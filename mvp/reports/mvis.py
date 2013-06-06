@@ -82,86 +82,67 @@ class HealthCoordinatorReport(MVPIndicatorReport):
     def indicator_slugs(self):
         return  [
             {
-                'category_title': "Child Health",
-                'category_slug': 'child_health',
+                'category_title': "Vital Events",
+                'category_slug': 'vital_events',
                 'indicator_slugs': [
-                    "under5_fever_rdt_proportion", # A1 - 28, all set
-                    "under5_fever_rdt_positive_proportion", # A1 - 29, all set
-                    "under5_fever_rdt_positive_medicated_proportion", # A1 - 20, all set
-                    "under5_fever_rdt_negative_medicated_proportion", # A2 - 30
-                    "under5_fever_rdt_not_received_proportion", #A1 - 48, all set
-                    "under5_diarrhea_ors_proportion", # A2 - 37
-                    "under5_diarrhea_zinc_proportion", # B - 38
-                    "under5_complicated_fever_facility_followup_proportion", # C - 32
-                    "under5_complicated_fever_referred_proportion",
-                    "under1_check_ups_proportion", # C - 9
-                    "under1_immunized_proportion", # A2 - 8
+                    "num_births_recorded",
+                    "maternal_deaths",
+                    "neonatal_deaths",
+                    "infant_deaths",
+                    "under5_deaths",
+                    "over5_deaths",
                 ]
             },
             {
-                'category_title': "Child Nutrition",
-                'category_slug': 'child_nutrition',
-                'indicator_slugs': [
-                    "muac_wasting_proportion", # A2 - 10, all set
-                    "muac_routine_proportion", # A2 - 11, all set
-                    "under6month_exclusive_breastfeeding_proportion", # B - 7, all set
-                    "low_birth_weight_proportion", # A3 - 5, all set
-                ]
-            },
-            {
-                'category_title': "CHW Visits",
+                'category_title': "Visits",
                 'category_slug': 'chw_visits',
                 'indicator_slugs': [
                     "households_routine_visit_past90days", # A1 - 23, all set
                     "households_routine_visit_past30days", # A1 - 44, all set
-                    "under5_routine_visit_past30days", # A1 - 45
                     "pregnant_routine_visit_past30days", # A1 - 46
+                    "pregnant_routine_checkup_proportion_6weeks",
                     "neonate_routine_visit_past7days", # A1 - 47
-                    "urgent_referrals_proportion", # A2 - 13, updated to spec
                     "newborn_7day_visit_proportion", # A2 - 6, denom slightly off
+                    "under1_check_ups_proportion",
+                    "under5_routine_visit_past30days", # A1 - 45
+                    "urgent_referrals_proportion", # A2 - 13, updated to spec
                 ]
             },
             {
-                'category_title': "CHW Mgmt",
-                'category_slug': 'chw_management',
-                'indicator_slugs': [
-                    "median_days_referral_followup", # ok all set
-                ]
-            },
-            {
-                'category_title': "Maternal",
+                'category_title': "Maternal Health",
                 'category_slug': 'maternal_health',
                 'indicator_slugs': [
-                    "family_planning_proportion", # A2 - 1
-                    "anc4_proportion", # A2 - 3
                     "no_anc_proportion", # A3 - 2
+                    "anc4_proportion", # A2 - 3
                     "facility_births_proportion", # A2 - 4
-                    "pregnant_routine_checkup_proportion_6weeks", # B - 24
+                    "low_birth_weight_proportion",
+                    "family_planning_proportion", # A2 - 1
+                ]
+            }, 
+            {
+                'category_title': "Child Health",
+                'category_slug': 'child_health',
+                'indicator_slugs': [
+                    "muac_routine_proportion",
+                    "muac_wasting_proportion",
+                    "under5_diarrhea_ors_proportion", # A2 - 37
+                    "under5_diarrhea_zinc_proportion", # B - 38
+                    "under5_complicated_fever_referred_proportion",
+                    "under5_complicated_fever_facility_followup_proportion",
+                    "under1_immunized_proportion", # A2 - 8
+                    "under6month_exclusive_breastfeeding_proportion",
                 ]
             },
             {
-                'category_title': "Over 5 Health",
-                'category_slug': 'over5',
+                'category_title': "Malaria",
+                'category_slug': 'malaria',
                 'indicator_slugs': [
+                    "under5_fever_rdt_proportion",
+                    "under5_fever_rdt_positive_proportion",
+                    "under5_fever_rdt_not_received_proportion",
+                    "under5_fever_rdt_positive_medicated_proportion",
+                    "under5_fever_rdt_negative_medicated_proportion",
                     "over5_positive_rdt_medicated_proportion",
-                ]
-            },
-            {
-                'category_title': "Births",
-                'category_slug': 'births',
-                'indicator_slugs': [
-                    "num_births_recorded", # A3 - 5
-                ]
-            },
-            {
-                'category_title': "Deaths",
-                'category_slug': 'deaths',
-                'indicator_slugs': [
-                    "neonatal_deaths",
-                    "infant_deaths",
-                    "under5_deaths",
-                    "maternal_deaths",
-                    "over5_deaths",
                 ]
             }
         ]
@@ -250,5 +231,3 @@ class HealthCoordinatorReport(MVPIndicatorReport):
         except AttributeError:
             pass
         return None
-
-
