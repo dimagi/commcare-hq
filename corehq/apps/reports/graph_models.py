@@ -6,12 +6,15 @@ class Axis(object):
 
 class Chart(object):
     template_partial = ''
+    height = 320
+    title = ''
 
 
 class MultiBarChart(Chart):
     template_partial = 'reports/partials/graphs/multibar_chart.html'
 
-    def __init__(self, x_axis, y_axis):
+    def __init__(self, title, x_axis, y_axis):
+        self.title = title
         self.x_axis = x_axis
         self.y_axis = y_axis
         self.data = []
@@ -42,7 +45,8 @@ class MultiBarChart(Chart):
 class PieChart(Chart):
     template_partial = 'reports/partials/graphs/pie_chart.html'
 
-    def __init__(self, data):
+    def __init__(self, title, data):
+        self.title = title
         self.data = data
         self.margin = {'top': 30, 'right': 20, 'bottom': 50, 'left': 80}
         self.showLabels = True

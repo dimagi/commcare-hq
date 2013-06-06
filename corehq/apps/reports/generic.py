@@ -22,6 +22,8 @@ from dimagi.utils.web import json_request
 from dimagi.utils.parsing import string_to_boolean
 from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
 
+CHART_SPAN_MAP = {1: '', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
+
 class GenericReportView(CacheableRequestMixIn):
     """
         A generic report structure for viewing a report
@@ -646,6 +648,16 @@ class GenericTabularReport(GenericReportView):
         shared_pagination_GET_params
             - this is where you select the GET parameters to pass to the paginator
             - returns a list formatted like [dict(name='group', value=self.group_id)]
+
+        ## Charts
+        To include charts in the report override the following property.
+        @property
+        charts
+            - returns a list of Chart objects e.g. PieChart, MultiBarChart
+
+        You can also adjust the following properties:
+        charts_per_row
+            - the number of charts to show in a row. 1, 2, 3, 4, or 6
     """
     # new class properties
     total_row = None
@@ -656,6 +668,7 @@ class GenericTabularReport(GenericReportView):
     fix_left_col = False
     ajax_pagination = False
     use_datatables = True
+    charts_per_row = 1
     
     # override old class properties
     report_template_path = "reports/async/tabular.html"
@@ -703,6 +716,13 @@ class GenericTabularReport(GenericReportView):
             return -1 if you want total_filtered_records to equal whatever the value of total_records is.
         """
         return -1
+
+    @property
+    def charts(self):
+        """
+            Override to return a list of Chart objects.
+        """
+        return []
 
     @property
     def shared_pagination_GET_params(self):
@@ -848,8 +868,10 @@ class GenericTabularReport(GenericReportView):
                 show_all_rows=self.show_all_rows,
                 pagination=pagination_spec,
                 left_col=left_col,
-                datatables=self.use_datatables,
-            )
+                datatables=self.use_datatables
+            ),
+            charts=self.charts,
+            chart_span=CHART_SPAN_MAP[self.charts_per_row]
         )
         for provider_function in self.extra_context_providers:
             context.update(provider_function(self))
