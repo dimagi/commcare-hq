@@ -1,6 +1,8 @@
 language: python
 python:
  - "2.6"
+env:
+ - CFLAGS=-O0
 install:
  - "time bash -e .travis/quietly-run-install.sh"
  - "time python .travis/download-requirements-in-parallel.py requirements/requirements.txt requirements/dev-requirements.txt"
