@@ -1,3 +1,4 @@
+from django_digest.decorators import httpdigest
 import receiver.views as rec_views
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
@@ -13,3 +14,6 @@ def form_list(request, domain):
 def post(request, domain, app_id=None):
     return rec_views.post(request)
 
+@httpdigest
+def secure_post(request, domain, app_id=None):
+    return post(request, domain, app_id=app_id)
