@@ -294,7 +294,7 @@ var CaseConfig = (function () {
             self.propertyCounts = ko.computed(function () {
                 var count = {};
                 _(self.case_properties()).each(function (p) {
-                    var key = p.keyVal();
+                    var key = p.key();
                     if (!count.hasOwnProperty(key)) {
                         count[key] = 0;
                     }
@@ -416,16 +416,7 @@ var CaseConfig = (function () {
         },
         wrap: function (data, case_transaction) {
             var self = ko.mapping.fromJS(data, CaseProperty.mapping);
-            self.defaultKey = ko.computed(function () {
-                var path = self.path() || '';
-                var value = path.split('/');
-                value = value[value.length-1];
-                return value;
-            });
             self.case_transaction = case_transaction;
-            self.keyVal = ko.computed(function () {
-                return self.key() || self.defaultKey();
-            });
             self.isBlank = ko.computed(function () {
                 return !self.key() && !self.path();
             });
@@ -437,15 +428,21 @@ var CaseConfig = (function () {
         mapping: CasePropertyBase.mapping,
         wrap: function (data, case_transaction) {
             var self = CasePropertyBase.wrap(data, case_transaction);
+            self.defaultKey = ko.computed(function () {
+                var path = self.path() || '';
+                var value = path.split('/');
+                value = value[value.length-1];
+                return value;
+            });
             self.repeat_context = function () {
                 return case_transaction.caseConfig.get_repeat_context(self.path());
             };
             self.validate = ko.computed(function () {
-                if (self.path() || self.keyVal()) {
-                    if (case_transaction.propertyCounts()[self.keyVal()] > 1) {
+                if (self.path() || self.key()) {
+                    if (case_transaction.propertyCounts()[self.key()] > 1) {
                         return "Property updated by two questions";
-                    } else if (case_transaction.caseConfig.reserved_words.indexOf(self.keyVal()) !== -1) {
-                        return '<strong>' + self.keyVal() + '</strong> is a reserved word';
+                    } else if (case_transaction.caseConfig.reserved_words.indexOf(self.key()) !== -1) {
+                        return '<strong>' + self.key() + '</strong> is a reserved word';
                     } else if (self.repeat_context() && self.repeat_context() !== case_transaction.repeat_context()) {
                         return 'Inside the wrong repeat!'
                     }
@@ -459,10 +456,13 @@ var CaseConfig = (function () {
     var CasePreload = {
         wrap: function (data, case_transaction) {
             var self = CasePropertyBase.wrap(data, case_transaction);
+            self.defaultKey = ko.computed(function () {
+                return '';
+            });
             self.validateProperty = ko.computed(function () {
-                if (self.path() || self.keyVal()) {
-                    if (case_transaction.caseConfig.reserved_words.indexOf(self.keyVal()) !== -1) {
-                        return '<strong>' + self.keyVal() + '</strong> is a reserved word';
+                if (self.path() || self.key()) {
+                    if (case_transaction.caseConfig.reserved_words.indexOf(self.key()) !== -1) {
+                        return '<strong>' + self.key() + '</strong> is a reserved word';
                     }
                 }
                 return null;
