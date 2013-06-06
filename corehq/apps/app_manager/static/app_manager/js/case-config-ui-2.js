@@ -443,7 +443,7 @@ var CaseConfig = (function () {
             self.validate = ko.computed(function () {
                 if (self.path() || self.keyVal()) {
                     if (case_transaction.propertyCounts()[self.keyVal()] > 1) {
-                        return "Duplicate property";
+                        return "Property updated by two questions";
                     } else if (case_transaction.caseConfig.reserved_words.indexOf(self.keyVal()) !== -1) {
                         return '<strong>' + self.keyVal() + '</strong> is a reserved word';
                     } else if (self.repeat_context() && self.repeat_context() !== case_transaction.repeat_context()) {
