@@ -489,6 +489,16 @@ ko.bindingHandlers.edit = {
 ko.bindingHandlers.typeahead = {
     init: function (element, valueAccessor) {
         var value = ko.utils.unwrapObservable(valueAccessor());
-        $(element).typeahead({source: value});
+        $(element).autocomplete({
+            source: value,
+            minLength: 0,
+            delay: 0
+        }).focus(function () {
+            $(element).autocomplete('search', $(element).val())
+                .autocomplete('widget').css({
+                width: '200px',
+                overflow: 'hidden'
+            });
+        });
     }
 };
