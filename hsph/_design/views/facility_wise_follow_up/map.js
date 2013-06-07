@@ -22,42 +22,42 @@ function(doc){
         entry.getBirthStats();
         
         var numOfBirths = entry.data.numBirths;
-        var dateOfBirth = entry.data.dateBirth;
-        if (numOfBirths && dateOfBirth) {
+        if (numOfBirths) {
             emit([regionId, districtId, siteId, siteNumber, doc.user_id,
-                'births', dateOfBirth], numOfBirths);
+                'births', , form.opened_on.substring(0, 10)], numOfBirths);
         }
          
         if (entry.data.isClosed && form.last_status === 'followed_up') {
             emit([regionId, districtId, siteId, siteNumber, doc.user_id,
-                'closed_cases', form.closed_on.substring(0, 10)], 1);
+                'closed_cases', form.opened_on.substring(0, 10)], 1);
         }
         
         if (entry.data.isClosed && form.last_status === 'lost_to_follow_up') {
             emit([regionId, districtId, siteId, siteNumber, doc.user_id,
-                'lost_to_follow_up', form.closed_on.substring(0, 10)], 1);
+                'lost_to_follow_up', form.opened_on.substring(0, 10)], 1);
         }
          
         if (entry.data.isClosed && (form.closed_by === 'cati_tl' ||
                 form.closed_by === 'cati')) 
         {
             emit([regionId, districtId, siteId, siteNumber, doc.user_id,
-             'followed_up_by_call_center', form.closed_on.substring(0, 10)], 1);
+             'followed_up_by_call_center', form.opened_on.substring(0, 10)], 1);
         }
         
-        if (entry.data.isClosed && form.closed_by === 'fida') {
+        if (entry.data.isClosed && form.closed_by === 'fida'){
             emit([regionId, districtId, siteId, siteNumber, doc.user_id,
-                'followed_up_by_field', form.closed_on.substring(0, 10) ], 1);
+                'followed_up_by_field', form.opened_on.substring(0, 10) ], 1);
         }
      
-        if(!entry.data.isClosed ){
+        if((!entry.data.isClosed) && form.date_admission){
             emit([regionId, districtId, siteId, siteNumber, doc.user_id,
-                'needing_follow_up', form.date_admission.substring(0, 10)], 1);
+                'needing_follow_up', form.opened_on.substring(0, 10),
+                form.date_admission.substring(0, 10)], 1);
         }
 
         if(!entry.data.isClosed ){
             emit([regionId, districtId, siteId, siteNumber, doc.user_id,
-                'open_cases'], 1);
+                'open_cases', form.opened_on.substring(0, 10)], 1);
         }       
     }
 }

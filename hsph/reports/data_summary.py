@@ -7,7 +7,7 @@ from hsph.reports import HSPHSiteDataMixin
     
 from collections import defaultdict
 from django.utils.translation import ugettext as _
-from datetime import date, timedelta
+from datetime import date, timedelta, time
 
 class DataSummaryReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
     """
@@ -329,6 +329,10 @@ class FacilityWiseFollowUpRepoert(GenericTabularReport, DataSummaryReport,
               
     show_all_rows_option = True
 
+    def _parse_date(self, date_str):
+        y, m, d = [int(val) for val in date_str.split('-')]
+        return date(y, m, d)
+
     @property
     def headers(self):
         return DataTablesHeader(
@@ -371,21 +375,24 @@ class FacilityWiseFollowUpRepoert(GenericTabularReport, DataSummaryReport,
         else:
             rpt_keys = site_keys
 
-        def get_single_value(case_type, start_dte, end_dte):
+        def get_view_results(case_type, start_dte, end_dte, reduce=True):
             my_start_key=key_start + [case_type] + [start_dte]
             if not start_dte:
                 my_start_key = key_start + [case_type]
             data = get_db().view('hsph/facility_wise_follow_up',
-                                 reduce=True,
+                                 reduce=reduce,
                                  startkey=my_start_key,
                                  endkey=key_start + [case_type] + [end_dte]
             )
             
-            return sum([ item['value'] for item in data])
+            if reduce:
+                return sum([ item['value'] for item in data])
+            return data
 
 
         rows = []
         today = date.today()
+        today_str = today.strftime('%Y-%m-%d')
         for item in  rpt_keys:
             key_start = item['key']
             region_id, district_id, site_id, site_number, user_id = item['key']
@@ -400,33 +407,38 @@ class FacilityWiseFollowUpRepoert(GenericTabularReport, DataSummaryReport,
                 site_number)
 
             fida = self.usernames[user_id]
-            births = get_single_value('births', startdate, enddate)
-            open_cases = get_single_value('open_cases', "", {})
-            
-            start = today - timedelta(days = 7)
-            not_yet_open_for_follow_up = get_single_value('needing_follow_up',
-            start.strftime('%Y-%m-%d'), today.strftime('%Y-%m-%d'))
-            
-            start = today - timedelta(days = 21)
-            end = today - timedelta(days = 8)
-            open_for_cati_follow_up = get_single_value('needing_follow_up',
-            start.strftime('%Y-%m-%d'), end.strftime('%Y-%m-%d'))
+            births = get_view_results('births', startdate, enddate)
+            open_cases = get_view_results('open_cases', startdate, enddate)
                         
-            end = today - timedelta(days = 22)
-            open_for_fada_follow_up = get_single_value('needing_follow_up',
-            "", end.strftime('%Y-%m-%d'))
-            
-            # closed cases - cumulative
-            closed_cases = get_single_value('closed_cases', "", enddate)
-            
-            # cumulative lost_to_follow_up
-            lost_to_follow_up = get_single_value('lost_to_follow_up', "", enddate)
-            
-            followed_up_by_call_center = get_single_value(
-                                        'followed_up_by_call_center', "", enddate)
-            followed_up_by_field = get_single_value('followed_up_by_field', "",
+            not_yet_open_for_follow_up = 0
+            for v in get_view_results('needing_follow_up', startdate, enddate, False):
+                if today < self._parse_date(v['key'][-1]) + timedelta(days=8):
+                    not_yet_open_for_follow_up += 1
+
+            open_for_cati_follow_up = 0
+            #Not closed and if (date_admission + 8) <= today <= (date_admission + 21)
+            for v in get_view_results('needing_follow_up', startdate, enddate, False):
+                date_admission = self._parse_date(v['key'][-1])
+                if (date_admission + timedelta(days=8)) <= today and\
+                today <= (date_admission + timedelta(days=21)):
+                    open_for_cati_follow_up += 1
+
+            open_for_fada_follow_up = 0
+            # Not closed and today > date_admission+21
+            for v in get_view_results('needing_follow_up', startdate, enddate, False):
+                if today > self._parse_date(v['key'][-1]) + timedelta(days=21):
+                    open_for_fada_follow_up += 1
+
+            closed_cases = get_view_results('closed_cases', startdate, enddate)
+
+            lost_to_follow_up = get_view_results('lost_to_follow_up', startdate,
                                                                         enddate)
-                        
+
+            followed_up_by_call_center = get_view_results(
+                               'followed_up_by_call_center', startdate, enddate)
+            followed_up_by_field = get_view_results('followed_up_by_field',
+                                                             startdate, enddate)
+
             rows.append([region_name, district_name, site_name, fida, births,
             open_cases, not_yet_open_for_follow_up, open_for_cati_follow_up,
             open_for_fada_follow_up, closed_cases, followed_up_by_call_center,
