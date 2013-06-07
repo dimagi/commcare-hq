@@ -77,7 +77,7 @@ class InvitationView():
 
         if request.user.is_authenticated():
             is_invited_user = request.couch_user.username == invitation.email
-            if self.is_invited(invitation, request.couch_user):
+            if self.is_invited(invitation, request.couch_user) and not request.couch_user.is_superuser:
                 if is_invited_user:
                     # if this invite was actually for this user, just mark it accepted
                     messages.info(request, _("You are already a member of {entity}.").format(
