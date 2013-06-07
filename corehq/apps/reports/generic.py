@@ -293,7 +293,7 @@ class GenericReportView(CacheableRequestMixIn):
     @memoized
     def export_format(self):
         from couchexport.models import Format
-        return self.export_format_override or self.request.GET.get('format', Format.XLS)
+        return self.export_format_override or self.request.GET.get('format', Format.XLS_2007)
 
     @property
     def export_name(self):
