@@ -37,21 +37,21 @@ function CommtrackSettingsViewModel() {
         this.loc_types($.map(data.loc_types, function(e) {
                     return new LocationTypeModel(e);
                 }));
-    }
+    };
 
     var settings = this;
 
     this.remove_action = function(action) {
         settings.actions.remove(action);
-    }
+    };
 
     this.new_action = function() {
         settings.actions.push(new ActionModel({}));
-    }
+    };
 
     this.remove_loctype = function(loc_type) {
         settings.loc_types.remove(loc_type);
-    }
+    };
 
     this.new_loctype = function() {
         var new_loctype = new LocationTypeModel({}, this);
@@ -59,9 +59,9 @@ function CommtrackSettingsViewModel() {
             var $inp = $(this.$e).find('.loctype_name');
             $inp.focus();
             setTimeout(function() { $inp.select(); }, 0);
-        }
+        };
         settings.loc_types.push(new_loctype);
-    }
+    };
 
     this.validate = function() {
         this.keyword_error(null);
@@ -101,7 +101,7 @@ function CommtrackSettingsViewModel() {
         }
         
         return valid;
-    }
+    };
 
     this.presubmit = function() {
         if (!this.validate()) {
@@ -126,7 +126,7 @@ function CommtrackSettingsViewModel() {
             });
 
         return keywords;
-    }
+    };
 
     this.sms_code_uniqueness = function(keyword, type, id) {
         var conflict = null;
@@ -137,7 +137,7 @@ function CommtrackSettingsViewModel() {
                 }
             });
         return conflict;
-    }
+    };
 
     this.validate_sms = function(model, attr, type, id) {
         var conflict = this.sms_code_uniqueness(model[attr](), type, id);
@@ -146,7 +146,7 @@ function CommtrackSettingsViewModel() {
             return false;
         }
         return true;
-    }
+    };
 
     this.to_json = function() {
         return {
@@ -154,7 +154,7 @@ function CommtrackSettingsViewModel() {
             actions: $.map(this.actions(), function(e) { return e.to_json(); }),
             loc_types: $.map(this.loc_types(), function(e) { return e.to_json(); }),
         };
-    }
+    };
 }
 
 function ActionModel(data) {
@@ -186,7 +186,7 @@ function ActionModel(data) {
         }
 
         return valid;
-    }
+    };
 
     this.to_json = function() {
         return {
@@ -195,7 +195,7 @@ function ActionModel(data) {
             type: this.type(),
             name: this.name
         };
-    }
+    };
 }
 
 function LocationTypeModel(data, root) {
@@ -232,7 +232,7 @@ function LocationTypeModel(data, root) {
         }
 
         return valid;
-    }
+    };
 
     this.to_json = function() {
         return {
@@ -240,11 +240,8 @@ function LocationTypeModel(data, root) {
             allowed_parents: this.allowed_parents(),
             administrative: this.administrative()
         };
-    }
+    };
 }
-
-
-
 
 
 
@@ -260,5 +257,5 @@ ko.bindingHandlers.bind_element = {
         if (viewModel.onBind) {
             viewModel.onBind(bindingContext);
         }
-    },
+    }
 };
