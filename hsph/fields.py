@@ -52,6 +52,8 @@ class NameOfFIDAField(SelectFilteredMobileWorkerField):
     name = "Name of FIDA"
     group_names = ["Role - FIDA"]
     cssId = "fida_name"
+    show_only_group_option = False
+    default_option = "All FIDAs"
 
 class NameOfCATIField(SelectFilteredMobileWorkerField):
     slug = "cati_name"
