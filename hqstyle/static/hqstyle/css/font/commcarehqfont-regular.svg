@@ -2,8 +2,8 @@
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" >
 <svg>
 <metadata>
-Created by FontForge 20110222 at Wed May  8 07:53:18 2013
- By Orthosie Webmaster
+Created by FontForge 20110222 at Wed May 22 06:24:49 2013
+ By Orthosie Webhosting
 2013 Dimagi, Inc.
 </metadata>
 <defs>
@@ -19,7 +19,7 @@ Created by FontForge 20110222 at Wed May  8 07:53:18 2013
     bbox="0 -247 2508 1772"
     underline-thickness="50"
     underline-position="-129"
-    unicode-range="U+0020-F00B"
+    unicode-range="U+0020-F00C"
   />
 <missing-glyph 
  />
@@ -88,5 +88,8 @@ l-17 -129q3 60 17 129zM396 462h-274v-274h274v274zM622 441l47 -220q-38 107 -47 22
     <glyph glyph-name="uniF00B" unicode="&#xf00b;" horiz-adv-x="1891" 
 d="M1891 1294q0 191 -135 326t-326 135q-125 0 -231 -61.5t-167.5 -168t-61.5 -231.5q0 -190 135 -325t325 -135q125 0 231.5 61.5t168 167.5t61.5 231zM1381 704q-10 -1 -27 -0.5t-67.5 8.5t-98 24t-109.5 54.5t-112 92.5q-49 53 -78 117t-36 117t-6.5 98t6.5 71l6 25
 q-20 -33 -54.5 -88.5t-135.5 -200.5t-193 -258q-58 -72 -125.5 -147t-123.5 -132.5t-103 -103.5t-76.5 -74.5t-31.5 -30.5q-16 -23 -15.5 -42.5t12.5 -31.5q6 -8 82.5 -89t86.5 -94q16 -18 38.5 -21t49.5 12q1 1 77 56t199.5 140.5t239.5 157.5q126 79 275 164t235 130z" />
+    <glyph glyph-name="uniF00C" unicode="&#xf00c;" horiz-adv-x="2122" 
+d="M291 1139l203 -319q-227 -131 -360.5 -348.5t-133.5 -473.5h2122q0 257 -135.5 477t-363.5 350l198 314q22 28 14 63.5t-39 56.5q-32 17 -67.5 9.5t-56.5 -37.5l-212 -330q-187 69 -400 69q-220 0 -408 -73l-213 334q-20 30 -55 37.5t-67 -9.5q-32 -21 -39.5 -56.5
+t13.5 -63.5zM673 347q-52 0 -88.5 37t-36.5 88q0 53 36.5 89.5t88.5 36.5t89 -36.5t37 -89.5q0 -51 -37 -88t-89 -37zM1449 347q-51 0 -88.5 37t-37.5 88q0 53 37 89.5t89 36.5q53 0 89.5 -36.5t36.5 -89.5q0 -51 -36.5 -88t-89.5 -37z" />
   </font>
 </defs></svg>
