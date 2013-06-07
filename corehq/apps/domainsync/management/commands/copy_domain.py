@@ -1,4 +1,4 @@
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, Pool
 import sys
 from django.core.management.base import BaseCommand, CommandError
 from dimagi.utils.couch.database import get_db, iter_docs
@@ -60,7 +60,7 @@ class Command(BaseCommand):
         since = datetime.strptime(options['since'], '%Y-%m-%d').isoformat() if options['since'] else None
 
         if options['list_types']:
-            self.list_types(sourcedb, domain)
+            self.list_types(sourcedb, domain, since)
             sys.exit(0)
 
         if simulate:
@@ -78,11 +78,20 @@ class Command(BaseCommand):
             exclude_types = DEFAULT_EXCLUDE_TYPES + options['doc_types_exclude'].split(',')
             self.copy_docs(sourcedb, domain, startkey, endkey, simulate, exclude_types=exclude_types)
 
-    def list_types(self, sourcedb, domain):
+    def list_types(self, sourcedb, domain, since):
         doc_types = sourcedb.view("domain/docs", startkey=[domain],
                                   endkey=[domain, {}], reduce=True, group=True, group_level=2)
-        for row in doc_types:
-            print "{:<30}- {}".format(row['key'][1], row['value'])
+
+        doc_count = dict([(row['key'][1], row['value']) for row in doc_types])
+        if since:
+            for doc_type in sorted(doc_count.iterkeys()):
+                num_since = sourcedb.view("domain/docs", startkey=[domain, doc_type, since],
+                                          endkey=[domain, doc_type, {}], reduce=True).all()
+                num = num_since[0]['value'] if num_since else 0
+                print "{:<30}- {:<6} total {}".format(doc_type, num, doc_count[doc_type])
+        else:
+            for doc_type in sorted(doc_count.iterkeys()):
+                print "{:<30}- {}".format(doc_type, doc_count[doc_type])
 
     def copy_docs(self, sourcedb, domain, startkey, endkey, simulate, type=None, since=None, exclude_types=None):
         doc_ids = [result["id"] for result in sourcedb.view("domain/docs", startkey=startkey,
