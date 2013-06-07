@@ -128,3 +128,13 @@ def extract_case_blocks(doc):
         return const.CASE_TAG_ID in case_block or \
                "@%s" % const.CASE_TAG_ID in case_block
     return [block for block in block_list if _has_case_id(block)]
+
+def cases_referenced_by_xform(xform):
+    '''
+    JSON repr of XFormInstance -> [CommCareCase]
+    '''
+    def extract_case_id(case_block):
+        return case_block.get(const.CASE_TAG_ID) or case_block.get('@%s' % const.CASE_TAG_ID)
+
+    return [CommCareCase.get(extract_case_id(case_block)) for case_block in extract_case_blocks(xform)]
+        
