@@ -4,8 +4,8 @@
 
 {% block title %}{% trans "Reminders" %}{% endblock %}
 
-{% block head %}
-    <script type="text/javascript">
+{% block js-inline %}
+    <script>
         $(function (){
             var unsaved = false;
             $(":input[type='submit'].btn-primary").click(function (){
@@ -22,6 +22,9 @@
             window.onbeforeunload = unloadPage;                    
         });
     </script>
+{% endblock%}
+
+{% block head %}
     
     {{ block.super }}
     <style>
