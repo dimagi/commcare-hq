@@ -244,6 +244,9 @@
         };
 
         function get_language_count(message){
+            //For encoding, Latin-language alphabet requires 7-bits and non-Latin-languages require 16bits. Refer to following.
+            //http://spin.atomicobject.com/2011/04/20/concatenated-sms-messages-and-character-counts/
+            //http://stackoverflow.com/questions/5454910/international-count-sms-characters
             var gsm7bitChars = "@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ !\"#¤%&'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà";
             var gsm7bitExChar = "^{}\\[~]|€";            
             var gsm7bitUnits = 0;
