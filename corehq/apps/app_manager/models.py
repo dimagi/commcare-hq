@@ -20,7 +20,7 @@ import commcare_translations
 from corehq.apps.app_manager import fixtures, suite_xml
 from corehq.apps.app_manager.suite_xml import IdStrings
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
-from corehq.apps.app_manager.util import split_path
+from corehq.apps.app_manager.util import split_path, save_xform
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, XFormError, XFormValidationError, WrappedNode, CaseXPath
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig, BuildRecord
@@ -588,7 +588,7 @@ class FormBase(DocumentSchema):
             if not subcase_action.case_type:
                 errors.append({'type': 'subcase has no case type'})
 
-        if self.actions.open_case.is_active() \
+        if self.requires == 'none' and self.actions.open_case.is_active() \
                 and not self.actions.open_case.name_path:
             errors.append({
                 'type': 'case_name required',
@@ -1907,6 +1907,22 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             for f,form in enumerate(module['forms']):
                 change_unique_id(source['modules'][m]['forms'][f])
 
+    def copy_form(self, module_id, form_id, to_module_id):
+        form  = self.get_module(module_id).get_form(form_id)
+        copy_source = deepcopy(form.to_json())
+        if copy_source.has_key('unique_id'):
+            del copy_source['unique_id']
+
+        copy_form = self.new_form_from_source(to_module_id, copy_source)
+
+        def xmlname(aform):
+            return "%s.xml" % aform.get_unique_id()
+
+        save_xform(self, copy_form, form.source)
+
+        if self.modules[module_id]['case_type'] != self.modules[to_module_id]['case_type']:
+            return 'case type conflict'
+
     @cached_property
     def has_case_management(self):
         for module in self.get_modules():
@@ -2005,7 +2021,7 @@ class RemoteApp(ApplicationBase):
 
             def set_property(key, value):
                 node = profile_xml.find('property[@key="%s"]' % key)
-                print "node %r" % node
+
                 if node.xml is None:
                     from lxml import etree as ET
                     node = ET.Element('property')
@@ -2029,6 +2045,7 @@ class RemoteApp(ApplicationBase):
                 set_property("PostURL", self.post_url)
                 set_property("cc_user_domain", cc_user_domain(self.domain))
                 set_property('form-record-url', self.form_record_url)
+                set_property('key_server', self.key_server_url)
                 reset_suite_remote_url()
 
             if self.build_langs:
