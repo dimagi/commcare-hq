@@ -11,12 +11,12 @@
 
         chart.xAxis.axisLabel({{ chart.x_axis.label|JSON }});
         {% if chart.x_axis.format %}
-            chart.xAxis.tickFormat({{ chart.x_axis.format|JSON }});
+            chart.xAxis.tickFormat(d3.format({{ chart.x_axis.format|JSON }}));
         {% endif %}
 
         chart.yAxis.axisLabel({{ chart.y_axis.label|JSON }});
         {% if chart.y_axis.format %}
-            chart.yAxis.tickFormat({{ chart.y_axis.format|JSON }});
+            chart.yAxis.tickFormat(d3.format({{ chart.y_axis.format|JSON }}));
         {% endif %}
 
         chart.showControls(chart_config.showControls);
