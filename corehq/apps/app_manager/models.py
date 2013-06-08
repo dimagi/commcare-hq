@@ -2021,7 +2021,7 @@ class RemoteApp(ApplicationBase):
 
             def set_property(key, value):
                 node = profile_xml.find('property[@key="%s"]' % key)
-                print "node %r" % node
+
                 if node.xml is None:
                     from lxml import etree as ET
                     node = ET.Element('property')
@@ -2045,6 +2045,7 @@ class RemoteApp(ApplicationBase):
                 set_property("PostURL", self.post_url)
                 set_property("cc_user_domain", cc_user_domain(self.domain))
                 set_property('form-record-url', self.form_record_url)
+                set_property('key_server', self.key_server_url)
                 reset_suite_remote_url()
 
             if self.build_langs:
