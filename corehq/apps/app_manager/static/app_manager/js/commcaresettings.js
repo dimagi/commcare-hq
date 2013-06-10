@@ -178,11 +178,6 @@ function CommcareSettings(options) {
                 return setting.visible();
             });
         });
-        section.reallyCollapse = ko.computed(function () {
-            section.collapse || _(section.settings).some(function (setting) {
-                return setting.hasError();
-            });
-        });
     });
 
     self.serialize = ko.computed(function () {
