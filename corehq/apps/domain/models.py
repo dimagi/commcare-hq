@@ -166,6 +166,7 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     can_use_data = BooleanProperty()
     notes = StringProperty()
     organization_name = StringProperty()
+    platform = StringListProperty()
 
 
 class CaseDisplaySettings(DocumentSchema):

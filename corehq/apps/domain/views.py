@@ -306,6 +306,7 @@ def internal_settings(request, domain, template='domain/internal_settings.html')
             "can_use_data": 'true' if domain.internal.can_use_data else 'false',
             "organization_name": domain.internal.organization_name,
             "notes": domain.internal.notes,
+            "platform": domain.internal.platform,
         })
 
     return render(request, template, {"project": domain, "domain": domain.name, "form": internal_form, 'active': 'settings'})
