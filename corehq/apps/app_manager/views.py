@@ -31,8 +31,10 @@ from corehq.apps.app_manager.util import is_valid_case_type, get_case_properties
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
-from couchexport.export import FormattedRow
+from corehq.apps.translations import system_text as st_trans
+from couchexport.export import FormattedRow, export_raw
 from couchexport.models import Format
+from couchexport.shortcuts import export_response
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.resource_conflict import retry_resource
@@ -42,7 +44,9 @@ from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions, CommCareUser
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.decorators.view import get_file
 from dimagi.utils.django.cache import make_template_fragment_key
+from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.subprocess_timeout import ProcessTimedOut
 from dimagi.utils.web import json_response, json_request
@@ -777,10 +781,12 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
 
     context = get_apps_base_context(req, domain, app)
     context.update(locals())
+    app.remove_unused_mappings()
     context.update({
         'edit': True,
         'nav_form': form if not is_user_registration else '',
         'formdesigner': True,
+        'multimedia_object_map': app.get_object_map()
     })
     return render(req, 'app_manager/form_designer.html', context)
 
@@ -1988,3 +1994,68 @@ def summary(request, domain, app_id, should_edit=True):
         return render(request, "app_manager/summary.html", context)
     else:
         return render(request, "app_manager/exchange_summary.html", context)
+
+@login_and_domain_required
+def download_translations(request, domain, app_id):
+    app = get_app(domain, app_id)
+    properties = tuple(["property"] + app.langs + ["default"])
+    temp = StringIO()
+    headers = (("translations", properties),)
+
+    row_dict = {}
+    for i, lang in enumerate(app.langs):
+        index = i + 1
+        trans_dict = app.translations.get(lang, {})
+        for prop, trans in trans_dict.iteritems():
+            if prop not in row_dict:
+                row_dict[prop] = [prop]
+            num_to_fill = index - len(row_dict[prop])
+            row_dict[prop].extend(["" for i in range(num_to_fill)] if num_to_fill > 0 else [])
+            row_dict[prop].append(trans)
+
+    rows = row_dict.values()
+    all_prop_trans = dict(st_trans.DEFAULT + st_trans.CC_DEFAULT + st_trans.CCODK_DEFAULT + st_trans.ODKCOLLECT_DEFAULT)
+    all_prop_trans = dict((k.lower(), v) for k, v in all_prop_trans.iteritems())
+    rows.extend([[t] for t in sorted(all_prop_trans.keys()) if t not in [k.lower() for k in row_dict]])
+
+    def fillrow(row):
+        num_to_fill = len(properties) - len(row)
+        row.extend(["" for i in range(num_to_fill)] if num_to_fill > 0 else [])
+        return row
+
+    def add_default(row):
+        row[-1] = all_prop_trans.get(row[0].lower(), "")
+        return row
+
+    rows = [add_default(fillrow(row)) for row in rows]
+
+    data = (("translations", tuple(rows)),)
+    export_raw(headers, data, temp)
+    return export_response(temp, Format.XLS_2007, "translations")
+
+@require_POST
+@require_can_edit_apps
+@get_file("file")
+def upload_translations(request, domain, app_id):
+    success = False
+    try:
+        workbook = WorkbookJSONReader(request.file)
+        translations = workbook.get_worksheet(title='translations')
+
+        app = get_app(domain, app_id)
+        trans_dict = defaultdict(dict)
+        for row in translations:
+            for lang in app.langs:
+               if row.get(lang):
+                   trans_dict[lang].update({row["property"]: row[lang].encode('utf8')})
+
+        app.translations = dict(trans_dict)
+        app.save()
+        success = True
+    except Exception:
+        messages.error(request, _("Something went wrong! Update failed. We're looking into it"))
+
+    if success:
+        messages.success(request, _("UI Translations Updated!"))
+
+    return HttpResponseRedirect(reverse('app_languages', args=[domain, app_id]))
