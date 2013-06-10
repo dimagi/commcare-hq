@@ -531,6 +531,10 @@ class FormBase(DocumentSchema):
         for subcase_action in self.actions.subcases:
             if not subcase_action.case_type:
                 errors.append({'type': 'subcase has no case type'})
+            # no parent properties for subcase
+            for key in subcase_action.case_properties:
+                if not re.match(r'^[a-zA-Z][\w_-]*$', key):
+                    errors.append({'type': 'update_case word illegal', 'word': key})
 
         if self.requires == 'none' and self.actions.open_case.is_active() \
                 and not self.actions.open_case.name_path:

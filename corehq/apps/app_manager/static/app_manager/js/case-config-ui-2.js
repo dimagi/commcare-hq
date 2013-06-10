@@ -557,7 +557,8 @@ var CaseConfig = (function () {
                 case_properties: case_properties,
                 case_preload: case_preload,
                 condition: self.open_case.condition,
-                close_condition: self.close_case.condition
+                close_condition: self.close_case.condition,
+                suggestedProperties: caseConfig.propertiesMap[caseConfig.caseType]
             }, caseConfig);
             _.delay(function () {
                 x.allow = {
@@ -645,6 +646,9 @@ var CaseConfig = (function () {
                 case_type: self.case_type,
                 case_properties: case_properties,
                 condition: self.condition,
+                suggestedProperties: _(caseConfig.propertiesMap[self.case_type]).filter(function (property) {
+                    return !_(property).contains('/');
+                }),
                 allow: {
                     condition: function () {
                         return true;
@@ -657,6 +661,9 @@ var CaseConfig = (function () {
                     },
                     repeats: function () {
                         return true;
+                    },
+                    parentProperties: function () {
+                        return false;
                     }
                 }
             }, caseConfig);
