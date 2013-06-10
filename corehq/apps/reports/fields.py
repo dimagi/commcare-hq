@@ -68,6 +68,7 @@ class ReportSelectField(ReportField):
     hide_field = False
     as_combo = False
     placeholder = ''
+    help_text = ''
 
     def __init__(self, *args, **kwargs):
         super(ReportSelectField, self).__init__(*args, **kwargs)
@@ -82,6 +83,7 @@ class ReportSelectField(ReportField):
     def update_context(self):
         self.update_params()
         self.context['hide_field'] = self.hide_field
+        self.context['help_text'] = self.help_text
         self.context['select'] = dict(
             options=self.options,
             default=self.default_option,
@@ -138,6 +140,7 @@ class GroupField(GroupFieldMixin, ReportSelectField):
 class MultiSelectGroupField(GroupFieldMixin, ReportMultiSelectField):
     default_option = ['_all']
     placeholder = 'Click to select groups'
+    help_text = "Click to select one or more groups"
 
     @property
     def options(self):
