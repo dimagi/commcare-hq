@@ -315,6 +315,29 @@ def account(request, domain, couch_user_id, template="users/account.html"):
                 'override_global_tz': dm.override_global_tz
             })
 
+    # commtrack
+    from django import forms
+    from django.template.loader import get_template
+    from django.template import Template, Context
+    class SupplyPointSelectWidget(forms.Widget):
+        def __init__(self, attrs=None, a=None):
+            super(SupplyPointSelectWidget, self).__init__(attrs)
+            self.a = a
+
+        def render(self, name, value, attrs=None):
+            return get_template('locations/manage/partials/autocomplete_select_widget.html').render(Context({
+                        'name': name,
+                        'value': value,
+                        'a': self.a,
+                    }))
+    class CommtrackUserForm(forms.Form):
+        supply_point = forms.CharField(label='Supply Point:', required=False, widget=SupplyPointSelectWidget())
+        
+    linked_loc = None
+    context.update({
+            'commtrack_form': CommtrackUserForm(initial={'supply_point': 'asdf'}),
+    })
+
     # for basic tab
     context.update(_handle_user_form(request, domain, couch_user))
     return render(request, template, context)
