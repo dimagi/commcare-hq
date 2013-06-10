@@ -1565,6 +1565,13 @@ class OrgMembershipMixin(DocumentSchema):
         if om:
             om.team_ids.remove(team_id)
 
+    def set_org_admin(self, org):
+        om = self.get_org_membership(org)
+        if not om:
+            raise OrgMembershipError("Cannot set admin -- %s is not a member of the %s organization" %
+                                     (self.username, org))
+        om.is_admin = True
+
 class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobileContactMixin):
     #do sync and create still work?
 
