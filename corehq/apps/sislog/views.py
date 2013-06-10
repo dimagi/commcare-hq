@@ -3,16 +3,16 @@ from corehq.apps.sms.api import incoming as incoming_sms
 
 def sms_in(request):
     """
-    msisdn - the number (in international format, without leading plus) of the person sending the sms
-    sn - the number the sms was sent to
-    msg - the message
+    sender - the number of the person sending the sms
+    receiver - the number the sms was sent to
+    msgdata - the message
     """
-    msisdn = request.GET.get("msisdn", None)
-    sn = request.GET.get("sn", None)
-    msg = request.GET.get("msg", None)
-    if msisdn is None or msg is None:
+    sender = request.GET.get("sender", None)
+    receiver = request.GET.get("receiver", None)
+    msgdata = request.GET.get("msgdata", None)
+    if sender is None or msgdata is None:
         return HttpResponse(status=400)
     else:
-        incoming_sms(msisdn, msg, "SISLOG")
+        incoming_sms(sender, msgdata, "SISLOG")
         return HttpResponse()
 
