@@ -509,6 +509,16 @@ def undo_remove_member(request, org, record_id):
     record.undo()
     return HttpResponseRedirect(reverse('orgs_members', args=[org]))
 
+@org_admin_required
+def set_admin(request, org):
+    member_id = request.POST.get("member_id", None)
+    if member_id:
+        member = WebUser.get(member_id)
+        member.set_org_admin(org)
+        member.save()
+        messages.success(request, 'You have made %s an admin of the organization %s.' % (member.username, org))
+    return HttpResponseRedirect(reverse("orgs_members", args=[org]))
+
 @require_superuser
 def verify_org(request, org):
     organization = Organization.get_by_name(org)
