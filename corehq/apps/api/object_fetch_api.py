@@ -6,10 +6,13 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.decorators import login_and_domain_required
 from django.core import cache
 
-
-#following flickr's sizing convention with some additions
-
-
+class CachedObjectAPI(View):
+    @method_decorator(login_and_domain_required)
+    def get(self, *args, **kwargs):
+        """
+        Return a cached object based upon the key in the URL
+        """
+        pass
 
 
 class CaseAttachmentAPI(View):
@@ -43,7 +46,7 @@ class CaseAttachmentAPI(View):
         if not case_exists:
             raise Http404
 
-
+        attachment_key = kwargs.get('attachment_id', None)
         rcache = cache.get_cache('redis')
 
         attachment_data_key = "%(case_id)_%(attachment)s_%(size_key)s" % {
@@ -53,7 +56,6 @@ class CaseAttachmentAPI(View):
         }
 
         case_doc = CommCareCase.get(case_id)
-        attachment_key = kwargs.get('attachment_id', None)
         attach_stream = CommCareCase.get_db().fetch_attachment(case_id, attachment_key, stream=True)
         wrapper = FileWrapper(attach_stream)
         attachment_meta = case_doc.case_attachments.get(attachment_key, {})
