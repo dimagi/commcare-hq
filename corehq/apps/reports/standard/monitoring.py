@@ -949,7 +949,21 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 except ValueError:
                     value = text
             return util.format_datatables_data(text=text, sort_key=value)
-        
+
+        def submit_history_link(owner_id, val, type='select_mw'):
+            """
+                takes a row, and converts certain cells in the row to links that link to the submit history report
+            """
+            fs_url = reverse('project_report_dispatcher', args=(self.domain, 'submit_history'))
+            start_date, end_date = dates_for_linked_reports()
+            url_args = {
+                type: owner_id,
+                "startdate": start_date,
+                "enddate": end_date,
+            }
+
+            return numcell('<a href="%s?%s" target="_blank">%s</a>' % (fs_url, urlencode(url_args, True), val), val)
+
         def add_case_list_links(owner_id, row):
             """
                 takes a row, and converts certain cells in the row to links that link to the case list page
@@ -1014,7 +1028,8 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
 
                 rows.append([
                     group_cell(group_id, group_name),
-                    numcell(sum([int(submissions_by_user.get(user["user_id"], 0)) for user in users])),
+                    submit_history_link(group_id,
+                            sum([int(submissions_by_user.get(user["user_id"], 0)) for user in users]), type="group"),
                     numcell(sum([int(avg_submissions_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
                     "%s / %s" % (int(active_users_by_group.get(group, 0)), len(self.users_by_group.get(group, []))),
                     numcell(sum([int(creations_by_user.get(user["user_id"], 0)) for user in users])),
@@ -1044,7 +1059,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
 
                 rows.append(add_case_list_links(user['user_id'], [
                     user["username_in_report"],
-                    numcell(submissions_by_user.get(user["user_id"], 0)),
+                    submit_history_link(user['user_id'], submissions_by_user.get(user["user_id"], 0)),
                     numcell(int(avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
                     last_form_by_user.get(user["user_id"]) or NO_FORMS_TEXT,
                     int(creations_by_user.get(user["user_id"],0)),
