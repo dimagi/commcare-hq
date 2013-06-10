@@ -159,7 +159,6 @@ def production():
     env.sudo_user = 'cchq'
     env.environment = 'production'
     env.django_port = '9010'
-    env.code_branch = 'master'
 
     #env.hosts = None
     env.roledefs = {
