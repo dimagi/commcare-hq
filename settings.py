@@ -194,6 +194,7 @@ HQ_APPS = (
     'corehq.apps.ivr',
     'corehq.apps.tropo',
     'corehq.apps.kookoo',
+    'corehq.apps.sislog',
     'corehq.apps.yo',
     'corehq.apps.registration',
     'corehq.apps.unicel',

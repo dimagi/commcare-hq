@@ -259,6 +259,18 @@ function BaseMediaReference (ref) {
         self.upload_controller.updateUploadFormUI();
     };
 
+    // Needed for Upload Controller
+
+    // we don't want to be dependent on a knockout structure (vellum)
+    self.getUrl = function () {
+        return self.url();
+    };
+
+    self.isMediaMatched = function () {
+        return self.is_matched();
+    };
+
+    // bound to event mediaUploadComplete
     self.uploadComplete = function (trigger, event, data) {
         if (data && !data.errors.length) {
             self.setObjReference(data.ref);

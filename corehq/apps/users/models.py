@@ -19,6 +19,7 @@ from django.template.loader import render_to_string
 from couchdbkit.ext.django.schema import *
 from couchdbkit.resource import ResourceNotFound
 from dimagi.utils.couch.database import get_safe_write_kwargs
+from dimagi.utils.logging import notify_exception
 
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
@@ -38,6 +39,11 @@ from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.django.database import get_unique_value
 
+from casexml.apps.case.xml import V2
+import uuid
+from xml.etree import ElementTree
+from corehq.apps.hqcase.utils import submit_case_blocks
+from couchdbkit.exceptions import MultipleResultsFound, NoResultFound
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -672,6 +678,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
         return self.email
 
     @property
+    def projects(self):
+        return map(Domain.get_by_name, self.get_domains())
+
+    @property
     def full_name(self):
         return ("%s %s" % (self.first_name or '', self.last_name or '')).strip()
 
@@ -966,6 +976,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
         couch_user.sync_from_django_user(django_user)
         return couch_user
 
+    def to_be_deleted(self):
+        return self.base_doc.endswith(DELETED_SUFFIX)
+
     def change_username(self, username):
         if username == self.username:
             return
@@ -980,18 +993,17 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
         self.username = username
         self.save()
 
-
     def save(self, **params):
         # test no username conflict
         by_username = self.get_db().view('users/by_username', key=self.username).first()
         if by_username and by_username['id'] != self._id:
             raise self.Inconsistent("CouchUser with username %s already exists" % self.username)
 
-        super(CouchUser, self).save(**params)
-        if not self.base_doc.endswith(DELETED_SUFFIX):
+        if not self.to_be_deleted():
             django_user = self.sync_to_django_user()
             django_user.save()
 
+        super(CouchUser, self).save(**params)
 
     @classmethod
     def django_user_post_save_signal(cls, sender, django_user, created, max_tries=3):
@@ -1001,6 +1013,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
             couch_user = cls.from_django_user(django_user)
             if couch_user:
                 couch_user.sync_from_django_user(django_user)
+
                 try:
                     # avoid triggering cyclical sync
                     super(CouchUser, couch_user).save(**get_safe_write_kwargs())
@@ -1079,6 +1092,21 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         return self
 
+    def save(self, **params):
+        from corehq.apps.users.signals import commcare_user_post_save
+        results = commcare_user_post_save.send_robust(sender='couch_user',
+                                                     couch_user=self)
+        for result in results:
+            # Second argument is None if there was no error
+            if result[1]:
+                notify_exception(
+                    None,
+                    message="Error occured while syncing user %s: %s" %
+                            (self.username, str(result[1]))
+                )
+
+        super(CommCareUser, self).save(**params)
+
     def is_domain_admin(self, domain=None):
         # cloudcare workaround
         return False
@@ -1115,6 +1143,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def filter_flag(self):
         from corehq.apps.reports.models import HQUserType
         return HQUserType.REGISTERED
+
+    @property
+    def project(self):
+        return Domain.get_by_name(self.domain)
 
     @property
     def username_in_report(self):
@@ -1400,6 +1432,58 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def __repr__(self):
         return ("CommCareUser(username={self.username!r})".format(self=self))
 
+    @classmethod
+    def sync_user_cases(cls, commcare_user):
+        from casexml.apps.case.tests.util import CaseBlock
+
+        domain = commcare_user.project
+        if not (domain and domain.call_center_config.enabled):
+            return
+
+        fields = {'name': commcare_user.name,
+                  'email': commcare_user.email,
+                  'language': commcare_user.language or ''} # prevent None
+        # fields comes second to prevent custom user data overriding
+        fields = dict(commcare_user.user_data, **fields)
+
+        found = False
+        try:
+            case = CommCareCase.view('hqcase/by_domain_hq_user_id',
+                                     key=[domain.name, commcare_user._id],
+                                     reduce=False,
+                                     include_docs=True).one()
+            found = bool(case)
+        except NoResultFound:
+            pass
+        except MultipleResultsFound:
+            return
+
+        close = commcare_user.to_be_deleted() or not commcare_user.is_active
+
+        if found:
+            caseblock = CaseBlock(
+                create = False,
+                case_id = case._id,
+                version = V2,
+                owner_id = domain.call_center_config.case_owner_id,
+                case_type = domain.call_center_config.case_type,
+                close = close,
+                update = fields
+            )
+        else:
+            fields['hq_user_id'] = commcare_user._id
+            caseblock = CaseBlock(
+                create = True,
+                case_id = uuid.uuid4().hex,
+                owner_id = domain.call_center_config.case_owner_id,
+                user_id = commcare_user._id,
+                version = V2,
+                case_type = domain.call_center_config.case_type,
+                update = fields
+            )
+
+        casexml = ElementTree.tostring(caseblock.as_xml())
+        submit_case_blocks(casexml, domain, commcare_user.username, commcare_user._id)
 
 class OrgMembershipMixin(DocumentSchema):
     org_memberships = SchemaListProperty(OrgMembership)
@@ -1538,10 +1622,6 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
 
     def get_language_code(self):
         return self.language
-
-    @property
-    def projects(self):
-        return map(Domain.get_by_name, self.get_domains())
 
     def get_teams(self, ids_only=False):
         from corehq.apps.orgs.models import Team

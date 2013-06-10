@@ -137,6 +137,7 @@ DOMAIN_FACETS = [
     "internal.sub_area",
     "internal.using_adm",
     "internal.using_call_center",
+    "internal.platform",
 
     "is_approved",
     "is_public",
