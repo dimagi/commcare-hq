@@ -210,12 +210,20 @@ class RepeatRecord(Document, LockableMixIn):
         return self.repeater.get_payload(self)
 
     def fire(self, max_tries=3, post_fn=None):
+        payload = self.get_payload()
         post_fn = post_fn or simple_post_with_cached_timeout
+        if self.repeater_type == "FormRepeater":
+            form = XFormInstance.get(self.repeat_record.payload_id)
+            headers = {
+                "content-type": "text/xml",
+                "content-length": len(payload),
+                "received_on": form.received_on,
+            }
+            post_fn = post_fn or simple_post_with_cached_timeout(headers=headers)
         if self.try_now():
             # we don't use celery's version of retry because
             # we want to override the success/fail each try
             for i in range(max_tries):
-                payload = self.get_payload()
                 try:
                     resp = post_fn(payload, self.url)
                     if 200 <= resp.status < 300:
