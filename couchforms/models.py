@@ -215,7 +215,11 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin):
         if not xml_payload:
             return SortedDict(sorted(self.form.items()))
 
-        element = ElementTree.XML(xml_payload)
+        try:
+            element = ElementTree.XML(xml_payload)
+        except UnicodeEncodeError:
+            xml_payload = xml_payload.encode('utf-8', errors='replace')
+            element = ElementTree.XML(xml_payload)
 
         for child in element:
             # fix {namespace}tag format forced by ElementTree in certain cases (eg, <reg> instead of <n0:reg>)
