@@ -949,7 +949,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 except ValueError:
                     value = text
             return util.format_datatables_data(text=text, sort_key=value)
-
+        
         def add_case_list_links(owner_id, row):
             """
                 takes a row, and converts certain cells in the row to links that link to the case list page
@@ -1027,7 +1027,16 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 ])
 
         else: # ^ if self.aggregate_by == 'groups'
-            for user in self.combined_users:
+
+            def all_users():
+                from corehq.apps.groups.models import Group
+                ret = [util._report_user_dict(u) for u in util.user_list(self.domain)]
+                for r in ret:
+                    r["group_ids"] = Group.by_user(r["user_id"], False)
+                return ret
+
+            users_to_iterate = self.combined_users if '_all' not in self.group_ids else all_users()
+            for user in users_to_iterate:
                 inactive_cases = int(inactives_by_owner.get(user["user_id"], 0)) + \
                     sum([int(inactives_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
                 total_cases = int(totals_by_owner.get(user["user_id"], 0)) + \
