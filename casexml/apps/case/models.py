@@ -1,33 +1,33 @@
 from __future__ import absolute_import
 from StringIO import StringIO
 import re
+from datetime import datetime
+import logging
+from copy import copy
+import itertools
+
 from django.core.cache import cache
-import simplejson
 from django.conf import settings
 from django.utils.translation import ugettext as _
-from corehq.apps.api.cached_object import CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage
-
+from couchdbkit.ext.django.schema import *
+from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
+from PIL import Image
+from dimagi.utils.django.cached_object import CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml,\
     couchable_property, get_case_xform_ids
-from datetime import datetime
-from couchdbkit.ext.django.schema import *
 from casexml.apps.case import const
 from dimagi.utils.modules import to_function
 from dimagi.utils import parsing
-import logging
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.indicators import ComputedDocumentMixin
 from receiver.util import spoof_submission
 from couchforms.models import XFormInstance
 from casexml.apps.case.sharedmodels import IndexHoldingMixIn, CommCareCaseIndex, CommCareCaseAttachment
-from copy import copy
-import itertools
 from dimagi.utils.couch.database import get_db, SafeSaveDocument
-from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from dimagi.utils.couch import LooselyEqualDocumentSchema
-from PIL import Image
+
 
 """
 Couch models for commcare cases.  
@@ -413,7 +413,9 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
 
     @classmethod
     def fetch_case_image(cls, case_id, attachment_key, filesize_limit=0, width_limit=0, height_limit=0, fixed_size=None):
-
+        """
+        Return (metadata, stream) information of best matching image attachment.
+        """
         do_constrain = False
         size_key = OBJECT_ORIGINAL
 
@@ -441,13 +443,8 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             stream = StringIO(resp.read())
             headers = resp.resp.headers
             cached_image.cache_image(stream, metadata=headers)
-            print "not cached"
-        else:
-            print "is cached!"
-
 
         #now that we got it cached, let's check for size
-
         if do_constrain:
             metas = cached_image.meta_keys
             #find the meta with the appropriate criteria
@@ -459,7 +456,12 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
 
 
     @classmethod
-    def fetch_case_attachment(cls, case_id, attachment_key, filesize_limit=0, fixed_size=None):
+    def fetch_case_attachment(cls, case_id, attachment_key, filesize_limit=0, fixed_size=None, **kwargs):
+        """
+        Return (metadata, stream) information of best matching image attachment.
+        TODO: This should be the primary case_attachment retrieval method, the image one is a silly separation of similar functionality
+        Additional functionality to be abstracted by content_type of underlying attachment
+        """
         size_key = OBJECT_ORIGINAL
         if fixed_size is not None and fixed_size in OBJECT_SIZE_MAP:
             size_key = fixed_size
@@ -476,14 +478,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             stream = StringIO(resp.read())
             headers = resp.resp.headers
             cobject.cache_put(stream, metadata=headers)
-            print "not cached"
-        else:
-            print "is cached!"
         meta, stream = cobject.get()
-
-        if filesize_limit > 0:
-            #check meta filesize
-            pass
 
         return meta, stream
 
@@ -503,9 +498,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
                             if case_update.modified_on_str else datetime.utcnow()
         
         # apply initial updates, referrals and such, if present
-        print "start from_case_update"
         case.update_from_case_update(case_update, xformdoc)
-        print "finish from_case_update"
         return case
     
     def apply_create_block(self, create_action, xformdoc, modified_on, user_id):
@@ -533,7 +526,6 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
     
     def update_from_case_update(self, case_update, xformdoc):
 
-        print "######### update_from_case_update"
         mod_date = parsing.string_to_datetime(case_update.modified_on_str) \
                     if   case_update.modified_on_str else datetime.utcnow()
         
@@ -605,11 +597,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
                                                                       case_update.user_id,
                                                                       xformdoc,
                                                                       case_update.get_attachment_action())
-            print "#### Update has attachments ####"
-            print "\tattachment action to append: %s" % len(self.actions)
             self.actions.append(attachment_action)
-            print "\tattachment action appended: %s" % len(self.actions)
-            #print simplejson.dumps(self.to_json(), indent=4)
             self._apply_action(attachment_action)
 
         # finally override any explicit properties from the update
@@ -647,11 +635,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         stream_dict = {}
         #cache all attachment streams from xform
         for k, v in attachment_action.attachments.items():
-            print "cache attachments..."
-            print k
             if v.is_present:
-                print "attach src: #%s#" % v.attachment_src
-                print "attach frm: #%s#" % v.attachment_from
                 #fetch attachment, update metadata, get the stream
                 attach_data = XFormInstance.get_db().fetch_attachment(attachment_action.xform_id, v.identifier)
                 stream_dict[k] = attach_data
@@ -676,10 +660,8 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             if v.is_present:
                 #fetch attachment from xform
                 attachment_key = v.attachment_key
-                #attach = XFormInstance.get_db().fetch_attachment(attachment_action.xform_id, attachment_key)
                 attach = stream_dict[attachment_key]
                 self.put_attachment(attach, name=attachment_key, content_type=v.server_mime)
-                #print simplejson.dumps(self.to_json(), indent=4)
             else:
                 self.delete_attachment(k)
                 del(update_attachments[k])
@@ -777,7 +759,6 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         return sorted([(key, value) for key, value in self.dynamic_properties().items() if re.search(r'^[a-zA-Z]', key)])
 
     def save(self, **params):
-        print "saving somewhere"
         self.server_modified_on = datetime.utcnow()
         super(CommCareCase, self).save(**params)
         case_post_save.send(CommCareCase, case=self)
@@ -867,4 +848,3 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             }
         ]
 
-import casexml.apps.case.signals

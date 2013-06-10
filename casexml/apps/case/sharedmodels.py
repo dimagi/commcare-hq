@@ -1,10 +1,9 @@
-from StringIO import StringIO
-import os
-from couchdbkit.ext.django.schema import *
+import mimetypes
+from couchdbkit.ext.django.schema import StringProperty, IntegerProperty, DictProperty
+
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
-from PIL import Image
-import mimetypes
+
 
 """
 Shared models live here to avoid cyclical import issues
@@ -77,7 +76,6 @@ class CommCareCaseAttachment(LooselyEqualDocumentSchema, UnicodeMixIn):
     @classmethod
     def from_case_index_update(cls, attachment):
         if attachment.attachment_src:
-            print "guess type: %s" % str(mimetypes.guess_type(attachment.attachment_src))
             guessed = mimetypes.guess_type(attachment.attachment_src)
             if len(guessed) > 0 and guessed[0] is not None:
                 mime_type = guessed[0]
