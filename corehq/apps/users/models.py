@@ -678,6 +678,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
         return self.email
 
     @property
+    def projects(self):
+        return map(Domain.get_by_name, self.get_domains())
+
+    @property
     def full_name(self):
         return ("%s %s" % (self.first_name or '', self.last_name or '')).strip()
 
