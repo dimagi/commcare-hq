@@ -8,16 +8,16 @@ new_reports = (
         field_management.FIDAPerformanceReport,
         # Facility Registrations
         # Facility-Wise Follow Up
-        # Case Report
+        field_management.CaseReport,
     )),
-    ('Call Center Reports', (
+    ('Call Center', (
         # CATI Performance
         # CATI Team Leaders
     )),
-    ('Data Summary Reports', (
+    ('Data Summary', (
         data_summary.PrimaryOutcomeReport,
         data_summary.SecondaryOutcomeReport,
-        data_summary.FADAObservationsReport
+        data_summary.FADAObservationsReport,
     )),
 )
 

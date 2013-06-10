@@ -5,11 +5,20 @@ import time
 
 from django.utils.datastructures import SortedDict
 
+from dimagi.utils.couch.database import get_db
+from dimagi.utils.decorators.memoized import memoized
+
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
+from corehq.apps.reports.standard.inspect import CaseDisplay, CaseListReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
-from dimagi.utils.couch.database import get_db
+from hsph.reports import HSPHSiteDataMixin
+from hsph.fields import AllocatedToFilter
+from corehq.apps.api.es import FullCaseES
+
+def short_date_format(date):
+    return date.strftime('%d-%b')
 
 def datestring_minus_days(datestring, days):
     date = datetime.datetime.strptime(datestring[:10], '%Y-%m-%d')
@@ -162,3 +171,242 @@ class FIDAPerformanceReport(GenericTabularReport, CustomProjectReport,
             rows.append(list_row)
 
         return rows
+
+
+class HSPHCaseDisplay(CaseDisplay):
+
+    @property
+    @memoized
+    def _date_admission(self):
+        return self.parse_date(self.case['date_admission'])
+
+    @property
+    def region(self):
+        try:
+            return self.report.get_region_name(self.case['region_id'])
+        except AttributeError:
+            return ""
+
+    @property
+    def district(self):
+        try:
+            return self.report.get_district_name(
+                self.case['region_id'], self.case['district_id'])
+        except AttributeError:
+            return ""
+
+    @property
+    def site(self):
+        try:
+            return self.report.get_site_name(
+                self.case['region_id'], self.case['district_id'],
+                self.case['site_number'])
+        except AttributeError:
+            return ""
+
+    @property
+    def patient_id(self):
+        return self.case.get('patient_id', '')
+
+    @property
+    def status(self):
+        return "Closed" if self.case['closed'] else "Open"
+
+    @property
+    def mother_name(self):
+        return self.case.get('name_mother', '')
+
+    @property
+    def date_admission(self):
+        return short_date_format(self._date_admission)
+
+    @property
+    def address(self):
+        return self.case.get('house_address', '')
+
+    @property
+    @memoized
+    def allocated_to(self):
+        # this logic is duplicated for elasticsearch in CaseReport.case_filter
+        UNKNOWN = "Unknown"
+        CALL_CENTER = "Call Center"
+        FIELD = "Field"
+
+        if self.case['closed']:
+            if 'closed_by' not in self.case:
+                return UNKNOWN
+
+            if self.case['closed_by'] in ("cati", "cati_tl"):
+                return CALL_CENTER
+            elif self.case['closed_by'] in ("fida", "field_manager"):
+                return FIELD
+            else:
+                return UNKNOWN
+        else:
+            today = datetime.datetime.now()
+            if today <= self._date_admission + datetime.timedelta(days=21):
+                return CALL_CENTER
+            else:
+                return FIELD
+    
+    @property
+    def allocated_start(self):
+        try:
+            delta = datetime.timedelta(
+                    days=8 if self.allocated_to == "Call Center" else 21)
+            return short_date_format(self._date_admission + delta)
+        except AttributeError:
+            return ""
+
+    @property
+    def allocated_end(self):
+        try:
+            delta = datetime.timedelta(
+                    days=20 if self.allocated_to == 'Call Center' else 29)
+            return short_date_format(self._date_admission + delta)
+        except AttributeError:
+            return ""
+
+    @property
+    def outside_allocated_period(self):
+        if self.case['closed_on']:
+            compare_date = self.parse_date(
+                    self.case['closed_on']).replace(tzinfo=None)
+        else:
+            compare_date = datetime.datetime.utcnow().replace(tzinfo=None)
+
+        return 'Yes' if (compare_date - self._date_admission).days > 29 else 'No'
+
+
+class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin,
+                 DatespanMixin):
+    name = 'Case Report'
+    slug = 'case_report'
+    
+    fields = (
+        'corehq.apps.reports.fields.FilterUsersField',
+        'corehq.apps.reports.fields.DatespanField',
+        'hsph.fields.SiteField',
+        'hsph.fields.AllocatedToFilter',
+        'hsph.fields.NameOfFIDAField',
+        'corehq.apps.reports.fields.SelectOpenCloseField',
+    )
+
+    default_case_type = 'birth'
+
+    @property
+    @memoized
+    def case_es(self):
+        return FullCaseES(self.domain)
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(
+            DataTablesColumn("Region"),
+            DataTablesColumn("District"),
+            DataTablesColumn("Site"),
+            DataTablesColumn("Patient ID"),
+            DataTablesColumn("Status"),
+            DataTablesColumn("Mother Name"),
+            DataTablesColumn("Date of Admission"),
+            DataTablesColumn("Address of Patient"),
+            DataTablesColumn("Allocated To"),
+            DataTablesColumn("Allocated Start"),
+            DataTablesColumn("Allocated End"),
+            DataTablesColumn("Outside Allocated Period")
+        )
+        headers.no_sort = True
+        return headers
+
+    @property
+    def case_filter(self):
+        allocated_to = self.request_params.get(AllocatedToFilter.slug, '')
+        region_id = self.request_params.get('hsph_region', '')
+        district_id = self.request_params.get('hsph_district', '')
+        site_num = str(self.request_params.get('hsph_site', ''))
+
+        filters = [{
+            'range': {
+                'opened_on': {
+                    "from": self.datespan.startdate_param_utc,
+                    "to": self.datespan.enddate_param_utc
+                }
+            }
+        }]
+        
+        if site_num:
+            filters.append({'term': {'site_number': site_num.lower()}})
+        if district_id:
+            filters.append({'term': {'district_id': district_id.lower()}})
+        if region_id:
+            filters.append({'term': {'region_id': region_id.lower()}})
+
+        if allocated_to:
+            max_date_admission = (datetime.date.today() -
+                datetime.timedelta(days=21)).strftime("%Y-%m-%d")
+
+            call_center_filter = {
+                'or': [
+                    {'and': [
+                        {'term': {'closed': True}},
+                        {'prefix': {'closed_by': 'cati'}}
+                    ]},
+                    {'and': [
+                        {'term': {'closed': False}},
+                        {'range': {
+                            'date_admission': {
+                                'from': max_date_admission
+                            }
+                        }}
+                    ]}
+                ]
+            }
+
+            if allocated_to == 'cati':
+                filters.append(call_center_filter)
+            else:
+                filters.append({'not': call_center_filter})
+
+        return {'and': filters} if filters else {}
+
+    @property
+    def shared_pagination_GET_params(self):
+        params = super(CaseReport, self).shared_pagination_GET_params
+
+        slugs = [
+            AllocatedToFilter.slug,
+            'hsph_region',
+            'hsph_district',
+            'hsph_site',
+            'startdate',
+            'enddate'
+        ]
+
+        for slug in slugs:
+            params.append({
+                'name': slug,
+                'value': self.request_params.get(slug, '')
+            })
+
+        return params
+
+    @property
+    def rows(self):
+        case_displays = (HSPHCaseDisplay(self, self.get_case(case))
+                         for case in self.es_results['hits'].get('hits', []))
+
+        for disp in case_displays:
+            yield [
+                disp.region,
+                disp.district,
+                disp.site,
+                disp.patient_id,
+                disp.status,
+                disp.case_link,
+                disp.date_admission,
+                disp.address,
+                disp.allocated_to,
+                disp.allocated_start,
+                disp.allocated_end,
+                disp.outside_allocated_period,
+            ]
