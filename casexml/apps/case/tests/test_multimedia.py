@@ -6,15 +6,12 @@ import os
 import hashlib
 
 from django.test import TestCase, RequestFactory
-import ipdb
 import lxml
 from django.core.files.uploadedfile import UploadedFile
 import simplejson
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
-from couchforms.util import post_xform_to_couch
-from casexml.apps.case.signals import process_cases
 from couchforms.models import XFormInstance
 from corehq.apps.receiverwrapper import views as rcv_views
 
