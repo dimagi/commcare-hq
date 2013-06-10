@@ -119,7 +119,7 @@
 {#                    <img src="{% url  %}"#}
 {#                    <img src="{% url api_case_attachment case_id=case.get_id attachment_id=attach_key %}">#}
                     {# todo: this breaks an abstractoin barrier the knowledge of this url #}
-                    <img src="/a/{{ case.domain }}/api/case/attachment/{{ case.get_id }}/{{ attach_key }}">
+                    <img src="/a/{{ case.domain }}/api/case/attachment/{{ case.get_id }}/{{ attach_key }}?img&size=large_square">
 
                 {% endif %}
                 </li>

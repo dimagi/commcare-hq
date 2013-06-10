@@ -5,6 +5,7 @@ from django.core.cache import cache
 import simplejson
 from django.conf import settings
 from django.utils.translation import ugettext as _
+from corehq.apps.api.cached_object import CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage
 
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
@@ -401,6 +402,90 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         else:
             return None
 
+    @classmethod
+    def fetch_case_attachments(cls, case_id, filesize_limit=0, width_limit=0, height_limit=0):
+        """
+        Generator function for retrieving attachments based upon size criteria
+
+        Returns iterator of dict of {'attachment_key': key, 'content_length': len, 'content_type': mimetype_string, 'stream': stream pointer}
+        """
+        pass
+
+    @classmethod
+    def fetch_case_image(cls, case_id, attachment_key, filesize_limit=0, width_limit=0, height_limit=0, fixed_size=None):
+
+        do_constrain = False
+        size_key = OBJECT_ORIGINAL
+
+        if filesize_limit > 0 or width_limit > 0 or height_limit > 0:
+            do_constrain=True
+            constraint_dict = {
+                'width': width_limit,
+                'height': height_limit,
+                'size': filesize_limit
+            }
+
+        if fixed_size is not None:
+            size_key = fixed_size
+            do_constrain=False
+
+        #if size key is None, then one of the limit criteria are set
+        attachment_cache_key = "%(case_id)s_%(attachment)s" % {
+            "case_id": case_id,
+            "attachment": attachment_key
+        }
+
+        cached_image = CachedImage(attachment_cache_key)
+        if not cached_image.is_cached():
+            resp = cls.get_db().fetch_attachment(case_id, attachment_key, stream=True)
+            stream = StringIO(resp.read())
+            headers = resp.resp.headers
+            cached_image.cache_image(stream, metadata=headers)
+            print "not cached"
+        else:
+            print "is cached!"
+
+
+        #now that we got it cached, let's check for size
+
+        if do_constrain:
+            metas = cached_image.meta_keys
+            #find the meta with the appropriate criteria
+            pass
+        else:
+            meta, stream = cached_image.get_size(size_key)
+
+        return meta, stream
+
+
+    @classmethod
+    def fetch_case_attachment(cls, case_id, attachment_key, filesize_limit=0, fixed_size=None):
+        size_key = OBJECT_ORIGINAL
+        if fixed_size is not None and fixed_size in OBJECT_SIZE_MAP:
+            size_key = fixed_size
+
+        #if size key is None, then one of the limit criteria are set
+        attachment_cache_key = "%(case_id)s_%(attachment)s" % {
+            "case_id": case_id,
+            "attachment": attachment_key
+        }
+
+        cobject = CachedObject(attachment_cache_key)
+        if not cobject.is_cached():
+            resp = cls.get_db().fetch_attachment(case_id, attachment_key, stream=True)
+            stream = StringIO(resp.read())
+            headers = resp.resp.headers
+            cobject.cache_put(stream, metadata=headers)
+            print "not cached"
+        else:
+            print "is cached!"
+        meta, stream = cobject.get()
+
+        if filesize_limit > 0:
+            #check meta filesize
+            pass
+
+        return meta, stream
 
     # this is only used by CommTrack SupplyPointCase cases and should go in
     # that class
@@ -579,8 +664,6 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
                     v.attachment_properties = props
 
         self.force_save()
-        print "start apply_attachments"
-        #print simplejson.dumps(self.to_json(), indent=4)
         update_attachments = {}
         for k, v in self.case_attachments.items():
             if v.is_present:
@@ -591,7 +674,6 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             #copy over attachments from form onto case
             update_attachments[k] = v
             if v.is_present:
-                print "\tAttachment %s present: %s" % (k, v.attachment_key)
                 #fetch attachment from xform
                 attachment_key = v.attachment_key
                 #attach = XFormInstance.get_db().fetch_attachment(attachment_action.xform_id, attachment_key)
@@ -599,14 +681,10 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
                 self.put_attachment(attach, name=attachment_key, content_type=v.server_mime)
                 #print simplejson.dumps(self.to_json(), indent=4)
             else:
-                print "deleting attachment"
                 self.delete_attachment(k)
-                print update_attachments
                 del(update_attachments[k])
-                print update_attachments
 
         self.case_attachments = update_attachments
-
 
 
     def apply_close(self, close_action):

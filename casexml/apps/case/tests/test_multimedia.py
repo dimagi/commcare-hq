@@ -1,18 +1,22 @@
+import StringIO
 from datetime import datetime, timedelta
 import time
 import uuid
-from django.test import TestCase
 import os
+import hashlib
+
+from django.test import TestCase, RequestFactory
 import ipdb
 import lxml
+from django.core.files.uploadedfile import UploadedFile
 import simplejson
+
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
 from couchforms.util import post_xform_to_couch
 from casexml.apps.case.signals import process_cases
-from django.core.files.uploadedfile import UploadedFile
 from couchforms.models import XFormInstance
-import hashlib
+from corehq.apps.receiverwrapper import views as rcv_views
 
 TEST_CASE_ID = "EOL9FIAKIQWOFXFOH0QAMWU64"
 CREATE_XFORM_ID = "6RGAZTETE3Z2QC0PE2DKM88MO"
@@ -28,21 +32,15 @@ MEDIA_FILES = {
 
 }
 
+TEST_DOMAIN = "test-domain"
 
-class CaseMultimediaTest(TestCase):
-    """
-    Tests new attachments for cases and case properties
-    Spec: https://bitbucket.org/commcare/commcare/wiki/CaseAttachmentAPI
-    """
-
+class BaseCaseMultimediaTest(TestCase):
     def setUp(self):
+
         for item in CommCareCase.view("case/by_user", include_docs=True, reduce=False).all():
-            print "delete cases!"
             item.delete()
         for item in XFormInstance.view("couchforms/by_xmlns", include_docs=True, reduce=False).all():
-            print "delete xforms!"
             item.delete()
-        print "finish setUp, all deleted"
 
     def _getXFormString(self, filename):
         file_path = os.path.join(os.path.dirname(__file__), "data", "multimedia", filename)
@@ -50,7 +48,7 @@ class CaseMultimediaTest(TestCase):
             xml_data = f.read()
         return xml_data
 
-    def _formatXForm(self, raw_xml, attachment_block, doc_id=None):
+    def _formatXForm(self, doc_id, raw_xml, attachment_block):
         final_xml = raw_xml % ({
                                    "attachments": attachment_block,
                                    "time_start": (
@@ -59,7 +57,7 @@ class CaseMultimediaTest(TestCase):
                                    "time_end": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
                                    "date_modified": datetime.utcnow().strftime(
                                        '%Y-%m-%dT%H:%M:%SZ'),
-                                   "doc_id": uuid.uuid4().hex if doc_id is None else doc_id
+                                   "doc_id": doc_id
                                })
         return final_xml
 
@@ -84,8 +82,29 @@ class CaseMultimediaTest(TestCase):
         with open(MEDIA_FILES[key], 'rb') as attach:
             return hashlib.md5(attach.read()).hexdigest()
 
-    def _submit_and_verify(self, xml_data, dict_attachments):
-        form = post_xform_to_couch(xml_data, attachments=dict_attachments)
+
+    def _submit_rf(self, xml_data, dict_attachments):
+        """
+        RequestFactory submitter
+        """
+        rf = RequestFactory()
+        f = StringIO.StringIO(xml_data.encode('utf-8'))
+        f.name = 'form.xml'
+        data_dict = {'xml_submission_file': f}
+        for k,v in dict_attachments.items():
+            data_dict[k] = v
+
+        req = rf.post('/a/%s/receiver' % TEST_DOMAIN,
+                      data=data_dict) #, content_type='multipart/form-data')
+        return rcv_views.post(req, 'tester')
+
+    def _submit_and_verify(self, doc_id, xml_data, dict_attachments):
+    # form = post_xform_to_couch(xml_data, attachments=dict_attachments)
+        self._submit_rf(xml_data, dict_attachments)
+
+        time.sleep(2)
+        form = XFormInstance.get(doc_id)
+
         self.assertEqual(len(dict_attachments), len(form.attachments))
         for k, vstream in dict_attachments.items():
             fileback = form.fetch_attachment(k)
@@ -93,24 +112,43 @@ class CaseMultimediaTest(TestCase):
             orig_attachment = vstream
             orig_attachment.seek(0)
             self.assertEqual(hashlib.md5(fileback).hexdigest(), hashlib.md5(orig_attachment.read()).hexdigest())
-        process_cases(sender="testharness", xform=form)
+        #process_cases(sender="testharness", xform=form) #use with post_xform_to_couch
         return form
 
+    def _doCreateCaseWithMultimedia(self, attachments=['fruity']):
+        xml_data = self._getXFormString('multimedia_create.xml')
+        attachment_block, dict_attachments = self._prepAttachments(attachments)
+        final_xml = self._formatXForm(CREATE_XFORM_ID, xml_data, attachment_block)
+        form = self._submit_and_verify(CREATE_XFORM_ID, final_xml, dict_attachments)
+
+    def _doSubmitUpdateWithMultimedia(self, new_attachments=['commcare_logo', 'dimagi_logo'],
+                                      removes=['fruity']):
+        attachment_block, dict_attachments = self._prepAttachments(new_attachments, removes=removes)
+
+        raw_xform = self._getXFormString('multimedia_update.xml')
+        doc_id = uuid.uuid4().hex
+        final_xform = self._formatXForm(doc_id, raw_xform, attachment_block)
+        form = self._submit_and_verify(doc_id, final_xform, dict_attachments)
+
+
+
+class CaseMultimediaTest(BaseCaseMultimediaTest):
+    """
+    Tests new attachments for cases and case properties
+    Spec: https://bitbucket.org/commcare/commcare/wiki/CaseAttachmentAPI
+    """
     def testAttachInCreate(self):
         print "testAttachInCreate"
         self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
 
-        xml_data = self._getXFormString('multimedia_create.xml')
-
         single_attach = 'fruity'
-        attachment_block, dict_attachments = self._prepAttachments([single_attach])
-        final_xml = self._formatXForm(xml_data, attachment_block, doc_id=CREATE_XFORM_ID)
-        print final_xml
+        self._doCreateCaseWithMultimedia(attachments=[single_attach])
 
-        form = self._submit_and_verify(final_xml, dict_attachments)
         case = CommCareCase.get(TEST_CASE_ID)
+        print simplejson.dumps(case.to_json(), indent=4)
         self.assertEqual(1, len(case.case_attachments))
         self.assertTrue(single_attach in case.case_attachments)
+        #ipdb.set_trace()
         self.assertEqual(1, len(filter(lambda x: x['action_type'] == 'attachment', case.actions)))
         self.assertEqual(self._calc_file_hash(single_attach), hashlib.md5(case.get_attachment(single_attach)).hexdigest())
 
@@ -118,14 +156,7 @@ class CaseMultimediaTest(TestCase):
         self.testAttachInCreate()
         new_attachments = []
         removes = ['fruity']
-        attachment_block, dict_attachments = self._prepAttachments(new_attachments, removes=removes)
-
-        raw_xform = self._getXFormString('multimedia_update.xml')
-        final_xform = self._formatXForm(raw_xform, attachment_block)
-        print "testAttachRemoveSingle"
-        print final_xform
-
-        form = self._submit_and_verify(final_xform, {})
+        self._doSubmitUpdateWithMultimedia(new_attachments=new_attachments, removes=removes)
         case = CommCareCase.get(TEST_CASE_ID)
 
         #1 plus the 2 we had
@@ -138,16 +169,11 @@ class CaseMultimediaTest(TestCase):
 
     def testAttachRemoveMultiple(self):
         self.testAttachInCreate()
+
         new_attachments = ['commcare_logo', 'dimagi_logo']
         removes = ['fruity']
-        attachment_block, dict_attachments = self._prepAttachments(new_attachments, removes=removes)
+        self._doSubmitUpdateWithMultimedia(new_attachments=new_attachments, removes=removes)
 
-        raw_xform = self._getXFormString('multimedia_update.xml')
-        final_xform = self._formatXForm(raw_xform, attachment_block)
-        print "testAttachRemoveMultiple"
-        print final_xform
-
-        form = self._submit_and_verify(final_xform, dict_attachments)
         case = CommCareCase.get(TEST_CASE_ID)
         #1 plus the 2 we had
         self.assertEqual(2, len(case.case_attachments))
@@ -189,20 +215,12 @@ class CaseMultimediaTest(TestCase):
         self.assertEqual(0, len(restore_attachments))
         print output
 
-
-    def testAttachInUpdate(self):
+    def testAttachInUpdate(self, new_attachments=['commcare_logo', 'dimagi_logo']):
         self.testAttachInCreate()
-        new_attachments = ['commcare_logo', 'dimagi_logo']
-        attachment_block, dict_attachments = self._prepAttachments(new_attachments)
+        removes = []
+        self._doSubmitUpdateWithMultimedia(new_attachments=new_attachments, removes=removes)
 
-        xml_data = self._getXFormString('multimedia_update.xml')
-        final_xform = self._formatXForm(xml_data, attachment_block)
-        print "testAttachInUpdate"
-        print final_xform
-        form = self._submit_and_verify(final_xform, dict_attachments)
         case = CommCareCase.get(TEST_CASE_ID)
-
-
         #1 plus the 2 we had
         self.assertEqual(len(new_attachments)+1, len(case.case_attachments))
         attach_actions = filter(lambda x: x['action_type'] == 'attachment', case.actions)
@@ -213,4 +231,16 @@ class CaseMultimediaTest(TestCase):
         for attach_name in new_attachments:
             self.assertTrue(attach_name in case.case_attachments)
             self.assertEqual(self._calc_file_hash(attach_name), hashlib.md5(case.get_attachment(attach_name)).hexdigest())
+
+
+    def testMultiSizeImages(self):
+        self.testAttachInUpdate(new_attachments=['dimagi_logo'])
+        #dimagi_logo = 2550x1200
+        #filesize: 484.9 kB (484,915 bytes)
+
+        case = CommCareCase.get(TEST_CASE_ID)
+
+
+
+
 
