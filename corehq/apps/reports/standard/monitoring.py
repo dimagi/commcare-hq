@@ -950,6 +950,20 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                     value = text
             return util.format_datatables_data(text=text, sort_key=value)
 
+        def submit_history_link(owner_id, val, type='select_mw'):
+            """
+                takes a row, and converts certain cells in the row to links that link to the submit history report
+            """
+            fs_url = reverse('project_report_dispatcher', args=(self.domain, 'submit_history'))
+            start_date, end_date = dates_for_linked_reports()
+            url_args = {
+                type: owner_id,
+                "startdate": start_date,
+                "enddate": end_date,
+            }
+
+            return numcell('<a href="%s?%s" target="_blank">%s</a>' % (fs_url, urlencode(url_args, True), val), val)
+
         def add_case_list_links(owner_id, row):
             """
                 takes a row, and converts certain cells in the row to links that link to the case list page
@@ -1014,7 +1028,8 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
 
                 rows.append([
                     group_cell(group_id, group_name),
-                    numcell(sum([int(submissions_by_user.get(user["user_id"], 0)) for user in users])),
+                    submit_history_link(group_id,
+                            sum([int(submissions_by_user.get(user["user_id"], 0)) for user in users]), type="group"),
                     numcell(sum([int(avg_submissions_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
                     "%s / %s" % (int(active_users_by_group.get(group, 0)), len(self.users_by_group.get(group, []))),
                     numcell(sum([int(creations_by_user.get(user["user_id"], 0)) for user in users])),
@@ -1027,7 +1042,16 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 ])
 
         else: # ^ if self.aggregate_by == 'groups'
-            for user in self.combined_users:
+
+            def all_users():
+                from corehq.apps.groups.models import Group
+                ret = [util._report_user_dict(u) for u in util.user_list(self.domain)]
+                for r in ret:
+                    r["group_ids"] = Group.by_user(r["user_id"], False)
+                return ret
+
+            users_to_iterate = self.combined_users if '_all' not in self.group_ids else all_users()
+            for user in users_to_iterate:
                 inactive_cases = int(inactives_by_owner.get(user["user_id"], 0)) + \
                     sum([int(inactives_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
                 total_cases = int(totals_by_owner.get(user["user_id"], 0)) + \
@@ -1035,7 +1059,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
 
                 rows.append(add_case_list_links(user['user_id'], [
                     user["username_in_report"],
-                    numcell(submissions_by_user.get(user["user_id"], 0)),
+                    submit_history_link(user['user_id'], submissions_by_user.get(user["user_id"], 0)),
                     numcell(int(avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
                     last_form_by_user.get(user["user_id"]) or NO_FORMS_TEXT,
                     int(creations_by_user.get(user["user_id"],0)),
