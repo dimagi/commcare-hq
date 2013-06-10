@@ -1,12 +1,11 @@
 from django.core.servers.basehttp import FileWrapper
 from django.http import HttpResponse, Http404
-from django.utils.decorators import method_decorator, classonlymethod
+from django.utils.decorators import method_decorator
 from django.views.generic import View
-import ipdb
-from corehq.apps.api.cached_object import IMAGE_SIZE_ORDERING
+from dimagi.utils.django.cached_object import IMAGE_SIZE_ORDERING
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.decorators import login_and_domain_required
-from django.core import cache
+
 
 class CachedObjectAPI(View):
     @method_decorator(login_and_domain_required)
@@ -68,9 +67,6 @@ class CaseAttachmentAPI(View):
                 #image workflow
 
                 attachment_meta, attachment_stream = CommCareCase.fetch_case_image(case_id, attachment_key, filesize_limit=size, width_limit=max_width, height_limit=max_height, fixed_size=size)
-
-
-
         else:
             #default stream
             attachment_meta, attachment_stream = CommCareCase.fetch_case_attachment(case_id, attachment_key)#, filesize_limit=max_size, width_limit=max_width, height_limit=max_height)
