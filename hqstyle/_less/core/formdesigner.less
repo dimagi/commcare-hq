@@ -97,3 +97,47 @@
 #fd-props-content {
   margin: 0 @gridGutterWidth;
 }
+
+.well-vellum {
+  margin: 0 0 @gridGutterWidth;
+  background-color: desaturate(lighten(@blueLight, 50), 40);
+}
+
+#formdesigner #fd-props-content fieldset:not(.ui-widget) {
+  padding-top: @gridGutterWidth !important;
+}
+
+#formdesigner #fd-lang-disp-div.control-group {
+  margin-bottom: 0;
+  padding: @gridGutterWidth/4 0;
+}
+
+.fd-mm-preview-container {
+  text-align: center;
+  img {
+    padding: .5em;
+    background-color: @white;
+    border: 1px solid @grayLighter;
+    margin-bottom: @gridGutterWidth/2;
+  }
+}
+.fd-mm-preview-container,
+.fd-mm-upload-container {
+  .btn { text-transform: capitalize; }
+}
+
+.fd-mm-no-ref {
+  color: @grayLight;
+  background-color: @white;
+  border: 1px solid @grayLighter;
+  padding: @gridGutterWidth/2;
+
+  i {
+    display: block;
+    font-size: @baseFontSize*4;
+  }
+}
+
+#formdesigner .itext-language-section .control-label {
+  text-transform: capitalize;
+}
