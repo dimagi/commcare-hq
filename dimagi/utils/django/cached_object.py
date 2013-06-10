@@ -94,14 +94,11 @@ class CachedObjectMeta(dict):
         """
 
         file_obj.seek(0, os.SEEK_END)
-        print "make meta object"
-        print metadata
         content_type = None
         for ctype_key in ['content_type', 'Content-Type']:
             content_type = metadata.get(ctype_key, None)
             if content_type is not None:
                 break
-            print "not breaking"
         if content_type is None:
             content_type = 'application/octet-stream'
 
@@ -146,8 +143,6 @@ class CachedImageMeta(CachedObjectMeta):
         content_length = image_stream.tell()
         image_stream.seek(0)
 
-        print "make meta image"
-        print metadata
         content_type = metadata.get('content_type', None)
         if content_type is None:
             file_format = image_obj.format
@@ -220,8 +215,6 @@ class CachedObject(object):
 
     def fetch_meta(self, key):
         meta = self.rcache.get(self.meta_key(key))
-        print "fetch meta %s" % key
-        print meta
         if meta is not None:
             return simplejson.loads(meta)
         else:
