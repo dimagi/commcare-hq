@@ -513,9 +513,9 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         return 'a'
 
     @classmethod
-    def get_all(cls):
+    def get_all(cls, include_docs=True):
         return Domain.view("domain/not_snapshots",
-                            include_docs=True).all()
+                            include_docs=include_docs).all()
 
     def case_sharing_included(self):
         return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)
