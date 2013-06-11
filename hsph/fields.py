@@ -34,7 +34,7 @@ class SiteField(ReportField):
             if district not in facs[region]["districts"]:
                 facs[region]["districts"][district] = dict(name=fix.fields.get("district_name"), sites=dict())
             if site not in facs[region]["districts"][district]["sites"]:
-                facs[region]["districts"][district]["sites"][site] = dict(name=fix.fields.get("site_name"))
+                facs[region]["districts"][district]["sites"][str(site)] = dict(name=fix.fields.get("site_name"))
         return facs
 
 
