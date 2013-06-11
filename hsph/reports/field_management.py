@@ -2,6 +2,7 @@ from collections import defaultdict
 import datetime
 import restkit.errors
 import time
+import numbers
 
 from django.utils.datastructures import SortedDict
 
@@ -20,6 +21,12 @@ from corehq.apps.reports.standard.inspect import CaseDisplay, CaseListReport
 from hsph.reports import HSPHSiteDataMixin
 from hsph.fields import AllocatedToFilter, IHForCHFField
 from corehq.apps.api.es import FullCaseES
+
+def numeric_cell(val):
+    if isinstance(val, numbers.Number):
+        return util.format_datatables_data(text=val, sort_key=val)
+    else:
+        return val
 
 def short_date_format(date):
     return date.strftime('%d-%b')
@@ -171,7 +178,7 @@ class FIDAPerformanceReport(GenericTabularReport, CustomProjectReport,
                 val = row.get(k, v)
                 if val is None:
                     val = '---'
-                list_row.append(val)
+                list_row.append(numeric_cell(val))
 
             rows.append(list_row)
 
@@ -225,8 +232,6 @@ class FacilityRegistrationsReport(GenericTabularReport, CustomProjectReport,
 
         rows = []
 
-        def numeric_cell(val):
-            return util.format_datatables_data(text=val, sort_key=val)
 
 
         for user in self.users:

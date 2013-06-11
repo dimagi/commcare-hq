@@ -1,11 +1,19 @@
 from corehq.apps.reports.standard import DatespanMixin, ProjectReportParametersMixin, CustomProjectReport
-from corehq.apps.reports.datatables import DataTablesColumn, DataTablesColumnGroup, DataTablesHeader, DTSortType
+from corehq.apps.reports.datatables import DataTablesColumn, NumericColumn, DataTablesColumnGroup, DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from dimagi.utils.couch.database import get_db
 from hsph.fields import IHForCHFField, SelectReferredInStatusField
 from hsph.reports import HSPHSiteDataMixin
 
 from collections import defaultdict
+import numbers
+from corehq.apps.reports import util
+
+def numeric_cell(val):
+    if isinstance(val, numbers.Number):
+        return util.format_datatables_data(text=val, sort_key=val)
+    else:
+        return val
 
 class DataSummaryReport(CustomProjectReport, ProjectReportParametersMixin,
                         DatespanMixin, HSPHSiteDataMixin):
@@ -26,10 +34,10 @@ class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport):
     @property
     def headers(self):
 
-        maternal_deaths = DataTablesColumn("Maternal Deaths", sort_type=DTSortType.NUMERIC)
-        maternal_near_miss = DataTablesColumn("Maternal Near Miss", sort_type=DTSortType.NUMERIC)
-        still_births = DataTablesColumn("Still Births", sort_type=DTSortType.NUMERIC)
-        neonatal_mortality = DataTablesColumn("Neonatal Mortality", sort_type=DTSortType.NUMERIC)
+        maternal_deaths = NumericColumn("Maternal Deaths")
+        maternal_near_miss = NumericColumn("Maternal Near Miss")
+        still_births = NumericColumn("Still Births")
+        neonatal_mortality = NumericColumn("Neonatal Mortality")
 
         outcomes_on_discharge = DataTablesColumnGroup("Outcomes on Discharge",
             maternal_deaths,
@@ -55,14 +63,14 @@ class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport):
             DataTablesColumn("Region"),
             DataTablesColumn("District"),
             DataTablesColumn("Site"),
-            DataTablesColumn("Birth Events"),
-            DataTablesColumn("Referred In Births"),
+            NumericColumn("Birth Events"),
+            NumericColumn("Referred In Births"),
             outcomes_on_discharge,
             outcomes_on_7days,
             positive_outcomes,
-            DataTablesColumn("Primary Outcome Yes"),
-            DataTablesColumn("Primary Outcome No"),
-            DataTablesColumn("Lost to Follow Up")
+            NumericColumn("Primary Outcome Yes"),
+            NumericColumn("Primary Outcome No"),
+            NumericColumn("Lost to Follow Up")
         )
 
     @property
@@ -108,7 +116,7 @@ class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport):
 
             for item in data:
                 row = list(self.get_site_table_values(key))
-                row.extend(item.get(f, 0) for f in fields)
+                row.extend(numeric_cell(item.get(f, 0)) for f in fields)
 
                 rows.append(row)
         return rows
