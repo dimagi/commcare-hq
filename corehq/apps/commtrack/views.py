@@ -232,9 +232,6 @@ def api_query_supply_point(request, domain):
     id = request.GET.get('id')
     query = request.GET.get('name', '')
     
-    # TODO support paging
-    page = request.GET.get('page')
-
     def loc_to_payload(loc):
         return {'id': loc._id, 'name': loc.name}
 

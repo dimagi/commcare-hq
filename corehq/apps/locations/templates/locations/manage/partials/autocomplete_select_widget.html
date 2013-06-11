@@ -16,8 +16,6 @@ $("#supply-point").select2({
         data: function (term, page) {
             return {
                 name: term,
-                page: page,
-                page_limit: 25, // what does this do?
             };
         },
         results: function (data, page) {
