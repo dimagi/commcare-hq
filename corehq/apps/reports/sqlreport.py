@@ -152,9 +152,10 @@ class AggregateColumn(Column):
         return self.view.get_value(row) if row else None
 
 
-class SqlTabularReport(GenericTabularReport, CustomProjectReport, ProjectReportParametersMixin):
+class SqlTabularReport(GenericTabularReport):
     exportable = True
     no_value = '--'
+    table_name = None
 
     @property
     def columns(self):
@@ -194,7 +195,7 @@ class SqlTabularReport(GenericTabularReport, CustomProjectReport, ProjectReportP
             group_by = ['region', 'sub_region']
             keys = [['region1', 'sub1'], ['region1', 'sub2'] ... ]
         """
-        raise NotImplementedError()
+        return None
 
     @property
     def fields(self):
