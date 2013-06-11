@@ -4,7 +4,28 @@
 
 {% block title %}{% trans "Reminders" %}{% endblock %}
 
+{% block js-inline %}
+    <script>
+        $(function (){
+            var unsaved = false;
+            $(":input[type='submit'].btn-primary").click(function (){
+                unsaved = false;
+            });
+            $(":input").not(":input[type='submit']").change(function(){ 
+                unsaved = true;
+            });         
+            function unloadPage(){ 
+                if(unsaved){
+                    return "{% trans 'You have unsaved changes.' %}";
+                }
+            }           
+            window.onbeforeunload = unloadPage;                    
+        });
+    </script>
+{% endblock%}
+
 {% block head %}
+    
     {{ block.super }}
     <style>
         #scheduled-reminders-container {
