@@ -59,10 +59,8 @@ class StockReportParser(object):
         if isinstance(u, CommCareUser):
             linked_loc_id = u.dynamic_properties().get('commtrack_location')
             if linked_loc_id:
-                self.location = Location.get(linked_loc_id).site_code
+                self.location = get_supply_point(self.domain.name, loc=Location.get(linked_loc_id))['case']
 
-        # get user linked to verified_contact
-        # determine if user is linked to a single supply point for stock reporting purposes
         self.C = domain.commtrack_settings
 
     # TODO sms parsing could really use unit tests
