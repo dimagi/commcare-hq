@@ -7,7 +7,7 @@ from hsph.reports import HSPHSiteDataMixin
     
 from collections import defaultdict
 from django.utils.translation import ugettext as _
-from datetime import date, timedelta, time
+from datetime import date, timedelta
 
 class DataSummaryReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
     """
@@ -325,8 +325,9 @@ class FacilityWiseFollowUpRepoert(GenericTabularReport, DataSummaryReport,
     slug = "hsph_facility_wise_follow_up"
     fields = ['corehq.apps.reports.fields.DatespanField',
                'corehq.apps.reports.fields.GroupField',
-              'hsph.fields.NameOfFIDAField']
-              
+              'hsph.fields.NameOfFIDAField',
+              'hsph.fields.SiteField']
+
     show_all_rows_option = True
 
     def _parse_date(self, date_str):
@@ -357,23 +358,23 @@ class FacilityWiseFollowUpRepoert(GenericTabularReport, DataSummaryReport,
         startdate = self.datespan.startdate_param_utc[:10]
         enddate = self.datespan.enddate_param_utc[:10]
 
-        site_keys = get_db().view('hsph/facility_wise_follow_up',
+        all_keys = get_db().view('hsph/facility_wise_follow_up',
                     reduce=True,
-                    group=True, group_level=5)
+                    group=True, group_level=4)
 
         rpt_keys = []
         key_start = []
-
-        if self.individual:
-            for entry in site_keys:
-                if entry['key'][-1] == self.individual:
-                    rpt_keys.append(entry)
-        elif self.user_ids:
-            for entry in site_keys:
-                if entry['key'][-1] in self.user_ids:
-                    rpt_keys.append(entry)
-        else:
-            rpt_keys = site_keys
+        report_sites = self.generate_keys()
+        for entry in all_keys:
+            if entry['key'][0:3] in report_sites:
+                if self.individual:
+                    if entry['key'][-1] == self.individual:
+                        rpt_keys.append(entry)
+                elif self.user_ids:
+                    if entry['key'][-1] in self.user_ids:
+                        rpt_keys.append(entry)
+                else:
+                    rpt_keys = all_keys
 
         def get_view_results(case_type, start_dte, end_dte, reduce=True):
             my_start_key=key_start + [case_type] + [start_dte]
@@ -389,21 +390,15 @@ class FacilityWiseFollowUpRepoert(GenericTabularReport, DataSummaryReport,
                 return sum([ item['value'] for item in data])
             return data
 
-
         rows = []
         today = date.today()
-        today_str = today.strftime('%Y-%m-%d')
         for item in  rpt_keys:
             key_start = item['key']
-            region_id, district_id, site_id, site_number, user_id = item['key']
+            region_id, district_id, site_number, user_id = item['key']
             region_name = self.get_region_name(region_id)
             district_name = self.get_district_name(region_id, district_id)
             
-            if site_number.isdigit() and int(site_number) > 9:
-                site_name = self.get_site_name(region_id, district_id, 
-                int(site_number))
-            else:
-                site_name = self.get_site_name(region_id, district_id, 
+            site_name = self.get_site_name(region_id, district_id,
                 site_number)
 
             fida = self.usernames[user_id]
