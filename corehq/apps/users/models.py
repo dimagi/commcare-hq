@@ -787,7 +787,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
         return CouchUser.view("users/by_username", include_docs=True)
 
     @classmethod
-    def by_domain(cls, domain, is_active=True, reduce=False, limit=None, skip=0):
+    def by_domain(cls, domain, is_active=True, reduce=False, limit=None, skip=0, strict=False):
         flag = "active" if is_active else "inactive"
         if cls.__name__ == "CouchUser":
             key = [flag, domain]
@@ -806,7 +806,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
             reduce=reduce,
             startkey=key,
             endkey=key + [{}],
-            stale=settings.COUCH_STALE_QUERY,
+            stale=None if strict else settings.COUCH_STALE_QUERY,
             **extra_args
         ).all()
 
