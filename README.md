@@ -237,7 +237,7 @@ and load CommCare binaries from the Dimagi build server.
  [builds]: https://github.com/dimagi/core-hq/blob/master/corehq/apps/builds/README.md
 
 Running Tests
-=============
+-------------
 
 To run the standard tests for CommCare HQ, simply run
 
