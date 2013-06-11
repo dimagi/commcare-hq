@@ -5,6 +5,8 @@ from dimagi.utils.couch.database import get_db
 from hsph.fields import IHForCHFField, SelectReferredInStatusField
 from hsph.reports import HSPHSiteDataMixin
 
+from collections import defaultdict
+
 class DataSummaryReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
     """
         Base class for this section
@@ -22,11 +24,6 @@ class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport, HSPHSiteData
 
     @property
     def headers(self):
-        region = DataTablesColumn("Region")
-        district = DataTablesColumn("District")
-        site = DataTablesColumn("Site")
-        num_births = DataTablesColumn("No. Birth Events Recorded")
-        num_referred_in_births = DataTablesColumn("No. Referred In Births")
 
         maternal_deaths = DataTablesColumn("Maternal Deaths", sort_type=DTSortType.NUMERIC)
         maternal_near_miss = DataTablesColumn("Maternal Near Miss", sort_type=DTSortType.NUMERIC)
@@ -35,12 +32,11 @@ class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport, HSPHSiteData
 
         outcomes_on_discharge = DataTablesColumnGroup("Outcomes on Discharge",
             maternal_deaths,
-            maternal_near_miss,
             still_births,
             neonatal_mortality)
         outcomes_on_discharge.css_span = 2
 
-        outcomes_on_7days = DataTablesColumnGroup("Outcomes on 7 Days",
+        outcomes_on_7days = DataTablesColumnGroup("Outcomes at 7 Days",
             maternal_deaths,
             maternal_near_miss,
             still_births,
@@ -54,78 +50,65 @@ class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport, HSPHSiteData
             neonatal_mortality)
         positive_outcomes.css_span = 2
 
-        primary_outcome = DataTablesColumn("Primary Outcome Yes")
-        negative_outcome = DataTablesColumn("Primary Outcome No")
-        lost = DataTablesColumn("Lost to Followup")
-
-        return DataTablesHeader(region,
-            district,
-            site,
-            num_births,
-            num_referred_in_births,
+        return DataTablesHeader(
+            DataTablesColumn("Region"),
+            DataTablesColumn("District"),
+            DataTablesColumn("Site"),
+            DataTablesColumn("Birth Events"),
+            DataTablesColumn("Referred In Births"),
             outcomes_on_discharge,
             outcomes_on_7days,
             positive_outcomes,
-            primary_outcome,
-            negative_outcome,
-            lost)
+            DataTablesColumn("Primary Outcome Yes"),
+            DataTablesColumn("Primary Outcome No"),
+            DataTablesColumn("Lost to Follow Up")
+        )
 
     @property
     def rows(self):
         rows = []
         if not self.selected_site_map:
             self._selected_site_map = self.site_map
+        
+        site_keys = self.generate_keys()
 
-        if self.request_params.get(SelectReferredInStatusField.slug) == 'referred':
-            keys = self.generate_keys(["site referred_in"])
-        else:
-            keys = self.generate_keys(["site"])
+        referred = self.request_params.get(SelectReferredInStatusField.slug)
+        prefix = ['referred_in'] if referred else []
+        startdate = self.datespan.startdate_param_utc[:10]
+        enddate = self.datespan.enddate_param_utc[:10]
 
-        for key in keys:
-            data = get_db().view('hsph/data_summary',
+        fields = [
+            'birthEvents',
+            'referredInBirths',
+            'maternalDeaths',
+            'stillBirths',
+            'neonatalMortality',
+            'maternalDeaths7Days',
+            'maternalNearMisses7Days',
+            'stillBirths7Days',
+            'neonatalMortalityEvents7Days',
+            'totalMaternalDeaths',
+            'totalMaternalNearMisses',
+            'totalStillBirths',
+            'totalNeonatalMortalityEvents',
+            'positiveOutcome',
+            'negativeOutcome',
+            'lostToFollowUp'
+        ]
+
+        for key in site_keys:
+            wtf = key
+            wtf[2] = str(wtf[2])
+
+            data = get_db().view('hsph/data_summary', 
+                startkey=[self.domain] + prefix + ['region'] + wtf + [startdate], 
+                endkey=[self.domain] + prefix + ['region'] + wtf + [enddate],
                 reduce=True,
-                startkey=key+[self.datespan.startdate_param_utc],
-                endkey=key+[self.datespan.enddate_param_utc]
-            ).all()
+                wrapper=lambda r: r['value'])
 
             for item in data:
-
-                item = item['value']
-                region, district, site = self.get_site_table_values(key[1:4])
-                birth_events = item['totalBirthRegistrationEvents']
-                referred_in_birth_events = item['totalReferredInBirths']
-                row = [region,
-                        district,
-                        site,
-                        birth_events,
-                        referred_in_birth_events]
-
-                discharge_stats = item['atDischarge']
-                on7days_stats = item['on7Days']
-                discharge = []
-                seven_days = []
-                total = []
-
-                stat_keys = ['maternalDeaths', 'maternalNearMisses', 'stillBirthEvents', 'neonatalMortalityEvents']
-                for stat in stat_keys:
-                    discharge.append(self.table_cell(discharge_stats[stat],
-                                                     '<span class="label">%d</span>' % discharge_stats[stat]))
-                    seven_days.append(self.table_cell(on7days_stats[stat],
-                                                      '<span class="label label-info">%d</span>' % on7days_stats[stat]))
-                    total.append(self.table_cell(item[stat],
-                                                 '<span class="label label-inverse">%d</span>' % item[stat]))
-
-                row.extend(discharge)
-                row.extend(seven_days)
-                row.extend(total)
-
-                negative_outcomes = item['totalBirthRegistrationEvents'] - \
-                                    item['positiveOutcomeEvents'] - \
-                                    item['lostToFollowUp']
-
-                row.extend([item['positiveOutcomeEvents'],
-                            negative_outcomes,
-                            item['lostToFollowUp']])
+                row = list(self.get_site_table_values(key))
+                row.extend(item.get(f, 0) for f in fields)
 
                 rows.append(row)
         return rows
@@ -141,53 +124,59 @@ class SecondaryOutcomeReport(DataSummaryReport, HSPHSiteDataMixin):
 
     @property
     def report_context(self):
-
         site_map = self.selected_site_map or self.site_map
-        facilities = IHForCHFField.get_selected_facilities(site_map)
+        facilities = IHForCHFField.get_selected_facilities(
+                site_map, domain=self.domain)
 
         return dict(
             ihf_data=self._get_data(facilities['ihf']),
             chf_data=self._get_data(facilities['chf'])
         )
 
-    def _get_data(self, facilities):
-        fields = [
-            'totalBirthRegistrationEvents',
-            'totalBirths',
-            'totalBirthEvents',
-            'followedUp',
-            'lostToFollowUp',
-            'maternalDeaths',
-            'maternalNearMisses',
-            'stillBirthEvents',
-            'neonatalMortalityEvents',
-            'positiveOutcomeEvents',
-            'combinedMortalityOutcomes'
-        ]
+    def _get_data(self, site_ids):
+        startdate = self.datespan.startdate_param_utc[:10]
+        enddate = self.datespan.enddate_param_utc[:10]
 
-        data = dict([(f, 0) for f in fields])
+        def per(field, denom_field, denom_multiplier):
+            def calculate(data):
+                denom = data.get(denom_field, 0)
+                if denom:
+                    return denom_multiplier * data.get(field, 0) / float(denom)
+                else:
+                    return '---'
+            return calculate
+
+        extra_fields = {
+            'maternalDeathsPer100000LiveBirths': per('totalMaternalDeaths', 'liveBirthsSum', 100000),
+            'maternalNearMissesPer1000LiveBirths': per('totalMaternalNearMisses', 'liveBirthsSum', 1000),
+            'referredInBirthsPer1000LiveBirths': per('referredInBirths', 'liveBirthsSum', 1000),
+            'cSectionsPer1000LiveBirths': per('cSections', 'liveBirthsSum', 1000),
+            'stillBirthsPer1000LiveBirths': per('totalStillBirthsSum', 'liveBirthsSum', 1000),
+            'neonatalMortalityEventsPer1000LiveBirths': per('neonatalMortalityEvents7DaysSum', 'liveBirthsSum', 1000),
+            'referredOutPer1000LiveBirths': per('referredOut', 'liveBirthsSum', 1000),
+        }
+
+        data = defaultdict(int)
         db = get_db()
 
-        for facility in facilities:
-            key = ["site_id", facility]
-
+        for site_id in site_ids:
             result = db.view('hsph/data_summary',
                 reduce=True,
-                startkey=key + [self.datespan.startdate_param_utc],
-                endkey=key + [self.datespan.enddate_param_utc]
+                startkey=[self.domain, "site", site_id, startdate],
+                endkey=[self.domain, "site", site_id, enddate],
+                wrapper=lambda r: r['value']
             ).first()
 
-            if not result:
-                continue
+            if result:
+                for field, value in result.items():
+                    data[field] += value
 
-            result = result['value']
+        data.update(FADAObservationsReport.get_values(
+                self.domain, (startdate, enddate), site_ids=site_ids))
 
-            for field in data:
-                data[field] += result[field]
+        for k, calc in extra_fields.items():
+            data[k] = calc(data)
 
-        data['negativeOutcomeEvents'] = data['totalBirthRegistrationEvents'] - \
-                                        data['positiveOutcomeEvents'] - \
-                                        data['lostToFollowUp']
         return data
 
 
@@ -196,14 +185,33 @@ class FADAObservationsReport(DataSummaryReport, HSPHSiteDataMixin):
     slug = "fada_observations"
 
     fields = ['corehq.apps.reports.fields.DatespanField',
-              'hsph.fields.NameOfFADAField']
+              'hsph.fields.NameOfFADAField',
+              'hsph.fields.SiteField']
 
     report_template_path = 'hsph/reports/fada_observations.html'
     flush_layout = True
 
-    @property
-    def report_context(self):
-        keys = [
+    @classmethod
+    def get_values(cls, domain, daterange, site_ids=None, user_ids=None):
+        """
+        Gets reduced results per unique process_sbr_no for each key and sums
+        them together, adding percentage occurences out of total_forms for all
+        indicators.
+
+        """
+
+        site_ids = site_ids or []
+        user_ids = user_ids or []
+        startdate, enddate = daterange
+        keys = []
+        keys.extend([(["site", site_id, startdate],
+                      ["site", site_id, enddate])
+                     for site_id in site_ids])
+        keys.extend([(["user", user_id, startdate],
+                      ["user", user_id, enddate])
+                     for user_id in user_ids])
+
+        data_keys = [
             "total_forms",
             "pp1_observed",
             "pp1_maternal_temp",
@@ -236,33 +244,75 @@ class FADAObservationsReport(DataSummaryReport, HSPHSiteDataMixin):
             "med_ab_baby",
             "med_art_mother",
             "med_art_baby",
-            "med_antiobiotics_baby"
+
+            "pp2_soap_and_water"
         ]
 
-        values = dict((k, 0) for k in keys)
-
+        values = dict((k, 0) for k in data_keys)
         db = get_db()
 
-        for user_id in self.user_ids:
+        all_results = []
+
+        for startkey, endkey in keys:
             results = db.view("hsph/fada_observations",
                 reduce=True,
-                group_level=3,
-                startkey=[user_id, self.datespan.startdate_param_utc],
-                endkey=[user_id, self.datespan.enddate_param_utc],
-                wrapper=lambda r: r['value']
-            )
+                group_level=5,
+                startkey=[domain] + startkey,
+                endkey=[domain] + endkey)
 
-            for result in results:
-                for k, v in result.items():
-                    values[k] += v
+            all_results.extend(results)
 
-        unique_sbrs = values['unique_sbrs'] = values['total_forms']
+        # "The same sbr no forms are definitely not going to come from
+        # different users." -- Sheel
+        seen_process_sbr_nos = set()
+        for result in all_results:
+            value = result['value']
+            process_sbr_no = result['key'][4]
+
+            if process_sbr_no not in seen_process_sbr_nos:
+                if value['site_id'] in site_ids and value['user_id'] in user_ids:
+                    for k, v in value.items():
+                        if k not in ('site_id', 'user_id'):
+                            values[k] += v
+                seen_process_sbr_nos.add(process_sbr_no)
+
         for k, v in values.items():
-            if unique_sbrs:
-                values[k + '_pct'] = round(float(v) * 100 / unique_sbrs, 1)
-            else:
-                values[k + '_pct'] = '---'
+            pp = ('medication' if k[:3] == 'med' else k[:3]) + "_observed"
+            if pp in values:
+                if values[pp]:
+                    values[k + '_pct'] = round(float(v) * 100 / values[pp], 1)
+                else:
+                    values[k + '_pct'] = '---'
+
+        # used by secondary outcome report
+        if values['pp3_baby_apneic']:
+            values['pp3_apneic_intervention_pct'] = round(
+                100 * float(values['pp3_baby_intervention']) / values['pp3_baby_apneic'], 1)
+        else:
+            values['pp3_apneic_intervention_pct'] = '---'
+        
+        values['unique_sbrs'] = values['total_forms']
 
         return values
 
+    @property
+    def report_context(self):
+        site_map = self.selected_site_map or self.site_map
+        facilities = IHForCHFField.get_selected_facilities(site_map, self.domain)
 
+        startdate = self.datespan.startdate_param_utc[:10]
+        enddate = self.datespan.enddate_param_utc[:10]
+
+        user_ids = self.user_ids
+
+       
+        return {
+            'ihf': self.get_values(
+                    self.domain, (startdate, enddate),
+                    site_ids=facilities['ihf'],
+                    user_ids=user_ids),
+            'chf': self.get_values(
+                    self.domain, (startdate, enddate),
+                    site_ids=facilities['chf'],
+                    user_ids=user_ids)
+        }

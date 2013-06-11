@@ -1,444 +1,412 @@
+from collections import defaultdict
 import datetime
-import dateutil
-import pytz
-from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
+import restkit.errors
+import time
+
+from django.utils.datastructures import SortedDict
+
+from dimagi.utils.couch.database import get_db
+from dimagi.utils.decorators.memoized import memoized
+
+from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
+from corehq.apps.reports.standard.inspect import CaseDisplay, CaseListReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
-from couchforms.models import XFormInstance
-from dimagi.utils.couch.database import get_db
-from corehq.apps.reports import util
-from hsph.fields import FacilityField, NameOfDCTLField, SiteField, SelectCaseStatusField
 from hsph.reports import HSPHSiteDataMixin
+from hsph.fields import AllocatedToFilter
+from corehq.apps.api.es import FullCaseES
 
-class HSPHFieldManagementReport(GenericTabularReport, CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
+def short_date_format(date):
+    return date.strftime('%d-%b')
+
+def datestring_minus_days(datestring, days):
+    date = datetime.datetime.strptime(datestring[:10], '%Y-%m-%d')
+    return (date - datetime.timedelta(days=days)).isoformat()
+
+def get_user_site_map(domain):
+    user_site_map = defaultdict(list)
+    data_type = FixtureDataType.by_domain_tag(domain, 'site').first()
+    fixtures = FixtureDataItem.by_data_type(domain, data_type.get_id)
+    for fixture in fixtures:
+        for user in fixture.get_users():
+            user_site_map[user._id].append(fixture.fields['site_id'])
+    return user_site_map
+
+
+class FIDAPerformanceReport(GenericTabularReport, CustomProjectReport,
+                            ProjectReportParametersMixin, DatespanMixin):
+    """
+    BetterBirth Shared Dropbox/Updated ICT package/Reporting Specs/FIDA Performance_v2.xls 
+    """
+    name = "FIDA Performance Report"
+    slug = "hsph_fida_performance"
+    
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.DatespanField',
-              'hsph.fields.NameOfFIDAField',
-              'hsph.fields.NameOfDCTLField']
+              'hsph.fields.NameOfFIDAField']
 
-    _selected_dctl = None
-    @property
-    def selected_dctl(self):
-        if self._selected_dctl is None:
-            self._selected_dctl = self.request.GET.get(NameOfDCTLField.slug, '')
-        return self._selected_dctl
-
-    _dctl_fixture = None
-    @property
-    def dctl_fixture(self):
-        if self._dctl_fixture is None:
-            fixture = FixtureDataType.by_domain_tag(self.domain, "dctl").first()
-            self._dctl_fixture = fixture.get_id if fixture else ''
-        return self._dctl_fixture
-
-    def user_to_dctl(self, user):
-        dctl_name = "Unknown DCTL"
-        dctl_id = None
-        data_items = list(FixtureDataItem.by_user(user, domain=self.domain))
-        for item in data_items:
-            if item.data_type_id == self.dctl_fixture:
-                dctl_id = item.fields.get('id')
-                dctl_name = item.fields.get('name', dctl_name)
-        return dctl_id, dctl_name
-
-class DCOActivityReport(HSPHFieldManagementReport):
-    name = "FIDA Activity Report"
-    slug = "hsph_fida_activity"
+    filter_group_name = "Role - FIDA" 
 
     @property
     def headers(self):
-        return DataTablesHeader(DataTablesColumn("Name of FIDA"),
-            DataTablesColumn("Name of DCTL"),
-            DataTablesColumn("No. Facilities Covered"),
+        return DataTablesHeader(
+            DataTablesColumn("Name of FIDA"),
+            #DataTablesColumn("Name of Team Leader"),
+            DataTablesColumn("No. of Facilities Covered"),
             DataTablesColumn("No. of Facility Visits"),
-            DataTablesColumn("No. of Facility Visits with less than 2 visits/week"),
-            DataTablesColumn("No. of Births Recorded"),
-            DataTablesColumn("Average time per Birth Record (min)"),
-            DataTablesColumn("No. of Births with no contact information provided"),
+            DataTablesColumn("No. of Facilities with less than 2 visits/week"),
+            DataTablesColumn("Average Time per Birth Record"),
+            DataTablesColumn("Average Number of Birth Records Uploaded Per Visit"),
+            DataTablesColumn("No. of Births with no phone details"),
+            DataTablesColumn("No. of Births with no address"),
+            DataTablesColumn("No. of Births with no contact info"),
             DataTablesColumn("No. of Home Visits assigned"),
             DataTablesColumn("No. of Home Visits completed"),
-            DataTablesColumn("No. of Home Visits open at 21 days"))
+            DataTablesColumn("No. of Home Visits completed per day"),
+            DataTablesColumn("No. of Home Visits Open at 30 Days"))
 
     @property
     def rows(self):
+        user_site_map = get_user_site_map(self.domain)
+
+        # ordered keys with default values
+        keys = SortedDict([
+            ('fidaName', None),
+            #('teamLeaderName', None),
+            ('facilitiesCovered', 0),
+            ('facilityVisits', 0),
+            ('facilitiesVisitedLessThanTwicePerWeek', None),
+            ('avgBirthRegistrationTime', None),
+            ('birthRegistrationsPerVisit', None),
+            ('noPhoneDetails', 0),
+            ('noAddress', 0),
+            ('noContactInfo', 0),
+            ('homeVisitsAssigned', 0),
+            ('homeVisitsCompleted', 0),
+            ('homeVisitsCompletedPerDay', 0),
+            ('homeVisitsOpenAt30Days', 0)
+        ])
+
         rows = []
+        db = get_db()
+
+        startdate = self.datespan.startdate_param_utc[:10]
+        enddate = self.datespan.enddate_param_utc[:10]
+        
+        to_date = lambda string: datetime.datetime.strptime(
+                        string, "%Y-%m-%d").date()
+        weeks = (to_date(enddate) - to_date(startdate)).days // 7
+
         for user in self.users:
-            dctl_id, dctl_name = self.user_to_dctl(user)
-            if self.selected_dctl and (self.selected_dctl != dctl_id):
-                continue
+            user_id = user.get('user_id')
 
-            key = [user.get('user_id')]
-            num_facilities = 0
-            num_fac_visits = 0
-            num_fac_visits_lt2 = 0
-            num_births = 0
-            avg_time = "---"
-            births_without_contact = 0
-            num_home_assigned = 0
-            num_home_completed = 0
-            num_home_21days = 0
+            row = db.view('hsph/fida_performance',
+                startkey=["all", self.domain, user_id, startdate],
+                endkey=["all", self.domain, user_id, enddate],
+                reduce=True,
+                wrapper=lambda r: r['value']
+            ).first() or {}
 
-            data = get_db().view('hsph/field_dco_activity',
-                startkey = key + [self.datespan.startdate_param_utc],
-                endkey = key + [self.datespan.enddate_param_utc],
-                reduce = True
-            ).first()
+            workingDays = db.view('hsph/fida_performance',
+                startkey=["workingDays", self.domain, user_id, startdate],
+                endkey=["workingDays", self.domain, user_id, enddate],
+                reduce=False,
+                wrapper=lambda r: r['value']['workingDay']).all()
+            workingDays = set(workingDays)
 
-
-
-            if data:
-                data = data.get('value', {})
-                num_facilities = data.get('numFacilitiesVisited', 0)
-                num_fac_visits = data.get('numFacilityVisits', 0)
-                num_fac_visits_lt2 = data.get('lessThanTwoWeeklyFacilityVisits', 0)
-                num_births = data.get('totalBirths', 0)
-                reg_length = data.get('averageRegistrationLength', None)
-                births_without_contact = data.get('totalBirthsWithoutContact', 0)
-                if reg_length:
-                    reg_length = datetime.datetime.fromtimestamp(reg_length//1000)
-                    avg_time = reg_length.strftime("%M:%S")
-                num_home_assigned = data.get('numHomeVisits', 0)
-                num_home_completed = data.get('numHomeVisitsCompleted', 0)
-                num_home_21days = data.get('numHomeVisitsOpenAt21', 0)
-            rows.append([
-                self.table_cell(user.get('raw_username'), user.get('username_in_report')),
-                dctl_name,
-                num_facilities,
-                num_fac_visits,
-                num_fac_visits_lt2,
-                num_births,
-                avg_time,
-                births_without_contact,
-                num_home_assigned,
-                num_home_completed,
-                num_home_21days
-            ])
-        return rows
-
-
-class FieldDataCollectionActivityReport(HSPHFieldManagementReport):
-    name = "Field Data Collection Activity Report"
-    slug = "hsph_field_data"
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.DatespanField',
-              'hsph.fields.NameOfFIDAField',
-              'hsph.fields.NameOfDCTLField',
-              'hsph.fields.FacilityField']
-
-    _all_facilities = None
-    @property
-    def all_facilities(self):
-        if self._all_facilities is None:
-            self._all_facilities = FacilityField.getFacilities()
-        return self._all_facilities
-
-    _facility_name_map = None
-    @property
-    def facility_name_map(self):
-        if self._facility_name_map is None:
-            self._facility_name_map = dict([(facility.get('val'), facility.get('text'))
-                                            for facility in self.all_facilities])
-        return self._facility_name_map
-
-    _facilities = None
-    @property
-    def facilities(self):
-        if self._facilities is None:
-            selected_fac = self.request.GET.get(FacilityField.slug, '')
-            if selected_fac:
-                self._facilities = [selected_fac]
+            row['fidaName'] = self.table_cell(
+                    user.get('raw_username'), user.get('username_in_report'))
+            row['facilitiesCovered'] = len(user_site_map[user_id])
+            row['facilitiesVisitedLessThanTwicePerWeek'] = len(
+                filter(
+                    lambda count: count < weeks * 2, 
+                    [row.get(site_id + 'Visits', 0) 
+                     for site_id in user_site_map[user_id]]
+                )
+            )
+            if row.get('avgBirthRegistrationTime'):
+                row['avgBirthRegistrationTime'] = time.strftime(
+                        '%M:%S', time.gmtime(row['avgBirthRegistrationTime']))
             else:
-                self._facilities = [facility.get("val") for facility in self.all_facilities]
-        return self._facilities
+                row['avgBirthRegistrationTime'] = None
 
-    @property
-    def headers(self):
-        return DataTablesHeader(DataTablesColumn("Facility Name"),
-            DataTablesColumn("Name of DCO"),
-            DataTablesColumn("Name of DCTL"),
-            DataTablesColumn("No. of visits by DCO"),
-            DataTablesColumn("No. of births recorded"),
-            DataTablesColumn("No. of births without contact details"))
-
-    @property
-    def rows(self):
-        rows = []
-        for user in self.users:
-            for facility in self.facilities:
-                dctl_id, dctl_name = self.user_to_dctl(user)
-                if self.selected_dctl and (self.selected_dctl != dctl_id):
-                    continue
-
-                key = [facility, user.get('user_id')]
-                data = get_db().view('hsph/field_data_collection_activity',
-                        startkey = key + [self.datespan.startdate_param_utc],
-                        endkey = key + [self.datespan.enddate_param_utc],
-                        reduce = True
-                    ).first()
-                if data:
-                    data = data['value']
-                    num_visits = data.get('numFacilityVisits', 0)
-                    num_births = data.get('totalBirths', 0)
-                    num_births_no_contact = data.get('totalBirthsWithoutContact', 0)
-                    rows.append([
-                        self.facility_name_map[facility],
-                        self.table_cell(user.get('raw_username'), user.get('username_in_report')),
-                        dctl_name,
-                        num_visits,
-                        num_births,
-                        num_births_no_contact
-                    ])
-
-        return rows
-
-
-class HVFollowUpStatusReport(HSPHFieldManagementReport, HSPHSiteDataMixin):
-    name = "Home Visit Follow Up Status"
-    slug = "hsph_hv_status"
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.DatespanField',
-              'hsph.fields.NameOfFIDAField',
-              'hsph.fields.NameOfDCTLField',
-              'hsph.fields.SiteField']
-
-    def get_data(self, key, reduce=True):
-        return get_db().view("hsph/field_follow_up_status",
-            reduce=reduce,
-            startkey=key+[self.datespan.startdate_param_utc],
-            endkey=key+[self.datespan.enddate_param_utc]
-        ).all()
-
-    def get_hv_range(self, original_key, dates=None):
-        if not dates:
-            dates = [0,8]
-        key = [original_key[1], original_key[2], original_key[3], original_key[4]]
-        now = self.datespan.enddate
-        stop = now-datetime.timedelta(days=dates[0])
-        stop = stop.strftime("%Y-%m-%d")
-        last_day = dates[1]
-        if last_day < 0:
-            start = None
-        else:
-            start = now-datetime.timedelta(days=dates[1])
-            start = start.strftime("%Y-%m-%d")
-        data = get_db().view("hsph/cases_by_birth_date",
-                                reduce=True,
-                                startkey=key+[start],
-                                endkey=key+[stop]
-                            ).first()
-        return data.get('value', 0) if data else 0
-
-    @property
-    def headers(self):
-        return DataTablesHeader(DataTablesColumn("Region"),
-            DataTablesColumn("District"),
-            DataTablesColumn("Site"),
-            DataTablesColumn("DCO Name"),
-            DataTablesColumn("DCTL Name"),
-            DataTablesColumn("No. Births Recorded"),
-            DataTablesColumn("No. patients followed up by call center"),
-            DataTablesColumn("No. patients followed up by DCO center"),
-            DataTablesColumn("No. patients not yet open for follow up (<8 days)"),
-            DataTablesColumn("No. patients open for DCC follow up (<14 days)"),
-            DataTablesColumn("No. patients open for DCO follow up (>21 days)"))
-
-    @property
-    def rows(self):
-        rows = []
-
-        if not self.selected_site_map:
-            self._selected_site_map = self.site_map
-
-        for user in self.users:
-            dctl_id, dctl_name = self.user_to_dctl(user)
-            if self.selected_dctl and (self.selected_dctl != dctl_id):
-                continue
-
-            keys = self.generate_keys(prefix=["by_site", user.get('user_id')])
-            for key in keys:
-                data = self.get_data(key)
-                for item in data:
-                    item = item.get('value', [])
-                    region, district, site = self.get_site_table_values(key[2:5])
-                    if item:
-                        rows.append([
-                            region,
-                            district,
-                            site,
-                            user.get('username_in_report'),
-                            dctl_name,
-                            item.get('totalBirths', 0),
-                            item.get('totalFollowedUpByCallCenter', 0),
-                            item.get('totalFollowedUpByDCO', 0),
-                            self.get_hv_range(key),
-                            self.get_hv_range(key, [8,14]),
-                            self.get_hv_range(key, [21,-1])
-                        ])
-
-        return rows
-
-
-class HVFollowUpStatusSummaryReport(HVFollowUpStatusReport):
-    name = "Home Visit Follow Up Status Summary"
-    slug = "hsph_hv_status_summary"
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.DatespanField',
-              'hsph.fields.NameOfFIDAField',
-              'hsph.fields.NameOfDCTLField',
-              'hsph.fields.SelectCaseStatusField',
-              'hsph.fields.SiteField']
-
-    _case_status = None
-    @property
-    def case_status(self):
-        if self._case_status is None:
-            self._case_status = self.request.GET.get(SelectCaseStatusField.slug, None)
-        return self._case_status
-
-    @property
-    def headers(self):
-        return DataTablesHeader(DataTablesColumn("Region"),
-            DataTablesColumn("District"),
-            DataTablesColumn("Site"),
-            DataTablesColumn("Unique Patient ID"),
-            DataTablesColumn("Home Visit Status"),
-            DataTablesColumn("Name of mother"),
-            DataTablesColumn("Address where mother can be reachable in next 10 days"),
-            DataTablesColumn("Assigned By"),
-            DataTablesColumn("Allocated Data Collector"),
-            DataTablesColumn("Allocated Start Date"),
-            DataTablesColumn("Allocated End Date"),
-            DataTablesColumn("Visited Date"),
-            DataTablesColumn("Start Time"),
-            DataTablesColumn("End Time"),
-            DataTablesColumn("Duration (min)"),
-            DataTablesColumn("Within Allocated Period"))
-
-    @property
-    def rows(self):
-        rows = []
-        data_not_found_text = 'unknown'
-        no_data_text = '--'
-
-        for user in self.users:
-            dctl_id, dctl_name = self.user_to_dctl(user)
-            if self.selected_dctl and (self.selected_dctl != dctl_id):
-                continue
-
-            if self.selected_site_map and self.case_status:
-                filter_by = "by_status_site"
-            elif self.case_status and not self.selected_site_map:
-                filter_by = "by_status"
-            elif self.selected_site_map and not self.case_status:
-                filter_by = "by_site"
+            if workingDays:
+                row['homeVisitsCompletedPerDay'] = round(
+                        row.get('homeVisitsCompleted', 0) / float(len(workingDays)), 1)
             else:
-                filter_by = "all"
+                row['homeVisitsCompletedPerDay'] = 0.0
 
-            prefix = [filter_by, user.get('user_id')]
-            if self.case_status:
-                prefix.append(self.case_status)
-
-            if self.selected_site_map:
-                keys = self.generate_keys(prefix=prefix)
-            else:
-                keys = [prefix]
-
-            for key in keys:
-                data = self.get_data(key, reduce=False)
-                for item in data:
-                    item = item.get('value', [])
-
-                    time_start = time_end = None
-                    total_time = allocated_period_default = no_data_text
-
-                    if item:
-                        region = item.get('region', data_not_found_text)
-                        district = item.get('district', data_not_found_text)
-                        site_num = item.get('siteNum', data_not_found_text)
-
-                        start_date = dateutil.parser.parse(item.get('startDate'))
-                        end_date = datetime.datetime.replace(dateutil.parser.parse(item.get('endDate')), tzinfo=pytz.utc)
-                        visited_date = item.get('visitedDate')
-
-                        if visited_date:
-                            visited_date = dateutil.parser.parse(visited_date)
-                            hv_form = XFormInstance.get(item.get('followupFormId'))
-                            if not isinstance(hv_form.get_form['meta'].get('timeEnd'), str):
-                                time_start = datetime.datetime.replace(hv_form.get_form['meta'].get('timeStart'), tzinfo=pytz.utc)
-                                time_end = datetime.datetime.replace(hv_form.get_form['meta'].get('timeEnd'), tzinfo=pytz.utc)
-                                total_time = time_end - time_start
-                                total_time = "%d:%d" % (round(total_time.seconds/60),
-                                                        total_time.seconds-round(total_time.seconds/60))
-                            allocated_period_default = "NO"
-
-                        rows.append([
-                            self.get_region_name(region),
-                            self.get_district_name(region, district),
-                            self.get_site_name(region, district, site_num),
-                            item.get('patientId', data_not_found_text),
-                            "CLOSED" if item.get('isClosed', False) else "OPEN",
-                            item.get('nameMother', data_not_found_text),
-                            item.get('address', data_not_found_text),
-                            dctl_name,
-                            user.get('username_in_report'),
-                            start_date.strftime('%d-%b'),
-                            end_date.strftime('%d-%b'),
-                            visited_date.strftime('%d-%b') if visited_date else no_data_text,
-                            time_start.strftime('%H:%M') if time_start else no_data_text,
-                            time_end.strftime('%H:%M') if time_end else no_data_text,
-                            total_time if total_time else no_data_text,
-                            "YES" if time_end and time_end < end_date else allocated_period_default
-                        ])
-        return rows
-
-
-class DCOProcessDataReport(HSPHFieldManagementReport, HSPHSiteDataMixin):
-    name = "DCO Process Data Report"
-    slug = "hsph_dco_process_data"
-    fields = ['corehq.apps.reports.fields.DatespanField',
-              'hsph.fields.SiteField']
-
-    @property
-    def headers(self):
-        return DataTablesHeader(DataTablesColumn("Region"),
-            DataTablesColumn("District"),
-            DataTablesColumn("Site"),
-            DataTablesColumn("IHF/CHF"),
-            DataTablesColumn("Number of Births Observed"),
-            DataTablesColumn("Average Time Per Birth Record"))
-
-    @property
-    def rows(self):
-        rows = []
-
-        if not self.selected_site_map:
-            self._selected_site_map = self.site_map
-
-        keys = self.generate_keys()
-
-        for key in keys:
-            data = get_db().view("hsph/field_process_data",
+            # These queries can fail if startdate is less than N days before
+            # enddate.  We just catch and supply a default value.
+            try:
+                row['homeVisitsAssigned'] = db.view('hsph/fida_performance',
+                    startkey=['assigned', self.domain, user_id, startdate],
+                    endkey=['assigned', self.domain, user_id,
+                        datestring_minus_days(enddate, 21)],
                     reduce=True,
-                    startkey=key+[self.datespan.startdate_param_utc],
-                    endkey=key+[self.datespan.enddate_param_utc]
-                ).all()
-            for item in data:
-                item = item.get('value')
-                if item:
-                    region, district, site = self.get_site_table_values(key)
+                    wrapper=lambda r: r['value']['homeVisitsAssigned']
+                ).first()
+            except restkit.errors.RequestFailed:
+                row['homeVisitsAssigned'] = 0
 
-                    reg_length = item.get('averageRegistrationLength', None)
-                    avg_time = '--'
-                    if reg_length:
-                        reg_length = datetime.datetime.fromtimestamp(reg_length//1000)
-                        avg_time = reg_length.strftime("%M:%S")
-                    rows.append([
-                        region,
-                        district,
-                        site,
-                        '--',
-                        item.get('totalBirths', 0),
-                        avg_time
-                    ])
+            try:
+                row['homeVisitsOpenAt30Days'] = db.view('hsph/fida_performance',
+                    startkey=['open30Days', self.domain, user_id, startdate],
+                    endkey=['open30Days', self.domain, user_id,
+                        datestring_minus_days(enddate, 29)],
+                    reduce=True,
+                    wrapper=lambda r: r['value']['homeVisitsOpenAt30Days']
+                ).first()
+            except restkit.errors.RequestFailed:
+                row['homeVisitsOpenAt30Days'] = 0
+
+            list_row = []
+            for k, v in keys.items():
+                val = row.get(k, v)
+                if val is None:
+                    val = '---'
+                list_row.append(val)
+
+            rows.append(list_row)
+
         return rows
+
+
+class HSPHCaseDisplay(CaseDisplay):
+
+    @property
+    @memoized
+    def _date_admission(self):
+        return self.parse_date(self.case['date_admission'])
+
+    @property
+    def region(self):
+        try:
+            return self.report.get_region_name(self.case['region_id'])
+        except AttributeError:
+            return ""
+
+    @property
+    def district(self):
+        try:
+            return self.report.get_district_name(
+                self.case['region_id'], self.case['district_id'])
+        except AttributeError:
+            return ""
+
+    @property
+    def site(self):
+        try:
+            return self.report.get_site_name(
+                self.case['region_id'], self.case['district_id'],
+                self.case['site_number'])
+        except AttributeError:
+            return ""
+
+    @property
+    def patient_id(self):
+        return self.case.get('patient_id', '')
+
+    @property
+    def status(self):
+        return "Closed" if self.case['closed'] else "Open"
+
+    @property
+    def mother_name(self):
+        return self.case.get('name_mother', '')
+
+    @property
+    def date_admission(self):
+        return short_date_format(self._date_admission)
+
+    @property
+    def address(self):
+        return self.case.get('house_address', '')
+
+    @property
+    @memoized
+    def allocated_to(self):
+        # this logic is duplicated for elasticsearch in CaseReport.case_filter
+        UNKNOWN = "Unknown"
+        CALL_CENTER = "Call Center"
+        FIELD = "Field"
+
+        if self.case['closed']:
+            if 'closed_by' not in self.case:
+                return UNKNOWN
+
+            if self.case['closed_by'] in ("cati", "cati_tl"):
+                return CALL_CENTER
+            elif self.case['closed_by'] in ("fida", "field_manager"):
+                return FIELD
+            else:
+                return UNKNOWN
+        else:
+            today = datetime.datetime.now()
+            if today <= self._date_admission + datetime.timedelta(days=21):
+                return CALL_CENTER
+            else:
+                return FIELD
+    
+    @property
+    def allocated_start(self):
+        try:
+            delta = datetime.timedelta(
+                    days=8 if self.allocated_to == "Call Center" else 21)
+            return short_date_format(self._date_admission + delta)
+        except AttributeError:
+            return ""
+
+    @property
+    def allocated_end(self):
+        try:
+            delta = datetime.timedelta(
+                    days=20 if self.allocated_to == 'Call Center' else 29)
+            return short_date_format(self._date_admission + delta)
+        except AttributeError:
+            return ""
+
+    @property
+    def outside_allocated_period(self):
+        if self.case['closed_on']:
+            compare_date = self.parse_date(
+                    self.case['closed_on']).replace(tzinfo=None)
+        else:
+            compare_date = datetime.datetime.utcnow().replace(tzinfo=None)
+
+        return 'Yes' if (compare_date - self._date_admission).days > 29 else 'No'
+
+
+class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin,
+                 DatespanMixin):
+    name = 'Case Report'
+    slug = 'case_report'
+    
+    fields = (
+        'corehq.apps.reports.fields.FilterUsersField',
+        'corehq.apps.reports.fields.DatespanField',
+        'hsph.fields.SiteField',
+        'hsph.fields.AllocatedToFilter',
+        'hsph.fields.NameOfFIDAField',
+        'corehq.apps.reports.fields.SelectOpenCloseField',
+    )
+
+    default_case_type = 'birth'
+
+    @property
+    @memoized
+    def case_es(self):
+        return FullCaseES(self.domain)
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(
+            DataTablesColumn("Region"),
+            DataTablesColumn("District"),
+            DataTablesColumn("Site"),
+            DataTablesColumn("Patient ID"),
+            DataTablesColumn("Status"),
+            DataTablesColumn("Mother Name"),
+            DataTablesColumn("Date of Admission"),
+            DataTablesColumn("Address of Patient"),
+            DataTablesColumn("Allocated To"),
+            DataTablesColumn("Allocated Start"),
+            DataTablesColumn("Allocated End"),
+            DataTablesColumn("Outside Allocated Period")
+        )
+        headers.no_sort = True
+        return headers
+
+    @property
+    def case_filter(self):
+        allocated_to = self.request_params.get(AllocatedToFilter.slug, '')
+        region_id = self.request_params.get('hsph_region', '')
+        district_id = self.request_params.get('hsph_district', '')
+        site_num = str(self.request_params.get('hsph_site', ''))
+
+        filters = [{
+            'range': {
+                'opened_on': {
+                    "from": self.datespan.startdate_param_utc,
+                    "to": self.datespan.enddate_param_utc
+                }
+            }
+        }]
+        
+        if site_num:
+            filters.append({'term': {'site_number': site_num.lower()}})
+        if district_id:
+            filters.append({'term': {'district_id': district_id.lower()}})
+        if region_id:
+            filters.append({'term': {'region_id': region_id.lower()}})
+
+        if allocated_to:
+            max_date_admission = (datetime.date.today() -
+                datetime.timedelta(days=21)).strftime("%Y-%m-%d")
+
+            call_center_filter = {
+                'or': [
+                    {'and': [
+                        {'term': {'closed': True}},
+                        {'prefix': {'closed_by': 'cati'}}
+                    ]},
+                    {'and': [
+                        {'term': {'closed': False}},
+                        {'range': {
+                            'date_admission': {
+                                'from': max_date_admission
+                            }
+                        }}
+                    ]}
+                ]
+            }
+
+            if allocated_to == 'cati':
+                filters.append(call_center_filter)
+            else:
+                filters.append({'not': call_center_filter})
+
+        return {'and': filters} if filters else {}
+
+    @property
+    def shared_pagination_GET_params(self):
+        params = super(CaseReport, self).shared_pagination_GET_params
+
+        slugs = [
+            AllocatedToFilter.slug,
+            'hsph_region',
+            'hsph_district',
+            'hsph_site',
+            'startdate',
+            'enddate'
+        ]
+
+        for slug in slugs:
+            params.append({
+                'name': slug,
+                'value': self.request_params.get(slug, '')
+            })
+
+        return params
+
+    @property
+    def rows(self):
+        case_displays = (HSPHCaseDisplay(self, self.get_case(case))
+                         for case in self.es_results['hits'].get('hits', []))
+
+        for disp in case_displays:
+            yield [
+                disp.region,
+                disp.district,
+                disp.site,
+                disp.patient_id,
+                disp.status,
+                disp.case_link,
+                disp.date_admission,
+                disp.address,
+                disp.allocated_to,
+                disp.allocated_start,
+                disp.allocated_end,
+                disp.outside_allocated_period,
+            ]
