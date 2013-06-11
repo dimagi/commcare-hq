@@ -324,6 +324,7 @@ def account(request, domain, couch_user_id, template="users/account.html"):
         linked_loc = couch_user.dynamic_properties().get('commtrack_location') # FIXME update user model appropriately
         commtrack_form = CommtrackUserForm(domain=domain, initial={'supply_point': linked_loc})
     context.update({
+            'commtrack_enabled': Domain.get_by_name(domain).commtrack_enabled,
             'commtrack_form': commtrack_form,
     })
 
