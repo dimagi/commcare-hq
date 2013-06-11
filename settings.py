@@ -222,6 +222,7 @@ HQ_APPS = (
     'a5288',
     'benin',
     'bihar',
+    'cvsu',
     'dca',
     'hsph',
     'mvp',
