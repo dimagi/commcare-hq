@@ -42,12 +42,12 @@ def tmpfile(*args, **kwargs):
     return (os.fdopen(fd, 'w'), path)
 
 
-def simple_post(data, url, content_type="text/xml", timeout=60, headers={}):
+def simple_post(data, url, content_type="text/xml", timeout=60, headers=None):
     """
     POST with a cleaner API, and return the actual HTTPResponse object, so
     that error codes can be interpreted.
     """
-    if not headers:
+    if headers is None:
         headers = {
             "content-type": content_type,
             "content-length": len(data),
