@@ -200,7 +200,6 @@ class TestCommCareUserResource(APIResourceTest):
         self.client.login(username=self.username, password=self.password)
 
         commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****')
-
         backend_id = commcare_user.get_id
 
         response = self.client.get(self.list_endpoint)
