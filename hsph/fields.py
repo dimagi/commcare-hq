@@ -12,8 +12,7 @@ class SiteField(ReportField):
     template = "hsph/fields/sites.html"
 
     def update_context(self):
-        sites = self.getFacilities()
-        self.context['sites'] = sites
+        self.context['sites'] = self.getFacilities(domain=self.domain)
         self.context['selected'] = dict(region=self.request.GET.get(self.slugs['region'], ''),
                                         district=self.request.GET.get(self.slugs['district'], ''),
                                         siteNum=self.request.GET.get(self.slugs['site'], ''))
