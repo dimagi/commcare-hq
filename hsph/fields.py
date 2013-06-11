@@ -218,7 +218,8 @@ class FacilityField(ReportSelectField):
         self.options = self.getFacilities()
 
     @classmethod
-    def getFacilities(cls):
-        data_type = FixtureDataType.by_domain_tag(cls.domain, 'site').first()
-        data_items = FixtureDataItem.by_data_type(cls.domain, data_type.get_id)
+    def getFacilities(cls, domain=None):
+        domain = domain or cls.domain
+        data_type = FixtureDataType.by_domain_tag(domain, 'site').first()
+        data_items = FixtureDataItem.by_data_type(domain, data_type.get_id)
         return [dict(text=item.fields.get("site_name"), val=item.fields.get("site_id")) for item in data_items]
