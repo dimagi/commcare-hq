@@ -708,7 +708,7 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'hsph', 
     'care-bihar', 
     'hsph-dev', 
-    'hsph-betterbirth-pilot-2'
+    'hsph-betterbirth-pilot-2',
 ]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
