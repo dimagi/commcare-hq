@@ -1,0 +1,124 @@
+{% extends 'hqwebapp/two_column.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load timezone_tags %}
+
+{% block title %}{% trans "SMS Connectivity" %}{% endblock %}
+
+{% block head %}{{ block.super }}
+    {% include "imports/datatables.html" %}
+    <script type="text/javascript" src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+<script>
+    function backend_type_changed() {
+        var link_id = "#id_link_for_" + $("#id_choose_backend_type").val();
+        $(".add_backend_links").hide();
+        $(link_id).show();
+    }
+    
+    $(function(){
+        $("#id_choose_backend_type").change(backend_type_changed);
+        backend_type_changed();
+        
+        var table = new HQReportDataTables({});
+        table.render();
+    });
+</script>
+{% endblock %}
+
+{% block page-title %}
+    {% if show_global %}
+    {% else %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url messaging domain %}"><strong>Messaging</strong></a> <span class="divider">&gt;</span>
+        </li>
+        <li class="active">
+            <div id="report-title">
+            {% block page-subtitle %}
+                <a href="{% url list_domain_backends domain %}">SMS Connectivity</a>
+            {% endblock %}
+            </div>
+        </li>
+    </ul>
+    {% endif %}
+{% endblock %}
+
+{% block main_column %}
+    <table class="table table-striped datatable">
+        <thead>
+            <th>Name</th>
+            <th>Type</th>
+            {% if not show_global %}
+            <th>Owner</th>
+            <th>Default</th>
+            <th></th>
+            {% endif %}
+            <th></th>
+            <th></th>
+        </thead>
+        <tbody>
+            {% for backend in backends %}
+            <tr>
+                <td>{{ backend.name }}</td>
+                <td>{{ backend.get_generic_name }}</td>
+                {% if not show_global %}
+                <td>{% if backend.domain == domain %}You{% else %}{% if backend.is_global %}System{% else %}Domain '{{ backend.domain }}'{% endif %}{% endif %}</td>
+                <td>
+                    {% if backend.get_id == default_sms_backend_id %}
+                        <span class="label label-warning"><small>DEFAULT</small></span>
+                    {% else %}
+                        <span class="label"><small>NO</small></span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if backend.get_id == default_sms_backend_id %}
+                        <a href="{% url unset_default_domain_backend domain backend.get_id %}"><span class="btn btn-primary">Remove As Default</span></a>
+                    {% else %}
+                        <a href="{% url set_default_domain_backend domain backend.get_id %}"><span class="btn btn-primary">Set As Default</span></a>
+                    {% endif %}
+                </td>
+                {% endif %}
+                <td>
+                    {% if backend.get_id in editable_backend_ids %}
+                    <a href="{% if show_global %}{% url edit_backend backend.doc_type backend.get_id %}{% else %}{% url edit_domain_backend domain backend.doc_type backend.get_id %}{% endif %}"><span class="btn btn-primary">Edit</span></a>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if backend.get_id in editable_backend_ids %}
+                    <a class="btn btn-danger" data-toggle="modal" href="#delete_{{ backend.get_id }}"><i class="icon icon-white icon-remove"></i> Delete</a>
+                    <div id="delete_{{ backend.get_id }}" class="modal hide fade">
+                        <div class="modal-header">
+                            <a class="close" data-dismiss="modal">&times;</a>
+                            <h3>Delete SMS Connection?</h3>
+                        </div>
+                        <form class="form form-horizontal" name="delete_backend" action="{% if show_global %}{% else %}{% url delete_domain_backend domain backend.get_id %}{% endif %}" method="post">
+                            <div class="modal-body">
+                                <p>Are you sure you want to delete SMS Connection '{{ backend.name }}'?</p>
+                            </div>
+                            <div class="modal-footer">
+                                <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                                <button type="submit" class="btn btn-danger"><i class="icon icon-white icon-remove"></i> Delete</button>
+                            </div>
+                        </form>
+                    </div>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div style="padding-top: 20px;">
+        Create SMS Connection using:
+        <select style="margin-bottom: 0px;" id="id_choose_backend_type">
+        {% for name, klass in instantiable_backends.items %}
+            <option value="{{ name }}">{{ klass.get_generic_name }}</option>
+        {% endfor %}
+        </select>
+        {% for name, klass in instantiable_backends.items %}
+            <a id="id_link_for_{{ name }}" style="display: none;" class="add_backend_links" href="{% if show_global %}{% url add_backend name %}{% else %}{% url add_domain_backend domain name %}{% endif %}"><span class="btn btn-success"><i class="icon icon-white icon-plus"></i> Create</span></a>
+        {% endfor %}
+    </div>
+{% endblock %}

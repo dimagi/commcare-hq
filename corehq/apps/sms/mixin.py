@@ -89,7 +89,7 @@ class MobileBackend(Document):
     # TODO: Once the ivr backends get refactored, can remove these two properties:
     outbound_module = StringProperty()      # The fully-qualified name of the outbound module to be used (sms backends: must implement send(); ivr backends: must implement initiate_outbound_call() )
     outbound_params = DictProperty()        # The parameters which will be the keyword arguments sent to the outbound module's send() method
-    inbound_phone_number = StringProperty() # The phone number which you can text to / call to reply to this backend
+    reply_to_phone_number = StringProperty() # The phone number which you can text to / call to reply to this backend
 
     def domain_is_authorized(self, domain):
         return self.is_global or domain == self.domain or domain in self.authorized_domains
@@ -140,11 +140,11 @@ class MobileBackend(Document):
         raise NotImplementedError("Please define get_api_id()")
 
     @classmethod
-    def get_description(cls):
+    def get_generic_name(cls):
         """
-        This method should return a descriptive name for this backend, for use in identifying it to an end user.
+        This method should return a descriptive name for this backend (such as "Unicel" or "Tropo"), for use in identifying it to an end user.
         """
-        raise NotImplementedError("Please define get_description()")
+        raise NotImplementedError("Please define get_generic_name()")
 
     @classmethod
     def get_template(cls):

@@ -12,7 +12,7 @@ from corehq.apps.sms.api import send_sms, incoming, send_sms_with_backend
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users import models as user_models
 from corehq.apps.sms.models import SMSLog, INCOMING, ForwardingRule
-from corehq.apps.sms.mixin import MobileBackend
+from corehq.apps.sms.mixin import MobileBackend, SMSBackend
 from corehq.apps.sms.forms import ForwardingRuleForm
 from corehq.apps.sms.util import get_available_backends
 from corehq.apps.groups.models import Group
@@ -21,6 +21,7 @@ from dimagi.utils.couch.database import get_db
 from django.contrib import messages
 from corehq.apps.reports import util as report_utils
 from django.views.decorators.csrf import csrf_exempt
+from corehq.apps.domain.models import Domain
 
 @login_and_domain_required
 def default(request, domain):
@@ -298,40 +299,133 @@ def delete_forwarding_rule(request, domain, forwarding_rule_id):
     forwarding_rule.retire()
     return HttpResponseRedirect(reverse("list_forwarding_rules", args=[domain]))
 
-@domain_admin_required
-def add_domain_backend(request, domain, backend_class_name, backend_id=None):
+def _add_backend(request, backend_class_name, is_global, domain=None, backend_id=None):
     backend_classes = get_available_backends()
     backend_class = backend_classes[backend_class_name]
     
     backend = None
     if backend_id is not None:
         backend = backend_class.get(backend_id)
-        if backend.domain != domain:
+        if not is_global and backend.domain != domain:
             raise Http404
     
-    common_fields = ["name","authorized_domains"]
+    ignored_fields = ["give_other_domains_access"]
     if request.method == "POST":
         form = backend_class.get_form_class()(request.POST)
+        form._cchq_domain = domain
+        form._cchq_backend_id = backend._id if backend is not None else None
         if form.is_valid():
             if backend is None:
-                backend = backend_class(domain=domain, is_global=False)
-            backend.name = form.cleaned_data.get("name")
-            backend.authorized_domains = form.cleaned_data.get("authorized_domains")
+                backend = backend_class(domain=domain, is_global=is_global)
             for key, value in form.cleaned_data.items():
-                if key not in common_fields:
+                if key not in ignored_fields:
                     setattr(backend, key, value)
             backend.save()
+            if is_global:
+                return HttpResponseRedirect(reverse("default_sms_admin_interface"))
+            else:
+                return HttpResponseRedirect(reverse("list_domain_backends", args=[domain]))
     else:
         initial = {}
         if backend is not None:
             for field in backend_class.get_form_class()():
-                initial[field.name] = getattr(backend, field.name, None)
+                if field.name not in ignored_fields:
+                    if field.name == "authorized_domains":
+                        initial[field.name] = ",".join(backend.authorized_domains)
+                    else:
+                        initial[field.name] = getattr(backend, field.name, None)
+            if len(backend.authorized_domains) > 0:
+                initial["give_other_domains_access"] = True
+            else:
+                initial["give_other_domains_access"] = False
         form = backend_class.get_form_class()(initial=initial)
     context = {
+        "is_global" : is_global,
         "domain" : domain,
         "form" : form,
-        "backend_specific_template" : backend_class.get_template(),
         "backend_class_name" : backend_class_name,
+        "backend_generic_name" : backend_class.get_generic_name(),
+        "backend_id" : backend_id,
     }
-    return render(request, "sms/add_backend.html", context)
+    return render(request, backend_class.get_template(), context)
+
+@domain_admin_required
+def add_domain_backend(request, domain, backend_class_name, backend_id=None):
+    return _add_backend(request, backend_class_name, False, domain, backend_id)
+
+@require_superuser
+def add_backend(request, backend_class_name, backend_id=None):
+    return _add_backend(request, backend_class_name, True, backend_id=backend_id)
+
+def _list_backends(request, show_global=False, domain=None):
+    backend_classes = get_available_backends()
+    backends = []
+    editable_backend_ids = []
+    default_sms_backend_id = None
+    if not show_global:
+        domain_obj = Domain.get_by_name(domain, strict=True)
+    raw_backends = []
+    if not show_global:
+        raw_backends += SMSBackend.view("sms/backend_by_domain", startkey=[domain], endkey=[domain, {}], include_docs=True).all()
+    raw_backends += SMSBackend.view("sms/global_backends", include_docs=True).all()
+    for backend in raw_backends:
+        backends.append(backend_classes[backend.doc_type].wrap(backend.to_json()))
+        if show_global or (not backend.is_global and backend.domain == domain):
+            editable_backend_ids.append(backend._id)
+        if not show_global and domain_obj.default_sms_backend_id == backend._id:
+            default_sms_backend_id = backend._id
+    instantiable_backends = {}
+    for name, klass in backend_classes.items():
+        try:
+            klass.get_generic_name()
+            klass.get_form_class()
+            instantiable_backends[name] = klass
+        except Exception:
+            pass
+    context = {
+        "show_global" : show_global,
+        "domain" : domain,
+        "backends" : backends,
+        "editable_backend_ids" : editable_backend_ids,
+        "default_sms_backend_id" : default_sms_backend_id,
+        "instantiable_backends" : instantiable_backends,
+    }
+    return render(request, "sms/list_backends.html", context)
+
+@domain_admin_required
+def list_domain_backends(request, domain):
+    return _list_backends(request, False, domain)
+
+@require_superuser
+def list_backends(request):
+    return _list_backends(request, True)
+
+@domain_admin_required
+def delete_domain_backend(request, domain, backend_id):
+    backend = SMSBackend.get(backend_id)
+    if backend.domain != domain:
+        raise Http404
+    domain_obj = Domain.get_by_name(domain, strict=True)
+    if domain_obj.default_sms_backend_id == backend._id:
+        domain_obj.default_sms_backend_id = None
+        domain_obj.save()
+    backend.delete()
+    return HttpResponseRedirect(reverse("list_domain_backends", args=[domain]))
+
+def _set_default_domain_backend(request, domain, backend_id, unset=False):
+    backend = SMSBackend.get(backend_id)
+    if not backend.domain_is_authorized(domain):
+        raise Http404
+    domain_obj = Domain.get_by_name(domain, strict=True)
+    domain_obj.default_sms_backend_id = None if unset else backend._id
+    domain_obj.save()
+    return HttpResponseRedirect(reverse("list_domain_backends", args=[domain]))
+
+@domain_admin_required
+def set_default_domain_backend(request, domain, backend_id):
+    return _set_default_domain_backend(request, domain, backend_id)
+
+@domain_admin_required
+def unset_default_domain_backend(request, domain, backend_id):
+    return _set_default_domain_backend(request, domain, backend_id, True)
 

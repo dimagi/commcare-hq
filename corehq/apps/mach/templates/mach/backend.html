@@ -1,0 +1,26 @@
+{% extends 'sms/add_backend.html' %}
+
+{% block backend_specific %}
+<h4>{{ backend_generic_name }} Settings</h4>
+<div class="form-block">
+    <table>
+        <tbody>
+            <tr>
+                <td><label for="id_account_id">Account ID</label></td>
+                <td><input type="text" name="account_id" id="id_account_id" value="{{ form.account_id.value|default:'' }}" /></td>
+                <td>{{ form.account_id.errors }}</td>
+            </tr>
+            <tr>
+                <td><label for="id_password">Password</label></td>
+                <td><input type="text" name="password" id="id_password" value="{{ form.password.value|default:'' }}" /></td>
+                <td>{{ form.password.errors }}</td>
+            </tr>
+            <tr>
+                <td><label for="id_sender_id">Sender ID</label></td>
+                <td><input type="text" name="sender_id" id="id_sender_id" value="{{ form.sender_id.value|default:'' }}" /></td>
+                <td>{{ form.sender_id.errors }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

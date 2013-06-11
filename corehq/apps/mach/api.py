@@ -5,6 +5,7 @@ from django.conf import settings
 import urllib2
 from corehq.apps.sms.mixin import SMSBackend
 from couchdbkit.ext.django.schema import *
+from corehq.apps.mach.forms import MachBackendForm
 
 MACH_URL = "http://gw1.promessaging.com/sms.php"
 
@@ -16,6 +17,18 @@ class MachBackend(SMSBackend):
     @classmethod
     def get_api_id(cls):
         return "MACH"
+
+    @classmethod
+    def get_generic_name(cls):
+        return "Mach"
+
+    @classmethod
+    def get_template(cls):
+        return "mach/backend.html"
+
+    @classmethod
+    def get_form_class(cls):
+        return MachBackendForm
 
     def send(self, msg, delay=True, *args, **kwargs):
         params = {

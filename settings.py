@@ -199,6 +199,7 @@ HQ_APPS = (
     'corehq.apps.kookoo',
     'corehq.apps.yo',
     'corehq.apps.telerivet',
+    'corehq.apps.mach',
     'corehq.apps.registration',
     'corehq.apps.unicel',
     'corehq.apps.reports',
@@ -647,7 +648,7 @@ SMS_HANDLERS = [
 
 SMS_LOADED_BACKENDS = [
     "corehq.apps.unicel.api.UnicelBackend",
-    "corehq.apps.sms.mach_api.MachBackend",
+    "corehq.apps.mach.api.MachBackend",
     "corehq.apps.tropo.api.TropoBackend",
     "corehq.apps.sms.backend.http_api.HttpBackend",
     "corehq.apps.telerivet.api.TelerivetBackend",

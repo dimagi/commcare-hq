@@ -4,6 +4,7 @@ from urllib2 import urlopen
 from corehq.apps.sms.util import create_billable_for_sms
 from corehq.apps.sms.mixin import SMSBackend
 from couchdbkit.ext.django.schema import *
+from corehq.apps.tropo.forms import TropoBackendForm
 
 class TropoBackend(SMSBackend):
     messaging_token = StringProperty()
@@ -11,6 +12,18 @@ class TropoBackend(SMSBackend):
     @classmethod
     def get_api_id(cls):
         return "TROPO"
+
+    @classmethod
+    def get_generic_name(cls):
+        return "Tropo"
+
+    @classmethod
+    def get_template(cls):
+        return "tropo/backend.html"
+
+    @classmethod
+    def get_form_class(cls):
+        return TropoBackendForm
 
     def send(self, msg, delay=True, *args, **kwargs):
         phone_number = msg.phone_number

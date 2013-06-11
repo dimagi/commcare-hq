@@ -1,0 +1,16 @@
+{% extends 'sms/add_backend.html' %}
+
+{% block backend_specific %}
+<h4>{{ backend_generic_name }} Settings</h4>
+<div class="form-block">
+    <table>
+        <tbody>
+            <tr>
+                <td><label for="id_messaging_token">Messaging Token</label></td>
+                <td><input type="text" name="messaging_token" id="id_messaging_token" value="{{ form.messaging_token.value|default:'' }}" /></td>
+                <td>{{ form.messaging_token.errors }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

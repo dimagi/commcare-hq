@@ -20,7 +20,7 @@ class TelerivetBackend(SMSBackend):
         return "TELERIVET"
 
     @classmethod
-    def get_description(cls):
+    def get_generic_name(cls):
         return "Telerivet"
 
     @classmethod

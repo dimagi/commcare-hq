@@ -14,4 +14,14 @@ urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^delete_forwarding_rule/(?P<forwarding_rule_id>[\w-]+)/$', 'delete_forwarding_rule', name='delete_forwarding_rule'),
     url(r'^add_backend/(?P<backend_class_name>[\w-]+)/$', 'add_domain_backend', name='add_domain_backend'),
     url(r'^edit_backend/(?P<backend_class_name>[\w-]+)/(?P<backend_id>[\w-]+)/$', 'add_domain_backend', name='edit_domain_backend'),
+    url(r'^list_backends/$', 'list_domain_backends', name='list_domain_backends'),
+    url(r'^delete_backend/(?P<backend_id>[\w-]+)/$', 'delete_domain_backend', name='delete_domain_backend'),
+    url(r'^set_default_domain_backend/(?P<backend_id>[\w-]+)/$', 'set_default_domain_backend', name='set_default_domain_backend'),
+    url(r'^unset_default_domain_backend/(?P<backend_id>[\w-]+)/$', 'unset_default_domain_backend', name='unset_default_domain_backend'),
+)
+
+sms_admin_interface_urls = patterns('corehq.apps.sms.views',
+    url(r'^backends/$', 'list_backends', name="default_sms_admin_interface"),
+    url(r'^add_backend/(?P<backend_class_name>[\w-]+)/$', 'add_backend', name="add_backend"),
+    url(r'^edit_backend/(?P<backend_class_name>[\w-]+)/(?P<backend_id>[\w-]+)/$', 'add_backend', name='edit_backend'),
 )

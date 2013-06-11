@@ -8,6 +8,7 @@ from urllib2 import urlopen
 from urllib import urlencode
 import pytz
 from couchdbkit.ext.django.schema import *
+from corehq.apps.unicel.forms import UnicelBackendForm
 
 OUTBOUND_URLBASE = "http://www.unicel.in/SendSMS/sendmsg.php"
 
@@ -45,6 +46,18 @@ class UnicelBackend(SMSBackend):
     @classmethod
     def get_api_id(cls):
         return "UNICEL"
+
+    @classmethod
+    def get_generic_name(cls):
+        return "Unicel"
+
+    @classmethod
+    def get_template(cls):
+        return "unicel/backend.html"
+
+    @classmethod
+    def get_form_class(cls):
+        return UnicelBackendForm
 
     def send(self, message, delay=True, *args, **kwargs):
         """

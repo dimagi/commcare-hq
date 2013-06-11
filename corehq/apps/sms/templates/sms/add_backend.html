@@ -3,8 +3,41 @@
 {% load hq_shared_tags %}
 {% load timezone_tags %}
 
+{% block title %}
+    {% if backend_id %}
+        {% trans "Edit SMS Backend" %}
+    {% else %}
+        {% trans "Add SMS Backend" %}
+    {% endif %}
+{% endblock %}
+
+{% block head %}
+{{ block.super }}
+<style>
+    .form-block {
+        border: 1px solid #EAEAFF;
+        background-color: #FAFAFF;
+        padding: 20px;
+    }
+</style>
+{% endblock %}
+
 {% block js-inline %}{{ block.super }}
 <script>
+    function domain_sharing_changed() {
+        if($("#id_give_other_domains_access").is(":checked")) {
+            $("#id_for_authorized_domains_input").show();
+        } else {
+            $("#id_for_authorized_domains_input").hide();
+        }
+    }
+    
+    $(function(){
+        $("#id_give_other_domains_access").click(function() {
+            domain_sharing_changed();
+        });
+        domain_sharing_changed();
+    });
 </script>
 {% endblock %}
 
@@ -17,9 +50,9 @@
             <div id="report-title">
             {% block page-subtitle %}
                 {% if backend_id %}
-                    <a href="{% url add_domain_backend domain backend_class_name backend_id %}">Edit Backend</a>
+                    <a href="{% url edit_domain_backend domain backend_class_name backend_id %}">Edit SMS Backend</a>
                 {% else %}
-                    <a href="{% url add_domain_backend domain backend_class_name %}">Add Backend</a>
+                    <a href="{% url add_domain_backend domain backend_class_name %}">Add SMS Backend</a>
                 {% endif %}
             {% endblock %}
             </div>
@@ -29,21 +62,36 @@
 
 {% block main_column %}
     <form action="" method="post">
-        <table>
-            <tr>
-                <th><label for="id_name">Name</label></th>
-                <td><input type="text" name="name" id="id_name" value="{{ form.name.value|default:'' }}" /></td>
-                <td>{{ form.name.errors }}</td>
-            </tr>
-            <tr>
-                <th><label for="id_authorized_domains">List domains here:</label></th>
-                <td><input type="text" name="authorized_domains" id="id_authorized_domains" value="{{ form.authorized_domains.value|default:'' }}" /></td>
-                <td>{{ form.authorized_domains.errors }}</td>
-            </tr>
-            {% if backend_specific_template %}
-            {% include backend_specific_template %}
-            {% endif %}
-        </table>
+        <h4>General Settings</h4>
+        <div class="form-block">
+            <table>
+                <tbody>
+                    <tr>
+                        <td><label for="id_name">Name</label></td>
+                        <td><input type="text" name="name" id="id_name" value="{{ form.name.value|default:'' }}" /></td>
+                        <td>{{ form.name.errors }}</td>
+                    </tr>
+                    <tr>
+                        <td><label for="id_reply_to_phone_number">Reply To Phone Number</label></td>
+                        <td><input type="text" name="reply_to_phone_number" id="id_reply_to_phone_number" value="{{ form.reply_to_phone_number.value|default:'' }}" /></td>
+                        <td>{{ form.reply_to_phone_number.errors }}</td>
+                    </tr>
+                    {% if not is_global %}
+                    <tr>
+                        <td><label for="id_give_other_domains_access">Give other domains access</label></td>
+                        <td><input type="checkbox" name="give_other_domains_access" id="id_give_other_domains_access" {% if form.give_other_domains_access.value %}checked="checked"{% endif %} /></td>
+                        <td></td>
+                    </tr>
+                    <tr id="id_for_authorized_domains_input">
+                        <td><label for="id_authorized_domains">List domains here:</label></td>
+                        <td><input type="text" name="authorized_domains" id="id_authorized_domains" value="{{ form.authorized_domains.value|default:'' }}" /></td>
+                        <td>{{ form.authorized_domains.errors }}</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        {% block backend_specific %}{% endblock %}
         <input type="submit" class="btn btn-primary" value="Submit" />
     </form>
 {% endblock %}
