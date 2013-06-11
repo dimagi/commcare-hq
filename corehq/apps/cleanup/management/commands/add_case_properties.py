@@ -1,7 +1,10 @@
+from dimagi.utils.couch.database import get_db
 from django.core.management import BaseCommand
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
 from couchforms.models import XFormInstance
+from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.bulk import wrapped_docs
 from dimagi.utils.couch.database import iter_docs
 
 
@@ -42,6 +45,14 @@ class Command(BaseCommand):
         domain_names = args or [d["key"] for d in Domain.get_all(include_docs=False)]
         for d in domain_names:
             print "Migrating cases in project space: %s" % d
-            for case in CommCareCase.by_domain(d):
-                if add_to_case(case):
-                    case.save()
+            key = ["all", d]
+            results = get_db().view('case/all_cases',
+                startkey=key,
+                endkey=key + [{}],
+                reduce=False,
+                include_docs=False,
+            )
+            for case_ids in chunked([r['id'] for r in results], 100):
+                for case in wrapped_docs(CommCareCase, case_ids):
+                    if add_to_case(case):
+                        case.save()
