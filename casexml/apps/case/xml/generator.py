@@ -114,7 +114,8 @@ class V1CaseXMLGenerator(CaseXMLGeneratorBase):
         root = safe_element("case")
         # moved to attrs in v2
         root.append(safe_element("case_id", self.case.get_id))
-        root.append(safe_element("date_modified", date_to_xml_string(self.case.modified_on)))
+        root.append(safe_element("date_modified",
+                                 json_format_datetime(self.case.modified_on)))
         return root
 
     def get_case_type_element(self):
