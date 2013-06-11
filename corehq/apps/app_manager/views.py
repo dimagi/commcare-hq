@@ -13,6 +13,7 @@ from django.core.cache import cache
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import cache_control
+from corehq.apps.app_manager import commcare_settings
 from django.utils import html
 from django.utils.http import urlencode as django_urlencode
 from couchdbkit.exceptions import ResourceConflict
@@ -25,7 +26,6 @@ from django.utils.http import urlencode
 from django.views.decorators.http import require_POST, require_GET
 from django.conf import settings
 from couchdbkit.resource import ResourceNotFound
-
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.app_manager.util import save_xform
@@ -55,7 +55,7 @@ from corehq.apps.app_manager.forms import NewXFormForm, NewModuleForm
 from corehq.apps.reports import util as report_utils
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
-    AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, EXAMPLE_DOMAIN, str_to_cls, validate_lang, SavedAppBuild, load_commcare_settings_layout
+    AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, EXAMPLE_DOMAIN, str_to_cls, validate_lang, SavedAppBuild
 from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download
@@ -419,7 +419,7 @@ def get_app_view_context(request, app):
     if hasattr(app, 'custom_suite'):
         hq_settings.update({'custom_suite': app.custom_suite})
     context = {
-        'settings_layout': load_commcare_settings_layout(app.get_doc_type()),
+        'settings_layout': commcare_settings.LAYOUT[app.get_doc_type()],
         'settings_values': {
             'properties': profile.get('properties', {}),
             'features': profile.get('features', {}),
