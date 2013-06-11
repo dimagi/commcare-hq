@@ -21,16 +21,22 @@ def add_to_case(case):
 
     for action in case.actions:
         if not action.user_id:
-            action.user_id = xforms(action.xform_id).metadata.userID
-            should_save = True
+            user_id = getattr(xforms(action.xform_id).metadata, 'userID', None)
+            if user_id:
+                action.user_id = user_id
+                should_save = True
 
         if not case.opened_by and action.action_type == 'create':
-            case.opened_by = xforms(action.xform_id).metadata.userID
-            should_save = True
+            opened_by = getattr(xforms(action.xform_id).metadata, 'userID', None)
+            if opened_by:
+                case.opened_by = opened_by
+                should_save = True
 
         if case.closed and not case.closed_by and action.action_type == 'close':
-            case.closed_by = xforms(action.xform_id).metadata.userID
-            should_save = True
+            closed_by = getattr(xforms(action.xform_id).metadata, 'userID', None)
+            if closed_by:
+                case.closed_by = closed_by
+                should_save = True
 
     return should_save
 
