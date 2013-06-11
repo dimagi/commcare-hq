@@ -7,13 +7,14 @@ from hsph.reports import HSPHSiteDataMixin
 
 from collections import defaultdict
 
-class DataSummaryReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
-    """
-        Base class for this section
-    """
+class DataSummaryReport(CustomProjectReport, ProjectReportParametersMixin,
+                        DatespanMixin, HSPHSiteDataMixin):
     pass
 
-class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport, HSPHSiteDataMixin):
+class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport):
+    """
+    BetterBirth Shared Dropbox/Updated ICT package/Reporting Specs/Primary Outcome.xlsx
+    """
     name = "Primary Outcome Report"
     slug = "hsph_primary_outcome"
     fields = ['corehq.apps.reports.fields.DatespanField',
@@ -97,12 +98,11 @@ class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport, HSPHSiteData
         ]
 
         for key in site_keys:
-            wtf = key
-            wtf[2] = str(wtf[2])
+            key[2] = str(key[2])  # wtf
 
             data = get_db().view('hsph/data_summary', 
-                startkey=[self.domain] + prefix + ['region'] + wtf + [startdate], 
-                endkey=[self.domain] + prefix + ['region'] + wtf + [enddate],
+                startkey=[self.domain] + prefix + ['region'] + key + [startdate], 
+                endkey=[self.domain] + prefix + ['region'] + key + [enddate],
                 reduce=True,
                 wrapper=lambda r: r['value'])
 
@@ -114,7 +114,11 @@ class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport, HSPHSiteData
         return rows
 
 
-class SecondaryOutcomeReport(DataSummaryReport, HSPHSiteDataMixin):
+class SecondaryOutcomeReport(DataSummaryReport):
+    """
+    BetterBirth Shared Dropbox/Updated ICT package/Reporting Specs/Secondary
+    Outcome.xlsx
+    """
     name = "Secondary Outcome Report"
     slug = "hsph_secondary_outcome"
     fields = ['corehq.apps.reports.fields.DatespanField',
@@ -180,7 +184,11 @@ class SecondaryOutcomeReport(DataSummaryReport, HSPHSiteDataMixin):
         return data
 
 
-class FADAObservationsReport(DataSummaryReport, HSPHSiteDataMixin):
+class FADAObservationsReport(DataSummaryReport):
+    """
+    BetterBirth Shared Dropbox/Updated ICT package/Reporting Specs/FADA
+    Observations - 2 _v6_ms.xls
+    """
     name = "FADA Observations"
     slug = "fada_observations"
 
