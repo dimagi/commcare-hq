@@ -25,7 +25,7 @@ from corehq.apps.prescriptions.models import Prescription
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.forms import WebUserForm, UserForm, ProjectSettingsForm
+from corehq.apps.users.forms import WebUserForm, UserForm, ProjectSettingsForm, CommtrackUserForm
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser, \
     DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required
@@ -316,38 +316,8 @@ def account(request, domain, couch_user_id, template="users/account.html"):
             })
 
     # commtrack
-    # FIXME clean up where all this stuff lives
-    from django import forms
-    from django.template.loader import get_template
-    from django.template import Template, Context
-    class SupplyPointSelectWidget(forms.Widget):
-        def __init__(self, attrs=None, domain=None):
-            super(SupplyPointSelectWidget, self).__init__(attrs)
-            self.domain = domain
-
-        def render(self, name, value, attrs=None):
-            return get_template('locations/manage/partials/autocomplete_select_widget.html').render(Context({
-                        'name': name,
-                        'value': value,
-                        'query_url': reverse('corehq.apps.commtrack.views.api_query_supply_point', args=[domain]),
-                    }))
-    class CommtrackUserForm(forms.Form):
-        supply_point = forms.CharField(label='Supply Point:', required=False)
-
-        def __init__(self, *args, **kwargs):
-            domain = None
-            if 'domain' in kwargs:
-                domain = kwargs['domain']
-                del kwargs['domain']
-            super(CommtrackUserForm, self).__init__(*args, **kwargs)
-            self.fields['supply_point'].widget = SupplyPointSelectWidget(domain=domain)
-
-        def save(self, user):
-            user.commtrack_location = self.cleaned_data['supply_point']
-            user.save()
-
     if request.method == "POST" and request.POST['form_type'] == "commtrack":
-        commtrack_form = CommtrackUserForm(request.POST)
+        commtrack_form = CommtrackUserForm(request.POST, domain=domain)
         if commtrack_form.is_valid():
             commtrack_form.save(couch_user)
     else:
