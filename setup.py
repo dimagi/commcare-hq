@@ -22,6 +22,6 @@ setup(
     tests_require=[
         'django',
         'unittest2',
-        'fakecouch'
+        'fakecouch>=0.0.3'
     ]
 )
