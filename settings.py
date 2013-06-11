@@ -595,6 +595,7 @@ COUCHDB_APPS = [
 
     # custom reports
     'benin',
+    'cvsu',
     'dca',
     'hsph',
     'mvp',
