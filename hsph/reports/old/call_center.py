@@ -217,7 +217,6 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin,
         'corehq.apps.reports.fields.DatespanField',
         'hsph.fields.SiteField',
         #'hsph.fields.AllocatedToFilter',
-        #'hsph.fields.DCTLAndFIDAFilter',
         'corehq.apps.reports.fields.SelectOpenCloseField',
     )
 
@@ -312,8 +311,6 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin,
             'hsph_region',
             'hsph_district',
             'hsph_site',
-            'dctl_fida_dctl',
-            'dctl_fida_fida',
             'startdate',
             'enddate'
         ]
@@ -325,18 +322,6 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin,
             })
 
         return params
-
-    @property
-    def user_ids(self):
-        fida_user_id = self.request_params.get('dctl_fida_fida', None)
-        dctl_group_id = self.request_params.get('dctl_fida_dctl', None)
-
-        if fida_user_id:
-            return [fida_user_id]
-        elif dctl_group_id:
-            return Group.get(dctl_group_id).get_user_ids()
-        else:
-            return super(CaseReport, self).user_ids
 
     @property
     def rows(self):

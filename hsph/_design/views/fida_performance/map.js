@@ -1,5 +1,6 @@
 function(doc) {
     // !code util/hsph.js
+    // !code util/hsph_field_management.js
 
     if (!(
         isFIDALogSiteForm(doc) ||
@@ -35,22 +36,11 @@ function(doc) {
     if (isFIDALogSiteForm(doc)) {
         data.facilityVisits = 1;
         data[form.current_site + 'Visits'] = 1;
-    }
-
-    if (isHSPHBirthRegForm(doc)) {
+    } else if (isHSPHBirthRegForm(doc)) {
+        data = getContactData(form);
         data.birthRegistrations = 1;
         data.birthRegistrationTime = get_form_filled_seconds(doc);
-        data.noPhoneDetails = !(
-            form.phone_mother_number ||
-            form.phone_husband_number ||
-            form.phone_asha_number ||
-            form.phone_house_number);
-
-        data.noAddress = (form.address_information_filled === 'no');
-        data.noContactInfo = (data.noPhoneDetails && data.noAddress);
-    }
-
-    if (isCATIFollowUpForm(doc)) {
+    } else if (isCATIFollowUpForm(doc)) {
         data.homeVisitsCompleted = (form.last_status === 'followed_up'); 
         emit(["workingDays", doc.domain, userID, date], {
             workingDay: daysSinceEpoch(new Date(form.meta.timeEnd))

@@ -6,7 +6,7 @@ from hsph.reports.old import (field_management as old_field_management,
 new_reports = (
     ('Field Management', (
         field_management.FIDAPerformanceReport,
-        # Facility Registrations
+        field_management.FacilityRegistrationsReport,
         # Facility-Wise Follow Up
         field_management.CaseReport,
     )),

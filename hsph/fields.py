@@ -4,8 +4,6 @@ from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.reports.filters.base import (BaseSingleOptionFilter,
     BaseDrilldownOptionFilter)
 from corehq.apps.reports.filters.users import LinkedUserFilter
-from corehq.apps.groups.models import Group
-from django.utils.translation import ugettext as _
 
 
 class SiteField(ReportField):
@@ -17,8 +15,7 @@ class SiteField(ReportField):
     template = "hsph/fields/sites.html"
 
     def update_context(self):
-        sites = self.getFacilities()
-        self.context['sites'] = sites
+        self.context['sites'] = self.getFacilities(domain=self.domain)
         self.context['selected'] = dict(region=self.request.GET.get(self.slugs['region'], ''),
                                         district=self.request.GET.get(self.slugs['district'], ''),
                                         siteNum=self.request.GET.get(self.slugs['site'], ''))
@@ -107,49 +104,6 @@ class DCTLToFIDAFilter(LinkedUserFilter):
     domain = 'hsph'
     user_types = ["DCTL", "FIDA"]
 
-# todo: remove
-class DCTLAndFIDAFilter(BaseDrilldownOptionFilter):
-
-    slug = 'dctl_fida'
-    label = "DCTL"
-
-    @classmethod
-    def get_group(cls, dctl):
-        return Group.by_name(
-            'hsph', 'Call Center - %s' % dctl.raw_username.capitalize())
-
-    @classmethod
-    def get_labels(self):
-        return [
-            (_('DCTL'), _("Select a DCTL"), 'dctl'),
-            (_('FIDA'), _("Select a FIDA"), 'fida')
-        ]
-
-    @property
-    def drilldown_map(self):
-
-        data_type = FixtureDataType.by_domain_tag('hsph', 'site').first()
-        data_items = FixtureDataItem.by_data_type('hsph', data_type._id).all()
-
-        dctl_usernames = []
-        for item in data_items:
-            users = list(item.get_users())
-            if not users:
-                continue
-
-            dctl = users[0]
-            dctl_group = self.get_group(dctl)
-            
-            if dctl_group:
-                if dctl.raw_username not in dctl_usernames:
-                    dctl_usernames.append(dctl.raw_username)
-                    yield {
-                        'val': dctl_group._id,
-                        'text': dctl.raw_username,
-                        'next': [dict(val=u._id, text=u.raw_username)
-                                 for u in dctl_group.get_users()]
-                    }
-
 class AllocatedToFilter(BaseSingleOptionFilter):
     slug = "allocated_to"
     label = "Allocated To"
@@ -163,7 +117,6 @@ class AllocatedToFilter(BaseSingleOptionFilter):
     default_text = "All"
 
 
-
 class SelectReferredInStatusField(ReportSelectField):
     slug = "referred_in_status"
     name = "Referred In Status"
@@ -171,6 +124,7 @@ class SelectReferredInStatusField(ReportSelectField):
     cssClasses = "span3"
     options = [dict(val="referred", text="Only Referred In Births")]
     default_option = "All Birth Data"
+
 
 class SelectCaseStatusField(ReportSelectField):
     slug = "case_status"
@@ -180,6 +134,7 @@ class SelectCaseStatusField(ReportSelectField):
     options = [dict(val="closed", text="CLOSED"),
                dict(val="open", text="OPEN")]
     default_option = "Select Status..."
+
 
 class IHForCHFField(ReportSelectField):
     slug = "ihf_or_chf"
@@ -268,7 +223,8 @@ class FacilityField(ReportSelectField):
         self.options = self.getFacilities()
 
     @classmethod
-    def getFacilities(cls):
-        data_type = FixtureDataType.by_domain_tag(cls.domain, 'site').first()
-        data_items = FixtureDataItem.by_data_type(cls.domain, data_type.get_id)
+    def getFacilities(cls, domain=None):
+        domain = domain or cls.domain
+        data_type = FixtureDataType.by_domain_tag(domain, 'site').first()
+        data_items = FixtureDataItem.by_data_type(domain, data_type.get_id)
         return [dict(text=item.fields.get("site_name"), val=item.fields.get("site_id")) for item in data_items]
