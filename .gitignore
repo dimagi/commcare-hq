@@ -31,5 +31,8 @@ tmp.sh
 app_builder_live_test/*/
 dump.rdb
 
+ptop*.txt
+ptop*.json
+
 /.coverage
 /coverage-report
