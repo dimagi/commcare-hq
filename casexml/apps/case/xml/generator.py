@@ -1,6 +1,7 @@
 from casexml.apps.case.xml import V1, V2, check_version, V2_NAMESPACE
 from xml.etree import ElementTree
 import logging
+from dimagi.utils.parsing import json_format_datetime
 
 def safe_element(tag, text=None):
     # shortcut for commonly used functionality
@@ -141,35 +142,32 @@ class V1CaseXMLGenerator(CaseXMLGeneratorBase):
         if self.case.indices:
             logging.info("Tried to add indices to version 1 CaseXML restore. This is not supported. "
                          "The case id is %s, domain %s." % (self.case.get_id, self.case.domain))
-        
-        
+
 class V2CaseXMLGenerator(CaseXMLGeneratorBase):
-    
-    
     def get_root_element(self):
         root = safe_element("case")
-        root.attrib = {"xmlns": V2_NAMESPACE,
-                       "case_id": self.case.get_id,
-                       "user_id": self.case.user_id,
-                       "date_modified": date_to_xml_string(self.case.modified_on)}
+        root.attrib = {
+            "xmlns": V2_NAMESPACE,
+            "case_id": self.case.get_id,
+            "user_id": self.case.user_id,
+            "date_modified": json_format_datetime(self.case.modified_on)}
         return root
-        
-    
+
     def get_case_type_element(self):
         # case_type_id --> case_type
         return safe_element("case_type", self.case.type)
-    
+
     def add_base_properties(self, element):
         super(V2CaseXMLGenerator, self).add_base_properties(element)
         # owner id introduced in v2
         # default to user_id for 1.3 compatibility
         element.append(safe_element('owner_id', self.case.owner_id or self.case.user_id))
-        
+
     def add_custom_properties(self, element):
         if self.case.external_id:
             element.append(safe_element('external_id', self.case.external_id))
         super(V2CaseXMLGenerator, self).add_custom_properties(element)
-            
+
     def add_referrals(self, element):
         # intentionally a no-op
         if self.case.referrals:

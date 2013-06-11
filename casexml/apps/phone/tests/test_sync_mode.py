@@ -6,7 +6,7 @@ from casexml.apps.case.tests.util import CaseBlock, check_user_has_case, delete_
 from casexml.apps.case.signals import process_cases
 from casexml.apps.phone.models import SyncLog, User
 from casexml.apps.phone.restore import generate_restore_payload
-from casexml.apps.phone.tests.dummy import dummy_user
+from dimagi.utils.parsing import json_format_datetime
 from couchforms.models import XFormInstance
 from casexml.apps.case.xml import V2
 from casexml.apps.case.util import post_case_blocks
@@ -429,8 +429,8 @@ class MultiUserSyncTest(SyncBaseTest):
             user_id=OTHER_USER_ID,
             case_type=PARENT_TYPE,
             version=V2,
-        ).as_xml()
-             
+        ).as_xml(format_datetime=json_format_datetime)
+
         self._postFakeWithSyncToken(
             parent_case,
             latest_sync.get_id
@@ -438,7 +438,7 @@ class MultiUserSyncTest(SyncBaseTest):
         # the original user should not get the parent case
         check_user_has_case(self, self.user, parent_case, should_have=False,
                             restore_id=self.sync_log.get_id, version=V2)
-        
+
         # update the original case from another, adding an indexed case
         self._postFakeWithSyncToken(
             CaseBlock(
@@ -448,7 +448,7 @@ class MultiUserSyncTest(SyncBaseTest):
                 owner_id=USER_ID,
                 version=V2,
                 index={'mother': ('mother', mother_id)}
-            ).as_xml(),
+            ).as_xml(format_datetime=json_format_datetime),
             latest_sync.get_id
         )
 
@@ -461,15 +461,19 @@ class MultiUserSyncTest(SyncBaseTest):
             case_type=PARENT_TYPE,
             owner_id=OTHER_USER_ID,
             version=V2,
-        ).as_xml()
-        
-        check_user_has_case(self, self.user, expected_parent_case, 
+        ).as_xml(format_datetime=json_format_datetime)
+
+        check_user_has_case(self, self.user, expected_parent_case,
                             restore_id=self.sync_log.get_id, version=V2)
-        orig = check_user_has_case(self, self.user, CaseBlock(case_id=case_id, version=V2).as_xml(),
-                                   line_by_line=False, restore_id=self.sync_log.get_id, 
-                                   version=V2)
+        orig = check_user_has_case(
+            self, self.user,
+            CaseBlock(
+                case_id=case_id, version=V2
+            ).as_xml(format_datetime=json_format_datetime),
+            line_by_line=False, restore_id=self.sync_log.get_id,
+            version=V2)
         self.assertTrue("index" in ElementTree.tostring(orig))
-        
+
     def testMultiUserEdits(self):
         # create a case from one user
         case_id = "multi_user_edits"
@@ -488,7 +492,7 @@ class MultiUserSyncTest(SyncBaseTest):
             user_id=USER_ID,
             version=V2,
             update={'greeting': 'hello'}
-        ).as_xml()
+        ).as_xml(format_datetime=json_format_datetime)
         self._postFakeWithSyncToken(
             my_change,
             self.sync_log.get_id
@@ -501,7 +505,7 @@ class MultiUserSyncTest(SyncBaseTest):
             user_id=USER_ID,
             version=V2,
             update={'greeting_2': 'hello'}
-        ).as_xml()
+        ).as_xml(format_datetime=json_format_datetime)
         self._postFakeWithSyncToken(
             their_change,
             self.other_sync_log.get_id
@@ -521,7 +525,7 @@ class MultiUserSyncTest(SyncBaseTest):
             owner_id=SHARED_ID,
             case_name='',
             case_type='mother',
-        ).as_xml()
+        ).as_xml(format_datetime=json_format_datetime)
         check_user_has_case(self, self.user, joint_change, restore_id=self.sync_log.get_id, version=V2)
         check_user_has_case(self, self.other_user, joint_change, restore_id=self.other_sync_log.get_id, version=V2)
 
@@ -544,23 +548,25 @@ class MultiUserSyncTest(SyncBaseTest):
             close_block,
             self.other_sync_log.get_id
         )
-        
+
         # original user syncs again
         # make sure close block appears
         check_user_has_case(self, self.user, close_block, line_by_line=False,
                             restore_id=self.sync_log.get_id, version=V2)
-    
+
     def testOtherUserUpdatesUnowned(self):
         # create a case from one user and assign ownership elsewhere
         case_id = "other_user_updates_unowned"
         self._createCaseStubs([case_id], owner_id=OTHER_USER_ID)
-        
+
         # sync and update from another user
-        check_user_has_case(self, self.other_user,
-            CaseBlock(case_id=case_id, version=V2).as_xml(),
+        check_user_has_case(
+            self, self.other_user,
+            CaseBlock(case_id=case_id, version=V2).as_xml(
+                format_datetime=json_format_datetime),
             should_have=True, line_by_line=False,
             restore_id=self.other_sync_log.get_id, version=V2)
-        
+
         self.other_sync_log = SyncLog.last_for_user(OTHER_USER_ID)
         update = CaseBlock(
             create=False,

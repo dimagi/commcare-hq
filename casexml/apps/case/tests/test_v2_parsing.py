@@ -10,6 +10,7 @@ from django.http import HttpRequest
 from casexml.apps.case import const
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
+from dimagi.utils.parsing import json_format_datetime
 
 class Version2CaseParsingTest(TestCase):
     """
@@ -81,22 +82,23 @@ class Version2CaseParsingTest(TestCase):
         self.assertEqual("cc_bihar_pregnancy", case.type)
         self.assertEqual("TEST", case.name)
         self.assertEqual(2, len(case.actions))
-    
-    
+
     def testParseWithIndices(self):
         self.testParseCreate()
-        
+
         user_id = "bar-user-id"
         for prereq in ["some_referenced_id", "some_other_referenced_id"]:
             post_case_blocks([
-                CaseBlock(create=True, case_id=prereq, user_id=user_id,
-                          version=V2).as_xml()
+                CaseBlock(
+                    create=True, case_id=prereq,
+                    user_id=user_id, version=V2
+                ).as_xml(format_datetime=json_format_datetime)
             ])
-            
+
         file_path = os.path.join(os.path.dirname(__file__), "data", "v2", "index_update.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        
+
         form = post_xform_to_couch(xml_data)
         process_cases(sender="testharness", xform=form)
         case = CommCareCase.get("foo-case-id")
@@ -107,27 +109,27 @@ class Version2CaseParsingTest(TestCase):
         self.assertEqual("some_referenced_id", case.get_index("foo_ref").referenced_id)
         self.assertEqual("bop", case.get_index("baz_ref").referenced_type)
         self.assertEqual("some_other_referenced_id", case.get_index("baz_ref").referenced_id)
-        
+
         # check the action
         self.assertEqual(2, len(case.actions))
         [_, index_action] = case.actions
         self.assertEqual(const.CASE_ACTION_INDEX, index_action.action_type)
         self.assertEqual(2, len(index_action.indices))
-        
-        
+
+
         # quick test for ota restore
         v2response = phone_views.xml_for_case(HttpRequest(), case.get_id, version="2.0")
         expected_v2_response = """
-<case case_id="foo-case-id" date_modified="2011-12-07" user_id="bar-user-id" xmlns="http://commcarehq.org/case/transaction/v2">
-    <create>
-        <case_type>v2_case_type</case_type>
-        <case_name>test case name</case_name>
-        <owner_id>bar-user-id</owner_id>
-    </create>
-    <index>
-        <baz_ref case_type="bop">some_other_referenced_id</baz_ref>
-        <foo_ref case_type="bar">some_referenced_id</foo_ref>
-    </index>
-</case>"""
+        <case case_id="foo-case-id" date_modified="2011-12-07T13:42:50Z" user_id="bar-user-id" xmlns="http://commcarehq.org/case/transaction/v2">
+                <create>
+                    <case_type>v2_case_type</case_type>
+                    <case_name>test case name</case_name>
+                    <owner_id>bar-user-id</owner_id>
+                </create>
+                <index>
+                    <baz_ref case_type="bop">some_other_referenced_id</baz_ref>
+                    <foo_ref case_type="bar">some_referenced_id</foo_ref>
+                </index>
+            </case>"""
         check_xml_line_by_line(self, expected_v2_response, v2response.content)
         
