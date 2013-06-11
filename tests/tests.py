@@ -17,7 +17,7 @@ class Base0(fluff.Calculator):
     def base_0_filter(self):
         pass
 
-    @fluff.date_emitter()
+    @fluff.date_emitter
     def base_0_emitter(self):
         pass
 
@@ -27,7 +27,7 @@ class Base1(Base0):
     def base_1_filter(self):
         pass
 
-    @fluff.date_emitter()
+    @fluff.date_emitter
     def base_1_emitter(self):
         pass
 
@@ -37,7 +37,7 @@ class Base2(Base0):
     def base_2_filter(self):
         pass
 
-    @fluff.date_emitter()
+    @fluff.date_emitter
     def base_2_emitter(self):
         pass
 
@@ -47,7 +47,7 @@ class Base3(Base1, Base2):
     def base_3_filter(self):
         pass
 
-    @fluff.date_emitter()
+    @fluff.date_emitter
     def base_3_emitter(self):
         pass
 
@@ -271,21 +271,21 @@ class MockDoc(Document):
 
 
 class ValueCalculator(fluff.Calculator):
-    @fluff.date_emitter('sum')
+    @fluff.custom_date_emitter('sum')
     def date_value(self, case):
         for action in case.actions:
             yield [action['date'], action['x']]
 
-    @fluff.null_emitter('max')
+    @fluff.custom_null_emitter('max')
     def null_value(self, case):
         yield [None, 2]
 
-    @fluff.date_emitter()
+    @fluff.date_emitter
     def date(self, case):
         for action in case.actions:
             yield action['date']
 
-    @fluff.null_emitter()
+    @fluff.null_emitter
     def null(self, case):
         yield None
 
