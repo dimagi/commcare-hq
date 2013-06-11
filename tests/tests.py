@@ -270,17 +270,6 @@ class MockDoc(Document):
     _doc_type = "Mock"
 
 
-class VisitCalculator(fluff.Calculator):
-    @fluff.date_emitter()
-    def all_visits(self, case):
-        for action in case.actions:
-            yield action['date']
-
-    @fluff.null_emitter()
-    def null_emitter(self, case):
-        yield None
-
-
 class ValueCalculator(fluff.Calculator):
     @fluff.date_emitter('sum')
     def date_value(self, case):
