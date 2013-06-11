@@ -22,18 +22,18 @@ import fluff
 
 class VisitCalculator(fluff.Calculator):
 
-    @fluff.date_emitter()
+    @fluff.date_emitter
     def all_visits(self, case):
         for action in case.actions:
             yield action.date
 
-    @fluff.date_emitter()
+    @fluff.date_emitter
     def bp_visits(self, case):
         for action in case.actions:
             if is_bp(case):
                 yield action.date
 
-    @fluff.date_emitter('max')
+    @fluff.custom_date_emitter('max')
     def temp_max(self, case):
         for action in case.actions:
             if is_temp(case):

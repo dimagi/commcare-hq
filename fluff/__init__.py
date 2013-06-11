@@ -37,18 +37,22 @@ class base_emitter(object):
         pass
 
 
-class date_emitter(base_emitter):
+class custom_date_emitter(base_emitter):
     fluff_emitter = 'date'
 
     def validate(self, value):
         assert value[0] is not None
 
 
-class null_emitter(base_emitter):
+class custom_null_emitter(base_emitter):
     fluff_emitter = 'null'
 
     def validate(self, value):
         assert value[0] is None
+
+date_emitter = custom_date_emitter()
+null_emitter = custom_null_emitter()
+
 
 
 def filter_by(fn):
