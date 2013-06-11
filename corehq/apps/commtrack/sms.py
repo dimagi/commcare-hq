@@ -57,9 +57,9 @@ class StockReportParser(object):
         self.location = None
         u = v.owner
         if isinstance(u, CommCareUser):
-
-            print u
-            pass
+            linked_loc_id = u.dynamic_properties().get('commtrack_location')
+            if linked_loc_id:
+                self.location = Location.get(linked_loc_id).site_code
 
         # get user linked to verified_contact
         # determine if user is linked to a single supply point for stock reporting purposes

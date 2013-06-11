@@ -1,55 +1,47 @@
 {% load hq_shared_tags %}
 
+<link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
 <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
 <script>
 
 $(function() {
 
-var formatResult = function() { };
-var formatSelection = function() { };
-
-$("#xxx").select2({
-    placeholder: "Search for a movie",
+$("#supply-point").select2({
+    placeholder: "Enter Name of Supply Point",
     minimumInputLength: 1,
-    ajax: { // instead of writing the function to execute the request we use Select2's convenient helper
-        url: "http://api.rottentomatoes.com/api/public/v1.0/movies.json",
-        dataType: 'jsonp',
+    ajax: {
+        url: "{{ query_url }}",
+        dataType: 'json',
+        quietMillis: 500,
         data: function (term, page) {
             return {
-                q: term, // search term
-                page_limit: 10,
-                apikey: "ju6z9mjyajq2djue3gbvv26t" // please do not use so this example keeps working
+                name: term,
+                page: page,
+                page_limit: 25, // what does this do?
             };
         },
-        results: function (data, page) { // parse the results into the format expected by Select2.
-            // since we are using custom formatting functions we do not need to alter remote JSON data
-            return {results: data.movies};
+        results: function (data, page) {
+            return {results: data, more: false};
         }
     },
     initSelection: function(element, callback) {
-        // the input tag has a value attribute preloaded that points to a preselected movie's id
-        // this function resolves that id attribute to an object that select2 can render
-        // using its formatResult renderer - that way the movie name is shown preselected
-        var id=$(element).val();
-        if (id!=="") {
-            $.ajax("http://api.rottentomatoes.com/api/public/v1.0/movies/"+id+".json", {
+        var id = $(element).val();
+        if (id !== "") {
+            $.ajax("{{ query_url }}", {
                 data: {
-                    apikey: "ju6z9mjyajq2djue3gbvv26t"
+                    id: id
                 },
-                dataType: "jsonp"
+                dataType: "json"
             }).done(function(data) { callback(data); });
         }
     },
-    formatResult: formatResult, // omitted for brevity, see the source of this page
-    formatSelection: formatSelection,  // omitted for brevity, see the source of this page
-    dropdownCssClass: "bigdrop", // apply css that makes the dropdown taller
-    escapeMarkup: function (m) { return m; } // we do not want to escape markup since we are displaying html in results
+    formatResult: function(e) { return e.name; },
+    formatSelection: function(e) { return e.name; },
 });
 
 });
 
 </script>
 
-{{ name }} {{ value }} {{ a }}
-
-<input type="hidden" id="xxx"></input>
+<!-- FIXME should not use a global id or else you can only ever have one of these widgets on the page -->
+<input type="hidden" id="supply-point" name="{{ name }}" value="{{ value }}" style="width: 30em;"></input>

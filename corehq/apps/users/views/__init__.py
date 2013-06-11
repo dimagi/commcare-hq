@@ -316,26 +316,45 @@ def account(request, domain, couch_user_id, template="users/account.html"):
             })
 
     # commtrack
+    # FIXME clean up where all this stuff lives
     from django import forms
     from django.template.loader import get_template
     from django.template import Template, Context
     class SupplyPointSelectWidget(forms.Widget):
-        def __init__(self, attrs=None, a=None):
+        def __init__(self, attrs=None, domain=None):
             super(SupplyPointSelectWidget, self).__init__(attrs)
-            self.a = a
+            self.domain = domain
 
         def render(self, name, value, attrs=None):
             return get_template('locations/manage/partials/autocomplete_select_widget.html').render(Context({
                         'name': name,
                         'value': value,
-                        'a': self.a,
+                        'query_url': reverse('corehq.apps.commtrack.views.api_query_supply_point', args=[domain]),
                     }))
     class CommtrackUserForm(forms.Form):
-        supply_point = forms.CharField(label='Supply Point:', required=False, widget=SupplyPointSelectWidget())
-        
-    linked_loc = None
+        supply_point = forms.CharField(label='Supply Point:', required=False)
+
+        def __init__(self, *args, **kwargs):
+            domain = None
+            if 'domain' in kwargs:
+                domain = kwargs['domain']
+                del kwargs['domain']
+            super(CommtrackUserForm, self).__init__(*args, **kwargs)
+            self.fields['supply_point'].widget = SupplyPointSelectWidget(domain=domain)
+
+        def save(self, user):
+            user.commtrack_location = self.cleaned_data['supply_point']
+            user.save()
+
+    if request.method == "POST" and request.POST['form_type'] == "commtrack":
+        commtrack_form = CommtrackUserForm(request.POST)
+        if commtrack_form.is_valid():
+            commtrack_form.save(couch_user)
+    else:
+        linked_loc = couch_user.dynamic_properties().get('commtrack_location') # FIXME update user model appropriately
+        commtrack_form = CommtrackUserForm(domain=domain, initial={'supply_point': linked_loc})
     context.update({
-            'commtrack_form': CommtrackUserForm(initial={'supply_point': 'asdf'}),
+            'commtrack_form': commtrack_form,
     })
 
     # for basic tab
