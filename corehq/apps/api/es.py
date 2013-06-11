@@ -104,8 +104,8 @@ class ESView(View):
         es_results = es_base.get('_search', data=es_query)
 
         if 'error' in es_results:
-            logging.error("Error in elasticsearch query [%s]: %s\nquery: %s"  % (self.index, es_results['error'], es_query))
-            notify_exception(None, message="Error in %s elasticsearch query: %s" % (self.index, es_results['error']))
+            msg = "Error in elasticsearch query [%s]: %s\nquery: %s" % (self.index, es_results['error'], es_query)
+            notify_exception(None, message=msg)
             return None
 
         for res in es_results['hits']['hits']:
