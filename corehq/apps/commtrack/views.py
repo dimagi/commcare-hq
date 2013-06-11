@@ -18,6 +18,7 @@ import json
 from couchdbkit import ResourceNotFound
 import csv
 from dimagi.utils.couch.database import iter_docs
+import itertools
 
 DEFAULT_PRODUCT_LIST_LIMIT = 10
 
@@ -234,21 +235,27 @@ def api_query_supply_point(request, domain):
     # TODO support paging
     page = request.GET.get('page')
 
-    data = [
-        {'name': 'Aberdeen', 'id': 'xxabe'},
-        {'name': 'Abington', 'id': 'xxabi'},
-        {'name': 'Abiquisit', 'id': 'xxabj'},
-        {'name': 'Berkeley', 'id': 'xxber'},
-        {'name': 'Morristown', 'id': 'xxmor'},
-    ]
+    def loc_to_payload(loc):
+        return {'id': loc._id, 'name': loc.name}
 
     if id:
-        try:
-            results = filter(lambda e: e['id'] == id, data)[0]
-        except KeyError:
-            results = []
+        loc = Location.get(id)
+        if loc:
+            payload = loc_to_payload(loc)
+        else:
+            payload = None
     else:
-        results = filter(lambda e: e['name'].lower().startswith(query.lower()), data)
+        LIMIT = 100
+        loc_types = [loc_type.name for loc_type in Domain.get_by_name(domain).commtrack_settings.location_types if not loc_type.administrative]
 
-    return HttpResponse(json.dumps(results), 'text/json')
+        def get_locs(type):
+            q = query.lower()
+            startkey = [domain, type, q]
+            endkey = [domain, type, q + 'zzzzzz']
+            return Location.view('locations/by_name', startkey=startkey, endkey=endkey, limit=LIMIT, include_docs=True)
+
+        locs = sorted(itertools.chain(*(get_locs(loc_type) for loc_type in loc_types)), key=lambda e: e.name)[:LIMIT]
+        payload = map(loc_to_payload, locs)
+
+    return HttpResponse(json.dumps(payload), 'text/json')
 
