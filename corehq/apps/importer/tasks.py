@@ -30,7 +30,11 @@ def bulk_import_async(import_id, config, domain, excel_id):
     row_count = spreadsheet.get_num_rows()
     columns = spreadsheet.get_header_columns()
     match_count = created_count = too_many_matches = 0
-    prime_offset = 1 # used to prevent back-to-back priming
+    prime_offset = 1  # used to prevent back-to-back priming
+
+    user = CouchUser.get_by_user_id(config.couch_user_id, domain)
+    username = user.username
+    user_id = user._id
 
     for i in range(row_count):
         DownloadBase.set_progress(task, i, row_count)
@@ -62,31 +66,27 @@ def bulk_import_async(import_id, config, domain, excel_id):
         fields_to_update = importer_util.populate_updated_fields(config,
                                                                  columns, row)
 
-        user = CouchUser.get_by_user_id(config.couch_user_id, domain)
-        username = user.username
-        user_id = user._id
-
         if not case:
             id = uuid.uuid4().hex
             owner_id = user_id
 
             caseblock = CaseBlock(
-                create = True,
-                case_id = id,
-                version = V2,
-                user_id = user_id,
-                owner_id = owner_id,
-                case_type = config.case_type,
-                external_id = search_id if config.search_field == 'external_id' else '',
-                update = fields_to_update
+                create=True,
+                case_id=id,
+                version=V2,
+                user_id=user_id,
+                owner_id=owner_id,
+                case_type=config.case_type,
+                external_id=search_id if config.search_field == 'external_id' else '',
+                update=fields_to_update
             )
             submit_case_block(caseblock, domain, username, user_id)
         elif case and case.type == config.case_type:
             caseblock = CaseBlock(
-                create = False,
-                case_id = case._id,
-                version = V2,
-                update = fields_to_update
+                create=False,
+                case_id=case._id,
+                version=V2,
+                update=fields_to_update
             )
             submit_case_block(caseblock, domain, username, user_id)
 
