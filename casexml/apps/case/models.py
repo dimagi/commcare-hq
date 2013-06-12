@@ -1,6 +1,9 @@
 from __future__ import absolute_import
 import re
 from django.core.cache import cache
+from django.conf import settings
+from django.utils.translation import ugettext as _
+
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml,\
@@ -8,6 +11,7 @@ from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml,\
 from datetime import datetime
 from couchdbkit.ext.django.schema import *
 from casexml.apps.case import const
+from dimagi.utils.modules import to_function
 from dimagi.utils import parsing
 import logging
 from dimagi.utils.decorators.memoized import memoized
@@ -28,6 +32,11 @@ For details on casexml check out:
 http://bitbucket.org/javarosa/javarosa/wiki/casexml
 """
 
+if getattr(settings, 'CASE_WRAPPER', None):
+    CASE_WRAPPER = to_function(getattr(settings, 'CASE_WRAPPER'))
+else:
+    CASE_WRAPPER = None
+
 class CaseBase(SafeSaveDocument):
     """
     Base class for cases and referrals.
@@ -38,8 +47,13 @@ class CaseBase(SafeSaveDocument):
     closed = BooleanProperty(default=False)
     closed_on = DateTimeProperty()
     
-    class Meta:
-        app_label = 'case'
+    def to_full_dict(self):
+        """
+        Include calculated properties that need to be available to the case
+        details display by overriding this method.
+
+        """
+        return self.to_json()
 
 
 class CommCareCaseAction(LooselyEqualDocumentSchema):
@@ -48,6 +62,7 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
     the xml.
     """
     action_type = StringProperty(choices=list(const.CASE_ACTIONS))
+    user_id = StringProperty()
     date = DateTimeProperty()
     server_date = DateTimeProperty()
     xform_id = StringProperty()
@@ -60,11 +75,11 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
     indices = SchemaListProperty(CommCareCaseIndex)
 
     @classmethod
-    def from_parsed_action(cls, action_type, date, xformdoc, action):
+    def from_parsed_action(cls, action_type, date, user_id, xformdoc, action):
         if not action_type in const.CASE_ACTIONS:
             raise ValueError("%s not a valid case action!")
         
-        ret = CommCareCaseAction(action_type=action_type, date=date)
+        ret = CommCareCaseAction(action_type=action_type, date=date, user_id=user_id)
         
         def _couchify(d):
             return dict((k, couchable_property(v)) for k, v in d.items())
@@ -74,6 +89,7 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
         ret.xform_xmlns = xformdoc.xmlns
         ret.xform_name = xformdoc.name
         ret.updated_known_properties = _couchify(action.get_known_properties())
+
         ret.updated_unknown_properties = _couchify(action.dynamic_properties)
         ret.indices = [CommCareCaseIndex.from_case_index_update(i) for i in action.indices]
         if hasattr(xformdoc, "last_sync_token"):
@@ -102,10 +118,6 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
             date=self.date, server_date=self.server_date
         )
 
-    class Meta:
-        app_label = 'case'
-
-    
 class Referral(CaseBase):
     """
     A referral, taken from casexml.  
@@ -119,9 +131,6 @@ class Referral(CaseBase):
     followup_on = DateTimeProperty()
     outcome = StringProperty()
     
-    class Meta:
-        app_label = 'case'
-
     def __unicode__(self):
         return ("%s:%s" % (self.type, self.referral_id))
         
@@ -189,18 +198,27 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
     external_id = StringProperty()
     user_id = StringProperty()
     owner_id = StringProperty()
+    opened_by = StringProperty()
+    closed_by = StringProperty()
 
     referrals = SchemaListProperty(Referral)
     actions = SchemaListProperty(CommCareCaseAction)
     name = StringProperty()
     version = StringProperty()
     indices = SchemaListProperty(CommCareCaseIndex)
+    
+    # this is only used for Commtrack SupplyPointCases and should ideally go in
+    # that class
     location_ = StringListProperty()
 
     server_modified_on = DateTimeProperty()
 
-    class Meta:
-        app_label = 'case'
+    def __repr__(self):
+        return u"Case: {id} ({type}: {name})".format(
+            id=self._id,
+            type=self.type,
+            name=self.name,
+        ).encode('utf-8')
 
     def __unicode__(self):
         return "CommCareCase: %s (%s)" % (self.case_id, self.get_id)
@@ -233,8 +251,9 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         ).all()
         
     @property
+    @memoized
     def all_indices(self):
-        return itertools.chain(self.indices, self.reverse_indices)
+        return list(itertools.chain(self.indices, self.reverse_indices))
         
     def get_json(self):
         
@@ -290,10 +309,16 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
                                           include_docs=False).one()['value'])
 
     @classmethod
+    def get_wrap_class(cls, data):
+        if CASE_WRAPPER:
+            return CASE_WRAPPER(data) or cls
+        return cls
+
+    @classmethod
     def bulk_get_lite(cls, ids):
         for res in cls.get_db().view("case/get_lite", keys=ids,
                                  include_docs=False):
-            yield CommCareCase.wrap(res['value'])
+            yield cls.wrap(res['value'])
 
     def get_preloader_dict(self):
         """
@@ -362,7 +387,9 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
     
     def get_attachment(self, attachment_tuple):
         return XFormInstance.get_db().fetch_attachment(attachment_tuple[0], attachment_tuple[1])
-        
+    
+    # this is only used by CommTrack SupplyPointCase cases and should go in
+    # that class
     def bind_to_location(self, loc):
         self.location_ = loc.path
 
@@ -371,7 +398,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         """
         Create a case object from a case update object.
         """
-        case = CommCareCase()
+        case = cls()
         case._id = case_update.id
         case.modified_on = parsing.string_to_datetime(case_update.modified_on_str) \
                             if case_update.modified_on_str else datetime.utcnow()
@@ -380,7 +407,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         case.update_from_case_update(case_update, xformdoc)
         return case
     
-    def apply_create_block(self, create_action, xformdoc, modified_on):
+    def apply_create_block(self, create_action, xformdoc, modified_on, user_id):
         # create case from required fields in the case/create block
         # create block
         def _safe_replace_and_force_to_string(me, attr, val):
@@ -390,14 +417,15 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
                 return
             if val:
                 setattr(me, attr, unicode(val))
-            
+
         _safe_replace_and_force_to_string(self, "type", create_action.type)
         _safe_replace_and_force_to_string(self, "name", create_action.name)
         _safe_replace_and_force_to_string(self, "external_id", create_action.external_id)
         _safe_replace_and_force_to_string(self, "user_id", create_action.user_id)
         _safe_replace_and_force_to_string(self, "owner_id", create_action.owner_id)
-        create_action = CommCareCaseAction.from_parsed_action(const.CASE_ACTION_CREATE, 
-                                                              modified_on, 
+        create_action = CommCareCaseAction.from_parsed_action(const.CASE_ACTION_CREATE,
+                                                              modified_on,
+                                                              user_id,
                                                               xformdoc,
                                                               create_action)
         self.actions.append(create_action)
@@ -411,14 +439,19 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             self.modified_on = mod_date
     
         if case_update.creates_case():
-            self.apply_create_block(case_update.get_create_action(), xformdoc, mod_date)
+            self.apply_create_block(case_update.get_create_action(), xformdoc, mod_date, case_update.user_id)
+            # case_update.get_create_action() seems to sometimes return an action with all properties set to none,
+            # so set opened_by and opened_on here
             if not self.opened_on:
                 self.opened_on = mod_date
-        
-        
+            if not self.opened_by:
+                self.opened_by = case_update.user_id
+
+
         if case_update.updates_case():
             update_action = CommCareCaseAction.from_parsed_action(const.CASE_ACTION_UPDATE, 
                                                                   mod_date,
+                                                                  case_update.user_id,
                                                                   xformdoc,
                                                                   case_update.get_update_action())
             self._apply_action(update_action)
@@ -426,9 +459,11 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         
         if case_update.closes_case():
             close_action = CommCareCaseAction.from_parsed_action(const.CASE_ACTION_CLOSE, 
-                                                                 mod_date, 
+                                                                 mod_date,
+                                                                 case_update.user_id,
                                                                  xformdoc,
                                                                  case_update.get_close_action())
+            self.closed_by = case_update.user_id
             self._apply_action(close_action)
             self.actions.append(close_action)
 
@@ -456,6 +491,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         if case_update.has_indices():
             index_action = CommCareCaseAction.from_parsed_action(const.CASE_ACTION_INDEX, 
                                                                  mod_date,
+                                                                 case_update.user_id,
                                                                  xformdoc,
                                                                  case_update.get_index_action())
             self.actions.append(index_action)
@@ -615,5 +651,56 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         if desired).
         """
         return get_case_xform_ids(self._id)
+
+    @classmethod
+    def get_display_config(cls):
+        return [
+            {
+                "layout": [
+                    [
+                        {
+                            "expr": "name",
+                            "name": _("Name"),
+                        },
+                        {
+                            "expr": "opened_on",
+                            "name": _("Opened On"),
+                            "parse_date": True,
+                        },
+                        {
+                            "expr": "modified_on",
+                            "name": _("Modified On"),
+                            "parse_date": True,
+                        },
+                        {
+                            "expr": "closed_on",
+                            "name": _("Closed On"),
+                            "parse_date": True,
+                        },
+                    ],
+                    [
+                        {
+                            "expr": "type",
+                            "name": _("Case Type"),
+                            "format": '<code>{0}</code>',
+                        },
+                        {
+                            "expr": "user_id",
+                            "name": _("User ID"),
+                            "format": '<span data-field="user_id">{0}</span>',
+                        },
+                        {
+                            "expr": "owner_id",
+                            "name": _("Owner ID"),
+                            "format": '<span data-field="owner_id">{0}</span>',
+                        },
+                        {
+                            "expr": "_id",
+                            "name": _("Case ID"),
+                        },
+                    ],
+                ],
+            }
+        ]
 
 import casexml.apps.case.signals

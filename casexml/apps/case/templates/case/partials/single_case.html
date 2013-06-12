@@ -18,12 +18,14 @@
         {% render_tables default_properties default_properties_options %}
     </div>
     <ul class="nav nav-tabs">
+        {% if dynamic_properties %}
         <li class="active"><a href="#case-details" data-toggle="tab">{% trans "Case Properties" %}</a></li>
-        <li><a href="#case-history-tab" data-toggle="tab">{% trans "Case History" %}</a></li>
+        {% endif %}
+        <li {% if not dynamic_properties %}class="active"{% endif %}><a href="#case-history-tab" data-toggle="tab">{% trans "Case History" %}</a></li>
         {% if case.referrals %}
         <li><a href="#case-referrals" data-toggle="tab">{% trans "Referrals" %}</a></li>
         {% endif %}
-        {% if case.all_indices|length %}
+        {% if case.all_indices %}
         <li><a href="#case-related" data-toggle="tab">{% trans "Related Cases" %}</a></li>
         {% endif %}
     {% if case.attachments %}
@@ -32,11 +34,14 @@
     </ul>
 
     <div class="tab-content">
+        {% if dynamic_properties %}
         <div class="tab-pane active" id="case-details">
             <div class="row-fluid">
                 {% render_tables dynamic_properties dynamic_properties_options %}
             </div>
         </div><!-- end case-details tab -->
+        {% endif %}
+
     {% if case.referrals %}
         <div class="tab-pane" id="case-referrals">
             <h2>{% trans "Referrals" %}</h2>
@@ -115,7 +120,7 @@
             </ul>
         </div> <!-- end case-attachments tab -->
     {% endif %}
-    <div class="tab-pane" id="case-history-tab" class="row-fluid">
+    <div class="tab-pane {% if not dynamic_properties %}active{% endif %}" id="case-history-tab" class="row-fluid">
         <div class="span5">
         <ul data-bind="foreach: $root.form_type_facets">
             <li>

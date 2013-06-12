@@ -150,7 +150,7 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
         root.attrib = {
             "xmlns": V2_NAMESPACE,
             "case_id": self.case.get_id,
-            "user_id": self.case.user_id,
+            "user_id": self.case.user_id or '',
             "date_modified": json_format_datetime(self.case.modified_on)}
         return root
 
