@@ -51,7 +51,8 @@ def simple_post(data, url, content_type="text/xml", timeout=60, headers=None):
         "content-type": content_type,
         "content-length": len(data),
     }
-    default_headers.update(headers)
+    if headers:
+        default_headers.update(headers)
             
     up = urlparse(url)
     if url.startswith("https"):
