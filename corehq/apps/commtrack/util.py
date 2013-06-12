@@ -31,10 +31,11 @@ def all_sms_codes(domain):
     sms_codes = zip(('action', 'product', 'command'), (actions, products, commands))
     return dict(itertools.chain(*([(k.lower(), (type, v)) for k, v in codes.iteritems()] for type, codes in sms_codes)))
 
-def get_supply_point(domain, site_code):
-    loc = Location.view('commtrack/locations_by_code',
-                        key=[domain, site_code.lower()],
-                        include_docs=True).first()
+def get_supply_point(domain, site_code=None, loc=None):
+    if loc is None:
+        loc = Location.view('commtrack/locations_by_code',
+                            key=[domain, site_code.lower()],
+                            include_docs=True).first()
     if loc:
         case = CommCareCase.view('commtrack/supply_point_by_loc',
                                  key=[domain, loc._id],
