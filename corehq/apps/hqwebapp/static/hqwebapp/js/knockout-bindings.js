@@ -495,6 +495,10 @@ ko.bindingHandlers.typeahead = {
             delay: 0,
             change: function () {
                 $(element).change();
+            },
+            select: function (event, ui) {
+                $(element).val(ui.item.value);
+                $(element).trigger('textchange');
             }
         }).focus(function () {
             $(element).autocomplete('search', $(element).val())

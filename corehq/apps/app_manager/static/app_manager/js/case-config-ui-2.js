@@ -646,9 +646,11 @@ var CaseConfig = (function () {
                 case_type: self.case_type,
                 case_properties: case_properties,
                 condition: self.condition,
-                suggestedProperties: _(caseConfig.propertiesMap[self.case_type]).filter(function (property) {
-                    return !_(property).contains('/');
-                }),
+                suggestedProperties: function (self) {
+                    _(caseConfig.propertiesMap[self.case_type()]).filter(function (property) {
+                        return !_(property).contains('/');
+                    });
+                },
                 allow: {
                     condition: function () {
                         return true;
