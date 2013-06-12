@@ -12,7 +12,7 @@ function (doc) {
                         if (doc[calcName].hasOwnProperty(emitterName)) {
                             for (i = 0; i < doc[calcName][emitterName].length; i++) {
                                 var value = doc[calcName][emitterName][i];
-                                emit(key.concat([calcName, emitterName, value]), 1);
+                                emit(key.concat([calcName, emitterName, value[0]]), value[1]);
                             }
                         }
                     }

@@ -1,14 +1,13 @@
 from django.conf import settings
-
 if not settings.configured:
     settings.configure(DEBUG=True)
 
-from unittest2 import TestCase
 import fluff
-from couchdbkit import Document, DocumentSchema, DocumentBase
-from datetime import date
+from unittest2 import TestCase
+from couchdbkit import Document
+from datetime import date, datetime, timedelta
 from fakecouch import FakeCouchDb
-from datetime import timedelta
+from dimagi.utils.parsing import json_format_date
 
 WEEK = timedelta(days=7)
 
@@ -63,6 +62,11 @@ class Indicators2(fluff.IndicatorDocument):
 
 
 class Test(TestCase):
+    def setUp(self):
+        self.fakedb = FakeCouchDb()
+        MockIndicators.set_db(self.fakedb)
+        MockDoc.set_db(self.fakedb)
+
     def test_calculator_base_classes(self):
         # Base0
         self.assertEqual(Base0._fluff_emitters, set([
@@ -111,21 +115,79 @@ class Test(TestCase):
         self.assertEquals(Indicators2._calculators.keys(), ['base1', 'base2'])
 
     def test_indicator_calculation(self):
+        actions = [dict(date="2012-09-23", x=2), dict(date="2012-09-24", x=3)]
+        self.fakedb.mock_docs["123"] = dict(actions=actions,
+                                            get_id="123",
+                                            domain="mock",
+                                            owner_id="test_owner")
         pillow = MockIndicators.pillow()()
         pillow.processor({'changes': [], 'id': '123', 'seq': 1})
-        indicator = fakedb.mock_docs.get("MockIndicators-123", None)
+        indicator = self.fakedb.mock_docs.get("MockIndicators-123", None)
         self.assertIsNotNone(indicator)
-        self.assertIn("visits_week", indicator)
-        self.assertIn("all_visits", indicator["visits_week"])
-        self.assertEqual("2012-09-23", indicator["visits_week"]["all_visits"][0])
-        self.assertEqual("2012-09-24", indicator["visits_week"]["all_visits"][1])
-        self.assertIsNone(indicator["visits_week"]["null_emitter"][0])
+        self.assertIn("value_week", indicator)
+        self.assertIn("date", indicator["value_week"])
+        self.assertIn("null", indicator["value_week"])
+        self.assertIn("date_value", indicator["value_week"])
+        self.assertIn("null_value", indicator["value_week"])
+        self.assertEqual(["2012-09-23", 1], indicator["value_week"]["date"][0])
+        self.assertEqual(["2012-09-24", 1], indicator["value_week"]["date"][1])
+        self.assertEqual([None, 1], indicator["value_week"]["null"][0])
+
+        self.assertEqual(["2012-09-23", 2], indicator["value_week"]["date_value"][0])
+        self.assertEqual(["2012-09-24", 3], indicator["value_week"]["date_value"][1])
+        self.assertEqual([None, 2], indicator["value_week"]["null_value"][0])
+
+
+    def test_calculator_calculate(self):
+        calc = ValueCalculator(WEEK)
+        values = calc.calculate(MockDoc.wrap(dict(actions=[dict(date="2012-09-23", x=2),
+                                                           dict(date="2012-09-24", x=3)])))
+        self.assertEquals(len(values.keys()), 4)
+        self.assertEquals(values['null_value'], [[None, 2]])
+        self.assertEquals(values['date_value'], [[date(2012, 9, 23), 2], [date(2012, 9, 24), 3]])
+        self.assertEquals(values['date'], [[date(2012, 9, 23), 1], [date(2012, 9, 24), 1]])
+        self.assertEquals(values['null'], [[None, 1]])
+
+    def test_calculator_get_result(self):
+        key = ['a', 'b']
+        now = datetime.utcnow().date()
+        start = json_format_date(now - WEEK)
+        end = json_format_date(now)
+        self.fakedb.add_view('fluff/generic', [
+            (
+                {'reduce': True, 'key': ['MockIndicators', 'a', 'b', 'value_week', 'null', None]},
+                [{"key": None, "value": {"count": 3}}]
+            ),
+            (
+                {'reduce': True, 'key': ['MockIndicators', 'a', 'b', 'value_week', 'null_value', None]},
+                [{"key": None, "value": {"max": 8}}]
+            ),
+            (
+                {'startkey': ['MockIndicators', 'a', 'b', 'value_week', 'date', start],
+                    'endkey': ['MockIndicators', 'a', 'b', 'value_week', 'date', end],
+                    'reduce': True},
+                [{"key": None, "value": {"count": 7}}]
+            ),
+            (
+                {'startkey': ['MockIndicators', 'a', 'b', 'value_week', 'date_value', start],
+                    'endkey': ['MockIndicators', 'a', 'b', 'value_week', 'date_value', end],
+                    'reduce': True},
+                [{"key": None, "value": {"sum": 11}}]
+            )
+            ])
+        value = MockIndicators.get_result('value_week', key, reduce=True)
+        self.assertEqual(value['null'], 3)
+        self.assertEqual(value['date'], 7)
+        self.assertEqual(value['date_value'], 11)
+        self.assertEqual(value['null_value'], 8)
 
     def test_indicator_diff_new(self):
         doc = MockIndicators(domain="mock",
                              owner_id="123",
-                             visits_week=dict(all_visits=[date(2012, 02, 23)],
-                                              null_emitter=[]))
+                             value_week=dict(date=[[date(2012, 02, 23), 1]],
+                                             null=[],
+                                             date_value=[],
+                                             null_value=[[None, 3]]))
         diff = doc.diff(None)
         expected = dict(domains=['test'],
                         database=MockIndicators.Meta.app_label,
@@ -133,18 +195,26 @@ class Test(TestCase):
                         group_values=['mock', '123'],
                         group_names=['domain', 'owner_id'],
                         indicator_changes=[
-                            dict(calculator='visits_week',
-                                 emitter='all_visits',
+                            dict(calculator='value_week',
+                                 emitter='date',
                                  emitter_type='date',
-                                 values=[date(2012, 2, 23)])
+                                 reduce_type='count',
+                                 values=[[date(2012, 2, 23), 1]]),
+                            dict(calculator='value_week',
+                                 emitter='null_value',
+                                 emitter_type='null',
+                                 reduce_type='max',
+                                 values=[[None, 3]])
                         ])
         self.assertEqual(expected, diff)
 
     def test_indicator_diff_same(self):
         doc = MockIndicators(domain="mock",
                              owner_id="123",
-                             visits_week=dict(all_visits=[date(2012, 02, 23)],
-                                              null_emitter=[]))
+                             value_week=dict(date=[date(2012, 02, 23)],
+                                             null=[],
+                                             date_value=[],
+                                             null_value=[[None, 3]]))
         another = doc.clone()
         diff = doc.diff(another)
         self.assertIsNone(diff)
@@ -152,12 +222,16 @@ class Test(TestCase):
     def test_indicator_diff(self):
         current = MockIndicators(domain="mock",
                                  owner_id="123",
-                                 visits_week=dict(all_visits=[date(2012, 02, 23)],
-                                                  null_emitter=[]))
+                                 value_week=dict(date=[[date(2012, 02, 23), 1]],
+                                                 null=[],
+                                                 date_value=[[date(2012, 02, 23), 3]],
+                                                 null_value=[]))
         new = MockIndicators(domain="mock",
                              owner_id="123",
-                             visits_week=dict(all_visits=[date(2012, 02, 24)],
-                                              null_emitter=[None]))
+                             value_week=dict(date=[[date(2012, 02, 24), 1]],
+                                             null=[[None, 1]],
+                                             date_value=[[date(2012, 02, 23), 4]],
+                                             null_value=[[None, 2]]))
 
         diff = new.diff(current)
         self.assertIsNotNone(diff)
@@ -168,39 +242,51 @@ class Test(TestCase):
                         group_values=['mock', '123'],
                         group_names=['domain', 'owner_id'],
                         indicator_changes=[
-                            dict(calculator='visits_week',
-                                 emitter='null_emitter',
-                                 emitter_type='null',
-                                 values=[None]),
-                            dict(calculator='visits_week',
-                                 emitter='all_visits',
+                            dict(calculator='value_week',
+                                 emitter='date_value',
                                  emitter_type='date',
-                                 values=[date(2012, 2, 24)])
+                                 reduce_type='sum',
+                                 values=[[date(2012, 2, 23), 4]]),
+                            dict(calculator='value_week',
+                                 emitter='date',
+                                 emitter_type='date',
+                                 reduce_type='count',
+                                 values=[[date(2012, 2, 24), 1]]),
+                            dict(calculator='value_week',
+                                 emitter='null',
+                                 emitter_type='null',
+                                 reduce_type='count',
+                                 values=[[None, 1]]),
+                            dict(calculator='value_week',
+                                 emitter='null_value',
+                                 emitter_type='null',
+                                 reduce_type='max',
+                                 values=[[None, 2]])
                         ])
         self.assertEqual(expected, diff)
-
-
-fakedb = FakeCouchDb(docs={"123": dict(actions=[dict(date="2012-09-23"), dict(date="2012-09-24")],
-                                       get_id="123",
-                                       domain="mock",
-                                       owner_id="test_owner")})
-
-DocumentSchema._db = fakedb
-DocumentBase._db = fakedb
 
 
 class MockDoc(Document):
     _doc_type = "Mock"
 
 
-class VisitCalculator(fluff.Calculator):
+class ValueCalculator(fluff.Calculator):
+    @fluff.custom_date_emitter('sum')
+    def date_value(self, case):
+        for action in case.actions:
+            yield [action['date'], action['x']]
+
+    @fluff.custom_null_emitter('max')
+    def null_value(self, case):
+        yield [None, 2]
+
     @fluff.date_emitter
-    def all_visits(self, case):
+    def date(self, case):
         for action in case.actions:
             yield action['date']
 
     @fluff.null_emitter
-    def null_emitter(self, case):
+    def null(self, case):
         yield None
 
 
@@ -210,7 +296,7 @@ class MockIndicators(fluff.IndicatorDocument):
     group_by = ('domain', 'owner_id')
     domains = ('test',)
 
-    visits_week = VisitCalculator(window=WEEK)
+    value_week = ValueCalculator(window=WEEK)
 
     class Meta:
         app_label = 'Mock'

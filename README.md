@@ -33,6 +33,12 @@ class VisitCalculator(fluff.Calculator):
             if is_bp(case):
                 yield action.date
 
+    @fluff.custom_date_emitter('max')
+    def temp_max(self, case):
+        for action in case.actions:
+            if is_temp(case):
+                yield [action.date, action.temperature]
+
 
 class MyIndicators(fluff.IndicatorDocument):
     document_class = CommCareCase
@@ -59,6 +65,23 @@ data in the following format:
     ```json
     {
         "all_visits": 26,
-        "bp_visits": 15
+        "bp_visits": 15,
+        "bp_max": 140
     }
     ```
+
+## Emitting custom values
+Yield a list where the second value in the list is the value you want to be emitted.
+
+This is useful if you want to do more than just count events. Options for aggregation are:
+  * count
+  * sum
+  * max
+  * min
+  * sumsqr
+
+
+In the example above the `temp_max` emitter emits `action.temperature` for each action.
+It also specifies that the final value should be the `max` of all the emitted values in the date range.
+
+
