@@ -42,15 +42,16 @@ def tmpfile(*args, **kwargs):
     return (os.fdopen(fd, 'w'), path)
 
 
-def simple_post(data, url, content_type="text/xml", timeout=60):
+def simple_post(data, url, content_type="text/xml", timeout=60, headers={}}):
     """
     POST with a cleaner API, and return the actual HTTPResponse object, so
     that error codes can be interpreted.
     """
-    headers = {
+    default_headers = {
         "content-type": content_type,
         "content-length": len(data),
     }
+    default_headers.update(headers)
             
     up = urlparse(url)
     if url.startswith("https"):
@@ -58,8 +59,9 @@ def simple_post(data, url, content_type="text/xml", timeout=60):
     else:
         Connection = httplib.HTTPConnection
     conn = Connection(up.netloc, timeout=timeout)
-    conn.request('POST', up.path, data, headers)
+    conn.request('POST', up.path, data, default_headers)
     return conn.getresponse()
+
 
 
 def post_data(data, url, curl_command="curl", use_curl=False, 
