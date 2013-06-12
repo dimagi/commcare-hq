@@ -215,8 +215,6 @@ class RepeatRecord(Document, LockableMixIn):
         if self.repeater_type == "FormRepeater":
             form = XFormInstance.get(self.repeat_record.payload_id)
             headers = {
-                "content-type": "text/xml",
-                "content-length": len(payload),
                 "received-on": form.received_on.isoformat()+"Z",
             }
             post_fn = post_fn or simple_post_with_cached_timeout(headers=headers)
