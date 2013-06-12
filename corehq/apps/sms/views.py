@@ -190,7 +190,6 @@ def send_to_recipients(request, domain):
             if not number:
                 no_numbers.append(user.raw_username)
             elif send_sms(domain, user.user_id if user else "", number, message):
-                messages.success(request, (user.raw_username if user else " no ")+" "+str(number))
                 sent.append("%s" % (user.raw_username if user else number))
             else:
                 failed_numbers.append("%s (%s)" % (
