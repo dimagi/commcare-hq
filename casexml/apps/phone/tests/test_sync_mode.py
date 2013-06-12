@@ -410,21 +410,25 @@ class MultiUserSyncTest(SyncBaseTest):
         self.assertTrue("Hello!" in ElementTree.tostring(match))
     
     def testOtherUserAddsIndex(self):
+        time = datetime.now()
+
         # create a case from one user
         case_id = "other_user_adds_index"
         self._createCaseStubs([case_id], owner_id=SHARED_ID)
 
         # sync to the other's phone to be able to edit
-        check_user_has_case(self, self.other_user,
+        check_user_has_case(
+            self, self.other_user,
             CaseBlock(case_id=case_id, version=V2).as_xml(),
             should_have=True, line_by_line=False,
             restore_id=self.other_sync_log.get_id, version=V2)
 
         latest_sync = SyncLog.last_for_user(OTHER_USER_ID)
         mother_id = "other_user_adds_index_mother"
-        # parent case
+
         parent_case = CaseBlock(
             create=True,
+            date_modified=time,
             case_id=mother_id,
             user_id=OTHER_USER_ID,
             case_type=PARENT_TYPE,
@@ -456,6 +460,7 @@ class MultiUserSyncTest(SyncBaseTest):
         # make sure index updates take and indexed case also syncs
         expected_parent_case = CaseBlock(
             create=True,
+            date_modified=time,
             case_id=mother_id,
             user_id=OTHER_USER_ID,
             case_type=PARENT_TYPE,
@@ -475,6 +480,8 @@ class MultiUserSyncTest(SyncBaseTest):
         self.assertTrue("index" in ElementTree.tostring(orig))
 
     def testMultiUserEdits(self):
+        time = datetime.now()
+
         # create a case from one user
         case_id = "multi_user_edits"
         self._createCaseStubs([case_id], owner_id=SHARED_ID)
@@ -488,6 +495,7 @@ class MultiUserSyncTest(SyncBaseTest):
         # update case from same user
         my_change = CaseBlock(
             create=False,
+            date_modified=time,
             case_id=case_id,
             user_id=USER_ID,
             version=V2,
@@ -501,6 +509,7 @@ class MultiUserSyncTest(SyncBaseTest):
         # update from another user
         their_change = CaseBlock(
             create=False,
+            date_modified=time,
             case_id=case_id,
             user_id=USER_ID,
             version=V2,
@@ -515,6 +524,7 @@ class MultiUserSyncTest(SyncBaseTest):
         # make sure updates both appear (and merge?)
         joint_change = CaseBlock(
             create=False,
+            date_modified=time,
             case_id=case_id,
             user_id=USER_ID,
             version=V2,
@@ -526,6 +536,7 @@ class MultiUserSyncTest(SyncBaseTest):
             case_name='',
             case_type='mother',
         ).as_xml(format_datetime=json_format_datetime)
+
         check_user_has_case(self, self.user, joint_change, restore_id=self.sync_log.get_id, version=V2)
         check_user_has_case(self, self.other_user, joint_change, restore_id=self.other_sync_log.get_id, version=V2)
 
