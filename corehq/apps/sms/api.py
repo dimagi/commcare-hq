@@ -1,7 +1,7 @@
 import logging
 from django.conf import settings
 
-from dimagi.utils.modules import try_import, to_function
+from dimagi.utils.modules import to_function
 from corehq.apps.sms.util import clean_phone_number, create_billable_for_sms, format_message_list
 from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING, ForwardingRule, FORWARD_ALL, FORWARD_BY_KEYWORD
 from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber
@@ -10,9 +10,8 @@ from datetime import datetime
 
 from corehq.apps.smsforms.models import XFormsSession
 from corehq.apps.smsforms.app import _get_responses, start_session
-from corehq.apps.app_manager.models import get_app, Form
+from corehq.apps.app_manager.models import Form
 from corehq.apps.sms.util import register_sms_contact, strip_plus
-from casexml.apps.case.models import CommCareCase
 from touchforms.formplayer.api import current_question
 from dateutil.parser import parse
 
@@ -205,7 +204,7 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None,
       dropped (useful to provide security when simulating incoming sms)
     """
     phone_number = clean_phone_number(phone_number)
-    v = VerifiedNumber.by_phone(phone_number)
+    v = VerifiedNumber.by_phone(phone_number, include_pending=True)
     if domain_scope:
         # only process messages for phones known to be associated with this domain
         if v is None or v.domain != domain_scope:
@@ -219,7 +218,7 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None,
         text            = text,
         backend_api     = backend_api
     )
-    if v is not None:
+    if v is not None and v.verified:
         msg.couch_recipient_doc_type    = v.owner_doc_type
         msg.couch_recipient             = v.owner_id
         msg.domain                      = v.domain
@@ -227,7 +226,7 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None,
 
     create_billable_for_sms(msg, backend_api, delay=delay)
     
-    if v is not None:
+    if v is not None and v.verified:
         for h in settings.SMS_HANDLERS:
             try:
                 handler = to_function(h)

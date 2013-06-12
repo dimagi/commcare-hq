@@ -11,7 +11,7 @@
     <div class="row">
         {% if request.user.is_authenticated %}
             <div class="page-header">
-                <h1>{{ invite_type|capfirst }} Invitation <small>You've been invited to join <strong>{{ invite_to }}</strong>.</small></h1>
+                <h1>{{ invite_type|capfirst }} {%  trans "Invitation" %} <small>{%  blocktrans %}You've been invited to join <strong>{{ invite_to }}{% endblocktrans %}</strong>.</small></h1>
             </div>
             <div class="span8">
                 {% if not mobile_user %}

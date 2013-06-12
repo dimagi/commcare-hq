@@ -3,8 +3,27 @@
 {% load report_tags %}
 {% load i18n %}
 
+{% block js %}{{ block.super }}
+    {% if charts %}
+    <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet">
+    <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v2.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.js' %}"></script>
+    {% endif %}
+{% endblock %}
+
 {% block reportcontent %}
-{% block pretable %}{% endblock %}
+{% block pretable %}
+    {% if charts %}
+    <div class="row">
+        {% for chart in charts %}
+        <div id='chart_{{ forloop.counter }}' class="span{{ chart_span }} hide">
+            {% if chart.title %}<h4 style="text-align: center;">{{ chart.title }}</h4>{% endif %}
+            <svg style='height: {{ chart.height }}px'> </svg>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+{% endblock %}
 {% block reporttable %}
 {% if report.needs_filters %}
     {% include 'reports/standard/partials/description.html' %}
@@ -111,4 +130,9 @@
             });
         });
     </script>
+    {% for chart in charts %}
+        {% with id=forloop.counter|stringformat:"s" %}
+            {% include chart.template_partial with chart=chart chart_id='chart_'|add:id %}
+        {% endwith %}
+    {% endfor %}
 {% endblock %}
