@@ -110,6 +110,9 @@
                 {% include "users/partial/edit_user_role.html" %}
             {% endif %}
             {% include "users/partial/edit_phone_numbers.html" %}
+	    {% if commtrack_enabled %}
+                {% include "users/partial/commtrack.html" %}
+	    {% endif %}
         </div>
         {% if editing_commcare_user %}
         <div class="tab-pane" id="user-data">
