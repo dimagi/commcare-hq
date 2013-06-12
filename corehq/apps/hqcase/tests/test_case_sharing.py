@@ -3,7 +3,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import CaseBlock, check_user_has_case
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V1, V2
-from casexml.apps.phone.xml import date_to_xml_string
+from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
@@ -122,7 +122,7 @@ class CaseSharingTest(TestCase):
             owner_id=owner_id,
             version=version,
             **kwargs
-        ).as_xml(format_datetime=date_to_xml_string)
+        ).as_xml(format_datetime=json_format_datetime)
         return case_block
 
     def get_update_block(self, case_id, owner_id=None, update=None, version=V1):
@@ -132,5 +132,5 @@ class CaseSharingTest(TestCase):
             update=update,
             owner_id=owner_id or CaseBlock.undefined,
             version=version,
-        ).as_xml(format_datetime=date_to_xml_string)
+        ).as_xml(format_datetime=json_format_datetime)
         return case_block
