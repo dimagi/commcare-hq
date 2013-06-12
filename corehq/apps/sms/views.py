@@ -102,7 +102,7 @@ def get_sms_autocomplete_context(request, domain):
     )
     groups = Group.view("groups/by_domain", key=domain, include_docs=True)
 
-    contacts = []
+    contacts = ["[send to all]"]
     contacts.extend(['%s [group]' % group.name for group in groups])
     user_id = None
     for user in phone_users:
@@ -130,9 +130,19 @@ def send_to_recipients(request, domain):
 
         unknown_usernames = []
         GROUP = "[group]"
+        send_to_all_checked = False
 
         for recipient in recipients:
-            if recipient.endswith(GROUP):
+            if recipient == "[send to all]":
+                send_to_all_checked = True
+                phone_users = CouchUser.view("users/phone_users_by_domain",
+                    startkey=[domain], endkey=[domain, {}], include_docs=True
+                )
+                for user in phone_users:
+                    usernames.append(user.username)
+                group_names = []
+                break
+            elif recipient.endswith(GROUP) and not send_to_all_checked:
                 name = recipient[:-len(GROUP)].strip()
                 group_names.append(name)
             elif re.match(r'^\+\d+', recipient): # here we expect it to have a plus sign
@@ -148,7 +158,7 @@ def send_to_recipients(request, domain):
                     phone_numbers.append((phone_users[0], recipient))
                 else:
                     phone_numbers.append((None, recipient))
-            elif re.match(r'[\w\.]+', recipient):
+            elif re.match(r'[\w\.]+', recipient) and not send_to_all_checked:
                 usernames.append(recipient)
             else:
                 unknown_usernames.append(recipient)
@@ -180,6 +190,7 @@ def send_to_recipients(request, domain):
             if not number:
                 no_numbers.append(user.raw_username)
             elif send_sms(domain, user.user_id if user else "", number, message):
+                messages.success(request, (user.raw_username if user else " no ")+" "+str(number))
                 sent.append("%s" % (user.raw_username if user else number))
             else:
                 failed_numbers.append("%s (%s)" % (
