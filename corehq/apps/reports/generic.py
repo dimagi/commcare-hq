@@ -295,7 +295,7 @@ class GenericReportView(CacheableRequestMixIn):
     @memoized
     def export_format(self):
         from couchexport.models import Format
-        return self.export_format_override or self.request.GET.get('format', Format.XLS)
+        return self.export_format_override or self.request.GET.get('format', Format.XLS_2007)
 
     @property
     def export_name(self):
@@ -835,8 +835,10 @@ class GenericTabularReport(GenericReportView):
 
         if self.ajax_pagination or self.needs_filters:
             rows = []
+            charts = []
         else:
             rows = list(self.rows)
+            charts = list(self.charts)
 
         if self.total_row is not None:
             self.total_row = list(self.total_row)
@@ -870,7 +872,7 @@ class GenericTabularReport(GenericReportView):
                 left_col=left_col,
                 datatables=self.use_datatables
             ),
-            charts=self.charts,
+            charts=charts,
             chart_span=CHART_SPAN_MAP[self.charts_per_row]
         )
         for provider_function in self.extra_context_providers:

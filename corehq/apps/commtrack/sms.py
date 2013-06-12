@@ -2,6 +2,7 @@ from django.conf import settings
 from corehq.apps.commtrack.const import RequisitionActions
 from corehq.apps.domain.models import Domain
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.locations.models import Location
 from corehq.apps.commtrack import stockreport, const
 from corehq.apps.sms.api import send_sms_to_verified_number
@@ -52,10 +53,18 @@ class StockReportParser(object):
     def __init__(self, domain, v):
         self.domain = domain
         self.v = v
+
+        self.location = None
+        u = v.owner
+        if isinstance(u, CommCareUser):
+            linked_loc_id = u.dynamic_properties().get('commtrack_location')
+            if linked_loc_id:
+                self.location = get_supply_point(self.domain.name, loc=Location.get(linked_loc_id))['case']
+
         self.C = domain.commtrack_settings
 
     # TODO sms parsing could really use unit tests
-    def parse(self, text, location=None):
+    def parse(self, text):
         """take in a text and return the parsed stock transactions"""
         args = text.split()
 
@@ -66,13 +75,13 @@ class StockReportParser(object):
 
         action_keyword = args[0]
         args = args[1:]
-        if not location:
+        if not self.location:
             if len(args) == 0:
                 # todo: this will change when users are tied to locations
                 # though need to make sure that PACK and APPROVE still require location code
                 # (since they refer to locations different from the sender's loc)
                 raise SMSError("must specify a location code")
-            location = self.location_from_code(args[0])
+            self.location = self.location_from_code(args[0])
             args = args[1:]
 
         # single action stock report
@@ -81,7 +90,7 @@ class StockReportParser(object):
             action_name = self.C.all_keywords()[action_keyword]
             action = self.C.all_actions_by_name[action_name]
 
-            _tx = self.single_action_transactions(action, args, transaction_factory(location, stockreport.StockTransaction))
+            _tx = self.single_action_transactions(action, args, transaction_factory(self.location, stockreport.StockTransaction))
 
         # requisition
         elif action_keyword in self.C.requisition_keywords():
@@ -89,13 +98,13 @@ class StockReportParser(object):
             action = self.C.all_actions_by_name[action_name]
 
             if action.action_type in [RequisitionActions.APPROVAL, RequisitionActions.PACK]:
-                _tx = self.requisition_bulk_action(action, location, args)
+                _tx = self.requisition_bulk_action(action, args)
             else:
-                _tx = self.single_action_transactions(action, args, transaction_factory(location, stockreport.Requisition))
+                _tx = self.single_action_transactions(action, args, transaction_factory(self.location, stockreport.Requisition))
 
         # multiple action stock report
         elif self.C.multiaction_enabled and action_keyword == self.C.multiaction_keyword.lower():
-            _tx = self.multiple_action_transactions(args, transaction_factory(location, stockreport.StockTransaction))
+            _tx = self.multiple_action_transactions(args, transaction_factory(self.location, stockreport.StockTransaction))
 
         else:
             # initial keyword not recognized; delegate to another handler
@@ -109,7 +118,7 @@ class StockReportParser(object):
             'timestamp': datetime.utcnow(),
             'user': self.v.owner,
             'phone': self.v.phone_number,
-            'location': location,
+            'location': self.location,
             'transactions': tx,
         }
 
@@ -207,7 +216,7 @@ class StockReportParser(object):
 
             raise SMSError('do not recognize keyword "%s"' % keyword)
 
-    def requisition_bulk_action(self, action, location, args):
+    def requisition_bulk_action(self, action, args):
         if args:
             raise SMSError('extra arguments at end')
 
@@ -215,7 +224,7 @@ class StockReportParser(object):
             domain=self.domain,
             action_type=action.action_type,
             action_name=action.action_name,
-            location_id=location.location_[-1],
+            location_id=self.location.location_[-1],
         )
 
     def location_from_code(self, loc_code):

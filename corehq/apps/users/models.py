@@ -678,6 +678,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
         return self.email
 
     @property
+    def projects(self):
+        return map(Domain.get_by_name, self.get_domains())
+
+    @property
     def full_name(self):
         return ("%s %s" % (self.first_name or '', self.last_name or '')).strip()
 
@@ -783,7 +787,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
         return CouchUser.view("users/by_username", include_docs=True)
 
     @classmethod
-    def by_domain(cls, domain, is_active=True, reduce=False, limit=None, skip=0):
+    def by_domain(cls, domain, is_active=True, reduce=False, limit=None, skip=0, strict=False):
         flag = "active" if is_active else "inactive"
         if cls.__name__ == "CouchUser":
             key = [flag, domain]
@@ -802,7 +806,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
             reduce=reduce,
             startkey=key,
             endkey=key + [{}],
-            stale=settings.COUCH_STALE_QUERY,
+            stale=None if strict else settings.COUCH_STALE_QUERY,
             **extra_args
         ).all()
 
@@ -1560,6 +1564,13 @@ class OrgMembershipMixin(DocumentSchema):
         om = self.get_org_membership(org)
         if om:
             om.team_ids.remove(team_id)
+
+    def set_org_admin(self, org):
+        om = self.get_org_membership(org)
+        if not om:
+            raise OrgMembershipError("Cannot set admin -- %s is not a member of the %s organization" %
+                                     (self.username, org))
+        om.is_admin = True
 
 class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobileContactMixin):
     #do sync and create still work?

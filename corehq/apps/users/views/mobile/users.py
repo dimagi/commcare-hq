@@ -20,7 +20,7 @@ from corehq.apps.users.forms import CommCareAccountForm
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
 from corehq.apps.users.bulkupload import create_or_update_users_and_groups,\
-    check_headers, dump_users_and_groups, GroupNameError
+    check_headers, dump_users_and_groups, GroupNameError, UserUploadError
 from corehq.apps.users.tasks import bulk_upload_async
 from corehq.apps.users.views import (_users_context, require_can_edit_web_users,
     require_can_edit_commcare_users, account as users_account)
@@ -252,7 +252,7 @@ class UploadCommCareUsers(TemplateView):
 
         try:
             check_headers(self.user_specs)
-        except Exception, e:
+        except UserUploadError as e:
             return HttpResponseBadRequest(e)
 
         response = HttpResponse()

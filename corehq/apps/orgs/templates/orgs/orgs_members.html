@@ -12,6 +12,12 @@
             $('#remove-member-modal').modal({show: true});
             return false;
         });
+        $('.make-admin-btn').on('click', function() {
+            $('#admining-member').text($(this).attr('data-member'));
+            $('#admining-member-id').val($(this).attr('data-member_id'));
+            $('#make-admin-modal').modal({show: true});
+            return false;
+        });
     });
 </script>
 {% endblock %}
@@ -29,11 +35,18 @@
                 {% if member.username in org_admins %} <span class="label">Admin</span>{% endif %}
             </strong>
             {% if admin %}
-                {% ifnotequal member.username request.couch_user.username %}
-                <a href="#" class="btn btn-danger remove-member-btn pull-right" data-member="{{ member.username }}" data-member_id="{{ member.get_id }}">
-                    <i class="icon-remove"></i> {% trans "Remove Member" %}
-                </a>
-                {% endifnotequal %}
+                <div class="btn-toolbar pull-right" style="margin: 0;">
+                    {% if member.username not in org_admins %}
+                        <a href="#" class="btn make-admin-btn" data-member="{{ member.username }}" data-member_id="{{ member.get_id }}">
+                            <i class="icon-hand-up"></i> {% trans "Make Admin" %}
+                        </a>
+                        {% ifnotequal member.username request.couch_user.username %}
+                        <a href="#" class="btn btn-danger remove-member-btn" data-member="{{ member.username }}" data-member_id="{{ member.get_id }}">
+                            <i class="icon-remove"></i> {% trans "Remove Member" %}
+                        </a>
+                        {% endifnotequal %}
+                    {% endif %}
+                </div>
             {% endif %}
         </td></tr>
     {% endfor %}
@@ -64,6 +77,20 @@
         <div class="modal-footer">
             <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
             <button type="submit" class="btn btn-primary disable-on-submit">{% trans "Remove Member" %}</button>
+        </div>
+    </form>
+</div>
+
+<div id="make-admin-modal" class="modal hide fade">
+    <form class="form-horizontal" method="post" action="{% url orgs_set_admin org.name %}">
+        <div class="modal-body">
+            <a class="close" data-dismiss="modal">&times;</a>
+            <h3>Make <span id="admining-member"></span> an admin of {{ org.title }}?</h3>
+            <input id="admining-member-id" type="hidden" name="member_id" value="" />
+        </div>
+        <div class="modal-footer">
+            <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
+            <button type="submit" class="btn btn-primary disable-on-submit">{% trans "Make Admin" %}</button>
         </div>
     </form>
 </div>

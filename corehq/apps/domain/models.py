@@ -158,14 +158,15 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     initiative = StringListProperty()
     project_state = StringProperty(choices=["", "POC", "transition", "at-scale"], default="")
     self_started = BooleanProperty()
-    area = StringProperty(choices=AREA_CHOICES + [""], default="")
-    sub_area = StringProperty(choices=SUB_AREA_CHOICES + [""], default="")
+    area = StringProperty()
+    sub_area = StringProperty()
     using_adm = BooleanProperty()
     using_call_center = BooleanProperty()
     custom_eula = BooleanProperty()
     can_use_data = BooleanProperty()
     notes = StringProperty()
     organization_name = StringProperty()
+    platform = StringListProperty()
 
 
 class CaseDisplaySettings(DocumentSchema):
