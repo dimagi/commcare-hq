@@ -488,9 +488,7 @@ ko.bindingHandlers.edit = {
 
 ko.bindingHandlers.typeahead = {
     init: function (element, valueAccessor) {
-        var value = ko.utils.unwrapObservable(valueAccessor());
         $(element).autocomplete({
-            source: value,
             minLength: 0,
             delay: 0,
             change: function () {
@@ -511,5 +509,8 @@ ko.bindingHandlers.typeahead = {
                 $(element).change();
             }
         });
+    },
+    update: function (element, valueAccessor) {
+        $(element).autocomplete('option', 'source', ko.utils.unwrapObservable(valueAccessor()));
     }
 };

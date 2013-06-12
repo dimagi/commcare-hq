@@ -87,15 +87,26 @@ var CaseConfig = (function () {
         self.caseType = params.caseType;
         self.reserved_words = params.reserved_words;
         self.moduleCaseTypes = params.moduleCaseTypes;
-        self.propertiesMap = params.propertiesMap;
+        self.propertiesMap = {};
         self.utils = utils;
 
-        _(self.moduleCaseTypes).each(function (case_type) {
-            if (!_(self.propertiesMap).has(case_type)) {
-                self.propertiesMap[case_type] = [];
-            }
-            self.propertiesMap[case_type].sort();
-        });
+        self.setPropertiesMap = function (propertiesMap) {
+            _(self.moduleCaseTypes).each(function (case_type) {
+                if (!_(propertiesMap).has(case_type)) {
+                    propertiesMap[case_type] = [];
+                }
+                propertiesMap[case_type].sort();
+            });
+            _(propertiesMap).each(function (properties, case_type) {
+                if (_(self.propertiesMap).has(case_type)) {
+                    self.propertiesMap[case_type](properties);
+                } else {
+                    self.propertiesMap[case_type] = ko.observableArray(properties);
+                }
+            });
+            self.propertiesMap = ko.mapping.fromJS(params.propertiesMap);
+        };
+        self.setPropertiesMap(params.propertiesMap);
 
         self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: "You have unchanged case settings",
@@ -123,6 +134,7 @@ var CaseConfig = (function () {
                     success: function (data) {
                         COMMCAREHQ.app_manager.updateDOM(data.update);
                         self.requires(requires);
+                        self.setPropertiesMap(data.propertiesMap);
                     }
                 });
             }
@@ -276,6 +288,7 @@ var CaseConfig = (function () {
             } catch (e) {
                 self.case_name = null;
             }
+            self.suggestedProperties = ko.computed(self.suggestedProperties, self);
 
             self.addProperty = function () {
                 var property = CaseProperty.wrap({
@@ -558,7 +571,9 @@ var CaseConfig = (function () {
                 case_preload: case_preload,
                 condition: self.open_case.condition,
                 close_condition: self.close_case.condition,
-                suggestedProperties: caseConfig.propertiesMap[caseConfig.caseType]
+                suggestedProperties: function () {
+                    return caseConfig.propertiesMap[this.case_type()]();
+                }
             }, caseConfig);
             _.delay(function () {
                 x.allow = {
@@ -646,10 +661,14 @@ var CaseConfig = (function () {
                 case_type: self.case_type,
                 case_properties: case_properties,
                 condition: self.condition,
-                suggestedProperties: function (self) {
-                    _(caseConfig.propertiesMap[self.case_type()]).filter(function (property) {
-                        return !_(property).contains('/');
-                    });
+                suggestedProperties: function () {
+                    if (this.case_type()) {
+                        return _(caseConfig.propertiesMap[this.case_type()]()).filter(function (property) {
+                            return !_(property).contains('/');
+                        });
+                    } else {
+                        return [];
+                    }
                 },
                 allow: {
                     condition: function () {

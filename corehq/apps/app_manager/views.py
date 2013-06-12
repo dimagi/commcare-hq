@@ -27,7 +27,7 @@ from django.conf import settings
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
-from corehq.apps.app_manager.util import is_valid_case_type, get_case_properties
+from corehq.apps.app_manager.util import is_valid_case_type, get_case_properties, get_all_case_properties
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
@@ -675,14 +675,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
                 defaults=('name', 'date-opened', 'status')
             )[case_type]
         else:
-            case_types = set(m.case_type
-                             for m in form.get_app().modules)
-
-            case_properties = get_case_properties(
-                app,
-                case_types,
-                defaults=('name',)
-            )
+            case_properties = get_all_case_properties(app)
 
     context = {
         'domain': domain,
@@ -1253,6 +1246,7 @@ def edit_form_actions(req, domain, app_id, module_id, form_id):
     form.requires = req.POST.get('requires', form.requires)
     response_json = {}
     app.save(response_json)
+    response_json['propertiesMap'] = get_all_case_properties(app)
     return json_response(response_json)
 
 @require_can_edit_apps

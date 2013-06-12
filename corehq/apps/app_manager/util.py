@@ -103,3 +103,11 @@ def get_case_properties(app, case_types, defaults=()):
         (case_type, sorted(get_properties(case_type)))
         for case_type in case_types
     )
+
+
+def get_all_case_properties(app):
+    return get_case_properties(
+        app,
+        set(m.case_type for m in app.modules),
+        defaults=('name',)
+    )
