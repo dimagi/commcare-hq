@@ -142,7 +142,7 @@ def send_to_recipients(request, domain):
                     usernames.append(user.username)
                 group_names = []
                 break
-            elif recipient.endswith(GROUP) and not send_to_all_checked:
+            elif (not send_to_all_checked) and recipient.endswith(GROUP):
                 name = recipient[:-len(GROUP)].strip()
                 group_names.append(name)
             elif re.match(r'^\+\d+', recipient): # here we expect it to have a plus sign
@@ -158,7 +158,7 @@ def send_to_recipients(request, domain):
                     phone_numbers.append((phone_users[0], recipient))
                 else:
                     phone_numbers.append((None, recipient))
-            elif re.match(r'[\w\.]+', recipient) and not send_to_all_checked:
+            elif (not send_to_all_checked) and re.match(r'[\w\.]+', recipient):
                 usernames.append(recipient)
             else:
                 unknown_usernames.append(recipient)
