@@ -217,7 +217,7 @@ class RepeatRecord(Document, LockableMixIn):
             headers = {
                 "content-type": "text/xml",
                 "content-length": len(payload),
-                "received-on": str(form.received_on.isoformat())+"Z",
+                "received-on": form.received_on.isoformat()+"Z",
             }
             post_fn = post_fn or simple_post_with_cached_timeout(headers=headers)
         if self.try_now():
