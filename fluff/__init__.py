@@ -248,7 +248,8 @@ class IndicatorDocument(schema.Document):
                     calculator: 'visit_week',
                     emitter: 'all_visits',
                     emitter_type: 'date',
-                    values: ['2012-09-23', '2012-09-24']
+                    reduce_type: 'count',
+                    values: [['2012-09-23', 1], ['2012-09-24', 1]]
                     },
                     {
                     calculator: 'visit_week',
