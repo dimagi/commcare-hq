@@ -3,7 +3,7 @@ from StringIO import StringIO
 import re
 from datetime import datetime
 import logging
-from copy import copy
+import copy
 import itertools
 
 from django.core.cache import cache
@@ -12,7 +12,8 @@ from django.utils.translation import ugettext as _
 from couchdbkit.ext.django.schema import *
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from PIL import Image
-from dimagi.utils.django.cached_object import CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage
+import simplejson
+from dimagi.utils.django.cached_object import CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage, IMAGE_SIZE_ORDERING
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml,\
@@ -417,19 +418,24 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         Return (metadata, stream) information of best matching image attachment.
         """
         do_constrain = False
-        size_key = OBJECT_ORIGINAL
-
-        if filesize_limit > 0 or width_limit > 0 or height_limit > 0:
-            do_constrain=True
-            constraint_dict = {
-                'width': width_limit,
-                'height': height_limit,
-                'size': filesize_limit
-            }
 
         if fixed_size is not None:
             size_key = fixed_size
-            do_constrain=False
+        else:
+            size_key = OBJECT_ORIGINAL
+
+        constraint_dict = {}
+        if filesize_limit or width_limit or height_limit:
+            do_constrain=True
+            if filesize_limit:
+                constraint_dict['content_length'] = filesize_limit
+
+            if height_limit:
+                constraint_dict['height'] = filesize_limit
+
+            if width_limit:
+                constraint_dict['width'] = width_limit
+            #do_constrain = False
 
         #if size key is None, then one of the limit criteria are set
         attachment_cache_key = "%(case_id)s_%(attachment)s" % {
@@ -444,13 +450,37 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             headers = resp.resp.headers
             cached_image.cache_image(stream, metadata=headers)
 
-        #now that we got it cached, let's check for size
+        #now that we got it cached, let's check for size constraints
+        meta, stream = cached_image.get_size(size_key)
+
         if do_constrain:
-            metas = cached_image.meta_keys
-            #find the meta with the appropriate criteria
-            pass
-        else:
-            meta, stream = cached_image.get_size(size_key)
+            #check this size first
+            #see if the current size matches the criteria
+
+            def meets_constraint(constraints, meta):
+                for c, limit in constraints.items():
+                    if meta[c] > limit:
+                        return False
+                return True
+
+            if meets_constraint(constraint_dict, meta):
+                #yay, do nothing
+                pass
+            else:
+                #this meta is no good, find another one
+                lesser_keys = IMAGE_SIZE_ORDERING[0:IMAGE_SIZE_ORDERING.index(size_key)]
+                lesser_keys.reverse()
+                is_met = False
+                for lesser_size in lesser_keys:
+                    less_meta, less_stream = cached_image.get_size(lesser_size)
+                    if meets_constraint(constraint_dict, less_meta):
+                        meta = less_meta
+                        stream = less_stream
+                        is_met = True
+                        break
+                if not is_met:
+                    meta = None
+                    stream = None
 
         return meta, stream
 
