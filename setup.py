@@ -24,6 +24,7 @@ setup(
         'python-digest',
         'pytz',
         'simplejson',
+        'PIL',
     ],
     tests_require = [
         'coverage',
