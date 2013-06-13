@@ -17,6 +17,7 @@ setup(
         'python-dateutil',
         'pytz',
         'couchdbkit',
+        'django_redis'
     ],
     tests_require=[
         'unittest2',
