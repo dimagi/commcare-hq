@@ -1,11 +1,13 @@
-from casexml.apps.case import const
-
 """
 Work on cases based on XForms. In our world XForms are special couch documents.
 """
-from casexml.apps.case.models import CommCareCase
 import logging
+
 from couchdbkit.resource import ResourceNotFound
+from dimagi.utils.couch.database import iter_docs
+
+from casexml.apps.case import const
+from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml.parser import case_update_from_block
 
 class CaseDbCache(object):
@@ -136,5 +138,5 @@ def cases_referenced_by_xform(xform):
     def extract_case_id(case_block):
         return case_block.get(const.CASE_TAG_ID) or case_block.get('@%s' % const.CASE_TAG_ID)
 
-    return [CommCareCase.get(extract_case_id(case_block)) for case_block in extract_case_blocks(xform)]
+    return [CommCareCase.wrap(dict) for dict in iter_docs(CommCareCase.get_db(), [extract_case_id(case_block) for case_block in extract_case_blocks(xform)])]
         
