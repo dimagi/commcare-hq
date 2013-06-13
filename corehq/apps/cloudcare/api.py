@@ -227,7 +227,8 @@ class ElasticCaseQuery(object):
         
     @property
     def scrubbed_filters(self):
-        return dict((k, v) for k, v in self.filters.items() if k not in self.RESERVED_KEYS)
+        return dict( (k, v) for k, v in self.filters.items()
+                     if k not in self.RESERVED_KEYS and not k.endswith('__full') )
         
     def _modified_params(self, key, start, end):
         return {
