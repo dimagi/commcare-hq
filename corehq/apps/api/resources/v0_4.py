@@ -5,6 +5,7 @@ from corehq.apps.api.util import get_object_or_not_exist
 
 from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case import xform as casexml_xform
 
 from corehq.apps.receiverwrapper.models import Repeater, repeater_types
 from corehq.apps.groups.models import Group
@@ -27,7 +28,7 @@ class XFormInstanceResource(v0_3.XFormInstanceResource, DomainSpecificResourceMi
     metadata = fields.DictField(attribute='metadata', blank=True, null=True)
 
     cases = ToManyDocumentsField('corehq.apps.api.resources.v0_4.CommCareCaseResource',
-                                 attribute=lambda xform: None if 'case' not in xform.get_form else [dict_object(CommCareCase.get(xform.get_form['case']['@case_id']).get_json())])
+                                 attribute=lambda xform: [dict_object(case.get_json()) for case in casexml_xform.cases_referenced_by_xform(xform)])
 
     # Prevent hitting Couch to md5 the attachment. However, there is no way to
     # eliminate a tastypie field defined in a parent class.
