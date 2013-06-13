@@ -107,6 +107,9 @@ class RepeaterResource(JsonResource, DomainSpecificResourceMixin):
         authorization = v0_1.DomainAdminAuthorization
 
 class CommCareCaseResource(v0_3.CommCareCaseResource, DomainSpecificResourceMixin):
+    xforms = UseIfRequested(ToManyDocumentsField('corehq.apps.api.resources.v0_4.XFormInstanceResource',
+                                                 attribute=lambda case: case.get_forms()))
+    
     def obj_get_list(self, bundle, domain, **kwargs):
         filters = v0_3.CaseListFilters(bundle.request.GET).filters
 
@@ -120,7 +123,7 @@ class CommCareCaseResource(v0_3.CommCareCaseResource, DomainSpecificResourceMixi
             del query['size']
         
         return ESQuerySet(payload = query,
-                          model = lambda jvalue: dict_object(CommCareCase.wrap(jvalue).get_json()),
+                          model = CommCareCase, #lambda jvalue: dict_object(CommCareCase.wrap(jvalue).get_json()),
                           es_client = CaseES(domain)) # Not that XFormES is used only as an ES client, for `run_query` against the proper index
 
 class GroupResource(JsonResource, DomainSpecificResourceMixin):
