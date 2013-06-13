@@ -267,7 +267,6 @@ function RequisitionConfigModel(data) {
     };
 
     this.new_action = function() {
-        console.log('new');
         that.actions.push(new ActionModel({}));
     };
 
