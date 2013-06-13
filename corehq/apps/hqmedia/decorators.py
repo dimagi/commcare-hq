@@ -11,8 +11,8 @@ def login_with_permission_from_post(login_decorator=login_and_domain_required):
         This gets around a limitation in flash (known manifistation in Firefox) where you can't
         insert the cookie directly into the header of the request.
     """
-    def _outer(view_func):
-        def _inner(req, domain, *args, **kwargs):
+    def view_decorator(view_func):
+        def new_view(req, domain, *args, **kwargs):
             if req.method == 'POST':
                 cookie = req.POST.get('_cookie')
                 if cookie:
@@ -25,5 +25,5 @@ def login_with_permission_from_post(login_decorator=login_and_domain_required):
                     req.user = get_user(req)
                     req.couch_user = CouchUser.from_django_user(req.user)
             return login_decorator(view_func)(req, domain, *args, **kwargs)
-        return _inner
-    return _outer
+        return new_view
+    return view_decorator
