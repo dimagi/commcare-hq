@@ -488,13 +488,15 @@ ko.bindingHandlers.edit = {
 
 ko.bindingHandlers.typeahead = {
     init: function (element, valueAccessor) {
-        var value = ko.utils.unwrapObservable(valueAccessor());
         $(element).autocomplete({
-            source: value,
             minLength: 0,
             delay: 0,
             change: function () {
                 $(element).change();
+            },
+            select: function (event, ui) {
+                $(element).val(ui.item.value);
+                $(element).trigger('textchange');
             }
         }).focus(function () {
             $(element).autocomplete('search', $(element).val())
@@ -507,5 +509,8 @@ ko.bindingHandlers.typeahead = {
                 $(element).change();
             }
         });
+    },
+    update: function (element, valueAccessor) {
+        $(element).autocomplete('option', 'source', ko.utils.unwrapObservable(valueAccessor()));
     }
 };
