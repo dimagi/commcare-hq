@@ -10,7 +10,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateView
 from django.shortcuts import render
 
-from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
+from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, _id_from_doc
 from corehq.apps.groups.models import Group
 from corehq.apps.users.bulkupload import GroupMemoizer
 from corehq.apps.users.decorators import require_permission
@@ -209,48 +209,44 @@ def view(request, domain, template='fixtures/view.html'):
 @require_can_edit_fixtures
 def download_item_lists(request, domain):
     data_types = FixtureDataType.by_domain(domain)
-    data_type_rows = []
-    tables = [] 
-    """ 
-    [(("header_name","schema"),("header_name","rows"))]
-    [(("Districts", (x,y,z)),
-      ("Districts", ((v1,v2),
-        ))))]
+    data_type_schemas = []
+    max_fields = 0
+    data_tables = []
 
-
-    """
-    out = ""
-    max_columns = 0
-    tables_data = []
     for data_type in data_types:
-        row = [data_type.name, data_type.tag]
+        type_schema = [data_type.name, data_type.tag]
         fields = [field for field in data_type.fields]
-        row.extend(fields)
-        data_type_rows.append(tuple(row))
-        if max_columns<len(row):
-            max_columns = len(row)
         type_id = data_type.get_id
-        table_data = []
+        data_table_of_type = []
         for item_row in FixtureDataItem.by_data_type(domain, type_id):
-            data_row = tuple([item_row.fields[field] for field in fields])
-            table_data.append(data_row)
-        tables_data.append((data_type.tag,tuple(table_data)))
+            group_1 = ",".join([group.name for group in item_row.get_groups()])
+            user_1 = ",".join([user.raw_username for user in item_row.get_users()])
+            data_row = tuple([str(_id_from_doc(item_row))]
+                            +[item_row.fields[field] for field in fields]
+                            +[group_1.strip(","),user_1.strip(","),"N"])
+            data_table_of_type.append(data_row)
+        type_schema.extend(fields)
+        data_type_schemas.append(tuple(type_schema))
+        if max_fields<len(type_schema):
+            max_fields = len(type_schema)
+        data_tables.append((data_type.tag,tuple(data_table_of_type)))
 
-    data_type_headers = ["name", "tag"] + ["field %d" % x for x in range(1,max_columns-1)]
-
-    type_headers = ("types", tuple(data_type_headers))
-    type_rows = ("types", tuple(data_type_rows))
-    table_headers = [type_headers]
-    for item_row in data_type_rows:
-        item_header = (item_row[1], tuple(["field: "+x for x in item_row[2:]]))
+    type_headers = ["name", "tag"] + ["field %d" % x for x in range(1,max_fields-1)]
+    type_headers = ("types", tuple(type_headers))
+    table_headers = [type_headers]    
+    for type_schema in data_type_schemas:
+        item_header = (type_schema[1], tuple(["field: UID"]
+                                            +["field: "+x for x in type_schema[2:]]
+                                            +["group 1", "user 1","Delete(Y/N)"]))
         table_headers.append(item_header)
+
     table_headers = tuple(table_headers)
-    tables_data = tuple([type_rows]+tables_data)
+    type_rows = ("types", tuple(data_type_schemas))
+    data_tables = tuple([type_rows]+data_tables)
     
-    #return HttpResponse(str(tables_data)+"<br/>"+str(tuple(table_headers)))
     fd, path = tempfile.mkstemp()
     with os.fdopen(fd, 'w') as temp:
-        export_raw((table_headers), (tables_data), temp)
+        export_raw((table_headers), (data_tables), temp)
     format = Format.XLS_2007
     return export_response(open(path), format, "%s_fixtures" % domain)
 
@@ -321,19 +317,23 @@ class UploadItemLists(TemplateView):
                         sort_key=sort_key
                     )
                     transaction.save(data_item)
-                    for group_name in di.get('group', []):
-                        group = group_memoizer.by_name(group_name)
-                        if group:
-                            data_item.add_group(group, transaction=transaction)
-                        else:
-                            messages.error(request, "Unknown group: %s" % group_name)
-                    for raw_username in di.get('user', []):
-                        username = normalize_username(raw_username, self.domain)
-                        user = CommCareUser.get_by_username(username)
-                        if user:
-                            data_item.add_user(user)
-                        else:
-                            messages.error(request, "Unknown user: %s" % raw_username)
+                    for group_names in di.get('group', []):
+                        for group_name in group_names.split(","):
+                            group_name = group_name.strip()
+                            group = group_memoizer.by_name(group_name)
+                            if group:
+                                data_item.add_group(group, transaction=transaction)
+                            else:
+                                messages.error(request, "Unknown group: %s" % group_name)
+                    for raw_usernames in di.get('user', []):
+                        for raw_username in raw_usernames.split(","):
+                            raw_username = raw_username.strip()
+                            username = normalize_username(raw_username, self.domain)
+                            user = CommCareUser.get_by_username(username)
+                            if user:
+                                data_item.add_user(user)
+                            else:
+                                messages.error(request, "Unknown user: %s" % raw_username)
             for data_type in transaction.preview_save(cls=FixtureDataType):
                 for duplicate in FixtureDataType.by_domain_tag(domain=self.domain, tag=data_type.tag):
                     duplicate.recursive_delete(transaction)
