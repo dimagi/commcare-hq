@@ -42,6 +42,9 @@ class custom_date_emitter(base_emitter):
 
     def validate(self, value):
         assert value[0] is not None
+        assert isinstance(value[0], (datetime.date, datetime.datetime))
+        if isinstance(value[0], datetime.datetime):
+            value[0] = value[0].date()
 
 
 class custom_null_emitter(base_emitter):
@@ -52,7 +55,6 @@ class custom_null_emitter(base_emitter):
 
 date_emitter = custom_date_emitter()
 null_emitter = custom_null_emitter()
-
 
 
 def filter_by(fn):
