@@ -7,27 +7,16 @@ import copy
 import six
 
 from tastypie.fields import ApiField
+import dimagi.utils.modules
 from corehq.apps.api.resources import dict_object
 
 def get_referenced_class(class_or_str):
     # Simplified from https://github.com/toastdriven/django-tastypie/blob/master/tastypie/fields.py#L519
 
-    if not isinstance(class_or_str, basestring):
-        return class_or_str
-
-    if '.' in class_or_str:
-        module_bits = class_or_str.split('.')
-        module_path, class_name = '.'.join(module_bits[:-1]), module_bits[-1]
-        module = importlib.import_module(module_path)
+    if isinstance(class_or_str, six.string_types):
+        return dimagi.utils.modules.to_function(class_or_str)
     else:
-        raise ImportError("The import path to a related resource must be asolute; this is not: '%s'." % class_or_str)
-
-    clazz = getattr(module, class_name, None)
-    
-    if clazz is None:
-        raise ImportError("Module '%s' does not appear to have a class called '%s'." % (module_path, class_name))
-    
-    return clazz
+        return class_or_str
 
 class AttributeOrCallable(object):
     def __init__(self, attribute):
