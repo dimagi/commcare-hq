@@ -108,7 +108,7 @@
 {% block group-view %}
     <div class="row-fluid">
         <div class="span6" id="members">
-            <h3>{% commcare_user %}s in Group</h3>
+            <h3>{% commcare_user %}s in Group ({{ members|length }})</h3>
             <div class="well">
                 {% for member in members %}
                     <form class="group-bubble" name="leave_group" action="{% url leave_group domain group.get_id member.user_id %}" method="post">
