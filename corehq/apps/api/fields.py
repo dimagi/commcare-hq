@@ -1,5 +1,10 @@
-import six
+'''
+Fields for use in Tastypie Resources
+'''
+
 import importlib
+import copy
+import six
 
 from tastypie.fields import ApiField
 from corehq.apps.api.resources import dict_object
@@ -24,6 +29,34 @@ def get_referenced_class(class_or_str):
     
     return clazz
 
+class AttributeOrCallable(object):
+    def __init__(self, attribute):
+        self.attribute = attribute
+
+    def __call__(self, v):
+        if isinstance(self.attribute, six.string_types):
+            accessor = lambda v: getattr(v, self.attribute)
+        else:
+            accessor = self.attribute
+
+        return accessor(v)
+
+class UseIfRequested(object):
+    '''
+    Returns a field identical to the one provided in
+    every way EXCEPT that this one will only appear in
+    the API output if <fieldname>__full=true is passed
+    on the querystring
+    '''
+    def __init__(self, underlying_field):
+        self.underlying_field = underlying_field
+
+    def use_in(self, bundle):
+        full_name = self.instance_name + '__full'
+        return bundle.request.GET.get(full_name, 'false').lower() == 'true'
+
+    def __getattr__(self, attr):
+        return getattr(self.underlying_field, attr)
 
 class ToManyDocumentsField(ApiField):
     '''
@@ -34,10 +67,6 @@ class ToManyDocumentsField(ApiField):
     (tastypie.fields.ToManyField requires the Django ORM)
     '''
 
-    def use_if_requested(self, bundle):
-        full_name = self.instance_name + '__full'
-        return bundle.request.GET.get(full_name, 'false').lower() == 'true'
-
     def __init__(self, to, attribute, blank=False, readonly=False, unique=False, help_text=None):
         '''
         Note that most of these options are unused as of now...
@@ -45,10 +74,10 @@ class ToManyDocumentsField(ApiField):
         super(ToManyDocumentsField, self).__init__(attribute=attribute,
                                                    blank=blank,
                                                    help_text=help_text,
-                                                   use_in=self.use_if_requested,
                                                    unique=unique,
                                                    readonly=readonly)
         self.to = to
+        self.attribute = AttributeOrCallable(attribute)
 
     @property
     def to_class(self):
@@ -62,35 +91,20 @@ class ToManyDocumentsField(ApiField):
         return self.to_class() # Tastypie internals are a bit more complex; it may or may not bite us that we do not share the complexity
 
     def dehydrate(self, bundle, for_list=True):
-        if isinstance(self.attribute, six.string_types):
-            accessor = lambda v: getattr(v, self.attribute)
-        else:
-            accessor = self.attribute
-
-        related_resource = self.related_resource
-
-        hydrated = accessor(bundle.obj)
+        hydrated = self.attribute(bundle.obj)
 
         if hydrated is None:
             return None
-
-        dehydrated = [related_resource.full_dehydrate(related_resource.build_bundle(obj=obj, request=bundle.request)).data
-                      for obj in hydrated]
-        
-        return dehydrated
+        else:
+            return [self.related_resource.full_dehydrate(self.related_resource.build_bundle(obj=obj, request=bundle.request)).data
+                    for obj in hydrated]
 
         
 class ToOneDocumentField(ApiField):
     '''
     A field that reference a single document in the couch database.
     It may or may not have a URI elsewhere in the API.
-
-    (if this looks identical to the above that is because it is for now)
     '''
-
-    def use_if_requested(self, bundle):
-        full_name = self.instance_name + '__full'
-        return bundle.request.GET.get(full_name, 'false').lower() == 'true'
 
     def __init__(self, to, attribute, blank=False, readonly=False, unique=False, help_text=None):
         '''
@@ -99,10 +113,10 @@ class ToOneDocumentField(ApiField):
         super(ToOneDocumentField, self).__init__(attribute=attribute,
                                                    blank=blank,
                                                    help_text=help_text,
-                                                   use_in=self.use_if_requested,
                                                    unique=unique,
                                                    readonly=readonly)
         self.to = to
+        self.attribute = AttributeOrCallable(attribute)
 
     @property
     def to_class(self):
@@ -116,19 +130,10 @@ class ToOneDocumentField(ApiField):
         return self.to_class() # Tastypie internals are a bit more complex; it may or may not bite us that we do not share the complexity
 
     def dehydrate(self, bundle, for_list=True):
-        if isinstance(self.attribute, six.string_types):
-            accessor = lambda v: getattr(v, self.attribute)
-        else:
-            accessor = self.attribute
+        hydrated = self.attribute(bundle.obj)
 
-        related_resource = self.related_resource
-
-        hydrated = accessor(bundle.obj)
-        
         if hydrated is None:
             return None
-
-        dehydrated = related_resource.full_dehydrate(related_resource.build_bundle(obj=accessor(bundle.obj), request=bundle.request)).data
-
-        return dehydrated
+        else:
+            return self.related_resource.full_dehydrate(self.related_resource.build_bundle(obj=hydrated, request=bundle.request)).data
 

@@ -12,7 +12,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.cloudcare.api import ElasticCaseQuery
 from corehq.apps.api.resources import v0_1, v0_3, JsonResource, DomainSpecificResourceMixin, dict_object
 from corehq.apps.api.es import XFormES, CaseES, ESQuerySet, es_search
-from corehq.apps.api.fields import ToManyDocumentsField
+from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested
 
 # By the time a test case is running, the resource is already instantiated,
 # so as a hack until this can be remedied, there is a global that
@@ -27,8 +27,8 @@ class XFormInstanceResource(v0_3.XFormInstanceResource, DomainSpecificResourceMi
     uiversion = fields.CharField(attribute='uiversion', blank=True, null=True)
     metadata = fields.DictField(attribute='metadata', blank=True, null=True)
 
-    cases = ToManyDocumentsField('corehq.apps.api.resources.v0_4.CommCareCaseResource',
-                                 attribute=lambda xform: [dict_object(case.get_json()) for case in casexml_xform.cases_referenced_by_xform(xform)])
+    cases = UseIfRequested(ToManyDocumentsField('corehq.apps.api.resources.v0_4.CommCareCaseResource',
+                                                attribute=lambda xform: [dict_object(case.get_json()) for case in casexml_xform.cases_referenced_by_xform(xform)]))
 
     # Prevent hitting Couch to md5 the attachment. However, there is no way to
     # eliminate a tastypie field defined in a parent class.
