@@ -554,6 +554,32 @@ class BillingTab(UITab):
         return self.couch_user and self.couch_user.is_superuser
 
 
+class SMSAdminTab(UITab):
+    title = ugettext_noop("SMS Connectivity")
+    view = "default_sms_admin_interface"
+
+    @property
+    def sidebar_items(self):
+        return [
+            (_('SMS Connectivity'), [
+                {'title': _('SMS Connections'),
+                 'url': reverse('list_backends'),
+                 'children': [
+                     {'title': _('Add Connection'),
+                      'urlname': 'add_backend'},
+                     {'title': _('Edit Connection'),
+                      'urlname': 'edit_backend'},
+                 ]},
+                {'title': _('SMS Country-Connection Map'),
+                 'url': reverse('global_backend_map')},
+            ]),
+        ]
+
+    @property
+    def is_viewable(self):
+        return self.couch_user and self.couch_user.is_superuser
+
+
 class AnnouncementsTab(UITab):
     title = ugettext_noop("Announcements")
     view = "corehq.apps.announcements.views.default_announcement"
@@ -571,6 +597,7 @@ class AdminTab(UITab):
         AdminReportsTab,
         GlobalADMConfigTab,
         BillingTab,
+        SMSAdminTab,
         AnnouncementsTab
     )
 
@@ -592,6 +619,7 @@ class AdminTab(UITab):
         except Exception:
             pass
         submenu_context.extend([
+            format_submenu_context(_("SMS Connectivity"), url=reverse("default_sms_admin_interface")),
             format_submenu_context(None, is_divider=True),
             format_submenu_context(_("Django Admin"), url="/admin")
         ])

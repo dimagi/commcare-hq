@@ -12,8 +12,8 @@ from corehq.apps.sms.api import send_sms, incoming, send_sms_with_backend
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users import models as user_models
 from corehq.apps.sms.models import SMSLog, INCOMING, ForwardingRule
-from corehq.apps.sms.mixin import MobileBackend, SMSBackend
-from corehq.apps.sms.forms import ForwardingRuleForm
+from corehq.apps.sms.mixin import MobileBackend, SMSBackend, BackendMapping
+from corehq.apps.sms.forms import ForwardingRuleForm, BackendMapForm
 from corehq.apps.sms.util import get_available_backends
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest, domain_admin_required, require_superuser
@@ -367,6 +367,8 @@ def _list_backends(request, show_global=False, domain=None):
     raw_backends = []
     if not show_global:
         raw_backends += SMSBackend.view("sms/backend_by_domain", startkey=[domain], endkey=[domain, {}], include_docs=True).all()
+        if len(raw_backends) > 0 and domain_obj.default_sms_backend_id in [None, ""]:
+            messages.error(request, "WARNING: You have not specified a default SMS connection. By default, the system will automatically select one of the SMS connections owned by the system when sending sms.")
     raw_backends += SMSBackend.view("sms/global_backends", include_docs=True).all()
     for backend in raw_backends:
         backends.append(backend_classes[backend.doc_type].wrap(backend.to_json()))
@@ -403,7 +405,7 @@ def list_backends(request):
 @domain_admin_required
 def delete_domain_backend(request, domain, backend_id):
     backend = SMSBackend.get(backend_id)
-    if backend.domain != domain:
+    if backend.domain != domain or backend.base_doc != "MobileBackend":
         raise Http404
     domain_obj = Domain.get_by_name(domain, strict=True)
     if domain_obj.default_sms_backend_id == backend._id:
@@ -411,6 +413,14 @@ def delete_domain_backend(request, domain, backend_id):
         domain_obj.save()
     backend.delete()
     return HttpResponseRedirect(reverse("list_domain_backends", args=[domain]))
+
+@require_superuser
+def delete_backend(request, backend_id):
+    backend = SMSBackend.get(backend_id)
+    if not backend.is_global or backend.base_doc != "MobileBackend":
+        raise Http404
+    backend.delete()
+    return HttpResponseRedirect(reverse("list_backends"))
 
 def _set_default_domain_backend(request, domain, backend_id, unset=False):
     backend = SMSBackend.get(backend_id)
@@ -428,4 +438,53 @@ def set_default_domain_backend(request, domain, backend_id):
 @domain_admin_required
 def unset_default_domain_backend(request, domain, backend_id):
     return _set_default_domain_backend(request, domain, backend_id, True)
+
+@require_superuser
+def global_backend_map(request):
+    global_backends = SMSBackend.view("sms/global_backends", include_docs=True).all()
+    current_map = {}
+    catchall_entry = None
+    for entry in BackendMapping.view("sms/backend_map", startkey=["*"], endkey=["*", {}], include_docs=True).all():
+        if entry.prefix == "*":
+            catchall_entry = entry
+        else:
+            current_map[entry.prefix] = entry
+    if request.method == "POST":
+        form = BackendMapForm(request.POST)
+        if form.is_valid():
+            new_backend_map = form.cleaned_data.get("backend_map")
+            new_catchall_backend_id = form.cleaned_data.get("catchall_backend_id")
+            for prefix, entry in current_map.items():
+                if prefix not in new_backend_map:
+                    current_map[prefix].delete()
+                    del current_map[prefix]
+            for prefix, backend_id in new_backend_map.items():
+                if prefix in current_map:
+                    current_map[prefix].backend_id = backend_id
+                    current_map[prefix].save()
+                else:
+                    current_map[prefix] = BackendMapping(is_global=True, prefix=prefix, backend_id=backend_id)
+                    current_map[prefix].save()
+            if new_catchall_backend_id is None:
+                if catchall_entry is not None:
+                    catchall_entry.delete()
+                    catchall_entry = None
+            else:
+                if catchall_entry is None:
+                    catchall_entry = BackendMapping(is_global=True, prefix="*", backend_id=new_catchall_backend_id)
+                else:
+                    catchall_entry.backend_id = new_catchall_backend_id
+                catchall_entry.save()
+            messages.success(request, "Changes Saved.")
+    else:
+        initial = {
+            "catchall_backend_id" : catchall_entry.backend_id if catchall_entry is not None else None,
+            "backend_map" : [{"prefix" : prefix, "backend_id" : entry.backend_id} for prefix, entry in current_map.items()],
+        }
+        form = BackendMapForm(initial=initial)
+    context = {
+        "backends" : global_backends,
+        "form" : form,
+    }
+    return render(request, "sms/backend_map.html", context)
 

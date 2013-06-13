@@ -42,22 +42,43 @@
 {% endblock %}
 
 {% block page-title %}
+    {% if is_global %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url default_sms_admin_interface %}"><strong>SMS Connectivity</strong></a> <span class="divider">&gt;</span>
+        </li>
+        <li>
+            <a href="{% url list_backends %}">SMS Connections</a> <span class="divider">&gt;</span>
+        </li>
+        <li class="active">
+            <div id="report-title">
+            {% if backend_id %}
+                <a href="{% url edit_backend backend_class_name backend_id %}">Edit SMS Connection</a>
+            {% else %}
+                <a href="{% url add_backend backend_class_name %}">Add SMS Connection</a>
+            {% endif %}
+            </div>
+        </li>
+    </ul>
+    {% else %}
     <ul class="breadcrumb">
         <li>
             <a href="{% url messaging domain %}"><strong>Messaging</strong></a> <span class="divider">&gt;</span>
         </li>
+        <li>
+            <a href="{% url list_domain_backends domain %}">SMS Connectivity</a> <span class="divider">&gt;</span>
+        </li>
         <li class="active">
             <div id="report-title">
-            {% block page-subtitle %}
-                {% if backend_id %}
-                    <a href="{% url edit_domain_backend domain backend_class_name backend_id %}">Edit SMS Backend</a>
-                {% else %}
-                    <a href="{% url add_domain_backend domain backend_class_name %}">Add SMS Backend</a>
-                {% endif %}
-            {% endblock %}
+            {% if backend_id %}
+                <a href="{% url edit_domain_backend domain backend_class_name backend_id %}">Edit SMS Connection</a>
+            {% else %}
+                <a href="{% url add_domain_backend domain backend_class_name %}">Add SMS Connection</a>
+            {% endif %}
             </div>
         </li>
     </ul>
+    {% endif %}
 {% endblock %}
 
 {% block main_column %}
@@ -92,6 +113,8 @@
             </table>
         </div>
         {% block backend_specific %}{% endblock %}
-        <input type="submit" class="btn btn-primary" value="Submit" />
+        <div style="padding-top: 20px;">
+            <input type="submit" class="btn btn-primary" value="Save" />
+        </div>
     </form>
 {% endblock %}

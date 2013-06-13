@@ -20,6 +20,7 @@ from corehq.apps.hqwebapp.urls import domain_specific as hqwebapp_domain_specifi
 from corehq.apps.settings.urls import domain_specific as settings_domain_specific
 from corehq.apps.settings.urls import users_redirect, domain_redirect
 from corehq.apps.adm.urls import adm_admin_interface_urls
+from corehq.apps.sms.urls import sms_admin_interface_urls
 
 
 domain_specific = patterns('',
@@ -70,6 +71,7 @@ urlpatterns = patterns('',
     (r'', include('corehq.apps.domain.urls')),
     (r'^adm/', include(adm_admin_interface_urls)),
     (r'^announcements/', include('corehq.apps.announcements.urls')),
+    (r'^hq/sms/', include(sms_admin_interface_urls)),
     (r'^hq/billing/', include('hqbilling.urls')),
     (r'^hq/multimedia/', include('corehq.apps.hqmedia.urls')),
     (r'^hq/admin/', include('corehq.apps.hqadmin.urls')),

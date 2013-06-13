@@ -30,6 +30,16 @@
 
 {% block page-title %}
     {% if show_global %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url default_sms_admin_interface %}"><strong>SMS Connectivity</strong></a> <span class="divider">&gt;</span>
+        </li>
+        <li class="active">
+            <div id="report-title">
+                <a href="{% url list_backends %}">SMS Connections</a>
+            </div>
+        </li>
+    </ul>
     {% else %}
     <ul class="breadcrumb">
         <li>
@@ -37,9 +47,7 @@
         </li>
         <li class="active">
             <div id="report-title">
-            {% block page-subtitle %}
                 <a href="{% url list_domain_backends domain %}">SMS Connectivity</a>
-            {% endblock %}
             </div>
         </li>
     </ul>
@@ -94,7 +102,7 @@
                             <a class="close" data-dismiss="modal">&times;</a>
                             <h3>Delete SMS Connection?</h3>
                         </div>
-                        <form class="form form-horizontal" name="delete_backend" action="{% if show_global %}{% else %}{% url delete_domain_backend domain backend.get_id %}{% endif %}" method="post">
+                        <form class="form form-horizontal" name="delete_backend" action="{% if show_global %}{% url delete_backend backend.get_id %}{% else %}{% url delete_domain_backend domain backend.get_id %}{% endif %}" method="post">
                             <div class="modal-body">
                                 <p>Are you sure you want to delete SMS Connection '{{ backend.name }}'?</p>
                             </div>

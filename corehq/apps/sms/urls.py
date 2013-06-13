@@ -21,7 +21,10 @@ urlpatterns = patterns('corehq.apps.sms.views',
 )
 
 sms_admin_interface_urls = patterns('corehq.apps.sms.views',
-    url(r'^backends/$', 'list_backends', name="default_sms_admin_interface"),
+    url(r'^$', 'list_backends', name="default_sms_admin_interface"),
+    url(r'^backends/$', 'list_backends', name="list_backends"),
     url(r'^add_backend/(?P<backend_class_name>[\w-]+)/$', 'add_backend', name="add_backend"),
     url(r'^edit_backend/(?P<backend_class_name>[\w-]+)/(?P<backend_id>[\w-]+)/$', 'add_backend', name='edit_backend'),
+    url(r'^delete_backend/(?P<backend_id>[\w-]+)/$', 'delete_backend', name='delete_backend'),
+    url(r'^global_backend_map/$', 'global_backend_map', name='global_backend_map'),
 )

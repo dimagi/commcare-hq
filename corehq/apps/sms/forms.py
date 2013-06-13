@@ -4,6 +4,7 @@ from django.forms.fields import *
 from corehq.apps.sms.models import ForwardingRule, FORWARD_ALL, FORWARD_BY_KEYWORD
 from django.core.exceptions import ValidationError
 from corehq.apps.sms.mixin import SMSBackend
+from corehq.apps.reminders.forms import RecordListField
 
 FORWARDING_CHOICES = (
     (FORWARD_ALL, "All messages"),
@@ -68,4 +69,30 @@ class BackendForm(Form):
                 return None
             else:
                 return value
+
+class BackendMapForm(Form):
+    catchall_backend_id = CharField(required=False)
+    backend_map = RecordListField(input_name="backend_map")
+
+    def clean_backend_map(self):
+        cleaned_value = {}
+        for record in self.cleaned_data.get("backend_map", []):
+            prefix = record["prefix"].strip()
+            try:
+                prefix = int(prefix)
+                assert prefix > 0
+            except ValueError, AssertionError:
+                raise ValidationError("Please enter a positive number for the prefix.")
+            prefix = str(prefix)
+            if prefix in cleaned_value:
+                raise ValidationError("Prefix is specified twice: %s" % prefix)
+            cleaned_value[prefix] = record["backend_id"]
+        return cleaned_value
+
+    def clean_catchall_backend_id(self):
+        value = self.cleaned_data.get("catchall_backend_id", None)
+        if value == "":
+            return None
+        else:
+            return value
 

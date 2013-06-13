@@ -177,6 +177,12 @@ class SMSBackend(MobileBackend):
     def send(msg, *args, **kwargs):
         raise NotImplementedError("send() method not implemented")
 
+class BackendMapping(Document):
+    domain = StringProperty()
+    is_global = BooleanProperty()
+    prefix = StringProperty()
+    backend_id = StringProperty() # Couch Document id of a MobileBackend
+
 class CommCareMobileContactMixin(object):
     """
     Defines a mixin to manage a mobile contact's information. This mixin must be used with
