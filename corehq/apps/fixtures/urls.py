@@ -10,4 +10,5 @@ urlpatterns = patterns('corehq.apps.fixtures.views',
     url(r'^groups/$', 'groups'),
     url(r'^users/$', 'users'),
     url(r'^item-lists/upload/$', UploadItemLists.as_view(), name='upload_item_lists'),
+    url(r'^item-lists/download/$', 'download_item_lists', name="download_fixtures"),
 )

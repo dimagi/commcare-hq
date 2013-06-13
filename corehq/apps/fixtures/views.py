@@ -1,9 +1,11 @@
 import json
+import os
+import tempfile
 from couchdbkit import ResourceNotFound
 
 from django.contrib import messages
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404
+from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404, HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateView
 from django.shortcuts import render
@@ -14,6 +16,9 @@ from corehq.apps.users.bulkupload import GroupMemoizer
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CommCareUser, Permissions
 from corehq.apps.users.util import normalize_username
+from couchexport.export import UnsupportedExportFormat, export_raw
+from couchexport.shortcuts import export_response
+from couchexport.models import Format
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
 from dimagi.utils.logging import notify_exception
@@ -200,6 +205,54 @@ def view(request, domain, template='fixtures/view.html'):
     return render(request, template, {
         'domain': domain
     })
+
+@require_can_edit_fixtures
+def download_item_lists(request, domain):
+    data_types = FixtureDataType.by_domain(domain)
+    data_type_rows = []
+    tables = [] 
+    """ 
+    [(("header_name","schema"),("header_name","rows"))]
+    [(("Districts", (x,y,z)),
+      ("Districts", ((v1,v2),
+        ))))]
+
+
+    """
+    out = ""
+    max_columns = 0
+    tables_data = []
+    for data_type in data_types:
+        row = [data_type.name, data_type.tag]
+        fields = [field for field in data_type.fields]
+        row.extend(fields)
+        data_type_rows.append(tuple(row))
+        if max_columns<len(row):
+            max_columns = len(row)
+        type_id = data_type.get_id
+        table_data = []
+        for item_row in FixtureDataItem.by_data_type(domain, type_id):
+            data_row = tuple([item_row.fields[field] for field in fields])
+            table_data.append(data_row)
+        tables_data.append((data_type.tag,tuple(table_data)))
+
+    data_type_headers = ["name", "tag"] + ["field %d" % x for x in range(1,max_columns-1)]
+
+    type_headers = ("types", tuple(data_type_headers))
+    type_rows = ("types", tuple(data_type_rows))
+    table_headers = [type_headers]
+    for item_row in data_type_rows:
+        item_header = (item_row[1], tuple(["field: "+x for x in item_row[2:]]))
+        table_headers.append(item_header)
+    table_headers = tuple(table_headers)
+    tables_data = tuple([type_rows]+tables_data)
+    
+    #return HttpResponse(str(tables_data)+"<br/>"+str(tuple(table_headers)))
+    fd, path = tempfile.mkstemp()
+    with os.fdopen(fd, 'w') as temp:
+        export_raw((table_headers), (tables_data), temp)
+    format = Format.XLS_2007
+    return export_response(open(path), format, "%s_fixtures" % domain)
 
 
 class UploadItemLists(TemplateView):
