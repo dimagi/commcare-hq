@@ -15,7 +15,7 @@ from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater
 from corehq.apps.api.resources import v0_1, v0_4
-from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField
+from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, UseIfRequested
 from corehq.apps.api.es import ESQuerySet
 
 class FakeXFormES(object):
@@ -454,7 +454,7 @@ class ToManyDestResource(Resource):
 
 class TestToManyDocumentsField(TestCase):
     '''
-    Basic test of the <fieldname>__full
+    Basic test that ToMany dehydrated alright
     '''
     
     def test_requested_use_in(self):
@@ -470,23 +470,16 @@ class TestToManyDocumentsField(TestCase):
         ]
 
         source_resource = ToManySourceResource(source_objs)
-        bundle = source_resource.build_bundle(obj=source_objs[0])
-        dehydrated_bundle = source_resource.full_dehydrate(bundle)
-
-        self.assertFalse('other_models' in dehydrated_bundle.data)
 
         bundle = source_resource.build_bundle(obj=source_objs[0])
-        bundle.request.GET['other_models__full'] = 'true'
         dehydrated_bundle = source_resource.full_dehydrate(bundle)
 
         self.assertTrue('other_models' in dehydrated_bundle.data)
         self.assertEqual([other['id'] for other in dehydrated_bundle.data['other_models']], ['foo', 'bar'])
 
         bundle = source_resource.build_bundle(obj=source_objs[1])
-        bundle.request.GET['other_models__full'] = 'true'
         dehydrated_bundle = source_resource.full_dehydrate(bundle)
 
-        self.assertTrue('other_models' in dehydrated_bundle.data)
         self.assertEqual([other['id'] for other in dehydrated_bundle.data['other_models']], ['bar', 'baz'])
 
 
@@ -542,21 +535,52 @@ class TestToOneDocumentField(TestCase):
         ]
 
         source_resource = ToOneSourceResource(source_objs)
+
         bundle = source_resource.build_bundle(obj=source_objs[0])
         dehydrated_bundle = source_resource.full_dehydrate(bundle)
 
-        self.assertFalse('other_model' in dehydrated_bundle.data)
-
-        bundle = source_resource.build_bundle(obj=source_objs[0])
-        bundle.request.GET['other_model__full'] = 'true'
-        dehydrated_bundle = source_resource.full_dehydrate(bundle)
-
-        self.assertTrue('other_model' in dehydrated_bundle.data)
         self.assertEqual(dehydrated_bundle.data['other_model']['id'], 'foo')
 
         bundle = source_resource.build_bundle(obj=source_objs[1])
-        bundle.request.GET['other_model__full'] = 'true'
         dehydrated_bundle = source_resource.full_dehydrate(bundle)
 
-        self.assertTrue('other_model' in dehydrated_bundle.data)
         self.assertEqual(dehydrated_bundle.data['other_model']['id'], 'bar')
+
+        
+class UseIfRequestedModel(object):
+    def __init__(self, id):
+        self.id = id
+
+class UseIfRequestedTestResource(Resource):
+    something = UseIfRequested(fields.CharField(attribute='id'))
+
+    def __init__(self, objs):
+        super(UseIfRequestedTestResource, self).__init__()
+        self.objs = objs
+
+    def obj_get_list(self):
+        return self.objs
+
+    class Meta:
+        model_class = UseIfRequestedModel
+
+class TestUseIfRequested(TestCase):
+    def test_requested_use_in(self):
+        objs = [
+            UseIfRequestedModel(id='foo'),
+            UseIfRequestedModel(id='bar')
+        ]
+
+        test_resource = UseIfRequestedTestResource(objs)
+
+        bundle = test_resource.build_bundle(obj=objs[0])
+        dehydrated_bundle = test_resource.full_dehydrate(bundle)
+
+        self.assertFalse('id' in dehydrated_bundle.data)
+
+        bundle = test_resource.build_bundle(obj=objs[0])
+        bundle.request.GET['something__full'] = 'true'
+        dehydrated_bundle = test_resource.full_dehydrate(bundle)
+
+        self.assertTrue('something' in dehydrated_bundle.data)
+        self.assertEqual(dehydrated_bundle.data['something'], 'foo')
