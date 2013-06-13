@@ -7,6 +7,11 @@ function get_form_filled_duration(xform_doc) {
     return null;
 }
 
+function get_form_filled_seconds(doc) {
+    return Math.round(get_form_filled_duration(doc) / 1000);
+
+}
+
 function get_submission_day(xform_doc) {
     var meta = xform_doc.form.meta;
     if (meta && meta.timeEnd) {
@@ -55,6 +60,11 @@ function isCATIFollowUpForm(doc) {
     return (isNewHSPHForm(doc) &&
             doc.xmlns === "http://openrosa.org/formdesigner/A5B08D8F-139D-46C6-9FDF-B1AD176EAE1F");
 }
+
+function isFIDALogSiteForm(doc) {
+    return (isNewHSPHForm(doc) &&
+           doc.xmlns === "http://openrosa.org/formdesigner/FBF25DA1-4BE7-4E2E-8F4B-AAE815A0C6D2");
+} 
 
 // old apps
 function isDCOFollowUpReport(doc) {
