@@ -6,37 +6,40 @@ $(function() {
                 return model.presubmit();
             });
 
-        ko.applyBindings(model);
         model.load(settings);
-        
+        ko.applyBindings(model);
+
     });
 
 function CommtrackSettingsViewModel() {
     this.keyword = ko.observable();
     this.actions = ko.observableArray();
     this.loc_types = ko.observableArray();
+    this.requisition_config = ko.observable();
 
     this.json_payload = ko.observable();
 
     this.keyword_error = ko.observable();
     this.loc_types_error = ko.observable();
 
+    // TODO: sort out possibly removing this redundant declaration in js
     this.action_types = [
         {label: 'Stock on hand', value: 'stockonhand'},
         {label: 'Receipts', value: 'receipts'},
         {label: 'Consumption', value: 'consumption'},
         {label: 'Stock out', value: 'stockout'},
-        {label: '# days stocked-out for', value: 'stockedoutfor'},
+        {label: '# days stocked-out for', value: 'stockedoutfor'}
     ];
 
     this.load = function(data) {
         this.keyword(data.keyword);
         this.actions($.map(data.actions, function(e) {
-                    return new ActionModel(e);
-                }));
+            return new ActionModel(e);
+        }));
         this.loc_types($.map(data.loc_types, function(e) {
-                    return new LocationTypeModel(e);
-                }));
+            return new LocationTypeModel(e);
+        }));
+        this.requisition_config(new RequisitionConfigModel(data.requisition_config));
     };
 
     var settings = this;
@@ -153,6 +156,7 @@ function CommtrackSettingsViewModel() {
             keyword: this.keyword(),
             actions: $.map(this.actions(), function(e) { return e.to_json(); }),
             loc_types: $.map(this.loc_types(), function(e) { return e.to_json(); }),
+            requisition_config: this.requisition_config().to_json()
         };
     };
 }
@@ -239,6 +243,38 @@ function LocationTypeModel(data, root) {
             name: this.name(),
             allowed_parents: this.allowed_parents(),
             administrative: this.administrative()
+        };
+    };
+}
+
+function RequisitionConfigModel(data) {
+    // TODO: sort out possibly removing this redundant declaration in js
+    this.action_types = [
+        {label: 'Request', value: 'request'},
+        {label: 'Approval', value: 'approval'},
+        {label: 'Pack', value: 'pack'},
+        {label: 'Receipts (Requisition)', value: 'requisition-receipts'}
+    ];
+
+    this.enabled = ko.observable(data.enabled);
+    this.actions = ko.observableArray($.map(data.actions, function(item) {
+        return new ActionModel(item);
+    }));
+
+    var that = this;
+    this.remove_action = function(action) {
+        that.actions.remove(action);
+    };
+
+    this.new_action = function() {
+        console.log('new');
+        that.actions.push(new ActionModel({}));
+    };
+
+    this.to_json = function() {
+        return {
+            enabled: this.enabled(),
+            actions: $.map(this.actions(), function(e) { return e.to_json(); })
         };
     };
 }

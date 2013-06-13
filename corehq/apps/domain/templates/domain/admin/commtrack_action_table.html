@@ -23,12 +23,11 @@
         <div class="help-inline" data-bind="text: keyword_error"></div>
       </td>
       <td>
-        <select data-bind="value: type, options: $root.action_types, optionsText: 'label', optionsValue: 'value'"></select>
+        <select data-bind="value: type, options: $parent.action_types, optionsText: 'label', optionsValue: 'value'"></select>
       </td>
       <td>
-        <button type="button" class="btn btn-danger" data-bind="click: $root.remove_action"><i class="icon-trash icon-white"></i> Remove</button>
+        <button type="button" class="btn btn-danger" data-bind="click: $parent.remove_action"><i class="icon-trash icon-white"></i> {% trans "Remove" %}</button>
       </td>
     </tr>
   </tbody>
 </table>
-<button type="button" class="btn btn-primary" data-bind="click: new_action"><i class="icon-plus icon-white"></i> New Action</button>

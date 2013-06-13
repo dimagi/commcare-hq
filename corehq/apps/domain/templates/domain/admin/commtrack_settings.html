@@ -59,11 +59,25 @@ var other_sms_codes = {{ other_sms_codes|JSON }};
 <h3>Stock Actions</h3>
 
 <p class="help">For a given incoming stock report, stock actions will be applied in the order listed below.</p>
-
 {% include "domain/admin/commtrack_action_table.html" %}
-
+<button type="button" class="btn btn-primary" data-bind="click: new_action"><i class="icon-plus icon-white"></i> {% trans "New Action" %}</button>
 <hr />
 
+<h3>{% trans "Requisitions" %}</h3>
+<fieldset>
+    <div class="control-group" >
+    <label class="control-label" for="requisitions_enabled">{% trans "Enable Requisitions?" %}</label>
+    <div class="controls">
+      <input id="requisitions_enabled" type="checkbox" data-bind="checked: requisition_config().enabled">
+    </div>
+  </div>
+</fieldset>
+<fieldset data-bind="with: requisition_config(), visible: requisition_config().enabled">
+    <h3{% trans "Requisitions Actions" %}></h3>
+    <p class="help">{% trans "For a given incoming requisition report, actions will be applied in the order listed below." %}</p>
+        {% include "domain/admin/commtrack_action_table.html" %}
+    <button type="button" class="btn btn-primary" data-bind="click: new_action"><i class="icon-plus icon-white"></i> {% trans "New Action" %}</button>
+</fieldset>
 <h3>Location Hierarchy</h3>
 
 <div class="text-error" data-bind="text: loc_types_error"></div>
