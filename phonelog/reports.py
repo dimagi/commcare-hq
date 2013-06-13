@@ -151,6 +151,20 @@ class DeviceLogDetailsReport(PhonelogReport):
             self._selected_devices = set(self.request.GET.getlist(DeviceLogDevicesField.slug))
         return self._selected_devices
 
+    _filters = None
+    @property
+    def filters(self):
+        if self._filters is None:
+            self._filters = set()
+            if self.selected_tags:
+                self._filters.add('tag')
+            if self.devices:
+                self._filters.add('device')
+            if self.device_log_users:
+                self._filters.add('user')
+
+        return self._filters
+
     _devices_for_users = None
     @property
     def devices_for_users(self):
@@ -171,12 +185,12 @@ class DeviceLogDetailsReport(PhonelogReport):
 
             self._devices_for_users = set([device_id for user in self.device_log_users
                                                      for device_id in device_ids_for_username[user]])
-            
+
         return self._devices_for_users
 
     @property
     def devices(self):
-        return self.devices_for_users | self.selected_devices
+        return self.selected_devices
 
     _goto_key = None
     @property
@@ -220,8 +234,8 @@ class DeviceLogDetailsReport(PhonelogReport):
             new_title = "Last %s Logs <small>before %s</small>" % (self.limit, record_desc)
         return new_title
 
-#    def get_parameters(self):
-#        self.hide_filters = bool(self.goto_key)
+    def is_filtered_by(self, *args):
+        return set(args) == self.filters
 
     @property
     def rows(self):
@@ -240,13 +254,32 @@ class DeviceLogDetailsReport(PhonelogReport):
         else:
             if self.errors_only:
                 key_set = [[self.domain, "all_errors_only"]]
-            elif self.selected_tags and self.devices:
-                key_set = [[self.domain, "tag_device", tag, device] for tag in self.selected_tags
-                                                                    for device in self.devices]
-            elif (not self.selected_tags) and self.devices:
-                key_set = [[self.domain, "device", device] for device in self.devices]
-            elif self.selected_tags and (not self.devices):
-                key_set = [[self.domain, "tag", tag] for tag in self.selected_tags]
+            elif self.is_filtered_by('user'):
+                key_set = [[self.domain, "user", [user]]
+                           for user in self.device_log_users]
+            elif self.is_filtered_by('device'):
+                key_set = [[self.domain, "device", device]
+                           for device in self.devices]
+            elif self.is_filtered_by('tag'):
+                key_set = [[self.domain, "tag", tag]
+                           for tag in self.selected_tags]
+            elif self.is_filtered_by('tag', 'device'):
+                key_set = [[self.domain, "tag_device", tag, device]
+                           for tag in self.selected_tags
+                           for device in self.devices]
+            elif self.is_filtered_by('tag', 'user'):
+                key_set = [[self.domain, "tag_user", tag, [user]]
+                           for tag in self.selected_tags
+                           for user in self.device_log_users]
+            elif self.is_filtered_by('user', 'device'):
+                key_set = [[self.domain, "user_device", [user], device]
+                           for user in self.device_log_users
+                           for device in self.devices]
+            elif self.is_filtered_by('tag', 'user', 'device'):
+                key_set = [[self.domain, "tag_user_device", tag, [user], device]
+                           for tag in self.selected_tags
+                           for user in self.device_log_users
+                           for device in self.devices]
             else:
                 key_set = [[self.domain, "basic"]]
 

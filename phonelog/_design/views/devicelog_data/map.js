@@ -47,12 +47,22 @@ function(doc) {
                     emit([doc.domain, "all_errors_only", entry['@date']], entry);
                 }
 
+                if (user_subreport_usernames.length !== 0) {
+                  var usernames = user_subreport_usernames;
+                } else {
+                  var usernames = [logged_in_user];
+                }
+
                 // Single Parameters
                 emit([doc.domain, "tag", entry.type, entry['@date']], entry);
                 emit([doc.domain, "device", doc.form.device_id, entry['@date']], entry);
+                emit([doc.domain, "user", usernames, entry['@date']], entry);
 
                 // Coupled Parameters
                 emit([doc.domain, "tag_device", entry.type, doc.form.device_id, entry['@date']], entry);
+                emit([doc.domain, "tag_user", entry.type, usernames, entry['@date']], entry);
+                emit([doc.domain, "user_device", usernames, doc.form.device_id, entry['@date']], entry);
+                emit([doc.domain, "tag_user_device", entry.type, usernames, doc.form.device_id, entry['@date']], entry);
             }
 
         }
