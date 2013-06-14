@@ -212,7 +212,12 @@ def download_item_lists(request, domain):
     data_types = FixtureDataType.by_domain(domain)
     data_type_schemas = []
     max_fields = 0
+    max_groups = 0
+    max_users = 0
+    mmax_groups = 0
+    mmax_users = 0
     data_tables = []
+    
 
     for data_type in data_types:
         type_schema = [data_type.name, data_type.tag]
@@ -220,25 +225,35 @@ def download_item_lists(request, domain):
         type_id = data_type.get_id
         data_table_of_type = []
         for item_row in FixtureDataItem.by_data_type(domain, type_id):
-            group_1 = ",".join([group.name for group in item_row.get_groups()])
-            user_1 = ",".join([user.raw_username for user in item_row.get_users()])
-            data_row = tuple([str(_id_from_doc(item_row))]+
+            group_len = len(item_row.get_groups())
+            max_groups = group_len if group_len>max_groups else max_groups
+            user_len = len(item_row.get_users())
+            max_users = user_len if user_len>max_users else max_users
+        for item_row in FixtureDataItem.by_data_type(domain, type_id):
+            groups = [group.name for group in item_row.get_groups()] + ["" for x in range(0,max_groups-len(item_row.get_groups()))]
+            users = [user.raw_username for user in item_row.get_users()] + ["" for x in range(0, max_users-len(item_row.get_users()))]
+            data_row = tuple([str(_id_from_doc(item_row)),"N"]+
                              [item_row.fields[field] for field in fields]+
-                             [group_1.strip(","),user_1.strip(","),"N"])
+                             groups + users)
             data_table_of_type.append(data_row)
         type_schema.extend(fields)
         data_type_schemas.append(tuple(type_schema))
         if max_fields<len(type_schema):
             max_fields = len(type_schema)
         data_tables.append((data_type.tag,tuple(data_table_of_type)))
+        mmax_users = max_users if max_users>mmax_users else mmax_users
+        mmax_groups = max_groups if max_groups>mmax_groups else mmax_groups
+        max_users = 0
+        max_groups = 0
 
     type_headers = ["name", "tag"] + ["field %d" % x for x in range(1,max_fields-1)]
     type_headers = ("types", tuple(type_headers))
     table_headers = [type_headers]    
     for type_schema in data_type_schemas:
-        item_header = (type_schema[1], tuple(["field: UID"]+
+        item_header = (type_schema[1], tuple(["UID","Delete(Y/N)"]+
                                              ["field: "+x for x in type_schema[2:]]+
-                                             ["group 1", "user 1","Delete(Y/N)"]))
+                                             ["group %d" % x for x in range(1, mmax_groups+1)]+
+                                             ["user %d" % x for x in range(1, mmax_users+1)]))
         table_headers.append(item_header)
 
     table_headers = tuple(table_headers)
@@ -416,16 +431,14 @@ def run_upload_api(request, domain, workbook):
                 for user in old_users:
                     old_data_item.remove_user(user)
 
-                for group_names in di.get('group', []):
-                    for group_name in group_names.split(","):
-                        group = group_memoizer.by_name(group_name.strip())
+                for group_name in di.get('group', []):
+                        group = group_memoizer.by_name(group_name)
                         if group:
                             old_data_item.add_group(group, transaction=transaction)
                         else:
                             messages.error(request, "Unknown group: %s" % group_name)
-                for raw_usernames in di.get('user', []):
-                    for raw_username in raw_usernames.split(","):
-                        username = normalize_username(raw_username.strip(), domain)
+                for raw_username in di.get('user', []):
+                        username = normalize_username(raw_username, domain)
                         user = CommCareUser.get_by_username(username)
                         if user:
                             old_data_item.add_user(user)
