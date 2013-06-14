@@ -448,7 +448,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             resp = cls.get_db().fetch_attachment(case_id, attachment_key, stream=True)
             stream = StringIO(resp.read())
             headers = resp.resp.headers
-            cached_image.cache_image(stream, metadata=headers)
+            cached_image.cache_image(stream, headers)
 
         #now that we got it cached, let's check for size constraints
         meta, stream = cached_image.get_size(size_key)
@@ -507,7 +507,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             resp = cls.get_db().fetch_attachment(case_id, attachment_key, stream=True)
             stream = StringIO(resp.read())
             headers = resp.resp.headers
-            cobject.cache_put(stream, metadata=headers)
+            cobject.cache_put(stream, headers)
         meta, stream = cobject.get()
 
         return meta, stream

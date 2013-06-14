@@ -147,7 +147,6 @@ class CaseAttachmentAction(CaseActionBase):
     @classmethod
     def from_v2(cls, block):
         attachments = {}
-        print "#### Case AttachmentAction: #%s#" % block
         for id, data in block.items():
             if isinstance(data, basestring):
                 attachment_from = None
@@ -157,8 +156,6 @@ class CaseAttachmentAction(CaseActionBase):
                 attachment_from = data.get('@from', None)
                 attachment_src = data.get('@src', None)
                 attachment_name = data.get('@name', None)
-            print "case attachment action: %s" % id
-            print data
 
             if attachment_from == attachment_src == attachment_name == None:
                 #all null, this is a deletion
