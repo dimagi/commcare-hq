@@ -616,7 +616,13 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         return not self.is_snapshot and self.original_doc is not None
 
     def snapshots(self):
-        return Domain.view('domain/snapshots', startkey=[self._id, {}], endkey=[self._id], include_docs=True, descending=True)
+        return Domain.view('domain/snapshots',
+            startkey=[self._id, {}],
+            endkey=[self._id],
+            include_docs=True,
+            reduce=False,
+            descending=True
+        )
 
     @memoized
     def published_snapshot(self):
@@ -805,6 +811,15 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     def get_form_display(self, form):
         """Get the properties display definition for a given XFormInstance"""
         return self.case_display.form_details.get(form.xmlns)
+
+    @property
+    def total_downloads(self):
+        return get_db().view("domain/snapshots",
+            startkey=[self.get_id],
+            endkey=[self.get_id, {}],
+            reduce=True,
+            include_docs=False,
+        ).one()["value"]["sum"]
 
 
 class DomainCounter(Document):
