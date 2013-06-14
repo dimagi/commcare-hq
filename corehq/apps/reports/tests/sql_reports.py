@@ -86,7 +86,7 @@ class UserTestReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
             return aggregate_cols
 
 
-class RegionTestReport(SqlTabularReport, DatespanMixin):
+class RegionTestReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
     name = "SQL Demo"
     slug = "sql_demo"
     field_classes = (DatespanField,)
