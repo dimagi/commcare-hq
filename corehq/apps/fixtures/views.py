@@ -221,9 +221,9 @@ def download_item_lists(request, domain):
         for item_row in FixtureDataItem.by_data_type(domain, type_id):
             group_1 = ",".join([group.name for group in item_row.get_groups()])
             user_1 = ",".join([user.raw_username for user in item_row.get_users()])
-            data_row = tuple([str(_id_from_doc(item_row))]
-                            +[item_row.fields[field] for field in fields]
-                            +[group_1.strip(","),user_1.strip(","),"N"])
+            data_row = tuple([str(_id_from_doc(item_row))]+
+                             [item_row.fields[field] for field in fields]+
+                             [group_1.strip(","),user_1.strip(","),"N"])
             data_table_of_type.append(data_row)
         type_schema.extend(fields)
         data_type_schemas.append(tuple(type_schema))
@@ -235,9 +235,9 @@ def download_item_lists(request, domain):
     type_headers = ("types", tuple(type_headers))
     table_headers = [type_headers]    
     for type_schema in data_type_schemas:
-        item_header = (type_schema[1], tuple(["field: UID"]
-                                            +["field: "+x for x in type_schema[2:]]
-                                            +["group 1", "user 1","Delete(Y/N)"]))
+        item_header = (type_schema[1], tuple(["field: UID"]+
+                                             ["field: "+x for x in type_schema[2:]]+
+                                             ["group 1", "user 1","Delete(Y/N)"]))
         table_headers.append(item_header)
 
     table_headers = tuple(table_headers)
