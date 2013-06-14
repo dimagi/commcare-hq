@@ -206,6 +206,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     is_shared = BooleanProperty(default=False)
     commtrack_enabled = BooleanProperty(default=False)
     call_center_config = SchemaProperty(CallCenterProperties)
+    restrict_superusers = BooleanProperty(default=False)
 
     case_display = SchemaProperty(CaseDisplaySettings)
 
