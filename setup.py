@@ -18,7 +18,9 @@ setup(
         'pytz',
         'couchdbkit',
         'django_redis',
-        'unittest2'
+        'unittest2',
+        'simplejson',
+        'PIL'
     ],
     tests_require=[
         'unittest2',
