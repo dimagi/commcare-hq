@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='dimagi-utils',
-    version='1.0.2',
+    version='1.0.3',
     description='Dimagi Shared Utilities',
     author='Dimagi',
     author_email='dev@dimagi.com',
@@ -17,7 +17,8 @@ setup(
         'python-dateutil',
         'pytz',
         'couchdbkit',
-        'django_redis'
+        'django_redis',
+        'unittest2'
     ],
     tests_require=[
         'unittest2',
