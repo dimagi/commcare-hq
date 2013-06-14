@@ -181,12 +181,6 @@ class CachedObject(object):
         self.stream_keys = stream_keys
         self.meta_keys = meta_keys
 
-
-
-    @classmethod
-    def get_cached(cls, filename):
-        pass
-
     def is_cached(self):
         metas, streams = self.get_all_keys()
         if len(metas) == 0:
@@ -228,9 +222,9 @@ class CachedObject(object):
 
     #retrieval methods
     def get(self):
-        return self.get_size(OBJECT_ORIGINAL)
+        return self._do_get_size(OBJECT_ORIGINAL)
 
-    def get_size(self, size_key):
+    def _do_get_size(self, size_key):
         """
         Return the stream of the filename and size_key you want
         """
@@ -239,8 +233,8 @@ class CachedObject(object):
 
         return (meta, stream)
 
-    def cache_put(self, object_stream, metadata=None):
-        object_meta = CachedObjectMeta.make_meta(object_stream, OBJECT_ORIGINAL, metadata=metadata)
+    def cache_put(self, object_stream, metadata):
+        object_meta = CachedObjectMeta.make_meta(object_stream, OBJECT_ORIGINAL, metadata)
 
         rcache = self.rcache
         object_stream.seek(0)
@@ -307,12 +301,10 @@ class CachedImage(CachedObject):
             can_size = self.can_size(size_key)
             if can_size:
                 self.make_size(size_key)
-                return super(CachedImage, self).get_size(size_key)
             else:
                 #if size is not possible, this will mean it's too large, return the original
-                return super(CachedImage, self).get_size(OBJECT_ORIGINAL)
-        else:
-            return super(CachedImage, self).get_size(size_key)
+                size_key = OBJECT_ORIGINAL
+        return super(CachedImage, self)._do_get_size(size_key)
 
 
     def can_size(self, target_size_key, source_size_key=OBJECT_ORIGINAL):
@@ -322,7 +314,7 @@ class CachedImage(CachedObject):
         source_meta = CachedImageMeta.wrap(self.fetch_meta(source_size_key))
         target_size = (OBJECT_SIZE_MAP[target_size_key]['width'], OBJECT_SIZE_MAP[target_size_key]['height'])
 
-        if source_meta.width <= target_size[0]:
+        if source_meta.width < target_size[0]:
             return False
         else:
             return True
