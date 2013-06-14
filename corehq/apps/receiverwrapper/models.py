@@ -217,13 +217,13 @@ class RepeatRecord(Document, LockableMixIn):
             headers = {
                 "received-on": form.received_on.isoformat()+"Z",
             }
-            post_fn = post_fn or simple_post_with_cached_timeout(headers=headers)
+            post_fn = post_fn or simple_post_with_cached_timeout
         if self.try_now():
             # we don't use celery's version of retry because
             # we want to override the success/fail each try
             for i in range(max_tries):
                 try:
-                    resp = post_fn(payload, self.url)
+                    resp = post_fn(payload, self.url,headers=headers)
                     if 200 <= resp.status < 300:
                         self.update_success()
                         break
