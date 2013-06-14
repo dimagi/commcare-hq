@@ -50,7 +50,7 @@ class CachedObjectTests(TestCase):
     def _make_image(self, width=3001, height=2001):
         im = Image.new("RGB", (width, height), (0, 0, 0))
         buf = StringIO.StringIO()
-        im.save(buf, "JPEG")
+        im.save(buf, "png")
         buf.seek(0)
         return (im, buf)
 
