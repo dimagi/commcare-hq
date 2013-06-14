@@ -47,7 +47,7 @@ class CaseActionBase(object):
         self.opened_on = opened_on
         self.dynamic_properties = dynamic_properties or {}
         self.indices = indices or []
-		self.attachments = attachments or {}
+        self.attachments = attachments or {}
     
     def get_known_properties(self):
         prop_list = ["type", "name", "external_id", "user_id",

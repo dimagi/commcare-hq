@@ -8,6 +8,7 @@ import itertools
 
 from django.core.cache import cache
 from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from couchdbkit.ext.django.schema import *
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
@@ -395,11 +396,11 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         A server specific URL for remote clients to access case attachment resources async.
         """
         if attachment_key in self.case_attachments:
-            return "/a/%(domain)s/case/attachment/%(case_id)s/%(attach)s" % {
+            return reverse("api_case_attachment", kwargs={
                 "domain": self.domain,
                 "case_id": self._id,
-                "attach": attachment_key
-            }
+                "attachment_id": attachment_key}
+            )
         else:
             return None
 
