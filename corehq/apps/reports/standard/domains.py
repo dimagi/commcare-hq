@@ -2,15 +2,14 @@ from datetime import datetime
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
-import math
-from corehq.apps.domain.calculations import dom_calc, _all_domain_stats, ES_CALCED_PROPS
-from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.dispatcher import BasicReportDispatcher, AdminReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport, ElasticTabularReport
 from django.utils.translation import ugettext as _
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 
+def format_date(dstr, default):
+    return datetime.strptime(dstr, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y/%m/%d %H:%M:%S') if dstr else default
 
 class DomainStatsReport(GenericTabularReport):
     dispatcher = BasicReportDispatcher
@@ -18,6 +17,7 @@ class DomainStatsReport(GenericTabularReport):
     section_name = 'DOMSTATS'
     base_template = "reports/async/default.html"
     custom_params = []
+    es_queried = False
 
     name = ugettext_noop('Domain Statistics')
     slug = 'dom_stats'
@@ -27,6 +27,26 @@ class DomainStatsReport(GenericTabularReport):
 
     def is_custom_param(self, param):
         raise NotImplementedError
+
+    def get_name_or_link(self, d):
+        if not getattr(self, 'show_name', None):
+            return mark_safe('<a href="%s">%s</a>' % \
+                   (reverse("domain_homepage", args=[d['name']]), d.get('hr_name') or d['name']))
+        else:
+            return d['name']
+
+    @property
+    def es_results(self):
+        if not getattr(self, 'es_response', None):
+            self.es_query()
+        return self.es_response
+
+    def es_query(self):
+        if not self.es_queried:
+            results = es_domain_query(domains=[d.name for d in self.get_domains()])
+            self.es_queried = True
+            self.es_response = results
+        return self.es_response
 
     @property
     def headers(self):
@@ -48,30 +68,21 @@ class DomainStatsReport(GenericTabularReport):
 
     @property
     def rows(self):
-        def numcell(text, value=None):
-            if value is None:
-                try:
-                    value = int(text)
-                    if math.isnan(value):
-                        text = '---'
-                except ValueError:
-                    value = text
-            return util.format_datatables_data(text=text, sort_key=value)
-        all_stats = _all_domain_stats()
-        domains = self.get_domains()
-        for domain in domains:
-            dom = getattr(domain, 'name', domain) # get the domain name if domains is a list of domain objects
-            yield [
-                getattr(domain, 'hr_name', dom), # get the hr_name if domain is a domain object
-                numcell(dom_calc("mobile_users", dom)),
-                numcell(all_stats["commcare_users"][dom]),
-                numcell(dom_calc("cases_in_last", dom, 120)),
-                numcell(all_stats["cases"][dom]),
-                numcell(all_stats["forms"][dom]),
-                dom_calc("first_form_submission", dom),
-                dom_calc("last_form_submission", dom),
-                numcell(all_stats["web_users"][dom]),
-            ]
+        domains = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
+
+        for dom in domains:
+            if dom.has_key('name'): # for some reason when using the statistical facet, ES adds an empty dict to hits
+                yield [
+                    self.get_name_or_link(dom),
+                    dom.get("cp_n_active_cc_users", _("Not yet calculated")),
+                    dom.get("cp_n_cc_users", _("Not yet calculated")),
+                    dom.get("cp_n_active_cases", _("Not yet calculated")),
+                    dom.get("cp_n_cases", _("Not yet calculated")),
+                    dom.get("cp_n_forms", _("Not yet calculated")),
+                    format_date(dom.get("cp_first_form"), _("No forms")),
+                    format_date(dom.get("cp_last_form"), _("No forms")),
+                    dom.get("cp_n_web_users", _("Not yet calculated"))
+                ]
 
     @property
     def shared_pagination_GET_params(self):
@@ -83,6 +94,8 @@ class DomainStatsReport(GenericTabularReport):
         return ret
 
 class OrgDomainStatsReport(DomainStatsReport):
+    override_permissions_check = True
+
     def get_domains(self):
         from corehq.apps.orgs.models import Organization
         from corehq.apps.domain.models import Domain
@@ -124,6 +137,7 @@ DOMAIN_FACETS = [
     "internal.sub_area",
     "internal.using_adm",
     "internal.using_call_center",
+    "internal.platform",
 
     "is_approved",
     "is_public",
@@ -141,8 +155,10 @@ DOMAIN_FACETS = [
     "tags",
 ]
 
-def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict=False, start_at=None, size=None, sort=None):
+def es_domain_query(params=None, facets=None, terms=None, domains=None, return_q_dict=False, start_at=None, size=None, sort=None):
     from corehq.apps.appstore.views import es_query
+    if params is None:
+        params = {}
     if terms is None:
         terms = ['search']
     if facets is None:
@@ -172,7 +188,7 @@ def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict
                             "operator" : "or", }}}}}
 
     q["facets"] = {}
-    stats = ['cp_n_active_cases', 'cp_n_active_cc_users', 'cp_n_cc_users', 'cp_n_60_day_cases', 'cp_n_web_users', 'cp_n_forms', 'cp_n_cases']
+    stats = ['cp_n_active_cases', 'cp_n_inactive_cases', 'cp_n_active_cc_users', 'cp_n_cc_users', 'cp_n_60_day_cases', 'cp_n_web_users', 'cp_n_forms', 'cp_n_cases']
     for prop in stats:
         q["facets"].update({"%s-STATS" % prop: {"statistical": {"field": prop}}})
 
@@ -188,7 +204,6 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
     base_template = "hqadmin/stats_report.html"
     asynchronous = False
     ajax_pagination = True
-    es_queried = False
     exportable = True
 
     @property
@@ -207,12 +222,6 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
     @property
     def total_records(self):
         return int(self.es_results['hits']['total'])
-
-    @property
-    def es_results(self):
-        if not getattr(self, 'es_response', None):
-            self.es_query()
-        return self.es_response
 
     def es_query(self):
         from corehq.apps.appstore.views import parse_args_for_es, generate_sortables_from_facets
@@ -244,6 +253,8 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
                 help_text=_("The number of cases modified in the last 60 days")),
             DataTablesColumn(_("# Active Cases"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_active_cases",
                 help_text=_("The number of cases modified in the last 120 days")),
+            DataTablesColumn(_("# Inactive Cases"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_inactive_cases",
+                help_text=_("The number of open cases not modified in the last 120 days")),
             DataTablesColumn(_("# Cases"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_cases"),
             DataTablesColumn(_("# Form Submissions"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_forms"),
             DataTablesColumn(_("First Form Submission"), prop_name="cp_first_form"),
@@ -276,9 +287,10 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
             5: "cp_n_cc_users",
             6: "cp_n_60_day_cases",
             7: "cp_n_active_cases",
-            8: "cp_n_cases",
-            9: "cp_n_forms",
-            12: "cp_n_web_users",
+            8: "cp_n_inactive_cases",
+            9: "cp_n_cases",
+            10: "cp_n_forms",
+            13: "cp_n_web_users",
         }
         def stat_row(name, what_to_get, type='float'):
             row = [name]
@@ -310,7 +322,7 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
         for dom in domains:
             if dom.has_key('name'): # for some reason when using the statistical facet, ES adds an empty dict to hits
                 yield [
-                    get_name_or_link(dom),
+                    self.get_name_or_link(dom),
                     dom.get("internal", {}).get('organization_name') or _('No org'),
                     format_date(dom.get('deployment', {}).get('date'), _('No date')),
                     dom.get("deployment", {}).get('country') or _('No country'),
@@ -318,6 +330,7 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
                     dom.get("cp_n_cc_users", _("Not yet calculated")),
                     dom.get("cp_n_60_day_cases", _("Not yet calculated")),
                     dom.get("cp_n_active_cases", _("Not yet calculated")),
+                    dom.get("cp_n_inactive_cases", _("Not yet calculated")),
                     dom.get("cp_n_cases", _("Not yet calculated")),
                     dom.get("cp_n_forms", _("Not yet calculated")),
                     format_date(dom.get("cp_first_form"), _("No forms")),
