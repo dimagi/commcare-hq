@@ -22,7 +22,16 @@ class CaseError(XFormError):
     pass
 
 class XFormValidationError(XFormError):
-    pass
+    def __init__(self, fatal_error, validation_problems=None):
+        self.fatal_error = fatal_error
+        self.validation_problems = validation_problems
+    def __str__(self):
+        ret = "Validation Error: %s" % self.fatal_error
+        if self.validation_problems:
+            ret += "\n\nMore information:"
+            for problem in self.validation_problems:
+                ret += "\n{type}: {msg}".format(type=problem['type'].title(), msg=problem['message'])
+        return ret
 
 namespaces = dict(
     jr = "{http://openrosa.org/javarosa}",
@@ -142,8 +151,8 @@ class XForm(WrappedNode):
 
     def validate(self, version='1.0'):
         r = formtranslate.api.validate(ET.tostring(self.xml), version=version)
-        if not r['success']:
-            raise XFormValidationError(r["errstring"])
+        if not r['validated']:
+            raise XFormValidationError(r["fatal_error"], r["problems"])
         return self
 
     @property

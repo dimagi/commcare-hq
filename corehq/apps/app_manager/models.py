@@ -359,11 +359,15 @@ class FormBase(DocumentSchema):
             try:
                 XForm(self.source).validate(version=self.get_app().application_version)
             except XFormValidationError as e:
-                self.validation_cache = unicode(e)
+                validation_dict = {
+                    "fatal_error": e.fatal_error,
+                    "validation_problems": e.validation_problems
+                }
+                self.validation_cache = json.dumps(validation_dict)
             else:
                 self.validation_cache = ""
         if self.validation_cache:
-            raise XFormValidationError(self.validation_cache)
+            raise XFormValidationError(**json.loads(self.validation_cache))
         return self
 
     def validate_for_build(self):
