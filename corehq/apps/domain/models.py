@@ -819,7 +819,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             endkey=[self.get_id, {}],
             reduce=True,
             include_docs=False,
-        ).one()["value"]["sum"]
+        ).one()["value"]
 
 
 class DomainCounter(Document):
