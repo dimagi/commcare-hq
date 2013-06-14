@@ -160,7 +160,7 @@ requires imports/proptable.html to be included in the main template
         <ul>
             {% for key, val in instance.attachments.items %}
             <li>
-                <a href="{% url download_attachment domain instance.get_id key %}">{{ key }}</a>
+                <a href="{% url download_attachment domain instance.get_id %}?attachment={{ key }}">{{ key }}</a>
             </li>
             {% endfor %}
         </ul>
