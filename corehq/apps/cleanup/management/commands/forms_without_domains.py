@@ -25,6 +25,7 @@ class Command(BaseCommand):
                 print ",".join([f._id, f.xmlns or '', f.metadata.username or '', f.received_on.isoformat(), domain, str(len(domains))])
             else:
                 if len(domains) == 1:
+                    f.domain = domain
                     reprocess_form_cases(f)
                     print 'added form %s to domain %s' % (f._id, domains[0])
                 else:
