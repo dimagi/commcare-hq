@@ -1,6 +1,7 @@
 from casexml.apps.case.xml import V1, V2, check_version, V2_NAMESPACE
 from xml.etree import ElementTree
 import logging
+from dimagi.utils.parsing import json_format_datetime
 
 def safe_element(tag, text=None):
     # shortcut for commonly used functionality
@@ -19,7 +20,7 @@ def date_to_xml_string(date):
 
 def get_dynamic_element(key, val):
     """
-    Gets an element from a key/value pair assumed to be pulled from 
+    Gets an element from a key/value pair assumed to be pulled from
     a case object (usually in the dynamic properties)
     """
     element = ElementTree.Element(key)
@@ -34,7 +35,7 @@ def get_dynamic_element(key, val):
 
 class CaseXMLGeneratorBase(object):
     # The breakdown of functionality here is a little sketchy, but basically
-    # everything that changed from v1 to v2 gets a split. The rest is 
+    # everything that changed from v1 to v2 gets a split. The rest is
     # attempted to be as DRY as possible
 
     def __init__(self, case):
@@ -113,7 +114,8 @@ class V1CaseXMLGenerator(CaseXMLGeneratorBase):
         root = safe_element("case")
         # moved to attrs in v2
         root.append(safe_element("case_id", self.case.get_id))
-        root.append(safe_element("date_modified", date_to_xml_string(self.case.modified_on)))
+        root.append(safe_element("date_modified",
+                                 json_format_datetime(self.case.modified_on)))
         return root
 
     def get_case_type_element(self):
@@ -142,16 +144,14 @@ class V1CaseXMLGenerator(CaseXMLGeneratorBase):
             logging.info("Tried to add indices to version 1 CaseXML restore. This is not supported. "
                          "The case id is %s, domain %s." % (self.case.get_id, self.case.domain))
 
-
 class V2CaseXMLGenerator(CaseXMLGeneratorBase):
-
-
     def get_root_element(self):
         root = safe_element("case")
-        root.attrib = {"xmlns": V2_NAMESPACE,
-                       "case_id": self.case.get_id,
-                       "user_id": self.case.user_id,
-                       "date_modified": date_to_xml_string(self.case.modified_on)}
+        root.attrib = {
+            "xmlns": V2_NAMESPACE,
+            "case_id": self.case.get_id,
+            "user_id": self.case.user_id or '',
+            "date_modified": json_format_datetime(self.case.modified_on)}
         return root
 
 

@@ -37,7 +37,7 @@ class CaseActionBase(object):
     
     def __init__(self, block, type=None, name=None, external_id=None, 
                  user_id=None, owner_id=None, opened_on=None, 
-                 dynamic_properties={}, indices=[], attachments={}):
+                 dynamic_properties=None, indices=None, attachments=None):
         self.raw_block = block
         self.type = type
         self.name = name
@@ -45,9 +45,9 @@ class CaseActionBase(object):
         self.user_id = user_id
         self.owner_id = owner_id
         self.opened_on = opened_on
-        self.dynamic_properties = dynamic_properties
-        self.indices = indices
-        self.attachments = attachments
+        self.dynamic_properties = dynamic_properties or {}
+        self.indices = indices or []
+		self.attachments = attachments or {}
     
     def get_known_properties(self):
         prop_list = ["type", "name", "external_id", "user_id",

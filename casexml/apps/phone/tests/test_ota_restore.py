@@ -18,7 +18,7 @@ from casexml.apps.phone.tests.dummy import dummy_restore_xml, dummy_user,\
 
 class OtaRestoreTest(TestCase):
     """Tests OTA Restore"""
-    
+
     def setUp(self):
         delete_all_cases()
         delete_all_sync_logs()
@@ -32,20 +32,18 @@ class OtaRestoreTest(TestCase):
         self.assertEqual("secret", user.password)
         self.assertEqual(datetime(2011, 6, 9), user.date_joined)
         self.assertFalse(bool(user.user_data))
-        
-        
+
     def testRegistrationXML(self):
-        check_xml_line_by_line(self, dummy_user_xml(), 
+        check_xml_line_by_line(self, dummy_user_xml(),
                                xml.get_registration_xml(dummy_user()))
-        
+
     def testUserRestore(self):
         self.assertEqual(0, len(SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()))
         restore_payload = generate_restore_payload(dummy_user())
         # implicit length assertion
         [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
         check_xml_line_by_line(self, dummy_restore_xml(sync_log.get_id), restore_payload)
-        
-        
+
     def testUserRestoreWithCase(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "create_short.xml")
         with open(file_path, "rb") as f:
@@ -53,27 +51,27 @@ class OtaRestoreTest(TestCase):
         form = post_xform_to_couch(xml_data)
         process_cases(sender="testharness", xform=form)
         user = dummy_user()
-        
+
         # implicit length assertion
         [newcase] = CommCareCase.view("case/by_user", reduce=False, include_docs=True).all()
         self.assertEqual(1, len(user.get_case_updates(None).actual_cases_to_sync))
         expected_case_block = """
         <case>
-            <case_id>asdf</case_id> 
-            <date_modified>2010-06-29</date_modified>
+            <case_id>asdf</case_id>
+            <date_modified>2010-06-29T13:42:50Z</date_modified>
             <create>
-                <case_type_id>test_case_type</case_type_id> 
-                <user_id>foo</user_id> 
-                <case_name>test case name</case_name> 
+                <case_type_id>test_case_type</case_type_id>
+                <user_id>foo</user_id>
+                <case_name>test case name</case_name>
                 <external_id>someexternal</external_id>
             </create>
         </case>"""
         check_xml_line_by_line(self, expected_case_block, xml.get_case_xml(newcase, [case_const.CASE_ACTION_CREATE,
                                                                                      case_const.CASE_ACTION_UPDATE]))
-        
+
         # check v2
         expected_v2_case_block = """
-        <case case_id="asdf" date_modified="2010-06-29" user_id="foo" xmlns="http://commcarehq.org/case/transaction/v2" >
+        <case case_id="asdf" date_modified="2010-06-29T13:42:50Z" user_id="foo" xmlns="http://commcarehq.org/case/transaction/v2" >
             <create>
                 <case_type>test_case_type</case_type> 
                 <case_name>test case name</case_name>
@@ -114,7 +112,7 @@ class OtaRestoreTest(TestCase):
         response = views.xml_for_case(HttpRequest(), updated_case.get_id)
         expected_response = """<case>
     <case_id>IKA9G79J4HDSPJLG3ER2OHQUY</case_id> 
-    <date_modified>2011-02-19</date_modified>
+    <date_modified>2011-02-19T16:46:28Z</date_modified>
     <create>
         <case_type_id>cc_mobilize_client</case_type_id> 
         <user_id>ae179a62-38af-11e0-b6a3-005056aa7fb5</user_id> 
@@ -190,9 +188,9 @@ class OtaRestoreTest(TestCase):
     </referral>
 </case>"""
         check_xml_line_by_line(self, expected_response, response.content)
-        
+
         # this is really ridiculous. TODO, get rid of massive text wall x 2
-        expected_v2_response = """<case xmlns="http://commcarehq.org/case/transaction/v2" case_id="IKA9G79J4HDSPJLG3ER2OHQUY" date_modified="2011-02-19" user_id="ae179a62-38af-11e0-b6a3-005056aa7fb5">
+        expected_v2_response = """<case xmlns="http://commcarehq.org/case/transaction/v2" case_id="IKA9G79J4HDSPJLG3ER2OHQUY" date_modified="2011-02-19T16:46:28Z" user_id="ae179a62-38af-11e0-b6a3-005056aa7fb5">
     <create>
         <case_type>cc_mobilize_client</case_type> 
         <case_name>SIEGEL-ROBERT-5412366523984</case_name>
@@ -260,41 +258,38 @@ class OtaRestoreTest(TestCase):
        <vomiting></vomiting>
     </update>
 </case>"""
-        
+
         v2response = views.xml_for_case(HttpRequest(), updated_case.get_id, version="2.0")
         check_xml_line_by_line(self, expected_v2_response, v2response.content)
-        
-        
-        
+
     def testSyncToken(self):
         """
         Tests sync token / sync mode support
         """
-        
+
         file_path = os.path.join(os.path.dirname(__file__), "data", "create_short.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
         process_cases(sender="testharness", xform=form)
-        
+
         time.sleep(1)
         restore_payload = generate_restore_payload(dummy_user())
         # implicit length assertion
         [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
-        check_xml_line_by_line(self, dummy_restore_xml(sync_log.get_id, const.CREATE_SHORT), 
+        check_xml_line_by_line(self, dummy_restore_xml(sync_log.get_id, const.CREATE_SHORT),
                                restore_payload)
-        
-        
+
         time.sleep(1)
         sync_restore_payload = generate_restore_payload(dummy_user(), sync_log.get_id)
         [latest_log] = [log for log in \
                         SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all() \
                         if log.get_id != sync_log.get_id]
-        
+
         # should no longer have a case block in the restore XML
-        check_xml_line_by_line(self, dummy_restore_xml(latest_log.get_id), 
+        check_xml_line_by_line(self, dummy_restore_xml(latest_log.get_id),
                                sync_restore_payload)
-        
+
         # apply an update
         time.sleep(1)
         file_path = os.path.join(os.path.dirname(__file__), "data", "update_short.xml")
