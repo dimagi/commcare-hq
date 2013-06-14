@@ -37,6 +37,7 @@
             {% block append-to-title %}{% endblock %}
         </h2>
         {% block report %}
+        <span style="margin-bottom: 1em" class="label label-info">{% trans "All dates are in UTC" %}</span>
         {% if not hide_filters %}
             {% include "reports/partials/generic_filters.html" %}
         {% endif %}
