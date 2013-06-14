@@ -109,7 +109,10 @@ class RepeaterResource(JsonResource, DomainSpecificResourceMixin):
 class CommCareCaseResource(v0_3.CommCareCaseResource, DomainSpecificResourceMixin):
     xforms = UseIfRequested(ToManyDocumentsField('corehq.apps.api.resources.v0_4.XFormInstanceResource',
                                                  attribute=lambda case: case.get_forms()))
-    
+
+    child_cases = UseIfRequested(ToManyDocumentsField('corehq.apps.api.resources.v0_4.CommCareCaseResource',
+                                                       attribute=lambda case: [CommCareCase.get(index.referenced_id) for index in case.indices]))
+
     def obj_get_list(self, bundle, domain, **kwargs):
         filters = v0_3.CaseListFilters(bundle.request.GET).filters
 
