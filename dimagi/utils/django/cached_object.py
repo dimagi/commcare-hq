@@ -63,6 +63,8 @@ OBJECT_SIZE_MAP = {
     OBJECT_ORIGINAL: {"width": 0, "height": 0} #cache the original anyway - but generally don't serve this
 }
 
+MOCK_REDIS_CACHE = None
+
 class CachedObjectMeta(dict):
     content_length = 0
     content_type = ""
@@ -92,13 +94,14 @@ class CachedObjectMeta(dict):
             return 'txt'
 
     @classmethod
-    def make_meta(cls, file_stream, size_key, metadata={}):
+    def make_meta(cls, file_stream, size_key, metadata):
         """
-        giventhe image object and the size key, prepare the metadata calculations
+        Given the image object and the size key, prepare the metadata calculations
         image_obj: Image object
-        size_key: matching the image_size_map - if original calculate from origina lfilesize
+        file_stream: StringIO stream
+        size_key: matching the image_size_map - if original calculate from the original file
+        metadata: dict of attachment information taken from the couch _attachments dict
         """
-
         file_stream.seek(0, os.SEEK_END)
         content_type = None
         for ctype_key in ['content_type', 'Content-Type']:
@@ -126,20 +129,18 @@ class CachedImageMeta(CachedObjectMeta):
         self.width = width
         self.height = height
 
-    def get_size(self):
-        return self.width, self.height
+    def get_image_size(self):
+        return (self.width, self.height)
 
     @classmethod
-    def make_meta(cls, file_stream, size_key, metadata={}):
+    def make_meta(cls, file_stream, size_key, metadata):
         """
-        giventhe image object and the size key, prepare the metadata calculations
+        Given the image object and the size key, prepare the metadata calculations
         image_obj: Image object
         size_key: matching the image_size_map - if original calculate from origina lfilesize
         """
-        #assert isinstance(image_obj, Image), "CachedImageMeta needs to be a PIL Image instance"
         file_stream.seek(0)
         image_obj = Image.open(file_stream)
-
 
         if size_key == OBJECT_ORIGINAL:
             width, height = image_obj.size
@@ -233,15 +234,12 @@ class CachedObject(object):
         """
         Return the stream of the filename and size_key you want
         """
-        #stream_key = self.stream_key(size_key)
-        #meta_key = self.meta_key(size_key)
-
         stream = self.fetch_stream(size_key)
         meta = self.fetch_meta(size_key)
 
-        return meta, stream
+        return (meta, stream)
 
-    def cache_put(self, object_stream, metadata={}):
+    def cache_put(self, object_stream, metadata=None):
         object_meta = CachedObjectMeta.make_meta(object_stream, OBJECT_ORIGINAL, metadata=metadata)
 
         rcache = self.rcache
@@ -251,7 +249,7 @@ class CachedObject(object):
 
     @property
     def rcache(self):
-        return cache.get_cache('redis')
+        return MOCK_REDIS_CACHE or cache.get_cache('redis')
 
     def get_all_keys(self):
         """
@@ -265,28 +263,21 @@ class CachedObject(object):
 
 
 class CachedImage(CachedObject):
-
-    #for an original, make subsizes on demand
-    #get Sizes ofme
-
-    #get all meta
-    #filter by filesize
-    #generate
-    #return stream
-
-    def cache_image(self, image_stream, metadata={}):
+    """
+    Image specific operations added to Cached Object. Specifically resolution resizing
+    """
+    def cache_image(self, image_stream, metadata):
         """
         Create a cached image
         For a given original sized image - cache it initially to speed up small size generation
         """
-        image_meta = CachedImageMeta.make_meta(image_stream, OBJECT_ORIGINAL, metadata=metadata)
+        image_meta = CachedImageMeta.make_meta(image_stream, OBJECT_ORIGINAL, metadata)
 
         rcache = self.rcache
         image_stream.seek(0)
 
         rcache.set(self.stream_key(OBJECT_ORIGINAL), image_stream.read())
         rcache.set(self.meta_key(OBJECT_ORIGINAL), simplejson.dumps(image_meta.to_json()))
-
 
     def fetch_image(self, key):
         stream = self.rcache.get(self.stream_key(key))
@@ -349,13 +340,17 @@ class CachedImage(CachedObject):
     def make_size(self, size_key):
         """
         size_key = target key size
+
+        returns: int status codes to reflect HTTP use case.
+        201: created
+        204: No content - exists but no action
         """
         rcache = self.rcache
         if self.has_size(size_key):
             #do nothing, already exists
             return 204
         else:
-            #make size from the next available largest size (so if there's a small_320 and you want small, generate it from small_320
+            #make size from the next available largest size (so if there's a small_320 and you want small, generate it from next size up
             size_seq = IMAGE_SIZE_ORDERING.index(size_key)
             source_key = OBJECT_ORIGINAL
             target_size = (OBJECT_SIZE_MAP[size_key]['width'], OBJECT_SIZE_MAP[size_key]['height'])
@@ -368,7 +363,6 @@ class CachedImage(CachedObject):
             source_meta = CachedImageMeta.wrap(self.fetch_meta(OBJECT_ORIGINAL))
 
             if source_meta.width <= target_size[0]:
-                #area calc, if source is smaller, cache it regardless
                 rcache.set(self.stream_key(size_key), "")
                 rcache.set(self.meta_key(size_key), simplejson.dumps(source_meta.to_json()))
             else:
@@ -379,7 +373,6 @@ class CachedImage(CachedObject):
 
                 #output to buffer
                 target_handle = StringIO.StringIO()
-                #target_image_obj.save(target_handle, mime_ext)
                 target_image_obj.save(target_handle, mime_ext)
                 target_handle.seek(0)
                 target_meta = CachedImageMeta.make_meta(target_handle, size_key, metadata={'content_type': source_meta.content_type})
