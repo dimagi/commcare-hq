@@ -175,7 +175,7 @@ class CachedObject(object):
         """
         self.filename = filename
         #hashed_name is for future use by creating filenames based upon hashes and saving these versions to the filesystem for serving via staticfiles.
-        self.hashed_name = hashlib.md5(filename).hexdigest()
+        self.hashed_name = "%s_%s" % (self.filename, hashlib.md5(filename).hexdigest())
         stream_keys, meta_keys = self.get_all_keys()
 
         self.stream_keys = stream_keys
@@ -333,15 +333,10 @@ class CachedImage(CachedObject):
         """
         size_key = target key size
 
-        returns: int status codes to reflect HTTP use case.
-        201: created
-        204: No content - exists but no action
+        returns: Nothing
         """
         rcache = self.rcache
-        if self.has_size(size_key):
-            #do nothing, already exists
-            return 204
-        else:
+        if not self.has_size(size_key):
             #make size from the next available largest size (so if there's a small_320 and you want small, generate it from next size up
             size_seq = IMAGE_SIZE_ORDERING.index(size_key)
             source_key = OBJECT_ORIGINAL
@@ -371,7 +366,6 @@ class CachedImage(CachedObject):
 
                 rcache.set(self.stream_key(size_key), target_handle.read())
                 rcache.set(self.meta_key(size_key), simplejson.dumps(target_meta.to_json()))
-            return 201
 
 
 
