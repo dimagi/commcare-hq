@@ -10,10 +10,6 @@ class PSISQLReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
     fields = ['corehq.apps.reports.fields.DatespanField','psi.reports.AsyncPlaceField',]
 
     @property
-    def table_name(self):
-        return "%s_events" % self.domain
-
-    @property
     def group_by(self):
         return [col.view.key for col in self.initial_columns[:4]]
 
@@ -82,6 +78,7 @@ class PSISQLEventsReport(PSISQLReport):
     slug = "event_demonstations_sql"
     section_name = "event demonstrations"
     default_aggregation = 'district'
+    table_name = 'psi-unicef_psi_events'
 
     @property
     def columns(self):
