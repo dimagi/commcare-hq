@@ -329,38 +329,60 @@ def run_upload_api(request, domain, workbook):
     with CouchTransaction() as transaction:
         for number_of_fixtures, dt in enumerate(data_types):
             err_msg = "Workbook 'types' has no column '{attr}'"
-            data_type = FixtureDataType(
-                domain=domain,
-                name=_get_or_raise(dt, 'name', err_msg),
-                tag=_get_or_raise(dt, 'tag', err_msg),
-                fields=_get_or_raise(dt, 'field', err_msg),
-            )
-            transaction.save(data_type)
+            tag = _get_or_raise(dt, 'tag', err_msg)
+            data_type_results = FixtureDataType.by_domain_tag(domain, tag)
+            if len(data_type_results)==0:
+                data_type = FixtureDataType(
+                    domain=domain,
+                    name=_get_or_raise(dt, 'name', err_msg),
+                    tag=_get_or_raise(dt, 'tag', err_msg),
+                    fields=_get_or_raise(dt, 'field', err_msg),
+                )
+                transaction.save(data_type)
+            else:
+                for x in data_type_results:
+                    data_type = x
             data_items = workbook.get_worksheet(data_type.tag)
             for sort_key, di in enumerate(data_items):
-                data_item = FixtureDataItem(
+                new_data_item = FixtureDataItem(
                     domain=domain,
                     data_type_id=data_type.get_id,
                     fields=di['field'],
                     sort_key=sort_key
                 )
-                transaction.save(data_item)
-                for group_name in di.get('group', []):
-                    group = group_memoizer.by_name(group_name)
-                    if group:
-                        data_item.add_group(group, transaction=transaction)
-                    else:
-                        return_val["unknown_groups"].append(group_name)
-                for raw_username in di.get('user', []):
-                    username = normalize_username(raw_username, domain)
-                    user = CommCareUser.get_by_username(username)
-                    if user:
-                        data_item.add_user(user)
-                    else:
-                        return_val["unknown_users"].append(raw_username)
-        for data_type in transaction.preview_save(cls=FixtureDataType):
-            for duplicate in FixtureDataType.by_domain_tag(domain=domain, tag=data_type.tag):
-                duplicate.recursive_delete(transaction)
+                try:
+                    old_data_item = FixtureDataItem.get(di['UID'])
+                    if di['Delete(Y/N)']=="Y" or di['Delete(Y/N)']=="y":
+                        old_data_item.recursive_delete(transaction)
+                        continue   
+                    old_data_item.fields = di['field']
+                    transaction.save(old_data_item)                 
+                except:
+                    old_data_item = new_data_item
+                    transaction.save(old_data_item)
+
+                old_groups = old_data_item.get_groups()
+                for group in old_groups:
+                    old_data_item.remove_group(group)
+                old_users = old_data_item.get_users()
+                for user in old_users:
+                    old_data_item.remove_user(user)
+
+                for group_names in di.get('group', []):
+                    for group_name in group_names.split(","):
+                        group = group_memoizer.by_name(group_name.strip())
+                        if group:
+                            old_data_item.add_group(group, transaction=transaction)
+                        else:
+                            messages.error(request, "Unknown group: %s" % group_name)
+                for raw_usernames in di.get('user', []):
+                    for raw_username in raw_usernames.split(","):
+                        username = normalize_username(raw_username.strip(), domain)
+                        user = CommCareUser.get_by_username(username)
+                        if user:
+                            old_data_item.add_user(user)
+                        else:
+                            messages.error(request, "Unknown user: %s" % raw_username)
 
     return_val["number_of_fixtures"] = number_of_fixtures + 1
     return return_val
