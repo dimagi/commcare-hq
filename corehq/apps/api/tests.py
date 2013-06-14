@@ -15,7 +15,7 @@ from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater
 from corehq.apps.api.resources import v0_1, v0_4
-from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, UseIfRequested
+from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, UseIfRequested, ToManyDictField
 from corehq.apps.api.es import ESQuerySet
 
 class FakeXFormES(object):
@@ -481,6 +481,72 @@ class TestToManyDocumentsField(TestCase):
         dehydrated_bundle = source_resource.full_dehydrate(bundle)
 
         self.assertEqual([other['id'] for other in dehydrated_bundle.data['other_models']], ['bar', 'baz'])
+
+        
+class ToManyDictSourceModel(object):
+    def __init__(self, other_model_ids, other_model_dict):
+        self.other_model_dict = other_model_dict
+        self.other_model_ids = other_model_ids
+
+    @property
+    def other_models(self):
+        return dict([(key, self.other_model_dict.get(id)) for key, id in self.other_model_ids.items()])
+    
+class ToManyDictDestModel(object):
+    def __init__(self, id):
+        self.id = id
+
+class ToManyDictSourceResource(Resource):
+    other_model_ids = fields.ListField(attribute='other_model_ids')
+    other_models = ToManyDictField('corehq.apps.api.tests.ToManyDictDestResource', attribute='other_models')
+
+    def __init__(self, objs):
+        super(ToManyDictSourceResource, self).__init__()
+        self.objs = objs
+
+    def obj_get_list(self):
+        return self.objs
+
+    class Meta:
+        model_class = ToManyDictSourceModel
+
+class ToManyDictDestResource(Resource):
+    id = fields.CharField(attribute='id')
+
+    class Meta:
+        model_class = ToManyDictDestModel
+
+class TestToManyDictField(TestCase):
+    '''
+    Basic test that ToMany dehydrated alright
+    '''
+    
+    def test_dehydrate(self):
+        dest_objs = {
+            'foo': ToManyDictDestModel('foo'),
+            'bar': ToManyDictDestModel('bar'),
+            'baz': ToManyDictDestModel('baz'),
+        }
+        
+        source_objs = [
+            ToManyDictSourceModel(other_model_ids={ 'first_other': 'foo', 'second_other': 'bar'}, other_model_dict=dest_objs),
+            ToManyDictSourceModel(other_model_ids={ 'first_other': 'bar', 'second_other': 'baz'}, other_model_dict=dest_objs)
+        ]
+
+        source_resource = ToManyDictSourceResource(source_objs)
+
+        bundle = source_resource.build_bundle(obj=source_objs[0])
+        dehydrated_bundle = source_resource.full_dehydrate(bundle)
+
+        self.assertTrue('other_models' in dehydrated_bundle.data)
+        self.assertEqual(dehydrated_bundle.data['other_models']['first_other']['id'] , 'foo')
+        self.assertEqual(dehydrated_bundle.data['other_models']['second_other']['id'], 'bar')
+
+        bundle = source_resource.build_bundle(obj=source_objs[1])
+        dehydrated_bundle = source_resource.full_dehydrate(bundle)
+
+        self.assertEqual(dehydrated_bundle.data['other_models']['first_other']['id'] , 'bar')
+        self.assertEqual(dehydrated_bundle.data['other_models']['second_other']['id'], 'baz')
 
 
 

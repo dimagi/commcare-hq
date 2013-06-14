@@ -88,6 +88,50 @@ class ToManyDocumentsField(ApiField):
             return [self.related_resource.full_dehydrate(self.related_resource.build_bundle(obj=obj, request=bundle.request)).data
                     for obj in hydrated]
 
+class ToManyDictField(ApiField):
+    '''
+    A field that references multiple documents in the couch database.
+    It assumes, for purposes of dehydrating correctly, that the documents
+    are stored in a dictionary by e.g. ID, like so:
+    {
+        subcase_foo: <CommCareCase object>,
+        subcase_bar: <CommCareCase object>
+    }
+    
+    It does not necessarily refer to something with an API URI, though it should...
+
+    (tastypie.fields.ToManyField requires the Django ORM)
+    '''
+
+    def __init__(self, to, attribute, blank=False, readonly=False, unique=False, help_text=None):
+        super(ToManyDictField, self).__init__(attribute=attribute,
+                                              blank=blank,
+                                              help_text=help_text,
+                                              unique=unique,
+                                              readonly=readonly)
+        self.to = to
+        self.attribute = AttributeOrCallable(attribute)
+
+    @property
+    def to_class(self):
+        if not hasattr(self, '_to_class'):
+            self._to_class = get_referenced_class(self.to)
+
+        return self._to_class
+
+    @property
+    def related_resource(self):
+        return self.to_class() # Tastypie internals are a bit more complex; it may or may not bite us that we do not share the complexity
+
+    def dehydrate(self, bundle, for_list=True):
+        hydrated = self.attribute(bundle.obj)
+
+        if hydrated is None:
+            return None
+        else:
+            return dict([(key, self.related_resource.full_dehydrate(self.related_resource.build_bundle(obj=obj, request=bundle.request)).data)
+                         for key, obj in hydrated.items()])
+
         
 class ToOneDocumentField(ApiField):
     '''
