@@ -54,7 +54,7 @@ def parse_list(option, opt, value, parser):
 
 
 class Command(BaseCommand):
-    help = "Case attachment shortcut script"
+    help = "A shortcut script to generate xform submissions that legally put attachments on your case"
     option_list = NoArgsCommand.option_list + (
         make_option('--remove',
                     type="string",
