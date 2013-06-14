@@ -1,7 +1,6 @@
 from optparse import make_option
 from django.core.management import call_command
 
-from gevent import monkey;
 from django.core.management.base import BaseCommand
 from django.core.mail import mail_admins
 from django.conf import settings
@@ -9,11 +8,12 @@ import gevent
 
 POOL_SIZE = getattr(settings, 'PREINDEX_POOL_SIZE', 8)
 
+
 class Command(BaseCommand):
     help = 'Super preindex management command to do our bidding'
 
     option_list = BaseCommand.option_list + (
-        make_option('--mail', help='Mail confirmation', default=False),
+        make_option('--mail', help='Mail confirmation', action='store_true', default=False),
     )
 
     def handle(self, *args, **options):
