@@ -74,7 +74,7 @@ def login_and_domain_required_ex(redirect_field_name=REDIRECT_FIELD_NAME, login_
                         couch_user = CouchUser.from_django_user(user)
                     if couch_user.is_member_of(domain) or domain.is_public:
                         return view_func(req, domain_name, *args, **kwargs)
-                    elif user.is_superuser:
+                    elif user.is_superuser and not domain.restrict_superusers:
                         # superusers can circumvent domain permissions.
                         return view_func(req, domain_name, *args, **kwargs)
                     elif domain.is_snapshot:
@@ -86,7 +86,6 @@ def login_and_domain_required_ex(redirect_field_name=REDIRECT_FIELD_NAME, login_
                     return _redirect_for_login_or_domain(req, redirect_field_name, login_url)
             else:
                 raise Http404
-        
         return _inner
     return _outer
 
