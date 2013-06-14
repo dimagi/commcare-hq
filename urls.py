@@ -51,6 +51,7 @@ domain_specific = patterns('',
     (r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
     (r'^fixtures/', include('corehq.apps.fixtures.urls')),
     (r'^importer/', include('corehq.apps.importer.urls')), 
+    (r'^sqlextract/', include('ctable_view.urls')),
 )
 
 urlpatterns = patterns('',
