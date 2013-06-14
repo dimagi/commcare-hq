@@ -61,7 +61,7 @@ class CachedObjectTests(TestCase):
         buffer.seek(0)
 
         cimage = CachedImage("test_huge")
-        metadata = {'content_type': 'image/jpeg'}
+        metadata = {'content_type': 'image/png'}
         cimage.cache_image(buffer, metadata)
 
         for size in IMAGE_SIZE_ORDERING:
@@ -85,7 +85,7 @@ class CachedObjectTests(TestCase):
         buffer.seek(0)
 
         cimage = CachedImage("test_small")
-        metadata = {'content_type': 'image/jpeg'}
+        metadata = {'content_type': 'image/png'}
         cimage.cache_image(buffer, metadata)
 
         smaller = IMAGE_SIZE_ORDERING[0:7]
