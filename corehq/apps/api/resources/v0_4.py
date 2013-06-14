@@ -132,6 +132,9 @@ class CommCareCaseResource(v0_3.CommCareCaseResource, DomainSpecificResourceMixi
                           model = CommCareCase, #lambda jvalue: dict_object(CommCareCase.wrap(jvalue).get_json()),
                           es_client = CaseES(domain)) # Not that XFormES is used only as an ES client, for `run_query` against the proper index
 
+    class Meta(v0_3.CommCareCaseResource.Meta):
+        max_limit = 100 # Today, takes ~25 seconds for some domains
+
 class GroupResource(JsonResource, DomainSpecificResourceMixin):
     id = fields.CharField(attribute='get_id', unique=True, readonly=True)
     domain = fields.CharField(attribute='domain')
