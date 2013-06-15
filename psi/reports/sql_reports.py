@@ -1,12 +1,12 @@
 from sqlagg.columns import *
 from corehq.apps.fixtures.models import FixtureDataItem
-from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn
+from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn, SummingSqlTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from util import get_unique_combinations
 from dimagi.utils.decorators.memoized import memoized
 
 
-class PSISQLReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
+class PSISQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin):
     fields = ['corehq.apps.reports.fields.DatespanField','psi.reports.AsyncPlaceField',]
 
     @property
