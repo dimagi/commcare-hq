@@ -245,3 +245,18 @@ class SqlTabularReport(GenericTabularReport):
 
     def _or_no_value(self, value):
         return value if value is not None else self.no_value
+
+
+class SummingSqlTabularReport(SqlTabularReport):
+    @property
+    def rows(self):
+        ret = list(super(SummingSqlTabularReport, self).rows)
+        if len(ret) > 0:
+            num_cols = len(ret[0])
+            total_row = []
+            for i in range(num_cols):
+                colrows = [cr[i] for cr in ret if isinstance(cr[i], dict)]
+                colnums = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), (int, long))]
+                total_row.append(reduce(lambda x, y: x + y, colnums, 0))
+            self.total_row = total_row
+        return ret
