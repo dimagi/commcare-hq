@@ -1,7 +1,38 @@
 from urllib import urlencode
 from urllib2 import urlopen
 from corehq.apps.sms.mixin import SMSBackend
+from corehq.apps.sms.forms import BackendForm
+from corehq.apps.reminders.forms import RecordListField
+from django.forms.fields import *
+from django.core.exceptions import ValidationError
 from couchdbkit.ext.django.schema import *
+
+class HttpBackendForm(BackendForm):
+    url = CharField()
+    message_param = CharField()
+    number_param = CharField()
+    include_plus = BooleanField(required=False)
+    method = ChoiceField(choices=(("GET","GET"),("POST","POST")))
+    additional_params = RecordListField(input_name="additional_params")
+
+    def __init__(self, *args, **kwargs):
+        if "initial" in kwargs and "additional_params" in kwargs["initial"]:
+            additional_params_dict = kwargs["initial"]["additional_params"]
+            kwargs["initial"]["additional_params"] = [{"name" : key, "value" : value} for key, value in additional_params_dict.items()]
+        super(HttpBackendForm, self).__init__(*args, **kwargs)
+
+    def clean_additional_params(self):
+        value = self.cleaned_data.get("additional_params")
+        result = {}
+        for pair in value:
+            name = pair["name"].strip()
+            value = pair["value"].strip()
+            if name == "" or value == "":
+                raise ValidationError("Please enter both name and value.")
+            if name in result:
+                raise ValidationError("Parameter name entered twice: %s" % name)
+            result[name] = value
+        return result
 
 class HttpBackend(SMSBackend):
     url                 = StringProperty() # the url to send to
@@ -14,6 +45,18 @@ class HttpBackend(SMSBackend):
     @classmethod
     def get_api_id(cls):
         return "HTTP"
+
+    @classmethod
+    def get_generic_name(cls):
+        return "HTTP"
+
+    @classmethod
+    def get_template(cls):
+        return "sms/http_backend.html"
+
+    @classmethod
+    def get_form_class(cls):
+        return HttpBackendForm
 
     def send(self, msg, *args, **kwargs):
         """

@@ -322,7 +322,7 @@ def _add_backend(request, backend_class_name, is_global, domain=None, backend_id
                     setattr(backend, key, value)
             backend.save()
             if is_global:
-                return HttpResponseRedirect(reverse("default_sms_admin_interface"))
+                return HttpResponseRedirect(reverse("list_backends"))
             else:
                 return HttpResponseRedirect(reverse("list_domain_backends", args=[domain]))
     else:
@@ -401,6 +401,10 @@ def list_domain_backends(request, domain):
 @require_superuser
 def list_backends(request):
     return _list_backends(request, True)
+
+@require_superuser
+def default_sms_admin_interface(request):
+    return HttpResponseRedirect(reverse("list_backends"))
 
 @domain_admin_required
 def delete_domain_backend(request, domain, backend_id):
