@@ -361,7 +361,8 @@ class FormBase(DocumentSchema):
             except XFormValidationError as e:
                 validation_dict = {
                     "fatal_error": e.fatal_error,
-                    "validation_problems": e.validation_problems
+                    "validation_problems": e.validation_problems,
+                    "version": e.version,
                 }
                 self.validation_cache = json.dumps(validation_dict)
             else:
