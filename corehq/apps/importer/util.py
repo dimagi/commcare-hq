@@ -194,10 +194,11 @@ def lookup_case(search_field, search_id, domain):
             pass
     elif search_field == 'external_id':
         try:
-            case = CommCareCase.view('hqcase/by_domain_external_id',
-                                     key=[domain, search_id],
-                                     reduce=False,
-                                     include_docs=True).one()
+            case = CommCareCase.view(
+                'hqcase/by_domain_external_id',
+                key=[domain, search_id],
+                reduce=False,
+                include_docs=True).one()
             found = bool(case)
         except NoResultFound:
             pass

@@ -180,7 +180,8 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
                 'commtrack_enabled': domain.commtrack_enabled,
                 'call_center_enabled': domain.call_center_config.enabled,
                 'call_center_case_owner': domain.call_center_config.case_owner_id,
-                'call_center_case_type': domain.call_center_config.case_type
+                'call_center_case_type': domain.call_center_config.case_type,
+                'restrict_superusers': domain.restrict_superusers,
             })
         else:
             form = DomainGlobalSettingsForm(initial={
@@ -235,6 +236,7 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
             # view whose template extends users_base.html); mike says he's refactoring all of this imminently, so
             # i will not worry about it until he is done
         call_center_enabled=domain.call_center_config.enabled,
+        restrict_superusers=domain.restrict_superusers,
         autocomplete_fields=('project_type', 'phone_model', 'user_type', 'city', 'country', 'region'),
         billing_info_form=billing_info_form,
         billing_info_partial=billing_info_partial,

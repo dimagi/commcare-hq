@@ -915,7 +915,10 @@ def download_form(request, domain, instance_id):
 @require_form_view_permission
 @login_and_domain_required
 @require_GET
-def download_attachment(request, domain, instance_id, attachment):
+def download_attachment(request, domain, instance_id):
+    attachment = request.GET.get('attachment', False)
+    if not attachment:
+        return HttpResponseBadRequest("Invalid attachment.")
     instance = _get_form_or_404(instance_id)
     assert(domain == instance.domain)
     return couchforms_views.download_attachment(request, instance_id, attachment)

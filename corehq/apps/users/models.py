@@ -353,7 +353,9 @@ class CustomDomainMembership(DomainMembership):
 
 class IsMemberOfMixin(DocumentSchema):
     def _is_member_of(self, domain):
-        return self.is_global_admin() or domain in self.get_domains()
+        domain_obj = Domain.get_by_name(domain)
+        return domain in self.get_domains() or \
+            (self.is_global_admin() and not domain_obj.restrict_superusers)
 
     def is_member_of(self, domain_qs):
         """

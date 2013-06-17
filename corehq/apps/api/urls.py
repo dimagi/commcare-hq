@@ -95,4 +95,4 @@ def api_url_patterns():
 
 
 urlpatterns = patterns('',
-    *api_url_patterns)
+    *list(api_url_patterns))

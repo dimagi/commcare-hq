@@ -11,11 +11,11 @@ Adding CommCare Builds to CommCare HQ
 * Now `cd` into the commcare-hq root directory, and run the following command:
   `python manage.py add_commcare_build $build_path $version $build_number`
 
-Finally, make sure the build is available in the couch config. To do this, open the document with the id 
+Now make sure the build is available in the couch config. To do this, open the document with the id 
 `config--commcare-builds` and add your version to the "menu" config if it is not there. Use the `$version` number from
 above. You can also set the default here to be the version you've added.
 
-You're done. In order to get full permissions on a J2ME phone, you need to set up jar signing. To do so, you will need
+Finally, in order to get full permissions on a J2ME phone, you need to set up jar signing. To do so, you will need
 acquire a code signing certificate (from e.g. Thawte).
 
 * To enable jar signing, put your certificate information in localsettings.py as follows:
@@ -29,7 +29,7 @@ acquire a code signing certificate (from e.g. Thawte).
         key_pass = "*****",
     )
 
-* To skip this step, comment out the code entirely:
+* If you don't need this, skip this step by commenting out the code entirely:
 
 <!-- language: lang-py -->
 
@@ -39,3 +39,5 @@ acquire a code signing certificate (from e.g. Thawte).
     #    store_pass = "*****",
     #    key_pass = "*****",
     #)
+
+You're done!
