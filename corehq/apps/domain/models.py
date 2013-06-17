@@ -228,8 +228,8 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     title = StringProperty()
     cda = SchemaProperty(LicenseAgreement)
     multimedia_included = BooleanProperty(default=True)
-    downloads = IntegerProperty(default=0)
-    full_downloads = IntegerProperty(default=0)
+    downloads = IntegerProperty(default=0) # number of downloads for this specific snapshot
+    full_downloads = IntegerProperty(default=0) # number of downloads for all snapshots from this domain
     author = StringProperty()
     phone_model = StringProperty()
     attribution_notes = StringProperty()
@@ -816,6 +816,9 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
     @property
     def total_downloads(self):
+        """
+            Returns the total number of downloads from every snapshot created from this domain
+        """
         return get_db().view("domain/snapshots",
             startkey=[self.get_id],
             endkey=[self.get_id, {}],
@@ -826,6 +829,9 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     @property
     @memoized
     def download_count(self):
+        """
+            Updates and returns the total number of downloads from every sister snapshot.
+        """
         if self.is_snapshot:
             self.full_downloads = self.copied_from.total_downloads
         return self.full_downloads
