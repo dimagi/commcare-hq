@@ -174,29 +174,52 @@ class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
     name = fields.CharField(attribute='name')
 
     modules = fields.ListField()
+    def dehydrate_module(self, module, langs):
+        '''
+        Convert a Module object to a JValue representation
+        with just the good parts.
+
+        NOTE: This is not a tastypie "magic"-name method to
+        dehydrate the "module" field; there is no such field.
+        '''
+        dehydrated = {}
+
+        dehydrated['case_type'] = module.case_type
+
+        dehydrated['case_properties'] = []
+        for detail in module.details:
+            if detail.type != 'case_long':
+                continue
+
+            for column in detail.columns:
+                col_jvalue = {
+                    'field': column.field,
+                    'enum': column.enum,
+                    'header': column.header,
+                    'format': column.format,
+                }
+                dehydrated['case_properties'].append(col_jvalue)
+        
+        dehydrated['forms'] = []
+
+        for form in module.forms:
+            form = Form.get_form(form.unique_id)
+            form_jvalue = {
+                'xmlns': form.xmlns,
+                'name': form.name,
+                'questions': form.get_questions(langs),
+            }
+            dehydrated['forms'].append(form_jvalue)
+
+        return dehydrated
+    
     def dehydrate_modules(self, bundle):
         app = bundle.obj
         
         if app.doc_type == Application._doc_type:
-            modules = [module.export_jvalue() for module in bundle.obj.modules]
+            return [self.dehydrate_module(module, app.langs) for module in bundle.obj.modules]
         elif app.doc_type == RemoteApp._doc_type:
-            modules = []
-
-        for module in modules:
-            for form_json in module['forms']:
-                form = Form.get_form(form_json['unique_id'])
-                langs = app.langs
-                form_json['questions'] = form.get_questions(langs)
-
-        return modules
-
-    xforms = fields.ListField()
-    def dehydrate_xforms(self, bundle):
-        if bundle.obj.doc_type == Application._doc_type:
             return []
-        elif bundle.obj.doc_type == RemoteApp._doc_type:
-            return []
-            # ... bundle.obj.make_questions_map().items()
 
     def obj_get_list(self, bundle, domain, **kwargs):
         return Application.by_domain(domain)
