@@ -84,8 +84,11 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
                 "filter":
                     { "and": [
                         {"terms": {"form.meta.userID": filter(None, self.combined_user_ids)}},
-                        {"terms": {"xmlns.exact": filter(None, [f["xmlns"] for f in self.all_relevant_forms.values()])}},
                     ]}}
+
+            xmlnss = filter(None, [f["xmlns"] for f in self.all_relevant_forms.values()])
+            if xmlnss:
+                q["filter"]["and"].append({"terms": {"xmlns.exact": xmlnss}})
 
             def any_in(a, b):
                 return any(i in b for i in a)
