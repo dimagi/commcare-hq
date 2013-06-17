@@ -229,6 +229,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     cda = SchemaProperty(LicenseAgreement)
     multimedia_included = BooleanProperty(default=True)
     downloads = IntegerProperty(default=0)
+    full_downloads = IntegerProperty(default=0)
     author = StringProperty()
     phone_model = StringProperty()
     attribution_notes = StringProperty()
@@ -775,7 +776,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     @classmethod
     def hit_sort(cls, domains):
         domains = list(domains)
-        domains = sorted(domains, key=lambda domain: domain.downloads, reverse=True)
+        domains = sorted(domains, key=lambda domain: domain.download_count, reverse=True)
         return domains
 
     @classmethod
@@ -822,6 +823,12 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             include_docs=False,
         ).one()["value"]
 
+    @property
+    @memoized
+    def download_count(self):
+        if self.is_snapshot:
+            self.full_downloads = self.copied_from.total_downloads
+        return self.full_downloads
 
 class DomainCounter(Document):
     domain = StringProperty()
