@@ -1,6 +1,7 @@
 import hashlib
 import mimetypes
 import os
+import uuid
 import simplejson
 
 try:
@@ -169,13 +170,17 @@ class CachedImageMeta(CachedObjectMeta):
 
 
 class CachedObject(object):
-    def __init__(self, filename):
+    def __init__(self, cache_key):
         """
-        Filename for a cached object is a user defined, unique, yet human readable identifier.
+        cache_key is the supposedly unique cache key you will want to create for keeping track of your cacheable assets.
+        like cache.set(key, value) - it's the implementor's responsibility to make sure to have a universally unique cache key for the assets you want to cache.
         """
-        self.filename = filename
-        #hashed_name is for future use by creating filenames based upon hashes and saving these versions to the filesystem for serving via staticfiles.
-        self.hashed_name = "%s_%s" % (self.filename, hashlib.md5(filename).hexdigest())
+        self.cache_key = cache_key
+
+        #key_hash is the hash of the key for eventual use as a retrieval via static assets.
+        #todo: once key_hash determined with object stream, create stream file and deposit onto static machine
+        #generate url and retrieve by key_hash url.
+        self.key_hash = hashlib.md5(cache_key).hexdigest()
         stream_keys, meta_keys = self.get_all_keys()
 
         self.stream_keys = stream_keys
@@ -190,10 +195,10 @@ class CachedObject(object):
 
     @property
     def key_prefix(self):
-        #reality is it's the filename
+        #reality is it's the cache_key
         #note single underscore here and on the other side so it's double underscore
         return "%(cache_prefix)s_%(prefix_str)s_" % {"cache_prefix": CACHE_PREFIX,
-                                                     "prefix_str": self.filename}
+                                                     "prefix_str": self.cache_key}
 
     def stream_key(self, size_key):
         cache_stream_key = "%(prefix)s_object_%(size)s" % \
@@ -226,7 +231,7 @@ class CachedObject(object):
 
     def _do_get_size(self, size_key):
         """
-        Return the stream of the filename and size_key you want
+        Return the stream of the cache_key and size_key you want
         """
         stream = self.fetch_stream(size_key)
         meta = self.fetch_meta(size_key)
@@ -295,7 +300,7 @@ class CachedImage(CachedObject):
 
     def get_size(self, size_key):
         """
-        Return the stream of the filename and size_key you want
+        Return the stream of the cache_key and size_key you want
         """
         if not self.has_size(size_key):
             can_size = self.can_size(size_key)
