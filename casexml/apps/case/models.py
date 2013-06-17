@@ -626,11 +626,16 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             conflict = CommCareCase.get(self._id)
             # if there's a conflict, make sure we know about every
             # form in the conflicting doc
-            if set(conflict.xform_ids) - set(self.xform_ids):
+            missing_forms = set(conflict.xform_ids) - set(self.xform_ids)
+            if missing_forms:
+                logging.exception('doc update conflict saving case {id}. missing forms: {forms}'.format(
+                    id=self._id,
+                    forms=",".join(missing_forms)
+                ))
                 raise
             # couchdbkit doesn't like to let you set _rev very easily
             self._doc["_rev"] = conflict._rev
-            self.save()
+            self.force_save()
 
     def to_xml(self, version):
         from xml.etree import ElementTree

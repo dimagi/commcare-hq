@@ -1,3 +1,4 @@
+from couchdbkit.exceptions import ResourceConflict
 from couchdbkit.ext.django.schema import *
 from dimagi.utils.couch.database import SafeSaveDocument
 from dimagi.utils.mixins import UnicodeMixIn
@@ -233,7 +234,14 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
                     # import pdb
                     # pdb.set_trace()
                     raise
-        self.save()
+        try:
+            self.save()
+        except ResourceConflict:
+            logging.exception('doc update conflict saving sync log {id}'.format(
+                    id=self._id,
+            ))
+            raise
+
 
     def get_footprint_of_cases_on_phone(self):
         """

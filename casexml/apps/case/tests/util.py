@@ -51,7 +51,7 @@ def replace_ids_and_post(xml_data, case_id_override=None, referral_id_override=N
     xml_data = xml_data.replace("REPLACE_REFID", ref_id)
     doc = post_xform_to_couch(xml_data)
     return (doc.get_id, uid, case_id, ref_id)
-    
+
 def check_xml_line_by_line(test_case, expected, actual):
     """Does what it's called, hopefully parameters are self-explanatory"""
     # this is totally wacky, but elementtree strips needless
@@ -62,15 +62,19 @@ def check_xml_line_by_line(test_case, expected, actual):
     
     if parsed_expected == parsed_actual:
         return
-    
+
     try:
         expected_lines = parsed_expected.split("\n")
         actual_lines = parsed_actual.split("\n")
-        test_case.assertEqual(len(expected_lines), len(actual_lines), "Parsed xml files are different lengths\n" + 
-                              "Expected: \n%s\nActual:\n%s" % (parsed_expected, parsed_actual)) 
+        test_case.assertEqual(
+            len(expected_lines),
+            len(actual_lines),
+            "Parsed xml files are different lengths\n" +
+            "Expected: \n%s\nActual:\n%s" % (parsed_expected, parsed_actual))
+
         for i in range(len(expected_lines)):
             test_case.assertEqual(expected_lines[i], actual_lines[i])
-            
+
     except AssertionError:
         import logging
         logging.error("Failure in xml comparison\nExpected:\n%s\nActual:\n%s" % (parsed_expected, parsed_actual))
