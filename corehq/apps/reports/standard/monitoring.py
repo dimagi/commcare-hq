@@ -737,7 +737,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
 
 class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
     slug = 'worker_activity'
-    name = ugettext_noop("Worker Activty")
+    name = ugettext_noop("Worker Activity")
     description = ugettext_noop("Summary of form and case activity by user or group.")
     section_name = ugettext_noop("Project Reports")
     num_avg_intervals = 3 # how many duration intervals we go back to calculate averages
@@ -971,13 +971,12 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
             cl_url = reverse('project_report_dispatcher', args=(self.domain, 'case_list'))
             url_args = {
                 "ufilter": range(4), # include all types of users in case list report
-                "individual": owner_id,
             }
 
             start_date, end_date = dates_for_linked_reports()
             search_strings = {
-                4: "opened_on: [%s TO %s]" % (start_date, end_date), # cases created
-                5: "closed_on: [%s TO %s]" % (start_date, end_date), # cases closed
+                4: "opened_by: %s AND opened_on: [%s TO %s]" % (owner_id, start_date, end_date), # cases created
+                5: "closed_by: %s AND closed_on: [%s TO %s]" % (owner_id, start_date, end_date), # cases closed
                 6: "modified_on: [%s TO %s]" % (start_date, end_date), # cases modified
                 8: "opened_on: [* TO %s] AND NOT closed_on [* TO %s] AND NOT modified_on: [%s TO %s]" %
                    (start_date, start_date, start_date, end_date), # inactive cases
@@ -988,7 +987,8 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 """
                     Given an index for a cell in a the row, creates the link to the case list page for that cell
                 """
-                url_params = url_args
+                url_params = {"individual": owner_id} if index not in (4, 5) else {}
+                url_params.update(url_args)
                 url_params.update({"search_query": search_strings[index]})
                 return numcell('<a href="%s?%s" target="_blank">%s</a>' % (cl_url, urlencode(url_params, True), row[index]), row[index])
 
