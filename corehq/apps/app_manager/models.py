@@ -831,6 +831,10 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
         for form in source['forms']:
             del form['unique_id']
         return json.dumps(source) if dump_json else source
+
+    def export_jvalue(self):
+        return self.export_json(dump_json=False)
+    
     def requires(self):
         r = set(["none"])
         for form in self.get_forms():
@@ -1103,6 +1107,14 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         if should_save:
             self.save()
         return self
+
+    @classmethod
+    def by_domain(cls, domain):
+        return cls.view('app_manager/applications_brief',
+                        startkey=[domain],
+                        endkey=[domain, {}],
+                        include_docs=True,
+                        stale=settings.COUCH_STALE_QUERY).all()
 
     def rename_lang(self, old_lang, new_lang):
         validate_lang(new_lang)
