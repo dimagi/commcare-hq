@@ -7,6 +7,7 @@ from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import xform as casexml_xform
 
+from corehq.apps.app_manager.models import ApplicationBase, Application, RemoteApp
 from corehq.apps.receiverwrapper.models import Repeater, repeater_types
 from corehq.apps.groups.models import Group
 from corehq.apps.cloudcare.api import ElasticCaseQuery
@@ -168,3 +169,34 @@ class GroupResource(JsonResource, DomainSpecificResourceMixin):
         list_allowed_methods = ['get']
         resource_name = 'group'
 
+class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
+
+    name = fields.CharField(attribute='name')
+
+    modules = fields.ListField()
+    
+    def dehydrate_modules(self, bundle):
+        if bundle.obj.doc_type == Application._doc_type:
+            return [module.export_jvalue() for module in bundle.obj.modules]
+        elif bundle.obj.doc_type == RemoteApp._doc_type:
+            return []
+
+    xforms = fields.ListField()
+    def dehydrate_xforms(self, bundle):
+        if bundle.obj.doc_type == Application._doc_type:
+            return []
+        elif bundle.obj.doc_type == RemoteApp._doc_type:
+            return []
+            # ... bundle.obj.make_questions_map().items()
+
+    def obj_get_list(self, bundle, domain, **kwargs):
+        return Application.by_domain(domain)
+
+    def obj_get(self, bundle, **kwargs):
+        return get_object_or_not_exist(Application, kwargs['domain'], kwargs['pk'])
+
+    class Meta(v0_1.CustomResourceMeta):
+        object_class = Application
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
+        resource_name = 'application'
