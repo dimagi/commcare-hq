@@ -76,13 +76,10 @@ def _get_or_update_model(case_block, xformdoc, case_dbcache):
     case_update = case_update_from_block(case_block)
     case_doc = case_dbcache.get(case_update.id)
 
-    print "_get_or_update_model"
     if case_doc == None:
-        print "case None"
         case_doc = CommCareCase.from_case_update(case_update, xformdoc)
         return case_doc
     else:
-        print "case not None"
         case_doc.update_from_case_update(case_update, xformdoc)
         return case_doc
         

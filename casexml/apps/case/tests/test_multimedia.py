@@ -135,14 +135,12 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
     Spec: https://bitbucket.org/commcare/commcare/wiki/CaseAttachmentAPI
     """
     def testAttachInCreate(self):
-        print "testAttachInCreate"
         self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
 
         single_attach = 'fruity'
         self._doCreateCaseWithMultimedia(attachments=[single_attach])
 
         case = CommCareCase.get(TEST_CASE_ID)
-        print simplejson.dumps(case.to_json(), indent=4)
         self.assertEqual(1, len(case.case_attachments))
         self.assertTrue(single_attach in case.case_attachments)
         #ipdb.set_trace()
@@ -182,13 +180,11 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
 
     def testOTARestoreSingle(self):
         self.testAttachInCreate()
-        print "testOTARestoreSingle"
         restore_attachments = ['fruity']
         self._validateOTARestore(TEST_CASE_ID, restore_attachments)
 
     def testOTARestoreMultiple(self):
         self.testAttachRemoveMultiple()
-        print "testOTARestoreMultiple"
         restore_attachments = ['commcare_logo', 'dimagi_logo']
         self._validateOTARestore(TEST_CASE_ID, restore_attachments)
 
@@ -210,7 +206,6 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
             self.assertIn(name, restore_attachments)
             restore_attachments.remove(clean_tag)
         self.assertEqual(0, len(restore_attachments))
-        print output
 
     def testAttachInUpdate(self, new_attachments=['commcare_logo', 'dimagi_logo']):
         self.testAttachInCreate()
