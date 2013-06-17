@@ -1,4 +1,6 @@
 from couchdbkit.ext.django.schema import *
+from django.utils.translation import ugettext as _
+
 from corehq.apps.commtrack import const
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.loosechange import map_reduce
@@ -9,13 +11,14 @@ from casexml.apps.case.models import CommCareCase
 from copy import copy
 from django.dispatch import receiver
 from corehq.apps.locations.signals import location_created
+from corehq.apps.locations.models import Location
 from corehq.apps.commtrack.const import RequisitionActions, RequisitionStatus
+
+from dimagi.utils.decorators.memoized import memoized
 
 # these are the allowable stock transaction types, listed in the
 # default ordering in which they are processed. processing order
 # may be customized per domain
-from dimagi.utils.decorators.memoized import memoized
-
 ACTION_TYPES = [
     # indicates the product has been stocked out for N days
     # prior to the reporting date, including today ('0' does
@@ -39,12 +42,12 @@ REQUISITION_ACTION_TYPES = [
     # request a product
     RequisitionActions.REQUEST,
 
-    # approve a requisition (it is allowed to be filled)
+    # approve a requisition (it is allowed to be packed)
     # using this is configurable and optional
     RequisitionActions.APPROVAL,
 
-    # fill a requisition (the order is ready)
-    RequisitionActions.FILL,
+    # pack a requisition (the order is ready)
+    RequisitionActions.PACK,
 
     # receive the sock (closes the requisition)
     # NOTE: it's not totally clear if this is necessary or
@@ -145,7 +148,21 @@ class SupplyPointType(DocumentSchema):
     name = StringProperty()
     categories = StringListProperty()
 
+
+class ConsumptionConfig(DocumentSchema):
+    min_transactions = IntegerProperty(default=2)
+    min_window = IntegerProperty(default=10)
+    optimal_window = IntegerProperty()
+
+
+class StockLevelsConfig(DocumentSchema):
+    emergency_level = DecimalProperty(default=0.5)  # in months
+    understock_threshold = DecimalProperty(default=1.5)  # in months
+    overstock_threshold = DecimalProperty(default=3)  # in months
+
+
 class CommtrackConfig(Document):
+
     domain = StringProperty()
 
     # supported stock actions for this commtrack domain
@@ -162,9 +179,12 @@ class CommtrackConfig(Document):
 
     requisition_config = SchemaProperty(CommtrackRequisitionConfig)
 
-    consumption_rate_window = IntegerProperty() # days
-    consumption_rate_min_timespan = IntegerProperty() # days
-    consumption_rate_min_datapoints = IntegerProperty()
+    # configured on Advanced Settings page
+    use_auto_emergency_levels = BooleanProperty(default=False)
+
+    use_auto_consumption = BooleanProperty(default=False)
+    consumption_config = SchemaProperty(ConsumptionConfig)
+    stock_levels_config = SchemaProperty(StockLevelsConfig)
 
     @classmethod
     def for_domain(cls, domain):
@@ -315,27 +335,101 @@ def _get_single_index(case, identifier, type, wrapper=None):
         return wrapper.get(ref_id) if wrapper else ref_id
     return None
 
+def get_case_wrapper(data):
+    return {
+        const.SUPPLY_POINT_CASE_TYPE: SupplyPointCase,
+        const.SUPPLY_POINT_PRODUCT_CASE_TYPE: SupplyPointProductCase,
+        const.REQUISITION_CASE_TYPE: RequisitionCase
+    }.get(data.get('type'))
+
 
 class SupplyPointCase(CommCareCase):
     """
     A wrapper around CommCareCases to get more built in functionality
     specific to supply points.
     """
+    class Meta: 
+        # This is necessary otherwise syncdb will confuse this app with casexml
+        app_label = "commtrack"
 
     def open_requisitions(self):
         return RequisitionCase.open_for_location(self.domain, self.location_[-1])
 
-    class Meta:
-        app_label = "commtrack" # This is necessary otherwise syncdb will confuse this app with casexml
+    @property
+    @memoized
+    def location(self):
+        return Location.get(self.location_id)
+
+
+    def to_full_dict(self):
+        data = super(SupplyPointCase, self).to_full_dict()
+        
+        data['location_type'] = self.location.location_type
+        data['location_site_code'] = self.location.site_code
+        if self.location.parent:
+            data['location_parent_name'] = self.location.parent.name
+        else:
+            data['location_parent_name'] = None
+
+        # todo
+        #data['last_reported'] = None
+
+        return data
+
+    @classmethod
+    def get_display_config(cls):
+        return [
+            {
+                "layout": [
+                    [
+                        {
+                            "expr": "name",
+                            "name": _("Name"),
+                        },
+                        {
+                            "expr": "location_type",
+                            "name": _("Type"),
+                        },
+                        {
+                            "expr": "location_site_code",
+                            "name": _("Code"),
+                        },
+                        #{
+                            #"expr": "last_reported",
+                            #"name": _("Last Reported"),
+                        #},
+                    ],
+                    [
+                        {
+                            "expr": "location_parent_name",
+                            "name": _("Location"),
+                        },
+                        {
+                            "expr": "owner_id",
+                            "name": _("Group"),
+                            "format": '<span data-field="owner_id">{0}</span>',
+                        },
+                    ],
+                ],
+            }
+        ]
 
 
 class SupplyPointProductCase(CommCareCase):
     """
     A wrapper around CommCareCases to get more built in functionality
     specific to supply point products.
+
+    See
+    https://confluence.dimagi.com/display/ctinternal/Data+Model+Documentation
     """
+    class Meta: 
+        # This is necessary otherwise syncdb will confuse this app with casexml
+        app_label = "commtrack"
+
     # can flesh this out more as needed
     product = StringProperty() # would be nice if this was product_id but is grandfathered in
+    current_stock = StringProperty()
 
     @memoized
     def get_product(self):
@@ -349,14 +443,106 @@ class SupplyPointProductCase(CommCareCase):
     def get_supply_point_case_id(self):
         return _get_single_index(self, const.PARENT_CASE_REF, const.SUPPLY_POINT_CASE_TYPE)
 
-    class Meta:
-        app_label = "commtrack" # This is necessary otherwise syncdb will confuse this app with casexml
+    @property
+    def months_until_stockout(self):
+        from corehq.apps.reports.commtrack.standard import (current_stock,
+                monthly_consumption)
+
+        current_stock = current_stock(self)
+        monthly_consumption = monthly_consumption(self)
+        
+        if current_stock is None or monthly_consumption is None:
+            return None
+        else:
+            return round(current_stock / monthly_consumption, ndigits=1)
+
+    @property
+    def stockout_duration_in_months(self):
+        if self.stocked_out_since:
+            today = datetime.today().date()
+
+            return round((today - self.stocked_out_since).days / 30.0, ndigits=1)
+        else:
+            return None
+
+
+    def to_full_dict(self):
+        from corehq.apps.reports.commtrack.standard import monthly_consumption
+
+        data = super(SupplyPointProductCase, self).to_full_dict()
+        del data['stocked_out_since']
+        data['consumption_rate'] = monthly_consumption(self)
+
+        data['supply_point_name'] = self.get_supply_point_case()['name']
+        data['product_name'] = self.get_product()['name']
+        
+        #data['emergency_level'] = None
+        #data['max_level'] = None
+
+        data['months_until_stockout'] = self.months_until_stockout
+        data['stockout_duration_in_months'] = self.stockout_duration_in_months
+
+        return data
+
+    @classmethod
+    def get_display_config(cls):
+        return [
+            {
+                "layout": [
+                    [
+                        {
+                            "name": _("Supply Point"),
+                            "expr": "supply_point_name"
+                        },
+                        {
+                            "name": _("Product"),
+                            "expr": "product_name"
+                        },
+                        {
+                            "name": _("Last reported"),
+                            "expr": "last_reported",
+                            "parse_date": True
+                        }
+                    ],
+                    [
+                        {
+                            "name": _("Current stock"),
+                            "expr": "current_stock"
+                        },
+                        {
+                            "name": _("Monthly consumption"),
+                            "expr": "consumption_rate"
+                        },
+                        {
+                            "name": _("Months until stockout"),
+                            "expr": "months_until_stockout"
+                        },
+                        {
+                            "name": _("Stockout duration in months"),
+                            "expr": "stockout_duration_in_months"
+                        }
+                        #{
+                            #"name": _("Emergency level"),
+                            #"expr": "emergency_level"
+                        #},
+                        #{
+                            #"name": _("Max level"),
+                            #"expr": "max_level"
+                        #}
+                    ],
+                ],
+            }
+        ]
 
 class RequisitionCase(CommCareCase):
     """
     A wrapper around CommCareCases to get more built in functionality
     specific to requisitions.
     """
+    class Meta: 
+        # This is necessary otherwise syncdb will confuse this app with casexml
+        app_label = "commtrack"
+
     # supply_point = StringProperty() # todo, if desired
     requisition_status = StringProperty()
 
@@ -367,12 +553,12 @@ class RequisitionCase(CommCareCase):
     # the status can change, but once set - this one will not
     requested_on = DateTimeProperty()
     approved_on = DateTimeProperty()
-    filled_on = DateTimeProperty()
+    packed_on = DateTimeProperty()
     received_on = DateTimeProperty()
 
     requested_by = StringProperty()
     approved_by = StringProperty()
-    filled_by = StringProperty()
+    packed_by = StringProperty()
     received_by = StringProperty()
 
     # NOTE: should these be strings or ints or decimals?
@@ -381,8 +567,13 @@ class RequisitionCase(CommCareCase):
     # approve partial resupplies in the current system, but is
     # left in the models for possible use down the road
     amount_approved = StringProperty()
-    amount_filled = StringProperty()
+    amount_packed = StringProperty()
     amount_received = StringProperty()
+
+    @memoized
+    def get_location(self):
+        if self.location_:
+            return Location.get(self.location_[-1])
 
     @memoized
     def get_supply_point_case(self):
@@ -415,7 +606,7 @@ class RequisitionCase(CommCareCase):
         property_map = {
             RequisitionStatus.REQUESTED: 'amount_requested',
             RequisitionStatus.APPROVED: 'amount_approved',
-            RequisitionStatus.FILLED: 'amount_filled',
+            RequisitionStatus.PACKED: 'amount_packed',
         }
         return getattr(self, property_map.get(self.requisition_status, 'amount_requested'))
 
@@ -456,8 +647,82 @@ class RequisitionCase(CommCareCase):
         )
         return [r['id'] for r in results]
 
-    class Meta:
-        app_label = "commtrack" # This is necessary otherwise syncdb will confuse this app with casexml
+    def to_full_dict(self):
+        data = super(RequisitionCase, self).to_full_dict()
+        data['supply_point_name'] = self.get_supply_point_case()['name']
+        data['product_name'] = self.get_product_case()['name']
+        data['balance'] = self.get_default_value()
+        return data
+
+    @classmethod
+    def get_display_config(cls):
+        return [
+            {
+                "layout": [
+                    [
+                        {
+                            "name": _("Supply Point"),
+                            "expr": "supply_point_name"
+                        }
+                    ],
+                    [
+                        {
+                            "name": _("Product"),
+                            "expr": "product_name"
+                        }
+                    ],
+                    [
+                        {
+                            "name": _("Status"),
+                            "expr": "requisition_status"
+                        }
+                    ],
+                    [
+                        {
+                            "name": _("Balance"),
+                            "expr": "balance"
+                        }
+                    ]
+                ]
+            },
+            {
+                "layout": [
+                    [ 
+                        {
+                            "name": _("Amount Requested"),
+                            "expr": "amount_requested",
+                        },
+                        {
+                            "name": _("Requested On"),
+                            "expr": "requested_on",
+                            "parse_date": True
+                        }
+                    ],
+                    [
+                        {
+                            "name": _("Amount Approved"),
+                            "expr": "amount_approved",
+                        },
+                        {
+                            "name": _("Approved On"),
+                            "expr": "approved_on",
+                            "parse_date": True
+                        }
+                    ],
+                    [
+                        {
+                            "name": _("Amount Received"),
+                            "expr": "amount_Received"
+                        },
+                        {
+                            "name": _("Received On"),
+                            "expr": "received_on",
+                            "parse_date": True
+                        }
+                    ]
+                ]
+            }
+        ]
 
 
 class StockReport(object):

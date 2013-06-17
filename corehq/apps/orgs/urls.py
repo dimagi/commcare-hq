@@ -13,6 +13,7 @@ urlpatterns = patterns('corehq.apps.orgs.views',
     url(r'^(?P<org>[\w\.-]+)/add_team/$', 'orgs_add_team', name='orgs_add_team'),
     url(r'^(?P<org>[\w\.-]+)/logo/$', 'orgs_logo', name='orgs_logo'),
     url(r'^(?P<org>[\w\.-]+)/members/$', 'orgs_members', name='orgs_members'),
+    url(r'^(?P<org>[\w\.-]+)/set_admin/$', 'set_admin', name='orgs_set_admin'),
 
     url(r'^(?P<org>[\w\.-]+)/teams/$', 'orgs_teams', name='orgs_teams'),
     url(r'^(?P<org>[\w\.-]+)/update_team_info/$', 'orgs_update_team', name='orgs_update_team'),

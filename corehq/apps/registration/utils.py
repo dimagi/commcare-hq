@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime
 from django.core.mail import send_mail
 from corehq.apps.registration.models import RegistrationRequest
+from corehq.apps.commtrack.util import bootstrap_default
 from dimagi.utils.web import get_ip, get_url_base
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -58,6 +59,8 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
         commtrack_enabled=commtrack_enabled,
         creating_user=current_user.username)
 
+    bootstrap_default(new_domain)    
+
     if org:
         new_domain.organization = org
         new_domain.hr_name = request.POST.get('domain_hrname', None) or new_domain.name
@@ -91,7 +94,7 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
                                        dom_req.activation_guid)
     else:
         send_global_domain_registration_email(request.user, new_domain.name)
-    send_new_domain_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=new_user)
+    send_new_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=new_user)
 
 def send_domain_registration_email(recipient, domain_name, guid):
     DNS_name = Site.objects.get(id = settings.SITE_ID).domain
@@ -145,7 +148,7 @@ The CommCareHQ Team
 
     try:
         send_HTML_email(subject, recipient, message_html, text_content=message_plaintext,
-                        email_from=settings.HQ_NOTIFICATIONS_EMAIL)
+                        email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 
@@ -198,17 +201,19 @@ The CommCareHQ Team
 
     try:
         send_HTML_email(subject, requesting_user.email, message_html,
-                        text_content=message_plaintext, email_from=settings.HQ_NOTIFICATIONS_EMAIL)
+                        text_content=message_plaintext, email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 
-def send_new_domain_request_update_email(user, requesting_ip, domain_name, is_new_user=False, is_confirming=False):
+def send_new_request_update_email(user, requesting_ip, entity_name, entity_type="domain", is_new_user=False, is_confirming=False):
+    entity_texts = {"domain": ["project space", "Project"],
+                   "org": ["organization", "Organization"]}[entity_type]
     if is_confirming:
-        message = "A (basically) brand new user just confirmed his/her account. The project space requested was %s." % domain_name
+        message = "A (basically) brand new user just confirmed his/her account. The %s requested was %s." % (entity_texts[0], entity_name)
     elif is_new_user:
-        message = "A brand new user just requested a project space called %s." % domain_name
+        message = "A brand new user just requested a %s called %s." % (entity_texts[0], entity_name)
     else:
-        message = "An existing user just created a new project space called %s." % domain_name
+        message = "An existing user just created a new %s called %s." % (entity_texts[0], entity_name)
     message = """%s
 
 Details include...
@@ -216,13 +221,15 @@ Details include...
 Username: %s
 IP Address: %s
 
-You can view the project here: %s""" % (
+You can view the %s here: %s""" % (
         message,
         user.username,
         requesting_ip,
-        get_url_base() + "/a/%s/" % domain_name)
+        entity_texts[0],
+        get_url_base() + "/%s/%s/" % ("o" if entity_type == "org" else "a", entity_name))
     try:
         recipients = settings.NEW_DOMAIN_RECIPIENTS
-        send_mail("New Project: %s" % domain_name, message, settings.HQ_NOTIFICATIONS_EMAIL, recipients)
+        send_mail("New %s: %s" % (entity_texts[0], entity_name), message, settings.SERVER_EMAIL, recipients)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message)
+

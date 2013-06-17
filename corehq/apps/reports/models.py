@@ -161,7 +161,11 @@ class ReportConfig(Document):
         return super(ReportConfig, self).delete(*args, **kwargs)
 
     @classmethod
-    def by_domain_and_owner(cls, domain, owner_id, report_slug=None, **kwargs):
+    def by_domain_and_owner(cls, domain, owner_id, report_slug=None,
+                            stale=True, **kwargs):
+        if stale:
+            kwargs['stale'] = settings.COUCH_STALE_QUERY
+
         if report_slug is not None:
             key = ["name slug", domain, owner_id, report_slug]
         else:
@@ -169,7 +173,7 @@ class ReportConfig(Document):
 
         return cls.view('reportconfig/configs_by_domain',
             reduce=False, include_docs=True, startkey=key, endkey=key + [{}],
-            stale=settings.COUCH_STALE_QUERY, **kwargs)
+            **kwargs)
    
     @classmethod
     def default(self):
@@ -389,12 +393,15 @@ class ReportNotification(Document):
             return True
         
     @classmethod
-    def by_domain_and_owner(cls, domain, owner_id, **kwargs):
+    def by_domain_and_owner(cls, domain, owner_id, stale=True, **kwargs):
+        if stale:
+            kwargs['stale'] = settings.COUCH_STALE_QUERY
+
         key = [domain, owner_id]
 
         return cls.view("reportconfig/user_notifications",
             reduce=False, include_docs=True, startkey=key, endkey=key + [{}],
-            stale=settings.COUCH_STALE_QUERY, **kwargs)
+            **kwargs)
 
     @property
     def all_recipient_emails(self):
@@ -487,7 +494,7 @@ class ReportNotification(Document):
             self.owner, self.domain, self._id).content
 
         for email in self.all_recipient_emails:
-            send_HTML_email(title, email, body, email_from=settings.HQ_NOTIFICATIONS_EMAIL)
+            send_HTML_email(title, email, body, email_from=settings.DEFAULT_FROM_EMAIL)
 
 
 class AppNotFound(Exception):

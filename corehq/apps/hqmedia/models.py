@@ -15,7 +15,7 @@ from couchforms.models import XFormError
 from dimagi.utils.decorators.memoized import memoized
 from hutch.models import AuxMedia
 from corehq.apps.domain.models import LICENSES
-from dimagi.utils.couch.database import get_db
+from dimagi.utils.couch.database import get_db, SafeSaveDocument, get_safe_read_kwargs, iter_docs
 from django.utils.translation import ugettext as _
 
 MULTIMEDIA_PREFIX = "jr://file/"
@@ -39,7 +39,7 @@ class HQMediaLicense(DocumentSchema):
         return LICENSES.get(self.type, "Improper License")
 
 
-class CommCareMultimedia(Document):
+class CommCareMultimedia(SafeSaveDocument):
     """
         The base object of all CommCare Multimedia
     """
@@ -54,6 +54,17 @@ class CommCareMultimedia(Document):
     licenses = SchemaListProperty(HQMediaLicense, default=[])
     shared_by = StringListProperty(default=[])
     tags = DictProperty(default={})  # dict of string lists
+
+    @classmethod
+    def get(cls, docid, rev=None, db=None, dynamic_properties=True):
+        # copied and tweaked from the superclass's method
+        if not db:
+            db = cls.get_db()
+        cls._allow_dynamic_properties = dynamic_properties
+        # on cloudant don't get the doc back until all nodes agree
+        # on the copy, to avoid race conditions
+        extras = get_safe_read_kwargs()
+        return db.get(docid, rev=rev, wrapper=cls.wrap, **extras)
 
     @property
     def is_shared(self):
@@ -163,6 +174,7 @@ class CommCareMultimedia(Document):
             "updated": is_updated,
             "original_path": original_path,
             "icon_class": self.get_icon_class(),
+            "media_type": self.get_nice_name(),
         }
 
     @property
@@ -217,7 +229,8 @@ class CommCareMultimedia(Document):
     def get_doc_class(cls, doc_type):
         return {
             'CommCareImage': CommCareImage,
-            'CommCareAudio': CommCareAudio
+            'CommCareAudio': CommCareAudio,
+            'CommCareVideo': CommCareVideo,
         }[doc_type]
 
     @classmethod
@@ -225,6 +238,7 @@ class CommCareMultimedia(Document):
         return {
             'image': CommCareImage,
             'audio': CommCareAudio,
+            'video': CommCareVideo,
         }.get(cls.get_base_mime_type(data, filename=filename))
 
     @classmethod
@@ -280,23 +294,6 @@ class CommCareImage(CommCareMultimedia):
     class Config(object):
         search_view = 'hqmedia/image_search'
 
-    @memoized
-    def get_image_object(self, data):
-        return Image.open(StringIO(data))
-
-    def get_thumbnail_data(self, data, size):
-        try:
-            image = self.get_image_object(data)
-            if image.mode != "RGB":
-                image = image.convert("RGB")
-            o = StringIO()
-            image.thumbnail(size, Image.ANTIALIAS)
-            image.save(o, format="JPEG")
-            return o.getvalue()
-        except ImportError:
-            logging.error("Could not correctly process thumbnail for media %s" % self._id)
-        return data
-
     def attach_data(self, data, original_filename=None, username=None, attachment_id=None, media_meta=None,
                     replace_attachment=False):
         image = self.get_image_object(data)
@@ -311,6 +308,33 @@ class CommCareImage(CommCareMultimedia):
         return super(CommCareImage, self).attach_data(data, original_filename=original_filename, username=username,
                                                       attachment_id=attachment_id, media_meta=media_meta,
                                                       replace_attachment=replace_attachment)
+
+    @classmethod
+    def get_image_object(cls, data):
+        return Image.open(StringIO(data))
+
+    @classmethod
+    def _get_resized_image(cls, image, size):
+        if image.mode != "RGB":
+            image = image.convert("RGB")
+        o = StringIO()
+        image.thumbnail(size, Image.ANTIALIAS)
+        image.save(o, format="JPEG")
+        return o.getvalue()
+
+    @classmethod
+    def get_invalid_image_data(cls):
+        import os
+        invalid_image_path = os.path.join(os.path.dirname(__file__), 'static/hqmedia/img/invalid_image.png')
+        return Image.open(open(invalid_image_path))
+
+    @classmethod
+    def get_thumbnail_data(cls, data, size):
+        try:
+            data = cls._get_resized_image(cls.get_image_object(data), size)
+        except (ImportError, IOError):
+            data = cls._get_resized_image(cls.get_invalid_image_data(), size)
+        return data
 
     @classmethod
     def get_nice_name(cls):
@@ -335,6 +359,17 @@ class CommCareAudio(CommCareMultimedia):
         return "icon-volume-up"
 
 
+class CommCareVideo(CommCareMultimedia):
+
+    @classmethod
+    def get_nice_name(cls):
+        return _("Video")
+
+    @classmethod
+    def get_icon_class(cls):
+        return "icon-facetime-video"
+
+
 class HQMediaMapItem(DocumentSchema):
 
     multimedia_id = StringProperty()
@@ -343,6 +378,10 @@ class HQMediaMapItem(DocumentSchema):
 
     @staticmethod
     def format_match_map(path, media_type=None, media_id=None, upload_path=""):
+        """
+            This method is deprecated. Use CommCareMultimedia.get_media_info instead.
+        """
+        # todo cleanup references to this method
         return {
             "path": path,
             "uid": path.replace('jr://','').replace('/', '_').replace('.', '_'),
@@ -364,7 +403,7 @@ class ApplicationMediaReference(object):
     def __init__(self, path,
                  module_id=None, module_name=None,
                  form_id=None, form_name=None, form_order=None,
-                 media_class=None, is_menu_media=False):
+                 media_class=None, is_menu_media=False, app_lang=None):
 
         if not isinstance(path, basestring):
             raise ValueError("path should be a string")
@@ -382,6 +421,8 @@ class ApplicationMediaReference(object):
 
         self.media_class = media_class
         self.is_menu_media = is_menu_media
+
+        self.app_lang = app_lang or "en"
 
     def __str__(self):
         detailed_location = ""
@@ -414,13 +455,13 @@ class ApplicationMediaReference(object):
         }
 
     def _get_name(self, raw_name, lang=None):
-        if raw_name is None:
+        if not raw_name:
             return ""
         if not isinstance(raw_name, dict) or not isinstance(raw_name, LazyDict):
             return raw_name
         if lang is None:
-            lang = 'en'
-        return raw_name.get(lang)
+            lang = self.app_lang
+        return raw_name.get(lang, raw_name.values()[0])
 
     def get_module_name(self, lang=None):
         return self._get_name(self.module_name, lang=lang)
@@ -458,10 +499,12 @@ class HQMediaMixin(Document):
                                                        media_class=CommCareAudio,
                                                        is_menu_media=True, **kwargs))
 
+
         for m, module in enumerate(self.get_modules()):
             media_kwargs = {
                 'module_name': module.name,
                 'module_id': m,
+                'app_lang': self.default_language,
             }
             _add_menu_media(module, **media_kwargs)
             for f_order, f in enumerate(module.get_forms()):
@@ -480,6 +523,9 @@ class HQMediaMixin(Document):
                     for audio in parsed.audio_references:
                         if audio:
                             media.append(ApplicationMediaReference(audio, media_class=CommCareAudio, **media_kwargs))
+                    for video in parsed.video_references:
+                        if video:
+                            media.append(ApplicationMediaReference(video, media_class=CommCareVideo, **media_kwargs))
                 except (XFormValidationError, XFormError):
                     self.media_form_errors = True
         return media
@@ -527,15 +573,22 @@ class HQMediaMixin(Document):
         """
             Gets all the media objects stored in the multimedia map.
         """
+        found_missing_mm = False
+        # preload all the docs to avoid excessive couch queries.
+        # these will all be needed in memory anyway so this is ok.
+        expected_ids = [map_item.multimedia_id for map_item in self.multimedia_map.values()]
+        raw_docs = dict((d["_id"], d) for d in iter_docs(CommCareMultimedia.get_db(), expected_ids))
         for path, map_item in self.multimedia_map.items():
-            media = CommCareMultimedia.get_doc_class(map_item.media_type)
-            try:
-                media = media.get(map_item.multimedia_id)
-                yield path, media
-            except ResourceNotFound:
+            media_item = raw_docs.get(map_item.multimedia_id)
+            if media_item:
+                media_cls = CommCareMultimedia.get_doc_class(map_item.media_type)
+                yield path, media_cls.wrap(media_item)
+            else:
                 # delete media reference from multimedia map so this doesn't pop up again!
                 del self.multimedia_map[path]
-                self.save()
+                found_missing_mm = True
+        if found_missing_mm:
+            self.save()
 
     def get_references(self, lang=None):
         """
@@ -554,14 +607,16 @@ class HQMediaMixin(Document):
             Returns a list of totals of each type of media in the application and total matches.
         """
         totals = []
-        for mm in [CommCareImage, CommCareAudio]:
+        for mm in [CommCareImage, CommCareAudio, CommCareVideo]:
             paths = self.get_all_paths_of_type(mm.__name__)
+            matched_paths = [p for p in self.multimedia_map.keys() if p in paths]
             if len(paths) > 0:
                 totals.append({
-                        'media_type': mm.get_nice_name(),
-                        'totals': len(paths),
-                        'matched': len([p for p in self.multimedia_map.keys() if p in paths]),
-                        'icon_class': mm.get_icon_class(),
+                    'media_type': mm.get_nice_name(),
+                    'totals': len(paths),
+                    'matched': len(matched_paths),
+                    'icon_class': mm.get_icon_class(),
+                    'paths': matched_paths,
                 })
         return totals
 

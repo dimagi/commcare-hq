@@ -230,7 +230,7 @@ var uiElement;
                 var $modal_form = $('<form class="form-horizontal hq-enum-editor" action="" />'),
                     $modal_body = $('<div class="modal-body" style="max-height:372px; overflow-y: scroll;" />');
                 $modal_body.append($('<fieldset />'));
-                $modal_body.append('<div class="control-group"><a href="#" class="btn btn-success" data-enum-action="add"><i class="icon icon-white icon-plus"></i> Add Key => Value Mapping</a></div>');
+                $modal_body.append('<div class="control-group"><a href="#" class="btn btn-success" data-enum-action="add"><i class="icon icon-white icon-plus"></i> Add Key &rarr; Value Mapping</a></div>');
 
                 $modal_form.append($modal_body);
                 $modal_form.append('<div class="modal-footer"><button class="btn btn-primary" data-dismiss="modal">Done</button></div>');
@@ -332,7 +332,7 @@ var uiElement;
                     that.fire('change');
                 });
                 this.$edit_view.append(key_input);
-                this.$edit_view.append(' => ')
+                this.$edit_view.append(' &rarr; ')
                 this.$edit_view.append(val_input);
                 if(this.show_delete) {
                     var $deleteButton = $('<a href="#" data-enum-action="remove" class="btn btn-danger" />');
@@ -374,7 +374,7 @@ var uiElement;
 
                         }
                         if(map_key) {
-                            this.$noedit_view.text('"'+map_key+'" => "'+map_val+'"');
+                            this.$noedit_view.html('"'+map_key+'" &rarr; "'+map_val+'"');
                         }else{
                             this.$noedit_view.text("");
                         }

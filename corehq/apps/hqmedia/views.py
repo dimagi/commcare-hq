@@ -1,30 +1,30 @@
+import tempfile
 import zipfile
 import logging
 import os
 from django.contrib.auth.decorators import login_required
-import magic
+from django.core.servers.basehttp import FileWrapper
 import json
 from django.core.urlresolvers import reverse
-from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.views.generic import View, TemplateView
-from StringIO import StringIO
 
 from couchdbkit.exceptions import ResourceNotFound
 
 from django.http import HttpResponse, Http404, HttpResponseRedirect, HttpResponseServerError, HttpResponseBadRequest
 
-from django.views.decorators.http import require_POST
 from django.shortcuts import render
 
 from corehq.apps.app_manager.decorators import safe_download
 from corehq.apps.app_manager.views import require_can_edit_apps, set_file_download, ApplicationViewMixin
 from corehq.apps.app_manager.models import get_app
-from corehq.apps.hqmedia import utils
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
-from corehq.apps.hqmedia.controller import MultimediaBulkUploadController, MultimediaImageUploadController, MultimediaAudioUploadController
-from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX
+from corehq.apps.hqmedia.controller import MultimediaBulkUploadController, MultimediaImageUploadController, MultimediaAudioUploadController, MultimediaVideoUploadController
+from corehq.apps.hqmedia.decorators import login_with_permission_from_post
+from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX, CommCareVideo
 from corehq.apps.hqmedia.tasks import process_bulk_upload_zip
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import Permissions
 from dimagi.utils.decorators.memoized import memoized
 from soil.util import expose_download
 from django.utils.translation import ugettext as _
@@ -32,7 +32,7 @@ from django.utils.translation import ugettext as _
 
 class BaseMultimediaView(ApplicationViewMixin, View):
 
-    @method_decorator(require_can_edit_apps)
+    @method_decorator(require_permission(Permissions.edit_apps, login_decorator=login_with_permission_from_post()))
     def dispatch(self, request, *args, **kwargs):
         return super(BaseMultimediaView, self).dispatch(request, *args, **kwargs)
 
@@ -178,6 +178,8 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
                                                                args=[self.domain, self.app_id])),
             MultimediaAudioUploadController("hqaudio", reverse(ProcessAudioFileUploadView.name,
                                                                args=[self.domain, self.app_id])),
+            MultimediaVideoUploadController("hqvideo", reverse(ProcessVideoFileUploadView.name,
+                                                               args=[self.domain, self.app_id])),
         ]
 
 
@@ -229,7 +231,7 @@ class BaseProcessUploadedView(BaseMultimediaView):
             data = self.uploaded_file.file.read()
             return CommCareMultimedia.get_mime_type(data, filename=self.uploaded_file.name)
         except Exception as e:
-            return BadMediaFileException("There was an error fetching the MIME type of your file. Error: %s" % e)
+            raise BadMediaFileException("There was an error fetching the MIME type of your file. Error: %s" % e)
 
     def get(self, request, *args, **kwargs):
         return HttpResponseBadRequest("You may only post to this URL.")
@@ -362,6 +364,15 @@ class ProcessAudioFileUploadView(BaseProcessFileUploadView):
         return ['audio']
 
 
+class ProcessVideoFileUploadView(BaseProcessFileUploadView):
+    media_class = CommCareVideo
+    name = "hqmedia_uploader_video"
+
+    @classmethod
+    def valid_base_types(cls):
+        return ['video']
+
+
 class CheckOnProcessingFile(BaseMultimediaView):
     name = "hqmedia_check_processing"
 
@@ -382,11 +393,13 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
 
     def get(self, request, *args, **kwargs):
         errors = []
-        temp = StringIO()
-        media_zip = zipfile.ZipFile(temp, "a")
         self.app.remove_unused_mappings()
         if not self.app.multimedia_map:
             return HttpResponse("You have no multimedia to download.")
+
+        fd, fpath = tempfile.mkstemp()
+        tmpfile = os.fdopen(fd, 'w')
+        media_zip = zipfile.ZipFile(tmpfile, "w")
         for path, media in self.app.get_media_objects():
             try:
                 data, content_type = media.get_display_file()
@@ -399,17 +412,16 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
                     'error': e,
                 })
         media_zip.close()
-
         if errors:
             logging.error("Error downloading multimedia ZIP for domain %s and application %s." %
                           (self.domain, self.app_id))
             return HttpResponseServerError("Errors were encountered while "
                                            "retrieving media for this application.<br /> %s" % "<br />".join(errors))
 
-        response = HttpResponse(mimetype="application/zip")
+        wrapper = FileWrapper(open(fpath))
+        response = HttpResponse(wrapper, mimetype="application/zip")
+        response['Content-Length'] = os.path.getsize(fpath)
         set_file_download(response, 'commcare.zip')
-        temp.seek(0)
-        response.write(temp.read())
         return response
 
 
@@ -482,13 +494,8 @@ class ViewMultimediaFile(View):
 
     def get(self, request, *args, **kwargs):
         data, content_type = self.multimedia.get_display_file()
-        if self.media_class == CommCareImage:
-            data = self.resize_image(data)
+        if self.thumb:
+            data = CommCareImage.get_thumbnail_data(data, self.thumb)
         response = HttpResponse(mimetype=content_type)
         response.write(data)
         return response
-
-    def resize_image(self, data):
-        if self.thumb:
-            return self.multimedia.get_thumbnail_data(data, self.thumb)
-        return data

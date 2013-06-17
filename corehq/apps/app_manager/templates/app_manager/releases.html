@@ -128,7 +128,7 @@
                 <th>Released</th>
 
             </tr>
-            <tbody data-bind="visible: buildState, css: {hidden: false}" class="hidden">
+            <tbody data-bind="visible: buildState, css: {hide: false}" class="hide">
                 <tr data-bind="visible: buildState() == 'pending'">
                     <td colspan="9">
                         <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
@@ -143,11 +143,11 @@
                     </td>
                 </tr>
             </tbody>
-            <tbody data-bind="css: {hidden: false}, template: {
+            <tbody data-bind="css: {hide: false}, template: {
                 foreach: savedApps,
                 afterAdd: function(elem) { $(elem).hide().fadeIn() },
                 beforeRemove: function(elem) { $(elem).fadeOut() }
-            }" class="hidden">
+            }" class="hide">
                 <tr class="build" data-bind="css: {
                     'build-released': is_released(),
                     'build-unreleased': !is_released(),
@@ -204,18 +204,18 @@
             <tbody>
                 <tr>
                     <td colspan="9">
-                        <div data-bind="visible: fetchState() === 'pending', css: {hidden: false}" class="hidden">
+                        <div data-bind="visible: fetchState() === 'pending', css: {hide: false}" class="hide">
                             <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
                         </div>
-                        <div data-bind="visible: fetchState() === 'error', css: {hidden: false}" class="hidden">
+                        <div data-bind="visible: fetchState() === 'error', css: {hide: false}" class="hide">
                             <div class="alert alert-error">
                                 {% trans "Whoops, we couldn't get those builds for you. Could you try that again?" %}
                             </div>
                         </div>
-                        <div data-bind="visible: fetchState() !== 'pending' && !doneFetching(), css: {hidden: false}" class="hidden">
+                        <div data-bind="visible: fetchState() !== 'pending' && !doneFetching(), css: {hide: false}" class="hide">
                             <a href="#" class="btn" data-bind="click: getMoreSavedApps">{% trans "View More" %}</a>
                         </div>
-                        <div data-bind="visible: doneFetching() && !savedApps().length, css: {hidden: false}" class="hidden">
+                        <div data-bind="visible: doneFetching() && !savedApps().length, css: {hide: false}" class="hide">
                             <div class="alert alert-info">
                                 {% trans 'Use the <strong>Make New Version</strong> button to create and deploy the latest version of your application' %}
                             </div>

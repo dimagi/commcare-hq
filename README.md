@@ -133,11 +133,7 @@ that you have a 32bit version of Python installed.
     # Next, set the aliases of the elastic indices. These can be set by a management command
     # that sets the stored index names to the aliases.
 
-    python manage.py ptop_es_manage --flip_alias --pillow CasePillow
-    python manage.py ptop_es_manage --flip_alias --pillow FullCasePillow
-    python manage.py ptop_es_manage --flip_alias --pillow XFormPillow
-    python manage.py ptop_es_manage --flip_alias --pillow FullXFormPillow
-
+    python manage.py ptop_es_manage --flip_all_aliases
 
 
 To enable CloudCare, ensure that `TOUCHFORMS_API_USER` and
@@ -218,7 +214,7 @@ Then run the following separately:
     > jython submodules/touchforms-src/touchforms/backend/xformserver.py
 
     # On Mac / Linux use Gunicorn as the multi-threaded server
-    ./manage.py run_gunicorn
+    ./manage.py run_gunicorn -w 3
 
     # on Windows use CherryPy
     > manage.py runcpserver port=8000
@@ -234,10 +230,10 @@ In order to build and download a CommCare mobile app from your instance of
 CommCare HQ, you need to follow our [instructions][builds] for how to download
 and load CommCare binaries from the Dimagi build server.
 
- [builds]: https://github.com/dimagi/core-hq/blob/master/corehq/apps/builds/README.md
+ [builds]: https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/builds/README.md
 
 Running Tests
-=============
+-------------
 
 To run the standard tests for CommCare HQ, simply run
 

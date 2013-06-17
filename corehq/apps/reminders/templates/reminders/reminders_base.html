@@ -4,7 +4,28 @@
 
 {% block title %}{% trans "Reminders" %}{% endblock %}
 
+{% block js-inline %}
+    <script>
+        $(function (){
+            var unsaved = false;
+            $(":input[type='submit'].btn-primary").click(function (){
+                unsaved = false;
+            });
+            $(":input").not(":input[type='submit']").change(function(){ 
+                unsaved = true;
+            });         
+            function unloadPage(){ 
+                if(unsaved){
+                    return "{% trans 'You have unsaved changes.' %}";
+                }
+            }           
+            window.onbeforeunload = unloadPage;                    
+        });
+    </script>
+{% endblock%}
+
 {% block head %}
+    
     {{ block.super }}
     <style>
         #scheduled-reminders-container {
@@ -88,8 +109,8 @@
             {% block reminder_definition_nav %}{% endblock %}
             <li{% is_url_active request scheduled_reminders_url %}><a href="{{ scheduled_reminders_url }}">Reminder Calendar</a></li>
             <li{% is_url_active request keywords_url %}><a href="{{ keywords_url }}">Keywords</a></li>
-            <li{% is_url_active request reminders_in_error_url %}><a href="{{ reminders_in_error_url }}">Reminders in Error</a></li>
             {% block keyword_nav %}{% endblock %}
+            <li{% is_url_active request reminders_in_error_url %}><a href="{{ reminders_in_error_url }}">Reminders in Error</a></li>
         </ul>
     </nav>
 {% endblock %}

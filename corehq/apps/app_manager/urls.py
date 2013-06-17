@@ -2,10 +2,12 @@ from django.conf.urls.defaults import patterns, url, include
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 
 app_urls = patterns('corehq.apps.app_manager.views',
-    url(r'^languages/$', 'view_app', name='view_app'),
-    url(r'^multimedia/$', 'view_app', name='view_app'),
-    url(r'^copy/$', 'view_app', name='view_app'),
-    url(r'^delete/$', 'view_app', name='view_app'),
+    url(r'^languages/$', 'view_app', name='app_languages'),
+    url(r'^languages/translations/download/$', 'download_translations', name='download_translations'),
+    url(r'^languages/translations/upload/$', 'upload_translations', name='upload_translations'),
+    url(r'^multimedia/$', 'view_app', name='app_multimedia'),
+    url(r'^copy/$', 'view_app', name='app_copy'),
+    url(r'^delete/$', 'view_app', name='app_delete'),
     url(r'^$', 'view_app', name='view_app'),
     url(r'^releases/$', 'release_manager', name='release_manager'),
     url(r'^releases/json/$', 'paginate_releases', name='paginate_releases'),
@@ -52,6 +54,9 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
         'delete_module', name="delete_module"),
     url(r'^delete_form/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
         'delete_form', name="delete_form"),
+
+    url(r'^copy_form/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
+        'copy_form', name='copy_form'),
 
     url(r'^undo_delete_app/(?P<record_id>[\w-]+)/$', 'undo_delete_app',
         name='undo_delete_app'),

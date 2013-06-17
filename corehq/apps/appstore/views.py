@@ -18,9 +18,9 @@ from django.contrib import messages
 from django.utils.translation import ugettext as _
 from dimagi.utils.couch.database import apply_update
 
-SNAPSHOT_FACETS = ['project_type', 'license', 'region', 'author']
+SNAPSHOT_FACETS = ['project_type', 'license', 'author']
 DEPLOYMENT_FACETS = ['deployment.region']
-SNAPSHOT_MAPPING = {'category':'project_type', 'license': 'license', 'region': 'region', 'author': 'author'}
+SNAPSHOT_MAPPING = {'category':'project_type', 'license': 'license', 'author': 'author'}
 DEPLOYMENT_MAPPING = {'region': 'deployment.region'}
 
 

@@ -110,6 +110,9 @@
                 {% include "users/partial/edit_user_role.html" %}
             {% endif %}
             {% include "users/partial/edit_phone_numbers.html" %}
+	    {% if commtrack_enabled %}
+                {% include "users/partial/commtrack.html" %}
+	    {% endif %}
         </div>
         {% if editing_commcare_user %}
         <div class="tab-pane" id="user-data">
@@ -162,7 +165,13 @@
                 <a class="close" data-dismiss="modal">&times;</a>
                 <h3>Delete +{{ phone_number }}?</h3>
             </div>
-            <form class="form form-horizontal hq-form" name="delete_phone_number" action="{% url delete_phone_number domain couch_user.couch_id %}?phone_number={{phone_number|urlencode}}" method="post">
+            <form class="form form-horizontal hq-form"
+                  name="delete_phone_number"
+                  action="{% url delete_phone_number domain couch_user.couch_id %}"
+                  method="POST">
+
+                <input type="hidden" name="phone_number" value="{{ phone_number }}"/>
+
                 <div class="modal-body">
                     <p>Are you sure you want to delete the phone number: "+{{ phone_number }}"?</p>
                 </div>

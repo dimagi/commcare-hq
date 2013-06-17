@@ -1,5 +1,5 @@
 from django.template.loader import render_to_string
-from . import DTSortDirection
+from . import DTSortDirection, DTSortType
 
 
 class DataTablesColumn(object):
@@ -48,6 +48,12 @@ class DataTablesColumn(object):
         if self.rotate:
             aoColumns["sWidth"] = '10px'
         return aoColumns
+
+
+class NumericColumn(DataTablesColumn):
+    def __init__(self, *args, **kwargs):
+        return super(NumericColumn, self).__init__(
+            sort_type=DTSortType.NUMERIC, sortable=True, *args, **kwargs)
 
 
 class DataTablesColumnGroup(object):

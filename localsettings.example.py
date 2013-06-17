@@ -37,8 +37,10 @@ BUG_REPORT_RECIPIENTS = ['commcarehq-support@dimagi.com']
 NEW_DOMAIN_RECIPIENTS = ['commcarehq-dev+newdomain@dimagi.com']
 EXCHANGE_NOTIFICATION_RECIPIENTS = ['commcarehq-dev+exchange@dimagi.com']
 
-HQ_NOTIFICATIONS_EMAIL = 'commcarehq-noreply@dimagi.com'
+SERVER_EMAIL = 'commcarehq-noreply@dimagi.com' #the physical server emailing - differentiate if needed
+DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
+EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 ####### Log/debug setup ########
 
@@ -103,7 +105,7 @@ TOUCHFORMS_API_PASSWORD = 'password'
 
 ####### Misc / HQ-specific Config ########
 
-DEFAULT_PROTOCOL = "https" # or http
+DEFAULT_PROTOCOL = "http" # or https
 OVERRIDE_LOCATION="https://www.commcarehq.org"
 
 #Set your analytics IDs here for GA and pingdom RUM
@@ -136,6 +138,9 @@ ADM_ENABLED_PROJECTS = []
 SOIL_DEFAULT_CACHE = "redis"
 SOIL_BACKEND = "soil.CachedDownload"
 
+# reports cache
+REPORT_CACHE = 'default' # or e.g. 'redis'
+
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
@@ -145,7 +150,7 @@ CACHES = {
         'BACKEND': 'redis_cache.cache.RedisCache',
         'LOCATION': 'localhost:6379',
         'OPTIONS': {},
-    }
+    },
 }
 
 ELASTICSEARCH_HOST = 'localhost' #on both a local and a distributed environment this should be

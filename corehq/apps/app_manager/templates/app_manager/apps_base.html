@@ -1,4 +1,4 @@
-{% extends base_template %}
+{% extends 'hqwebapp/two_column.html' %}
 {% load xforms_extras %}
 {% load url_extras %}
 {% load hq_shared_tags %}
@@ -7,44 +7,94 @@
 
 {% block title %}{% trans "Applications" %}{% endblock %}
 
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% if app %}{% url view_app domain app.id %}{% else %}#{% endif %}"><strong>{% trans "Applications" %}</strong></a>
+        </li>
+        {% block breadcrumbs %}
+        {% endblock %}
+    </ul>
+{% endblock %}
+
 {% block head %}{{ block.super }}
     <link rel="stylesheet" href="{% static 'hqstyle/css/legacy/app_manager.css' %}"/>
     {% include "imports/jqmodal.html" %}
-    <style>
-        .hq-oldstyle .nav-pills .active > a {
-            color: white;
-            background-color: #1557A2;
-        }
-        /* stupid hacks to make bootstrap btns not look bad */
-        .hq-oldstyle a.btn {
-            text-decoration: none;
-            color: black; /* i think this is the wrong color - maybe like #CCC or something is right? */
-        }
-        .hq-oldstyle a.btn-primary,
-        .hq-oldstyle a.btn-danger,
-        .hq-oldstyle a.btn-info {
-            color: white;
-        }
-        #release-manager-nav {
-            float: right;
-        }
-    </style>
 {% endblock %}
 
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
     <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
-    <script src="{% static 'app_manager/js/app_manager.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    {# Put here to avoid the .hq-oldstyle styling. (js-inline gets dumped into the end of body) #}
+    <script>
+    $(function () {
+        $('#deleted-app-dialog').modal({
+            backdrop: 'static',
+            keyboard: false,
+            show: true
+        }).on('hide', function () {
+            window.location = "{% url corehq.apps.app_manager.views.default domain %}";
+        });
+    });
+    $(function () {
+       $('.app-manager-content').removeClass('hide');
+    });
+    </script>
+{% endblock %}
+
+{% block sidebar %}
+{% endblock %}
+
+{% block main_column %}
+<div class="app-manager-content hide">
+    <input type="hidden" name="edit_mode" value="{% if edit %}true{% else %}false{% endif %}" />
+    {% if app %}
+        {% if error %}
+        <div id="error">
+            {% ifequal error 'app_exists' %}
+                {% trans "Oops! We can't create that application; you already have one with the same name." %}
+            {% endifequal %}
+        </div>
+        {% endif %}
+
+        {% block app-content %}{% endblock %}
+
+    {% else %}
+        <div style="padding: 1em; text-align: center">
+            <p style="font-size: 1.5em">
+                {% blocktrans %}
+                Welcome to the CommCare Application Builder.
+                Before you begin, check out the
+                <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Beginner+Tutorial">Beginner Tutorial</a>.
+                {% endblocktrans %}
+            </p>
+            <form action="{% url new_app domain %}">
+                <input type="hidden" name="type" value="Application">
+                <input type="hidden" name="application_version" value="2.0" />
+                {% if request.couch_user.can_edit_apps %}
+                <a href="#" class="submit">{% trans 'Create a blank app' %}</a>
+                {% else %}
+                {% trans 'There are no applications at this time' %}
+                {% endif %}
+                {% trans 'or' %} <a href="{% url appstore %}">{% trans 'copy an existing app from CommCare Exchange' %}</a>.
+            </form>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block column_style %}{% endblock %}
+
+{% block modals %}
+    {{ block.super }}
     {% if app.is_deleted %}
     <div id="deleted-app-dialog" class="modal hide fade">
-        <div class="modal-header"><h1>Oops! This application was deleted.</h1></div>
+        <div class="modal-header"><h1>{% trans 'Oops! This application was deleted.' %}</h1></div>
         <div class="modal-body">
-            <p>If you want your application back, click Restore.</p>
+            <p>{% trans 'If you want your application back, click Restore.' %}</p>
         </div>
         <div class="modal-footer">
             <a href="{% url undo_delete_app domain app.id %}" class="post-link btn btn-primary">
@@ -56,85 +106,4 @@
         </div>
     </div>
     {% endif %}
-    <script>
-    $(function () {
-        $('#deleted-app-dialog').modal({
-            backdrop: 'static',
-            keyboard: false,
-            show: true
-        }).on('hide', function () {
-            window.location = "{% url corehq.apps.app_manager.views.default domain %}";
-        });
-        $('.hq-help-template').each(function () {
-            COMMCAREHQ.makeHqHelp({
-                content: $(this).data('content'),
-                title: $(this).data('title')
-            }, false).insertAfter(this);
-            $(this).remove();
-        });
-        $('.hq-help').hqHelp();
-    });
-    $(function () {
-        COMMCAREHQ.app_manager.init({
-            appVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
-            edit: {{ edit|JSON }},
-            commcareVersion: {{ app.commcare_minor_release|JSON }}
-        });
-    });
-    $(function () {
-        $('.btn-langcode-preprocessed').each( function () {
-            langcodeTag.button_tag($(this), $(this).text());
-            if ($(this).hasClass('langcode-input')) {
-                var $langcodeInput = $(this).parent().find("input");
-                var that = this;
-                if ($langcodeInput) {
-                    $langcodeInput.change(function () {
-                        if ($(this).val() == "")
-                            $(that).show();
-                        else
-                            $(that).hide();
-                    });
-                }
-            }
-        });
-    });
-    </script>
-{% endblock %}
-
-{% block content %}
-    <input type="hidden" name="edit_mode" value="{% if edit %}true{% else %}false{% endif %}" />
-    <div id="main_container">
-
-        {% if app %}
-        {% if error %}
-        <div id="error">
-            {% ifequal error 'app_exists' %}
-                {# trans #} Oops! We can't create that application; you already have one with the same name.
-            {% endifequal %}
-        </div>
-        {% endif %}
-        <div id="app-content">
-            {% block app-content %}
-            {% endblock %}
-        </div>
-        {% else %}
-            <div style="padding: 1em; text-align: center">
-                <p style="font-size: 1.5em">
-                    Welcome to the CommCare Application Builder.
-                    Before you begin, check out the
-                    <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Beginner+Tutorial">Beginner Tutorial</a>.
-                </p>
-                <form action="{% url new_app domain %}">
-                    <input type="hidden" name="type" value="Application">
-                    <input type="hidden" name="application_version" value="2.0" />
-                    {% if request.couch_user.can_edit_apps %}
-                    <a href="#" class="submit">Create a blank app</a>
-                    {% else %}
-                    There are no applications at this time
-                    {% endif %}
-                    or <a href="{% url appstore %}">copy an existing app from CommCare Exchange</a>.
-                </form>
-            </div>
-        {% endif %}
-    </div>
-{% endblock %}
+{% endblock modals %}

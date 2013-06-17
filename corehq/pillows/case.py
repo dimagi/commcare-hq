@@ -17,7 +17,7 @@ class CasePillow(AliasedElasticPillow):
     couch_filter = "case/casedocs"
     es_host = settings.ELASTICSEARCH_HOST
     es_port = settings.ELASTICSEARCH_PORT
-    es_timeout = 600
+    es_timeout = 60
     es_index_prefix = "hqcases"
     es_alias = "hqcases"
     es_type = "case"

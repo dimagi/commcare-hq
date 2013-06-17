@@ -43,7 +43,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     # Download and view form data
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/$', 'form_data', name='render_form_data'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/download/$', 'download_form', name='download_form'),
-    url(r'^form_data/(?P<instance_id>[\w\-:]+)/download/(?P<attachment>[\w.-_]+)?$',
+    url(r'^form_data/(?P<instance_id>[\w\-:]+)/download-attachment/$',
         'download_attachment', name='download_attachment'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/archive/$', 'archive_form', name='archive_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/unarchive/$', 'unarchive_form', name='unarchive_form'),

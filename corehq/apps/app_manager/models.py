@@ -7,7 +7,7 @@ from django.core.cache import cache
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 import re
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.const import APP_V1, APP_V2
 from couchdbkit.exceptions import BadValueError
 from couchdbkit.ext.django.schema import *
@@ -17,10 +17,10 @@ from django.core.urlresolvers import reverse
 from django.http import Http404
 from restkit.errors import ResourceError
 import commcare_translations
-from corehq.apps.app_manager import fixtures, suite_xml
+from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings
 from corehq.apps.app_manager.suite_xml import IdStrings
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
-from corehq.apps.app_manager.util import split_path
+from corehq.apps.app_manager.util import split_path, save_xform
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, XFormError, XFormValidationError, WrappedNode, CaseXPath
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig, BuildRecord
@@ -96,67 +96,6 @@ def load_default_user_registration():
     with open(os.path.join(os.path.dirname(__file__), 'data', 'register_user.xhtml')) as f:
         return f.read()
 
-
-def load_custom_commcare_settings():
-    import yaml
-    path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json')
-    settings = []
-    with open(os.path.join(path,
-                           'commcare-profile-settings.yaml')) as f:
-        for setting in yaml.load(f):
-            if not setting.get('type'):
-                setting['type'] = 'properties'
-            settings.append(setting)
-
-    with open(os.path.join(path, 'commcare-app-settings.yaml')) as f:
-        for setting in yaml.load(f):
-            if not setting.get('type'):
-                setting['type'] = 'hq'
-            settings.append(setting)
-    for setting in settings:
-        if not setting.get('widget'):
-            setting['widget'] = 'select'
-        # i18n; not statically analyzable
-        setting['name'] = ugettext_noop(setting['name'])
-    return settings
-
-
-def load_commcare_settings_layout(doc_type):
-    import yaml
-    settings = dict([
-        ('{0}.{1}'.format(setting.get('type'), setting.get('id')), setting)
-        for setting in load_custom_commcare_settings()
-    ])
-    path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json')
-    with open(os.path.join(path, 'commcare-settings-layout.yaml')) as f:
-        layout = yaml.load(f)
-
-    for section in layout:
-        # i18n; not statically analyzable
-        section['title'] = ugettext_noop(section['title'])
-        for i, key in enumerate(section['settings']):
-            setting = settings.pop(key)
-            if doc_type == 'Application' or setting['type'] == 'hq':
-                section['settings'][i] = setting
-            else:
-                section['settings'][i] = None
-        section['settings'] = filter(None, section['settings'])
-        for setting in section['settings']:
-            setting['value'] = None
-
-    if settings:
-        raise Exception(
-            "CommCare settings layout should mention "
-            "all the available settings. "
-            "The following settings went unmentioned: %s" % (
-                ', '.join(settings.keys())
-            )
-        )
-    return layout
-
-if not settings.DEBUG:
-    load_custom_commcare_settings = memoized(load_custom_commcare_settings)
-    load_commcare_settings_layout = memoized(load_commcare_settings_layout)
 
 def authorize_xform_edit(view):
     def authorized_view(request, xform_id):
@@ -588,7 +527,7 @@ class FormBase(DocumentSchema):
             if not subcase_action.case_type:
                 errors.append({'type': 'subcase has no case type'})
 
-        if self.actions.open_case.is_active() \
+        if self.requires == 'none' and self.actions.open_case.is_active() \
                 and not self.actions.open_case.name_path:
             errors.append({
                 'type': 'case_name required',
@@ -1064,8 +1003,14 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
 
     # this is the supported way of specifying which commcare build to use
     build_spec = SchemaProperty(BuildSpec)
-    platform = StringProperty(choices=["nokia/s40", "nokia/s60", "winmo", "generic"], default="nokia/s40")
-    text_input = StringProperty(choices=['roman', 'native', 'custom-keys'], default="roman")
+    platform = StringProperty(
+        choices=["nokia/s40", "nokia/s60", "winmo", "generic"],
+        default="nokia/s40"
+    )
+    text_input = StringProperty(
+        choices=['roman', 'native', 'custom-keys', 'qwerty'],
+        default="roman"
+    )
     success_message = DictProperty()
 
     # The following properties should only appear on saved builds
@@ -1148,10 +1093,23 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     def is_remote_app(self):
         return False
 
-    def get_latest_app(self):
-        return get_app(self.domain, self.get_id, latest=True)
+    def get_latest_app(self, released_only=True):
+        if released_only:
+            return get_app(self.domain, self.get_id, latest=True)
+        else:
+            return self.view('app_manager/applications',
+                startkey=[self.domain, self.get_id, {}],
+                endkey=[self.domain, self.get_id],
+                include_docs=True,
+                limit=1,
+                descending=True,
+            ).first()
+
 
     def get_latest_saved(self):
+        """
+        This looks really similar to get_latest_app, not sure why tim added
+        """
         if not hasattr(self, '_latest_saved'):
             released = self.__class__.view('app_manager/applications',
                 startkey=['^ReleasedApplications', self.domain, self._id, {}],
@@ -1268,9 +1226,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         return reverse('corehq.apps.app_manager.views.download_jar', args=[self.domain, self._id])
 
     def get_jar_path(self):
-        build = self.get_build()
-        if self.text_input == 'custom-keys' and build.minor_release() < (1,3):
-            raise AppError("Custom Keys not supported in CommCare versions before 1.3. (Using %s.%s)" % build.minor_release())
 
         spec = {
             'nokia/s40': 'Nokia/S40',
@@ -1284,12 +1239,34 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
                 ('native',): '-native-input',
                 ('roman',): '-generic',
                 ('custom-keys',):  '-custom-keys',
+                ('qwerty',): '-qwerty'
             }[(self.text_input,)]
 
         return spec
 
     def get_jadjar(self):
         return self.get_build().get_jadjar(self.get_jar_path())
+
+    def validate_jar_path(self):
+        build = self.get_build()
+        setting = commcare_settings.SETTINGS_LOOKUP['hq']['text_input']
+        value = self.text_input
+        setting_version = setting['since'].get(value)
+
+        if setting_version:
+            setting_version = tuple(map(int, setting_version.split('.')))
+            my_version = build.minor_release()
+
+            if my_version < setting_version:
+                i = setting['values'].index(value)
+                assert i != -1
+                name = _(setting['value_names'][i])
+                raise AppError(_(
+                    '%s Text Input is not supported '
+                    'in CommCare versions before %s.%s. '
+                    '(You are using %s.%s)'
+                ) % ((name,) + setting_version + my_version))
+
 
     @property
     def jad_settings(self):
@@ -1337,6 +1314,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         errors.extend(self.check_password_charset())
 
         try:
+            self.validate_jar_path()
             self.create_all_files()
         except (AppError, XFormValidationError, XFormError) as e:
             errors.append({'type': 'error', 'message': unicode(e)})
@@ -1524,7 +1502,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @property
     def url_base(self):
-        if self.force_http:
+        # force_http is a deprecated hack
+        # for safety we're just special-casing the only
+        # domain that ever used it, wvmoz
+        if self.force_http and self.domain == 'wvmoz':
             return settings.INSECURE_URL_BASE
         else:
             return get_url_base()
@@ -1545,6 +1526,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def media_suite_loc(self):
         return "media_suite.xml"
 
+    @property
+    def default_language(self):
+        return self.build_langs[0] if len(self.build_langs) > 0 else "en"
+
     def fetch_xform(self, module_id=None, form_id=None, form=None):
         if not form:
             form = self.get_module(module_id).get_form(form_id)
@@ -1559,10 +1544,20 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         if previous_version:
             for form_stuff in self.get_forms(bare=False):
+                filename = 'files/%s' % self.get_form_filename(**form_stuff)
                 form = form_stuff["form"]
                 try:
                     previous_form = previous_version.get_form(form.unique_id)
-                    previous_hash = _hash(previous_version.fetch_xform(form=previous_form))
+                    # we don't want to perform any validation on previous_form
+                    # because it could have been built with an eariler version
+                    # of commcarehq in which there was a bug
+                    # that let invalid forms through
+                    previous_source = previous_version.fetch_attachment(filename)
+                except (ResourceNotFound, KeyError):
+                    # if this is a new form just use my version
+                    form.version = self.version
+                else:
+                    previous_hash = _hash(previous_source)
 
                     # hack - temporarily set my version to the previous version
                     # so that that's not treated as the diff
@@ -1570,9 +1565,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     my_hash = _hash(self.fetch_xform(form=form))
                     if previous_hash != my_hash:
                         form.version = self.version
-                except KeyError:
-                    # if this is a new form just use my version
-                    form.version = self.version
 
     def _create_custom_app_strings(self, lang):
         def trans(d):
@@ -1657,8 +1649,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         # the following code is to let HQ override CommCare defaults
         # impetus: Weekly Logging should be Short (HQ override) instead of Never (CommCare default)
         # setting.default is assumed to also be the CommCare default unless there's a setting.commcare_default
-        all_settings = load_custom_commcare_settings()
-        for setting in all_settings:
+        for setting in commcare_settings.SETTINGS:
             type = setting['type']
             if type in ('properties', 'features') and setting['id'] not in app_profile[type]:
                 if 'commcare_default' in setting and setting['commcare_default'] != setting['default']:
@@ -1706,6 +1697,13 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             sections=['media_resources']
         )
 
+    @classmethod
+    def get_form_filename(cls, type=None, form=None, module=None):
+        if type == 'user_registration':
+            return 'user_registration.xml'
+        else:
+            return 'modules-%s/forms-%s.xml' % (module.id, form.id)
+
     def create_all_files(self):
         files = {
             "profile.xml": self.create_profile(),
@@ -1714,14 +1712,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if self.include_media_resources:
             files['media_suite.xml'] = self.create_media_suite()
 
-        if self.show_user_registration:
-            files["user_registration.xml"] = self.fetch_xform(form=self.get_user_registration())
         for lang in ['default'] + self.build_langs:
             files["%s/app_strings.txt" % lang] = self.create_app_strings(lang)
-        for module in self.get_modules():
-            for form in module.get_forms():
-                files["modules-%s/forms-%s.xml" % (module.id, form.id)] = self.fetch_xform(form=form)
+        for form_stuff in self.get_forms(bare=False):
+            filename = self.get_form_filename(**form_stuff)
+            form = form_stuff['form']
+            files[filename] = self.fetch_xform(form=form)
         return files
+
     get_modules = IndexedSchema.Getter('modules')
 
     @parse_int([1])
@@ -1854,10 +1852,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         columns = detail['columns']
         columns.insert(i, columns.pop(j))
         detail['columns'] = columns
-    def rearrange_forms(self, module_id, i, j):
-        forms = self.modules[module_id]['forms']
-        forms.insert(i, forms.pop(j))
-        self.modules[module_id]['forms'] = forms
+    def rearrange_forms(self, to_module_id, from_module_id, i, j):
+        forms = self.modules[to_module_id]['forms']
+        forms.insert(i, forms.pop(j) if to_module_id == from_module_id else self.modules[from_module_id]['forms'].pop(j))
+        self.modules[to_module_id]['forms'] = forms
+        if self.modules[to_module_id]['case_type'] != self.modules[from_module_id]['case_type']:
+            return 'case type conflict'
     def scrub_source(self, source):
         def change_unique_id(form):
             unique_id = form['unique_id']
@@ -1870,6 +1870,22 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         for m,module in enumerate(source['modules']):
             for f,form in enumerate(module['forms']):
                 change_unique_id(source['modules'][m]['forms'][f])
+
+    def copy_form(self, module_id, form_id, to_module_id):
+        form  = self.get_module(module_id).get_form(form_id)
+        copy_source = deepcopy(form.to_json())
+        if copy_source.has_key('unique_id'):
+            del copy_source['unique_id']
+
+        copy_form = self.new_form_from_source(to_module_id, copy_source)
+
+        def xmlname(aform):
+            return "%s.xml" % aform.get_unique_id()
+
+        save_xform(self, copy_form, form.source)
+
+        if self.modules[module_id]['case_type'] != self.modules[to_module_id]['case_type']:
+            return 'case type conflict'
 
     @cached_property
     def has_case_management(self):
@@ -1969,7 +1985,7 @@ class RemoteApp(ApplicationBase):
 
             def set_property(key, value):
                 node = profile_xml.find('property[@key="%s"]' % key)
-                print "node %r" % node
+
                 if node.xml is None:
                     from lxml import etree as ET
                     node = ET.Element('property')
@@ -1993,6 +2009,7 @@ class RemoteApp(ApplicationBase):
                 set_property("PostURL", self.post_url)
                 set_property("cc_user_domain", cc_user_domain(self.domain))
                 set_property('form-record-url', self.form_record_url)
+                set_property('key_server', self.key_server_url)
                 reset_suite_remote_url()
 
             if self.build_langs:

@@ -200,16 +200,78 @@ class DomainGlobalSettingsForm(forms.Form):
             return False
 
 class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
-    customer_type = ChoiceField(label='Customer Type',
-        choices=(('basic', 'Basic'), ('plus', 'Plus'), ('full', 'Full')))
-    is_test = ChoiceField(label='Test Project', choices=tf_choices('Test', 'Real'))
-    survey_management_enabled = BooleanField(label='Survey Management Enabled', required=False)
-    sms_case_registration_enabled = BooleanField(label='Enable Case Registration Via SMS', required=False)
-    sms_case_registration_type = CharField(label='SMS Case Registration Type', required=False)
-    sms_case_registration_owner_id = ChoiceField(label='SMS Case Registration Owner', required=False, choices=[])
-    sms_case_registration_user_id = ChoiceField(label='SMS Case Registration Submitting User', required=False, choices=[])
-    default_sms_backend_id = CharField(label="Default SMS Backend", required=False, help_text="This SMS backend will be used if a contact has no backend specified.")
-    commtrack_enabled = BooleanField(label='CommTrack Enabled', required=False, help_text='CommTrack is a CommCareHQ module for logistics, inventory tracking, and supply chain management. It is still under active development. Do not enable for your domain unless you\'re actively piloting it.')
+    customer_type = ChoiceField(
+        label=_("Customer Type"),
+        choices=(('basic', _('Basic')),
+                 ('plus', _('Plus')),
+                 ('full', _('Full')))
+    )
+    is_test = ChoiceField(
+        label=_("Test Project"),
+        choices=tf_choices('Test', _('Real'))
+    )
+    survey_management_enabled = BooleanField(
+        label=_("Survey Management Enabled"),
+        required=False
+    )
+    sms_case_registration_enabled = BooleanField(
+        label=_("Enable Case Registration Via SMS"),
+        required=False
+    )
+    sms_case_registration_type = CharField(
+        label=_("SMS Case Registration Type"),
+        required=False
+    )
+    sms_case_registration_owner_id = ChoiceField(
+        label=_("SMS Case Registration Owner"),
+        required=False,
+        choices=[]
+    )
+    sms_case_registration_user_id = ChoiceField(
+        label=_("SMS Case Registration Submitting User"),
+        required=False,
+        choices=[]
+    )
+    default_sms_backend_id = CharField(
+        label=_("Default SMS Backend"),
+        required=False,
+        help_text=_("This SMS backend will be used if a contact has no "
+                    "backend specified.")
+    )
+    commtrack_enabled = BooleanField(
+        label=_("CommTrack Enabled"),
+        required=False,
+        help_text=_("CommTrack is a CommCareHQ module for logistics, inventory "
+                    "tracking, and supply chain management. It is still under "
+                    "active development. Do not enable for your domain unless "
+                    "you\'re actively piloting it.")
+    )
+    call_center_enabled = BooleanField(
+        label=_("Call Center Application"),
+        required=False,
+        help_text=_("Call Center mode is a CommCareHQ module for managing "
+                    "call center workflows. It is still under "
+                    "active development. Do not enable for your domain unless "
+                    "you're actively piloting it.")
+    )
+    call_center_case_owner = ChoiceField(
+        label=_("Call Center Case Owner"),
+        initial=None,
+        required=False,
+        help_text=_("Select the person who will be listed as the owner "
+                    "of all cases created for call center users.")
+    )
+    call_center_case_type = CharField(
+        label=_("Call Center Case Type"),
+        required=False,
+        help_text=_("Enter the case type to be used for call center workers")
+    )
+    restrict_superusers = BooleanField(
+        label=_("Restrict Superuser Access"),
+        required=False,
+        help_text=_("If access to a domain is restricted only users added " +
+                    "to the domain and staff members will have access.")
+    )
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
@@ -218,18 +280,34 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         if not (user and user.is_previewer):
             # commtrack is pre-release
             self.fields['commtrack_enabled'].widget = forms.HiddenInput()
-        
+            self.fields['call_center_enabled'].widget = forms.HiddenInput()
+            self.fields['call_center_case_owner'].widget = forms.HiddenInput()
+            self.fields['call_center_case_type'].widget = forms.HiddenInput()
+
+        if not (user and user.is_staff):
+            self.fields['restrict_superusers'].widget = forms.HiddenInput()
+
         if domain is not None:
             groups = Group.get_case_sharing_groups(domain)
             users = CommCareUser.by_domain(domain)
-            
-            domain_owner_choices = [(group._id, group.name) for group in groups]
+
+            domain_group_choices = [(group._id, group.name) for group in groups]
             domain_user_choices = [(user._id, user.raw_username) for user in users]
-            domain_owner_choices += domain_user_choices
-            
+            domain_owner_choices = domain_group_choices + domain_user_choices
+
             self.fields["sms_case_registration_owner_id"].choices = domain_owner_choices
             self.fields["sms_case_registration_user_id"].choices = domain_user_choices
-    
+
+            call_center_user_choices = [(user._id, user.name + ' (user)')
+                                         for user in users]
+            call_center_group_choices = [(group._id, group.name + ' (group)')
+                                         for group in groups]
+
+            self.fields["call_center_case_owner"].choices = \
+                [('', '')] + \
+                call_center_user_choices + \
+                call_center_group_choices
+
     def _validate_sms_registration_field(self, field_name, error_msg):
         value = self.cleaned_data.get(field_name)
         if value is not None:
@@ -238,16 +316,16 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             if value is None or value == "":
                 raise forms.ValidationError(error_msg)
         return value
-    
+
     def clean_sms_case_registration_type(self):
         return self._validate_sms_registration_field("sms_case_registration_type", _("Please enter a default case type for cases that register themselves via sms."))
-    
+
     def clean_sms_case_registration_owner_id(self):
         return self._validate_sms_registration_field("sms_case_registration_owner_id", _("Please enter a default owner for cases that register themselves via sms."))
-    
+
     def clean_sms_case_registration_user_id(self):
         return self._validate_sms_registration_field("sms_case_registration_user_id", _("Please enter a default submitting user for cases that register themselves via sms."))
-    
+
     def save(self, request, domain):
         res = DomainGlobalSettingsForm.save(self, request, domain)
         if not res:
@@ -263,8 +341,13 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             domain.sms_case_registration_user_id = self.cleaned_data.get('sms_case_registration_user_id')
             domain.default_sms_backend_id = self.cleaned_data.get('default_sms_backend_id')
             domain.commtrack_enabled = self.cleaned_data.get('commtrack_enabled', False)
-            if domain.commtrack_enabled and not domain.commtrack_settings:
-                commtrack_util.bootstrap_default(domain.name)
+            domain.call_center_config.enabled = self.cleaned_data.get('call_center_enabled', False)
+            if domain.call_center_config.enabled:
+                domain.internal.using_call_center = True
+                domain.call_center_config.case_owner_id = self.cleaned_data.get('call_center_case_owner', None)
+                domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type', None)
+            domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
+            commtrack_util.bootstrap_default(domain)
             domain.save()
             return True
         except Exception:
@@ -317,6 +400,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     can_use_data = ChoiceField(label=ugettext_noop("Data Usage?"), choices=tf_choices('Yes', 'No'), required=False)
     organization_name = CharField(label=ugettext_noop("Organization Name"), required=False)
     notes = CharField(label=ugettext_noop("Notes"), required=False, widget=forms.Textarea)
+    platform = forms.MultipleChoiceField(label=ugettext_noop("Platform"), widget=forms.CheckboxSelectMultiple(),
+                                         choices=tuple_of_copies(["java", "android", "cloudcare"], blank=False), required=False)
 
     def save(self, domain):
         domain.update_internal(sf_contract_id=self.cleaned_data['sf_contract_id'],
@@ -334,6 +419,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             can_use_data=self.cleaned_data['can_use_data'] == 'true',
             organization_name=self.cleaned_data['organization_name'],
             notes=self.cleaned_data['notes'],
+            platform=self.cleaned_data['platform'],
         )
 
 

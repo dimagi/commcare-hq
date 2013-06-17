@@ -1,0 +1,45 @@
+{% load hq_shared_tags %}
+
+<link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
+<script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
+<script>
+
+$(function() {
+
+$("#supply-point").select2({
+    placeholder: "Enter Name of Supply Point",
+    minimumInputLength: 1,
+    ajax: {
+        url: "{{ query_url }}",
+        dataType: 'json',
+        quietMillis: 500,
+        data: function (term, page) {
+            return {
+                name: term,
+            };
+        },
+        results: function (data, page) {
+            return {results: data, more: false};
+        }
+    },
+    initSelection: function(element, callback) {
+        var id = $(element).val();
+        if (id !== "") {
+            $.ajax("{{ query_url }}", {
+                data: {
+                    id: id
+                },
+                dataType: "json"
+            }).done(function(data) { callback(data); });
+        }
+    },
+    formatResult: function(e) { return e.name; },
+    formatSelection: function(e) { return e.name; },
+});
+
+});
+
+</script>
+
+<!-- FIXME should not use a global id or else you can only ever have one of these widgets on the page -->
+<input type="hidden" id="supply-point" name="{{ name }}" value="{{ value }}" style="width: 30em;"></input>
