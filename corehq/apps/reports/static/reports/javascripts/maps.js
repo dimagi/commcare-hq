@@ -502,6 +502,7 @@ function maps_init(config, case_api_url) {
     }
     // set to global var for now
     CONFIG = config.case_types;
+    console.log(CONFIG);
 
     var map = init_map($('#map'), [30., 0.], 2, 'terrain');
 
@@ -521,7 +522,16 @@ function init_callback(map, case_list) {
     $.each(case_list, function(i, c) {
 	    cases[c.case_id] = annotate(c);
 	});
-    $.each(cases, function(id, c) {
+
+    // FIXME shit... there's an ordering issue in how we process cases to find the geo link
+    // need to factor in the DAG and process bottom-up
+    var _cases = [];
+    $.each(cases, function(k, v) {
+	_cases.push(v);
+    });
+    _cases = _.sortBy(_cases, function(e) { return ['supply-point', 'supply-point-product'].indexOf(e.type()); });
+    ////
+    $.each(_cases, function(i, c) {
 	    init_case(c, cases, map);
         });
 
