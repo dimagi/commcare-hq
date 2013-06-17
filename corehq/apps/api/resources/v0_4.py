@@ -7,7 +7,7 @@ from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import xform as casexml_xform
 
-from corehq.apps.app_manager.models import ApplicationBase, Application, RemoteApp
+from corehq.apps.app_manager.models import ApplicationBase, Application, RemoteApp, Form
 from corehq.apps.receiverwrapper.models import Repeater, repeater_types
 from corehq.apps.groups.models import Group
 from corehq.apps.cloudcare.api import ElasticCaseQuery
@@ -174,12 +174,21 @@ class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
     name = fields.CharField(attribute='name')
 
     modules = fields.ListField()
-    
     def dehydrate_modules(self, bundle):
-        if bundle.obj.doc_type == Application._doc_type:
-            return [module.export_jvalue() for module in bundle.obj.modules]
-        elif bundle.obj.doc_type == RemoteApp._doc_type:
-            return []
+        app = bundle.obj
+        
+        if app.doc_type == Application._doc_type:
+            modules = [module.export_jvalue() for module in bundle.obj.modules]
+        elif app.doc_type == RemoteApp._doc_type:
+            modules = []
+
+        for module in modules:
+            for form_json in module['forms']:
+                form = Form.get_form(form_json['unique_id'])
+                langs = app.langs
+                form_json['questions'] = form.get_questions(langs)
+
+        return modules
 
     xforms = fields.ListField()
     def dehydrate_xforms(self, bundle):
