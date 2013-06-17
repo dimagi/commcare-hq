@@ -1593,41 +1593,46 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             for form in module.get_forms():
                 yield id_strings.form_locale(form), trans(form.name) + ('${0}' if form.show_count else '')
 
-    def create_app_strings(self, lang, include_blank_custom=False):
+    def load_messages(self, lang, include_blank_custom=False):
         def non_empty_only(dct):
             return dict([(key, value) for key, value in dct.items() if value])
-        if lang != "default":
-            messages = {"cchq.case": "Case", "cchq.referral": "Referral"}
 
-            custom = dict(self._create_custom_app_strings(lang))
-            if include_blank_custom:
-                messages.update(custom)
-            else:
-                messages.update(non_empty_only(custom))
+        messages = {"cchq.case": "Case", "cchq.referral": "Referral"}
 
-            # include language code names
-            for lc in self.langs:
-                name = langcodes.get_name(lc) or lc
-                if name:
-                    messages[lc] = name
+        custom = dict(self._create_custom_app_strings(lang))
+        if include_blank_custom:
+            messages.update(custom)
+        else:
+            messages.update(non_empty_only(custom))
 
-            cc_trans = commcare_translations.load_translations(lang)
-            messages.update(cc_trans)
+        # include language code names
+        for lc in self.langs:
+            name = langcodes.get_name(lc) or lc
+            if name:
+                messages[lc] = name
 
-            messages.update(non_empty_only(self.translations.get(lang, {})))
+        cc_trans = commcare_translations.load_translations(lang)
+        messages.update(cc_trans)
+
+        messages.update(non_empty_only(self.translations.get(lang, {})))
+
+        return messages
+
+    def create_app_strings(self, lang, include_blank_custom=False):
+        if lang != 'default':
+            messages = self.load_messages('default')
+            messages.update(self.load_messages(lang, include_blank_custom))
         else:
             messages = {}
-            for lc in reversed(self.langs):
-                if lc == "default":
-                    continue
-                new_messages = commcare_translations.loads(
-                    self.create_app_strings(lc, include_blank_custom=True)
-                )
+            lc = self.default_language
+            if lc != "default":
+                default_messages = self.load_messages('default')
+                messages = default_messages
+                messages.update(
+                    commcare_translations.loads(
+                        self.create_app_strings(lc, include_blank_custom=True)
+                    ))
 
-                for key, val in new_messages.items():
-                    # do not overwrite a real trans with a blank trans
-                    if not (val == '' and key in messages):
-                        messages[key] = val
         return commcare_translations.dumps(messages).encode('utf-8')
 
     @property
