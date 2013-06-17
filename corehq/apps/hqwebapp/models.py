@@ -56,6 +56,7 @@ class UITab(object):
         else:
             self.subtabs = None
 
+        print "ui tab org: %s" % org
         self.domain = domain
         self.couch_user = couch_user
         self.project = project

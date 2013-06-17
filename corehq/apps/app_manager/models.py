@@ -368,7 +368,11 @@ class FormBase(DocumentSchema):
             else:
                 self.validation_cache = ""
         if self.validation_cache:
-            raise XFormValidationError(**json.loads(self.validation_cache))
+            try:
+                raise XFormValidationError(**json.loads(self.validation_cache))
+            except ValueError:
+                self.validation_cache = None
+                return self.validate_form()
         return self
 
     def validate_for_build(self):
