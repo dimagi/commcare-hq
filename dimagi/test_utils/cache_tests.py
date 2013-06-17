@@ -101,7 +101,6 @@ class CachedObjectTests(TestCase):
             self.assertLess(stream_size, orig_size)
 
         for size_key in bigger:
-            print "bigger: %s" % size_key
             self.assertFalse(cimage.can_size(size_key), msg="size key: %s shouldn't be sized" % size_key)
             cmeta, cstream = cimage.get_size(size_key)
             cstream.seek(0, os.SEEK_END)
