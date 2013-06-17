@@ -285,7 +285,8 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             }.items()),
             #reorganized
             "indices": self.get_index_map(),
-            "reverse_indices": self.get_index_map(True)
+            "reverse_indices": self.get_index_map(True),
+            "location_path": getattr(self, 'location_', None),
         }
 
     @memoized
