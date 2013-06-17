@@ -1,5 +1,6 @@
 {% extends 'reports/async/basic.html' %}
 {% load report_tags %}
+{% load i18n %}
 
 {% block main_column %}
     <form class="form-horizontal form-report"
@@ -7,23 +8,34 @@
           method="post"
           enctype="multipart/form-data">
         <fieldset>
-            <legend>Select an Excel file from your computer to import</legend>
+            <legend>
+                {% trans "Upload an Excel File From Your Computer to Import From" %}
+            </legend>
             <div class="control-group">
+                <label class="control-label" for="file">
+                    {% trans "Select a file to upload" %}
+                </label>
                 <div class="controls">
                     <input class="input-small" name="file" id="file" type="file" />
+                </div>
+            </div>
 
-                    <label for="named_columns">Are there column headers in this file?</label>
-                    <select class="input-small" name="named_columns" id="named_columns">
-                        <option selected>yes</option>
-                        <option>no</option>
-                    </select>
+            <div class="control-group">
+                <div class="controls">
+                    <label class="checkbox" for="named_columns">
+                        <input type="checkbox"
+                               id="named_columns"
+                               name="named_columns"
+                               checked="checked" />
+                        {% trans "This file contains column headers" %}
+                    </label>
                 </div>
             </div>
         </fieldset>
 
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary btn-large">
-                <i class="icon-forward icon-white"></i> Next step
+            <button type="submit" class="btn btn-primary">
+                <i class="icon-forward icon-white"></i> {% trans "Next step" %}
             </button>
         </div>
     </form>

@@ -16,7 +16,7 @@ update_instance_id = "ZYXKVB636DFYL38FNX3D38WV5"
 case_block = """
 <case>
     <case_id>%s</case_id>
-    <date_modified>2011-12-19</date_modified>
+    <date_modified>2011-12-19T00:00:00Z</date_modified>
     <create>
         <case_type_id>repeater_case</case_type_id>
         <user_id>O2XLT0WZW97W1A91E2W1Y0NJG</user_id>
@@ -29,7 +29,7 @@ case_block = """
 update_block = """
 <case>
     <case_id>%s</case_id>
-    <date_modified>2011-12-19</date_modified>
+    <date_modified>2011-12-19T00:00:00Z</date_modified>
     <update>
         <case_name>ABC 234</case_name>
     </update>

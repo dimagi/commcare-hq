@@ -181,12 +181,13 @@
                     {% endif %}
                 });
                 caseConfig.init();
-
-                // tag the 'preview in cloudcare' button with the right url
-                // unfortunately, has to be done in javascript
-                var cloudCareUrl = getCloudCareUrl("{% url cloudcare_main domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
-                $("#cloudcare-preview-url").attr("href", cloudCareUrl);
             }
+
+            // tag the 'preview in cloudcare' button with the right url
+            // unfortunately, has to be done in javascript
+            var cloudCareUrl = getCloudCareUrl("{% url cloudcare_main domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
+            $("#cloudcare-preview-url").attr("href", cloudCareUrl);
+
             {% if app.application_version != '1.0' %}
                 var allFormsRequireACase = {{ module.all_forms_require_a_case|BOOL }};
                 var putInRoot = {{ module.put_in_root|BOOL }};
