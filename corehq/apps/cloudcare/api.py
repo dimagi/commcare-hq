@@ -1,6 +1,7 @@
 import json
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.locations.models import Location
 from corehq.apps.app_manager.models import ApplicationBase, Application
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.decorators import inline
@@ -117,6 +118,14 @@ class CaseAPIHelper(object):
 
         if self.filters:
             base_results = filter(_filter, base_results)
+
+        # annotate case results with linked location info
+        loc_ids = set(c.couch_doc.location_[-1] for c in base_results if hasattr(c.couch_doc, 'location_'))
+        locs = dict((loc._id, loc) for loc in Location.view('_all_docs', keys=list(loc_ids), include_docs=True))
+        for match in base_results:
+            if hasattr(match.couch_doc, 'location_'):
+                loc_id = match.couch_doc.location_[-1]
+                match.couch_doc.location = locs[loc_id]._doc
 
         if self.footprint:
             return [CaseAPIResult(couch_doc=case, id_only=self.ids_only) for case in \

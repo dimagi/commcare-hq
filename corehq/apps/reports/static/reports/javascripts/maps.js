@@ -365,6 +365,9 @@ function init_case(c, cases, map) {
     var config = case_type_config(c.type()) || {};
 
     var geo_field = config.geo_field;
+    if (!geo_field && !config.geo_linked_to) {
+	geo_field = '_loc';
+    }
     if (geo_field) {
 	// create map marker associated with case
 
@@ -396,12 +399,28 @@ function parse_pos(raw) {
     if (isNaN(lat) || isNaN(lon)) {
 	return null;
     }
-    return new google.maps.LatLng(lat, lon);
+    return [lat, lon];
+}
+
+function case_to_pos(c, geo_field) {
+    var pos;
+    if (geo_field == '_loc') {
+	var loc = c.prop('location');
+	var lat = loc.latitude;
+	var lon = loc.longitude;
+	if (lat == null || lon == null) {
+	    return null;
+	}
+	pos = [lat, lon];
+    } else {
+	pos = parse_pos(c.prop(geo_field));
+    }
+    return new google.maps.LatLng(pos[0], pos[1]);
 }
 
 // create a marker corresponding to a (geo-enabled) case
 function geoify_case(c, geo_field, map, make_marker, make_info) {
-    var pos = parse_pos(c.prop(geo_field));
+    var pos = case_to_pos(c, geo_field);
     if (pos == null) {
 	return;
     }
