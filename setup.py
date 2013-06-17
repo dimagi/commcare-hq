@@ -18,7 +18,6 @@ setup(
         'pytz',
         'couchdbkit',
         'django_redis',
-        'unittest2',
         'simplejson',
         'PIL'
     ],

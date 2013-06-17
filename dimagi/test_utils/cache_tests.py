@@ -1,9 +1,11 @@
 import os
+import StringIO
+
 from unittest2 import TestCase
+
 from dimagi.utils.django import cached_object
 from dimagi.utils.django.cached_object import CachedObject, CachedImage, IMAGE_SIZE_ORDERING, OBJECT_ORIGINAL
-import StringIO
-import Image, ImageFont, ImageDraw
+import Image
 
 
 class FakeCache(object):
