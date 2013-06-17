@@ -16,6 +16,8 @@ from django.contrib import messages
 from django.conf import settings
 from restkit import Resource
 from django.core import cache
+from corehq.apps.app_manager.models import ApplicationBase
+from corehq.apps.app_manager.util import get_settings_values
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
@@ -26,7 +28,7 @@ from corehq.apps.sms.models import SMSLog
 from corehq.apps.users.models import  CommCareUser, WebUser
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
-from corehq.apps.domain.decorators import  require_superuser
+from corehq.apps.domain.decorators import  require_superuser, login_or_digest
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from dimagi.utils.web import json_response
@@ -719,3 +721,25 @@ def noneulized_users(request, template="hqadmin/noneulized_users.html"):
     context["aoColumns"] = headers.render_aoColumns
 
     return render(request, template, context)
+
+
+@require_superuser
+@cache_page(60*5)
+def all_commcare_settings(request):
+    apps = ApplicationBase.view('app_manager/applications_brief',
+                                include_docs=True)
+    filters = set()
+    for param in request.GET:
+        s_type, name = param.split('.')
+        value = request.GET.get(param)
+        filters.add((s_type, name, value))
+
+    def app_filter(settings):
+        for s_type, name, value in filters:
+            if settings[s_type].get(name) != value:
+                return False
+        return True
+
+    settings_list = [s for s in (get_settings_values(app) for app in apps)
+                     if app_filter(s)]
+    return json_response(settings_list)
