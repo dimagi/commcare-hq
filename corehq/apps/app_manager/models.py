@@ -826,14 +826,15 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
                 return detail
         raise Exception("Module %s has no detail type %s" % (self, detail_type))
 
-    def export_json(self, dump_json=True):
+    def export_json(self, dump_json=True, keep_unique_id=False):
         source = self.to_json()
-        for form in source['forms']:
-            del form['unique_id']
+        if not keep_unique_id:
+            for form in source['forms']:
+                del form['unique_id']
         return json.dumps(source) if dump_json else source
 
     def export_jvalue(self):
-        return self.export_json(dump_json=False)
+        return self.export_json(dump_json=False, keep_unique_id=True)
     
     def requires(self):
         r = set(["none"])
