@@ -60,7 +60,7 @@ class UITab(object):
         self.couch_user = couch_user
         self.project = project
         self.org = org
-       
+
         # This should not be considered as part of the subclass API unless it
         # is necessary. Try to add new explicit parameters instead.
         self._request = request
