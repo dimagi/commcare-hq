@@ -833,7 +833,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
 
         return dict([(u["user_id"], convert_date(es_q(u["user_id"]))) for u in self.combined_users])
 
-    def es_case_queries(self, date_field, datespan=None, dict_only=False):
+    def es_case_queries(self, date_field, user_field='user_id', datespan=None, dict_only=False):
         datespan = datespan or self.datespan
         q = {"query": {
                 "bool": {
@@ -844,7 +844,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                                 "from": datespan.startdate_param_utc,
                                 "to": datespan.enddate_param_utc}}}
                     ]}}}
-        facets = ['user_id']
+        facets = [user_field]
 
         return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
 
@@ -916,16 +916,16 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
         else:
             last_form_by_user = self.es_last_submissions()
 
-        case_creation_data = self.es_case_queries('opened_on')
-        creations_by_user = dict([(t["term"], t["count"]) for t in case_creation_data["facets"]["user_id"]["terms"]])
+        case_creation_data = self.es_case_queries('opened_on', 'opened_by')
+        creations_by_user = dict([(t["term"], t["count"]) for t in case_creation_data["facets"]["opened_by"]["terms"]])
 
         case_modification_data = self.es_modified_cases()
         modifications_by_user = dict([(t["term"], t["count"]) for t in case_modification_data["facets"]["user_id"]["terms"]])
         avg_case_modification_data = self.es_modified_cases(datespan=avg_datespan)
         avg_modifications_by_user = dict([(t["term"], t["count"]) for t in avg_case_modification_data["facets"]["user_id"]["terms"]])
 
-        case_closure_data = self.es_case_queries('closed_on')
-        closures_by_user = dict([(t["term"], t["count"]) for t in case_closure_data["facets"]["user_id"]["terms"]])
+        case_closure_data = self.es_case_queries('closed_on', 'closed_by')
+        closures_by_user = dict([(t["term"], t["count"]) for t in case_closure_data["facets"]["closed_by"]["terms"]])
 
         inactive_case_data = self.es_inactive_cases()
         inactives_by_owner = dict([(t["term"], t["count"]) for t in inactive_case_data["facets"]["owner_id"]["terms"]])
