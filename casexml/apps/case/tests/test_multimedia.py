@@ -8,7 +8,6 @@ import hashlib
 from django.test import TestCase, RequestFactory
 import lxml
 from django.core.files.uploadedfile import UploadedFile
-import simplejson
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
