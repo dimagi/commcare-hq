@@ -1,76 +1,92 @@
 function(doc) {
     //!code util/hsph.js
+    
+    if (!(
+        isCATIFollowUpForm(doc) ||
+        isNewHSPHBirthCase(doc)
+    )) {
+        return;
+    }
+
+    var data = {},
+        userID, date;
 
     if (isCATIFollowUpForm(doc)) {
-        var data = {},
-            form = doc.form,
-            followUpTime = get_form_filled_duration(doc),
-            submissionDay = get_submission_day(doc), 
-            key = [form.meta.userID, form.date_admission];
-
-        data.waitlisted = (form.last_status === 'cati_waitlist');
-        data.transferredToTeamLeader = (form.last_status === 'cati_tl');
+        var form = doc.form,
+            followUpTime = get_form_filled_seconds(doc),
+            submissionDay = get_submission_day(doc);
         
+        userID = form.meta.userID;
+        date = form.date_admission;
+        
+        data.waitlisted = (form.last_status === 'cati_waitlist') ? 1 : 0;
+        data.transferredToTeamLeader = (form.last_status === 'cati_tl') ? 1 : 0;
+       
+        data.followUpForms = 1;
         if (followUpTime) {
             data.followUpTime = followUpTime;
         }
+
         if (submissionDay) {
-            emit([doc.domain, "submission_day"].concat(key), submissionDay);
+            emit(["submissionDay", doc.domain, userID, date], {
+                submissionDay: submissionDay
+            });
+        }
+    }
+
+    if (isNewHSPHBirthCase(doc)) {
+        userID = doc.user_id;
+        date = doc.date_admission;
+
+        function datePlusDays(string, daysToAdd) {
+            var newDate = new Date(string);
+            newDate.setDate(newDate.getDate() + daysToAdd);
+            return newDate;
         }
 
-        emit([doc.domain].concat(key), data); 
-        return;
-    }
-
-    if (!isHSPHBirthCase(doc)) {
-        return;
-    }
+        // get first and last follow up time from case actions
         
-    function datePlusDays(string, daysToAdd) {
-        var newDate = new Date(string);
-        newDate.setDate(newDate.getDate() + daysToAdd);
-        return newDate;
-    }
+        var firstFollowUpTime = false,
+            lastFollowUpTime = false;
 
-    // get first and last follow up time from case actions
-    
-    var firstFollowUpTime = false,
-        lastFollowUpTime = false;
-
-    for (var i in doc.actions) {
-        var action = doc.actions[i],
-            properties = action.updated_unknown_properties;
-        for (var prop in action.updated_known_properties) {
-            properties[prop] = action.updated_known_properties[prop];
-        }
-
-        if (typeof properties.follow_up_type !== 'undefined') {
-            var time = (new Date(action.date)).getTime();
-            
-            if (!firstFollowUpTime) {
-                firstFollowUpTime = time;
+        for (var i in doc.actions) {
+            var action = doc.actions[i],
+                properties = action.updated_unknown_properties;
+            for (var prop in action.updated_known_properties) {
+                properties[prop] = action.updated_known_properties[prop];
             }
 
-            if (!lastFollowUpTime || time > lastFollowUpTime) {
-                lastFollowUpTime = time;
+            if (typeof properties.follow_up_type !== 'undefined') {
+                var time = (new Date(action.date)).getTime();
+                
+                if (!firstFollowUpTime) {
+                    firstFollowUpTime = time;
+                }
+
+                if (!lastFollowUpTime || time > lastFollowUpTime) {
+                    lastFollowUpTime = time;
+                }
             }
         }
+
+        // calculate indicators
+        var admissionDatePlus13 = datePlusDays(doc.date_admission, 13).getTime(),
+            admissionDatePlus21 = datePlusDays(doc.date_admission, 21).getTime();
+
+        data.followedUp = (doc.last_status === 'followed_up') ? 1 : 0;
+
+        emit(["noFollowUpAfter6Days", doc.domain, userID, date], {
+            noFollowUpAfter6Days: (doc.date_admission &&
+            (!firstFollowUpTime || admissionDatePlus13 < firstFollowUpTime)) ? 1 : 0
+        });
+        
+        emit(["timedOut", doc.domain, userID, date], {
+            timedOut: (doc.date_admission && 
+            (!(doc.closed_on) || admissionDatePlus21 < lastFollowUpTime)) ? 1 : 0
+        });
     }
 
-    // calculate indicators
-
-    var data = {},
-        openedOn = datePlusDays(doc.opened_on, 0).getTime(),
-        admissionDatePlus13 = datePlusDays(doc.date_admission, 11).getTime(),
-        admissionDatePlus21 = datePlusDays(doc.date_admission, 13).getTime();
-
-    data.followedUp = (doc.follow_up_type === 'followed_up');
-
-    data.noFollowUpAfter6Days = (doc.date_admission &&
-        (!firstFollowUpTime || admissionDatePlus13 < firstFollowUpTime));
-    
-    data.catiTimedOut = (doc.date_admission && 
-        (!(doc.closed_on) || admissionDatePlus21 < lastFollowUpTime));
-
-    emit([doc.domain, doc.user_id, doc.date_admission], data);
+    if (Object.getOwnPropertyNames(data).length) {
+        emit(["all", doc.domain, userID, date], data);
+    }
 }

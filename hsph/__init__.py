@@ -11,7 +11,7 @@ new_reports = (
         field_management.CaseReport,
     )),
     ('Call Center', (
-        # CATI Performance
+        call_center.CATIPerformanceReport,
         call_center.CATITeamLeaderReport,
     )),
     ('Data Summary', (
