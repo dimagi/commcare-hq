@@ -119,13 +119,7 @@ class CaseAPIHelper(object):
         if self.filters:
             base_results = filter(_filter, base_results)
 
-        # annotate case results with linked location info
-        loc_ids = set(c.couch_doc.location_[-1] for c in base_results if hasattr(c.couch_doc, 'location_'))
-        locs = dict((loc._id, loc) for loc in Location.view('_all_docs', keys=list(loc_ids), include_docs=True))
-        for match in base_results:
-            if hasattr(match.couch_doc, 'location_'):
-                loc_id = match.couch_doc.location_[-1]
-                match.couch_doc.location = locs[loc_id]._doc
+        link_locations(base_results)
 
         if self.footprint:
             return [CaseAPIResult(couch_doc=case, id_only=self.ids_only) for case in \
@@ -168,6 +162,15 @@ class CaseAPIHelper(object):
                                          include_docs=False, reduce=False)
         ids = [res["id"] for res in view_results]
         return self._case_results(ids)
+
+def link_locations(base_results):
+    """annotate case results with info from linked location doc (if any)"""
+    loc_ids = set(match.couch_doc.location_[-1] for match in base_results if hasattr(match.couch_doc, 'location_'))
+    locs = dict((loc._id, loc) for loc in Location.view('_all_docs', keys=list(loc_ids), include_docs=True))
+    for match in base_results:
+        if hasattr(match.couch_doc, 'location_'):
+            loc_id = match.couch_doc.location_[-1]
+            match.couch_doc.location = locs[loc_id]._doc
 
 # todo: Make these api functions use generators for streaming
 # so that a limit call won't fetch more docs than it needs to
