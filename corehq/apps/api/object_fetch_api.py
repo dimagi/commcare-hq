@@ -6,16 +6,6 @@ from dimagi.utils.django.cached_object import IMAGE_SIZE_ORDERING, OBJECT_ORIGIN
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.decorators import login_and_domain_required
 
-
-class CachedObjectAPI(View):
-    @method_decorator(login_and_domain_required)
-    def get(self, *args, **kwargs):
-        """
-        Return a cached object based upon the key in the URL
-        """
-        pass
-
-
 class CaseAttachmentAPI(View):
     @method_decorator(login_and_domain_required)
     def get(self, *args, **kwargs):
