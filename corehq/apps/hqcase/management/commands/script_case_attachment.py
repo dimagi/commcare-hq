@@ -151,8 +151,6 @@ class Command(BaseCommand):
             "case_id": self.case_id,
             "attachments": ''.join(attachments)
         }
-        #print format_dict
-
         url = self.url_base + "/a/%s/receiver" % domain
 
         attachment_tuples = [(k, v) for k, v in options['files'].items()]
