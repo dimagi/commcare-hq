@@ -9,7 +9,9 @@
                     &nbsp;&nbsp;
 
                     &nbsp;<a class="btn" {% if not notabs %}target="_blank"{% endif %} href="{{ cloudcare_pn_url }}">New Progress Note</a>
+                    {% if patient_doc.dot_status != "" %}
                     &nbsp;<a class="btn" {% if not notabs %}target="_blank"{% endif %} href="{{ cloudcare_dot_url }}">New DOT</a>
+                    {% endif %}
                     &nbsp;<a class="btn" {% if not notabs %}target="_blank"{% endif %} href="{{ cloudcare_bw_url }}">New Bloodwork</a>
                 </h4>
             </div>
