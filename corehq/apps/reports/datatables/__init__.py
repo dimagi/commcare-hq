@@ -1,5 +1,5 @@
 from django.template.loader import render_to_string
-from . import DTSortDirection
+from . import DTSortDirection, DTSortType
 
 class DataTablesColumn(object):
     rowspan = 1
@@ -49,6 +49,12 @@ class DataTablesColumn(object):
         return aoColumns
 
 
+class NumericColumn(DataTablesColumn):
+    def __init__(self, *args, **kwargs):
+        return super(NumericColumn, self).__init__(
+            sort_type=DTSortType.NUMERIC, sortable=True, *args, **kwargs)
+
+
 class DataTablesColumnGroup(object):
     css_span = 0
 
@@ -86,6 +92,19 @@ class DataTablesColumnGroup(object):
         for col in self.columns:
             aoColumns.append(col.render_aoColumns)
         return aoColumns
+
+    def __iter__(self):
+        for col in self.columns:
+            yield col
+
+    def __len__(self):
+        length = 0
+        for _ in self:
+            length += 1
+        return length
+
+    def __nonzero__(self):
+        return True
 
 
 class DataTablesHeader(object):
@@ -180,5 +199,11 @@ class DataTablesHeader(object):
         for column in self.header:
             yield column
 
+    def __len__(self):
+        length = 0
+        for col in self:
+            length += len(col) if isinstance(col, DataTablesColumnGroup) else 1
+        return length
 
-
+    def __nonzero__(self):
+        return True

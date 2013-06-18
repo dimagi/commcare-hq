@@ -2,7 +2,6 @@ from collections import defaultdict
 from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.app_manager.const import APP_V1
 from lxml import etree as ET
-from corehq.apps.app_manager.util import split_path
 import formtranslate.api
 
 
@@ -179,7 +178,7 @@ class XForm(WrappedNode):
     def media_references(self, form):
         try:
             nodes = self.itext_node.findall('{f}translation/{f}text/{f}value[@form="%s"]' % form)
-            return [n.text for n in nodes]
+            return list(set([n.text for n in nodes]))
         except XFormError:
             return []
 
@@ -563,6 +562,7 @@ class XForm(WrappedNode):
             self.add_bind(nodeset=ref, type=type)
 
     def create_casexml_2(self, form):
+        from corehq.apps.app_manager.util import split_path
 
         actions = form.active_actions()
 

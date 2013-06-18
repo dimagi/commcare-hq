@@ -9,6 +9,11 @@ from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.excel import flatten_json, json_to_headers, \
     alphanumeric_sort_key
 
+
+class UserUploadError(Exception):
+    pass
+
+
 required_headers = set(['username'])
 allowed_headers = set(['password', 'phone-number', 'user_id', 'name', 'group', 'data', 'language']) | required_headers
 
@@ -22,9 +27,10 @@ def check_headers(user_specs):
     messages = []
     for header_set, label in (missing_headers, 'required'), (illegal_headers, 'illegal'):
         if header_set:
-            messages.append('The following are %s column headers: %s.' % (label, ', '.join(header_set)))
+            messages.append(_('The following are {label} column headers: {headers}.').format(
+                label=label, headers=', '.join(header_set)))
     if messages:
-        raise Exception('\n'.join(messages))
+        raise UserUploadError('\n'.join(messages))
 
 
 class GroupMemoizer(object):
@@ -135,6 +141,7 @@ def create_or_update_groups(domain, group_specs, log):
             group.metadata = data
     return group_memoizer
 
+
 def create_or_update_users_and_groups(domain, user_specs, group_specs):
     ret = {"errors": [], "rows": []}
     group_memoizer = create_or_update_groups(domain, group_specs, log=ret)
@@ -182,7 +189,8 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
                         user = CommCareUser.get_by_username(username)
                     if user:
                         if user.domain != domain:
-                            raise Exception(_('User with username %r is somehow in domain %r') % (user.username, user.domain))
+                            raise UserUploadError(_('User with username %(username)r is somehow in domain %(domain)r') %
+                                            {'username': user.username, 'domain': user.domain})
                         if username and user.username != username:
                             user.change_username(username)
                         if password:
@@ -190,7 +198,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
                         status_row['flag'] = 'updated'
                     else:
                         if not password:
-                            raise Exception(_("Cannot create a new user with a blank password"))
+                            raise UserUploadError(_("Cannot create a new user with a blank password"))
                         user = CommCareUser.create(domain, username, password, uuid=user_id or '')
                         status_row['flag'] = 'created'
                     if phone_number:
@@ -215,10 +223,13 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
 
                     for group_name in group_names:
                         if group_name not in allowed_group_names:
-                            raise Exception(_("Can't add to group '%s' (try adding it to your spreadsheet)") % group_name)
+                            raise UserUploadError(_(
+                                "Can't add to group '%s' "
+                                "(try adding it to your spreadsheet)"
+                            ) % group_name)
                         group_memoizer.by_name(group_name).add_user(user, save=False)
 
-                except Exception, e:
+                except UserUploadError as e:
                     status_row['flag'] = '%s' % e
                     
             ret["rows"].append(status_row)

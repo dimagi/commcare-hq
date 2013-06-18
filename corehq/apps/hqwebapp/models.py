@@ -489,6 +489,9 @@ class ProjectSettingsTab(UITab):
                 {'title': _('Project Settings'),
                  'url': reverse('domain_commtrack_settings',
                      args=[self.domain])},
+                {'title': _('Advanced Settings'),
+                 'url': reverse('commtrack_settings_advanced',
+                     args=[self.domain])},
                 {'title': _('Manage Products'),
                  'url': reverse('commtrack_product_list',
                      args=[self.domain])},
@@ -522,6 +525,8 @@ class AdminReportsTab(UITab):
                  'url': reverse('global_submissions_errors')},
                 {'title': _('System Info'),
                  'url': reverse('system_info')},
+                {'title': _('Mobile User Reports'),
+                 'url': reverse('mobile_user_reports')},
             ]),
             (_('Administrative Operations'), [
                 {'title': _('View/Update Domain Information'),

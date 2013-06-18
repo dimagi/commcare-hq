@@ -282,6 +282,7 @@ function BaseHQMediaUploadController (uploader_name, marker, options) {
                 postParams[key] = true;
             }
         }
+        postParams['_cookie'] = document.cookie;
         // With YUI 3.9 you can trigger downloads on a per file basis, but for now just keep the original behavior
         // of uploading the entire queue.
         self.uploader.uploadAll(self.uploadURL, postParams);
@@ -504,9 +505,9 @@ function HQMediaFileUploadController (uploader_name, marker, options) {
         var $existingFile = $(self.existingFileSelector);
         $(self.fileUploadCompleteSelector).addClass('hide');
 
-        if (self.currentReference.is_matched()) {
+        if (self.currentReference.isMediaMatched()) {
             $existingFile.removeClass('hide');
-            $existingFile.find('.controls').html(self.processExistingFileTemplate(self.currentReference.url()));
+            $existingFile.find('.controls').html(self.processExistingFileTemplate(self.currentReference.getUrl()));
         } else {
             $existingFile.addClass('hide');
             $existingFile.find('.controls').empty();
@@ -522,7 +523,7 @@ function HQMediaFileUploadController (uploader_name, marker, options) {
         $(curUpload.progressBarContainer).removeClass('active').addClass('progress-success');
 
         var response = $.parseJSON(event.data);
-        $('[data-path="' + self.currentReference.path + '"]').trigger('mediaUploadComplete', response);
+        $('[data-hqmediapath="' + self.currentReference.path + '"]').trigger('mediaUploadComplete', response);
         if (!response.errors.length) {
             self.updateUploadFormUI();
             $(self.fileUploadCompleteSelector).removeClass('hide');

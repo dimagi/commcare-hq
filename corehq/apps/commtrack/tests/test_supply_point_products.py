@@ -1,12 +1,11 @@
 from datetime import datetime
-from django.utils.unittest.case import TestCase
 from corehq.apps.commtrack.helpers import make_supply_point,\
     make_supply_point_product, make_product, get_commtrack_user_id
-from corehq.apps.commtrack.tests.util import make_loc
-from corehq.apps.cloudcare.tests.test_api import TEST_DOMAIN
+from corehq.apps.commtrack.tests.util import (TEST_DOMAIN, make_loc,
+    CommTrackTest)
 from corehq.apps.commtrack import const
 
-class SupplyPointProductTest(TestCase):
+class SupplyPointProductTest(CommTrackTest):
 
     def setUp(self):
         self.loc = make_loc('loc1')

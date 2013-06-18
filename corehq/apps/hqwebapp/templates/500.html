@@ -26,7 +26,7 @@
         </div>
         <div class="span8">
             <form class="well form form-horizontal" style="padding-bottom: 0;" action="{% url bug_report %}" method="post">
-                <input type="hidden" id="bug-report-500-url" name="url" value="{{ request.path }}"/>
+                <input type="hidden" id="bug-report-500-url" name="url" value="{{ request.build_absolute_uri }}"/>
                 <input type="hidden" id="bug-report-500-username" name="username" value="{{ user.username }}"/>
                 <input type="hidden" id="bug-report-500-domain" name="domain" value="{{ domain }}"/>
                 <input type="hidden" id="bug-report-500-app_id" name="app_id" value="{{ app.id }}"/>

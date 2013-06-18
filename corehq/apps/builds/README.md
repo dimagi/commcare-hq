@@ -4,18 +4,24 @@ Adding CommCare Builds to CommCare HQ
 * First you need to get the CommCare build off the Dimagi build server:
     1. Go here http://build.dimagi.com:250/ and click [Login as a Guest User](http://build.dimagi.com:250/guestLogin.html?guest=1)
     2. Pick the branch you want and click on the link (e.g. "CommCare 1.3")
-    3. Pick a build (probably the first one in the table) and write down the build number (under "#"). This will be referenced as `$build_number` below
+    3. Pick a build (probably the first one in the table) and write down
+       the build number (under "#"). This will be referenced as `$build_number`
+       below
     4. Click on "Success" in that row (under "Results")
-    5. Select the "Build Parameters" tab and write down the version (all the way at the bottom in the "Environment Variables" table. This will be referenced as `$version` below
-    6. Select the "Artifacts" tab and click on "Download all (.zip)" on the right hand side. Note the path of the downloaded file. This will be referenced as `$build_path` below
+    5. Select the "Build Parameters" tab and write down the version (all
+       the way at the bottom in the "Environment Variables" table.) This will
+       be referenced as `$version` below
+    6. Select the "Artifacts" tab and click on "Download all (.zip)" on the
+       right hand side. Note the path of the downloaded file. This will be
+       referenced as `$build_path` below
 * Now `cd` into the commcare-hq root directory, and run the following command:
   `python manage.py add_commcare_build $build_path $version $build_number`
 
-Finally, make sure the build is available in the couch config. To do this, open the document with the id 
+Now make sure the build is available in the couch config. To do this, open the document with the id 
 `config--commcare-builds` and add your version to the "menu" config if it is not there. Use the `$version` number from
 above. You can also set the default here to be the version you've added.
 
-You're done. In order to get full permissions on a J2ME phone, you need to set up jar signing. To do so, you will need
+Finally, in order to get full permissions on a J2ME phone, you need to set up jar signing. To do so, you will need
 acquire a code signing certificate (from e.g. Thawte).
 
 * To enable jar signing, put your certificate information in localsettings.py as follows:
@@ -29,7 +35,7 @@ acquire a code signing certificate (from e.g. Thawte).
         key_pass = "*****",
     )
 
-* To skip this step, comment out the code entirely:
+* If you don't need this, skip this step by commenting out the code entirely:
 
 <!-- language: lang-py -->
 
@@ -39,3 +45,50 @@ acquire a code signing certificate (from e.g. Thawte).
     #    store_pass = "*****",
     #    key_pass = "*****",
     #)
+
+You're done!
+
+
+Sending to an Android Phone
+===========================
+
+If you would like to use a url or barcode scanner to download the application
+to your phone here is what you need to setup.
+
+### Make sure your local django application is accessible over the network
+
+The django server will need to be running on an ip address instead of localhost.
+To do this, run the application using the following command, substituting your
+local IP address.
+
+`./manage.py runserver 192.168.1.5:8000`
+
+Try accessing this url from the browser on your phone to make sure it works.
+
+### Make CommCare use this IP address
+
+The url an application was created on gets stored for use by the app builder
+during site creation. This means if you created a site and application
+previously, while using a 'localhost:8000' url, you will have to make a code
+tweak to have the app builder behave properly.
+
+The easiest way to check this is to see what url is shown below the barcode on
+the deploy screen.
+
+If it is currently displaying a `localhost:8000/a/yourapp/...` url then open
+`submodules/dimagi-utils-src/dimagi/utils/web.py` and change the line defining
+the IP address (at line 22 at time of writing this, but may have changed).
+
+Delete this line:
+
+    return '%s://%s' % (protocol, Site.objects.get(id = settings.SITE_ID).domain)
+
+And replace it with:
+
+    ip_address = '192.168.1.4' # use your local ip address here
+    return '%s://%s:8000' % (protocol, ip_address)
+
+### Try it out
+
+With this set up, you should be able to scan the barcode from your phone to
+download and install your own locally built CommCare application!
