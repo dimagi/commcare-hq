@@ -3,7 +3,7 @@ from StringIO import StringIO
 import re
 from datetime import datetime
 import logging
-import copy
+from copy import copy
 import itertools
 
 from django.core.cache import cache
@@ -13,7 +13,6 @@ from django.utils.translation import ugettext as _
 from couchdbkit.ext.django.schema import *
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from PIL import Image
-import simplejson
 from dimagi.utils.django.cached_object import CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage, IMAGE_SIZE_ORDERING
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
