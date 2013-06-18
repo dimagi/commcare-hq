@@ -10,6 +10,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2, LEGAL_VERSIONS
 
 from couchforms.models import XFormInstance
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.post import simple_post
@@ -159,10 +160,9 @@ class RepeatRecord(Document, LockableMixIn):
     payload_id = StringProperty()
 
     @property
+    @memoized
     def repeater(self):
-        if not hasattr(self, '_repeater'):
-            self._repeater = Repeater.get(self.repeater_id)
-        return self._repeater
+        return Repeater.get(self.repeater_id)
 
     @property
     def url(self):
@@ -210,14 +210,20 @@ class RepeatRecord(Document, LockableMixIn):
         return self.repeater.get_payload(self)
 
     def fire(self, max_tries=3, post_fn=None):
+        payload = self.get_payload()
         post_fn = post_fn or simple_post_with_cached_timeout
+        headers = None
+        if self.repeater_type == "FormRepeater":
+            form = XFormInstance.get(self.payload_id)
+            headers = {
+                "received-on": form.received_on.isoformat()+"Z",
+            }
         if self.try_now():
             # we don't use celery's version of retry because
             # we want to override the success/fail each try
             for i in range(max_tries):
-                payload = self.get_payload()
                 try:
-                    resp = post_fn(payload, self.url)
+                    resp = post_fn(payload, self.url, headers=headers)
                     if 200 <= resp.status < 300:
                         self.update_success()
                         break

@@ -12,7 +12,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.cloudcare.api import ElasticCaseQuery
 from corehq.apps.api.resources import v0_1, v0_3, JsonResource, DomainSpecificResourceMixin, dict_object
 from corehq.apps.api.es import XFormES, CaseES, ESQuerySet, es_search
-from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested
+from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField
 
 # By the time a test case is running, the resource is already instantiated,
 # so as a hack until this can be remedied, there is a global that
@@ -107,6 +107,15 @@ class RepeaterResource(JsonResource, DomainSpecificResourceMixin):
         authorization = v0_1.DomainAdminAuthorization
 
 class CommCareCaseResource(v0_3.CommCareCaseResource, DomainSpecificResourceMixin):
+    xforms = UseIfRequested(ToManyDocumentsField('corehq.apps.api.resources.v0_4.XFormInstanceResource',
+                                                 attribute=lambda case: case.get_forms()))
+
+    child_cases = UseIfRequested(ToManyDictField('corehq.apps.api.resources.v0_4.CommCareCaseResource',
+                                                 attribute=lambda case: dict([ (index.identifier, CommCareCase.get(index.referenced_id)) for index in case.indices])))
+
+    parent_cases = UseIfRequested(ToManyDictField('corehq.apps.api.resources.v0_4.CommCareCaseResource',
+                                                  attribute=lambda case: dict([ (index.identifier, CommCareCase.get(index.referenced_id)) for index in case.reverse_indices])))
+
     def obj_get_list(self, bundle, domain, **kwargs):
         filters = v0_3.CaseListFilters(bundle.request.GET).filters
 
@@ -120,8 +129,11 @@ class CommCareCaseResource(v0_3.CommCareCaseResource, DomainSpecificResourceMixi
             del query['size']
         
         return ESQuerySet(payload = query,
-                          model = lambda jvalue: dict_object(CommCareCase.wrap(jvalue).get_json()),
+                          model = CommCareCase, #lambda jvalue: dict_object(CommCareCase.wrap(jvalue).get_json()),
                           es_client = CaseES(domain)) # Not that XFormES is used only as an ES client, for `run_query` against the proper index
+
+    class Meta(v0_3.CommCareCaseResource.Meta):
+        max_limit = 100 # Today, takes ~25 seconds for some domains
 
 class GroupResource(JsonResource, DomainSpecificResourceMixin):
     id = fields.CharField(attribute='get_id', unique=True, readonly=True)

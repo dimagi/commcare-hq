@@ -206,6 +206,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     is_shared = BooleanProperty(default=False)
     commtrack_enabled = BooleanProperty(default=False)
     call_center_config = SchemaProperty(CallCenterProperties)
+    restrict_superusers = BooleanProperty(default=False)
 
     case_display = SchemaProperty(CaseDisplaySettings)
 
@@ -227,7 +228,8 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     title = StringProperty()
     cda = SchemaProperty(LicenseAgreement)
     multimedia_included = BooleanProperty(default=True)
-    downloads = IntegerProperty(default=0)
+    downloads = IntegerProperty(default=0) # number of downloads for this specific snapshot
+    full_downloads = IntegerProperty(default=0) # number of downloads for all snapshots from this domain
     author = StringProperty()
     phone_model = StringProperty()
     attribution_notes = StringProperty()
@@ -616,7 +618,13 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         return not self.is_snapshot and self.original_doc is not None
 
     def snapshots(self):
-        return Domain.view('domain/snapshots', startkey=[self._id, {}], endkey=[self._id], include_docs=True, descending=True)
+        return Domain.view('domain/snapshots',
+            startkey=[self._id, {}],
+            endkey=[self._id],
+            include_docs=True,
+            reduce=False,
+            descending=True
+        )
 
     @memoized
     def published_snapshot(self):
@@ -768,7 +776,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     @classmethod
     def hit_sort(cls, domains):
         domains = list(domains)
-        domains = sorted(domains, key=lambda domain: domain.downloads, reverse=True)
+        domains = sorted(domains, key=lambda domain: domain.download_count, reverse=True)
         return domains
 
     @classmethod
@@ -806,6 +814,27 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         """Get the properties display definition for a given XFormInstance"""
         return self.case_display.form_details.get(form.xmlns)
 
+    @property
+    def total_downloads(self):
+        """
+            Returns the total number of downloads from every snapshot created from this domain
+        """
+        return get_db().view("domain/snapshots",
+            startkey=[self.get_id],
+            endkey=[self.get_id, {}],
+            reduce=True,
+            include_docs=False,
+        ).one()["value"]
+
+    @property
+    @memoized
+    def download_count(self):
+        """
+            Updates and returns the total number of downloads from every sister snapshot.
+        """
+        if self.is_snapshot:
+            self.full_downloads = self.copied_from.total_downloads
+        return self.full_downloads
 
 class DomainCounter(Document):
     domain = StringProperty()
