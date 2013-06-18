@@ -40,6 +40,7 @@ CHECK_REPEATERS_INTERVAL = timedelta(minutes=1)
 def check_repeaters():
     start = datetime.utcnow()
     LIMIT = 100
+    DELETED = '-Deleted'
     while True:
         number_locked = 0
         # take LIMIT records off the top
@@ -63,7 +64,11 @@ def check_repeaters():
                 return
 
             if repeat_record.acquire_lock(start):
-                repeat_record.fire()
+                if repeat_record.repeater.doc_type.endswith(DELETED):
+                    if not repeat_record.doc_type.endswith(DELETED):
+                        repeat_record.doc_type += DELETED
+                else:
+                    repeat_record.fire()
                 repeat_record.save()
                 repeat_record.release_lock()
             else:

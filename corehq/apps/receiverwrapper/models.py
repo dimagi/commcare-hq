@@ -10,6 +10,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2, LEGAL_VERSIONS
 
 from couchforms.models import XFormInstance
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.post import simple_post
@@ -159,10 +160,9 @@ class RepeatRecord(Document, LockableMixIn):
     payload_id = StringProperty()
 
     @property
+    @memoized
     def repeater(self):
-        if not hasattr(self, '_repeater'):
-            self._repeater = Repeater.get(self.repeater_id)
-        return self._repeater
+        return Repeater.get(self.repeater_id)
 
     @property
     def url(self):
