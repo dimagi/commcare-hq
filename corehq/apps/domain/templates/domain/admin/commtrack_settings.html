@@ -74,7 +74,6 @@ var other_sms_codes = {{ other_sms_codes|JSON }};
 </fieldset>
 <fieldset data-bind="with: requisition_config(), visible: requisition_config().enabled">
     <h3>{% trans "Requisitions Actions" %}</h3>
-    <p class="help">{% trans "For a given incoming requisition report, actions will be applied in the order listed below." %}</p>
         {% include "domain/admin/commtrack_action_table.html" %}
     <button type="button" class="btn btn-primary" data-bind="click: new_action"><i class="icon-plus icon-white"></i> {% trans "New Action" %}</button>
 </fieldset>
