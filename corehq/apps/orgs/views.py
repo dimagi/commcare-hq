@@ -509,6 +509,16 @@ def undo_remove_member(request, org, record_id):
     record.undo()
     return HttpResponseRedirect(reverse('orgs_members', args=[org]))
 
+@org_admin_required
+def set_admin(request, org):
+    member_id = request.POST.get("member_id", None)
+    if member_id:
+        member = WebUser.get(member_id)
+        member.set_org_admin(org)
+        member.save()
+        messages.success(request, 'You have made %s an admin of the organization %s.' % (member.username, org))
+    return HttpResponseRedirect(reverse("orgs_members", args=[org]))
+
 @require_superuser
 def verify_org(request, org):
     organization = Organization.get_by_name(org)
@@ -563,22 +573,20 @@ def stats_data(request, org):
     histo_type = request.GET.get('histogram_type')
     period = request.GET.get("daterange", 'month')
 
-    today = date.today()
-    startdate = (today - timedelta(days={
-        'month': 30,
-        'week': 7,
-        'quarter': 90,
-        'year': 365,
-    }[period]))
+    enddate = request.GET.get('enddate')
+    enddate = datetime.strptime(enddate, "%Y-%m-%d") if enddate else date.today()
+    startdate = request.GET.get('startdate')
+    startdate = datetime.strptime(startdate, "%Y-%m-%d") if startdate else enddate - timedelta(days=30)
 
-    histo_data = dict([(d['hr_name'], es_histogram(histo_type, [d["name"]], startdate.strftime('%Y-%m-%d'), today.strftime('%Y-%m-%d')))
+    histo_data = dict([(d['hr_name'],
+                        es_histogram(histo_type, [d["name"]], startdate.strftime('%Y-%m-%d'), enddate.strftime('%Y-%m-%d')))
                        for d in domains])
 
     return json_response({
         'histo_data': histo_data,
         'range': period,
         'startdate': [startdate.year, startdate.month, startdate.day],
-        'enddate': [today.year, today.month, today.day],
+        'enddate': [enddate.year, enddate.month, enddate.day],
     })
 
 def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None):

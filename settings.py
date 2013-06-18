@@ -194,6 +194,7 @@ HQ_APPS = (
     'corehq.apps.ivr',
     'corehq.apps.tropo',
     'corehq.apps.kookoo',
+    'corehq.apps.sislog',
     'corehq.apps.yo',
     'corehq.apps.registration',
     'corehq.apps.unicel',
@@ -702,7 +703,14 @@ PILLOWTOPS = [
 XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
 
 #Custom fully indexed domains for FullCase index/pillowtop
-ES_CASE_FULL_INDEX_DOMAINS = ['pact', 'hsph', 'care-bihar']
+# Adding a domain will not automatically index that domain's existing cases
+ES_CASE_FULL_INDEX_DOMAINS = [
+    'pact', 
+    'hsph', 
+    'care-bihar', 
+    'hsph-dev', 
+    'hsph-betterbirth-pilot-2',
+]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 

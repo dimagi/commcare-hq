@@ -86,11 +86,6 @@ def register_org(request, template="registration/org_request.html"):
             email = form.cleaned_data["email"]
             url = form.cleaned_data["url"]
             location = form.cleaned_data["location"]
-            # logo = form.cleaned_data["logo"]
-            # if logo:
-            #     logo_filename = logo.name
-            # else:
-            #     logo_filename = ''
 
             org = Organization(name=name, title=title, location=location, email=email, url=url)
             org.save()
@@ -98,8 +93,7 @@ def register_org(request, template="registration/org_request.html"):
             request.couch_user.add_org_membership(org.name, is_admin=True)
             request.couch_user.save()
 
-            # if logo:
-            #     org.put_attachment(content=logo.read(), name=logo.name)
+            send_new_request_update_email(request.couch_user, get_ip(request), org.name, entity_type="org")
 
             if referer_url:
                 return redirect(referer_url)
@@ -166,7 +160,6 @@ def register_domain(request, domain_type=None):
                 return HttpResponseRedirect(reverse("domain_homepage", args=[requested_domain]))
         else:
             if nextpage:
-#                messages.error(request, "The new project could not be created! Please make sure to fill out all fields of the form.")
                 return orgs_landing(request, org, form=form)
     else:
         form = DomainRegistrationForm(initial={'domain_type': domain_type})
@@ -255,7 +248,7 @@ def confirm_domain(request, guid=None):
     requested_domain.save()
     requesting_user = WebUser.get_by_username(req.new_user_username)
 
-    send_new_domain_request_update_email(requesting_user, get_ip(request), requested_domain.name, is_confirming=True)
+    send_new_request_update_email(requesting_user, get_ip(request), requested_domain.name, is_confirming=True)
 
     vals['message_title'] = 'Account Confirmed'
     vals['message_subtitle'] = 'Thank you for activating your account, %s!' % requesting_user.first_name
