@@ -93,9 +93,3 @@ def case_inline_display(case):
         ret = _("Empty Case")
 
     return escape(ret)
-
-
-
-@register.simple_tag
-def case_image_display(case, attachment, size):
-    pass

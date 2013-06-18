@@ -540,7 +540,6 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         self.actions.append(create_action)
     
     def update_from_case_update(self, case_update, xformdoc):
-
         mod_date = parsing.string_to_datetime(case_update.modified_on_str) \
                     if   case_update.modified_on_str else datetime.utcnow()
         
@@ -863,3 +862,4 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             }
         ]
 
+import casexml.apps.case.signals

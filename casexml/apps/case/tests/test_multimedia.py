@@ -81,7 +81,7 @@ class BaseCaseMultimediaTest(TestCase):
 
     def _submit_rf(self, xml_data, dict_attachments):
         """
-        RequestFactory submitter
+        RequestFactory submitter - simulates direct submission to server directly (no need to call process case after fact)
         """
         rf = RequestFactory()
         f = StringIO.StringIO(xml_data.encode('utf-8'))
@@ -95,7 +95,6 @@ class BaseCaseMultimediaTest(TestCase):
         return rcv_views.post(req, 'tester')
 
     def _submit_and_verify(self, doc_id, xml_data, dict_attachments):
-    # form = post_xform_to_couch(xml_data, attachments=dict_attachments)
         self._submit_rf(xml_data, dict_attachments)
 
         time.sleep(2)
@@ -108,7 +107,6 @@ class BaseCaseMultimediaTest(TestCase):
             orig_attachment = vstream
             orig_attachment.seek(0)
             self.assertEqual(hashlib.md5(fileback).hexdigest(), hashlib.md5(orig_attachment.read()).hexdigest())
-        #process_cases(sender="testharness", xform=form) #use with post_xform_to_couch
         return form
 
     def _doCreateCaseWithMultimedia(self, attachments=['fruity']):
@@ -222,15 +220,6 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         for attach_name in new_attachments:
             self.assertTrue(attach_name in case.case_attachments)
             self.assertEqual(self._calc_file_hash(attach_name), hashlib.md5(case.get_attachment(attach_name)).hexdigest())
-
-
-    def testMultiSizeImages(self):
-        self.testAttachInUpdate(new_attachments=['dimagi_logo'])
-        #dimagi_logo = 2550x1200
-        #filesize: 484.9 kB (484,915 bytes)
-
-        case = CommCareCase.get(TEST_CASE_ID)
-
 
 
 
