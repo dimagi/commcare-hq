@@ -243,14 +243,12 @@ def recompute_dots_casedata(casedoc, couch_user, submit_date=None):
 
     This only updates the patient's casexml block with new dots data, and has no bearing on website display - whatever is pulled from the dots view is real.
     """
-    update_dict = {}
-#    assumes that regimen stuff is up to date
-#    update_dict = calculate_regimen_caseblock(casedoc) # this updates the artregimen,dot_a_one, etc
-#    update_dict['pactid'] =  casedoc.pactid
+    if casedoc.dot_status in ['DOT5', 'DOT3', 'DOT1']:
+        update_dict = {}
+        dots_data = get_dots_case_json(casedoc)
 
-    dots_data = get_dots_case_json(casedoc)
-    update_dict['dots'] = simplejson.dumps(dots_data)
-    submit_case_update_form(casedoc, update_dict, couch_user, submit_date=submit_date, xmlns=XMLNS_PATIENT_UPDATE_DOT)
+        update_dict['dots'] = simplejson.dumps(dots_data)
+        submit_case_update_form(casedoc, update_dict, couch_user, submit_date=submit_date, xmlns=XMLNS_PATIENT_UPDATE_DOT)
 
 def submit_case_update_form(casedoc, update_dict, couch_user, submit_date=None, xmlns=XMLNS_PATIENT_UPDATE):
     """
