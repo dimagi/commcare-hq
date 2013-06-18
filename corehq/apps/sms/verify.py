@@ -34,7 +34,7 @@ def process_verification(phone_number, text, backend_id=None):
     assert v.owner_doc_type == 'CommCareUser'
     owner = CommCareUser.get(v.owner_id)
 
-    owner.save_verified_number(v.domain, phone_number, True, backend._id)
+    owner.save_verified_number(v.domain, phone_number, True, backend.name)
 
     api.send_sms(v.domain, owner._id, phone_number, CONFIRM)
 

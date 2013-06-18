@@ -86,6 +86,19 @@ def send_sms_with_backend(domain, phone_number, text, backend_id):
         logging.exception("Exception while sending SMS to %s with backend %s" % (phone_number, backend_id))
     return send_message_via_backend(msg, MobileBackend.load(backend_id), onerror=onerror)
 
+def send_sms_with_backend_name(domain, phone_number, text, backend_name):
+    msg = SMSLog(
+        domain=domain,
+        phone_number=phone_number,
+        direction=OUTGOING,
+        date=datetime.utcnow(),
+        text=text
+    )
+
+    def onerror():
+        logging.exception("Exception while sending SMS to %s with backend name %s from domain %s" % (phone_number, backend_name, domain))
+    return send_message_via_backend(msg, MobileBackend.load_by_name(domain, backend_name), onerror=onerror)
+
 def send_message_via_backend(msg, backend=None, onerror=lambda: None):
     """send sms using a specific backend
 

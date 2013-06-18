@@ -8,7 +8,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.shortcuts import render
 from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_SMS
-from corehq.apps.sms.api import send_sms, incoming, send_sms_with_backend
+from corehq.apps.sms.api import send_sms, incoming, send_sms_with_backend_name
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users import models as user_models
 from corehq.apps.sms.models import SMSLog, INCOMING, ForwardingRule
@@ -232,13 +232,20 @@ def message_test(request, domain, phone_number):
 @csrf_exempt
 @login_or_digest
 def api_send_sms(request, domain):
+    """
+    An API to send SMS.
+    Expected post parameters:
+        phone_number - the phone number to send to
+        text - the text of the message
+        backend_id - the name of the MobileBackend to use while sending
+    """
     if request.method == "POST":
         phone_number = request.POST.get("phone_number", None)
         text = request.POST.get("text", None)
         backend_id = request.POST.get("backend_id", None)
         if (phone_number is None) or (text is None) or (backend_id is None):
             return HttpResponseBadRequest("Not enough arguments.")
-        if send_sms_with_backend(domain, phone_number, text, backend_id):
+        if send_sms_with_backend_name(domain, phone_number, text, backend_id):
             return HttpResponse("OK")
         else:
             return HttpResponse("ERROR")
@@ -415,7 +422,7 @@ def delete_domain_backend(request, domain, backend_id):
     if domain_obj.default_sms_backend_id == backend._id:
         domain_obj.default_sms_backend_id = None
         domain_obj.save()
-    backend.delete()
+    backend.retire() # Do not actually delete so that linkage always exists between SMSLog and MobileBackend
     return HttpResponseRedirect(reverse("list_domain_backends", args=[domain]))
 
 @require_superuser
@@ -423,7 +430,7 @@ def delete_backend(request, backend_id):
     backend = SMSBackend.get(backend_id)
     if not backend.is_global or backend.base_doc != "MobileBackend":
         raise Http404
-    backend.delete()
+    backend.retire() # Do not actually delete so that linkage always exists between SMSLog and MobileBackend
     return HttpResponseRedirect(reverse("list_backends"))
 
 def _set_default_domain_backend(request, domain, backend_id, unset=False):

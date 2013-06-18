@@ -656,18 +656,6 @@ SMS_LOADED_BACKENDS = [
     "corehq.apps.sms.backend.test.TestBackend",
 ]
 
-# mapping of phone number prefix (including country code) to a registered
-# outbound sms backend to use for that set of numbers. the backend can be:
-# * the ID of a MobileBackend couch doc ("new-style" backends), or
-# * the python path of a backend module ("old-style" backends)
-# NOTE: Going forward, do not add backends here, add them in localsettings
-if "SMS_BACKENDS" not in globals():
-    SMS_BACKENDS = {}
-
-SMS_BACKENDS[''] = 'MOBILE_BACKEND_MACH' # default backend
-SMS_BACKENDS['91'] = 'MOBILE_BACKEND_UNICEL' # india
-SMS_BACKENDS['999'] = 'MOBILE_BACKEND_TEST' # +999 is an unused country code
-
 SELENIUM_APP_SETTING_DEFAULTS = {
     'cloudcare': {
         # over-generous defaults for now
