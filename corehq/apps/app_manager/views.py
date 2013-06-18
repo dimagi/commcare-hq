@@ -490,6 +490,7 @@ def _clear_app_cache(request, domain):
     for is_active in True, False:
         key = make_template_fragment_key('header_tab', [
             domain,
+            None, # tab.org should be None for any non org page
             ApplicationsTab.view,
             is_active,
             request.couch_user.get_id
