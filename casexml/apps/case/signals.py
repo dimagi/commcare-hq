@@ -1,5 +1,4 @@
 from django.dispatch.dispatcher import Signal
-import simplejson
 from dimagi.utils.logging import notify_exception
 from receiver.signals import successful_form_received
 from casexml.apps.phone.models import SyncLog

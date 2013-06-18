@@ -134,10 +134,6 @@ class CaseAttachmentAction(CaseActionBase):
 
     def __init__(self, block, attachments):
         super(CaseAttachmentAction, self).__init__(block, attachments=attachments)
-    #
-    # def get_known_properties(self):
-    #     # override this since the index action only cares about a list of indices
-    #     return {}
 
     @classmethod
     def from_v1(cls, block):

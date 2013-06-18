@@ -61,14 +61,6 @@ class CaseBase(SafeSaveDocument):
         """
         return self.to_json()
 
-    def to_full_dict(self):
-        """
-        Include calculated properties that need to be available to the case
-        details display by overriding this method.
-
-        """
-        return self.to_json()
-
 
 class CommCareCaseAction(LooselyEqualDocumentSchema):
     """
@@ -357,6 +349,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             return getattr(self, property)
         except Exception:
             return None
+
     def set_case_property(self, property, value):
         setattr(self, property, value)
 
@@ -403,15 +396,6 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             )
         else:
             return None
-
-    @classmethod
-    def fetch_case_attachments(cls, case_id, filesize_limit=0, width_limit=0, height_limit=0):
-        """
-        Generator function for retrieving attachments based upon size criteria
-
-        Returns iterator of dict of {'attachment_key': key, 'content_length': len, 'content_type': mimetype_string, 'stream': stream pointer}
-        """
-        pass
 
     @classmethod
     def fetch_case_image(cls, case_id, attachment_key, filesize_limit=0, width_limit=0, height_limit=0, fixed_size=None):
