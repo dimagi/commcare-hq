@@ -316,7 +316,7 @@ class UploadItemLists(TemplateView):
 @require_POST
 @login_or_digest
 def upload_fixture_api(request, domain, **kwargs):
-    response_codes = {"fail":405, "warning":402, "success":404}
+    response_codes = {"fail": 405, "warning": 402, "success": 200}
     error_messages = {"invalid_post_req": "Invalid post request. Submit the form with field 'file-to-upload' to upload a fixture",
                       "has_no_permission": "User {attr} doesn't have permission to upload fixtures",
                       "invalid_file": "Error processing your file. Submit a valid (.xlsx) file",
@@ -365,13 +365,13 @@ def upload_fixture_api(request, domain, **kwargs):
     else:
         resp_json["code"] = response_codes["warning"]
 
-    warn_groups = "%d group%s unknown " % (num_unknown_groups, 's are' if num_unknown_groups > 1 else ' is')
-    warn_users = "%d user%s unknown " % (num_unknown_users, 's are' if num_unknown_users > 1 else ' is')
+    warn_groups = "%d group%s unknown" % (num_unknown_groups, 's are' if num_unknown_groups > 1 else ' is')
+    warn_users = "%d user%s unknown" % (num_unknown_users, 's are' if num_unknown_users > 1 else ' is')
     resp_json["message"] = "Fixtures have been uploaded. But following "
     if num_unknown_groups:
-        resp_json["message"] += warn_groups + str(upload_resp["unknown_groups"])
+        resp_json["message"] += "%s %s" % (warn_groups, upload_resp["unknown_groups"])
     if num_unknown_users:
-        resp_json["message"] += ("and following " if num_unknown_groups else "" ) + warn_users + str(upload_resp["unknown_users"])
+        resp_json["message"] += "%s%s%s" % (("and following " if num_unknown_groups else "" ), warn_users, upload_resp["unknown_users"])
 
     return HttpResponse(json.dumps(resp_json), mimetype="application/json")
 
@@ -382,29 +382,29 @@ def run_upload_api(request, domain, workbook):
 
     data_types = workbook.get_worksheet(title='types')
 
-    def _get_or_raise(container, attr, message):
+    def _get_or_raise(container, attr):
         try:
             return container[attr]
         except KeyError:
-            raise Exception(message.format(attr=attr))
+            raise Exception("Workbook 'types' has no column '{attr}'".format(attr=attr))
    
     number_of_fixtures = -1
     with CouchTransaction() as transaction:
         for number_of_fixtures, dt in enumerate(data_types):
-            err_msg = "Workbook 'types' has no column '{attr}'"
-            tag = _get_or_raise(dt, 'tag', err_msg)
+            tag = _get_or_raise(dt, 'tag')
             data_type_results = FixtureDataType.by_domain_tag(domain, tag)
-            if len(data_type_results)==0:
+            if len(data_type_results) == 0:
                 data_type = FixtureDataType(
                     domain=domain,
-                    name=_get_or_raise(dt, 'name', err_msg),
-                    tag=_get_or_raise(dt, 'tag', err_msg),
-                    fields=_get_or_raise(dt, 'field', err_msg),
+                    name=_get_or_raise(dt, 'name'),
+                    tag=_get_or_raise(dt, 'tag'),
+                    fields=_get_or_raise(dt, 'field'),
                 )
                 transaction.save(data_type)
             else:
                 for x in data_type_results:
                     data_type = x
+
             data_items = workbook.get_worksheet(data_type.tag)
             for sort_key, di in enumerate(data_items):
                 new_data_item = FixtureDataItem(
@@ -437,6 +437,7 @@ def run_upload_api(request, domain, workbook):
                             old_data_item.add_group(group, transaction=transaction)
                         else:
                             messages.error(request, "Unknown group: %s" % group_name)
+
                 for raw_username in di.get('user', []):
                         username = normalize_username(raw_username, domain)
                         user = CommCareUser.get_by_username(username)
