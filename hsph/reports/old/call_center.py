@@ -1,7 +1,6 @@
 import datetime
 from casexml.apps.case.models import CommCareCaseAction
 from corehq.apps.api.es import FullCaseES
-from corehq.apps.groups.models import Group
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.basic import BasicTabularReport, Column
 from corehq.apps.reports.standard import (DatespanMixin,

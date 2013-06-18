@@ -64,6 +64,14 @@ class NameOfCATIField(SelectFilteredMobileWorkerField):
     group_names = ["Role - CATI"]
     show_only_group_option = False
     default_option = "All CATIs"
+
+class NameOfCATITLField(SelectFilteredMobileWorkerField):
+    slug = "cati_tl_name"
+    name = "Name of CATI TL"
+    cssId = "cati_tl_name"
+    group_names = ["Role - CATI TL"]
+    show_only_group_option = False
+    default_option = "All CATI TLs"
     
 
 class NameOfCITLField(SelectFilteredMobileWorkerField):

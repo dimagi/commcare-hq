@@ -106,6 +106,7 @@ class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport):
         ]
 
         for key in site_keys:
+            wtf = key[2]
             key[2] = str(key[2])  # wtf
 
             data = get_db().view('hsph/data_summary', 
@@ -115,6 +116,7 @@ class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport):
                 wrapper=lambda r: r['value'])
 
             for item in data:
+                key[2] = wtf
                 row = list(self.get_site_table_values(key))
                 row.extend(numeric_cell(item.get(f, 0)) for f in fields)
 

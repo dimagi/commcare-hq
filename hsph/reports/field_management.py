@@ -51,7 +51,7 @@ class FIDAPerformanceReport(GenericTabularReport, CustomProjectReport,
     """
     BetterBirth Shared Dropbox/Updated ICT package/Reporting Specs/FIDA Performance_v2.xls 
     """
-    name = "FIDA Performance Report"
+    name = "FIDA Performance"
     slug = "hsph_fida_performance"
     
     fields = ['corehq.apps.reports.fields.FilterUsersField',
@@ -192,7 +192,7 @@ class FacilityRegistrationsReport(GenericTabularReport, CustomProjectReport,
     BetterBirth Shared Dropbox/Updated ICT package/Reporting Specs/Facility
     Registrations_v2_ss.xls
     """
-    name = "Facility Registrations Report"
+    name = "Facility Registrations"
     slug = "hsph_facility_registrations"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.DatespanField',

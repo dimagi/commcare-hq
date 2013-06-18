@@ -1,4 +1,4 @@
-from hsph.reports import data_summary, field_management
+from hsph.reports import data_summary, field_management, call_center
 from hsph.reports.old import (field_management as old_field_management,
         data_summary as old_data_summary, call_center as old_call_center,
         project_management as old_project_management) 
@@ -11,8 +11,8 @@ new_reports = (
         field_management.CaseReport,
     )),
     ('Call Center', (
-        # CATI Performance
-        # CATI Team Leaders
+        call_center.CATIPerformanceReport,
+        call_center.CATITeamLeaderReport,
     )),
     ('Data Summary', (
         data_summary.PrimaryOutcomeReport,

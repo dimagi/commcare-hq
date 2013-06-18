@@ -14,11 +14,6 @@ function (key, values, rereduce) {
                 } else {
                     result[key] += data[key];
                 }
-
-                if (key === 'followUpTime') {
-                    result['followUpTimeCount'] = (result['followUpTimeCount'] || 0) + 1;
-                
-                }
             }
         }
     }
