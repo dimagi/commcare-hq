@@ -243,7 +243,7 @@ def recompute_dots_casedata(casedoc, couch_user, submit_date=None):
 
     This only updates the patient's casexml block with new dots data, and has no bearing on website display - whatever is pulled from the dots view is real.
     """
-    if casedoc.dot_status in ['DOT5', 'DOT3', 'DOT1']:
+    if getattr(casedoc, 'dot_status', None) in ['DOT5', 'DOT3', 'DOT1']:
         update_dict = {}
         dots_data = get_dots_case_json(casedoc)
 
