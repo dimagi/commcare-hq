@@ -327,6 +327,13 @@ function fit_all(map, cases) {
     $.each(cases, function(id, c) {
             if (c.marker) {
                 bounds.extend(c.marker.position);
+
+		// ugly
+		if (!window.MARKERS) {
+		    MARKERS = [];
+		}
+		MARKERS.push(c.marker);
+
                 any = true;
             }
         });
@@ -491,7 +498,7 @@ function field_type(fc) {
 }
 
 
-function maps_init(config, case_api_url) {
+function maps_init(config) {
     var debug_mode = (window.location.href.indexOf('?debug=true') != -1);
     if (debug_mode) {
         config = gen_test_config();
@@ -505,17 +512,18 @@ function maps_init(config, case_api_url) {
     console.log(CONFIG);
 
     var map = init_map($('#map'), [30., 0.], 2, 'terrain');
-
-    if (!debug_mode) {
-        $.get(case_api_url, null, function(data) {
-            init_callback(map, data, CONFIG);
-            }, 'json');
-    } else {
-        var test_cases = gen_test_data();
-        console.log('test data', test_cases);
-        init_callback(map, test_cases, CONFIG);
-    }
+    return map;
 }
+
+function maps_refresh(map, cases) {
+    var debug_mode = (window.location.href.indexOf('?debug=true') != -1);
+    if (debug_mode) {
+	cases = gen_test_data();
+    }
+    
+    init_callback(map, cases, CONFIG);
+}
+
 
 function topological_sort(dag) {
     var ordered_nodes = [];
@@ -581,6 +589,9 @@ function init_callback(map, case_list) {
             init_case(c, cases, map);
         });
 
+    for (var i = 0; i < (window.MARKERS || []).length; i++) {
+	MARKERS[i].setMap(null);
+    }
     fit_all(map, cases);
 
     // num visits is a meta-field?
