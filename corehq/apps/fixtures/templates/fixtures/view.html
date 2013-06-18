@@ -38,6 +38,9 @@
 {% endblock %}
 
 {% block content %}
+    <div class="span2">&nbsp;</div>
+     {% trans "To edit following items lists " %}
+    <a href="{% url download_fixtures domain %}">{% trans "download all fixtures in excel format" %}</a> and reupload
     <div class="row-fluid hidden" style="margin-top: 25px;" id="fixtures-ui">
         <div class="span2">&nbsp;</div>
         <div class="span9">
