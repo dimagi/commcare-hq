@@ -638,10 +638,6 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff
     if histo_type == "users":
         q["facets"]["histo"]["facet_filter"]["and"].append({"term": {"doc_type": "CommCareUser"}})
 
-    import json
-    print json.dumps(q)
-    print es_url
-
     es = get_es()
     ret_data = es.get(es_url, data=q)
     return ret_data["facets"]["histo"]["entries"]
