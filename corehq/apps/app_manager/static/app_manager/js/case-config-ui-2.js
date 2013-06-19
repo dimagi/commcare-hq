@@ -612,7 +612,7 @@ var CaseConfig = (function () {
 
             }
 
-            if (actionType === 'update') {
+            if (actionType === 'open' || actionType === 'update') {
                 update_condition.type = 'always';
             } else {
                 update_condition.type = 'never';
