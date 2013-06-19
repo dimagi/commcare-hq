@@ -610,6 +610,7 @@ function init_callback(map, case_list) {
     };
 
     var $panel = $('#panel');
+    $panel.empty();
     $.each(CONFIG, function(i, c) {
             var $hdr = $('<h3 />');
             $hdr.text(c.display_name || c.case_type);

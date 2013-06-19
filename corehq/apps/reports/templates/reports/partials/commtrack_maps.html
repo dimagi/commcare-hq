@@ -24,10 +24,17 @@ function CommtrackViewModel() {
 function ProductModel(data, root) {
   this.name = ko.observable(data.name);
   this.uuid = ko.observable(data._id);
+  this.active = ko.observable(false);
 
   this.clicked = function() {
+    var p = this;
     $.get(CASE_API_URL + '?properties/product=' + this.uuid(), null, function(data) {
       maps_refresh(root.map, data);
+
+      $.each(root.products(), function(i, e) {
+        e.active(false);
+      });
+      p.active(true);
     }, 'json');
   }
 }
@@ -95,16 +102,16 @@ $(document).ready(function() {
     <div id="products" style="margin-bottom: 30px;">
       <h3>Products</h3>
       <div data-bind="foreach: products">
-	<div data-bind="text: name, click: clicked"></div>
+	<div data-bind="text: name, click: clicked, css: { selected: active() }" class="choice"></div>
       </div>
     </div>
 
- <div style="display: none;">
     <div id="legend" style="display: none; margin-bottom: 30px;">
       <h3>Legend</h3>
       <div id="legend-inner"></div>
     </div>
 
+<div style="display: none;">
     <div id="style" style="display: none; margin-bottom: 30px;">
       <h3>Style</h3>
 	<span type="intens">intensity</span> &middot;
@@ -126,9 +133,9 @@ $(document).ready(function() {
       <span type="avg">average</span> &middot;
       <span type="tally">tally</span>
     </div>
+</div><!-- end hide -->
 
     <div id="panel"></div>
-</div>
 
   </div>
   
