@@ -890,16 +890,13 @@ class VersionedDoc(Document):
             copy = copies[0]
         else:
             copy = deepcopy(self.to_json())
-            del copy['_id']
-            del copy['_rev']
-            if 'short_url' in copy:
-                del copy['short_url']
-            if 'short_odk_url' in copy:
-                del copy['short_odk_url']
-            if "recipients" in copy:
-                del copy['recipients']
-            if '_attachments' in copy:
-                del copy['_attachments']
+            bad_keys = ('_id', '_rev', '_attachments',
+                        'short_url', 'short_odk_url', 'recipients')
+
+            for bad_key in bad_keys:
+                if bad_key in copy:
+                    del copy[bad_key]
+
             copy = cls.wrap(copy)
             copy['copy_of'] = self._id
             copy.save(increment_version=False)
