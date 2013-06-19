@@ -25,19 +25,28 @@ def register_repeater_type(cls):
     return cls
 
 
-def simple_post_with_cached_timeout(data, url, expiry=60*60, *args, **kwargs):
+def simple_post_with_cached_timeout(data, url, expiry=60 * 60, *args, **kwargs):
     # no control characters (e.g. '/') in keys
     key = hashlib.md5(
         '{0} timeout {1}'.format(__name__, url)
     ).hexdigest()
 
-    if cache.get(key) == 'timeout':
+    cache_value = cache.get(key)
+
+    if cache_value == 'timeout':
         raise socket.timeout('recently timed out, not retrying')
+    elif cache_value == 'error':
+        raise socket.timeout('recently errored, not retrying')
+
     try:
-        return simple_post(data, url, *args, **kwargs)
+        resp = simple_post(data, url, *args, **kwargs)
     except socket.timeout:
         cache.set(key, 'timeout', expiry)
         raise
+
+    if not 200 <= resp.status < 300:
+        cache.set(key, 'error', expiry)
+    return resp
 
 
 DELETED = "-Deleted"
