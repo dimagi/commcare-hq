@@ -13,7 +13,6 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import cache_control
 from corehq.apps.app_manager import commcare_settings
-from corehq.apps.app_manager.util import is_valid_case_type, get_case_properties, get_all_case_properties
 from django.utils import html
 from django.utils.http import urlencode as django_urlencode
 from couchdbkit.exceptions import ResourceConflict
@@ -28,6 +27,7 @@ from django.conf import settings
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
+from corehq.apps.app_manager.util import is_valid_case_type, get_case_properties, get_all_case_properties
 from corehq.apps.app_manager.util import save_xform, get_settings_values
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
