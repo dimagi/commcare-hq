@@ -70,7 +70,17 @@ function format_data(data, start, end) {
     return trim_data(ret);
 }
 
-function addHistogram(element_id, xname, data, starting_time, ending_time) {
+function formatDataForLineGraph(data) {
+    ret = {"key": data.key, "values": []};
+    var total = 0
+    for (var i = 0; i < data.values.length; i++) {
+        total += data.values[i].y;
+        ret.values.push([data.values[i].x, total])
+    }
+    return ret
+}
+
+function loadCharts(xname, data, starting_time, ending_time) {
     for (var key in data) {
         if (data.hasOwnProperty(key)) {
             if (data[key].length > 0) {
@@ -85,26 +95,61 @@ function addHistogram(element_id, xname, data, starting_time, ending_time) {
     }
 
     var domain_data = format_data(data, starting_time, ending_time);
+    var cum_domain_data = _.map(domain_data, formatDataForLineGraph);
 
-    chart = nv.addGraph(function() {
-        var chart = nv.models.multiBarChart();
+    var bar_chart = addHistogram("#bar-chart svg", xname, domain_data);
+    var cum_chart = addLineGraph("#cum-chart svg", xname, cum_domain_data);
+    var stacked_cum_chart = addStackedAreaGraph("#stacked-cum-chart svg", xname, cum_domain_data);
 
-        chart.xAxis
-            .axisLabel('Date')
-            .tickFormat(function(d){return d3.time.format.utc('%d-%b-%Y')(new Date(d));});
+    return {
+        "bar-chart": bar_chart,
+        "cum-chart": cum_chart,
+        "stacked-cum-chart": stacked_cum_chart
+    }
+}
 
-        chart.yAxis
-            .tickFormat(d3.format(',.1d'))
-            .axisLabel(xname);
+function addHistogram(selector, xname, data) {
+    var chart = nv.models.multiBarChart().color(d3.scale.category10().range());
+    chart = formatChart(chart, selector, xname, data);
+    nv.addGraph(function() { return chart });
+    return chart;
+}
 
-        chart.margin({top: 30, right: 20, bottom: 50, left: 80});
+function addLineGraph(selector, xname, data) {
+    var chart = nv.models.lineChart()
+                  .x(function(d) { return d[0] })
+                  .y(function(d) { return d[1] })
+                  .color(d3.scale.category10().range());
+    chart = formatChart(chart, selector, xname, data);
+    nv.addGraph(function() { return chart });
+    return chart;
+}
 
-        d3.select('#' + element_id + ' svg')
-            .datum(domain_data)
-            .transition().duration(500).call(chart);
+function addStackedAreaGraph(selector, xname, data) {
+    var chart = nv.models.stackedAreaChart()
+                  .x(function(d) { return d[0] })
+                  .y(function(d) { return d[1] })
+                  .color(d3.scale.category10().range());
+    chart = formatChart(chart, selector, xname, data);
+    nv.addGraph(function() { return chart });
+    return chart;
+}
 
-        nv.utils.windowResize(chart.update);
+function formatChart(chart, selector, xname, data) {
+    chart.xAxis
+        .axisLabel('Date')
+        .tickFormat(function(d){return d3.time.format.utc('%d-%b-%Y')(new Date(d));});
 
-        return chart;
-    });
+    chart.yAxis
+        .tickFormat(d3.format(',.1d'))
+        .axisLabel(xname);
+
+    d3.select(selector)
+        .datum(data)
+        .transition().duration(500)
+        .call(chart);
+
+    nv.utils.windowResize(chart.update);
+
+    return chart;
 }

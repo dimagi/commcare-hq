@@ -558,12 +558,20 @@ def base_report(request, org, template='orgs/report_base.html'):
     return render(request, template, ctxt)
 
 @org_member_required
-def stats(request, org, template='orgs/stats.html'):
+def stats(request, org, stat_slug, template='orgs/stats.html'):
     ctxt = base_context(request, request.organization)
+
+    xaxis_label = {
+        "forms": "# form submissions",
+        "cases": "# case modifications",
+    }[stat_slug]
+
     ctxt.update({
         'tab': 'reports',
-        'report_type': 'stats',
+        'report_type': 'stats_%s' % stat_slug,
         'no_header': True,
+        'stat_slug': stat_slug,
+        'xaxis_label': xaxis_label,
     })
     return render(request, template, ctxt)
 
@@ -580,7 +588,7 @@ def stats_data(request, org):
 
     histo_data = dict([(d['hr_name'],
                         es_histogram(histo_type, [d["name"]], startdate.strftime('%Y-%m-%d'), enddate.strftime('%Y-%m-%d')))
-                       for d in domains])
+                        for d in domains])
 
     return json_response({
         'histo_data': histo_data,
