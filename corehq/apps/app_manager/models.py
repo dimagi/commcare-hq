@@ -766,6 +766,21 @@ class DetailColumn(IndexedSchema):
         return super(DetailColumn, cls).wrap(data)
 
 
+class SortItem(IndexedSchema):
+    field = StringProperty()
+    format = StringProperty()
+    direction = StringProperty()
+
+    def values(self):
+        values = {
+            'field': self.field,
+            'type': self.format,
+            'direction': self.direction,
+        }
+
+        return values
+
+
 class Detail(IndexedSchema):
     """
     Full configuration for a case selection screen
@@ -775,17 +790,19 @@ class Detail(IndexedSchema):
     columns = SchemaListProperty(DetailColumn)
 
     get_columns = IndexedSchema.Getter('columns')
+
     @parse_int([1])
     def get_column(self, i):
         return self.columns[i].with_id(i%len(self.columns), self)
 
     def append_column(self, column):
         self.columns.append(column)
+
     def update_column(self, column_id, column):
         my_column = self.columns[column_id]
 
-        my_column.model  = column.model
-        my_column.field  = column.field
+        my_column.model = column.model
+        my_column.field = column.field
         my_column.format = column.format
         my_column.late_flag = column.late_flag
         my_column.advanced = column.advanced
@@ -844,6 +861,7 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
     case_list = SchemaProperty(CaseList)
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
+    sort_properties = SchemaListProperty(SortItem)
 
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
@@ -1480,7 +1498,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     force_http = BooleanProperty(default=False)
     cloudcare_enabled = BooleanProperty(default=False)
     include_media_resources = BooleanProperty(default=False)
-    
+
     @classmethod
     def wrap(cls, data):
         for module in data.get('modules', []):
@@ -1560,6 +1578,20 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @property
     def media_suite_loc(self):
         return "media_suite.xml"
+
+    @property
+    def build_version(self):
+        # returns a tuple.. ex: (2, 6)
+        version_tuple = self.get_build().minor_release()
+
+        # convert it to '2.6' for easy comparisons
+        version = (
+            str(version_tuple[0]) +
+            '.' +
+            str(version_tuple[1])
+        )
+
+        return version
 
     @property
     def default_language(self):

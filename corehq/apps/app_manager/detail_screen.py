@@ -22,6 +22,7 @@ class FormattedDetailColumn(object):
     header_width = None
     template_width = None
     template_form = None
+    sort_width = None
 
     def __init__(self, app, module, detail, column):
         from corehq.apps.app_manager.suite_xml import IdStrings
@@ -59,6 +60,29 @@ class FormattedDetailColumn(object):
                 )
 
         return template
+
+    @property
+    def sort_node(self):
+        sort_fields = [s.field for s in self.module.sort_properties]
+        field = self.column.field
+        if field in sort_fields and \
+           self.app.build_version >= '2.2':
+            order = sort_fields.index(field)
+            sort_property = self.module.sort_properties[order]
+
+            sort = sx.Sort(
+                text=sx.Text(xpath_function=self.xpath_function),
+                width=self.sort_width,
+                type=sort_property.format,
+                order=order,
+                direction=sort_property.direction,
+            )
+
+            return sort
+        else:
+            return None
+
+    variables = None
 
     @property
     def xpath(self):
@@ -106,15 +130,18 @@ class FormattedDetailColumn(object):
             yield sx.Field(
                 header=self.header,
                 template=self.hidden_template,
+                sort_node=self.sort_node,
             )
             yield sx.Field(
                 header=self.hidden_header,
                 template=self.template,
+                sort_node=self.sort_node,
             )
         else:
             yield sx.Field(
                 header=self.header,
                 template=self.template,
+                sort_node=self.sort_node,
             )
 
 class HideShortHeaderColumn(FormattedDetailColumn):
