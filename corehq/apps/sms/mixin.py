@@ -16,6 +16,9 @@ class InvalidFormatException(PhoneNumberException):
 class PhoneNumberInUseException(PhoneNumberException):
     pass
 
+class BadSMSConfigException(Exception):
+    pass
+
 class VerifiedNumber(Document):
     """
     There should only be one VerifiedNumber entry per (owner_doc_type, owner_id), and
@@ -37,13 +40,10 @@ class VerifiedNumber(Document):
 
     @property
     def backend(self):
-        backend = None
         if self.backend_id is not None and isinstance(self.backend_id, basestring) and self.backend_id.strip() != "":
-            backend = MobileBackend.load_by_name(self.domain, self.backend_id)
-        if backend is None:
-            return MobileBackend.auto_load("+%s" % self.phone_number, self.domain)
+            return MobileBackend.load_by_name(self.domain, self.backend_id)
         else:
-            return backend
+            return MobileBackend.auto_load("+%s" % self.phone_number, self.domain)
 
     @property
     def ivr_backend(self):
@@ -128,7 +128,7 @@ class MobileBackend(Document):
         for prefix, backend_id in backend_mapping:
             if phone_number.startswith('+' + prefix):
                 return cls.load(backend_id)
-        raise RuntimeError('no suitable backend found for phone number %s' % phone_number)
+        raise BadSMSConfigException('no suitable backend found for phone number %s' % phone_number)
 
     @classmethod
     def load(cls, backend_id):
@@ -148,8 +148,7 @@ class MobileBackend(Document):
     def load_by_name(cls, domain, name):
         """
         Attempts to load the backend with the given name.
-        If no matching backend is found, None is returned, and you can use the auto_load() method to
-        automatically choose a system-wide backend instead.
+        If no matching backend is found, a RuntimeError is raised.
         """
         # First look for backends with that name that are owned by domain
         name = name.strip().upper()
@@ -163,7 +162,7 @@ class MobileBackend(Document):
         if backend is not None:
             return cls.load(backend._id)
         else:
-            return None
+            raise BadSMSConfigException("Could not find backend '%s' from domain '%s'" % (name, domain))
 
     @classmethod
     def get_api_id(cls):

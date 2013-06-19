@@ -32,7 +32,6 @@ def send_sms(domain, id, phone_number, text):
         return False
     if isinstance(phone_number, int) or isinstance(phone_number, long):
         phone_number = str(phone_number)
-    logging.debug('Sending message: %s' % text)
     phone_number = clean_phone_number(phone_number)
 
     msg = SMSLog(
@@ -73,6 +72,7 @@ def send_sms_to_verified_number(verified_number, text):
     return send_message_via_backend(msg, verified_number.backend, onerror=onerror)
 
 def send_sms_with_backend(domain, phone_number, text, backend_id):
+    phone_number = clean_phone_number(phone_number)
     msg = SMSLog(
         domain=domain,
         phone_number=phone_number,
@@ -86,6 +86,7 @@ def send_sms_with_backend(domain, phone_number, text, backend_id):
     return send_message_via_backend(msg, MobileBackend.load(backend_id), onerror=onerror)
 
 def send_sms_with_backend_name(domain, phone_number, text, backend_name):
+    phone_number = clean_phone_number(phone_number)
     msg = SMSLog(
         domain=domain,
         phone_number=phone_number,
@@ -117,7 +118,7 @@ def send_message_via_backend(msg, backend=None, onerror=lambda: None):
         if backend.domain_is_authorized(msg.domain):
             backend.send(msg)
         else:
-            raise BackendAuthorizationException("Domain '%' is not authorized to use backend '%s'" % (domain, backend._id))
+            raise BackendAuthorizationException("Domain '%s' is not authorized to use backend '%s'" % (msg.domain, backend._id))
 
         try:
             msg.backend_api = backend.__class__.get_api_id()

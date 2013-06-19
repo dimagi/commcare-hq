@@ -11,7 +11,7 @@ class TestSMSBackend(SMSBackend):
         debug = getattr(settings, "DEBUG", False)
         if debug:
             print "***************************************************"
-            print "Message To:      " + msg.phone_number
-            print "Message Content: " + msg.text
+            print "Message To:      %s" % msg.phone_number
+            print "Message Content: %s" % msg.text
             print "***************************************************"
 
