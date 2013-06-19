@@ -98,13 +98,13 @@ function loadCharts(xname, data, starting_time, ending_time) {
     var cum_domain_data = _.map(domain_data, formatDataForLineGraph);
 
     var bar_chart = addHistogram("#bar-chart svg", xname, domain_data);
-    var cum_chart = addLineGraph("#cum-chart svg", xname, cum_domain_data);
-    var stacked_cum_chart = addStackedAreaGraph("#stacked-cum-chart svg", xname, cum_domain_data);
+    var cum_chart = addLineGraph("#cumulative-chart svg", xname, cum_domain_data);
+    var stacked_cum_chart = addStackedAreaGraph("#stacked-cumulative-chart svg", xname, cum_domain_data);
 
     return {
         "bar-chart": bar_chart,
-        "cum-chart": cum_chart,
-        "stacked-cum-chart": stacked_cum_chart
+        "cumulative-chart": cum_chart,
+        "stacked-cumulative-chart": stacked_cum_chart
     }
 }
 
