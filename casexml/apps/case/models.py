@@ -207,8 +207,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
     version = StringProperty()
     indices = SchemaListProperty(CommCareCaseIndex)
     
-    # this is only used for Commtrack SupplyPointCases and should ideally go in
-    # that class
+    # TODO: move to commtrack.models.SupplyPointCases (and full regression test)
     location_ = StringListProperty()
 
     server_modified_on = DateTimeProperty()
@@ -286,7 +285,6 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             #reorganized
             "indices": self.get_index_map(),
             "reverse_indices": self.get_index_map(True),
-            "location_path": getattr(self, 'location_', None),
         }
 
     @memoized
@@ -319,7 +317,8 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
     def bulk_get_lite(cls, ids):
         for res in cls.get_db().view("case/get_lite", keys=ids,
                                  include_docs=False):
-            yield cls.wrap(res['value'])
+            # cls.wrap is called in a lot of places; do they all need to be updated?
+            yield cls.get_wrap_class(res['value']).wrap(res['value'])
 
     def get_preloader_dict(self):
         """
