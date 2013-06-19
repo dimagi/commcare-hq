@@ -12,7 +12,7 @@
 
 {% block js-inline %} {{ block.super }}
     <script src="{% static 'hqwebapp/js/hash-tab.js' %}"></script>
-    <script src='{% static 'hqadmin/js/date_histogram_chart.js' %}' type='text/javascript'></script>
+    <script src='{% static 'hqadmin/js/nvd3_charts_helper.js' %}' type='text/javascript'></script>
     <script type="text/javascript">
         var charts = { "bar_chart": null, "cum_chart": null, "stacked_cum_chart": null };
 
@@ -24,7 +24,10 @@
             var $charts = $('.nvd3-chart');
 
             $loading.show();
-            $charts.hide();
+            $charts.each(function(){
+                var $this = $(this);
+                $(this).hide().html('').append("<svg style='height:320px'> </svg>"); // create a new svg element to stop update issues
+            });
 
             var data = {histogram_type: "{{ stat_slug }}"};
             if (enddate) {
@@ -36,11 +39,21 @@
 
             $.getJSON('{% url orgs_stats_data org.name %}', data,
                 function(d) {
-                    var starting_time = new Date(Date.UTC(d.startdate[0], d.startdate[1]-1, d.startdate[2])).getTime();
-                    var ending_time = new Date(Date.UTC(d.enddate[0], d.enddate[1]-1, d.enddate[2])).getTime();
-                    charts = loadCharts("{{ xaxis_label }}", d.histo_data, starting_time, ending_time);
+                    var startdate = new Date(Date.UTC(d.startdate[0], d.startdate[1]-1, d.startdate[2]));
+                    var enddate = new Date(Date.UTC(d.enddate[0], d.enddate[1]-1, d.enddate[2]));
+                    charts = loadCharts("{{ xaxis_label }}", d.histo_data, startdate.getTime(), enddate.getTime());
                     $loading.hide();
                     $charts.show();
+
+                    // set the date fields if they're not already set
+                    $startdate_field = $("#{{ chart_name }}-startdate");
+                    $enddate_field = $("#{{ chart_name }}-enddate");
+                    if (!$startdate_field.val()) {
+                        $startdate_field.val(startdate.toISOString().substr(0, 10)); // substr bc date strs are 10 chars
+                    }
+                    if (!$enddate_field.val()) {
+                        $enddate_field.val(enddate.toISOString().substr(0, 10))
+                    }
 
                     if (callback_fn) {
                         callback_fn();
