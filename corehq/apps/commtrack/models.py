@@ -616,8 +616,10 @@ class SupplyPointProductCase(CommCareCase):
         data = super(SupplyPointProductCase, self).get_json()
         data['properties'].update({
             'product': self.product,
-            'current_stock': self.current_stock,
-            # add mos etc here
+            'current_stock': self.current_stock_level,
+            'consumption': self.monthly_consumption,
+            'months_remaining': self.months_until_stockout,
+            'stock_category': self.current_stock_category,
         })
         return data
 
