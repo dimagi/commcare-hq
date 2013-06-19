@@ -28,7 +28,8 @@ class XFormValidationError(XFormError):
         self.validation_problems = validation_problems
 
     def __str__(self):
-        ret = "Validation Error: %s" % self.format_v_one(self.fatal_error)
+        fatal_error_text = self.format_v_one(self.fatal_error)
+        ret = "Validation Error%s" % (': %s' % fatal_error_text if fatal_error_text else '')
         if self.validation_problems:
             ret += "\n\nMore information:"
             for problem in self.validation_problems:
