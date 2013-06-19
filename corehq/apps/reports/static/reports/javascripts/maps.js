@@ -412,17 +412,16 @@ function parse_pos(raw) {
 function case_to_pos(c, geo_field) {
     var pos;
     if (geo_field == '_loc') {
-        var loc = c.prop('location');
+        var loc = c.prop('linked_location');
         var lat = loc.latitude;
         var lon = loc.longitude;
-        if (lat == null || lon == null) {
-            return null;
-        }
-        pos = [lat, lon];
+        if (lat != null && lon != null) {
+            pos = [+lat, +lon];
+	}
     } else {
         pos = parse_pos(c.prop(geo_field));
     }
-    return new google.maps.LatLng(pos[0], pos[1]);
+    return (pos ? new google.maps.LatLng(pos[0], pos[1]) : null);
 }
 
 // create a marker corresponding to a (geo-enabled) case

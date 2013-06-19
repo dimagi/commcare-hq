@@ -170,7 +170,7 @@ def link_locations(base_results):
     for match in base_results:
         if hasattr(match.couch_doc, 'location_'):
             loc_id = match.couch_doc.location_[-1]
-            match.couch_doc.location = locs[loc_id]._doc
+            match.couch_doc.linked_location = locs[loc_id]._doc
 
 # todo: Make these api functions use generators for streaming
 # so that a limit call won't fetch more docs than it needs to
