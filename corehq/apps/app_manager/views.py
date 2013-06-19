@@ -13,8 +13,6 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import cache_control
 from corehq.apps.app_manager import commcare_settings
-from corehq.apps.app_manager.const import APP_V1
-from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.app_manager.util import is_valid_case_type, get_case_properties, get_all_case_properties
 from django.utils import html
 from django.utils.http import urlencode as django_urlencode
@@ -28,7 +26,9 @@ from django.utils.http import urlencode
 from django.views.decorators.http import require_POST, require_GET
 from django.conf import settings
 from couchdbkit.resource import ResourceNotFound
-from corehq.apps.app_manager.util import save_xform
+from corehq.apps.app_manager.const import APP_V1
+from corehq.apps.app_manager.success_message import SuccessMessage
+from corehq.apps.app_manager.util import save_xform, get_settings_values
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.translations import system_text as st_trans
@@ -397,29 +397,11 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
 
 
 def get_app_view_context(request, app):
-    try:
-        profile = app.profile
-    except AttributeError:
-        profile = {}
-    hq_settings = dict([
-        (attr, app[attr])
-        for attr in app.properties() if not hasattr(app[attr], 'pop')
-    ])
-    if hasattr(app, 'custom_suite'):
-        hq_settings.update({'custom_suite': app.custom_suite})
+
     context = {
         'settings_layout': commcare_settings.LAYOUT[app.get_doc_type()],
-        'settings_values': {
-            'properties': profile.get('properties', {}),
-            'features': profile.get('features', {}),
-            'hq': hq_settings,
-            '$parent': {
-                'doc_type': app.get_doc_type()
-            }
-        }
+        'settings_values': get_settings_values(app),
     }
-    context['settings_values']['hq']['build_spec'] = app.build_spec.to_string()
-
 
     commcare_build_options = {}
     build_config = CommCareBuildConfig.fetch()
@@ -497,6 +479,7 @@ def _clear_app_cache(request, domain):
     for is_active in True, False:
         key = make_template_fragment_key('header_tab', [
             domain,
+            None, # tab.org should be None for any non org page
             ApplicationsTab.view,
             is_active,
             request.couch_user.get_id

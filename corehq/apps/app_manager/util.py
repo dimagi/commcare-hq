@@ -111,3 +111,29 @@ def get_all_case_properties(app):
         set(m.case_type for m in app.modules),
         defaults=('name',)
     )
+
+
+def get_settings_values(app):
+    try:
+        profile = app.profile
+    except AttributeError:
+        profile = {}
+    hq_settings = dict([
+        (attr, app[attr])
+        for attr in app.properties() if not hasattr(app[attr], 'pop')
+    ])
+    if hasattr(app, 'custom_suite'):
+        hq_settings.update({'custom_suite': app.custom_suite})
+
+    hq_settings['build_spec'] = app.build_spec.to_string()
+
+    return {
+        'properties': profile.get('properties', {}),
+        'features': profile.get('features', {}),
+        'hq': hq_settings,
+        '$parent': {
+            'doc_type': app.get_doc_type(),
+            '_id': app.get_id,
+            'domain': app.domain,
+        }
+    }

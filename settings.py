@@ -710,6 +710,7 @@ FLUFF_PILLOW_TYPES_TO_SQL = []
 XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
 
 #Custom fully indexed domains for FullCase index/pillowtop
+# Adding a domain will not automatically index that domain's existing cases
 ES_CASE_FULL_INDEX_DOMAINS = [
     'pact', 
     'hsph', 

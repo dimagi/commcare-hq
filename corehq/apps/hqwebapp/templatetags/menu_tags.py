@@ -15,7 +15,7 @@ class MainMenuNode(template.Node):
         project = getattr(request, 'project', None)
         domain = context.get('domain')
         org = context.get('org')
-        
+
         try:
             module = Domain.get_module_by_name(domain)
         except (ValueError, AttributeError):

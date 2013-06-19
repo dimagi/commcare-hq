@@ -6,52 +6,55 @@ $(function() {
                 return model.presubmit();
             });
 
-        ko.applyBindings(model);
         model.load(settings);
-        
+        ko.applyBindings(model);
+
     });
 
 function CommtrackSettingsViewModel() {
     this.keyword = ko.observable();
     this.actions = ko.observableArray();
     this.loc_types = ko.observableArray();
+    this.requisition_config = ko.observable();
 
     this.json_payload = ko.observable();
 
     this.keyword_error = ko.observable();
     this.loc_types_error = ko.observable();
 
+    // TODO: sort out possibly removing this redundant declaration in js
     this.action_types = [
         {label: 'Stock on hand', value: 'stockonhand'},
         {label: 'Receipts', value: 'receipts'},
         {label: 'Consumption', value: 'consumption'},
         {label: 'Stock out', value: 'stockout'},
-        {label: '# days stocked-out for', value: 'stockedoutfor'},
+        {label: '# days stocked-out for', value: 'stockedoutfor'}
     ];
 
     this.load = function(data) {
         this.keyword(data.keyword);
         this.actions($.map(data.actions, function(e) {
-                    return new ActionModel(e);
-                }));
+            return new ActionModel(e);
+        }));
         this.loc_types($.map(data.loc_types, function(e) {
-                    return new LocationTypeModel(e);
-                }));
-    }
+            return new LocationTypeModel(e);
+        }));
+        this.requisition_config(new RequisitionConfigModel(data.requisition_config));
+    };
 
     var settings = this;
 
     this.remove_action = function(action) {
         settings.actions.remove(action);
-    }
+    };
 
     this.new_action = function() {
         settings.actions.push(new ActionModel({}));
-    }
+    };
 
     this.remove_loctype = function(loc_type) {
         settings.loc_types.remove(loc_type);
-    }
+    };
 
     this.new_loctype = function() {
         var new_loctype = new LocationTypeModel({}, this);
@@ -59,9 +62,9 @@ function CommtrackSettingsViewModel() {
             var $inp = $(this.$e).find('.loctype_name');
             $inp.focus();
             setTimeout(function() { $inp.select(); }, 0);
-        }
+        };
         settings.loc_types.push(new_loctype);
-    }
+    };
 
     this.validate = function() {
         this.keyword_error(null);
@@ -101,7 +104,7 @@ function CommtrackSettingsViewModel() {
         }
         
         return valid;
-    }
+    };
 
     this.presubmit = function() {
         if (!this.validate()) {
@@ -126,7 +129,7 @@ function CommtrackSettingsViewModel() {
             });
 
         return keywords;
-    }
+    };
 
     this.sms_code_uniqueness = function(keyword, type, id) {
         var conflict = null;
@@ -137,7 +140,7 @@ function CommtrackSettingsViewModel() {
                 }
             });
         return conflict;
-    }
+    };
 
     this.validate_sms = function(model, attr, type, id) {
         var conflict = this.sms_code_uniqueness(model[attr](), type, id);
@@ -146,15 +149,16 @@ function CommtrackSettingsViewModel() {
             return false;
         }
         return true;
-    }
+    };
 
     this.to_json = function() {
         return {
             keyword: this.keyword(),
             actions: $.map(this.actions(), function(e) { return e.to_json(); }),
             loc_types: $.map(this.loc_types(), function(e) { return e.to_json(); }),
+            requisition_config: this.requisition_config().to_json()
         };
-    }
+    };
 }
 
 function ActionModel(data) {
@@ -186,7 +190,7 @@ function ActionModel(data) {
         }
 
         return valid;
-    }
+    };
 
     this.to_json = function() {
         return {
@@ -195,7 +199,7 @@ function ActionModel(data) {
             type: this.type(),
             name: this.name
         };
-    }
+    };
 }
 
 function LocationTypeModel(data, root) {
@@ -232,7 +236,7 @@ function LocationTypeModel(data, root) {
         }
 
         return valid;
-    }
+    };
 
     this.to_json = function() {
         return {
@@ -240,11 +244,39 @@ function LocationTypeModel(data, root) {
             allowed_parents: this.allowed_parents(),
             administrative: this.administrative()
         };
-    }
+    };
 }
 
+function RequisitionConfigModel(data) {
+    // TODO: sort out possibly removing this redundant declaration in js
+    this.action_types = [
+        {label: 'Request', value: 'request'},
+        {label: 'Approval', value: 'approval'},
+        {label: 'Pack', value: 'pack'},
+        {label: 'Receipts (Requisition)', value: 'requisition-receipts'}
+    ];
 
+    this.enabled = ko.observable(data.enabled);
+    this.actions = ko.observableArray($.map(data.actions, function(item) {
+        return new ActionModel(item);
+    }));
 
+    var that = this;
+    this.remove_action = function(action) {
+        that.actions.remove(action);
+    };
+
+    this.new_action = function() {
+        that.actions.push(new ActionModel({}));
+    };
+
+    this.to_json = function() {
+        return {
+            enabled: this.enabled(),
+            actions: $.map(this.actions(), function(e) { return e.to_json(); })
+        };
+    };
+}
 
 
 
@@ -260,5 +292,5 @@ ko.bindingHandlers.bind_element = {
         if (viewModel.onBind) {
             viewModel.onBind(bindingContext);
         }
-    },
+    }
 };
