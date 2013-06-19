@@ -14,7 +14,7 @@
     <script src="{% static 'hqwebapp/js/hash-tab.js' %}"></script>
     <script src='{% static 'hqadmin/js/nvd3_charts_helper.js' %}' type='text/javascript'></script>
     <script type="text/javascript">
-        var charts = { "bar_chart": null, "cum_chart": null, "stacked_cum_chart": null };
+        var charts = { "bar-chart": null, "cumulative-chart": null, "stacked-cumulative-chart": null };
 
 
         // given the chart_id of a chart element in the dom, the function fetches the data associated with that chart
@@ -104,8 +104,8 @@
     <span style="margin-bottom: 1em" class="label label-info">{% trans "All dates are in UTC" %}</span>
     <ul id="chart-tabs" class="nav nav-tabs">
         <li class="active"><a href="#bar-chart" data-toggle="hash-tab">{% trans "Bar Chart" %}</a></li>
-        <li><a href="#cum-chart" data-toggle="hash-tab">{% trans "Cumulative Chart" %}</a></li>
-        <li><a href="#stacked-cum-chart" data-toggle="hash-tab">{% trans "Stacked Cumulative Chart" %}</a></li>
+        <li><a href="#cumulative-chart" data-toggle="hash-tab">{% trans "Cumulative Chart" %}</a></li>
+        <li><a href="#stacked-cumulative-chart" data-toggle="hash-tab">{% trans "Stacked Cumulative Chart" %}</a></li>
         <form data-chart="{{ chart_name }}" style="margin: 0;" class="form-inline pull-right reload-graph-form">
             <span class="pull-right">
                 <label for="{{ chart_name }}-startdate" class="sub-label">{% trans 'From' %}</label>
@@ -124,13 +124,13 @@
                 <svg style='height:320px'> </svg>
             </div>
         </div>
-        <div class="tab-pane" id="cum-chart">
+        <div class="tab-pane" id="cumulative-chart">
             <div style="height: 320px; min-height: 320px;" class="loading">{% trans "Loading..." %}</div>
             <div class='nvd3-chart hide'>
                 <svg style='height:320px'> </svg>
             </div>
         </div>
-        <div class="tab-pane" id="stacked-cum-chart">
+        <div class="tab-pane" id="stacked-cumulative-chart">
             <div style="height: 320px; min-height: 320px;" class="loading">{% trans "Loading..." %}</div>
             <div class='nvd3-chart hide'>
                 <svg style='height:320px'> </svg>
