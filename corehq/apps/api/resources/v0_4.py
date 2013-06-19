@@ -19,6 +19,7 @@ from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyD
 # can be set to provide a mock.
 
 MOCK_XFORM_ES = None
+MOCK_CASE_ES = None
 
 class XFormInstanceResource(v0_3.XFormInstanceResource, DomainSpecificResourceMixin):
 
