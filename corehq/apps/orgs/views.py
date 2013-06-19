@@ -19,6 +19,7 @@ from corehq.apps.reports.standard.domains import DomainStatsReport, OrgDomainSta
 from corehq.apps.users.models import WebUser, UserRole, OrgRemovalRecord
 from corehq.elastic import get_es
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
+from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
@@ -564,6 +565,7 @@ def stats(request, org, stat_slug, template='orgs/stats.html'):
     xaxis_label = {
         "forms": "# form submissions",
         "cases": "# case modifications",
+        "users": "# mobile workers created",
     }[stat_slug]
 
     ctxt.update({
@@ -599,9 +601,11 @@ def stats_data(request, org):
 
 def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None):
     date_field = {  "forms": "received_on",
-                    "cases": "opened_on"  }[histo_type]
+                    "cases": "opened_on",
+                    "users": "created_on", }[histo_type]
     es_url = {  "forms": XFORM_INDEX + '/xform/_search',
-                "cases": CASE_INDEX + '/case/_search' }[histo_type]
+                "cases": CASE_INDEX + '/case/_search',
+                "users": USER_INDEX + '/user/_search' }[histo_type]
 
     q = {"query": {"match_all":{}}}
 
@@ -630,6 +634,9 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff
 
     if histo_type == "forms":
         q["facets"]["histo"]["facet_filter"]["and"].append({"not": {"in": {"doc_type": ["xformduplicate", "xformdeleted"]}}})
+
+    if histo_type == "users":
+        q["facets"]["histo"]["facet_filter"]["and"].append({"term": {"doc_type": "CommCareUser"}})
 
     es = get_es()
     ret_data = es.get(es_url, data=q)
