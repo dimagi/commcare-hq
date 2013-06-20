@@ -4,6 +4,10 @@ python:
 env:
  - CFLAGS=-O0
 install:
+ - "uname -a"
+ - "lsb_release -a"
+ - "bash -ex .travis/upgrade-couchdb.sh"
+ - "curl http://127.0.0.1:5984/"
  - "time bash -e .travis/quietly-run-install.sh"
  - "time python .travis/download-requirements-in-parallel.py requirements/requirements.txt requirements/dev-requirements.txt"
  - "time pip install Cython --use-mirrors"
