@@ -5,6 +5,7 @@ python:
 env:
  - CFLAGS=-O0
 install:
+ - "uname -a"
  - "curl http://127.0.0.1:5984/"
  - "pip install -e ."
  - "pip install coverage coveralls"
