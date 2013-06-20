@@ -94,10 +94,9 @@ function loadCharts(xname, data, initial_values, starting_time, ending_time) {
         }
     }
     var domain_data = format_data(data, starting_time, ending_time);
-    var cum_domain_data = [];
-    for (var i = 0; i < domain_data.length; i++) {
-        cum_domain_data.push(formatDataForLineGraph(domain_data[i], initial_values[domain_data[i].key]))
-    }
+    var cum_domain_data = _.map(domain_data, function (domain_datum) {
+        return formatDataForLineGraph(domain_datum, initial_values[domain_datum.key]);
+    });
 
     var bar_chart = addHistogram("#bar-chart svg", xname, domain_data);
     var cum_chart = addLineGraph("#cumulative-chart svg", xname, cum_domain_data);
