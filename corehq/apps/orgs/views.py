@@ -558,9 +558,21 @@ def base_report(request, org, template='orgs/report_base.html'):
     })
     return render(request, template, ctxt)
 
+
+DATE_FORMAT = "%Y-%m-%d"
+
+def _dates_from_request(request):
+    enddate = request.GET.get('enddate')
+    enddate = datetime.strptime(enddate, DATE_FORMAT) if enddate else date.today()
+    startdate = request.GET.get('startdate')
+    startdate = datetime.strptime(startdate, DATE_FORMAT) if startdate else enddate - timedelta(days=30)
+    return startdate, enddate
+
 @org_member_required
 def stats(request, org, stat_slug, template='orgs/stats.html'):
     ctxt = base_context(request, request.organization)
+
+    startdate, enddate = _dates_from_request(request)
 
     xaxis_label = {
         "forms": "# form submissions",
@@ -574,6 +586,8 @@ def stats(request, org, stat_slug, template='orgs/stats.html'):
         'no_header': True,
         'stat_slug': stat_slug,
         'xaxis_label': xaxis_label,
+        'startdate': startdate.strftime(DATE_FORMAT),
+        'enddate': enddate.strftime(DATE_FORMAT),
     })
     return render(request, template, ctxt)
 
@@ -583,13 +597,10 @@ def stats_data(request, org):
     histo_type = request.GET.get('histogram_type')
     period = request.GET.get("daterange", 'month')
 
-    enddate = request.GET.get('enddate')
-    enddate = datetime.strptime(enddate, "%Y-%m-%d") if enddate else date.today()
-    startdate = request.GET.get('startdate')
-    startdate = datetime.strptime(startdate, "%Y-%m-%d") if startdate else enddate - timedelta(days=30)
+    startdate, enddate = _dates_from_request(request)
 
     histo_data = dict([(d['hr_name'],
-                        es_histogram(histo_type, [d["name"]], startdate.strftime('%Y-%m-%d'), enddate.strftime('%Y-%m-%d')))
+                        es_histogram(histo_type, [d["name"]], startdate.strftime(DATE_FORMAT), enddate.strftime(DATE_FORMAT)))
                         for d in domains])
 
     return json_response({
