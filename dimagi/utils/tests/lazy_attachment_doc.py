@@ -67,3 +67,5 @@ class LazyAttachmentDocTest(TestCase):
 
         self.assertEqual(doc.fetch_attachment(name), lordsprayer)
         self.assertEqual(doc.lazy_fetch_attachment(name), lordsprayer)
+
+        SampleDoc.wrap({})

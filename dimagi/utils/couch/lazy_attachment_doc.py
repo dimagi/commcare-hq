@@ -6,10 +6,11 @@ class LazyAttachmentDoc(Document):
     @classmethod
     def wrap(cls, data):
         self = super(LazyAttachmentDoc, cls).wrap(data)
-        for name, attachment in self._attachments.items():
-            if isinstance(attachment, basestring):
-                del self._attachments[name]
-                self.lazy_put_attachment(attachment, name)
+        if self._attachments:
+            for name, attachment in self._attachments.items():
+                if isinstance(attachment, basestring):
+                    del self._attachments[name]
+                    self.lazy_put_attachment(attachment, name)
         return self
 
     def __store_lazy_attachment(self, content, name=None, content_type=None,
