@@ -216,8 +216,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
     indices = SchemaListProperty(CommCareCaseIndex)
     case_attachments = SchemaDictProperty(CommCareCaseAttachment)
     
-    # this is only used for Commtrack SupplyPointCases and should ideally go in
-    # that class
+    # TODO: move to commtrack.models.SupplyPointCases (and full regression test)
     location_ = StringListProperty()
 
     server_modified_on = DateTimeProperty()
@@ -294,7 +293,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             }.items()),
             #reorganized
             "indices": self.get_index_map(),
-            "reverse_indices": self.get_index_map(True)
+            "reverse_indices": self.get_index_map(True),
         }
 
     @memoized
@@ -327,7 +326,8 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
     def bulk_get_lite(cls, ids):
         for res in cls.get_db().view("case/get_lite", keys=ids,
                                  include_docs=False):
-            yield cls.wrap(res['value'])
+            # cls.wrap is called in a lot of places; do they all need to be updated?
+            yield cls.get_wrap_class(res['value']).wrap(res['value'])
 
     def get_preloader_dict(self):
         """
@@ -783,11 +783,16 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             conflict = CommCareCase.get(self._id)
             # if there's a conflict, make sure we know about every
             # form in the conflicting doc
-            if set(conflict.xform_ids) - set(self.xform_ids):
+            missing_forms = set(conflict.xform_ids) - set(self.xform_ids)
+            if missing_forms:
+                logging.exception('doc update conflict saving case {id}. missing forms: {forms}'.format(
+                    id=self._id,
+                    forms=",".join(missing_forms)
+                ))
                 raise
             # couchdbkit doesn't like to let you set _rev very easily
             self._doc["_rev"] = conflict._rev
-            self.save()
+            self.force_save()
 
     def to_xml(self, version):
         from xml.etree import ElementTree

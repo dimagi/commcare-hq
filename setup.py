@@ -18,6 +18,7 @@ setup(
         'django',
         'django-digest',    
         'lxml',
+        'mock', # Actually a missing dimagi-utils dep?
         'receiver>=1.0.0',
         'requests',
         'restkit',
@@ -25,6 +26,7 @@ setup(
         'pytz',
         'simplejson',
         'PIL',
+        'unittest2', # Actually a missing dimagi-utils dep?
     ],
     tests_require = [
         'coverage',
