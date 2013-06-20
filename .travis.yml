@@ -12,3 +12,5 @@ install:
 script: coverage run `which django-admin.py` test --settings settings --traceback utils
 after_success:
  - coveralls
+services:
+ - couchdb
