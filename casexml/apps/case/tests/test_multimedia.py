@@ -28,6 +28,10 @@ MEDIA_FILES = {
 
 }
 
+
+
+
+
 TEST_DOMAIN = "test-domain"
 
 class BaseCaseMultimediaTest(TestCase):
@@ -140,7 +144,6 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         case = CommCareCase.get(TEST_CASE_ID)
         self.assertEqual(1, len(case.case_attachments))
         self.assertTrue(single_attach in case.case_attachments)
-        #ipdb.set_trace()
         self.assertEqual(1, len(filter(lambda x: x['action_type'] == 'attachment', case.actions)))
         self.assertEqual(self._calc_file_hash(single_attach), hashlib.md5(case.get_attachment(single_attach)).hexdigest())
 
