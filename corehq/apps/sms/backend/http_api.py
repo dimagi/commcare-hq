@@ -59,10 +59,6 @@ class HttpBackend(SMSBackend):
         return HttpBackendForm
 
     def send(self, msg, *args, **kwargs):
-        """
-        Expected kwargs:
-            additional_params   a dictionary of additional parameters that will be sent in the request (optional, defaults to {})
-        """
         if self.additional_params is not None:
             params = self.additional_params.copy()
         else:

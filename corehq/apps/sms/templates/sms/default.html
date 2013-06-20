@@ -26,10 +26,10 @@
 {% block page-title %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% url messaging domain %}"><strong>Messaging</strong></a> <span class="divider">&gt;</span>
+            <a href="{% url messaging domain %}"><strong>{% trans "Messaging" %}</strong></a> <span class="divider">&gt;</span>
         </li>
         <li class="active">
-            <div id="report-title">{% block page-subtitle %}<a href="{% url messaging domain %}">Message History</a>{% endblock %}</div>
+            <div id="report-title">{% block page-subtitle %}<a href="{% url messaging domain %}">{% trans "Message History" %}</a>{% endblock %}</div>
         </li>
     </ul>
 {% endblock %}
@@ -44,11 +44,11 @@
     <table class="table table-striped datatable">
         <thead>
         <tr>
-            <th><i class="icon-white"></i> Username</th>
-            <th><i class="icon-white"></i> Phone number</th>
-            <th><i class="icon-white"></i> Type</th>
-            <th><i class="icon-white"></i> Time</th>
-            <th><i class="icon-white"></i> Message</th>
+            <th><i class="icon-white"></i> {% trans "Username" %}</th>
+            <th><i class="icon-white"></i> {% trans "Phone number" %}</th>
+            <th><i class="icon-white"></i> {% trans "Type" %}</th>
+            <th><i class="icon-white"></i> {% trans "Time" %}</th>
+            <th><i class="icon-white"></i> {% trans "Message" %}</th>
         </tr>
         </thead>
         <tbody>
@@ -56,8 +56,8 @@
             <tr>
                 <td>{{ message.username }}</td>
                 <td>{{ message.phone_number }}</td>
-                <td>{% if message.direction == "I" %}Received
-                {% else %}Sent
+                <td>{% if message.direction == "I" %}{% trans "Received" %}
+                {% else %}{% trans "Sent" %}
                 {% endif %}
                 </td>
                 <td>{% utc_to_timezone message.date timezone %}</td>

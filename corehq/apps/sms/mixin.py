@@ -183,8 +183,9 @@ class MobileBackend(Document):
     def get_template(cls):
         """
         This method should return the path to the Django template which will be used to capture values for this backend's specific properties.
+        This template should extend sms/add_backend.html
         """
-        raise NotImplementedError("Please define get_template()")
+        return "sms/add_backend.html"
 
     @classmethod
     def get_form_class(cls):

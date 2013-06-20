@@ -1,13 +1,14 @@
 {% extends 'sms/add_backend.html' %}
+{% load i18n %}
 
 {% block backend_specific %}
-<h4>{{ backend_generic_name }} Settings</h4>
+<h4>{{ backend_generic_name }} {% trans "Settings" %}</h4>
 <div class="form-block">
     <table>
         <tbody>
             <tr>
-                <td><label for="id_messaging_token">Messaging Token</label></td>
-                <td><input type="text" name="messaging_token" id="id_messaging_token" value="{{ form.messaging_token.value|default:'' }}" /></td>
+                <td><label for="id_messaging_token">{% trans "Messaging Token" %}</label></td>
+                <td>{{ form.messaging_token }}</td>
                 <td>{{ form.messaging_token.errors }}</td>
             </tr>
         </tbody>

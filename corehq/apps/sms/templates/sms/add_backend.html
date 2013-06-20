@@ -45,17 +45,17 @@
     {% if is_global %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% url default_sms_admin_interface %}"><strong>SMS Connectivity</strong></a> <span class="divider">&gt;</span>
+            <a href="{% url default_sms_admin_interface %}"><strong>{% trans "SMS Connectivity" %}</strong></a> <span class="divider">&gt;</span>
         </li>
         <li>
-            <a href="{% url list_backends %}">SMS Connections</a> <span class="divider">&gt;</span>
+            <a href="{% url list_backends %}">{% trans "SMS Connections" %}</a> <span class="divider">&gt;</span>
         </li>
         <li class="active">
             <div id="report-title">
             {% if backend_id %}
-                <a href="{% url edit_backend backend_class_name backend_id %}">Edit SMS Connection</a>
+                <a href="{% url edit_backend backend_class_name backend_id %}">{% trans "Edit SMS Connection" %}</a>
             {% else %}
-                <a href="{% url add_backend backend_class_name %}">Add SMS Connection</a>
+                <a href="{% url add_backend backend_class_name %}">{% trans "Add SMS Connection" %}</a>
             {% endif %}
             </div>
         </li>
@@ -63,17 +63,17 @@
     {% else %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% url messaging domain %}"><strong>Messaging</strong></a> <span class="divider">&gt;</span>
+            <a href="{% url messaging domain %}"><strong>{% trans "Messaging" %}</strong></a> <span class="divider">&gt;</span>
         </li>
         <li>
-            <a href="{% url list_domain_backends domain %}">SMS Connectivity</a> <span class="divider">&gt;</span>
+            <a href="{% url list_domain_backends domain %}">{% trans "SMS Connectivity" %}</a> <span class="divider">&gt;</span>
         </li>
         <li class="active">
             <div id="report-title">
             {% if backend_id %}
-                <a href="{% url edit_domain_backend domain backend_class_name backend_id %}">Edit SMS Connection</a>
+                <a href="{% url edit_domain_backend domain backend_class_name backend_id %}">{% trans "Edit SMS Connection" %}</a>
             {% else %}
-                <a href="{% url add_domain_backend domain backend_class_name %}">Add SMS Connection</a>
+                <a href="{% url add_domain_backend domain backend_class_name %}">{% trans "Add SMS Connection" %}</a>
             {% endif %}
             </div>
         </li>
@@ -82,31 +82,31 @@
 {% endblock %}
 
 {% block main_column %}
-    <div class="page-header"><h3>{{ backend_generic_name }} Connection</h3></div>
+    <div class="page-header"><h3>{{ backend_generic_name }} {% trans "Connection" %}</h3></div>
     <form action="" method="post">
-        <h4>General Settings</h4>
+        <h4>{% trans "General Settings" %}</h4>
         <div class="form-block">
             <table>
                 <tbody>
                     <tr>
-                        <td><label for="id_name">Name</label></td>
-                        <td><input type="text" name="name" id="id_name" value="{{ form.name.value|default:'' }}" /></td>
+                        <td><label for="id_name">{% trans "Name" %}</label></td>
+                        <td>{{ form.name }}</td>
                         <td>{{ form.name.errors }}</td>
                     </tr>
                     <tr>
-                        <td><label for="id_reply_to_phone_number">Reply To Phone Number</label></td>
-                        <td><input type="text" name="reply_to_phone_number" id="id_reply_to_phone_number" value="{{ form.reply_to_phone_number.value|default:'' }}" /></td>
+                        <td><label for="id_reply_to_phone_number">{% trans "Reply To Phone Number" %}</label></td>
+                        <td>{{ form.reply_to_phone_number }}</td>
                         <td>{{ form.reply_to_phone_number.errors }}</td>
                     </tr>
                     {% if not is_global %}
                     <tr>
-                        <td><label for="id_give_other_domains_access">Give other domains access</label></td>
-                        <td><input type="checkbox" name="give_other_domains_access" id="id_give_other_domains_access" {% if form.give_other_domains_access.value %}checked="checked"{% endif %} /></td>
+                        <td><label for="id_give_other_domains_access">{% trans "Give other domains access" %}</label></td>
+                        <td>{{ form.give_other_domains_access }}</td>
                         <td></td>
                     </tr>
                     <tr id="id_for_authorized_domains_input">
-                        <td><label for="id_authorized_domains">List domains here:</label></td>
-                        <td><input type="text" name="authorized_domains" id="id_authorized_domains" value="{{ form.authorized_domains.value|default:'' }}" /></td>
+                        <td><label for="id_authorized_domains">{% trans "List domains here:" %}</label></td>
+                        <td>{{ form.authorized_domains }}</td>
                         <td>{{ form.authorized_domains.errors }}</td>
                     </tr>
                     {% endif %}

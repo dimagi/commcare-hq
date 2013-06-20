@@ -22,6 +22,7 @@ from django.contrib import messages
 from corehq.apps.reports import util as report_utils
 from django.views.decorators.csrf import csrf_exempt
 from corehq.apps.domain.models import Domain
+from django.utils.translation import ugettext as _, ugettext_noop
 
 @login_and_domain_required
 def default(request, domain):
@@ -120,9 +121,9 @@ def send_to_recipients(request, domain):
     recipients = request.POST.get('recipients')
     message = request.POST.get('message')
     if not recipients:
-        messages.error(request, "You didn't specify any recipients")
+        messages.error(request, _("You didn't specify any recipients"))
     elif not message:
-        messages.error(request, "You can't send an empty message")
+        messages.error(request, _("You can't send an empty message"))
     else:
         recipients = [x.strip() for x in recipients.split(',') if x.strip()]
         phone_numbers = []
@@ -202,19 +203,19 @@ def send_to_recipients(request, domain):
 
         if empty_groups or failed_numbers or unknown_usernames or no_numbers:
             if empty_groups:
-                messages.error(request, "The following groups don't exist: %s"  % (', '.join(empty_groups)))
+                messages.error(request, _("The following groups don't exist: ") + (', '.join(empty_groups)))
             if no_numbers:
-                messages.error(request, "The following users don't have phone numbers: %s"  % (', '.join(no_numbers)))
+                messages.error(request, _("The following users don't have phone numbers: ") + (', '.join(no_numbers)))
             if failed_numbers:
-                messages.error(request, "Couldn't send to the following number(s): %s" % (', '.join(failed_numbers)))
+                messages.error(request, _("Couldn't send to the following number(s): ") + (', '.join(failed_numbers)))
             if unknown_usernames:
-                messages.error(request, "Couldn't find the following user(s): %s" % (', '.join(unknown_usernames)))
+                messages.error(request, _("Couldn't find the following user(s): ") + (', '.join(unknown_usernames)))
             if sent:
-                messages.success(request, "Successfully sent: %s" % (', '.join(sent)))
+                messages.success(request, _("Successfully sent: ") + (', '.join(sent)))
             else:
-                messages.info(request, "No messages were sent.")
+                messages.info(request, _("No messages were sent."))
         else:
-            messages.success(request, "Message sent")
+            messages.success(request, _("Message sent"))
 
     return HttpResponseRedirect(
         request.META.get('HTTP_REFERER') or
@@ -311,7 +312,7 @@ def add_forwarding_rule(request, domain, forwarding_rule_id=None):
 @require_superuser
 def delete_forwarding_rule(request, domain, forwarding_rule_id):
     forwarding_rule = ForwardingRule.get(forwarding_rule_id)
-    if forwarding_rule.domain != domain:
+    if forwarding_rule.domain != domain or forwarding_rule.doc_type != "ForwardingRule":
         raise Http404
     forwarding_rule.retire()
     return HttpResponseRedirect(reverse("list_forwarding_rules", args=[domain]))
@@ -385,7 +386,7 @@ def _list_backends(request, show_global=False, domain=None):
     if not show_global:
         raw_backends += SMSBackend.view("sms/backend_by_domain", startkey=[domain], endkey=[domain, {}], include_docs=True).all()
         if len(raw_backends) > 0 and domain_obj.default_sms_backend_id in [None, ""]:
-            messages.error(request, "WARNING: You have not specified a default SMS connection. By default, the system will automatically select one of the SMS connections owned by the system when sending sms.")
+            messages.error(request, _("WARNING: You have not specified a default SMS connection. By default, the system will automatically select one of the SMS connections owned by the system when sending sms."))
     raw_backends += SMSBackend.view("sms/global_backends", include_docs=True).all()
     for backend in raw_backends:
         backends.append(backend_classes[backend.doc_type].wrap(backend.to_json()))
@@ -393,14 +394,15 @@ def _list_backends(request, show_global=False, domain=None):
             editable_backend_ids.append(backend._id)
         if not show_global and domain_obj.default_sms_backend_id == backend._id:
             default_sms_backend_id = backend._id
-    instantiable_backends = {}
+    instantiable_backends = []
     for name, klass in backend_classes.items():
         try:
             klass.get_generic_name()
             klass.get_form_class()
-            instantiable_backends[name] = klass
+            instantiable_backends.append((name, klass))
         except Exception:
             pass
+    instantiable_backends.sort(key = lambda t : t[0])
     context = {
         "show_global" : show_global,
         "domain" : domain,
@@ -496,7 +498,7 @@ def global_backend_map(request):
                 else:
                     catchall_entry.backend_id = new_catchall_backend_id
                 catchall_entry.save()
-            messages.success(request, "Changes Saved.")
+            messages.success(request, _("Changes Saved."))
     else:
         initial = {
             "catchall_backend_id" : catchall_entry.backend_id if catchall_entry is not None else None,

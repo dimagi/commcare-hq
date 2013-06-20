@@ -32,22 +32,22 @@
     {% if show_global %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% url default_sms_admin_interface %}"><strong>SMS Connectivity</strong></a> <span class="divider">&gt;</span>
+            <a href="{% url default_sms_admin_interface %}"><strong>{% trans "SMS Connectivity" %}</strong></a> <span class="divider">&gt;</span>
         </li>
         <li class="active">
             <div id="report-title">
-                <a href="{% url list_backends %}">SMS Connections</a>
+                <a href="{% url list_backends %}">{% trans "SMS Connections" %}</a>
             </div>
         </li>
     </ul>
     {% else %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% url messaging domain %}"><strong>Messaging</strong></a> <span class="divider">&gt;</span>
+            <a href="{% url messaging domain %}"><strong>{% trans "Messaging" %}</strong></a> <span class="divider">&gt;</span>
         </li>
         <li class="active">
             <div id="report-title">
-                <a href="{% url list_domain_backends domain %}">SMS Connectivity</a>
+                <a href="{% url list_domain_backends domain %}">{% trans "SMS Connectivity" %}</a>
             </div>
         </li>
     </ul>
@@ -57,11 +57,11 @@
 {% block main_column %}
     <table class="table table-striped datatable">
         <thead>
-            <th>Name</th>
-            <th>Type</th>
+            <th>{% trans "Name" %}</th>
+            <th>{% trans "Type" %}</th>
             {% if not show_global %}
-            <th>Owner</th>
-            <th>Default</th>
+            <th>{% trans "Owner" %}</th>
+            <th>{% trans "Default" %}</th>
             <th></th>
             {% endif %}
             <th></th>
@@ -73,42 +73,42 @@
                 <td>{{ backend.name }}</td>
                 <td>{{ backend.get_generic_name }}</td>
                 {% if not show_global %}
-                <td>{% if backend.domain == domain %}You{% else %}{% if backend.is_global %}System{% else %}Domain '{{ backend.domain }}'{% endif %}{% endif %}</td>
+                <td>{% if backend.domain == domain %}{% trans "You" %}{% else %}{% if backend.is_global %}{% trans "System" %}{% else %}{% trans "Project" %} '{{ backend.domain }}'{% endif %}{% endif %}</td>
                 <td>
                     {% if backend.get_id == default_sms_backend_id %}
-                        <span class="label label-warning"><small>DEFAULT</small></span>
+                        <span class="label label-warning"><small>{% trans "DEFAULT" %}</small></span>
                     {% else %}
-                        <span class="label"><small>NO</small></span>
+                        <span class="label"><small>{% trans "NO" %}</small></span>
                     {% endif %}
                 </td>
                 <td>
                     {% if backend.get_id == default_sms_backend_id %}
-                        <a href="{% url unset_default_domain_backend domain backend.get_id %}"><span class="btn btn-primary">Remove As Default</span></a>
+                        <a href="{% url unset_default_domain_backend domain backend.get_id %}"><span class="btn btn-primary">{% trans "Remove As Default" %}</span></a>
                     {% else %}
-                        <a href="{% url set_default_domain_backend domain backend.get_id %}"><span class="btn btn-primary">Set As Default</span></a>
+                        <a href="{% url set_default_domain_backend domain backend.get_id %}"><span class="btn btn-primary">{% trans "Set As Default" %}</span></a>
                     {% endif %}
                 </td>
                 {% endif %}
                 <td>
                     {% if backend.get_id in editable_backend_ids %}
-                    <a href="{% if show_global %}{% url edit_backend backend.doc_type backend.get_id %}{% else %}{% url edit_domain_backend domain backend.doc_type backend.get_id %}{% endif %}"><span class="btn btn-primary">Edit</span></a>
+                    <a href="{% if show_global %}{% url edit_backend backend.doc_type backend.get_id %}{% else %}{% url edit_domain_backend domain backend.doc_type backend.get_id %}{% endif %}"><span class="btn btn-primary">{% trans "Edit" %}</span></a>
                     {% endif %}
                 </td>
                 <td>
                     {% if backend.get_id in editable_backend_ids %}
-                    <a class="btn btn-danger" data-toggle="modal" href="#delete_{{ backend.get_id }}"><i class="icon icon-white icon-remove"></i> Delete</a>
+                    <a class="btn btn-danger" data-toggle="modal" href="#delete_{{ backend.get_id }}"><i class="icon icon-white icon-remove"></i> {% trans "Delete" %}</a>
                     <div id="delete_{{ backend.get_id }}" class="modal hide fade">
                         <div class="modal-header">
                             <a class="close" data-dismiss="modal">&times;</a>
-                            <h3>Delete SMS Connection?</h3>
+                            <h3>{% trans "Delete SMS Connection?" %}</h3>
                         </div>
                         <form class="form form-horizontal" name="delete_backend" action="{% if show_global %}{% url delete_backend backend.get_id %}{% else %}{% url delete_domain_backend domain backend.get_id %}{% endif %}" method="post">
                             <div class="modal-body">
-                                <p>Are you sure you want to delete SMS Connection '{{ backend.name }}'?</p>
+                                <p>{% trans "Are you sure you want to delete SMS Connection" %} '{{ backend.name }}'?</p>
                             </div>
                             <div class="modal-footer">
-                                <a href="#" data-dismiss="modal" class="btn">Cancel</a>
-                                <button type="submit" class="btn btn-danger"><i class="icon icon-white icon-remove"></i> Delete</button>
+                                <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
+                                <button type="submit" class="btn btn-danger"><i class="icon icon-white icon-remove"></i> {% trans "Delete" %}</button>
                             </div>
                         </form>
                     </div>
@@ -119,14 +119,14 @@
         </tbody>
     </table>
     <div style="padding-top: 20px;">
-        Create SMS Connection using:
+        {% trans "Create SMS Connection using:" %}
         <select style="margin-bottom: 0px;" id="id_choose_backend_type">
-        {% for name, klass in instantiable_backends.items %}
+        {% for name, klass in instantiable_backends %}
             <option value="{{ name }}">{{ klass.get_generic_name }}</option>
         {% endfor %}
         </select>
-        {% for name, klass in instantiable_backends.items %}
-            <a id="id_link_for_{{ name }}" style="display: none;" class="add_backend_links" href="{% if show_global %}{% url add_backend name %}{% else %}{% url add_domain_backend domain name %}{% endif %}"><span class="btn btn-success"><i class="icon icon-white icon-plus"></i> Create</span></a>
+        {% for name, klass in instantiable_backends %}
+            <a id="id_link_for_{{ name }}" style="display: none;" class="add_backend_links" href="{% if show_global %}{% url add_backend name %}{% else %}{% url add_domain_backend domain name %}{% endif %}"><span class="btn btn-success"><i class="icon icon-white icon-plus"></i> {% trans "Create" %}</span></a>
         {% endfor %}
     </div>
 {% endblock %}

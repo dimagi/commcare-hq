@@ -1,23 +1,24 @@
 {% extends 'sms/add_backend.html' %}
+{% load i18n %}
 
 {% block backend_specific %}
-<h4>{{ backend_generic_name }} Settings</h4>
+<h4>{{ backend_generic_name }} {% trans "Settings" %}</h4>
 <div class="form-block">
     <table>
         <tbody>
             <tr>
-                <td><label for="id_api_key">API Key</label></td>
-                <td><input type="text" name="api_key" id="id_api_key" value="{{ form.api_key.value|default:'' }}" /></td>
+                <td><label for="id_api_key">{% trans "API Key" %}</label></td>
+                <td>{{ form.api_key }}</td>
                 <td>{{ form.api_key.errors }}</td>
             </tr>
             <tr>
-                <td><label for="id_project_id">Project ID</label></td>
-                <td><input type="text" name="project_id" id="id_project_id" value="{{ form.project_id.value|default:'' }}" /></td>
+                <td><label for="id_project_id">{% trans "Project ID" %}</label></td>
+                <td>{{ form.project_id }}</td>
                 <td>{{ form.project_id.errors }}</td>
             </tr>
             <tr>
-                <td><label for="id_phone_id">Phone ID</label></td>
-                <td><input type="text" name="phone_id" id="id_phone_id" value="{{ form.phone_id.value|default:'' }}" /></td>
+                <td><label for="id_phone_id">{% trans "Phone ID" %}</label></td>
+                <td>{{ form.phone_id }}</td>
                 <td>{{ form.phone_id.errors }}</td>
             </tr>
         </tbody>

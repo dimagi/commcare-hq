@@ -5,10 +5,11 @@ from corehq.apps.sms.models import ForwardingRule, FORWARD_ALL, FORWARD_BY_KEYWO
 from django.core.exceptions import ValidationError
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.reminders.forms import RecordListField
+from django.utils.translation import ugettext as _, ugettext_noop
 
 FORWARDING_CHOICES = (
-    (FORWARD_ALL, "All messages"),
-    (FORWARD_BY_KEYWORD, "All messages starting with a keyword"),
+    (FORWARD_ALL, ugettext_noop("All messages")),
+    (FORWARD_BY_KEYWORD, ugettext_noop("All messages starting with a keyword")),
 )
 
 class ForwardingRuleForm(Form):
@@ -21,7 +22,7 @@ class ForwardingRuleForm(Form):
         keyword = self.cleaned_data.get("keyword", "").strip()
         if forward_type == FORWARD_BY_KEYWORD:
             if keyword == "":
-                raise ValidationError("This field is required.")
+                raise ValidationError(_("This field is required."))
             return keyword
         else:
             return None
@@ -39,13 +40,13 @@ class BackendForm(Form):
         if value is not None:
             value = value.strip().upper()
         if value is None or value == "":
-            raise ValidationError("This field is required.")
+            raise ValidationError(_("This field is required."))
         if re.compile("\s").search(value) is not None:
-            raise ValidationError("Name may not contain any spaces.")
+            raise ValidationError(_("Name may not contain any spaces."))
         
         backend = SMSBackend.view("sms/backend_by_owner_domain", key=[self._cchq_domain, value], include_docs=True).one()
         if backend is not None and backend._id != self._cchq_backend_id:
-            raise ValidationError("Name is already in use.")
+            raise ValidationError(_("Name is already in use."))
         
         return value
 
@@ -82,10 +83,10 @@ class BackendMapForm(Form):
                 prefix = int(prefix)
                 assert prefix > 0
             except ValueError, AssertionError:
-                raise ValidationError("Please enter a positive number for the prefix.")
+                raise ValidationError(_("Please enter a positive number for the prefix."))
             prefix = str(prefix)
             if prefix in cleaned_value:
-                raise ValidationError("Prefix is specified twice: %s" % prefix)
+                raise ValidationError(_("Prefix is specified twice:") + prefix)
             cleaned_value[prefix] = record["backend_id"]
         return cleaned_value
 
