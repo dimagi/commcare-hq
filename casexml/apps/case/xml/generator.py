@@ -144,6 +144,9 @@ class V1CaseXMLGenerator(CaseXMLGeneratorBase):
             logging.info("Tried to add indices to version 1 CaseXML restore. This is not supported. "
                          "The case id is %s, domain %s." % (self.case.get_id, self.case.domain))
 
+    def add_attachments(self, element):
+        pass
+
 class V2CaseXMLGenerator(CaseXMLGeneratorBase):
     def get_root_element(self):
         root = safe_element("case")
