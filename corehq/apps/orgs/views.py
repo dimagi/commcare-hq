@@ -19,6 +19,7 @@ from corehq.apps.reports.standard.domains import DomainStatsReport, OrgDomainSta
 from corehq.apps.users.models import WebUser, UserRole, OrgRemovalRecord
 from corehq.elastic import get_es
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
+from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
@@ -217,15 +218,9 @@ def orgs_update_team(request, org):
 @org_admin_required
 @require_POST
 def orgs_add_project(request, org):
-    form = AddProjectForm(org, request.POST)
+    form = AddProjectForm(org, request.couch_user, request.POST)
     if form.is_valid():
         domain_name = form.cleaned_data['domain_name']
-
-        if not request.couch_user.is_domain_admin(domain_name):
-            org_requests = filter(lambda r: r.domain == domain_name, OrgRequest.get_requests(org))
-            if not org_requests:
-                messages.error(request, 'You must be an admin of this project in order to add it to your organization')
-                return orgs_landing(request, org, add_form=form)
 
         dom = Domain.get_by_name(domain_name)
         dom.organization = org
@@ -279,6 +274,13 @@ class OrgInvitationView(InvitationView):
 
     def validate_invitation(self, invitation):
         assert invitation.organization == self.organization
+
+    def is_invited(self, invitation, couch_user):
+        return couch_user.is_member_of_org(invitation.organization)
+
+    @property
+    def inviting_entity(self):
+        return self.organization
 
     @property
     def success_msg(self):
@@ -508,6 +510,16 @@ def undo_remove_member(request, org, record_id):
     record.undo()
     return HttpResponseRedirect(reverse('orgs_members', args=[org]))
 
+@org_admin_required
+def set_admin(request, org):
+    member_id = request.POST.get("member_id", None)
+    if member_id:
+        member = WebUser.get(member_id)
+        member.set_org_admin(org)
+        member.save()
+        messages.success(request, 'You have made %s an admin of the organization %s.' % (member.username, org))
+    return HttpResponseRedirect(reverse("orgs_members", args=[org]))
+
 @require_superuser
 def verify_org(request, org):
     organization = Organization.get_by_name(org)
@@ -547,12 +559,21 @@ def base_report(request, org, template='orgs/report_base.html'):
     return render(request, template, ctxt)
 
 @org_member_required
-def stats(request, org, template='orgs/stats.html'):
+def stats(request, org, stat_slug, template='orgs/stats.html'):
     ctxt = base_context(request, request.organization)
+
+    xaxis_label = {
+        "forms": "# form submissions",
+        "cases": "# case modifications",
+        "users": "# mobile workers created",
+    }[stat_slug]
+
     ctxt.update({
         'tab': 'reports',
-        'report_type': 'stats',
+        'report_type': 'stats_%s' % stat_slug,
         'no_header': True,
+        'stat_slug': stat_slug,
+        'xaxis_label': xaxis_label,
     })
     return render(request, template, ctxt)
 
@@ -562,29 +583,29 @@ def stats_data(request, org):
     histo_type = request.GET.get('histogram_type')
     period = request.GET.get("daterange", 'month')
 
-    today = date.today()
-    startdate = (today - timedelta(days={
-        'month': 30,
-        'week': 7,
-        'quarter': 90,
-        'year': 365,
-    }[period]))
+    enddate = request.GET.get('enddate')
+    enddate = datetime.strptime(enddate, "%Y-%m-%d") if enddate else date.today()
+    startdate = request.GET.get('startdate')
+    startdate = datetime.strptime(startdate, "%Y-%m-%d") if startdate else enddate - timedelta(days=30)
 
-    histo_data = dict([(d['hr_name'], es_histogram(histo_type, [d["name"]], startdate.strftime('%Y-%m-%d'), today.strftime('%Y-%m-%d')))
-                       for d in domains])
+    histo_data = dict([(d['hr_name'],
+                        es_histogram(histo_type, [d["name"]], startdate.strftime('%Y-%m-%d'), enddate.strftime('%Y-%m-%d')))
+                        for d in domains])
 
     return json_response({
         'histo_data': histo_data,
         'range': period,
         'startdate': [startdate.year, startdate.month, startdate.day],
-        'enddate': [today.year, today.month, today.day],
+        'enddate': [enddate.year, enddate.month, enddate.day],
     })
 
 def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None):
     date_field = {  "forms": "received_on",
-                    "cases": "opened_on"  }[histo_type]
+                    "cases": "opened_on",
+                    "users": "created_on", }[histo_type]
     es_url = {  "forms": XFORM_INDEX + '/xform/_search',
-                "cases": CASE_INDEX + '/case/_search' }[histo_type]
+                "cases": CASE_INDEX + '/case/_search',
+                "users": USER_INDEX + '/user/_search' }[histo_type]
 
     q = {"query": {"match_all":{}}}
 
@@ -613,6 +634,9 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff
 
     if histo_type == "forms":
         q["facets"]["histo"]["facet_filter"]["and"].append({"not": {"in": {"doc_type": ["xformduplicate", "xformdeleted"]}}})
+
+    if histo_type == "users":
+        q["facets"]["histo"]["facet_filter"]["and"].append({"term": {"doc_type": "CommCareUser"}})
 
     es = get_es()
     ret_data = es.get(es_url, data=q)

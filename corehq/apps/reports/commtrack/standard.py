@@ -1,8 +1,10 @@
+from corehq.apps.commtrack.psi_hacks import is_psi_domain
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.commtrack.psi_prototype import CommtrackReportMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.models import Product
+from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.commtrack.util import num_periods_late
 from datetime import date, datetime
@@ -88,7 +90,7 @@ def stock_category(stock, consumption, months_left=None):
         return 'adequate'
 
 def _enabled_hack(domain):
-    return 'psi' not in (domain or  '')
+    return not is_psi_domain(domain)
 
 class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Stock Status by Product')
@@ -96,13 +98,6 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     fields = ['corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
     emailable = True
-
-    report_template_path = "reports/async/tabular_graph.html"
-
-    # temporary
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return super(CurrentStockStatusReport, cls).show_in_navigation(domain, project, user) and _enabled_hack(domain)
 
     @property
     def headers(self):
@@ -149,7 +144,6 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     def rows(self):
         return [pd[0:2] + ['%.1f%%' %d for d in pd[2:]] for pd in self.product_data]
 
-
     def get_data_for_graph(self):
         ret = [
             {"key": "stocked out", "color": "#e00707"},
@@ -171,11 +165,11 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         return ret
 
     @property
-    def report_context(self):
-        ctxt = super(CurrentStockStatusReport, self).report_context
+    def charts(self):
         if 'location_id' in self.request.GET: # hack: only get data if we're loading an actual report
-            ctxt['stock_data'] = self.get_data_for_graph()
-        return ctxt
+            chart = MultiBarChart(None, Axis(_('Products')), Axis(_('% of Facilities'), ',.1d'))
+            chart.data = self.get_data_for_graph()
+            return [chart]
 
 class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Consumption and Months Remaining')
@@ -270,8 +264,6 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     exportable = True
     emailable = True
 
-    report_template_path = "reports/async/tabular_pie.html"
-
     # temporary
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
@@ -352,8 +344,6 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
         }]
 
     @property
-    def report_context(self):
-        ctxt = super(ReportingRatesReport, self).report_context
+    def charts(self):
         if 'location_id' in self.request.GET: # hack: only get data if we're loading an actual report
-            ctxt['reporting_data'] = self.master_pie_chart_data()
-        return ctxt
+            return [PieChart(None, self.master_pie_chart_data())]

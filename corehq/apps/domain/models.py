@@ -105,7 +105,6 @@ class HQBillingAddress(DocumentSchema):
         self.address = kwargs.get('address', [''])
         self.name = kwargs.get('name', '')
 
-
 class HQBillingDomainMixin(DocumentSchema):
     """
         This contains all the attributes required to bill a client for CommCare HQ services.
@@ -123,7 +122,6 @@ class HQBillingDomainMixin(DocumentSchema):
         self.billing_address.update_billing_address(**kwargs)
         self.currency_code = kwargs.get('currency_code', settings.DEFAULT_CURRENCY)
 
-
 class UpdatableSchema():
     def update(self, new_dict):
         for kw in new_dict:
@@ -136,6 +134,11 @@ class Deployment(DocumentSchema, UpdatableSchema):
     region = StringProperty() # e.g. US, LAC, SA, Sub-saharn Africa, East Africa, West Africa, Southeast Asia)
     description = StringProperty()
     public = BooleanProperty(default=False)
+
+class CallCenterProperties(DocumentSchema):
+    enabled = BooleanProperty(default=False)
+    case_owner_id = StringProperty()
+    case_type = StringProperty()
 
 class LicenseAgreement(DocumentSchema):
     signed = BooleanProperty(default=False)
@@ -155,14 +158,15 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     initiative = StringListProperty()
     project_state = StringProperty(choices=["", "POC", "transition", "at-scale"], default="")
     self_started = BooleanProperty()
-    area = StringProperty(choices=AREA_CHOICES + [""], default="")
-    sub_area = StringProperty(choices=SUB_AREA_CHOICES + [""], default="")
+    area = StringProperty()
+    sub_area = StringProperty()
     using_adm = BooleanProperty()
     using_call_center = BooleanProperty()
     custom_eula = BooleanProperty()
     can_use_data = BooleanProperty()
     notes = StringProperty()
     organization_name = StringProperty()
+    platform = StringListProperty()
 
 
 class CaseDisplaySettings(DocumentSchema):
@@ -201,8 +205,11 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     short_description = StringProperty()
     is_shared = BooleanProperty(default=False)
     commtrack_enabled = BooleanProperty(default=False)
-    case_display = SchemaProperty(CaseDisplaySettings) 
-    
+    call_center_config = SchemaProperty(CallCenterProperties)
+    restrict_superusers = BooleanProperty(default=False)
+
+    case_display = SchemaProperty(CaseDisplaySettings)
+
     # CommConnect settings
     survey_management_enabled = BooleanProperty(default=False)
     sms_case_registration_enabled = BooleanProperty(default=False) # Whether or not a case can register via sms
@@ -221,7 +228,8 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     title = StringProperty()
     cda = SchemaProperty(LicenseAgreement)
     multimedia_included = BooleanProperty(default=True)
-    downloads = IntegerProperty(default=0)
+    downloads = IntegerProperty(default=0) # number of downloads for this specific snapshot
+    full_downloads = IntegerProperty(default=0) # number of downloads for all snapshots from this domain
     author = StringProperty()
     phone_model = StringProperty()
     attribution_notes = StringProperty()
@@ -507,9 +515,9 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         return 'a'
 
     @classmethod
-    def get_all(cls):
+    def get_all(cls, include_docs=True):
         return Domain.view("domain/not_snapshots",
-                            include_docs=True).all()
+                            include_docs=include_docs).all()
 
     def case_sharing_included(self):
         return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)
@@ -530,12 +538,14 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         new_domain.snapshot_time = None
         new_domain.organization = None # TODO: use current user's organization (?)
 
-        # reset the cda
+        # reset stuff
         new_domain.cda.signed = False
         new_domain.cda.date = None
         new_domain.cda.type = None
         new_domain.cda.user_id = None
         new_domain.cda.user_ip = None
+        new_domain.is_test = True
+        new_domain.internal = InternalProperties()
 
         for field in self._dirty_fields:
             if hasattr(new_domain, field):
@@ -610,7 +620,13 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         return not self.is_snapshot and self.original_doc is not None
 
     def snapshots(self):
-        return Domain.view('domain/snapshots', startkey=[self._id, {}], endkey=[self._id], include_docs=True, descending=True)
+        return Domain.view('domain/snapshots',
+            startkey=[self._id, {}],
+            endkey=[self._id],
+            include_docs=True,
+            reduce=False,
+            descending=True
+        )
 
     @memoized
     def published_snapshot(self):
@@ -762,7 +778,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     @classmethod
     def hit_sort(cls, domains):
         domains = list(domains)
-        domains = sorted(domains, key=lambda domain: domain.downloads, reverse=True)
+        domains = sorted(domains, key=lambda domain: domain.download_count, reverse=True)
         return domains
 
     @classmethod
@@ -800,6 +816,27 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         """Get the properties display definition for a given XFormInstance"""
         return self.case_display.form_details.get(form.xmlns)
 
+    @property
+    def total_downloads(self):
+        """
+            Returns the total number of downloads from every snapshot created from this domain
+        """
+        return get_db().view("domain/snapshots",
+            startkey=[self.get_id],
+            endkey=[self.get_id, {}],
+            reduce=True,
+            include_docs=False,
+        ).one()["value"]
+
+    @property
+    @memoized
+    def download_count(self):
+        """
+            Updates and returns the total number of downloads from every sister snapshot.
+        """
+        if self.is_snapshot:
+            self.full_downloads = self.copied_from.total_downloads
+        return self.full_downloads
 
 class DomainCounter(Document):
     domain = StringProperty()

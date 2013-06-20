@@ -25,28 +25,10 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
     <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
-    <script src="{% static 'app_manager/js/app_manager.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    {# Put here to avoid the .hq-oldstyle styling. (js-inline gets dumped into the end of body) #}
-    {% if app.is_deleted %}
-    <div id="deleted-app-dialog" class="modal hide fade">
-        <div class="modal-header"><h1>{% trans 'Oops! This application was deleted.' %}</h1></div>
-        <div class="modal-body">
-            <p>{% trans 'If you want your application back, click Restore.' %}</p>
-        </div>
-        <div class="modal-footer">
-            <a href="{% url undo_delete_app domain app.id %}" class="post-link btn btn-primary">
-                {% trans "Restore" %}
-            </a>
-            <a href="#" class="btn" data-dismiss="modal">
-                {% trans "No thanks, get me out of here" %}
-            </a>
-        </div>
-    </div>
-    {% endif %}
     <script>
     $(function () {
         $('#deleted-app-dialog').modal({
@@ -55,38 +37,6 @@
             show: true
         }).on('hide', function () {
             window.location = "{% url corehq.apps.app_manager.views.default domain %}";
-        });
-        $('.hq-help-template').each(function () {
-            COMMCAREHQ.makeHqHelp({
-                content: $(this).data('content'),
-                title: $(this).data('title')
-            }, false).insertAfter(this);
-            $(this).remove();
-        });
-        $('.hq-help').hqHelp();
-    });
-    $(function () {
-        COMMCAREHQ.app_manager.init({
-            appVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
-            edit: {{ edit|JSON }},
-            commcareVersion: {{ app.commcare_minor_release|JSON }}
-        });
-    });
-    $(function () {
-        $('.btn-langcode-preprocessed').each( function () {
-            langcodeTag.button_tag($(this), $(this).text());
-            if ($(this).hasClass('langcode-input')) {
-                var $langcodeInput = $(this).parent().find("input");
-                var that = this;
-                if ($langcodeInput) {
-                    $langcodeInput.change(function () {
-                        if ($(this).val() == "")
-                            $(that).show();
-                        else
-                            $(that).hide();
-                    });
-                }
-            }
         });
     });
     $(function () {
@@ -137,3 +87,23 @@
 {% endblock %}
 
 {% block column_style %}{% endblock %}
+
+{% block modals %}
+    {{ block.super }}
+    {% if app.is_deleted %}
+    <div id="deleted-app-dialog" class="modal hide fade">
+        <div class="modal-header"><h1>{% trans 'Oops! This application was deleted.' %}</h1></div>
+        <div class="modal-body">
+            <p>{% trans 'If you want your application back, click Restore.' %}</p>
+        </div>
+        <div class="modal-footer">
+            <a href="{% url undo_delete_app domain app.id %}" class="post-link btn btn-primary">
+                {% trans "Restore" %}
+            </a>
+            <a href="#" class="btn" data-dismiss="modal">
+                {% trans "No thanks, get me out of here" %}
+            </a>
+        </div>
+    </div>
+    {% endif %}
+{% endblock modals %}

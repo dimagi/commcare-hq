@@ -400,13 +400,117 @@ ko.bindingHandlers.valueOrNoneUI = {
 ko.bindingHandlers.makeHqHelp = {
     init: function (element, valueAccessor) {
         var opts = valueAccessor(),
-            name = ko.utils.unwrapObservable(opts.name),
-            description = ko.utils.unwrapObservable(opts.description),
+            name = ko.utils.unwrapObservable(opts.name || $(element).data('title')),
+            description = ko.utils.unwrapObservable(opts.description || $(element).data('content')),
             format = ko.utils.unwrapObservable(opts.format);
         COMMCAREHQ.makeHqHelp({
             title: name,
             content: description,
             html: format === 'html'
         }).appendTo(element);
+    }
+};
+
+ko.bindingHandlers.optstr = {
+    /*
+        I find this often to be nicer than the built-in 'options' bindingHandler
+        optstr: [{label: 'Yes', value: true},  {label: 'No', value: false}]
+        optstrValue: 'value' (default)
+        optstrText: 'label' (default)
+        value: (ko.observable)
+     */
+    update: function (element, valueAccessor, allBindingsAccessor) {
+        var optionObjects = ko.utils.unwrapObservable(valueAccessor());
+        var allBindings = allBindingsAccessor();
+        var optstrValue = allBindings.optstrValue || 'value';
+        var optstrText = allBindings.optstrText || 'label';
+        var optionStrings = ko.utils.arrayMap(optionObjects, function (o) {
+            return o[optstrValue];
+        });
+        allBindings.optionsText = function (optionString) {
+            for (var i = 0; i < optionObjects.length; i++) {
+                if (optionObjects[i][optstrValue] === optionString) {
+                    if (typeof optstrText === 'string') {
+                        return optionObjects[i][optstrText];
+                    } else {
+                        return optstrText(optionObjects[i]);
+                    }
+                }
+            }
+        };
+
+        return ko.bindingHandlers.options.update(element, function () {
+            return optionStrings;
+        }, function () {
+            return allBindings;
+        });
+    }
+};
+
+ko.bindingHandlers.valueDefault = {
+    init: ko.bindingHandlers.value.init,
+    update: function (element, valueAccessor, allBindingsAccessor) {
+        var value = valueAccessor();
+        if (!value()) {
+            value(ko.utils.unwrapObservable(allBindingsAccessor()['default']));
+        }
+        return ko.bindingHandlers.value.update(element, valueAccessor);
+    }
+};
+
+ko.bindingHandlers.edit = {
+    update: function (element, valueAccessor) {
+        var editable = ko.utils.unwrapObservable(valueAccessor());
+        function getValue(e) {
+            if ($(e).is('select')) {
+                return $('option[value="' + $(e).val() + '"]', e).text() || $(e).val();
+            }
+            return $(e).val();
+        }
+        if (editable) {
+            $(element).show();
+            $(element).next('.ko-no-edit').hide();
+        } else {
+            $(element).hide();
+            var no_edit = $(element).next('.ko-no-edit');
+            if (!no_edit.length) {
+                if ($(element).hasClass('code')) {
+                    no_edit = $('<code></code>');
+                } else {
+                    no_edit = $('<span></span>');
+                }
+                no_edit.addClass('ko-no-edit').insertAfter(element);
+            }
+            no_edit.text(getValue(element)).removeClass().addClass($(element).attr('class')).addClass('ko-no-edit').addClass('ko-no-edit-' + element.tagName.toLowerCase());
+        }
+    }
+};
+
+ko.bindingHandlers.typeahead = {
+    init: function (element, valueAccessor) {
+        $(element).autocomplete({
+            minLength: 0,
+            delay: 0,
+            change: function () {
+                $(element).change();
+            },
+            select: function (event, ui) {
+                $(element).val(ui.item.value);
+                $(element).trigger('textchange');
+            }
+        }).focus(function () {
+            $(element).autocomplete('search', $(element).val())
+                .autocomplete('widget').css({
+                width: '200px',
+                overflow: 'hidden'
+            });
+        }).on('textchange', function () {
+            if ($(element).val()) {
+                $(element).change();
+            }
+        });
+    },
+    update: function (element, valueAccessor) {
+        $(element).autocomplete('option', 'source', ko.utils.unwrapObservable(valueAccessor()));
     }
 };

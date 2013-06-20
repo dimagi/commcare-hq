@@ -213,7 +213,12 @@ class CaseDisplay(object):
 
     @property
     def owner_id(self):
-        return self.case['owner_id'] if self.case['owner_id'] else self.case['user_id']
+        if 'owner_id' in self.case:
+            return self.case['owner_id']
+        elif 'user_id' in self.case:
+            return self.case['user_id']
+        else:
+            return ''
 
     @property
     @memoized

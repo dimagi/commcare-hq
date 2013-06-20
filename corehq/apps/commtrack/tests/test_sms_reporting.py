@@ -8,7 +8,7 @@ from corehq.apps.commtrack.sms import handle, SMSError
 
 class StockReportTest(CommTrackTest):
 
-    def testStockReport(self):
+    def testStockReportRoaming(self):
         self.assertEqual(0, len(self.get_commtrack_forms()))
 
         amounts = {
@@ -17,7 +17,7 @@ class StockReportTest(CommTrackTest):
             'pr': 30,
         }
         # soh loc1 pp 10 pq 20...
-        handled = handle(self.verified_number, 'soh {loc} {report}'.format(
+        handled = handle(self.reporters['roaming'].get_verified_number(), 'soh {loc} {report}'.format(
             loc='loc1',
             report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
         ))
@@ -30,6 +30,29 @@ class StockReportTest(CommTrackTest):
             spp = CommCareCase.get(self.spps[code]._id)
             self.assertEqual(self.sp.location_, spp.location_)
             self.assertEqual(str(amt), spp.current_stock)
+
+    def testStockReportFixed(self):
+        self.assertEqual(0, len(self.get_commtrack_forms()))
+
+        amounts = {
+            'pp': 10,
+            'pq': 20,
+            'pr': 30,
+        }
+        # soh loc1 pp 10 pq 20...
+        handled = handle(self.reporters['fixed'].get_verified_number(), 'soh {report}'.format(
+            report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
+        ))
+        self.assertTrue(handled)
+        forms = list(self.get_commtrack_forms())
+        self.assertEqual(1, len(forms))
+        self.assertEqual(self.sp.location_, forms[0].location_)
+
+        for code, amt in amounts.items():
+            spp = CommCareCase.get(self.spps[code]._id)
+            self.assertEqual(self.sp.location_, spp.location_)
+            self.assertEqual(str(amt), spp.current_stock)
+
 
 class StockRequisitionTest(CommTrackTest):
     requisitions_enabled = True
@@ -44,7 +67,7 @@ class StockRequisitionTest(CommTrackTest):
             'pr': 30,
         }
         # req loc1 pp 10 pq 20...
-        handled = handle(self.verified_number, 'req {loc} {report}'.format(
+        handled = handle(self.user.get_verified_number(), 'req {loc} {report}'.format(
             loc='loc1',
             report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
         ))
@@ -74,13 +97,13 @@ class StockRequisitionTest(CommTrackTest):
         self.testRequisition()
 
         try:
-            handle(self.verified_number, 'approve')
+            handle(self.user.get_verified_number(), 'approve')
             self.fail("empty locations should fail")
         except SMSError, e:
             self.assertEqual('must specify a location code', str(e))
 
         try:
-            handle(self.verified_number, 'approve notareallocation')
+            handle(self.user.get_verified_number(), 'approve notareallocation')
             self.fail("unknown locations should fail")
         except SMSError, e:
             self.assertTrue('invalid location code' in str(e))
@@ -89,7 +112,7 @@ class StockRequisitionTest(CommTrackTest):
         self.testRequisition()
 
         # approve loc1
-        handled = handle(self.verified_number, 'approve {loc}'.format(
+        handled = handle(self.user.get_verified_number(), 'approve {loc}'.format(
             loc='loc1',
             ))
         self.assertTrue(handled)
@@ -109,7 +132,7 @@ class StockRequisitionTest(CommTrackTest):
         self.testRequisition()
 
         # pack loc1
-        handled = handle(self.verified_number, 'pack {loc}'.format(
+        handled = handle(self.user.get_verified_number(), 'pack {loc}'.format(
             loc='loc1',
         ))
         self.assertTrue(handled)
@@ -140,7 +163,7 @@ class StockRequisitionTest(CommTrackTest):
             'pr': 10,
         }
         # rec loc1 pp 10 pq 20...
-        handled = handle(self.verified_number, 'rec {loc} {report}'.format(
+        handled = handle(self.user.get_verified_number(), 'rec {loc} {report}'.format(
             loc='loc1',
             report=' '.join('%s %s' % (k, v) for k, v in rec_amounts.items())
         ))
@@ -171,7 +194,7 @@ class StockRequisitionTest(CommTrackTest):
             'pr': 10,
         }
         # rec loc1 pp 10 pq 20...
-        handled = handle(self.verified_number, 'rec {loc} {report}'.format(
+        handled = handle(self.user.get_verified_number(), 'rec {loc} {report}'.format(
             loc='loc1',
             report=' '.join('%s %s' % (k, v) for k, v in rec_amounts.items())
         ))
