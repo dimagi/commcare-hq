@@ -22,6 +22,7 @@ from corehq.elastic import get_es
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
+from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.web import json_response
@@ -560,7 +561,9 @@ def base_report(request, org, template='orgs/report_base.html'):
     })
     return render(request, template, ctxt)
 
+
 @org_member_required
+@datespan_in_request(from_param="startdate", to_param="enddate")
 def stats(request, org, stat_slug, template='orgs/stats.html'):
     ctxt = base_context(request, request.organization)
 
@@ -576,9 +579,13 @@ def stats(request, org, stat_slug, template='orgs/stats.html'):
         'no_header': True,
         'stat_slug': stat_slug,
         'xaxis_label': xaxis_label,
+        'startdate': request.datespan.startdate_display,
+        'enddate': request.datespan.enddate_display,
     })
     return render(request, template, ctxt)
 
+@org_member_required
+@datespan_in_request(from_param="startdate", to_param="enddate")
 def stats_data(request, org):
     params, _ = parse_args_for_es(request)
     domains = [{"name": d.name, "hr_name": d.hr_name} for d in Domain.get_by_organization(org).all()]
@@ -590,7 +597,7 @@ def stats_data(request, org):
     startdate = datetime.strptime(startdate, "%Y-%m-%d") if startdate else enddate - timedelta(days=30)
 
     histo_data = dict([(d['hr_name'],
-                        es_histogram(histo_type, [d["name"]], startdate.strftime('%Y-%m-%d'), enddate.strftime('%Y-%m-%d')))
+                        es_histogram(histo_type, [d["name"]], request.datespan.startdate_display, request.datespan.enddate_display))
                         for d in domains])
 
     def _total_forms_until_date(dom, date):
@@ -652,8 +659,8 @@ def stats_data(request, org):
     return json_response({
         'histo_data': histo_data,
         'initial_values': dict([(dom["name"], init_val_fn(dom["name"], startdate)) for dom in domains]),
-        'startdate': [startdate.year, startdate.month, startdate.day],
-        'enddate': [enddate.year, enddate.month, enddate.day],
+        'startdate': request.datespan.startdate_key_utc,
+        'enddate': request.datespan.enddate_key_utc,
     })
 
 def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None):
