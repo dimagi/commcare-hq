@@ -239,7 +239,8 @@ class ElasticCaseQuery(object):
         
     @property
     def scrubbed_filters(self):
-        return dict((k, v) for k, v in self.filters.items() if k not in self.RESERVED_KEYS)
+        return dict( (k, v) for k, v in self.filters.items()
+                     if k not in self.RESERVED_KEYS and not k.endswith('__full') )
         
     def _modified_params(self, key, start, end):
         return {
@@ -291,6 +292,7 @@ class ElasticCaseQuery(object):
 def es_filter_cases(domain, filters=None):
     """
     Filter cases using elastic search
+    (Domain, Filters?) -> [CommCareCase]
     """
     
     
@@ -298,7 +300,7 @@ def es_filter_cases(domain, filters=None):
     res = get_es().get('hqcases/_search', data=q.get_query())
     # this is ugly, but for consistency / ease of deployment just
     # use this to return everything in the expected format for now
-    return [CommCareCase.wrap(r["_source"]).get_json() for r in res['hits']['hits'] if r["_source"]]
+    return [CommCareCase.wrap(r["_source"]) for r in res['hits']['hits'] if r["_source"]]
 
 def get_filters_from_request(request, limit_top_level=None):
     """

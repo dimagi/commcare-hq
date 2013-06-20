@@ -1,3 +1,4 @@
+from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.ext.django.schema import *
 from django.utils.translation import ugettext as _
 
@@ -361,17 +362,25 @@ class SupplyPointCase(CommCareCase):
     @property
     @memoized
     def location(self):
-        return Location.get(self.location_id)
+        if hasattr(self, 'location_id'):
+            try:
+                return Location.get(self.location_id)
+            except ResourceNotFound:
+                pass
+        return None
 
     def to_full_dict(self):
         data = super(SupplyPointCase, self).to_full_dict()
-        
-        data['location_type'] = self.location.location_type
-        data['location_site_code'] = self.location.site_code
-        if self.location.parent:
-            data['location_parent_name'] = self.location.parent.name
-        else:
-            data['location_parent_name'] = None
+        data.update({
+            'location_type': None,
+            'location_site_code': None,
+            'location_parent_name': None,
+        })
+        if self.location:
+            data['location_type'] = self.location.location_type
+            data['location_site_code'] = self.location.site_code
+            if self.location.parent:
+                data['location_parent_name'] = self.location.parent.name
 
         # todo
         #data['last_reported'] = None

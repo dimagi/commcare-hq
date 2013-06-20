@@ -1,5 +1,6 @@
 {% extends "hqwebapp/two_column.html" %}
 {% load report_tags %}
+{% load i18n %}
 
 {% block head %}
     {{ block.super }}
@@ -8,11 +9,49 @@
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function() {
-            $('.custom_field').change(function() {
-                selectField = $(this).prev();
+            function updatePropertyInput() {
+                var caseField = $(this).closest('tr').find(".case_field");
+                var customField = $(this).closest('tr').find(".custom_field");
 
+                if (this.checked) {
+                    customField.closest('td').removeClass('hide');
+                    caseField.val('');
+                    caseField.closest('td').addClass('hide');
+                } else {
+                    customField.val('');
+                    customField.closest('td').addClass('hide');
+                    caseField.closest('td').removeClass('hide');
+                }
+            };
+
+            $('.new_property').change(updatePropertyInput);
+
+            function removeRow() {
+                $(this).closest('tr').remove();
+            };
+
+            $('a.remove_row').click(removeRow);
+
+            $('a.add_mapping').click(function() {
+                var table = $(this).prev('table');
+                var cloned = table.find('tbody tr').first().clone();
+
+                cloned.find('input').val('');
+                cloned.find('select').val('');
+                cloned.find('input[type=checkbox]').attr('checked', false)
+                cloned.find('.remove_row').removeClass('hide');
+
+                cloned.find('.case_field').closest('td').removeClass('hide');
+                cloned.find('.custom_field').closest('td').addClass('hide');
+
+                cloned.find('.new_property').change(updatePropertyInput);
+                cloned.find('.remove_row').click(removeRow);
+
+                table.find('tr').last().after(cloned);
+            });
+
+            $('.custom_field').bind('change, keypress, keydown, keyup', function() {
                 // check if field is valid for xml
-
                 // TODO: this method seems pretty sketchy, should cleanup
                 var value = $(this).val();
                 var regx = new RegExp(/^xml/i); 
@@ -22,24 +61,18 @@
                 value = value.replace(regx, ""); // remove xml from beginning of string
 
                 $(this).val(value);
-
-                if ($(this).val() != '') {
-                    selectField.val('');
-                    selectField.attr('disabled', 'disabled');
-                } else {
-                    selectField.removeAttr('disabled');
-                }
             });
 
-            $('.custom_field').change();
+            $('.custom_field').trigger('change');
 
             $('#field_form').submit(function() {
                 $('[disabled]').each(function() {
                     $(this).removeAttr('disabled');
                 });
 
-                $(this).find('input[type=checkbox]').each(function () {
-                    $(this).prev().val($(this).is(':checked') ? '1' : '0');
+                $(this).find('input.is_date').each(function() {
+                    var checked_val = this.checked;
+                    $(this).closest('tr').find('input.is_date_field').val(checked_val);
                 });
 
                 return true;
@@ -54,79 +87,48 @@
 {% endblock %}
 
 {% block main_column %}
-    <form class="form-horizontal form-report"
-          action="{% url corehq.apps.importer.views.excel_commit domain %}"
+    <form action="{% url corehq.apps.importer.views.excel_commit domain %}"
           method="post"
           id="field_form">
         <input type="hidden" name="named_columns" value="{{named_columns}}" />
         <input type="hidden" name="case_type" value="{{case_type}}" />
         <input type="hidden" name="search_column" value="{{search_column}}" />
         <input type="hidden" name="search_field" value="{{search_field}}" />
+        <input type="hidden" name="create_new_cases" value="{{create_new_cases}}" />
         <input type="hidden" name="key_column" value="{{key_column}}" />
         <input type="hidden" name="value_column" value="{{value_column}}" />
 
         <fieldset>
-            <legend>Map columns to case fields</legend>
-            <table>
-                <tr>
-                    <th>
-                        Excel data label
-                    </th>
-                    <th>
-                        Case field name
-                    </th>
-                    <th>
-                        or enter a new field name
-                    </th>
-                    <th>
-                        Is this a date field?
-                    </th>
-                </tr>
-
-                {% for i in excel_fields_range %}
+            <legend>{% trans "Match Excel Columns to Case Properties" %}</legend>
+            <table class="table table-condensed">
+                <thead>
+                    <th class="span1"></th>
+                    <th>{% trans "Excel Field" %}</th>
+                    <th></th>
+                    <th></th>
+                    <th>{% trans "Case Property" %}</th>
+                    <th></th>
+                </thead>
+                <tbody>
+                    {% for item in excel_fields %}
                     <tr>
-                        <td>
-                            <select name="excel_field[]">
-                                <option value=""></option>
-                                {% for excel_field in excel_fields %}
-                                    <option value="{{excel_field|escape}}">
-                                        {{excel_field|escape}}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </td>
-
-                        <td>
-                            <select name="case_field[]">
-                                <option value=""></option>
-                                {% for case_field in case_fields %}
-                                    <option value="{{case_field|escape}}">
-                                        {{case_field|escape}}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </td>
-
-                        <td>
-                            <input type="text" name="custom_field[]" class="custom_field" />
-                        </td>
-
-                        <td style="text-align:center">
-                            <input type="checkbox" />
-                        </td>
-
-                        <input type="hidden" name="date_yesno[]" value="0" />
+                        {% include "importer/partials/excel_field_row.html" %}
                     </tr>
-                {% endfor %}
+                    {% endfor %}
+                </tbody>
             </table>
+            <a class="add_mapping" href="#">
+                <i class="icon-plus"></i> {% trans "Add another matching" %}
+            </a>
         </fieldset>
 
         <div class="form-actions">
-            <button type="button" class="btn btn-primary btn-large" id="back_button">
-                <i class="icon-backward icon-white"></i> Back
+            <button type="button" class="btn btn-primary" id="back_button">
+                <i class="icon-backward icon-white"></i> {% trans "Back" %}
             </button>
-            <button type="submit" class="btn btn-primary btn-large">
-                <i class="icon-forward icon-white"></i> Confirm import
+            <button type="submit" class="btn btn-primary">
+                <i class="icon-forward icon-white"></i>
+                {% trans "Confirm Import" %}
             </button>
         </div>
     </form>

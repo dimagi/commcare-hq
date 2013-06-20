@@ -7,7 +7,7 @@ from django.core.cache import cache
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 import re
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.const import APP_V1, APP_V2
 from couchdbkit.exceptions import BadValueError
 from couchdbkit.ext.django.schema import *
@@ -17,10 +17,10 @@ from django.core.urlresolvers import reverse
 from django.http import Http404
 from restkit.errors import ResourceError
 import commcare_translations
-from corehq.apps.app_manager import fixtures, suite_xml
+from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings
 from corehq.apps.app_manager.suite_xml import IdStrings
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
-from corehq.apps.app_manager.util import split_path
+from corehq.apps.app_manager.util import split_path, save_xform
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, XFormError, XFormValidationError, WrappedNode, CaseXPath
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig, BuildRecord
@@ -96,67 +96,6 @@ def load_default_user_registration():
     with open(os.path.join(os.path.dirname(__file__), 'data', 'register_user.xhtml')) as f:
         return f.read()
 
-
-def load_custom_commcare_settings():
-    import yaml
-    path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json')
-    settings = []
-    with open(os.path.join(path,
-                           'commcare-profile-settings.yaml')) as f:
-        for setting in yaml.load(f):
-            if not setting.get('type'):
-                setting['type'] = 'properties'
-            settings.append(setting)
-
-    with open(os.path.join(path, 'commcare-app-settings.yaml')) as f:
-        for setting in yaml.load(f):
-            if not setting.get('type'):
-                setting['type'] = 'hq'
-            settings.append(setting)
-    for setting in settings:
-        if not setting.get('widget'):
-            setting['widget'] = 'select'
-        # i18n; not statically analyzable
-        setting['name'] = ugettext_noop(setting['name'])
-    return settings
-
-
-def load_commcare_settings_layout(doc_type):
-    import yaml
-    settings = dict([
-        ('{0}.{1}'.format(setting.get('type'), setting.get('id')), setting)
-        for setting in load_custom_commcare_settings()
-    ])
-    path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json')
-    with open(os.path.join(path, 'commcare-settings-layout.yaml')) as f:
-        layout = yaml.load(f)
-
-    for section in layout:
-        # i18n; not statically analyzable
-        section['title'] = ugettext_noop(section['title'])
-        for i, key in enumerate(section['settings']):
-            setting = settings.pop(key)
-            if doc_type == 'Application' or setting['type'] == 'hq':
-                section['settings'][i] = setting
-            else:
-                section['settings'][i] = None
-        section['settings'] = filter(None, section['settings'])
-        for setting in section['settings']:
-            setting['value'] = None
-
-    if settings:
-        raise Exception(
-            "CommCare settings layout should mention "
-            "all the available settings. "
-            "The following settings went unmentioned: %s" % (
-                ', '.join(settings.keys())
-            )
-        )
-    return layout
-
-if not settings.DEBUG:
-    load_custom_commcare_settings = memoized(load_custom_commcare_settings)
-    load_commcare_settings_layout = memoized(load_commcare_settings_layout)
 
 def authorize_xform_edit(view):
     def authorized_view(request, xform_id):
@@ -261,30 +200,35 @@ class UpdateReferralAction(FormAction):
             )
         return self.followup_date or "date(today() + 2)"
 
+
 class OpenReferralAction(UpdateReferralAction):
-    name_path       = StringProperty()
+    name_path = StringProperty()
+
 
 class OpenCaseAction(FormAction):
-    name_path   = StringProperty()
+    name_path = StringProperty()
     external_id = StringProperty()
+
 
 class OpenSubCaseAction(FormAction):
     case_type = StringProperty()
     case_name = StringProperty()
     case_properties = DictProperty()
+    repeat_context = StringProperty()
+
 
 class FormActions(DocumentSchema):
-    open_case       = SchemaProperty(OpenCaseAction)
-    update_case     = SchemaProperty(UpdateCaseAction)
-    close_case      = SchemaProperty(FormAction)
-    open_referral   = SchemaProperty(OpenReferralAction)
+    open_case = SchemaProperty(OpenCaseAction)
+    update_case = SchemaProperty(UpdateCaseAction)
+    close_case = SchemaProperty(FormAction)
+    open_referral = SchemaProperty(OpenReferralAction)
     update_referral = SchemaProperty(UpdateReferralAction)
-    close_referral  = SchemaProperty(FormAction)
+    close_referral = SchemaProperty(FormAction)
 
-    case_preload    = SchemaProperty(PreloadAction)
-    referral_preload= SchemaProperty(PreloadAction)
+    case_preload = SchemaProperty(PreloadAction)
+    referral_preload = SchemaProperty(PreloadAction)
 
-    subcases        = SchemaListProperty(OpenSubCaseAction)
+    subcases = SchemaListProperty(OpenSubCaseAction)
 
     def all_property_names(self):
         names = set()
@@ -587,6 +531,10 @@ class FormBase(DocumentSchema):
         for subcase_action in self.actions.subcases:
             if not subcase_action.case_type:
                 errors.append({'type': 'subcase has no case type'})
+            # no parent properties for subcase
+            for key in subcase_action.case_properties:
+                if not re.match(r'^[a-zA-Z][\w_-]*$', key):
+                    errors.append({'type': 'update_case word illegal', 'word': key})
 
         if self.requires == 'none' and self.actions.open_case.is_active() \
                 and not self.actions.open_case.name_path:
@@ -1064,8 +1012,14 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
 
     # this is the supported way of specifying which commcare build to use
     build_spec = SchemaProperty(BuildSpec)
-    platform = StringProperty(choices=["nokia/s40", "nokia/s60", "winmo", "generic"], default="nokia/s40")
-    text_input = StringProperty(choices=['roman', 'native', 'custom-keys'], default="roman")
+    platform = StringProperty(
+        choices=["nokia/s40", "nokia/s60", "winmo", "generic"],
+        default="nokia/s40"
+    )
+    text_input = StringProperty(
+        choices=['roman', 'native', 'custom-keys', 'qwerty'],
+        default="roman"
+    )
     success_message = DictProperty()
 
     # The following properties should only appear on saved builds
@@ -1281,9 +1235,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         return reverse('corehq.apps.app_manager.views.download_jar', args=[self.domain, self._id])
 
     def get_jar_path(self):
-        build = self.get_build()
-        if self.text_input == 'custom-keys' and build.minor_release() < (1,3):
-            raise AppError("Custom Keys not supported in CommCare versions before 1.3. (Using %s.%s)" % build.minor_release())
 
         spec = {
             'nokia/s40': 'Nokia/S40',
@@ -1297,12 +1248,34 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
                 ('native',): '-native-input',
                 ('roman',): '-generic',
                 ('custom-keys',):  '-custom-keys',
+                ('qwerty',): '-qwerty'
             }[(self.text_input,)]
 
         return spec
 
     def get_jadjar(self):
         return self.get_build().get_jadjar(self.get_jar_path())
+
+    def validate_jar_path(self):
+        build = self.get_build()
+        setting = commcare_settings.SETTINGS_LOOKUP['hq']['text_input']
+        value = self.text_input
+        setting_version = setting['since'].get(value)
+
+        if setting_version:
+            setting_version = tuple(map(int, setting_version.split('.')))
+            my_version = build.minor_release()
+
+            if my_version < setting_version:
+                i = setting['values'].index(value)
+                assert i != -1
+                name = _(setting['value_names'][i])
+                raise AppError(_(
+                    '%s Text Input is not supported '
+                    'in CommCare versions before %s.%s. '
+                    '(You are using %s.%s)'
+                ) % ((name,) + setting_version + my_version))
+
 
     @property
     def jad_settings(self):
@@ -1350,6 +1323,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         errors.extend(self.check_password_charset())
 
         try:
+            self.validate_jar_path()
             self.create_all_files()
         except (AppError, XFormValidationError, XFormError) as e:
             errors.append({'type': 'error', 'message': unicode(e)})
@@ -1684,8 +1658,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         # the following code is to let HQ override CommCare defaults
         # impetus: Weekly Logging should be Short (HQ override) instead of Never (CommCare default)
         # setting.default is assumed to also be the CommCare default unless there's a setting.commcare_default
-        all_settings = load_custom_commcare_settings()
-        for setting in all_settings:
+        for setting in commcare_settings.SETTINGS:
             type = setting['type']
             if type in ('properties', 'features') and setting['id'] not in app_profile[type]:
                 if 'commcare_default' in setting and setting['commcare_default'] != setting['default']:
@@ -1907,6 +1880,22 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             for f,form in enumerate(module['forms']):
                 change_unique_id(source['modules'][m]['forms'][f])
 
+    def copy_form(self, module_id, form_id, to_module_id):
+        form  = self.get_module(module_id).get_form(form_id)
+        copy_source = deepcopy(form.to_json())
+        if copy_source.has_key('unique_id'):
+            del copy_source['unique_id']
+
+        copy_form = self.new_form_from_source(to_module_id, copy_source)
+
+        def xmlname(aform):
+            return "%s.xml" % aform.get_unique_id()
+
+        save_xform(self, copy_form, form.source)
+
+        if self.modules[module_id]['case_type'] != self.modules[to_module_id]['case_type']:
+            return 'case type conflict'
+
     @cached_property
     def has_case_management(self):
         for module in self.get_modules():
@@ -2005,7 +1994,7 @@ class RemoteApp(ApplicationBase):
 
             def set_property(key, value):
                 node = profile_xml.find('property[@key="%s"]' % key)
-                print "node %r" % node
+
                 if node.xml is None:
                     from lxml import etree as ET
                     node = ET.Element('property')
@@ -2029,6 +2018,7 @@ class RemoteApp(ApplicationBase):
                 set_property("PostURL", self.post_url)
                 set_property("cc_user_domain", cc_user_domain(self.domain))
                 set_property('form-record-url', self.form_record_url)
+                set_property('key_server', self.key_server_url)
                 reset_suite_remote_url()
 
             if self.build_langs:
