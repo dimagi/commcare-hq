@@ -186,13 +186,6 @@ class FIDAPerformanceReport(GenericTabularReport, CustomProjectReport,
         return rows
 
 
-class DataSummaryReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
-    """
-        Base class for this section
-    """
-    pass
-
-
 class FacilityRegistrationsReport(GenericTabularReport, CustomProjectReport,
                                   ProjectReportParametersMixin, DatespanMixin,
                                   HSPHSiteDataMixin):
@@ -505,8 +498,9 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin,
             ]
 
 
-class FacilityWiseFollowUpRepoert(GenericTabularReport, DataSummaryReport,
-                                                        HSPHSiteDataMixin):
+class FacilityWiseFollowUpReport(GenericTabularReport, DatespanMixin,
+                                 HSPHSiteDataMixin, CustomProjectReport,
+                                 ProjectReportParametersMixin):
     name = "Facility Wise Follow Up Report"
     slug = "hsph_facility_wise_follow_up"
     fields = ['corehq.apps.reports.fields.DatespanField',

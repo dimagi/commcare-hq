@@ -7,7 +7,7 @@ new_reports = (
     ('Field Management', (
         field_management.FIDAPerformanceReport,
         field_management.FacilityRegistrationsReport,
-        field_management.FacilityWiseFollowUpRepoert,
+        field_management.FacilityWiseFollowUpReport,
         field_management.CaseReport,
     )),
     ('Call Center', (
