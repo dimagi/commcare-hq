@@ -50,3 +50,21 @@ COVERAGE_REPORT_HTML_OUTPUT_DIR='coverage-html'
 COVERAGE_MODULE_EXCLUDES= ['tests$', 'settings$', 'urls$', 'locale$',
                            'common.views.test', '^django', 'management', 'migrations',
                            '^south', '^djcelery', '^debug_toolbar', '^rosetta']
+
+# Disable logging from casexml
+LOGGING = {
+    'version': 1,
+    'handlers': {
+        'null': {
+            'level': 'DEBUG',
+            'class': 'django.utils.log.NullHandler',
+        },
+    },
+    'loggers': {
+        '': {
+            'level': 'CRITICAL',
+            'handler': 'null',
+            'propagate': False,
+        }
+    }
+}
