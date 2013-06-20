@@ -10,9 +10,10 @@ install:
  - "pip install coverage coveralls --use-mirrors"
  - "pip install unittest2 mock"
 script:
-- "coverage run `which django-admin.py` test --settings settings --traceback utils"
-- "coverage run setup.py test"
+- "coverage run --parallel-mode `which django-admin.py` test --settings settings --traceback utils"
+- "coverage run --parallel-mode setup.py test"
 after_success:
+ - coverage combine
  - coveralls
 services:
  - couchdb
