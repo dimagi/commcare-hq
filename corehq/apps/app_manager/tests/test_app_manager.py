@@ -1,9 +1,3 @@
-"""
-This file demonstrates two different styles of tests (one doctest and one
-unittest). These will both pass when you run "manage.py test".
-
-Replace these with more appropriate tests for your application.
-"""
 import os
 
 from django.test import TestCase
@@ -83,8 +77,11 @@ class AppManagerTest(TestCase):
         self.failUnlessEqual(self.app.modules[0].name['en'], m1)
         self.failUnlessEqual(self.app.modules[1].name['en'], m0)
 
-
     def testImportApp(self):
         self.failUnless(self.app._attachments)
         new_app = import_app(self.app.id, self.domain)
         self.failUnlessEqual(set(new_app._attachments.keys()).intersection(self.app._attachments.keys()), set())
+        new_forms = list(new_app.get_forms())
+        old_forms = list(self.app.get_forms())
+        for new_form, old_form in zip(new_forms, old_forms):
+            self.assertEqual(new_form.source, old_form.source)

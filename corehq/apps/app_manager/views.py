@@ -1558,11 +1558,12 @@ def save_copy(req, domain, app_id):
 
     if not errors:
         try:
-            copy = app.save_copy(
+            copy = app.make_build(
                 comment=comment,
                 user_id=req.couch_user.get_id,
                 previous_version=app.get_latest_app(released_only=False)
             )
+            copy.save()
         finally:
             # To make a RemoteApp always available for building
             if app.is_remote_app():
