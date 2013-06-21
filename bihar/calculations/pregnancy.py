@@ -69,7 +69,10 @@ class LiveBirthCalculator(CaseCalculator):
 
     @fluff.filter_by
     def live_birth(self, case):
-        return get_related_prop(case, 'birth_status') == "live_birth"
+        return (
+            get_related_prop(case, 'birth_status') == "live_birth" or
+            get_related_prop(case, 'where_born') is not None
+        )
 
 
 class BreastFedBirthPlace(DoneDueCalculator, BirthPlace, LiveBirthCalculator):
