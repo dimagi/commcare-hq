@@ -17,7 +17,6 @@
     <script type="text/javascript">
         var charts = { "bar-chart": null, "cumulative-chart": null, "stacked-cumulative-chart": null };
 
-
         // given the chart_id of a chart element in the dom, the function fetches the data associated with that chart
         // and renders the chart in the specified element
         function loadChartData(callback_fn, startdate, enddate) {
@@ -42,7 +41,8 @@
                 function(d) {
                     var startdate = new Date(Date.UTC(d.startdate[0], d.startdate[1]-1, d.startdate[2]));
                     var enddate = new Date(Date.UTC(d.enddate[0], d.enddate[1]-1, d.enddate[2]));
-                    charts = loadCharts("{{ xaxis_label }}", d.histo_data, startdate.getTime(), enddate.getTime());
+                    charts = loadCharts("{{ xaxis_label }}", d.histo_data, d.initial_values,
+                            startdate.getTime(), enddate.getTime());
                     $loading.hide();
                     $charts.show();
 
