@@ -546,6 +546,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         new_domain.cda.user_ip = None
         new_domain.is_test = True
         new_domain.internal = InternalProperties()
+        new_domain.creating_user = user.username if user else None
 
         for field in self._dirty_fields:
             if hasattr(new_domain, field):

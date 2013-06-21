@@ -1,3 +1,4 @@
+import json
 import os
 
 from django.test import TestCase
@@ -28,6 +29,18 @@ class AppManagerTest(TestCase):
             )
         self.app.save()
 
+        self.build1 = {'version': '1.2.dev', 'build_number': 7106}
+        self.build2 = {'version': '2.7.0', 'build_number': 20655}
+
+        def add_build(version, build_number):
+            path = os.path.join(os.path.dirname(__file__), "jadjar")
+            jad_path = os.path.join(path, 'CommCare_%s_%s.zip' % (version, build_number))
+            CommCareBuild.create_from_zip(jad_path, version, build_number)
+        add_build(**self.build1)
+        add_build(**self.build2)
+
+
+
     def tearDown(self):
         self.app.delete()
         #for xform in XForm.view('app_manager/xforms', key=self.xform_xmlns, reduce=False).all():
@@ -39,15 +52,8 @@ class AppManagerTest(TestCase):
             self.assertEqual(len(module.forms), 3)
 
     def testCreateJadJar(self):
-        version = "1.2.dev"
-        build_number = 7106
-        def make_sure_there_is_a_build():
-            path = os.path.join(os.path.dirname(__file__), "jadjar")
-            jad_path = os.path.join(path, 'CommCare_%s_%s.zip' % (version, build_number))
-            CommCareBuild.create_from_zip(jad_path, version, build_number)
-        make_sure_there_is_a_build()
         # make sure this doesn't raise an error
-        self.app.build_spec = BuildSpec(version=version, build_number=build_number)
+        self.app.build_spec = BuildSpec(**self.build1)
         self.app.create_jadjar()
 
     def testDeleteForm(self):
@@ -96,3 +102,14 @@ class AppManagerTest(TestCase):
             limit=1,
         ).all()
         self.assertEqual(len(apps), 1)
+
+    def testBuildApp(self):
+        # this app fixture uses both the (new) '_attachment'
+        # and the (old) 'contents' conventions, to test that both work
+        with open(os.path.join(os.path.dirname(__file__), 'data', 'yesno.json')) as f:
+            source = json.load(f)
+
+        app = import_app(source, self.domain)
+
+        copy = app.make_build()
+        copy.save()

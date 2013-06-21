@@ -247,8 +247,12 @@ class FormSource(object):
         filename = "%s.xml" % unique_id
 
         # for backwards compatibility of really old apps
-        if hasattr(form, 'contents'):
-            app.lazy_put_attachment(form['contents'], filename)
+        try:
+            old_contents = form['contents']
+        except AttributeError:
+            pass
+        else:
+            app.lazy_put_attachment(old_contents, filename)
             del form['contents']
 
         try:
