@@ -68,3 +68,21 @@ ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
 
 AUDIT_ADMIN_VIEWS=False
+
+# No logging
+LOGGING = {
+    'version': 1,
+    'handlers': {
+        'null': {
+            'level': 'DEBUG',
+            'class': 'django.utils.log.NullHandler',
+        },
+    },
+    'loggers': {
+        '': {
+            'level': 'CRITICAL',
+            'handler': 'null',
+            'propagate': False,
+        }
+    }
+}
