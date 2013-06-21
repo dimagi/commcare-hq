@@ -1,4 +1,5 @@
 from django.core.servers.basehttp import FileWrapper
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404
 from django.utils.decorators import method_decorator
 from django.views.generic import View
@@ -28,7 +29,6 @@ class CaseAttachmentAPI(View):
         else:
             size_key = None
 
-        domain = self.request.domain
         case_id = kwargs.get('case_id', None)
         case_exists = CommCareCase.get_db().doc_exist(case_id)
         if not case_exists:
@@ -56,13 +56,21 @@ class CaseAttachmentAPI(View):
                     if meta is not None:
                         r.write('Resolution: %d x %d<br>' % (meta['width'], meta['height']))
                         r.write('Filesize: %d<br>' % ( meta['content_length']))
-                        r.write('<img src="/a/%(domain)s/api/case/attachment/%(case_id)s/%(attachment_key)s?img&size=%(size_key)s&max_size=%(max_filesize)s&max_image_width=%(max_width)s&max_image_height=%(max_height)s">' %
-                                {"domain":case_doc.domain, "case_id":case_id,
-                                 "attachment_key": attachment_key,
-                                 "size_key": fsize,
-                                 "max_filesize":max_filesize,
-                                 "max_width": max_width,
-                                 "max_height": max_height})
+                        r.write('%(attach_url)s?img&size=%(size_key)s&max_size=%(max_filesize)s&max_image_width=%(max_width)s&max_image_height=%(max_height)s">' %
+                                {
+                                    "attach_url": reverse("api_case_attachment", kwargs={
+                                        "domain": self.request.domain,
+                                        "case_id": case_id,
+                                        "attachment_id": attachment_key
+                                    }),
+                                    "domain": case_doc.domain, "case_id": case_id,
+                                    "attachment_key": attachment_key,
+                                    "size_key": fsize,
+                                    "max_filesize": max_filesize,
+                                    "max_width": max_width,
+                                    "max_height": max_height
+                                }
+                        )
                     else:
                         r.write('Not available')
                     r.write('</li>')
