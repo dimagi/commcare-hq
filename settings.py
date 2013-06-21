@@ -7,7 +7,6 @@ INSTALLED_APPS = (
     'casexml.apps.phone',
     'couchdbkit.ext.django',
     'couchforms',
-    'coverage',
     'django.contrib.contenttypes',
     'django.contrib.auth',
 )
