@@ -1028,6 +1028,21 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
 
         del screens['sort_by']
 
+    if app.build_version >= '2.2' and len(module.sort_properties) == 0:
+        # if we are using new sort style, we need to force a default
+        try:
+            default = screens['case_short'][0]
+            item = SortItem()
+            item.field = default['field']
+            item.format = ''
+            item.direction = 'ascending'
+            module.sort_properties.append(item)
+        except Exception:
+            # if it errors, we don't have any thing to sort by so
+            # can just skip it
+            pass
+
+
     for detail_type in screens:
         if detail_type not in DETAIL_TYPES:
             return HttpResponseBadRequest("All detail types must be in %r"
