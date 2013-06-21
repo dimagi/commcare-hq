@@ -72,3 +72,17 @@ class LazyAttachmentDocTest(TestCase):
         self.assertEqual(doc.lazy_fetch_attachment(name), lordsprayer)
 
         SampleDoc.wrap({})
+
+    def test_lazy_list_attachments(self):
+        doc = SampleDoc.wrap({'_attachments': {'one.txt': '1'}})
+        doc.save()
+        self.assertEqual(doc.lazy_list_attachments(),
+                         set(doc._attachments.keys()))
+        doc.lazy_put_attachment('2', 'two.txt')
+        self.assertEqual(doc.lazy_list_attachments(),
+                         set(['one.txt', 'two.txt']))
+        self.assertNotEqual(doc.lazy_list_attachments(),
+                            set(doc._attachments.keys()))
+        doc.save()
+        self.assertEqual(doc.lazy_list_attachments(),
+                         set(doc._attachments.keys()))
