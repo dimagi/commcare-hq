@@ -547,7 +547,9 @@ class FacilityWiseFollowUpReport(GenericTabularReport, DatespanMixin,
         if not self.selected_site_map:
             self._selected_site_map = self.site_map
 
-        report_sites = self.generate_keys()
+        # make sure key elements are strings
+        report_sites =  [[str(item) for item in rk] for rk in self.generate_keys()]
+
         for entry in all_keys:
             if entry['key'][0:3] in report_sites:
                 if self.individual:
