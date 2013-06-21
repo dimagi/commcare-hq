@@ -75,7 +75,7 @@ class FormattedDetailColumn(object):
                 text=sx.Text(xpath_function=self.xpath_function),
                 width=self.sort_width,
                 type=sort_property.format,
-                order=order,
+                order=order+1,  # order is 1 indexed on mobile
                 direction=sort_property.direction,
             )
 
