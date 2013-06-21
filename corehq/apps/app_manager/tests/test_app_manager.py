@@ -109,7 +109,17 @@ class AppManagerTest(TestCase):
         with open(os.path.join(os.path.dirname(__file__), 'data', 'yesno.json')) as f:
             source = json.load(f)
 
-        app = import_app(source, self.domain)
+        # do it from a NOT-SAVED app;
+        # regression test against case where contents gets lazy-put w/o saving
+        app = Application.wrap(source)
+        self.assertEqual(app['_id'], None)  # i.e. hasn't been saved
+        copy = app.make_build()
+        copy.save()
 
+    def testBuildImportedApp(self):
+        with open(os.path.join(os.path.dirname(__file__), 'data', 'yesno.json')) as f:
+            source = json.load(f)
+
+        app = import_app(source, self.domain)
         copy = app.make_build()
         copy.save()

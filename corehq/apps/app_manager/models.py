@@ -259,6 +259,7 @@ class FormSource(object):
             source = app.lazy_fetch_attachment(filename)
         except KeyError:
             source = ''
+
         return source
 
     def __set__(self, form, value):
@@ -911,9 +912,9 @@ class VersionedDoc(LazyAttachmentDoc):
         return copy
 
     def copy_attachments(self, other, regexp=ATTACHMENT_REGEX):
-        for name in other._attachments or {}:
+        for name in other.lazy_list_attachments() or {}:
             if regexp is None or re.match(regexp, name):
-                self.lazy_put_attachment(other.fetch_attachment(name), name)
+                self.lazy_put_attachment(other.lazy_fetch_attachment(name), name)
     def revert_to_copy(self, copy):
         """
         Replaces couch doc with a copy of the backup ("copy").
