@@ -1,18 +1,18 @@
-import StringIO
 from datetime import datetime, timedelta
 import time
 import uuid
 import os
 import hashlib
 
-from django.test import TestCase, RequestFactory
+from django.test import TestCase
 import lxml
 from django.core.files.uploadedfile import UploadedFile
 
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.signals import process_cases
 from casexml.apps.case.xml import V2
 from couchforms.models import XFormInstance
-from corehq.apps.receiverwrapper import views as rcv_views
+from couchforms.util import post_xform_to_couch
 
 TEST_CASE_ID = "EOL9FIAKIQWOFXFOH0QAMWU64"
 CREATE_XFORM_ID = "6RGAZTETE3Z2QC0PE2DKM88MO"
@@ -82,24 +82,17 @@ class BaseCaseMultimediaTest(TestCase):
         with open(MEDIA_FILES[key], 'rb') as attach:
             return hashlib.md5(attach.read()).hexdigest()
 
-
-    def _submit_rf(self, xml_data, dict_attachments):
+    def _do_submit(self, xml_data, dict_attachments):
         """
         RequestFactory submitter - simulates direct submission to server directly (no need to call process case after fact)
         """
-        rf = RequestFactory()
-        f = StringIO.StringIO(xml_data.encode('utf-8'))
-        f.name = 'form.xml'
-        data_dict = {'xml_submission_file': f}
-        for k,v in dict_attachments.items():
-            data_dict[k] = v
+        form = post_xform_to_couch(xml_data, dict_attachments)
+        self.assertEqual(len(dict_attachments.keys()), len(form.attachments))
+        process_cases(sender="testharness", xform=form)
 
-        req = rf.post('/a/%s/receiver' % TEST_DOMAIN,
-                      data=data_dict) #, content_type='multipart/form-data')
-        return rcv_views.post(req, 'tester')
 
     def _submit_and_verify(self, doc_id, xml_data, dict_attachments):
-        self._submit_rf(xml_data, dict_attachments)
+        self._do_submit(xml_data, dict_attachments)
 
         time.sleep(2)
         form = XFormInstance.get(doc_id)
