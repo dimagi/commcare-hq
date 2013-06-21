@@ -165,10 +165,14 @@ class CaseAPIHelper(object):
 
 def link_locations(base_results):
     """annotate case results with info from linked location doc (if any)"""
-    loc_ids = set(match.couch_doc.location_[-1] for match in base_results if hasattr(match.couch_doc, 'location_'))
+
+    def _has_location(doc):
+        return hasattr(doc, 'location_') and doc.location_
+
+    loc_ids = set(match.couch_doc.location_[-1] for match in base_results if _has_location(match.couch_doc))
     locs = dict((loc._id, loc) for loc in Location.view('_all_docs', keys=list(loc_ids), include_docs=True))
     for match in base_results:
-        if hasattr(match.couch_doc, 'location_'):
+        if _has_location(match.couch_doc):
             loc_id = match.couch_doc.location_[-1]
             match.couch_doc.linked_location = locs[loc_id]._doc
 
