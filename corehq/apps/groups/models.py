@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from functools import partial
 from couchdbkit.ext.django.schema import *
+from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.users.models import CouchUser, CommCareUser
 from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord
 from django.conf import settings
@@ -90,6 +91,7 @@ class Group(UndoableDocument):
         self.path = self.path[index:]
         self.save()
 
+    @memoized
     def get_user_ids(self, is_active=True):
         return [user.user_id for user in self.get_users(is_active)]
 
