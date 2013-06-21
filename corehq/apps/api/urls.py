@@ -1,5 +1,5 @@
 import re
-from corehq.apps.api.object_fetch_api import CaseAttachmentAPI, CachedObjectAPI
+from corehq.apps.api.object_fetch_api import CaseAttachmentAPI
 
 from corehq.apps.api.domainapi import DomainAPI
 from corehq.apps.api.resources import v0_1, v0_2, v0_3, v0_4
