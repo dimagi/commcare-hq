@@ -42,7 +42,7 @@
                 applicationVersion: {{ app.application_version|JSON }}
             });
 
-            var parsedSortRows = JSON.parse({{ sortRows|JSON }});
+            var parsedSortRows = JSON.parse({{ sortElements|JSON }});
             for (var i=0; i < parsedSortRows.length; i++) {
                 sortRows.addSortRow(
                     parsedSortRows[i].field,

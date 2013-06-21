@@ -63,7 +63,7 @@ class FormattedDetailColumn(object):
 
     @property
     def sort_node(self):
-        sort_fields = [s.field for s in self.module.sort_properties]
+        sort_fields = [s.field for s in self.module.sort_elements]
         field = self.column.field
         if field in sort_fields and \
            self.app.build_version >= '2.2' and \

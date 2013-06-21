@@ -52,7 +52,7 @@ from corehq.apps.reports import util as report_utils
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
     AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, EXAMPLE_DOMAIN, str_to_cls, validate_lang, SavedAppBuild, load_commcare_settings_layout
-from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util, SortItem
+from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download
 
@@ -720,8 +720,8 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         template = "app_manager/form_view.html"
         context.update(get_form_view_context(req, form, context['langs'], is_user_registration))
     elif module:
-        sort_properties = [prop.values() for prop in module.sort_properties]
-        context.update({"sortRows": json.dumps(sort_properties)})
+        sort_elements = [prop.values() for prop in module.sort_elements]
+        context.update({"sortElements": json.dumps(sort_elements)})
         template = "app_manager/module_view.html"
     else:
         template = "app_manager/app_view.html"
@@ -1017,26 +1017,26 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
 
-    module.sort_properties = []
-    if 'sort_by' in screens:
-        for sort_item in json.load(StringIO(screens['sort_by'])):
-            item = SortItem()
-            item.field = sort_item['field']
-            item.format = sort_item['type']
-            item.direction = sort_item['direction']
-            module.sort_properties.append(item)
+    module.sort_elements = []
+    if 'sort_elements' in screens:
+        for sort_element in json.load(StringIO(screens['sort_elements'])):
+            item = SortElement()
+            item.field = sort_element['field']
+            item.type = sort_element['type']
+            item.direction = sort_element['direction']
+            module.sort_elements.append(item)
 
-        del screens['sort_by']
+        del screens['sort_elements']
 
     if app.build_version >= '2.2' and len(module.sort_properties) == 0:
         # if we are using new sort style, we need to force a default
         try:
             default = screens['case_short'][0]
-            item = SortItem()
+            item = SortElement()
             item.field = default['field']
-            item.format = ''
+            item.type = ''
             item.direction = 'ascending'
-            module.sort_properties.append(item)
+            module.sort_elements.append(item)
         except Exception:
             # if it errors, we don't have any thing to sort by so
             # can just skip it

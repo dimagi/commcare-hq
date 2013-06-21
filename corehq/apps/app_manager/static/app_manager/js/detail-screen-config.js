@@ -526,7 +526,7 @@ var DetailScreenConfig = (function () {
                     return {
                         'case_short': shortColumns,
                         'case_long': longColumns,
-                        'sort_by': ko.toJSON(sortRows.sortRows),
+                        'sort_elements': ko.toJSON(sortRows.sortRows),
                     };
                 } else {
                     return {

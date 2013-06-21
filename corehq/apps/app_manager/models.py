@@ -766,15 +766,15 @@ class DetailColumn(IndexedSchema):
         return super(DetailColumn, cls).wrap(data)
 
 
-class SortItem(IndexedSchema):
+class SortElement(IndexedSchema):
     field = StringProperty()
-    format = StringProperty()
+    type = StringProperty()
     direction = StringProperty()
 
     def values(self):
         values = {
             'field': self.field,
-            'type': self.format,
+            'type': self.type,
             'direction': self.direction,
         }
 
@@ -861,7 +861,7 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
     case_list = SchemaProperty(CaseList)
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
-    sort_properties = SchemaListProperty(SortItem)
+    sort_elements = SchemaListProperty(SortElement)
 
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
