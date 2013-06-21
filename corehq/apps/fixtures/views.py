@@ -12,6 +12,7 @@ from django.views.generic.base import TemplateView
 from django.shortcuts import render
 
 from corehq.apps.domain.decorators import login_or_digest
+from corehq.apps.fixtures.exceptions import UploadItemListsException
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, _id_from_doc
 from corehq.apps.groups.models import Group
 from corehq.apps.users.bulkupload import GroupMemoizer
@@ -207,6 +208,9 @@ def view(request, domain, template='fixtures/view.html'):
     return render(request, template, {
         'domain': domain
     })
+
+DELETE_HEADER = 'Delete(Y/N)'
+
 @require_can_edit_fixtures
 def download_item_lists(request, domain):
     data_types = FixtureDataType.by_domain(domain)
@@ -246,14 +250,14 @@ def download_item_lists(request, domain):
         max_users = 0
         max_groups = 0
 
-    type_headers = ["name", "tag"] + ["field %d" % x for x in range(1,max_fields-1)]
+    type_headers = ["name", "tag"] + ["field %d" % x for x in range(1, max_fields - 1)]
     type_headers = ("types", tuple(type_headers))
     table_headers = [type_headers]    
     for type_schema in data_type_schemas:
-        item_header = (type_schema[1], tuple(["UID","Delete(Y/N)"]+
-                                             ["field: "+x for x in type_schema[2:]]+
-                                             ["group %d" % x for x in range(1, mmax_groups+1)]+
-                                             ["user %d" % x for x in range(1, mmax_users+1)]))
+        item_header = (type_schema[1], tuple(["UID", DELETE_HEADER] +
+                                             ["field: " + x for x in type_schema[2:]] +
+                                             ["group %d" % x for x in range(1, mmax_groups + 1)] +
+                                             ["user %d" % x for x in range(1, mmax_users + 1)]))
         table_headers.append(item_header)
 
     table_headers = tuple(table_headers)
@@ -377,7 +381,11 @@ def upload_fixture_api(request, domain, **kwargs):
 
 
 def run_upload_api(request, domain, workbook):
-    return_val = {"unknown_groups":[], "unknown_users":[], "number_of_fixtures":0}
+    return_val = {
+        "unknown_groups": [],
+        "unknown_users": [],
+        "number_of_fixtures": 0,
+    }
     group_memoizer = GroupMemoizer(domain)
 
     data_types = workbook.get_worksheet(title='types')
@@ -415,12 +423,16 @@ def run_upload_api(request, domain, workbook):
                 )
                 try:
                     old_data_item = FixtureDataItem.get(di['UID'])
-                    if di['Delete(Y/N)']=="Y" or di['Delete(Y/N)']=="y":
+                    assert old_data_item.domain == domain
+                    assert old_data_item.doc_type == FixtureDataItem._doc_type
+                    assert old_data_item.data_type_id == data_type.get_id
+                    if di.get(DELETE_HEADER) in ("Y", "y"):
                         old_data_item.recursive_delete(transaction)
-                        continue   
+                        continue
                     old_data_item.fields = di['field']
-                    transaction.save(old_data_item)                 
-                except:
+                    transaction.save(old_data_item)
+                except (AttributeError, KeyError, ResourceNotFound,
+                        AssertionError):
                     old_data_item = new_data_item
                     transaction.save(old_data_item)
 
