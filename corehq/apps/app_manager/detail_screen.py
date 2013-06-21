@@ -66,7 +66,8 @@ class FormattedDetailColumn(object):
         sort_fields = [s.field for s in self.module.sort_properties]
         field = self.column.field
         if field in sort_fields and \
-           self.app.build_version >= '2.2':
+           self.app.build_version >= '2.2' and \
+           self.detail.display == 'short':
             order = sort_fields.index(field)
             sort_property = self.module.sort_properties[order]
 
