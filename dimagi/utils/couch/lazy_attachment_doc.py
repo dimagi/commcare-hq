@@ -54,6 +54,11 @@ class LazyAttachmentDoc(Document):
         except KeyError:
             return self.fetch_attachment(name)
 
+    def lazy_list_attachments(self):
+        keys = set()
+        keys.update(self._LAZY_ATTACHMENTS.keys())
+        keys.update(self._attachments.keys())
+        return keys
 
     def register_pre_save(self, fn):
         if not hasattr(self, '_PRE_SAVE'):
