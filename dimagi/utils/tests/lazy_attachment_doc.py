@@ -7,6 +7,9 @@ class SampleDoc(LazyAttachmentDoc):
 
     name = StringProperty()
 
+    class Meta:
+        app_label = 'utils'
+
 
 class LazyAttachmentDocTest(TestCase):
 

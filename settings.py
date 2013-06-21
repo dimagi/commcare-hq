@@ -27,7 +27,7 @@ COUCH_DATABASE_NAME = 'dimagi_utils'
 
 COUCH_DATABASE = 'http://127.0.0.1:5984/dimagi_utils_test'
 
-COUCHDB_DATABASES = [(app, 'http://127.0.0.1:5984/dimagi_utils') for app in ['utils', 'couch', 'tests']]
+COUCHDB_DATABASES = [(app, 'http://127.0.0.1:5984/dimagi_utils') for app in ['utils', 'couch']]
 
 
 # Hardcode the test database?
