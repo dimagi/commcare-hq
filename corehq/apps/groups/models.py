@@ -91,7 +91,6 @@ class Group(UndoableDocument):
         self.path = self.path[index:]
         self.save()
 
-    @memoized
     def get_user_ids(self, is_active=True):
         return [user.user_id for user in self.get_users(is_active)]
 
@@ -107,7 +106,16 @@ class Group(UndoableDocument):
             return [user for user in users if user.is_active]
         else:
             return users
-    
+
+    @memoized
+    def get_static_user_ids(self, is_active=True):
+        return [user.user_id for user in self.get_static_users(is_active)]
+
+    @memoized
+    def get_static_users(self, is_active=True):
+        return self.get_users()
+
+
     @classmethod
     def by_domain(cls, domain):
         return cls.view('groups/by_domain',
