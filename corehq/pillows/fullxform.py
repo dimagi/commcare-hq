@@ -33,6 +33,8 @@ class FullXFormPillow(XFormPillow):
     es_type = "fullxform"
     es_index = FULL_XFORM_INDEX
 
+    xform_handlers = []
+
     #for simplicity, the handlers are managed on the domain level
     handler_domain_map = {}
 
