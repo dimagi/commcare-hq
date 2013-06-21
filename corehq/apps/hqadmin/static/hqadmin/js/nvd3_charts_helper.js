@@ -70,9 +70,9 @@ function format_data(data, start, end) {
     return trim_data(ret);
 }
 
-function formatDataForLineGraph(data) {
+function formatDataForLineGraph(data, init_val) {
     ret = {"key": data.key, "values": []};
-    var total = 0
+    var total = init_val;
     for (var i = 0; i < data.values.length; i++) {
         total += data.values[i].y;
         ret.values.push([data.values[i].x, total])
@@ -80,7 +80,7 @@ function formatDataForLineGraph(data) {
     return ret
 }
 
-function loadCharts(xname, data, starting_time, ending_time) {
+function loadCharts(xname, data, initial_values, starting_time, ending_time) {
     for (var key in data) {
         if (data.hasOwnProperty(key)) {
             if (data[key].length > 0) {
@@ -93,9 +93,10 @@ function loadCharts(xname, data, starting_time, ending_time) {
             }
         }
     }
-
     var domain_data = format_data(data, starting_time, ending_time);
-    var cum_domain_data = _.map(domain_data, formatDataForLineGraph);
+    var cum_domain_data = _.map(domain_data, function (domain_datum) {
+        return formatDataForLineGraph(domain_datum, initial_values[domain_datum.key]);
+    });
 
     var bar_chart = addHistogram("#bar-chart svg", xname, domain_data);
     var cum_chart = addLineGraph("#cumulative-chart svg", xname, cum_domain_data);
