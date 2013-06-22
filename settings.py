@@ -3,7 +3,7 @@
 SECRET_KEY = 'this is not a secret key'
 
 INSTALLED_APPS = (
-    'export',
+    'couchexport',
     'couchdbkit.ext.django',
     'coverage',
     'django.contrib.contenttypes',
