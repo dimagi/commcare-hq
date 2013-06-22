@@ -10,7 +10,11 @@ setup(
     author_email='information@dimagi.com',
     url='http://www.dimagi.com/',
     install_requires = [
-        "django", "couchdbkit", "dimagi-utils", "openpyxl", "xlwt"
+        "django",
+        "couchdbkit",
+        "dimagi-utils",
+        "openpyxl",
+        "xlwt",
     ],
     packages = find_packages(exclude=['*.pyc']),
     include_package_data=True
