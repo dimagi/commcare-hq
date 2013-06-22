@@ -7,7 +7,7 @@ import json
 from StringIO import StringIO
 import couchexport
 from couchexport.util import SerializableFunctionProperty,\
-    get_schema_index_view_keys, force_tag_to_list
+    get_schema_index_view_keys, force_tag_to_list, clear_attachments
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch.database import get_db, iter_docs
@@ -244,6 +244,13 @@ class ExportTable(DocumentSchema):
     columns = SchemaListProperty(ExportColumn)
     order = ListProperty()
     
+
+    @classmethod
+    def wrap(cls, data):
+        # hack: manually remove any references to _attachments at runtime
+        data['columns'] = [c for c in data['columns'] if not c['index'].startswith("_attachments.")]
+        return super(ExportTable, cls).wrap(data)
+
     @classmethod
     def default(cls, index):
         return cls(index=index, display="", columns=[])
