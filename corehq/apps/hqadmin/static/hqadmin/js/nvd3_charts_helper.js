@@ -51,7 +51,7 @@ function trim_data(data) {
 
     var firsts = _.filter(_.map(data, function(d) { return get_first(d.values); }), gt_zero);
     var lasts = _.filter(_.map(data, function(d) { return get_last(d.values); }), gt_zero);
-    var first = firsts.length > 0 ? Math.max.apply(null, firsts) : 0;
+    var first = firsts.length > 0 ? Math.min.apply(null, firsts) : 0;
     var last = lasts.length > 0 ? Math.max.apply(null, lasts) : data[0].values.length;
 
     return _.map(data, function(d){
@@ -70,7 +70,17 @@ function format_data(data, start, end) {
     return trim_data(ret);
 }
 
-function addHistogram(element_id, xname, data, starting_time, ending_time) {
+function formatDataForLineGraph(data, init_val) {
+    ret = {"key": data.key, "values": []};
+    var total = init_val;
+    for (var i = 0; i < data.values.length; i++) {
+        total += data.values[i].y;
+        ret.values.push([data.values[i].x, total])
+    }
+    return ret
+}
+
+function loadCharts(xname, data, initial_values, starting_time, ending_time) {
     for (var key in data) {
         if (data.hasOwnProperty(key)) {
             if (data[key].length > 0) {
@@ -83,28 +93,64 @@ function addHistogram(element_id, xname, data, starting_time, ending_time) {
             }
         }
     }
-
     var domain_data = format_data(data, starting_time, ending_time);
-
-    chart = nv.addGraph(function() {
-        var chart = nv.models.multiBarChart();
-
-        chart.xAxis
-            .axisLabel('Date')
-            .tickFormat(function(d){return d3.time.format.utc('%d-%b-%Y')(new Date(d));});
-
-        chart.yAxis
-            .tickFormat(d3.format(',.1d'))
-            .axisLabel(xname);
-
-        chart.margin({top: 30, right: 20, bottom: 50, left: 80});
-
-        d3.select('#' + element_id + ' svg')
-            .datum(domain_data)
-            .transition().duration(500).call(chart);
-
-        nv.utils.windowResize(chart.update);
-
-        return chart;
+    var cum_domain_data = _.map(domain_data, function (domain_datum) {
+        return formatDataForLineGraph(domain_datum, initial_values[domain_datum.key]);
     });
+
+    var bar_chart = addHistogram("#bar-chart svg", xname, domain_data);
+    var cum_chart = addLineGraph("#cumulative-chart svg", xname, cum_domain_data);
+    var stacked_cum_chart = addStackedAreaGraph("#stacked-cumulative-chart svg", xname, cum_domain_data);
+
+    return {
+        "bar-chart": bar_chart,
+        "cumulative-chart": cum_chart,
+        "stacked-cumulative-chart": stacked_cum_chart
+    }
+}
+
+function addHistogram(selector, xname, data) {
+    var chart = nv.models.multiBarChart().color(d3.scale.category10().range());
+    chart = formatChart(chart, selector, xname, data);
+    nv.addGraph(function() { return chart });
+    return chart;
+}
+
+function addLineGraph(selector, xname, data) {
+    var chart = nv.models.lineChart()
+                  .x(function(d) { return d[0] })
+                  .y(function(d) { return d[1] })
+                  .color(d3.scale.category10().range());
+    chart = formatChart(chart, selector, xname, data);
+    nv.addGraph(function() { return chart });
+    return chart;
+}
+
+function addStackedAreaGraph(selector, xname, data) {
+    var chart = nv.models.stackedAreaChart()
+                  .x(function(d) { return d[0] })
+                  .y(function(d) { return d[1] })
+                  .color(d3.scale.category10().range());
+    chart = formatChart(chart, selector, xname, data);
+    nv.addGraph(function() { return chart });
+    return chart;
+}
+
+function formatChart(chart, selector, xname, data) {
+    chart.xAxis
+        .axisLabel('Date')
+        .tickFormat(function(d){return d3.time.format.utc('%d-%b-%Y')(new Date(d));});
+
+    chart.yAxis
+        .tickFormat(d3.format(',.1d'))
+        .axisLabel(xname);
+
+    d3.select(selector)
+        .datum(data)
+        .transition().duration(500)
+        .call(chart);
+
+    nv.utils.windowResize(chart.update);
+
+    return chart;
 }

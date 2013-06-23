@@ -4,6 +4,7 @@ import corehq.apps.receiverwrapper.reports as receiverwrapper
 import phonelog.reports as phonelog
 from corehq.apps.reports.commtrack import psi_prototype
 from corehq.apps.reports.commtrack import standard as commtrack_reports
+from corehq.apps.reports.commtrack import maps as commtrack_maps
 
 from django.utils.translation import ugettext_noop as _
 
@@ -17,6 +18,7 @@ REPORTS = (
         psi_prototype.CumulativeSalesAndConsumptionReport,
         psi_prototype.StockOutReport,
         psi_prototype.StockReportExport,
+        commtrack_maps.StockStatusMapReport,
     )),
     (_("Monitor Workers"), (
         monitoring.DailyFormStatsReport,

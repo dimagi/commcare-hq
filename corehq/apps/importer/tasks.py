@@ -66,9 +66,14 @@ def bulk_import_async(import_id, config, domain, excel_id):
         fields_to_update = importer_util.populate_updated_fields(config,
                                                                  columns, row)
 
+        if 'owner_id' in fields_to_update:
+            owner_id = fields_to_update['owner_id']
+            del fields_to_update['owner_id']
+        else:
+            owner_id = user_id
+
         if not case:
             id = uuid.uuid4().hex
-            owner_id = user_id
 
             caseblock = CaseBlock(
                 create=True,
@@ -85,6 +90,7 @@ def bulk_import_async(import_id, config, domain, excel_id):
             caseblock = CaseBlock(
                 create=False,
                 case_id=case._id,
+                owner_id=owner_id,
                 version=V2,
                 update=fields_to_update
             )

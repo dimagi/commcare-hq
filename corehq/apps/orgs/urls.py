@@ -30,8 +30,7 @@ urlpatterns = patterns('corehq.apps.orgs.views',
     url(r'^(?P<org>[\w\.-]+)/teams/(?P<team_id>[ \w-]+)/leave_team$', 'leave_team', name='leave_team'),
 
     url(r'^(?P<org>[\w\.-]+)/reports/$', 'base_report', name='orgs_report'),
-    url(r'^(?P<org>[\w\.-]+)/reports/stats/$', 'stats', name='orgs_stats'),
-    # url(r'^(?P<org>[\w\.-]+)/stats/$', 'stats', name='orgs_stats'),
+    url(r'^(?P<org>[\w\.-]+)/reports/stats/(?P<stat_slug>[ \w-]+)/$', 'stats', name='orgs_stats'),
     url(r'^(?P<org>[\w\.-]+)/reports/stats_data/$', 'stats_data', name='orgs_stats_data'),
 
     url(r'^(?P<org>[\w\.-]+)/join/(?P<invitation_id>[ \w-]+)/$', 'accept_invitation', name='orgs_accept_invitation'),

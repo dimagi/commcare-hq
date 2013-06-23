@@ -200,30 +200,35 @@ class UpdateReferralAction(FormAction):
             )
         return self.followup_date or "date(today() + 2)"
 
+
 class OpenReferralAction(UpdateReferralAction):
-    name_path       = StringProperty()
+    name_path = StringProperty()
+
 
 class OpenCaseAction(FormAction):
-    name_path   = StringProperty()
+    name_path = StringProperty()
     external_id = StringProperty()
+
 
 class OpenSubCaseAction(FormAction):
     case_type = StringProperty()
     case_name = StringProperty()
     case_properties = DictProperty()
+    repeat_context = StringProperty()
+
 
 class FormActions(DocumentSchema):
-    open_case       = SchemaProperty(OpenCaseAction)
-    update_case     = SchemaProperty(UpdateCaseAction)
-    close_case      = SchemaProperty(FormAction)
-    open_referral   = SchemaProperty(OpenReferralAction)
+    open_case = SchemaProperty(OpenCaseAction)
+    update_case = SchemaProperty(UpdateCaseAction)
+    close_case = SchemaProperty(FormAction)
+    open_referral = SchemaProperty(OpenReferralAction)
     update_referral = SchemaProperty(UpdateReferralAction)
-    close_referral  = SchemaProperty(FormAction)
+    close_referral = SchemaProperty(FormAction)
 
-    case_preload    = SchemaProperty(PreloadAction)
-    referral_preload= SchemaProperty(PreloadAction)
+    case_preload = SchemaProperty(PreloadAction)
+    referral_preload = SchemaProperty(PreloadAction)
 
-    subcases        = SchemaListProperty(OpenSubCaseAction)
+    subcases = SchemaListProperty(OpenSubCaseAction)
 
     def all_property_names(self):
         names = set()
@@ -526,6 +531,10 @@ class FormBase(DocumentSchema):
         for subcase_action in self.actions.subcases:
             if not subcase_action.case_type:
                 errors.append({'type': 'subcase has no case type'})
+            # no parent properties for subcase
+            for key in subcase_action.case_properties:
+                if not re.match(r'^[a-zA-Z][\w_-]*$', key):
+                    errors.append({'type': 'update_case word illegal', 'word': key})
 
         if self.requires == 'none' and self.actions.open_case.is_active() \
                 and not self.actions.open_case.name_path:
