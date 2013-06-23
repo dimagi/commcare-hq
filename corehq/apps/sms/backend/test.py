@@ -24,10 +24,12 @@ def bootstrap(id=None, to_console=True):
     """
     backend = TestBackend(
         description='test backend',
+        is_global=True,
         to_console=to_console,
     )
     if id:
         backend._id = id
+        backend.name = id.strip().upper()
     backend.save(**get_safe_write_kwargs())
     return backend
 
