@@ -44,7 +44,12 @@ class BackendForm(Form):
         if re.compile("\s").search(value) is not None:
             raise ValidationError(_("Name may not contain any spaces."))
         
-        backend = SMSBackend.view("sms/backend_by_owner_domain", key=[self._cchq_domain, value], include_docs=True).one()
+        if self._cchq_domain is None:
+            # Ensure name is not duplicated among other global backends
+            backend = SMSBackend.view("sms/global_backends", key=[value], include_docs=True).one()
+        else:
+            # Ensure name is not duplicated among other backends owned by this domain
+            backend = SMSBackend.view("sms/backend_by_owner_domain", key=[self._cchq_domain, value], include_docs=True).one()
         if backend is not None and backend._id != self._cchq_backend_id:
             raise ValidationError(_("Name is already in use."))
         

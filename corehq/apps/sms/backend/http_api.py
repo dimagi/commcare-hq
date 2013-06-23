@@ -6,11 +6,12 @@ from corehq.apps.reminders.forms import RecordListField
 from django.forms.fields import *
 from django.core.exceptions import ValidationError
 from couchdbkit.ext.django.schema import *
+from dimagi.utils.django.fields import TrimmedCharField
 
 class HttpBackendForm(BackendForm):
-    url = CharField()
-    message_param = CharField()
-    number_param = CharField()
+    url = TrimmedCharField()
+    message_param = TrimmedCharField()
+    number_param = TrimmedCharField()
     include_plus = BooleanField(required=False)
     method = ChoiceField(choices=(("GET","GET"),("POST","POST")))
     additional_params = RecordListField(input_name="additional_params")

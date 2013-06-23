@@ -12,6 +12,10 @@
         background-color: #FAFAFF;
         padding: 20px;
     }
+    .errorlist li {
+        color: #A22;
+        list-style-type: none;
+    }
 </style>
 {% endblock %}
 
@@ -66,8 +70,8 @@
 {% block main_column %}
 <form action="" method="post">
     <h4>{% trans "SMS Country-Connection Map" %}</h4>
-    {{ form.backend_map.errors }}
     <div class="form-block">
+        {{ form.backend_map.errors }}
         <table style="width: auto;" class="table table-striped table-bordered datatable">
             <thead>
                 <tr>
