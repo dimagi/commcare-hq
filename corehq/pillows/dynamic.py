@@ -11,7 +11,7 @@ def prop_subtype(prop_type, nested=False, dynamic=False):
     return {
         'type': 'nested' if nested else 'object',
         'dynamic': dynamic,
-        'properties': set_properties(prop_type)
+        'properties': set_properties(prop_type),
     }
 
 
@@ -35,6 +35,22 @@ complex_type_mapper = {
 
 conservative_types = {
     DictProperty: {"type": "object", "dynamic": False}
+}
+
+
+#dynamic template fragment to auto-multi-field all fields, used for report indices where everything is made into a dict
+everything_is_dict_template = {
+    "everything_else": {
+        "match": "*",
+        "match_mapping_type": "string",
+        "mapping": {
+            "type": "multi_field",
+            "fields": {
+                "{name}": {"type": "string", "index": "analyzed"},
+                "exact": {"type": "string", "index": "not_analyzed"}
+            }
+        }
+    }
 }
 
 
@@ -76,7 +92,7 @@ case_special_types = {
     #to extend, use this and add special date formats here...
 }
 
-case_nested_types = ['actions']
+case_nested_types = ['actions',]
 
 domain_special_types = {
     "name": type_exact_match_string("name", dual=True),
@@ -88,7 +104,7 @@ domain_special_types = {
     "cda.type": {"type": "string", "index": "not_analyzed"},
 }
 
-def set_properties(schema_class, custom_types=default_special_types, nested_types=default_nested_types, init_dict=None):
+def set_properties(schema_class, custom_types=default_special_types, nested_types=default_nested_types, init_dict=None, dynamic=False):
     """
     Helper function to walk a schema_class's properties recursively and create a typed out mapping
     that can index well (specifically dict types and date time properties)
@@ -101,7 +117,7 @@ def set_properties(schema_class, custom_types=default_special_types, nested_type
             props_dict[prop_name] = simple_type_mapper[prop_type.__class__]
         elif complex_type_mapper.has_key(prop_type.__class__):
             func = complex_type_mapper[prop_type.__class__]
-            props_dict[prop_name] = func(prop_type._schema, nested=prop_name in nested_types, dynamic=False)
+            props_dict[prop_name] = func(prop_type._schema, nested=prop_name in nested_types, dynamic=dynamic)
 
     if not props_dict.get('doc_type'):
         props_dict["doc_type"] = {"type": "string", "index": "not_analyzed"}
@@ -113,7 +129,7 @@ def set_properties(schema_class, custom_types=default_special_types, nested_type
 #but try to always add to mapping additional properties of dicts we didn't expect (from DictProperties)
 DEFAULT_MAPPING_WRAPPER = {
         "date_detection": False,
-        'dynamic': False,
+        'dynamic': True,
         "date_formats": DATE_FORMATS_ARR, #for parsing the explicitly defined dates
         "_meta": {"created": None},
         "properties": {}
