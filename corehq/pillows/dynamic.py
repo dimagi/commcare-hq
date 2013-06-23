@@ -129,15 +129,8 @@ def set_properties(schema_class, custom_types=default_special_types, nested_type
 #but try to always add to mapping additional properties of dicts we didn't expect (from DictProperties)
 DEFAULT_MAPPING_WRAPPER = {
         "date_detection": False,
-        'dynamic': True,
+        'dynamic': False,
         "date_formats": DATE_FORMATS_ARR, #for parsing the explicitly defined dates
         "_meta": {"created": None},
         "properties": {}
     }
-
-def case_mapping_generator():
-    #todo: need to ensure that domain is always mapped
-    m = DEFAULT_MAPPING_WRAPPER
-    doc_class=CommCareCase
-    m['properties'] = set_properties(doc_class, custom_types=case_special_types)
-    return m
