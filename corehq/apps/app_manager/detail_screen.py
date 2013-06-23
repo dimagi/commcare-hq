@@ -69,14 +69,14 @@ class FormattedDetailColumn(object):
            self.app.build_version >= '2.2' and \
            self.detail.display == 'short':
             order = sort_fields.index(field)
-            sort_property = self.module.sort_properties[order]
+            sort_element = self.module.sort_elements[order]
 
             sort = sx.Sort(
                 text=sx.Text(xpath_function=self.xpath_function),
                 width=self.sort_width,
-                type=sort_property.format,
+                type=sort_element.type,
                 order=order+1,  # order is 1 indexed on mobile
-                direction=sort_property.direction,
+                direction=sort_element.direction,
             )
 
             return sort
