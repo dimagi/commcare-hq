@@ -1,7 +1,7 @@
 import copy
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.pillows.base import convert_properties
-from .mappings.report_xform_mapping import REPORT_XFORM_INDEX, REPORT_XFORM_MAPPING
+from .mappings.reportxform_mapping import REPORT_XFORM_INDEX, REPORT_XFORM_MAPPING
 from .xform import XFormPillow
 
 

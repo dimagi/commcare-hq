@@ -6,7 +6,7 @@ from django.conf import settings
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.management.commands.ptop_generate_mapping import MappingOutputCommand
-from corehq.pillows.mappings import report_xform_mapping
+from corehq.pillows.mappings import reportxform_mapping
 from corehq.pillows.reportxform import ReportXFormPillow
 
 
@@ -19,24 +19,22 @@ class Command(MappingOutputCommand):
 
 
     def finish_handle(self):
-        filepath = os.path.join(settings.FILEPATH, 'corehq','pillows','mappings','report_xform_mapping.py')
+        filepath = os.path.join(settings.FILEPATH, 'corehq','pillows','mappings','reportxform_mapping.py')
         xform_pillow = ReportXFormPillow(create_index=False)
 
         #current index
         #check current index
         aliased_indices = xform_pillow.check_alias()
 
-#        current_index = '%s_%s' % (xform_pillow.es_index_prefix, xform_pillow.calc_meta())
         current_index = xform_pillow.es_index
 
         sys.stderr.write("current index:\n")
         sys.stderr.write('REPORT_XFORM_INDEX="%s"\n' % current_index)
 
         #regenerate the mapping dict
-        mapping = report_xform_mapping.REPORT_XFORM_MAPPING
+        mapping = reportxform_mapping.REPORT_XFORM_MAPPING
         xform_pillow.default_mapping = mapping
         delattr(xform_pillow, '_calc_meta_cache')
-        #xform_pillow.calc_meta.reset_cache()
         calc_index = "%s_%s" % (xform_pillow.es_index_prefix, xform_pillow.calc_meta())
 
         if calc_index not in aliased_indices and calc_index != current_index:

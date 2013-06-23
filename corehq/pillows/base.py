@@ -10,9 +10,9 @@ def convert_properties(sub_dict, mapping, override_root_keys=None):
     For mapping out ALL nested properties on cases, convert everything to a dict so as to
     prevent string=>object and object=>string mapping errors.
 
-    mapping is the mapping at the level of the properties you are at - originally passing as the default mapping of the pillow
-
-    override_root_keys is a list of keys you want explicitly skipped at the root level and are not recursed down
+    sub_dict: the doc dict you want to modify in place before sending to ES
+    mapping: The mapping at the level of the properties you are at - originally passing as the default mapping of the pillow
+    override_root_keys: a list of keys you want explicitly skipped at the root level and are not recursed down
     """
     mapping = mapping or {}
     override_root_keys = override_root_keys or []

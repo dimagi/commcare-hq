@@ -1,6 +1,6 @@
 import copy
 from corehq.pillows.case import CasePillow
-from corehq.pillows.mappings.report_case_mapping import REPORT_CASE_MAPPING, REPORT_CASE_INDEX
+from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_MAPPING, REPORT_CASE_INDEX
 from .base import convert_properties
 
 
