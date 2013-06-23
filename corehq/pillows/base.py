@@ -19,18 +19,13 @@ def convert_properties(sub_dict, mapping, override_root_keys=None):
 
     for k, v in sub_dict.items():
         if k in mapping.get('properties', {}) or k in override_root_keys:
-            print "skipping %s" % k
             continue
-        print "converting %s" % k
 
         if isinstance(v, dict):
             if mapping.get('dynamic', False):
                 #only transmogrify stuff if it's explicitly set to dynamic
-                print "\tsubdict: %s" % k
-                print "\tmapping has: %s" % (k in mapping.get('properties', {}))
                 sub_dict[k] = convert_properties(v, mapping.get('properties', {}).get(k, {}))
         elif not isinstance(v, list):
-            print "it's not a list or dict: %s:%s" % (k, v)
             sub_dict[k] = {VALUE_TAG: v}
     return sub_dict
 
