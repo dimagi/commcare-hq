@@ -55,7 +55,7 @@ class DatabaseColumn(Column):
                 Additional positional arguments will be passed on when creating the DataTablesColumn
         Kwargs:
             :param column_type=SumColumn:
-                The type of the column. Must be an instance of sqlagg.columns.BaseColumn.
+                The type of the column. Must be a subclass of sqlagg.columns.BaseColumn.
             :param header_group=None:
                 An instance of corehq.apps.reports.datatables.DataTablesColumnGroup to which this column header will
                 be added.
@@ -93,7 +93,7 @@ class DatabaseColumn(Column):
         if 'sortable' not in kwargs:
             kwargs['sortable'] = True
 
-        if kwargs['sortable'] and 'sort_type' not in kwargs and column_type is not SimpleColumn:
+        if kwargs['sortable'] and 'sort_type' not in kwargs and not isinstance(column_type, SimpleColumn):
             kwargs['sort_type'] = DTSortType.NUMERIC
             format_fn = format_fn or format_data
 
@@ -207,7 +207,6 @@ class SqlTabularReport(GenericTabularReport):
         return DataTablesHeader(*[c.data_tables_column for c in self.columns])
 
     @property
-    @memoized
     def query_context(self):
         return sqlagg.QueryContext(self.table_name, self.filters, self.group_by)
 

@@ -2,7 +2,7 @@
 <script type="text/javascript">
     nv.addGraph(function() {
         var chart_config = {{ chart.config_dict|JSON }};
-        var chart_data = {{ chart.data|JSON }}
+        var chart_data = {{ chart.data|JSON }};
         var chart_id = '#{{ chart_id }}';
 
         $(chart_id).show();

@@ -275,12 +275,9 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
             'late': _('Late'),
             'nonreporting': _('Non-reporting'),
         }
-        return [{
-                'key': _('Current Reporting'),
-                'values': [{'label': labels[k], 'value': tally.get(k, {'count': 0.})['count']} for k in ('ontime', 'late', 'nonreporting')],
-        }]
+        return [{'label': labels[k], 'value': tally.get(k, {'count': 0.})['count']} for k in ('ontime', 'late', 'nonreporting')]
 
     @property
     def charts(self):
         if 'location_id' in self.request.GET: # hack: only get data if we're loading an actual report
-            return [PieChart(None, self.master_pie_chart_data())]
+            return [PieChart(None, _('Current Reporting'), self.master_pie_chart_data())]
