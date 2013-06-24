@@ -18,13 +18,20 @@ class MultiBarChart(Chart):
         self.x_axis = x_axis
         self.y_axis = y_axis
         self.data = []
-        self.margin = {'top': 30, 'right': 20, 'bottom': 50, 'left': 80}
+        self.marginTop = 30
+        self.marginRight = 20
+        self.marginBottom = 50
+        self.marginLeft = 80
         self.showControls = True
         self.showLegend = True
-        self.reduceXTicks = True
+        self.reduceXTicks = False
         self.rotateLabels = 0
         self.tooltips = True
         self.stacked = False
+        self.translateLabelsX = 0
+        self.translateLabelsY = 0
+        self.staggerLabels = False
+        self.groupSpacing = 0.3
 
     def add_dataset(self, key, values, color=None):
         d = dict(key=key, values=values)
@@ -33,13 +40,22 @@ class MultiBarChart(Chart):
         self.data.append(d)
 
     def config_dict(self):
-        return dict(margin=self.margin,
+        if self.rotateLabels and not self.translateLabelsX:
+            self.translateLabelsX = -10
+        return dict(margin={'top': self.marginTop,
+                            'right': self.marginRight,
+                            'bottom': self.marginBottom,
+                            'left': self.marginLeft},
                     showControls=self.showControls,
                     showLegend=self.showLegend,
                     reduceXTicks=self.reduceXTicks,
                     rotateLabels=self.rotateLabels,
                     tooltips=self.tooltips,
-                    stacked=self.stacked)
+                    stacked=self.stacked,
+                    translateLabelsX=self.translateLabelsX,
+                    translateLabelsY=self.translateLabelsY,
+                    staggerLabels=self.staggerLabels,
+                    groupSpacing=self.groupSpacing)
 
 
 class PieChart(Chart):
