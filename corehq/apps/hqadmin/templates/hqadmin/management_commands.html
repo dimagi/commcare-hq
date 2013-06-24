@@ -3,21 +3,34 @@
 
 {% block js-inline %}
     <script type="text/javascript">
-        var $command_select = $('#command-select');
-        var $command_btn = $('#cmd-btn');
-        var $current_command_name = $('#command-name');
         function update_button() {
             $('#command-name').text($("#command-select option:selected").text());
         }
+
+        function textToProperHtml(text) {
+            var $ele = $('<span>');
+            var lines = text.split('\n');
+            for (var i = 0; i < lines.length; i++) {
+                $ele.append($('<div>').text(lines[i]))
+            }
+            return $ele.html();
+        }
+
         $(function() {
+            var $command_select = $('#command-select');
+            $command_select.change(update_button);
+            update_button();
+
             $(document).on("click", "#cmd-btn", function(){
-                var data = {"command": $("#command-select").val()};
+                var data = {"command": $command_select.val()};
                 $.post("{% url run_management_command %}", data, function(resp) {
-                    var alert_cls = resp.success ? "alert-sucess" : "alert-error";
-                    $("#cmd-resp").addClass(alert_cls).text(resp.output).show();
+                    var alert_cls = resp.success ? "alert-success" : "alert-error";
+                    $("#cmd-resp")
+                            .removeClass("alert-success alert-error")
+                            .addClass(alert_cls)
+                            .html(textToProperHtml(resp.output)).show();
                 });
             });
-            update_button();
         })
     </script>
 {% endblock %}
