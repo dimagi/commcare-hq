@@ -65,14 +65,17 @@ def bulk_export_async(bulk_export_helper, download_id,
         finally:
             zf.close()
 
-        return cache_file_to_be_served(
-            tmp=path,
-            checkpoint=bulk_export_helper,
-            download_id=download_id,
-            filename=filename,
-            format='zip',
-            expiry=expiry
-        )
+        try:
+            return cache_file_to_be_served(
+                tmp=path,
+                checkpoint=bulk_export_helper,
+                download_id=download_id,
+                filename=filename,
+                format='zip',
+                expiry=expiry
+            )
+        finally:
+            os.remove(path)
     else:
         export_object = bulk_export_helper.bulk_files[0]
         return cache_file_to_be_served(
