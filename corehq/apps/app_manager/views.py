@@ -980,7 +980,7 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
 
         del screens['sort_elements']
 
-    if app.build_version >= '2.2' and len(module.sort_properties) == 0:
+    if app.build_version >= '2.2' and len(module.sort_elements) == 0:
         # if we are using new sort style, we need to force a default
         try:
             default = screens['case_short'][0]
