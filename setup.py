@@ -13,6 +13,7 @@ setup(
         "django",
         "couchdbkit",
         "dimagi-utils",
+        'django-soil',
         "openpyxl",
         "xlwt",
     ],
