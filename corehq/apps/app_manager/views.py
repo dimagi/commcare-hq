@@ -12,6 +12,7 @@ from django.core.cache import cache
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import cache_control
+from corehq import ApplicationsTab
 from corehq.apps.app_manager import commcare_settings
 from django.utils import html
 from django.utils.http import urlencode as django_urlencode
@@ -1467,7 +1468,12 @@ def edit_app_attr(request, domain, app_id, attr):
             setattr(app, attribute, value)
 
     if should_edit("name"):
-        resp['update'].update({'.variable-app_name': hq_settings['name']})
+        _clear_app_cache(request, domain)
+        name = hq_settings['name']
+        resp['update'].update({
+            '.variable-app_name': name,
+            '[data-id="{id}"]'.format(id=app_id): ApplicationsTab.make_app_title(name, app.doc_type),
+        })
 
     if should_edit("success_message"):
         success_message = hq_settings['success_message']
