@@ -25,7 +25,7 @@ def convert_properties(sub_dict, mapping, override_root_keys=None):
             if mapping.get('dynamic', False):
                 #only transmogrify stuff if it's explicitly set to dynamic
                 sub_dict[k] = convert_properties(v, mapping.get('properties', {}).get(k, {}))
-        elif not isinstance(v, list):
+        else:
             sub_dict[k] = {VALUE_TAG: v}
     return sub_dict
 
