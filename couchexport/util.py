@@ -37,6 +37,10 @@ def intersect_functions(*functions):
 # deprecated
 intersect_filters = intersect_functions
 
+def clear_attachments(schema_or_doc):
+    if schema_or_doc and '_attachments' in schema_or_doc:
+        del schema_or_doc['_attachments']
+    return schema_or_doc
 
 class SerializableFunction(object):
     def __init__(self, function=None, **kwargs):
