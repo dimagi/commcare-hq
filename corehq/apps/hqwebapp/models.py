@@ -577,7 +577,7 @@ class AdminTab(UITab):
         AdminReportsTab,
         GlobalADMConfigTab,
         BillingTab,
-        AnnouncementsTab
+        AnnouncementsTab,
     )
 
     @property
@@ -589,6 +589,7 @@ class AdminTab(UITab):
             format_submenu_context(_("Management"), is_header=True),
             format_submenu_context(mark_for_escaping(_("ADM Reports & Columns")),
                 url=reverse("default_adm_admin_interface")),
+            format_submenu_context(mark_for_escaping(_("Commands")), url=reverse("management_commands")),
 #            format_submenu_context(mark_for_escaping("HQ Announcements"),
 #                url=reverse("default_announcement_admin")),
         ]

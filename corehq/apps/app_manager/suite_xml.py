@@ -163,12 +163,21 @@ class Header(AbstractTemplate):
     ROOT_NAME = 'header'
 
 
+class Sort(AbstractTemplate):
+    ROOT_NAME = 'sort'
+
+    type = StringField('@type')
+    order = StringField('@order')
+    direction = StringField('@direction')
+
+
 class Field(XmlObject):
     ROOT_NAME = 'field'
 
     sort = StringField('@sort')
     header = NodeField('header', Header)
     template = NodeField('template', Template)
+    sort_node = NodeField('sort', Sort)
 
 
 class DetailVariable(XmlObject):
@@ -390,8 +399,10 @@ class SuiteGenerator(object):
                         for column in detail_columns:
                             fields = get_column_generator(self.app, module, detail, column).fields
                             d.fields.extend(fields)
+
                         try:
-                            d.fields[0].sort = 'default'
+                            if self.app.build_version < '2.2':
+                                d.fields[0].sort = 'default'
                         except IndexError:
                             pass
                         else:

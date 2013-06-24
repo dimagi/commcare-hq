@@ -1,8 +1,68 @@
 /*globals $, _, uiElement, eventize, lcsMerge, COMMCAREHQ */
 
+var SortRow = function (field, type, direction) {
+  this.field = ko.observable(field);
+  this.type = ko.observable(type);
+  this.direction = ko.observable(direction);
+
+  this.type.subscribe(function () {
+    window.saveButton.fire('change');
+  });
+  this.direction.subscribe(function () {
+    window.saveButton.fire('change');
+  });
+};
+
+var SortRows = function () {
+  var self = this;
+  self.sortRows = ko.observableArray([]);
+
+  self.addSortRow = function (field, type, direction) {
+    self.sortRows.push(new SortRow(field, type, direction));
+  };
+
+  self.removeSortRow = function (row) {
+    self.sortRows.remove(row);
+    window.saveButton.fire('change');
+  };
+
+  self.rowCount = ko.computed(function () {
+    return self.sortRows().length;
+  });
+
+};
+
+// http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
+// connect items with observableArrays
+ko.bindingHandlers.sortableList = {
+  init: function(element, valueAccessor) {
+    var list = valueAccessor();
+    $(element).sortable({
+      handle: '.grip',
+      cursor: 'move',
+      update: function(event, ui) {
+        //retrieve our actual data item
+        var item = ko.dataFor(ui.item.get(0));
+        //figure out its new position
+        var position = ko.utils.arrayIndexOf(ui.item.parent().children(), ui.item[0]);
+        //remove the item and add it back in the right spot
+        if (position >= 0) {
+          list.remove(item);
+          list.splice(position, 0, item);
+        }
+        ui.item.remove();
+      }
+    });
+  }
+};
+
+sortRows = new SortRows
+ko.applyBindings(sortRows, $('#detail-screen-config-body').get(0));
+
 var DetailScreenConfig = (function () {
     "use strict";
     var DetailScreenConfig, Screen, Column;
+
     function formatEnum(obj, lang, langs) {
         var key,
             translated_pairs = {},
@@ -202,7 +262,14 @@ var DetailScreenConfig = (function () {
                 $(this).remove();
                 that.screen.fire('delete-column', that);
             }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.DELETE_COLUMN);
-        }
+
+            this.$sortLink = $('<a href="#">Sort by this</a>').click(function (e) {
+                var $row = $(this).closest('tr');
+                var $field = $row.find('.detail-screen-field code').text();
+                sortRows.addSortRow($field, '', '');
+                e.preventDefault();
+            });
+       }
 
         Column.init = function (col, screen) {
             return new Column(col, screen);
@@ -380,6 +447,7 @@ var DetailScreenConfig = (function () {
                     that.save();
                 }
             });
+            window.saveButton = this.saveButton;
 
             this.render();
             this.on('add-column', function (column) {
@@ -457,7 +525,8 @@ var DetailScreenConfig = (function () {
                 if (this.model === 'case') {
                     return {
                         'case_short': shortColumns,
-                        'case_long': longColumns
+                        'case_long': longColumns,
+                        'sort_elements': ko.toJSON(sortRows.sortRows),
                     };
                 } else {
                     return {
@@ -503,7 +572,13 @@ var DetailScreenConfig = (function () {
 
                 $('<td/>').addClass('detail-screen-header').append(column.header.ui).appendTo($tr);
                 $('<td/>').addClass('detail-screen-format').append(column.format.ui).appendTo($tr);
-                $('<td/>').addClass('detail-screen-extra').append(column.$extra).appendTo($tr);
+
+                var sortLine = $('<td/>').addClass('detail-screen-extra');
+                if (!suggested && window.enableNewSort) {
+                  sortLine.append(column.$sortLink)
+                }
+                sortLine.appendTo($tr);
+
                 if (this.edit) {
                     $('<td/>').addClass('detail-screen-icon').append(
                         suggested ? column.$add : column.$copy
@@ -514,7 +589,6 @@ var DetailScreenConfig = (function () {
                 } else {
                     $('<td/>').addClass('detail-screen-icon').appendTo($tr);
                     $('<td/>').addClass('detail-screen-icon').appendTo($tr);
-
                 }
                 return $tr;
             },
@@ -538,7 +612,8 @@ var DetailScreenConfig = (function () {
                     $('<p/>').text(DetailScreenConfig.message.EMPTY_SCREEN).appendTo($box);
                 } else {
                     if (this.edit) {
-                        $('<div class="clearfix">').append(this.saveButton.ui).appendTo($box);
+                        var $detailBody = $('#detail-screen-config-body');
+                        $('<div id="saveBtn" class="clearfix">').append(this.saveButton.ui).prependTo($detailBody);
                     }
                     $table = $('<table class="table table-condensed"/>'
                         ).addClass('detail-screen-table'
@@ -593,8 +668,9 @@ var DetailScreenConfig = (function () {
                     handle: '.grip',
                     items: ">*:not(:has(.sort-disabled))",
                     update: function (e, ui) {
-                        var fromIndex = ui.item.data('index'),
-                            toIndex = rows.find('tr').get().indexOf(ui.item[0]);
+                        var fromIndex = ui.item.data('index');
+                        var toIndex = rows.find('tr').get().indexOf(ui.item[0]);
+
                         function reorder(list) {
                             var tmp = list.splice(fromIndex, 1)[0];
                             list.splice(toIndex, 0, tmp);
