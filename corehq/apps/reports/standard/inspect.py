@@ -79,8 +79,8 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
                 "query": {
                     "range": {
                         "form.meta.timeEnd": {
-                            "from": self.datespan.startdate_param_utc,
-                            "to": self.datespan.enddate_param_utc}}},
+                            "from": self.datespan.startdate_param,
+                            "to": self.datespan.enddate_param}}},
                 "filter":
                     { "and": [
                         {"terms": {"form.meta.userID": filter(None, self.combined_user_ids)}},
