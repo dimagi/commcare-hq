@@ -3,7 +3,7 @@ from couchexport.export import ExportConfiguration
 from dimagi.utils.couch.database import get_safe_write_kwargs, get_db
 
 
-class ExportSchemaTest(TestCase):
+class CleanupAttachmentTest(TestCase):
 
     def testAttachmentsRemoved(self):
         db = get_db()
