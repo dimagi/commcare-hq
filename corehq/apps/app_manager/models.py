@@ -17,7 +17,7 @@ from django.core.urlresolvers import reverse
 from django.http import Http404
 from restkit.errors import ResourceError
 import commcare_translations
-from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings
+from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings, build_error_utils
 from corehq.apps.app_manager.suite_xml import IdStrings
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 from corehq.apps.app_manager.util import split_path, save_xform
@@ -403,7 +403,7 @@ class FormBase(DocumentSchema):
 
         meta = {
             'form_type': form_type,
-            'module': {"id": module.id, "name": module.name} if module else {},
+            'module': build_error_utils.get_module_info(module) if module else {},
             'form': {"id": self.id if hasattr(self, 'id') else None, "name": self.name}
         }
 
@@ -432,12 +432,15 @@ class FormBase(DocumentSchema):
             needs_referral_detail = True
 
         if module:
-            if needs_case_type and not module.case_type:
-                errors.append({'type': "no case type", "module": {"id": module.id, "name": module.name}})
-            if needs_case_detail and not module.get_detail('case_short').columns:
-                errors.append({'type': "no case detail", "module": {"id": module.id, "name": module.name}})
-            if needs_referral_detail and not module.get_detail('ref_short').columns:
-                errors.append({'type': "no ref detail", "module": {"id": module.id, "name": module.name}})
+            errors.extend(
+                build_error_utils.get_case_errors(
+                    module,
+                    needs_case_type=needs_case_type,
+                    needs_case_detail=needs_case_detail,
+                    needs_referral_detail=needs_referral_detail,
+                )
+            )
+
         return errors
 
     def get_unique_id(self):
@@ -1604,6 +1607,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def _create_custom_app_strings(self, lang):
         def trans(d):
             return clean_trans(d, langs)
+        def numfirst(text):
+            if self.profile['features'].get('sense') == 'true':
+                text = "${0} %s" % (text,) if not (text and text[0].isdigit()) else text
+            return text
         id_strings = IdStrings()
         langs = [lang] + self.langs
         yield id_strings.homescreen_title(), self.name
@@ -1620,13 +1627,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     if column.format == 'enum':
                         for key, val in column.enum.items():
                             yield id_strings.detail_column_enum_variable(module, detail, column, key), trans(val)
-            yield id_strings.module_locale(module), trans(module.name)
+            yield id_strings.module_locale(module), numfirst(trans(module.name))
             if module.case_list.show:
                 yield id_strings.case_list_locale(module), trans(module.case_list.label) or "Case List"
             if module.referral_list.show:
                 yield id_strings.referral_list_locale(module), trans(module.referral_list.label)
             for form in module.get_forms():
-                yield id_strings.form_locale(form), trans(form.name) + ('${0}' if form.show_count else '')
+                form_name = trans(form.name) + ('${0}' if form.show_count else '')
+                yield id_strings.form_locale(form), numfirst(form_name)
 
     def load_messages(self, lang, include_blank_custom=False):
         def non_empty_only(dct):
@@ -1971,7 +1979,19 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             errors.append({'type': "no modules"})
         for module in self.get_modules():
             if not module.forms:
-                errors.append({'type': "no forms", "module": {"id": module.id, "name": module.name}})
+                errors.append({
+                    'type': 'no forms',
+                    'module': build_error_utils.get_module_info(module),
+                })
+            if module.case_list.show:
+                errors.extend(
+                    build_error_utils.get_case_errors(
+                        module,
+                        needs_case_type=True,
+                        needs_case_detail=True
+                    )
+                )
+
 
         for form in self.get_forms():
             errors.extend(form.validate_for_build())
