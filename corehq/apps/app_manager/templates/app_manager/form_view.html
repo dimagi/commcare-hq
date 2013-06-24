@@ -152,36 +152,34 @@
             /* form_requires needs to be a knockout observable so that
              its value can be read by another UI (form filtering) */
             var form_requires = ko.observable({{ form.requires|JSON }});
-            if (!form_empty) {
-                var caseConfig = new CaseConfig.CaseConfig({
-                    home: $('#casexml_home'),
-                    actions: {{ form.actions|JSON }},
-                    questions: {{ xform_questions|JSON }},
-                    edit: edit,
-                    save_url: "{% url corehq.apps.app_manager.views.edit_form_actions app.domain app.id module.id nav_form.id %}",
-                    requires: form_requires,
-                    reserved_words: {{ case_reserved_words_json|JSON }},
-                    moduleCaseTypes: {{ module_case_types|JSON }},
-                    caseType: {{ form.get_case_type|JSON }},
-                    propertiesMap: {{ case_properties|JSON }}
-                    {% if app.application_version != '1.0' %}
-                    ,ejs_urls: {
-                        template: "{% static 'app_manager/ejs/case-config-ui-2.ejs' %}",
-                        condition_ejs: "{% static 'app_manager/ejs/condition.ejs' %}",
-                        action_ejs: "{% static 'app_manager/ejs/action.ejs' %}",
-                        options_ejs: "{% static 'app_manager/ejs/options.ejs' %}",
-                        propertyList_ejs: "{% static 'app_manager/ejs/propertyList.ejs' %}",
-                        action_templates: {
-                            open_case: "{% static 'app_manager/ejs/actions/open_case.ejs' %}",
-                            update_case: "{% static 'app_manager/ejs/actions/update_case.ejs' %}",
-                            case_preload: "{% static 'app_manager/ejs/actions/case_preload.ejs' %}",
-                            close_case: "{% static 'app_manager/ejs/actions/close_case.ejs' %}"
-                        }
+            var caseConfig = new CaseConfig.CaseConfig({
+                home: $('#casexml_home'),
+                actions: {{ form.actions|JSON }},
+                questions: {{ xform_questions|JSON }},
+                edit: edit,
+                save_url: "{% url corehq.apps.app_manager.views.edit_form_actions app.domain app.id module.id nav_form.id %}",
+                requires: form_requires,
+                reserved_words: {{ case_reserved_words_json|JSON }},
+                moduleCaseTypes: {{ module_case_types|JSON }},
+                caseType: {{ form.get_case_type|JSON }},
+                propertiesMap: {{ case_properties|JSON }}
+                {% if app.application_version != '1.0' %}
+                ,ejs_urls: {
+                    template: "{% static 'app_manager/ejs/case-config-ui-2.ejs' %}",
+                    condition_ejs: "{% static 'app_manager/ejs/condition.ejs' %}",
+                    action_ejs: "{% static 'app_manager/ejs/action.ejs' %}",
+                    options_ejs: "{% static 'app_manager/ejs/options.ejs' %}",
+                    propertyList_ejs: "{% static 'app_manager/ejs/propertyList.ejs' %}",
+                    action_templates: {
+                        open_case: "{% static 'app_manager/ejs/actions/open_case.ejs' %}",
+                        update_case: "{% static 'app_manager/ejs/actions/update_case.ejs' %}",
+                        case_preload: "{% static 'app_manager/ejs/actions/case_preload.ejs' %}",
+                        close_case: "{% static 'app_manager/ejs/actions/close_case.ejs' %}"
                     }
-                    {% endif %}
-                });
-                caseConfig.init();
-            }
+                }
+                {% endif %}
+            });
+            caseConfig.init();
 
             // tag the 'preview in cloudcare' button with the right url
             // unfortunately, has to be done in javascript
@@ -413,7 +411,11 @@
         </div>
     {% endif %}
         <div class="tab-pane" id="case-configuration">
-        {% if form.source and xform_questions %}
+        {% if form_errors %}
+            <p class="alert alert-warning">
+                {% trans "Case management is disabled because you have errors in your form.  Edit your form in the Form Designer and fix all errors to proceed." %}
+            </p>
+        {% else %}{% if form.source %}
             {% if app.application_version == '1.0' %}
                 <header class="clearfix">
                     <h4 class="pull-left">{% trans "Cases and Referrals" %}</h4>
@@ -438,12 +440,9 @@
             {% endif %}
         {% else %}
             <p class="alert alert-warning">
-            {% if form_errors %}
-                {% trans "Case management is disabled because you have errors in your form.  Edit your form in the Form Designer and fix all errors to proceed." %}
-            {% else %}
-                {% trans "Your form has no usable questions for case management." %}
-            {% endif %}
+                {% trans "Case management is disabled because you have not created a form yet." %}
             </p>
+        {% endif %}
         {% endif %}
         </div>
         <div class="tab-pane" id="advanced">
