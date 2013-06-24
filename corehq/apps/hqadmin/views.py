@@ -5,6 +5,7 @@ import logging
 from collections import defaultdict
 from StringIO import StringIO
 import os
+from django.views.decorators.http import require_POST
 from pytz import timezone
 
 from django.http import HttpResponseRedirect, HttpResponse
@@ -40,6 +41,7 @@ from dimagi.utils.decorators.view import get_file
 from django.utils import html
 from dimagi.utils.timezones import utils as tz_utils
 from django.utils.translation import ugettext as _
+from django.core import management
 
 @require_superuser
 def default(request):
@@ -743,3 +745,27 @@ def all_commcare_settings(request):
     settings_list = [s for s in (get_settings_values(app) for app in apps)
                      if app_filter(s)]
     return json_response(settings_list)
+
+
+@require_superuser
+def management_commands(request, template="hqadmin/management_commands.html"):
+    commands = [(_('Remove Duplicate Domains'), 'remove_duplicate_domains')]
+    context = get_hqadmin_base_context(request)
+    context["hide_filters"] = True
+    context["commands"] = commands
+    return render(request, template, context)
+
+
+@require_POST
+@require_superuser
+def run_command(request):
+    cmd = request.POST.get('command')
+    if cmd not in ['remove_duplicate_domains']: # only expose this one command for now
+        return json_response({"success": False, "output": "Command not available"})
+
+    output_buf = StringIO()
+    management.call_command(cmd, stdout=output_buf)
+    output = output_buf.getvalue()
+    output_buf.close()
+
+    return json_response({"success": True, "output": output})

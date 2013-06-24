@@ -1,0 +1,36 @@
+{% extends "hqadmin/hqadmin_base_report.html" %}
+{% load i18n %}
+
+{% block js-inline %}
+    <script type="text/javascript">
+        var $command_select = $('#command-select');
+        var $command_btn = $('#cmd-btn');
+        var $current_command_name = $('#command-name');
+        function update_button() {
+            $('#command-name').text($("#command-select option:selected").text());
+        }
+        $(function() {
+            $(document).on("click", "#cmd-btn", function(){
+                var data = {"command": $("#command-select").val()};
+                $.post("{% url run_management_command %}", data, function(resp) {
+                    var alert_cls = resp.success ? "alert-sucess" : "alert-error";
+                    $("#cmd-resp").addClass(alert_cls).text(resp.output).show();
+                });
+            });
+            update_button();
+        })
+    </script>
+{% endblock %}
+
+{% block report-title %}{% trans "Management Commands" %}{% endblock %}
+{% block reportcontent %}
+    <div id="cmd-resp" class="alert hide"></div>
+    <div class="form-inline">
+        <select id="command-select">
+            {% for command in commands %}
+                <option value="{{ command.1 }}">{{ command.0 }}</option>
+            {% endfor %}
+        </select>
+        <button id="cmd-btn" class="btn">{% trans "Run" %} <span id="command-name"></span></button>
+    </div>
+{% endblock %}
