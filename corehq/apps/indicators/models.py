@@ -86,45 +86,42 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
         return couch_key
 
     @classmethod
-    def update_or_create_unique(cls, namespace, domain, slug=None, version=None, save_on_update=False, **kwargs):
+    def increment_or_create_unique(cls, namespace, domain, slug=None, version=None, **kwargs):
         """
-            key_options should be formatted as an option list:
-            [(key, val), ...]
+            If an indicator with the same namespace, domain, and version exists, create a new indicator with the
+            version number incremented.
         """
         couch_key = cls._generate_couch_key(
+            namespace=namespace,
+            domain=domain,
+            slug=slug,
+            reverse=True
+        )
+
+        existing_indicator = cls.view(
+            cls.indicator_list_view(),
+            reduce=False,
+            include_docs=True,
+            descending=True,
+            limit=1,
+            **couch_key
+        ).first()
+        if existing_indicator:
+            version = existing_indicator.version + 1
+        elif version is None:
+            version = 1
+
+        new_indicator = cls(
             version=version,
             namespace=namespace,
             domain=domain,
             slug=slug,
             **kwargs
         )
-        unique_indicator = cls.view(cls.indicator_list_view(),
-            reduce=False,
-            include_docs=True,
-            **couch_key
-        ).first()
-        if not unique_indicator:
-            unique_indicator = cls(
-                version=version,
-                namespace=namespace,
-                domain=domain,
-                slug=slug,
-                **kwargs
-            )
-            unique_indicator.last_modified = datetime.datetime.utcnow()
-            unique_indicator.save()
-        else:
-            # update indicator
-            unique_indicator.namespace = namespace
-            unique_indicator.domain = domain
-            unique_indicator.slug = slug
-            unique_indicator.version = version
-            for key, val in kwargs.items():
-                setattr(unique_indicator, key, val)
-            if save_on_update:
-                unique_indicator.last_modified = datetime.datetime.utcnow()
-                unique_indicator.save()
-        return unique_indicator
+        new_indicator.last_modified = datetime.datetime.utcnow()
+
+        new_indicator.save()
+        return new_indicator
 
     @classmethod
     def get_current(cls, namespace, domain, slug, version=None, wrap=True, **kwargs):
@@ -180,14 +177,19 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
         return all_indicators
 
     @classmethod
-    def get_all_of_type(cls, namespace, domain):
+    def get_all_of_type(cls, namespace, domain, show_only_current=False):
         key = ["type", namespace, domain, cls.__name__]
-        return cls.view(cls.indicator_list_view(),
-                        reduce = False,
-                        include_docs = True,
-                        startkey=key,
-                        endkey=key+[{}]
+        indicators = cls.view(
+            cls.indicator_list_view(),
+            reduce = False,
+            include_docs = True,
+            startkey=key,
+            endkey=key+[{}]
         ).all()
+        unique = {}
+        for ind in indicators:
+            unique["%s.%s" % (ind.slug, ind.namespace)] = ind
+        return unique.values()
 
     @classmethod
     def get_nice_name(cls):
