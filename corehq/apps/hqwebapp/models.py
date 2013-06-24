@@ -335,7 +335,15 @@ class MessagesTab(UITab):
             {'title': _('Message History'),
              'url': reverse('messaging', args=[self.domain])},
             {'title': _('Compose SMS Message'),
-             'url': reverse('sms_compose_message', args=[self.domain])}
+             'url': reverse('sms_compose_message', args=[self.domain])},
+            {'title': _('SMS Connectivity'),
+             'url': reverse('list_domain_backends', args=[self.domain]),
+             'children': [
+                 {'title': _('Add Connection'),
+                  'urlname': 'add_domain_backend'},
+                 {'title': _('Edit Connection'),
+                  'urlname': 'edit_domain_backend'},
+             ]},
         ])]
 
 
