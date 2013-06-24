@@ -225,8 +225,8 @@
                             <tr>
                                 <th></th>
                                 <th>Property</th>
-                                <th>Format</th>
                                 <th>Direction</th>
+                                <th>Type</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -236,7 +236,7 @@
                                     <i class="grip
                                             icon-resize-vertical
                                             icon-blue"
-                                        style="cursor: move"></i>
+                                       style="cursor: move"></i>
                                 </td>
 
                                 <td>
@@ -246,29 +246,26 @@
                                 </td>
 
                                 <td>
-                                    <select data-bind="value: type">
-                                        <option value=''>
-                                            {% trans 'None' %}
-                                        </option>
-                                        <option value='string'>
-                                            {% trans 'String' %}
-                                        </option>
-                                        <option value='int'>
-                                            {% trans 'Integer' %}
-                                        </option>
-                                        <option value='double'>
-                                            {% trans 'Double' %}
-                                        </option>
-                                    </select>
-                                </td>
-
-                                <td>
                                     <select data-bind="value: direction">
                                         <option value='ascending'>
                                             {% trans 'Ascending' %}
                                         </option>
                                         <option value='descending'>
                                             {% trans 'Descending' %}
+                                        </option>
+                                    </select>
+                                </td>
+
+                                <td>
+                                    <select data-bind="value: type">
+                                        <option value='string'>
+                                            {% trans 'Plain' %}
+                                        </option>
+                                        <option value='int'>
+                                            {% trans 'Integer' %}
+                                        </option>
+                                        <option value='double'>
+                                            {% trans 'Decimal' %}
                                         </option>
                                     </select>
                                 </td>
