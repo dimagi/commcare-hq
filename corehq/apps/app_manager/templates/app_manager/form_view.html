@@ -411,7 +411,11 @@
         </div>
     {% endif %}
         <div class="tab-pane" id="case-configuration">
-        {% if form.source and not form_errors %}
+        {% if form_errors %}
+            <p class="alert alert-warning">
+                {% trans "Case management is disabled because you have errors in your form.  Edit your form in the Form Designer and fix all errors to proceed." %}
+            </p>
+        {% else %}{% if form.source %}
             {% if app.application_version == '1.0' %}
                 <header class="clearfix">
                     <h4 class="pull-left">{% trans "Cases and Referrals" %}</h4>
@@ -436,8 +440,9 @@
             {% endif %}
         {% else %}
             <p class="alert alert-warning">
-                {% trans "Case management is disabled because you have errors in your form.  Edit your form in the Form Designer and fix all errors to proceed." %}
+                {% trans "Case management is disabled because you have not created a form yet." %}
             </p>
+        {% endif %}
         {% endif %}
         </div>
         <div class="tab-pane" id="advanced">
