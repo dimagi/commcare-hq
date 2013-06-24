@@ -60,7 +60,7 @@ class UITab(object):
         self.couch_user = couch_user
         self.project = project
         self.org = org
-       
+
         # This should not be considered as part of the subclass API unless it
         # is necessary. Try to add new explicit parameters instead.
         self._request = request
@@ -576,7 +576,7 @@ class AdminTab(UITab):
         AdminReportsTab,
         GlobalADMConfigTab,
         BillingTab,
-        AnnouncementsTab
+        AnnouncementsTab,
     )
 
     @property
@@ -588,6 +588,7 @@ class AdminTab(UITab):
             format_submenu_context(_("Management"), is_header=True),
             format_submenu_context(mark_for_escaping(_("ADM Reports & Columns")),
                 url=reverse("default_adm_admin_interface")),
+            format_submenu_context(mark_for_escaping(_("Commands")), url=reverse("management_commands")),
 #            format_submenu_context(mark_for_escaping("HQ Announcements"),
 #                url=reverse("default_announcement_admin")),
         ]
@@ -641,8 +642,10 @@ class OrgReportTab(OrgTab):
     @property
     def dropdown_items(self):
         return [
-            format_submenu_context(_("All Projects"), url=reverse("orgs_report", args=(self.org.name,))),
-            format_submenu_context(_("Visualize Data"), url=reverse("orgs_stats", args=(self.org.name,))),
+            format_submenu_context(_("Projects Table"), url=reverse("orgs_report", args=(self.org.name,))),
+            format_submenu_context(_("Visualize Forms"), url=reverse("orgs_stats", args=(self.org.name, "forms"))),
+            format_submenu_context(_("Visualize Cases"), url=reverse("orgs_stats", args=(self.org.name, "cases"))),
+            format_submenu_context(_("Visualize Users"), url=reverse("orgs_stats", args=(self.org.name, "users"))),
         ]
 
 class OrgSettingsTab(OrgTab):

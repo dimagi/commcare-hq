@@ -2,10 +2,12 @@ from django.conf.urls.defaults import patterns, url, include
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 
 app_urls = patterns('corehq.apps.app_manager.views',
-    url(r'^languages/$', 'view_app', name='view_app'),
-    url(r'^multimedia/$', 'view_app', name='view_app'),
-    url(r'^copy/$', 'view_app', name='view_app'),
-    url(r'^delete/$', 'view_app', name='view_app'),
+    url(r'^languages/$', 'view_app', name='app_languages'),
+    url(r'^languages/translations/download/$', 'download_translations', name='download_translations'),
+    url(r'^languages/translations/upload/$', 'upload_translations', name='upload_translations'),
+    url(r'^multimedia/$', 'view_app', name='app_multimedia'),
+    url(r'^copy/$', 'view_app', name='app_copy'),
+    url(r'^delete/$', 'view_app', name='app_delete'),
     url(r'^$', 'view_app', name='view_app'),
     url(r'^releases/$', 'release_manager', name='release_manager'),
     url(r'^releases/json/$', 'paginate_releases', name='paginate_releases'),

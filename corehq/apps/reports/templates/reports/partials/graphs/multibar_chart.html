@@ -1,0 +1,38 @@
+{% load hq_shared_tags %}
+<script type="text/javascript">
+    nv.addGraph(function() {
+        var chart_config = {{ chart.config_dict|JSON }};
+        var chart_data = {{ chart.data|JSON }}
+        var chart_id = '#{{ chart_id }}';
+
+        $(chart_id).show();
+
+        var chart = nv.models.multiBarChart();
+
+        chart.xAxis.axisLabel({{ chart.x_axis.label|JSON }});
+        {% if chart.x_axis.format %}
+            chart.xAxis.tickFormat(d3.format({{ chart.x_axis.format|JSON }}));
+        {% endif %}
+
+        chart.yAxis.axisLabel({{ chart.y_axis.label|JSON }});
+        {% if chart.y_axis.format %}
+            chart.yAxis.tickFormat(d3.format({{ chart.y_axis.format|JSON }}));
+        {% endif %}
+
+        chart.showControls(chart_config.showControls);
+        chart.showLegend(chart_config.showLegend);
+        chart.reduceXTicks(chart_config.reduceXTicks);
+        chart.rotateLabels(chart_config.rotateLabels);
+        chart.tooltips(chart_config.tooltips);
+        chart.stacked(chart_config.stacked);
+        chart.margin(chart_config.margin);
+
+        d3.select(chart_id + ' svg')
+                .datum(chart_data)
+                .transition().duration(500).call(chart);
+
+        nv.utils.windowResize(chart.update);
+
+        return chart;
+    });
+</script>

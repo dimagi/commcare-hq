@@ -394,7 +394,7 @@ def preindex_views():
         update_virtualenv(preindex=True) #no update to env - the actual deploy will do - this may break if a new dependency is introduced in preindex
 
         sudo('echo "%(virtualenv_root_preindex)s/bin/python %(code_root_preindex)s/manage.py \
-             preindex_everything 8 %(user)s" | at -t `date -d "5 seconds" \
+             preindex_everything 8 %(user)s" --mail | at -t `date -d "5 seconds" \
              +%%m%%d%%H%%M.%%S`' % env, user=env.sudo_user)
 
 @roles('django_app','django_celery', 'staticfiles', 'django_public', 'django_monolith')#,'formsplayer')

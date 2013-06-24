@@ -178,6 +178,10 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
                 'sms_case_registration_user_id': domain.sms_case_registration_user_id,
                 'default_sms_backend_id': domain.default_sms_backend_id,
                 'commtrack_enabled': domain.commtrack_enabled,
+                'call_center_enabled': domain.call_center_config.enabled,
+                'call_center_case_owner': domain.call_center_config.case_owner_id,
+                'call_center_case_type': domain.call_center_config.case_type,
+                'restrict_superusers': domain.restrict_superusers,
             })
         else:
             form = DomainGlobalSettingsForm(initial={
@@ -231,6 +235,8 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
             # some other means. otherwise it has to be supplied to every view reachable in that sidebar (every
             # view whose template extends users_base.html); mike says he's refactoring all of this imminently, so
             # i will not worry about it until he is done
+        call_center_enabled=domain.call_center_config.enabled,
+        restrict_superusers=domain.restrict_superusers,
         autocomplete_fields=('project_type', 'phone_model', 'user_type', 'city', 'country', 'region'),
         billing_info_form=billing_info_form,
         billing_info_partial=billing_info_partial,
@@ -302,9 +308,17 @@ def internal_settings(request, domain, template='domain/internal_settings.html')
             "can_use_data": 'true' if domain.internal.can_use_data else 'false',
             "organization_name": domain.internal.organization_name,
             "notes": domain.internal.notes,
+            "platform": domain.internal.platform,
         })
 
-    return render(request, template, {"project": domain, "domain": domain.name, "form": internal_form, 'active': 'settings'})
+    ctxt = {
+        "project": domain,
+        "domain": domain.name,
+        "form": internal_form,
+        'active': 'settings',
+        "areas": dict([(a["name"], a["sub_areas"]) for a in settings.INTERNAL_DATA["area"]])
+    }
+    return render(request, template, ctxt)
 
 @login_and_domain_required
 @require_superuser
@@ -632,6 +646,8 @@ def commtrack_settings(request, domain):
 
         settings.actions = [mk_action(a) for a in payload['actions']]
         settings.location_types = [mk_loctype(l) for l in payload['loc_types']]
+        settings.requisition_config.enabled = payload['requisition_config']['enabled']
+        settings.requisition_config.actions =  [mk_action(a) for a in payload['requisition_config']['actions']]
         settings.save()
 
     def settings_to_json(config):
@@ -639,6 +655,11 @@ def commtrack_settings(request, domain):
             'keyword': config.multiaction_keyword,
             'actions': [action_to_json(a) for a in config.actions],
             'loc_types': [loctype_to_json(l) for l in config.location_types],
+            'requisition_config': {
+                'enabled': config.requisition_config.enabled,
+                'actions': [action_to_json(a) for a in config.requisition_config.actions],
+            }
+
         }
     def action_to_json(action):
         return {

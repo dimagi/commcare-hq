@@ -22,6 +22,8 @@ from dimagi.utils.web import json_request
 from dimagi.utils.parsing import string_to_boolean
 from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
 
+CHART_SPAN_MAP = {1: '', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
+
 class GenericReportView(CacheableRequestMixIn):
     """
         A generic report structure for viewing a report
@@ -293,7 +295,7 @@ class GenericReportView(CacheableRequestMixIn):
     @memoized
     def export_format(self):
         from couchexport.models import Format
-        return self.export_format_override or self.request.GET.get('format', Format.XLS)
+        return self.export_format_override or self.request.GET.get('format', Format.XLS_2007)
 
     @property
     def export_name(self):
@@ -591,6 +593,15 @@ class GenericReportView(CacheableRequestMixIn):
         return export_response(temp, self.export_format, self.export_name)
 
     @property
+    @request_cache("raw")
+    def raw_response(self):
+        """
+        Returns the raw report data. What gets rendered in the async response.
+        """
+        self.is_rendered_as_email = True
+        return HttpResponse(self._async_context()['report'])
+
+    @property
     def partial_response(self):
         """
             Use this response for rendering smaller chunks of your report.
@@ -646,6 +657,16 @@ class GenericTabularReport(GenericReportView):
         shared_pagination_GET_params
             - this is where you select the GET parameters to pass to the paginator
             - returns a list formatted like [dict(name='group', value=self.group_id)]
+
+        ## Charts
+        To include charts in the report override the following property.
+        @property
+        charts
+            - returns a list of Chart objects e.g. PieChart, MultiBarChart
+
+        You can also adjust the following properties:
+        charts_per_row
+            - the number of charts to show in a row. 1, 2, 3, 4, or 6
     """
     # new class properties
     total_row = None
@@ -656,6 +677,7 @@ class GenericTabularReport(GenericReportView):
     fix_left_col = False
     ajax_pagination = False
     use_datatables = True
+    charts_per_row = 1
     
     # override old class properties
     report_template_path = "reports/async/tabular.html"
@@ -703,6 +725,13 @@ class GenericTabularReport(GenericReportView):
             return -1 if you want total_filtered_records to equal whatever the value of total_records is.
         """
         return -1
+
+    @property
+    def charts(self):
+        """
+            Override to return a list of Chart objects.
+        """
+        return []
 
     @property
     def shared_pagination_GET_params(self):
@@ -815,8 +844,10 @@ class GenericTabularReport(GenericReportView):
 
         if self.ajax_pagination or self.needs_filters:
             rows = []
+            charts = []
         else:
             rows = list(self.rows)
+            charts = list(self.charts)
 
         if self.total_row is not None:
             self.total_row = list(self.total_row)
@@ -848,8 +879,10 @@ class GenericTabularReport(GenericReportView):
                 show_all_rows=self.show_all_rows,
                 pagination=pagination_spec,
                 left_col=left_col,
-                datatables=self.use_datatables,
-            )
+                datatables=self.use_datatables
+            ),
+            charts=charts,
+            chart_span=CHART_SPAN_MAP[self.charts_per_row]
         )
         for provider_function in self.extra_context_providers:
             context.update(provider_function(self))

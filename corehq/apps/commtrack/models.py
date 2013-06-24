@@ -1,3 +1,4 @@
+from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.ext.django.schema import *
 from django.utils.translation import ugettext as _
 
@@ -348,6 +349,9 @@ class SupplyPointCase(CommCareCase):
     A wrapper around CommCareCases to get more built in functionality
     specific to supply points.
     """
+
+    # TODO move location_ property from CommCareCase
+
     class Meta: 
         # This is necessary otherwise syncdb will confuse this app with casexml
         app_label = "commtrack"
@@ -358,18 +362,25 @@ class SupplyPointCase(CommCareCase):
     @property
     @memoized
     def location(self):
-        return Location.get(self.location_id)
-
+        if hasattr(self, 'location_id'):
+            try:
+                return Location.get(self.location_id)
+            except ResourceNotFound:
+                pass
+        return None
 
     def to_full_dict(self):
         data = super(SupplyPointCase, self).to_full_dict()
-        
-        data['location_type'] = self.location.location_type
-        data['location_site_code'] = self.location.site_code
-        if self.location.parent:
-            data['location_parent_name'] = self.location.parent.name
-        else:
-            data['location_parent_name'] = None
+        data.update({
+            'location_type': None,
+            'location_site_code': None,
+            'location_parent_name': None,
+        })
+        if self.location:
+            data['location_type'] = self.location.location_type
+            data['location_site_code'] = self.location.site_code
+            if self.location.parent:
+                data['location_parent_name'] = self.location.parent.name
 
         # todo
         #data['last_reported'] = None
@@ -414,6 +425,14 @@ class SupplyPointCase(CommCareCase):
             }
         ]
 
+DAYS_PER_MONTH = 365.2425 / 12.
+
+# TODO make settings
+
+UNDERSTOCK_THRESHOLD = 0.5 # months
+OVERSTOCK_THRESHOLD = 2. # months
+
+DEFAULT_CONSUMPTION = 10. # per month
 
 class SupplyPointProductCase(CommCareCase):
     """
@@ -444,34 +463,101 @@ class SupplyPointProductCase(CommCareCase):
         return _get_single_index(self, const.PARENT_CASE_REF, const.SUPPLY_POINT_CASE_TYPE)
 
     @property
-    def months_until_stockout(self):
-        from corehq.apps.reports.commtrack.standard import (current_stock,
-                monthly_consumption)
+    def current_stock_level(self):
+        return int(self.current_stock) if self.current_stock is not None else None
 
-        current_stock = current_stock(self)
-        monthly_consumption = monthly_consumption(self)
-        
-        if current_stock is None or monthly_consumption is None:
+    @property
+    @memoized
+    def monthly_consumption(self):
+        daily_rate = self.computed_.get('commtrack', {}).get('consumption_rate')
+        if daily_rate is None:
+            daily_rate = self.default_consumption / DAYS_PER_MONTH
+        if daily_rate is None:
             return None
-        else:
-            return round(current_stock / monthly_consumption, ndigits=1)
+
+        return daily_rate * DAYS_PER_MONTH
+
+    @property
+    def default_consumption(self):
+        # TODO does this belong in this class? in the future this will be configurable
+        # based on (product, supply point type)
+        return DEFAULT_CONSUMPTION
+
+    @staticmethod
+    def default_thresholds():
+        return {
+            'low': UNDERSTOCK_THRESHOLD,
+            'high': OVERSTOCK_THRESHOLD,
+        }
+
+    @property
+    def stock_thresholds(self):
+        # TODO does this belong in this class? in the future will these thresholds vary
+        # by supply point type? by product?
+        return SupplyPointProductCase.default_thresholds()
+
+    @staticmethod
+    def months_of_stock_remaining(stock, consumption):
+        try:
+            return stock / consumption
+        except (TypeError, ZeroDivisionError):
+            return None
+
+    @property
+    def months_until_stockout(self):
+        return SupplyPointProductCase.months_of_stock_remaining(self.current_stock_level, self.monthly_consumption)
 
     @property
     def stockout_duration_in_months(self):
         if self.stocked_out_since:
             today = datetime.today().date()
-
-            return round((today - self.stocked_out_since).days / 30.0, ndigits=1)
+            return (today - self.stocked_out_since).days / DAYS_PER_MONTH
         else:
             return None
 
+    @staticmethod
+    def stock_category(stock, consumption, consumable_stock=None, thresholds=None):
+        # "consumable stock" if the amount of stock for which we know the consumption rate
+        if consumable_stock is None:
+            consumable_stock = stock
+        if thresholds is None:
+            thresholds = SupplyPointProductCase.default_thresholds()
+
+        if stock is None:
+            return 'nodata'
+        elif stock == 0:
+            return 'stockout'
+        elif consumption is None:
+            return 'nodata'
+        elif consumption == 0:
+            return 'overstock'
+
+        months_left = SupplyPointProductCase.months_of_stock_remaining(consumable_stock, consumption)
+        if months_left is None:
+            return 'nodata'
+        elif months_left < thresholds['low']:
+            return 'understock'
+        elif months_left > thresholds['high']:
+            return 'overstock'
+        else:
+            return 'adequate'
+
+    @property
+    @memoized
+    def current_stock_category(self):
+        return SupplyPointProductCase.stock_category(
+            self.current_stock_level,
+            self.monthly_consumption,
+            thresholds=self.stock_thresholds
+        )
 
     def to_full_dict(self):
-        from corehq.apps.reports.commtrack.standard import monthly_consumption
+        def roundif(k, digits):
+            return round(k, digits) if k is not None else None
 
         data = super(SupplyPointProductCase, self).to_full_dict()
         del data['stocked_out_since']
-        data['consumption_rate'] = monthly_consumption(self)
+        data['consumption_rate'] = self.monthly_consumption
 
         data['supply_point_name'] = self.get_supply_point_case()['name']
         data['product_name'] = self.get_product()['name']
@@ -479,8 +565,9 @@ class SupplyPointProductCase(CommCareCase):
         #data['emergency_level'] = None
         #data['max_level'] = None
 
-        data['months_until_stockout'] = self.months_until_stockout
-        data['stockout_duration_in_months'] = self.stockout_duration_in_months
+        # TODO shouldn't this rounding happen in the presentation layer?
+        data['months_until_stockout'] = roundif(self.months_until_stockout, 1)
+        data['stockout_duration_in_months'] = roundif(self.stockout_duration_in_months, 1)
 
         return data
 
@@ -533,6 +620,18 @@ class SupplyPointProductCase(CommCareCase):
                 ],
             }
         ]
+
+    def get_json(self):
+        data = super(SupplyPointProductCase, self).get_json()
+        data['properties'].update({
+            'product': self.product,
+            'current_stock': self.current_stock_level,
+            'consumption': self.monthly_consumption,
+            'months_remaining': self.months_until_stockout,
+            'stock_category': self.current_stock_category,
+        })
+        return data
+
 
 class RequisitionCase(CommCareCase):
     """

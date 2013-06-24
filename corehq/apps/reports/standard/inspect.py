@@ -213,7 +213,12 @@ class CaseDisplay(object):
 
     @property
     def owner_id(self):
-        return self.case['owner_id'] if self.case['owner_id'] else self.case['user_id']
+        if 'owner_id' in self.case:
+            return self.case['owner_id']
+        elif 'user_id' in self.case:
+            return self.case['user_id']
+        else:
+            return ''
 
     @property
     @memoized
@@ -520,7 +525,7 @@ create a couch doc as such:
 }
 """
 
-    name = ugettext_noop("Maps")
+    name = ugettext_noop("Maps Sandbox")
     slug = "maps"
     # todo: support some of these filters -- right now this report
     hide_filters = True

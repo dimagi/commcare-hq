@@ -19,6 +19,7 @@ def get_reindex_command(pillow_class_name):
         'FullCasePillow': 'ptop_fast_reindex_fullcases',
         'XFormPillow': 'ptop_fast_reindex_xforms',
         'FullXFormPillow': 'ptop_fast_reindex_fullxforms',
+        'UserPillow': 'ptop_fast_reindex_users',
     }
     reindex_command = pillow_command_map.get(pillow_class_name, None)
     return reindex_command

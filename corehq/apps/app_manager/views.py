@@ -1,5 +1,4 @@
 from StringIO import StringIO
-import functools
 import logging
 import hashlib
 import os
@@ -13,6 +12,7 @@ from django.core.cache import cache
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import cache_control
+from corehq.apps.app_manager import commcare_settings
 from django.utils import html
 from django.utils.http import urlencode as django_urlencode
 from couchdbkit.exceptions import ResourceConflict
@@ -25,15 +25,16 @@ from django.utils.http import urlencode
 from django.views.decorators.http import require_POST, require_GET
 from django.conf import settings
 from couchdbkit.resource import ResourceNotFound
-
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
-from corehq.apps.app_manager.util import save_xform
-from corehq.apps.app_manager.util import is_valid_case_type
+from corehq.apps.app_manager.util import is_valid_case_type, get_case_properties, get_all_case_properties
+from corehq.apps.app_manager.util import save_xform, get_settings_values
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
-from couchexport.export import FormattedRow
+from corehq.apps.translations import system_text as st_trans
+from couchexport.export import FormattedRow, export_raw
 from couchexport.models import Format
+from couchexport.shortcuts import export_response
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.resource_conflict import retry_resource
@@ -43,7 +44,9 @@ from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions, CommCareUser
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.decorators.view import get_file
 from dimagi.utils.django.cache import make_template_fragment_key
+from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.subprocess_timeout import ProcessTimedOut
 from dimagi.utils.web import json_response, json_request
@@ -51,7 +54,7 @@ from corehq.apps.app_manager.forms import NewXFormForm, NewModuleForm
 from corehq.apps.reports import util as report_utils
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
-    AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, EXAMPLE_DOMAIN, str_to_cls, validate_lang, SavedAppBuild, load_commcare_settings_layout
+    AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, EXAMPLE_DOMAIN, str_to_cls, validate_lang, SavedAppBuild
 from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download
@@ -390,7 +393,10 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
             form_errors[i] = err[0]
         else:
             messages.error(request, err)
-
+    module_case_types = [
+        {'module_name': module.name.get('en'), 'case_type': module.case_type}
+        for module in form.get_app().modules if module.case_type
+    ] if not is_user_registration else None
     return {
         'nav_form': form if not is_user_registration else '',
         'xform_languages': languages,
@@ -398,35 +404,17 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         'form_actions': form.actions.to_json(),
         'case_reserved_words_json': load_case_reserved_words(),
         'is_user_registration': is_user_registration,
-        'module_case_types': [{'module_name': module.name.get('en'), 'case_type': module.case_type} for module in form.get_app().modules if module.case_type] if not is_user_registration else None,
+        'module_case_types': module_case_types,
         'form_errors': form_errors,
     }
 
 
 def get_app_view_context(request, app):
-    try:
-        profile = app.profile
-    except AttributeError:
-        profile = {}
-    hq_settings = dict([
-        (attr, app[attr])
-        for attr in app.properties() if not hasattr(app[attr], 'pop')
-    ])
-    if hasattr(app, 'custom_suite'):
-        hq_settings.update({'custom_suite': app.custom_suite})
-    context = {
-        'settings_layout': load_commcare_settings_layout(app.get_doc_type()),
-        'settings_values': {
-            'properties': profile.get('properties', {}),
-            'features': profile.get('features', {}),
-            'hq': hq_settings,
-            '$parent': {
-                'doc_type': app.get_doc_type()
-            }
-        }
-    }
-    context['settings_values']['hq']['build_spec'] = app.build_spec.to_string()
 
+    context = {
+        'settings_layout': commcare_settings.LAYOUT[app.get_doc_type()],
+        'settings_values': get_settings_values(app),
+    }
 
     commcare_build_options = {}
     build_config = CommCareBuildConfig.fetch()
@@ -504,6 +492,7 @@ def _clear_app_cache(request, domain):
     for is_active in True, False:
         key = make_template_fragment_key('header_tab', [
             domain,
+            None, # tab.org should be None for any non org page
             ApplicationsTab.view,
             is_active,
             request.couch_user.get_id
@@ -607,6 +596,7 @@ def release_build(request, domain, app_id, saved_app_id):
     else:
         return HttpResponseRedirect(reverse('release_manager', args=[domain, app_id]))
 
+
 @retry_resource(3)
 def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user_registration=False):
     """
@@ -658,44 +648,17 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         del app['use_commcare_sense']
         app.save()
 
-    case_properties = set()
+    case_properties = None
     if module:
-        @memoized
-        def get_properties(case_type,
-                defaults=("name", "date-opened", "status"),
-                already_visited=()):
-
-            if case_type in already_visited:
-                return ()
-
-            get_properties_recursive = functools.partial(
-                get_properties,
-                already_visited=already_visited + (case_type,)
-            )
-
-            case_properties = set(defaults)
-            parent_types = set()
-
-            for module in app.get_modules():
-                for form in module.get_forms():
-                    if module.case_type == case_type:
-                        case_properties.update(
-                            form.actions.update_case.update.keys()
-                        )
-                    for subcase in form.actions.subcases:
-                        if subcase.case_type == case_type:
-                            case_properties.update(
-                                subcase.case_properties.keys()
-                            )
-                            parent_types.add(module.case_type)
-
-            for parent_type in parent_types:
-                for property in get_properties_recursive(parent_type):
-                    case_properties.add('parent/%s' % property)
-
-            return case_properties
-
-        case_properties = list(get_properties(module.case_type))
+        if not form:
+            case_type = module.case_type
+            case_properties = get_case_properties(
+                app,
+                [case_type],
+                defaults=('name', 'date-opened', 'status')
+            )[case_type]
+        else:
+            case_properties = get_all_case_properties(app)
 
     context = {
         'domain': domain,
@@ -796,10 +759,12 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
 
     context = get_apps_base_context(req, domain, app)
     context.update(locals())
+    app.remove_unused_mappings()
     context.update({
         'edit': True,
         'nav_form': form if not is_user_registration else '',
         'formdesigner': True,
+        'multimedia_object_map': app.get_object_map()
     })
     return render(req, 'app_manager/form_designer.html', context)
 
@@ -1295,6 +1260,7 @@ def edit_form_actions(req, domain, app_id, module_id, form_id):
     form.requires = req.POST.get('requires', form.requires)
     response_json = {}
     app.save(response_json)
+    response_json['propertiesMap'] = get_all_case_properties(app)
     return json_response(response_json)
 
 @require_can_edit_apps
@@ -2036,3 +2002,68 @@ def summary(request, domain, app_id, should_edit=True):
         return render(request, "app_manager/summary.html", context)
     else:
         return render(request, "app_manager/exchange_summary.html", context)
+
+@login_and_domain_required
+def download_translations(request, domain, app_id):
+    app = get_app(domain, app_id)
+    properties = tuple(["property"] + app.langs + ["default"])
+    temp = StringIO()
+    headers = (("translations", properties),)
+
+    row_dict = {}
+    for i, lang in enumerate(app.langs):
+        index = i + 1
+        trans_dict = app.translations.get(lang, {})
+        for prop, trans in trans_dict.iteritems():
+            if prop not in row_dict:
+                row_dict[prop] = [prop]
+            num_to_fill = index - len(row_dict[prop])
+            row_dict[prop].extend(["" for i in range(num_to_fill)] if num_to_fill > 0 else [])
+            row_dict[prop].append(trans)
+
+    rows = row_dict.values()
+    all_prop_trans = dict(st_trans.DEFAULT + st_trans.CC_DEFAULT + st_trans.CCODK_DEFAULT + st_trans.ODKCOLLECT_DEFAULT)
+    all_prop_trans = dict((k.lower(), v) for k, v in all_prop_trans.iteritems())
+    rows.extend([[t] for t in sorted(all_prop_trans.keys()) if t not in [k.lower() for k in row_dict]])
+
+    def fillrow(row):
+        num_to_fill = len(properties) - len(row)
+        row.extend(["" for i in range(num_to_fill)] if num_to_fill > 0 else [])
+        return row
+
+    def add_default(row):
+        row[-1] = all_prop_trans.get(row[0].lower(), "")
+        return row
+
+    rows = [add_default(fillrow(row)) for row in rows]
+
+    data = (("translations", tuple(rows)),)
+    export_raw(headers, data, temp)
+    return export_response(temp, Format.XLS_2007, "translations")
+
+@require_POST
+@require_can_edit_apps
+@get_file("file")
+def upload_translations(request, domain, app_id):
+    success = False
+    try:
+        workbook = WorkbookJSONReader(request.file)
+        translations = workbook.get_worksheet(title='translations')
+
+        app = get_app(domain, app_id)
+        trans_dict = defaultdict(dict)
+        for row in translations:
+            for lang in app.langs:
+               if row.get(lang):
+                   trans_dict[lang].update({row["property"]: row[lang].encode('utf8')})
+
+        app.translations = dict(trans_dict)
+        app.save()
+        success = True
+    except Exception:
+        messages.error(request, _("Something went wrong! Update failed. We're looking into it"))
+
+    if success:
+        messages.success(request, _("UI Translations Updated!"))
+
+    return HttpResponseRedirect(reverse('app_languages', args=[domain, app_id]))

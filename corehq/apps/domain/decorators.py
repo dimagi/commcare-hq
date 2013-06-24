@@ -74,7 +74,7 @@ def login_and_domain_required_ex(redirect_field_name=REDIRECT_FIELD_NAME, login_
                         couch_user = CouchUser.from_django_user(user)
                     if couch_user.is_member_of(domain) or domain.is_public:
                         return view_func(req, domain_name, *args, **kwargs)
-                    elif user.is_superuser:
+                    elif user.is_superuser and not domain.restrict_superusers:
                         # superusers can circumvent domain permissions.
                         return view_func(req, domain_name, *args, **kwargs)
                     elif domain.is_snapshot:
@@ -86,7 +86,6 @@ def login_and_domain_required_ex(redirect_field_name=REDIRECT_FIELD_NAME, login_
                     return _redirect_for_login_or_domain(req, redirect_field_name, login_url)
             else:
                 raise Http404
-        
         return _inner
     return _outer
 
@@ -203,21 +202,24 @@ login_required_late_eval_of_LOGIN_URL = login_required_ex()
 # is not defined - people may forget to do this, because it's not a standard, defined Django 
 # config setting
 
-def domain_admin_required_ex( redirect_page_name = None ):
+def domain_admin_required_ex(redirect_page_name=None):
     if redirect_page_name is None:
-        redirect_page_name = getattr(settings, 'DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME', 'homepage')                                                                                                 
+        redirect_page_name = getattr(settings, 'DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME', 'homepage')
+
     def _outer(view_func):
         @wraps(view_func)
         def _inner(request, domain, *args, **kwargs):
             if not hasattr(request, 'couch_user'):
-                raise Http404
+                raise Http404()
             if not request.couch_user.is_web_user():
-                raise Http404
+                raise Http404()
             domain_name, domain = load_domain(request, domain)
+            if not domain:
+                raise Http404()
             if not request.couch_user.is_domain_admin(domain_name):
                 return HttpResponseRedirect(reverse(redirect_page_name))
             return view_func(request, domain_name, *args, **kwargs)
-        
+
         return _inner
     return _outer
 
