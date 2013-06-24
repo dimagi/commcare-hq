@@ -918,14 +918,15 @@ class VersionedDoc(LazyAttachmentDoc):
         for name in other.lazy_list_attachments() or {}:
             if regexp is None or re.match(regexp, name):
                 self.lazy_put_attachment(other.lazy_fetch_attachment(name), name)
-    def revert_to_copy(self, copy):
+
+    def make_reversion_to_copy(self, copy):
         """
         Replaces couch doc with a copy of the backup ("copy").
         Returns the another Application/RemoteApp referring to this
         updated couch doc. The returned doc should be used in place of
         the original doc, i.e. should be called as follows:
-            app = revert_to_copy(app, copy)
-        This is not ideal :(
+            app = app.make_reversion_to_copy(copy)
+            app.save()
         """
         if copy.copy_of != self._id:
             raise VersioningError("%s is not a copy of %s" % (copy, self))
@@ -938,7 +939,6 @@ class VersionedDoc(LazyAttachmentDoc):
             del app['_attachments']
         cls = self.__class__
         app = cls.wrap(app)
-        app.save()
         app.copy_attachments(copy)
         return app
 
@@ -1482,8 +1482,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             data['build_langs'] = data['langs']
         return super(Application, cls).wrap(data)
 
-    def revert_to_copy(self, copy):
-        app = super(Application, self).revert_to_copy(copy)
+    def make_reversion_to_copy(self, copy):
+        app = super(Application, self).make_reversion_to_copy(copy)
 
         for form in app.get_forms():
             # reset the form's validation cache, since the form content is

@@ -1,4 +1,5 @@
 import json
+from dimagi.utils.decorators.memoized import memoized
 import os
 
 from django.test import TestCase
@@ -103,23 +104,44 @@ class AppManagerTest(TestCase):
         ).all()
         self.assertEqual(len(apps), 1)
 
-    def testBuildApp(self):
+    @property
+    @memoized
+    def _yesno_source(self):
         # this app fixture uses both the (new) '_attachment'
         # and the (old) 'contents' conventions, to test that both work
         with open(os.path.join(os.path.dirname(__file__), 'data', 'yesno.json')) as f:
-            source = json.load(f)
+            return json.load(f)
 
+    def testBuildApp(self):
         # do it from a NOT-SAVED app;
         # regression test against case where contents gets lazy-put w/o saving
-        app = Application.wrap(source)
+        app = Application.wrap(self._yesno_source)
         self.assertEqual(app['_id'], None)  # i.e. hasn't been saved
         copy = app.make_build()
         copy.save()
 
     def testBuildImportedApp(self):
-        with open(os.path.join(os.path.dirname(__file__), 'data', 'yesno.json')) as f:
-            source = json.load(f)
-
-        app = import_app(source, self.domain)
+        app = import_app(self._yesno_source, self.domain)
         copy = app.make_build()
         copy.save()
+
+    def testRevertToCopy(self):
+        old_name = 'old name'
+        new_name = 'new name'
+        app = Application.wrap(self._yesno_source)
+        app.name = old_name
+        app.save()
+
+        copy = app.make_build()
+        copy.save()
+
+        self.assertEqual(copy.name, old_name)
+
+        app.name = new_name
+        app.save()
+        app = Application.get(app.get_id)
+        self.assertEqual(app.name, new_name)
+
+        app = app.make_reversion_to_copy(copy)
+        app.save()
+        self.assertEqual(app.name, old_name)
