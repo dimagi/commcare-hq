@@ -593,6 +593,15 @@ class GenericReportView(CacheableRequestMixIn):
         return export_response(temp, self.export_format, self.export_name)
 
     @property
+    @request_cache("raw")
+    def raw_response(self):
+        """
+        Returns the raw report data. What gets rendered in the async response.
+        """
+        self.is_rendered_as_email = True
+        return HttpResponse(self._async_context()['report'])
+
+    @property
     def partial_response(self):
         """
             Use this response for rendering smaller chunks of your report.
