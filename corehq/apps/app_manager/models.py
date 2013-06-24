@@ -17,7 +17,7 @@ from django.core.urlresolvers import reverse
 from django.http import Http404
 from restkit.errors import ResourceError
 import commcare_translations
-from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings
+from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings, build_error_utils
 from corehq.apps.app_manager.suite_xml import IdStrings
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 from corehq.apps.app_manager.util import split_path, save_xform
@@ -387,7 +387,7 @@ class FormBase(DocumentSchema):
 
         meta = {
             'form_type': form_type,
-            'module': {"id": module.id, "name": module.name} if module else {},
+            'module': build_error_utils.get_module_info(module) if module else {},
             'form': {"id": self.id if hasattr(self, 'id') else None, "name": self.name}
         }
 
@@ -416,12 +416,15 @@ class FormBase(DocumentSchema):
             needs_referral_detail = True
 
         if module:
-            if needs_case_type and not module.case_type:
-                errors.append({'type': "no case type", "module": {"id": module.id, "name": module.name}})
-            if needs_case_detail and not module.get_detail('case_short').columns:
-                errors.append({'type': "no case detail", "module": {"id": module.id, "name": module.name}})
-            if needs_referral_detail and not module.get_detail('ref_short').columns:
-                errors.append({'type': "no ref detail", "module": {"id": module.id, "name": module.name}})
+            errors.extend(
+                build_error_utils.get_case_errors(
+                    module,
+                    needs_case_type=needs_case_type,
+                    needs_case_detail=needs_case_detail,
+                    needs_referral_detail=needs_referral_detail,
+                )
+            )
+
         return errors
 
     def get_unique_id(self):
@@ -1940,7 +1943,19 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             errors.append({'type': "no modules"})
         for module in self.get_modules():
             if not module.forms:
-                errors.append({'type': "no forms", "module": {"id": module.id, "name": module.name}})
+                errors.append({
+                    'type': 'no forms',
+                    'module': build_error_utils.get_module_info(module),
+                })
+            if module.case_list.show:
+                errors.extend(
+                    build_error_utils.get_case_errors(
+                        module,
+                        needs_case_type=True,
+                        needs_case_detail=True
+                    )
+                )
+
 
         for form in self.get_forms():
             errors.extend(form.validate_for_build())
