@@ -1,0 +1,3 @@
+include README.rst
+recursive-include soil/static *
+recursive-include soil/templates *
