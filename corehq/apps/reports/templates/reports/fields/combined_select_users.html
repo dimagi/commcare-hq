@@ -36,6 +36,17 @@
 
 <script type="text/javascript">
     $(function () {
+
+        $(document).on('click', '#apply-filters', function() {
+            // really hacky way of clearing the inputs for mws and groups if the mobileworker user filter isn't set
+            if (!$("#user-filter-0").get(0).checked) {
+                $("#all-groups").prop('checked', false);
+                $("#all-mobile-workers").prop('checked', false);
+                $("#{{ smwf.field.cssId }} option:selected").removeAttr("selected");
+                $("#{{ sgf.field.cssId }} option:selected").removeAttr("selected");
+            }
+        });
+
         var checked_list = [
             ['#user-filter-0', '#mw_combined_filter', false],
             ['#all-mobile-workers', '#select-mobile-worker-field', true],
