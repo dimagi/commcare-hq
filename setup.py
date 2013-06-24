@@ -8,11 +8,12 @@ setup(
     description="A simple django library to help you schedule long running tasks for retrieval later when they're done using celery",
     author='Dimagi',
     author_email='information@dimagi.com',
-    url='http://www.dimagi.com/',
+    url='https://github.com/dimagi/django-soil/',
+    download_url='https://github.com/dimagi/django-soil/',
     install_requires = [
         "django",
     ],
-    packages = find_packages(exclude=['*.pyc']),
+    packages = ['soil'],
     include_package_data=True
 )
 
