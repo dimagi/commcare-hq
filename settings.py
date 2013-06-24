@@ -590,6 +590,7 @@ COUCHDB_APPS = [
     'smsforms',
     'translations',
     'users',
+    'utils',  # dimagi-utils
     'formplayer',
     'phonelog',
     'registration',

@@ -80,6 +80,7 @@ case_nested_types = ['actions']
 
 domain_special_types = {
     "name": type_exact_match_string("name", dual=True),
+    "deployment.country": {"type": "string", "index": "not_analyzed"},
     "author": {"type": "string", "index": "not_analyzed"},
     "title": {"type": "string", "index": "not_analyzed"},
     "deployment.description": {"type": "string", "index": "not_analyzed"},
