@@ -89,6 +89,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         })
         if self.display_app_type:
             context['selected'] = ['active']
+        context["show_advanced"] = context["unknown"]["show"] or context["hide_fuzzy"]["checked"]
         return context
 
     @property

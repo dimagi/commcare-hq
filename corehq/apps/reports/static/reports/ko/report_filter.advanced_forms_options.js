@@ -1,6 +1,6 @@
 var DeletedFormsControl = function (options) {
     var self = this;
-    self.show = ko.observable();
+    self.show = ko.observable(options.show);
     self.is_unknown_shown = ko.observable((options.is_unknown_shown) ? 'yes': '');
     self.selected_unknown_form = ko.observable(options.selected_unknown_form);
     self.all_unknown_forms = ko.observableArray(options.all_unknown_forms);
@@ -29,7 +29,6 @@ $.fn.advanceFormsOptions = function (options) {
 
             }
         });
-        viewModel.show(false);
     });
 };
 
