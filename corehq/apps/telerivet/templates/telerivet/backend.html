@@ -21,6 +21,11 @@
                 <td>{{ form.phone_id }}</td>
                 <td>{{ form.phone_id.errors }}</td>
             </tr>
+            <tr>
+                <td><label for="id_webhook_secret">{% trans "Webhook Secret" %}</label></td>
+                <td>{{ form.webhook_secret }}</td>
+                <td>{{ form.webhook_secret.errors }}</td>
+            </tr>
         </tbody>
     </table>
 </div>

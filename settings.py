@@ -586,6 +586,7 @@ COUCHDB_APPS = [
     'reports',
     'sms',
     'smsforms',
+    'telerivet',
     'translations',
     'users',
     'utils',  # dimagi-utils
@@ -662,7 +663,7 @@ SMS_LOADED_BACKENDS = [
     "corehq.apps.mach.api.MachBackend",
     "corehq.apps.tropo.api.TropoBackend",
     "corehq.apps.sms.backend.http_api.HttpBackend",
-    "corehq.apps.telerivet.api.TelerivetBackend",
+    "corehq.apps.telerivet.models.TelerivetBackend",
     "corehq.apps.sms.test_backend.TestSMSBackend",
     "corehq.apps.sms.backend.test.TestBackend",
 ]
