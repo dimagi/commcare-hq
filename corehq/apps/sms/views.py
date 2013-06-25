@@ -318,7 +318,7 @@ def delete_forwarding_rule(request, domain, forwarding_rule_id):
     return HttpResponseRedirect(reverse("list_forwarding_rules", args=[domain]))
 
 def _add_backend(request, backend_class_name, is_global, domain=None, backend_id=None):
-    assert is_global or backend_class_name == "TelerivetBackend" # TODO: Remove this once domain-specific billing is sorted out
+    assert request.couch_user.is_superuser or is_global or backend_class_name == "TelerivetBackend" # TODO: Remove this once domain-specific billing is sorted out
     backend_classes = get_available_backends()
     backend_class = backend_classes[backend_class_name]
     
@@ -398,7 +398,7 @@ def _list_backends(request, show_global=False, domain=None):
     instantiable_backends = []
     for name, klass in backend_classes.items():
         try:
-            assert show_global or name == "TelerivetBackend" # TODO: Remove this once domain-specific billing is sorted out
+            assert request.couch_user.is_superuser or show_global or name == "TelerivetBackend" # TODO: Remove this once domain-specific billing is sorted out
             klass.get_generic_name()
             klass.get_form_class()
             instantiable_backends.append((name, klass))
