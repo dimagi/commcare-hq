@@ -27,6 +27,7 @@ class ExportReport(ProjectReport, ProjectReportParametersMixin):
         return dict(
             custom_bulk_export_format=self.custom_bulk_export_format,
             saved_exports=self.get_saved_exports(),
+            timezone=self.timezone,
             get_filter_params=self.get_filter_params(),
         )
 
