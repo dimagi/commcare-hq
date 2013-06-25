@@ -26,7 +26,7 @@ COUCH_DATABASE_NAME = 'couchexport'
 
 COUCH_DATABASE = 'http://127.0.0.1:5984/couchlog_test'
 
-COUCHDB_DATABASES = [('couchexport', 'http://127.0.0.1:5984/couchexport')]
+COUCHDB_DATABASES = [ (app, 'http://127.0.0.1:5984/couchexport') for app in ['couch', 'couchexport'] ]
 
 TEST_RUNNER = 'couchdbkit.ext.django.testrunner.CouchDbKitTestSuiteRunner'
 
