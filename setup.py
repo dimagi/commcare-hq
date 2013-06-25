@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='dimagi-utils',
-    version='1.0.3',
+    version='1.0.4',
     description='Dimagi Shared Utilities',
     author='Dimagi',
     author_email='dev@dimagi.com',
