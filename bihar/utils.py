@@ -1,5 +1,7 @@
+from operator import attrgetter
 from django.utils.translation import ugettext_noop
 from corehq.apps.groups.models import Group
+from corehq.apps.users.models import CouchUser
 
 ASHA_ROLE = ugettext_noop('ASHA')
 AWW_ROLE = ugettext_noop('AWW')
@@ -52,10 +54,26 @@ def get_all_calculations(group_id):
             ), reduce=False)
             num_cases = ', '.join(r.get('numerator', ()))
             total_cases = ', '.join(r.get('total', ()))
-            print '%s | %s | %s | %s | %s' % (
+            yield (
                 indicator.name,
                 num or '',
                 total,
                 num_cases,
                 total_cases
             )
+
+
+def get_groups_for_group(group_id):
+    """This is a helper function only called locally"""
+    user_ids = [user.get_id for user in get_team_members(Group.get(group_id))]
+    owner_ids = list(get_all_owner_ids(user_ids))
+    db = Group.get_db()
+    rows = db.view('_all_docs', keys=owner_ids, include_docs=True)
+    groups = []
+    for row in rows:
+        doc = row['doc']
+        if doc['doc_type'] == 'Group':
+            groups.append(Group.wrap(doc))
+
+    groups.sort(key=attrgetter('name'))
+    return groups
