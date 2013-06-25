@@ -29,7 +29,7 @@ from dimagi.utils.couch.pagination import CouchFilter
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.groups.models import Group
-
+from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
 
 
 class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -473,6 +473,49 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
         return tz_utils.adjust_datetime_to_timezone\
             (date, pytz.utc.zone, self.timezone.zone).strftime\
             ('%Y-%m-%d %H:%M:%S') if date else ""
+
+class GenericPieChartReport(ProjectReport, GenericTabularReport):
+    name = 'Generic Pie Chart (sandbox)'
+    slug = 'generic_pie'
+    fields = ['corehq.apps.reports.fields.DatespanField',
+              'corehq.apps.reports.fields.AsyncLocationField']
+
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return True
+
+    @property
+    def headers(self):
+        return DataTablesHeader(*(DataTablesColumn(text) for text in [
+                    'Response', '# Responses', '% of responses',
+                ]))
+
+    def _data(self):
+        raw = {'a': 13, 'b': 46, 'c': 86}
+        return sorted(raw.iteritems())
+
+    @property
+    def rows(self):
+        data = self._data()
+        total = sum(v for k, v in data)
+        def row(k, v):
+            pct = v / float(total) if total > 0 else None
+            fmtpct = ('%.1f%%' % (100. * pct)) if pct is not None else u'\u2014'
+            return (k, v, fmtpct)
+        return [row(*r) for r in data]
+
+    def _chart_data(self):
+        return [{
+                'key': _('Tallied by Response'),
+                'values': [{'label': k, 'value': v} for k, v in self._data()],
+        }]
+
+    @property
+    def charts(self):
+        if 'location_id' in self.request.GET: # hack: only get data if we're loading an actual report
+            return [PieChart(None, self._chart_data())]
+
 
 class MapReport(ProjectReport, ProjectReportParametersMixin):
     """

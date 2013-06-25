@@ -32,6 +32,7 @@ REPORTS = (
         inspect.SubmitHistory,
         inspect.CaseListReport,
         inspect.MapReport,
+        inspect.GenericPieChartReport,
     )),
     (_("Raw Data"), (
         export.ExcelExportReport,
