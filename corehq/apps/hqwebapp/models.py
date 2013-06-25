@@ -22,13 +22,14 @@ from corehq.apps.announcements.dispatcher import (
 
 
 def format_submenu_context(title, url=None, html=None,
-                           is_header=False, is_divider=False):
+                           is_header=False, is_divider=False, data_id=None):
     return {
         'title': title,
         'url': url,
         'html': html,
         'is_header': is_header,
         'is_divider': is_divider,
+        'data_id': data_id,
     }
 
 
@@ -248,10 +249,18 @@ class ManageDataTab(UITab):
         # navigation isomorphism
         return ('importer/excel' in self._request.get_full_path() or
                 super(ManageDataTab, self).is_active)
-        
+
+
 class ApplicationsTab(UITab):
     title = ugettext_noop("Applications")
     view = "corehq.apps.app_manager.views.default"
+
+    @classmethod
+    def make_app_title(cls, app_name, doc_type):
+        return mark_safe("%s%s" % (
+            mark_for_escaping(app_name or '(Untitled)'),
+            mark_for_escaping(' (Remote)' if doc_type == 'RemoteApp' else ''),
+        ))
 
     @property
     def dropdown_items(self):
@@ -271,13 +280,18 @@ class ApplicationsTab(UITab):
         for app in apps:
             app_info = app['value']
             if app_info:
-                url = reverse('view_app', args=[self.domain, app_info['_id']])
-                app_name = mark_safe("%s%s" % (
-                    mark_for_escaping(app_info['name'] or '(Untitled)'),
-                    mark_for_escaping(' (Remote)' if app_info['doc_type'] == 'RemoteApp' else ''),
-                ))
+                app_id = app_info['_id']
+                app_name = app_info['name']
+                app_doc_type = app_info['doc_type']
 
-                submenu_context.append(format_submenu_context(app_name, url=url))
+                url = reverse('view_app', args=[self.domain, app_id])
+                app_title = self.make_app_title(app_name, app_doc_type)
+
+                submenu_context.append(format_submenu_context(
+                    app_title,
+                    url=url,
+                    data_id=app_id,
+                ))
 
         if self.couch_user.can_edit_apps():
             submenu_context.append(format_submenu_context(None, is_divider=True))
