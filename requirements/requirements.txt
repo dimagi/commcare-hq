@@ -57,3 +57,4 @@ sqlagg==0.1.3
 -e submodules/fluff-src
 -e submodules/ctable-src
 unittest2
+pycurl==7.19.0
