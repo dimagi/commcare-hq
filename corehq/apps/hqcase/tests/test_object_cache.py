@@ -1,15 +1,20 @@
+import StringIO
 import hashlib
 
 from django.test import RequestFactory
 from django.test.client import Client
+import ipdb
+from corehq.apps.domain.models import Domain
+import time
 
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests import TEST_CASE_ID, BaseCaseMultimediaTest, TEST_DOMAIN
 from corehq.apps.api.object_fetch_api import CaseAttachmentAPI
 
 
-TEST_USER = 'tester'
+TEST_USER = 'case_attachment@hqtesting.com'
+
 TEST_PASSWORD = 'testing'
 
 class CaseObjectCacheTest(BaseCaseMultimediaTest):
@@ -18,10 +23,16 @@ class CaseObjectCacheTest(BaseCaseMultimediaTest):
     """
 
     def setUp(self):
-        self.user = CommCareUser.create(TEST_DOMAIN, TEST_USER, TEST_PASSWORD)
+        self.domain = Domain.get_or_create_with_name(TEST_DOMAIN, is_active=True)
+        self.user = WebUser.create(TEST_DOMAIN, TEST_USER, TEST_PASSWORD)
+        #self.user.set_role(self.domain.name, 'field-implementer')
+        self.user.set_role(self.domain.name, 'admin')
+        self.user.save()
+        time.sleep(1)
 
     def tearDown(self):
         self.user.delete()
+        self.domain.delete()
 
     def testGenericObjectCache(self):
         """
@@ -30,28 +41,23 @@ class CaseObjectCacheTest(BaseCaseMultimediaTest):
         #API url not implemented yet, leaving this stub in as placeholder todo for full implementation
         pass
 
-    def _ref_get(self, url):
-        rf = RequestFactory()
-        req = rf.get(url)
-        attach_api = CaseAttachmentAPI()
-        return attach_api.get(req, 'tester')
-
-
     def testCreateMultimediaCase(self):
         attachments = ['dimagi_logo', 'commcare_logo']
 
         self._doCreateCaseWithMultimedia(attachments=attachments)
         case = CommCareCase.get(TEST_CASE_ID)
-        case.domain=TEST_DOMAIN
+        case.domain = TEST_DOMAIN
         self.assertEqual(2, len(case.case_attachments))
-        c = Client()
-        lresponse = c.post('/accounts/login/', {'username': TEST_USER, 'password': TEST_PASSWORD})
-
+        client = Client()
+        #lresponse = client.post('/accounts/login/', {'username': TEST_USER, 'password': TEST_PASSWORD})
+        client.login(username=TEST_USER, password=TEST_PASSWORD)
+        data2 = client.get('/a/%s/' % TEST_DOMAIN, follow=True)
         for a in attachments:
             url = case.get_attachment_server_url(a)
-            data = c.get(url)
+            data = client.get(url, follow=True)
+            content = StringIO.StringIO(data.content)
             self.assertEqual(hashlib.md5(self._attachmentFileStream(a).read()).hexdigest(),
-                             hashlib.md5(data.content).hexdigest())
+                             hashlib.md5(content.read()).hexdigest())
 
 
 
