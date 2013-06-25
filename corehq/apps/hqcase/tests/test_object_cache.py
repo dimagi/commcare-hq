@@ -49,9 +49,7 @@ class CaseObjectCacheTest(BaseCaseMultimediaTest):
         case.domain = TEST_DOMAIN
         self.assertEqual(2, len(case.case_attachments))
         client = Client()
-        #lresponse = client.post('/accounts/login/', {'username': TEST_USER, 'password': TEST_PASSWORD})
         client.login(username=TEST_USER, password=TEST_PASSWORD)
-        data2 = client.get('/a/%s/' % TEST_DOMAIN, follow=True)
         for a in attachments:
             url = case.get_attachment_server_url(a)
             data = client.get(url, follow=True)
