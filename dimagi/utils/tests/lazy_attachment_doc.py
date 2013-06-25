@@ -86,3 +86,7 @@ class LazyAttachmentDocTest(TestCase):
         doc.save()
         self.assertEqual(doc.lazy_list_attachments(),
                          set(doc._attachments.keys()))
+
+    def test_null_lazy_list_attachments(self):
+        doc = SampleDoc.wrap({})
+        self.assertEqual(doc.lazy_list_attachments(), set())

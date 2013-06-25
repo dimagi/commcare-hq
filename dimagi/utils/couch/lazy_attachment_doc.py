@@ -56,8 +56,8 @@ class LazyAttachmentDoc(Document):
 
     def lazy_list_attachments(self):
         keys = set()
-        keys.update(self._LAZY_ATTACHMENTS.keys())
-        keys.update(self._attachments.keys())
+        keys.update(getattr(self, '_LAZY_ATTACHMENTS', None) or {})
+        keys.update(getattr(self, '_attachments', None) or {})
         return keys
 
     def register_pre_save(self, fn):
