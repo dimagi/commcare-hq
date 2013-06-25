@@ -4,3 +4,4 @@
 *localsettings.py
 *~
 *.db
+.coverage
