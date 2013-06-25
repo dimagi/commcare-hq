@@ -202,21 +202,24 @@ login_required_late_eval_of_LOGIN_URL = login_required_ex()
 # is not defined - people may forget to do this, because it's not a standard, defined Django 
 # config setting
 
-def domain_admin_required_ex( redirect_page_name = None ):
+def domain_admin_required_ex(redirect_page_name=None):
     if redirect_page_name is None:
-        redirect_page_name = getattr(settings, 'DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME', 'homepage')                                                                                                 
+        redirect_page_name = getattr(settings, 'DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME', 'homepage')
+
     def _outer(view_func):
         @wraps(view_func)
         def _inner(request, domain, *args, **kwargs):
             if not hasattr(request, 'couch_user'):
-                raise Http404
+                raise Http404()
             if not request.couch_user.is_web_user():
-                raise Http404
+                raise Http404()
             domain_name, domain = load_domain(request, domain)
+            if not domain:
+                raise Http404()
             if not request.couch_user.is_domain_admin(domain_name):
                 return HttpResponseRedirect(reverse(redirect_page_name))
             return view_func(request, domain_name, *args, **kwargs)
-        
+
         return _inner
     return _outer
 

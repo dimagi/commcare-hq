@@ -19,6 +19,7 @@ from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyD
 # can be set to provide a mock.
 
 MOCK_XFORM_ES = None
+MOCK_CASE_ES = None
 
 class XFormInstanceResource(v0_3.XFormInstanceResource, DomainSpecificResourceMixin):
 
@@ -116,6 +117,13 @@ class CommCareCaseResource(v0_3.CommCareCaseResource, DomainSpecificResourceMixi
     parent_cases = UseIfRequested(ToManyDictField('corehq.apps.api.resources.v0_4.CommCareCaseResource',
                                                   attribute=lambda case: dict([ (index.identifier, CommCareCase.get(index.referenced_id)) for index in case.reverse_indices])))
 
+    # Fields that v0.2 assumed were pre-transformed but we are now operating on straight CommCareCase objects again
+    date_modified = fields.CharField(attribute='modified_on', default="1900-01-01")
+    server_date_modified = fields.CharField(attribute='server_modified_on', default="1900-01-01")
+
+    def case_es(self, domain):
+        return MOCK_CASE_ES or CaseES(domain)
+
     def obj_get_list(self, bundle, domain, **kwargs):
         filters = v0_3.CaseListFilters(bundle.request.GET).filters
 
@@ -130,7 +138,7 @@ class CommCareCaseResource(v0_3.CommCareCaseResource, DomainSpecificResourceMixi
         
         return ESQuerySet(payload = query,
                           model = CommCareCase, #lambda jvalue: dict_object(CommCareCase.wrap(jvalue).get_json()),
-                          es_client = CaseES(domain)) # Not that XFormES is used only as an ES client, for `run_query` against the proper index
+                          es_client = self.case_es(domain)) # Not that XFormES is used only as an ES client, for `run_query` against the proper index
 
     class Meta(v0_3.CommCareCaseResource.Meta):
         max_limit = 100 # Today, takes ~25 seconds for some domains

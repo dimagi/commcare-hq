@@ -19,11 +19,11 @@ djtables==0.1.1
 egenix-mx-base==3.2.6
 eulxml==0.18.0
 gunicorn==0.17.4
-lxml==2.3
+lxml==3.2.1
 mock==0.8.0
 mocker==1.1.1
 openpyxl==1.5.6
-PIL==1.1.7
+Pillow==2.0.0
 phonenumbers==5.1b1
 poster==0.8.1
 psycopg2==2.4.1
@@ -57,3 +57,4 @@ amqplib==1.0.2
 -e submodules/fluff-src
 django-redis==3.2
 redis==2.7.5
+unittest2

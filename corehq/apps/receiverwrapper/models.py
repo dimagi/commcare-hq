@@ -25,19 +25,28 @@ def register_repeater_type(cls):
     return cls
 
 
-def simple_post_with_cached_timeout(data, url, expiry=60*60, *args, **kwargs):
+def simple_post_with_cached_timeout(data, url, expiry=60 * 60, *args, **kwargs):
     # no control characters (e.g. '/') in keys
     key = hashlib.md5(
         '{0} timeout {1}'.format(__name__, url)
     ).hexdigest()
 
-    if cache.get(key) == 'timeout':
+    cache_value = cache.get(key)
+
+    if cache_value == 'timeout':
         raise socket.timeout('recently timed out, not retrying')
+    elif cache_value == 'error':
+        raise socket.timeout('recently errored, not retrying')
+
     try:
-        return simple_post(data, url, *args, **kwargs)
+        resp = simple_post(data, url, *args, **kwargs)
     except socket.timeout:
         cache.set(key, 'timeout', expiry)
         raise
+
+    if not 200 <= resp.status < 300:
+        cache.set(key, 'error', expiry)
+    return resp
 
 
 DELETED = "-Deleted"
@@ -96,15 +105,27 @@ class Repeater(Document, UnicodeMixIn):
             self['base_doc'] += DELETED
         self.save()
 
+    def get_headers(self, repeat_record):
+        # to be overridden
+        return {}
+
 @register_repeater_type
 class FormRepeater(Repeater):
     """
     Record that forms should be repeated to a new url
 
     """
+    @memoized
+    def _payload_doc(self, repeat_record):
+        return XFormInstance.get(repeat_record.payload_id)
 
     def get_payload(self, repeat_record):
-        return XFormInstance.get(repeat_record.payload_id).get_xml()
+        return self._payload_doc(repeat_record).get_xml()
+
+    def get_headers(self, repeat_record):
+        return {
+            "received-on": self._payload_doc(repeat_record).received_on.isoformat()+"Z"
+        }
 
     def __unicode__(self):
         return "forwarding forms to: %s" % self.url
@@ -118,8 +139,17 @@ class CaseRepeater(Repeater):
 
     version = StringProperty(default=V2, choices=LEGAL_VERSIONS)
 
+    @memoized
+    def _payload_doc(self, repeat_record):
+        return CommCareCase.get(repeat_record.payload_id)
+
     def get_payload(self, repeat_record):
-        return CommCareCase.get(repeat_record.payload_id).to_xml(version=self.version)
+        return self._payload_doc(repeat_record).to_xml(version=self.version)
+
+    def get_headers(self, repeat_record):
+        return {
+            "server-modified-on": self._payload_doc(repeat_record).server_modified_on.isoformat()+"Z"
+        }
 
     def __unicode__(self):
         return "forwarding cases to: %s" % self.url
@@ -133,12 +163,21 @@ class ShortFormRepeater(Repeater):
 
     version = StringProperty(default=V2, choices=LEGAL_VERSIONS)
 
+    @memoized
+    def _payload_doc(self, repeat_record):
+        return XFormInstance.get(repeat_record.payload_id)
+
     def get_payload(self, repeat_record):
-        form = XFormInstance.get(repeat_record.payload_id)
+        form = self._payload_doc(repeat_record)
         cases = CommCareCase.get_by_xform_id(form.get_id)
         return json.dumps({'form_id': form._id,
                            'received_on': json_format_datetime(form.received_on),
                            'case_ids': [case._id for case in cases]})
+
+    def get_headers(self, repeat_record):
+        return {
+            "received-on": self._payload_doc(repeat_record).received_on.isoformat()+"Z"
+        }
 
     def __unicode__(self):
         return "forwarding short form to: %s" % self.url
@@ -212,12 +251,7 @@ class RepeatRecord(Document, LockableMixIn):
     def fire(self, max_tries=3, post_fn=None):
         payload = self.get_payload()
         post_fn = post_fn or simple_post_with_cached_timeout
-        headers = None
-        if self.repeater_type == "FormRepeater":
-            form = XFormInstance.get(self.payload_id)
-            headers = {
-                "received-on": form.received_on.isoformat()+"Z",
-            }
+        headers = self.repeater.get_headers(self)
         if self.try_now():
             # we don't use celery's version of retry because
             # we want to override the success/fail each try

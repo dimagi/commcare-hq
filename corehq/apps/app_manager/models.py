@@ -17,7 +17,7 @@ from django.core.urlresolvers import reverse
 from django.http import Http404
 from restkit.errors import ResourceError
 import commcare_translations
-from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings
+from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings, build_error_utils
 from corehq.apps.app_manager.suite_xml import IdStrings
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 from corehq.apps.app_manager.util import split_path, save_xform
@@ -31,6 +31,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import cc_user_domain
 from corehq.util import bitly
 import current_builds
+from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base, parse_int
@@ -200,30 +201,35 @@ class UpdateReferralAction(FormAction):
             )
         return self.followup_date or "date(today() + 2)"
 
+
 class OpenReferralAction(UpdateReferralAction):
-    name_path       = StringProperty()
+    name_path = StringProperty()
+
 
 class OpenCaseAction(FormAction):
-    name_path   = StringProperty()
+    name_path = StringProperty()
     external_id = StringProperty()
+
 
 class OpenSubCaseAction(FormAction):
     case_type = StringProperty()
     case_name = StringProperty()
     case_properties = DictProperty()
+    repeat_context = StringProperty()
+
 
 class FormActions(DocumentSchema):
-    open_case       = SchemaProperty(OpenCaseAction)
-    update_case     = SchemaProperty(UpdateCaseAction)
-    close_case      = SchemaProperty(FormAction)
-    open_referral   = SchemaProperty(OpenReferralAction)
+    open_case = SchemaProperty(OpenCaseAction)
+    update_case = SchemaProperty(UpdateCaseAction)
+    close_case = SchemaProperty(FormAction)
+    open_referral = SchemaProperty(OpenReferralAction)
     update_referral = SchemaProperty(UpdateReferralAction)
-    close_referral  = SchemaProperty(FormAction)
+    close_referral = SchemaProperty(FormAction)
 
-    case_preload    = SchemaProperty(PreloadAction)
-    referral_preload= SchemaProperty(PreloadAction)
+    case_preload = SchemaProperty(PreloadAction)
+    referral_preload = SchemaProperty(PreloadAction)
 
-    subcases        = SchemaListProperty(OpenSubCaseAction)
+    subcases = SchemaListProperty(OpenSubCaseAction)
 
     def all_property_names(self):
         names = set()
@@ -233,37 +239,40 @@ class FormActions(DocumentSchema):
             names.update(subcase.case_properties.keys())
         return names
 
+
 class FormSource(object):
     def __get__(self, form, form_cls):
         unique_id = form.get_unique_id()
-        source = form.dynamic_properties().get('contents')
-        if source is None:
-            app = form.get_app()
-            filename = "%s.xml" % unique_id
-            if app._attachments and filename in app._attachments and isinstance(app._attachments[filename], basestring):
-                source = app._attachments[filename]
-            elif app._attachments and filename in app._attachments and app._attachments[filename]["length"] > 0:
-                source = form.get_app().fetch_attachment(filename)
-            else:
-                source = ''
+        app = form.get_app()
+        filename = "%s.xml" % unique_id
+
+        # for backwards compatibility of really old apps
+        try:
+            old_contents = form['contents']
+        except AttributeError:
+            pass
+        else:
+            app.lazy_put_attachment(old_contents, filename)
+            del form['contents']
+
+        try:
+            source = app.lazy_fetch_attachment(filename)
+        except KeyError:
+            source = ''
+
         return source
 
     def __set__(self, form, value):
         unique_id = form.get_unique_id()
-        form.contents = value
         app = form.get_app()
-        def pre_save():
-            if form.dynamic_properties().has_key('contents'):
-                del form.contents
-        def post_save():
-            app.put_attachment(value, '%s.xml' % unique_id)
+        filename = "%s.xml" % unique_id
+        app.lazy_put_attachment(value, filename)
         form.validation_cache = None
         try:
             form.xmlns = form.wrapped_xform().data_node.tag_xmlns
         except Exception:
             form.xmlns = None
-        app.register_pre_save(pre_save)
-        app.register_post_save(post_save)
+
 
 class CachedStringProperty(object):
     def __init__(self, key):
@@ -283,8 +292,10 @@ class CachedStringProperty(object):
     def set(cls, key, value):
         cache.set(key, value, 12*60*60)
 
+
 class CouchCache(Document):
     value = StringProperty(default=None)
+
 
 class CouchCachedStringProperty(CachedStringProperty):
 
@@ -306,6 +317,7 @@ class CouchCachedStringProperty(CachedStringProperty):
         c = cls._get(key)
         c.value = value
         c.save()
+
 
 class FormBase(DocumentSchema):
     """
@@ -382,7 +394,7 @@ class FormBase(DocumentSchema):
 
         meta = {
             'form_type': form_type,
-            'module': {"id": module.id, "name": module.name} if module else {},
+            'module': build_error_utils.get_module_info(module) if module else {},
             'form': {"id": self.id if hasattr(self, 'id') else None, "name": self.name}
         }
 
@@ -411,12 +423,15 @@ class FormBase(DocumentSchema):
             needs_referral_detail = True
 
         if module:
-            if needs_case_type and not module.case_type:
-                errors.append({'type': "no case type", "module": {"id": module.id, "name": module.name}})
-            if needs_case_detail and not module.get_detail('case_short').columns:
-                errors.append({'type': "no case detail", "module": {"id": module.id, "name": module.name}})
-            if needs_referral_detail and not module.get_detail('ref_short').columns:
-                errors.append({'type': "no ref detail", "module": {"id": module.id, "name": module.name}})
+            errors.extend(
+                build_error_utils.get_case_errors(
+                    module,
+                    needs_case_type=needs_case_type,
+                    needs_case_detail=needs_case_detail,
+                    needs_referral_detail=needs_referral_detail,
+                )
+            )
+
         return errors
 
     def get_unique_id(self):
@@ -526,6 +541,10 @@ class FormBase(DocumentSchema):
         for subcase_action in self.actions.subcases:
             if not subcase_action.case_type:
                 errors.append({'type': 'subcase has no case type'})
+            # no parent properties for subcase
+            for key in subcase_action.case_properties:
+                if not re.match(r'^[a-zA-Z][\w_-]*$', key):
+                    errors.append({'type': 'update_case word illegal', 'word': key})
 
         if self.requires == 'none' and self.actions.open_case.is_active() \
                 and not self.actions.open_case.name_path:
@@ -847,7 +866,8 @@ class VersioningError(Exception):
     """For errors that violate the principals of versioning in VersionedDoc"""
     pass
 
-class VersionedDoc(Document):
+
+class VersionedDoc(LazyAttachmentDoc):
     """
     A document that keeps an auto-incrementing version number, knows how to make copies of itself,
     delete a copy of itself, and revert back to an earlier copy of itself.
@@ -868,47 +888,45 @@ class VersionedDoc(Document):
     def save(self, response_json=None, increment_version=True, **params):
         if increment_version:
             self.version = self.version + 1 if self.version else 1
-        super(VersionedDoc, self).save()
+        super(VersionedDoc, self).save(**params)
         if response_json is not None:
             if 'update' not in response_json:
                 response_json['update'] = {}
             response_json['update']['app-version'] = self.version
 
-    def save_copy(self):
+    def make_build(self):
         cls = self.__class__
         copies = cls.view('app_manager/applications', key=[self.domain, self._id, self.version], include_docs=True, limit=1).all()
         if copies:
             copy = copies[0]
         else:
             copy = deepcopy(self.to_json())
-            del copy['_id']
-            del copy['_rev']
-            if 'short_url' in copy:
-                del copy['short_url']
-            if 'short_odk_url' in copy:
-                del copy['short_odk_url']
-            if "recipients" in copy:
-                del copy['recipients']
-            if '_attachments' in copy:
-                del copy['_attachments']
+            bad_keys = ('_id', '_rev', '_attachments',
+                        'short_url', 'short_odk_url', 'recipients')
+
+            for bad_key in bad_keys:
+                if bad_key in copy:
+                    del copy[bad_key]
+
             copy = cls.wrap(copy)
             copy['copy_of'] = self._id
-            copy.save(increment_version=False)
+
             copy.copy_attachments(self)
         return copy
 
     def copy_attachments(self, other, regexp=ATTACHMENT_REGEX):
-        for name in other._attachments or {}:
+        for name in other.lazy_list_attachments() or {}:
             if regexp is None or re.match(regexp, name):
-                self.put_attachment(other.fetch_attachment(name), name)
-    def revert_to_copy(self, copy):
+                self.lazy_put_attachment(other.lazy_fetch_attachment(name), name)
+
+    def make_reversion_to_copy(self, copy):
         """
         Replaces couch doc with a copy of the backup ("copy").
         Returns the another Application/RemoteApp referring to this
         updated couch doc. The returned doc should be used in place of
         the original doc, i.e. should be called as follows:
-            app = revert_to_copy(app, copy)
-        This is not ideal :(
+            app = app.make_reversion_to_copy(copy)
+            app.save()
         """
         if copy.copy_of != self._id:
             raise VersioningError("%s is not a copy of %s" % (copy, self))
@@ -921,7 +939,6 @@ class VersionedDoc(Document):
             del app['_attachments']
         cls = self.__class__
         app = cls.wrap(app)
-        app.save()
         app.copy_attachments(copy)
         return app
 
@@ -1282,8 +1299,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
 
     def create_jadjar(self, save=False):
         try:
-            return self.fetch_attachment('CommCare.jad'), self.fetch_attachment('CommCare.jar')
-        except ResourceError:
+            return (
+                self.lazy_fetch_attachment('CommCare.jad'),
+                self.lazy_fetch_attachment('CommCare.jar'),
+            )
+        except (ResourceError, KeyError):
             built_on = datetime.utcnow()
             all_files = self.create_all_files()
             jad_settings = {
@@ -1299,12 +1319,13 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
                     signed=jadjar.signed,
                     datetime=built_on,
                 )
-                self.save(increment_version=False)
 
-                self.put_attachment(jadjar.jad, 'CommCare.jad')
-                self.put_attachment(jadjar.jar, 'CommCare.jar')
+                self.lazy_put_attachment(jadjar.jad, 'CommCare.jad')
+                self.lazy_put_attachment(jadjar.jar, 'CommCare.jar')
+
                 for filepath in all_files:
-                    self.put_attachment(all_files[filepath], 'files/%s' % filepath)
+                    self.lazy_put_attachment(all_files[filepath],
+                                             'files/%s' % filepath)
 
             return jadjar.jad, jadjar.jar
 
@@ -1335,7 +1356,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     def get_odk_qr_code(self):
         """Returns a QR code, as a PNG to install on CC-ODK"""
         try:
-            return self.fetch_attachment("qrcode.png")
+            return self.lazy_fetch_attachment("qrcode.png")
         except ResourceNotFound:
             try:
                 from pygooglechart import QRChart
@@ -1352,7 +1373,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
             os.close(f)
             with open(fname, "rb") as f:
                 png_data = f.read()
-                self.put_attachment(png_data, "qrcode.png", content_type="image/png")
+                self.lazy_put_attachment(png_data, "qrcode.png",
+                                         content_type="image/png")
             return png_data
 
     def fetch_jar(self):
@@ -1364,20 +1386,29 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         jadjar = jadjar.pack(self.create_all_files())
         return jadjar.jar
 
-    def save_copy(self, comment=None, user_id=None, previous_version=None):
-        copy = super(ApplicationBase, self).save_copy()
+    def make_build(self, comment=None, user_id=None, previous_version=None):
+        copy = super(ApplicationBase, self).make_build()
+        if not copy._id:
+            # I expect this always to be the case
+            # but check explicitly so as not to change the _id if it exists
+            copy._id = copy.get_db().server.next_uuid()
 
         copy.set_form_versions(previous_version)
         copy.create_jadjar(save=True)
 
         try:
+            # since this hard to put in a test
+            # I'm putting this assert here if copy._id is ever None
+            # which makes tests error
+            assert copy._id
             copy.short_url = bitly.shorten(
                 get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
             )
             copy.short_odk_url = bitly.shorten(
                 get_url_base() + reverse('corehq.apps.app_manager.views.download_odk_profile', args=[copy.domain, copy._id])
             )
-
+        except AssertionError:
+            raise
         except:        # URLError, BitlyError
             # for offline only
             logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
@@ -1387,7 +1418,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         copy.build_comment = comment
         copy.comment_from = user_id
         copy.is_released = False
-        copy.save(increment_version=False)
 
         return copy
 
@@ -1461,8 +1491,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             data['build_langs'] = data['langs']
         return super(Application, cls).wrap(data)
 
-    def revert_to_copy(self, copy):
-        app = super(Application, self).revert_to_copy(copy)
+    def make_reversion_to_copy(self, copy):
+        app = super(Application, self).make_reversion_to_copy(copy)
 
         for form in app.get_forms():
             # reset the form's validation cache, since the form content is
@@ -1471,30 +1501,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         return app
 
-    def register_pre_save(self, fn):
-        if not hasattr(self, '_PRE_SAVE'):
-            self._PRE_SAVE = []
-        self._PRE_SAVE.append(fn)
-
-    def register_post_save(self, fn):
-        if not hasattr(self, '_POST_SAVE'):
-            self._POST_SAVE = []
-        self._POST_SAVE.append(fn)
-
-    def save(self, response_json=None, **kwargs):
-        if hasattr(self, '_PRE_SAVE'):
-            for pre_save in self._PRE_SAVE:
-                pre_save()
-            def del_pre_save():
-                del self._PRE_SAVE
-            self.register_post_save(del_pre_save)
-
-        super(Application, self).save(response_json, **kwargs)
-        if hasattr(self, '_POST_SAVE'):
-            for post_save in self._POST_SAVE:
-                post_save()
-
-            del self._POST_SAVE
 
     @property
     def profile_url(self):
@@ -1931,7 +1937,19 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             errors.append({'type': "no modules"})
         for module in self.get_modules():
             if not module.forms:
-                errors.append({'type': "no forms", "module": {"id": module.id, "name": module.name}})
+                errors.append({
+                    'type': 'no forms',
+                    'module': build_error_utils.get_module_info(module),
+                })
+            if module.case_list.show:
+                errors.extend(
+                    build_error_utils.get_case_errors(
+                        module,
+                        needs_case_type=True,
+                        needs_case_detail=True
+                    )
+                )
+
 
         for form in self.get_forms():
             errors.extend(form.validate_for_build())
@@ -2212,8 +2230,12 @@ def import_app(app_id_or_source, domain, name=None, validate_source_domain=None)
         source = json.loads(source)
     else:
         source = app_id_or_source
-    try: attachments = source.pop('_attachments')
-    except KeyError: attachments = {}
+    try:
+        attachments = source['_attachments']
+    except KeyError:
+        attachments = {}
+    finally:
+        source['_attachments'] = {}
     if name:
         source['name'] = name
     cls = str_to_cls[source['doc_type']]

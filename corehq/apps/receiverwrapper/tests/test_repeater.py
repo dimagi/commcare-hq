@@ -136,7 +136,7 @@ class RepeaterTest(TestCase):
         self.assertEqual(self.log[1][:3], (self.form_repeater.url, 200, xform_xml))
         self.assertIn('received-on', self.log[1][3])
         self.assertEqual(self.log[3][:2], (self.case_repeater.url, 200))
-        self.assertIsNone(self.log[3][3])
+        self.assertIn('server-modified-on', self.log[3][3])
         check_xml_line_by_line(self, self.log[3][2], case_block)
 
         repeat_records = RepeatRecord.all(domain=self.domain, due_before=next_check_time)

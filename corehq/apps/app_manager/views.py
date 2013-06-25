@@ -1,5 +1,4 @@
 from StringIO import StringIO
-import functools
 import logging
 import hashlib
 import os
@@ -13,6 +12,7 @@ from django.core.cache import cache
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import cache_control
+from corehq import ApplicationsTab
 from corehq.apps.app_manager import commcare_settings
 from django.utils import html
 from django.utils.http import urlencode as django_urlencode
@@ -28,8 +28,8 @@ from django.conf import settings
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
+from corehq.apps.app_manager.util import is_valid_case_type, get_case_properties, get_all_case_properties
 from corehq.apps.app_manager.util import save_xform, get_settings_values
-from corehq.apps.app_manager.util import is_valid_case_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.translations import system_text as st_trans
@@ -394,7 +394,10 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
             form_errors[i] = err[0]
         else:
             messages.error(request, err)
-
+    module_case_types = [
+        {'module_name': module.name.get('en'), 'case_type': module.case_type}
+        for module in form.get_app().modules if module.case_type
+    ] if not is_user_registration else None
     return {
         'nav_form': form if not is_user_registration else '',
         'xform_languages': languages,
@@ -402,7 +405,7 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         'form_actions': form.actions.to_json(),
         'case_reserved_words_json': load_case_reserved_words(),
         'is_user_registration': is_user_registration,
-        'module_case_types': [{'module_name': module.name.get('en'), 'case_type': module.case_type} for module in form.get_app().modules if module.case_type] if not is_user_registration else None,
+        'module_case_types': module_case_types,
         'form_errors': form_errors,
     }
 
@@ -594,6 +597,7 @@ def release_build(request, domain, app_id, saved_app_id):
     else:
         return HttpResponseRedirect(reverse('release_manager', args=[domain, app_id]))
 
+
 @retry_resource(3)
 def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user_registration=False):
     """
@@ -645,44 +649,17 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         del app['use_commcare_sense']
         app.save()
 
-    case_properties = set()
+    case_properties = None
     if module:
-        @memoized
-        def get_properties(case_type,
-                defaults=("name", "date-opened", "status"),
-                already_visited=()):
-
-            if case_type in already_visited:
-                return ()
-
-            get_properties_recursive = functools.partial(
-                get_properties,
-                already_visited=already_visited + (case_type,)
-            )
-
-            case_properties = set(defaults)
-            parent_types = set()
-
-            for module in app.get_modules():
-                for form in module.get_forms():
-                    if module.case_type == case_type:
-                        case_properties.update(
-                            form.actions.update_case.update.keys()
-                        )
-                    for subcase in form.actions.subcases:
-                        if subcase.case_type == case_type:
-                            case_properties.update(
-                                subcase.case_properties.keys()
-                            )
-                            parent_types.add(module.case_type)
-
-            for parent_type in parent_types:
-                for property in get_properties_recursive(parent_type):
-                    case_properties.add('parent/%s' % property)
-
-            return case_properties
-
-        case_properties = list(get_properties(module.case_type))
+        if not form:
+            case_type = module.case_type
+            case_properties = get_case_properties(
+                app,
+                [case_type],
+                defaults=('name', 'date-opened', 'status')
+            )[case_type]
+        else:
+            case_properties = get_all_case_properties(app)
 
     context = {
         'domain': domain,
@@ -1253,6 +1230,7 @@ def edit_form_actions(req, domain, app_id, module_id, form_id):
     form.requires = req.POST.get('requires', form.requires)
     response_json = {}
     app.save(response_json)
+    response_json['propertiesMap'] = get_all_case_properties(app)
     return json_response(response_json)
 
 @require_can_edit_apps
@@ -1490,7 +1468,12 @@ def edit_app_attr(request, domain, app_id, attr):
             setattr(app, attribute, value)
 
     if should_edit("name"):
-        resp['update'].update({'.variable-app_name': hq_settings['name']})
+        _clear_app_cache(request, domain)
+        name = hq_settings['name']
+        resp['update'].update({
+            '.variable-app_name': name,
+            '[data-id="{id}"]'.format(id=app_id): ApplicationsTab.make_app_title(name, app.doc_type),
+        })
 
     if should_edit("success_message"):
         success_message = hq_settings['success_message']
@@ -1581,11 +1564,12 @@ def save_copy(req, domain, app_id):
 
     if not errors:
         try:
-            copy = app.save_copy(
+            copy = app.make_build(
                 comment=comment,
                 user_id=req.couch_user.get_id,
                 previous_version=app.get_latest_app(released_only=False)
             )
+            copy.save(increment_version=False)
         finally:
             # To make a RemoteApp always available for building
             if app.is_remote_app():
@@ -1638,7 +1622,8 @@ def revert_to_copy(req, domain, app_id):
     """
     app = get_app(domain, app_id)
     copy = get_app(domain, req.POST['saved_app'])
-    app = app.revert_to_copy(copy)
+    app = app.make_reversion_to_copy(copy)
+    app.save()
     messages.success(req, "Successfully reverted to version %s, now at version %s" % (copy.version, app.version))
     return back_to_main(**locals())
 

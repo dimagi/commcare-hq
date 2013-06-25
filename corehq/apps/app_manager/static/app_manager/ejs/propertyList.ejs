@@ -5,10 +5,10 @@
         <th></th>
     </tr>
 
-    [% for(var key in map) { %]
+    [% _(casexml.sortByQuestions(map, keyType === 'nodeset' ? 'keys' : 'values')).each(function (pair) { %]
         [%
-            var nodeset = keyType === "nodeset" ? key : map[key];
-            var propertyName = keyType === "nodeset" ? map[key] : key;
+            var nodeset = keyType === "nodeset" ? pair[0] : pair[1];
+            var propertyName = keyType === "nodeset" ? pair[1] : pair[0];
         %]
         <tr class="action-update">
             <td>
@@ -39,7 +39,7 @@
                 [% } %]
             </td>
         </tr>
-    [% } %]
+    [% }); %]
     [% if (casexml.edit) { %]
         <tr class="action-update">
             <td>

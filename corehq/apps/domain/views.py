@@ -646,6 +646,8 @@ def commtrack_settings(request, domain):
 
         settings.actions = [mk_action(a) for a in payload['actions']]
         settings.location_types = [mk_loctype(l) for l in payload['loc_types']]
+        settings.requisition_config.enabled = payload['requisition_config']['enabled']
+        settings.requisition_config.actions =  [mk_action(a) for a in payload['requisition_config']['actions']]
         settings.save()
 
     def settings_to_json(config):
@@ -653,6 +655,11 @@ def commtrack_settings(request, domain):
             'keyword': config.multiaction_keyword,
             'actions': [action_to_json(a) for a in config.actions],
             'loc_types': [loctype_to_json(l) for l in config.location_types],
+            'requisition_config': {
+                'enabled': config.requisition_config.enabled,
+                'actions': [action_to_json(a) for a in config.requisition_config.actions],
+            }
+
         }
     def action_to_json(action):
         return {

@@ -586,6 +586,7 @@ COUCHDB_APPS = [
     'smsforms',
     'translations',
     'users',
+    'utils',  # dimagi-utils
     'formplayer',
     'phonelog',
     'registration',
@@ -692,6 +693,7 @@ PILLOWTOPS = [
                  'corehq.pillows.xform.XFormPillow',
                  'corehq.pillows.fullxform.FullXFormPillow',
                  'corehq.pillows.domain.DomainPillow',
+                 'corehq.pillows.user.UserPillow',
                  'corehq.pillows.exchange.ExchangePillow',
                  'corehq.pillows.commtrack.ConsumptionRatePillow',
 
