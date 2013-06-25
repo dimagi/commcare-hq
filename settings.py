@@ -24,7 +24,7 @@ COUCH_USERNAME = ''
 COUCH_PASSWORD = ''
 COUCH_DATABASE_NAME = 'couchexport'
 
-COUCH_DATABASE = 'http://127.0.0.1:5984/couchlog_test'
+COUCH_DATABASE = 'http://127.0.0.1:5984/couchexport'
 
 COUCHDB_DATABASES = [ (app, 'http://127.0.0.1:5984/couchexport') for app in ['couch', 'couchexport'] ]
 
