@@ -17,7 +17,7 @@ class Command(BaseCommand):
                 seen.add(domain.name)
 
         if not dups:
-            print 'Found no duplicate domains'
+            self.stdout.write('Found no duplicate domains\n')
 
         for domain in list(dups):
             real_dom = Domain.get_by_name(domain)
@@ -28,9 +28,9 @@ class Command(BaseCommand):
             ).all()
             fake_doms = [d for d in total_doms if d.get_id != real_dom.get_id]
 
-            print 'Found Dup: %s' % domain
-            print " -- _id of correct domain: %s" % real_dom.get_id
-            print " -- ids of duplicate domains: %s" % [d.get_id for d in fake_doms]
+            self.stdout.write('Found Dup: %s\n' % domain)
+            self.stdout.write(" -- _id of correct domain: %s\n" % real_dom.get_id)
+            self.stdout.write(" -- ids of duplicate domains: %s\n" % [d.get_id for d in fake_doms])
 
             for dom in fake_doms:
                 dom.doc_type = 'Domain-DUPLICATE'

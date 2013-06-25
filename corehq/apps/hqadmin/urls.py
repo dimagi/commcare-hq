@@ -18,6 +18,8 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^domains/download/$', 'domain_list_download', name="domain_list_download"),
     url(r'^noneulized_users/$', 'noneulized_users', name="noneulized_users"),
     url(r'^commcare_settings/$', 'all_commcare_settings', name="all_commcare_settings"),
+    url(r'^management_commands/$', 'management_commands', name="management_commands"),
+    url(r'^run_command/$', 'run_command', name="run_management_command"),
     AdminReportDispatcher.url_pattern(),
 )
 
