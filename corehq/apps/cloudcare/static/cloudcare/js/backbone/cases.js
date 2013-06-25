@@ -260,7 +260,7 @@ cloudCare.CaseListView = Backbone.View.extend({
         $inputLabel.attr("for", "dataTables-filter-box");
         $inputLabel.text('Filter cases:');
         this.el.parent().before($('<section class="row-fluid" />').append($dataTablesFilter));
-    }, 
+    }
 });
 
 cloudCare.CaseDetailsView = Backbone.View.extend(cloudCare.caseViewMixin).extend({

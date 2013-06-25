@@ -14,7 +14,6 @@ from dimagi.utils.decorators.memoized import memoized
 class BaseIndicatorDefinitionForm(BaseAdminCRUDForm):
     slug = forms.SlugField(label="Slug")
     namespace = forms.CharField(label="Namespace", widget=forms.Select(choices=[]))
-    version = forms.IntegerField(label="Version No.")
 
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
                  initial=None, error_class=ErrorList, label_suffix=':',
@@ -244,8 +243,7 @@ class BulkCopyIndicatorsForm(forms.Form):
                 properties = set(indicator.properties().keys())
                 copied_properties = properties.difference(excluded_properties)
                 copied_properties = dict([(p, getattr(indicator, p)) for p in copied_properties])
-                copied_indicator = self.indicator_class.update_or_create_unique(indicator.namespace, destination_domain,
-                                                                                save_on_update=override,
+                copied_indicator = self.indicator_class.increment_or_create_unique(indicator.namespace, destination_domain,
                                                                                 **copied_properties)
                 if copied_indicator and not copied_indicator.version:
                     copied_indicator.version = 1

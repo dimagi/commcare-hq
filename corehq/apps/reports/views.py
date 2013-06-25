@@ -302,7 +302,7 @@ def custom_export(req, domain):
 
     if req.method == "POST":
         helper.update_custom_export()
-        messages.success(req, "Custom export created! You can continue editing here.")
+        messages.success(req, _("Custom export created!"))
         return _redirect_to_export_home(helper.export_type, domain, ajax=True)
 
     schema = build_latest_schema(export_tag)
