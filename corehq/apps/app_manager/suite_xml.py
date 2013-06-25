@@ -179,6 +179,20 @@ class Field(XmlObject):
     template = NodeField('template', Template)
     sort_node = NodeField('sort', Sort)
 
+    def __init__(self, *args, **kwargs):
+        super(Field, self).__init__(*args)
+
+        header = kwargs.get('header')
+        template = kwargs.get('template')
+        sort_node = kwargs.get('sort_node')
+
+        if header:
+            self.header = header
+        if template:
+            self.template = template
+        if sort_node:
+            self.sort_node = sort_node
+
 
 class DetailVariable(XmlObject):
     ROOT_NAME = '_'
