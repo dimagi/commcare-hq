@@ -19,7 +19,7 @@ setup(
         'couchdbkit',
         'django_redis',
         'simplejson',
-        'PIL'
+        'Pillow'
     ],
     tests_require=[
         'unittest2',
