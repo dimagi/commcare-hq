@@ -945,14 +945,15 @@ class VersionedDoc(LazyAttachmentDoc):
         for name in other.lazy_list_attachments() or {}:
             if regexp is None or re.match(regexp, name):
                 self.lazy_put_attachment(other.lazy_fetch_attachment(name), name)
-    def revert_to_copy(self, copy):
+
+    def make_reversion_to_copy(self, copy):
         """
         Replaces couch doc with a copy of the backup ("copy").
         Returns the another Application/RemoteApp referring to this
         updated couch doc. The returned doc should be used in place of
         the original doc, i.e. should be called as follows:
-            app = revert_to_copy(app, copy)
-        This is not ideal :(
+            app = app.make_reversion_to_copy(copy)
+            app.save()
         """
         if copy.copy_of != self._id:
             raise VersioningError("%s is not a copy of %s" % (copy, self))
@@ -965,7 +966,6 @@ class VersionedDoc(LazyAttachmentDoc):
             del app['_attachments']
         cls = self.__class__
         app = cls.wrap(app)
-        app.save()
         app.copy_attachments(copy)
         return app
 
@@ -1415,18 +1415,27 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
 
     def make_build(self, comment=None, user_id=None, previous_version=None):
         copy = super(ApplicationBase, self).make_build()
+        if not copy._id:
+            # I expect this always to be the case
+            # but check explicitly so as not to change the _id if it exists
+            copy._id = copy.get_db().server.next_uuid()
 
         copy.set_form_versions(previous_version)
         copy.create_jadjar(save=True)
 
         try:
+            # since this hard to put in a test
+            # I'm putting this assert here if copy._id is ever None
+            # which makes tests error
+            assert copy._id
             copy.short_url = bitly.shorten(
                 get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
             )
             copy.short_odk_url = bitly.shorten(
                 get_url_base() + reverse('corehq.apps.app_manager.views.download_odk_profile', args=[copy.domain, copy._id])
             )
-
+        except AssertionError:
+            raise
         except:        # URLError, BitlyError
             # for offline only
             logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
@@ -1509,8 +1518,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             data['build_langs'] = data['langs']
         return super(Application, cls).wrap(data)
 
-    def revert_to_copy(self, copy):
-        app = super(Application, self).revert_to_copy(copy)
+    def make_reversion_to_copy(self, copy):
+        app = super(Application, self).make_reversion_to_copy(copy)
 
         for form in app.get_forms():
             # reset the form's validation cache, since the form content is
