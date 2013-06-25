@@ -51,7 +51,6 @@ from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.subprocess_timeout import ProcessTimedOut
 from dimagi.utils.web import json_response, json_request
-from corehq.apps.app_manager.forms import NewXFormForm, NewModuleForm
 from corehq.apps.reports import util as report_utils
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
@@ -670,9 +669,6 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'form': form,
 
         'case_properties': case_properties,
-
-        'new_module_form': NewModuleForm(),
-        'new_xform_form': NewXFormForm(),
 
         'show_secret_settings': req.GET.get('secret', False)
     }
