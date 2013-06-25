@@ -73,10 +73,11 @@
 
 <div class="tabbable">
 <ul class="nav nav-tabs" id="module-view-tabs">
-    <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
-    <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
+    <!-- todo: figure out why the hash is getting cleared after loading page -->
+    <li class="active"><a href="#module-settings" data-toggle="hash-tab">{% trans "Settings" %}</a></li>
+    <li><a href="#case-settings" data-toggle="hash-tab">{% trans "Case Management" %}</a></li>
     <li>
-        <a href="#detail-screen-config-tab" data-toggle="tab">
+        <a href="#detail-screen-config-tab" data-toggle="hash-tab">
             {% trans "Case List" %}
         </a>
     </li>

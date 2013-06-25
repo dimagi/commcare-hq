@@ -65,18 +65,18 @@
 
 {% block subsection-title %}
     <li class="active">
-        <a href="#">Project Settings</a>
+        <a href="#">{% trans "Project Settings" %}</a>
     </li>
 {% endblock %}
 
 {% block user-view %}
     <ul class="nav nav-tabs" id="project-settings-tabs">
-        <li><a href="#overall-settings" data-toggle="tab">Project Information</a></li>
-        <li><a href="#deployment-info" data-toggle="tab">Deployment Information</a></li>
-        {% if billing_enabled %}<li><a href="#billing-info" data-toggle="tab">Billing Information</a></li>{% endif %}
+        <li><a href="#overall-settings" data-toggle="tab">{% trans "Project Information" %}</a></li>
+        <li><a href="#deployment-info" data-toggle="tab">{% trans "Deployment Information" %}</a></li>
+        {% if billing_enabled %}<li><a href="#billing-info" data-toggle="tab">{% trans "Billing Information" %}</a></li>{% endif %}
     </ul>
     <div class="tab-content" id="settings">
-        <section class="tab-pane" id="overall-settings">
+        <section class="tab-pane active" id="overall-settings">
             <form class="form-horizontal" method="post">
                 {% bootstrap_form_errors form %}
                 {% bootstrap_fieldset form "Project Settings" %}

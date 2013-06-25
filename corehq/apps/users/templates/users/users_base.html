@@ -25,6 +25,7 @@
                 $(this).remove();
             });
             $('.hq-help').hqHelp();
+            // todo: use hash-tab instead of whatever this is -- for project_settings.html and account.html
             var activeTabCookie = 'active_tab',
                 last_active_tab = $.cookie(activeTabCookie);
             if(last_active_tab) {
