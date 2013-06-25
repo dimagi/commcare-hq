@@ -19,13 +19,12 @@ TEST_PASSWORD = 'testing'
 
 class CaseObjectCacheTest(BaseCaseMultimediaTest):
     """
-    test case object caching
+    test case object caching - for case-attachments and api access.
     """
 
     def setUp(self):
         self.domain = Domain.get_or_create_with_name(TEST_DOMAIN, is_active=True)
         self.user = WebUser.create(TEST_DOMAIN, TEST_USER, TEST_PASSWORD)
-        #self.user.set_role(self.domain.name, 'field-implementer')
         self.user.set_role(self.domain.name, 'admin')
         self.user.save()
         time.sleep(1)
@@ -42,6 +41,9 @@ class CaseObjectCacheTest(BaseCaseMultimediaTest):
         pass
 
     def testCreateMultimediaCase(self):
+        """
+        Verify that URL for case attachment api uses the right view and returns at least the original attachments correclty.
+        """
         attachments = ['dimagi_logo', 'commcare_logo']
 
         self._doCreateCaseWithMultimedia(attachments=attachments)
