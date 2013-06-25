@@ -1622,7 +1622,8 @@ def revert_to_copy(req, domain, app_id):
     """
     app = get_app(domain, app_id)
     copy = get_app(domain, req.POST['saved_app'])
-    app = app.revert_to_copy(copy)
+    app = app.make_reversion_to_copy(copy)
+    app.save()
     messages.success(req, "Successfully reverted to version %s, now at version %s" % (copy.version, app.version))
     return back_to_main(**locals())
 
