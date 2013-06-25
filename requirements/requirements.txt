@@ -23,7 +23,7 @@ lxml==3.2.1
 mock==0.8.0
 mocker==1.1.1
 openpyxl==1.5.6
-PIL==1.1.7
+Pillow==2.0.0
 phonenumbers==5.1b1
 poster==0.8.1
 psycopg2==2.4.1
