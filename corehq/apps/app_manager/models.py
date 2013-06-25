@@ -1567,7 +1567,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         def trans(d):
             return clean_trans(d, langs)
         def numfirst(text):
-            if self.profile['features'].get('sense') == 'true':
+            if self.profile.get('features', {}).get('sense') == 'true':
                 text = "${0} %s" % (text,) if not (text and text[0].isdigit()) else text
             return text
         id_strings = IdStrings()
