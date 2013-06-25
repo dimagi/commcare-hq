@@ -10,6 +10,7 @@ try:
     from .test_ota_restore import *
     from .test_rebuild import *
     from .test_v2_parsing import *
+    from .test_domains import *
 except ImportError, e:
     # for some reason the test harness squashes these so log them here for clarity
     # otherwise debugging is a pain
