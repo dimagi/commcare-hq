@@ -1,4 +1,5 @@
 from django.test import TestCase
+from casexml.apps.case import settings
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from datetime import datetime, timedelta
 from copy import copy, deepcopy
@@ -8,6 +9,7 @@ from casexml.apps.case.tests.util import post_util, delete_all_cases
 class CaseRebuildTest(TestCase):
 
     def setUp(self):
+        settings.CASEXML_FORCE_DOMAIN_CHECK = False
         delete_all_cases()
 
     def _assertListEqual(self, l1, l2, include_ordering=True):

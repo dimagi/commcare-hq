@@ -52,9 +52,6 @@ class DomainTest(TestCase):
     def setUp(self):
         settings.CASEXML_FORCE_DOMAIN_CHECK = True
 
-    def tearDown(self):
-        settings.CASEXML_FORCE_DOMAIN_CHECK = False
-
     def testCantPwnCase(self):
         alice_domain = 'domain1'
         eve_domain = 'domain2'

@@ -1,5 +1,6 @@
 from django.test import TestCase
 import os
+from casexml.apps.case import settings
 from casexml.apps.case.models import CommCareCase
 from couchforms.util import post_xform_to_couch
 from casexml.apps.case.signals import process_cases
@@ -14,6 +15,7 @@ class CaseAttachmentTest(TestCase):
     
     
     def setUp(self):
+        settings.CASEXML_FORCE_DOMAIN_CHECK = False
         delete_all_cases()
         delete_all_xforms()
 

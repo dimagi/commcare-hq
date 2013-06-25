@@ -7,7 +7,7 @@ from casexml.apps.case.signals import process_cases
 from datetime import datetime
 from casexml.apps.phone import views as phone_views
 from django.http import HttpRequest
-from casexml.apps.case import const
+from casexml.apps.case import const, settings
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from dimagi.utils.parsing import json_format_datetime
@@ -18,6 +18,7 @@ class Version2CaseParsingTest(TestCase):
     """
     
     def setUp(self):
+        settings.CASEXML_FORCE_DOMAIN_CHECK = False
         delete_all_cases()
 
     def testParseCreate(self):

@@ -5,7 +5,7 @@ import logging
 
 from couchdbkit.resource import ResourceNotFound
 from casexml.apps.case.exceptions import IllegalCaseId, NoDomainProvided
-from casexml.apps.case.settings import CASEXML_FORCE_DOMAIN_CHECK
+from casexml.apps.case import settings
 from dimagi.utils.couch.database import iter_docs
 
 from casexml.apps.case import const
@@ -66,7 +66,7 @@ def get_or_update_cases(xformdoc):
     except AttributeError:
         domain = None
 
-    if not domain and CASEXML_FORCE_DOMAIN_CHECK:
+    if not domain and settings.CASEXML_FORCE_DOMAIN_CHECK:
         raise NoDomainProvided()
 
     case_db = CaseDbCache(domain=domain)

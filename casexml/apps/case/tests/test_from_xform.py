@@ -10,6 +10,8 @@ from dimagi.utils.post import post_data
 class CaseFromXFormTest(TestCase):
     
     def testCreate(self):
+        from casexml.apps.case import settings
+        settings.CASEXML_FORCE_DOMAIN_CHECK = False
         case = bootstrap_case_from_xml(self, "create.xml")
         self._check_static_properties(case)
         self.assertEqual(False, case.closed)
