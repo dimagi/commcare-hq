@@ -22,7 +22,7 @@ from dimagi.utils.web import json_request
 from dimagi.utils.parsing import string_to_boolean
 from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
 
-CHART_SPAN_MAP = {1: '', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
+CHART_SPAN_MAP = {1: '12', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
 
 class GenericReportView(CacheableRequestMixIn):
     """

@@ -35,17 +35,6 @@
 
         nv.utils.windowResize(chart.update);
 
-        if (chart_config.rotateLabels) {
-            var xTicks = d3.select('.nv-x.nv-axis > g').selectAll('g');
-            xTicks
-              .selectAll('text')
-              .attr('transform', function(d,i,j) {
-                        return 'translate (' + chart_config.translateLabelsX + ', ' + chart_config.translateLabelsY + ') rotate(' + chart_config.rotateLabels + ' 0,0)'
-                    }) ;
-        }
-
-
-
         return chart;
     });
 </script>

@@ -45,7 +45,7 @@ class MultiBarChart(Chart):
         self.marginTop = 30
         self.marginRight = 20
         self.marginBottom = 50
-        self.marginLeft = 80
+        self.marginLeft = 100
         self.showControls = True
         self.showLegend = True
         self.reduceXTicks = False
