@@ -987,7 +987,8 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 """
                     Given an index for a cell in a the row, creates the link to the case list page for that cell
                 """
-                url_params = url_args
+                url_params = {"individual": owner_id} if index not in (4, 5) else {}
+                url_params.update(url_args)
                 url_params.update({"search_query": search_strings[index]})
                 return numcell('<a href="%s?%s" target="_blank">%s</a>' % (cl_url, urlencode(url_params, True), row[index]), row[index])
 
