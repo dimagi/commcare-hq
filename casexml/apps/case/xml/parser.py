@@ -16,7 +16,10 @@ def get_version(case_block):
     xmlns = case_block.get(XMLNS_ATTR, "")
     if xmlns:
         if xmlns not in NS_REVERSE_LOOKUP_MAP:
-            raise CaseGenerationException("%s not a valid case xmlns. We don't know how to handle this version.")
+            raise CaseGenerationException(
+                "%s not a valid case xmlns. "
+                "We don't know how to handle this version." % xmlns
+            )
         return NS_REVERSE_LOOKUP_MAP[xmlns]
     return DEFAULT_VERSION
 
@@ -180,8 +183,7 @@ class CaseUpdate(object):
             self.actions.append(CLOSE_ACTION_FUNCTION_MAP[self.version](self.close_block))
         if self.has_indices():
             self.actions.append(INDEX_ACTION_FUNCTION_MAP[self.version](self.index_block))
-        
-    
+
     def creates_case(self):
         # creates have to have actual data in them so this is fine
         return bool(self.create_block)    
@@ -202,8 +204,7 @@ class CaseUpdate(object):
     
     def __str__(self):
         return "%s: %s" % (self.version, self.id)
-    
-    
+
     def _filtered_action(self, func):
         # filters the actions, assumes exactly 0 or 1 match.
         filtered = filter(func, self.actions)
@@ -230,7 +231,10 @@ class CaseUpdate(object):
         Spec: https://bitbucket.org/javarosa/javarosa/wiki/casexml
         """
         if const.CASE_TAG_ID not in case_block:
-            raise CaseGenerationException("No case_id element found in v1 case block, this is a required property.")
+            raise CaseGenerationException(
+                "No case_id element found in v1 case block, "
+                "this is a required property."
+            )
         
         modified_on = case_block.get(const.CASE_TAG_MODIFIED, "")
         return cls(id=case_block[const.CASE_TAG_ID], 
@@ -250,7 +254,10 @@ class CaseUpdate(object):
     
         case_id_attr = _to_attr(const.CASE_TAG_ID) 
         if case_id_attr not in case_block:
-            raise CaseGenerationException("No case_id attribute found in v2 case block, this is a required property.")
+            raise CaseGenerationException(
+                "No case_id attribute found in v2 case block, "
+                "this is a required property."
+            )
         
         user_id = case_block.get(_to_attr(const.CASE_TAG_USER_ID), "")
         modified_on = case_block.get(_to_attr(const.CASE_TAG_MODIFIED), "")
@@ -282,6 +289,6 @@ CLOSE_ACTION_FUNCTION_MAP = {
     V2: CaseCloseAction.from_v2,
 }
 INDEX_ACTION_FUNCTION_MAP = {
-    V2: CaseIndexAction.from_v1,
-    V2: CaseIndexAction.from_v2
+    V1: CaseIndexAction.from_v1,
+    V2: CaseIndexAction.from_v2,
 }
