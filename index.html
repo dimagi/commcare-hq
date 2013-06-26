@@ -36,6 +36,8 @@
                     return Math.round(self.current() * 100 / self.total()) + '%';
                 });
 
+                // TODO: add option to load only submodules: https://api.github.com/repos/dimagi/commcare-hq/contents/submodules
+                
                 self.reloadAll = function() {
                     self.showProgress(true);
                     self.reset();
