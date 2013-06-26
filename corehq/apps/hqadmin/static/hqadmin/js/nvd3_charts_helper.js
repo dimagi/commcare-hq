@@ -102,6 +102,12 @@ function loadCharts(xname, data, initial_values, starting_time, ending_time) {
     var cum_chart = addLineGraph("#cumulative-chart svg", xname, cum_domain_data);
     var stacked_cum_chart = addStackedAreaGraph("#stacked-cumulative-chart svg", xname, cum_domain_data);
 
+    // move the yaxis label to the left a lil
+    var yaxislabel = d3.selectAll('.nv-y.nv-axis .nv-axislabel');
+    yaxislabel.attr('transform', function(d,i,j) {
+        return 'translate (-11, 0), rotate(-90)'
+    });
+
     return {
         "bar-chart": bar_chart,
         "cumulative-chart": cum_chart,
@@ -136,7 +142,7 @@ function addStackedAreaGraph(selector, xname, data) {
     return chart;
 }
 
-function formatChart(chart, selector, xname, data) {
+function formatChart(chart, selector, xname, data, margin_left) {
     chart.xAxis
         .axisLabel('Date')
         .tickFormat(function(d){return d3.time.format.utc('%d-%b-%Y')(new Date(d));});
@@ -152,5 +158,6 @@ function formatChart(chart, selector, xname, data) {
 
     nv.utils.windowResize(chart.update);
 
+    chart.margin({left: margin_left || 75});
     return chart;
 }
