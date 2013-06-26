@@ -676,27 +676,40 @@ class CombinedSelectUsersField(ReportField):
         ctxt = {"fuf": self.filter_users_field.context}
         ctxt['fuf'].update({'field': self.filter_users_field})
 
+        all_groups = self.request.GET.get('all_groups', 'off') == 'on'
+        all_mws = self.request.GET.get('all_mws', 'off') == 'on'
+
         if self.show_mobile_worker_field:
             self.select_mobile_worker_field.update_context()
             ctxt["smwf"] = self.select_mobile_worker_field.context
             ctxt['smwf'].update({'field': self.select_mobile_worker_field})
 
-            if self.request.GET.get('all_mws', 'off') == 'on':
+            if all_mws:
                 ctxt["smwf"]["select"]["selected"] = []
             else: # remove the _all selection
                 ctxt["smwf"]["select"]["selected"] = filter(lambda s: s != '_all', ctxt["smwf"]["select"]["selected"])
             ctxt["smwf"]["select"]["options"] = ctxt["smwf"]["select"]["options"][1:]
+
 
         if self.show_group_field:
             self.select_group_field.update_context()
             ctxt["sgf"] = self.select_group_field.context
             ctxt['sgf'].update({'field': self.select_group_field})
 
-            if self.request.GET.get('all_groups', 'off') == 'on':
+            if all_groups:
                 ctxt["sgf"]["select"]["selected"] = []
             else: # remove the _all selection
                 ctxt["sgf"]["select"]["selected"] = filter(lambda s: s != '_all', ctxt["sgf"]["select"]["selected"])
             ctxt["sgf"]["select"]["options"] = ctxt["sgf"]["select"]["options"][1:]
+
+
+        if self.show_mobile_worker_field:
+            ctxt["smwf"]["checked"] = all_mws or (not ctxt["smwf"]["select"]["selected"] and not (
+                self.show_group_field and (ctxt["sgf"]["select"]["selected"] or all_groups)))
+
+        if self.show_group_field:
+            ctxt["sgf"]["checked"] = all_groups or (not ctxt["sgf"]["select"]["selected"] and not (
+                self.show_mobile_worker_field and (ctxt["smwf"]["select"]["selected"] or all_mws)))
 
         self.context.update(ctxt)
 
