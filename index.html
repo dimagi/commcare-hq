@@ -20,7 +20,7 @@
 
         <script type="text/javascript">
             var default_repos = ['commcare-hq','dimagi-utils','couchexport','couchlog','couchforms',
-                'commcare-export','fluff','casexml','ctable'];
+                'commcare-export','fluff','casexml','ctable','sql-agg','receiver','pillowtop'];
             var view_model = function() {
                 var self = this;
                 self.reposSuccess = ko.observableArray();
@@ -39,12 +39,29 @@
                 self.reloadAll = function() {
                     self.showProgress(true);
                     self.reset();
-                    $.get('https://api.github.com/orgs/dimagi/repos?type=public', function(data){
-                        self.total(data.length);
-                        $.each(data, function(i, repo) {
-                            self.load(repo.name);
+                    function getPage(url) {
+                        $.ajax({
+                            type: 'GET',
+                            dataType: 'jsonp',
+                            url: url,
+                            success: function(response){
+                                self.total(self.total() + response.data.length);
+
+                                $.each(response.data, function(i, repo) {
+                                    self.load(repo.name);
+                                });
+
+                                $.each(response.meta.Link, function(i, link){
+                                    var url = link[0];
+                                    var type = link[1].rel;
+                                    if (type == 'next') {
+                                        getPage(url);
+                                    }
+                                })
+                            }
                         });
-                    });
+                    }
+                    getPage('https://api.github.com/orgs/dimagi/repos?type=public');
                 }
 
                 self.reloadDefault = function() {
