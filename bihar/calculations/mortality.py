@@ -105,6 +105,11 @@ class StillBirth(TotalCalculator, AddCalculator):
     def is_stillborn(self, case):
         return is_stillborn(case)
 
+    @fluff.filter_by
+    def case_open(self, case):
+        # include closed cases
+        return True
+
 
 class StillBirthPlace(StillBirth, BirthPlace):
     _('Still Births at Government Hospital')
