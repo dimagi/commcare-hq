@@ -208,6 +208,7 @@
                 <!-- ko if: repo.status == 'build' -->
                     <ul><li>
                         <a data-bind="attr: { href: 'https://travis-ci.org/dimagi/' + repo.name }"><img data-bind="attr: { src: 'https://api.travis-ci.org/repos/dimagi/' + repo.name + '.png?branch=master'}" /></a>
+                        <a data-bind="attr: { href: 'https://coveralls.io/r/dimagi/' + repo.name }"><img data-bind="attr: { src: 'https://coveralls.io/repos/dimagi/'+ repo.name +'/badge.png?branch=master'}" /></a>
                     </li></ul>
                 <!-- /ko -->
             </li>
