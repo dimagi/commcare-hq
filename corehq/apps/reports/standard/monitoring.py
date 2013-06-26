@@ -802,8 +802,8 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                         {"match": {"domain.exact": self.domain}},
                         {"range": {
                             "form.meta.timeEnd": {
-                                "from": datespan.startdate_param_utc,
-                                "to": datespan.enddate_param_utc}}}]}}}
+                                "from": datespan.startdate_param,
+                                "to": datespan.enddate_param}}}]}}}
         facets = ['form.meta.userID']
         return es_query(q=q, facets=facets, es_url=XFORM_INDEX + '/xform/_search', size=1, dict_only=dict_only)
 
@@ -820,8 +820,8 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                             {"match": {"form.meta.userID": user_id}},
                             {"range": {
                                 "form.meta.timeEnd": {
-                                    "from": datespan.startdate_param_utc,
-                                    "to": datespan.enddate_param_utc}}}
+                                    "from": datespan.startdate_param,
+                                    "to": datespan.enddate_param}}}
                         ]}},
                 "sort": {"form.meta.timeEnd" : {"order": "desc"}}}
             results = es_query(q=q, es_url=XFORM_INDEX + '/xform/_search', size=1, dict_only=dict_only)['hits']['hits']
@@ -841,8 +841,8 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                         {"match": {"domain.exact": self.domain}},
                         {"range": {
                             date_field: {
-                                "from": datespan.startdate_param_utc,
-                                "to": datespan.enddate_param_utc}}}
+                                "from": datespan.startdate_param,
+                                "to": datespan.enddate_param}}}
                     ]}}}
         facets = [user_field]
 
@@ -859,8 +859,8 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                             "query": {
                                 "range": {
                                     "actions.date": {
-                                        "from": datespan.startdate_param_utc,
-                                        "to": datespan.enddate_param_utc}}}}},
+                                        "from": datespan.startdate_param,
+                                        "to": datespan.enddate_param}}}}},
                     ]}}}
         facets = ['user_id']
         return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
@@ -874,16 +874,16 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 "bool": {
                     "must": [
                         {"match": {"domain.exact": self.domain}},
-                        {"range": {"opened_on": {"lt": datespan.startdate_param_utc}}}],
+                        {"range": {"opened_on": {"lt": datespan.startdate_param}}}],
                     "must_not": [
-                        {"range": {"closed_on": {"lt": datespan.startdate_param_utc}}},
+                        {"range": {"closed_on": {"lt": datespan.startdate_param}}},
                         {"nested": {
                             "path": "actions",
                             "query": {
                                 "range": {
                                     "actions.date": {
-                                        "from": datespan.startdate_param_utc,
-                                        "to": datespan.enddate_param_utc}}}}},
+                                        "from": datespan.startdate_param,
+                                        "to": datespan.enddate_param}}}}},
                     ]}}}
         facets = ['owner_id']
         return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
@@ -894,8 +894,8 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 "bool": {
                     "must": [
                         {"match": {"domain.exact": self.domain}},
-                        {"range": {"opened_on": {"lt": datespan.enddate_param_utc}}}],
-                    "must_not": {"range": {"closed_on": {"lt": datespan.startdate_param_utc}}}}}}
+                        {"range": {"opened_on": {"lt": datespan.enddate_param}}}],
+                    "must_not": {"range": {"closed_on": {"lt": datespan.startdate_param}}}}}}
         facets = ['owner_id']
         return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
 
@@ -980,7 +980,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 # 6: "modified_on: [%s TO %s]" % (start_date, end_date), # cases modified
                 # 8: "opened_on: [* TO %s] AND NOT closed_on [* TO %s] AND NOT modified_on: [%s TO %s]" %
                 #    (start_date, start_date, start_date, end_date), # inactive cases
-                9: "opened_on: [* TO %s] AND NOT closed_on [* TO %s]" % (start_date, start_date), # total cases
+                9: "opened_on: [* TO %s] AND NOT closed_on [* TO %s]" % (end_date, start_date), # total cases
             }
 
             def create_case_url(index):
@@ -1063,7 +1063,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                     last_form_by_user.get(user["user_id"]) or NO_FORMS_TEXT,
                     int(creations_by_user.get(user["user_id"],0)),
                     int(closures_by_user.get(user["user_id"], 0)),
-                    int(modifications_by_user.get(user["user_id"], 0)),
+                    numcell(int(modifications_by_user.get(user["user_id"], 0))),
                     numcell(int(avg_modifications_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
                     numcell(inactive_cases),
                     total_cases,
