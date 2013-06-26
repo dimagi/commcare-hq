@@ -1,5 +1,6 @@
 from django.test import TestCase
 import os
+from casexml.apps.case import settings
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests import delete_all_xforms, delete_all_cases
 from couchforms.models import XFormInstance
@@ -10,6 +11,7 @@ from casexml.apps.case.signals import process_cases
 class MultiCaseTest(TestCase):
     
     def setUp(self):
+        settings.CASEXML_FORCE_DOMAIN_CHECK = False
         delete_all_cases()
         delete_all_xforms()
 

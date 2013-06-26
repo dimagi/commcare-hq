@@ -1,10 +1,12 @@
 from django.test import TestCase
+from casexml.apps.case import settings
 from casexml.apps.case.models import CommCareCase
 from couchdbkit.exceptions import ResourceConflict
 
 class ForceSaveTest(TestCase):
 
     def testForceSave(self):
+        settings.CASEXML_FORCE_DOMAIN_CHECK = False
         original = CommCareCase()
         original.save()
         conflict = CommCareCase.get(original._id)

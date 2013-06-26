@@ -4,11 +4,14 @@ Work on cases based on XForms. In our world XForms are special couch documents.
 import logging
 
 from couchdbkit.resource import ResourceNotFound
+from casexml.apps.case.exceptions import IllegalCaseId, NoDomainProvided
+from casexml.apps.case import settings
 from dimagi.utils.couch.database import iter_docs
 
 from casexml.apps.case import const
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml.parser import case_update_from_block
+
 
 class CaseDbCache(object):
     """
@@ -16,36 +19,57 @@ class CaseDbCache(object):
     so we can get the latest updates even if they haven't been saved
     to the database. Also provides some type checking safety.
     """
-    def __init__(self):
+    def __init__(self, domain=None):
         self.cache = {}
-        
+        self.domain = domain
+
+    def validate_doc(self, doc):
+        # some forms recycle case ids as other ids (like xform ids)
+        # disallow that hard.
+        if doc.doc_type not in ["CommCareCase", "CommCareCase-Deleted"]:
+            raise IllegalCaseId(
+                "Bad case doc type! "
+                "This usually means you are using a bad value for case_id."
+            )
+        if self.domain and doc.domain != self.domain:
+            raise IllegalCaseId("Bad case id")
+
     def get(self, case_id):
         if case_id in self.cache:
             return self.cache[case_id]
+
         try: 
             case_doc = CommCareCase.get(case_id)
-            # some forms recycle case ids as other ids (like xform ids)
-            # disallow that hard.
-            if case_doc.doc_type not in ["CommCareCase", "CommCareCase-Deleted"]:
-                raise Exception("Bad case doc type! This usually means you are using a bad value for case_id.")
-            return case_doc
         except ResourceNotFound:
             return None
+
+        self.validate_doc(case_doc)
+
+        return case_doc
         
     def set(self, case_id, case):
         self.cache[case_id] = case
         
     def doc_exist(self, case_id):
         return case_id in self.cache or CommCareCase.get_db().doc_exist(case_id)
-        
+
+
 def get_or_update_cases(xformdoc):
     """
     Given an xform document, update any case blocks found within it,
-    returning a dicitonary mapping the case ids affected to the
+    returning a dictionary mapping the case ids affected to the
     couch case document objects
     """
     case_blocks = extract_case_blocks(xformdoc)
-    case_db = CaseDbCache()
+    try:
+        domain = xformdoc.domain
+    except AttributeError:
+        domain = None
+
+    if not domain and settings.CASEXML_FORCE_DOMAIN_CHECK:
+        raise NoDomainProvided()
+
+    case_db = CaseDbCache(domain=domain)
     for case_block in case_blocks:
         case_doc = _get_or_update_model(case_block, xformdoc, case_db)
         if case_doc:
@@ -76,7 +100,7 @@ def _get_or_update_model(case_block, xformdoc, case_dbcache):
     case_update = case_update_from_block(case_block)
     case_doc = case_dbcache.get(case_update.id)
     
-    if case_doc == None:
+    if case_doc is None:
         case_doc = CommCareCase.from_case_update(case_update, xformdoc)
         return case_doc
     else:

@@ -20,8 +20,9 @@ from casexml.apps.phone.xml import date_to_xml_string
 from casexml.apps.phone.restore import generate_restore_payload
 from casexml.apps.case.util import post_case_blocks
 
+
 def bootstrap_case_from_xml(test_class, filename, case_id_override=None,
-                                 referral_id_override=None):
+                            referral_id_override=None, domain=None):
     
     starttime = utcnow_sans_milliseconds()
     
@@ -29,8 +30,10 @@ def bootstrap_case_from_xml(test_class, filename, case_id_override=None,
     with open(file_path, "rb") as f:
         xml_data = f.read()
     doc_id, uid, case_id, ref_id = replace_ids_and_post(xml_data, case_id_override=case_id_override,
-                                                         referral_id_override=referral_id_override)  
+                                                         referral_id_override=referral_id_override)
     doc = XFormInstance.get(doc_id)
+    if domain:
+        doc.domain = domain
     process_cases(sender="testharness", xform=doc)
     case = CommCareCase.get(case_id)
     test_class.assertTrue(starttime <= case.server_modified_on)

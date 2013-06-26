@@ -73,6 +73,7 @@ def process_cases(sender, xform, config=None, **kwargs):
     xform.save(force_update=True)
     for case in cases:
         case.force_save()
+    return cases
 
 
 successful_form_received.connect(process_cases)

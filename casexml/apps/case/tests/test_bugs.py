@@ -1,5 +1,6 @@
 from django.test import TestCase
 import os
+from casexml.apps.case import settings
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import CaseBlock, delete_all_cases
 from casexml.apps.case.util import post_case_blocks
@@ -13,6 +14,7 @@ class CaseBugTest(TestCase):
     """
     
     def setUp(self):
+        settings.CASEXML_FORCE_DOMAIN_CHECK = False
         delete_all_cases()
 
     def testConflictingIds(self):
