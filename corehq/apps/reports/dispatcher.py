@@ -135,7 +135,7 @@ class ReportDispatcher(View):
 
     @classmethod
     def allowed_renderings(cls):
-        return ['json', 'async', 'filters', 'export', 'mobile', 'email', 'partial', 'raw']
+        return ['json', 'async', 'filters', 'export', 'mobile', 'email', 'partial', 'print']
 
     @classmethod
     def navigation_sections(cls, context):

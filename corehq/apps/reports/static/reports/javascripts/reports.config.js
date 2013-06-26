@@ -10,6 +10,7 @@ var HQReport = function (options) {
     self.toggleFiltersButton = options.toggleFiltersButton || "#toggle-report-filters";
     self.exportReportButton = options.exportReportButton || "#export-report-excel";
     self.emailReportButton = options.emailReportButton || "#email-report";
+    self.printReportButton = options.printReportButton || "#print-report";
     self.emailReportModal = options.emailReportModal || "#email-report-modal";
     self.isExportable = options.isExportable || false;
     self.isEmailable = options.isEmailable || false;
@@ -47,6 +48,11 @@ var HQReport = function (options) {
                     self.emailReportViewModel = new EmailReportViewModel(self);
                     ko.applyBindings(self.emailReportViewModel, $(self.emailReportModal).get(0));
                 }
+
+                $(self.printReportButton).click(function (e) {
+                    e.preventDefault();
+                    window.open(get_report_render_url("print"));
+                });
             }
         });
     };
