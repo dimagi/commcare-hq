@@ -50,7 +50,8 @@ class LazyAttachmentDoc(Document):
         if not hasattr(self, '_LAZY_ATTACHMENTS'):
             self._LAZY_ATTACHMENTS = {}
         try:
-            return self._LAZY_ATTACHMENTS[name]['content']
+            info = self._LAZY_ATTACHMENTS[name]
+            return info['content']
         except KeyError:
             return self.fetch_attachment(name)
 
