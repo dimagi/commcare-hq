@@ -140,13 +140,13 @@ class GroupField(GroupFieldMixin, ReportSelectField):
 class MultiSelectGroupField(GroupFieldMixin, ReportMultiSelectField):
     default_option = ['_all']
     placeholder = 'Click to select groups'
-    help_text = "Click to select one or more groups"
+    help_text = "Start typing to select one or more groups"
 
     @property
     def options(self):
         self.groups = Group.get_reporting_groups(self.domain)
         opts = [dict(val=group.get_id, text=group.name) for group in self.groups]
-        opts.insert(0, {'text': 'All Groups', 'val': '_all'})
+        opts.insert(0, {'text': 'All', 'val': '_all'})
         return opts
 
 class SelectReportingGroupField(GroupField):
@@ -642,9 +642,9 @@ class UserOrGroupField(ReportSelectField):
     """
         To Use: Subclass and specify what the field options should be
     """
-    slug = "aggregate_by"
-    name = "Aggregate by Users or Groups"
-    cssId = "aggregate_by_select"
+    slug = "view_by"
+    name = "View by Users or Groups"
+    cssId = "view_by_select"
     cssClasses = "span2"
     default_option = "Users"
 

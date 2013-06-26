@@ -757,12 +757,12 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
             return _('This report currently does not fully support case sharing. There might be inconsistencies in the cases modified columns if a user did not create the case.')
 
     @property
-    def aggregate_by(self):
-        return self.request.GET.get('aggregate_by', None)
+    def view_by(self):
+        return self.request.GET.get('view_by', None)
 
     @property
     def headers(self):
-        by_group = self.aggregate_by == 'groups'
+        by_group = self.view_by == 'groups'
         columns = [DataTablesColumn(_("Group"))] if by_group else [DataTablesColumn(_("User"))]
         columns.append(DataTablesColumnGroup(_("Form Data"),
             DataTablesColumn(_("# Forms Submitted"), sort_type=DTSortType.NUMERIC,
@@ -910,7 +910,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
         avg_form_data = self.es_form_submissions(datespan=avg_datespan)
         avg_submissions_by_user = dict([(t["term"], t["count"]) for t in avg_form_data["facets"]["form.meta.userID"]["terms"]])
 
-        if self.aggregate_by == 'groups':
+        if self.view_by == 'groups':
             active_users_by_group = dict([(g, len(filter(lambda u: submissions_by_user.get(u['user_id']), users)))
                                           for g, users in self.users_by_group.iteritems()])
         else:
@@ -977,9 +977,9 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
             search_strings = {
                 4: "opened_by: %s AND opened_on: [%s TO %s]" % (owner_id, start_date, end_date), # cases created
                 5: "closed_by: %s AND closed_on: [%s TO %s]" % (owner_id, start_date, end_date), # cases closed
-                6: "modified_on: [%s TO %s]" % (start_date, end_date), # cases modified
-                8: "opened_on: [* TO %s] AND NOT closed_on [* TO %s] AND NOT modified_on: [%s TO %s]" %
-                   (start_date, start_date, start_date, end_date), # inactive cases
+                # 6: "modified_on: [%s TO %s]" % (start_date, end_date), # cases modified
+                # 8: "opened_on: [* TO %s] AND NOT closed_on [* TO %s] AND NOT modified_on: [%s TO %s]" %
+                #    (start_date, start_date, start_date, end_date), # inactive cases
                 9: "opened_on: [* TO %s] AND NOT closed_on [* TO %s]" % (start_date, start_date), # total cases
             }
 
@@ -987,8 +987,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 """
                     Given an index for a cell in a the row, creates the link to the case list page for that cell
                 """
-                url_params = {"individual": owner_id} if index not in (4, 5) else {}
-                url_params.update(url_args)
+                url_params = url_args
                 url_params.update({"search_query": search_strings[index]})
                 return numcell('<a href="%s?%s" target="_blank">%s</a>' % (cl_url, urlencode(url_params, True), row[index]), row[index])
 
@@ -1000,7 +999,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
             """
                 takes group info, and creates a cell that links to the user status report focused on the group
             """
-            us_url = reverse('project_report_dispatcher', args=(self.domain, 'user_status'))
+            us_url = reverse('project_report_dispatcher', args=(self.domain, 'worker_activity'))
             start_date, end_date = dates_for_linked_reports()
             url_args = {
                 "group": group_id,
@@ -1014,7 +1013,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
 
         rows = []
         NO_FORMS_TEXT = _('No forms submitted in time period')
-        if self.aggregate_by == 'groups':
+        if self.view_by == 'groups':
             for group, users in self.users_by_group.iteritems():
                 group_name, group_id = tuple(group.split('|'))
                 if group_name == 'no_group':
@@ -1041,7 +1040,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                     numcell((float(inactive_cases)/total_cases) * 100 if inactive_cases else 'nan', convert='float'),
                 ])
 
-        else: # ^ if self.aggregate_by == 'groups'
+        else: # ^ if self.view_by == 'groups'
 
             def all_users():
                 from corehq.apps.groups.models import Group
@@ -1066,7 +1065,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                     int(closures_by_user.get(user["user_id"], 0)),
                     int(modifications_by_user.get(user["user_id"], 0)),
                     numcell(int(avg_modifications_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
-                    inactive_cases,
+                    numcell(inactive_cases),
                     total_cases,
                     numcell((float(inactive_cases)/total_cases) * 100 if inactive_cases else 'nan', convert='float'),
                 ]))
@@ -1079,7 +1078,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
             else:
                 self.total_row.append('---')
 
-        if self.aggregate_by == 'groups':
+        if self.view_by == 'groups':
             def parse(str):
                 num, denom = tuple(str.split('/'))
                 num = int(num.strip())
