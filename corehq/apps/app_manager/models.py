@@ -1388,18 +1388,27 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
 
     def make_build(self, comment=None, user_id=None, previous_version=None):
         copy = super(ApplicationBase, self).make_build()
+        if not copy._id:
+            # I expect this always to be the case
+            # but check explicitly so as not to change the _id if it exists
+            copy._id = copy.get_db().server.next_uuid()
 
         copy.set_form_versions(previous_version)
         copy.create_jadjar(save=True)
 
         try:
+            # since this hard to put in a test
+            # I'm putting this assert here if copy._id is ever None
+            # which makes tests error
+            assert copy._id
             copy.short_url = bitly.shorten(
                 get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
             )
             copy.short_odk_url = bitly.shorten(
                 get_url_base() + reverse('corehq.apps.app_manager.views.download_odk_profile', args=[copy.domain, copy._id])
             )
-
+        except AssertionError:
+            raise
         except:        # URLError, BitlyError
             # for offline only
             logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
