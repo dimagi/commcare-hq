@@ -37,7 +37,7 @@
                 });
 
                 // TODO: add option to load only submodules: https://api.github.com/repos/dimagi/commcare-hq/contents/submodules
-                
+
                 self.reloadAll = function() {
                     self.showProgress(true);
                     self.reset();
@@ -157,9 +157,9 @@
                    <li class="dropdown">
                       <a href="#" class="dropdown-toggle" data-toggle="dropdown">Reload <b class="caret"></b></a>
                       <ul class="dropdown-menu">
-                        <li><a href="#" data-bind="click: reloadDefault">Reload Default</a></li>
-                        <li><a href="#" data-bind="click: reloadFailing">Reload Failing</a></li>
-                        <li><a href="#" data-bind="click: reloadAll">Reload All</a></li>
+                        <li><a href="#" data-bind="click: reloadDefault">Load Default Repos</a></li>
+                        <li><a href="#" data-bind="click: reloadFailing">Load Failing Repos</a></li>
+                        <li><a href="#" data-bind="click: reloadAll">Load All Dimagi Repos (121 repos)</a></li>
                       </ul>
                 </div>
               </div><!--/.nav-collapse -->
