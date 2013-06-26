@@ -140,13 +140,13 @@ class GroupField(GroupFieldMixin, ReportSelectField):
 class MultiSelectGroupField(GroupFieldMixin, ReportMultiSelectField):
     default_option = ['_all']
     placeholder = 'Click to select groups'
-    help_text = "Click to select one or more groups"
+    help_text = "Start typing to select one or more groups"
 
     @property
     def options(self):
         self.groups = Group.get_reporting_groups(self.domain)
         opts = [dict(val=group.get_id, text=group.name) for group in self.groups]
-        opts.insert(0, {'text': 'All Groups', 'val': '_all'})
+        opts.insert(0, {'text': 'All', 'val': '_all'})
         return opts
 
 class SelectReportingGroupField(GroupField):
@@ -642,9 +642,9 @@ class UserOrGroupField(ReportSelectField):
     """
         To Use: Subclass and specify what the field options should be
     """
-    slug = "aggregate_by"
-    name = "Aggregate by Users or Groups"
-    cssId = "aggregate_by_select"
+    slug = "view_by"
+    name = "View by Users or Groups"
+    cssId = "view_by_select"
     cssClasses = "span2"
     default_option = "Users"
 
@@ -676,27 +676,40 @@ class CombinedSelectUsersField(ReportField):
         ctxt = {"fuf": self.filter_users_field.context}
         ctxt['fuf'].update({'field': self.filter_users_field})
 
+        all_groups = self.request.GET.get('all_groups', 'off') == 'on'
+        all_mws = self.request.GET.get('all_mws', 'off') == 'on'
+
         if self.show_mobile_worker_field:
             self.select_mobile_worker_field.update_context()
             ctxt["smwf"] = self.select_mobile_worker_field.context
             ctxt['smwf'].update({'field': self.select_mobile_worker_field})
 
-            if self.request.GET.get('all_mws', 'off') == 'on':
+            if all_mws:
                 ctxt["smwf"]["select"]["selected"] = []
             else: # remove the _all selection
                 ctxt["smwf"]["select"]["selected"] = filter(lambda s: s != '_all', ctxt["smwf"]["select"]["selected"])
             ctxt["smwf"]["select"]["options"] = ctxt["smwf"]["select"]["options"][1:]
+
 
         if self.show_group_field:
             self.select_group_field.update_context()
             ctxt["sgf"] = self.select_group_field.context
             ctxt['sgf'].update({'field': self.select_group_field})
 
-            if self.request.GET.get('all_groups', 'off') == 'on':
+            if all_groups:
                 ctxt["sgf"]["select"]["selected"] = []
             else: # remove the _all selection
                 ctxt["sgf"]["select"]["selected"] = filter(lambda s: s != '_all', ctxt["sgf"]["select"]["selected"])
             ctxt["sgf"]["select"]["options"] = ctxt["sgf"]["select"]["options"][1:]
+
+
+        if self.show_mobile_worker_field:
+            ctxt["smwf"]["checked"] = all_mws or (not ctxt["smwf"]["select"]["selected"] and not (
+                self.show_group_field and (ctxt["sgf"]["select"]["selected"] or all_groups)))
+
+        if self.show_group_field:
+            ctxt["sgf"]["checked"] = all_groups or (not ctxt["sgf"]["select"]["selected"] and not (
+                self.show_mobile_worker_field and (ctxt["smwf"]["select"]["selected"] or all_mws)))
 
         self.context.update(ctxt)
 

@@ -11,7 +11,7 @@
 <div class="control-group">
     <label class="control-label">{% trans "Users" %}</label>
     <div class="controls"><label class="checkbox">
-        <input id="all-mobile-workers" name="all_mws" type="checkbox" {% if not smwf.select.selected and not sgf.select.selected %}checked{% endif %}> {% trans "All Users" %}
+        <input id="all-mobile-workers" name="all_mws" type="checkbox" {% if smwf.checked %}checked{% endif %}> {% trans "All Users" %}
     </label></div>
     <div id="select-mobile-worker-field" class="hide">
         {% include smwf.field.template with select=smwf.select slug=smwf.field.slug placeholder=smwf.placeholder%}
@@ -23,7 +23,7 @@
 <div id="sgf-field" class="control-group hide">
     <label class="control-label">{% trans "Groups" %}</label>
     <div class="controls"><label class="checkbox">
-        <input id="all-groups" name="all_groups" type="checkbox" {% if not smwf.select.selected and not sgf.select.selected %}checked{% endif %}> {% trans "All Groups" %}
+        <input id="all-groups" name="all_groups" type="checkbox" {% if sgf.checked %}checked{% endif %}> {% trans "All Groups" %}
     </label></div>
     <div id="select-group-field" class="hide">
         {% include sgf.field.template with select=sgf.select slug=sgf.field.slug placeholder=sgf.placeholder %}
@@ -36,14 +36,21 @@
 
 <script type="text/javascript">
     $(function () {
+        function clear (all_mws, all_groups, selected_mws, selected_groups) {
+            if (all_mws)            {   $("#all-mobile-workers").prop('checked', false); }
+            if (all_groups)         {   $("#all-groups").prop('checked', false); }
+            if (selected_mws)       {   $("#{{ smwf.field.cssId }} option:selected").removeAttr("selected"); }
+            if (selected_groups)    {   $("#{{ sgf.field.cssId }} option:selected").removeAttr("selected"); }
+        }
 
         $(document).on('click', '#apply-filters', function() {
             // really hacky way of clearing the inputs for mws and groups if the mobileworker user filter isn't set
             if (!$("#user-filter-0").get(0).checked) {
-                $("#all-groups").prop('checked', false);
-                $("#all-mobile-workers").prop('checked', false);
-                $("#{{ smwf.field.cssId }} option:selected").removeAttr("selected");
-                $("#{{ sgf.field.cssId }} option:selected").removeAttr("selected");
+                clear(true, true, true, true);
+            } else if ($("#all-mobile-workers").get(0).checked) {
+                clear(false, true, true, true);
+            } else if ($("#all-groups").get(0).checked) {
+                clear(false, false, false, true);
             }
         });
 
