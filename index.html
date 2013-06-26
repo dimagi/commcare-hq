@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8"/>
+        <title>Commcare-HQ Build dashboard</title>
+        <meta http-equiv="content-language" content="en">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <script src="assets/js/jquery-1.10.1.min.js"></script>
+        <script src="assets/js/knockout-2.2.1.js"></script>
+        <script src="assets/js/bootstrap.min.js"></script>
+        <link rel="stylesheet" href="assets/css/bootstrap.min.css" />
+
+        <style type="text/css">
+          body {
+            padding-top: 60px;
+            padding-bottom: 40px;
+          }
+        </style>
+
+        <script type="text/javascript">
+            var default_repos = ['commcare-hq','dimagi-utils','couchexport','couchlog','couchforms',
+                'commcare-export','fluff','casexml','ctable'];
+            var view_model = function() {
+                var self = this;
+                self.reposSuccess = ko.observableArray();
+                self.reposFail = ko.observableArray();
+                self.reposNoBuild = ko.observableArray();
+                self.reposError = ko.observableArray();
+
+                self.total = ko.observable(0);
+                self.current = ko.observable(0);
+                self.showProgress = ko.observable(false);
+
+                self.progress = ko.computed(function() {
+                    return Math.round(self.current() * 100 / self.total()) + '%';
+                });
+
+                self.reloadAll = function() {
+                    self.showProgress(true);
+                    self.reset();
+                    $.get('https://api.github.com/orgs/dimagi/repos?type=public', function(data){
+                        self.total(data.length);
+                        $.each(data, function(i, repo) {
+                            self.load(repo.name);
+                        });
+                    });
+                }
+
+                self.reloadDefault = function() {
+                    self.showProgress(true);
+                    self.reset();
+                    self.total(default_repos.length);
+                    $.each(default_repos, function(i, repo) {
+                         self.load(repo);
+                    });
+                }
+
+                self.reloadFailing = function() {
+                    self.showProgress(true);
+                    var failing = self.reposFail.removeAll();
+                    self.total(failing.length);
+                    $.each(failing, function(i, repo) {
+                         self.load(repo.name);
+                    });
+                }
+
+                self.load = function(repo) {
+                    $.get('https://api.travis-ci.org/repos/dimagi/' + repo + '/builds.json', function(tData){
+                        if (tData.length == 0) {
+                            vm.reposNoBuild.push({
+                               name: repo,
+                               status: 'no_build'
+                            });
+                        } else {
+                            var latest_master_build = $.grep(tData, function(build){
+                               return build.branch === 'master';
+                            })[0];
+                            if (latest_master_build.state === 'finished' && latest_master_build.result === 0) {
+                                vm.reposSuccess.push({
+                                   name: repo,
+                                   status: 'build'
+                                });
+                            } else {
+                                vm.reposFail.push({
+                                   name: repo,
+                                   status: 'build'
+                                });
+                            }
+                        }
+                    }).fail(function(){
+                        vm.reposError.push({
+                           name: repo,
+                           status: 'error'
+                        });
+                    }).always(function() {
+                        self.current(self.current() + 1);
+                        if (self.current() == self.total()) {
+                            self.total(0);
+                            self.current(0);
+                            self.showProgress(false);
+                        }
+                    });
+                }
+
+                self.reset = function() {
+                    self.reposSuccess.removeAll();
+                    self.reposFail.removeAll();
+                    self.reposNoBuild.removeAll();
+                    self.reposError.removeAll();
+                }
+            };
+            var vm = new view_model();
+            vm.reloadDefault();
+
+            $(function(){
+                $('#reload').click(function(){
+                    vm.reset();
+                    loadDashboard();
+                });
+
+                ko.applyBindings(vm);
+            });
+        </script>
+    </head>
+    <body>
+        <div class="navbar navbar-inverse navbar-fixed-top">
+          <div class="navbar-inner">
+            <div class="container">
+              <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="brand" href="#">Commcare-HQ build dashboard</a>
+              <div class="nav-collapse collapse">
+                  <ul class="nav">
+                   <li class="dropdown">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown">Reload <b class="caret"></b></a>
+                      <ul class="dropdown-menu">
+                        <li><a href="#" data-bind="click: reloadDefault">Reload Default</a></li>
+                        <li><a href="#" data-bind="click: reloadFailing">Reload Failing</a></li>
+                        <li><a href="#" data-bind="click: reloadAll">Reload All</a></li>
+                      </ul>
+                </div>
+              </div><!--/.nav-collapse -->
+            </div>
+          </div>
+        </div>
+
+
+        <div class="container">
+            <div id="progress" data-bind="visible: showProgress">
+                <div class="progress progress-striped">
+                    <div class="bar" data-bind="style: { width: progress }"></div>
+                </div>
+                <span data-bind="text: current"></span> of <span data-bind="text: total"></span>
+            </div>
+            <div class="row">
+                <div id="failures" class="span4">
+                    <h4>Failing</h4>
+                    <ul data-bind="template: { name: 'repo-template',
+                                  foreach: reposFail,
+                                  as: 'repo' }"></ul>
+
+                    <h4 data-bind="visible: reposError().length > 0">Unable to fetch data</h4>
+                    <ul data-bind="template: { name: 'repo-template',
+                                  foreach: reposError,
+                                  as: 'repo' }"></ul>
+                </div>
+                <div id="success" class="span4">
+                    <h4>Succeeding</h4>
+                    <ul data-bind="template: { name: 'repo-template',
+                                  foreach: reposSuccess,
+                                  as: 'repo' }"></ul>
+                </div>
+                <div id="no_build" class="span4">
+                    <h4 data-bind="visible: reposNoBuild().length > 0">No Builds</h4>
+                    <ul data-bind="template: { name: 'repo-template',
+                                  foreach: reposNoBuild,
+                                  as: 'repo' }"></ul>
+                </div>
+            </div>
+        </div>
+
+        <script type="text/html" id="repo-template">
+            <li>
+                <a data-bind="attr: { href: 'https://github.com/dimagi/' + repo.name }, text: repo.name"></a>
+                <!-- ko if: repo.status == 'build' -->
+                    <ul><li>
+                        <a data-bind="attr: { href: 'https://travis-ci.org/dimagi/' + repo.name }"><img data-bind="attr: { src: 'https://api.travis-ci.org/repos/dimagi/' + repo.name + '.png?branch=master'}" /></a>
+                    </li></ul>
+                <!-- /ko -->
+            </li>
+        </script>
+    </body>
+</html>
