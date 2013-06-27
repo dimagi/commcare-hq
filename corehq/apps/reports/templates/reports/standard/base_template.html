@@ -130,6 +130,12 @@
                     </a>
                 {% endif %}
 
+                {% if report.is_printable %}
+                    <a href="#" class="btn{% if report.needs_filters %} hide{% endif %}" id="print-report">
+                        <i class="icon icon-print"></i> Print
+                    </a>
+                {% endif %}
+
             </div>
             <div id="extra-filter-info" class="accordion-extra"></div>
         </div>
