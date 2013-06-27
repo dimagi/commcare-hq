@@ -417,16 +417,14 @@ def get_app_view_context(request, app):
         'settings_values': get_settings_values(app),
     }
 
-    commcare_build_options = {}
     build_config = CommCareBuildConfig.fetch()
-    for version in [app.application_version]:
-        options = build_config.get_menu(version)
-        options_labels = list()
-        options_builds = list()
-        for option in options:
-            options_labels.append(option.get_label())
-            options_builds.append(option.build.to_string())
-            commcare_build_options[version] = {"options" : options, "labels" : options_labels, "builds" : options_builds}
+    version = app.application_version
+    options = build_config.get_menu(version)
+    options_labels = list()
+    options_builds = list()
+    for option in options:
+        options_labels.append(option.get_label())
+        options_builds.append(option.build.to_string())
 
     (build_spec_setting,) = filter(
         lambda x: x['type'] == 'hq' and x['id'] == 'build_spec',
@@ -437,21 +435,11 @@ def get_app_view_context(request, app):
     build_spec_setting['value_names'] = options_labels
     build_spec_setting['default'] = build_config.get_default(app.application_version).to_string()
 
-    app_build_spec_string = app.build_spec.to_string()
-    app_build_spec_label = app.build_spec.get_label()
-
-    context.update({
-        "commcare_build_options" : commcare_build_options,
-        "app_build_spec_string" : app_build_spec_string,  # todo: remove
-        "app_build_spec_label" : app_build_spec_label,  # todo: remove
-        "app_version" : app.application_version,  # todo: remove
-    })
-
     if app.get_doc_type() == 'Application':
         try:
             # todo remove get_media_references
             multimedia = app.get_media_references()
-        except ProcessTimedOut as e:
+        except ProcessTimedOut:
             notify_exception(request)
             messages.warning(request, (
                 "We were unable to check if your forms had errors. "
@@ -466,6 +454,7 @@ def get_app_view_context(request, app):
             'multimedia': multimedia,
         })
     return context
+
 
 def get_langs(request, app):
     lang = request.GET.get('lang',
