@@ -577,13 +577,13 @@ class FormBase(DocumentSchema):
                         if hasattr(action, 'external_id') and action.external_id:
                             yield action.external_id
                         if hasattr(action, 'update'):
-                            for _, path in self.actions.update_case.update.items():
+                            for _, path in action.update.items():
                                 yield path
                         if hasattr(action, 'case_properties'):
-                            for _, path in self.actions.update_case.update.items():
+                            for _, path in action.case_properties.items():
                                 yield path
                         if hasattr(action, 'preload'):
-                            for path, _ in self.actions.case_preload.preload.items():
+                            for path, _ in action.preload.items():
                                 yield path
             paths.update(generate_paths())
             for path in paths:
