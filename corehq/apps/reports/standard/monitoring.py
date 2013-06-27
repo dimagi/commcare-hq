@@ -980,7 +980,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 # 6: "modified_on: [%s TO %s]" % (start_date, end_date), # cases modified
                 # 8: "opened_on: [* TO %s] AND NOT closed_on [* TO %s] AND NOT modified_on: [%s TO %s]" %
                 #    (start_date, start_date, start_date, end_date), # inactive cases
-                9: "opened_on: [* TO %s] AND NOT closed_on [* TO %s]" % (end_date, start_date), # total cases
+                9: "opened_on: [* TO %s] AND NOT closed_on: [* TO %s]" % (end_date, start_date), # total cases
             }
 
             def create_case_url(index):
