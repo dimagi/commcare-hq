@@ -1,3 +1,4 @@
+from dimagi.utils.decorators.memoized import memoized
 import re
 from couchdbkit import ResourceNotFound
 from django.conf import settings
@@ -27,6 +28,7 @@ def get_domain_from_url(path):
     return domain
 
 
+@memoized
 def get_domain_module_map():
     hardcoded = getattr(settings, 'DOMAIN_MODULE_MAP', {})
     try:
@@ -38,6 +40,7 @@ def get_domain_module_map():
     return hardcoded
 
 
+@memoized
 def get_adm_enabled_domains():
     try:
         domains = get_db().get('ADM_ENABLED_DOMAINS').get('domains', [])

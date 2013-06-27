@@ -1,7 +1,9 @@
 from couchdbkit import ResourceNotFound
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.couch.database import get_db
 
 
+@memoized
 def get_indicator_config():
     try:
         return get_db().get('INDICATOR_CONFIGURATION').get('namespaces', {})

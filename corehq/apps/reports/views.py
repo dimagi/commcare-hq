@@ -85,6 +85,7 @@ def default(request, domain):
 def old_saved_reports(request, domain):
     return default(request, domain)
 
+
 @login_and_domain_required
 def saved_reports(request, domain, template="reports/reports_home.html"):
     user = request.couch_user
