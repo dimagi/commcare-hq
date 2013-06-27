@@ -24,19 +24,26 @@ class MyBasicReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
 
 ## Custom reporting
 ### Terms:
-* indicator grain - individual records that contribute to an indicator total e.g. 1 birth at clinicA on 2013-02-01
-* Fluff - python processors that calculate indicators in real time (as the data is changing)
+* indicator fact - contirbutions to an indicator from individual documents (form / case)
+  * e.g. 1 birth at clinicA on 2013-02-01 from case 123
+* indicator grain - aggreagtion of facts at the most detailed level
+  * e.g. 3 births at clinicA on 2013-02-01
+* Fluff - python processors that calculate facts in real time
+  * Each new version of a document causes the document to be passed to fluff which caluculates all the indicator
+  facts for that document.
 * CTable - python library for writing indicators to SQL
+  * Reads data form CouchDB views and translates it into SQL insert / update statments based on pre-defined mappings.
+  * Can also listen to changes from Fluff to provide real time updates to the SQL data.
 
 ### Brief overview:
-* Custom CouchDB views emit indicator grains based on cases / forms.
-* CTable periodically reads the indicator grains from the custom views and writes them to SQL (configurable by read
-schedule as well as query filters).
-
-* Fluff pillows calculate indicator grains in real time and update IndicatorDocuments in CouchDB.
-* Fluff view emits indicator grains from IndicatorDocuments.
-* Fluff also notifies CTable of grain level changes.
-* CTable re-calculates grains that have changed by querying the Fluff indicator view and writes them to SQL.
+In order to produce a custom report for a project there are two or three components that need to be considered:
+1. Extracting the indicator facts from the cases / forms.
+  * Write custom CouchDB views that emit the indicator facts.
+  * Write a Fluff pillow to create IndicatorDocuments with the indicator facts.
+2. Optionally (but recommended) creating the ctable mappings.
+3. Creating the report 'view'. Options are:
+  * Completely custom (class extends GenericTabularReport).
+  * If data is in SQL table, extend SqlTabularReport.
 
 ### The basic idea
 
