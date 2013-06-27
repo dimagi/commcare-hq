@@ -40,7 +40,6 @@ from corehq.apps.domain.models import cached_property
 from django.template.loader import render_to_string
 from urllib2 import urlopen
 from urlparse import urljoin
-from corehq.apps.domain.decorators import login_and_domain_required
 import langcodes
 
 
@@ -75,11 +74,6 @@ CASE_PROPERTY_MAP = {
 ATTACHMENT_REGEX = r'[^/]*\.xml'
 
 
-def _dsstr(self):
-    return ", ".join(json.dumps(self.to_json()), self.schema)
-#DocumentSchema.__repr__ = _dsstr
-
-
 def _rename_key(dct, old, new):
     if old in dct:
         if new in dct and dct[new]:
@@ -97,31 +91,6 @@ def load_default_user_registration():
     with open(os.path.join(os.path.dirname(__file__), 'data', 'register_user.xhtml')) as f:
         return f.read()
 
-
-def authorize_xform_edit(view):
-    def authorized_view(request, xform_id):
-        @login_and_domain_required
-        def wrapper(req, domain):
-            pass
-        _, app = Form.get_form(*xform_id.split('__'), and_app=True)
-        if wrapper(request, app.domain):
-            # If login_and_domain_required intercepted wrapper
-            # and returned an HttpResponse of its own
-            #return HttpResponseForbidden()
-            return wrapper(request, app.domain)
-        else:
-            return view(request, xform_id)
-    return authorized_view
-
-def get_xform(form_unique_id):
-    "For use with xep_hq_server's GET_XFORM hook."
-    form = Form.get_form(form_unique_id)
-    return form.source
-def put_xform(form_unique_id, source):
-    "For use with xep_hq_server's PUT_XFORM hook."
-    form, app = Form.get_form(form_unique_id, and_app=True)
-    form.source = source
-    app.save()
 
 def partial_escape(xpath):
     """
