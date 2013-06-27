@@ -351,11 +351,14 @@ class CustomDomainMembership(DomainMembership):
         self.custom_role.domain = self.domain
         self.custom_role.permissions.set(permission, value, data)
 
+
 class IsMemberOfMixin(DocumentSchema):
+
     def _is_member_of(self, domain):
-        domain_obj = Domain.get_by_name(domain)
-        return domain in self.get_domains() or \
-            (self.is_global_admin() and not domain_obj.restrict_superusers)
+        return domain in self.get_domains() or (
+            self.is_global_admin() and
+            not Domain.get_by_name(domain).restrict_superusers
+        )
 
     def is_member_of(self, domain_qs):
         """
