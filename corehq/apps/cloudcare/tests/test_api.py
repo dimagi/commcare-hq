@@ -217,9 +217,7 @@ def _create_case(user, type, close=False, **extras):
             close=True,
             version=V2,
         ).as_xml(format_datetime=date_to_xml_string))
-    post_case_blocks(blocks)
+    post_case_blocks(blocks, {'domain': TEST_DOMAIN})
     case = CommCareCase.get(case_id)
     assert case.closed == close
-    case.domain = TEST_DOMAIN
-    case.save()
     return case
