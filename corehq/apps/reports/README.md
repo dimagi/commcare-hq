@@ -1,27 +1,5 @@
 # Commcare Reporting
 
-A basic report:
-
-```python
-class MyBasicReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
-    name = "My Basic Report"
-    slug = "my_basic_report"
-    fields = (DatespanMixin.datespan_field)
-
-    @property
-    def headers(self):
-        return DataTablesHeader(DataTablesColumn("Col A"),
-                                DataTablesColumnGroup("Goup 1", DataTablesColumn("Col B"),
-                                                      DataTablesColumn("Col C")),
-                                DataTablesColumn("Col D"))
-
-    @property
-    def rows(self):
-        return [
-            ['Row 1', 2, 3, 4],
-            ['Row 2', 3, 2, 1]
-        ]
-
 ## Custom reporting
 ### Terms:
 * indicator fact - contirbutions to an indicator from individual documents (form / case)
@@ -45,22 +23,26 @@ In order to produce a custom report for a project there are two or three compone
   * Completely custom (class extends GenericTabularReport).
   * If data is in SQL table, extend SqlTabularReport.
 
-### The basic idea
+### Writing couchdb views to use with ctable
 
-Each report broken into set of indicators that can be calculated on a per document level where the key is the set of
-filters and the value is usually a the value that this document contributes to the indicator.
+The best output format of indicator facts to use for couchdb views for consumption by ctable is as follows:
+
+`key = [date, <filter and group by parameters>, 'indicator_name'], value = N`
+
+* Filter and group by parameters
+  * These are any values that are required to filter or group the report by e.g. location, user etc.
+* Indicator name
+  * This is the name of the indicator to which this 'fact' is contribution.
+* N
+  * The numeric value that this fact is contribution to the indicator
 
 e.g.
-Indicator: Number of referrals per patient type per village (reported on a monthly basis) results in an set of
-records of the following format for any document that contributes to the indicator:
+Indicator: Number of referrals per patient type per village (reported on a monthly basis)
 
-([village, patient_type, 'referrals', date], 1)
+Filter and group by parameters: village, patient type, date
+Indicator name: 'referrals'
 
-These could then be aggregated across the various filters to get the final indicator.
-
-The output of this view could be consumed by any external reporting service that the reports / aggregation
-could be built on top of (or the reports could run directly off couchdbkit-aggregate, but that is likely a
-bad interface for querying) e.g. ctable extracts the view data to a table in SQL.
+Couch view output: `([date, village, patient_type, 'referrals'], 1)`
 
 ### Counting unique values
 Kenn suggested using bit flipping to do unique counts e.g. open case at a particular date. In this case would be
@@ -79,11 +61,89 @@ Doing count accross filter ranges becomes a matter or ORing the bit sets and cou
 
 More on this technique here: http://highscalability.com/blog/2012/4/5/big-data-counting-how-to-count-a-billion-distinct-objects-us.html
 
-Read only DB per domain
+## Example fully custom report
+```python
+class MyBasicReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
+    name = "My Basic Report"
+    slug = "my_basic_report"
+    fields = (DatespanMixin.datespan_field)
 
-To get some level of data segregation for improved performance it was suggested to use a read only DB per domain
-that houses all the report views and logic. This DB would be kept up to date with the main DB but would only be used
-for generating reports. This would make the indexing or the data much faster since there is less data.
-It would also provide some protection to the rest of the databases from any errors in custom views etc. It would
-also remove all the custom report views from the main DB.
+    @property
+    def headers(self):
+        return DataTablesHeader(DataTablesColumn("Col A"),
+                                DataTablesColumnGroup("Goup 1", DataTablesColumn("Col B"),
+                                                      DataTablesColumn("Col C")),
+                                DataTablesColumn("Col D"))
 
+    @property
+    def rows(self):
+        return [
+            ['Row 1', 2, 3, 4],
+            ['Row 2', 3, 2, 1]
+        ]
+```
+
+## Example SQL report
+See SqlTabularReport for more detailed docs.
+
+```python
+class DemoReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
+    name = "SQL Demo"
+    slug = "sql_demo"
+    field_classes = (DatespanField,)
+    datespan_default_days = 30
+    group_by = ["user"]
+    table_name = "user_report_data"
+
+    @property
+    def filters(self):
+        return [
+            "date between :startdate and :enddate"
+        ]
+
+    @property
+    def filter_values(self):
+        return {
+            "startdate": self.datespan.startdate_param_utc,
+            "enddate": self.datespan.enddate_param_utc
+        }
+
+    @property
+    def keys(self):
+        # would normally be loaded from couch
+        return [["user1"], ["user2"], ['user3']]
+
+    @property
+    def columns(self):
+        user = DatabaseColumn("Username1", "user", column_type=SimpleColumn, format_fn=self.username)
+        i_a = DatabaseColumn("Indicator A", "indicator_a")
+        i_b = DatabaseColumn("Indicator B", "indicator_b")
+
+        agg_c_d = AggregateColumn("C/D", self.calc_percentage,
+                                  SumColumn("indicator_c"),
+                                  SumColumn("indicator_d"),
+                                  format_fn=self.format_percent)
+
+        return [
+            user,
+            i_a,
+            i_b,
+            agg_c_d
+        ]
+
+    _usernames = {"user1": "Joe", "user2": "Bob", 'user3': "Gill"}  # normally loaded from couch
+    def username(self, key):
+        return self._usernames[key]
+
+    def calc_percentage(num, denom):
+        if isinstance(num, Number) and isinstance(denom, Number):
+            if denom != 0:
+                return num * 100 / denom
+            else:
+                return 0
+        else:
+            return None
+
+    def format_percent(self, value):
+        return format_datatables_data("%d%%" % value, value)
+```
