@@ -122,7 +122,7 @@ def get_settings_values(app):
         (attr, app[attr])
         for attr in app.properties() if not hasattr(app[attr], 'pop')
     ])
-    if hasattr(app, 'custom_suite'):
+    if getattr(app, 'use_custom_suite', False):
         hq_settings.update({'custom_suite': app.custom_suite})
 
     hq_settings['build_spec'] = app.build_spec.to_string()

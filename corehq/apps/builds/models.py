@@ -1,6 +1,7 @@
 from datetime import datetime
 import logging
 from zipfile import ZipFile
+from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.app_manager.const import APP_V1, APP_V2
 from couchdbkit.exceptions import ResourceNotFound, BadValueError
 from couchdbkit.ext.django.schema import *
@@ -196,6 +197,7 @@ class CommCareBuildConfig(Document):
         return config
 
     @classmethod
+    @memoized
     def fetch(cls):
         try:
             return cls.get(cls.ID.default)
