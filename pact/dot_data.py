@@ -3,7 +3,17 @@ import dateutil
 from django.conf import settings
 from datetime import datetime, timedelta
 from pytz import timezone
-from pact.enums import DAY_SLOTS_BY_TIME, DOT_DAYS_INTERVAL, DOT_ART, DOT_NONART, CASE_ART_REGIMEN_PROP, CASE_NONART_REGIMEN_PROP, DOT_OBSERVATION_PILLBOX, DOT_ADHERENCE_UNCHECKED, DOT_OBSERVATION_DIRECT
+from pact.enums import DAY_SLOTS_BY_TIME, \
+    DOT_DAYS_INTERVAL, \
+    DOT_ART, \
+    DOT_NONART, \
+    CASE_ART_REGIMEN_PROP, \
+    CASE_NONART_REGIMEN_PROP, \
+    DOT_OBSERVATION_PILLBOX, \
+    DOT_ADHERENCE_UNCHECKED, \
+    DOT_OBSERVATION_DIRECT,\
+    DOT_UNCHECKED_CELL
+
 from datetime import date
 from pact.models import CObservation
 
@@ -195,10 +205,10 @@ def cmp_observation(x, y):
     elif x.method != DOT_OBSERVATION_DIRECT and y.method == DOT_OBSERVATION_DIRECT:
         #result: x < y
         return -1
-    elif x.adherence == DOT_ADHERENCE_UNCHECKED and y.adherence != DOT_ADHERENCE_UNCHECKED:
+    elif (x.adherence, x.method) == DOT_UNCHECKED_CELL and (y.adherence, y.method) != DOT_UNCHECKED_CELL:
         #unchecked should always lose
         return -1
-    elif x.adherence != DOT_ADHERENCE_UNCHECKED and y.adherence == DOT_ADHERENCE_UNCHECKED:
+    elif (x.adherence, x.method) != DOT_UNCHECKED_CELL and (y.adherence, y.method) == DOT_UNCHECKED_CELL:
         return 1
     else:
         return cmp(y.encounter_date, x.encounter_date)
