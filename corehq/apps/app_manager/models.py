@@ -261,8 +261,8 @@ class FormSource(object):
             source = ''
         except ResourceNotFound:
             # this is for debugging
-            local_variable_lazy_attachments = self._LAZY_ATTACHMENTS
-            local_variable_attachments = self._attachments
+            local_variable_lazy_attachments = app._LAZY_ATTACHMENTS
+            local_variable_attachments = app._attachments
             raise
 
         return source
