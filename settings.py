@@ -421,6 +421,27 @@ COUCH_HTTPS = False
 # this should be overridden in localsettings
 INTERNAL_DATA = defaultdict(list)
 
+COUCH_STALE_QUERY='update_after'  # 'ok' for cloudant
+
+
+MESSAGE_LOG_OPTIONS = {
+    "abbreviated_phone_number_domains": ["mustmgh", "mgh-cgh-uganda"],
+}
+
+IVR_OUTBOUND_RETRIES = 3
+IVR_OUTBOUND_RETRY_INTERVAL = 10
+
+try:
+    #try to see if there's an environmental variable set for local_settings
+    if os.environ.get('CUSTOMSETTINGS', None) == "demo":
+        # this sucks, but is a workaround for supporting different settings
+        # in the same environment
+        from settings_demo import *
+    else:
+        from localsettings import *
+except ImportError:
+    pass
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': True,
@@ -494,27 +515,6 @@ LOGGING = {
         }
     }
 }
-
-COUCH_STALE_QUERY='update_after'  # 'ok' for cloudant
-
-
-MESSAGE_LOG_OPTIONS = {
-    "abbreviated_phone_number_domains": ["mustmgh", "mgh-cgh-uganda"],
-}
-
-IVR_OUTBOUND_RETRIES = 3
-IVR_OUTBOUND_RETRY_INTERVAL = 10
-
-try:
-    #try to see if there's an environmental variable set for local_settings
-    if os.environ.get('CUSTOMSETTINGS', None) == "demo":
-        # this sucks, but is a workaround for supporting different settings
-        # in the same environment
-        from settings_demo import *
-    else:
-        from localsettings import *
-except ImportError:
-    pass
 
 if DEBUG:
     try:
