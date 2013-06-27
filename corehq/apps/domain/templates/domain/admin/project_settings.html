@@ -71,9 +71,9 @@
 
 {% block user-view %}
     <ul class="nav nav-tabs" id="project-settings-tabs">
-        <li><a href="#overall-settings" data-toggle="tab">{% trans "Project Information" %}</a></li>
-        <li><a href="#deployment-info" data-toggle="tab">{% trans "Deployment Information" %}</a></li>
-        {% if billing_enabled %}<li><a href="#billing-info" data-toggle="tab">{% trans "Billing Information" %}</a></li>{% endif %}
+        <li class="active"><a href="#overall-settings" data-toggle="hash-tab">{% trans "Project Information" %}</a></li>
+        <li><a href="#deployment-info" data-toggle="hash-tab">{% trans "Deployment Information" %}</a></li>
+        {% if billing_enabled %}<li><a href="#billing-info" data-toggle="hash-tab">{% trans "Billing Information" %}</a></li>{% endif %}
     </ul>
     <div class="tab-content" id="settings">
         <section class="tab-pane active" id="overall-settings">

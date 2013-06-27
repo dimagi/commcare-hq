@@ -1,4 +1,5 @@
 {% extends "users/users_base.html" %}
+{% load i18n %}
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
 {% load field_tags %}
@@ -91,19 +92,19 @@
 
 {% block user-view %}
     <ul class="nav nav-tabs" id="project-settings-tabs">
-        <li><a href="#basic-info" data-toggle="tab">Basic</a></li>
+        <li class="active"><a href="#basic-info" data-toggle="hash-tab">{% trans "Basic" %}</a></li>
     {% if editing_commcare_user %}
-        <li><a href="#user-data" data-toggle="tab">Custom Registration Data</a></li>
+        <li><a href="#user-data" data-toggle="hash-tab">{% trans "Custom Registration Data" %}</a></li>
     {% endif %}
     {% if proj_settings_form %}
-        <li><a href="#project-settings" data-toggle="tab">My Settings for this Project</a></li>
+        <li><a href="#project-settings" data-toggle="hash-tab">{% trans "My Settings for this Project" %}</a></li>
     {% endif %}
     {% if current_users_page and not couch_user.is_commcare_user %}
-        <li><a href="#domains" data-toggle="tab">My Projects</a></li>
+        <li><a href="#projects" data-toggle="hash-tab">{% trans "My Projects" %}</a></li>
     {% endif %}
     </ul>
     <div class="tab-content" id="settings">
-        <div class="tab-pane" id="basic-info">
+        <div class="tab-pane active" id="basic-info">
             {% if current_users_page or couch_user.is_commcare_user %}
                 {% include "users/partial/edit_user.html" %}
             {% else %}
@@ -125,7 +126,7 @@
             </div>
         {% endif %}
         {% if current_users_page and not couch_user.is_commcare_user %}
-            <div class="tab-pane" id="domains">
+            <div class="tab-pane" id="projects">
                 {% include "users/partial/domain_accounts.html" %}
             </div>
         {% endif %}

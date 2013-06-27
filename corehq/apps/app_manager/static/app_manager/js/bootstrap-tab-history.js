@@ -20,7 +20,6 @@ $(function () {
         if (!State.data || !State.data.tab) {
             if (hash) {
                 State.data.tab = hash;
-                window.location.hash = '';
             } else {
                 State.data.tab = '';
             }
