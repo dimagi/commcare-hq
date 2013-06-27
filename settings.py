@@ -741,3 +741,5 @@ DOMAIN_MODULE_MAP = {
     'mvp-sada': 'mvp',
     'psi-unicef': 'psi',
 }
+
+CASEXML_FORCE_DOMAIN_CHECK = True
