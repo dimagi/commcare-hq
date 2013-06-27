@@ -1,13 +1,10 @@
 import logging
-import pdb
 import dateutil
 from django.conf import settings
 from datetime import datetime, timedelta
 from pytz import timezone
-from pact.enums import DAY_SLOTS_BY_TIME, DOT_DAYS_INTERVAL, DOT_ART, DOT_NONART, CASE_ART_REGIMEN_PROP, CASE_NONART_REGIMEN_PROP
-
+from pact.enums import DAY_SLOTS_BY_TIME, DOT_DAYS_INTERVAL, DOT_ART, DOT_NONART, CASE_ART_REGIMEN_PROP, CASE_NONART_REGIMEN_PROP, DOT_OBSERVATION_PILLBOX, DOT_ADHERENCE_UNCHECKED, DOT_OBSERVATION_DIRECT
 from datetime import date
-from pact.enums import    DOT_OBSERVATION_DIRECT
 from pact.models import CObservation
 
 
@@ -80,8 +77,6 @@ class DOTDay(object):
 
 
     def to_case_json(self, casedoc, regimen_labels):
-#        pass
-#    def get_day_elements(casedoc, day_data):
         """
         Return the json representation of a single days nonart/art data that is put back into the caseblock, sent to phone, sent back from phone
 
@@ -180,18 +175,18 @@ def cmp_observation(x, y):
 
     assert x.observed_date.date() == y.observed_date.date()
     #Reconcilation handling
+    #reconciliations always win.
     if (hasattr(x, 'is_reconciliation') and getattr(x, 'is_reconciliation')) and (hasattr(y, 'is_reconciliation') and getattr(y, 'is_reconciliation')):
         #sort by earlier date, so flip x,y
         return cmp(y.submitted_date, x.submitted_date)
-
     elif (hasattr(x, 'is_reconciliation') and getattr(x, 'is_reconciliation')) and (not hasattr(y,'is_reconciliation') or not getattr(y, 'is_reconciliation')):
         # result: x > y
         return 1
     elif (not hasattr(x, 'is_reconciliation') or not getattr(x, 'is_reconciliation')) and (hasattr(y, 'is_reconciliation') and getattr(y, 'is_reconciliation')):
         # result: x < y
         return -1
-
-    if x.method == DOT_OBSERVATION_DIRECT and y.method == DOT_OBSERVATION_DIRECT:
+    elif x.method == DOT_OBSERVATION_DIRECT and y.method == DOT_OBSERVATION_DIRECT:
+        #Direct observations win next
         #sort by earlier date, so flip x,y
         return cmp(y.encounter_date, x.encounter_date)
     elif x.method == DOT_OBSERVATION_DIRECT and y.method != DOT_OBSERVATION_DIRECT:
@@ -200,8 +195,12 @@ def cmp_observation(x, y):
     elif x.method != DOT_OBSERVATION_DIRECT and y.method == DOT_OBSERVATION_DIRECT:
         #result: x < y
         return -1
+    elif x.adherence == DOT_ADHERENCE_UNCHECKED and y.adherence != DOT_ADHERENCE_UNCHECKED:
+        #unchecked should always lose
+        return -1
+    elif x.adherence != DOT_ADHERENCE_UNCHECKED and y.adherence == DOT_ADHERENCE_UNCHECKED:
+        return 1
     else:
-        #sort by earlier date, so flip x,y
         return cmp(y.encounter_date, x.encounter_date)
 
 def sort_observations(observations):
