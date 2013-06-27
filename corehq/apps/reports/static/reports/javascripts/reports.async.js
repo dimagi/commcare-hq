@@ -84,6 +84,7 @@ var HQAsyncReport = function (o) {
         if (setFilters) {
             $(self.standardReport.exportReportButton).removeClass('hide');
             $(self.standardReport.emailReportButton).removeClass('hide');
+            $(self.standardReport.printReportButton).removeClass('hide');
         }
 
         self.reportRequest = $.ajax({
