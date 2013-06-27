@@ -338,18 +338,21 @@ class FormBase(DocumentSchema):
             return form, app
         else:
             return form
+
     def wrapped_xform(self):
         return XForm(self.source)
+
     def validate_form(self):
-        if self.validation_cache is None:
+        vc = self.validation_cache
+        if vc is None:
             try:
                 XForm(self.source).validate(version=self.get_app().application_version)
             except XFormValidationError as e:
-                self.validation_cache = unicode(e)
+                vc = self.validation_cache = unicode(e)
             else:
-                self.validation_cache = ""
-        if self.validation_cache:
-            raise XFormValidationError(self.validation_cache)
+                vc = self.validation_cache = ""
+        if vc:
+            raise XFormValidationError(vc)
         return self
 
     def validate_for_build(self):
