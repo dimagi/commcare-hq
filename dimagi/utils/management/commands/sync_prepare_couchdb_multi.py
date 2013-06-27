@@ -1,3 +1,4 @@
+from optparse import make_option
 from gevent import monkey
 monkey.patch_all()
 from restkit.session import set_session
@@ -36,8 +37,11 @@ def do_sync(app_index):
 class Command(BaseCommand):
     help = 'Sync design docs to temporary ids...but multithreaded'
 
-    def handle(self, *args, **options):
+    option_list = BaseCommand.option_list + (
+        make_option('--no-mail', help="Don't send email confirmation", action='store_true', default=False),
+    )
 
+    def handle(self, *args, **options):
 
         start = datetime.utcnow()
         if len(args) == 0:
@@ -49,6 +53,8 @@ class Command(BaseCommand):
             username = args[1]
         else:
             username = 'unknown'
+
+        no_email = options['no_mail']
 
         pool = Pool(num_pool)
 
@@ -95,13 +101,14 @@ class Command(BaseCommand):
 
         delta = datetime.utcnow() - start
         message += "Total time: %d seconds" % delta.seconds
-        print message
 
-        send_mail('%s Preindex Complete' % settings.EMAIL_SUBJECT_PREFIX,
-                  message,
-                  settings.SERVER_EMAIL,
-                  [x[1] for x in settings.ADMINS],
-                  fail_silently=True)
+        if not no_email:
+            print message
+            send_mail('%s Preindex Complete' % settings.EMAIL_SUBJECT_PREFIX,
+                      message,
+                      settings.SERVER_EMAIL,
+                      [x[1] for x in settings.ADMINS],
+                      fail_silently=True)
 
 
 
