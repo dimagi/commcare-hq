@@ -1,10 +1,11 @@
-function MultimediaReferenceController (references, obj_map) {
+function MultimediaReferenceController (references, obj_map, totals) {
     'use strict';
     var self = this;
     self.obj_map = obj_map;
     self.modules = [];
     self.showMissingReferences = ko.observable(false);
-
+    self.totals = ko.observable(totals);
+    
     self.toggleRefsText = ko.computed(function () {
         return (self.showMissingReferences()) ? "Show All References" : "Show Only Missing References";
     }, self);
@@ -44,6 +45,18 @@ function MultimediaReferenceController (references, obj_map) {
         event.preventDefault();
     };
 
+    self.incrementTotals = function (trigger, event, data) {
+        var newTotals = _.map(self.totals(), function (media) {
+            if (media.media_type == data.media_type && media.paths.indexOf(data.path) < 0) {
+                media = _.clone(media);
+                media.paths.push(data.path);
+                media.matched = media.paths.length;
+            }
+            return media;
+        });
+        self.totals(newTotals);
+    };
+
 }
 
 function BaseReferenceGroup (name, obj_map, group_id) {
@@ -73,6 +86,10 @@ function BaseReferenceGroup (name, obj_map, group_id) {
             var audioRef = new AudioReference(ref);
             audioRef.setObjReference(obj_ref);
             return audioRef;
+        } else if (ref.media_class == "CommCareVideo" ) {
+            var videoRef = new VideoReference(ref);
+            videoRef.setObjReference(obj_ref);
+            return videoRef;
         }
         return null;
     };
@@ -118,12 +135,16 @@ function FormReferences (name, obj_map, group_id) {
     var self = this;
     self.images = ko.observableArray();
     self.audio = ko.observableArray();
+    self.video = ko.observableArray();
 
     self.active_images = ko.computed(function () {
         return (self.showOnlyMissing()) ? self.getMissingRefs(self.images()) : self.images();
     }, self);
     self.active_audio = ko.computed(function () {
         return (self.showOnlyMissing()) ? self.getMissingRefs(self.audio()) : self.audio();
+    }, self);
+    self.active_video = ko.computed(function () {
+        return (self.showOnlyMissing()) ? self.getMissingRefs(self.video()) : self.video();
     }, self);
 
     self.showImageRefs = ko.computed(function () {
@@ -132,9 +153,12 @@ function FormReferences (name, obj_map, group_id) {
     self.showAudioRefs = ko.computed(function () {
         return self.active_audio().length > 0;
     }, self);
+    self.showVideoRefs = ko.computed(function () {
+        return self.active_video().length > 0;
+    }, self);
 
     self.showForm = ko.computed(function () {
-        return self.showImageRefs() || self.showAudioRefs() || self.showMenuRefs();
+        return self.showImageRefs() || self.showAudioRefs() || self.showVideoRefs() || self.showMenuRefs();
     });
 
     self.processReference = function (ref) {
@@ -145,6 +169,8 @@ function FormReferences (name, obj_map, group_id) {
             self.images.push(ref_obj);
         } else if (ref.media_class == "CommCareAudio") {
             self.audio.push(ref_obj);
+        } else if (ref.media_class == "CommCareVideo") {
+            self.video.push(ref_obj);
         }
     }
 }
@@ -198,6 +224,7 @@ function BaseMediaReference (ref) {
             self.m_id(obj_ref.m_id);
             self.uid(obj_ref.uid);
             self.url(obj_ref.url);
+            $('.media-totals').trigger('refMediaAdded', self);
             self.is_matched(true);
         }
     };
@@ -232,6 +259,18 @@ function BaseMediaReference (ref) {
         self.upload_controller.updateUploadFormUI();
     };
 
+    // Needed for Upload Controller
+
+    // we don't want to be dependent on a knockout structure (vellum)
+    self.getUrl = function () {
+        return self.url();
+    };
+
+    self.isMediaMatched = function () {
+        return self.is_matched();
+    };
+
+    // bound to event mediaUploadComplete
     self.uploadComplete = function (trigger, event, data) {
         if (data && !data.errors.length) {
             self.setObjReference(data.ref);
@@ -243,7 +282,7 @@ function ImageReference (ref) {
     'use strict';
     BaseMediaReference.call(this, ref);
     var self = this;
-    self.upload_controller = hqimage_controller;
+    self.upload_controller = HQMediaUploaders['hqimage'];
     self.preview_template = "image-preview-template";
     self.thumb_url = ko.computed(function () {
         return (self.url()) ? self.url() + "?thumb=50" : "";
@@ -258,12 +297,24 @@ function AudioReference (ref) {
     'use strict';
     BaseMediaReference.call(this, ref);
     var self = this;
-    self.upload_controller = hqaudio_controller;
+    self.upload_controller = HQMediaUploaders['hqaudio'];
     self.preview_template = "audio-preview-template";
 }
 
 AudioReference.prototype = Object.create( BaseMediaReference.prototype );
 AudioReference.prototype.constructor = AudioReference;
+
+
+function VideoReference (ref) {
+    'use strict';
+    BaseMediaReference.call(this, ref);
+    var self = this;
+    self.upload_controller = HQMediaUploaders['hqvideo'];
+    self.preview_template = "video-preview-template";
+}
+
+VideoReference.prototype = Object.create( BaseMediaReference.prototype );
+VideoReference.prototype.constructor = VideoReference;
 
 
 // Kept from Tim, you might want to fix it up a bit

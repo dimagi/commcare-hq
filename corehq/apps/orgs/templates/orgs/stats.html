@@ -1,196 +1,145 @@
-{#{% extends "orgs/orgs_landing.html" %}#}
 {% extends "orgs/report_base.html" %}
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    {% include "imports/datatables.html" %}
-    <script type="text/javascript" src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
-    <script type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'reports/javascripts/datepicker.js' %}"></script>
-
     <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet">
     <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v2.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/nvd3/lib/fisheye.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.js' %}"></script>
-    <script src="{% static 'reports/javascripts/reports.config.js' %}"></script>
-    <script src="{% static 'reports/javascripts/reports.async.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/history-1.7.1.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
-    <script src='{% static 'hqadmin/js/date_histogram_chart.js' %}' type='text/javascript'></script>
+    <script src="{% static 'hqwebapp/js/hash-tab.js' %}"></script>
+    <script src='{% static 'hqadmin/js/nvd3_charts_helper.js' %}' type='text/javascript'></script>
     <script type="text/javascript">
-        function setActiveRange(chart_id, range) {
-            var $chart = $('#' + chart_id);
-            var $accordion = $chart.parents('.accordion-group');
-            var $labels = $accordion.find('.label');
-            $labels.removeClass('label-success');
-            $accordion.find('.' + range + '-label').addClass('label-success');
-        }
+        var charts = { "bar-chart": null, "cumulative-chart": null, "stacked-cumulative-chart": null };
 
         // given the chart_id of a chart element in the dom, the function fetches the data associated with that chart
         // and renders the chart in the specified element
-        function loadChartData(chart_id, daterange) {
-            var xname = {
-                'forms-chart': '# of form submissions',
-                'cases-chart': '# of cases created'
-            }[chart_id];
-            var histo_type = {
-                'forms-chart': 'forms',
-                'cases-chart': 'cases'
-            }[chart_id];
-            var $chart = $('#' + chart_id);
-            $chart.parent().children('.loading').show();
-            $chart.hide();
+        function loadChartData(callback_fn, startdate, enddate) {
+            var $loading = $('.loading');
+            var $charts = $('.nvd3-chart');
 
-            $.getJSON('{% url orgs_stats_data org.name %}', {daterange: daterange, histogram_type: histo_type},
-                    function(d) {
-                        var starting_time = new Date(Date.UTC(d.startdate[0], d.startdate[1]-1, d.startdate[2])).getTime();
-                        var ending_time = new Date(Date.UTC(d.enddate[0], d.enddate[1]-1, d.enddate[2])).getTime();
-                        addHistogram(chart_id, xname, d.histo_data, starting_time, ending_time);
-                        $chart.parent().children('.loading').hide();
-                        $chart.parent().css('padding-top', 48);
-                        $chart.html('').append('<svg style="height:320px"> </svg>');
-                        $chart.show();
-                        setActiveRange(chart_id, d.range);
+            $loading.show();
+            $charts.each(function(){
+                var $this = $(this);
+                $(this).hide().html('').append("<svg style='height:320px'> </svg>"); // create a new svg element to stop update issues
+            });
+
+            var data = {histogram_type: "{{ stat_slug }}"};
+            if (enddate) {
+                data["enddate"] = enddate;
+            }
+            if (startdate) {
+                data["startdate"] = startdate;
+            }
+
+            $.getJSON('{% url orgs_stats_data org.name %}', data,
+                function(d) {
+                    var startdate = new Date(Date.UTC(d.startdate[0], d.startdate[1]-1, d.startdate[2]));
+                    var enddate = new Date(Date.UTC(d.enddate[0], d.enddate[1]-1, d.enddate[2]));
+                    charts = loadCharts("{{ xaxis_label }}", d.histo_data, d.initial_values,
+                            startdate.getTime(), enddate.getTime());
+                    $loading.hide();
+                    $charts.show();
+
+                    // set the date fields if they're not already set
+                    $startdate_field = $("#{{ chart_name }}-startdate");
+                    $enddate_field = $("#{{ chart_name }}-enddate");
+                    if (!$startdate_field.val()) {
+                        $startdate_field.val(startdate.toISOString().substr(0, 10)); // substr bc date strs are 10 chars
                     }
+                    if (!$enddate_field.val()) {
+                        $enddate_field.val(enddate.toISOString().substr(0, 10))
+                    }
+
+                    if (callback_fn) {
+                        callback_fn();
+                    }
+                }
             )
         }
 
+        function _update_chart_if_exists(chart) {
+            if (chart) {
+                chart.update();
+            }
+        }
+        function update_active_chart() {
+            // for some reason nvd3 doesn't fully animate the charts, force this update after the chart is loaded
+            var active_chart_name = $('#chart-tabs li.active a').attr('href').substr(1); // remove '#'
+            _update_chart_if_exists(charts[active_chart_name]);
+        }
+
         $(function() {
-{#            // 'Select All' and 'Deselect All' buttons in filter domains#}
-{#            $project_filter_checkboxes = $('#filter-projects-form').find(':checkbox');#}
-{#            $(document).on('click', '#select-btn', function() {#}
-{#                $project_filter_checkboxes.attr('checked', true);#}
-{#            });#}
-{#            $(document).on('click', '#deselect-btn', function() {#}
-{#                $project_filter_checkboxes.attr('checked', false);#}
-{#            });#}
-
-            // collapse other collapseable divs in the charts accordion when
-            $('#charts-accordion .collapse').on('show', function(){
-                $('#charts-accordion .collapse.in').collapse('hide');
-            });
-
-            // load chart if not already visible on the screen
-            $('#charts-accordion').on('click', '.accordion-toggle', function(){
-                var $chart = ($($(this).attr('href')).find('.nvd3-chart'));
-                $c = $chart;
-                if ($chart.length > 0 && !$chart.is(':visible')) {
-                    console.log('loading for the first time');
-                    loadChartData($chart.attr('id'), 'month');
-                }
-            });
-
-            // hover effects of the daterange button
-            $('.daterange-btn').hover(function() { // Mouse in
-               $(this).children(":first").addClass('label-info');
-            }, function() { // Mouse out
-                $(this).children(":first").removeClass('label-info');
-            });
-
             // load new chart when daterange is clicked
-            $(document).on('click', '.daterange-btn', function() {
+            $(document).on('submit', '.reload-graph-form', function() {
                 var $this = $(this);
-                var $chart_container = $this.parents('.accordion-heading').siblings('.accordion-body');
-                loadChartData($this.attr('data-chart'), $this.attr('data-range'));
-                if (!$chart_container.hasClass('in')) { // check to see
-                    $chart_container.collapse('show');
-                }
+                var startdate = $this.find('[name="startdate"]').val();
+                var enddate = $this.find('[name="enddate"]').val();
+                loadChartData(update_active_chart, startdate, enddate);
+                var new_url = "?startdate=" + startdate + "&enddate=" + enddate + window.location.hash;
+                History.pushState(null, "Reloaded Chart", new_url);
                 return false;
             });
+            $('.reload-graph-form').submit();
 
-            loadChartData('forms-chart', 'month');
+            // load chart if not already visible on the screen
+            $('#chart-tabs').on('click', 'a[data-toggle="hash-tab"]', function(){
+                $('.nvd3-chart').hide();
+                var $chart = $($(this).attr('href')).children('.nvd3-chart');
+                $chart.show();
+                var chart = charts[$chart.parents('.tab-pane').attr('id')];
+                    _update_chart_if_exists(chart); // for some reason nvd3 doesn't fully animate the charts, force this update
+            });
         });
     </script>
 {% endblock %}
 
+{% block append-to-title %}
+    <small><em>Visualize {{ stat_slug|capfirst }}</em></small>
+{% endblock %}
+
 {% block report %}
     <span style="margin-bottom: 1em" class="label label-info">{% trans "All dates are in UTC" %}</span>
-    <div class="accordion" id="charts-accordion">
-        <div class="accordion-group">
-            <div class="accordion-heading">
-                <span class="pull-right" style="margin: 8px">
-                    <a data-chart="forms-chart" data-range="year" class="daterange-btn" href="#">
-                        <span class="label year-label">Year</span></a>
-                    <a data-chart="forms-chart" data-range="month" class="daterange-btn" href="#">
-                        <span class="label month-label">Month</span></a>
-                    <a data-chart="forms-chart" data-range="week" class="daterange-btn" href="#">
-                        <span class="label week-label">Week</span></a>
-                </span>
-                <a class="accordion-toggle" data-toggle="collapse" data-parent="#charts-accordion" href="#forms-graph">
-                    {% trans "Forms" %}</a>
-            </div>
-            <div id="forms-graph" class="accordion-body collapse in">
-                <div class="accordion-inner">
-                    <div style="height: 320px; min-height: 320px;" class="loading">Loading...</div>
-                    <div id='forms-chart' class='nvd3-chart hide'>
-                        <svg style='height:320px'> </svg>
-                    </div>
-                </div>
+    <ul id="chart-tabs" class="nav nav-tabs">
+        <li class="active"><a href="#bar-chart" data-toggle="hash-tab">{% trans "Bar Chart" %}</a></li>
+        <li><a href="#cumulative-chart" data-toggle="hash-tab">{% trans "Cumulative Chart" %}</a></li>
+        <li><a href="#stacked-cumulative-chart" data-toggle="hash-tab">{% trans "Stacked Cumulative Chart" %}</a></li>
+        <form data-chart="{{ chart_name }}" style="margin: 0;" class="form-inline pull-right reload-graph-form">
+            <span class="pull-right">
+                <label for="{{ chart_name }}-startdate" class="sub-label">{% trans 'From' %}</label>
+                <input type="text" id="{{ chart_name }}-startdate" name="startdate" value="{{ startdate }}" class="date-picker input-small">
+                <label for="{{ chart_name }}-enddate" class="sub-label">{% trans 'To' %}</label>
+                <input type="text" id="{{ chart_name }}-enddate" name="enddate" value="{{ enddate }}" class="date-picker input-small">
+                <button type="submit" class="btn btn-info">{% trans "Reload Data" %}</button>
+            </span>
+        </form>
+    </ul>
+
+    <div id="charts" class="tab-content">
+        <div class="tab-pane active" id="bar-chart">
+            <div style="height: 320px; min-height: 320px;" class="loading">{% trans "Loading..." %}</div>
+            <div class='nvd3-chart hide'>
+                <svg style='height:320px'> </svg>
             </div>
         </div>
-        <div class="accordion-group">
-            <div class="accordion-heading">
-                <span class="pull-right" style="margin: 8px">
-                    <a data-chart="cases-chart" data-range="year" class="daterange-btn" href="#">
-                        <span class="label year-label">Year</span></a>
-                    <a data-chart="cases-chart" data-range="month" class="daterange-btn" href="#">
-                        <span class="label month-label">Month</span></a>
-                    <a data-chart="cases-chart" data-range="week" class="daterange-btn" href="#">
-                        <span class="label week-label">Week</span></a>
-                </span>
-                <a class="accordion-toggle" data-toggle="collapse" data-parent="#charts-accordion" href="#cases-graph">
-                    {% trans "Cases" %}
-                </a>
+        <div class="tab-pane" id="cumulative-chart">
+            <div style="height: 320px; min-height: 320px;" class="loading">{% trans "Loading..." %}</div>
+            <div class='nvd3-chart hide'>
+                <svg style='height:320px'> </svg>
             </div>
-            <div id="cases-graph" class=" accordion-body collapse">
-                <div class="accordion-inner">
-                    <div style="height: 320px; min-height: 320px;" class="loading">Loading...</div>
-                    <div id='cases-chart' class='nvd3-chart hide'>
-                        <svg style='height:320px'> </svg>
-                    </div>
-                </div>
+        </div>
+        <div class="tab-pane" id="stacked-cumulative-chart">
+            <div style="height: 320px; min-height: 320px;" class="loading">{% trans "Loading..." %}</div>
+            <div class='nvd3-chart hide'>
+                <svg style='height:320px'> </svg>
             </div>
         </div>
     </div>
-
-{#    <hr />#}
-{#    <div id="report-content">#}
-{#        {% include "reports/async/default.html" %}#}
-{#        {% if not report.is_async and report.slug %}#}
-{#            {% block reportcontent %}#}
-{#            {% endblock %}#}
-{#        {% else %}#}
-{#            {% include "reports/async/default.html" %}#}
-{#        {% endif %}#}
-{#    </div>#}
-
-{#    <hr />#}
-{#    <form id="filter-projects-form" action="{% url orgs_stats org.name %}" method="get">#}
-{#        <h3>{% trans "Filter Project Spaces" %}#}
-{#            <button type="submit" class="btn btn-primary"><strong>{% trans "Filter" %}</strong></button>#}
-{#            <div class="btn-group pull-right">#}
-{#                <button type="button" id="select-btn" href="#" class="btn">{% trans "Select All" %}</button>#}
-{#                <button type="button" id="deselect-btn" href="#" class="btn">{% trans "Deselect All" %}</button>#}
-{#            </div>#}
-{#        </h3>#}
-{#        <div class="well" id="domain-filter">#}
-{#            <div class="row-fluid">#}
-{#                {% for dom in domains %}#}
-{#                    {% if forloop.counter0|divisibleby:"4" and forloop.counter0 != 0 %}#}
-{#                        </div><div class="row-fluid">#}
-{#                    {% endif %}#}
-{#                    <div class="span3">#}
-{#                        <label class="checkbox">#}
-{#                            <input type="checkbox" name="name" value="{{ dom.name }}" {% if dom.active_in_filter %}checked{% endif %}> <strong>{{ dom.display_name }}</strong>#}
-{#                        </label>#}
-{#                    </div>#}
-{#                {% endfor %}#}
-{#            </div>#}
-{#        </div>#}
-{#    </form>#}
 {% endblock %}
 
 {% block org-modals %}

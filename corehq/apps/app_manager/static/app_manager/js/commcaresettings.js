@@ -77,9 +77,18 @@ function CommcareSettings(options) {
     _(self.settings).each(function (setting) {
         var value = initialValues[setting.type][setting.id];
         setting.contingent_default = setting.contingent_default || [];
-        setting.since = setting.since || '1.1';
-
         setting.value = ko.observable(value);
+        if (!_.isObject(setting.since)) {
+            setting.since = {'': setting.since};
+        }
+
+        setting.requiredVersion = ko.computed(function () {
+            return {
+                option: setting.since[setting.value()] || setting.since[''] || '1.1',
+                setting: setting.since[''] || '1.1'
+            };
+        });
+
         setting.valueIsLegal = function () {
             // to be overridden
             return true;
@@ -92,17 +101,24 @@ function CommcareSettings(options) {
             return self.parseCondition(setting.requires);
         });
         setting.versionOK = ko.computed(function () {
-            return COMMCAREHQ.app_manager.checkCommcareVersion(setting.since);
+            return COMMCAREHQ.app_manager.checkCommcareVersion(setting.requiredVersion().setting);
+        });
+        setting.optionOK = ko.computed(function () {
+            return COMMCAREHQ.app_manager.checkCommcareVersion(setting.requiredVersion().option);
         });
         setting.enabled = ko.computed(function () {
             var condition = setting.parsedCondition();
             return setting.versionOK() && condition.check();
         });
         setting.disabledMessage = ko.computed(function () {
-            if (!setting.enabled()) {
-                var versionOK = setting.versionOK();
-                if (!versionOK) {
-                    return 'Upgrade to CommCare ' + setting.since + '!';
+            var optionOK = setting.optionOK();
+            if (!setting.enabled() || !optionOK) {
+                if (!optionOK) {
+                    if (setting.versionOK()) {
+                        return 'Upgrade to CommCare ' + setting.requiredVersion().option + ' for this option!';
+                    } else {
+                        return 'Upgrade to CommCare ' + setting.requiredVersion().option + '!';
+                    }
                 } else {
                     var condition = setting.parsedCondition();
                     var names = _(condition.settings).map(function (setting) {
@@ -176,6 +192,11 @@ function CommcareSettings(options) {
         section.notEmpty = ko.computed(function () {
             return _(section.settings).some(function (setting) {
                 return setting.visible();
+            });
+        });
+        section.reallyCollapse = ko.computed(function () {
+            section.collapse || _(section.settings).some(function (setting) {
+                return setting.hasError();
             });
         });
     });

@@ -288,7 +288,6 @@ class MessageLogOld(models.Model):
 
 
 class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
-    
     def case_changed(self):
         contact_phone_number = self.get_case_property("contact_phone_number")
         contact_phone_number_is_verified = self.get_case_property("contact_phone_number_is_verified")

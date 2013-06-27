@@ -50,11 +50,11 @@
             return JSON.parse(r);
         }
         function resetIndexes($sortable) {
-            var indexes = $sortable.find('> * > .index').get(),
+            var $sortables = $sortable.children.get(),
                 i;
-            for (i in indexes) {
-                if (indexes.hasOwnProperty(i)) {
-                    $(indexes[i]).text(i).trigger('change');
+            for (i in $sortables) {
+                if ($sortables.hasOwnProperty(i)) {
+                    $($sortables[i]).data('index', i);
                 }
             }
         }
@@ -92,7 +92,8 @@
         $('.sortable .sort-action').addClass('sort-disabled');
         $('.drag_handle').addClass(COMMCAREHQ.icons.GRIP);
         $('.sortable').each(function () {
-            if ($(this).children().not('.sort-disabled').size() < 2) {
+            var min_elem = $(this).hasClass('sortable-forms') ? 1 : 2;
+            if ($(this).children().not('.sort-disabled').size() < min_elem) {
                 var $sortable = $(this);
                 $('.drag_handle', this).each(function () {
                     if ($(this).closest('.sortable')[0] === $sortable[0]) {
@@ -103,36 +104,66 @@
         });
         $('.sortable').each(function () {
             var $sortable = $(this);
-            if ($(this).children().not('.sort-disabled').size() > 1) {
-                $(this).sortable({
+            var sorting_forms = $sortable.hasClass('sortable-forms');
+            var min_elem = $(this).hasClass('sortable-forms') ? 0 : 1;
+            if ($(this).children().not('.sort-disabled').size() > min_elem) {
+                var init_dict = {
                     handle: '.drag_handle ',
                     items: ">*:not(.sort-disabled)",
                     update: function (e, ui) {
+                        // because the event is triggered on both sortables when moving between one sortable list to
+                        // another, do a check to see if this is the sortable list we're moving the item to
+                        if ($sortable.find(ui.item).length < 1) {
+                            return;
+                        }
+
                         var to = -1,
                             from = -1,
+                            to_module_id = parseInt($sortable.parents('.edit-module-li').data('index'), 10),
+                            moving_to_new_module = false,
                             $form;
-                        $(this).find('> * > .index').each(function (i) {
-                            if (from !== -1) {
-                                if (from === parseInt($(this).text(), 10)) {
+
+                        // if you're moving modules or moving forms within the same module, use this logic to find to and from
+                        if (!sorting_forms || to_module_id === parseInt(ui.item.data('moduleid'), 10)) {
+                            $(this).children().not('.sort-disabled').each(function (i) {
+                                var index = parseInt($(this).data('index'), 10);
+                                if (from !== -1) {
+                                    if (from === index) {
+                                        to = i;
+                                        return false;
+                                    }
+                                }
+                                if (i !== index) {
+                                    if (i + 1 === index) {
+                                        from = i;
+                                    } else {
+                                        to = i;
+                                        from = index;
+                                        return false;
+                                    }
+                                }
+                            });
+                        } else { //moving forms to a new submodule
+                            $(this).children().not('.sort-disabled').each(function (i) {
+                                if (parseInt($(this).data('moduleid'), 10) !== to_module_id) {
+                                    moving_to_new_module = true;
                                     to = i;
+                                    from = parseInt(ui.item.data('index'), 10);
                                     return false;
                                 }
-                            }
-                            if (i !== parseInt($(this).text(), 10)) {
-                                if (i + 1 === parseInt($(this).text(), 10)) {
-                                    from = i;
-                                } else {
-                                    to = i;
-                                    from = parseInt($(this).text(), 10);
-                                    return false;
-                                }
-                            }
-                        });
-                        if (to !== from) {
+                            });
+                        }
+
+                        if (moving_to_new_module || to !== from) {
+                            var from_module_id = parseInt(ui.item.data('moduleid'), 10);
                             $form = $(this).find('> .sort-action form');
                             $form.find('[name="from"], [name="to"]').remove();
                             $form.append('<input type="hidden" name="from" value="' + from.toString() + '" />');
                             $form.append('<input type="hidden" name="to"   value="' + to.toString()   + '" />');
+                            if (sorting_forms) {
+                                $form.append('<input type="hidden" name="from_module_id" value="' + from_module_id.toString() + '" />');
+                                $form.append('<input type="hidden" name="to_module_id"   value="' + to_module_id.toString()   + '" />');
+                            }
 
                             // disable sortable
                             $sortable.find('.drag_handle').css('color', 'transparent').removeClass('drag_handle');
@@ -150,10 +181,14 @@
                             }
                         }
                     }
-                });
+                };
+                if (sorting_forms) {
+                    init_dict["connectWith"] = '.sortable-forms';
+                }
+                $(this).sortable(init_dict);
             }
         });
-        $('.index, .sort-action').hide();
+        $('.sort-action').hide();
 
         $('select.applications').change(function () {
             var url = $(this).find('option:selected').attr('value');
@@ -201,11 +236,6 @@
             }
         });
 
-        $('.index').change(function () {
-            // make sure that column_id changes when index changes (after drag-drop)
-            $(this).closest('tr').find('[name="index"]').val($(this).text());
-        }).trigger('change');
-
         COMMCAREHQ.app_manager.commcareVersion.subscribe(function () {
             $('.commcare-feature').each(function () {
                 var version = '' + $(this).data('since-version') || '1.1',
@@ -214,7 +244,7 @@
 
                 if (COMMCAREHQ.app_manager.checkCommcareVersion(version)) {
                     area.find('upgrade-message').remove();
-                    area.find('*:not(".hidden")').show();
+                    area.find('*:not(".hide")').show();
                 } else {
                     area.find('*').hide();
                     upgradeMessage.append(

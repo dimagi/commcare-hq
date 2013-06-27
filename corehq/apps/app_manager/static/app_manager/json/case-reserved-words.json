@@ -18,5 +18,7 @@
     "actions",
     "indices",
     "index",
-    "initial_processing_complete"
+    "initial_processing_complete",
+    "opened_by",
+    "closed_by"
 ]

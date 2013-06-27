@@ -4,7 +4,7 @@
 {% load i18n %}
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/underscore-1.3.1.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
     <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
     <script src="{% static 'app_manager/js/lcs-merge.js' %}"></script>
     <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
@@ -58,10 +58,10 @@
     {% if edit %}
     <div class="delete-me">
         <form action="{% url delete_module domain app.id module.id %}" method="post">
-            <a class="submit btn btn-danger" href="#">
+            <button type="submit" class="disable-on-submit btn btn-danger">
                 <i class="icon-trash"></i>
                 {% trans "Delete Module" %}
-            </a>
+            </button>
         </form>
     </div>
     {% endif %}

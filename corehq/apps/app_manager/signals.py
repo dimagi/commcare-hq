@@ -1,5 +1,4 @@
 from datetime import timedelta
-from couchdbkit.exceptions import MultipleResultsFound
 from corehq.apps.app_manager.models import Application, get_app
 from corehq.apps.app_manager.success_message import SuccessMessage
 from receiver.signals import successful_form_received, Certainty, ReceiverResult

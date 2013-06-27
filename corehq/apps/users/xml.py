@@ -7,7 +7,7 @@ Spec: https://bitbucket.org/javarosa/javarosa/wiki/UserRegistrationAPI
 """
 # this should eventually be harmonized with the other responses, but 
 # has been implemented quick and dirty
-from casexml.apps.phone import xml as phone_xml 
+from casexml.apps.phone import xml as phone_xml
 from receiver import xml as receiver_xml 
 from receiver.xml import ResponseNature
 

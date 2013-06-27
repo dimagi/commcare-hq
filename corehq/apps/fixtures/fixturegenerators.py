@@ -31,7 +31,7 @@ def item_lists(user, version=V2, last_sync=None):
         xFixture = ElementTree.Element('fixture', attrib={'id': 'item-list:%s' % data_type.tag, 'user_id': user.user_id})
         xItemList = ElementTree.Element('%s_list' % data_type.tag)
         xFixture.append(xItemList)
-        for item in items_by_type[data_type.get_id]:
+        for item in sorted(items_by_type[data_type.get_id], key=lambda x: x.sort_key):
             xItemList.append(item.to_xml())
         fixtures.append(xFixture)
     return fixtures

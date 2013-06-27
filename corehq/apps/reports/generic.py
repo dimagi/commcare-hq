@@ -22,6 +22,8 @@ from dimagi.utils.web import json_request
 from dimagi.utils.parsing import string_to_boolean
 from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
 
+CHART_SPAN_MAP = {1: '', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
+
 class GenericReportView(CacheableRequestMixIn):
     """
         A generic report structure for viewing a report
@@ -77,6 +79,7 @@ class GenericReportView(CacheableRequestMixIn):
     asynchronous = False
     hide_filters = False
     emailable = False
+    printable = False
 
     exportable = False
     mobile_enabled = False
@@ -95,6 +98,7 @@ class GenericReportView(CacheableRequestMixIn):
     show_time_notice = False
     is_admin_report = False
     special_notice = None
+    override_permissions_check = False # whether to ignore the permissions check that's done when rendering the report
     
     
     def __init__(self, request, base_context=None, domain=None, **kwargs):
@@ -117,6 +121,7 @@ class GenericReportView(CacheableRequestMixIn):
         self.context = base_context or {}
         self._update_initial_context()
         self.is_rendered_as_email = False # setting this to true in email_response
+        self.override_template = "reports/async/email_report.html"
 
     def __str__(self):
         return "%(klass)s report named '%(name)s' with slug '%(slug)s' in section '%(section)s'.%(desc)s%(fields)s" % dict(
@@ -246,7 +251,7 @@ class GenericReportView(CacheableRequestMixIn):
         original_template = self.report_template_path or "reports/async/basic.html"
         if self.is_rendered_as_email:
             self.context.update(original_template=original_template)
-            return "reports/async/email_report.html"
+            return self.override_template
         return original_template
 
     @property
@@ -292,7 +297,7 @@ class GenericReportView(CacheableRequestMixIn):
     @memoized
     def export_format(self):
         from couchexport.models import Format
-        return self.export_format_override or self.request.GET.get('format', Format.XLS)
+        return self.export_format_override or self.request.GET.get('format', Format.XLS_2007)
 
     @property
     def export_name(self):
@@ -361,8 +366,14 @@ class GenericReportView(CacheableRequestMixIn):
         Whether a report has any filters set. Based on whether or not there 
         is a query string. This gets carried to additional asynchronous calls
         """
-        return string_to_boolean(self.request.GET.get("filterSet")) \
-            if "filterSet" in self.request.GET else bool(self.request.META.get('QUERY_STRING'))
+        are_filters_set = bool(self.request.META.get('QUERY_STRING'))
+        if "filterSet" in self.request.GET:
+            try:
+                are_filters_set = string_to_boolean(self.request.GET.get("filterSet"))
+            except ValueError:
+                # not a parseable boolean
+                pass
+        return are_filters_set
         
     
     @property
@@ -386,7 +397,6 @@ class GenericReportView(CacheableRequestMixIn):
         """
             Intention: Don't override.
         """
-
         report_configs = ReportConfig.by_domain_and_owner(self.domain,
             self.request.couch_user._id, report_slug=self.slug).all()
         current_config_id = self.request.GET.get('config_id', '')
@@ -409,8 +419,10 @@ class GenericReportView(CacheableRequestMixIn):
                 filter_set=self.filter_set,
                 needs_filters=self.needs_filters,
                 has_datespan=has_datespan,
-                show=self.request.couch_user.can_view_reports() or self.request.couch_user.get_viewable_reports(),
+                show=self.override_permissions_check or \
+                   self.request.couch_user.can_view_reports() or self.request.couch_user.get_viewable_reports(),
                 is_emailable=self.emailable,
+                is_printable=self.printable,
                 is_admin=self.is_admin_report,   # todo is this necessary???
                 special_notice=self.special_notice,
             ),
@@ -442,7 +454,6 @@ class GenericReportView(CacheableRequestMixIn):
             Intention: This probably does not need to be overridden in general.
             Please override template_context instead.
         """
-        url_args = [] if not self.domain else [self.domain]
         self.context['report'].update(
             show_filters=self.fields or not self.hide_filters,
             breadcrumbs=self.breadcrumbs,
@@ -585,6 +596,16 @@ class GenericReportView(CacheableRequestMixIn):
         return export_response(temp, self.export_format, self.export_name)
 
     @property
+    @request_cache("raw")
+    def print_response(self):
+        """
+        Returns the raw report data. What gets rendered in the async response.
+        """
+        self.is_rendered_as_email = True
+        self.override_template = "reports/async/print_report.html"
+        return HttpResponse(self._async_context()['report'])
+
+    @property
     def partial_response(self):
         """
             Use this response for rendering smaller chunks of your report.
@@ -640,6 +661,16 @@ class GenericTabularReport(GenericReportView):
         shared_pagination_GET_params
             - this is where you select the GET parameters to pass to the paginator
             - returns a list formatted like [dict(name='group', value=self.group_id)]
+
+        ## Charts
+        To include charts in the report override the following property.
+        @property
+        charts
+            - returns a list of Chart objects e.g. PieChart, MultiBarChart
+
+        You can also adjust the following properties:
+        charts_per_row
+            - the number of charts to show in a row. 1, 2, 3, 4, or 6
     """
     # new class properties
     total_row = None
@@ -650,6 +681,7 @@ class GenericTabularReport(GenericReportView):
     fix_left_col = False
     ajax_pagination = False
     use_datatables = True
+    charts_per_row = 1
     
     # override old class properties
     report_template_path = "reports/async/tabular.html"
@@ -697,6 +729,13 @@ class GenericTabularReport(GenericReportView):
             return -1 if you want total_filtered_records to equal whatever the value of total_records is.
         """
         return -1
+
+    @property
+    def charts(self):
+        """
+            Override to return a list of Chart objects.
+        """
+        return []
 
     @property
     def shared_pagination_GET_params(self):
@@ -809,8 +848,10 @@ class GenericTabularReport(GenericReportView):
 
         if self.ajax_pagination or self.needs_filters:
             rows = []
+            charts = []
         else:
             rows = list(self.rows)
+            charts = list(self.charts)
 
         if self.total_row is not None:
             self.total_row = list(self.total_row)
@@ -842,8 +883,10 @@ class GenericTabularReport(GenericReportView):
                 show_all_rows=self.show_all_rows,
                 pagination=pagination_spec,
                 left_col=left_col,
-                datatables=self.use_datatables,
-            )
+                datatables=self.use_datatables
+            ),
+            charts=charts,
+            chart_span=CHART_SPAN_MAP[self.charts_per_row]
         )
         for provider_function in self.extra_context_providers:
             context.update(provider_function(self))

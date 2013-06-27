@@ -115,8 +115,8 @@ todo fix
     <form class="form-horizontal" data-bind="foreach: sections">
         <fieldset data-bind="visible: notEmpty">
             <legend>
-                <a data-toggle="collapse" data-bind="attr: {href: '#' + id}">
-                    <i class="icon icon-double-angle-right"></i>
+                <a class="accordion-toggle" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {'collapsed': reallyCollapse}">
+                    <i class="icon-double-angle-down"></i>
                     <span data-bind="text: title"></span>
                 </a>
             </legend>
@@ -131,8 +131,8 @@ todo fix
                     </label>
                     <div class="controls">
                         <span data-bind="template: $data.widget_template || 'CommcareSettings.widgets.' + widget"></span>
-                        <span data-bind="visible: disabledMessage(), css: {'text-warning': !versionOK(), 'text-success': versionOK}">
-                            <i data-bind="css: {'icon-arrow-left': !versionOK(), 'icon-ok': versionOK}"></i>
+                        <span data-bind="visible: disabledMessage(), css: {'text-warning': !optionOK(), 'text-success': optionOK}">
+                            <i data-bind="css: {'icon-arrow-left': !optionOK(), 'icon-ok': optionOK}"></i>
                             <span data-bind="text: disabledMessage()"></span>
                         </span>
                         <p class="help-block" data-bind="visible: disabledButHasValue">

@@ -43,19 +43,19 @@ var HQAsyncReport = function (o) {
     self.init = function () {
         self.reportContent.attr('style', 'position: relative;');
 
-        self.updateReport(true, window.location.search.substr(1));
+        self.updateReport(true, window.location.search.substr(1), self.standardReport.filterSet);
         
         // only update the report if there are actually filters set
         if (!self.standardReport.needsFilters) {
             self.standardReport.filterSubmitButton.addClass('disabled');
-	        self.filterForm.submit(function () {
-	            var params = $(this).serialize();
-	            History.pushState(null,window.location.title,window.location.pathname+"?"+params);
-	            self.updateFilters(params);
-	            self.updateReport(false, params);
-	            return false;
-	        });
-        } 
+        }
+        self.filterForm.submit(function () {
+            var params = $(this).serialize();
+            History.pushState(null,window.location.title,window.location.pathname+"?"+params);
+            self.updateFilters(params);
+            self.updateReport(false, params, true);
+            return false;
+        });
     };
 
     self.updateFilters = function (form_params) {
@@ -68,7 +68,7 @@ var HQAsyncReport = function (o) {
         });
     };
 
-    self.updateReport = function (initial_load, params) {
+    self.updateReport = function (initial_load, params, setFilters) {
         var process_filters = "";
         if (initial_load) {
             process_filters = "hq_filters=true&";
@@ -78,7 +78,15 @@ var HQAsyncReport = function (o) {
                     "&enddate="+self.standardReport.datespan.enddate;
             }
         }
-        process_filters = process_filters + "&filterSet=" + self.standardReport.filterSet;
+        if (setFilters != undefined) {
+            process_filters = process_filters + "&filterSet=" + setFilters;
+        }
+        if (setFilters) {
+            $(self.standardReport.exportReportButton).removeClass('hide');
+            $(self.standardReport.emailReportButton).removeClass('hide');
+            $(self.standardReport.printReportButton).removeClass('hide');
+        }
+
         self.reportRequest = $.ajax({
             url: (self.customAsyncUrl || window.location.pathname.replace(self.standardReport.urlRoot,
                 self.standardReport.urlRoot+'async/'))+"?"+process_filters+"&"+params+"&"+self.additionalParams,

@@ -29,9 +29,10 @@
 - id: text_input
   name: "Text Input"
   widget: text_input
-  values: ['roman', 'native', 'custom-keys']
-  value_names: [Roman, Native (International), Custom Keys]
+  values: ['roman', 'native', 'custom-keys', 'qwerty']
+  value_names: [Roman, Native (International), Custom Keys, Full Keyboard]
   default: roman
+  since: {qwerty: '2.6', 'custom-keys': '1.3'}
 
 # RemoteApp Only
 - id: profile_url
@@ -85,7 +86,6 @@
 - id: admin_password
   name: "Admin Password"
   widget: password
-  requires: "{$parent.doc_type}='Application'"
   hide_if_not_enabled: true
 
 - id: show_user_registration

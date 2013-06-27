@@ -1,13 +1,15 @@
+from datetime import datetime
+from django.core.urlresolvers import reverse
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
-import math
-from corehq.apps.domain.calculations import dom_calc, _all_domain_stats, ES_CALCED_PROPS
-from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.dispatcher import BasicReportDispatcher, AdminReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport, ElasticTabularReport
 from django.utils.translation import ugettext as _
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 
+def format_date(dstr, default):
+    return datetime.strptime(dstr, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y/%m/%d %H:%M:%S') if dstr else default
 
 class DomainStatsReport(GenericTabularReport):
     dispatcher = BasicReportDispatcher
@@ -15,6 +17,7 @@ class DomainStatsReport(GenericTabularReport):
     section_name = 'DOMSTATS'
     base_template = "reports/async/default.html"
     custom_params = []
+    es_queried = False
 
     name = ugettext_noop('Domain Statistics')
     slug = 'dom_stats'
@@ -25,10 +28,31 @@ class DomainStatsReport(GenericTabularReport):
     def is_custom_param(self, param):
         raise NotImplementedError
 
+    def get_name_or_link(self, d, internal_settings=False):
+        if not getattr(self, 'show_name', None):
+            reverse_str = "domain_homepage" if not internal_settings else "domain_internal_settings"
+            return mark_safe('<a href="%s">%s</a>' % \
+                   (reverse(reverse_str, args=[d['name']]), d.get('hr_name') or d['name']))
+        else:
+            return d['name']
+
+    @property
+    def es_results(self):
+        if not getattr(self, 'es_response', None):
+            self.es_query()
+        return self.es_response
+
+    def es_query(self):
+        if not self.es_queried:
+            results = es_domain_query(domains=[d.name for d in self.get_domains()])
+            self.es_queried = True
+            self.es_response = results
+        return self.es_response
+
     @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn("Project"),
+            DataTablesColumn("Project", prop_name="name.exact"),
             DataTablesColumn(_("# Active Mobile Workers"), sort_type=DTSortType.NUMERIC,
                 prop_name="cp_n_active_cc_users",
                 help_text=_("The number of mobile workers who have submitted a form in the last 30 days")),
@@ -45,30 +69,21 @@ class DomainStatsReport(GenericTabularReport):
 
     @property
     def rows(self):
-        def numcell(text, value=None):
-            if value is None:
-                try:
-                    value = int(text)
-                    if math.isnan(value):
-                        text = '---'
-                except ValueError:
-                    value = text
-            return util.format_datatables_data(text=text, sort_key=value)
-        all_stats = _all_domain_stats()
-        domains = self.get_domains()
-        for domain in domains:
-            dom = getattr(domain, 'name', domain) # get the domain name if domains is a list of domain objects
-            yield [
-                getattr(domain, 'hr_name', dom), # get the hr_name if domain is a domain object
-                numcell(dom_calc("mobile_users", dom)),
-                numcell(all_stats["commcare_users"][dom]),
-                numcell(dom_calc("cases_in_last", dom, 120)),
-                numcell(all_stats["cases"][dom]),
-                numcell(all_stats["forms"][dom]),
-                dom_calc("first_form_submission", dom),
-                dom_calc("last_form_submission", dom),
-                numcell(all_stats["web_users"][dom]),
-            ]
+        domains = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
+
+        for dom in domains:
+            if dom.has_key('name'): # for some reason when using the statistical facet, ES adds an empty dict to hits
+                yield [
+                    self.get_name_or_link(dom),
+                    dom.get("cp_n_active_cc_users", _("Not yet calculated")),
+                    dom.get("cp_n_cc_users", _("Not yet calculated")),
+                    dom.get("cp_n_active_cases", _("Not yet calculated")),
+                    dom.get("cp_n_cases", _("Not yet calculated")),
+                    dom.get("cp_n_forms", _("Not yet calculated")),
+                    format_date(dom.get("cp_first_form"), _("No forms")),
+                    format_date(dom.get("cp_last_form"), _("No forms")),
+                    dom.get("cp_n_web_users", _("Not yet calculated"))
+                ]
 
     @property
     def shared_pagination_GET_params(self):
@@ -80,6 +95,8 @@ class DomainStatsReport(GenericTabularReport):
         return ret
 
 class OrgDomainStatsReport(DomainStatsReport):
+    override_permissions_check = True
+
     def get_domains(self):
         from corehq.apps.orgs.models import Organization
         from corehq.apps.domain.models import Domain
@@ -93,20 +110,56 @@ class OrgDomainStatsReport(DomainStatsReport):
     def is_custom_param(self, param):
         return param in ['org']
 
+DOMAIN_FACETS = [
+    "cp_is_active",
+    "cp_has_app",
+    "uses reminders",
+    "project_type",
+    "area",
+    "case_sharing",
+    "commtrack_enabled",
+    "customer_type",
+    "deployment.city",
+    "deployment.country",
+    "deployment.date",
+    "deployment.public",
+    "deployment.region",
+    "hr_name",
+    "internal.area",
+    "internal.can_use_data",
+    "internal.commcare_edition",
+    "internal.custom_eula",
+    "internal.initiative",
+    "internal.project_state",
+    "internal.self_started",
+    "internal.services",
+    "internal.sf_account_id",
+    "internal.sf_contract_id",
+    "internal.sub_area",
+    "internal.using_adm",
+    "internal.using_call_center",
+    "internal.platform",
 
-def project_stats_facets():
-    from corehq.apps.domain.models import Domain, InternalProperties, Deployment, LicenseAgreement
-    facets = Domain.properties().keys()
-    facets += ['internal.' + p for p in InternalProperties.properties().keys()]
-    facets += ['deployment.' + p for p in Deployment.properties().keys()]
-    facets += ['cda.' + p for p in LicenseAgreement.properties().keys()]
-    for p in ['internal', 'deployment', 'cda', 'migrations', 'eula']:
-        facets.remove(p)
-    facets += ES_CALCED_PROPS
-    return facets
+    "is_approved",
+    "is_public",
+    "is_shared",
+    "is_sms_billable",
+    "is_snapshot",
+    "is_test",
+    "license",
+    "multimedia_included",
 
-def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict=False, start_at=None, size=None, sort=None):
+    "phone_model",
+    "published",
+    "sub_area",
+    "survey_management_enabled",
+    "tags",
+]
+
+def es_domain_query(params=None, facets=None, terms=None, domains=None, return_q_dict=False, start_at=None, size=None, sort=None):
     from corehq.apps.appstore.views import es_query
+    if params is None:
+        params = {}
     if terms is None:
         terms = ['search']
     if facets is None:
@@ -120,6 +173,11 @@ def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict
             }
         }
 
+    q["filter"] = {"and": [
+        {"term": {"doc_type": "Domain"}},
+        {"term": {"is_snapshot": False}},
+    ]}
+
     search_query = params.get('search', "")
     if search_query:
         q['query'] = {
@@ -128,10 +186,10 @@ def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict
                     "match" : {
                         "_all" : {
                             "query" : search_query,
-                            "operator" : "and" }}}}}
+                            "operator" : "or", }}}}}
 
     q["facets"] = {}
-    stats = ['cp_n_active_cases', 'cp_n_active_cc_users', 'cp_n_cc_users', 'cp_n_web_users', 'cp_n_forms', 'cp_n_cases']
+    stats = ['cp_n_active_cases', 'cp_n_inactive_cases', 'cp_n_active_cc_users', 'cp_n_cc_users', 'cp_n_60_day_cases', 'cp_n_web_users', 'cp_n_forms', 'cp_n_cases']
     for prop in stats:
         q["facets"].update({"%s-STATS" % prop: {"statistical": {"field": prop}}})
 
@@ -147,7 +205,7 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
     base_template = "hqadmin/stats_report.html"
     asynchronous = False
     ajax_pagination = True
-    es_queried = False
+    exportable = True
 
     @property
     def template_context(self):
@@ -166,17 +224,11 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
     def total_records(self):
         return int(self.es_results['hits']['total'])
 
-    @property
-    def es_results(self):
-        if not getattr(self, 'es_response', None):
-            self.es_query()
-        return self.es_response
-
     def es_query(self):
         from corehq.apps.appstore.views import parse_args_for_es, generate_sortables_from_facets
         if not self.es_queried:
             self.es_params, _ = parse_args_for_es(self.request, prefix=ES_PREFIX)
-            self.es_facets = project_stats_facets()
+            self.es_facets = DOMAIN_FACETS
             results = es_domain_query(self.es_params, self.es_facets, sort=self.get_sorting_block(),
                 start_at=self.pagination.start, size=self.pagination.count)
             self.es_sortables = generate_sortables_from_facets(results, self.es_params, prefix=ES_PREFIX)
@@ -190,23 +242,39 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
     @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn("Project"),
-            DataTablesColumn(_("Organization"), prop_name="organization"),
+            DataTablesColumn("Project", prop_name="name.exact"),
+            DataTablesColumn(_("Organization"), prop_name="internal.organization_name"),
             DataTablesColumn(_("Deployment Date"), prop_name="deployment.date"),
+            DataTablesColumn(_("Deployment Country"), prop_name="deployment.country"),
             DataTablesColumn(_("# Active Mobile Workers"), sort_type=DTSortType.NUMERIC,
                 prop_name="cp_n_active_cc_users",
                 help_text=_("The number of mobile workers who have submitted a form in the last 30 days")),
             DataTablesColumn(_("# Mobile Workers"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_cc_users"),
+            DataTablesColumn(_("# Cases in last 60"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_60_day_cases",
+                help_text=_("The number of cases modified in the last 60 days")),
             DataTablesColumn(_("# Active Cases"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_active_cases",
                 help_text=_("The number of cases modified in the last 120 days")),
+            DataTablesColumn(_("# Inactive Cases"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_inactive_cases",
+                help_text=_("The number of open cases not modified in the last 120 days")),
             DataTablesColumn(_("# Cases"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_cases"),
             DataTablesColumn(_("# Form Submissions"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_forms"),
             DataTablesColumn(_("First Form Submission"), prop_name="cp_first_form"),
             DataTablesColumn(_("Last Form Submission"), prop_name="cp_last_form"),
             DataTablesColumn(_("# Web Users"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_web_users"),
             DataTablesColumn(_("Notes"), prop_name="internal.notes"),
+            DataTablesColumn(_("Services"), prop_name="internal.services"),
+            DataTablesColumn(_("Project State"), prop_name="internal.project_state"),
+            DataTablesColumn(_("Using ADM?"), prop_name="internal.using_adm"),
+            DataTablesColumn(_("Using Call Center?"), prop_name="internal.using_call_center"),
         )
         return headers
+
+    @property
+    def export_table(self):
+        self.pagination.count = 1000000 # terrible hack to get the export to return all rows
+        self.show_name = True
+        return super(AdminDomainStatsReport, self).export_table
+
 
     @property
     def rows(self):
@@ -216,20 +284,21 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
             return self.es_results.get('facets', {}).get('%s-STATS' % prop, {}).get(what_to_get)
 
         CALCS_ROW_INDEX = {
-            3: "cp_n_active_cc_users",
-            4: "cp_n_cc_users",
-            5: "cp_n_active_cases",
-            6: "cp_n_cases",
-            7: "cp_n_forms",
-            10: "cp_n_web_users",
+            4: "cp_n_active_cc_users",
+            5: "cp_n_cc_users",
+            6: "cp_n_60_day_cases",
+            7: "cp_n_active_cases",
+            8: "cp_n_inactive_cases",
+            9: "cp_n_cases",
+            10: "cp_n_forms",
+            13: "cp_n_web_users",
         }
-        NUM_ROWS = 12
         def stat_row(name, what_to_get, type='float'):
             row = [name]
-            for index in range(1, NUM_ROWS): #todo: switch to len(self.headers) when that userstatus report PR is merged
+            for index in range(1, len(self.headers)):
                 if index in CALCS_ROW_INDEX:
                     val = get_from_stat_facets(CALCS_ROW_INDEX[index], what_to_get)
-                    row.append('%.2f' % float(val) if type=='float' else val)
+                    row.append('%.2f' % float(val) if val and type=='float' else val or "Not yet calculated")
                 else:
                     row.append('---')
             return row
@@ -240,19 +309,37 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
             stat_row(_('STD'), 'std_deviation'),
         ]
 
+        def format_date(dstr, default):
+            # use [:19] so that only only the 'YYYY-MM-DDTHH:MM:SS' part of the string is parsed
+            return datetime.strptime(dstr[:19], '%Y-%m-%dT%H:%M:%S').strftime('%Y/%m/%d %H:%M:%S') if dstr else default
+
+        def get_name_or_link(d):
+            if not getattr(self, 'show_name', None):
+                return mark_safe('<a href="%s">%s</a>' % \
+                       (reverse("domain_homepage", args=[d['name']]), d.get('hr_name') or d['name']))
+            else:
+                return d['name']
+
         for dom in domains:
             if dom.has_key('name'): # for some reason when using the statistical facet, ES adds an empty dict to hits
                 yield [
-                    dom.get('hr_name') or dom['name'],
-                    dom.get("organization") or _('No org'),
-                    dom.get('deployment', {}).get('date') or _('No date'),
-                    dom.get("cp_n_active_cc_users", _("Not Yet Calculated")),
-                    dom.get("cp_n_cc_users", _("Not Yet Calculated")),
-                    dom.get("cp_n_active_cases", _("Not Yet Calculated")),
-                    dom.get("cp_n_cases", _("Not Yet Calculated")),
-                    dom.get("cp_n_forms", _("Not Yet Calculated")),
-                    dom.get("cp_first_form", _("No Forms")),
-                    dom.get("cp_last_form", _("No Forms")),
-                    dom.get("cp_n_web_users", _("Not Yet Calculated")),
+                    self.get_name_or_link(dom, internal_settings=True),
+                    dom.get("internal", {}).get('organization_name') or _('No org'),
+                    format_date(dom.get('deployment', {}).get('date'), _('No date')),
+                    dom.get("deployment", {}).get('country') or _('No country'),
+                    dom.get("cp_n_active_cc_users", _("Not yet calculated")),
+                    dom.get("cp_n_cc_users", _("Not yet calculated")),
+                    dom.get("cp_n_60_day_cases", _("Not yet calculated")),
+                    dom.get("cp_n_active_cases", _("Not yet calculated")),
+                    dom.get("cp_n_inactive_cases", _("Not yet calculated")),
+                    dom.get("cp_n_cases", _("Not yet calculated")),
+                    dom.get("cp_n_forms", _("Not yet calculated")),
+                    format_date(dom.get("cp_first_form"), _("No forms")),
+                    format_date(dom.get("cp_last_form"), _("No forms")),
+                    dom.get("cp_n_web_users", _("Not yet calculated")),
                     dom.get('internal', {}).get('notes') or _('No notes'),
+                    dom.get('internal', {}).get('services') or _('No info'),
+                    dom.get('internal', {}).get('project_state') or _('No info'),
+                    dom.get('internal', {}).get('using_adm') or False,
+                    dom.get('internal', {}).get('using_call_center') or False,
                 ]

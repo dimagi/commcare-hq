@@ -1,6 +1,11 @@
 {% extends 'app_manager/managed_app.html'%}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
+{% load i18n %}
+
+{% block underscore %}
+    <script src="{% static 'formdesigner/js/lib/underscore-1.3.1.js' %}"></script>
+{% endblock %}
 
 {% block js %}{{ block.super }}
     <script src="{% static 'formdesigner/js/lib/jquery.jstree.js' %}"></script>
@@ -19,58 +24,32 @@
     <script src="{% static 'formdesigner/js/model.js' %}"></script>
     <script src="{% static 'formdesigner/js/controller.js' %}"></script>
     <script src="{% static 'formdesigner/js/widgets.js' %}"></script>
-<script type="text/javascript" src="{% static 'hqwebapp/js/lib/underscore-1.3.1.js' %}"></script>
+    <script src="{% static 'formdesigner/js/multimedia.js' %}"></script>
+
+    {% include 'hqmedia/partials/multimedia_js.html' %} {# todo We should have a discussion at some point how we'd like to organize this in the future. #}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
     <script>
-{#        var uploadUrl = "{{ STATIC_URL }}hqmedia/js";#}
-{#        var lookupUrlsUrl = '{% url hqmedia_media_urls domain app.get_id %}';#}
-{##}
-{#        var searchUrl = '{% url hqmedia_search domain app.get_id %}';#}
-{#        var chooseImageUrl = '{% url hqmedia_choose_media domain app.get_id %}';#}
         $(function () {
 
             $("#edit").hide();
 
-{#        hqimage_uploader = new HQMediaUploader({#}
-{#            uploadElem: '#hqmedia-upload-Image',#}
-{#            fileFilters: new Array({description:"Images", extensions:"*.jpg;*.png;*.gif"}),#}
-{#            uploadURL: '{% url hqmedia_handle_uploaded domain app.get_id %}',#}
-{#            buttonImage: '{% static 'hqmedia/img/select_image_button.png' %}',#}
-{#                onSuccess: function (event, data) {#}
-{#            console.log(data);#}
-{#        },#}
-{#        singleFileUpload: true,#}
-{#                uploadParams: {},#}
-{#        modalClass: '.hqm-modal-image',#}
-{#                mediaType: 'hquimage_',#}
-{#                swfLocation: '{% static 'hqmedia/yui/uploader/uploader.swf' %}'#}
-{#        });#}
-{#        hqimage_uploader.render();#}
-{##}
-{#        hqaudio_uploader = new HQMediaUploader({#}
-{#            uploadElem: '#hqmedia-upload-Audio',#}
-{#            fileFilters: new Array({description:"Audio", extensions:"*.mp3"}),#}
-{#            uploadURL: '{% url hqmedia_handle_uploaded domain app.get_id %}',#}
-{#            buttonImage: '{% static 'hqmedia/img/select_audio_button.png' %}',#}
-{#                onSuccess: function (event, data) {#}
-{#            console.log(data);#}
-{#        },#}
-{#        singleFileUpload: true,#}
-{#                uploadParams: {},#}
-{#        modalClass: '.hqm-modal-audio',#}
-{#                mediaType: 'hquaudio_',#}
-{#                swfLocation: '{% static 'hqmedia/yui/uploader/uploader.swf' %}'#}
-{#        });#}
-{#        hqaudio_uploader.render();#}
-
             formdesigner.launch({
                 rootElement: $("#formdesigner"),
                 staticPrefix: '/static/formdesigner/',
-                iconUrl: '/static/hqwebapp/js/lib/jquery-ui/images/ui-icons_469bdd_256x240.png',
                 saveUrl: '{% url edit_form_attr domain app.id form.get_unique_id "xform" %}',
                 patchUrl: '{% url patch_xform domain app.id form.get_unique_id %}',
+                multimediaConfig: {
+                    uploadUrls: {
+                        image: '{% url hqmedia_uploader_image domain app.id %}',
+                        audio: '{% url hqmedia_uploader_audio domain app.id %}',
+                        video: '{% url hqmedia_uploader_video domain app.id %}'
+                    },
+                    swfURL: '{% static 'hqmedia/yui/assets/flashuploader.swf' %}',
+                    objectMap: {{ multimedia_object_map|JSON }},
+                    uploadControllerClass: HQMediaFileUploadController
+                },
                 saveType: 'patch',
                 form: {{ form.source|JSON }},
                 langs: {{ app.langs|JSON }},
@@ -92,33 +71,15 @@
     <link rel="stylesheet" href="{% static 'formdesigner/css/jquery.fancybox-1.3.4.css' %}" media="screen" />
     <link href="{% static 'formdesigner/css/main.css' %}" rel="stylesheet" media="screen, projection" />
 
-    <style>
-        #forms {
-            padding:  10px;
-        }
-        #forms {
-            position: relative;
-        }
-        #forms:after {
-          content: ".";
-          display: block;
-          height: 0;
-          clear: both;
-          visibility: hidden;
-        }
-        .hq-oldstyle #main_container {
-            padding: 0;
-        }
-        #formdesigner:after {
-            content: ".";
-            display: block;
-            height: 2px;
-            clear: both;
-            visibility: hidden;
-        }
-    </style>
 {% endblock %}
 
 {% block form-view %}
-    <div id="formdesigner"></div>
+    <div id="formdesigner" class="clearfix"></div>
+{% endblock %}
+
+{% block column_style %}hq-flush-content{% endblock %}
+
+{% block breadcrumbs %}
+    {{ block.super }}
+    <li><span class="divider">&gt;</span> <i class="icon-file-alt"></i> {{ form.name|trans:app.langs }}</li>
 {% endblock %}

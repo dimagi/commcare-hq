@@ -3,13 +3,10 @@ from collections import defaultdict
 from copy import deepcopy
 import json
 import uuid
-import datetime
 from casexml.apps.case import const
 from casexml.apps.phone.xml import get_case_xml
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.receiverwrapper.util import get_submit_url
 from corehq.apps.users.models import CommCareUser
-from dimagi.utils.parsing import json_format_datetime
 from django.contrib import messages
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -17,14 +14,10 @@ from django.shortcuts import render
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
 from corehq.apps.users.util import user_id_to_username
-from django.template.loader import render_to_string
-from receiver.util import spoof_submission
 
 @login_and_domain_required
 def open_cases_json(request, domain):
     delete_ids = json.loads(request.GET.get('delete_ids', 'false'))
-    delete_doc_types = json.loads(request.GET.get('delete_doc_types', 'true'))
-    username = request.GET.get("username", None)
 
     cases = CommCareCase.view('hqcase/open_cases', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True)
 

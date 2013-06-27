@@ -216,7 +216,7 @@ class RequisitionResponse(Requisition):
 
 class BulkRequisitionResponse(object):
     """
-    A bulk response to a set of requisitions, for example "approve" or "fill".
+    A bulk response to a set of requisitions, for example "approve" or "pack".
     """
     # todo: it's possible this class should support explicit transactions/amounts
     # on a per-product basis, but won't until someone demands it

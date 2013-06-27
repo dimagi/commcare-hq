@@ -1,5 +1,6 @@
 {% extends "hqwebapp/two_column.html" %}
 {% load hq_shared_tags %}
+{% load i18n %}
 
 {% block head %}
     {{ block.super }}
@@ -29,16 +30,28 @@
 {% block page-title %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% url default_admin_report %}"><strong>Admin Reports</strong></a> <span class="divider">&gt;</span>
+            <a href="{% url default_admin_report %}"><strong>{% trans "Admin Reports" %}</strong></a> <span class="divider">&gt;</span>
         </li>
         {% if not report_breadcrumbs %}
             <li class="active">
-                <div id="report-title"><a href="#">{% block report-title %}Administrative Report{% endblock %}</a></div>
+                <div id="report-title"><a href="#">{% block report-title %}{% trans "Administrative Report" %}{% endblock %}</a></div>
             </li>
         {% else %}
             {{ report_breadcrumbs|safe }}
         {% endif %}
     </ul>
+{% endblock %}
+
+{% block sidebar %}
+    {{ block.super }}
+    {% if report.is_exportable %}
+        <hr />
+        <ul class="nav">
+            <a href="#" class="btn" id="export-report-excel">
+                <i class="icon icon-share"></i> {% trans "Export to Excel" %}
+            </a>
+        </ul>
+    {% endif %}
 {% endblock %}
 
 {% block main_column %}

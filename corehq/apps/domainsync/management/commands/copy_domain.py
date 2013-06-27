@@ -1,3 +1,4 @@
+from multiprocessing import Process, Queue, Pool
 import sys
 from django.core.management.base import BaseCommand, CommandError
 from dimagi.utils.couch.database import get_db, iter_docs
@@ -13,6 +14,9 @@ DEFAULT_EXCLUDE_TYPES = [
     'WeeklyNotification',
     'DailyNotification'
 ]
+
+NUM_PROCESSES = 8
+
 
 class Command(BaseCommand):
     help = "Copies the contents of a domain to another database."
@@ -46,7 +50,6 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
-        
         if len(args) != 2:
             raise CommandError('Usage is copy_domain %s' % self.args)
 
@@ -57,7 +60,7 @@ class Command(BaseCommand):
         since = datetime.strptime(options['since'], '%Y-%m-%d').isoformat() if options['since'] else None
 
         if options['list_types']:
-            self.list_types(sourcedb, domain)
+            self.list_types(sourcedb, domain, since)
             sys.exit(0)
 
         if simulate:
@@ -75,15 +78,24 @@ class Command(BaseCommand):
             exclude_types = DEFAULT_EXCLUDE_TYPES + options['doc_types_exclude'].split(',')
             self.copy_docs(sourcedb, domain, startkey, endkey, simulate, exclude_types=exclude_types)
 
-    def list_types(self, sourcedb, domain):
+    def list_types(self, sourcedb, domain, since):
         doc_types = sourcedb.view("domain/docs", startkey=[domain],
                                   endkey=[domain, {}], reduce=True, group=True, group_level=2)
-        for row in doc_types:
-            print "{:<30}- {}".format(row['key'][1], row['value'])
+
+        doc_count = dict([(row['key'][1], row['value']) for row in doc_types])
+        if since:
+            for doc_type in sorted(doc_count.iterkeys()):
+                num_since = sourcedb.view("domain/docs", startkey=[domain, doc_type, since],
+                                          endkey=[domain, doc_type, {}], reduce=True).all()
+                num = num_since[0]['value'] if num_since else 0
+                print "{:<30}- {:<6} total {}".format(doc_type, num, doc_count[doc_type])
+        else:
+            for doc_type in sorted(doc_count.iterkeys()):
+                print "{:<30}- {}".format(doc_type, doc_count[doc_type])
 
     def copy_docs(self, sourcedb, domain, startkey, endkey, simulate, type=None, since=None, exclude_types=None):
         doc_ids = [result["id"] for result in sourcedb.view("domain/docs", startkey=startkey,
-                             endkey=endkey, reduce=False)]
+                                                            endkey=endkey, reduce=False)]
 
         total = len(doc_ids)
         count = 0
@@ -92,16 +104,41 @@ class Command(BaseCommand):
         msg += " of type: %s" % (type) if type else ""
         msg += " since: %s" % (since) if since else ""
         print msg
-        for doc in iter_docs(sourcedb, doc_ids):
+
+        queue = Queue(150)
+        for i in range(NUM_PROCESSES):
+            Worker(queue, sourcedb, targetdb, exclude_types, total, simulate).start()
+
+        for doc in iter_docs(sourcedb, doc_ids, chunksize=100):
+            count += 1
+            queue.put((doc, count))
+
+        # shutdown workers
+        for i in range(NUM_PROCESSES):
+            queue.put(None)
+
+
+class Worker(Process):
+
+    def __init__(self, queue, sourcedb, targetdb, exclude_types, total, simulate):
+        super(Worker, self).__init__()
+        self.queue = queue
+        self.sourcedb = sourcedb
+        self.targetdb = targetdb
+        self.exclude_types = exclude_types
+        self.total = total
+        self.simulate = simulate
+
+    def run(self):
+        for doc, count in iter(self.queue.get, None):
             try:
-                count += 1
-                if exclude_types and doc["doc_type"] in exclude_types:
+                if self.exclude_types and doc["doc_type"] in self.exclude_types:
                     print "     SKIPPED (excluded type: %s). Synced %s/%s docs (%s: %s)" % \
-                          (doc["doc_type"], count, total, doc["doc_type"], doc["_id"])
+                          (doc["doc_type"], count, self.total, doc["doc_type"], doc["_id"])
                 else:
-                    if not simulate:
-                        dt = DocumentTransform(doc, sourcedb)
-                        save(dt, targetdb)
-                    print "     Synced %s/%s docs (%s: %s)" % (count, total, doc["doc_type"], doc["_id"])
+                    if not self.simulate:
+                        dt = DocumentTransform(doc, self.sourcedb)
+                        save(dt, self.targetdb)
+                    print "     Synced %s/%s docs (%s: %s)" % (count, self.total, doc["doc_type"], doc["_id"])
             except Exception, e:
                 print "     Document %s failed! Error is: %s" % (doc["_id"], e)

@@ -11,7 +11,6 @@ from dimagi.utils.couch.database import get_db
 from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
-from django.db import transaction
 from django.http import Http404, HttpResponseRedirect, HttpResponse, HttpResponseForbidden
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -26,7 +25,7 @@ from corehq.apps.prescriptions.models import Prescription
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.forms import WebUserForm, UserForm, ProjectSettingsForm
+from corehq.apps.users.forms import WebUserForm, UserForm, ProjectSettingsForm, CommtrackUserForm
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser, \
     DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required
@@ -126,12 +125,15 @@ def web_users(request, domain, template="users/web_users.html"):
 @require_POST
 def remove_web_user(request, domain, couch_user_id):
     user = WebUser.get_by_user_id(couch_user_id, domain)
-    record = user.delete_domain_membership(domain, create_record=True)
-    user.save()
-    messages.success(request, 'You have successfully removed {username} from your domain. <a href="{url}" class="post-link">Undo</a>'.format(
-        username=user.username,
-        url=reverse('undo_remove_web_user', args=[domain, record.get_id])
-    ), extra_tags="html")
+    # if no user, very likely they just pressed delete twice in rapid succession so
+    # don't bother doing anything.
+    if user:
+        record = user.delete_domain_membership(domain, create_record=True)
+        user.save()
+        messages.success(request, 'You have successfully removed {username} from your domain. <a href="{url}" class="post-link">Undo</a>'.format(
+            username=user.username,
+            url=reverse('undo_remove_web_user', args=[domain, record.get_id])
+        ), extra_tags="html")
     return HttpResponseRedirect(reverse('web_users', args=[domain]))
 
 @require_can_edit_web_users
@@ -170,6 +172,13 @@ class UserInvitationView(InvitationView):
     def validate_invitation(self, invitation):
         assert invitation.domain == self.domain
 
+    def is_invited(self, invitation, couch_user):
+        return couch_user.is_member_of(invitation.domain)
+
+    @property
+    def inviting_entity(self):
+        return self.domain
+
     @property
     def success_msg(self):
         return "You have been added to the %s domain" % self.domain
@@ -183,16 +192,28 @@ class UserInvitationView(InvitationView):
         user.set_role(self.domain, invitation.role)
         user.save()
 
-@transaction.commit_on_success
 def accept_invitation(request, domain, invitation_id):
     return UserInvitationView()(request, invitation_id, domain=domain)
+
+@require_POST
+@require_can_edit_web_users
+def reinvite_web_user(request, domain):
+    invitation_id = request.POST['invite']
+    try:
+        invitation = DomainInvitation.get(invitation_id)
+        invitation.send_activation_email()
+        return json_response({'response': _("Invitation resent"), 'status': 'ok'})
+    except ResourceNotFound:
+        return json_response({'response': _("Error while attempting resend"), 'status': 'error'})
 
 @require_can_edit_web_users
 def invite_web_user(request, domain, template="users/invite_web_user.html"):
     role_choices = UserRole.role_choices(domain)
     if request.method == "POST":
+        current_users = [user.username for user in WebUser.by_domain(domain)]
+        pending_invites = [di.email for di in DomainInvitation.by_domain(domain)]
         form = AdminInvitesUserForm(request.POST,
-            excluded_emails=[user.username for user in WebUser.by_domain(domain)],
+            excluded_emails= current_users + pending_invites,
             role_choices=role_choices
         )
         if form.is_valid():
@@ -293,6 +314,19 @@ def account(request, domain, couch_user_id, template="users/account.html"):
                 'proj_settings_form': project_settings_form,
                 'override_global_tz': dm.override_global_tz
             })
+
+    # commtrack
+    if request.method == "POST" and request.POST['form_type'] == "commtrack":
+        commtrack_form = CommtrackUserForm(request.POST, domain=domain)
+        if commtrack_form.is_valid():
+            commtrack_form.save(couch_user)
+    else:
+        linked_loc = couch_user.dynamic_properties().get('commtrack_location') # FIXME update user model appropriately
+        commtrack_form = CommtrackUserForm(domain=domain, initial={'supply_point': linked_loc})
+    context.update({
+            'commtrack_enabled': Domain.get_by_name(domain).commtrack_enabled,
+            'commtrack_form': commtrack_form,
+    })
 
     # for basic tab
     context.update(_handle_user_form(request, domain, couch_user))

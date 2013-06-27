@@ -16,7 +16,7 @@
             {% format_sidebar %}
             {% endblock %}
         </div>
-        <div class="hq-{% if layout_flush_content %}flush-{% endif %}content span10">
+        <div class="hq-content span10 {% block column_style %}{% endblock %} ">
             {% block main_column %}{% endblock %}
         </div>
     </div>

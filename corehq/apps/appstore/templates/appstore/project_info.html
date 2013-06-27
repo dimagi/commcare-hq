@@ -149,7 +149,7 @@
         <!-- This version: -->
         {% if project.copies and request.couch_user.is_superuser %}
             <button class="btn btn-mini btn-info" data-open='false' id="downloads-btn">
-                {{ project.downloads }} {% trans "Downloads" %} <span id="downloads-btn-append">>></span>
+                {{ project.download_count }} {% trans "Downloads" %} <span id="downloads-btn-append">>></span>
             </button>
             <div style="margin-top: 1em;" class="well well-small hide" id="downloads-info">
                 <div class="alert">
@@ -176,9 +176,8 @@
                 {% endif %}
             </div>
         {% else %}
-            {{ project.downloads }}
+            {{ project.copied_from.total_downloads }}
         {% endif %}
-{#        <!-- All versions: -->{{ project.downloads }}#}
     </dd>
     {% if project.multimedia_included and project.has_media %}
         <dd>
@@ -223,7 +222,7 @@
                         <dt>{% trans 'Attribution notes' %}</dt>
                         <dd>{{ app.attribution_notes }}</dd>
                     {% endif %}
-                    <dd><a class="btn" style="margin: .4em 0" href="{% url exchange_app_summary project app.id %}">{% trans "Application Summary" %}</a></dd>
+{#                    <dd><a class="btn" style="margin: .4em 0" href="{% url exchange_app_summary project app.id %}">{% trans "Application Summary" %}</a></dd>#}
                 </dl>
             </div>
         {% endfor %}

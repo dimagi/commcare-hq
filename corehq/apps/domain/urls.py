@@ -1,6 +1,5 @@
 import sys
 from django.conf.urls.defaults import *
-from django.views.generic.simple import direct_to_template
 from django.contrib.auth.views import password_reset
 from django.shortcuts import render_to_response
 from django.template import RequestContext
@@ -57,7 +56,7 @@ urlpatterns =\
 
         url(r'^accounts/password_reset_email/$', exception_safe_password_reset, extend(auth_pages_path('password_reset_form.html'),
                                                                                        { 'password_reset_form': ConfidentialPasswordResetForm,
-                                                                                         'from_email':settings.HQ_NOTIFICATIONS_EMAIL}),
+                                                                                         'from_email':settings.DEFAULT_FROM_EMAIL}),
                                                                                 name='password_reset_email'),
         url(r'^accounts/password_reset_email/done/$', 'password_reset_done', auth_pages_path('password_reset_done.html') ),
 
@@ -77,7 +76,8 @@ domain_settings = patterns('corehq.apps.domain.views',
                            url(r'^snapshots/$', 'snapshot_settings', name='domain_snapshot_settings'),
                            url(r'^snapshots/new/$', 'create_snapshot', name='domain_create_snapshot'),
                            url(r'^multimedia/$', 'manage_multimedia', name='domain_manage_multimedia'),
-                           url(r'^commtrack/$', 'commtrack_settings', name='domain_commtrack_settings'),
+                           url(r'^commtrack/general/$', 'commtrack_settings', name='domain_commtrack_settings'),
+                           url(r'^commtrack/advanced/$', 'commtrack_settings_advanced', name='commtrack_settings_advanced'),
                            url(r'^organization/$', 'org_settings', name='domain_org_settings'),
                            url(r'^organization/request/$', 'org_request', name='domain_org_request'),
                            url(r'^internal/$', 'internal_settings', name='domain_internal_settings'),

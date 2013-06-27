@@ -15,7 +15,7 @@ for path in sys.argv[1:]:
 jobs = []
 
 for requirement in requirements:
-    jobs.append(subprocess.Popen(['pip', 'install', '--no-install', requirement]))
+    jobs.append(subprocess.Popen(['pip', 'install', '--use-mirrors', '--no-install', requirement]))
 
 for job in jobs:
     job.wait()

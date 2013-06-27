@@ -78,6 +78,7 @@ case_special_types = {
 
 domain_special_types = {
     "name": type_exact_match_string("name", dual=True),
+    "deployment.country": {"type": "string", "index": "not_analyzed"},
     "author": {"type": "string", "index": "not_analyzed"},
     "title": {"type": "string", "index": "not_analyzed"},
     "deployment.description": {"type": "string", "index": "not_analyzed"},
@@ -100,6 +101,10 @@ def set_properties(schema_class, custom_types=default_special_types, init_dict=N
         elif complex_type_mapper.has_key(prop_type.__class__):
             func = complex_type_mapper[prop_type.__class__]
             props_dict[prop_name] = func(prop_type._schema, nested=False, dynamic=False)
+
+    if not props_dict.get('doc_type'):
+        props_dict["doc_type"] = {"type": "string", "index": "not_analyzed"}
+
     return props_dict
 
 

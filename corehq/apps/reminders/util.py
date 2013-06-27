@@ -50,7 +50,14 @@ def get_recipient_name(recipient, include_desc=True):
     from casexml.apps.case.models import CommCareCase
     from .models import SurveySample
     
-    if isinstance(recipient, CouchUser):
+    if recipient == None:
+        return "(no recipient)"
+    elif isinstance(recipient, list):
+        if len(recipient) > 0:
+            return ",".join([get_recipient_name(r, include_desc) for r in recipient])
+        else:
+            return "(no recipient)"
+    elif isinstance(recipient, CouchUser):
         name = recipient.raw_username
         desc = "User"
     elif isinstance(recipient, CommCareCase):

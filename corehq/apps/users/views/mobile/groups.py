@@ -1,3 +1,4 @@
+from couchdbkit.exceptions import ResourceNotFound
 from django.http import Http404
 from django.shortcuts import render
 
@@ -5,7 +6,6 @@ from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.users.views import _users_context, require_can_edit_commcare_users
 from dimagi.utils.excel import alphanumeric_sort_key
-from dimagi.utils.web import json_response, get_url_base, get_ip
 
 def _get_sorted_groups(domain):
     return sorted(
@@ -27,8 +27,9 @@ def all_groups(request, domain, template="groups/all_groups.html"):
 def group_members(request, domain, group_id, template="groups/group_members.html"):
     context = _users_context(request, domain)
     all_groups = _get_sorted_groups(domain)
-    group = Group.get(group_id)
-    if group is None:
+    try:
+        group = Group.get(group_id)
+    except ResourceNotFound:
         raise Http404("Group %s does not exist" % group_id)
     member_ids = group.get_user_ids()
     members = CouchUser.view("_all_docs", keys=member_ids, include_docs=True).all()

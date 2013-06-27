@@ -23,14 +23,14 @@ class RequisitionState(object):
     Intermediate representation of a requisition
     """
 
-    def __init__(self, domain, id, user_id, username, product_stock_case_id,
+    def __init__(self, domain, id, user_id, username, product_stock_case,
                  create=False, owner_id=None, close=False, **custom_fields):
         self.domain = domain
         self.id = id
         self.user_id = user_id
         self.owner_id = owner_id
         self.username = username
-        self.product_stock_case_id = product_stock_case_id
+        self.product_stock_case = product_stock_case
         self.create = create
         self.close = close
         self.custom_fields = custom_fields or {}
@@ -39,6 +39,12 @@ class RequisitionState(object):
         extras = {}
         if self.owner_id:
             extras['owner_id'] = self.owner_id
+        if self.create:
+            extras['case_name'] = self.product_stock_case.name
+            extras['index'] = {
+                const.PARENT_CASE_REF: (const.SUPPLY_POINT_PRODUCT_CASE_TYPE,
+                                        self.product_stock_case._id),
+            }
         caseblock = CaseBlock(
             case_id=self.id,
             create=self.create,
@@ -46,10 +52,6 @@ class RequisitionState(object):
             user_id=self.user_id,
             case_type=const.REQUISITION_CASE_TYPE,
             update = copy(self.custom_fields),
-            index={
-                const.PARENT_CASE_REF: (const.SUPPLY_POINT_PRODUCT_CASE_TYPE,
-                                        self.product_stock_case_id),
-            },
             close=self.close,
             **extras
         )
@@ -76,11 +78,11 @@ class RequisitionState(object):
                     'approved_by': user_id,
                     'approved_on': datetime.utcnow(),
                 })
-            elif transaction.action_config.action_type == RequisitionActions.FILL:
+            elif transaction.action_config.action_type == RequisitionActions.PACK:
                 ret.update({
-                    'amount_filled': transaction.value,
-                    'filled_by': user_id,
-                    'filled_on': datetime.utcnow(),
+                    'amount_packed': transaction.value,
+                    'packed_by': user_id,
+                    'packed_on': datetime.utcnow(),
                 })
             elif transaction.action_config.action_type == RequisitionActions.RECEIPTS:
                 ret.update({
@@ -116,7 +118,7 @@ class RequisitionState(object):
             id=_get_case_id(transactions),
             user_id=user_id,
             username=username,
-            product_stock_case_id=product_stock_case._id,
+            product_stock_case=product_stock_case,
             **kwargs
         )
 
@@ -142,14 +144,17 @@ def get_notification_recipients(next_action, requisition):
 
 def get_notification_message(next_action, requisitions):
     templates = {
-        RequisitionActions.APPROVAL: _('{name} has requested the following supplies: {summary}. please respond "{keyword}" to approve.'),
-        RequisitionActions.FILL: _('{name} should be supplied with the following supplies: {summary}. please respond "{keyword}" to confirm the order.'),
+        RequisitionActions.APPROVAL: _('{name} has requested the following supplies: {summary}. please respond "{keyword} {loc}" to approve.'),
+        RequisitionActions.PACK: _('{name} should be supplied with the following supplies: {summary}. please respond "{keyword} {loc}" to confirm the order.'),
         RequisitionActions.RECEIPTS: _('your order of {summary} is ready to be picked up. please respond with a "{keyword}" message to report receipts.'),
     }
 
+    # NOTE: it'd be weird if this was None but for now we won't fail hard
+    guessed_location = requisitions[0].get_location()
     summary = ', '.join(r.sms_format() for r in requisitions)
     return templates[next_action.action_type].format(
         name=requisitions[0].get_requester().full_name,
         summary=summary,
+        loc=guessed_location.site_code if guessed_location else "<loc code>",
         keyword=next_action.keyword,
     )

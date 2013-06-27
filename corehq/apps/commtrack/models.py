@@ -1,4 +1,7 @@
+from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.ext.django.schema import *
+from django.utils.translation import ugettext as _
+
 from corehq.apps.commtrack import const
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.loosechange import map_reduce
@@ -9,13 +12,14 @@ from casexml.apps.case.models import CommCareCase
 from copy import copy
 from django.dispatch import receiver
 from corehq.apps.locations.signals import location_created
+from corehq.apps.locations.models import Location
 from corehq.apps.commtrack.const import RequisitionActions, RequisitionStatus
+
+from dimagi.utils.decorators.memoized import memoized
 
 # these are the allowable stock transaction types, listed in the
 # default ordering in which they are processed. processing order
 # may be customized per domain
-from dimagi.utils.decorators.memoized import memoized
-
 ACTION_TYPES = [
     # indicates the product has been stocked out for N days
     # prior to the reporting date, including today ('0' does
@@ -39,12 +43,12 @@ REQUISITION_ACTION_TYPES = [
     # request a product
     RequisitionActions.REQUEST,
 
-    # approve a requisition (it is allowed to be filled)
+    # approve a requisition (it is allowed to be packed)
     # using this is configurable and optional
     RequisitionActions.APPROVAL,
 
-    # fill a requisition (the order is ready)
-    RequisitionActions.FILL,
+    # pack a requisition (the order is ready)
+    RequisitionActions.PACK,
 
     # receive the sock (closes the requisition)
     # NOTE: it's not totally clear if this is necessary or
@@ -145,7 +149,21 @@ class SupplyPointType(DocumentSchema):
     name = StringProperty()
     categories = StringListProperty()
 
+
+class ConsumptionConfig(DocumentSchema):
+    min_transactions = IntegerProperty(default=2)
+    min_window = IntegerProperty(default=10)
+    optimal_window = IntegerProperty()
+
+
+class StockLevelsConfig(DocumentSchema):
+    emergency_level = DecimalProperty(default=0.5)  # in months
+    understock_threshold = DecimalProperty(default=1.5)  # in months
+    overstock_threshold = DecimalProperty(default=3)  # in months
+
+
 class CommtrackConfig(Document):
+
     domain = StringProperty()
 
     # supported stock actions for this commtrack domain
@@ -162,9 +180,12 @@ class CommtrackConfig(Document):
 
     requisition_config = SchemaProperty(CommtrackRequisitionConfig)
 
-    consumption_rate_window = IntegerProperty() # days
-    consumption_rate_min_timespan = IntegerProperty() # days
-    consumption_rate_min_datapoints = IntegerProperty()
+    # configured on Advanced Settings page
+    use_auto_emergency_levels = BooleanProperty(default=False)
+
+    use_auto_consumption = BooleanProperty(default=False)
+    consumption_config = SchemaProperty(ConsumptionConfig)
+    stock_levels_config = SchemaProperty(StockLevelsConfig)
 
     @classmethod
     def for_domain(cls, domain):
@@ -315,6 +336,13 @@ def _get_single_index(case, identifier, type, wrapper=None):
         return wrapper.get(ref_id) if wrapper else ref_id
     return None
 
+def get_case_wrapper(data):
+    return {
+        const.SUPPLY_POINT_CASE_TYPE: SupplyPointCase,
+        const.SUPPLY_POINT_PRODUCT_CASE_TYPE: SupplyPointProductCase,
+        const.REQUISITION_CASE_TYPE: RequisitionCase
+    }.get(data.get('type'))
+
 
 class SupplyPointCase(CommCareCase):
     """
@@ -322,20 +350,105 @@ class SupplyPointCase(CommCareCase):
     specific to supply points.
     """
 
+    # TODO move location_ property from CommCareCase
+
+    class Meta: 
+        # This is necessary otherwise syncdb will confuse this app with casexml
+        app_label = "commtrack"
+
     def open_requisitions(self):
         return RequisitionCase.open_for_location(self.domain, self.location_[-1])
 
-    class Meta:
-        app_label = "commtrack" # This is necessary otherwise syncdb will confuse this app with casexml
+    @property
+    @memoized
+    def location(self):
+        if hasattr(self, 'location_id'):
+            try:
+                return Location.get(self.location_id)
+            except ResourceNotFound:
+                pass
+        return None
 
+    def to_full_dict(self):
+        data = super(SupplyPointCase, self).to_full_dict()
+        data.update({
+            'location_type': None,
+            'location_site_code': None,
+            'location_parent_name': None,
+        })
+        if self.location:
+            data['location_type'] = self.location.location_type
+            data['location_site_code'] = self.location.site_code
+            if self.location.parent:
+                data['location_parent_name'] = self.location.parent.name
+
+        # todo
+        #data['last_reported'] = None
+
+        return data
+
+    @classmethod
+    def get_display_config(cls):
+        return [
+            {
+                "layout": [
+                    [
+                        {
+                            "expr": "name",
+                            "name": _("Name"),
+                        },
+                        {
+                            "expr": "location_type",
+                            "name": _("Type"),
+                        },
+                        {
+                            "expr": "location_site_code",
+                            "name": _("Code"),
+                        },
+                        #{
+                            #"expr": "last_reported",
+                            #"name": _("Last Reported"),
+                        #},
+                    ],
+                    [
+                        {
+                            "expr": "location_parent_name",
+                            "name": _("Location"),
+                        },
+                        {
+                            "expr": "owner_id",
+                            "name": _("Group"),
+                            "format": '<span data-field="owner_id">{0}</span>',
+                        },
+                    ],
+                ],
+            }
+        ]
+
+DAYS_PER_MONTH = 365.2425 / 12.
+
+# TODO make settings
+
+UNDERSTOCK_THRESHOLD = 0.5 # months
+OVERSTOCK_THRESHOLD = 2. # months
+
+DEFAULT_CONSUMPTION = 10. # per month
 
 class SupplyPointProductCase(CommCareCase):
     """
     A wrapper around CommCareCases to get more built in functionality
     specific to supply point products.
+
+    See
+    https://confluence.dimagi.com/display/ctinternal/Data+Model+Documentation
     """
+    class Meta: 
+        # This is necessary otherwise syncdb will confuse this app with casexml
+        app_label = "commtrack"
+
     # can flesh this out more as needed
     product = StringProperty() # would be nice if this was product_id but is grandfathered in
+    current_stock = StringProperty()
 
     @memoized
     def get_product(self):
@@ -349,14 +462,186 @@ class SupplyPointProductCase(CommCareCase):
     def get_supply_point_case_id(self):
         return _get_single_index(self, const.PARENT_CASE_REF, const.SUPPLY_POINT_CASE_TYPE)
 
-    class Meta:
-        app_label = "commtrack" # This is necessary otherwise syncdb will confuse this app with casexml
+    @property
+    def current_stock_level(self):
+        return int(self.current_stock) if self.current_stock is not None else None
+
+    @property
+    @memoized
+    def monthly_consumption(self):
+        daily_rate = self.computed_.get('commtrack', {}).get('consumption_rate')
+        if daily_rate is None:
+            daily_rate = self.default_consumption / DAYS_PER_MONTH
+        if daily_rate is None:
+            return None
+
+        return daily_rate * DAYS_PER_MONTH
+
+    @property
+    def default_consumption(self):
+        # TODO does this belong in this class? in the future this will be configurable
+        # based on (product, supply point type)
+        return DEFAULT_CONSUMPTION
+
+    @staticmethod
+    def default_thresholds():
+        return {
+            'low': UNDERSTOCK_THRESHOLD,
+            'high': OVERSTOCK_THRESHOLD,
+        }
+
+    @property
+    def stock_thresholds(self):
+        # TODO does this belong in this class? in the future will these thresholds vary
+        # by supply point type? by product?
+        return SupplyPointProductCase.default_thresholds()
+
+    @staticmethod
+    def months_of_stock_remaining(stock, consumption):
+        try:
+            return stock / consumption
+        except (TypeError, ZeroDivisionError):
+            return None
+
+    @property
+    def months_until_stockout(self):
+        return SupplyPointProductCase.months_of_stock_remaining(self.current_stock_level, self.monthly_consumption)
+
+    @property
+    def stockout_duration_in_months(self):
+        if self.stocked_out_since:
+            today = datetime.today().date()
+            return (today - self.stocked_out_since).days / DAYS_PER_MONTH
+        else:
+            return None
+
+    @staticmethod
+    def stock_category(stock, consumption, consumable_stock=None, thresholds=None):
+        # "consumable stock" if the amount of stock for which we know the consumption rate
+        if consumable_stock is None:
+            consumable_stock = stock
+        if thresholds is None:
+            thresholds = SupplyPointProductCase.default_thresholds()
+
+        if stock is None:
+            return 'nodata'
+        elif stock == 0:
+            return 'stockout'
+        elif consumption is None:
+            return 'nodata'
+        elif consumption == 0:
+            return 'overstock'
+
+        months_left = SupplyPointProductCase.months_of_stock_remaining(consumable_stock, consumption)
+        if months_left is None:
+            return 'nodata'
+        elif months_left < thresholds['low']:
+            return 'understock'
+        elif months_left > thresholds['high']:
+            return 'overstock'
+        else:
+            return 'adequate'
+
+    @property
+    @memoized
+    def current_stock_category(self):
+        return SupplyPointProductCase.stock_category(
+            self.current_stock_level,
+            self.monthly_consumption,
+            thresholds=self.stock_thresholds
+        )
+
+    def to_full_dict(self):
+        def roundif(k, digits):
+            return round(k, digits) if k is not None else None
+
+        data = super(SupplyPointProductCase, self).to_full_dict()
+        del data['stocked_out_since']
+        data['consumption_rate'] = self.monthly_consumption
+
+        data['supply_point_name'] = self.get_supply_point_case()['name']
+        data['product_name'] = self.get_product()['name']
+        
+        #data['emergency_level'] = None
+        #data['max_level'] = None
+
+        # TODO shouldn't this rounding happen in the presentation layer?
+        data['months_until_stockout'] = roundif(self.months_until_stockout, 1)
+        data['stockout_duration_in_months'] = roundif(self.stockout_duration_in_months, 1)
+
+        return data
+
+    @classmethod
+    def get_display_config(cls):
+        return [
+            {
+                "layout": [
+                    [
+                        {
+                            "name": _("Supply Point"),
+                            "expr": "supply_point_name"
+                        },
+                        {
+                            "name": _("Product"),
+                            "expr": "product_name"
+                        },
+                        {
+                            "name": _("Last reported"),
+                            "expr": "last_reported",
+                            "parse_date": True
+                        }
+                    ],
+                    [
+                        {
+                            "name": _("Current stock"),
+                            "expr": "current_stock"
+                        },
+                        {
+                            "name": _("Monthly consumption"),
+                            "expr": "consumption_rate"
+                        },
+                        {
+                            "name": _("Months until stockout"),
+                            "expr": "months_until_stockout"
+                        },
+                        {
+                            "name": _("Stockout duration in months"),
+                            "expr": "stockout_duration_in_months"
+                        }
+                        #{
+                            #"name": _("Emergency level"),
+                            #"expr": "emergency_level"
+                        #},
+                        #{
+                            #"name": _("Max level"),
+                            #"expr": "max_level"
+                        #}
+                    ],
+                ],
+            }
+        ]
+
+    def get_json(self):
+        data = super(SupplyPointProductCase, self).get_json()
+        data['properties'].update({
+            'product': self.product,
+            'current_stock': self.current_stock_level,
+            'consumption': self.monthly_consumption,
+            'months_remaining': self.months_until_stockout,
+            'stock_category': self.current_stock_category,
+        })
+        return data
+
 
 class RequisitionCase(CommCareCase):
     """
     A wrapper around CommCareCases to get more built in functionality
     specific to requisitions.
     """
+    class Meta: 
+        # This is necessary otherwise syncdb will confuse this app with casexml
+        app_label = "commtrack"
+
     # supply_point = StringProperty() # todo, if desired
     requisition_status = StringProperty()
 
@@ -367,12 +652,12 @@ class RequisitionCase(CommCareCase):
     # the status can change, but once set - this one will not
     requested_on = DateTimeProperty()
     approved_on = DateTimeProperty()
-    filled_on = DateTimeProperty()
+    packed_on = DateTimeProperty()
     received_on = DateTimeProperty()
 
     requested_by = StringProperty()
     approved_by = StringProperty()
-    filled_by = StringProperty()
+    packed_by = StringProperty()
     received_by = StringProperty()
 
     # NOTE: should these be strings or ints or decimals?
@@ -381,8 +666,13 @@ class RequisitionCase(CommCareCase):
     # approve partial resupplies in the current system, but is
     # left in the models for possible use down the road
     amount_approved = StringProperty()
-    amount_filled = StringProperty()
+    amount_packed = StringProperty()
     amount_received = StringProperty()
+
+    @memoized
+    def get_location(self):
+        if self.location_:
+            return Location.get(self.location_[-1])
 
     @memoized
     def get_supply_point_case(self):
@@ -415,7 +705,7 @@ class RequisitionCase(CommCareCase):
         property_map = {
             RequisitionStatus.REQUESTED: 'amount_requested',
             RequisitionStatus.APPROVED: 'amount_approved',
-            RequisitionStatus.FILLED: 'amount_filled',
+            RequisitionStatus.PACKED: 'amount_packed',
         }
         return getattr(self, property_map.get(self.requisition_status, 'amount_requested'))
 
@@ -456,8 +746,82 @@ class RequisitionCase(CommCareCase):
         )
         return [r['id'] for r in results]
 
-    class Meta:
-        app_label = "commtrack" # This is necessary otherwise syncdb will confuse this app with casexml
+    def to_full_dict(self):
+        data = super(RequisitionCase, self).to_full_dict()
+        data['supply_point_name'] = self.get_supply_point_case()['name']
+        data['product_name'] = self.get_product_case()['name']
+        data['balance'] = self.get_default_value()
+        return data
+
+    @classmethod
+    def get_display_config(cls):
+        return [
+            {
+                "layout": [
+                    [
+                        {
+                            "name": _("Supply Point"),
+                            "expr": "supply_point_name"
+                        }
+                    ],
+                    [
+                        {
+                            "name": _("Product"),
+                            "expr": "product_name"
+                        }
+                    ],
+                    [
+                        {
+                            "name": _("Status"),
+                            "expr": "requisition_status"
+                        }
+                    ],
+                    [
+                        {
+                            "name": _("Balance"),
+                            "expr": "balance"
+                        }
+                    ]
+                ]
+            },
+            {
+                "layout": [
+                    [ 
+                        {
+                            "name": _("Amount Requested"),
+                            "expr": "amount_requested",
+                        },
+                        {
+                            "name": _("Requested On"),
+                            "expr": "requested_on",
+                            "parse_date": True
+                        }
+                    ],
+                    [
+                        {
+                            "name": _("Amount Approved"),
+                            "expr": "amount_approved",
+                        },
+                        {
+                            "name": _("Approved On"),
+                            "expr": "approved_on",
+                            "parse_date": True
+                        }
+                    ],
+                    [
+                        {
+                            "name": _("Amount Received"),
+                            "expr": "amount_Received"
+                        },
+                        {
+                            "name": _("Received On"),
+                            "expr": "received_on",
+                            "parse_date": True
+                        }
+                    ]
+                ]
+            }
+        ]
 
 
 class StockReport(object):

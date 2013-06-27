@@ -366,11 +366,11 @@ var DetailScreenConfig = (function () {
                     }
                 }
             }
-            this.suggestedColumns.sortBy(function () {
+            this.suggestedColumns = _(this.suggestedColumns).sortBy(function (column) {
                 return [
-                    this.model.val() === 'referral' ? 1 : 2,
-                    /\//.test(this.field.val()) ? 2 : 1,
-                    this.field.val()
+                    column.model.val() === 'referral' ? 1 : 2,
+                    /\//.test(column.field.val()) ? 2 : 1,
+                    column.field.val()
                 ];
             });
 

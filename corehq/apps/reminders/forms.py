@@ -12,13 +12,15 @@ RECIPIENT_USER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE, RECIPIENT_OWNER,\
 MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE, EVENT_AS_SCHEDULE, EVENT_AS_OFFSET,\
 SurveySample, CaseReminderHandler, FIRE_TIME_DEFAULT, FIRE_TIME_CASE_PROPERTY,\
 METHOD_SMS, METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY,\
-CASE_CRITERIA, QUESTION_RETRY_CHOICES
+CASE_CRITERIA, QUESTION_RETRY_CHOICES, FORM_TYPE_ONE_BY_ONE,\
+FORM_TYPE_ALL_AT_ONCE, SurveyKeyword, RECIPIENT_PARENT_CASE, RECIPIENT_SUBCASE
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
 from dimagi.utils.excel import WorkbookJSONReader
 from openpyxl.shared.exc import InvalidFileException
 from django.utils.translation import ugettext as _
+from corehq.apps.app_manager.models import Form as CCHQForm
 
 YES_OR_NO = (
     ("Y","Yes"),
@@ -38,6 +40,8 @@ RECIPIENT_CHOICES = (
     (RECIPIENT_OWNER, "The case's owner(s)"),
     (RECIPIENT_USER, "The case's last submitting user"),
     (RECIPIENT_CASE, "The case"),
+    (RECIPIENT_PARENT_CASE, "The case's parent case"),
+    (RECIPIENT_SUBCASE, "The case's child case(s)"),
     (RECIPIENT_SURVEY_SAMPLE, "Survey Sample"),
 )
 
@@ -66,6 +70,11 @@ ITERATION_CHOICES = (
 EVENT_CHOICES = (
     (EVENT_AS_OFFSET, "Offset-based"),
     (EVENT_AS_SCHEDULE, "Schedule-based")
+)
+
+FORM_TYPE_CHOICES = (
+    (FORM_TYPE_ONE_BY_ONE, "One sms per question"),
+    (FORM_TYPE_ALL_AT_ONCE, "All questions in one sms"),
 )
 
 def validate_date(value):
@@ -188,6 +197,9 @@ class ComplexCaseReminderForm(Form):
     sample_id = CharField(required=False)
     enable_advanced_time_choices = BooleanField(required=False)
     max_question_retries = ChoiceField(choices=((n,n) for n in QUESTION_RETRY_CHOICES))
+    recipient_case_match_property = CharField(required=False)
+    recipient_case_match_type = ChoiceField(choices=MATCH_TYPE_DISPLAY_CHOICES,required=False)
+    recipient_case_match_value = CharField(required=False)
     
     def __init__(self, *args, **kwargs):
         super(ComplexCaseReminderForm, self).__init__(*args, **kwargs)
@@ -453,6 +465,34 @@ class ComplexCaseReminderForm(Form):
         
         return events
     
+    def clean_recipient_case_match_property(self):
+        if self.cleaned_data.get("recipient") == RECIPIENT_SUBCASE:
+            value = self.cleaned_data.get("recipient_case_match_property")
+            if value is not None:
+                value = value.strip()
+            if value is None or value == "":
+                raise ValidationError(_("Please enter a case property name."))
+            return value
+        else:
+            return None
+    
+    def clean_recipient_case_match_type(self):
+        if self.cleaned_data.get("recipient") == RECIPIENT_SUBCASE:
+            return self.cleaned_data.get("recipient_case_match_type")
+        else:
+            return None
+    
+    def clean_recipient_case_match_value(self):
+        if self.cleaned_data.get("recipient") == RECIPIENT_SUBCASE and self.cleaned_data.get("recipient_case_match_type") in [MATCH_EXACT, MATCH_REGEX]:
+            value = self.cleaned_data.get("recipient_case_match_value")
+            if value is not None:
+                value = value.strip()
+            if value is None or value == "":
+                raise ValidationError(_("Please enter a value to match."))
+            return value
+        else:
+            return None
+    
     def clean(self):
         cleaned_data = super(ComplexCaseReminderForm, self).clean()
         
@@ -700,4 +740,84 @@ class ListField(Field):
 class RemindersInErrorForm(Form):
     selected_reminders = ListField(required=False)
 
+class KeywordForm(Form):
+    _cchq_domain = None
+    _sk_id = None
+    keyword = CharField()
+    form_unique_id = CharField(required=False)
+    form_type = ChoiceField(choices=FORM_TYPE_CHOICES)
+    use_custom_delimiter = BooleanField(required=False)
+    delimiter = CharField(required=False)
+    use_named_args = BooleanField(required=False)
+    use_named_args_separator = BooleanField(required=False)
+    named_args = RecordListField(input_name="named_args")
+    named_args_separator = CharField(required=False)
+    
+    def clean_keyword(self):
+        value = self.cleaned_data.get("keyword")
+        if value is not None:
+            value = value.strip().upper()
+        if value is None or value == "":
+            raise ValidationError(_("This field is required."))
+        if len(value.split()) > 1:
+            raise ValidationError(_("Keyword should be one word."))
+        duplicate = SurveyKeyword.get_keyword(self._cchq_domain, value)
+        if duplicate is not None and duplicate._id != self._sk_id:
+            raise ValidationError(_("Keyword already exists."))
+        return value
+    
+    def clean_form_unique_id(self):
+        value = self.cleaned_data.get("form_unique_id")
+        if value is None:
+            raise ValidationError(_("Please create a form first, and then add a keyword for it."))
+        try:
+            form = CCHQForm.get_form(value)
+            app = form.get_app()
+            assert app.domain == self._cchq_domain
+        except Exception:
+            raise ValidationError(_("Invalid form chosen."))
+        return value
+    
+    def clean_delimiter(self):
+        value = self.cleaned_data.get("delimiter", None)
+        if self.cleaned_data.get("form_type") == FORM_TYPE_ALL_AT_ONCE and self.cleaned_data.get("use_custom_delimiter", False):
+            if value is not None:
+                value = value.strip()
+            if value is None or value == "":
+                raise ValidationError(_("This field is required."))
+            return value
+        else:
+            return None
+    
+    def clean_named_args(self):
+        if self.cleaned_data.get("form_type") == FORM_TYPE_ALL_AT_ONCE and self.cleaned_data.get("use_named_args", False):
+            value = self.cleaned_data.get("named_args")
+            data_dict = {}
+            for d in value:
+                name = d["name"].strip().upper()
+                xpath = d["xpath"].strip()
+                if name == "" or xpath == "":
+                    raise ValidationError(_("Name and xpath are both required fields."))
+                for k, v in data_dict.items():
+                    if k.startswith(name) or name.startswith(k):
+                        raise ValidationError(_("Cannot have two names overlap: ") + "(%s, %s)" % (k, name))
+                    if v == xpath:
+                        raise ValidationError(_("Cannot reference the same xpath twice: ") + xpath)
+                data_dict[name] = xpath
+            return data_dict
+        else:
+            return {}
+    
+    def clean_named_args_separator(self):
+        value = self.cleaned_data.get("named_args_separator", None)
+        if self.cleaned_data.get("form_type") == FORM_TYPE_ALL_AT_ONCE and self.cleaned_data.get("use_named_args", False) and self.cleaned_data.get("use_named_args_separator", False):
+            if value is not None:
+                value = value.strip()
+            if value is None or value == "":
+                raise ValidationError(_("This field is required."))
+            if value == self.cleaned_data.get("delimiter"):
+                raise ValidationError(_("Delimiter and joining character cannot be the same."))
+            return value
+        else:
+            return None
 

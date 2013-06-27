@@ -1,6 +1,6 @@
 import logging
-from couchdbkit import Database
-from django.core.management.base import LabelCommand
+from couchdbkit import Database, BulkSaveError, ResourceConflict
+from django.core.management.base import LabelCommand, CommandError
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
@@ -14,7 +14,19 @@ class Command(LabelCommand):
     args = '<sourcedb> <group_id>'
     label = ""
 
+    def lenient_bulk_save(self, cls, docs):
+        try:
+            cls.get_db().bulk_save(docs)
+        except BulkSaveError as e:
+            other = [error for error in e.errors if error['error'] != 'conflict']
+            if other:
+                logging.exception(other)
+                raise
+
     def handle(self, *args, **options):
+        if len(args) != 2:
+            raise CommandError('Usage is copy_group_data %s' % self.args)
+
         sourcedb = Database(args[0])
         group_id = args[1]
 
@@ -40,7 +52,8 @@ class Command(LabelCommand):
             reduce=False,
             include_docs=True
         ).all()
-        CommCareCase.get_db().bulk_save(cases)
+        self.lenient_bulk_save(CommCareCase, cases)
+
 
         print 'compiling xform_ids'
         xform_ids = set()
@@ -62,7 +75,7 @@ class Command(LabelCommand):
                 include_docs=True,
                 wrapper=form_wrapper,
             ).all()
-            XFormInstance.get_db().bulk_save(xforms)
+            self.lenient_bulk_save(XFormInstance, xforms)
 
             for xform in xforms:
                 user_id = xform.metadata.userID
@@ -85,5 +98,4 @@ class Command(LabelCommand):
         ).all()
         for user in users:
             # if we use bulk save, django user doesn't get sync'd
-            if user:
-                user.save()
+            user.save(force_update=True)

@@ -62,7 +62,7 @@ report_names = (
 
     'Export Submissions to Excel',
     'Export Cases, Referrals, & Users',
-    'De-Identified Export',
+    'De-Identified Export', # this requires at least one saved export to be created
 
     'Application Status',
     'Raw Forms, Errors & Duplicates',

@@ -5,6 +5,8 @@ import logging
 from collections import defaultdict
 from StringIO import StringIO
 import os
+from django.views.decorators.http import require_POST
+from pytz import timezone
 
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
@@ -15,6 +17,8 @@ from django.contrib import messages
 from django.conf import settings
 from restkit import Resource
 from django.core import cache
+from corehq.apps.app_manager.models import ApplicationBase
+from corehq.apps.app_manager.util import get_settings_values
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
@@ -25,7 +29,7 @@ from corehq.apps.sms.models import SMSLog
 from corehq.apps.users.models import  CommCareUser, WebUser
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
-from corehq.apps.domain.decorators import  require_superuser
+from corehq.apps.domain.decorators import  require_superuser, login_or_digest
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from dimagi.utils.web import json_response
@@ -34,7 +38,10 @@ from couchexport.shortcuts import export_response
 from couchexport.models import Format
 from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.decorators.view import get_file
-
+from django.utils import html
+from dimagi.utils.timezones import utils as tz_utils
+from django.utils.translation import ugettext as _
+from django.core import management
 
 @require_superuser
 def default(request):
@@ -360,6 +367,50 @@ def submissions_errors(request, template="hqadmin/submissions_errors_report.html
     return render(request, template, context)
 
 @require_superuser
+def mobile_user_reports(request):
+    template = "hqadmin/mobile_user_reports.html"
+    domains = Domain.get_all()
+
+    rows = []
+    for domain in domains:
+        data = get_db().view("phonelog/devicelog_data",
+            reduce=False,
+            startkey=[domain.name, "tag", "user-report"],
+            endkey=[domain.name, "tag", "user-report", {}],
+            stale=settings.COUCH_STALE_QUERY,
+        ).all()
+        for report in data:
+            val = report.get('value')
+            version = val.get('version', 'unknown')
+            formatted_date = tz_utils.string_to_prertty_time(val['@date'], timezone(domain.default_timezone), fmt="%b %d, %Y %H:%M:%S")
+            rows.append(dict(domain=domain.name,
+                             time=formatted_date,
+                             user=val['user'],
+                             device_users=val['device_users'],
+                             message=val['msg'],
+                             version=version.split(' ')[0],
+                             detailed_version=html.escape(version),
+                             report_id=report['id']))
+
+    headers = DataTablesHeader(
+        DataTablesColumn(_("View Form")),
+        DataTablesColumn(_("Domain")),
+        DataTablesColumn(_("Time"), sort_type=DTSortType.NUMERIC),
+        DataTablesColumn(_("User"), sort_type=DTSortType.NUMERIC),
+        DataTablesColumn(_("Device Users"), sort_type=DTSortType.NUMERIC),
+        DataTablesColumn(_("Message"), sort_type=DTSortType.NUMERIC),
+        DataTablesColumn(_("Version"), sort_type=DTSortType.NUMERIC)
+
+    )
+
+    context = get_hqadmin_base_context(request)
+    context["headers"] = headers
+    context["aoColumns"] = headers.render_aoColumns
+    context["rows"] = rows
+
+    return render(request, template, context)
+
+@require_superuser
 @get_file("file")
 def update_domains(request):
     if request.method == "POST":
@@ -464,7 +515,6 @@ def domain_list_download(request):
     data = (("domains", (_row(domain) for domain in domains)),)
     export_raw(headers, data, temp)
     return export_response(temp, Format.XLS_2007, "domains")
-
 
 @require_superuser
 def system_ajax(request):
@@ -673,3 +723,49 @@ def noneulized_users(request, template="hqadmin/noneulized_users.html"):
     context["aoColumns"] = headers.render_aoColumns
 
     return render(request, template, context)
+
+
+@require_superuser
+@cache_page(60*5)
+def all_commcare_settings(request):
+    apps = ApplicationBase.view('app_manager/applications_brief',
+                                include_docs=True)
+    filters = set()
+    for param in request.GET:
+        s_type, name = param.split('.')
+        value = request.GET.get(param)
+        filters.add((s_type, name, value))
+
+    def app_filter(settings):
+        for s_type, name, value in filters:
+            if settings[s_type].get(name) != value:
+                return False
+        return True
+
+    settings_list = [s for s in (get_settings_values(app) for app in apps)
+                     if app_filter(s)]
+    return json_response(settings_list)
+
+
+@require_superuser
+def management_commands(request, template="hqadmin/management_commands.html"):
+    commands = [(_('Remove Duplicate Domains'), 'remove_duplicate_domains')]
+    context = get_hqadmin_base_context(request)
+    context["hide_filters"] = True
+    context["commands"] = commands
+    return render(request, template, context)
+
+
+@require_POST
+@require_superuser
+def run_command(request):
+    cmd = request.POST.get('command')
+    if cmd not in ['remove_duplicate_domains']: # only expose this one command for now
+        return json_response({"success": False, "output": "Command not available"})
+
+    output_buf = StringIO()
+    management.call_command(cmd, stdout=output_buf)
+    output = output_buf.getvalue()
+    output_buf.close()
+
+    return json_response({"success": True, "output": output})

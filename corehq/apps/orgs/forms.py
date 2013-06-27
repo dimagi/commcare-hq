@@ -3,7 +3,7 @@ from django.core.validators import validate_email
 from corehq.apps.domain.models import Domain
 import re
 from corehq.apps.domain.utils import new_domain_re, website_re
-from corehq.apps.orgs.models import Organization, Team
+from corehq.apps.orgs.models import Organization, Team, OrgRequest
 from corehq.apps.registration.forms import OrganizationRegistrationForm
 from corehq.apps.users.models import CouchUser
 
@@ -11,8 +11,9 @@ class AddProjectForm(forms.Form):
     domain_name = forms.CharField(label="Project Name", help_text="e.g. - public")
     domain_hrname = forms.CharField(label="Project Nickname", required=False, help_text="e.g. - Commcare HQ Demo Project")
 
-    def __init__(self, org_name, *args, **kwargs):
+    def __init__(self, org_name, user=None, *args, **kwargs):
         self.org_name = org_name
+        self.user = user
         super(AddProjectForm, self).__init__(*args, **kwargs)
 
     def clean_domain_hrname(self):
@@ -27,8 +28,15 @@ class AddProjectForm(forms.Form):
 
     def clean_domain_name(self):
         data = self.cleaned_data['domain_name'].strip().lower()
-        if not Domain.get_by_name(data):
+        project = Domain.get_by_name(data)
+        if not project:
             raise forms.ValidationError('This project does not exist.')
+
+        if not self.user.is_domain_admin(data):
+            org_requests = filter(lambda r: r.domain == data, OrgRequest.get_requests(self.org_name))
+            if not org_requests:
+                raise forms.ValidationError('You must be an admin of this project in order to add it to your organization')
+
         return data
 
 class InviteMemberForm(forms.Form):

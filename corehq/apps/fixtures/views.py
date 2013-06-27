@@ -1,19 +1,27 @@
 import json
+import os
+import tempfile
 from couchdbkit import ResourceNotFound
 
 from django.contrib import messages
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404
+from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404, HttpResponse
 from django.utils.decorators import method_decorator
+from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView
 from django.shortcuts import render
 
-from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
+from corehq.apps.domain.decorators import login_or_digest
+from corehq.apps.fixtures.exceptions import UploadItemListsException
+from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, _id_from_doc
 from corehq.apps.groups.models import Group
 from corehq.apps.users.bulkupload import GroupMemoizer
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CommCareUser, Permissions
 from corehq.apps.users.util import normalize_username
+from couchexport.export import UnsupportedExportFormat, export_raw
+from couchexport.models import Format
+from couchexport.shortcuts import export_response
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
 from dimagi.utils.logging import notify_exception
@@ -115,7 +123,11 @@ def data_items(request, domain, data_type_id, data_item_id):
         o.save()
         return json_response(strip_json(o, disallow=['data_type_id']))
     elif request.method == 'GET' and data_item_id is None:
-        return json_response([prepare_item(x) for x in FixtureDataItem.by_data_type(domain, data_type_id)])
+        return json_response([
+            prepare_item(x)
+            for x in sorted(FixtureDataItem.by_data_type(domain, data_type_id),
+                            key=lambda x: x.sort_key)
+        ])
     elif request.method == 'GET' and data_item_id:
         try:
             o = FixtureDataItem.get(data_item_id)
@@ -197,6 +209,67 @@ def view(request, domain, template='fixtures/view.html'):
         'domain': domain
     })
 
+DELETE_HEADER = 'Delete(Y/N)'
+
+@require_can_edit_fixtures
+def download_item_lists(request, domain):
+    data_types = FixtureDataType.by_domain(domain)
+    data_type_schemas = []
+    max_fields = 0
+    max_groups = 0
+    max_users = 0
+    mmax_groups = 0
+    mmax_users = 0
+    data_tables = []
+    
+
+    for data_type in data_types:
+        type_schema = [data_type.name, data_type.tag]
+        fields = [field for field in data_type.fields]
+        type_id = data_type.get_id
+        data_table_of_type = []
+        for item_row in FixtureDataItem.by_data_type(domain, type_id):
+            group_len = len(item_row.get_groups())
+            max_groups = group_len if group_len>max_groups else max_groups
+            user_len = len(item_row.get_users())
+            max_users = user_len if user_len>max_users else max_users
+        for item_row in FixtureDataItem.by_data_type(domain, type_id):
+            groups = [group.name for group in item_row.get_groups()] + ["" for x in range(0,max_groups-len(item_row.get_groups()))]
+            users = [user.raw_username for user in item_row.get_users()] + ["" for x in range(0, max_users-len(item_row.get_users()))]
+            data_row = tuple([str(_id_from_doc(item_row)),"N"]+
+                             [item_row.fields[field] for field in fields]+
+                             groups + users)
+            data_table_of_type.append(data_row)
+        type_schema.extend(fields)
+        data_type_schemas.append(tuple(type_schema))
+        if max_fields<len(type_schema):
+            max_fields = len(type_schema)
+        data_tables.append((data_type.tag,tuple(data_table_of_type)))
+        mmax_users = max_users if max_users>mmax_users else mmax_users
+        mmax_groups = max_groups if max_groups>mmax_groups else mmax_groups
+        max_users = 0
+        max_groups = 0
+
+    type_headers = ["name", "tag"] + ["field %d" % x for x in range(1, max_fields - 1)]
+    type_headers = ("types", tuple(type_headers))
+    table_headers = [type_headers]    
+    for type_schema in data_type_schemas:
+        item_header = (type_schema[1], tuple(["UID", DELETE_HEADER] +
+                                             ["field: " + x for x in type_schema[2:]] +
+                                             ["group %d" % x for x in range(1, mmax_groups + 1)] +
+                                             ["user %d" % x for x in range(1, mmax_users + 1)]))
+        table_headers.append(item_header)
+
+    table_headers = tuple(table_headers)
+    type_rows = ("types", tuple(data_type_schemas))
+    data_tables = tuple([type_rows]+data_tables)
+    
+    fd, path = tempfile.mkstemp()
+    with os.fdopen(fd, 'w') as temp:
+        export_raw((table_headers), (data_tables), temp)
+    format = Format.XLS_2007
+    return export_response(open(path), format, "%s_fixtures" % domain)
+
 
 class UploadItemLists(TemplateView):
 
@@ -221,10 +294,14 @@ class UploadItemLists(TemplateView):
             messages.error(request, "Error processing your Excel (.xlsx) file")
             return error_redirect()
 
-
-
         try:
-            self._run_upload(request, workbook)
+            upload_result = run_upload_api(request, self.domain, workbook)
+            if upload_result["unknown_groups"]:
+                for group_name in upload_result["unknown_groups"]:
+                    messages.error(request, "Unknown group: %s" % group_name)
+            if upload_result["unknown_users"]:
+                for user_name in upload_result["unknown_users"]:
+                    messages.error(request, "Unknown user: %s" % user_name)
         except WorksheetNotFound as e:
             messages.error(request, "Workbook does not have a sheet called '%s'" % e.title)
             return error_redirect()
@@ -235,53 +312,151 @@ class UploadItemLists(TemplateView):
 
         return HttpResponseRedirect(reverse('fixture_view', args=[self.domain]))
 
-    def _run_upload(self, request, workbook):
-        group_memoizer = GroupMemoizer(self.domain)
-
-        data_types = workbook.get_worksheet(title='types')
-
-        def _get_or_raise(container, attr, message):
-            try:
-                return container[attr]
-            except KeyError:
-                raise Exception(message.format(attr=attr))
-        with CouchTransaction() as transaction:
-            for dt in data_types:
-                err_msg = "Workbook 'types' has no column '{attr}'"
-                data_type = FixtureDataType(
-                    domain=self.domain,
-                    name=_get_or_raise(dt, 'name', err_msg),
-                    tag=_get_or_raise(dt, 'tag', err_msg),
-                    fields=_get_or_raise(dt, 'field', err_msg),
-                )
-                transaction.save(data_type)
-                data_items = workbook.get_worksheet(data_type.tag)
-                for di in data_items:
-                    data_item = FixtureDataItem(
-                        domain=self.domain,
-                        data_type_id=data_type.get_id,
-                        fields=di['field']
-                    )
-                    transaction.save(data_item)
-                    for group_name in di.get('group', []):
-                        group = group_memoizer.by_name(group_name)
-                        if group:
-                            data_item.add_group(group, transaction=transaction)
-                        else:
-                            messages.error(request, "Unknown group: %s" % group_name)
-                    for raw_username in di.get('user', []):
-                        username = normalize_username(raw_username, self.domain)
-                        user = CommCareUser.get_by_username(username)
-                        if user:
-                            data_item.add_user(user)
-                        else:
-                            messages.error(request, "Unknown user: %s" % raw_username)
-            for data_type in transaction.preview_save(cls=FixtureDataType):
-                for duplicate in FixtureDataType.by_domain_tag(domain=self.domain, tag=data_type.tag):
-                    duplicate.recursive_delete(transaction)
-
-
     @method_decorator(require_can_edit_fixtures)
     def dispatch(self, request, domain, *args, **kwargs):
         self.domain = domain
         return super(UploadItemLists, self).dispatch(request, *args, **kwargs)
+
+@require_POST
+@login_or_digest
+def upload_fixture_api(request, domain, **kwargs):
+    response_codes = {"fail": 405, "warning": 402, "success": 200}
+    error_messages = {"invalid_post_req": "Invalid post request. Submit the form with field 'file-to-upload' to upload a fixture",
+                      "has_no_permission": "User {attr} doesn't have permission to upload fixtures",
+                      "invalid_file": "Error processing your file. Submit a valid (.xlsx) file",
+                      "has_no_sheet": "Workbook does not have a sheet called {attr}",
+                      "has_no_column": "Fixture upload couldn't succeed due to the following error: {attr}"}
+    
+    def _return_response(code, message):
+        resp_json = {}
+        resp_json["code"] = code
+        resp_json["message"] = message
+        return HttpResponse(json.dumps(resp_json), mimetype="application/json")
+
+    try:
+        upload_file = request.FILES["file-to-upload"]
+    except Exception:
+        return _return_response(response_codes["fail"], error_messages["invalid_post_req"])
+
+    if not request.couch_user.has_permission(domain, Permissions.edit_data.name):
+        error_message = error_messages["has_no_permission"].format(attr=request.couch_user.username)
+        return _return_response(response_codes["fail"], error_message)
+
+    try:
+        workbook = WorkbookJSONReader(upload_file)
+    except Exception:
+        return _return_response(response_codes["fail"], error_messages["invalid_file"])
+
+
+    try:
+        upload_resp = run_upload_api(request, domain, workbook) #error handle for other files
+    except WorksheetNotFound as e:
+        error_message = error_messages["has_no_sheet"].format(attr=e.title)
+        return _return_response(response_codes["fail"], error_message)
+    except Exception as e:
+        notify_exception(request)
+        error_message = error_messages["has_no_column"].format(attr=e)
+        return _return_response(response_codes["fail"], error_message)
+
+    num_unknown_groups = len(upload_resp["unknown_groups"])
+    num_unknown_users = len(upload_resp["unknown_users"])
+    resp_json = {}
+
+    if not num_unknown_users and not num_unknown_groups:
+        num_uploads = upload_resp["number_of_fixtures"]
+        success_message = "Successfully uploaded %d fixture%s." % (num_uploads, 's' if num_uploads > 1 else '')
+        return _return_response(response_codes["success"], success_message)
+    else:
+        resp_json["code"] = response_codes["warning"]
+
+    warn_groups = "%d group%s unknown" % (num_unknown_groups, 's are' if num_unknown_groups > 1 else ' is')
+    warn_users = "%d user%s unknown" % (num_unknown_users, 's are' if num_unknown_users > 1 else ' is')
+    resp_json["message"] = "Fixtures have been uploaded. But following "
+    if num_unknown_groups:
+        resp_json["message"] += "%s %s" % (warn_groups, upload_resp["unknown_groups"])
+    if num_unknown_users:
+        resp_json["message"] += "%s%s%s" % (("and following " if num_unknown_groups else "" ), warn_users, upload_resp["unknown_users"])
+
+    return HttpResponse(json.dumps(resp_json), mimetype="application/json")
+
+
+def run_upload_api(request, domain, workbook):
+    return_val = {
+        "unknown_groups": [],
+        "unknown_users": [],
+        "number_of_fixtures": 0,
+    }
+    group_memoizer = GroupMemoizer(domain)
+
+    data_types = workbook.get_worksheet(title='types')
+
+    def _get_or_raise(container, attr):
+        try:
+            return container[attr]
+        except KeyError:
+            raise Exception("Workbook 'types' has no column '{attr}'".format(attr=attr))
+   
+    number_of_fixtures = -1
+    with CouchTransaction() as transaction:
+        for number_of_fixtures, dt in enumerate(data_types):
+            tag = _get_or_raise(dt, 'tag')
+            data_type_results = FixtureDataType.by_domain_tag(domain, tag)
+            if len(data_type_results) == 0:
+                data_type = FixtureDataType(
+                    domain=domain,
+                    name=_get_or_raise(dt, 'name'),
+                    tag=_get_or_raise(dt, 'tag'),
+                    fields=_get_or_raise(dt, 'field'),
+                )
+                transaction.save(data_type)
+            else:
+                for x in data_type_results:
+                    data_type = x
+
+            data_items = workbook.get_worksheet(data_type.tag)
+            for sort_key, di in enumerate(data_items):
+                new_data_item = FixtureDataItem(
+                    domain=domain,
+                    data_type_id=data_type.get_id,
+                    fields=di['field'],
+                    sort_key=sort_key
+                )
+                try:
+                    old_data_item = FixtureDataItem.get(di['UID'])
+                    assert old_data_item.domain == domain
+                    assert old_data_item.doc_type == FixtureDataItem._doc_type
+                    assert old_data_item.data_type_id == data_type.get_id
+                    if di.get(DELETE_HEADER) in ("Y", "y"):
+                        old_data_item.recursive_delete(transaction)
+                        continue
+                    old_data_item.fields = di['field']
+                    transaction.save(old_data_item)
+                except (AttributeError, KeyError, ResourceNotFound,
+                        AssertionError):
+                    old_data_item = new_data_item
+                    transaction.save(old_data_item)
+
+                old_groups = old_data_item.get_groups()
+                for group in old_groups:
+                    old_data_item.remove_group(group)
+                old_users = old_data_item.get_users()
+                for user in old_users:
+                    old_data_item.remove_user(user)
+
+                for group_name in di.get('group', []):
+                        group = group_memoizer.by_name(group_name)
+                        if group:
+                            old_data_item.add_group(group, transaction=transaction)
+                        else:
+                            messages.error(request, "Unknown group: %s" % group_name)
+
+                for raw_username in di.get('user', []):
+                        username = normalize_username(raw_username, domain)
+                        user = CommCareUser.get_by_username(username)
+                        if user:
+                            old_data_item.add_user(user)
+                        else:
+                            messages.error(request, "Unknown user: %s" % raw_username)
+
+    return_val["number_of_fixtures"] = number_of_fixtures + 1
+    return return_val

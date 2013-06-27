@@ -88,6 +88,8 @@ def update_calculated_properties():
             "cp_n_active_cc_users": int(CALC_FNS["mobile_users"](dom)),
             "cp_n_cc_users": int(all_stats["commcare_users"][dom]),
             "cp_n_active_cases": int(CALC_FNS["cases_in_last"](dom, 120)),
+            "cp_n_inactive_cases": int(CALC_FNS["inactive_cases_in_last"](dom, 120)),
+            "cp_n_60_day_cases": int(CALC_FNS["cases_in_last"](dom, 60)),
             "cp_n_cases": int(all_stats["cases"][dom]),
             "cp_n_forms": int(all_stats["forms"][dom]),
             "cp_first_form": CALC_FNS["first_form_submission"](dom, False),

@@ -13,6 +13,7 @@ from django.utils.translation import ugettext_noop
 REMOTE_APP_WILDCARD = "http://(.+).commcarehq.org"
 MISSING_APP_ID = "_MISSING_APP_ID"
 
+
 class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     """
         Use this filter to drill down by
@@ -466,6 +467,9 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             app_name = "%s [Deleted]" % app_name
         return "%s > %s > %s" % (app_name, module_name, form_name)
 
+    def _clean_remote_id(self, app_id):
+        return app_id if app_id != self.unknown_remote_app_id else MISSING_APP_ID
+
     @memoized
     def get_unknown_form_name(self, xmlns, app_id=None, none_if_not_found=False):
         key = ["xmlns", self.domain, xmlns]
@@ -520,7 +524,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             xmlns = filter_results[-1]['value']
             app_id = filter_results[-3]['value']
             if use_remote_form_data:
-                app_id = app_id if app_id != self.unknown_remote_app_id else {}
+                app_id = self._clean_remote_id(app_id)
                 data = [{'value': self.remote_forms[self.make_xmlns_app_key(xmlns, app_id)]}]
             else:
                 status = filter_results[0]['value'] if filter_results[0]['slug'] == 'status' else 'active'
@@ -545,7 +549,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                             all_forms.extend(module['forms'])
                     except KeyError:
                         pass
-                app_id = app_id if app_id != self.unknown_remote_app_id else {}
+                app_id = self._clean_remote_id(app_id)
                 data.extend([{'value': self.remote_forms[self.make_xmlns_app_key(f['xmlns'], app_id)]} for f in all_forms])
 
             if (self.application_forms and
@@ -594,7 +598,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             for line in data:
                 app = line['value']
                 app_id = app['app']['id']
-                app_id = app_id if app_id != self.unknown_remote_app_id else {}
+                app_id = self._clean_remote_id(app_id)
                 xmlns_app = self.make_xmlns_app_key(app['xmlns'], app_id)
                 if xmlns_app not in result:
                     result[xmlns_app] = _generate_report_app_info(

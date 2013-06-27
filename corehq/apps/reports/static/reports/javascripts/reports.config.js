@@ -10,6 +10,7 @@ var HQReport = function (options) {
     self.toggleFiltersButton = options.toggleFiltersButton || "#toggle-report-filters";
     self.exportReportButton = options.exportReportButton || "#export-report-excel";
     self.emailReportButton = options.emailReportButton || "#email-report";
+    self.printReportButton = options.printReportButton || "#print-report";
     self.emailReportModal = options.emailReportModal || "#email-report-modal";
     self.isExportable = options.isExportable || false;
     self.isEmailable = options.isEmailable || false;
@@ -34,7 +35,8 @@ var HQReport = function (options) {
 
             if (self.needsFilters) {
                 self.filterSubmitButton.button('reset').addClass('btn-primary');
-            } else if (self.slug) {
+            }
+            if (self.slug) {
                 if (self.isExportable) {
                     $(self.exportReportButton).click(function (e) {
                         e.preventDefault();
@@ -44,12 +46,13 @@ var HQReport = function (options) {
 
                 if (self.isEmailable) {
                     self.emailReportViewModel = new EmailReportViewModel(self);
-                    $(self.emailReportButton).click(function (e) {
-                        self.emailReportViewModel.openEmailModal();
-                    });
-
                     ko.applyBindings(self.emailReportViewModel, $(self.emailReportModal).get(0));
                 }
+
+                $(self.printReportButton).click(function (e) {
+                    e.preventDefault();
+                    window.open(get_report_render_url("print"));
+                });
             }
         });
     };
@@ -154,42 +157,41 @@ var HQReport = function (options) {
     function EmailReportViewModel(hqReport) {
         var self = this;
 
-        self.modalDisplayState = ko.observable();
-
         self.send_to_owner = ko.observable(true);
         self.subject = ko.observable(hqReport.emailDefaultSubject);
         self.recipient_emails = ko.observable();
         self.notes = ko.observable();
 
-        self.openEmailModal = function () {
-            self.modalDisplayState({});
-        }
-
-        self.closeEmailModal = function() {
-            self.modalDisplayState(undefined);
-        }
-
         self.unwrap = function () {
             var data = ko.mapping.toJS(self, {
-                ignore: ['modalTitle', 'modalDisplayState', 'openEmailModal',
-                'closeEmailModal', 'sendEmail', 'unwrap']
+                ignore: ['sendEmail', 'unwrap', 'resetModal']
             });
 
             for (var i in data) {
                 if (data[i] === null || data[i] === undefined) delete data[i];
             }
             return data;
-        }
+        };
 
-        self.sendEmail = function(data, event) {
+        self.sendEmail = function () {
+             var $sendButton = $(hqReport.emailReportModal).find('.send-button');
+             $sendButton.button('loading');
+
             $.get(get_report_render_url("email_onceoff", $.param(self.unwrap())))
                 .done(function() {
+                    $(hqReport.emailReportModal).modal('hide');
+                    self.resetModal();
                     $.showMessage(hqReport.emailSuccessMessage, "success");
-                    self.closeEmailModal();
                 })
                 .fail(function() {
+                    $(hqReport.emailReportModal).modal('hide');
+                    self.resetModal();
                     $.showMessage(hqReport.emailErrorMessage, "error");
                 });
-        }
-    };
+        };
+
+        self.resetModal = function () {
+            $(hqReport.emailReportModal).find('.send-button').button('reset');
+        };
+    }
 };

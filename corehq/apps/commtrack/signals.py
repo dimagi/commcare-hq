@@ -3,11 +3,11 @@ import itertools
 from casexml.apps.case.signals import cases_received
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.const import is_commtrack_form, RequisitionStatus
-from corehq.apps.commtrack.models import RequisitionCase, SupplyPointProductCase, CommtrackConfig
+from corehq.apps.commtrack.models import (RequisitionCase, SupplyPointProductCase,
+        CommtrackConfig)
 from corehq.apps.locations.models import Location
 from corehq.apps.sms.api import send_sms_to_verified_number
 from dimagi.utils import create_unique_filter
-
 
 def attach_locations(xform, cases):
     """
@@ -73,8 +73,8 @@ def send_notifications(xform, cases):
         for r in requisitions:
             by_status[r.requisition_status].append(r)
 
-        # since each state transition might trigger a different person to be notified
         req_config = CommtrackConfig.for_domain(requisitions[0].domain).requisition_config
+        # since each state transition might trigger a different person to be notified
         for s, reqs in by_status.items():
             next_action = req_config.get_next_action(RequisitionStatus.to_action_type(s))
 

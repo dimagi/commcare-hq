@@ -1,8 +1,8 @@
 /*globals $, EJS, COMMCAREHQ */
-var CaseXML = (function () {
+var CaseConfig = (function () {
     "use strict";
     var action_names = ["open_case", "update_case", "close_case", "open_referral", "update_referral", "close_referral", "case_preload", "referral_preload"],
-        CaseXML = function (params) {
+        CaseConfig = function (params) {
             var i, $form;
 
             this.home = params.home;
@@ -42,7 +42,7 @@ var CaseXML = (function () {
             }
             //        $("#casexml-template").remove();
             $form = $('<form method="POST"/>').attr('action', this.save_url).append(
-                $('<textarea id="casexml_json" class="hidden" name="actions"/>')
+                $('<textarea id="casexml_json" class="hide" name="actions"/>')
             );
 
             this.saveButton = COMMCAREHQ.SaveButton.initForm($form, {
@@ -56,8 +56,13 @@ var CaseXML = (function () {
             }
             $form.appendTo(this.home);
             this.subhome = $('<div/>').appendTo($form);
+            var questionScores = {};
+            _(this.questions).each(function (question, i) {
+                questionScores[question.value] = i;
+            });
+            this.questionScores = questionScores;
         };
-    CaseXML.prototype = {
+    CaseConfig.prototype = {
         truncateLabel: function (label, suffix) {
             suffix = suffix || "";
             var MAXLEN = 40,
@@ -74,7 +79,7 @@ var CaseXML = (function () {
 
 
 
-    CaseXML.prototype.render = function () {
+    CaseConfig.prototype.render = function () {
         var i;
         for (i = 0; i < action_names.length; i += 1) {
             this.actions[action_names[i]] = this.actions[action_names[i]] || {
@@ -92,7 +97,7 @@ var CaseXML = (function () {
             }
         });
     };
-    CaseXML.prototype.init = function () {
+    CaseConfig.prototype.init = function () {
         var casexml = this;
         if (this.questions.length && this.edit) {
             this.home.delegate('input:not(.action-checkbox), select', 'change textchange', function () {
@@ -117,14 +122,20 @@ var CaseXML = (function () {
         }
         this.render();
     };
-
-    CaseXML.prototype.renderCondition = function (condition) {
+    CaseConfig.prototype.sortByQuestions = function (map, keysOrValues) {
+        var self = this, pairs = _.pairs(map);
+        return _(pairs).sortBy(function (pair) {
+            var path = keysOrValues === 'keys' ? pair[0] : pair[1];
+            return self.questionScores[path];
+        });
+    };
+    CaseConfig.prototype.renderCondition = function (condition) {
         return this.condition_ejs.render({
             casexml: this,
             condition: condition
         });
     };
-    CaseXML.prototype.getQuestions = function (filter, excludeHidden) {
+    CaseConfig.prototype.getQuestions = function (filter, excludeHidden) {
         // filter can be "all", or any of "select1", "select", or "input" separated by spaces
         var i, options = [],
             q;
@@ -141,7 +152,7 @@ var CaseXML = (function () {
         }
         return options;
     };
-    CaseXML.prototype.renderOptions = function (options, value, name, allowNull) {
+    CaseConfig.prototype.renderOptions = function (options, value, name, allowNull) {
         if (allowNull === undefined) {
             allowNull = true;
         }
@@ -153,7 +164,7 @@ var CaseXML = (function () {
             allowNull: allowNull
         });
     };
-    CaseXML.prototype.renderQuestions = function (filter) {
+    CaseConfig.prototype.renderQuestions = function (filter) {
         var options = this.getQuestions(filter),
             html = "";
         options.forEach(function (o) {
@@ -161,7 +172,7 @@ var CaseXML = (function () {
         });
         return html;
     };
-    CaseXML.prototype.getAnswers = function (condition) {
+    CaseConfig.prototype.getAnswers = function (condition) {
         var i, q, o, value = condition.question,
             found = false,
             options = [];
@@ -180,7 +191,7 @@ var CaseXML = (function () {
         }
         return options;
     };
-    CaseXML.prototype.renderChecked = function (action) {
+    CaseConfig.prototype.renderChecked = function (action) {
         if (this.action_is_active(action)) {
             return 'checked="true"';
         } else {
@@ -188,7 +199,7 @@ var CaseXML = (function () {
         }
     };
 
-    CaseXML.prototype.refreshActions = function () {
+    CaseConfig.prototype.refreshActions = function () {
         var actions = {},
             requires;
 
@@ -267,7 +278,7 @@ var CaseXML = (function () {
         this.actions = actions;
     };
 
-    CaseXML.prototype.renderAction = function (action_type, label) {
+    CaseConfig.prototype.renderAction = function (action_type, label) {
         var html = this.action_ejs.render({
             casexml: this,
             id: action_type.replace("_", "-"),
@@ -277,7 +288,7 @@ var CaseXML = (function () {
         });
         return html;
     };
-    CaseXML.prototype.hasActions = function () {
+    CaseConfig.prototype.hasActions = function () {
         var a;
         for (a in this.actions) {
             if (this.actions.hasOwnProperty(a)) {
@@ -288,7 +299,7 @@ var CaseXML = (function () {
         }
     };
 
-    CaseXML.prototype.renderPropertyList = function (map, keyType, reservedWords, showSuggestion) {
+    CaseConfig.prototype.renderPropertyList = function (map, keyType, reservedWords, showSuggestion) {
         showSuggestion = showSuggestion === undefined ? false : showSuggestion;
         return this.propertyList_ejs.render({
             map: map,
@@ -299,5 +310,5 @@ var CaseXML = (function () {
         });
     };
 
-    return CaseXML;
+    return {CaseConfig: CaseConfig};
 }());

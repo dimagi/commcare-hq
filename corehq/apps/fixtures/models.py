@@ -1,6 +1,6 @@
 from xml.etree import ElementTree
 from corehq.apps.users.models import CommCareUser
-from couchdbkit.ext.django.schema import Document, DictProperty, StringProperty, StringListProperty
+from couchdbkit.ext.django.schema import Document, DictProperty, StringProperty, StringListProperty, IntegerProperty
 from corehq.apps.groups.models import Group
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.couch.database import get_db
@@ -34,6 +34,7 @@ class FixtureDataItem(Document):
     domain = StringProperty()
     data_type_id = StringProperty()
     fields = DictProperty()
+    sort_key = IntegerProperty()
 
     @property
     def data_type(self):

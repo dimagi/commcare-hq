@@ -63,6 +63,24 @@ def cases_in_last(domain, days):
     data = es_query(params={"domain.exact": domain, 'closed': False}, q=q, es_url=CASE_INDEX + '/case/_search', size=1)
     return data['hits']['total'] if data.get('hits') else 0
 
+def inactive_cases_in_last(domain, days):
+    """
+    Returns the number of open cases that have been modified in the last <days> days
+    """
+    now = datetime.now()
+    then = (now - timedelta(days=int(days))).strftime(DATE_FORMAT)
+    now = now.strftime(DATE_FORMAT)
+
+    q = {"query":
+             {"bool": {
+                 "must_not": {
+                     "range": {
+                         "modified_on": {
+                             "from": then,
+                             "to": now }}}}}}
+    data = es_query(params={"domain.exact": domain, 'closed': False}, q=q, es_url=CASE_INDEX + '/case/_search', size=1)
+    return data['hits']['total'] if data.get('hits') else 0
+
 def forms(domain, *args):
     key = make_form_couch_key(domain)
     row = get_db().view("reports_forms/all_forms", startkey=key, endkey=key+[{}]).one()
@@ -145,6 +163,7 @@ CALC_FNS = {
     "mobile_users": active_mobile_users,
     "active_cases": not_implemented,
     "cases_in_last": cases_in_last,
+    "inactive_cases_in_last": inactive_cases_in_last,
     "active": active,
     "first_form_submission": first_form_submission,
     "last_form_submission": last_form_submission,

@@ -148,7 +148,6 @@
                 <form class="form-horizontal" action="{% url orgs_new_project org.name %}" method="post">
                     <div class="modal-body">
                         <fieldset>
-                            <legend>{% trans "Create a new project within this organization" %}</legend>
                             {% for global_error in reg_form.non_field_errors %}
                             <div class="alert alert-error">
                                 {{ global_error }}
@@ -191,13 +190,13 @@
             <div id="add_project_modal" class="modal hide fade">
                 <div class="modal-header">
                     <a class="close" data-dismiss="modal">&times;</a>
-                    <h3>{% trans "Add an existing project" %}</h3>
+                    <h3>{% trans "Add an existing project to " %}{{ org.title }}</h3>
                 </div>
                 <form class="form-horizontal" method="post" action="{% url orgs_add_project org.name %}">
                     <div class="modal-body">
                         <fieldset>
                             {% bootstrap_form_errors add_form %}
-                            {% bootstrap_fieldset add_form "Add an existing project to this organization" %}
+                            {% bootstrap_fieldset add_form %}
                         </fieldset>
                     </div>
                     <div class="modal-footer">

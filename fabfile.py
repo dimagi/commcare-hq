@@ -394,7 +394,7 @@ def preindex_views():
         update_virtualenv(preindex=True) #no update to env - the actual deploy will do - this may break if a new dependency is introduced in preindex
 
         sudo('echo "%(virtualenv_root_preindex)s/bin/python %(code_root_preindex)s/manage.py \
-             sync_prepare_couchdb_multi 8 %(user)s" | at -t `date -d "5 seconds" \
+             preindex_everything 8 %(user)s" --mail | at -t `date -d "5 seconds" \
              +%%m%%d%%H%%M.%%S`' % env, user=env.sudo_user)
 
 @roles('django_app','django_celery', 'staticfiles', 'django_public', 'django_monolith')#,'formsplayer')
@@ -589,11 +589,7 @@ def flip_es_aliases():
     """Flip elasticsearch aliases to the lastest version """
     require('code_root', provided_by=('production', 'demo', 'staging', "india"))
     with cd(env.code_root):
-        sudo('%(virtualenv_root)s/bin/python manage.py ptop_es_manage --flip_alias --pillow CasePillow' % env, user=env.sudo_user)
-        sudo('%(virtualenv_root)s/bin/python manage.py ptop_es_manage --flip_alias --pillow FullCasePillow' % env, user=env.sudo_user)
-        sudo('%(virtualenv_root)s/bin/python manage.py ptop_es_manage --flip_alias --pillow XFormPillow' % env, user=env.sudo_user)
-        sudo('%(virtualenv_root)s/bin/python manage.py ptop_es_manage --flip_alias --pillow FullXFormPillow' % env, user=env.sudo_user)
-        sudo('%(virtualenv_root)s/bin/python manage.py ptop_es_manage --flip_alias --pillow DomainPillow' % env, user=env.sudo_user)
+        sudo('%(virtualenv_root)s/bin/python manage.py ptop_es_manage --flip_all_aliases' % env, user=env.sudo_user)
 
 @roles('staticfiles', 'django_monolith')
 def _do_collectstatic():

@@ -111,7 +111,7 @@
   id: "ViewStyle"
   values: ["v_chatterbox","v_singlequestionscreen"]
   value_names: ["Multiple Questions per Screen", "One Question per Screen"]
-  values_txt: "Chatterbox displays a running list of questions on the screen at the same time. One Question per Screen displays each question independently. Note: OQPS does not support some features"
+  values_txt: "Multiple Questions per Screen displays a running list of questions on the screen at the same time. One Question per Screen displays each question independently. Note: OQPS does not support some features"
   default: "v_chatterbox"
 
 - disabled: true
@@ -171,12 +171,12 @@
   group: "sense"
 
 - name: "Extra Key Action"
-  description: "What the 'Extra Key' (# on Nokia Phones) does when pressed in Chatterbox"
+  description: "What the 'Extra Key' (# on Nokia Phones) does when pressed"
   id: "extra_key_action"
   requires: "{features.sense}='false'"
   values: ["cycle", "audio"]
-  value_names: ["Cycle", "Audio"]
-  values_txt: "cycle cycles through available languages. audio plays the question's audio if available. NOTE: If audio is selected, a question's audio will not be played by default when the question is displayed."
+  value_names: ["Languages", "Audio"]
+  values_txt: "Language cycles through any available translations. Audio plays the question's audio if available. NOTE: If audio is selected, a question's audio will not be played by default when the question is displayed."
   default: "audio"
   commcare_default: "cycle"
   contingent_default: [{"condition": "{features.sense}='true'", "value": "audio"}]

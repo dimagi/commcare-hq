@@ -1,7 +1,7 @@
 # coding=utf-8
 from numbers import Number
 from corehq.apps.reports.fields import DatespanField
-from corehq.apps.reports.standard import DatespanMixin
+from corehq.apps.reports.standard import DatespanMixin, CustomProjectReport
 from corehq.apps.reports.util import format_datatables_data
 from dimagi.utils.decorators.memoized import memoized
 
@@ -9,7 +9,6 @@ from sqlagg import *
 from sqlagg.columns import *
 
 from ..sqlreport import SqlTabularReport, DatabaseColumn, AggregateColumn
-
 
 
 def combine_indicator(num, denom):
@@ -25,6 +24,7 @@ def combine_indicator(num, denom):
 def test_report(report, keys=None, filters=None, group_by=None):
     class TestReportInst(report):
         database = "test_commcarehq"
+
         @property
         def keys(self):
             return keys
@@ -40,7 +40,7 @@ def test_report(report, keys=None, filters=None, group_by=None):
     return TestReportInst
 
 
-class UserTestReport(SqlTabularReport, DatespanMixin):
+class UserTestReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
     name = "SQL Demo"
     slug = "sql_demo"
     field_classes = (DatespanField,)
@@ -61,7 +61,7 @@ class UserTestReport(SqlTabularReport, DatespanMixin):
         return self.usernames_demo[key]
 
     def format_percent(self, value):
-        return format_datatables_data("%d%%"%value, value)
+        return format_datatables_data("%d%%" % value, value)
 
     @property
     def columns(self):
@@ -86,7 +86,7 @@ class UserTestReport(SqlTabularReport, DatespanMixin):
             return aggregate_cols
 
 
-class RegionTestReport(SqlTabularReport, DatespanMixin):
+class RegionTestReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
     name = "SQL Demo"
     slug = "sql_demo"
     field_classes = (DatespanField,)

@@ -23,9 +23,6 @@ except IndexError:
 ADMINS = ()
 MANAGERS = ADMINS
 
-# Default reporting database should be overridden in localsettings.
-SQL_REPORTING_DATABASE_URL = "sqlite:////tmp/commcare_reporting_test.db"
-
 # default to the system's timezone settings
 TIME_ZONE = "UTC"
 
@@ -197,6 +194,7 @@ HQ_APPS = (
     'corehq.apps.ivr',
     'corehq.apps.tropo',
     'corehq.apps.kookoo',
+    'corehq.apps.sislog',
     'corehq.apps.yo',
     'corehq.apps.registration',
     'corehq.apps.unicel',
@@ -222,6 +220,7 @@ HQ_APPS = (
 
     # custom reports
     'a5288',
+    'benin',
     'bihar',
     'dca',
     'hsph',
@@ -241,6 +240,12 @@ INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
 LOGIN_REDIRECT_URL = '/'
+
+
+# Default reporting database should be overridden in localsettings.
+SQL_REPORTING_DATABASE_URL = "sqlite:////tmp/commcare_reporting_test.db"
+
+REPORT_CACHE = 'default' # or e.g. 'redis'
 
 ####### Domain settings  #######
 
@@ -287,8 +292,10 @@ EMAIL_SMTP_PORT = 587
 BUG_REPORT_RECIPIENTS = ()
 EXCHANGE_NOTIFICATION_RECIPIENTS = []
 
-HQ_NOTIFICATIONS_EMAIL = 'commcarehq-noreply@dimagi.com'
+SERVER_EMAIL = 'commcarehq-noreply@dimagi.com' #the physical server emailing - differentiate if needed
+DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
+EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
@@ -469,11 +476,15 @@ LOGGING = {
         'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler',
-        }
+        },
+        'sentry': {
+            'level': 'ERROR',
+            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
+        },
     },
     'loggers': {
         '': {
-            'handlers': ['console', 'file', 'couchlog'],
+            'handlers': ['console', 'file', 'couchlog', 'sentry'],
             'propagate': True,
             'level': 'INFO',
         },
@@ -575,6 +586,7 @@ COUCHDB_APPS = [
     'smsforms',
     'translations',
     'users',
+    'utils',  # dimagi-utils
     'formplayer',
     'phonelog',
     'registration',
@@ -583,6 +595,7 @@ COUCHDB_APPS = [
     'couchlog',
 
     # custom reports
+    'benin',
     'dca',
     'hsph',
     'mvp',
@@ -637,6 +650,7 @@ DEFAULT_CURRENCY = "USD"
 SMS_HANDLERS = [
     'corehq.apps.sms.api.forwarding_handler',
     'corehq.apps.commtrack.sms.handle',
+    'corehq.apps.sms.api.structured_sms_handler',
     'corehq.apps.sms.api.form_session_handler',
     'corehq.apps.sms.api.fallback_handler',
 ]
@@ -671,13 +685,17 @@ INDICATOR_CONFIG = {
     "mvp-potou": ['mvp_indicators'],
 }
 
+CASE_WRAPPER = 'corehq.apps.hqcase.utils.get_case_wrapper'
+
 PILLOWTOPS = [
                  'corehq.pillows.case.CasePillow',
                  'corehq.pillows.fullcase.FullCasePillow',
                  'corehq.pillows.xform.XFormPillow',
                  'corehq.pillows.fullxform.FullXFormPillow',
                  'corehq.pillows.domain.DomainPillow',
+                 'corehq.pillows.user.UserPillow',
                  'corehq.pillows.exchange.ExchangePillow',
+                 'corehq.pillows.commtrack.ConsumptionRatePillow',
 
                  # fluff
                  'bihar.models.CareBiharFluffPillow',
@@ -687,7 +705,14 @@ PILLOWTOPS = [
 XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
 
 #Custom fully indexed domains for FullCase index/pillowtop
-ES_CASE_FULL_INDEX_DOMAINS = ['pact', 'hsph', 'care-bihar']
+# Adding a domain will not automatically index that domain's existing cases
+ES_CASE_FULL_INDEX_DOMAINS = [
+    'pact', 
+    'hsph', 
+    'care-bihar', 
+    'hsph-dev', 
+    'hsph-betterbirth-pilot-2',
+]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
@@ -710,3 +735,5 @@ DOMAIN_MODULE_MAP = {
     'mvp-sada': 'mvp',
     'psi-unicef': 'psi',
 }
+
+CASEXML_FORCE_DOMAIN_CHECK = True

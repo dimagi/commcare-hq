@@ -114,41 +114,49 @@
                     <a href="#reportFilters" class="btn" id="toggle-report-filters"
                        data-toggle="collapse" data-open-text="Show Filter Options"
                        data-close-text="Hide Filter Options">
-                        Filter Options
+                        {% trans "Filter Options" %}
                     </a>
                 {% endif %}
 
-                {% if not report.needs_filters %}
-                    {% if report.is_exportable %}
-                        <a href="#" class="btn" id="export-report-excel">
-                            <i class="icon icon-share"></i> Export to Excel
-                        </a>
-                    {% endif %}
-
-                    {% if report.is_emailable %}
-                        <a href="#" class="btn" id="email-report">
-                            <i class="icon icon-envelope"></i> Email report
-                        </a>
-                    {% endif %}
+                {% if report.is_exportable %}
+                    <a href="#" class="btn{% if report.needs_filters %} hide{% endif %}" id="export-report-excel">
+                        <i class="icon icon-share"></i> {% trans "Export to Excel" %}
+                    </a>
                 {% endif %}
+
+                {% if report.is_emailable %}
+                    <a href="#email-report-modal" class="btn{% if report.needs_filters %} hide{% endif %}" data-toggle="modal" id="email-report">
+                        <i class="icon icon-envelope"></i> {% trans "Email report" %}
+                    </a>
+                {% endif %}
+
+                {% if report.is_printable %}
+                    <a href="#" class="btn{% if report.needs_filters %} hide{% endif %}" id="print-report">
+                        <i class="icon icon-print"></i> {% trans "Print" %}
+                    </a>
+                {% endif %}
+
             </div>
             <div id="extra-filter-info" class="accordion-extra"></div>
         </div>
     </div>
 
-    {% if not report.needs_filters and report.is_emailable%}
-    <div id="email-report-modal" class="hide fade" data-bind="modal: modalDisplayState">
+    {% if report.is_emailable %}
+    <div id="email-report-modal" class="modal hide fade">
         <div>
             <div class="modal-header">
-                <a class="close" data-bind="click: closeEmailModal">×</a>
+                <a class="close" data-dismiss="modal" data-bind="click: resetModal">×</a>
                 <h3>{% trans "Email report" %}</h3>
             </div>
             <form class="form-horizontal">
                 <div class="modal-body">
                     <div class="control-group">
-                        <label class="control-label" for="subject">{% trans "Subject" %}</label>
+                        <label class="control-label" for="email-report-subject">{% trans "Subject" %}</label>
                         <div class="controls">
-                            <input type="text" id="subject" data-bind="value: subject"/>
+                            <input type="text"
+                                   id="email-report-subject"
+                                   name="subject"
+                                   data-bind="value: subject"/>
                         </div>
                     </div>
                     <div class="control-group">
@@ -157,26 +165,31 @@
                         </div>
                     </div>
                     <div class="control-group">
-                        <label class="control-label" for="recipient_emails">{% trans "Additional Recipients" %}</label>
+                        <label class="control-label"
+                               for="email-report-recipient_emails">{% trans "Additional Recipients" %}</label>
                         <div class="controls">
-                            <textarea rows="3" name="recipient_emails" data-bind="value: recipient_emails"></textarea>
+                            <textarea rows="3"
+                                      id="email-report-recipient_emails"
+                                      name="recipient_emails"
+                                      data-bind="value: recipient_emails"></textarea>
                         </div>
                     </div>
                     <div class="control-group">
-                        <label class="control-label" for="notes">{% trans "Report notes" %}</label>
+                        <label class="control-label" for="email-report-notes">{% trans "Report notes" %}</label>
                         <div class="controls">
-                            <textarea rows="3" name="notes" data-bind="value: notes"></textarea>
+                            <textarea rows="3" id="email-report-notes" name="notes" data-bind="value: notes"></textarea>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <div class="btn-toolbar">
-                        <div class="btn-group">
-                            <a href="#" class="btn" data-bind="click: closeEmailModal">Cancel</a>
-                        </div>
-                        <div class="btn-group">
-                            <a href="#" class="btn btn-success" data-bind="click: sendEmail">Send</a>
-                        </div>
+                    <div class="pull-left">
+                    <div class="email-status text-success hide">{% trans 'Email successfully sent!' %}</div>
+                    <div class="email-status text-error hide">{% trans 'Error sending email.' %}</div></div>
+                    <div class="btn-toolbar pull-right">
+                        <a href="#" class="btn cancel-button" data-dismiss="modal" data-bind="click: resetModal">Close</a>
+                        <button class="btn btn-success send-button" type="button"
+                               data-loading-text="{% trans 'Sending...' %}"
+                               data-bind="click: sendEmail">{% trans 'Send Email' %}</button>
                     </div>
                 </div>
             </form>
@@ -199,3 +212,5 @@
         {% endif %}
     </div>
 {% endblock %}
+
+{% block column_style %}{% if layout_flush_content %}hq-flush-content{% endif %}{% endblock %}

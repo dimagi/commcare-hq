@@ -24,7 +24,7 @@
                 reminder = reminders[i];
                 if (reminder) {
                     var recipient_text;
-                    if (reminder.recipient_type == "USER" || reminder.recipient_type == "OWNER" || reminder.recipient_type == "CASE") {
+                    if (reminder.recipient_type == "USER" || reminder.recipient_type == "OWNER" || reminder.recipient_type == "CASE" || reminder.recipient_type == "PARENT_CASE" || reminder.recipient_type == "SUBCASE") {
                         var case_url = '<a href="' + reminder.case_url + '">' + reminder.case_name + '</a>';
                         if (reminder.recipient_type == "CASE") {
                             recipient_text = case_url;

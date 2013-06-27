@@ -32,3 +32,31 @@
         </form>
     {% endblock %}
 {% endblock %}
+{% block js-inline %}
+    <script type="text/javascript">
+    var areas = {{ areas|JSON }};
+    function update_subareas() {
+        var $subarea = $subarea || $('[name="sub_area"]');
+        var chosen_sub_area = $subarea.val();
+        var area = $('[name="area"]').val();
+        var valid_sub_areas = [];
+        if (area) {
+            valid_sub_areas = areas[area];
+        }
+        $subarea.empty().append($("<option></option>").attr("value", '').text('---'));
+        _.each(valid_sub_areas, function(val) {
+            var $opt = $("<option></option>").attr("value", val).text(val);
+            if (val == chosen_sub_area) {
+                $opt.attr("selected", "selected");
+            }
+             $subarea.append($opt);
+        });
+    }
+    $(function() {
+        update_subareas();
+        $('[name="area"]').change(function() {
+            update_subareas();
+        })
+    });
+    </script>
+{% endblock %}

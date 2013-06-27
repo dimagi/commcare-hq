@@ -81,6 +81,7 @@ urlpatterns = patterns('',
     (r'^tropo/', include('corehq.apps.tropo.urls')),
     (r'^kookoo/', include('corehq.apps.kookoo.urls')),
     (r'^yo/', include('corehq.apps.yo.urls')),
+    (r'^sislog/', include('corehq.apps.sislog.urls')),
     (r'^langcodes/', include('langcodes.urls')),
     (r'^builds/', include('corehq.apps.builds.urls')),
     (r'^downloads/temp/', include('soil.urls')),
@@ -96,6 +97,7 @@ urlpatterns = patterns('',
     url(r'^bsd_license/$', 'corehq.apps.hqwebapp.views.bsd_license', name='bsd_license'),
     url(r'^exchange/cda_basic/$', 'django.views.generic.simple.direct_to_template', {'template': 'cda.html'}, name='cda_basic'),
     url(r'^exchange/cda/$', 'corehq.apps.hqwebapp.views.cda', name='cda'),
+    url(r'^sms_in/$', 'corehq.apps.sms.views.sms_in', name='sms_in'),
 ) + patterns('', *LOCAL_APP_URLS)
 
 # django rosetta support if configured

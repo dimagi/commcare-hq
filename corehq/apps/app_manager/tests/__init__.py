@@ -12,3 +12,8 @@ except ImportError, e:
     import logging
     logging.exception(e)
     raise
+
+from corehq.apps.app_manager.util import is_valid_case_type
+__test__ = {
+    'is_valid_case_type': is_valid_case_type
+}

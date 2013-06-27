@@ -7,7 +7,7 @@ import types
 from couchforms.signals import submission_error_received
 
 DOMAIN_RE = re.compile(r'^/a/(\S+)/receiver(/(.*))?/?$')
-APP_ID_RE = re.compile(r'^/a/\S+/receiver/(.*)/$')
+APP_ID_RE = re.compile(r'^/a/\S+/receiver/(?:secure/)?(.*)/$')
 
 def scrub_meta(sender, xform):
     """

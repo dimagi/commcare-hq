@@ -1,4 +1,3 @@
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.models import Product, CommtrackConfig,\
     CommtrackActionConfig, SupplyPointType, SupplyPointProductCase, SupplyPointCase
 from corehq.apps.commtrack import const
@@ -37,6 +36,7 @@ def make_supply_point(domain, location, owner_id=None):
         case_id=id,
         create=True,
         version=V2,
+        case_name=location.name,
         user_id=user_id,
         owner_id=owner_id,
         case_type=const.SUPPLY_POINT_CASE_TYPE,
@@ -55,10 +55,12 @@ def make_supply_point_product(supply_point_case, product_uuid, owner_id=None):
     user_id = get_commtrack_user_id(domain)
     owner_id = owner_id or get_owner_id(supply_point_case) or user_id
     username = const.COMMTRACK_USERNAME
+    product_name = Product.get(product_uuid).name
     caseblock = CaseBlock(
         case_id=id,
         create=True,
         version=V2,
+        case_name=product_name,
         user_id=user_id,
         owner_id=owner_id,
         case_type=const.SUPPLY_POINT_PRODUCT_CASE_TYPE,

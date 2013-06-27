@@ -3,28 +3,18 @@ from pytz import timezone
 from datetime import timedelta, datetime, date, time
 import re
 from couchdbkit.ext.django.schema import *
-from django.conf import settings
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.sms.api import send_sms, send_sms_to_verified_number
-from corehq.apps.sms.models import CallLog, CommConnectCase
+from corehq.apps.sms.models import CommConnectCase
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.groups.models import Group
-import logging
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
 from dateutil.parser import parse
-from corehq.apps.smsforms.models import XFormsSession
-from corehq.apps.smsforms.app import start_session
-from corehq.apps.app_manager.models import get_app, Form
-from corehq.apps.sms.util import format_message_list
 from corehq.apps.reminders.util import get_form_name
-from touchforms.formplayer.api import current_question
-from corehq.apps.sms.mixin import VerifiedNumber
 from couchdbkit.exceptions import ResourceConflict
 from corehq.apps.sms.util import create_task, close_task, update_task
 from corehq.apps.smsforms.app import submit_unfinished_form
 from dimagi.utils.couch import LockableMixIn
-from dimagi.utils.couch.database import get_db
 
 METHOD_SMS = "sms"
 METHOD_SMS_CALLBACK = "callback"
@@ -57,8 +47,10 @@ UI_CHOICES = [UI_SIMPLE_FIXED, UI_COMPLEX]
 RECIPIENT_USER = "USER"
 RECIPIENT_OWNER = "OWNER"
 RECIPIENT_CASE = "CASE"
+RECIPIENT_PARENT_CASE = "PARENT_CASE"
+RECIPIENT_SUBCASE = "SUBCASE"
 RECIPIENT_SURVEY_SAMPLE = "SURVEY_SAMPLE"
-RECIPIENT_CHOICES = [RECIPIENT_USER, RECIPIENT_OWNER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE]
+RECIPIENT_CHOICES = [RECIPIENT_USER, RECIPIENT_OWNER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE, RECIPIENT_PARENT_CASE, RECIPIENT_SUBCASE]
 
 FIRE_TIME_DEFAULT = "DEFAULT"
 FIRE_TIME_CASE_PROPERTY = "CASE_PROPERTY"
@@ -80,6 +72,10 @@ UI_FREQUENCY_CHOICES = [UI_FREQUENCY_ADVANCED]
 
 QUESTION_RETRY_CHOICES = [1, 2, 3, 4, 5]
 
+FORM_TYPE_ONE_BY_ONE = "ONE_BY_ONE" # Answer each question one at a time
+FORM_TYPE_ALL_AT_ONCE = "ALL_AT_ONCE" # Complete the entire form with just one sms using the delimiter to separate answers
+FORM_TYPE_CHOICES = [FORM_TYPE_ONE_BY_ONE, FORM_TYPE_ALL_AT_ONCE]
+
 # This time is used when the case property used to specify the reminder time isn't a valid time
 # TODO: Decide whether to keep this or retire the reminder
 DEFAULT_REMINDER_TIME = time(12, 0)
@@ -93,6 +89,22 @@ def looks_like_timestamp(value):
         return (regex.match(value) is not None)
     except Exception:
         return False
+
+def case_matches_criteria(case, match_type, case_property, value_to_match):
+    result = False
+    case_property_value = case.get_case_property(case_property)
+    if match_type == MATCH_EXACT:
+        result = (case_property_value == value_to_match) and (value_to_match is not None)
+    elif match_type == MATCH_ANY_VALUE:
+        result = case_property_value is not None
+    elif match_type == MATCH_REGEX:
+        try:
+            regex = re.compile(value_to_match)
+            result = regex.match(str(case_property_value)) is not None
+        except Exception:
+            result = False
+    
+    return result
 
 class MessageVariable(object):
     def __init__(self, variable):
@@ -292,6 +304,12 @@ class CaseReminderHandler(Document):
     recipient = StringProperty(choices=RECIPIENT_CHOICES, default=RECIPIENT_USER)
     ui_frequency = StringProperty(choices=UI_FREQUENCY_CHOICES, default=UI_FREQUENCY_ADVANCED) # This will be used to simplify the scheduling process in the ui
     sample_id = StringProperty()
+    
+    # Only used when recipient is RECIPIENT_SUBCASE.
+    # All subcases matching the given criteria will be the recipients.
+    recipient_case_match_property = StringProperty()
+    recipient_case_match_type = StringProperty(choices=MATCH_TYPE_CHOICES)
+    recipient_case_match_value = StringProperty()
     
     # Only applies when method is "survey".
     # If this is True, on the last survey timeout, instead of resending the current question, 
@@ -567,7 +585,9 @@ class CaseReminderHandler(Document):
         # Retrieve the list of individual recipients
         recipient = reminder.recipient
         
-        if isinstance(recipient, CouchUser) or isinstance(recipient, CommCareCase):
+        if isinstance(recipient, list) and len(recipient) > 0:
+            recipients = recipient
+        elif isinstance(recipient, CouchUser) or isinstance(recipient, CommCareCase):
             recipients = [recipient]
         elif isinstance(recipient, Group):
             recipients = recipient.get_users(is_active=True, only_commcare=False)
@@ -663,20 +683,7 @@ class CaseReminderHandler(Document):
             if reminder:
                 reminder.retire()
         else:
-            # Retrieve the value of the start property
-            actual_start_value = case.get_case_property(self.start_property)
-            if self.start_match_type == MATCH_EXACT:
-                start_condition_reached = (actual_start_value == self.start_value) and (self.start_value is not None)
-            elif self.start_match_type == MATCH_ANY_VALUE:
-                start_condition_reached = actual_start_value is not None
-            elif self.start_match_type == MATCH_REGEX:
-                try:
-                    regex = re.compile(self.start_value)
-                    start_condition_reached = regex.match(str(actual_start_value)) is not None
-                except Exception:
-                    start_condition_reached = False
-            else:
-                start_condition_reached = False
+            start_condition_reached = case_matches_criteria(case, self.start_match_type, self.start_property, self.start_value)
             start_date = case.get_case_property(self.start_date)
             if (not isinstance(start_date, date)) and not (isinstance(start_date, datetime)):
                 try:
@@ -814,7 +821,6 @@ class CaseReminderHandler(Document):
         reminders = self.get_reminders()
         self.doc_type += "-Deleted"
         for reminder in reminders:
-            print "Retiring %s" % reminder._id
             reminder.retire()
         self.save()
 
@@ -888,6 +894,23 @@ class CaseReminder(Document, LockableMixIn):
             return SurveySample.get(self.sample_id)
         elif handler.recipient == RECIPIENT_OWNER:
             return get_wrapped_owner(get_owner_id(self.case))
+        elif handler.recipient == RECIPIENT_PARENT_CASE:
+            indices = self.case.indices
+            for index in indices:
+                # TODO: The data model allows for more than one parent.
+                # For now, send to the first parent, but need to decide how to handle multiple ones.
+                if index.identifier == "parent":
+                    return CommConnectCase.get(index.referenced_id)
+            return None
+        elif handler.recipient == RECIPIENT_SUBCASE:
+            indices = self.case.reverse_indices
+            recipients = []
+            for index in indices:
+                if index.identifier == "parent":
+                    subcase = CommConnectCase.get(index.referenced_id)
+                    if case_matches_criteria(subcase, handler.recipient_case_match_type, handler.recipient_case_match_property, handler.recipient_case_match_value):
+                        recipients.append(subcase)
+            return recipients
         else:
             return None
     
@@ -903,7 +926,12 @@ class CaseReminder(Document, LockableMixIn):
 class SurveyKeyword(Document):
     domain = StringProperty()
     keyword = StringProperty()
+    form_type = StringProperty(choices=FORM_TYPE_CHOICES, default=FORM_TYPE_ONE_BY_ONE)
     form_unique_id = StringProperty()
+    delimiter = StringProperty() # Default is None, in which case the delimiter is any consecutive white space
+    use_named_args = BooleanProperty()
+    named_args = DictProperty() # Dictionary of {argument name in the sms (caps) : form question xpath}
+    named_args_separator = StringProperty()
     
     def retire(self):
         self.doc_type += "-Deleted"

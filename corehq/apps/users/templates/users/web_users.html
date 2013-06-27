@@ -40,6 +40,18 @@
     </script>
     <script>
         $(function () {
+            $('.resend-invite').click(function () {
+                var post_url = '{% url reinvite_web_user domain %}';
+                var doc_id = this.getAttribute('data-invite');
+                var self = this;
+                $.post(post_url, {invite: doc_id},
+                    function(data) {
+                        $(self).parent().text(data.response);
+                        self.remove();
+                    }
+                )
+            }),
+
             $('#user-roles-table').userRoles({
                 userRoles: {{ user_roles|JSON }},
                 defaultRole: {{ default_role|JSON }},
@@ -83,6 +95,7 @@
                 <th>{% trans "E-mail" %}</th>
                 <th>{% trans "Role" %}</th>
                 <th>{% trans "Date" %} (UTC)</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -96,6 +109,13 @@
                 </td>
                 <td>
                     {{ invitation.invited_on }}
+                </td>
+                <td>
+                    <div>
+                        <a class="resend-invite btn" data-invite={{ invitation.get_id }}>
+                            {% trans "Resend Invitation" %}
+                        </a>
+                    </div>
                 </td>
             </tr>
         {% endfor %}

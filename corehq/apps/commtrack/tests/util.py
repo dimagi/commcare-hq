@@ -20,16 +20,30 @@ TEST_NUMBER = '5551234'
 TEST_PASSWORD = 'secret'
 TEST_BACKEND = 'test-backend'
 
-MAIN_USER = {
-    'username': TEST_USER,
-    'phone_number': TEST_NUMBER,
-    'first_name': 'main',
-    'last_name': 'user',
-    'user_data': {
-        const.UserRequisitionRoles.REQUESTER: True,
-        const.UserRequisitionRoles.RECEIVER: True,
+REPORTING_USERS = {
+    'roaming': {
+        'username': TEST_USER + '-roaming',
+        'phone_number': TEST_NUMBER,
+        'first_name': 'roaming',
+        'last_name': 'reporter',
+        'user_data': {
+            const.UserRequisitionRoles.REQUESTER: True,
+            const.UserRequisitionRoles.RECEIVER: True,
+        },
+    },
+    'fixed': {
+        'username': TEST_USER + '-fixed',
+        'phone_number': str(int(TEST_NUMBER) + 1),
+        'first_name': 'fixed',
+        'last_name': 'reporter',
+        'user_data': {
+            const.UserRequisitionRoles.REQUESTER: True,
+            const.UserRequisitionRoles.RECEIVER: True,
+        },
+        'home_loc': 'loc1',
     },
 }
+
 APPROVER_USER = {
     'username': 'test-approver',
     'phone_number': '5550000',
@@ -40,10 +54,10 @@ APPROVER_USER = {
     },
 }
 
-FILLER_USER = {
-    'username': 'test-filler',
+PACKER_USER = {
+    'username': 'test-packer',
     'phone_number': '5550001',
-    'first_name': 'filler',
+    'first_name': 'packer',
     'last_name': 'user',
     'user_data': {
         const.UserRequisitionRoles.SUPPLIER: True,
@@ -56,19 +70,23 @@ def bootstrap_domain(domain_name=TEST_DOMAIN, requisitions_enabled=False):
     domain_obj = create_domain(domain_name)
     domain_obj.commtrack_enabled = True
     domain_obj.save(**get_safe_write_kwargs())
-    bootstrap_default(domain_name, requisitions_enabled)
+    bootstrap_default(domain_obj, requisitions_enabled)
+
     return domain_obj
 
 
-def bootstrap_user(username=TEST_USER, domain=TEST_DOMAIN,
+def bootstrap_user(setup, username=TEST_USER, domain=TEST_DOMAIN,
                    phone_number=TEST_NUMBER, password=TEST_PASSWORD,
                    backend=TEST_BACKEND, first_name='', last_name='',
-                   user_data=None,
+                   home_loc=None, user_data=None,
                    ):
     user_data = user_data or {}
     user = CommCareUser.create(domain, username, password, phone_numbers=[TEST_NUMBER],
                                user_data=user_data, first_name=first_name,
                                last_name=last_name)
+    if home_loc == setup.loc.site_code:
+        user.commtrack_location = setup.loc._id
+        user.save()
     user.save_verified_number(domain, phone_number, verified=True, backend_id=backend)
     return user
 
@@ -88,21 +106,23 @@ class CommTrackTest(TestCase):
 
         self.backend = test.bootstrap(TEST_BACKEND, to_console=True)
         self.domain = bootstrap_domain(requisitions_enabled=self.requisitions_enabled)
-        self.user = bootstrap_user(**MAIN_USER)
-        self.verified_number = self.user.get_verified_number()
+        self.loc = make_loc('loc1')
+
+        self.reporters = dict((k, bootstrap_user(self, **v)) for k, v in REPORTING_USERS.iteritems())
+        # backwards compatibility
+        self.user = self.reporters['roaming']
 
         # bootstrap additional users for requisitions
-        self.approver = bootstrap_user(**APPROVER_USER)
-        self.filler = bootstrap_user(**FILLER_USER)
+        self.approver = bootstrap_user(self, **APPROVER_USER)
+        self.packer = bootstrap_user(self, **PACKER_USER)
 
-        self.users = [self.user, self.approver, self.filler]
+        self.users = self.reporters.values() + [self.approver, self.packer]
         # everyone should be in a group.
         self.group = Group(domain=TEST_DOMAIN, name='commtrack-folks',
                            users=[u._id for u in self.users],
                            case_sharing=True)
         self.group.save()
 
-        self.loc = make_loc('loc1')
         self.sp = make_supply_point(self.domain.name, self.loc, owner_id=self.group._id)
         self.products = Product.by_domain(self.domain.name)
         self.assertEqual(3, len(self.products))

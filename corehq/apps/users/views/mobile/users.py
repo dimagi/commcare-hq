@@ -20,7 +20,7 @@ from corehq.apps.users.forms import CommCareAccountForm
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
 from corehq.apps.users.bulkupload import create_or_update_users_and_groups,\
-    check_headers, dump_users_and_groups, GroupNameError
+    check_headers, dump_users_and_groups, GroupNameError, UserUploadError
 from corehq.apps.users.tasks import bulk_upload_async
 from corehq.apps.users.views import (_users_context, require_can_edit_web_users,
     require_can_edit_commcare_users, account as users_account)
@@ -252,7 +252,7 @@ class UploadCommCareUsers(TemplateView):
 
         try:
             check_headers(self.user_specs)
-        except Exception, e:
+        except UserUploadError as e:
             return HttpResponseBadRequest(e)
 
         response = HttpResponse()
@@ -277,18 +277,24 @@ class UploadCommCareUsers(TemplateView):
 
         if redirect:
             if not async:
-                messages.success(request, 'Your bulk user upload is complete!')
+                messages.success(request,
+                                 _('Your bulk user upload is complete!'))
             problem_rows = []
             for row in response_rows:
                 if row['flag'] not in ('updated', 'created'):
                     problem_rows.append(row)
             if problem_rows:
-                messages.error(request, 'However, we ran into problems with the following users:')
+                messages.error(
+                    request,
+                    _('However, we ran into problems with the following users:')
+                )
                 for row in problem_rows:
                     if row['flag'] == 'missing-data':
-                        messages.error(request, 'A row with no username was skipped')
+                        messages.error(request,
+                                       _('A row with no username was skipped'))
                     else:
-                        messages.error(request, '{username}: {flag}'.format(**row))
+                        messages.error(request,
+                                       '{username}: {flag}'.format(**row))
             return HttpResponseRedirect(redirect)
         else:
             return response

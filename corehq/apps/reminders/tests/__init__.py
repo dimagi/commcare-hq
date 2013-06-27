@@ -50,6 +50,10 @@ class ReminderTestCase(TestCase):
         )
         cls.case.save()
 
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete()
+
     def test_ok(self):
         self.assertEqual(self.handler.events[0].message['en'], self.message)
         self.assertEqual(self.handler.get_reminder(self.case), None)
@@ -116,9 +120,6 @@ class ReminderTestCase(TestCase):
         self.assertEqual(reminder.last_fired, last_fired)
         self.assertEqual(reminder.active, False)
 
-    @classmethod
-    def tearDownClass(cls):
-        pass
 
 class ReminderIrregularScheduleTestCase(TestCase):
     """
@@ -183,6 +184,11 @@ class ReminderIrregularScheduleTestCase(TestCase):
             user_id=cls.user_id,
         )
         cls.case.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete()
+
 
     def test_ok(self):
         self.assertEqual(self.handler.get_reminder(self.case), None)
@@ -270,10 +276,6 @@ class ReminderIrregularScheduleTestCase(TestCase):
         self.assertEqual(reminder.active, False)
 
 
-    @classmethod
-    def tearDownClass(cls):
-        pass
-
 class ReminderCallbackTestCase(TestCase):
     """
     This use case represents a reminder schedule with an expected callback:
@@ -336,6 +338,10 @@ class ReminderCallbackTestCase(TestCase):
         )
         cls.case.save()
         cls.user.save_verified_number("test", "14445551234", True, None)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete()
 
     def test_ok(self):
         self.assertEqual(self.handler.get_reminder(self.case), None)
@@ -533,10 +539,6 @@ class ReminderCallbackTestCase(TestCase):
         self.assertNotEqual(event, None)
         self.assertEqual(event.status, CALLBACK_RECEIVED)
 
-    @classmethod
-    def tearDownClass(cls):
-        pass
-
 
 class CaseTypeReminderTestCase(TestCase):
     @classmethod
@@ -633,6 +635,10 @@ class CaseTypeReminderTestCase(TestCase):
             user_id=cls.user_id
         )
         cls.case2.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete()
 
     def test_ok(self):
         # Initial condition
@@ -742,10 +748,6 @@ class CaseTypeReminderTestCase(TestCase):
            ,prev_now + timedelta(days=self.handler2.start_offset)
         )
 
-    @classmethod
-    def tearDownClass(cls):
-        pass
-
 class StartConditionReminderTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -784,6 +786,11 @@ class StartConditionReminderTestCase(TestCase):
             user_id=cls.user_id
         )
         cls.case1.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete()
+
 
     def test_ok(self):
         #
@@ -962,11 +969,6 @@ class StartConditionReminderTestCase(TestCase):
         self.assertEqual(reminder, None)
         self.assertEqual(CaseReminder.get(old_reminder_id).doc_type, "CaseReminder-Deleted")
 
-
-    @classmethod
-    def tearDownClass(cls):
-        pass
-
 class ReminderLockTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -1006,6 +1008,11 @@ class ReminderLockTestCase(TestCase):
         )
         cls.case1.save()
 
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete()
+
+
     def test_ok(self):
         # Spawn the reminder with an "ok" start condition value
         CaseReminderHandler.now = datetime(year=2012, month=2, day=17, hour=12, minute=0)
@@ -1042,10 +1049,6 @@ class ReminderLockTestCase(TestCase):
         self.assertEqual(reminder.acquire_lock(CaseReminderHandler.now), True)
         self.assertEqual(reminder.acquire_lock(CaseReminderHandler.now), False)
         self.assertEqual(reminder.acquire_lock(CaseReminderHandler.now + LOCK_EXPIRATION + timedelta(minutes = 1)), True)
-
-    @classmethod
-    def tearDownClass(cls):
-        pass
 
 
 class MessageTestCase(TestCase):

@@ -92,8 +92,12 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
         raise Http404
 
     configs = ReportConfig.by_domain_and_owner(domain, user._id).all()
-    scheduled_reports = [s for s in ReportNotification.by_domain_and_owner(domain, user._id).all()
-                         if not hasattr(s, 'report_slug') or s.report_slug != 'admin_domains']
+    def _is_valid(rn):
+        # the _id check is for weird bugs we've seen in the wild that look like
+        # oddities in couch.
+        return hasattr(rn, "_id") and rn._id and (not hasattr(rn, 'report_slug') or rn.report_slug != 'admin_domains')
+
+    scheduled_reports = [rn for rn in ReportNotification.by_domain_and_owner(domain, user._id).all() if _is_valid(rn)]
 
     context = dict(
         couch_user=request.couch_user,
@@ -298,7 +302,7 @@ def custom_export(req, domain):
 
     if req.method == "POST":
         helper.update_custom_export()
-        messages.success(req, "Custom export created! You can continue editing here.")
+        messages.success(req, _("Custom export created!"))
         return _redirect_to_export_home(helper.export_type, domain, ajax=True)
 
     schema = build_latest_schema(export_tag)
@@ -421,8 +425,8 @@ def touch_saved_reports_views(user, domain):
     homepage.
 
     """
-    ReportConfig.by_domain_and_owner(domain, user._id, limit=1).all()
-    ReportNotification.by_domain_and_owner(domain, user._id, limit=1).all()
+    ReportConfig.by_domain_and_owner(domain, user._id, limit=1, stale=False).all()
+    ReportNotification.by_domain_and_owner(domain, user._id, limit=1, stale=False).all()
 
 
 @login_and_domain_required
@@ -523,11 +527,11 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
 
     if form.cleaned_data['send_to_owner']:
         send_HTML_email(subject, request.couch_user.get_email(), body,
-                        email_from=settings.HQ_NOTIFICATIONS_EMAIL)
+                        email_from=settings.DEFAULT_FROM_EMAIL)
 
     if form.cleaned_data['recipient_emails']:
         for recipient in form.cleaned_data['recipient_emails']:
-            send_HTML_email(subject, recipient, body, email_from=settings.HQ_NOTIFICATIONS_EMAIL)
+            send_HTML_email(subject, recipient, body, email_from=settings.DEFAULT_FROM_EMAIL)
 
     return HttpResponse()
 
@@ -622,13 +626,17 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
 @require_POST
 def delete_scheduled_report(request, domain, scheduled_report_id):
     user_id = request.couch_user._id
-    rep = ReportNotification.get(scheduled_report_id)
+    try:
+        rep = ReportNotification.get(scheduled_report_id)
+    except ResourceNotFound:
+        # was probably already deleted by a fast-clicker.
+        pass
+    else:
+        if user_id != rep.owner._id:
+            return HttpResponseBadRequest()
 
-    if user_id != rep.owner._id:
-        return HttpResponseBadRequest()
-
-    rep.delete()
-    messages.success(request, "Scheduled report deleted!")
+        rep.delete()
+        messages.success(request, "Scheduled report deleted!")
     return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
 
 @login_and_domain_required
@@ -701,6 +709,7 @@ def view_scheduled_report(request, domain, scheduled_report_id):
     return get_scheduled_report_response(
         request.couch_user, domain, scheduled_report_id, email=False)
 
+
 @require_case_view_permission
 @login_and_domain_required
 @require_GET
@@ -729,7 +738,7 @@ def case_details(request, domain, case_id):
         username = CommCareUser.get_by_user_id(case.user_id, domain).raw_username
     except Exception:
         username = None
-
+    
     return render(request, "reports/reportdata/case_details.html", {
         "domain": domain,
         "case_id": case_id,
@@ -835,13 +844,10 @@ def download_cases(request, domain):
 
     return generate_payload(payload_func)
 
+
 def _get_form_context(request, domain, instance_id):
     timezone = util.get_timezone(request.couch_user.user_id, domain)
-
-    try:
-        instance = XFormInstance.get(instance_id)
-    except Exception:
-        raise Http404()
+    instance = _get_form_or_404(instance_id)
     try:
         assert domain == instance.domain
     except AssertionError:
@@ -856,6 +862,14 @@ def _get_form_context(request, domain, instance_id):
     }
     context['form_render_options'] = context
     return context
+
+
+def _get_form_or_404(id):
+    # maybe this should be a more general utility a-la-django's get_object_or_404
+    try:
+        return XFormInstance.get(id)
+    except ResourceNotFound:
+        raise Http404()
 
 
 @require_form_view_permission
@@ -890,20 +904,22 @@ def case_form_data(request, domain, case_id, xform_id):
     return HttpResponse(render_form(
             context['instance'], domain, options=context))
 
-
 @require_form_view_permission
 @login_and_domain_required
 @require_GET
 def download_form(request, domain, instance_id):
-    instance = XFormInstance.get(instance_id)
+    instance = _get_form_or_404(instance_id)
     assert(domain == instance.domain)
     return couchforms_views.download_form(request, instance_id)
 
 @require_form_view_permission
 @login_and_domain_required
 @require_GET
-def download_attachment(request, domain, instance_id, attachment):
-    instance = XFormInstance.get(instance_id)
+def download_attachment(request, domain, instance_id):
+    attachment = request.GET.get('attachment', False)
+    if not attachment:
+        return HttpResponseBadRequest("Invalid attachment.")
+    instance = _get_form_or_404(instance_id)
     assert(domain == instance.domain)
     return couchforms_views.download_attachment(request, instance_id, attachment)
 
@@ -911,7 +927,7 @@ def download_attachment(request, domain, instance_id, attachment):
 @require_permission(Permissions.edit_data)
 @require_POST
 def archive_form(request, domain, instance_id):
-    instance = XFormInstance.get(instance_id)
+    instance = _get_form_or_404(instance_id)
     assert instance.domain == domain
     if instance.doc_type == "XFormInstance": 
         instance.archive()
@@ -938,7 +954,7 @@ def archive_form(request, domain, instance_id):
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 def unarchive_form(request, domain, instance_id):
-    instance = XFormInstance.get(instance_id)
+    instance = _get_form_or_404(instance_id)
     assert instance.domain == domain
     if instance.doc_type == "XFormArchived":
         instance.doc_type = "XFormInstance"

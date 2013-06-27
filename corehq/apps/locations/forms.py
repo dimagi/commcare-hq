@@ -5,6 +5,7 @@ from django.template import Template, Context
 from corehq.apps.locations.util import load_locs_json, allowed_child_types, location_custom_properties
 from django.utils.safestring import mark_safe
 from corehq.apps.locations.signals import location_created, location_edited
+import re
 
 class ParentLocWidget(forms.Widget):
     def render(self, name, value, attrs=None):
@@ -25,6 +26,8 @@ class LocationForm(forms.Form):
     parent_id = forms.CharField(label='Parent', required=False, widget=ParentLocWidget())
     name = forms.CharField(max_length=100)
     location_type = forms.CharField(widget=LocTypeWidget())
+    coordinates = forms.CharField(max_length=30, required=False,
+                                  help_text="enter as 'lat lon' or 'lat, lon' (e.g., '42.3652 -71.1029')")
 
     strict = True # optimization hack: strict or loose validation 
     def __init__(self, location, bound_data=None, *args, **kwargs):
@@ -34,6 +37,8 @@ class LocationForm(forms.Form):
         # seed form data from couch doc
         kwargs['initial'] = self.location._doc
         kwargs['initial']['parent_id'] = self.cur_parent_id
+        lat, lon = (getattr(self.location, k, None) for k in ('latitude', 'longitude'))
+        kwargs['initial']['coordinates'] = '%s, %s' % (lat, lon) if lat is not None else ''
 
         super(LocationForm, self).__init__(bound_data, *args, **kwargs)
         self.fields['parent_id'].widget.domain = self.location.domain
@@ -96,6 +101,23 @@ class LocationForm(forms.Form):
 
         return loc_type
 
+    def clean_coordinates(self):
+        coords = self.cleaned_data['coordinates'].strip()
+        if not coords:
+            return None
+        pieces = re.split('[ ,]+', coords)
+
+        if len(pieces) != 2:
+            raise forms.ValidationError('could not understand coordinates')
+
+        try:
+            lat = float(pieces[0])
+            lon = float(pieces[1])
+        except ValueError:
+            raise forms.ValidationError('could not understand coordinates')
+
+        return [lat, lon]
+
     def clean(self):
         super(LocationForm, self).clean()
 
@@ -116,6 +138,9 @@ class LocationForm(forms.Form):
 
         for field in ('name', 'location_type'):
             setattr(location, field, self.cleaned_data[field])
+        coords = self.cleaned_data['coordinates']
+        setattr(location, 'latitude', coords[0] if coords else None)
+        setattr(location, 'longitude', coords[1] if coords else None)
         location.lineage = Location(parent=self.cleaned_data['parent_id']).lineage
 
         for k, v in self.cleaned_data.iteritems():

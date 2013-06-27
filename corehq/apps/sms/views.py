@@ -7,7 +7,7 @@ from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.shortcuts import render
-
+from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_SMS
 from corehq.apps.sms.api import send_sms, incoming, send_sms_with_backend
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users import models as user_models
@@ -47,6 +47,7 @@ def compose_message(request, domain, template="sms/compose.html"):
     return render(request, template, context)
 
 def post(request, domain):
+    # TODO: Figure out if this is being used anywhere and remove it if not
     """
     We assume sms sent to HQ will come in the form
     http://hqurl.com?username=%(username)s&password=%(password)s&id=%(phone_number)s&text=%(message)s
@@ -75,6 +76,24 @@ def post(request, domain):
     msg.save()
     return HttpResponse('OK')     
 
+@require_api_user_permission(PERMISSION_POST_SMS)
+def sms_in(request):
+    """
+    CommCareHQ's generic inbound sms post api, requiring an ApiUser with permission to post sms.
+    The request must be a post, and must have the following post parameters:
+        username - ApiUser username
+        password - ApiUser password
+        phone_number - phone number message was sent from
+        message - text of message
+    """
+    backend_api = "HQ_HTTP_INBOUND"
+    phone_number = request.POST.get("phone_number", None)
+    message = request.POST.get("message", None)
+    if phone_number is None or message is None:
+        return HttpResponse("Please specify 'phone_number' and 'message' parameters.", status=400)
+    else:
+        incoming(phone_number, message, backend_api)
+        return HttpResponse("OK")
 
 def get_sms_autocomplete_context(request, domain):
     """A helper view for sms autocomplete"""
@@ -83,7 +102,7 @@ def get_sms_autocomplete_context(request, domain):
     )
     groups = Group.view("groups/by_domain", key=domain, include_docs=True)
 
-    contacts = []
+    contacts = ["[send to all]"]
     contacts.extend(['%s [group]' % group.name for group in groups])
     user_id = None
     for user in phone_users:
@@ -111,9 +130,19 @@ def send_to_recipients(request, domain):
 
         unknown_usernames = []
         GROUP = "[group]"
+        send_to_all_checked = False
 
         for recipient in recipients:
-            if recipient.endswith(GROUP):
+            if recipient == "[send to all]":
+                send_to_all_checked = True
+                phone_users = CouchUser.view("users/phone_users_by_domain",
+                    startkey=[domain], endkey=[domain, {}], include_docs=True
+                )
+                for user in phone_users:
+                    usernames.append(user.username)
+                group_names = []
+                break
+            elif (not send_to_all_checked) and recipient.endswith(GROUP):
                 name = recipient[:-len(GROUP)].strip()
                 group_names.append(name)
             elif re.match(r'^\+\d+', recipient): # here we expect it to have a plus sign
@@ -129,7 +158,7 @@ def send_to_recipients(request, domain):
                     phone_numbers.append((phone_users[0], recipient))
                 else:
                     phone_numbers.append((None, recipient))
-            elif re.match(r'[\w\.]+', recipient):
+            elif (not send_to_all_checked) and re.match(r'[\w\.]+', recipient):
                 usernames.append(recipient)
             else:
                 unknown_usernames.append(recipient)

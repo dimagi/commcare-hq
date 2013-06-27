@@ -13,6 +13,7 @@ urlpatterns = patterns('corehq.apps.orgs.views',
     url(r'^(?P<org>[\w\.-]+)/add_team/$', 'orgs_add_team', name='orgs_add_team'),
     url(r'^(?P<org>[\w\.-]+)/logo/$', 'orgs_logo', name='orgs_logo'),
     url(r'^(?P<org>[\w\.-]+)/members/$', 'orgs_members', name='orgs_members'),
+    url(r'^(?P<org>[\w\.-]+)/set_admin/$', 'set_admin', name='orgs_set_admin'),
 
     url(r'^(?P<org>[\w\.-]+)/teams/$', 'orgs_teams', name='orgs_teams'),
     url(r'^(?P<org>[\w\.-]+)/update_team_info/$', 'orgs_update_team', name='orgs_update_team'),
@@ -29,8 +30,7 @@ urlpatterns = patterns('corehq.apps.orgs.views',
     url(r'^(?P<org>[\w\.-]+)/teams/(?P<team_id>[ \w-]+)/leave_team$', 'leave_team', name='leave_team'),
 
     url(r'^(?P<org>[\w\.-]+)/reports/$', 'base_report', name='orgs_report'),
-    url(r'^(?P<org>[\w\.-]+)/reports/stats/$', 'stats', name='orgs_stats'),
-    # url(r'^(?P<org>[\w\.-]+)/stats/$', 'stats', name='orgs_stats'),
+    url(r'^(?P<org>[\w\.-]+)/reports/stats/(?P<stat_slug>[ \w-]+)/$', 'stats', name='orgs_stats'),
     url(r'^(?P<org>[\w\.-]+)/reports/stats_data/$', 'stats_data', name='orgs_stats_data'),
 
     url(r'^(?P<org>[\w\.-]+)/join/(?P<invitation_id>[ \w-]+)/$', 'accept_invitation', name='orgs_accept_invitation'),

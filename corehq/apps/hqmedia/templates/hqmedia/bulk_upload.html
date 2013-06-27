@@ -22,7 +22,7 @@
         <code>commcare/images/image.jpg</code>.{% endblocktrans %}</p>
 
     {% for uploader in uploaders %}
-    <div id="{{ uploader.name }}">
+    <div id="{{ uploader.slug }}">
         <div class="alert alert-info hqm-not-supported hide">
             <i class="icon-warning-sign"></i>
             {% blocktrans %}

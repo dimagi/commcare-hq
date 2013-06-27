@@ -1,5 +1,5 @@
 from corehq.apps.commtrack.tests.util import CommTrackTest
-from corehq.apps.commtrack.pillows import _compute_consumption
+from corehq.pillows.commtrack import _compute_consumption
 from dimagi.utils import parsing as dateparse
 from datetime import datetime, timedelta
 import collections

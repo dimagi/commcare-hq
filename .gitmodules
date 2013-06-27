@@ -103,3 +103,6 @@
 [submodule "submodules/fluff-src"]
 	path = submodules/fluff-src
 	url = git://github.com/dimagi/fluff.git
+[submodule "submodules/care-benin-reports"]
+	path = submodules/care-benin-reports
+	url = git://github.com/dimagi/care-benin-reports.git

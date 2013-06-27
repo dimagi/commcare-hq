@@ -22,7 +22,7 @@
                 </tr>
             </thead>
             <tbody data-bind="foreach: {{ ref_type }}">
-                <tr data-bind="attr: { 'data-path': path }, event: { mediaUploadComplete: uploadComplete }">
+                <tr data-bind="attr: { 'data-hqmediapath': path }, event: { mediaUploadComplete: uploadComplete }">
                     <td class="media-type-icon"><i data-bind="attr: { class: type_icon }"></i></td>
                     <td class="media-status-icon"><i data-bind="attr: { class: status_icon }"></i></td>
                     <td><a data-toggle="modal"

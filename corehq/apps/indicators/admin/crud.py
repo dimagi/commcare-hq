@@ -38,11 +38,11 @@ class IndicatorAdminCRUDManager(BaseAdminHQTabularCRUDManager):
     def create(self, **kwargs):
         namespace = kwargs['namespace']
         del kwargs['namespace']
-        self.document_instance = self.document_class.update_or_create_unique(namespace, self.domain, **kwargs)
+        self.document_instance = self.document_class.increment_or_create_unique(namespace, self.domain, **kwargs)
 
     def update(self, **kwargs):
-        self.document_instance.last_modified = datetime.datetime.utcnow()
-        super(IndicatorAdminCRUDManager, self).update(**kwargs)
+        # update and create behave the same here
+        self.create(**kwargs)
 
 
 class FormLabelIndicatorAdminCRUDManager(IndicatorAdminCRUDManager):

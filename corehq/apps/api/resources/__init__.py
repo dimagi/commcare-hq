@@ -7,6 +7,9 @@ class dict_object(object):
     def __getattr__(self, item):
         return self.dict[item]
 
+    def __repr__(self):
+        return 'dict_object(%r)' % self.dict
+
 class JsonDefaultResourceMixIn(object):
     """
     Mixin to avoid having to get the "please append format=json to your url"

@@ -1,6 +1,6 @@
 import logging
 from django.core.cache import cache
-from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio
+from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareVideo
 from django.utils.translation import ugettext as _
 
 
@@ -66,7 +66,7 @@ class BulkMultimediaStatusCache(BaseMultimediaStatusCache):
 
     @property
     def allowed_media(self):
-        return [CommCareAudio, CommCareImage]
+        return [CommCareAudio, CommCareImage, CommCareVideo]
 
     def get_response(self):
         response = super(BulkMultimediaStatusCache, self).get_response()

@@ -11,7 +11,7 @@ class DomainPillow(AliasedElasticPillow):
     """
 
     document_class = Domain
-    couch_filter = "domain/not_snapshots"
+    couch_filter = "domain/domains_inclusive"
     es_host = settings.ELASTICSEARCH_HOST
     es_port = settings.ELASTICSEARCH_PORT
     es_timeout = 60

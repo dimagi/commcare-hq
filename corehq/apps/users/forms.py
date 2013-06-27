@@ -1,9 +1,12 @@
 from django import forms
 from django.contrib.auth.forms import SetPasswordForm
 from django.core.validators import EmailValidator, email_re
+from django.core.urlresolvers import reverse
 from django.forms.widgets import PasswordInput, HiddenInput
 from django.utils.encoding import smart_str
 from django.utils.translation import ugettext_lazy as _
+from django.template.loader import get_template
+from django.template import Template, Context
 from hqstyle.forms.widgets import BootstrapCheckboxInput, BootstrapDisabledInput
 from dimagi.utils.timezones.fields import TimeZoneField
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
@@ -89,9 +92,6 @@ class UserForm(RoleForm):
     first_name = forms.CharField(max_length=50, required=False)
     last_name = forms.CharField(max_length=50, required=False)
     email = forms.EmailField(label=_("E-mail"), max_length=75, required=False)
-    email_opt_in = forms.BooleanField(required=False,
-                                      label="",
-                                      help_text=_("Join the mailing list to receive important announcements."))
     language = forms.ChoiceField(choices=(), initial=None, required=False, help_text=_(
         "Set the default language this user "
         "sees in CloudCare applications and in reports (if applicable). "
@@ -123,7 +123,7 @@ class CommCareAccountForm(forms.Form):
     password = forms.CharField(widget=PasswordInput(), required=True, min_length=1, help_text="Only numbers are allowed in passwords")
     password_2 = forms.CharField(label='Password (reenter)', widget=PasswordInput(), required=True, min_length=1)
     domain = forms.CharField(widget=HiddenInput())
-    
+
     class Meta:
         app_label = 'users'
 
@@ -132,7 +132,7 @@ class CommCareAccountForm(forms.Form):
         if username == 'admin' or username == 'demo_user':
             raise forms.ValidationError("The username %s is reserved for CommCare." % username)
         return username
-    
+
     def clean(self):
         try:
             password = self.cleaned_data['password']
@@ -164,4 +164,29 @@ class CommCareAccountForm(forms.Form):
 
 validate_username = EmailValidator(email_re, _(u'Username contains invalid characters.'), 'invalid')
 
+class SupplyPointSelectWidget(forms.Widget):
+    def __init__(self, attrs=None, domain=None):
+        super(SupplyPointSelectWidget, self).__init__(attrs)
+        self.domain = domain
 
+    def render(self, name, value, attrs=None):
+        return get_template('locations/manage/partials/autocomplete_select_widget.html').render(Context({
+                    'name': name,
+                    'value': value,
+                    'query_url': reverse('corehq.apps.commtrack.views.api_query_supply_point', args=[self.domain]),
+                }))
+
+class CommtrackUserForm(forms.Form):
+    supply_point = forms.CharField(label='Supply Point:', required=False)
+
+    def __init__(self, *args, **kwargs):
+        domain = None
+        if 'domain' in kwargs:
+            domain = kwargs['domain']
+            del kwargs['domain']
+        super(CommtrackUserForm, self).__init__(*args, **kwargs)
+        self.fields['supply_point'].widget = SupplyPointSelectWidget(domain=domain)
+
+    def save(self, user):
+        user.commtrack_location = self.cleaned_data['supply_point']
+        user.save()

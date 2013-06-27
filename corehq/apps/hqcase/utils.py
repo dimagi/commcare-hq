@@ -1,9 +1,12 @@
 import datetime
 import uuid
-from corehq.apps.receiverwrapper.util import get_submit_url
 from dimagi.utils.parsing import json_format_datetime
 from django.template.loader import render_to_string
+
 from receiver.util import spoof_submission
+
+from corehq.apps.domain.models import Domain
+from corehq.apps.receiverwrapper.util import get_submit_url
 
 def submit_case_blocks(case_blocks, domain, username="system", user_id="",
                        xmlns='http://commcarehq.org/case'):
@@ -23,3 +26,16 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id="",
         form_xml,
         hqsubmission=False,
     )
+
+def get_case_wrapper(data):
+    from corehq.apps.commtrack.models import get_case_wrapper
+    
+    wrapper = None
+
+    try:
+        if Domain.get_by_name(data['domain']).commtrack_enabled:
+            wrapper = get_case_wrapper(data)
+    except Exception:
+        pass
+
+    return wrapper

@@ -5,8 +5,11 @@ from django.contrib.auth.models import get_hexdigest, check_password
 from django.http import HttpResponse
 from django.conf import settings
 
+PERMISSION_POST_SMS = "POST_SMS"
+
 class ApiUser(Document):
     password = StringProperty()
+    permissions = ListProperty(StringProperty)
 
     @property
     def username(self):
@@ -25,8 +28,11 @@ class ApiUser(Document):
     def check_password(self, raw_password):
         return check_password(raw_password, self.password)
 
+    def has_permission(self, permission):
+        return permission in self.permissions
+
     @classmethod
-    def create(cls, username, password):
+    def create(cls, username, password, permissions=None):
         """
         To create a new ApiUser on the server:
         ./manage.py shell
@@ -38,6 +44,7 @@ class ApiUser(Document):
         self = cls()
         self['_id'] = "ApiUser-%s" % username
         self.set_password(password)
+        self.permissions = permissions or []
         return self
 
     @classmethod
@@ -45,22 +52,35 @@ class ApiUser(Document):
         return cls.get("ApiUser-%s" % username)
 
     @classmethod
-    def auth(cls, username, password):
+    def auth(cls, username, password, permission=None):
         try:
-            return cls.get_user(username).check_password(password)
+            user = cls.get_user(username)
+            if user.check_password(password):
+                if permission is not None:
+                    return user.has_permission(permission)
+                else:
+                    return True
+            else:
+                return False
         except ResourceNotFound:
             return False
 
-def require_api_user(fn):
-    from django.views.decorators.http import require_POST
-    if settings.DEBUG:
-        return fn
-    @require_POST
-    def _outer(request, *args, **kwargs):
-        if ApiUser.auth(request.POST.get('username', ''), request.POST.get('password', '')):
-            response = fn(request, *args, **kwargs)
-        else:
-            response = HttpResponse()
-            response.status_code = 401
-        return response
-    return _outer
+def _require_api_user(permission=None):
+    def _outer2(fn):
+        from django.views.decorators.http import require_POST
+        if settings.DEBUG:
+            return fn
+        @require_POST
+        def _outer(request, *args, **kwargs):
+            if ApiUser.auth(request.POST.get('username', ''), request.POST.get('password', ''), permission):
+                response = fn(request, *args, **kwargs)
+            else:
+                response = HttpResponse()
+                response.status_code = 401
+            return response
+        return _outer
+    return _outer2
+
+require_api_user = _require_api_user()
+require_api_user_permission = _require_api_user
+
