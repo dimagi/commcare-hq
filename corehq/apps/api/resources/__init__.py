@@ -10,21 +10,23 @@ class dict_object(object):
     def __repr__(self):
         return 'dict_object(%r)' % self.dict
 
-class JsonDefaultResourceMixIn(object):
-    """
-    Mixin to avoid having to get the "please append format=json to your url"
-    message and always default to json.
-    """
-
-    def determine_format(self, request):
-        return "application/json"
-
-class JsonResource(JsonDefaultResourceMixIn, Resource):
+class JsonResource(Resource):
     """
     This can be extended to default to json formatting. 
     """
     # This exists in addition to the mixin since the order of the class
     # definitions actually matters
+
+    def determine_format(self, request):
+        format = super(JsonResource, self).determine_format(request)
+
+        # Tastypie does _not_ support text/html but also does not raise the appropriate UnsupportedFormat exception
+        # for all other unsupported formats, Tastypie has correct behavior, so we only hack around this one.
+        if format == 'text/html':
+            format = 'application/json'
+
+        return format
+
     
 class DomainSpecificResourceMixin(object):
     def get_list(self, request, **kwargs):

@@ -23,6 +23,14 @@ except IndexError:
 ADMINS = ()
 MANAGERS = ADMINS
 
+# Ensure that extraneous Tastypie formats are not actually used
+# Curiously enough, browsers prefer html, then xml, lastly (or not at all) json
+# so removing html from the this variable annoyingly makes it render as XML
+# in the browser, when we want JSON. So I've added this commented
+# to document intent, but it should only really be activated
+# when we have logic in place to treat direct browser access specially.
+#TASTYPIE_DEFAULT_FORMATS=['json', 'xml', 'yaml']
+
 # default to the system's timezone settings
 TIME_ZONE = "UTC"
 

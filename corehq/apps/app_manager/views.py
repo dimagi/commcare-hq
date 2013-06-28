@@ -1695,16 +1695,29 @@ def download_file(req, domain, app_id, path):
         'ccpr': 'commcare/profile',
         'jad': 'text/vnd.sun.j2me.app-descriptor',
         'jar': 'application/java-archive',
+        'xml': 'application/xml',
+        'txt': 'text/plain',
     }
     try:
         response = HttpResponse(mimetype=mimetype_map[path.split('.')[-1]])
     except KeyError:
         response = HttpResponse()
     try:
-        response.write(req.app.fetch_attachment('files/%s' % path))
         assert req.app.copy_of
+        if path in ('CommCare.jad', 'CommCare.jar'):
+            set_file_download(response, path)
+        else:
+            path = 'files/%s' % path
+        payload = req.app.fetch_attachment(path)
+        response.write(payload)
+        response['Content-Length'] = len(payload)
         return response
     except (ResourceNotFound, AssertionError):
+        if req.app.copy_of:
+            # never try to create these resources for a saved app
+            # they should already exist,
+            # and if they don't it's because they're still being processed
+            raise Http404()
         callback, callback_args, callback_kwargs = RegexURLResolver(r'^', 'corehq.apps.app_manager.download_urls').resolve(path)
         return callback(req, domain, app_id, *callback_args, **callback_kwargs)
 
