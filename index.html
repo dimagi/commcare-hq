@@ -119,6 +119,14 @@
                     </script>
 
                     <div class="row" data-bind="visible: page() == 'pulls'">
+                        <div data-bind="visible: pulls().fails().length > 0">
+                            <h4>Failed to load</h4>
+                            <ul data-bind="foreach: pulls().fails">
+                                <li>
+                                    <a data-bind="attr: {href: 'https://github.com/dimagi/' + name + '/pulls'}, text: name" target="_blank"></a>
+                                </li>
+                            </ul>
+                        </div>
                         <div data-bind="template: { name: 'pull-template',
                                           foreach: pulls().pulls,
                                           as: 'pull' }"></div>
@@ -141,6 +149,9 @@
                             </ul>
                         </li>
                         </ul>
+                    </script>
+                    <script type="text/html" id="fails-template">
+
                     </script>
                 </div><!--/span-->
             </div><!--/row-->

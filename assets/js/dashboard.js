@@ -28,6 +28,7 @@ var Dashboard = function () {
 
     self.startProgress = function(total) {
         self.showProgress(true);
+        self.current(0);
         self.total(total);
     }
 
@@ -92,6 +93,7 @@ var Pulls = function(dash) {
     var self = this;
 
     self.pulls = ko.observableArray();
+    self.fails = ko.observableArray();
     self.sortDir = ko.observable('asc');
     self.sortBy = ko.observable('updated');
 
@@ -108,9 +110,10 @@ var Pulls = function(dash) {
     }
 
     self.reload = function() {
-        dash.startProgress(0);
+        dash.startProgress(pullRepos.length);
         dash.progressCompletionListener = self.sort;
         self.pulls.removeAll();
+        self.fails.removeAll();
         $.each(pullRepos, function(i, name){
             self.loadPulls({name: name});
         });
@@ -127,9 +130,7 @@ var Pulls = function(dash) {
     self.loadPulls = function(repo) {
         var reponame = repo.name;
         $.get('https://api.github.com/repos/dimagi/'+ reponame +'/pulls', function(pulls) {
-            dash.total(dash.total() + pulls.length);
             $.each(pulls, function(i, pull){
-                dash.incrementProgress();
                 self.pulls.push({
                     repo: reponame,
                     url: pull.html_url,
@@ -146,6 +147,10 @@ var Pulls = function(dash) {
                 });
             });
         }).fail(function(){
+            self.fails.push({
+                name: repo.name
+            });
+        }).always(function(){
             dash.incrementProgress();
         });
     }
