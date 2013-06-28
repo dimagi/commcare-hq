@@ -222,9 +222,12 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
     def __unicode__(self):
         return "CommCareCase: %s (%s)" % (self.case_id, self.get_id)
 
+    def __get_case_id(self):
+        return self._id
 
-    def __get_case_id(self):        return self._id
-    def __set_case_id(self, id):    self._id = id
+    def __set_case_id(self, id):
+        self._id = id
+
     case_id = property(__get_case_id, __set_case_id)
 
     @property
