@@ -38,8 +38,8 @@ class CustomProjectReport(ProjectReport):
 class CommCareUserMemoizer(object):
 
     @memoized
-    def by_domain(self, domain):
-        users = CommCareUser.by_domain(domain)
+    def by_domain(self, domain, is_active=False):
+        users = CommCareUser.by_domain(domain, is_active=is_active)
         for user in users:
             # put users in the cache for get_by_user_id
             # so that function never has to touch the database
@@ -59,6 +59,7 @@ class ProjectReportParametersMixin(object):
     default_case_type = None
     filter_group_name = None
     filter_users_field_class = FilterUsersField
+    include_inactive = False
 
     @property
     @memoized
@@ -125,7 +126,10 @@ class ProjectReportParametersMixin(object):
             cache_str = "mw_ids:%s" % self.domain
             ids = cache.get(cache_str)
             if not ids:
-                ids = [ccu._id for ccu in CommCareUser.by_domain(self.domain)]
+                cc_users = CommCareUser.by_domain(self.domain)
+                if self.include_inactive:
+                    cc_users += CommCareUser.by_domain(self.domain, is_active=False)
+                ids = [ccu._id for ccu in cc_users]
                 cache.set(cache_str, ids, 24*60*60)
         return ids
 

@@ -91,7 +91,9 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                                    len(context["selected"]) and context['selected'][0] != 'active'
         if self.display_app_type and not context['selected']:
             context['selected'] = ['active']
-        context["show_advanced"] = context["unknown"]["show"] or context["hide_fuzzy"]["checked"]
+        context["show_advanced"] = context["unknown"]["show"] or \
+                                   context["hide_fuzzy"]["checked"] or \
+                                   (context['selected'] and context['selected'][0] != 'active')
         return context
 
     @property
