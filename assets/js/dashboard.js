@@ -132,7 +132,7 @@ var Pulls = function(dash) {
                 dash.incrementProgress();
                 self.pulls.push({
                     repo: reponame,
-                    url: pull.url,
+                    url: pull.html_url,
                     number: pull.number,
                     title: pull.title,
                     created: pull.created_at,
