@@ -9,6 +9,7 @@
         <script src="assets/js/jquery-1.10.1.min.js"></script>
         <script src="assets/js/knockout-2.2.1.js"></script>
         <script src="assets/js/bootstrap.min.js"></script>
+        <script src="assets/js/dashboard.js"></script>
         <link rel="stylesheet" href="assets/css/bootstrap.min.css" />
 
         <style type="text/css">
@@ -16,202 +17,133 @@
             padding-top: 60px;
             padding-bottom: 40px;
           }
+          .list-group-item {
+            position: relative;
+            display: block;
+            margin-bottom: -1px;
+            padding: 8px 10px 10px 40px;
+            border: 1px solid #e5e5e5;
+          }
         </style>
-
-        <script type="text/javascript">
-            var default_repos = ['commcare-hq','dimagi-utils','couchexport','couchlog','couchforms',
-                'commcare-export','fluff','casexml','ctable','sql-agg','receiver','pillowtop'];
-            var view_model = function() {
-                var self = this;
-                self.reposSuccess = ko.observableArray();
-                self.reposFail = ko.observableArray();
-                self.reposNoBuild = ko.observableArray();
-                self.reposError = ko.observableArray();
-
-                self.total = ko.observable(0);
-                self.current = ko.observable(0);
-                self.showProgress = ko.observable(false);
-
-                self.progress = ko.computed(function() {
-                    return Math.round(self.current() * 100 / self.total()) + '%';
-                });
-
-                // TODO: add option to load only submodules: https://api.github.com/repos/dimagi/commcare-hq/contents/submodules
-
-                self.reloadAll = function() {
-                    self.showProgress(true);
-                    self.reset();
-                    function getPage(url) {
-                        $.ajax({
-                            type: 'GET',
-                            dataType: 'jsonp',
-                            url: url,
-                            success: function(response){
-                                self.total(self.total() + response.data.length);
-
-                                $.each(response.data, function(i, repo) {
-                                    self.load(repo.name);
-                                });
-
-                                $.each(response.meta.Link, function(i, link){
-                                    var url = link[0];
-                                    var type = link[1].rel;
-                                    if (type == 'next') {
-                                        getPage(url);
-                                    }
-                                })
-                            }
-                        });
-                    }
-                    getPage('https://api.github.com/orgs/dimagi/repos?type=public');
-                }
-
-                self.reloadDefault = function() {
-                    self.showProgress(true);
-                    self.reset();
-                    self.total(default_repos.length);
-                    $.each(default_repos, function(i, repo) {
-                         self.load(repo);
-                    });
-                }
-
-                self.reloadFailing = function() {
-                    self.showProgress(true);
-                    var failing = self.reposFail.removeAll();
-                    self.total(failing.length);
-                    $.each(failing, function(i, repo) {
-                         self.load(repo.name);
-                    });
-                }
-
-                self.load = function(repo) {
-                    $.get('https://api.travis-ci.org/repos/dimagi/' + repo + '/builds.json', function(tData){
-                        if (tData.length == 0) {
-                            vm.reposNoBuild.push({
-                               name: repo,
-                               status: 'no_build'
-                            });
-                        } else {
-                            var latest_master_build = $.grep(tData, function(build){
-                               return build.branch === 'master';
-                            })[0];
-                            if (latest_master_build.state === 'finished' && latest_master_build.result === 0) {
-                                vm.reposSuccess.push({
-                                   name: repo,
-                                   status: 'build'
-                                });
-                            } else {
-                                vm.reposFail.push({
-                                   name: repo,
-                                   status: 'build'
-                                });
-                            }
-                        }
-                    }).fail(function(){
-                        vm.reposError.push({
-                           name: repo,
-                           status: 'error'
-                        });
-                    }).always(function() {
-                        self.current(self.current() + 1);
-                        if (self.current() == self.total()) {
-                            self.total(0);
-                            self.current(0);
-                            self.showProgress(false);
-                        }
-                    });
-                }
-
-                self.reset = function() {
-                    self.reposSuccess.removeAll();
-                    self.reposFail.removeAll();
-                    self.reposNoBuild.removeAll();
-                    self.reposError.removeAll();
-                }
-            };
-            var vm = new view_model();
-            vm.reloadDefault();
-
-            $(function(){
-                $('#reload').click(function(){
-                    vm.reset();
-                    loadDashboard();
-                });
-
-                ko.applyBindings(vm);
-            });
-        </script>
     </head>
     <body>
         <div class="navbar navbar-inverse navbar-fixed-top">
           <div class="navbar-inner">
             <div class="container">
-              <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-              </button>
-              <a class="brand" href="#">Commcare-HQ build dashboard</a>
-              <div class="nav-collapse collapse">
+                <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="brand" href="#">Commcare-HQ build dashboard</a>
+                <div class="nav-collapse collapse">
                   <ul class="nav">
-                   <li class="dropdown">
-                      <a href="#" class="dropdown-toggle" data-toggle="dropdown">Reload <b class="caret"></b></a>
-                      <ul class="dropdown-menu">
-                        <li><a href="#" data-bind="click: reloadDefault">Load Default Repos</a></li>
-                        <li><a href="#" data-bind="click: reloadFailing">Load Failing Repos</a></li>
-                        <li><a href="#" data-bind="click: reloadAll">Load All Dimagi Repos (121 repos)</a></li>
-                      </ul>
+                   <li data-bind="css: { active: page() == 'build'}"><a href="#" data-bind="click: loadBuildStatus">Build status</a></li>
+                   <li data-bind="css: { active: page() == 'pulls'}"><a href="#" data-bind="click: loadPulls">Pull requests</a></li>
+                  </ul>
                 </div>
-              </div><!--/.nav-collapse -->
             </div>
           </div>
         </div>
 
+        <div class="container-fluid">
+            <script type="text/javascript">
+                var dash = new Dashboard();
+                dash.loadBuildStatus();
+                dash.bind();
+            </script>
+            <div class="row-fluid">
+                <div class="span3">
+                  <div class="well sidebar-nav">
+                    <ul class="nav nav-list" data-bind="visible: page() == 'build'">
+                      <li class="nav-header">Reload</li>
+                      <li><a href="#" data-bind="click: build().reloadDefault">Load Default Repos</a></li>
+                      <li><a href="#" data-bind="click: build().reloadFailing">Load Failing Repos</a></li>
+                      <li><a href="#" data-bind="click: build().reloadAll">Load All Dimagi Repos (121 repos)</a></li>
+                    </ul>
+                    <ul class="nav nav-list" data-bind="visible: page() == 'pulls'">
+                      <li class="nav-header">Sort by date updated</li>
+                      <li data-bind="css: {active: pulls().sortDir() == 'asc' && pulls().sortBy() == 'updated'}"><a href="#" data-bind="click: function(data, event) { pulls().sortAsc('updated') }">Ascending</a></li>
+                      <li data-bind="css: {active: pulls().sortDir() == 'desc' && pulls().sortBy() == 'updated'}"><a href="#" data-bind="click:function(data, event) { pulls().sortDesc('updated') }">Descending</a></li>
+                      <li class="nav-header">Sort by repository</li>
+                      <li data-bind="css: {active: pulls().sortDir() == 'asc' && pulls().sortBy() == 'repo'}"><a href="#" data-bind="click: function(data, event) { pulls().sortAsc('repo') }">Ascending</a></li>
+                      <li data-bind="css: {active: pulls().sortDir() == 'desc' && pulls().sortBy() == 'repo'}"><a href="#" data-bind="click:function(data, event) { pulls().sortDesc('repo') }">Descending</a></li>
+                      <li class="nav-header">Sort by user</li>
+                      <li data-bind="css: {active: pulls().sortDir() == 'asc' && pulls().sortBy() == 'user'}"><a href="#" data-bind="click: function(data, event) { pulls().sortAsc('user') }">Ascending</a></li>
+                      <li data-bind="css: {active: pulls().sortDir() == 'desc' && pulls().sortBy() == 'user'}"><a href="#" data-bind="click:function(data, event) { pulls().sortDesc('user') }">Descending</a></li>
+                    </ul>
+                  </div><!--/.well -->
+                </div><!--/span-->
+                <div class="span9">
+                    <div id="progress" data-bind="visible: showProgress">
+                        <div class="progress progress-striped">
+                            <div class="bar" data-bind="style: { width: progress }"></div>
+                        </div>
+                        <span data-bind="text: current"></span> of <span data-bind="text: total"></span>
+                    </div>
+                    <div class="row" data-bind="visible: page() == 'build'">
+                        <div id="failures" class="span4">
+                            <h4>Failing</h4>
+                            <ul data-bind="template: { name: 'repo-template',
+                                          foreach: build().reposFail,
+                                          as: 'repo' }"></ul>
 
-        <div class="container">
-            <div id="progress" data-bind="visible: showProgress">
-                <div class="progress progress-striped">
-                    <div class="bar" data-bind="style: { width: progress }"></div>
-                </div>
-                <span data-bind="text: current"></span> of <span data-bind="text: total"></span>
-            </div>
-            <div class="row">
-                <div id="failures" class="span4">
-                    <h4>Failing</h4>
-                    <ul data-bind="template: { name: 'repo-template',
-                                  foreach: reposFail,
-                                  as: 'repo' }"></ul>
+                            <h4 data-bind="visible: build().reposError().length > 0">Unable to fetch data</h4>
+                            <ul data-bind="template: { name: 'repo-template',
+                                          foreach: build().reposError,
+                                          as: 'repo' }"></ul>
+                        </div>
+                        <div id="success" class="span4">
+                            <h4>Succeeding</h4>
+                            <ul data-bind="template: { name: 'repo-template',
+                                          foreach: build().reposSuccess,
+                                          as: 'repo' }"></ul>
+                        </div>
+                        <div id="no_build" class="span4">
+                            <h4 data-bind="visible: build().reposNoBuild().length > 0">No Builds</h4>
+                            <ul data-bind="template: { name: 'repo-template',
+                                          foreach: build().reposNoBuild,
+                                          as: 'repo' }"></ul>
+                        </div>
+                    </div>
+                    <script type="text/html" id="repo-template">
+                        <li>
+                            <a data-bind="attr: { href: 'https://github.com/dimagi/' + repo.name }, text: repo.name"></a>
+                            <!-- ko if: repo.status == 'build' -->
+                                <ul><li>
+                                    <a data-bind="attr: { href: 'https://travis-ci.org/dimagi/' + repo.name }"><img data-bind="attr: { src: 'https://api.travis-ci.org/repos/dimagi/' + repo.name + '.png?branch=master'}" /></a>
+                                    <a data-bind="attr: { href: 'https://coveralls.io/r/dimagi/' + repo.name }"><img data-bind="attr: { src: 'https://coveralls.io/repos/dimagi/'+ repo.name +'/badge.png?branch=master'}" /></a>
+                                </li></ul>
+                            <!-- /ko -->
+                        </li>
+                    </script>
 
-                    <h4 data-bind="visible: reposError().length > 0">Unable to fetch data</h4>
-                    <ul data-bind="template: { name: 'repo-template',
-                                  foreach: reposError,
-                                  as: 'repo' }"></ul>
-                </div>
-                <div id="success" class="span4">
-                    <h4>Succeeding</h4>
-                    <ul data-bind="template: { name: 'repo-template',
-                                  foreach: reposSuccess,
-                                  as: 'repo' }"></ul>
-                </div>
-                <div id="no_build" class="span4">
-                    <h4 data-bind="visible: reposNoBuild().length > 0">No Builds</h4>
-                    <ul data-bind="template: { name: 'repo-template',
-                                  foreach: reposNoBuild,
-                                  as: 'repo' }"></ul>
-                </div>
-            </div>
+                    <div class="row" data-bind="visible: page() == 'pulls'">
+                        <div data-bind="template: { name: 'pull-template',
+                                          foreach: pulls().pulls,
+                                          as: 'pull' }"></div>
+                    </div>
+                    <script type="text/html" id="pull-template">
+                        <ul>
+                        <li class="list-group-item">
+                            <span class="pull-right" data-bind="text: repo + ' #'+number"></span>
+                            <h4>
+                                <a data-bind="attr: {href: url}, text: title"></a>
+                            </h4>
+
+                            <ul>
+                                <li>
+                                    <a data-bind="attr: {href: user.url}"><img height="16" data-bind="attr: {src: user.avatar_url}" width="16"></a>
+                                    by <a data-bind="attr: {href: user.url}, text: user.name"></a>
+                                    <time data-bind="attr: {datetime: created, title: created}, text: hoursSinceUpdate + ' hours ago'">
+                                    </time>
+                                </li>
+                            </ul>
+                        </li>
+                        </ul>
+                    </script>
+                </div><!--/span-->
+            </div><!--/row-->
         </div>
-
-        <script type="text/html" id="repo-template">
-            <li>
-                <a data-bind="attr: { href: 'https://github.com/dimagi/' + repo.name }, text: repo.name"></a>
-                <!-- ko if: repo.status == 'build' -->
-                    <ul><li>
-                        <a data-bind="attr: { href: 'https://travis-ci.org/dimagi/' + repo.name }"><img data-bind="attr: { src: 'https://api.travis-ci.org/repos/dimagi/' + repo.name + '.png?branch=master'}" /></a>
-                        <a data-bind="attr: { href: 'https://coveralls.io/r/dimagi/' + repo.name }"><img data-bind="attr: { src: 'https://coveralls.io/repos/dimagi/'+ repo.name +'/badge.png?branch=master'}" /></a>
-                    </li></ul>
-                <!-- /ko -->
-            </li>
-        </script>
     </body>
 </html>
