@@ -16,6 +16,7 @@ from corehq.apps.cloudcare.api import ElasticCaseQuery
 from corehq.apps.api.resources import v0_1, v0_3, JsonResource, DomainSpecificResourceMixin, dict_object
 from corehq.apps.api.es import XFormES, CaseES, ESQuerySet, es_search
 from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField
+from corehq.apps.api.serializers import CommCareCaseSerializer
 
 # By the time a test case is running, the resource is already instantiated,
 # so as a hack until this can be remedied, there is a global that
@@ -145,6 +146,7 @@ class CommCareCaseResource(v0_3.CommCareCaseResource, DomainSpecificResourceMixi
 
     class Meta(v0_3.CommCareCaseResource.Meta):
         max_limit = 100 # Today, takes ~25 seconds for some domains
+        serializer = CommCareCaseSerializer()
 
 class GroupResource(JsonResource, DomainSpecificResourceMixin):
     id = fields.CharField(attribute='get_id', unique=True, readonly=True)
