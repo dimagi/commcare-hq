@@ -181,8 +181,8 @@ var BuildStatus = function(dash) {
 
     self.reloadDefault = function() {
         self.reset();
-        dash.startProgress(self.build_repos.length);
-        $.each(self.build_repos, function(i, reponame) {
+        dash.startProgress(build_repos.length);
+        $.each(build_repos, function(i, reponame) {
              self.getBuildStatus({name: reponame});
         });
     }
