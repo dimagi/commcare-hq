@@ -213,7 +213,12 @@ class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
             return []
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        return Application.by_domain(domain)
+        # There should be few enough apps per domain that this is OK.
+        # This is the easiest way to filter remote apps
+        # Later we could serialize them to their URL or whatevs but it is not that useful yet
+        apps = ApplicationBase.by_domain(domain)
+        return [get_object_or_not_exist(Application, domain, app.id) for app in application_bases
+                if not app.is_remote_app]
 
     def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(Application, kwargs['domain'], kwargs['pk'])
