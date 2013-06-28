@@ -68,8 +68,12 @@ class ForceCloseCaseTest(TestCase):
     def test_close(self):
         case_id = 'uid_blah_3'
         domain = "test.domain"
-        case = bootstrap_case_from_xml(self, 'create.xml', case_id_override=case_id)
-        case.domain = domain
+        case = bootstrap_case_from_xml(
+            self,
+            filename='create.xml',
+            case_id_override=case_id,
+            domain=domain,
+        )
         case.save()
         referral_indexes=[]
         case = CommCareCase.get(case_id)
