@@ -18,6 +18,9 @@ var Dashboard = function () {
     self.showProgress = ko.observable(false);
 
     self.progress = ko.computed(function() {
+        if (self.total() == 0){
+            return '0%';
+        }
         return Math.round(self.current() * 100 / self.total()) + '%';
     });
 
@@ -116,7 +119,7 @@ var Pulls = function(dash) {
             dash.total(dash.total() + subs.length);
             $.each(subs, function(i, sub) {
                 var reponame = sub.git_url.replace('https://api.github.com/repos/dimagi/', '').split('/', 1)[0];
-                self.loadPulls(reponame);
+                self.loadPulls({name: reponame});
             });
         });
     }
