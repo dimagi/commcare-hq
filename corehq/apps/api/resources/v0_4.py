@@ -7,9 +7,12 @@ from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import xform as casexml_xform
 
+from corehq.apps.app_manager import util as app_manager_util
+from corehq.apps.app_manager.models import ApplicationBase, Application, RemoteApp, Form
 from corehq.apps.receiverwrapper.models import Repeater, repeater_types
 from corehq.apps.groups.models import Group
 from corehq.apps.cloudcare.api import ElasticCaseQuery
+
 from corehq.apps.api.resources import v0_1, v0_3, JsonResource, DomainSpecificResourceMixin, dict_object
 from corehq.apps.api.es import XFormES, CaseES, ESQuerySet, es_search
 from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField
@@ -168,3 +171,53 @@ class GroupResource(JsonResource, DomainSpecificResourceMixin):
         list_allowed_methods = ['get']
         resource_name = 'group'
 
+class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
+
+    name = fields.CharField(attribute='name')
+
+    modules = fields.ListField()
+    def dehydrate_module(self, app, module, langs):
+        '''
+        Convert a Module object to a JValue representation
+        with just the good parts.
+
+        NOTE: This is not a tastypie "magic"-name method to
+        dehydrate the "module" field; there is no such field.
+        '''
+        dehydrated = {}
+
+        dehydrated['case_type'] = module.case_type
+
+        dehydrated['case_properties'] = app_manager_util.get_case_properties(app, [module.case_type], defaults=['name'])[module.case_type]
+        
+        dehydrated['forms'] = []
+        for form in module.forms:
+            form = Form.get_form(form.unique_id)
+            form_jvalue = {
+                'xmlns': form.xmlns,
+                'name': form.name,
+                'questions': form.get_questions(langs),
+            }
+            dehydrated['forms'].append(form_jvalue)
+
+        return dehydrated
+    
+    def dehydrate_modules(self, bundle):
+        app = bundle.obj
+
+        if app.doc_type == Application._doc_type:
+            return [self.dehydrate_module(app, module, app.langs) for module in bundle.obj.modules]
+        elif app.doc_type == RemoteApp._doc_type:
+            return []
+
+    def obj_get_list(self, bundle, domain, **kwargs):
+        return Application.by_domain(domain)
+
+    def obj_get(self, bundle, **kwargs):
+        return get_object_or_not_exist(Application, kwargs['domain'], kwargs['pk'])
+
+    class Meta(v0_1.CustomResourceMeta):
+        object_class = Application
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
+        resource_name = 'application'

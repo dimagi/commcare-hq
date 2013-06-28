@@ -84,6 +84,7 @@ class CustomResourceMeta(object):
     authorization = ReadOnlyAuthorization()
     authentication = LoginAndDomainAuthentication()
     serializer = CustomXMLSerializer()
+    default_format='application/json'
 
 class UserResource(JsonResource, DomainSpecificResourceMixin):
     type = "user"
