@@ -47,6 +47,14 @@ def get_user_site_map(domain):
     return user_site_map
 
 
+def get_facility_map(domain):
+        from hsph.fields import FacilityField
+
+        facilities = FacilityField.getFacilities(domain=domain)
+        return dict([(facility.get('val'), facility.get('text'))
+                     for facility in facilities])
+
+
 class FIDAPerformanceReport(GenericTabularReport, CustomProjectReport,
                             ProjectReportParametersMixin, DatespanMixin):
     """
@@ -540,12 +548,14 @@ class FacilityWiseFollowUpReport(GenericTabularReport, DatespanMixin,
 
         all_keys = get_db().view('hsph/facility_wise_follow_up',
                     reduce=True,
-                    group=True, group_level=4)
+                    group=True, group_level=5)
 
         rpt_keys = []
         key_start = []
         if not self.selected_site_map:
             self._selected_site_map = self.site_map
+
+        facility_map = get_facility_map(self.domain)
 
         # make sure key elements are strings
         report_sites =  [[str(item) for item in rk] for rk in self.generate_keys()]
@@ -561,53 +571,48 @@ class FacilityWiseFollowUpReport(GenericTabularReport, DatespanMixin,
                 else:
                     rpt_keys = all_keys
 
-        def get_view_results(case_type, start_dte, end_dte, reduce=True):
+        def get_view_results(case_type, start_dte, end_dte):
             my_start_key=key_start + [case_type] + [start_dte]
             if not start_dte:
                 my_start_key = key_start + [case_type]
             data = get_db().view('hsph/facility_wise_follow_up',
-                                 reduce=reduce,
+                                 reduce=True,
                                  startkey=my_start_key,
                                  endkey=key_start + [case_type] + [end_dte]
             )
 
-            if reduce:
-                return sum([ item['value'] for item in data])
-            return data
+            return sum([ item['value'] for item in data])
 
         rows = []
         today = date.today()
         for item in  rpt_keys:
             key_start = item['key']
-            region_id, district_id, site_number, user_id = item['key']
+            region_id, district_id, site_number, site_id, user_id = item['key']
             region_name = self.get_region_name(region_id)
             district_name = self.get_district_name(region_id, district_id)
 
             site_name = self.get_site_name(region_id, district_id,
                 site_number)
-
+            site_name = facility_map[site_id]
             fida = self.usernames[user_id]
             births = get_view_results('births', startdate, enddate)
             open_cases = get_view_results('open_cases', startdate, enddate)
 
-            not_yet_open_for_follow_up = 0
-            for v in get_view_results('needing_follow_up', startdate, enddate, False):
-                if today < self._parse_date(v['key'][-1]) + timedelta(days=8):
-                    not_yet_open_for_follow_up += 1
+            # Not closed and If today < date_admission + 8
+            start = today - timedelta(days = 7)
+            not_yet_open_for_follow_up = get_view_results('needing_follow_up',
+            start.strftime('%Y-%m-%d'), today.strftime('%Y-%m-%d'))
 
-            open_for_cati_follow_up = 0
-            #Not closed and if (date_admission + 8) <= today <= (date_admission + 21)
-            for v in get_view_results('needing_follow_up', startdate, enddate, False):
-                date_admission = self._parse_date(v['key'][-1])
-                if (date_admission + timedelta(days=8)) <= today and\
-                today <= (date_admission + timedelta(days=21)):
-                    open_for_cati_follow_up += 1
+            # Not closed and if (date_admission + 8) <= today <= (date_admission + 21)
+            start = today - timedelta(days = 21)
+            end = today - timedelta(days = 8)
+            open_for_cati_follow_up = get_view_results('needing_follow_up',
+            start.strftime('%Y-%m-%d'), end.strftime('%Y-%m-%d'))
 
-            open_for_fada_follow_up = 0
             # Not closed and today > date_admission+21
-            for v in get_view_results('needing_follow_up', startdate, enddate, False):
-                if today > self._parse_date(v['key'][-1]) + timedelta(days=21):
-                    open_for_fada_follow_up += 1
+            end = today - timedelta(days = 22)
+            open_for_fada_follow_up = get_view_results('needing_follow_up',
+            "", end.strftime('%Y-%m-%d'))
 
             closed_cases = get_view_results('closed_cases', startdate, enddate)
 
