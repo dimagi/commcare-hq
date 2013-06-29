@@ -11,9 +11,7 @@ class Complications(DoneDueCalculator):
 
     window = A_MONTH
 
-    def case_open(self, case):
-        """Include all cases"""
-        return True
+    include_closed = True
 
     _pnc_ebc_complications = (
         'abdominal_pain',
