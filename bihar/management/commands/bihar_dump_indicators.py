@@ -12,7 +12,7 @@ class Command(BaseCommand):
         args = list(args)
         domain = args.pop(0)
         group_id_or_name = args.pop(0)
-        slug = args.pop(0) if args else None
+        slugs = args.pop(0) if args else None
 
         try:
             group = Group.get(group_id_or_name)
@@ -22,8 +22,9 @@ class Command(BaseCommand):
 
         owner_ids = get_all_owner_ids_from_group(group)
 
-        if slug:
-            lines = [get_calculation(owner_ids, slug)]
+        if slugs:
+            lines = [(slug,) + get_calculation(owner_ids, slug)
+                     for slug in slugs.split(' ')]
         else:
             lines = get_all_calculations(owner_ids)
 
