@@ -8,9 +8,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         domain = args[0]
         group_name = args[1]
-        group_id = Group.by_name(domain, name=group_name).get_id
-        groups = get_groups_for_group(group_id)
+        primary_group = Group.by_name(domain, name=group_name)
+        groups = get_groups_for_group(primary_group)
 
         for group in groups:
-            if group.case_sharing or group.get_id == group_id:
+            if group.case_sharing or group.get_id == group.get_id:
                 print group.get_id, group.name
