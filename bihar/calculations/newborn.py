@@ -17,7 +17,7 @@ def is_preterm(case):
     return getattr(case, 'term', None) == "pre_term"
 
 
-def     less_than_two_kilos(case):
+def less_than_two_kilos(case):
     w = _get_xpath_from_forms(case, "child_info/weight")
     fw = _get_xpath_from_forms(case, "child_info/first_weight")
     return (w is not None and w < 2.0) or (fw is not None and fw < 2.0)
