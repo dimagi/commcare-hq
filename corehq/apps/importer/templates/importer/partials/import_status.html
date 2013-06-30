@@ -9,7 +9,7 @@
                     updated.
                 {% endblocktrans %}
             </p>
-            {% ifnotequal result.created_count 0 %}
+            {% if result.created_count > 0 %}
                 <p>
                     {% blocktrans with created_count=result.created_count %}
                         <strong>{{ created_count }}</strong> rows did
@@ -17,7 +17,7 @@
                         for them.
                     {% endblocktrans %}
                 </p>
-            {% endifnotequal %}
+            {% endif %}
             <p>
                 {% blocktrans with too_many_matches=result.too_many_matches %}
                     <strong>{{ too_many_matches }}</strong> rows matched more
@@ -25,6 +25,16 @@
                     in your system with the same external ID.
                 {% endblocktrans %}
             </p>
+            {% if result.blank_externals|length > 0 %}
+                <p>
+                    {% blocktrans %}
+                        The following row numbers had blank external id's and 
+                        could not be created due to this:
+                    {% endblocktrans %}
+                    {{ result.blank_externals|join:", " }}
+                </p>
+            {% endif %}
+
         </div>
         <script type="text/javascript">
             $("#export-download-status .loading-indicator").addClass('hide');
