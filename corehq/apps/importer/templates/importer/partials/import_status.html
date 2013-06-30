@@ -3,12 +3,15 @@
     <div id="ready_{{ download_id }}">
         <legend>{% trans "Import complete." %}</legend>
         <div class="alert alert-success">
-            <p>
-                {% blocktrans with match_count=result.match_count %}
-                    <strong>{{ match_count }}</strong> rows were matched and
-                    updated.
-                {% endblocktrans %}
-            </p>
+            {% if result.match_count %}
+                <p>
+                    {% blocktrans with match_count=result.match_count %}
+                        <strong>{{ match_count }}</strong> rows were matched and
+                        updated.
+                    {% endblocktrans %}
+                </p>
+            {% endif %}
+
             {% if result.created_count > 0 %}
                 <p>
                     {% blocktrans with created_count=result.created_count %}
@@ -18,13 +21,23 @@
                     {% endblocktrans %}
                 </p>
             {% endif %}
-            <p>
-                {% blocktrans with too_many_matches=result.too_many_matches %}
-                    <strong>{{ too_many_matches }}</strong> rows matched more
-                    than one case at the same time - this means that there are cases
-                    in your system with the same external ID.
-                {% endblocktrans %}
-            </p>
+
+            {% if result.match_count == 0 and result.created_count == 0 %}
+                <p>
+                    {% trans "No cases were matched or updated during this import." %}
+                </p>
+            {% endif %}
+
+            {% if result.too_many_matches > 0 %}
+                <p>
+                    {% blocktrans with too_many_matches=result.too_many_matches %}
+                        <strong>{{ too_many_matches }}</strong> rows matched more
+                        than one case at the same time - this means that there are cases
+                        in your system with the same external ID.
+                    {% endblocktrans %}
+                </p>
+            {% endif %}
+
             {% if result.blank_externals|length > 0 %}
                 <p>
                     {% blocktrans %}
