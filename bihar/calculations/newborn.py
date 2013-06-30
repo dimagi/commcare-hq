@@ -44,6 +44,7 @@ def is_newborn(case):
 
 class Newborn(CaseCalculator):
     window = A_MONTH
+    include_closed = True
 
     @fluff.filter_by
     def is_newborn(self, case):
