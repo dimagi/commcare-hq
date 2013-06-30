@@ -48,7 +48,7 @@ def get_calculation(owner_ids, slug):
     ), reduce=False)
     num_cases = ', '.join(r.get('numerator', ()))
     total_cases = ', '.join(r.get('total', ()))
-    return num, total, num_cases, total_cases
+    return num or '', total, num_cases, total_cases
 
 
 def get_all_calculations(owner_ids):
@@ -59,7 +59,7 @@ def get_all_calculations(owner_ids):
     for indicator_set in config.indicator_sets:
         print indicator_set.name
         for indicator in indicator_set.get_indicators():
-            slug = indicator.slug()
+            slug = indicator.slug
             yield (indicator.name,) + get_calculation(owner_ids, slug)
 
 
