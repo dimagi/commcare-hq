@@ -31,6 +31,7 @@ def bulk_import_async(import_id, config, domain, excel_id):
     columns = spreadsheet.get_header_columns()
     match_count = created_count = too_many_matches = 0
     blank_external_ids = []
+    invalid_dates = []
     prime_offset = 1  # used to prevent back-to-back priming
 
     user = CouchUser.get_by_user_id(config.couch_user_id, domain)
@@ -59,6 +60,16 @@ def bulk_import_async(import_id, config, domain, excel_id):
         case, error = importer_util.lookup_case(config.search_field,
                                                 search_id, domain)
 
+        try:
+            fields_to_update = importer_util.populate_updated_fields(
+                config,
+                columns,
+                row
+            )
+        except importer_util.InvalidDateException:
+            invalid_dates.append(i + 1)
+            continue
+
         if case:
             match_count += 1
         elif error == LookupErrors.NotFound:
@@ -69,8 +80,6 @@ def bulk_import_async(import_id, config, domain, excel_id):
             too_many_matches += 1
             continue
 
-        fields_to_update = importer_util.populate_updated_fields(config,
-                                                                 columns, row)
 
         if 'owner_id' in fields_to_update:
             owner_id = fields_to_update['owner_id']
@@ -107,6 +116,7 @@ def bulk_import_async(import_id, config, domain, excel_id):
         'match_count': match_count,
         'too_many_matches': too_many_matches,
         'blank_externals': blank_external_ids,
+        'invalid_dates': invalid_dates,
     }
 
 

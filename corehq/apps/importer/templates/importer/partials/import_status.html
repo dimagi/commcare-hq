@@ -48,6 +48,18 @@
                 </p>
             {% endif %}
 
+            {% if result.invalid_dates|length > 0 %}
+                <p>
+                    {% blocktrans %}
+                        Date fields were specified that caused an error during
+                        conversion. This is likely caused by a value from
+                        excel having the wrong type or not being formatted
+                        properly. The following row numbers had this issue and
+                        were ignored:
+                    {% endblocktrans %}
+                    {{ result.invalid_dates|join:", " }}
+                </p>
+            {% endif %}
         </div>
         <script type="text/javascript">
             $("#export-download-status .loading-indicator").addClass('hide');
