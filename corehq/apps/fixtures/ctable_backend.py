@@ -37,7 +37,7 @@ class CouchFixtureBackend(CtableBackend):
 
         if data_type:
             fields = set(data_type.fields)
-            mapping_columns = {c.name for c in mapping.columns}
+            mapping_columns = set([c.name for c in mapping.columns])
             for name in fields:
                 if name in mapping_columns:
                     mapping_columns.remove(name)
