@@ -12,6 +12,7 @@ from django.core.cache import cache
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import cache_control
+from corehq import ApplicationsTab
 from corehq.apps.app_manager import commcare_settings
 from django.utils import html
 from django.utils.http import urlencode as django_urlencode
@@ -757,7 +758,6 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
 
     context = get_apps_base_context(req, domain, app)
     context.update(locals())
-    app.remove_unused_mappings()
     context.update({
         'edit': True,
         'nav_form': form if not is_user_registration else '',
@@ -1467,7 +1467,12 @@ def edit_app_attr(request, domain, app_id, attr):
             setattr(app, attribute, value)
 
     if should_edit("name"):
-        resp['update'].update({'.variable-app_name': hq_settings['name']})
+        _clear_app_cache(request, domain)
+        name = hq_settings['name']
+        resp['update'].update({
+            '.variable-app_name': name,
+            '[data-id="{id}"]'.format(id=app_id): ApplicationsTab.make_app_title(name, app.doc_type),
+        })
 
     if should_edit("success_message"):
         success_message = hq_settings['success_message']
@@ -1558,11 +1563,12 @@ def save_copy(req, domain, app_id):
 
     if not errors:
         try:
-            copy = app.save_copy(
+            copy = app.make_build(
                 comment=comment,
                 user_id=req.couch_user.get_id,
                 previous_version=app.get_latest_app(released_only=False)
             )
+            copy.save(increment_version=False)
         finally:
             # To make a RemoteApp always available for building
             if app.is_remote_app():
@@ -1615,7 +1621,8 @@ def revert_to_copy(req, domain, app_id):
     """
     app = get_app(domain, app_id)
     copy = get_app(domain, req.POST['saved_app'])
-    app = app.revert_to_copy(copy)
+    app = app.make_reversion_to_copy(copy)
+    app.save()
     messages.success(req, "Successfully reverted to version %s, now at version %s" % (copy.version, app.version))
     return back_to_main(**locals())
 

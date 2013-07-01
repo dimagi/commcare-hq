@@ -3,12 +3,18 @@
     <h1>{% trans "Welcome back to " %}{% if domain %}{{ domain }}{% else %}CommCare HQ{% endif %}!<br />
         <small>
         {% if next %}
-            {% trans "You will be transferred to your original destination after you sign in." %}
+            {% trans "Looks like your CommCare session has expired. Please log-in again to continue working." %}
         {% else %}
             {% trans "Please sign in below to continue." %}
         {% endif %}
         </small>
     </h1>
+
+    {% if next %}
+    <p>
+        {% trans "You will be transferred to your original destination after you sign in." %}
+    </p>
+    {% endif %}
 </div>
 <form class="form-horizontal form-login" name="form" method="post" >
     {% csrf_token %}

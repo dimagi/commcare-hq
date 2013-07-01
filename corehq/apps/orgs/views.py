@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, date
 from couchdbkit import ResourceNotFound
+from dimagi.utils.couch.database import get_db
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect, Http404
@@ -21,7 +22,9 @@ from corehq.elastic import get_es
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
+from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.web import json_response
 from corehq.apps.orgs.models import Organization, Team, DeleteTeamRecord, \
     OrgInvitation, OrgRequest
@@ -558,13 +561,15 @@ def base_report(request, org, template='orgs/report_base.html'):
     })
     return render(request, template, ctxt)
 
+
 @org_member_required
+@datespan_in_request(from_param="startdate", to_param="enddate")
 def stats(request, org, stat_slug, template='orgs/stats.html'):
     ctxt = base_context(request, request.organization)
 
     xaxis_label = {
         "forms": "# form submissions",
-        "cases": "# case modifications",
+        "cases": "# case creations",
         "users": "# mobile workers created",
     }[stat_slug]
 
@@ -574,14 +579,17 @@ def stats(request, org, stat_slug, template='orgs/stats.html'):
         'no_header': True,
         'stat_slug': stat_slug,
         'xaxis_label': xaxis_label,
+        'startdate': request.datespan.startdate_display,
+        'enddate': request.datespan.enddate_display,
     })
     return render(request, template, ctxt)
 
+@org_member_required
+@datespan_in_request(from_param="startdate", to_param="enddate")
 def stats_data(request, org):
     params, _ = parse_args_for_es(request)
     domains = [{"name": d.name, "hr_name": d.hr_name} for d in Domain.get_by_organization(org).all()]
     histo_type = request.GET.get('histogram_type')
-    period = request.GET.get("daterange", 'month')
 
     enddate = request.GET.get('enddate')
     enddate = datetime.strptime(enddate, "%Y-%m-%d") if enddate else date.today()
@@ -589,14 +597,70 @@ def stats_data(request, org):
     startdate = datetime.strptime(startdate, "%Y-%m-%d") if startdate else enddate - timedelta(days=30)
 
     histo_data = dict([(d['hr_name'],
-                        es_histogram(histo_type, [d["name"]], startdate.strftime('%Y-%m-%d'), enddate.strftime('%Y-%m-%d')))
+                        es_histogram(histo_type, [d["name"]], request.datespan.startdate_display, request.datespan.enddate_display))
                         for d in domains])
+
+    def _total_forms_until_date(dom, date):
+        key = ["submission", dom]
+        r = get_db().view('reports_forms/all_forms',
+            startkey=key+[""],
+            endkey=key+[json_format_datetime(date)],
+            group=False
+        ).one()
+        return r['value'] if r else 0
+
+    def _total_cases_until_date(dom, date):
+        key = [dom, {}, {}]
+        r = get_db().view('hqcase/all_cases',
+            startkey=key+[""],
+            endkey=key+[json_format_datetime(date)],
+            group=False
+        ).one()
+        return r['value'] if r else 0
+
+    def es_domain_query(params=None, facets=None, terms=None, domains=None, return_q_dict=False, start_at=None, size=None, sort=None):
+        from corehq.apps.appstore.views import es_query
+        if params is None:
+            params = {}
+        if terms is None:
+            terms = ['search']
+        if facets is None:
+            facets = []
+        q = {
+            "query": {"term": dom},
+            "filter": {
+                "and": [{"range": {"created_on": {"lt": startdate}}}]
+            }
+        }
+
+        return es_query(params, facets, terms, q, USER_INDEX + '/user/_search')["hits"]["total"]
+
+
+    def _total_users_until_date(dom, date):
+        from corehq.apps.appstore.views import es_query
+        q = {
+            "query": {"term": {"domain": dom}},
+            "filter": {
+                "and": [
+                    {"range": {"created_on": {"lt": date.strftime('%Y-%m-%d')}}},
+                    {"term": {"doc_type": "CommCareUser"}},
+                ],
+            },
+        }
+        return es_query(q=q, es_url=USER_INDEX + '/user/_search')["hits"]["total"]
+
+
+    init_val_fn = {
+        "forms": _total_forms_until_date,
+        "cases": _total_cases_until_date,
+        "users": _total_users_until_date,
+    }[histo_type]
 
     return json_response({
         'histo_data': histo_data,
-        'range': period,
-        'startdate': [startdate.year, startdate.month, startdate.day],
-        'enddate': [enddate.year, enddate.month, enddate.day],
+        'initial_values': dict([(dom["name"], init_val_fn(dom["name"], startdate)) for dom in domains]),
+        'startdate': request.datespan.startdate_key_utc,
+        'enddate': request.datespan.enddate_key_utc,
     })
 
 def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None):
@@ -641,6 +705,3 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff
     es = get_es()
     ret_data = es.get(es_url, data=q)
     return ret_data["facets"]["histo"]["entries"]
-
-
-

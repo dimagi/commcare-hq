@@ -426,18 +426,15 @@ def run_upload_api(request, domain, workbook):
                     assert old_data_item.domain == domain
                     assert old_data_item.doc_type == FixtureDataItem._doc_type
                     assert old_data_item.data_type_id == data_type.get_id
-                    if di[DELETE_HEADER] in ("Y", "y"):
+                    if di.get(DELETE_HEADER) in ("Y", "y"):
                         old_data_item.recursive_delete(transaction)
                         continue
                     old_data_item.fields = di['field']
                     transaction.save(old_data_item)
-                except AttributeError:
+                except (AttributeError, KeyError, ResourceNotFound,
+                        AssertionError):
                     old_data_item = new_data_item
                     transaction.save(old_data_item)
-                except (ResourceNotFound, AssertionError):
-                    raise UploadItemListsException(
-                        'UID %s unacceptable' % di['UID']
-                    )
 
                 old_groups = old_data_item.get_groups()
                 for group in old_groups:
