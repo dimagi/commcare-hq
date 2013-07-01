@@ -226,13 +226,8 @@ class FormSource(object):
 
         try:
             source = app.lazy_fetch_attachment(filename)
-        except KeyError:
+        except (ResourceNotFound, KeyError):
             source = ''
-        except ResourceNotFound:
-            # this is for debugging
-            local_variable_lazy_attachments = app._LAZY_ATTACHMENTS
-            local_variable_attachments = app._attachments
-            raise
 
         return source
 
