@@ -87,13 +87,12 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             'display_app_type': self.display_app_type,
             'support_email': settings.SUPPORT_EMAIL,
         })
-        context['show_advanced'] = self.selected_unknown_xmlns or context['hide_fuzzy']['checked'] or \
-                                   len(context["selected"]) and context['selected'][0] != 'active'
+
         if self.display_app_type and not context['selected']:
             context['selected'] = ['active']
-        context["show_advanced"] = context["unknown"]["show"] or \
+        context["show_advanced"] = self.request.GET.get('show_advanced') == 'on' or context["unknown"]["show"] or \
                                    context["hide_fuzzy"]["checked"] or \
-                                   (context['selected'] and context['selected'][0] != 'active')
+                                   (len(context['selected']) > 0 and context['selected'][0] != 'active')
         return context
 
     @property

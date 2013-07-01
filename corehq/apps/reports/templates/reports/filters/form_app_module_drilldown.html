@@ -58,7 +58,7 @@
 {% if unknown_available or display_app_type %}
 <div id="{{ css_id }}-advanced-options">
     <label class="checkbox">
-        <input type="checkbox" data-bind="checked: show" /> {% trans "Show Advanced Options" %}
+        <input name="show_advanced" type="checkbox" data-bind="checked: show" /> {% trans "Show Advanced Options" %}
     </label>
 </div>
 {% endif %}
