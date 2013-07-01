@@ -509,15 +509,15 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
         return [row(*r) for r in data]
 
     def _chart_data(self):
-        return [{
+        return {
                 'key': _('Tallied by Response'),
                 'values': [{'label': k, 'value': v} for k, v in self._data()],
-        }]
+        }
 
     @property
     def charts(self):
         if 'location_id' in self.request.GET: # hack: only get data if we're loading an actual report
-            return [PieChart(None, self._chart_data())]
+            return [PieChart(None, **self._chart_data())]
 
 class PieChartReportCaseExample(GenericPieChartReportTemplate):
     name = 'Pie Chart (Case)'
