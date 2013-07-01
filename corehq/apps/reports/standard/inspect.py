@@ -474,12 +474,15 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
             (date, pytz.utc.zone, self.timezone.zone).strftime\
             ('%Y-%m-%d %H:%M:%S') if date else ""
 
-class GenericPieChartReport(ProjectReport, GenericTabularReport):
+class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
     name = 'Generic Pie Chart (sandbox)'
     slug = 'generic_pie'
     fields = ['corehq.apps.reports.fields.DatespanField',
               'corehq.apps.reports.fields.AsyncLocationField']
-
+    # define in subclass
+    #mode = 'case' or 'form'
+    #submission_type = <case type> or <xform xmlns>
+    #field = <case property> or <path to form instance node>
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
@@ -515,6 +518,20 @@ class GenericPieChartReport(ProjectReport, GenericTabularReport):
     def charts(self):
         if 'location_id' in self.request.GET: # hack: only get data if we're loading an actual report
             return [PieChart(None, self._chart_data())]
+
+class PieChartReportCaseExample(GenericPieChartReportTemplate):
+    name = 'Pie Chart (Case)'
+    slug = 'case_pie'
+    mode = 'case'
+    submission_type = '[case-type]'
+    field = '[case-prop]'
+
+class PieChartReportFormExample(GenericPieChartReportTemplate):
+    name = 'Pie Chart (Form)'
+    slug = 'form_pie'
+    mode = 'form'
+    submission_type = '[xmlns]'
+    field = '[question-path]'
 
 
 class MapReport(ProjectReport, ProjectReportParametersMixin):
