@@ -1702,8 +1702,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     def create_all_files(self):
         files = {
-            "profile.xml": self.create_profile(),
-            "suite.xml": self.create_suite(),
+            'profile.xml': self.create_profile(is_odk=False),
+            'profile.ccpr': self.create_profile(is_odk=True),
+            'suite.xml': self.create_suite(),
         }
         if self.include_media_resources:
             files['media_suite.xml'] = self.create_media_suite()
