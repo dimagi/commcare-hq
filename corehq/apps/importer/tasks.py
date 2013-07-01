@@ -80,9 +80,8 @@ def bulk_import_async(import_id, config, domain, excel_id):
             too_many_matches += 1
             continue
 
-
-        owner_id = get_property(fields_to_update, 'owner_id') or user_id
-        external_id = get_property(fields_to_update, 'external_id')
+        owner_id = fields_to_update.pop('owner_id', user_id)
+        external_id = fields_to_update.pop('external_id', None)
 
         if not case:
             id = uuid.uuid4().hex
@@ -118,14 +117,6 @@ def bulk_import_async(import_id, config, domain, excel_id):
         'blank_externals': blank_external_ids,
         'invalid_dates': invalid_dates,
     }
-
-def get_property(fields, property_name):
-    if property_name in fields:
-        prop = fields[property_name]
-        del fields[property_name]
-        return prop
-    else:
-        return None
 
 def submit_case_block(caseblock, domain, username, user_id):
     """ Convert a CaseBlock object to xml and submit for creation/update """
