@@ -261,7 +261,7 @@ REPORT_CACHE = 'default' # or e.g. 'redis'
 
 DOMAIN_MAX_REGISTRATION_REQUESTS_PER_DAY = 99
 DOMAIN_SELECT_URL = "/domain/select/"
-LOGIN_URL = "/accounts/login/"
+
 # If a user tries to access domain admin pages but isn't a domain
 # administrator, here's where he/she is redirected
 DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME = "homepage"

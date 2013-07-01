@@ -21,9 +21,9 @@ def load_domain(req, domain):
 
 ########################################################################################################
 
-def _redirect_for_login_or_domain(request, redirect_field_name, where):
+def _redirect_for_login_or_domain(request, redirect_field_name, login_url):
     path = urlquote(request.get_full_path())
-    nextURL = '%s?%s=%s' % (where, redirect_field_name, path)
+    nextURL = '%s?%s=%s' % (login_url, redirect_field_name, path)
     return HttpResponseRedirect(nextURL)
 
 ########################################################################################################
@@ -57,7 +57,7 @@ def _redirect_for_login_or_domain(request, redirect_field_name, where):
 # the call to reverse until post-initialization, which means until during the first actual call
 # into _inner().
 
-def login_and_domain_required_ex(redirect_field_name=REDIRECT_FIELD_NAME, login_url=settings.LOGIN_URL):
+def login_and_domain_required_ex(redirect_field_name=REDIRECT_FIELD_NAME):
     def _outer(view_func):
         @wraps(view_func)
         def _inner(req, domain, *args, **kwargs):
@@ -83,6 +83,9 @@ def login_and_domain_required_ex(redirect_field_name=REDIRECT_FIELD_NAME, login_
                     else:
                         raise Http404
                 else:
+                    login_url = reverse('login', kwargs={
+                        'domain_type': domain.domain_type
+                    })
                     return _redirect_for_login_or_domain(req, redirect_field_name, login_url)
             else:
                 raise Http404
@@ -155,37 +158,18 @@ def cls_to_view(additional_decorator=None):
 # URLConf parsing (same problem described above). So, we need to define a delayed-eval login_required
 # call, too. We'll give it a distinguished name, so people are less confused.
 
-def login_required_ex( redirect_field_name = REDIRECT_FIELD_NAME,                                  
-                                  login_url = None ) :                                  
-
-    def _outer( view_func ): 
+def login_required_ex(redirect_field_name=REDIRECT_FIELD_NAME):
+    def _outer(view_func):
+        @wraps(view_func)
         def _inner(request, *args, **kwargs):
-                
-            #######################################################################                
-            #    
-            # Can't change vals in closure variables - need to use new locals      
-                              
-            if login_url is None:
-                l_login_url = settings.LOGIN_URL
-            else:
-                l_login_url = login_url
-
-            #######################################################################
-            # 
-            # The actual meat of the decorator
-            
+            login_url = reverse('login')
             user = request.user
             if not (user.is_authenticated() and user.is_active):
-                return _redirect_for_login_or_domain( request, redirect_field_name, l_login_url)
+                return _redirect_for_login_or_domain(request,
+                        redirect_field_name, login_url)
             
             # User's login and domain have been validated - it's safe to call the view function
             return view_func(request, *args, **kwargs)
-
-        _inner.__name__ = view_func.__name__
-        _inner.__doc__ = view_func.__doc__
-        _inner.__module__ = view_func.__module__
-        _inner.__dict__.update(view_func.__dict__)
-        
         return _inner
     return _outer
 

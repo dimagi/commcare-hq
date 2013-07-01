@@ -9,7 +9,7 @@ urlpatterns = patterns('corehq.apps.hqwebapp.views',
 
     url(r'^no_permissions/$', 'no_permissions', name='no_permissions'),
 
-    url(r'^accounts/login/$', 'login', name="login"),
+    url(r'^accounts/login/(?P<domain_type>\w+)?$', 'login', name="login"),
     url(r'^accounts/logout/$', 'logout', name="logout"),
     (r'^$', 'redirect_to_default'),
     (r'^reports/$', 'redirect_to_default'),
