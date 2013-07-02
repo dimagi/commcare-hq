@@ -1,0 +1,2 @@
+recursive-include fluff/_design *
+recursive-include fluff/fluff_filter/_design *
