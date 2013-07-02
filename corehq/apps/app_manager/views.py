@@ -1699,7 +1699,7 @@ def download_file(req, domain, app_id, path):
         return response
     except (ResourceNotFound, AssertionError):
         if req.app.copy_of:
-            if req.META['HTTP_USER_AGENT'] == 'bitlybot':
+            if req.META.get('HTTP_USER_AGENT') == 'bitlybot':
                 raise Http404()
             elif path == 'profile.ccpr':
                 # legacy: should patch build to add odk profile
