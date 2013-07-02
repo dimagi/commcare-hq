@@ -288,7 +288,7 @@ class DateSpan(object):
         return DateSpan(start, end, format)
     
     @classmethod
-    def since(cls, days, enddate=None, enddate_offset=0, format=DEFAULT_DATE_FORMAT, inclusive=True, timezone=pytz.utc):
+    def since(cls, days, enddate=None, format=DEFAULT_DATE_FORMAT, inclusive=True, timezone=pytz.utc):
         """
         Generate a DateSpan ending with a certain date, and going back 
         N days. The enddate defaults to today midnight but is inclusive
@@ -299,7 +299,6 @@ class DateSpan(object):
         if enddate is None:
             enddate = datetime.now(tz=timezone) 
         end = datetime(enddate.year, enddate.month, enddate.day)
-        end = end + timedelta(days=enddate_offset)
         start = end - timedelta(days=days)
         return DateSpan(start, end, format, inclusive, timezone)
                     
