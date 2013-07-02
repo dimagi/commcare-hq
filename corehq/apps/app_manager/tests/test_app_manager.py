@@ -112,6 +112,18 @@ class AppManagerTest(TestCase):
         with open(os.path.join(os.path.dirname(__file__), 'data', 'yesno.json')) as f:
             return json.load(f)
 
+    def _check_has_build_files(self, build):
+
+        min_acceptable_paths = (
+            'CommCare.jar',
+            'CommCare.jad',
+            'files/profile.ccpr',
+            'files/profile.xml',
+            'files/modules-0/forms-0.xml',
+        )
+        for path in min_acceptable_paths:
+            self.assertTrue(build.fetch_attachment(path))
+
     def testBuildApp(self):
         # do it from a NOT-SAVED app;
         # regression test against case where contents gets lazy-put w/o saving
@@ -119,11 +131,13 @@ class AppManagerTest(TestCase):
         self.assertEqual(app['_id'], None)  # i.e. hasn't been saved
         copy = app.make_build()
         copy.save()
+        self._check_has_build_files(copy)
 
     def testBuildImportedApp(self):
         app = import_app(self._yesno_source, self.domain)
         copy = app.make_build()
         copy.save()
+        self._check_has_build_files(copy)
 
     def testRevertToCopy(self):
         old_name = 'old name'
