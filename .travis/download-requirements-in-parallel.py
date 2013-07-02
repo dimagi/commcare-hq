@@ -1,5 +1,6 @@
 import sys
 import subprocess
+from os.path import expanduser
 
 requirements = []
 
@@ -14,8 +15,11 @@ for path in sys.argv[1:]:
 
 jobs = []
 
+home = expanduser("~")
+
 for requirement in requirements:
-    jobs.append(subprocess.Popen(['pip', 'install', '--use-mirrors', '--no-install', requirement]))
+    jobs.append(subprocess.Popen(['pip', 'install', '--use-wheel', '--use-mirrors', '--no-install',
+                                  '--find-links=%s/wheelhouse' % home, requirement]))
 
 for job in jobs:
     job.wait()
