@@ -10,7 +10,7 @@ install:
  - "curl http://127.0.0.1:5984/"
  - "time bash -e .travis/quietly-run-install.sh"
  - "time python .travis/download-requirements-in-parallel.py requirements/requirements.txt requirements/dev-requirements.txt"
- - "time pip install Cython --use-mirrors"
+ - "time pip install Cython --use-mirrors --use-wheel --find-links=/home/$USER/wheelhouse"
  - "time pip install -r requirements/requirements.txt -r requirements/dev-requirements.txt --use-mirrors"
  - "bash -e .travis/misc-setup.sh"
  - "cp .travis/localsettings.py localsettings.py"
