@@ -1,4 +1,5 @@
 import json
+from corehq.apps.app_manager.util import add_odk_profile_after_build
 from dimagi.utils.decorators.memoized import memoized
 import os
 
@@ -124,20 +125,37 @@ class AppManagerTest(TestCase):
         for path in min_acceptable_paths:
             self.assertTrue(build.fetch_attachment(path))
 
+    def _check_legacy_odk_files(self, build):
+        self.assertTrue(build.copy_of)
+        with self.assertRaises(AttributeError):
+            build.odk_profile_created_after_build
+        path = 'files/profile.ccpr'
+        build_version = build.version
+        build.delete_attachment(path)
+        add_odk_profile_after_build(build)
+        build.save()
+        build = Application.get(build.get_id)
+        self.assertEqual(build.version, build_version)
+        self.assertTrue(build.fetch_attachment(path))
+        self.assertEqual(build.odk_profile_created_after_build, True)
+
     def testBuildApp(self):
         # do it from a NOT-SAVED app;
         # regression test against case where contents gets lazy-put w/o saving
         app = Application.wrap(self._yesno_source)
         self.assertEqual(app['_id'], None)  # i.e. hasn't been saved
+        app._id = Application.get_db().server.next_uuid()
         copy = app.make_build()
         copy.save()
         self._check_has_build_files(copy)
+        self._check_legacy_odk_files(copy)
 
     def testBuildImportedApp(self):
         app = import_app(self._yesno_source, self.domain)
         copy = app.make_build()
         copy.save()
         self._check_has_build_files(copy)
+        self._check_legacy_odk_files(copy)
 
     def testRevertToCopy(self):
         old_name = 'old name'
