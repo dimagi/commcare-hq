@@ -162,6 +162,13 @@ def excel_fields(request, domain):
     except:
         pass
 
+    # we can't actually update this so don't show it
+    try:
+        case_fields.remove('type')
+    except:
+        pass
+
+
     return render(request, "importer/excel_fields.html", {
                                 'named_columns': named_columns,
                                 'case_type': case_type,
