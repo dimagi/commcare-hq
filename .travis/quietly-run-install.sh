@@ -14,7 +14,7 @@ keytool -genkey \
 
 
 sudo apt-get install s3cmd
-mv s3cfg ~/.s3cfg
+mv .travis/s3cfg ~/.s3cfg
 echo "access_key = $ARTIFACTS_AWS_ACCESS_KEY_ID" >> ~/.s3cfg
 echo "secret_key = $ARTIFACTS_AWS_SECRET_ACCESS_KEY" >> ~/.s3cfg
 
