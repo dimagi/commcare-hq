@@ -28,7 +28,7 @@ from django.conf import settings
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
-from corehq.apps.app_manager.util import is_valid_case_type, get_case_properties, get_all_case_properties
+from corehq.apps.app_manager.util import is_valid_case_type, get_case_properties, get_all_case_properties, add_odk_profile_after_build
 from corehq.apps.app_manager.util import save_xform, get_settings_values
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
@@ -1702,22 +1702,32 @@ def download_file(req, domain, app_id, path):
         response = HttpResponse(mimetype=mimetype_map[path.split('.')[-1]])
     except KeyError:
         response = HttpResponse()
+
+    if path in ('CommCare.jad', 'CommCare.jar'):
+        set_file_download(response, path)
+        full_path = path
+    else:
+        full_path = 'files/%s' % path
+
     try:
         assert req.app.copy_of
-        if path in ('CommCare.jad', 'CommCare.jar'):
-            set_file_download(response, path)
-        else:
-            path = 'files/%s' % path
-        payload = req.app.fetch_attachment(path)
+        payload = req.app.fetch_attachment(full_path)
         response.write(payload)
         response['Content-Length'] = len(payload)
         return response
     except (ResourceNotFound, AssertionError):
         if req.app.copy_of:
-            # never try to create these resources for a saved app
-            # they should already exist,
-            # and if they don't it's because they're still being processed
-            raise Http404()
+            if req.META.get('HTTP_USER_AGENT') == 'bitlybot':
+                raise Http404()
+            elif path == 'profile.ccpr':
+                # legacy: should patch build to add odk profile
+                # which wasn't made on build for a long time
+                add_odk_profile_after_build(req.app)
+                req.app.save()
+                return download_file(req, domain, app_id, path)
+            else:
+                notify_exception(req, 'Build resource not found')
+                raise Http404()
         callback, callback_args, callback_kwargs = RegexURLResolver(r'^', 'corehq.apps.app_manager.download_urls').resolve(path)
         return callback(req, domain, app_id, *callback_args, **callback_kwargs)
 
