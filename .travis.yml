@@ -24,3 +24,8 @@ services:
  - rabbitmq
  - elasticsearch
  - memcache
+env:
+ global:
+  - secure: "LYNNc9DQMSvDKssc6YuP0yE4AWSo8Y0hFd5r/0LLG0b6Fj6YT/I/O4hhnZ1U\nz8O/RPHVPRJoJZtYJUX4cIeXogGQp2/p8oIZ7h5bYBxncfBaBhfNE+FVPSTb\n/Q1k+Zpy4lk11mEHniflBpg6WZ+yaOEd/q1c4Fo9bv+B3sgaB40="
+  - secure: "FeEbC3bJVli9OuL7b8VGQNhgqIFq0uLoclDZ49raKeqGlnV+4qDAVYusenLg\nUYdO8CmhwobWpk6lvDGYWqRPQC/aHkaehmyKLT4aBAxUV+WoCV3oKUyD2p9X\njIAo5iXY9CqkPZ8thoGP+ef+cbgh+FZnPPm0VZ2l559qngCwLmk="
+
