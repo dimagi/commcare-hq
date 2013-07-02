@@ -1,6 +1,6 @@
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
-from corehq.apps.reports.basic import BasicTabularReport, Column, FunctionView, SummingTabularReport
+from corehq.apps.reports.basic import Column, FunctionView, SummingTabularReport
 from corehq.apps.reports.fields import AsyncDrillableField, ReportSelectField
 from util import get_unique_combinations
 from couchdbkit_aggregate.fn import mean
@@ -130,6 +130,7 @@ class PSIReport(SummingTabularReport, CustomProjectReport, DatespanMixin):
         for c in combos:
             yield [self.domain] + [c[pt] for pt in self.place_types]
 
+
 class PSIEventsReport(PSIReport):
     fields = ['corehq.apps.reports.fields.DatespanField',
               'psi.reports.StateDistrictField',
@@ -165,6 +166,7 @@ class PSIEventsReport(PSIReport):
     leaflets = Column("Total number of leaflets distributed", key='leaflets')
 
     gifts = Column("Total number of gifts distributed", key='gifts')
+
 
 class PSIHDReport(PSIReport):
     name = "Household Demonstrations Report"

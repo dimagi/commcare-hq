@@ -20,5 +20,6 @@ function (doc) {
 
         emit_array([doc.domain, form.activity_state], [opened_on], data);
         emit_array([doc.domain, form.activity_state, form.activity_district], [opened_on], data);
+        emit_array(['ctable', opened_on, doc.domain, form.activity_state, form.activity_district], [], data);
     }
 }
