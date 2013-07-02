@@ -243,6 +243,59 @@
             "Child Case Property": "Enter a case property along with the criteria for matching it. Only the child cases whose given case property matches the given criteria will be recipients."
         };
 
+        function get_language_count(message){
+            //For encoding, Latin-language alphabet requires 7-bits and non-Latin-languages require 16bits. Refer to following.
+            //http://spin.atomicobject.com/2011/04/20/concatenated-sms-messages-and-character-counts/
+            //http://stackoverflow.com/questions/5454910/international-count-sms-characters
+            var gsm7bitChars = "@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ !\"#¤%&'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà";
+            var gsm7bitExChar = "^{}\\[~]|€";            
+            var gsm7bitUnits = 0;
+            var utf16codeUnits = 0;            
+            for (var i = 0, len = message.length; i < len; i++) {
+                if (gsm7bitUnits != null) {
+                    if (gsm7bitChars.indexOf(message.charAt(i)) > -1) {
+                        gsm7bitUnits++; 
+                    } 
+                    else if (gsm7bitExChar.indexOf(message.charAt(i)) > -1) {
+                        gsm7bitUnits += 2;
+                    } 
+                    else {
+                        gsm7bitUnits = null;
+                    }
+                }
+                utf16codeUnits += message.charCodeAt(i) < 0x10000 ? 1 : 2;  
+            }            
+            if (gsm7bitUnits==null){
+                return ["foriegn", utf16codeUnits];
+            }
+            else{
+                return ["english", gsm7bitUnits];
+            }        
+        }
+        
+        function alert_sms_counts($message_box){
+            var language_count = get_language_count($message_box.val());
+            var current_count = language_count[1];
+            var max_char = (language_count[0]=="english") ? 160 : 70;
+            var max_sms_multiples = (max_char==160) ? 153 : 67;
+            var cc_message = "";
+            var chars_remaining = max_char - current_count;
+            var $char_count = $message_box.parent().find("#character-count");
+            if(chars_remaining < 0){
+                $char_count.addClass("alert-danger").removeClass('alert-info');
+            } 
+            else {
+                $char_count.removeClass("alert-danger").addClass('alert-info');
+            }
+            cc_message = current_count + " character";
+            if(current_count != 1){
+                cc_message = cc_message + "s";
+            }
+            var split_count = (current_count<=max_char) ? 1 : Math.ceil(current_count/max_sms_multiples);
+            cc_message = cc_message + " (" + max_char + " max). Messages : "+split_count;
+            $char_count.text(cc_message);            
+        }
+
         $('.help_popover').popover({
             placement: 'top',
             trigger: 'hover',
@@ -271,6 +324,8 @@
         $(".add_translation").click(function() {
             $(this).parent().clone(true).appendTo($(this).parent().parent());
             $(this).parent().parent().children("div").last().find("input").attr("value","");
+            $(this).parent().parent().children("div").last().find("#character-count").text('0 characters (160 max)');
+            $(this).parent().parent().children("div").last().find("#character-count").removeClass("alert-danger").addClass('alert-info');
             order_event_table();
         });
         
@@ -330,8 +385,13 @@
         
         $("#id_recipient_case_match_type").change(function() {
             recipient_case_match_type_changed();
-        });
-        
+        });                
+
+        $(".language_message.message").bind('keyup', function () {
+            alert_sms_counts($(this));
+        }).keyup();
+
+
         // Run on change methods
         
         method_changed();
@@ -576,6 +636,7 @@
                             <input type="text" class="language_message message" name="reminder_events.{{ forloop.parentloop.counter }}.messages.{{ forloop.counter }}.text" value="{{ message.text }}" />
                             <span class="btn btn-success language_message add_translation"><i class="icon icon-white icon-plus"></i> Add Translation</span>
                             <span class="btn btn-danger language_message remove_translation"><i class="icon icon-white icon-remove"></i> Remove Translation</span>
+                            <p class="alert alert-info help-block" id="character-count">0 characters (160 max)</p>
                         </div>
                         {% empty %}
                         <div>

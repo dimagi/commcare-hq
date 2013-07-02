@@ -1,9 +1,12 @@
 from django import forms
 from django.contrib.auth.forms import SetPasswordForm
 from django.core.validators import EmailValidator, email_re
+from django.core.urlresolvers import reverse
 from django.forms.widgets import PasswordInput, HiddenInput
 from django.utils.encoding import smart_str
 from django.utils.translation import ugettext_lazy as _
+from django.template.loader import get_template
+from django.template import Template, Context
 from hqstyle.forms.widgets import BootstrapCheckboxInput, BootstrapDisabledInput
 from dimagi.utils.timezones.fields import TimeZoneField
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
@@ -161,3 +164,29 @@ class CommCareAccountForm(forms.Form):
 
 validate_username = EmailValidator(email_re, _(u'Username contains invalid characters.'), 'invalid')
 
+class SupplyPointSelectWidget(forms.Widget):
+    def __init__(self, attrs=None, domain=None):
+        super(SupplyPointSelectWidget, self).__init__(attrs)
+        self.domain = domain
+
+    def render(self, name, value, attrs=None):
+        return get_template('locations/manage/partials/autocomplete_select_widget.html').render(Context({
+                    'name': name,
+                    'value': value,
+                    'query_url': reverse('corehq.apps.commtrack.views.api_query_supply_point', args=[self.domain]),
+                }))
+
+class CommtrackUserForm(forms.Form):
+    supply_point = forms.CharField(label='Supply Point:', required=False)
+
+    def __init__(self, *args, **kwargs):
+        domain = None
+        if 'domain' in kwargs:
+            domain = kwargs['domain']
+            del kwargs['domain']
+        super(CommtrackUserForm, self).__init__(*args, **kwargs)
+        self.fields['supply_point'].widget = SupplyPointSelectWidget(domain=domain)
+
+    def save(self, user):
+        user.commtrack_location = self.cleaned_data['supply_point']
+        user.save()

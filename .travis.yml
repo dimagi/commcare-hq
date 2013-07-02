@@ -4,14 +4,18 @@ python:
 env:
  - CFLAGS=-O0
 install:
+ - "uname -a"
+ - "lsb_release -a"
+ - "bash -ex .travis/upgrade-couchdb.sh"
+ - "curl http://127.0.0.1:5984/"
  - "time bash -e .travis/quietly-run-install.sh"
  - "time python .travis/download-requirements-in-parallel.py requirements/requirements.txt requirements/dev-requirements.txt"
  - "time pip install Cython --use-mirrors"
  - "time pip install -r requirements/requirements.txt -r requirements/dev-requirements.txt --use-mirrors"
  - "bash -e .travis/misc-setup.sh"
  - "cp .travis/localsettings.py localsettings.py"
- - pip install coveralls
-script: "cat .travis/apps_under_test | grep -v '^#' | xargs coverage run manage.py test --noinput"
+ - "pip install coveralls coverage unittest2 mock"
+script: "cat .travis/apps_under_test | grep -v '^#' | xargs coverage run manage.py test --noinput --failfast"
 after_success:
  - coveralls
 services:

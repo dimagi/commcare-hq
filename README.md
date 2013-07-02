@@ -230,7 +230,7 @@ In order to build and download a CommCare mobile app from your instance of
 CommCare HQ, you need to follow our [instructions][builds] for how to download
 and load CommCare binaries from the Dimagi build server.
 
- [builds]: https://github.com/dimagi/core-hq/blob/master/corehq/apps/builds/README.md
+ [builds]: https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/builds/README.md
 
 Running Tests
 -------------

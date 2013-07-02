@@ -4,14 +4,14 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'formdesigner/js/lib/chosen.jquery.min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/knockout.mapping.js' %}"></script>
     <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
 
-    <script src="{% static 'app_manager/js/ejs.min.js' %}"></script>
     {% if app.application_version == '2.0' %}
         <script src="{% static 'app_manager/js/case-config-ui-2.js' %}"></script>
     {% else %}
+        <script src="{% static 'app_manager/js/ejs.min.js' %}"></script>
         <script src="{% static 'app_manager/js/case-config-ui-1.js' %}"></script>
     {% endif %}
     <script src="{% static 'cloudcare/js/util.js' %}"></script>
@@ -136,7 +136,7 @@
                         select.attr('id', 'data_paths_select').val(paths).css({
                             width: '600px',
                             height: '10em',
-                        }).appendTo(home).chosen();
+                        }).appendTo(home).select2();
                     }
 
                     select.change(function () {
@@ -152,40 +152,40 @@
             /* form_requires needs to be a knockout observable so that
              its value can be read by another UI (form filtering) */
             var form_requires = ko.observable({{ form.requires|JSON }});
-            if (!form_empty) {
-                var casexml = new CaseXML({
-                    home: $('#casexml_home'),
-                    actions: {{ form.actions|JSON }},
-                    questions: {{ xform_questions|JSON }},
-                    edit: edit,
-                    save_url: "{% url corehq.apps.app_manager.views.edit_form_actions app.domain app.id module.id nav_form.id %}",
-                    requires: form_requires,
-                    reserved_words: {{ case_reserved_words_json|JSON }},
-                    moduleCaseTypes: {{ module_case_types|JSON }},
-                    caseType: {{ form.get_case_type|JSON }}
-                    {% if app.application_version != '1.0' %}
-                    ,ejs_urls: {
-                        template: "{% static 'app_manager/ejs/case-config-ui-2.ejs' %}",
-                        condition_ejs: "{% static 'app_manager/ejs/condition.ejs' %}",
-                        action_ejs: "{% static 'app_manager/ejs/action.ejs' %}",
-                        options_ejs: "{% static 'app_manager/ejs/options.ejs' %}",
-                        propertyList_ejs: "{% static 'app_manager/ejs/propertyList.ejs' %}",
-                        action_templates: {
-                            open_case: "{% static 'app_manager/ejs/actions/open_case.ejs' %}",
-                            update_case: "{% static 'app_manager/ejs/actions/update_case.ejs' %}",
-                            case_preload: "{% static 'app_manager/ejs/actions/case_preload.ejs' %}",
-                            close_case: "{% static 'app_manager/ejs/actions/close_case.ejs' %}"
-                        }
+            var caseConfig = new CaseConfig.CaseConfig({
+                home: $('#casexml_home'),
+                actions: {{ form.actions|JSON }},
+                questions: {{ xform_questions|JSON }},
+                edit: edit,
+                save_url: "{% url corehq.apps.app_manager.views.edit_form_actions app.domain app.id module.id nav_form.id %}",
+                requires: form_requires,
+                reserved_words: {{ case_reserved_words_json|JSON }},
+                moduleCaseTypes: {{ module_case_types|JSON }},
+                caseType: {{ form.get_case_type|JSON }},
+                propertiesMap: {{ case_properties|JSON }}
+                {% if app.application_version != '1.0' %}
+                ,ejs_urls: {
+                    template: "{% static 'app_manager/ejs/case-config-ui-2.ejs' %}",
+                    condition_ejs: "{% static 'app_manager/ejs/condition.ejs' %}",
+                    action_ejs: "{% static 'app_manager/ejs/action.ejs' %}",
+                    options_ejs: "{% static 'app_manager/ejs/options.ejs' %}",
+                    propertyList_ejs: "{% static 'app_manager/ejs/propertyList.ejs' %}",
+                    action_templates: {
+                        open_case: "{% static 'app_manager/ejs/actions/open_case.ejs' %}",
+                        update_case: "{% static 'app_manager/ejs/actions/update_case.ejs' %}",
+                        case_preload: "{% static 'app_manager/ejs/actions/case_preload.ejs' %}",
+                        close_case: "{% static 'app_manager/ejs/actions/close_case.ejs' %}"
                     }
-                    {% endif %}
-                });
-                casexml.init();
+                }
+                {% endif %}
+            });
+            caseConfig.init();
 
-                // tag the 'preview in cloudcare' button with the right url
-                // unfortunately, has to be done in javascript
-                var cloudCareUrl = getCloudCareUrl("{% url cloudcare_main domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
-                $("#cloudcare-preview-url").attr("href", cloudCareUrl);
-            }
+            // tag the 'preview in cloudcare' button with the right url
+            // unfortunately, has to be done in javascript
+            var cloudCareUrl = getCloudCareUrl("{% url cloudcare_main domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
+            $("#cloudcare-preview-url").attr("href", cloudCareUrl);
+
             {% if app.application_version != '1.0' %}
                 var allFormsRequireACase = {{ module.all_forms_require_a_case|BOOL }};
                 var putInRoot = {{ module.put_in_root|BOOL }};
@@ -222,7 +222,7 @@
 {% endblock %}
 {% block head %}
     {{ block.super }}
-    <link rel="stylesheet" href="{% static 'formdesigner/css/chosen.css' %}" />
+    <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
     <link rel="stylesheet" href="{{ STATIC_URL }}syntaxhighlighter/styles/shCoreDefault.css"/>
     <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shCore.js"></script>
     <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shBrushXml.js"></script>
@@ -272,6 +272,9 @@
             pointer-events: none;
             cursor: default;
             color: #888;
+        }
+        .bigdrop {
+            width: 600px !important;
         }
     </style>
     {% if app.application_version == '2.0' %}
@@ -408,7 +411,11 @@
         </div>
     {% endif %}
         <div class="tab-pane" id="case-configuration">
-        {% if form.source and xform_questions %}
+        {% if form_errors %}
+            <p class="alert alert-warning">
+                {% trans "Case management is disabled because you have errors in your form.  Edit your form in the Form Designer and fix all errors to proceed." %}
+            </p>
+        {% else %}{% if form.source %}
             {% if app.application_version == '1.0' %}
                 <header class="clearfix">
                     <h4 class="pull-left">{% trans "Cases and Referrals" %}</h4>
@@ -423,137 +430,19 @@
                 <header class="clearfix">
                     <h4 class="pull-left">{% trans "Case Management" %}</h4>
                     <span class="hq-help-template"
-                          data-title="{% trans "Case Management" %}"
-                          data-content="{% trans "Cases give you a way to track patients, farms, etc. over time.  You can choose to save data from a form to the case, which will store the data locally on the phone to use later." %}"
+                        data-title="{% trans "Case Management" %}"
+                        data-content="{% trans "Cases give you a way to track patients, farms, etc. over time.  You can choose to save data from a form to the case, which will store the data locally on the phone to use later." %}"
                     ></span>
                 </header>
                 <div class="casexml" id="casexml_home">
-                    <script type="text/html" id="remove-subcase-modal-template">
-                        <div class="modal-header">
-                            <a href="#" class="close" data-dismiss="modal">×</a>
-                            <h3>{% trans "Remove Subcase?" %}</h3>
-                        </div>
-                        <div class="modal-body">
-                            <p>{% trans "Are you sure you want to remove this subcase?" %}</p>
-                        </div>
-                        <div class="modal-footer">
-                            <a href="#" class="btn" data-dismiss="modal">{% trans "Cancel" %}</a>
-                            <a class="btn btn-danger" href="#" data-bind="click: $root.removeSubCase" data-dismiss="modal">{% trans "Remove Subcase" %}</a>
-                        </div>
-                    </script>
-                    <div id="case-config-ko">
-                        <header class="clearfix">
-                            <h5 class="pull-left">{% trans "Child Cases" %}</h5>
-                            <span class="hq-help-template"
-                                  data-title="{% trans "Child Cases" %}"
-                                  data-content="{% trans "Child Cases let you open other types of cases for use in other modules. When possible, they'll be linked to the current case so you'll always know where they came from. A great use of Child Cases is for tracking a newborn separately from its mother." %}"
-                            ></span>
-                        </header>
-
-                        <div data-bind="foreach: subcases" class="indent form">
-                            <div>
-                                <i class="icon-ok"></i>
-                                {% trans "Opens a case for a different case list:" %}
-                                <span class="control-group" data-bind="css: {warning: !case_type()}">
-                                    <select data-bind="
-                                        options: $root.caseTypes,
-                                        optionsText: $root.getCaseTypeLabel,
-                                        value: case_type,
-                                        optionsCaption: 'Choose a Module...',
-                                        edit: $root.edit"></select>
-                                    <span class="help-inline" data-bind="visible: !case_type()">{% trans "Required" %}</span>
-                                </span>
-                                <a href="#" data-bind="openModal: 'remove-subcase-modal-template', visible: $root.edit" style="float: right"><i class="icon-trash"></i>{% trans "Remove subcase" %}</a>
-                            </div>
-                            <div data-bind="visible: condition.type() === 'always' && $root.edit" class="indent">
-                                <a href="#" data-bind="click: function () {condition.type('if')}"><i class="icon-plus"></i> {% trans "Use condition..." %}</a>
-                            </div>
-                            <div data-bind="visible: condition.type() === 'if'" class="indent">
-                                <a href="#" data-bind="click: function () {condition.type('always')}, visible: $root.edit"><i class="icon-remove"></i></a>
-                                {% trans "If the answer to" %}
-                                <select data-bind="
-                                    optstr: $root.utils.getQuestions('select1'),
-                                    value: condition.question,
-                                    optionsCaption: ' ',
-                                    edit: $root.edit"></select>
-                                {% trans "is" %}
-                                    <span data-bind="if: $root.utils.getAnswers({question: condition.question()}).length">
-                                        <select data-bind="
-                                            optstr: $root.utils.getAnswers({question: condition.question()}),
-                                            value: condition.answer,
-                                            edit: $root.edit"></select>
-                                    </span>
-                                    <span data-bind="if: !$root.utils.getAnswers({question: condition.question()}).length">
-                                        <input type="text" class="code" data-bind="value: condition.answer, edit: $root.edit"/>
-                                    </span>
-                            </div>
-                            <div class="well" style="margin: 10px">
-                                <table>
-                                    <thead>
-                                    <tr>
-                                        <th></th>
-                                        <th>{% trans "Question" %}</th>
-                                        <th>{% trans "Case Property" %}</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr class="control-group" data-bind="css: {warning: !case_name()}">
-                                            <td></td>
-                                            <td>
-                                                <div><select data-bind="
-                                                    optstr: $root.utils.getQuestions('all'),
-                                                    optstrText: function (question) { return $root.getLabel(question)},
-                                                    value: case_name,
-                                                    optionsCaption: ' ',
-                                                    edit: $root.edit"></select></div>
-                                                <p class="help-inline" data-bind="visible: !case_name()">{% trans "Required" %}</p>
-                                            </td>
-                                            <td>
-                                                <span class="label label-inverse">{% trans "Name" %}</span> <code>case_name</code>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-
-                                    <tbody data-bind="foreach: case_properties">
-                                    <tr class="control-group" data-bind="css: {error: validate}">
-                                        <td>
-                                            <a href="#" data-bind="click: $parent.removeProperty, visible: $root.edit"><i class="icon-remove"></i></a>
-                                        </td>
-                                        <td>
-                                            <select data-bind="
-                                                optstr: $root.utils.getQuestions('all'),
-                                                optstrText: function (question) { return $root.getLabel(question)},
-                                                value: path,
-                                                optionsCaption: ' ',
-                                                edit: $root.edit"></select>
-                                        </td>
-                                        <td>
-                                            <input type="text" class="code" data-bind="value: key, attr: {placeholder: defaultKey}, edit: $root.edit"/>
-                                            <p class="help-inline" data-bind="html: validate"></p>
-                                        </td>
-                                    </tr>
-                                    </tbody>
-                                </table>
-                                <a href="#" data-bind="click: addProperty, visible: $root.edit">{% trans "Add property" %}</a>
-                            </div>
-                        </div>
-                        <div class="indent">
-                            <a href="#" data-bind="click: addSubCase, visible: $root.edit">
-                                <i class="icon-plus"></i>
-                                {% trans "Opens a case for a different case list..." %}
-                            </a>
-                        </div>
-                    </div>
+                    {% include 'app_manager/partials/case_config.html' %}
                 </div>
             {% endif %}
         {% else %}
             <p class="alert alert-warning">
-            {% if form_errors %}
-                {% trans "Case management is disabled because you have errors in your form.  Edit your form in the Form Designer and fix all errors to proceed." %}
-            {% else %}
-                {% trans "Your form has no usable questions for case management." %}
-            {% endif %}
+                {% trans "Case management is disabled because you have not created a form yet." %}
             </p>
+        {% endif %}
         {% endif %}
         </div>
         <div class="tab-pane" id="advanced">

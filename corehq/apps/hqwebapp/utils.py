@@ -77,7 +77,7 @@ class InvitationView():
 
         if request.user.is_authenticated():
             is_invited_user = request.couch_user.username == invitation.email
-            if self.is_invited(invitation, request.couch_user):
+            if self.is_invited(invitation, request.couch_user) and not request.couch_user.is_superuser:
                 if is_invited_user:
                     # if this invite was actually for this user, just mark it accepted
                     messages.info(request, _("You are already a member of {entity}.").format(
@@ -89,7 +89,7 @@ class InvitationView():
                                              "{invited} but you are already a member of {entity} with the "
                                              "account {current}. Please sign out to accept this invitation "
                                              "as another user.").format(
-                                                 domain=self.inviting_entity,
+                                                 entity=self.inviting_entity,
                                                  invited=invitation.email,
                                                  current=request.couch_user.username,
                                              ))

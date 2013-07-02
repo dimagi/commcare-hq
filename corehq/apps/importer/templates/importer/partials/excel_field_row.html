@@ -1,0 +1,69 @@
+{% load i18n %}
+
+<td>
+    {% if forloop.first %}
+        <a class="hide remove_row" href="#"><i class="icon-remove"></i></a>
+    {% else %}
+        <a class="remove_row" href="#"><i class="icon-remove"></i></a>
+    {% endif %}
+</td>
+
+<td class="span3">
+    <select name="excel_field[]">
+        <option>{% trans "Select field from excel..." %}</option>
+        {% for field in excel_fields %}
+            {% ifequal field item %}
+                <option value="{{ field|escape }}" selected="selected">
+                    {{ field|escape }}
+                </option>
+            {% else %}
+                <option value="{{ field|escape }}">
+                    {{ field|escape }}
+                </option>
+            {% endifequal %}
+        {% endfor %}
+    </select>
+</td>
+
+<td class="span3">
+    <label class="checkbox">
+        <input type="checkbox"
+               class="is_date"
+               name="is_date[]" />
+        {% trans "This field is a date" %}
+    </label>
+</td>
+
+<td>
+    <i class="icon-arrow-right"></i>
+</td>
+
+<td class="hide">
+    <input type="text" name="custom_field[]"
+           class="hide custom_field"
+           placeholder="Enter new property name" />
+</td>
+
+<td class="span3">
+    <select name="case_field[]" class="case_field">
+        <option value="">{% trans "Select property name..." %}</option>
+
+        {% for field in case_fields %}
+        <option value="{{ field|escape }}">
+            {{ field|escape }}
+        </option>
+        {% endfor %}
+    </select>
+</td>
+
+<td>
+    <label class="checkbox">
+        <input type="checkbox" class="new_property" />
+        {% trans "Create a new property instead" %}
+    </label>
+</td>
+
+<input type="hidden"
+       class="is_date_field"
+       name="is_date_field[]"
+       value="false" />

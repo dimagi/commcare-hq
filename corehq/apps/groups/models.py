@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from functools import partial
 from couchdbkit.ext.django.schema import *
+from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.users.models import CouchUser, CommCareUser
 from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord
 from django.conf import settings
@@ -105,7 +106,16 @@ class Group(UndoableDocument):
             return [user for user in users if user.is_active]
         else:
             return users
-    
+
+    @memoized
+    def get_static_user_ids(self, is_active=True):
+        return [user.user_id for user in self.get_static_users(is_active)]
+
+    @memoized
+    def get_static_users(self, is_active=True):
+        return self.get_users()
+
+
     @classmethod
     def by_domain(cls, domain):
         return cls.view('groups/by_domain',

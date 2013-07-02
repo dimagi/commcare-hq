@@ -1,22 +1,35 @@
 {% extends "hqwebapp/two_column.html" %}
 {% load report_tags %}
+{% load i18n %}
 
 {% block head %}
     {{ block.super }}
 {% endblock %}
 
 {% block main_column %}
-    <form class="form-horizontal form-report" action="#" method="post">
+    {% block extrahead %}
+        <script type="text/javascript">
+            var autoRefresh = '';
+            var pollDownloader = function () {
+                if ($('#ready_{{ download_id }}').length == 0)
+                    {
+                        $.get("{% url importer_job_poll domain download_id %}", function(data) {
+                            $("#display_{{ download_id }}").html(data);
+                        });
+                    } else {
+                        clearInterval(autoRefresh);
+                    }
+            };
+            $(document).ready(function () {
+                pollDownloader();
+                autoRefresh = setInterval(pollDownloader, 2000);
+            });
+        </script>
+    {% endblock extrahead %}
 
-    <fieldset>
-        <legend>Success!</legend>
-        <br>
-        Import complete. <strong>{{match_count}}</strong> rows were matched and updated, <strong>{{no_match_count}}</strong>
-        rows did not match any cases.<br>
-        <br>
-        <strong>{{too_many_matches}}</strong> rows matched more than one case at the same time - this means that there
-        are cases in your system with the same external ID.       
-    </fieldset>    
-    
-    </form>
+    <div class="downloader_container" id="display_{{ download_id }}">
+        <legend>
+            {% trans "Importing your data. This may take some time..." %}
+        </legend>
+    </div>
 {% endblock %}

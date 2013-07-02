@@ -3,6 +3,9 @@ from couchforms import models as couchforms_models
 from couchdbkit.exceptions import ResourceNotFound
 from tastypie import fields
 
+from casexml.apps.case.models import CommCareCase
+
+from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.api.resources import v0_2, v0_1
 from corehq.apps.api.resources import DomainSpecificResourceMixin, dict_object
 from corehq.apps.api.util import object_does_not_exist
@@ -33,10 +36,21 @@ class CommCareCaseResource(v0_2.CommCareCaseResource, DomainSpecificResourceMixi
     
     # in v2 this can't be null, but in v3 it can
     user_id = fields.CharField(attribute='user_id', null=True)
+
+    # in v2 the bundle.obj is not actually a CommCareCase object but just a dict_object around a CaseAPIResult
+    # so there is no 'get_json'
+    def dehydrate_properties(self, bundle):
+        return bundle.obj.get_json()['properties']
+
+    def dehydrate_indices(self, bundle):
+        return bundle.obj.get_json()['indices']
+
+    def obj_get(self, bundle, **kwargs):
+        return get_object_or_not_exist(CommCareCase, kwargs['pk'], kwargs['domain'])
     
     def obj_get_list(self, bundle, domain, **kwargs):
         filters = CaseListFilters(bundle.request.GET)
-        return map(dict_object, es_filter_cases(domain, filters=filters.filters))
+        return es_filter_cases(domain, filters=filters.filters)
 
     
 class XFormInstanceResource(v0_1.XFormInstanceResource, DomainSpecificResourceMixin):

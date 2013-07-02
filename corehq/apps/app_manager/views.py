@@ -1,5 +1,4 @@
 from StringIO import StringIO
-import functools
 import logging
 import hashlib
 import os
@@ -13,6 +12,7 @@ from django.core.cache import cache
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import cache_control
+from corehq import ApplicationsTab
 from corehq.apps.app_manager import commcare_settings
 from django.utils import html
 from django.utils.http import urlencode as django_urlencode
@@ -28,8 +28,8 @@ from django.conf import settings
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
-from corehq.apps.app_manager.util import save_xform
-from corehq.apps.app_manager.util import is_valid_case_type
+from corehq.apps.app_manager.util import is_valid_case_type, get_case_properties, get_all_case_properties
+from corehq.apps.app_manager.util import save_xform, get_settings_values
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.translations import system_text as st_trans
@@ -381,7 +381,10 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
             form_errors[i] = err[0]
         else:
             messages.error(request, err)
-
+    module_case_types = [
+        {'module_name': module.name.get('en'), 'case_type': module.case_type}
+        for module in form.get_app().modules if module.case_type
+    ] if not is_user_registration else None
     return {
         'nav_form': form if not is_user_registration else '',
         'xform_languages': languages,
@@ -389,35 +392,17 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         'form_actions': form.actions.to_json(),
         'case_reserved_words_json': load_case_reserved_words(),
         'is_user_registration': is_user_registration,
-        'module_case_types': [{'module_name': module.name.get('en'), 'case_type': module.case_type} for module in form.get_app().modules if module.case_type] if not is_user_registration else None,
+        'module_case_types': module_case_types,
         'form_errors': form_errors,
     }
 
 
 def get_app_view_context(request, app):
-    try:
-        profile = app.profile
-    except AttributeError:
-        profile = {}
-    hq_settings = dict([
-        (attr, app[attr])
-        for attr in app.properties() if not hasattr(app[attr], 'pop')
-    ])
-    if hasattr(app, 'custom_suite'):
-        hq_settings.update({'custom_suite': app.custom_suite})
+
     context = {
         'settings_layout': commcare_settings.LAYOUT[app.get_doc_type()],
-        'settings_values': {
-            'properties': profile.get('properties', {}),
-            'features': profile.get('features', {}),
-            'hq': hq_settings,
-            '$parent': {
-                'doc_type': app.get_doc_type()
-            }
-        }
+        'settings_values': get_settings_values(app),
     }
-    context['settings_values']['hq']['build_spec'] = app.build_spec.to_string()
-
 
     commcare_build_options = {}
     build_config = CommCareBuildConfig.fetch()
@@ -495,6 +480,7 @@ def _clear_app_cache(request, domain):
     for is_active in True, False:
         key = make_template_fragment_key('header_tab', [
             domain,
+            None, # tab.org should be None for any non org page
             ApplicationsTab.view,
             is_active,
             request.couch_user.get_id
@@ -598,6 +584,7 @@ def release_build(request, domain, app_id, saved_app_id):
     else:
         return HttpResponseRedirect(reverse('release_manager', args=[domain, app_id]))
 
+
 @retry_resource(3)
 def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user_registration=False):
     """
@@ -649,44 +636,17 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         del app['use_commcare_sense']
         app.save()
 
-    case_properties = set()
+    case_properties = None
     if module:
-        @memoized
-        def get_properties(case_type,
-                defaults=("name", "date-opened", "status"),
-                already_visited=()):
-
-            if case_type in already_visited:
-                return ()
-
-            get_properties_recursive = functools.partial(
-                get_properties,
-                already_visited=already_visited + (case_type,)
-            )
-
-            case_properties = set(defaults)
-            parent_types = set()
-
-            for module in app.get_modules():
-                for form in module.get_forms():
-                    if module.case_type == case_type:
-                        case_properties.update(
-                            form.actions.update_case.update.keys()
-                        )
-                    for subcase in form.actions.subcases:
-                        if subcase.case_type == case_type:
-                            case_properties.update(
-                                subcase.case_properties.keys()
-                            )
-                            parent_types.add(module.case_type)
-
-            for parent_type in parent_types:
-                for property in get_properties_recursive(parent_type):
-                    case_properties.add('parent/%s' % property)
-
-            return case_properties
-
-        case_properties = list(get_properties(module.case_type))
+        if not form:
+            case_type = module.case_type
+            case_properties = get_case_properties(
+                app,
+                [case_type],
+                defaults=('name', 'date-opened', 'status')
+            )[case_type]
+        else:
+            case_properties = get_all_case_properties(app)
 
     context = {
         'domain': domain,
@@ -785,7 +745,6 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
 
     context = get_apps_base_context(req, domain, app)
     context.update(locals())
-    app.remove_unused_mappings()
     context.update({
         'edit': True,
         'nav_form': form if not is_user_registration else '',
@@ -1257,6 +1216,7 @@ def edit_form_actions(req, domain, app_id, module_id, form_id):
     form.requires = req.POST.get('requires', form.requires)
     response_json = {}
     app.save(response_json)
+    response_json['propertiesMap'] = get_all_case_properties(app)
     return json_response(response_json)
 
 @require_can_edit_apps
@@ -1494,7 +1454,12 @@ def edit_app_attr(request, domain, app_id, attr):
             setattr(app, attribute, value)
 
     if should_edit("name"):
-        resp['update'].update({'.variable-app_name': hq_settings['name']})
+        _clear_app_cache(request, domain)
+        name = hq_settings['name']
+        resp['update'].update({
+            '.variable-app_name': name,
+            '[data-id="{id}"]'.format(id=app_id): ApplicationsTab.make_app_title(name, app.doc_type),
+        })
 
     if should_edit("success_message"):
         success_message = hq_settings['success_message']
@@ -1585,11 +1550,12 @@ def save_copy(req, domain, app_id):
 
     if not errors:
         try:
-            copy = app.save_copy(
+            copy = app.make_build(
                 comment=comment,
                 user_id=req.couch_user.get_id,
                 previous_version=app.get_latest_app(released_only=False)
             )
+            copy.save(increment_version=False)
         finally:
             # To make a RemoteApp always available for building
             if app.is_remote_app():
@@ -1642,7 +1608,8 @@ def revert_to_copy(req, domain, app_id):
     """
     app = get_app(domain, app_id)
     copy = get_app(domain, req.POST['saved_app'])
-    app = app.revert_to_copy(copy)
+    app = app.make_reversion_to_copy(copy)
+    app.save()
     messages.success(req, "Successfully reverted to version %s, now at version %s" % (copy.version, app.version))
     return back_to_main(**locals())
 
@@ -1697,16 +1664,29 @@ def download_file(req, domain, app_id, path):
         'ccpr': 'commcare/profile',
         'jad': 'text/vnd.sun.j2me.app-descriptor',
         'jar': 'application/java-archive',
+        'xml': 'application/xml',
+        'txt': 'text/plain',
     }
     try:
         response = HttpResponse(mimetype=mimetype_map[path.split('.')[-1]])
     except KeyError:
         response = HttpResponse()
     try:
-        response.write(req.app.fetch_attachment('files/%s' % path))
         assert req.app.copy_of
+        if path in ('CommCare.jad', 'CommCare.jar'):
+            set_file_download(response, path)
+        else:
+            path = 'files/%s' % path
+        payload = req.app.fetch_attachment(path)
+        response.write(payload)
+        response['Content-Length'] = len(payload)
         return response
     except (ResourceNotFound, AssertionError):
+        if req.app.copy_of:
+            # never try to create these resources for a saved app
+            # they should already exist,
+            # and if they don't it's because they're still being processed
+            raise Http404()
         callback, callback_args, callback_kwargs = RegexURLResolver(r'^', 'corehq.apps.app_manager.download_urls').resolve(path)
         return callback(req, domain, app_id, *callback_args, **callback_kwargs)
 

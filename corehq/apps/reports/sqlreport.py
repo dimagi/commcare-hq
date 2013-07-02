@@ -55,7 +55,7 @@ class DatabaseColumn(Column):
                 Additional positional arguments will be passed on when creating the DataTablesColumn
         Kwargs:
             :param column_type=SumColumn:
-                The type of the column. Must be an instance of sqlagg.columns.BaseColumn.
+                The type of the column. Must be a subclass of sqlagg.columns.BaseColumn.
             :param header_group=None:
                 An instance of corehq.apps.reports.datatables.DataTablesColumnGroup to which this column header will
                 be added.
@@ -93,7 +93,7 @@ class DatabaseColumn(Column):
         if 'sortable' not in kwargs:
             kwargs['sortable'] = True
 
-        if kwargs['sortable'] and 'sort_type' not in kwargs and column_type is not SimpleColumn:
+        if kwargs['sortable'] and 'sort_type' not in kwargs and not isinstance(column_type, SimpleColumn):
             kwargs['sort_type'] = DTSortType.NUMERIC
             format_fn = format_fn or format_data
 
@@ -152,9 +152,10 @@ class AggregateColumn(Column):
         return self.view.get_value(row) if row else None
 
 
-class SqlTabularReport(GenericTabularReport, CustomProjectReport, ProjectReportParametersMixin):
+class SqlTabularReport(GenericTabularReport):
     exportable = True
     no_value = '--'
+    table_name = None
 
     @property
     def columns(self):
@@ -194,7 +195,7 @@ class SqlTabularReport(GenericTabularReport, CustomProjectReport, ProjectReportP
             group_by = ['region', 'sub_region']
             keys = [['region1', 'sub1'], ['region1', 'sub2'] ... ]
         """
-        raise NotImplementedError()
+        return None
 
     @property
     def fields(self):
@@ -206,7 +207,6 @@ class SqlTabularReport(GenericTabularReport, CustomProjectReport, ProjectReportP
         return DataTablesHeader(*[c.data_tables_column for c in self.columns])
 
     @property
-    @memoized
     def query_context(self):
         return sqlagg.QueryContext(self.table_name, self.filters, self.group_by)
 
@@ -244,3 +244,18 @@ class SqlTabularReport(GenericTabularReport, CustomProjectReport, ProjectReportP
 
     def _or_no_value(self, value):
         return value if value is not None else self.no_value
+
+
+class SummingSqlTabularReport(SqlTabularReport):
+    @property
+    def rows(self):
+        ret = list(super(SummingSqlTabularReport, self).rows)
+        if len(ret) > 0:
+            num_cols = len(ret[0])
+            total_row = []
+            for i in range(num_cols):
+                colrows = [cr[i] for cr in ret if isinstance(cr[i], dict)]
+                colnums = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), (int, long))]
+                total_row.append(reduce(lambda x, y: x + y, colnums, 0))
+            self.total_row = total_row
+        return ret

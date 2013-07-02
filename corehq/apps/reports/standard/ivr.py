@@ -24,6 +24,7 @@ class CallLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularR
     slug = 'call_log'
     fields = ['corehq.apps.reports.fields.DatespanField']
     exportable = True
+    emailable = True
     
     @property
     def headers(self):

@@ -20,8 +20,11 @@ from corehq.apps.app_manager.views import require_can_edit_apps, set_file_downlo
 from corehq.apps.app_manager.models import get_app
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
 from corehq.apps.hqmedia.controller import MultimediaBulkUploadController, MultimediaImageUploadController, MultimediaAudioUploadController, MultimediaVideoUploadController
+from corehq.apps.hqmedia.decorators import login_with_permission_from_post
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX, CommCareVideo
 from corehq.apps.hqmedia.tasks import process_bulk_upload_zip
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import Permissions
 from dimagi.utils.decorators.memoized import memoized
 from soil.util import expose_download
 from django.utils.translation import ugettext as _
@@ -29,7 +32,7 @@ from django.utils.translation import ugettext as _
 
 class BaseMultimediaView(ApplicationViewMixin, View):
 
-    @method_decorator(require_can_edit_apps)
+    @method_decorator(require_permission(Permissions.edit_apps, login_decorator=login_with_permission_from_post()))
     def dispatch(self, request, *args, **kwargs):
         return super(BaseMultimediaView, self).dispatch(request, *args, **kwargs)
 

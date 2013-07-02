@@ -21,9 +21,13 @@ class CommCareCaseResource(JsonResource, DomainSpecificResourceMixin):
 
     xform_ids = fields.ListField(attribute='xform_ids')
 
-    properties = fields.DictField('properties')
+    properties = fields.DictField()
+    def dehydrate_properties(self, bundle):
+        return bundle.obj.properties
 
-    indices = fields.DictField('indices')
+    indices = fields.DictField()
+    def dehydrate_indices(self, bundle):
+        return bundle.obj.indices
 
     def obj_get(self, bundle, **kwargs):
         case = get_object_or_not_exist(CommCareCase, kwargs['pk'], kwargs['domain'])
@@ -35,9 +39,9 @@ class CommCareCaseResource(JsonResource, DomainSpecificResourceMixin):
         filters = get_filters_from_request(bundle.request, limit_top_level=self.fields)
         case_type = filters.get('properties/case_type', None)
         return map(dict_object, get_filtered_cases(domain, status=status,
-                                                   case_type=case_type,
-                                                   user_id=user_id,
-                                                   filters=filters))
+                                  case_type=case_type,
+                                  user_id=user_id,
+                                  filters=filters))
 
     class Meta(CustomResourceMeta):
         object_class = CommCareCase    

@@ -266,6 +266,12 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         required=False,
         help_text=_("Enter the case type to be used for call center workers")
     )
+    restrict_superusers = BooleanField(
+        label=_("Restrict Superuser Access"),
+        required=False,
+        help_text=_("If access to a domain is restricted only users added " +
+                    "to the domain and staff members will have access.")
+    )
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
@@ -277,6 +283,9 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             self.fields['call_center_enabled'].widget = forms.HiddenInput()
             self.fields['call_center_case_owner'].widget = forms.HiddenInput()
             self.fields['call_center_case_type'].widget = forms.HiddenInput()
+
+        if not (user and user.is_staff):
+            self.fields['restrict_superusers'].widget = forms.HiddenInput()
 
         if domain is not None:
             groups = Group.get_case_sharing_groups(domain)
@@ -295,7 +304,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
                                          for group in groups]
 
             self.fields["call_center_case_owner"].choices = \
-                [('','')] + \
+                [('', '')] + \
                 call_center_user_choices + \
                 call_center_group_choices
 
@@ -337,6 +346,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
                 domain.internal.using_call_center = True
                 domain.call_center_config.case_owner_id = self.cleaned_data.get('call_center_case_owner', None)
                 domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type', None)
+            domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
             commtrack_util.bootstrap_default(domain)
             domain.save()
             return True

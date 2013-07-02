@@ -25,7 +25,7 @@ from corehq.apps.prescriptions.models import Prescription
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.forms import WebUserForm, UserForm, ProjectSettingsForm
+from corehq.apps.users.forms import WebUserForm, UserForm, ProjectSettingsForm, CommtrackUserForm
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser, \
     DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required
@@ -314,6 +314,19 @@ def account(request, domain, couch_user_id, template="users/account.html"):
                 'proj_settings_form': project_settings_form,
                 'override_global_tz': dm.override_global_tz
             })
+
+    # commtrack
+    if request.method == "POST" and request.POST['form_type'] == "commtrack":
+        commtrack_form = CommtrackUserForm(request.POST, domain=domain)
+        if commtrack_form.is_valid():
+            commtrack_form.save(couch_user)
+    else:
+        linked_loc = couch_user.dynamic_properties().get('commtrack_location') # FIXME update user model appropriately
+        commtrack_form = CommtrackUserForm(domain=domain, initial={'supply_point': linked_loc})
+    context.update({
+            'commtrack_enabled': Domain.get_by_name(domain).commtrack_enabled,
+            'commtrack_form': commtrack_form,
+    })
 
     # for basic tab
     context.update(_handle_user_form(request, domain, couch_user))

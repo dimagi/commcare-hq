@@ -5,18 +5,25 @@ from corehq.apps.api.util import get_object_or_not_exist
 
 from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case import xform as casexml_xform
 
+from corehq.apps.app_manager import util as app_manager_util
+from corehq.apps.app_manager.models import ApplicationBase, Application, RemoteApp, Form
 from corehq.apps.receiverwrapper.models import Repeater, repeater_types
 from corehq.apps.groups.models import Group
 from corehq.apps.cloudcare.api import ElasticCaseQuery
+
 from corehq.apps.api.resources import v0_1, v0_3, JsonResource, DomainSpecificResourceMixin, dict_object
 from corehq.apps.api.es import XFormES, CaseES, ESQuerySet, es_search
+from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField
+from corehq.apps.api.serializers import CommCareCaseSerializer
 
 # By the time a test case is running, the resource is already instantiated,
 # so as a hack until this can be remedied, there is a global that
 # can be set to provide a mock.
 
 MOCK_XFORM_ES = None
+MOCK_CASE_ES = None
 
 class XFormInstanceResource(v0_3.XFormInstanceResource, DomainSpecificResourceMixin):
 
@@ -24,6 +31,9 @@ class XFormInstanceResource(v0_3.XFormInstanceResource, DomainSpecificResourceMi
     # not present for e.g. devicelogs and must be allowed blank
     uiversion = fields.CharField(attribute='uiversion', blank=True, null=True)
     metadata = fields.DictField(attribute='metadata', blank=True, null=True)
+
+    cases = UseIfRequested(ToManyDocumentsField('corehq.apps.api.resources.v0_4.CommCareCaseResource',
+                                                attribute=lambda xform: [dict_object(case.get_json()) for case in casexml_xform.cases_referenced_by_xform(xform)]))
 
     # Prevent hitting Couch to md5 the attachment. However, there is no way to
     # eliminate a tastypie field defined in a parent class.
@@ -35,7 +45,7 @@ class XFormInstanceResource(v0_3.XFormInstanceResource, DomainSpecificResourceMi
         return MOCK_XFORM_ES or XFormES(domain)
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        es_query = es_search(bundle.request, domain)    
+        es_query = es_search(bundle.request, domain)
         es_query['filter']['and'].append({'term': {'doc_type': 'xforminstance'}})
 
         return ESQuerySet(payload = es_query,
@@ -102,6 +112,22 @@ class RepeaterResource(JsonResource, DomainSpecificResourceMixin):
         authorization = v0_1.DomainAdminAuthorization
 
 class CommCareCaseResource(v0_3.CommCareCaseResource, DomainSpecificResourceMixin):
+    xforms = UseIfRequested(ToManyDocumentsField('corehq.apps.api.resources.v0_4.XFormInstanceResource',
+                                                 attribute=lambda case: case.get_forms()))
+
+    child_cases = UseIfRequested(ToManyDictField('corehq.apps.api.resources.v0_4.CommCareCaseResource',
+                                                 attribute=lambda case: dict([ (index.identifier, CommCareCase.get(index.referenced_id)) for index in case.indices])))
+
+    parent_cases = UseIfRequested(ToManyDictField('corehq.apps.api.resources.v0_4.CommCareCaseResource',
+                                                  attribute=lambda case: dict([ (index.identifier, CommCareCase.get(index.referenced_id)) for index in case.reverse_indices])))
+
+    # Fields that v0.2 assumed were pre-transformed but we are now operating on straight CommCareCase objects again
+    date_modified = fields.CharField(attribute='modified_on', default="1900-01-01")
+    server_date_modified = fields.CharField(attribute='server_modified_on', default="1900-01-01")
+
+    def case_es(self, domain):
+        return MOCK_CASE_ES or CaseES(domain)
+
     def obj_get_list(self, bundle, domain, **kwargs):
         filters = v0_3.CaseListFilters(bundle.request.GET).filters
 
@@ -115,8 +141,12 @@ class CommCareCaseResource(v0_3.CommCareCaseResource, DomainSpecificResourceMixi
             del query['size']
         
         return ESQuerySet(payload = query,
-                          model = lambda jvalue: dict_object(CommCareCase.wrap(jvalue).get_json()),
-                          es_client = CaseES(domain)) # Not that XFormES is used only as an ES client, for `run_query` against the proper index
+                          model = CommCareCase, #lambda jvalue: dict_object(CommCareCase.wrap(jvalue).get_json()),
+                          es_client = self.case_es(domain)) # Not that XFormES is used only as an ES client, for `run_query` against the proper index
+
+    class Meta(v0_3.CommCareCaseResource.Meta):
+        max_limit = 100 # Today, takes ~25 seconds for some domains
+        serializer = CommCareCaseSerializer()
 
 class GroupResource(JsonResource, DomainSpecificResourceMixin):
     id = fields.CharField(attribute='get_id', unique=True, readonly=True)
@@ -143,3 +173,53 @@ class GroupResource(JsonResource, DomainSpecificResourceMixin):
         list_allowed_methods = ['get']
         resource_name = 'group'
 
+class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
+
+    name = fields.CharField(attribute='name')
+
+    modules = fields.ListField()
+    def dehydrate_module(self, app, module, langs):
+        '''
+        Convert a Module object to a JValue representation
+        with just the good parts.
+
+        NOTE: This is not a tastypie "magic"-name method to
+        dehydrate the "module" field; there is no such field.
+        '''
+        dehydrated = {}
+
+        dehydrated['case_type'] = module.case_type
+
+        dehydrated['case_properties'] = app_manager_util.get_case_properties(app, [module.case_type], defaults=['name'])[module.case_type]
+        
+        dehydrated['forms'] = []
+        for form in module.forms:
+            form = Form.get_form(form.unique_id)
+            form_jvalue = {
+                'xmlns': form.xmlns,
+                'name': form.name,
+                'questions': form.get_questions(langs),
+            }
+            dehydrated['forms'].append(form_jvalue)
+
+        return dehydrated
+    
+    def dehydrate_modules(self, bundle):
+        app = bundle.obj
+
+        if app.doc_type == Application._doc_type:
+            return [self.dehydrate_module(app, module, app.langs) for module in bundle.obj.modules]
+        elif app.doc_type == RemoteApp._doc_type:
+            return []
+
+    def obj_get_list(self, bundle, domain, **kwargs):
+        return Application.by_domain(domain)
+
+    def obj_get(self, bundle, **kwargs):
+        return get_object_or_not_exist(Application, kwargs['domain'], kwargs['pk'])
+
+    class Meta(v0_1.CustomResourceMeta):
+        object_class = Application
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
+        resource_name = 'application'

@@ -37,6 +37,7 @@ API_LIST = (
     ((0, 4), (
         v0_1.CommCareUserResource,
         v0_1.WebUserResource,
+        v0_4.ApplicationResource,
         v0_4.CommCareCaseResource,
         v0_4.GroupResource,
         v0_4.XFormInstanceResource,
@@ -95,4 +96,4 @@ def api_url_patterns():
 
 
 urlpatterns = patterns('',
-    *api_url_patterns)
+    *list(api_url_patterns))

@@ -22,7 +22,7 @@ from dimagi.utils.web import json_request
 from dimagi.utils.parsing import string_to_boolean
 from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
 
-CHART_SPAN_MAP = {1: '', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
+CHART_SPAN_MAP = {1: '12', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
 
 class GenericReportView(CacheableRequestMixIn):
     """
@@ -79,6 +79,7 @@ class GenericReportView(CacheableRequestMixIn):
     asynchronous = False
     hide_filters = False
     emailable = False
+    printable = False
 
     exportable = False
     mobile_enabled = False
@@ -120,6 +121,7 @@ class GenericReportView(CacheableRequestMixIn):
         self.context = base_context or {}
         self._update_initial_context()
         self.is_rendered_as_email = False # setting this to true in email_response
+        self.override_template = "reports/async/email_report.html"
 
     def __str__(self):
         return "%(klass)s report named '%(name)s' with slug '%(slug)s' in section '%(section)s'.%(desc)s%(fields)s" % dict(
@@ -249,7 +251,7 @@ class GenericReportView(CacheableRequestMixIn):
         original_template = self.report_template_path or "reports/async/basic.html"
         if self.is_rendered_as_email:
             self.context.update(original_template=original_template)
-            return "reports/async/email_report.html"
+            return self.override_template
         return original_template
 
     @property
@@ -420,6 +422,7 @@ class GenericReportView(CacheableRequestMixIn):
                 show=self.override_permissions_check or \
                    self.request.couch_user.can_view_reports() or self.request.couch_user.get_viewable_reports(),
                 is_emailable=self.emailable,
+                is_printable=self.printable,
                 is_admin=self.is_admin_report,   # todo is this necessary???
                 special_notice=self.special_notice,
             ),
@@ -591,6 +594,16 @@ class GenericReportView(CacheableRequestMixIn):
         temp = StringIO()
         export_from_tables(self.export_table, temp, self.export_format)
         return export_response(temp, self.export_format, self.export_name)
+
+    @property
+    @request_cache("raw")
+    def print_response(self):
+        """
+        Returns the raw report data. What gets rendered in the async response.
+        """
+        self.is_rendered_as_email = True
+        self.override_template = "reports/async/print_report.html"
+        return HttpResponse(self._async_context()['report'])
 
     @property
     def partial_response(self):

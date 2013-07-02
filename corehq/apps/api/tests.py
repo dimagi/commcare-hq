@@ -1,17 +1,25 @@
 import simplejson
+import time
 from datetime import datetime
+
+import dateutil.parser
 
 from django.utils.http import urlencode
 from django.test import TestCase
 from django.core.urlresolvers import reverse
+from tastypie.resources import Resource
+from tastypie import fields
 
 from couchforms.models import XFormInstance
+from casexml.apps.case.models import CommCareCase
 
 from corehq.pillows.xform import XFormPillow
+from corehq.pillows.case import CasePillow
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater
 from corehq.apps.api.resources import v0_1, v0_4
+from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, UseIfRequested, ToManyDictField
 from corehq.apps.api.es import ESQuerySet
 
 class FakeXFormES(object):
@@ -189,6 +197,46 @@ class TestXFormInstanceResource(APIResourceTest):
 
         self.assertEqual(response.status_code, 200)
 
+class TestCommCareCaseResource(APIResourceTest):
+    """
+    Tests the CommCareCaseREsource, currently only v0_4
+    """
+    resource = v0_4.CommCareCaseResource
+
+    def test_get_list(self):
+        """
+        Any case in the appropriate domain should be in the list from the API.
+        """
+
+        # The actual infrastructure involves saving to CouchDB, having PillowTop
+        # read the changes and write it to ElasticSearch.
+
+        #the pillow is set to offline mode - elasticsearch not needed to validate
+        pillow = CasePillow(online=False)
+        fake_case_es = FakeXFormES()
+        v0_4.MOCK_CASE_ES = fake_case_es
+
+        modify_date = datetime.utcnow()
+
+        backend_case = CommCareCase(server_modified_on = modify_date)
+        backend_case.save()
+
+        translated_doc = pillow.change_transform(backend_case.to_json())
+        
+        fake_case_es.add_doc(translated_doc['_id'], translated_doc)
+
+        self.client.login(username=self.username, password=self.password)
+
+        response = self.client.get(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+
+        api_cases = simplejson.loads(response.content)['objects']
+        self.assertEqual(len(api_cases), 1)
+
+        api_case = api_cases[0]
+        self.assertEqual(dateutil.parser.parse(api_case['server_date_modified']), backend_case.server_modified_on)
+
+        backend_case.delete()
 
 class TestCommCareUserResource(APIResourceTest):
     """
@@ -414,3 +462,235 @@ class TestESQuerySet(TestCase):
         self.assertEqual(es.queries[2]['size'], 500)
         self.assertEqual(len(qs_slice), 500)
 
+
+class ToManySourceModel(object):
+    def __init__(self, other_model_ids, other_model_dict):
+        self.other_model_dict = other_model_dict
+        self.other_model_ids = other_model_ids
+
+    @property
+    def other_models(self):
+        return [self.other_model_dict.get(id) for id in self.other_model_ids]
+    
+class ToManyDestModel(object):
+    def __init__(self, id):
+        self.id = id
+    
+class ToManySourceResource(Resource):
+    other_model_ids = fields.ListField(attribute='other_model_ids')
+    other_models = ToManyDocumentsField('corehq.apps.api.tests.ToManyDestResource', attribute='other_models')
+
+    def __init__(self, objs):
+        super(ToManySourceResource, self).__init__()
+        self.objs = objs
+
+    def obj_get_list(self):
+        return self.objs
+
+    class Meta:
+        model_class = ToManySourceModel
+
+class ToManyDestResource(Resource):
+    id = fields.CharField(attribute='id')
+
+    class Meta:
+        model_class = ToManyDestModel
+
+class TestToManyDocumentsField(TestCase):
+    '''
+    Basic test that ToMany dehydrated alright
+    '''
+    
+    def test_requested_use_in(self):
+        dest_objs = {
+            'foo': ToManyDestModel('foo'),
+            'bar': ToManyDestModel('bar'),
+            'baz': ToManyDestModel('baz'),
+        }
+        
+        source_objs = [
+            ToManySourceModel(other_model_ids=['foo', 'bar'], other_model_dict=dest_objs),
+            ToManySourceModel(other_model_ids=['bar', 'baz'], other_model_dict=dest_objs)
+        ]
+
+        source_resource = ToManySourceResource(source_objs)
+
+        bundle = source_resource.build_bundle(obj=source_objs[0])
+        dehydrated_bundle = source_resource.full_dehydrate(bundle)
+
+        self.assertTrue('other_models' in dehydrated_bundle.data)
+        self.assertEqual([other['id'] for other in dehydrated_bundle.data['other_models']], ['foo', 'bar'])
+
+        bundle = source_resource.build_bundle(obj=source_objs[1])
+        dehydrated_bundle = source_resource.full_dehydrate(bundle)
+
+        self.assertEqual([other['id'] for other in dehydrated_bundle.data['other_models']], ['bar', 'baz'])
+
+        
+class ToManyDictSourceModel(object):
+    def __init__(self, other_model_ids, other_model_dict):
+        self.other_model_dict = other_model_dict
+        self.other_model_ids = other_model_ids
+
+    @property
+    def other_models(self):
+        return dict([(key, self.other_model_dict.get(id)) for key, id in self.other_model_ids.items()])
+    
+class ToManyDictDestModel(object):
+    def __init__(self, id):
+        self.id = id
+
+class ToManyDictSourceResource(Resource):
+    other_model_ids = fields.ListField(attribute='other_model_ids')
+    other_models = ToManyDictField('corehq.apps.api.tests.ToManyDictDestResource', attribute='other_models')
+
+    def __init__(self, objs):
+        super(ToManyDictSourceResource, self).__init__()
+        self.objs = objs
+
+    def obj_get_list(self):
+        return self.objs
+
+    class Meta:
+        model_class = ToManyDictSourceModel
+
+class ToManyDictDestResource(Resource):
+    id = fields.CharField(attribute='id')
+
+    class Meta:
+        model_class = ToManyDictDestModel
+
+class TestToManyDictField(TestCase):
+    '''
+    Basic test that ToMany dehydrated alright
+    '''
+    
+    def test_dehydrate(self):
+        dest_objs = {
+            'foo': ToManyDictDestModel('foo'),
+            'bar': ToManyDictDestModel('bar'),
+            'baz': ToManyDictDestModel('baz'),
+        }
+        
+        source_objs = [
+            ToManyDictSourceModel(other_model_ids={ 'first_other': 'foo', 'second_other': 'bar'}, other_model_dict=dest_objs),
+            ToManyDictSourceModel(other_model_ids={ 'first_other': 'bar', 'second_other': 'baz'}, other_model_dict=dest_objs)
+        ]
+
+        source_resource = ToManyDictSourceResource(source_objs)
+
+        bundle = source_resource.build_bundle(obj=source_objs[0])
+        dehydrated_bundle = source_resource.full_dehydrate(bundle)
+
+        self.assertTrue('other_models' in dehydrated_bundle.data)
+        self.assertEqual(dehydrated_bundle.data['other_models']['first_other']['id'] , 'foo')
+        self.assertEqual(dehydrated_bundle.data['other_models']['second_other']['id'], 'bar')
+
+        bundle = source_resource.build_bundle(obj=source_objs[1])
+        dehydrated_bundle = source_resource.full_dehydrate(bundle)
+
+        self.assertEqual(dehydrated_bundle.data['other_models']['first_other']['id'] , 'bar')
+        self.assertEqual(dehydrated_bundle.data['other_models']['second_other']['id'], 'baz')
+
+
+
+class ToOneSourceModel(object):
+    def __init__(self, other_model_id, other_model_dict):
+        self.other_model_dict = other_model_dict
+        self.other_model_id = other_model_id
+
+    @property
+    def other_model(self):
+        return self.other_model_dict.get(self.other_model_id)
+    
+class ToOneDestModel(object):
+    def __init__(self, id):
+        self.id = id
+    
+class ToOneSourceResource(Resource):
+    other_model_id = fields.ListField(attribute='other_model_id')
+    other_model = ToOneDocumentField('corehq.apps.api.tests.ToOneDestResource', attribute='other_model')
+
+    def __init__(self, objs):
+        super(ToOneSourceResource, self).__init__()
+        self.objs = objs
+
+    def obj_get_list(self):
+        return self.objs
+
+    class Meta:
+        model_class = ToOneSourceModel
+
+class ToOneDestResource(Resource):
+    id = fields.CharField(attribute='id')
+
+    class Meta:
+        model_class = ToOneDestModel
+
+class TestToOneDocumentField(TestCase):
+    '''
+    Basic test of the <fieldname>__full
+    '''
+    
+    def test_requested_use_in(self):
+        dest_objs = {
+            'foo': ToOneDestModel('foo'),
+            'bar': ToOneDestModel('bar'),
+            'baz': ToOneDestModel('baz'),
+        }
+        
+        source_objs = [
+            ToOneSourceModel(other_model_id='foo', other_model_dict=dest_objs),
+            ToOneSourceModel(other_model_id='bar', other_model_dict=dest_objs)
+        ]
+
+        source_resource = ToOneSourceResource(source_objs)
+
+        bundle = source_resource.build_bundle(obj=source_objs[0])
+        dehydrated_bundle = source_resource.full_dehydrate(bundle)
+
+        self.assertEqual(dehydrated_bundle.data['other_model']['id'], 'foo')
+
+        bundle = source_resource.build_bundle(obj=source_objs[1])
+        dehydrated_bundle = source_resource.full_dehydrate(bundle)
+
+        self.assertEqual(dehydrated_bundle.data['other_model']['id'], 'bar')
+
+        
+class UseIfRequestedModel(object):
+    def __init__(self, id):
+        self.id = id
+
+class UseIfRequestedTestResource(Resource):
+    something = UseIfRequested(fields.CharField(attribute='id'))
+
+    def __init__(self, objs):
+        super(UseIfRequestedTestResource, self).__init__()
+        self.objs = objs
+
+    def obj_get_list(self):
+        return self.objs
+
+    class Meta:
+        model_class = UseIfRequestedModel
+
+class TestUseIfRequested(TestCase):
+    def test_requested_use_in(self):
+        objs = [
+            UseIfRequestedModel(id='foo'),
+            UseIfRequestedModel(id='bar')
+        ]
+
+        test_resource = UseIfRequestedTestResource(objs)
+
+        bundle = test_resource.build_bundle(obj=objs[0])
+        dehydrated_bundle = test_resource.full_dehydrate(bundle)
+
+        self.assertFalse('id' in dehydrated_bundle.data)
+
+        bundle = test_resource.build_bundle(obj=objs[0])
+        bundle.request.GET['something__full'] = 'true'
+        dehydrated_bundle = test_resource.full_dehydrate(bundle)
+
+        self.assertTrue('something' in dehydrated_bundle.data)
+        self.assertEqual(dehydrated_bundle.data['something'], 'foo')

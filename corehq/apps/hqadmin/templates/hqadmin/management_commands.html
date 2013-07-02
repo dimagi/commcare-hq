@@ -1,0 +1,49 @@
+{% extends "hqadmin/hqadmin_base_report.html" %}
+{% load i18n %}
+
+{% block js-inline %}
+    <script type="text/javascript">
+        function update_button() {
+            $('#command-name').text($("#command-select option:selected").text());
+        }
+
+        function textToProperHtml(text) {
+            var $ele = $('<span>');
+            var lines = text.split('\n');
+            for (var i = 0; i < lines.length; i++) {
+                $ele.append($('<div>').text(lines[i]))
+            }
+            return $ele.html();
+        }
+
+        $(function() {
+            var $command_select = $('#command-select');
+            $command_select.change(update_button);
+            update_button();
+
+            $(document).on("click", "#cmd-btn", function(){
+                var data = {"command": $command_select.val()};
+                $.post("{% url run_management_command %}", data, function(resp) {
+                    var alert_cls = resp.success ? "alert-success" : "alert-error";
+                    $("#cmd-resp")
+                            .removeClass("alert-success alert-error")
+                            .addClass(alert_cls)
+                            .html(textToProperHtml(resp.output)).show();
+                });
+            });
+        })
+    </script>
+{% endblock %}
+
+{% block report-title %}{% trans "Management Commands" %}{% endblock %}
+{% block reportcontent %}
+    <div id="cmd-resp" class="alert hide"></div>
+    <div class="form-inline">
+        <select id="command-select">
+            {% for command in commands %}
+                <option value="{{ command.1 }}">{{ command.0 }}</option>
+            {% endfor %}
+        </select>
+        <button id="cmd-btn" class="btn">{% trans "Run" %} <span id="command-name"></span></button>
+    </div>
+{% endblock %}

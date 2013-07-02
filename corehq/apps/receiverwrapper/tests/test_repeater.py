@@ -16,7 +16,7 @@ update_instance_id = "ZYXKVB636DFYL38FNX3D38WV5"
 case_block = """
 <case>
     <case_id>%s</case_id>
-    <date_modified>2011-12-19</date_modified>
+    <date_modified>2011-12-19T00:00:00Z</date_modified>
     <create>
         <case_type_id>repeater_case</case_type_id>
         <user_id>O2XLT0WZW97W1A91E2W1Y0NJG</user_id>
@@ -29,7 +29,7 @@ case_block = """
 update_block = """
 <case>
     <case_id>%s</case_id>
-    <date_modified>2011-12-19</date_modified>
+    <date_modified>2011-12-19T00:00:00Z</date_modified>
     <update>
         <case_name>ABC 234</case_name>
     </update>
@@ -80,9 +80,9 @@ class RepeaterTest(TestCase):
 
     def make_post_fn(self, status_codes):
         status_codes = iter(status_codes)
-        def post_fn(data, url):
+        def post_fn(data, url, headers=None):
             status_code = status_codes.next()
-            self.log.append((url, status_code, data))
+            self.log.append((url, status_code, data, headers))
             class resp:
                 status = status_code
             return resp
@@ -114,7 +114,7 @@ class RepeaterTest(TestCase):
             repeat_record.fire(post_fn=self.make_post_fn([404, 404, 404]))
             repeat_record.save()
 
-        for (url, status, data) in self.log:
+        for (url, status, data, headers) in self.log:
             self.assertEqual(status, 404)
 
         self.clear_log()
@@ -133,8 +133,10 @@ class RepeaterTest(TestCase):
             repeat_record.save()
 
         self.assertEqual(len(self.log), 4)
-        self.assertEqual(self.log[1], (self.form_repeater.url, 200, xform_xml))
+        self.assertEqual(self.log[1][:3], (self.form_repeater.url, 200, xform_xml))
+        self.assertIn('received-on', self.log[1][3])
         self.assertEqual(self.log[3][:2], (self.case_repeater.url, 200))
+        self.assertIn('server-modified-on', self.log[3][3])
         check_xml_line_by_line(self, self.log[3][2], case_block)
 
         repeat_records = RepeatRecord.all(domain=self.domain, due_before=next_check_time)
