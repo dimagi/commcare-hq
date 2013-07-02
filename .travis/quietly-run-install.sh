@@ -22,6 +22,7 @@ mkdir ~/wheelhouse
 s3cmd sync s3://wheelhouse.dimagi.com ~/wheelhouse
 
 pip install -e git+https://github.com/pypa/pip#egg=pip
+pip install https://bitbucket.org/pypa/setuptools/downloads/setuptools-0.8b3.tar.gz
 pip install wheel --use-mirrors
 
 bash -ex install.sh
