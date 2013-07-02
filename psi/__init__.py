@@ -3,7 +3,7 @@ from psi.reports.sql_reports import PSISQLEventsReport
 
 CUSTOM_REPORTS = (
     ('Custom Reports', (
-        PSIEventsReport,
+        # PSIEventsReport,
         PSISQLEventsReport,
         PSIHDReport,
         PSISSReport,

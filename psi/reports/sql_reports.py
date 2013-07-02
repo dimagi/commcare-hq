@@ -72,7 +72,7 @@ class PSISQLEventsReport(PSISQLReport):
     fields = ['corehq.apps.reports.fields.DatespanField',
               'psi.reports.StateDistrictField',
               'psi.reports.AASD',]
-    name = "Event Demonstration Report (SQL)"
+    name = "Event Demonstration Report"
     exportable = True
     emailable = True
     slug = "event_demonstations_sql"
