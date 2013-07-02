@@ -1,3 +1,4 @@
+from datetime import timedelta, datetime
 import dateutil
 from django.core.urlresolvers import reverse
 from corehq.apps.groups.models import Group
@@ -164,7 +165,8 @@ class DatespanMixin(object):
         Use this where you'd like to include the datespan field.
     """
     datespan_field = 'corehq.apps.reports.fields.DatespanField'
-    datespan_default_days = 6
+    datespan_default_days = 7
+    inclusive = True
 
     _datespan = None
     @property
@@ -183,6 +185,10 @@ class DatespanMixin(object):
 
     @property
     def default_datespan(self):
-        datespan = DateSpan.since(self.datespan_default_days, enddate_offset=-1, format="%Y-%m-%d", timezone=self.timezone)
+        enddate = datetime.now(tz=self.timezone)
+        if self.inclusive:
+            enddate = enddate - timedelta(days=1)
+        days = self.datespan_default_days - 1 if self.inclusive else self.datespan_default_days
+        datespan = DateSpan.since(days, enddate=enddate, format="%Y-%m-%d", timezone=self.timezone)
         datespan.is_default = True
         return datespan

@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from corehq.apps.reports.filters.base import BaseReportFilter
 
 # For translations
@@ -14,11 +15,16 @@ class DatespanFilter(BaseReportFilter):
     template = "reports/filters/datespan.html"
     label = ugettext_noop("Date Range")
     slug = "datespan"
-    default_days = 6 # this will show data for 7 days when inclusive is true
+    default_days = 7
+    inclusive = True
 
     @property
     def datespan(self):
-        datespan = DateSpan.since(self.default_days, enddate_offset=-1, format="%Y-%m-%d", timezone=self.timezone)
+        enddate = datetime.now(tz=self.timezone)
+        if self.inclusive:
+            enddate = enddate - timedelta(days=1)
+        days = self.default_days - 1 if self.inclusive else self.default_days
+        datespan = DateSpan.since(days, enddate=enddate, format="%Y-%m-%d", timezone=self.timezone)
         if self.request.datespan.is_valid() and self.slug == 'datespan':
             datespan.startdate = self.request.datespan.startdate
             datespan.enddate = self.request.datespan.enddate
