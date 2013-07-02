@@ -137,3 +137,12 @@ def get_settings_values(app):
             'domain': app.domain,
         }
     }
+
+
+def add_odk_profile_after_build(app_build):
+    """caller must save"""
+
+    profile = app_build.create_profile(is_odk=True)
+    app_build.lazy_put_attachment(profile, 'files/profile.ccpr')
+    # hack this in for records
+    app_build.odk_profile_created_after_build = True
