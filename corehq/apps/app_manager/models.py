@@ -226,13 +226,8 @@ class FormSource(object):
 
         try:
             source = app.lazy_fetch_attachment(filename)
-        except KeyError:
+        except (ResourceNotFound, KeyError):
             source = ''
-        except ResourceNotFound:
-            # this is for debugging
-            local_variable_lazy_attachments = app._LAZY_ATTACHMENTS
-            local_variable_attachments = app._attachments
-            raise
 
         return source
 
@@ -338,10 +333,13 @@ class FormBase(DocumentSchema):
             return form, app
         else:
             return form
+
     def wrapped_xform(self):
         return XForm(self.source)
+
     def validate_form(self):
-        if self.validation_cache is None:
+        vc = self.validation_cache
+        if vc is None:
             try:
                 XForm(self.source).validate(version=self.get_app().application_version)
             except XFormValidationError as e:
@@ -350,12 +348,12 @@ class FormBase(DocumentSchema):
                     "validation_problems": e.validation_problems,
                     "version": e.version,
                 }
-                self.validation_cache = json.dumps(validation_dict)
+                vc = self.validation_cache = json.dumps(validation_dict)
             else:
-                self.validation_cache = ""
-        if self.validation_cache:
+                vc = self.validation_cache = ""
+        if vc:
             try:
-                raise XFormValidationError(**json.loads(self.validation_cache))
+                raise XFormValidationError(**json.loads(vc))
             except ValueError:
                 self.validation_cache = None
                 return self.validate_form()

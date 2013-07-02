@@ -1445,9 +1445,14 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if not (domain and domain.call_center_config.enabled):
             return
 
-        fields = {'name': commcare_user.name,
-                  'email': commcare_user.email,
-                  'language': commcare_user.language or ''} # prevent None
+        # language or phone_number can be null and will break
+        # case submission
+        fields = {
+            'name': commcare_user.name,
+            'email': commcare_user.email,
+            'language': commcare_user.language or '',
+            'phone_number': commcare_user.phone_number or ''
+        }
         # fields comes second to prevent custom user data overriding
         fields = dict(commcare_user.user_data, **fields)
 

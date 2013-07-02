@@ -145,3 +145,8 @@ class AppManagerTest(TestCase):
         app = app.make_reversion_to_copy(copy)
         app.save()
         self.assertEqual(app.name, old_name)
+
+    def testUserReg(self):
+        "regression test for not catching ResourceNotFound"
+        self.app.show_user_registration = True
+        list(self.app.get_forms())

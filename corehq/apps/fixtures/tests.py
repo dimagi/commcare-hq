@@ -5,6 +5,7 @@ from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, Fixtur
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase
 
+
 class FixtureDataTest(TestCase):
     def setUp(self):
         self.domain = 'qwerty'

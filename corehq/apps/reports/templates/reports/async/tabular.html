@@ -5,7 +5,7 @@
 
 {% block js %}{{ block.super }}
     {% if charts %}
-    <link href="{% static 'hqwebapp/js/lib/nvd3/lib/nv.d3.css' %}" rel="stylesheet">
+    <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet">
     <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v2.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.js' %}"></script>
     {% endif %}
