@@ -71,12 +71,12 @@
 
 {% block user-view %}
     <ul class="nav nav-tabs" id="project-settings-tabs">
-        <li class="active"><a href="#overall-settings" data-toggle="hash-tab">{% trans "Project Information" %}</a></li>
+        <li class="active"><a href="#project-info" data-toggle="hash-tab">{% trans "Project Information" %}</a></li>
         <li><a href="#deployment-info" data-toggle="hash-tab">{% trans "Deployment Information" %}</a></li>
         {% if billing_enabled %}<li><a href="#billing-info" data-toggle="hash-tab">{% trans "Billing Information" %}</a></li>{% endif %}
     </ul>
     <div class="tab-content" id="settings">
-        <section class="tab-pane active" id="overall-settings">
+        <section class="tab-pane active" id="project-info">
             <form class="form-horizontal" method="post">
                 {% bootstrap_form_errors form %}
                 {% bootstrap_fieldset form "Project Settings" %}
