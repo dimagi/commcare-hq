@@ -14,11 +14,11 @@ class DatespanFilter(BaseReportFilter):
     template = "reports/filters/datespan.html"
     label = ugettext_noop("Date Range")
     slug = "datespan"
-    default_days = 7
+    default_days = 6 # this will show data for 7 days when inclusive is true
 
     @property
     def datespan(self):
-        datespan = DateSpan.since(self.default_days, format="%Y-%m-%d", timezone=self.timezone)
+        datespan = DateSpan.since(self.default_days, enddate_offset=-1, format="%Y-%m-%d", timezone=self.timezone)
         if self.request.datespan.is_valid() and self.slug == 'datespan':
             datespan.startdate = self.request.datespan.startdate
             datespan.enddate = self.request.datespan.enddate

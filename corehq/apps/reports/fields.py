@@ -27,12 +27,6 @@ import uuid
     reporting structure.
 """
 
-datespan_default = datespan_in_request(
-            from_param="startdate",
-            to_param="enddate",
-            default_days=7,
-        )
-
 class ReportField(CacheableRequestMixIn):
     slug = ""
     template = ""
@@ -405,7 +399,7 @@ class DatespanField(ReportField):
 
     def update_context(self):
         self.context["datespan_name"] = self.name
-        self.datespan = DateSpan.since(7, format="%Y-%m-%d", timezone=self.timezone)
+        self.datespan = DateSpan.since(6, enddate_offset=-1, format="%Y-%m-%d", timezone=self.timezone)
         if self.request.datespan.is_valid():
             self.datespan.startdate = self.request.datespan.startdate
             self.datespan.enddate = self.request.datespan.enddate

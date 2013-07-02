@@ -164,7 +164,7 @@ class DatespanMixin(object):
         Use this where you'd like to include the datespan field.
     """
     datespan_field = 'corehq.apps.reports.fields.DatespanField'
-    datespan_default_days = 7
+    datespan_default_days = 6
 
     _datespan = None
     @property
@@ -183,6 +183,6 @@ class DatespanMixin(object):
 
     @property
     def default_datespan(self):
-        datespan = DateSpan.since(self.datespan_default_days, format="%Y-%m-%d", timezone=self.timezone)
+        datespan = DateSpan.since(self.datespan_default_days, enddate_offset=-1, format="%Y-%m-%d", timezone=self.timezone)
         datespan.is_default = True
         return datespan
