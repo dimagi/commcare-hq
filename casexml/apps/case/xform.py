@@ -46,7 +46,7 @@ class CaseDbCache(object):
             return None
 
         self.validate_doc(case_doc)
-
+        self.cache[case_id] = case_doc
         return case_doc
         
     def set(self, case_id, case):
@@ -55,11 +55,14 @@ class CaseDbCache(object):
     def doc_exist(self, case_id):
         return case_id in self.cache or CommCareCase.get_db().doc_exist(case_id)
 
+    def in_cache(self, case_id):
+        return case_id in self.cache
+
     def populate(self, case_ids):
 
         def _iter_raw_cases(case_ids):
             if self.strip_history:
-                for ids in chunked(case_ids):
+                for ids in chunked(case_ids, 100):
                     for row in CommCareCase.get_db().view("case/get_lite", keys=ids, include_docs=False):
                         yield row['value']
             else:
