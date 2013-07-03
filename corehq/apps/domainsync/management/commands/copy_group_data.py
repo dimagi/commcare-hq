@@ -84,12 +84,17 @@ class Command(LabelCommand):
         print 'getting users'
 
         def wrap_user(row):
-            doc = row['doc']
+            try:
+                doc = row['doc']
+            except KeyError:
+                logging.exception('trouble with user result %r' % row)
+                return None
+
             try:
                 return CouchUser.wrap_correctly(doc)
-            except Exception as e:
+            except Exception:
                 logging.exception('trouble with user %s' % doc['_id'])
-            return None
+                return None
 
         users = sourcedb.all_docs(
             keys=list(user_ids),

@@ -12,4 +12,4 @@ keytool -genkey \
   -storepass onetwothreefourfive \
   -dname 'CN=Foo, OU=Bar, O=Bizzle, L=Bazzle, ST=Bingle, C=US'
 
-(bash -ex install.sh > $LOG 2>&1) || (cat $LOG; exit 1)
+bash -ex install.sh
