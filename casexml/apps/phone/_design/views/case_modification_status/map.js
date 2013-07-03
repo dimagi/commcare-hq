@@ -2,7 +2,6 @@
 function (doc) {
     if (doc.doc_type === 'CommCareCase') {
         var actions = doc.actions;
-        var server_date, sync_log_id;
         for (var i = 0; i < actions.length; i += 1) {
             emit([doc._id, actions[i]['sync_log_id']], actions[i]['server_date']);
         }
