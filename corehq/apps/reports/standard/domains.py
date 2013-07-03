@@ -28,10 +28,11 @@ class DomainStatsReport(GenericTabularReport):
     def is_custom_param(self, param):
         raise NotImplementedError
 
-    def get_name_or_link(self, d):
+    def get_name_or_link(self, d, internal_settings=False):
         if not getattr(self, 'show_name', None):
+            reverse_str = "domain_homepage" if not internal_settings else "domain_internal_settings"
             return mark_safe('<a href="%s">%s</a>' % \
-                   (reverse("domain_homepage", args=[d['name']]), d.get('hr_name') or d['name']))
+                   (reverse(reverse_str, args=[d['name']]), d.get('hr_name') or d['name']))
         else:
             return d['name']
 
@@ -51,7 +52,7 @@ class DomainStatsReport(GenericTabularReport):
     @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn("Project"),
+            DataTablesColumn("Project", prop_name="name.exact"),
             DataTablesColumn(_("# Active Mobile Workers"), sort_type=DTSortType.NUMERIC,
                 prop_name="cp_n_active_cc_users",
                 help_text=_("The number of mobile workers who have submitted a form in the last 30 days")),
@@ -241,7 +242,7 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
     @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn("Project"),
+            DataTablesColumn("Project", prop_name="name.exact"),
             DataTablesColumn(_("Organization"), prop_name="internal.organization_name"),
             DataTablesColumn(_("Deployment Date"), prop_name="deployment.date"),
             DataTablesColumn(_("Deployment Country"), prop_name="deployment.country"),
@@ -322,7 +323,7 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
         for dom in domains:
             if dom.has_key('name'): # for some reason when using the statistical facet, ES adds an empty dict to hits
                 yield [
-                    self.get_name_or_link(dom),
+                    self.get_name_or_link(dom, internal_settings=True),
                     dom.get("internal", {}).get('organization_name') or _('No org'),
                     format_date(dom.get('deployment', {}).get('date'), _('No date')),
                     dom.get("deployment", {}).get('country') or _('No country'),

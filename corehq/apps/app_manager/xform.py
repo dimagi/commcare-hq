@@ -322,21 +322,22 @@ class XForm(WrappedNode):
         questions = []
         excluded_paths = set()
 
-        def build_questions(group, path_context="", exclude=False):
+        def build_questions(group, path_context="", repeat_context="", exclude=False):
             for prompt in group.findall('*'):
                 if prompt.tag_xmlns == namespaces['f'][1:-1] and prompt.tag_name != "label":
                     path = self.resolve_path(get_path(prompt), path_context)
                     excluded_paths.add(path)
                     if prompt.tag_name == "group":
-                        build_questions(prompt, path_context=path)
+                        build_questions(prompt, path_context=path, repeat_context=repeat_context)
                     elif prompt.tag_name == "repeat":
-                        build_questions(prompt, path_context=path, exclude=True)
+                        build_questions(prompt, path_context=path, repeat_context=path)
                     elif prompt.tag_name not in ("trigger", "label"):
                         if not exclude:
                             question = {
                                 "label": self.get_label_text(prompt, langs),
                                 "tag": prompt.tag_name,
-                                "value": path
+                                "value": path,
+                                "repeat": repeat_context,
                             }
 
                             if question['tag'] == "select1":
@@ -600,7 +601,8 @@ class XForm(WrappedNode):
             else:
                 return 'false()'
 
-        def add_create_block(case_block, action, case_name, case_type, path=''):
+        def add_create_block(case_block, action, case_name, case_type, path='',
+                             delay_case_id=False):
             create_block = make_case_elem('create')
             case_block.append(create_block)
             case_type_node = make_case_elem('case_type')
@@ -609,15 +611,22 @@ class XForm(WrappedNode):
                 make_case_elem('case_name'),
                 make_case_elem('owner_id'),
                 case_type_node,
-                ])
+            ])
             self.add_bind(
                 nodeset='%scase' % path,
                 relevant=relevance(action),
             )
-            self.add_setvalue(
-                ref="%scase/@case_id" % path,
-                value="uuid()",
-            )
+            if not delay_case_id:
+                self.add_setvalue(
+                    ref='%scase/@case_id' % path,
+                    value='uuid()',
+                )
+            else:
+                self.add_bind(
+                    nodeset='%scase/@case_id' % path,
+                    calculate='uuid()',
+                    # relevant='count(%scase) > 0' % path,
+                )
             self.add_bind(
                 nodeset="%scase/create/case_name" % path,
                 calculate=self.resolve_path(case_name),
@@ -800,15 +809,25 @@ class XForm(WrappedNode):
 
         if 'subcases' in actions:
             for i, subcase in enumerate(actions['subcases']):
-                name = 'subcase_%s' % i
-                path = '%s/' % name
-                subcase_node = _make_elem('{x}%s' % name)
-                subcase_block = make_case_block(path)
+                if subcase.repeat_context:
+                    name = subcase.repeat_context
+                    _xpath = '/{x}'.join(subcase.repeat_context.split('/'))[1:]
+                    subcase_node = self.instance_node.find(_xpath)
+                else:
+                    name = 'subcase_%s' % i
+                    subcase_node = _make_elem('{x}%s' % name)
+                    self.data_node.append(subcase_node)
 
-                add_create_block(subcase_block, subcase,
+                path = '%s/' % name
+                subcase_block = make_case_block(path)
+                subcase_node.insert(0, subcase_block)
+                add_create_block(
+                    subcase_block,
+                    subcase,
                     case_name=subcase.case_name,
                     case_type=subcase.case_type,
-                    path=path
+                    path=path,
+                    delay_case_id=bool(subcase.repeat_context),
                 )
 
                 add_update_block(subcase_block, subcase.case_properties, path=path)
@@ -823,13 +842,8 @@ class XForm(WrappedNode):
                     index_node.append(parent_index)
                     subcase_block.append(index_node)
 
-                subcase_node.append(subcase_block)
-                self.data_node.append(subcase_node)
-
-
         # always needs session instance for meta
         self.add_instance('commcaresession', src='jr://instance/session')
-
 
         case = self.case_node
         case_parent = self.data_node

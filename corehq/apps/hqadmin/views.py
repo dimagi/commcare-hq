@@ -5,6 +5,7 @@ import logging
 from collections import defaultdict
 from StringIO import StringIO
 import os
+from django.views.decorators.http import require_POST
 from pytz import timezone
 
 from django.http import HttpResponseRedirect, HttpResponse
@@ -16,6 +17,8 @@ from django.contrib import messages
 from django.conf import settings
 from restkit import Resource
 from django.core import cache
+from corehq.apps.app_manager.models import ApplicationBase
+from corehq.apps.app_manager.util import get_settings_values
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
@@ -26,7 +29,7 @@ from corehq.apps.sms.models import SMSLog
 from corehq.apps.users.models import  CommCareUser, WebUser
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
-from corehq.apps.domain.decorators import  require_superuser
+from corehq.apps.domain.decorators import  require_superuser, login_or_digest
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from dimagi.utils.web import json_response
@@ -38,6 +41,7 @@ from dimagi.utils.decorators.view import get_file
 from django.utils import html
 from dimagi.utils.timezones import utils as tz_utils
 from django.utils.translation import ugettext as _
+from django.core import management
 
 @require_superuser
 def default(request):
@@ -719,3 +723,49 @@ def noneulized_users(request, template="hqadmin/noneulized_users.html"):
     context["aoColumns"] = headers.render_aoColumns
 
     return render(request, template, context)
+
+
+@require_superuser
+@cache_page(60*5)
+def all_commcare_settings(request):
+    apps = ApplicationBase.view('app_manager/applications_brief',
+                                include_docs=True)
+    filters = set()
+    for param in request.GET:
+        s_type, name = param.split('.')
+        value = request.GET.get(param)
+        filters.add((s_type, name, value))
+
+    def app_filter(settings):
+        for s_type, name, value in filters:
+            if settings[s_type].get(name) != value:
+                return False
+        return True
+
+    settings_list = [s for s in (get_settings_values(app) for app in apps)
+                     if app_filter(s)]
+    return json_response(settings_list)
+
+
+@require_superuser
+def management_commands(request, template="hqadmin/management_commands.html"):
+    commands = [(_('Remove Duplicate Domains'), 'remove_duplicate_domains')]
+    context = get_hqadmin_base_context(request)
+    context["hide_filters"] = True
+    context["commands"] = commands
+    return render(request, template, context)
+
+
+@require_POST
+@require_superuser
+def run_command(request):
+    cmd = request.POST.get('command')
+    if cmd not in ['remove_duplicate_domains']: # only expose this one command for now
+        return json_response({"success": False, "output": "Command not available"})
+
+    output_buf = StringIO()
+    management.call_command(cmd, stdout=output_buf)
+    output = output_buf.getvalue()
+    output_buf.close()
+
+    return json_response({"success": True, "output": output})

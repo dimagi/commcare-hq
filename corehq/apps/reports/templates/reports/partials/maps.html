@@ -15,12 +15,20 @@ $(document).ready(function() {
     setMapHeight();
     $(window).resize(setMapHeight);
 
-    maps_init(CONFIG, CASE_API_URL);
+    var map = maps_init(CONFIG);
+    $.get(CASE_API_URL, null, function(data) {
+      maps_refresh(map, data);
+    }, 'json');
 });
 
 </script>
 
 <style>
+
+/* fix bootstrap / gmaps conflict */
+#map img {
+  max-width: none !important;
+}
 
 #sidebar {
   position: absolute;

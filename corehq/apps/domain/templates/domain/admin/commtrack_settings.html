@@ -59,43 +59,24 @@ var other_sms_codes = {{ other_sms_codes|JSON }};
 <h3>Stock Actions</h3>
 
 <p class="help">For a given incoming stock report, stock actions will be applied in the order listed below.</p>
-
-<table class="table table-striped table-bordered">
-  <thead>
-    <tr>
-      <th></th>
-      <th>Name</th>
-      <th>SMS Keyword</th>
-      <th>Action Type</th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody data-bind="sortable: actions">
-    <tr>
-      <td>
-        <i class="icon-sort sortable-handle"></i>
-      </td>
-      <td class="control-group" data-bind="css: { 'error': caption_error }">
-        <input data-bind="value: caption" type="text" />
-        <div class="help-inline" data-bind="text: caption_error"></div>
-      </td>
-      <td class="control-group" data-bind="css: { 'error': keyword_error }">
-        <input data-bind="value: keyword" type="text" />
-        <div class="help-inline" data-bind="text: keyword_error"></div>
-      </td>
-      <td>
-        <select data-bind="value: type, options: $root.action_types, optionsText: 'label', optionsValue: 'value'"></select>
-      </td>
-      <td>
-        <button type="button" class="btn btn-danger" data-bind="click: $root.remove_action"><i class="icon-trash icon-white"></i> Remove</button>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<button type="button" class="btn btn-primary" data-bind="click: new_action"><i class="icon-plus icon-white"></i> New Action</button>
-
+{% include "domain/admin/commtrack_action_table.html" %}
+<button type="button" class="btn btn-primary" data-bind="click: new_action"><i class="icon-plus icon-white"></i> {% trans "New Action" %}</button>
 <hr />
 
+<h3>{% trans "Requisitions" %}</h3>
+<fieldset>
+    <div class="control-group" >
+    <label class="control-label" for="requisitions_enabled">{% trans "Enable Requisitions?" %}</label>
+    <div class="controls">
+      <input id="requisitions_enabled" type="checkbox" data-bind="checked: requisition_config().enabled">
+    </div>
+  </div>
+</fieldset>
+<fieldset data-bind="with: requisition_config(), visible: requisition_config().enabled">
+    <h3>{% trans "Requisitions Actions" %}</h3>
+        {% include "domain/admin/commtrack_action_table.html" %}
+    <button type="button" class="btn btn-primary" data-bind="click: new_action"><i class="icon-plus icon-white"></i> {% trans "New Action" %}</button>
+</fieldset>
 <h3>Location Hierarchy</h3>
 
 <div class="text-error" data-bind="text: loc_types_error"></div>

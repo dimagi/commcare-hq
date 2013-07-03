@@ -23,6 +23,14 @@ except IndexError:
 ADMINS = ()
 MANAGERS = ADMINS
 
+# Ensure that extraneous Tastypie formats are not actually used
+# Curiously enough, browsers prefer html, then xml, lastly (or not at all) json
+# so removing html from the this variable annoyingly makes it render as XML
+# in the browser, when we want JSON. So I've added this commented
+# to document intent, but it should only really be activated
+# when we have logic in place to treat direct browser access specially.
+#TASTYPIE_DEFAULT_FORMATS=['json', 'xml', 'yaml']
+
 # default to the system's timezone settings
 TIME_ZONE = "UTC"
 
@@ -167,6 +175,8 @@ HQ_APPS = (
     'couchforms',
     'couchexport',
     'couchlog',
+    'ctable',
+    'ctable_view',
     'dimagi.utils',
     'formtranslate',
     'receiver',
@@ -416,6 +426,27 @@ COUCH_HTTPS = False
 # this should be overridden in localsettings
 INTERNAL_DATA = defaultdict(list)
 
+COUCH_STALE_QUERY='update_after'  # 'ok' for cloudant
+
+
+MESSAGE_LOG_OPTIONS = {
+    "abbreviated_phone_number_domains": ["mustmgh", "mgh-cgh-uganda"],
+}
+
+IVR_OUTBOUND_RETRIES = 3
+IVR_OUTBOUND_RETRY_INTERVAL = 10
+
+try:
+    #try to see if there's an environmental variable set for local_settings
+    if os.environ.get('CUSTOMSETTINGS', None) == "demo":
+        # this sucks, but is a workaround for supporting different settings
+        # in the same environment
+        from settings_demo import *
+    else:
+        from localsettings import *
+except ImportError:
+    pass
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': True,
@@ -490,27 +521,6 @@ LOGGING = {
     }
 }
 
-COUCH_STALE_QUERY='update_after'  # 'ok' for cloudant
-
-
-MESSAGE_LOG_OPTIONS = {
-    "abbreviated_phone_number_domains": ["mustmgh", "mgh-cgh-uganda"],
-}
-
-IVR_OUTBOUND_RETRIES = 3
-IVR_OUTBOUND_RETRY_INTERVAL = 10
-
-try:
-    #try to see if there's an environmental variable set for local_settings
-    if os.environ.get('CUSTOMSETTINGS', None) == "demo":
-        # this sucks, but is a workaround for supporting different settings
-        # in the same environment
-        from settings_demo import *
-    else:
-        from localsettings import *
-except ImportError:
-    pass
-
 if DEBUG:
     try:
         import luna
@@ -563,6 +573,7 @@ COUCHDB_APPS = [
     'couchdbkit_aggregate',
     'couchforms',
     'couchexport',
+    'ctable',
     'hqadmin',
     'domain',
     'facilities',
@@ -586,6 +597,7 @@ COUCHDB_APPS = [
     'smsforms',
     'translations',
     'users',
+    'utils',  # dimagi-utils
     'formplayer',
     'phonelog',
     'registration',
@@ -692,6 +704,7 @@ PILLOWTOPS = [
                  'corehq.pillows.xform.XFormPillow',
                  'corehq.pillows.fullxform.FullXFormPillow',
                  'corehq.pillows.domain.DomainPillow',
+                 'corehq.pillows.user.UserPillow',
                  'corehq.pillows.exchange.ExchangePillow',
                  'corehq.pillows.commtrack.ConsumptionRatePillow',
 
@@ -699,10 +712,14 @@ PILLOWTOPS = [
                  'bihar.models.CareBiharFluffPillow',
              ] + LOCAL_PILLOWTOPS
 
+# List of Fluff pillow classes that ctable should process diffs for
+FLUFF_PILLOW_TYPES_TO_SQL = []
+
 #Custom workflow for indexing xform data beyond the standard properties
 XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
 
 #Custom fully indexed domains for FullCase index/pillowtop
+# Adding a domain will not automatically index that domain's existing cases
 ES_CASE_FULL_INDEX_DOMAINS = [
     'pact', 
     'hsph', 
@@ -732,3 +749,5 @@ DOMAIN_MODULE_MAP = {
     'mvp-sada': 'mvp',
     'psi-unicef': 'psi',
 }
+
+CASEXML_FORCE_DOMAIN_CHECK = True

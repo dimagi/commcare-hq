@@ -230,7 +230,7 @@ def filter_cases(request, domain, app_id, module_id):
         # otherwise just use our built in api with the defaults
         case_ids = [res.id for res in get_filtered_cases(
             domain, status=CASE_STATUS_OPEN, case_type=case_type,
-            user_id=request.couch_user._id, footprint=True, ids_only=True
+            user_id=request.couch_user._id, ids_only=True
         )]
 
     cases = [CommCareCase.get(id) for id in case_ids]

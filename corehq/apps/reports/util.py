@@ -253,7 +253,7 @@ def case_users_filter(doc, users):
 
 def case_group_filter(doc, group):
     if group:
-        user_ids = set(group.get_user_ids())
+        user_ids = set(group.get_static_user_ids())
         try:
             return doc['user_id'] in user_ids
         except KeyError:
@@ -270,7 +270,7 @@ def users_filter(doc, users):
 
 def group_filter(doc, group):
     if group:
-        user_ids = set(group.get_user_ids())
+        user_ids = set(group.get_static_user_ids())
         try:
             return doc['form']['meta']['userID'] in user_ids
         except KeyError:

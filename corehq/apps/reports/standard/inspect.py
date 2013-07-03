@@ -567,7 +567,7 @@ create a couch doc as such:
 }
 """
 
-    name = ugettext_noop("Maps")
+    name = ugettext_noop("Maps Sandbox")
     slug = "maps"
     # todo: support some of these filters -- right now this report
     hide_filters = True

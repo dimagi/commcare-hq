@@ -30,6 +30,8 @@ def bulk_import_async(import_id, config, domain, excel_id):
     row_count = spreadsheet.get_num_rows()
     columns = spreadsheet.get_header_columns()
     match_count = created_count = too_many_matches = 0
+    blank_external_ids = []
+    invalid_dates = []
     prime_offset = 1  # used to prevent back-to-back priming
 
     user = CouchUser.get_by_user_id(config.couch_user_id, domain)
@@ -50,8 +52,23 @@ def bulk_import_async(import_id, config, domain, excel_id):
 
         row = spreadsheet.get_row(i)
         search_id = importer_util.parse_search_id(config, columns, row)
+        if config.search_field == 'external_id' and not search_id:
+            # do not allow blank external id since we save this
+            blank_external_ids.append(i + 1)
+            continue
+
         case, error = importer_util.lookup_case(config.search_field,
                                                 search_id, domain)
+
+        try:
+            fields_to_update = importer_util.populate_updated_fields(
+                config,
+                columns,
+                row
+            )
+        except importer_util.InvalidDateException:
+            invalid_dates.append(i + 1)
+            continue
 
         if case:
             match_count += 1
@@ -63,12 +80,11 @@ def bulk_import_async(import_id, config, domain, excel_id):
             too_many_matches += 1
             continue
 
-        fields_to_update = importer_util.populate_updated_fields(config,
-                                                                 columns, row)
+        owner_id = fields_to_update.pop('owner_id', user_id)
+        external_id = fields_to_update.pop('external_id', None)
 
         if not case:
             id = uuid.uuid4().hex
-            owner_id = user_id
 
             caseblock = CaseBlock(
                 create=True,
@@ -85,14 +101,22 @@ def bulk_import_async(import_id, config, domain, excel_id):
             caseblock = CaseBlock(
                 create=False,
                 case_id=case._id,
+                owner_id=owner_id,
                 version=V2,
                 update=fields_to_update
             )
+            if external_id:
+                caseblock['external_id'] = external_id
+
             submit_case_block(caseblock, domain, username, user_id)
 
-    return {'created_count': created_count,
-            'match_count': match_count,
-            'too_many_matches': too_many_matches}
+    return {
+        'created_count': created_count,
+        'match_count': match_count,
+        'too_many_matches': too_many_matches,
+        'blank_externals': blank_external_ids,
+        'invalid_dates': invalid_dates,
+    }
 
 def submit_case_block(caseblock, domain, username, user_id):
     """ Convert a CaseBlock object to xml and submit for creation/update """

@@ -82,6 +82,7 @@ var CRUDAdminControl = function(options) {
                 if ($(this).hasClass('btn-danger')) {
                     submit_url = self.formSubmitURL+'delete/';
                 }
+                self.updateItemModal.find('input[disabled="disabled"]').removeAttr('disabled');
 
                 self.updateItemModal.find('form').ajaxSubmit({
                     dataType: 'json',

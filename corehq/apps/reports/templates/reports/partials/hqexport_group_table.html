@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load timezone_tags %}
 {% if group.saved_exports %}
 <table class="couchexport-group-download table table-condensed">
     <thead>
@@ -13,7 +14,7 @@
     <tr>
     {% if saved and saved.has_file %}
         <td><a href="{% url hq_download_saved_export domain saved.get_id %}">{{ config.name }}</a></td>
-        <td>{{ saved.last_updated|date:"d M Y H:i" }}</td>
+        <td>{%  utc_to_timezone saved.last_updated timezone %}</td>
         <td>{{ saved.size|filesizeformat }}</td>
     {% else %}
         <td>{{ config.name }}</td>
