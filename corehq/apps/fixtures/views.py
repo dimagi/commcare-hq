@@ -297,7 +297,7 @@ class UploadItemLists(TemplateView):
         """View's dispatch method automatically calls this"""
 
         def error_redirect():
-            return HttpResponseRedirect(reverse('upload_item_lists', args=[self.domain]))
+            return HttpResponseRedirect(reverse('upload_fixtures', args=[self.domain]))
 
         try:
             workbook = WorkbookJSONReader(request.file)

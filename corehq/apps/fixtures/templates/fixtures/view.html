@@ -14,16 +14,6 @@
 <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
 <script src="{% static 'fixtures/js/item-lists.js' %}"></script>
 {% endblock %}
-{% block js-inline %}
-    <script>
-        $(function () {
-            function FileUpload() {
-                this.file = ko.observable();
-            }
-            ko.applyBindings(new FileUpload(), $('#upload-item-lists').get(0));
-        });
-    </script>
-{% endblock %}
 {% block head %}
 <style>
     .selected, .table tr.selected, .table tr.selected:hover, .table tr.selected > td {
@@ -48,54 +38,7 @@
 {% endblock %}
 
 {% block content %}
-    <div id="import-export" class="accordion-body">
-        <div class="accordion-inner">
-            <section>
-                <h2>{% trans "Bulk Download/Upload of Fixtures" %}</h2>
-                <p>
-                    <ol>
-                        <li>
-                            {% trans "Download your " %}
-                            <a href="{% url download_fixtures domain %}">{% trans "fixtures file" %}</a>
-                        </li>
-                        <li>
-                            {% trans "To add new fixture types/items, insert new rows with UID-column as blank." %}
-                        </li>
-                        <li>
-                            {% trans "To delete any fixture type/itemm, mark 'Y' in the 'Delete(Y/N)' column." %}
-                        </li>
-                        <li>
-                            {% trans "Use the form below to update fixtures."%}
-                        </li>
-                    </ol>
-                </p>
-                <p class="alert alert-info">
-                    {% trans "Fixtures will be updated according to changes in the uploaded document." %}
-                </p>
-                <form class="form form-horizontal" action="{% url upload_item_lists domain%}" method="post" enctype="multipart/form-data">
-                    <legend>{% trans "Choose a file for upload" %}</legend>
-                    <div class="form-actions" style="padding-left: 1em;">
-                        <fieldset>
-                            <div class="control-group">
-                                <label for="bulk_upload_file" class="control-label">{% trans "Fixtures File" %}</label>
-                                <div class="controls">
-                                    <input id="bulk_upload_file" type="file" name="file" data-bind="value: file"/>
-                                </div>
-                            </div>
-                            <div class="control-group">
-                                <div class="controls">
-                                    <button type="submit" class="btn btn-primary" data-bind="visible: file()">
-                                        {% trans "Update Fixtures" %}
-                                    </button>
-                                </div>
-                            </div>
-                        </fieldset>
-                    </div>
-                </form>
-            </section>
-        </div>
-    </div>
-
+    <button class="btn btn-primary" onClick="window.location='{% url upload_fixtures domain %}'">Bulk upload/download Fixtures</button>
     <div class="span2">&nbsp;</div>
     <div class="row-fluid hidden" style="margin-top: 25px;" id="fixtures-ui">
         <div class="span2">&nbsp;</div>
