@@ -13,8 +13,6 @@ class CaseDbCacheTest(TestCase):
     Tests the functionality of the CaseDbCache object
     """
 
-    def setUp(self): pass
-
     def testDomainCheck(self):
         id = uuid.uuid4().hex
         post_case_blocks([
