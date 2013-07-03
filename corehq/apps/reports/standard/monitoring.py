@@ -803,7 +803,8 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                         {"range": {
                             "form.meta.timeEnd": {
                                 "from": datespan.startdate_param,
-                                "to": datespan.enddate_param}}}]}}}
+                                "to": datespan.enddate_param,
+                                "include_upper": True}}}]}}}
         facets = ['form.meta.userID']
         return es_query(q=q, facets=facets, es_url=XFORM_INDEX + '/xform/_search', size=1, dict_only=dict_only)
 
@@ -821,7 +822,8 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                             {"range": {
                                 "form.meta.timeEnd": {
                                     "from": datespan.startdate_param,
-                                    "to": datespan.enddate_param}}}
+                                    "to": datespan.enddate_param,
+                                    "include_upper": True}}}
                         ]}},
                 "sort": {"form.meta.timeEnd" : {"order": "desc"}}}
             results = es_query(q=q, es_url=XFORM_INDEX + '/xform/_search', size=1, dict_only=dict_only)['hits']['hits']
@@ -842,7 +844,8 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                         {"range": {
                             date_field: {
                                 "from": datespan.startdate_param,
-                                "to": datespan.enddate_param}}}
+                                "to": datespan.enddate_param,
+                                "include_upper": True}}}
                     ]}}}
         facets = [user_field]
 
@@ -860,7 +863,8 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                                 "range": {
                                     "actions.date": {
                                         "from": datespan.startdate_param,
-                                        "to": datespan.enddate_param}}}}},
+                                        "to": datespan.enddate_param,
+                                        "include_upper": True}}}}},
                     ]}}}
         facets = ['user_id']
         return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
@@ -883,7 +887,8 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                                 "range": {
                                     "actions.date": {
                                         "from": datespan.startdate_param,
-                                        "to": datespan.enddate_param}}}}},
+                                        "to": datespan.enddate_param,
+                                        "include_upper": True}}}}},
                     ]}}}
         facets = ['owner_id']
         return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
@@ -894,7 +899,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 "bool": {
                     "must": [
                         {"match": {"domain.exact": self.domain}},
-                        {"range": {"opened_on": {"lt": datespan.enddate_param}}}],
+                        {"range": {"opened_on": {"lte": datespan.enddate_param}}}],
                     "must_not": {"range": {"closed_on": {"lt": datespan.startdate_param}}}}}}
         facets = ['owner_id']
         return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
@@ -902,8 +907,9 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
 
     @property
     def rows(self):
-        duration = self.datespan.enddate - self.datespan.startdate
-        avg_datespan = DateSpan(self.datespan.startdate - (duration * self.num_avg_intervals), self.datespan.startdate)
+        duration = (self.datespan.enddate - self.datespan.startdate) + datetime.timedelta(days=1) # adjust bc inclusive
+        avg_datespan = DateSpan(self.datespan.startdate - (duration * self.num_avg_intervals),
+                                self.datespan.startdate - datetime.timedelta(days=1))
 
         form_data = self.es_form_submissions()
         submissions_by_user = dict([(t["term"], t["count"]) for t in form_data["facets"]["form.meta.userID"]["terms"]])
@@ -933,9 +939,10 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
         total_case_data = self.es_total_cases()
         totals_by_owner = dict([(t["term"], t["count"]) for t in total_case_data["facets"]["owner_id"]["terms"]])
 
-        def dates_for_linked_reports():
+        def dates_for_linked_reports(case_list=False):
             start_date = self.datespan.startdate_param
-            end_date = self.datespan.enddate.strftime(self.datespan.format)
+            end_date = self.datespan.enddate if not case_list else self.datespan.enddate + datetime.timedelta(days=1)
+            end_date = end_date.strftime(self.datespan.format)
             return start_date, end_date
 
         def numcell(text, value=None, convert='int'):
@@ -973,7 +980,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 "ufilter": range(4), # include all types of users in case list report
             }
 
-            start_date, end_date = dates_for_linked_reports()
+            start_date, end_date = dates_for_linked_reports(case_list=True)
             search_strings = {
                 4: "opened_by: %s AND opened_on: [%s TO %s]" % (owner_id, start_date, end_date), # cases created
                 5: "closed_by: %s AND closed_on: [%s TO %s]" % (owner_id, start_date, end_date), # cases closed
