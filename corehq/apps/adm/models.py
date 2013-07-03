@@ -474,6 +474,10 @@ class CompareADMColumn(ConfigurableADMColumn):
         return ["numerator_ref", "denominator_ref"]
 
     @property
+    def returns_numerical(self):
+        return True
+
+    @property
     @memoized
     def numerator(self):
         if self.is_default:
