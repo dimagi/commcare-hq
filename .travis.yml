@@ -10,7 +10,7 @@ install:
  - "curl http://127.0.0.1:5984/"
  - "time bash -e .travis/quietly-run-install.sh"
  - "time pip install Cython --use-mirrors --use-wheel --find-links=/home/travis/wheelhouse"
- - "time pip install -r requirements/requirements.txt -r requirements/dev-requirements.txt --use-mirrors --use-wheel --find-links=/home/travis/wheelhouse"
+ - "time pip install -r requirements/requirements.txt --use-mirrors --use-wheel --find-links=/home/travis/wheelhouse"
  - "bash -e .travis/misc-setup.sh"
  - "cp .travis/localsettings.py localsettings.py"
  - "pip install coveralls coverage unittest2 mock"
