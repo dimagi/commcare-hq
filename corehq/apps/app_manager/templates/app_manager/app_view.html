@@ -36,7 +36,11 @@
                 }
             };
             ko.applyBindings(COMMCAREHQ.appView.settings, $('#commcare-settings').get(0));
+
+            {% if not app.is_remote_app %}
             ko.applyBindings(COMMCAREHQ.appView.settings, $('#success-message').get(0));
+            ko.applyBindings({file: ko.observable(null)}, $("#translations-upload-form").get(0));
+            {% endif %}
         });
 
     </script>
@@ -155,10 +159,6 @@
             });
         </script>
     {% endif %}
-    <script>
-        ko.applyBindings({file: ko.observable(null)},
-                         $("#translations-upload-form").get(0));
-    </script>
 {% endblock %}
 
 {% block head %}{{ block.super }}
