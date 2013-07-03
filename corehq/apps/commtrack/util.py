@@ -78,6 +78,12 @@ def bootstrap_default(domain, requisitions_enabled=True):
                 name='consumed',
             ),
             CommtrackActionConfig(
+                action_type='consumption',
+                keyword='l',
+                caption='Losses',
+                name='lost',
+            ),
+            CommtrackActionConfig(
                 action_type='stockonhand',
                 keyword='soh',
                 caption='Stock on hand',
