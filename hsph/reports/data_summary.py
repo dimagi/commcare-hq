@@ -4,7 +4,7 @@ from corehq.apps.reports.generic import GenericTabularReport
 from dimagi.utils.couch.database import get_db
 from hsph.fields import IHForCHFField, SelectReferredInStatusField
 from hsph.reports import HSPHSiteDataMixin
-
+    
 from collections import defaultdict
 import numbers
 from corehq.apps.reports import util
