@@ -143,12 +143,12 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
         Get the case state object associated with an id, or None if no such
         object is found
         """
-        filtered_list = [case for case in self.cases_on_phone if case.case_id == case_id]
+        filtered_list = [case for case in self._doc['cases_on_phone'] if case['case_id'] == case_id]
         if filtered_list:
             self._assert(len(filtered_list) == 1, \
                          "Should be exactly 0 or 1 cases on phone but were %s for %s" % \
                          (len(filtered_list), case_id))
-            return filtered_list[0]
+            return CaseState.wrap(filtered_list[0])
         return None
 
     def phone_has_dependent_case(self, case_id):
@@ -162,12 +162,12 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
         Get the dependent case state object associated with an id, or None if no such
         object is found
         """
-        filtered_list = [case for case in self.dependent_cases_on_phone if case.case_id == case_id]
+        filtered_list = [case for case in self._doc['dependent_cases_on_phone'] if case['case_id'] == case_id]
         if filtered_list:
             self._assert(len(filtered_list) == 1, \
                          "Should be exactly 0 or 1 dependent cases on phone but were %s for %s" % \
                          (len(filtered_list), case_id))
-            return filtered_list[0]
+            return CaseState.wrap(filtered_list[0])
         return None
 
     def _get_case_state_from_anywhere(self, case_id):
