@@ -40,7 +40,6 @@ from corehq.apps.domain.models import cached_property
 from django.template.loader import render_to_string
 from urllib2 import urlopen
 from urlparse import urljoin
-from corehq.apps.domain.decorators import login_and_domain_required
 import langcodes
 
 
@@ -75,11 +74,6 @@ CASE_PROPERTY_MAP = {
 ATTACHMENT_REGEX = r'[^/]*\.xml'
 
 
-def _dsstr(self):
-    return ", ".join(json.dumps(self.to_json()), self.schema)
-#DocumentSchema.__repr__ = _dsstr
-
-
 def _rename_key(dct, old, new):
     if old in dct:
         if new in dct and dct[new]:
@@ -97,31 +91,6 @@ def load_default_user_registration():
     with open(os.path.join(os.path.dirname(__file__), 'data', 'register_user.xhtml')) as f:
         return f.read()
 
-
-def authorize_xform_edit(view):
-    def authorized_view(request, xform_id):
-        @login_and_domain_required
-        def wrapper(req, domain):
-            pass
-        _, app = Form.get_form(*xform_id.split('__'), and_app=True)
-        if wrapper(request, app.domain):
-            # If login_and_domain_required intercepted wrapper
-            # and returned an HttpResponse of its own
-            #return HttpResponseForbidden()
-            return wrapper(request, app.domain)
-        else:
-            return view(request, xform_id)
-    return authorized_view
-
-def get_xform(form_unique_id):
-    "For use with xep_hq_server's GET_XFORM hook."
-    form = Form.get_form(form_unique_id)
-    return form.source
-def put_xform(form_unique_id, source):
-    "For use with xep_hq_server's PUT_XFORM hook."
-    form, app = Form.get_form(form_unique_id, and_app=True)
-    form.source = source
-    app.save()
 
 def partial_escape(xpath):
     """
@@ -257,7 +226,7 @@ class FormSource(object):
 
         try:
             source = app.lazy_fetch_attachment(filename)
-        except KeyError:
+        except (ResourceNotFound, KeyError):
             source = ''
 
         return source
@@ -364,10 +333,13 @@ class FormBase(DocumentSchema):
             return form, app
         else:
             return form
+
     def wrapped_xform(self):
         return XForm(self.source)
+
     def validate_form(self):
-        if self.validation_cache is None:
+        vc = self.validation_cache
+        if vc is None:
             try:
                 XForm(self.source).validate(version=self.get_app().application_version)
             except XFormValidationError as e:
@@ -376,12 +348,12 @@ class FormBase(DocumentSchema):
                     "validation_problems": e.validation_problems,
                     "version": e.version,
                 }
-                self.validation_cache = json.dumps(validation_dict)
+                vc = self.validation_cache = json.dumps(validation_dict)
             else:
-                self.validation_cache = ""
-        if self.validation_cache:
+                vc = self.validation_cache = ""
+        if vc:
             try:
-                raise XFormValidationError(**json.loads(self.validation_cache))
+                raise XFormValidationError(**json.loads(vc))
             except ValueError:
                 self.validation_cache = None
                 return self.validate_form()
@@ -586,13 +558,13 @@ class FormBase(DocumentSchema):
                         if hasattr(action, 'external_id') and action.external_id:
                             yield action.external_id
                         if hasattr(action, 'update'):
-                            for _, path in self.actions.update_case.update.items():
+                            for _, path in action.update.items():
                                 yield path
                         if hasattr(action, 'case_properties'):
-                            for _, path in self.actions.update_case.update.items():
+                            for _, path in action.case_properties.items():
                                 yield path
                         if hasattr(action, 'preload'):
-                            for path, _ in self.actions.case_preload.preload.items():
+                            for path, _ in action.preload.items():
                                 yield path
             paths.update(generate_paths())
             for path in paths:
@@ -853,11 +825,16 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
                 return detail
         raise Exception("Module %s has no detail type %s" % (self, detail_type))
 
-    def export_json(self, dump_json=True):
+    def export_json(self, dump_json=True, keep_unique_id=False):
         source = self.to_json()
-        for form in source['forms']:
-            del form['unique_id']
+        if not keep_unique_id:
+            for form in source['forms']:
+                del form['unique_id']
         return json.dumps(source) if dump_json else source
+
+    def export_jvalue(self):
+        return self.export_json(dump_json=False, keep_unique_id=True)
+    
     def requires(self):
         r = set(["none"])
         for form in self.get_forms():
@@ -912,7 +889,9 @@ class VersionedDoc(LazyAttachmentDoc):
     def id(self):
         return self._id
 
-    def save(self, response_json=None, increment_version=True, **params):
+    def save(self, response_json=None, increment_version=None, **params):
+        if increment_version is None:
+            increment_version = not self.copy_of
         if increment_version:
             self.version = self.version + 1 if self.version else 1
         super(VersionedDoc, self).save(**params)
@@ -922,6 +901,8 @@ class VersionedDoc(LazyAttachmentDoc):
             response_json['update']['app-version'] = self.version
 
     def make_build(self):
+        assert self.get_id
+        assert self.copy_of is None
         cls = self.__class__
         copies = cls.view('app_manager/applications', key=[self.domain, self._id, self.version], include_docs=True, limit=1).all()
         if copies:
@@ -1130,6 +1111,14 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         if should_save:
             self.save()
         return self
+
+    @classmethod
+    def by_domain(cls, domain):
+        return cls.view('app_manager/applications_brief',
+                        startkey=[domain],
+                        endkey=[domain, {}],
+                        include_docs=True,
+                        stale=settings.COUCH_STALE_QUERY).all()
 
     def rename_lang(self, old_lang, new_lang):
         validate_lang(new_lang)
@@ -1763,8 +1752,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     def create_all_files(self):
         files = {
-            "profile.xml": self.create_profile(),
-            "suite.xml": self.create_suite(),
+            'profile.xml': self.create_profile(is_odk=False),
+            'profile.ccpr': self.create_profile(is_odk=True),
+            'suite.xml': self.create_suite(),
         }
         if self.include_media_resources:
             files['media_suite.xml'] = self.create_media_suite()

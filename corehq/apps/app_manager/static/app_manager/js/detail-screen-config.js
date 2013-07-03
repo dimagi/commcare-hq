@@ -191,14 +191,25 @@ var DetailScreenConfig = (function () {
             (function () {
                 var f = formatEnum(that.original['enum'], that.lang, that.screen.langs);
                 that.enum_extra = uiElement.map_list(guidGenerator(), that.original.field);
-                that.enum_extra.ui.prepend($('<h4/>').text(DetailScreenConfig.message.ENUM_EXTRA_LABEL));
                 that.enum_extra.val(f.cleaned, f.translations);
+                var div = that.enum_extra.ui.find('div');
+                if (div.is(':empty')) {
+                    div.css('display', 'inline-block')
+                       .css('margin-right', '10px')
+                       .prepend($("<h4/>")
+                       .text(DetailScreenConfig.message.ENUM_EXTRA_LABEL));
+                }
+                that.enum_extra.ui.find('.enum-edit').css({ display: 'inline-block' });
             }());
             this.late_flag_extra = uiElement.input().val(this.original.late_flag.toString());
-            this.late_flag_extra.ui.prepend($('<span/>').text(DetailScreenConfig.message.LATE_FLAG_EXTRA_LABEL));
+            this.late_flag_extra.ui.find('input').css('width', 'auto');
+            this.late_flag_extra.ui.prepend(
+                $('<span/>').css('float', 'left')
+                            .css('padding', '5px 5px 0px 0px')
+                            .text(DetailScreenConfig.message.LATE_FLAG_EXTRA_LABEL));
 
             this.filter_xpath_extra = uiElement.input().val(this.original.filter_xpath.toString());
-            this.filter_xpath_extra.ui.prepend($('<span/>').text(DetailScreenConfig.message.FILTER_XPATH_EXTRA_LABEL));
+            this.filter_xpath_extra.ui.prepend($('<div/>').text(DetailScreenConfig.message.FILTER_XPATH_EXTRA_LABEL));
 
             this.time_ago_extra = uiElement.select([
                 {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.YEARS, value: DetailScreenConfig.TIME_AGO.year},
@@ -209,7 +220,7 @@ var DetailScreenConfig = (function () {
                 {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.WEEKS_UNTIL, value: -DetailScreenConfig.TIME_AGO.week},
                 {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.MONTHS_UNTIL, value: -DetailScreenConfig.TIME_AGO.month},
             ]).val(this.original.time_ago_interval.toString());
-            this.time_ago_extra.ui.prepend($('<span/>').text(DetailScreenConfig.message.TIME_AGO_EXTRA_LABEL));
+            this.time_ago_extra.ui.prepend($('<div/>').text(DetailScreenConfig.message.TIME_AGO_EXTRA_LABEL));
 
             elements = [
                 'includeInShort',
@@ -232,19 +243,38 @@ var DetailScreenConfig = (function () {
                 this[elements[i]].on('change', fireChange);
             }
 
-            this.$extra = $('<div/>');
-            //this.setFormat(this.original.format);
-
             this.format.on('change', function () {
-                that.$extra.find('> *').detach();
-                if (this.val() === "enum") {
-                    that.$extra.append(that.enum_extra.ui);
-                } else if (this.val() === 'late-flag') {
-                    that.$extra.append(that.late_flag_extra.ui);
-                } else if (this.val() === 'filter') {
-                    that.$extra.append(that.filter_xpath_extra.ui);
-                } else if (this.val() === 'time-ago') {
-                    that.$extra.append(that.time_ago_extra.ui);
+                // Prevent this from running on page load before init
+                if (that.format.ui.parent().length > 0) {
+                    that.enum_extra.ui.remove();
+                    that.late_flag_extra.ui.remove();
+                    that.filter_xpath_extra.ui.remove();
+                    that.time_ago_extra.ui.remove();
+
+                    if (this.val() === "enum") {
+                        that.format.ui.parent().append(that.enum_extra.ui);
+                    } else if (this.val() === 'late-flag') {
+                        that.format.ui.parent().append(that.late_flag_extra.ui);
+                        var input = that.late_flag_extra.ui.find('input');
+                        input.change(function() {
+                            that.late_flag_extra.value = input.val();
+                            fireChange();
+                        });
+                    } else if (this.val() === 'filter') {
+                        that.format.ui.parent().append(that.filter_xpath_extra.ui);
+                        var input = that.filter_xpath_extra.ui.find('input');
+                        input.change(function() {
+                            that.filter_xpath_extra.value = input.val();
+                            fireChange();
+                        });
+                    } else if (this.val() === 'time-ago') {
+                        that.format.ui.parent().append(that.time_ago_extra.ui);
+                        var select = that.time_ago_extra.ui.find('select');
+                        select.change(function() {
+                            that.time_ago_extra.value = select.val();
+                            fireChange();
+                        });
+                    }
                 }
             }).fire('change');
 
@@ -572,6 +602,7 @@ var DetailScreenConfig = (function () {
 
                 $('<td/>').addClass('detail-screen-header').append(column.header.ui).appendTo($tr);
                 $('<td/>').addClass('detail-screen-format').append(column.format.ui).appendTo($tr);
+                column.format.fire('change');
 
                 var sortLine = $('<td/>').addClass('detail-screen-extra');
                 if (!suggested && window.enableNewSort) {
@@ -747,7 +778,7 @@ var DetailScreenConfig = (function () {
         PLAIN_FORMAT: 'Plain',
         DATE_FORMAT: 'Date',
         TIME_AGO_FORMAT: 'Time Since or Until Date',
-        TIME_AGO_EXTRA_LABEL: ' measuring ',
+        TIME_AGO_EXTRA_LABEL: ' Measuring: ',
         TIME_AGO_INTERVAL: {
             YEARS: 'Years since date',
             MONTHS: 'Months since date',
@@ -763,7 +794,7 @@ var DetailScreenConfig = (function () {
         LATE_FLAG_FORMAT: 'Late Flag',
         LATE_FLAG_EXTRA_LABEL: 'Days late: ',
         FILTER_XPATH_FORMAT: 'Filter (Advanced)',
-        FILTER_XPATH_EXTRA_LABEL: 'Filter XPath',
+        FILTER_XPATH_EXTRA_LABEL: '',
         INVISIBLE_FORMAT: 'Search Only',
         ADDRESS_FORMAT: 'Address (Android/CloudCare)',
 

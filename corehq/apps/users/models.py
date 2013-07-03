@@ -351,11 +351,14 @@ class CustomDomainMembership(DomainMembership):
         self.custom_role.domain = self.domain
         self.custom_role.permissions.set(permission, value, data)
 
+
 class IsMemberOfMixin(DocumentSchema):
+
     def _is_member_of(self, domain):
-        domain_obj = Domain.get_by_name(domain)
-        return domain in self.get_domains() or \
-            (self.is_global_admin() and not domain_obj.restrict_superusers)
+        return domain in self.get_domains() or (
+            self.is_global_admin() and
+            not Domain.get_by_name(domain).restrict_superusers
+        )
 
     def is_member_of(self, domain_qs):
         """
@@ -1442,9 +1445,14 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if not (domain and domain.call_center_config.enabled):
             return
 
-        fields = {'name': commcare_user.name,
-                  'email': commcare_user.email,
-                  'language': commcare_user.language or ''} # prevent None
+        # language or phone_number can be null and will break
+        # case submission
+        fields = {
+            'name': commcare_user.name,
+            'email': commcare_user.email,
+            'language': commcare_user.language or '',
+            'phone_number': commcare_user.phone_number or ''
+        }
         # fields comes second to prevent custom user data overriding
         fields = dict(commcare_user.user_data, **fields)
 

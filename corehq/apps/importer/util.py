@@ -135,9 +135,17 @@ def convert_custom_fields_to_struct(config):
 
     return field_map
 
+class InvalidDateException(Exception):
+    pass
+
 def parse_excel_date(date_val):
     """ Convert field value from excel to a date value """
-    return str(date(*xldate_as_tuple(date_val, 0)[:3]))
+    try:
+        parsed_date = str(date(*xldate_as_tuple(date_val, 0)[:3]))
+    except Exception:
+        raise InvalidDateException
+
+    return parsed_date
 
 def parse_search_id(config, columns, row):
     """ Find and convert the search id in an excel row """

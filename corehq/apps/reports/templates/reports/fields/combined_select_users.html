@@ -11,7 +11,7 @@
 <div class="control-group">
     <label class="control-label">{% trans "Users" %}</label>
     <div class="controls"><label class="checkbox">
-        <input id="all-mobile-workers" name="all_mws" type="checkbox" {% if smwf.checked %}checked{% endif %}> {% trans "All Users" %}
+        <input id="all-mobile-workers" name="all_mws" type="checkbox" {% if smwf.checked %}checked{% endif %}> {% trans "Show All Users" %}
     </label></div>
     <div id="select-mobile-worker-field" class="hide">
         {% include smwf.field.template with select=smwf.select slug=smwf.field.slug placeholder=smwf.placeholder%}
@@ -23,7 +23,7 @@
 <div id="sgf-field" class="control-group hide">
     <label class="control-label">{% trans "Groups" %}</label>
     <div class="controls"><label class="checkbox">
-        <input id="all-groups" name="all_groups" type="checkbox" {% if sgf.checked %}checked{% endif %}> {% trans "All Groups" %}
+        <input id="all-groups" name="all_groups" type="checkbox" {% if sgf.checked %}checked{% endif %}> {% trans "Show All Groups" %}
     </label></div>
     <div id="select-group-field" class="hide">
         {% include sgf.field.template with select=sgf.select slug=sgf.field.slug placeholder=sgf.placeholder %}

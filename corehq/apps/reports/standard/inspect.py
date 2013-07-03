@@ -56,6 +56,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
               'corehq.apps.reports.fields.DatespanField']
     ajax_pagination = True
     filter_users_field_class = StrongFilterUsersField
+    include_inactive = True
 
 
     @property
@@ -81,10 +82,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
                         "form.meta.timeEnd": {
                             "from": self.datespan.startdate_param,
                             "to": self.datespan.enddate_param}}},
-                "filter":
-                    { "and": [
-                        {"terms": {"form.meta.userID": filter(None, self.combined_user_ids)}},
-                    ]}}
+                "filter": {"and": []}}
 
             xmlnss = filter(None, [f["xmlns"] for f in self.all_relevant_forms.values()])
             if xmlnss:
@@ -92,7 +90,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
 
             def any_in(a, b):
                 return any(i in b for i in a)
-            if self.request.GET.get('all_mws', '') == 'off' or any_in(['1', '2', '3'], self.request.GET.getlist('ufilter')):
+            if self.request.GET.get('all_mws', 'off') != 'on' or any_in(['1', '2', '3'], self.request.GET.getlist('ufilter')):
                 q["filter"]["and"].append({"terms": {"form.meta.userID": filter(None, self.combined_user_ids)}})
             else:
                 ids = filter(None, [user['user_id'] for user in self.get_admins_and_demo_users()])
