@@ -3,28 +3,36 @@ Logic about chws phones and cases go here.
 """
 from collections import defaultdict
 from datetime import datetime
-from dimagi.utils.couch.loosechange import map_reduce
+import itertools
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import const
+from casexml.apps.case.xform import CaseDbCache
+
 
 def get_footprint(initial_case_list, strip_history=False):
     """
-    Get's the flat list of the footprint of cases based on a starting list.
+    Gets the flat list of the footprint of cases based on a starting list.
     Walks all the referenced indexes recursively.
     """
-    
-    def children(case):
-        return [CommCareCase.get(index.referenced_id,
-                                 strip_history=strip_history) \
-                for index in case.indices]
-    
+
+    if not initial_case_list:
+        return {}
+
+    case_db = CaseDbCache(domain=list(initial_case_list)[0].domain, strip_history=strip_history)
+
+    def children(case_db, case):
+        return [case_db.get(index.referenced_id) for index in case.indices]
+
     relevant_cases = {}
     queue = list(case for case in initial_case_list)
+    directly_referenced_indices = itertools.chain(*[[index.referenced_id for index in case.indices]
+                                                    for case in initial_case_list])
+    case_db.populate(directly_referenced_indices)
     while queue:
         case = queue.pop()
         if case.case_id not in relevant_cases:
             relevant_cases[case.case_id] = case
-            queue.extend(children(case))
+            queue.extend(children(case_db, case))
     return relevant_cases
 
 class CaseSyncUpdate(object):

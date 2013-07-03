@@ -4,6 +4,7 @@ Work on cases based on XForms. In our world XForms are special couch documents.
 import logging
 
 from couchdbkit.resource import ResourceNotFound
+from dimagi.utils.chunked import chunked
 from casexml.apps.case.exceptions import IllegalCaseId, NoDomainProvided
 from casexml.apps.case import settings
 from dimagi.utils.couch.database import iter_docs
@@ -19,9 +20,12 @@ class CaseDbCache(object):
     so we can get the latest updates even if they haven't been saved
     to the database. Also provides some type checking safety.
     """
-    def __init__(self, domain=None):
+    def __init__(self, domain=None, strip_history=False, initial_case_ids=None):
         self.cache = {}
         self.domain = domain
+        self.strip_history = strip_history
+        if initial_case_ids:
+            self.populate(initial_case_ids)
 
     def validate_doc(self, doc):
         # some forms recycle case ids as other ids (like xform ids)
@@ -39,7 +43,7 @@ class CaseDbCache(object):
             return self.cache[case_id]
 
         try: 
-            case_doc = CommCareCase.get(case_id)
+            case_doc = CommCareCase.get(case_id, strip_history=self.strip_history)
         except ResourceNotFound:
             return None
 
@@ -52,6 +56,22 @@ class CaseDbCache(object):
         
     def doc_exist(self, case_id):
         return case_id in self.cache or CommCareCase.get_db().doc_exist(case_id)
+
+    def populate(self, case_ids):
+
+        def _iter_raw_cases(case_ids):
+            if self.strip_history:
+                for ids in chunked(case_ids):
+                    for row in CommCareCase.get_db().view("case/get_lite", keys=ids, include_docs=False):
+                        yield row['value']
+            else:
+                for raw_case in iter_docs(CommCareCase.get_db(), case_ids):
+                    yield raw_case
+
+        for raw_case in  _iter_raw_cases(case_ids):
+            case = CommCareCase.wrap(raw_case)
+            self.set(case._id, case)
+
 
 
 def get_and_check_xform_domain(xform):
