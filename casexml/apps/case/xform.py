@@ -20,12 +20,10 @@ class CaseDbCache(object):
     so we can get the latest updates even if they haven't been saved
     to the database. Also provides some type checking safety.
     """
-    def __init__(self, domain=None, strip_history=False, initial_case_ids=None):
+    def __init__(self, domain=None, strip_history=False):
         self.cache = {}
         self.domain = domain
         self.strip_history = strip_history
-        if initial_case_ids:
-            self.populate(initial_case_ids)
 
     def validate_doc(self, doc):
         # some forms recycle case ids as other ids (like xform ids)
