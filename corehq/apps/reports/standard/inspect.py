@@ -30,7 +30,8 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
-
+import rawes
+from corehq import elastic
 
 class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     """
@@ -494,8 +495,49 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
                     'Response', '# Responses', '% of responses',
                 ]))
 
+    def _es_query(self):
+        es_index, es_type, submission_type_term = {
+            'case': ('report_cases', 'report_case', 'type'),
+            'form': ('report_xforms', 'report_xform', '@xmlns'),
+        }[self.mode]
+
+        MAX_VALUES = 50
+
+        es = elastic.get_es()
+        result = es.get('%s/_search' % es_index, data={
+                "query": {
+                    "match_all": {}
+                },
+                "facets": {
+                    "blah": {
+                        "terms": {
+                            "field": "%s.%s.#value" % (es_type, self.field),
+                            "size": MAX_VALUES
+                        },
+                        "facet_filter": {
+                            "and": [{
+                                    "term": {
+                                        "domain": self.domain
+                                    }
+                                }, {
+                                    "term": {
+                                        submission_type_term: self.submission_type
+                                    }
+                                }]
+                        }
+                    }
+                },
+                "size": 0
+            })
+        result = result['facets']['blah']
+
+        raw = dict((k['term'], k['count']) for k in result['terms'])
+        if result['other']:
+            raw['Other'] = result['other']
+        return raw
+
     def _data(self):
-        raw = {'a': 13, 'b': 46, 'c': 86}
+        raw = self._es_query()
         return sorted(raw.iteritems())
 
     @property
@@ -515,6 +557,18 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
         }
 
     @property
+    def location_id(self):
+        return self.request.GET.get('location_id')
+
+    @property
+    def start_date(self):
+        return self.request.GET.get('startdate')
+
+    @property
+    def end_date(self):
+        return self.request.GET.get('enddate')
+
+    @property
     def charts(self):
         if 'location_id' in self.request.GET: # hack: only get data if we're loading an actual report
             return [PieChart(None, **self._chart_data())]
@@ -523,8 +577,8 @@ class PieChartReportCaseExample(GenericPieChartReportTemplate):
     name = 'Pie Chart (Case)'
     slug = 'case_pie'
     mode = 'case'
-    submission_type = '[case-type]'
-    field = '[case-prop]'
+    submission_type = 'supply-point-product'
+    field = 'product'
 
 class PieChartReportFormExample(GenericPieChartReportTemplate):
     name = 'Pie Chart (Form)'
