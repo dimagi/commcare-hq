@@ -218,9 +218,9 @@ def download_item_lists(request, domain):
     mmax_users = 0
     data_tables = []
     
-
+    #Fills sheets' schemas and data
     for data_type in data_types:
-        type_schema = [data_type.name, data_type.tag]
+        type_schema = [str(_id_from_doc(data_type)), "N", data_type.name, data_type.tag]
         fields = [field for field in data_type.fields]
         type_id = data_type.get_id
         data_table_of_type = []
@@ -246,12 +246,12 @@ def download_item_lists(request, domain):
         max_users = 0
         max_groups = 0
 
-    type_headers = ["name", "tag"] + ["field %d" % x for x in range(1,max_fields-1)]
+    type_headers = ["UID", "Delete(Y/N)", "name", "tag"] + ["field %d" % x for x in range(1,max_fields-3)]
     type_headers = ("types", tuple(type_headers))
     table_headers = [type_headers]    
     for type_schema in data_type_schemas:
-        item_header = (type_schema[1], tuple(["UID","Delete(Y/N)"]+
-                                             ["field: "+x for x in type_schema[2:]]+
+        item_header = (type_schema[3], tuple(["UID","Delete(Y/N)"]+
+                                             ["field: "+x for x in type_schema[4:]]+
                                              ["group %d" % x for x in range(1, mmax_groups+1)]+
                                              ["user %d" % x for x in range(1, mmax_users+1)]))
         table_headers.append(item_header)
@@ -259,6 +259,21 @@ def download_item_lists(request, domain):
     table_headers = tuple(table_headers)
     type_rows = ("types", tuple(data_type_schemas))
     data_tables = tuple([type_rows]+data_tables)
+
+    """
+    Example of sheets preperation:
+    
+    headers:
+     (("employee", ("id", "name", "gender")),
+      ("building", ("id", "name", "address")))
+    
+    data:
+     (("employee", (("1", "cory", "m"),
+                    ("2", "christian", "m"),
+                    ("3", "amelia", "f"))),
+      ("building", (("1", "dimagi", "585 mass ave."),
+                    ("2", "old dimagi", "529 main st."))))
+    """
     
     fd, path = tempfile.mkstemp()
     with os.fdopen(fd, 'w') as temp:
@@ -392,19 +407,22 @@ def run_upload(request, domain, workbook):
     with CouchTransaction() as transaction:
         for number_of_fixtures, dt in enumerate(data_types):
             tag = _get_or_raise(dt, 'tag')
-            data_type_results = FixtureDataType.by_domain_tag(domain, tag)
             type_definition_fields = _get_or_raise(dt, 'field')
-            if len(data_type_results) == 0:
-                data_type = FixtureDataType(
+
+            new_data_type = FixtureDataType(
                     domain=domain,
                     name=_get_or_raise(dt, 'name'),
                     tag=_get_or_raise(dt, 'tag'),
                     fields= type_definition_fields,
                 )
-            else:
-                for x in data_type_results:
-                    data_type = x
+            try:
+                data_type = FixtureDataType.get(dt['UID'])
+                if dt['Delete(Y/N)'] == "Y" or dt['Delete(Y/N)'] == "y":
+                    data_type.recursive_delete(transaction)
+                    continue
                 data_type.fields = type_definition_fields
+            except:
+                data_type = new_data_type
             transaction.save(data_type)
 
             data_items = workbook.get_worksheet(data_type.tag)
