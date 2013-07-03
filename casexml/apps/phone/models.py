@@ -143,6 +143,10 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
         Get the case state object associated with an id, or None if no such
         object is found
         """
+        # this is because we don't want to needlessly call wrap
+        # (which couchdbkit does not make any effort to cache on repeated calls)
+        # deterministically this change shaved off 10 seconds from an ota restore
+        # of about 300 cases.
         filtered_list = [case for case in self._doc['cases_on_phone'] if case['case_id'] == case_id]
         if filtered_list:
             self._assert(len(filtered_list) == 1, \
@@ -162,6 +166,7 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
         Get the dependent case state object associated with an id, or None if no such
         object is found
         """
+        # see comment in get_case_state for reasoning
         filtered_list = [case for case in self._doc['dependent_cases_on_phone'] if case['case_id'] == case_id]
         if filtered_list:
             self._assert(len(filtered_list) == 1, \
