@@ -496,38 +496,50 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
                 ]))
 
     def _es_query(self):
-        es_index, es_type, submission_type_term = {
-            'case': ('report_cases', 'report_case', 'type'),
-            'form': ('report_xforms', 'report_xform', '@xmlns'),
+        es_config_case = {
+            'index': 'report_cases',
+            'type': 'report_case',
+            'field_to_path': lambda f: '%s.#value' % f,
+            'fields': {
+                'submission_type': 'type',
+            }
+        }
+        es_config_form = {
+            'index': 'report_xforms',
+            'type': 'report_xform',
+            'field_to_path': lambda f: 'form.%s.#value' % f,
+            'fields': {
+                'submission_type': 'xmlns',
+            }
+        }
+        es_config = {
+            'case': es_config_case,
+            'form': es_config_form,
         }[self.mode]
 
-        MAX_VALUES = 50
+        MAX_DISTINCT_VALUES = 50
 
         es = elastic.get_es()
-        result = es.get('%s/_search' % es_index, data={
-                "query": {
-                    "match_all": {}
-                },
+        filter_criteria = [
+            {"term": {"domain": self.domain}},
+            {"term": {es_config['fields']['submission_type']: self.submission_type}},
+        ]
+        if self.location_id:
+            filter_criteria.append({"term": {"location_": self.location_id}})
+        result = es.get('%s/_search' % es_config['index'], data={
+                "query": {"match_all": {}}, 
+                "size": 0, # no hits; only aggregated data
                 "facets": {
                     "blah": {
                         "terms": {
-                            "field": "%s.%s.#value" % (es_type, self.field),
-                            "size": MAX_VALUES
+                            "field": "%s.%s" % (es_config['type'], es_config['field_to_path'](self.field)),
+                            "size": MAX_DISTINCT_VALUES
                         },
                         "facet_filter": {
-                            "and": [{
-                                    "term": {
-                                        "domain": self.domain
-                                    }
-                                }, {
-                                    "term": {
-                                        submission_type_term: self.submission_type
-                                    }
-                                }]
+                            "and": filter_criteria
                         }
                     }
                 },
-                "size": 0
             })
         result = result['facets']['blah']
 
@@ -584,8 +596,8 @@ class PieChartReportFormExample(GenericPieChartReportTemplate):
     name = 'Pie Chart (Form)'
     slug = 'form_pie'
     mode = 'form'
-    submission_type = '[xmlns]'
-    field = '[question-path]'
+    submission_type = 'http://openrosa.org/commtrack/stock_report'
+    field = 'location'
 
 
 class MapReport(ProjectReport, ProjectReportParametersMixin):
