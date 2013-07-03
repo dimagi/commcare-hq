@@ -5,7 +5,7 @@ from django.utils.translation import ugettext_noop
 from django.conf import settings
 import json
 
-class StockStatusMapReport(BaseMapReport, CommtrackReportMixin):
+class StockStatusMapReport(CommtrackReportMixin, BaseMapReport):
     name = ugettext_noop("Stock Status (map)")
     slug = "stockstatus_map"
     hide_filters = True

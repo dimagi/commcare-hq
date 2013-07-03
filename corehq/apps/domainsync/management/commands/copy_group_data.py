@@ -1,6 +1,9 @@
 import logging
+from optparse import make_option
 from couchdbkit import Database, BulkSaveError, ResourceConflict
+from dimagi.utils.couch.database import iter_docs
 from django.core.management.base import LabelCommand, CommandError
+import itertools
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
@@ -13,6 +16,9 @@ class Command(LabelCommand):
     help = "Copy all data (users, forms, cases) associated with a single group"
     args = '<sourcedb> <group_id>'
     label = ""
+    option_list = LabelCommand.option_list + \
+        (make_option('--include-user-owned', action='store_true', dest='include_user_cases', default=False,
+            help="In addition to getting cases owned by the group itself, also get those owned by all users in the group"),)
 
     def lenient_bulk_save(self, cls, docs):
         try:
@@ -41,28 +47,47 @@ class Command(LabelCommand):
         )
         domain.save(force_update=True)
 
-        print 'getting cases'
-        cases = sourcedb.view(
-            'hqcase/by_owner',
-            keys=[
-                [group.domain, group_id, False],
-                [group.domain, group_id, True],
-            ],
-            wrapper=lambda row: CommCareCase.wrap(row['doc']),
-            reduce=False,
-            include_docs=True
-        ).all()
-        self.lenient_bulk_save(CommCareCase, cases)
+        owners = [group_id]
+        if options["include_user_cases"]:
+            owners.extend(group.users)
 
+        def keys_for_owner(domain, owner_id):
+            return [
+                [domain, owner_id, False],
+                [domain, owner_id, True],
+            ]
 
-        print 'compiling xform_ids'
-        xform_ids = set()
-        for case in cases:
-            xform_ids.update(case.xform_ids)
+        def get_case_ids(owners):
+            keys = list(itertools.chain(*[keys_for_owner(domain.name, owner_id) for owner_id in owners]))
+            results = sourcedb.view(
+                'hqcase/by_owner',
+                keys=keys,
+                reduce=False,
+                include_docs=False,
+            )
+            return [res['id'] for res in results]
 
-        print 'getting xforms'
-        user_ids = set(group.users)
         CHUNK_SIZE = 100
+        case_ids = get_case_ids(owners)
+        xform_ids = set()
+
+        print 'copying %s cases' % len(case_ids)
+
+        for i, subset in enumerate(chunked(case_ids, CHUNK_SIZE)):
+            print i * CHUNK_SIZE
+            cases = [CommCareCase.wrap(case['doc']) for case in sourcedb.all_docs(
+                keys=list(subset),
+                include_docs=True,
+            )]
+
+            for case in cases:
+                xform_ids.update(case.xform_ids)
+
+            self.lenient_bulk_save(CommCareCase, cases)
+
+
+        print 'copying %s xforms' % len(xform_ids)
+        user_ids = set(group.users)
 
         def form_wrapper(row):
             doc = row['doc']

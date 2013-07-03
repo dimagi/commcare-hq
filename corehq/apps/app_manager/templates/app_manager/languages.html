@@ -4,15 +4,12 @@
     <div class="tabbable">
         <ul class="nav nav-tabs">
             <li class="active"><a href="#supported-languages" data-toggle="tab">{% trans "Language List" %}</a></li>
-            {% if not app.is_remote_app %}
-                <li><a href="#translations-tab" data-toggle="tab">{% trans "CommCare Translations" %}</a></li>
-            {% endif %}
+            <li><a href="#translations-tab" data-toggle="tab">{% trans "CommCare Translations" %}</a></li>
         </ul>
         <div class="tab-content">
             <div id="supported-languages" class="tab-pane active">
                 {% include "app_manager/partials/supported-languages.html" %}
             </div>
-            {% if not app.is_remote_app %}
             <div id="translations-tab" class="tab-pane">
                 <div class="accordion" id="ie-accordion">
                     <div class="accordion-group">
@@ -111,7 +108,6 @@
                     <div style="height: 85px"></div>
                 </section>
             </div>
-            {% endif %}
         </div>
     </div>
 </div>
