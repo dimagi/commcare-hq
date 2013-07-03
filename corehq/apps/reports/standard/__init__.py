@@ -174,7 +174,7 @@ class ProjectReportParametersMixin(object):
         if getattr(self, 'need_group_ids', False):
             for users in user_dict.values():
                 for u in users:
-                    u["group_ids"] = Group.by_user(u, False)
+                    u["group_ids"] = Group.by_user(u['user_id'], False)
 
         return user_dict
 
