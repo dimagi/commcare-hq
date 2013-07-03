@@ -605,7 +605,7 @@ var DetailScreenConfig = (function () {
                 column.format.fire('change');
 
                 var sortLine = $('<td/>').addClass('detail-screen-extra');
-                if (!suggested && window.enableNewSort) {
+                if (window.enableNewSort) {
                   sortLine.append(column.$sortLink)
                 }
                 sortLine.appendTo($tr);
