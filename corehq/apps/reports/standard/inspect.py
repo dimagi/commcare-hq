@@ -501,6 +501,7 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
             'type': 'report_case',
             'field_to_path': lambda f: '%s.#value' % f,
             'fields': {
+                'date': 'server_modified_on',
                 'submission_type': 'type',
             }
         }
@@ -509,6 +510,7 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
             'type': 'report_xform',
             'field_to_path': lambda f: 'form.%s.#value' % f,
             'fields': {
+                'date': 'received_on',
                 'submission_type': 'xmlns',
             }
         }
@@ -523,6 +525,10 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
         filter_criteria = [
             {"term": {"domain": self.domain}},
             {"term": {es_config['fields']['submission_type']: self.submission_type}},
+            {"range": {es_config['fields']['date']: {
+                    "from": self.start_date,
+                    "to": self.end_date,
+                }}},
         ]
         if self.location_id:
             filter_criteria.append({"term": {"location_": self.location_id}})
