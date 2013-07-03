@@ -304,6 +304,9 @@ class UploadItemLists(TemplateView):
         except AttributeError:
             messages.error(request, "Error processing your Excel (.xlsx) file")
             return error_redirect()
+        except Exception as e:
+            messages.error(request, "Invalid file-format. Please upload a valid xlsx file.")
+            return error_redirect()
 
         try:
             upload_result = run_upload(request, self.domain, workbook)
