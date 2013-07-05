@@ -6,6 +6,8 @@ from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
+from django.utils.translation import ugettext as _
+
 from corehq.apps.domain.decorators import login_required_late_eval_of_LOGIN_URL
 from corehq.apps.domain.models import Domain
 from corehq.apps.orgs.views import orgs_landing
@@ -133,7 +135,9 @@ def register_domain(request, domain_type=None):
             max_req = settings.DOMAIN_MAX_REGISTRATION_REQUESTS_PER_DAY
             if reqs_today >= max_req:
                 context.update({
-                    'error_msg':'Number of domains requested today exceeds limit ('+str(max_req)+') - contact Dimagi',
+                    'error_msg': _(
+                        'Number of domains requested today exceeds limit (%d) - contact Dimagi'
+                    ) % max_req,
                     'show_homepage_link': 1
                 })
                 return render(request, 'error.html', context)
@@ -144,16 +148,17 @@ def register_domain(request, domain_type=None):
             requested_domain = form.cleaned_data['domain_name']
             if is_new:
                 context.update({
-                    'alert_message': "An email has been sent to %s." % request.user.username,
+                    'alert_message': _("An email has been sent to %s.") % request.user.username,
                     'requested_domain': requested_domain
                 })
                 return render(request, 'registration/confirmation_sent.html',
                         context)
             else:
-                messages.success(request, '<strong>The project {project_name} was successfully created!</strong> An email has been sent to {username} for your records.'.format(
-                    username=request.user.username,
-                    project_name=requested_domain
-                ), extra_tags="html")
+                messages.success(request, _(
+                    '<strong>The project %s was successfully created!</strong>'
+                    'An email has been sent to %s for your records.') % (
+                        request.user.username, requested_domain),
+                    extra_tags="html")
 
                 if nextpage:
                     return HttpResponseRedirect(nextpage)
@@ -195,14 +200,15 @@ def resend_confirmation(request):
             send_domain_registration_email(dom_req.new_user_username, dom_req.domain, dom_req.activation_guid)
         except Exception:
             context.update({
-                'error_msg': 'There was a problem with your request',
+                'error_msg': _('There was a problem with your request'),
                 'error_details': sys.exc_info(),
                 'show_homepage_link': 1,
             })
             return render(request, 'error.html', context)
         else:
             context.update({
-                'alert_message': "An email has been sent to %s." % dom_req.new_user_username,
+                'alert_message': _(
+                    "An email has been sent to %s.") % dom_req.new_user_username,
                 'requested_domain': dom_req.domain
             })
             return render(request, 'registration/confirmation_sent.html',
@@ -218,31 +224,40 @@ def confirm_domain(request, guid=None):
     # Did we get a guid?
     vals = {}
     if guid is None:
-        vals['message_title'] = 'Missing Activation Key'
-        vals['message_subtitle'] = 'Account Activation Failed'
-        vals['message_body'] = 'An account activation key was not provided. If you think this is an error, please contact the system administrator.'
+        vals['message_title'] = _('Missing Activation Key')
+        vals['message_subtitle'] = _('Account Activation Failed')
+        vals['message_body'] = _(
+            'An account activation key was not provided.  If you think this '
+            'is an error, please contact the system administrator.'
+        )
         vals['is_error'] = True
         return render(request, 'registration/confirmation_complete.html', vals)
 
     # Does guid exist in the system?
     req = RegistrationRequest.get_by_guid(guid)
     if not req:
-        vals['message_title'] = 'Invalid Activation Key'
-        vals['message_subtitle'] = 'Account Activation Failed'
-        vals['message_body'] = 'The account activation key "%s" provided is invalid. If you think this is an error, please contact the system administrator.'  % guid
+        vals['message_title'] = _('Invalid Activation Key')
+        vals['message_subtitle'] = _('Account Activation Failed')
+        vals['message_body'] = _(
+            'The account activation key "%s" provided is invalid. If you '
+            'think this is an error, please contact the system '
+            'administrator.'
+        ) % guid
         vals['is_error'] = True
         return render(request, 'registration/confirmation_complete.html', vals)
 
-    # Has guid already been confirmed?
-    
     requested_domain = Domain.get_by_name(req.domain)
     context = get_domain_context(requested_domain.domain_type)
     context['requested_domain'] = req.domain
 
+    # Has guid already been confirmed?
     if requested_domain.is_active:
         assert(req.confirm_time is not None and req.confirm_ip is not None)
-        context['message_title'] = 'Already Activated'
-        context['message_body'] = 'Your account %s has already been activated. No further validation is required.' % req.new_user_username
+        context['message_title'] = _('Already Activated')
+        context['message_body'] = _(
+            'Your account %s has already been activated. No further '
+            'validation is required.'
+        ) % req.new_user_username
         context['is_error'] = False
         return render(request, 'registration/confirmation_complete.html',
                 context)
@@ -257,9 +272,14 @@ def confirm_domain(request, guid=None):
 
     send_new_request_update_email(requesting_user, get_ip(request), requested_domain.name, is_confirming=True)
 
-    context['message_title'] = 'Account Confirmed'
-    context['message_subtitle'] = 'Thank you for activating your account, %s!' % requesting_user.first_name
-    context['message_body'] = 'Your account has been successfully activated. Thank you for taking the time to confirm your email address: %s.' % requesting_user.username
+    context['message_title'] = _('Account Confirmed')
+    context['message_subtitle'] = _(
+        'Thank you for activating your account, %s!'
+    ) % requesting_user.first_name
+    context['message_body'] = _(
+        'Your account has been successfully activated.  Thank you for taking '
+        'the time to confirm your email address: %s.'
+    ) % requesting_user.username 
     context['is_error'] = False
     return render(request, 'registration/confirmation_complete.html', context)
 
