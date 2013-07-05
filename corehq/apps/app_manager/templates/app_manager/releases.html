@@ -180,7 +180,7 @@
                     </td>
                     <td class="nowrap">
                         <div class="btn-group">
-                            <a class="btn btn-primary" data-bind="openModal: 'deploy-build-modal-template'">Deploy</a>
+                            <a class="btn btn-primary" data-bind="openModal: 'deploy-build-modal-template', click: $root.group_deploy">Deploy</a>
                         </div>
                     </td>
                     {% if edit %}
@@ -365,7 +365,7 @@
                                                 <div data-bind="visible: $data">
                                                     <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
                                                         <label>{% trans "Send to:" %}</label>
-                                                        <input type="text" name="recipients" value=""/>
+                                                        <input type="text" name="recipients" data-contacts='{{ sms_contacts|JSON }}' value=""/>
                                                         <br />
                                                         <textarea name="message" data-bind="text: 'Update to CommCare: ' +
                                                             $data + ' (&quot;' + $parent.short_name() + '&quot; v. ' + $parent.version() + ')'"></textarea>
