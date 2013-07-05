@@ -957,14 +957,14 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                     value = text
             return util.format_datatables_data(text=text, sort_key=value)
 
-        def submit_history_link(owner_id, val, type='select_mw'):
+        def submit_history_link(owner_id, val, param='select_mw'):
             """
                 takes a row, and converts certain cells in the row to links that link to the submit history report
             """
             fs_url = reverse('project_report_dispatcher', args=(self.domain, 'submit_history'))
             start_date, end_date = dates_for_linked_reports()
             url_args = {
-                type: owner_id,
+                param: owner_id,
                 "startdate": start_date,
                 "enddate": end_date,
             }
@@ -1029,14 +1029,14 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
 
                 case_sharing_groups = set(reduce(operator.add, [u['group_ids'] for u in users], []))
                 inactive_cases = sum([int(inactives_by_owner.get(u["user_id"], 0)) for u in users]) + \
-                    sum([int(inactives_by_owner.get(group_id, 0)) for group_id in case_sharing_groups])
+                    sum([int(inactives_by_owner.get(g_id, 0)) for g_id in case_sharing_groups])
                 total_cases = sum([int(totals_by_owner.get(u["user_id"], 0)) for u in users]) + \
-                    sum([int(totals_by_owner.get(group_id, 0)) for group_id in case_sharing_groups])
+                    sum([int(totals_by_owner.get(g_id, 0)) for g_id in case_sharing_groups])
 
                 rows.append([
                     group_cell(group_id, group_name),
                     submit_history_link(group_id,
-                            sum([int(submissions_by_user.get(user["user_id"], 0)) for user in users]), type="group"),
+                            sum([int(submissions_by_user.get(user["user_id"], 0)) for user in users]), param="group"),
                     numcell(sum([int(avg_submissions_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
                     "%s / %s" % (int(active_users_by_group.get(group, 0)), len(self.users_by_group.get(group, []))),
                     numcell(sum([int(creations_by_user.get(user["user_id"], 0)) for user in users])),
