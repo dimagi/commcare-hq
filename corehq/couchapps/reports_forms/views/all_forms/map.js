@@ -38,6 +38,7 @@ function(doc) {
                     emit([status+" xmlns",          doc.domain, xmlns,      times[status]], emit_entry);
                     emit([status+" app",            doc.domain, app_id,     times[status]], emit_entry);
                     emit([status+" user",           doc.domain, user_id,    times[status]], emit_entry);
+                    emit([status+" app user",       doc.domain, app_id, user_id, times[status]], emit_entry);
                     emit([status+" xmlns app",      doc.domain, xmlns, app_id,  times[status]], emit_entry);
                     emit([status+" xmlns user",     doc.domain, xmlns, user_id, times[status]], emit_entry);
                     emit([status+" xmlns app user", doc.domain, xmlns, app_id, user_id, times[status]], emit_entry);
