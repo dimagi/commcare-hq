@@ -1,5 +1,7 @@
 import hashlib
 from django.conf import settings
+from django.http import HttpResponse, HttpResponseServerError, HttpResponseBadRequest
+from django.utils.datastructures import MultiValueDictKeyError
 from dimagi.utils.mixins import UnicodeMixIn
 import urllib
 try:
@@ -47,6 +49,7 @@ def post_from_settings(instance, extras=None):
                                        settings.COUCH_PASSWORD)
     else:
         return post_unauthenticated_data(instance, url)
+
 
 def post_xform_to_couch(instance, attachments={}):
     """
@@ -179,3 +182,55 @@ def _log_hard_failure(instance, attachments, error):
         message = unicode(str(error), encoding='utf-8')
 
     return SubmissionErrorLog.from_instance(instance, message)
+
+
+class SubmissionPost(object):
+
+    magic_property = 'xml_submission_file'
+
+    def __init__(self, request):
+        self.request = request
+
+    def get_response(self):
+        attachments = {}
+        if self.request.META['CONTENT_TYPE'].startswith('multipart/form-data'):
+            # it's an standard form submission (eg ODK)
+            # this does an assumption that ODK submissions submit using the form parameter xml_submission_file
+            # todo: this should be made more flexibly to handle differeing params for xform submission
+            try:
+                instance = self.request.FILES[self.magic_property].read()
+            except MultiValueDictKeyError:
+                return HttpResponseBadRequest((
+                    'If you use multipart/form-data, '
+                    'please name your file %s.\n'
+                    'You may also do a normal (non-multipart) post '
+                    'with the xml submission as the request body instead.'
+                ) % self.magic_property)
+            for key, item in self.request.FILES.items():
+                if key != self.magic_property:
+                    attachments[key] = item
+        else:
+            #else, this is a raw post via a j2me client of xml (or touchforms)
+            #todo, multipart raw submissions need further parsing capacity.
+            instance = self.request.raw_post_data
+
+        try:
+            doc = post_xform_to_couch(instance, attachments=attachments)
+            return self.get_success_response(doc)
+        except SubmissionError as e:
+            logging.exception(
+                "Problem receiving submission to %s. %s" % (
+                    self.request.path,
+                    str(e),
+                )
+            )
+            return self.get_error_response(e.error_log)
+
+    def get_success_response(self, doc):
+        return HttpResponse(
+            "Thanks! Your new xform id is: %s" % doc["_id"],
+            status=201,
+        )
+
+    def get_error_response(self, error_log):
+        return HttpResponseServerError("FAIL")
