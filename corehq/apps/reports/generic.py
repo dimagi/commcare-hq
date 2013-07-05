@@ -599,9 +599,10 @@ class GenericReportView(CacheableRequestMixIn):
     @request_cache("raw")
     def print_response(self):
         """
-        Returns the raw report data. What gets rendered in the async response.
+        Returns the report for printing.
         """
         self.is_rendered_as_email = True
+        self.use_datatables = False
         self.override_template = "reports/async/print_report.html"
         return HttpResponse(self._async_context()['report'])
 

@@ -3718,7 +3718,7 @@ msgid "Insufficient Data"
 msgstr ""
 
 #: corehq/apps/reports/commtrack/standard.py:177
-msgid "Consumption and Months Remaining"
+msgid "Inventory"
 msgstr ""
 
 #: corehq/apps/reports/commtrack/standard.py:192
