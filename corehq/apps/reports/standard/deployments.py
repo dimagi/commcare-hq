@@ -61,10 +61,6 @@ class ApplicationStatusReport(DeploymentsReport):
                 else:
                     build_id = UNKNOWN
 
-                form_data = data.get_form
-
-                app_name = None
-
                 if data.app_id:
                     try:
                         app = Application.get(data.app_id)
@@ -73,12 +69,15 @@ class ApplicationStatusReport(DeploymentsReport):
                         pass
                 else:
                     try:
+                        form_data = data.get_form
                         app_name = form_data['meta']['appVersion']['#text']
                     except KeyError:
                         pass
-
+                    
                 app_name = app_name or _("Unknown App")
+
             if app_name is None and selected_app:
                 continue
+
             rows.append([user.get('username_in_report'), last_seen, app_name or "---"])
         return rows
