@@ -293,7 +293,7 @@ def create_export_filter(request, domain, export_type='form'):
         else:
             filter = SerializableFunction(case_group_filter, group=group)
     else:
-        filter = SerializableFunction(instances) & SerializableFunction(app_export_filter, app_id=app_id)
+        filter = SerializableFunction(app_export_filter, app_id=app_id)
         filter &= SerializableFunction(datespan_export_filter, datespan=request.datespan)
         if user_filters and use_user_filters:
             users_matching_filter = map(lambda x: x.get('user_id'), get_all_users_by_domain(domain,
