@@ -73,6 +73,7 @@ class DueNextMonth(TotalCalculator):
 
 class RecentDeliveryList(TotalCalculator):
     window = A_MONTH
+    include_closed = True
 
     def filter(self, case):
         return is_pregnant_mother(case) and get_add(case)

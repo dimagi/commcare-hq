@@ -8,44 +8,10 @@ import fluff
 
 
 class Complications(DoneDueCalculator):
-    """
-        DENOM: [
-            any DELIVERY forms with (
-                complications = 'yes'
-            ) in last 30 days
-            PLUS any PNC forms with ( # 'any applicable from PNC forms with' (?)
-                abdominal_pain ='yes' or
-                bleeding = 'yes' or
-                discharge = 'yes' or
-                fever = 'yes' or
-                pain_urination = 'yes'
-            ) in the last 30 days
-            PLUS any REGISTRATION forms with (
-                abd_pain ='yes' or    # == abdominal_pain
-                fever = 'yes' or
-                pain_urine = 'yes' or    # == pain_urination
-                vaginal_discharge = 'yes'    # == discharge
-            ) with add in last 30 days
-            PLUS any EBF forms with (
-                abdominal_pain ='yes' or
-                bleeding = 'yes' or
-                discharge = 'yes' or
-                fever = 'yes' or
-                pain_urination = 'yes'
-            ) in last 30 days    # note, don't exist in EBF yet, but will shortly
-        ]
-        NUM: [
-            filter (
-                DELIVERY ? form.meta.timeStart - child_info/case/update/time_of_birth,
-                REGISTRATION|PNC|EBF ? form.meta.timeStart - case.add
-            ) < `days` days
-        ]
-    """
+
     window = A_MONTH
 
-    def case_open(self, case):
-        """Include all cases"""
-        return True
+    include_closed = True
 
     _pnc_ebc_complications = (
         'abdominal_pain',

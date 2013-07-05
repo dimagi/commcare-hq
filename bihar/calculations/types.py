@@ -3,10 +3,11 @@ import fluff
 
 
 class CaseCalculator(fluff.Calculator):
+    include_closed = False
 
     @fluff.filter_by
     def case_open(self, case):
-        return not case.closed
+        return self.include_closed or not case.closed
 
 
 class DoneDueCalculator(CaseCalculator):

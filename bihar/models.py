@@ -28,8 +28,8 @@ class CareBiharFluff(fluff.IndicatorDocument):
 
     upcoming_deliveries = homevisit.DueNextMonth()
     deliveries = homevisit.RecentDeliveryList()
-    no_bp_counseling = homevisit.NoBPList()
     new_pregnancies = homevisit.RecentlyOpened()
+    no_bp_counseling = homevisit.NoBPList()
     no_ifa_tablets = homevisit.NoIFAList()
     no_emergency_prep = homevisit.NoEmergencyPrep()
     no_newborn_prep = homevisit.NoNewbornPrep()

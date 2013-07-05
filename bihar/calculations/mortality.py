@@ -100,6 +100,7 @@ class IMCalculator(TotalCalculator):
 class StillBirth(TotalCalculator, AddCalculator):
 
     window = A_MONTH
+    include_closed = True
 
     @fluff.filter_by
     def is_stillborn(self, case):
