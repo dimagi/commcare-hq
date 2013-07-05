@@ -143,6 +143,12 @@ function ReleasesMain(o) {
                 self.buildState('error');
             });
     };
+    self.group_deploy = function() { 
+        var json_contacts = $('.tabbable').find("input[name]='recipients'").attr("data-contacts").replace(/'/g,'"');
+        $('.tabbable').find("input[name]='recipients'").multiTypeahead({ 
+            source: jQuery.parseJSON(json_contacts),
+        }).focus();
+    };
     // init
     setTimeout(function () {
         self.getMoreSavedApps();

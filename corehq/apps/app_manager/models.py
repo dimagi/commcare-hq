@@ -1386,6 +1386,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
             # I'm putting this assert here if copy._id is ever None
             # which makes tests error
             assert copy._id
+            """
+            #Hardcode variables for testing purpose to avoid BitlyError. CHANGE_BEFORE_COMMIT.
+            copy.short_url = "http://SET_IN_CODE_UPDATE"
+            copy.short_odk_url = "http:/SET_IN_CODE_UPDATE"
+            """
             copy.short_url = bitly.shorten(
                 get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
             )
