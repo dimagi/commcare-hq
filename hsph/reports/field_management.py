@@ -590,11 +590,8 @@ class FacilityWiseFollowUpReport(GenericTabularReport, DatespanMixin,
             region_id, district_id, site_number, site_id, user_id = item['key']
             region_name = self.get_region_name(region_id)
             district_name = self.get_district_name(region_id, district_id)
-
-            site_name = self.get_site_name(region_id, district_id,
-                site_number)
-            site_name = facility_map[site_id]
-            fida = self.usernames[user_id]
+            site_name = facility_map.get(site_id, site_id)
+            fida = self.usernames.get(user_id, "")
             births = get_view_results('births', startdate, enddate)
             open_cases = get_view_results('open_cases', startdate, enddate)
 
