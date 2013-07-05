@@ -66,7 +66,8 @@ class SuccessMessage(object):
         r = get_db().view('reports_forms/all_forms',
             startkey=key+[json_format_datetime(time)],
             endkey=key+[{}],
-            group=False
+            group=False,
+            stale='ok',
         ).one()
         return r['value'] if r else 0
 
