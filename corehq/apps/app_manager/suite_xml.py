@@ -405,12 +405,30 @@ class SuiteGenerator(object):
             for module in self.modules:
                 for detail in module.get_details():
                     detail_columns = detail.get_columns()
+
                     if detail_columns and detail.type in ('case_short', 'case_long'):
                         d = Detail(
                             id=self.id_strings.detail(module, detail),
                             title=Text(locale_id=self.id_strings.detail_title_locale(module, detail))
                         )
-                        for column in detail_columns:
+
+                        if detail.type == 'case_short':
+                            detail_fields = [c.field for c in detail_columns]
+                            sort_fields = [e.field for e in module.sort_elements]
+                            sort_only_fields = [field for field in sort_fields
+                                                if field not in detail_fields]
+
+                            from corehq.apps.app_manager.models import DetailColumn
+                            for sort_field in sort_only_fields:
+                                dc = DetailColumn(
+                                    name={'en': sort_field},
+                                    model='case',
+                                    field=sort_field,
+                                    format='invisible',
+                                )
+                                detail.append_column(dc)
+
+                        for column in detail.get_columns():
                             fields = get_column_generator(self.app, module, detail, column).fields
                             d.fields.extend(fields)
 
@@ -422,6 +440,7 @@ class SuiteGenerator(object):
                         else:
                             # only yield the Detail if it has Fields
                             r.append(d)
+
         return r
 
     def get_filter_xpath(self, module, delegation=False):

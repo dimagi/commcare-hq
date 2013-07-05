@@ -1550,17 +1550,20 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @property
     def build_version(self):
-        # returns a tuple.. ex: (2, 6)
-        version_tuple = self.get_build().minor_release()
+        try:
+            # returns a tuple.. ex: (2, 6)
+            version_tuple = self.get_build().minor_release()
 
-        # convert it to '2.6' for easy comparisons
-        version = (
-            str(version_tuple[0]) +
-            '.' +
-            str(version_tuple[1])
-        )
+            # convert it to '2.6' for easy comparisons
+            version = (
+                str(version_tuple[0]) +
+                '.' +
+                str(version_tuple[1])
+            )
 
-        return version
+            return version
+        except KeyError:
+            return ''
 
     @property
     def default_language(self):
