@@ -791,6 +791,7 @@ class KeywordForm(Form):
     
     def clean_named_args(self):
         if self.cleaned_data.get("form_type") == FORM_TYPE_ALL_AT_ONCE and self.cleaned_data.get("use_named_args", False):
+            use_named_args_separator = self.cleaned_data.get("use_named_args_separator", False)
             value = self.cleaned_data.get("named_args")
             data_dict = {}
             for d in value:
@@ -799,8 +800,10 @@ class KeywordForm(Form):
                 if name == "" or xpath == "":
                     raise ValidationError(_("Name and xpath are both required fields."))
                 for k, v in data_dict.items():
-                    if k.startswith(name) or name.startswith(k):
+                    if not use_named_args_separator and (k.startswith(name) or name.startswith(k)):
                         raise ValidationError(_("Cannot have two names overlap: ") + "(%s, %s)" % (k, name))
+                    if use_named_args_separator and k == name:
+                        raise ValidationError(_("Cannot use the same name twice: ") + name)
                     if v == xpath:
                         raise ValidationError(_("Cannot reference the same xpath twice: ") + xpath)
                 data_dict[name] = xpath
