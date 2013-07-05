@@ -1,6 +1,4 @@
-from datetime import date, timedelta
 import sqlagg
-from sqlagg.columns import SumColumn
 import sqlalchemy
 import settings
 
@@ -42,7 +40,7 @@ class SqlIndicatorSet(object):
     def data(self):
         group_by = [self.group_by] if self.group_by else []
         qc = sqlagg.QueryContext(self.table_name, self.filters, group_by)
-        for c in self.columns.values():
+        for c in self.columns:
             qc.append_column(c)
         engine = sqlalchemy.create_engine(settings.SQL_REPORTING_DATABASE_URL)
         conn = engine.connect()
@@ -52,31 +50,3 @@ class SqlIndicatorSet(object):
             conn.close()
 
         return data
-
-
-class CallCenter(SqlIndicatorSet):
-    name = 'call_center'
-    table_name = 'call_center_indicators'
-
-    @property
-    def filters(self):
-        return ['date between :weekago and :today']
-
-    @property
-    def filter_values(self):
-        return {
-            'today': date.today(),
-            'weekago': date.today() - timedelta(days=7),
-            '2weekago': date.today() - timedelta(days=14),
-        }
-
-    @property
-    def group_by(self):
-        return 'case'
-
-    @property
-    def columns(self):
-        return {
-            'casesUpdatedInLastWeek': SumColumn('cases_updated'),
-            'casesUpdatedInWeekPrior': SumColumn('cases_updated', filters=['date between 2weekago and weekago']),
-        }
