@@ -270,9 +270,9 @@ class DateSpan(object):
 
         # if the end date is today or tomorrow, use "last N days syntax"  
         today = datetime.combine(datetime.today(), time())
-        day_after_tomorrow = today + timedelta (days=2)
-        if today <= self.enddate < day_after_tomorrow:
-            return "last %s days" % (self.enddate - self.startdate).days
+        day_after_tomorrow = today + timedelta(days=2)
+        if today <= self.enddate + timedelta(days=(1 if self.inclusive else 0)) < day_after_tomorrow:
+            return "last %s days" % ((self.enddate - self.startdate).days + (1 if self.inclusive else 0))
         
         return "%s to %s" % (self.startdate.strftime(self.format), 
                              self.enddate.strftime(self.format))
