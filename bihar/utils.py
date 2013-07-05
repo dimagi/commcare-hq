@@ -1,7 +1,6 @@
 from operator import attrgetter
 from django.utils.translation import ugettext_noop
 from corehq.apps.groups.models import Group
-from corehq.apps.users.models import CouchUser
 
 ASHA_ROLE = ugettext_noop('ASHA')
 AWW_ROLE = ugettext_noop('AWW')
@@ -33,8 +32,27 @@ def get_all_owner_ids(user_ids):
     return set(user_ids).union(set(all_group_ids))
 
 
-def get_all_calculations(group_id):
+def get_all_owner_ids_from_group(group):
+    return get_all_owner_ids([user.get_id for user in get_team_members(group)])
+
+
+def get_calculation(owner_ids, slug):
     from bihar.models import CareBiharFluff
+    r = CareBiharFluff.aggregate_results(slug, (
+        ['care-bihar', owner_id] for owner_id in owner_ids
+    ), reduce=True)
+    num = r.get('numerator')
+    total = r.get('total')
+    r = CareBiharFluff.aggregate_results(slug, (
+        ['care-bihar', owner_id] for owner_id in owner_ids
+    ), reduce=False)
+    num_cases = ', '.join(r.get('numerator', ()))
+    total_cases = ', '.join(r.get('total', ()))
+    return num or '', total, num_cases, total_cases
+
+
+def get_all_calculations(owner_ids):
+
     from bihar.reports.indicators.indicators import IndicatorConfig, INDICATOR_SETS
 
     config = IndicatorConfig(INDICATOR_SETS)
@@ -42,31 +60,12 @@ def get_all_calculations(group_id):
         print indicator_set.name
         for indicator in indicator_set.get_indicators():
             slug = indicator.slug
-            user_ids = [user.get_id for user in get_team_members(Group.get(group_id))]
-            owner_ids = get_all_owner_ids(user_ids)
-            r = CareBiharFluff.aggregate_results(slug, (
-                ['care-bihar', owner_id] for owner_id in owner_ids
-            ))
-            num = r.get('numerator')
-            total = r.get('total')
-            r = CareBiharFluff.aggregate_results(slug, (
-                ['care-bihar', owner_id] for owner_id in owner_ids
-            ), reduce=False)
-            num_cases = ', '.join(r.get('numerator', ()))
-            total_cases = ', '.join(r.get('total', ()))
-            yield (
-                indicator.name,
-                num or '',
-                total,
-                num_cases,
-                total_cases
-            )
+            yield (indicator.name,) + get_calculation(owner_ids, slug)
 
 
-def get_groups_for_group(group_id):
+def get_groups_for_group(group):
     """This is a helper function only called locally"""
-    user_ids = [user.get_id for user in get_team_members(Group.get(group_id))]
-    owner_ids = list(get_all_owner_ids(user_ids))
+    owner_ids = list(get_all_owner_ids_from_group(group))
     db = Group.get_db()
     rows = db.view('_all_docs', keys=owner_ids, include_docs=True)
     groups = []

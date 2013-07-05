@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
-from bihar.utils import get_team_members, get_all_owner_ids
+from bihar.utils import get_team_members, get_all_owner_ids, get_all_owner_ids_from_group
 
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.reports.standard import CustomProjectReport
@@ -99,8 +99,7 @@ class GroupReferenceMixIn(object):
     @property
     @memoized
     def all_owner_ids(self):
-        all_user_ids = [u._id for u in self.get_team_members()]
-        return get_all_owner_ids(all_user_ids)
+        return get_all_owner_ids_from_group(self.group)
 
 
     @property
