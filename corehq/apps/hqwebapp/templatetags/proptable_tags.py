@@ -113,7 +113,11 @@ def to_html(key, val, level=0, datetime_fmt="%b %d, %Y %H:%M %Z",
 
 
 def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
-    prop_def = copy.copy(prop_def)
+    # when prop_def came from a couchdbkit document, it will be a LazyDict with
+    # a broken pop method.  This conversion also has the effect of a shallow
+    # copy, which we want.
+    prop_def = dict(prop_def)
+
     default_processors = {
         'yesno': yesno
     }
