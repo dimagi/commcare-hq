@@ -159,6 +159,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             endkey=key+[{}],
             group=True,
             group_level=4,
+            stale='ok',
         ).all()
         all_submitted = set(self.get_xmlns_app_keys(data))
         from_apps = set(self.application_forms)
@@ -459,6 +460,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             startkey=key,
             endkey=key+[{}],
             limit=1,
+            stale='ok',
         ).first()
         if data:
             return data['value']
@@ -607,6 +609,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         return get_db().view('reports_forms/by_app_info',
             startkey=startkey,
             endkey=endkey+[{}],
+            stale='ok',
             **kwargs
         ).all()
 

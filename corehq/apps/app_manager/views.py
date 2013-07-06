@@ -1713,7 +1713,7 @@ def download_file(req, domain, app_id, path):
         assert req.app.copy_of
         payload = req.app.fetch_attachment(full_path)
         response.write(payload)
-        response['Content-Length'] = len(payload)
+        response['Content-Length'] = len(response.content)
         return response
     except (ResourceNotFound, AssertionError):
         if req.app.copy_of:

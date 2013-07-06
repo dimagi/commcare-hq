@@ -159,6 +159,7 @@ def get_all_userids_submitted(domain):
         startkey=[domain],
         endkey=[domain, {}],
         group=True,
+        stale='ok',
     ).all()
     return [user['key'][1] for user in submitted]
 
@@ -177,7 +178,8 @@ def get_username_from_forms(domain, user_id):
         'reports_forms/all_forms',
         startkey=key,
         limit=1,
-        reduce=False
+        reduce=False,
+        stale='ok',
     ).one()
     username = HQUserType.human_readable[HQUserType.ADMIN]
     try:

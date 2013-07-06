@@ -76,6 +76,7 @@ class MultiFormDrilldownMixin(object):
             reduce=False,
             startkey=key+[self.datespan.startdate_param_utc],
             endkey=key+[self.datespan.enddate_param_utc],
+            stale='ok',
         ).all()
 
         all_submitted_forms = set([FormsByApplicationFilter.make_xmlns_app_key(d['value']['xmlns'], d['value']['app_id'])
@@ -353,6 +354,7 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase, MultiFormDrilldow
             reduce=True,
             startkey=key+[self.datespan.startdate_param_utc],
             endkey=key+[self.datespan.enddate_param_utc],
+            stale='ok',
         ).first()
         return data['value'] if data else 0
 
@@ -395,7 +397,8 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         results = get_db().view("reports_forms/all_forms",
             reduce=False,
             startkey=key+[self.datespan.startdate_param_utc if self.by_submission_time else self.datespan.startdate_param],
-            endkey=key+[self.datespan.enddate_param_utc if self.by_submission_time else self.datespan.enddate_param]
+            endkey=key+[self.datespan.enddate_param_utc if self.by_submission_time else self.datespan.enddate_param],
+            stale='ok',
         ).all()
 
         user_map = dict([(user.get('user_id'), i) for (i, user) in enumerate(self.users)])
@@ -507,7 +510,8 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
         data = get_db().view("reports_forms/all_forms",
             startkey=key+[self.datespan.startdate_param_utc],
             endkey=key+[self.datespan.enddate_param_utc],
-            reduce=False
+            reduce=False,
+            stale='ok',
         ).all()
         durations = [d['value']['duration'] for d in data if d['value']['duration'] is not None]
         error_msg = _("Problem retrieving form durations.") if (not durations and data) else None
@@ -592,7 +596,8 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
         return get_db().view("reports_forms/all_forms",
             reduce=False,
             startkey=key+[self.datespan.startdate_param_utc],
-            endkey=key+[self.datespan.enddate_param_utc]
+            endkey=key+[self.datespan.enddate_param_utc],
+            stale='ok',
         ).all()
 
     def _format_date(self, date, d_format="%d %b %Y, %H:%M:%S"):
@@ -673,6 +678,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
                     reduce=False,
                     startkey=key+[self.datespan.startdate_param_utc],
                     endkey=key+[self.datespan.enddate_param_utc],
+                    stale='ok',
                 ).all()
                 all_times.extend([dateutil.parser.parse(d['key'][-1]) for d in data])
         if self.by_submission_time:
