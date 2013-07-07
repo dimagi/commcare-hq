@@ -335,6 +335,8 @@ class PactPatientCase(CommCareCase):
     @property
     def related_type_info(self):
         """For Care Plan module"""
+        PACT_CLOUD_APP_ID = "615bff7178e2a14eeddd2cddbed60b79" 
+
         return {
             "cc_path_client": {
                 "case_id_attr": "case_id",
@@ -346,7 +348,7 @@ class PactPatientCase(CommCareCase):
                 'closed_sortkeys': (('closed_on', 'desc'),),
 
                 # should get these automatically from xmlns
-                "app_id": "045d5cc2c41e93668f2f1031e47dc77b",
+                "app_id": PACT_CLOUD_APP_ID,
                 "edit_module_id": "1",
                 "edit_form_id": "3",
                 "create_module_id": "1",
@@ -362,7 +364,7 @@ class PactPatientCase(CommCareCase):
                 'open_sortkeys': (('date_followup', 'asc'),),
                 'closed_sortkeys': (('closed_on', 'desc'),),
                
-                'app_id': "045d5cc2c41e93668f2f1031e47dc77b",
+                'app_id': PACT_CLOUD_APP_ID,
                 "edit_module_id": "1",
                 "edit_form_id": "2",
                 "create_module_id": "1",
