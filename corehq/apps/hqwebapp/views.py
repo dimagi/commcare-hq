@@ -36,8 +36,6 @@ from soil import views as soil_views
 import os
 import re
 
-from django.utils.http import urlencode
-
 def server_error(request, template_name='500.html'):
     """
     500 error handler.
@@ -180,7 +178,9 @@ def no_permissions(request, redirect_to=None, template_name="no_permission.html"
 
     return render(request, template_name, {'next': next})
 
-def _login(req, domain, template_name):
+def _login(req, domain, domain_type, template_name):
+    from corehq.apps.registration.views import get_domain_context
+
     if req.user.is_authenticated() and req.method != "POST":
         redirect_to = req.REQUEST.get('next', '')
         if redirect_to:
@@ -196,19 +196,23 @@ def _login(req, domain, template_name):
         req.POST._mutable = False
     
     req.base_template = settings.BASE_TEMPLATE
+    context = get_domain_context(domain_type)
+    context['domain'] = domain
+
     return django_login(req, template_name=template_name,
                         authentication_form=EmailAuthenticationForm if not domain else CloudCareAuthenticationForm,
-                        extra_context={'domain': domain})
+                        extra_context=context)
     
-def login(req, template_name="login_and_password/login.html"):
+def login(req, domain_type='commcare'):
     # this view, and the one below, is overridden because
     # we need to set the base template to use somewhere
     # somewhere that the login page can access it.
     domain = req.REQUEST.get('domain', None)
-    return _login(req, domain, template_name)
+    return _login(req, domain, domain_type, "login_and_password/login.html")
     
 def domain_login(req, domain, template_name="login_and_password/login.html"):
-    return _login(req, domain, template_name)
+    project = Domain.get_by_name(domain)
+    return _login(req, domain, project.domain_type, template_name)
 
 def is_mobile_url(url):
     # Minor hack

@@ -256,6 +256,17 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     # to be eliminated from projects and related documents when they are copied for the exchange
     _dirty_fields = ('admin_password', 'admin_password_charset', 'city', 'country', 'region', 'customer_type')
 
+    @property
+    def domain_type(self):
+        """
+        The primary type of this domain.  Used to determine site-specific
+        branding.
+        """
+        if self.commtrack_enabled:
+            return 'commtrack'
+        else:
+            return 'commcare'
+
     @classmethod
     def wrap(cls, data):
         # for domains that still use original_doc
