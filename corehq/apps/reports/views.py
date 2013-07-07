@@ -755,8 +755,10 @@ def case_details(request, domain, case_id):
         "timezone": timezone,
         "case_display_options": {
             "display": request.project.get_case_display(case),
-            "timezone": timezone
-        }
+            "timezone": timezone,
+            "get_case_url": lambda case_id: reverse(
+                case_details, args=[domain, case_id])
+        },
     })
 
 def generate_case_export_payload(domain, include_closed, format, group, user_filter, process=None):
