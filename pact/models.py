@@ -1,4 +1,5 @@
 from functools import partial
+from django.utils.translation import ugettext as _
 import uuid
 from dateutil.parser import parser
 import simplejson
@@ -56,7 +57,9 @@ class DOTSubmission(XFormInstance):
 
 
 class PactPatientCase(CommCareCase):
-#class PactPatientCase(Document):
+    class Meta:
+        app_label='pact'
+
     def __init__(self, *args, **kwargs):
         super(PactPatientCase, self).__init__(*args, **kwargs)
 
@@ -307,9 +310,70 @@ class PactPatientCase(CommCareCase):
                 number = getattr(self, "Phone%d" % ix, None)
                 if number is not None and number != "":
                     yield {'id': ix, 'number': number, "type": getattr(self, "Phone%dType" % ix)}
+  
+    @property
+    def related_cases_columns(self):
+        return [
+            {
+                'name': _('Status'),
+                'expr': "status",
+            },
+            {
+                'name': _('Follow-Up Date'),
+                'expr': "date_followup",
+                'parse_date': True,
+                'timeago': True,
+            },
+            {
+                'name': _('Date Modified'),
+                'expr': "modified_on",
+                'parse_date': True,
+                'timeago': True,
+            }
+        ]
 
-    class Meta:
-        app_label='pact'
+    @property
+    def related_type_info(self):
+        """For Care Plan module"""
+        return {
+            "cc_path_client": {
+                "case_id_attr": "case_id",
+                "child_type": "pact_careplan_goal",
+            },
+            "pact_careplan_goal": {
+                'type_name': _("Goal"),
+                'open_sortkeys': (('date_followup', 'asc'),),
+                'closed_sortkeys': (('closed_on', 'desc'),),
+
+                # should get these automatically from xmlns
+                "app_id": "045d5cc2c41e93668f2f1031e47dc77b",
+                "edit_module_id": "1",
+                "edit_form_id": "3",
+                "create_module_id": "1",
+                "create_form_id": "0",
+                "case_id_attr": "case_id_goal",
+                "child_type": "pact_careplan_task",
+
+                #'create_form_xmlns': "http://dev.commcarehq.org/pact/careplan/goal/create",
+                #'update_form_xmlns': "http://dev.commcarehq.org/pact/careplan/goal/update"
+            },
+            "pact_careplan_task": {
+                'type_name': _("Task"),
+                'open_sortkeys': (('date_followup', 'asc'),),
+                'closed_sortkeys': (('closed_on', 'desc'),),
+               
+                'app_id': "045d5cc2c41e93668f2f1031e47dc77b",
+                "edit_module_id": "1",
+                "edit_form_id": "2",
+                "create_module_id": "1",
+                "create_form_id": "1",
+                "case_id_attr": "case_id_task",
+
+                #'create_form_xmlns': "http://dev.commcarehq.org/pact/careplan/task/create",
+                #'update_form_xmlns': "http://dev.commcarehq.org/pact/careplan/task/update"
+            },
+        }
+
 
 
 

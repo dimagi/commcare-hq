@@ -158,14 +158,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMix
 
     @property
     def rows(self):
-        """
-            Override this method to create a functional tabular report.
-            Returns 2D list of rows.
-            [['row1'],[row2']]
-        """
         if self.request.GET.has_key('patient_id'):
-            rows = []
-
             def _format_row(row_field_dict):
                 yield html.mark_safe("<a class='ajax_dialog' href='%s'>View</a>" % (
                 reverse('render_form_data', args=[self.domain, row_field_dict['_id']])))
