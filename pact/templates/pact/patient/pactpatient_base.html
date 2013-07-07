@@ -29,6 +29,9 @@
                         <li {% if view_mode == "submissions" %}class="active"{% endif %}>
                             <a href="{{ pt_root_url }}&view=submissions{% if notabs %}&notabs{% endif %}" >{% trans "Submissions" %}</a>
                         </li>
+                        <li {% if view_mode == "careplan" %}class="active"{% endif %}>
+                            <a href="{{ pt_root_url}}&view=careplan">{% trans "Care Plan" %}</a>
+                        </li>
                     {% endblock patient-tab-controller %}
                 </ul>
                 {% block patient-tab-container %}

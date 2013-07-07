@@ -96,9 +96,16 @@ class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMix
             ret['patient_form'] = the_form
             self.report_template_path = "pact/patient/pactpatient_edit.html"
         elif view_mode == 'providers':
-
-
             self.report_template_path = "pact/patient/pactpatient_providers.html"
+        elif view_mode == 'careplan':
+            ret.update({
+                'case_hierarchy_options': {
+                    "get_case_url": lambda case_id: reverse(
+                        'case_details', args=[PACT_DOMAIN, case_id])
+                },
+                'case': patient_doc,
+            })
+            self.report_template_path = "pact/patient/pactpatient_careplan.html"
         else:
             raise Http404
         return ret
