@@ -51,14 +51,12 @@ env.selenium_url = 'http://jenkins.dimagi.com/job/commcare-hq-post-deploy/buildW
 env.roledefs = {
         'django_celery': [],
         'django_app': [],
-        'django_public': [],
         'django_pillowtop': [], #for now combined with celery
 
         'django_monolith': [], # all of the above config - use this ONLY for single server config, lest deploy() will run multiple times in parallel causing bad contentions
 
         'formsplayer': [],
         'staticfiles': [],
-        'remote_es': [], #remote elasticsearch ssh tunnel config
 
         #package level configs that are not quite config'ed yet in this fabfile
         'couch': [],
@@ -96,7 +94,7 @@ def _set_apache_user():
 def setup_apache_dirs():
     sudo('mkdir -p %(services)s/apache' % env, user=env.sudo_user)
 
-@roles('django_celery', 'django_app', 'staticfiles') #'django_public','formsplayer','staticfiles'
+@roles('django_celery', 'django_app', 'staticfiles')
 def setup_dirs():
     """ create (if necessary) and make writable uploaded media, log, etc. directories """
     sudo('mkdir -p %(log_dir)s' % env, user=env.sudo_user)
@@ -140,10 +138,8 @@ def india():
         'sofabed': [],
         'django_celery': [],
         'django_app': [],
-        'django_public': [],
         'django_pillowtop': [],
         'formsplayer': [],
-        'remote_es': [],
         'staticfiles': [],
         'lb': [],
         'deploy': [],
@@ -163,23 +159,20 @@ def production():
 
     #env.hosts = None
     env.roledefs = {
-        'couch': ['hqdb.internal.commcarehq.org'],
-        'pg': ['hqdb.internal.commcarehq.org'],
-        'rabbitmq': ['hqdb.internal.commcarehq.org'],
-        'sofabed': ['hqdb.internal.commcarehq.org'], #todo, right now group it with celery
-        'django_celery': ['hqdb.internal.commcarehq.org'],
+        'couch': ['hqdb0.internal.commcarehq.org'],
+        'pg': ['hqdb0.internal.commcarehq.org'],
+        'rabbitmq': ['hqdb0.internal.commcarehq.org'],
+        'sofabed': ['hqdb0.internal.commcarehq.org'], #todo, right now group it with celery
+        'django_celery': ['hqdb0.internal.commcarehq.org'],
         'django_app': ['hqdjango0.internal.commcarehq.org', 'hqdjango2.internal.commcarehq.org'],
-        'django_public': ['hqdjango1.internal.commcarehq.org',],
-        'django_pillowtop': ['hqdb.internal.commcarehq.org'],
+        'django_pillowtop': ['hqdb0.internal.commcarehq.org'],
 
-        'remote_es': ['hqdb.internal.commcarehq.org', 'hqdjango0.internal.commcarehq.org',
-                      'hqdjango1.internal.commcarehq.org', 'hqdjango2.internal.commcarehq.org'],
         # for now, we'll have touchforms run on both hqdb and hqdjango0
-        # will remove hqdjango0 once we verify it works well on hqdb
-        'formsplayer': ['hqdb.internal.commcarehq.org'],
+        # will remove hqdjango0 once we verify it works well on hqdb0
+        'formsplayer': ['hqdb0.internal.commcarehq.org'],
         'lb': [], #todo on apache level config
         'staticfiles': ['hqproxy0.internal.commcarehq.org'],
-        'deploy': ['hqdb.internal.commcarehq.org'], #this is a stub becuaue we don't want to be prompted for a host or run deploy too many times
+        'deploy': ['hqdb0.internal.commcarehq.org'], #this is a stub becuaue we don't want to be prompted for a host or run deploy too many times
         'django_monolith': [] # fab complains if this doesn't exist
     }
 
@@ -207,22 +200,19 @@ def realstaging():
 
     #env.hosts = None
     env.roledefs = {
-        'couch': ['hqdb-staging.internal.commcarehq.org'],
-        'pg': ['hqdb-staging.internal.commcarehq.org'],
-        'rabbitmq': ['hqdb-staging.internal.commcarehq.org'],
-        'sofabed': ['hqdb-staging.internal.commcarehq.org'], #todo, right now group it with celery
-        'django_celery': ['hqdb-staging.internal.commcarehq.org'],
+        'couch': ['hqdb0-staging.internal.commcarehq.org'],
+        'pg': ['hqdb0-staging.internal.commcarehq.org'],
+        'rabbitmq': ['hqdb0-staging.internal.commcarehq.org'],
+        'sofabed': ['hqdb0-staging.internal.commcarehq.org'], #todo, right now group it with celery
+        'django_celery': ['hqdb0-staging.internal.commcarehq.org'],
         'django_app': ['hqdjango0-staging.internal.commcarehq.org','hqdjango1-staging.internal.commcarehq.org'],
-        'django_public': ['hqdjango0-staging.internal.commcarehq.org',],
-        'django_pillowtop': ['hqdb-staging.internal.commcarehq.org'],
-
-        'remote_es': ['hqdb-staging.internal.commcarehq.org','hqdjango0-staging.internal.commcarehq.org',],
+        'django_pillowtop': ['hqdb0-staging.internal.commcarehq.org'],
 
         'formsplayer': ['hqdjango1-staging.internal.commcarehq.org'],
         'lb': [], #todo on apache level config
         'staticfiles': ['hqproxy0.internal.commcarehq.org'],
-        'deploy': ['hqdb-staging.internal.commcarehq.org'], #this is a stub because we don't want to be prompted for a host or run deploy too many times
-        'django_monolith': [] # fab complains if this doesn't exist
+        'deploy': ['hqdb0-staging.internal.commcarehq.org'], #this is a stub because we don't want to be prompted for a host or run deploy too many times
+        'django_monolith': [], # fab complains if this doesn't exist
     }
 
     env.es_endpoint = 'hqdjango1-staging.internal.commcarehq.org'''
@@ -333,6 +323,11 @@ def bootstrap():
     sudo('mkdir -p %(root)s' % env, shell=False, user=env.sudo_user)
     execute(clone_repo)
 
+    update_code()
+    execute(create_virtualenvs)
+    execute(update_virtualenv)
+    execute(setup_dirs)
+
     # copy localsettings if it doesn't already exist in case any management
     # commands we want to run now would error otherwise
     with cd(env.code_root):
@@ -340,12 +335,6 @@ def bootstrap():
     with cd(env.code_root_preindex):
         sudo('cp -n localsettings.example.py localsettings.py', user=env.sudo_user)
 
-    update_code()
-    execute(create_virtualenvs)
-    execute(update_virtualenv)
-    execute(setup_dirs)
-    execute(update_apache_conf)
-    #execute(fix_locale_perms)
 
 @task
 def unbootstrap():
@@ -360,7 +349,7 @@ def unbootstrap():
 
 
 #@parallel
-@roles('django_celery', 'django_app', 'staticfiles', 'django_monolith') #'django_public','formsplayer'
+@roles('django_celery', 'django_app', 'staticfiles', 'django_monolith')
 def create_virtualenvs():
     """ setup virtualenv on remote host """
     require('virtualenv_root', 'virtualenv_root_preindex',
@@ -372,7 +361,7 @@ def create_virtualenvs():
 
 
 #@parallel
-@roles('django_celery', 'django_app', 'staticfiles', 'django_monolith') #'django_public', 'formsplayer'
+@roles('django_celery', 'django_app', 'staticfiles', 'django_monolith')
 def clone_repo():
     """ clone a new copy of the git repository """
     with settings(warn_only=True):
@@ -397,7 +386,7 @@ def preindex_views():
              preindex_everything 8 %(user)s" --mail | at -t `date -d "5 seconds" \
              +%%m%%d%%H%%M.%%S`' % env, user=env.sudo_user)
 
-@roles('django_app','django_celery', 'staticfiles', 'django_public', 'django_monolith')#,'formsplayer')
+@roles('django_app','django_celery', 'staticfiles', 'django_monolith')
 @parallel
 def update_code(preindex=False):
     if preindex:
@@ -464,7 +453,7 @@ def deploy():
 
 
 @task
-@roles('django_app','django_celery','staticfiles', 'django_public', 'django_monolith')#,'formsplayer')
+@roles('django_app','django_celery','staticfiles', 'django_monolith')#,'formsplayer')
 @parallel
 def update_virtualenv(preindex=False):
     """ update external dependencies on remote host assumes you've done a code update"""
@@ -506,7 +495,7 @@ def touch_supervisor():
     _supervisor_command('update')
 
 
-@roles('django_app', 'django_celery', 'django_public', 'django_monolith')# 'formsplayer')
+@roles('django_app', 'django_celery', 'django_monolith')
 @parallel
 def clear_services_dir():
     #remove old confs from directory first
@@ -545,7 +534,7 @@ def netstat_plnt():
 ############################################################3
 #Start service functions
 
-@roles('django_app', 'django_celery','django_public','django_monolith')# 'formsplayer'
+@roles('django_app', 'django_celery','django_monolith')# 'formsplayer'
 def services_start():
     ''' Start the gunicorn servers '''
     require('environment', provided_by=('staging', 'demo', 'production'))
@@ -557,14 +546,14 @@ def services_start():
 ########################################################
 #Stop service Functions
 
-@roles('django_app', 'django_celery','django_public', 'django_monolith')#, 'formsplayer')
+@roles('django_app', 'django_celery', 'django_monolith')#, 'formsplayer')
 def services_stop():
     ''' Stop the gunicorn servers '''
     require('environment', provided_by=('staging', 'demo', 'production'))
     _supervisor_command('stop all')
 ###########################################################
 
-@roles('django_app', 'django_celery','django_public', 'django_monolith')#, 'formsplayer')
+@roles('django_app', 'django_celery', 'django_monolith')#, 'formsplayer')
 def services_restart():
     ''' Stop and restart all supervisord services'''
     require('environment', provided_by=('staging', 'demo', 'production', 'india'))
@@ -692,6 +681,7 @@ def upload_celery_supervisorconf():
 @roles('django_celery', 'django_monolith')
 def upload_sofabed_supervisorconf():
     _upload_supervisor_conf_file('supervisor_sofabed.conf')
+    _upload_supervisor_conf_file('supervisor_sync_domains.conf')
 
 @roles('django_app', 'django_monolith')
 def upload_djangoapp_supervisorconf():
@@ -701,11 +691,6 @@ def upload_djangoapp_supervisorconf():
 @roles('remote_es')
 def upload_elasticsearch_supervisorconf():
     _upload_supervisor_conf_file('supervisor_elasticsearch.conf')
-
-@roles('django_public')
-def upload_django_public_supervisorconf():
-    _upload_supervisor_conf_file('supervisor_django_public.conf')
-    _upload_supervisor_conf_file('supervisor_sync_domains.conf')
 
 @roles('formsplayer', 'django_monolith')
 def upload_formsplayer_supervisorconf():
@@ -717,9 +702,10 @@ def upload_and_set_supervisor_config():
     execute(upload_celery_supervisorconf)
     execute(upload_sofabed_supervisorconf)
     execute(upload_djangoapp_supervisorconf)
-    execute(upload_elasticsearch_supervisorconf)
-    execute(upload_django_public_supervisorconf)
     execute(upload_formsplayer_supervisorconf)
+
+    #if needing tunneled ES setup, comment this back in
+    #execute(upload_elasticsearch_supervisorconf)
 
 
 
