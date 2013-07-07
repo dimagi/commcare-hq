@@ -66,8 +66,7 @@ class FormExportReportBase(ExportReport, DatespanMixin):
             limit=1,
             descending=False,
             reduce=False,
-            wrapper=extract_date,
-            stale='ok',
+            wrapper=extract_date
         ).one()
         if startdate:
             datespan.startdate = startdate
