@@ -36,10 +36,10 @@ function make_test_case(type, name, properties, links) {
 
     $.each(properties, function(k, v) {
             c.properties[k] = v;
-        });
+    });
     $.each(links, function(k, linked_case) {
             c.indices[k] = {case_type: linked_case.properties.case_type, case_id: linked_case.case_id};
-        });
+    });
 
     return c;
 }
@@ -52,13 +52,13 @@ function gen_test_data() {
         drew: '41.63 -72.59',
         archibald: '42.4 -71.1',
         mortimer: '41.17 -71.59',
-        noloc: null,
+        noloc: null
     };
 
     var pregnancies = {
         lucy: {mother_age: 22, gestational_age: 35, household: 'drew'},
         dorcas: {mother_age: 27, gestational_age: 135, household: 'drew'},
-        persephone: {mother_age: 35, gestational_age: 235, household: 'mortimer'},
+        persephone: {mother_age: 35, gestational_age: 235, household: 'mortimer'}
     };
 
     var children = {
@@ -72,7 +72,7 @@ function gen_test_data() {
         h: {gender: 'm', happiness: 2, household: 'drew'},
         i: {gender: 'f', happiness: 4, household: 'archibald'},
         j: {gender: 'm', happiness: 2, household: 'archibald'},
-        k: {gender: 'm', happiness: 5, household: 'archibald'},
+        k: {gender: 'm', happiness: 5, household: 'archibald'}
     };
 
 
@@ -83,7 +83,7 @@ function gen_test_data() {
             var props = {
                 geo: v,
                 salary: 1e5 * Math.random(),
-                dwelling: ['hut', 'apt', 'mansion'][Math.floor(Math.random() * 3)],
+                dwelling: ['hut', 'apt', 'mansion'][Math.floor(Math.random() * 3)]
             };
 
             var c = make_test_case('household', k, props);
@@ -316,7 +316,7 @@ function init_map($div, default_pos, default_zoom, default_map_type) {
             mapTypeId: {
                 terrain: google.maps.MapTypeId.TERRAIN
             }[default_map_type],
-            scaleControl: true,
+            scaleControl: true
         });
     return map;
 }
@@ -508,7 +508,6 @@ function maps_init(config) {
     }
     // set to global var for now
     CONFIG = config.case_types;
-    console.log(CONFIG);
 
     var map = init_map($('#map'), [30., 0.], 2, 'terrain');
     return map;
@@ -605,7 +604,7 @@ function init_callback(map, case_list) {
         case_type: null,
         field: null,
         metric: null,
-        style: null,
+        style: null
     };
 
     var $panel = $('#panel');
@@ -821,9 +820,6 @@ function DataAggregation(cases, case_type, field, metric_type) {
 function display_metric(context) {
     var data = new DataAggregation(context.cases, context.case_type, context.field.field, context.metric);
 
-    console.log(context);
-    console.log(data);
-
     render_data(data, context.style, context.field);
     hide_nonrelevant(data, context.cases);
 }
@@ -836,7 +832,7 @@ function make_style(type, config) {
         dot:        function(cfg) { return new PieMarkerStyle({radius: 8}, cfg); },
         pie:        function(cfg) { return new PieMarkerStyle({radius: 13}, cfg); },
         varpie:     function(cfg) { return new PieMarkerStyle({radius: 18, varsize: true}, cfg); },
-        explodepie: function(cfg) { return new ExplodedPieMarkerStyle({radius: 18}, cfg); },
+        explodepie: function(cfg) { return new ExplodedPieMarkerStyle({radius: 18}, cfg); }
     }[type];
     return factory(config);
 }
@@ -852,7 +848,7 @@ function Marker(style) {
 
         var m = this;
         return render_marker(function(ctx, w, h) { m.style.draw(data, context, ctx, w, h); }, dim.w, dim.h);
-    }
+    };
 
     this.legend = function(context, $div) {
         if (style.legend && context) {
@@ -1256,7 +1252,7 @@ function make_metric(type) {
         min: MinMetric,
         max: MaxMetric,
         avg: AvgMetric,
-        tally: TallyMetric,
+        tally: TallyMetric
     }[type];
     return new metric_factory();
 }
@@ -1264,11 +1260,11 @@ function make_metric(type) {
 function CountMetric() {
     this.summarize = function(v) {
         return v.length;
-    }
+    };
 
     this.overview = function(v) {
         return new MaxMetric().summarize(v);
-    }
+    };
 }
 
 function SumMetric() {
@@ -1278,11 +1274,11 @@ function SumMetric() {
                 k += e;
             });
         return k;
-    }
+    };
 
     this.overview = function(v) {
         return new MaxMetric().summarize(v);
-    }
+    };
 }
 
 function MinMetric() {
@@ -1292,7 +1288,7 @@ function MinMetric() {
                 k = (k == null ? e : Math.min(k, e));
             });
         return k;
-    }
+    };
 
     this.overview = function(v) {
         return new MaxMetric().summarize(v);
@@ -1306,22 +1302,22 @@ function MaxMetric() {
                 k = (k == null ? e : Math.max(k, e));
             });
         return k;
-    }
+    };
 
     this.overview = function(v) {
         return new MaxMetric().summarize(v);
-    }
+    };
 }
 
 function AvgMetric() {
     this.summarize = function(v) {
         var count = new CountMetric().summarize(v);
         return (count == 0 ? null : (new SumMetric().summarize(v)) / count);
-    }
+    };
 
     this.overview = function(v) {
         return new MaxMetric().summarize(v);
-    }
+    };
 }
 
 function TallyMetric() {
@@ -1338,7 +1334,7 @@ function TallyMetric() {
                 k[e]++;
             });
         return k;
-    }
+    };
 
     this.overview = function(v) {
         var maxes = [];
@@ -1357,7 +1353,7 @@ function TallyMetric() {
             });
 
         return {vals: uniques, maxval: new MaxMetric().summarize(maxes), maxsum: new MaxMetric().summarize(sums)};
-    }
+    };
 }
 
 
@@ -1456,7 +1452,7 @@ function AnimMarker(ctx, w, h) {
             }
 
             m.setTo(k0 + (k - k0) * easing(clock / period));
-        }
+        };
 
         var timer = setInterval(animate, FRAME_LENGTH);
         this.anim = {tag: tag, timer: timer};
@@ -1484,7 +1480,7 @@ function randcolor(min, max) {
 
     var k = function() {
         return Math.round(255 * Math.pow((max - min) * Math.random() + min, 1/2.2));
-    }
+    };
     return 'rgb(' + k() + ',' + k() + ',' + k() + ')';
 };
 
@@ -1530,7 +1526,4 @@ function drawpie(ctx, width, height, phase, c1, c2, c3) {
 function gauge(k) {
     return function(c,w,h) { drawpie(c,w,h, .005*k, 'rgb(50,50,50)', 'rgb(0,255,0)', 'rgb(0,0,0)'); };
 }
-
-
-
 
