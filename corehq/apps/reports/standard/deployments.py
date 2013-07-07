@@ -51,7 +51,6 @@ class ApplicationStatusReport(DeploymentsReport):
                 descending=True,
                 reduce=False,
                 limit=1,
-                stale='ok',
             ).first()
 
             if data:
