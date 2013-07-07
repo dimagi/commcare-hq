@@ -104,7 +104,7 @@ class UITab(object):
         else:
             try:
                 return self.is_viewable
-            except AttributeError as e:
+            except AttributeError:
                 return False
     
     @property
@@ -346,8 +346,10 @@ class MessagesTab(UITab):
 
     @property
     def is_viewable(self):
-        return (self.domain and self.project and not self.project.is_snapshot and
-                not self.couch_user.is_commcare_user())
+        return (self.domain and self.project and
+                not (self.project.is_snapshot or
+                     self.couch_user.is_commcare_user() or
+                     self.project.commconnect_only))
 
     @property
     def sidebar_items(self):
@@ -360,8 +362,14 @@ class MessagesTab(UITab):
 
 
 class RemindersTab(UITab):
-    title = ugettext_noop("Reminders")
     view = "corehq.apps.reminders.views.default"
+
+    @property
+    def title(self):
+        if self.project.commconnect_only:
+            return _("Messaging")
+        else:
+            return _("Reminders")
 
     @property
     def dropdown_items(self):
@@ -369,7 +377,7 @@ class RemindersTab(UITab):
 
     @property
     def is_viewable(self):
-        return self.project.commtrack_enabled
+        return self.project.commtrack_enabled or self.project.commconnect_only
 
 
 class ProjectSettingsTab(UITab):
