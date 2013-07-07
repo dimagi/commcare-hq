@@ -8,50 +8,60 @@ from corehq.apps.reports.commtrack import maps as commtrack_maps
 
 from django.utils.translation import ugettext_noop as _
 
-REPORTS = (
-    (_("Commtrack"), (
-        commtrack_reports.ReportingRatesReport,
-        commtrack_reports.CurrentStockStatusReport,
-        commtrack_reports.AggregateStockStatusReport,
-        psi_prototype.VisitReport,
-        psi_prototype.SalesAndConsumptionReport,
-        psi_prototype.CumulativeSalesAndConsumptionReport,
-        psi_prototype.StockOutReport,
-        psi_prototype.StockReportExport,
-        commtrack_maps.StockStatusMapReport,
-    )),
-    (_("Monitor Workers"), (
-        monitoring.DailyFormStatsReport,
-        monitoring.SubmissionsByFormReport,
-        monitoring.FormCompletionTimeReport,
-        monitoring.CaseActivityReport,
-        monitoring.FormCompletionVsSubmissionTrendsReport,
-        monitoring.WorkerActivityTimes,
-    )),
-    (_("Inspect Data"), (
-        inspect.SubmitHistory,
-        inspect.CaseListReport,
-        inspect.MapReport,
-    )),
-    (_("Raw Data"), (
-        export.ExcelExportReport,
-        export.CaseExportReport,
-        export.DeidExportReport,
-    )),
-    (_("Manage Deployments"), (
-        deployments.ApplicationStatusReport,
-        receiverwrapper.SubmissionErrorReport,
-        phonelog.FormErrorReport,
-        phonelog.DeviceLogDetailsReport
-    )),
-    (lambda project, user: (
-        _("Logs") if project.commtrack_enabled else _("CommConnect")), (
+def REPORTS(project):
+    reports = [
+        (_("Monitor Workers"), (
+            monitoring.DailyFormStatsReport,
+            monitoring.SubmissionsByFormReport,
+            monitoring.FormCompletionTimeReport,
+            monitoring.CaseActivityReport,
+            monitoring.FormCompletionVsSubmissionTrendsReport,
+            monitoring.WorkerActivityTimes,
+        )),
+        (_("Inspect Data"), (
+            inspect.SubmitHistory,
+            inspect.CaseListReport,
+            inspect.MapReport,
+        )),
+        (_("Raw Data"), (
+            export.ExcelExportReport,
+            export.CaseExportReport,
+            export.DeidExportReport,
+        )),
+        (_("Manage Deployments"), (
+            deployments.ApplicationStatusReport,
+            receiverwrapper.SubmissionErrorReport,
+            phonelog.FormErrorReport,
+            phonelog.DeviceLogDetailsReport
+        ))
+    ]
+    
+    if project.commtrack_enabled:
+        reports.insert(0, (_("Commtrack"), (
+            commtrack_reports.ReportingRatesReport,
+            commtrack_reports.CurrentStockStatusReport,
+            commtrack_reports.AggregateStockStatusReport,
+            psi_prototype.VisitReport,
+            psi_prototype.SalesAndConsumptionReport,
+            psi_prototype.CumulativeSalesAndConsumptionReport,
+            psi_prototype.StockOutReport,
+            psi_prototype.StockReportExport,
+            commtrack_maps.StockStatusMapReport,
+        )))
+
+    messaging = (lambda project, user: (
+        _("Logs") if project.commtrack_enabled else _("Messaging")), (
         sms.MessagesReport,
         sms.MessageLogReport,
         ivr.CallLogReport,
         ivr.ExpectedCallbackReport,
-    )),
-)
+    ))
+    if project.commconnect_only:
+        reports.insert(0, messaging)
+    else:
+        reports.append(messaging)
+    return reports
+    
 
 from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface
 from corehq.apps.importer.base import ImportCases
