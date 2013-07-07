@@ -219,6 +219,8 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     sms_mobile_worker_registration_enabled = BooleanProperty(default=False) # Whether or not a mobile worker can register via sms
     default_sms_backend_id = StringProperty()
 
+    commconnect_only = property(lambda self: self.survey_management_enabled)
+
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)
     is_approved = BooleanProperty(default=False)

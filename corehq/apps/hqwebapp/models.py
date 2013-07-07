@@ -252,8 +252,14 @@ class ManageDataTab(UITab):
 
 
 class ApplicationsTab(UITab):
-    title = ugettext_noop("Applications")
     view = "corehq.apps.app_manager.views.default"
+
+    @property
+    def title(self):
+        if self.project.commconnect_only:
+            return _("Surveys")
+        else:
+            return _("Applications")
 
     @classmethod
     def make_app_title(cls, app_name, doc_type):
