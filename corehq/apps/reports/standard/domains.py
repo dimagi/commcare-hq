@@ -217,6 +217,7 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
             'layout_flush_content': True,
             'sortables': sorted(self.es_sortables),
             'query_str': self.request.META['QUERY_STRING'],
+            'facet_prefix': ES_PREFIX,
         })
         return ctxt
 
@@ -231,7 +232,7 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
             self.es_facets = DOMAIN_FACETS
             results = es_domain_query(self.es_params, self.es_facets, sort=self.get_sorting_block(),
                 start_at=self.pagination.start, size=self.pagination.count)
-            self.es_sortables = generate_sortables_from_facets(results, self.es_params, prefix=ES_PREFIX)
+            self.es_sortables = generate_sortables_from_facets(results, self.es_params)
             self.es_queried = True
             self.es_response = results
         return self.es_response

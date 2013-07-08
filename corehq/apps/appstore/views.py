@@ -83,10 +83,6 @@ def project_info(request, domain, template="appstore/project_info.html"):
     images = set()
     audio = set()
 
-    # get facets
-    results = es_snapshot_query({}, SNAPSHOT_FACETS)
-    facets_sortables = generate_sortables_from_facets(results, {}, inverse_dict(SNAPSHOT_MAPPING))
-
     pb_id = dom.cda.user_id
     published_by = CouchUser.get_by_user_id(pb_id) if pb_id else {"full_name": "*Publisher's name*"}
 
@@ -101,7 +97,6 @@ def project_info(request, domain, template="appstore/project_info.html"):
         "num_ratings": num_ratings,
         "images": images,
         "audio": audio,
-        "sortables": facets_sortables,
         "url_base": reverse('appstore'),
         'display_import': True if getattr(request, "couch_user", "") and request.couch_user.get_domains() else False
     })
@@ -126,30 +121,15 @@ def parse_args_for_es(request, prefix=None):
 
     return params, facets
 
-def generate_sortables_from_facets(results, params=None, mapping=None, prefix=''):
+def generate_sortables_from_facets(results, params=None, mapping=None):
     """
     Sortable is a list of tuples containing the field name (e.g. Category) and a list of dictionaries for each facet
     under that field (e.g. HIV and MCH are under Category). Each facet's dict contains the query string, display name,
     count and active-status for each facet.
     """
+
     mapping = mapping or {}
     params = dict([(mapping.get(p, p), params[p]) for p in params])
-    def generate_query_string(attr, val):
-        if prefix:
-            attr = prefix + attr
-            updated_params = {}
-            for k, v in params.iteritems():
-                updated_params[prefix + k] = v[:] if isinstance(v, list) else v
-        else:
-            updated_params = copy.deepcopy(params)
-
-        updated_params[attr] = updated_params.get(attr, [])
-        if val in updated_params.get(attr, []):
-            updated_params[attr].remove(val)
-        else:
-            updated_params[attr].append(val)
-
-        return "?%s" % urlencode(updated_params, True)
 
     def generate_facet_dict(f_name, ft):
         if isinstance(ft['term'], unicode): #hack to get around unicode encoding issues. However it breaks this specific facet
@@ -162,10 +142,9 @@ def generate_sortables_from_facets(results, params=None, mapping=None, prefix=''
             'cc-nc': 'CC BY-NC',
             'cc-nc-sa': 'CC BY-NC-SA',
             'cc-nc-nd': 'CC BY-NC-ND',
-            }
+        }
         license = (f_name == 'license')
-        return {'url': generate_query_string(f_name, ft["term"]),
-                'name': ft["term"] if not license else ccs.get(ft["term"]),
+        return {'name': ft["term"] if not license else ccs.get(ft["term"]),
                 'count': ft["count"],
                 'active': str(ft["term"]) in params.get(f_name, "")}
 
@@ -198,6 +177,13 @@ def appstore(request, template="appstore/appstore_base.html"):
     else:
         d_results = Domain.hit_sort(d_results)
 
+    persistent_params = {}
+    if sort_by:
+        persistent_params["sort_by"] = sort_by
+    if include_unapproved:
+        persistent_params["is_approved"] = "false"
+    persistent_params = urlencode(persistent_params) # json.dumps(persistent_params)
+
     average_ratings = list()
     for result in d_results:
         average_ratings.append([result.name, Review.get_average_rating_by_app(result.copied_from._id)])
@@ -205,7 +191,8 @@ def appstore(request, template="appstore/appstore_base.html"):
     more_pages = False if len(d_results) <= page*page_length else True
 
     facets_sortables = generate_sortables_from_facets(results, params, inverse_dict(SNAPSHOT_MAPPING))
-    vals = dict(apps=d_results[(page-1)*page_length:page*page_length],
+    vals = dict(
+        apps=d_results[(page-1)*page_length:page*page_length],
         page=page,
         prev_page=(page-1),
         next_page=(page+1),
@@ -214,8 +201,11 @@ def appstore(request, template="appstore/appstore_base.html"):
         average_ratings=average_ratings,
         include_unapproved=include_unapproved,
         sortables=facets_sortables,
+        facets=results.get("facets", []),
         query_str=request.META['QUERY_STRING'],
-        search_query = params.get('search', [""])[0])
+        search_query=params.get('search', [""])[0],
+        persistent_params=persistent_params,
+    )
     return render(request, template, vals)
 
 def appstore_api(request):

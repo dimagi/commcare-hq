@@ -1,15 +1,16 @@
+{% load i18n %}
+
 <ul class="nav nav-list">
     {% if display_ua %}
         {% if request.user.is_superuser %}
-            <li{% if not include_unapproved %} class="active"{% endif %}><a href="{% url appstore %}">Approved</a></li>
-            <li{% if include_unapproved %} class="active"{% endif %}><a href="{% url appstore %}?is_approved=false">Unapproved</a></li>
+            <li{% if not include_unapproved %} class="active"{% endif %}><a href="{% url appstore %}">{% trans "Approved" %}</a></li>
+            <li{% if include_unapproved %} class="active"{% endif %}><a href="{% url appstore %}?is_approved=false">{% trans "Unapproved" %}</a></li>
         {% else %}
-            <li{% if not include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url appstore %}">All</a></li>
+            <li{% if not include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url appstore %}">{% trans "All" %}</a></li>
         {% endif %}
     {% endif %}
 
-    <!--<li{% if report %} class="active"{% endif %}><a href="{% url appstore_interfaces_default %}">Advanced search...</a></li>-->
-
+    <button style="margin: 1em 0" class="btn btn-primary" id="update-facets" data-prefix="{{ facet_prefix }}" data-params="{{ persistent_params }}">{% trans "Apply" %}</button>
     {% for sortable, choices in sortables %}
         <li class="nav-header">
             {{ sortable.title }}
@@ -19,16 +20,16 @@
                 </a>
             {% endifequal %}
         </li>
-            {% for choice in choices %}
-                <li class="sortable-{{ sortable }}{% if forloop.counter > 5 and choices|length > 6 %} hide{% endif %}">
-                    <a href="{% if url_base %}{{ url_base }}{% else %}{{ request.path }}{% endif %}{{ choice.url }}">
-                        <input class="facet-checkbox pull-right" type="checkbox" {% if choice.active %}checked=checked{% endif %}/>
-                        <span>{{ choice.name }} ({{ choice.count }})</span>
-                    </a>
-                </li>
-            {% endfor %}
-            {% if choices|length > 6 %}
-                <li><a class="more-sortable-button" data-sortable="{{ sortable }}" href="#">More...</a></li>
-            {% endif %}
+        {% for choice in choices %}
+            <li class="sortable sortable-{{ sortable }}{% if forloop.counter > 5 and choices|length > 6 %} hide{% endif %}" data-name="{{ sortable }}">
+                <input id="s-{{ sortable }}-{{ choice.name }}" name="{{ choice.name }}" class="facet-checkbox pull-right" type="checkbox" {% if choice.active %}checked=checked{% endif %}/>
+                <label for="s-{{ sortable }}-{{ choice.name }}">
+                    <span>{{ choice.name }} ({{ choice.count }})</span>
+                </label>
+            </li>
+        {% endfor %}
+        {% if choices|length > 6 %}
+            <li><a class="more-sortable-button" data-sortable="{{ sortable }}" href="#">{% trans "More..." %}</a></li>
+        {% endif %}
     {% endfor %}
 </ul>
