@@ -185,10 +185,7 @@ class DatespanMixin(object):
 
     @property
     def default_datespan(self):
-        enddate = datetime.now(tz=self.timezone)
-        if self.inclusive:
-            enddate = enddate - timedelta(days=1)
         days = self.datespan_default_days - 1 if self.inclusive else self.datespan_default_days
-        datespan = DateSpan.since(days, enddate=enddate, format="%Y-%m-%d", timezone=self.timezone)
+        datespan = DateSpan.default_since(self, days)
         datespan.is_default = True
         return datespan
