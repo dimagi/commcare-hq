@@ -155,9 +155,9 @@ def register_domain(request, domain_type=None):
                         context)
             else:
                 messages.success(request, _(
-                    '<strong>The project %s was successfully created!</strong>'
+                    '<strong>The project %s was successfully created!</strong> '
                     'An email has been sent to %s for your records.') % (
-                        request.user.username, requested_domain),
+                        requested_domain, request.user.username),
                     extra_tags="html")
 
                 if nextpage:
