@@ -11,6 +11,7 @@ function ReleasesMain(o) {
     var self = this;
     self.options = o;
     self.users_cannot_share = self.options.users_cannot_share;
+    self.recipients = self.options.reciepient_contacts;
     self.savedApps = ko.observableArray();
     self.doneFetching = ko.observable(false);
     self.buildState = ko.observable('');
@@ -144,9 +145,8 @@ function ReleasesMain(o) {
             });
     };
     self.group_deploy = function() { 
-        var json_contacts = $('.tabbable').find("input[name]='recipients'").attr("data-contacts").replace(/'/g,'"');
         $('.tabbable').find("input[name]='recipients'").multiTypeahead({ 
-            source: jQuery.parseJSON(json_contacts),
+            source: self.recipients,
         }).focus();
     };
     // init
