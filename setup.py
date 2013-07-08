@@ -12,17 +12,15 @@ setup(
     test_suite='dimagi.test_utils',
     test_loader='unittest2:TestLoader',
     install_requires=[
+        'couchdbkit',
         'django',
+        'django_redis',
+        'mock>=0.8.0',
         'openpyxl',
+        'Pillow',
         'python-dateutil',
         'pytz',
-        'couchdbkit',
-        'django_redis',
         'simplejson',
-        'Pillow'
-    ],
-    tests_require=[
         'unittest2',
-        'mock>=0.8.0',
     ],
 )

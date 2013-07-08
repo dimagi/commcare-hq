@@ -8,7 +8,6 @@ install:
  - "sudo ln -s /usr/lib/x86_64-linux-gnu/libz.so /usr/lib"
  - "pip install -e . --use-mirrors"
  - "pip install coverage coveralls --use-mirrors"
- - "pip install unittest2 mock"
 script:
 - "coverage run --parallel-mode `which django-admin.py` test --settings settings --traceback utils"
 - "coverage run --parallel-mode setup.py test"
