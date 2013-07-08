@@ -207,6 +207,8 @@ def view(request, domain, template='fixtures/view.html'):
     return render(request, template, {
         'domain': domain
     })
+
+DELETE_HEADER = "Delete(Y/N)"
 @require_can_edit_fixtures
 def download_item_lists(request, domain):
     data_types = FixtureDataType.by_domain(domain)
@@ -218,6 +220,10 @@ def download_item_lists(request, domain):
     mmax_users = 0
     data_tables = []
     
+    def _get_empty_list(length):
+        return ["" for x in range(0, length)]
+
+
     #Fills sheets' schemas and data
     for data_type in data_types:
         type_schema = [str(_id_from_doc(data_type)), "N", data_type.name, data_type.tag]
@@ -230,8 +236,8 @@ def download_item_lists(request, domain):
             user_len = len(item_row.get_users())
             max_users = user_len if user_len>max_users else max_users
         for item_row in FixtureDataItem.by_data_type(domain, type_id):
-            groups = [group.name for group in item_row.get_groups()] + ["" for x in range(0,max_groups-len(item_row.get_groups()))]
-            users = [user.raw_username for user in item_row.get_users()] + ["" for x in range(0, max_users-len(item_row.get_users()))]
+            groups = [group.name for group in item_row.get_groups()] + _get_empty_list(max_groups - len(item_row.get_groups()))
+            users = [user.raw_username for user in item_row.get_users()] + _get_empty_list(max_users - len(item_row.get_users()))
             data_row = tuple([str(_id_from_doc(item_row)),"N"]+
                              ["" if item_row.fields[field] is None else item_row.fields[field] for field in fields]+
                              groups + users)
@@ -246,11 +252,11 @@ def download_item_lists(request, domain):
         max_users = 0
         max_groups = 0
 
-    type_headers = ["UID", "Delete(Y/N)", "name", "tag"] + ["field %d" % x for x in range(1,max_fields-3)]
+    type_headers = ["UID", DELETE_HEADER, "name", "tag"] + ["field %d" % x for x in range(1, max_fields - 3)]
     type_headers = ("types", tuple(type_headers))
     table_headers = [type_headers]    
     for type_schema in data_type_schemas:
-        item_header = (type_schema[3], tuple(["UID","Delete(Y/N)"]+
+        item_header = (type_schema[3], tuple(["UID",DELETE_HEADER]+
                                              ["field: "+x for x in type_schema[4:]]+
                                              ["group %d" % x for x in range(1, mmax_groups+1)]+
                                              ["user %d" % x for x in range(1, mmax_users+1)]))
@@ -335,11 +341,13 @@ class UploadItemLists(TemplateView):
 @login_or_digest
 def upload_fixture_api(request, domain, **kwargs):
     response_codes = {"fail": 405, "warning": 402, "success": 200}
-    error_messages = {"invalid_post_req": "Invalid post request. Submit the form with field 'file-to-upload' to upload a fixture",
-                      "has_no_permission": "User {attr} doesn't have permission to upload fixtures",
-                      "invalid_file": "Error processing your file. Submit a valid (.xlsx) file",
-                      "has_no_sheet": "Workbook does not have a sheet called {attr}",
-                      "has_no_column": "Fixture upload couldn't succeed due to the following error: {attr}"}
+    error_messages = {
+        "invalid_post_req": "Invalid post request. Submit the form with field 'file-to-upload' to upload a fixture",
+        "has_no_permission": "User {attr} doesn't have permission to upload fixtures",
+        "invalid_file": "Error processing your file. Submit a valid (.xlsx) file",
+        "has_no_sheet": "Workbook does not have a sheet called {attr}",
+        "has_no_column": "Fixture upload couldn't succeed due to the following error: {attr}",
+    }
     
     def _return_response(code, message):
         resp_json = {}
@@ -395,7 +403,11 @@ def upload_fixture_api(request, domain, **kwargs):
 
 
 def run_upload(request, domain, workbook):
-    return_val = {"unknown_groups":[], "unknown_users":[], "number_of_fixtures":0}
+    return_val = {
+        "unknown_groups": [], 
+        "unknown_users": [], 
+        "number_of_fixtures": 0,
+    }
     group_memoizer = GroupMemoizer(domain)
 
     data_types = workbook.get_worksheet(title='types')
@@ -416,15 +428,15 @@ def run_upload(request, domain, workbook):
                     domain=domain,
                     name=_get_or_raise(dt, 'name'),
                     tag=_get_or_raise(dt, 'tag'),
-                    fields= type_definition_fields,
+                    fields=type_definition_fields,
                 )
             try:
                 data_type = FixtureDataType.get(dt['UID'])
-                if dt['Delete(Y/N)'] == "Y" or dt['Delete(Y/N)'] == "y":
+                if dt[DELETE_HEADER] == "Y" or dt[DELETE_HEADER] == "y":
                     data_type.recursive_delete(transaction)
                     continue
                 data_type.fields = type_definition_fields
-            except:
+            except ResourceNotFound:
                 data_type = new_data_type
             transaction.save(data_type)
 
@@ -448,12 +460,15 @@ def run_upload(request, domain, workbook):
                 )
                 try:
                     old_data_item = FixtureDataItem.get(di['UID'])
-                    if di['Delete(Y/N)']=="Y" or di['Delete(Y/N)']=="y":
+                    assert old_data_item.domain == domain
+                    assert old_data_item.doc_type == FixtureDataItem._doc_type
+                    assert old_data_item.data_type_id == data_type.get_id
+                    if di[DELETE_HEADER]=="Y" or di[DELETE_HEADER]=="y":
                         old_data_item.recursive_delete(transaction)
                         continue   
                     old_data_item.fields = di['field']
                     transaction.save(old_data_item)                 
-                except:
+                except ResourceNotFound:
                     old_data_item = new_data_item
                     transaction.save(old_data_item)
 

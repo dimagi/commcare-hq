@@ -38,12 +38,11 @@
 {% endblock %}
 
 {% block content %}
-    <button class="btn btn-primary" onClick="window.location='{% url upload_fixtures domain %}'">Bulk upload/download Fixtures</button>
     <div class="span2">&nbsp;</div>
     <div class="row-fluid hidden" style="margin-top: 25px;" id="fixtures-ui">
         <div class="span2">&nbsp;</div>
         <div class="span9">
-            <div>Fixtures</div>
+            <h1>{% trans "Fixtures" %} <a href="{% url upload_fixtures domain %}" class="btn btn-primary pull-right">Bulk upload/download Fixtures</a></h1>
             <div class="well" data-bind="visible: !data_types().length && loading" style="text-align: center;">Loading...</div>
             <div data-bind="visible: data_types().length">
                 {% trans "Number of fixtures types: " %}<span data-bind="text: data_types().length"></span>
