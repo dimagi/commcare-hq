@@ -1481,10 +1481,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 update = fields
             )
         else:
-            if not commcare_user._id:
-                # this is a hack because adding a user on another account
-                # goes through this twice, first without an _id
-                return
             fields['hq_user_id'] = commcare_user._id
             caseblock = CaseBlock(
                 create = True,
