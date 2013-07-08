@@ -395,7 +395,7 @@ a:hover {
   min-height: 100%;
   height: auto !important;
   height: 100%;
-  margin-bottom: -108px;
+  margin-bottom: -45px;
   *zoom: 1;
 }
 .hq-container-fluid:before,
@@ -408,7 +408,7 @@ a:hover {
   clear: both;
 }
 .hq-container-fluid:after {
-  height: 116px;
+  height: 48px;
 }
 .hq-container-fluid .sidebar nav {
   padding: 8px 0;

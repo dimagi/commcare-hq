@@ -4,31 +4,13 @@
 footer {
     min-width: @fluidMinimumWidth - @gridGutterWidth*2;
     height: @footerHeight;
-    padding: @gridGutterWidth @gridGutterWidth 0 @gridGutterWidth;
+    padding: 0 @gridGutterWidth;
     background-color: @footerBackground;
     color: @white;
+    font-size: @fontSizeSmall;
+    line-height: @fontSizeSmall+2px;
+
     .clearfix();
-}
-
-footer .footer-right {
-    display: block;
-    float: right;
-    clear: right;
-}
-
-footer .footer-left {
-    display: block;
-    float: left;
-    clear: left;
-}
-
-footer .footer-text {
-    padding-top: 5px;
-}
-
-footer .powered {
-    width: 85px;
-    height: 41px;
 }
 
 footer a,
@@ -39,4 +21,24 @@ footer a:visited {
 
 footer a:hover {
     color: @footerLinkColorHover;
+}
+
+footer a.btn{
+  color: @white;
+}
+
+footer a.btn:hover {
+  .btn-primary();
+}
+
+footer .btn-toolbar {
+  margin: 5px 0;
+}
+
+footer > .row-fluid {
+  margin-top: 3px;
+}
+
+footer .powered-by {
+  line-height: 39px;
 }
