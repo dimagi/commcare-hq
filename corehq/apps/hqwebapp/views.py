@@ -174,17 +174,17 @@ def server_up(req):
     checkers = {
         "heartbeat": {
             "always_check": False,
-            "message": "<br>* celery heartbeat is down",
+            "message": "* celery heartbeat is down",
             "check_func": hb_check
         },
         "postgres": {
             "always_check": True,
-            "message": "<br>* postgres has issues",
+            "message": "* postgres has issues",
             "check_func": pg_check
         },
         "couch": {
             "always_check": True,
-            "message": "<br>* couch has issues",
+            "message": "* couch has issues",
             "check_func": couch_check
         }
     }
@@ -198,7 +198,7 @@ def server_up(req):
                 failed = True
                 message.append(check_info['message'])
     if failed:
-        return HttpResponse('\n'.join(message), status=500)
+        return HttpResponse('<br>'.join(message), status=500)
     else:
         return HttpResponse("success")
 
