@@ -754,7 +754,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
     @property
     def special_notice(self):
         if self.domain_object.case_sharing_included():
-            return _('This report currently does not fully support case sharing. There might be inconsistencies in the cases modified columns if a user did not create the case.')
+            return _('This report currently does not fully support case sharing. There might be inconsistencies in the cases modified and average cases modified columns.')
 
     @property
     def view_by(self):
@@ -780,9 +780,9 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
             DataTablesColumn(_("# Cases Closed"), sort_type=DTSortType.NUMERIC,
                 help_text=_("Number of cases closed in the date range.")),
             DataTablesColumn(_("# Cases Modified"), sort_type=DTSortType.NUMERIC,
-                help_text=_("Number of cases created, modified or closed in the date range.  If you are using case sharing, this column will only include cases initially created by the user.")),
+                help_text=_("Number of cases created, modified or closed in the date range. If you are using case sharing, this column will only show cases last modified by the user.")),
             DataTablesColumn(_("Avg # Cases Modified"), sort_type=DTSortType.NUMERIC,
-                help_text=_("Average number of cases created, modified or closed in the last three date ranges of the same length.  If you are using case sharing, this column will only cases initially created by the user.")),
+                help_text=_("Average number of cases, modified or closed in the last three date ranges of the same length. If you are using case sharing, this column will only include cases last modified by that user.")),
         ))
         columns.append(DataTablesColumnGroup(_("Case Activity"),
             DataTablesColumn(_("# Inactive Cases"), sort_type=DTSortType.NUMERIC,
