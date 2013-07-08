@@ -25,6 +25,7 @@
     <script src="{% static 'formdesigner/js/controller.js' %}"></script>
     <script src="{% static 'formdesigner/js/widgets.js' %}"></script>
     <script src="{% static 'formdesigner/js/multimedia.js' %}"></script>
+    <script src="{% static 'formdesigner/js/window.js' %}"></script>
 
     {% include 'hqmedia/partials/multimedia_js.html' %} {# todo We should have a discussion at some point how we'd like to organize this in the future. #}
 {% endblock %}
@@ -49,6 +50,9 @@
                     swfURL: '{% static 'hqmedia/yui/assets/flashuploader.swf' %}',
                     objectMap: {{ multimedia_object_map|JSON }},
                     uploadControllerClass: HQMediaFileUploadController
+                },
+                windowConfig: {
+                    bottomOffset: 50
                 },
                 saveType: 'patch',
                 form: {{ form.source|JSON }},
