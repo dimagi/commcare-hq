@@ -93,7 +93,8 @@ class WrappedNode(object):
                     return none()
             return _fn
         else:
-            return getattr(self.xml, name)
+            return getattr(self.xml, name) if self.xml is not None else None
+
 
     @property
     def tag_xmlns(self):
