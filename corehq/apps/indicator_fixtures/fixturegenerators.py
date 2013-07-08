@@ -54,7 +54,9 @@ def gen_fixture(user, indicator_set, include_empty=True):
     name = indicator_set.name
     group = indicator_set.group_by
     data = indicator_set.data
-    indicator_names = [c.alias if c.alias else c.key for c in indicator_set.columns]
+    indicator_names = None
+    if include_empty:
+        indicator_names = [c.name for c in indicator_set.actual_columns]
 
     xFixture = ElementTree.Element('fixture', attrib={'id': 'indicators:%s' % name, 'user_id': user.user_id})
     xIndicators = ElementTree.SubElement(xFixture, 'indicators')

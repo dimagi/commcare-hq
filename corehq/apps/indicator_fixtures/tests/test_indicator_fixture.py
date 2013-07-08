@@ -19,7 +19,8 @@ class CallCenter(SqlIndicatorSet):
     name = 'call_center'
     table_name = 'call_center'
 
-    def __init__(self, group):
+    def __init__(self, config, group):
+        super(CallCenter, self).__init__(config)
         self.group = group
 
     @property
@@ -39,7 +40,7 @@ class CallCenter(SqlIndicatorSet):
         return self.group
 
     @property
-    def columns(self):
+    def available_columns(self):
         return [
             SumColumn('cases_updated', alias='casesUpdatedInLastWeek'),
             SumColumn('cases_updated',
@@ -53,13 +54,14 @@ class IndicatorFixtureTest(TestCase):
     def setUpClass(cls):
         load_data()
         cls.user = CommCareUser.create('qwerty', 'rudolph', '***')
+        cls.config = dict(columns=['casesUpdatedInLastWeek', 'casesUpdatedInWeekPrior'])
 
     @classmethod
     def tearDownClass(cls):
         cls.user.delete()
 
     def test_callcenter_group(self):
-        fixture = gen_fixture(self.user, CallCenter('case'))
+        fixture = gen_fixture(self.user, CallCenter(self.config, 'case'))
         check_xml_line_by_line(self, """
         <fixture id="indicators:call_center" user_id="{userid}">
             <indicators>
@@ -72,12 +74,22 @@ class IndicatorFixtureTest(TestCase):
         """.format(userid=self.user.user_id), ElementTree.tostring(fixture))
 
     def test_callcenter_no_group(self):
-        fixture = gen_fixture(self.user, CallCenter(None))
+        fixture = gen_fixture(self.user, CallCenter(self.config, None))
         check_xml_line_by_line(self, """
         <fixture id="indicators:call_center" user_id="{userid}">
             <indicators>
                 <casesUpdatedInLastWeek>3</casesUpdatedInLastWeek>
                 <casesUpdatedInWeekPrior>4</casesUpdatedInWeekPrior>
+            </indicators>
+        </fixture>
+        """.format(userid=self.user.user_id), ElementTree.tostring(fixture))
+
+    def test_callcenter_columns(self):
+        fixture = gen_fixture(self.user, CallCenter(dict(columns=['casesUpdatedInLastWeek']), None))
+        check_xml_line_by_line(self, """
+        <fixture id="indicators:call_center" user_id="{userid}">
+            <indicators>
+                <casesUpdatedInLastWeek>3</casesUpdatedInLastWeek>
             </indicators>
         </fixture>
         """.format(userid=self.user.user_id), ElementTree.tostring(fixture))
