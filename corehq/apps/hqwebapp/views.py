@@ -36,6 +36,42 @@ from soil import views as soil_views
 import os
 import re
 
+from django.utils.http import urlencode
+
+
+def pg_check():
+    """check django db"""
+    try:
+        user_count = User.objects.count()
+    except:
+        user_count = None
+    return user_count is not None
+
+
+def couch_check():
+    """check couch"""
+
+    #in reality when things go wrong with couch and postgres (as of this
+    # writing) - it's far from graceful, so this will # likely never be
+    # reached because another exception will fire first - but for
+    # completeness  sake, this check is done  here to verify our calls will
+    # work, and if other error handling allows the request to get this far.
+
+    try:
+        xforms = XFormInstance.view('couchforms/by_user', limit=1).all()
+    except:
+        xforms = None
+    return isinstance(xforms, list)
+
+
+def hb_check():
+    try:
+        hb = heartbeat.is_alive()
+    except:
+        hb = False
+    return hb
+
+
 def server_error(request, template_name='500.html'):
     """
     500 error handler.
@@ -134,41 +170,37 @@ def server_up(req):
     '''View that just returns "success", which can be hooked into server
        monitoring tools like: pingdom'''
 
-    try:
-        hb = heartbeat.is_alive()
-    except:
-        hb = False
 
-    #in reality when things go wrong with couch and postgres (as of this
-    # writing) - it's far from graceful, so this will # likely never be
-    # reached because another exception will fire first - but for
-    # completeness  sake, this check is done  here to verify our calls will
-    # work, and if other error handling allows the request to get this far.
+    checkers = {
+        "heartbeat": {
+            "always_check": False,
+            "message": "* celery heartbeat is down",
+            "check_func": hb_check
+        },
+        "postgres": {
+            "always_check": True,
+            "message": "* postgres has issues",
+            "check_func": pg_check
+        },
+        "couch": {
+            "always_check": True,
+            "message": "* couch has issues",
+            "check_func": couch_check
+        }
+    }
 
-    ## check django db
-    try:
-        user_count = User.objects.count()
-    except:
-        user_count = None
-
-    ## check couch
-    try:
-        xforms = XFormInstance.view('couchforms/by_user', limit=1).all()
-    except:
-        xforms = None
-
-    if hb and isinstance(user_count, int) and isinstance(xforms, list):
-        return HttpResponse("success")
+    failed = False
+    message = ['Problems with HQ (%s):' % os.uname()[1]]
+    for check, check_info in checkers.items():
+        if check_info['always_check'] or req.GET.get(check, None) is not None:
+            check_results = check_info['check_func']()
+            if not check_results:
+                failed = True
+                message.append(check_info['message'])
+    if failed:
+        return HttpResponse('<br>'.join(message), status=500)
     else:
-        message = ['Problems with HQ (%s):' % os.uname()[1]]
-        if not hb:
-            message.append(' * Celery and or celerybeat is down')
-        if user_count is None:
-            message.append(' * postgres has issues')
-        if xforms is None:
-            message.append(' * couch has issues')
-        return HttpResponse('\n'.join(message), status=500)
-
+        return HttpResponse("success")
 
 def no_permissions(request, redirect_to=None, template_name="no_permission.html"):
     next = redirect_to or request.GET.get('next', None)
