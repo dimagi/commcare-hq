@@ -5,6 +5,7 @@ from dimagi.utils.couch.database import iter_docs
 from django.core.management.base import LabelCommand, CommandError
 import itertools
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.phone.models import SyncLog
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser
@@ -16,9 +17,14 @@ class Command(LabelCommand):
     help = "Copy all data (users, forms, cases) associated with a single group"
     args = '<sourcedb> <group_id>'
     label = ""
-    option_list = LabelCommand.option_list + \
-        (make_option('--include-user-owned', action='store_true', dest='include_user_cases', default=False,
-            help="In addition to getting cases owned by the group itself, also get those owned by all users in the group"),)
+    option_list = LabelCommand.option_list + (
+        make_option('--include-user-owned',
+            action='store_true', dest='include_user_cases', default=False,
+            help="In addition to getting cases owned by the group itself, also get those owned by all users in the group"),
+        make_option('--include-sync-logs',
+            action='store_true', dest='include_sync_logs', default=False,
+            help="Get sync logs for all users in the group"),
+        )
 
     def lenient_bulk_save(self, cls, docs):
         try:
@@ -106,7 +112,7 @@ class Command(LabelCommand):
                 user_id = xform.metadata.userID
                 user_ids.add(user_id)
 
-        print 'getting users'
+        print 'copying %s users' % len(user_ids)
 
         def wrap_user(row):
             try:
@@ -129,3 +135,22 @@ class Command(LabelCommand):
         for user in users:
             # if we use bulk save, django user doesn't get sync'd
             user.save(force_update=True)
+
+        if options['include_sync_logs']:
+            print 'copying sync logs'
+            for user_id in user_ids:
+                log_ids = [res['id'] for res in sourcedb.view("phone/sync_logs_by_user",
+                    startkey=[user_id, {}],
+                    endkey=[user_id],
+                    descending=True,
+                    reduce=False,
+                    include_docs=True
+                )]
+                print 'user: %s, logs: %s' % (user_id, len(log_ids))
+                for i, subset in enumerate(chunked(log_ids, CHUNK_SIZE)):
+                    print i * CHUNK_SIZE
+                    logs = [SyncLog.wrap(log['doc']) for log in sourcedb.all_docs(
+                        keys=list(subset),
+                        include_docs=True,
+                    )]
+                    self.lenient_bulk_save(SyncLog, logs)
