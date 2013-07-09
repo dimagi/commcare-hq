@@ -965,7 +965,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
     @classmethod
     def create(cls, domain, username, password, email=None, uuid='', date='',
                first_name='', last_name='', **kwargs):
-        django_user = create_user(username, password=password, email=email,
+        django_user = User(username=username) or \
+                      create_user(username, password=password, email=email,
                                   first_name=first_name, last_name=last_name)
         if uuid:
             if not re.match(r'[\w-]+', uuid):
