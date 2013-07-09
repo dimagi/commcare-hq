@@ -50,7 +50,9 @@ def get_view_names(database):
 def iter_docs(database, ids, chunksize=100):
     for doc_ids in chunked(ids, chunksize):
         for doc in get_docs(database, keys=doc_ids):
-            yield doc['doc']
+            doc_dict = doc.get('doc')
+            if doc_dict:
+                yield doc_dict
 
 def is_bigcouch():
     # this is a bit of a hack but we'll use it for now

@@ -270,9 +270,9 @@ class DateSpan(object):
 
         # if the end date is today or tomorrow, use "last N days syntax"  
         today = datetime.combine(datetime.today(), time())
-        day_after_tomorrow = today + timedelta (days=2)
-        if today <= self.enddate < day_after_tomorrow:
-            return "last %s days" % (self.enddate - self.startdate).days
+        day_after_tomorrow = today + timedelta(days=2)
+        if today <= self.enddate + timedelta(days=(1 if self.inclusive else 0)) < day_after_tomorrow:
+            return "last %s days" % ((self.enddate - self.startdate).days + (1 if self.inclusive else 0))
         
         return "%s to %s" % (self.startdate.strftime(self.format), 
                              self.enddate.strftime(self.format))
@@ -286,7 +286,7 @@ class DateSpan(object):
         nextmonth = start + timedelta(days=32)
         end = datetime(nextmonth.year, nextmonth.month, 1) - timedelta(milliseconds=1)
         return DateSpan(start, end, format)
-    
+
     @classmethod
     def since(cls, days, enddate=None, format=DEFAULT_DATE_FORMAT, inclusive=True, timezone=pytz.utc):
         """
@@ -301,8 +301,14 @@ class DateSpan(object):
         end = datetime(enddate.year, enddate.month, enddate.day)
         start = end - timedelta(days=days)
         return DateSpan(start, end, format, inclusive, timezone)
-                    
-    
+
+    @classmethod
+    def default_since(cls, obj, days=6):
+        enddate = datetime.now(tz=obj.timezone)
+        if getattr(obj, "inclusive"):
+            enddate = enddate - timedelta(days=1)
+        return cls.since(days, enddate=enddate, format="%Y-%m-%d", timezone=obj.timezone)
+
     def parse(self, startdate_str, enddate_str, parse_format, display_format=None):
         """
         Generate a DateSpan with string formats. 
