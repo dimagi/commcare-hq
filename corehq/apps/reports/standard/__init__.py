@@ -1,6 +1,7 @@
 from datetime import timedelta, datetime
 import dateutil
 from django.core.urlresolvers import reverse
+import pytz
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
@@ -185,7 +186,7 @@ class DatespanMixin(object):
 
     @property
     def default_datespan(self):
-        days = self.datespan_default_days - 1 if self.inclusive else self.datespan_default_days
-        datespan = DateSpan.default_since(self, days)
+        timezone = getattr(self, "timezone") or pytz.utc
+        datespan = DateSpan.default_since(self.datespan_default_days, timezone, self.inclusive)
         datespan.is_default = True
         return datespan

@@ -397,10 +397,11 @@ class DatespanField(ReportField):
     slug = "datespan"
     template = "reports/fields/datespan.html"
     inclusive = True
+    default_days = 7
 
     def update_context(self):
         self.context["datespan_name"] = self.name
-        self.datespan = DateSpan.default_since(self)
+        self.datespan = DateSpan.default_since(self.default_days, self.timezone, self.inclusive)
         if self.request.datespan.is_valid():
             self.datespan.startdate = self.request.datespan.startdate
             self.datespan.enddate = self.request.datespan.enddate
