@@ -1439,6 +1439,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     @classmethod
     def sync_user_cases(cls, commcare_user):
+        if not commcare_user._id:
+            # hack: this sync happens twice on a user create and the first
+            # time the _id is None which causes a case submission error
+            return
+
         from casexml.apps.case.tests.util import CaseBlock
 
         domain = commcare_user.project
