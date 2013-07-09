@@ -2,8 +2,8 @@
 <html lang="en">
     <head>
         <meta charset="utf-8"/>
-        <title>{% block title %}{% endblock %} - CommCare HQ</title>
-        <meta name="application-name" content="CommCare HQ">
+        <title>{% block title %}{% endblock %} - {{ SITE_NAME }}</title>
+        <meta name="application-name" content="{{ SITE_NAME }}">
         <meta http-equiv="content-language" content="en">
 
         <link rel="shortcut icon" href="{% static 'hqwebapp/img/favicon2.png' %}" />
@@ -192,7 +192,7 @@
 
         <footer>
             <div class="row-fluid">
-                <div class="span1">
+                <div class="span2">
                     <a href="http://www.commcarehq.org/"><img src="{% static 'hqwebapp/img/commcare-flower-footer.png' %}" class="powered-by"  alt="CommCare" /></a>
                     <a href="http://www.dimagi.com/"><img src="{% static 'hqwebapp/img/dimagi-footer.png' %}" class="powered-by"  alt="Powered by Dimagi, Inc." /></a>
                 </div>
@@ -205,7 +205,7 @@
                     <br />
                     <a href="{% url eula %}">Read CommCare HQ's End User License Agreement</a>
                 </div>
-                <div class="span6">
+                <div class="span5">
                     <div class="btn-toolbar pull-right">
                     {% if user.is_authenticated %}
                         {% blocktrans %}

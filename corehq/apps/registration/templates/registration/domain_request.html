@@ -5,7 +5,7 @@
 
 {% block step-title %}
     {% if is_new %}
-        {% blocktrans %}Welcome to CommCare HQ! <small>It's time to create your first project.</small>{% endblocktrans %}
+        {% blocktrans %}Welcome to {{ SITE_NAME }}! <small>It's time to create your first project.</small>{% endblocktrans %}
     {% else %}
         {% blocktrans %}Create a New Project Space{% endblocktrans %}
     {% endif %}
@@ -32,11 +32,21 @@
 {% block registration-content %}
 <div class="span8">
     {% if is_new %}
-    <p>{% blocktrans with request.couch_user.first_name as first_name %}
-      Congratulations, {{ first_name }}&mdash;you've successfully joined CommCare HQ.
-    {% endblocktrans %}</p>
-    <p>Your CommCare HQ Project will contain all form submissions from your CommCare mobile applications, as well as tools that help you easily create, deploy, and monitor your applications and workers.</p>
-    <p>Before you can view any of your own data from CommCare, you will need to request a project space.</p>
+    <p>
+    {% blocktrans with request.couch_user.first_name as first_name %}
+    Congratulations, {{ first_name }}&mdash;you've successfully joined {{ SITE_NAME }}.
+    {% endblocktrans %}
+    </p>
+    <p>
+    {% blocktrans %}
+    Your {{ SITE_NAME }} project will contain all form submissions from your CommCare mobile applications, as well as tools that help you easily create, deploy, and monitor your applications and workers.
+    {% endblocktrans %}
+    </p>
+    <p>
+    {% blocktrans %}
+    Before you can view any of your own data from CommCare, you will need to request a project space.
+    {% endblocktrans %}
+    </p>
     {% endif %}
     <form class="form-horizontal" method="post" action="{{ request.get_full_path }}">
         <fieldset>

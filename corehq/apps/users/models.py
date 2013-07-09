@@ -1098,6 +1098,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return self
 
     def save(self, **params):
+        super(CommCareUser, self).save(**params)
+
         from corehq.apps.users.signals import commcare_user_post_save
         results = commcare_user_post_save.send_robust(sender='couch_user',
                                                      couch_user=self)
@@ -1109,8 +1111,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                     message="Error occured while syncing user %s: %s" %
                             (self.username, str(result[1]))
                 )
-
-        super(CommCareUser, self).save(**params)
 
     def is_domain_admin(self, domain=None):
         # cloudcare workaround

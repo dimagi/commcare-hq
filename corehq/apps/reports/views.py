@@ -10,14 +10,15 @@ from corehq.apps.reports.custom_export_helpers import CustomExportHelper
 from corehq.apps.reports.standard import inspect, export, ProjectReport
 from corehq.apps.reports.export import (
     ApplicationBulkExportHelper,
-    CustomBulkExportHelper
-)
+    CustomBulkExportHelper,
+    save_metadata_export_to_tempfile)
 from corehq.apps.reports.models import ReportConfig, ReportNotification
+from corehq.apps.reports.tasks import create_metadata_export
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
 from corehq.apps.users.models import Permissions
 import couchexport
-from couchexport.export import UnsupportedExportFormat, export_raw
+from couchexport.export import UnsupportedExportFormat
 from couchexport.util import SerializableFunction
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.bulk import wrapped_docs
@@ -47,8 +48,7 @@ from django.views.decorators.http import (require_http_methods, require_POST,
 from couchforms.filters import instances
 from couchdbkit.exceptions import ResourceNotFound
 from fields import FilterUsersField
-from util import get_all_users_by_domain, stream_qs
-from corehq.apps.hqsofabed.models import HQFormData
+from util import get_all_users_by_domain
 from corehq.apps.groups.models import Group
 from soil import DownloadBase
 from soil.tasks import prepare_download
@@ -364,27 +364,28 @@ def export_all_form_metadata(req, domain):
     Export metadata for _all_ forms in a domain.
     """
     format = req.GET.get("format", Format.XLS_2007)
-    
-    headers = ("domain", "instanceID", "received_on", "type", 
-               "timeStart", "timeEnd", "deviceID", "username", 
-               "userID", "xmlns", "version")
-    def _form_data_to_row(formdata):
-        def _key_to_val(formdata, key):
-            if key == "type":  return xmlns_to_name(domain, formdata.xmlns, app_id=None)
-            else:              return getattr(formdata, key)
-        return [_key_to_val(formdata, key) for key in headers]
-    
-    fd, path = tempfile.mkstemp()
-    
-    data = (_form_data_to_row(f) for f in stream_qs(
-        HQFormData.objects.filter(domain=domain).order_by('received_on')
+    tmp_path = save_metadata_export_to_tempfile(domain, format)
+
+    return export_response(open(tmp_path), format, "%s_forms" % domain)
+
+@login_or_digest
+@require_form_export_permission
+@login_and_domain_required
+@require_GET
+def export_all_form_metadata_async(req, domain):
+    format = req.GET.get("format", Format.XLS_2007)
+    filename = "%s_forms" % domain
+    download = DownloadBase()
+    download.set_task(create_metadata_export.delay(
+        download.download_id,
+        domain,
+        format=format,
+        filename=filename,
     ))
+    return download.get_start_response()
 
-    with os.fdopen(fd, 'w') as temp:
-        export_raw((("forms", headers),), (("forms", data),), temp)
 
-    return export_response(open(path), format, "%s_forms" % domain)
-    
+
 @require_form_export_permission
 @login_and_domain_required
 @require_POST
