@@ -372,8 +372,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         if status:
             subterms.append({"term": {"closed": (status == 'closed')}})
 
-        user_filters = list(_filter_gen('owner_id', owner_ids)) + \
-                       list(_filter_gen('user_id', owner_ids))
+        user_filters = list(_filter_gen('owner_id', owner_ids))
         if user_filters:
             subterms.append({'or': user_filters})
 
