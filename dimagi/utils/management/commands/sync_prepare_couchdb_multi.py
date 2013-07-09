@@ -97,7 +97,7 @@ class Command(BaseCommand):
         message += "Total time: %d seconds" % delta.seconds
         print message
 
-        send_mail('%s Preindex Complete' % settings.EMAIL_SUBJECT_PREFIX,
+        send_mail('%s CouchDB Preindex Complete' % settings.EMAIL_SUBJECT_PREFIX,
                   message,
                   settings.SERVER_EMAIL,
                   [x[1] for x in settings.ADMINS],
