@@ -52,7 +52,10 @@
                     uploadControllerClass: HQMediaFileUploadController
                 },
                 windowConfig: {
-                    bottomOffset: 50
+                    bottomOffset: 50,
+                    leftOffset: function () {
+                        return $('.sidebar').outerWidth();
+                    }
                 },
                 saveType: 'patch',
                 form: {{ form.source|JSON }},
