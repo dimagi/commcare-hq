@@ -191,32 +191,25 @@
         </div>
 
         <footer>
-            <div class="row-fluid">
-                <div class="span2">
-                    <a href="http://www.commcarehq.org/"><img src="{% static 'hqwebapp/img/commcare-flower-footer.png' %}" class="powered-by"  alt="CommCare" /></a>
-                    <a href="http://www.dimagi.com/"><img src="{% static 'hqwebapp/img/dimagi-footer.png' %}" class="powered-by"  alt="Powered by Dimagi, Inc." /></a>
-                </div>
-                <div class="span5" style="padding-top: 7px;">
-                    <a href="http://www.commcarehq.org/">CommCare HQ</a> is copyright &copy; {% now "Y" %} <a href="http://www.dimagi.com/">Dimagi, Inc.</a>
-                    {% if user.is_authenticated %}
-                        &nbsp;|&nbsp;
-                        <a href="http://www.commcarehq.org/home">Learn more about CommCare HQ</a>.
-                    {% endif %}
-                    <br />
-                    <a href="{% url eula %}">Read CommCare HQ's End User License Agreement</a>
-                </div>
-                <div class="span5">
-                    <div class="btn-toolbar pull-right">
-                    {% if user.is_authenticated %}
-                        {% blocktrans %}
-                        <a data-toggle="modal" data-target="#reportIssueModal" href="#reportIssueModal" class="btn btn-footer-highlight"><i class="icon-comment"></i> Report an Issue</a>
-                        <a href="https://wiki.commcarehq.org/display/commcarepublic/Home" target="_blank" class="btn btn-footer"><i class="icon-info-sign"></i> CommCare Help Site</a>
-                        <a href="http://groups.google.com/group/commcare-users/subscribe" target="_blank" class="btn btn-footer"><i class="icon-envelope"></i> commcare-users mailing list</a>
-                        {% endblocktrans %}
-                    {% endif %}
-
-                    </div>
-                </div>
+            <div class="pull-left" style="margin-right: 20px;">
+                <a href="http://www.commcarehq.org/"><img src="{% static 'hqwebapp/img/commcare-flower-footer.png' %}" class="powered-by"  alt="CommCare" /></a>
+                <a href="http://www.dimagi.com/"><img src="{% static 'hqwebapp/img/dimagi-footer.png' %}" class="powered-by"  alt="Powered by Dimagi, Inc." /></a>
+            </div>
+            {% if user.is_authenticated %}
+            <div class="btn-toolbar pull-right">
+                <a data-toggle="modal" data-target="#reportIssueModal" href="#reportIssueModal" class="btn btn-footer-highlight"><i class="icon-comment"></i> {% trans 'Report an Issue' %}</a>
+                <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}" target="_blank" class="btn btn-footer"><i class="icon-info-sign"></i> {% trans 'CommCare Help Site' %}</a>
+                <a href="{% trans 'http://groups.google.com/group/commcare-users/subscribe' %}" target="_blank" class="btn btn-footer"><i class="icon-envelope"></i> {% trans 'commcare-users mailing list' %}</a>
+            </div>
+            {% endif %}
+            <div style="padding-top: 7px;">
+                <a href="http://www.commcarehq.org/">CommCare HQ</a> is copyright &copy; {% now "Y" %} <a href="http://www.dimagi.com/">Dimagi, Inc.</a>
+                {% if user.is_authenticated %}
+                    &nbsp;|&nbsp;
+                    <a href="http://www.commcarehq.org/home">Learn more about CommCare HQ</a>.
+                {% endif %}
+                <br />
+                <a href="{% url eula %}">Read CommCare HQ's End User License Agreement</a>
             </div>
         </footer>
         <div id="hq-modal-home">
