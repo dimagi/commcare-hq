@@ -54,7 +54,10 @@
                 windowConfig: {
                     bottomOffset: 50,
                     leftOffset: function () {
-                        return $('.sidebar').outerWidth();
+                        return $('.sidebar').outerWidth() + 2;
+                    },
+                    topOffset: function () {
+                        return $('header').outerHeight() + $('.hq-page-header-container').outerHeight();
                     }
                 },
                 saveType: 'patch',
