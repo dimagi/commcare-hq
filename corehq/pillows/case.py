@@ -66,3 +66,8 @@ class CasePillow(AliasedElasticPillow):
 
     def get_type_string(self, doc_dict):
         return self.es_type
+
+    def change_transform(self, doc_dict):
+        if not doc_dict.get("owner_id"):
+            doc_dict["owner_id"] = doc_dict.get("user_id")
+        return doc_dict
