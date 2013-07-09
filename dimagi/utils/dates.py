@@ -290,24 +290,36 @@ class DateSpan(object):
     @classmethod
     def since(cls, days, enddate=None, format=DEFAULT_DATE_FORMAT, inclusive=True, timezone=pytz.utc):
         """
-        Generate a DateSpan ending with a certain date, and going back 
-        N days. The enddate defaults to today midnight but is inclusive
-        (which means it will look like tomorrow midnight)
-        
+        Generate a DateSpan ending with a certain date, and starting at a date that will
+        include N number of days.
+
+        The endddate defaults to yesterday midnight for inclusive request
+        (which means it will look like today midnight);
+        defaults to today midnight for non inclusive requests
+
+        e.g: enddate=7/21/2013, days=7, inclusive=True => 7/15/2013 - 7/21/2013 (15, 16, 17, 18, 19, 20, 21)
+        e.g: enddate=7/21/2013, days=7, inclusive=False => 7/14/2013 - 7/21/2013 (14, 15, 16, 17, 18, 19, 20)
+
         Will always ignore times.
         """
         if enddate is None:
-            enddate = datetime.now(tz=timezone) 
+            enddate = datetime.now(tz=timezone)
+            if inclusive:
+                enddate = enddate - timedelta(days=1)
+
+        if inclusive:
+            days += -1
+
         end = datetime(enddate.year, enddate.month, enddate.day)
         start = end - timedelta(days=days)
         return DateSpan(start, end, format, inclusive, timezone)
 
     @classmethod
-    def default_since(cls, obj, days=6):
-        enddate = datetime.now(tz=obj.timezone)
-        if getattr(obj, "inclusive"):
+    def default_since(cls, days, timezone=pytz.utc, inclusive=True):
+        enddate = datetime.now(tz=timezone)
+        if inclusive:
             enddate = enddate - timedelta(days=1)
-        return cls.since(days, enddate=enddate, format="%Y-%m-%d", timezone=obj.timezone)
+        return cls.since(days, enddate=enddate, format="%Y-%m-%d", timezone=timezone, inclusive=inclusive)
 
     def parse(self, startdate_str, enddate_str, parse_format, display_format=None):
         """
