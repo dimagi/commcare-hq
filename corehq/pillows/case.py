@@ -68,6 +68,8 @@ class CasePillow(AliasedElasticPillow):
         return self.es_type
 
     def change_transform(self, doc_dict):
-        if not doc_dict.get("owner_id"):
-            doc_dict["owner_id"] = doc_dict.get("user_id")
-        return doc_dict
+        doc_ret = copy.deepcopy(doc_dict)
+        if not doc_ret.get("owner_id"):
+            if doc_ret.get("user_id"):
+                doc_ret["owner_id"] = doc_ret["user_id"]
+        return doc_ret
