@@ -68,15 +68,18 @@
                         $(this).find("input").attr("name", "reminder_events." + i + ".time");
                         break;
                     case 3:
+                        $(this).find("input").attr("name", "reminder_events." + i + ".time_window_length");
+                        break;
+                    case 4:
                         $(this).find("div").each(function(k) {
                             $(this).find(".language").attr("name", "reminder_events." + i + ".messages." + (k + 1) + ".language");
                             $(this).find(".message").attr("name", "reminder_events." + i + ".messages." + (k + 1) + ".text");
                         });
                         break;
-                    case 4:
+                    case 5:
                         $(this).find("select").attr("name", "reminder_events." + i + ".survey");
                         break;
-                    case 5:
+                    case 6:
                         $(this).find("input").attr("name", "reminder_events." + i + ".timeouts");
                         break;
                 }
@@ -196,8 +199,10 @@
     function enable_advanced_time_changed() {
         if($("#id_enable_advanced_time_choices").is(":checked") && $("#id_start_condition_type").val() == "CASE_CRITERIA" && $("#id_event_interpretation").val() == "SCHEDULE") {
             $(".for_advanced_times").show();
+            time_type_changed();
         } else {
             $(".for_advanced_times").hide();
+            $(".for_random_time").hide();
         }
     }
     
@@ -206,6 +211,24 @@
             $("#id_recipient_case_match_value").hide();
         } else {
             $("#id_recipient_case_match_value").show();
+        }
+    }
+    
+    function time_type_changed() {
+        var at_least_one_random = false;
+        var advanced_times_enabled = $("#id_enable_advanced_time_choices").is(":checked");
+        $(".time_type").each(function(i) {
+            if($(this).val() == "RANDOM" && advanced_times_enabled) {
+                at_least_one_random = true;
+                $(this).parent().parent().children(".for_random_time").children("input").show();
+            } else {
+                $(this).parent().parent().children(".for_random_time").children("input").hide();
+            }
+        });
+        if(at_least_one_random) {
+            $(".for_random_time").show();
+        } else {
+            $(".for_random_time").hide();
         }
     }
     
@@ -240,6 +263,7 @@
                                               "schedule-based (not offset-based) schedules.",
             "Time Type": "Use 'Default' to specify the time of day to send (hh:mm). Use 'Case Property' to specify the case property that contains the time of day to send.",
             "Question Retries": "An IVR Survey will only allow this many invalid responses to a question before disconnecting the call.",
+            "Window Length": "The length, in minutes, of the window in which to choose a random time.",
             "Child Case Property": "Enter a case property along with the criteria for matching it. Only the child cases whose given case property matches the given criteria will be recipients."
         };
 
@@ -350,6 +374,7 @@
             $("#event_table > tbody").children("tr").last().clone(true).appendTo($("#event_table"));
             $("#event_table > tbody").children("tr").last().find("input").attr("value", "");
             order_event_table();
+            enable_advanced_time_changed();
         });
         
         $(".remove_event").click(function() {
@@ -358,6 +383,7 @@
             } else {
                 $(this).parent().parent().remove();
                 order_event_table();
+                enable_advanced_time_changed();
             }
         });
         
@@ -391,6 +417,9 @@
             alert_sms_counts($(this));
         }).keyup();
 
+        $(".time_type").change(function() {
+            time_type_changed();
+        });
 
         // Run on change methods
         
@@ -606,6 +635,9 @@
                         <div class="help_popover for_schedule_based" data-help-key="Time">Time <i class="icon icon-question-sign"></i></div>
                         <div class="help_popover for_offset_based" data-help-key="Time to Wait">Time to Wait <i class="icon icon-question-sign"></i></div>
                     </th>
+                    <th class="for_random_time">
+                        <div class="help_popover" data-help-key="Window Length">Window Length <i class="icon icon-question-sign"></i></div>
+                    </th>
                     <th class="for_sms for_sms_callback">
                         <div class="help_popover" data-help-key="Language | Message">Language | Message <i class="icon icon-question-sign"></i></div>
                     </th>
@@ -626,9 +658,11 @@
                         <select name="reminder_events.{{ forloop.counter }}.time_type" class="time_type">
                             <option value="DEFAULT" {% if e.time_type != "CASE_PROPERTY" %}selected="selected"{% endif %}>Default</option>
                             <option value="CASE_PROPERTY" {% if e.time_type == "CASE_PROPERTY" %}selected="selected"{% endif %}>Case Property</option>
+                            <option value="RANDOM" {% if e.time_type == "RANDOM" %}selected="selected"{% endif %}>Random Time</option>
                         </select>
                     </td>
                     <td><input type="text" class="input-medium" name="reminder_events.{{ forloop.counter }}.time" value="{{ e.time }}" /></td>
+                    <td class="for_random_time"><input type="text" class="short" name="reminder_events.{{ forloop.counter }}.time_window_length" value="{{ e.time_window_length|default:'' }}" /></td>
                     <td class="for_sms for_sms_callback">
                         {% for message_num, message in e.messages.items %}
                         <div>
