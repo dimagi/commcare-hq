@@ -13,7 +13,8 @@ MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE, EVENT_AS_SCHEDULE, EVENT_AS_OFFSET,\
 SurveySample, CaseReminderHandler, FIRE_TIME_DEFAULT, FIRE_TIME_CASE_PROPERTY,\
 METHOD_SMS, METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY,\
 CASE_CRITERIA, QUESTION_RETRY_CHOICES, FORM_TYPE_ONE_BY_ONE,\
-FORM_TYPE_ALL_AT_ONCE, SurveyKeyword, RECIPIENT_PARENT_CASE, RECIPIENT_SUBCASE
+FORM_TYPE_ALL_AT_ONCE, SurveyKeyword, RECIPIENT_PARENT_CASE, RECIPIENT_SUBCASE,\
+FIRE_TIME_RANDOM
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
@@ -236,6 +237,7 @@ class ComplexCaseReminderForm(Form):
                     "day"       : e.day_num,
                     "time"      : e.fire_time_aux if e.fire_time_type == FIRE_TIME_CASE_PROPERTY else "%02d:%02d" % (e.fire_time.hour, e.fire_time.minute),
                     "time_type" : e.fire_time_type,
+                    "time_window_length" : e.time_window_length,
                 }
                 
                 if e.fire_time_type != FIRE_TIME_DEFAULT:
@@ -418,6 +420,15 @@ class ComplexCaseReminderForm(Form):
                     raise ValidationError("Please enter a valid time from 00:00 to 23:59.")
                 fire_time_aux = None
             
+            if fire_time_type == FIRE_TIME_RANDOM:
+                try:
+                    time_window_length = int(e["time_window_length"])
+                    assert time_window_length > 0 and time_window_length < 1440
+                except (ValueError, AssertionError):
+                    raise ValidationError(_("Window length must be greater than 0 and less than 1440"))
+            else:
+                time_window_length = None
+            
             message = {}
             if method in [METHOD_SMS, METHOD_SMS_CALLBACK]:
                 for key in e["messages"]:
@@ -458,6 +469,7 @@ class ComplexCaseReminderForm(Form):
                 form_unique_id = form_unique_id,
                 fire_time_type = fire_time_type,
                 fire_time_aux = fire_time_aux,
+                time_window_length = time_window_length,
             ))
         
         if len(events) == 0:
