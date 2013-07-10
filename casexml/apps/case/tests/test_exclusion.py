@@ -1,5 +1,6 @@
 from django.test import TestCase
 import os
+from casexml.apps.case import settings
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases
 from couchforms.util import post_xform_to_couch
@@ -11,6 +12,7 @@ class CaseExclusionTest(TestCase):
     """
     
     def setUp(self):
+        settings.CASEXML_FORCE_DOMAIN_CHECK = False
         delete_all_cases()
 
     def testTopLevelExclusion(self):

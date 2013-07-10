@@ -1,4 +1,5 @@
 from xml.etree import ElementTree
+from casexml.apps.case import settings
 from casexml.apps.case.tests.util import CaseBlock, check_user_has_case
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
@@ -10,6 +11,7 @@ USER_ID = 'test-index-user'
 
 class IndexTest(TestCase):
     def testIndexes(self):
+        settings.CASEXML_FORCE_DOMAIN_CHECK = False
         CASE_ID = 'test-index-case'
         MOTHER_CASE_ID = 'text-index-mother-case'
         FATHER_CASE_ID = 'text-index-father-case'

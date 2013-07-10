@@ -4,6 +4,7 @@ from receiver.signals import successful_form_received
 from casexml.apps.phone.models import SyncLog
 from dimagi.utils.decorators.log_exception import log_exception
 
+
 class CaseProcessingConfig(object):
     def __init__(self, reconcile=False, strict_asserts=True, case_id_blacklist=None):
         self.reconcile = reconcile
@@ -16,6 +17,7 @@ class CaseProcessingConfig(object):
             strict=self.strict_asserts,
             ids=", ".join(self.case_id_blacklist)
         )
+
 
 @log_exception()
 def process_cases(sender, xform, config=None, **kwargs):
@@ -37,16 +39,21 @@ def process_cases(sender, xform, config=None, **kwargs):
     # attach domain and export tag if domain is there
     if hasattr(xform, "domain"):
         domain = xform.domain
+
         def attach_extras(case):
             case.domain = domain
-            if domain and hasattr(case, 'type'):
+            if domain:
+                assert hasattr(case, 'type')
                 case['#export_tag'] = ["domain", "type"]
             return case
+
         cases = [attach_extras(case) for case in cases]
 
     # handle updating the sync records for apps that use sync mode
-    if hasattr(xform, "last_sync_token") and xform.last_sync_token:
-        relevant_log = SyncLog.get(xform.last_sync_token)
+
+    last_sync_token = getattr(xform, 'last_sync_token', None)
+    if last_sync_token:
+        relevant_log = SyncLog.get(last_sync_token)
         # in reconciliation mode, things can be unexpected
         relevant_log.strict = config.strict_asserts
         from casexml.apps.case.util import update_sync_log_with_checks
@@ -59,10 +66,13 @@ def process_cases(sender, xform, config=None, **kwargs):
 
     try:
         cases_received.send(sender=None, xform=xform, cases=cases)
-    except Exception, e:
+    except Exception as e:
         # don't let the exceptions in signals prevent standard case processing
-        notify_exception(None,
-                         'something went wrong sending the cases_received signal for form %s: %s' % (xform._id, e))
+        notify_exception(
+            None,
+            'something went wrong sending the cases_received signal '
+            'for form %s: %s' % (xform._id, e)
+        )
 
     # set flags for indicator pillows and save
     xform.initial_processing_complete = True
@@ -73,6 +83,7 @@ def process_cases(sender, xform, config=None, **kwargs):
     xform.save(force_update=True)
     for case in cases:
         case.force_save()
+    return cases
 
 
 successful_form_received.connect(process_cases)
