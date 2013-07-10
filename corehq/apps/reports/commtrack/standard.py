@@ -109,7 +109,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             return [chart]
 
 class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
-    name = ugettext_noop('Consumption and Months Remaining')
+    name = ugettext_noop('Inventory')
     slug = 'agg_stock_status'
     fields = ['corehq.apps.reports.fields.AsyncLocationField']
     exportable = True

@@ -16,15 +16,24 @@ def base_template(request):
 
 def get_per_domain_context(project):
     if project and project.commtrack_enabled:
+        domain_type = 'commtrack'
         logo = 'hqstyle/img/commtrack-logo.png'
         site_name = "CommTrack"
+        public_site = "http://www.commtrack.org"
+        can_be_your = "mobile logistics solution"
     else:
+        domain_type = 'commcare'
         logo = 'hqstyle/img/commcare-logo.png'
         site_name = "CommCare HQ"
+        public_site = "http://www.commcarehq.org"
+        can_be_your = "mobile health solution"
 
     return {
+        'DOMAIN_TYPE': domain_type,
         'LOGO': logo,
-        'SITE_NAME': site_name
+        'SITE_NAME': site_name,
+        'CAN_BE_YOUR': can_be_your,
+        'PUBLIC_SITE': public_site,
     }
 
 

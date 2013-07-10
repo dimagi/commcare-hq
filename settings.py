@@ -261,6 +261,11 @@ REPORT_CACHE = 'default' # or e.g. 'redis'
 
 DOMAIN_MAX_REGISTRATION_REQUESTS_PER_DAY = 99
 DOMAIN_SELECT_URL = "/domain/select/"
+
+# This is not used by anything in CommCare HQ, leaving it here in case anything
+# in Django unexpectedly breaks without it.  When you need the login url, you
+# should use reverse('login', kwargs={'domain_type': domain_type}) in order to
+# maintain CommCare HQ/CommTrack distinction.
 LOGIN_URL = "/accounts/login/"
 # If a user tries to access domain admin pages but isn't a domain
 # administrator, here's where he/she is redirected
@@ -407,6 +412,7 @@ TOUCHFORMS_API_PASSWORD = "changeme"
 
 # import local settings if we find them
 LOCAL_APPS = ()
+LOCAL_COUCHDB_APPS = ()
 LOCAL_MIDDLEWARE_CLASSES = ()
 LOCAL_PILLOWTOPS = []
 
@@ -615,6 +621,8 @@ COUCHDB_APPS = [
     'pact',
     'psi',
 ]
+
+COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
 COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label in COUCHDB_APPS]
 

@@ -594,6 +594,8 @@ class CaseReminderHandler(Document):
         elif isinstance(recipient, SurveySample):
             recipients = [CommConnectCase.get(case_id) for case_id in recipient.contacts]
         else:
+            from corehq.apps.reminders.event_handlers import raise_error, ERROR_NO_RECIPIENTS
+            raise_error(reminder, ERROR_NO_RECIPIENTS)
             return False
         
         # Retrieve the corresponding verified number entries for all individual recipients
