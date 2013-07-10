@@ -113,20 +113,20 @@
             <tr><td>
             <dl class="dl-horizontal">
                 {% if not forloop.first %}<br>{% endif %}
-                <dt>Case Property</dt>
+                <dt>{% trans "Case Property" %}</dt>
                     <dd>{{ attach_key }}</dd>
-                <dt>Source File</dt>
+                <dt>{% trans "Source File" %}</dt>
                     <dd>{{ attachment.attachment_src }}</dd>
-                <dt>File Type</dt>
+                <dt>{% trans "File Type" %}</dt>
                     <dd>{{ attachment.server_mime }}</dd>
-                <dt>File Size</dt>
+                <dt>{% trans "File Size" %}</dt>
                     <dd>{{ attachment.attachment_size }} bytes</dd>
                 {% if attachment.is_image %}
-                    <dt>Image</dt>
+                    <dt>{% trans "Image" %}</dt>
                     {# Note to devs, the api_case_attachment url is a named url not implemented by the casexml app - an external app must implement this URL #}
                     <dd><img src="{% url api_case_attachment domain=case.domain case_id=case.get_id attachment_id=attach_key %}?img&size=large_square"></dd>
                 {% else %}
-                    <dt>Link</dt>
+                    <dt>{% trans "Link" %}</dt>
                     <dd><a href="{% url api_case_attachment domain=case.domain case_id=case.get_id attachment_id=attach_key %}">Download</a></dd>
                 {% endif %}
             </dl>
