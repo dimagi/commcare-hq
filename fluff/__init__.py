@@ -246,7 +246,7 @@ class IndicatorDocument(schema.Document):
             assert isinstance(getter, AttributeGetter)
             return getter
 
-        return (_wrap_if_necessary(item) for item in self.group_by)
+        return (_wrap_if_necessary(item) for item in type(self)().group_by)
 
     def get_group_names(self):
         return [gb.attribute for gb in self.wrapped_group_by]
@@ -265,7 +265,7 @@ class IndicatorDocument(schema.Document):
         for getter in self.wrapped_group_by:
             self[getter.attribute] = getter.getter_function(item)
         # overwrite whatever's in group_by with the default
-        self['group_by'] = type(self)().get_group_names()
+        self._doc['group_by'] = list(self.get_group_names())
 
     def diff(self, other_doc):
         """
@@ -415,6 +415,7 @@ class FluffPillow(BasicPillow):
         else:
             indicator = current_indicator
             current_indicator = indicator.to_json()
+
         indicator.calculate(doc)
         return current_indicator, indicator
 
