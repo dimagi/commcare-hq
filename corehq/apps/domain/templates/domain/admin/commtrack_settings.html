@@ -77,15 +77,15 @@ var other_sms_codes = {{ other_sms_codes|JSON }};
         {% include "domain/admin/commtrack_action_table.html" %}
     <button type="button" class="btn btn-primary" data-bind="click: new_action"><i class="icon-plus icon-white"></i> {% trans "New Action" %}</button>
 </fieldset>
-<h3>Location Hierarchy</h3>
+<h3>{% trans "Location Hierarchy" %}</h3>
 
 <div class="text-error" data-bind="text: loc_types_error"></div>
 <table class="table table-striped table-bordered">
   <thead>
     <tr>
-      <th>Location Type</th>
-      <th>Allowed Parent Types</th>
-      <th>Administrative only?</th>
+      <th>{% trans "Location Type" %}</th>
+      <th>{% trans "Allowed Parent Types" %}</th>
+      <th>{% trans "Administrative only?" %}</th>
       <th></th>
     </tr>
   </thead>
@@ -103,12 +103,12 @@ var other_sms_codes = {{ other_sms_codes|JSON }};
         <input data-bind="checked: administrative" type="checkbox" />
       </td>
       <td>
-        <button type="button" class="btn btn-danger" data-bind="click: $root.remove_loctype"><i class="icon-trash icon-white"></i> Remove</button>
+        <button type="button" class="btn btn-danger" data-bind="click: $root.remove_loctype"><i class="icon-trash icon-white"></i> {% trans "Remove" %}</button>
       </td>
     </tr>
   </tbody>
 </table>
-<button type="button" class="btn btn-primary" data-bind="click: new_loctype"><i class="icon-plus icon-white"></i> New Location Type</button>
+<button type="button" class="btn btn-primary" data-bind="click: new_loctype"><i class="icon-plus icon-white"></i> {% trans "New Location Type" %}</button>
 
 
 <!--
@@ -119,7 +119,7 @@ var other_sms_codes = {{ other_sms_codes|JSON }};
 
 -->
 
-<div class="form-actions"><button type="submit" class="btn btn-primary">Save Settings</button></div>
+<div class="form-actions"><button type="submit" class="btn btn-primary">{% trans "Save Settings" %}</button></div>
 
 <input name="json" type="hidden" data-bind="value: json_payload" />
 </form>

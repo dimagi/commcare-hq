@@ -415,6 +415,7 @@ TOUCHFORMS_API_PASSWORD = "changeme"
 
 # import local settings if we find them
 LOCAL_APPS = ()
+LOCAL_COUCHDB_APPS = ()
 LOCAL_MIDDLEWARE_CLASSES = ()
 LOCAL_PILLOWTOPS = []
 
@@ -625,6 +626,8 @@ COUCHDB_APPS = [
     'pact',
     'psi',
 ]
+
+COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
 COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label in COUCHDB_APPS]
 

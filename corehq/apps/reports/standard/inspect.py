@@ -195,11 +195,12 @@ class CaseDisplay(object):
         if not username:
             mc = cache.get_cache('default')
             cache_key = "%s.%s" % (CouchUser.__class__.__name__, user_id)
+
             try:
                 if mc.has_key(cache_key):
                     user_dict = simplejson.loads(mc.get(cache_key))
                 else:
-                    user_obj = CouchUser.get_by_user_id(self.owner_id) if user_id else None
+                    user_obj = CouchUser.get_by_user_id(user_id) if user_id else None
                     if user_obj:
                         user_dict = user_obj.to_json()
                     else:
@@ -212,7 +213,7 @@ class CaseDisplay(object):
                     user_obj = CouchUser.wrap(user_dict)
                     username = user_obj.username
             except Exception:
-                return None
+                return self.user_not_found_display(user_id)
         return username
 
     @property
@@ -347,9 +348,10 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         return CaseES(self.domain)
 
 
-    def build_query(self, case_type=None, filter=None, status=None, owner_ids=[], search_string=None):
+    def build_query(self, case_type=None, filter=None, status=None, owner_ids=None, search_string=None):
         # there's no point doing filters that are like owner_id:(x1 OR x2 OR ... OR x612)
         # so past a certain number just exclude
+        owner_ids = owner_ids or []
         MAX_IDS = 50
 
         def _filter_gen(key, flist):
