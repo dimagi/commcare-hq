@@ -1,5 +1,7 @@
 from xml.etree import ElementTree
 from casexml.apps.case.xml import V2
+from corehq.apps.domain.models import Domain
+from corehq.apps.callcenter.indicator_sets import CallCenter
 from corehq.apps.users.models import CommCareUser
 
 
@@ -11,8 +13,12 @@ def indicators(user, version=V2, last_sync=None):
     else:
         return []
 
-    # TODO: get indicator sets for user
     indicator_sets = []
+    for dom in user.get_domains():
+        domain = Domain.get_by_name(dom)
+        if domain.call_center_config.enabled:
+            indicator_sets.append(CallCenter(domain, user))
+
     fixtures = []
     for set in indicator_sets:
         fixtures.append(gen_fixture(user, set))
@@ -56,7 +62,7 @@ def gen_fixture(user, indicator_set, include_empty=True):
     data = indicator_set.data
     indicator_names = None
     if include_empty:
-        indicator_names = [c.name for c in indicator_set.actual_columns]
+        indicator_names = [c.name for c in indicator_set.columns]
 
     xFixture = ElementTree.Element('fixture', attrib={'id': 'indicators:%s' % name, 'user_id': user.user_id})
     xIndicators = ElementTree.SubElement(xFixture, 'indicators')
