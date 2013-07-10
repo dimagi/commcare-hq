@@ -721,7 +721,7 @@ PILLOWTOPS = [
              ] + LOCAL_PILLOWTOPS
 
 # List of Fluff pillow classes that ctable should process diffs for
-FLUFF_PILLOW_TYPES_TO_SQL = []
+FLUFF_PILLOW_TYPES_TO_SQL = {}
 
 #Custom workflow for indexing xform data beyond the standard properties
 XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
