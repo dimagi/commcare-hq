@@ -2,7 +2,8 @@ from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter
-from corehq.apps.groups.models import Group
+from corehq.apps.groups.hierarchy import (get_hierarchy,
+        get_leaf_user_ids_from_hierarchy)
 
 
 class LinkedUserFilter(BaseDrilldownOptionFilter):
@@ -57,7 +58,7 @@ class LinkedUserFilter(BaseDrilldownOptionFilter):
     @property
     def drilldown_map(self):
         try:
-            hierarchy = Group.get_hierarchy(self.domain, self.user_types)
+            hierarchy = get_hierarchy(self.domain, self.user_types)
         except Exception:
             return []
 
@@ -102,5 +103,5 @@ class LinkedUserFilter(BaseDrilldownOptionFilter):
                 selected_user_id = user_id
                 break
 
-        return Group.get_leaf_user_ids_from_hierarchy(domain, cls.user_types,
+        return get_leaf_user_ids_from_hierarchy(domain, cls.user_types,
                 root_user_id=selected_user_id)
