@@ -1,28 +1,38 @@
 """
 Logic about chws phones and cases go here.
 """
+from collections import defaultdict
 from datetime import datetime
+import itertools
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import const
+from casexml.apps.case.xform import CaseDbCache
+
 
 def get_footprint(initial_case_list, strip_history=False):
     """
-    Get's the flat list of the footprint of cases based on a starting list.
+    Gets the flat list of the footprint of cases based on a starting list.
     Walks all the referenced indexes recursively.
     """
-    
-    def children(case):
-        return [CommCareCase.get(index.referenced_id,
-                                 strip_history=strip_history) \
-                for index in case.indices]
-    
+
+    if not initial_case_list:
+        return {}
+
+    case_db = CaseDbCache(domain=list(initial_case_list)[0].domain, strip_history=strip_history)
+
+    def children(case_db, case):
+        return [case_db.get(index.referenced_id) for index in case.indices]
+
     relevant_cases = {}
     queue = list(case for case in initial_case_list)
+    directly_referenced_indices = itertools.chain(*[[index.referenced_id for index in case.indices]
+                                                    for case in initial_case_list])
+    case_db.populate(directly_referenced_indices)
     while queue:
         case = queue.pop()
         if case.case_id not in relevant_cases:
             relevant_cases[case.case_id] = case
-            queue.extend(children(case))
+            queue.extend(children(case_db, case))
     return relevant_cases
 
 class CaseSyncUpdate(object):
@@ -61,32 +71,7 @@ class CaseSyncOperation(object):
         except AttributeError:
             keys = [[user.user_id, False]]
         
-        def case_modified_elsewhere_since_sync(case):
-            # this function uses closures so can't be moved
-            if not last_sync:
-                return True
-            else:
-                case_actions = CommCareCase.get_db().view('case/actions_by_case', key=case._id).all()
-                actions_sorted = sorted(case_actions, key=lambda x: x['value']['seq'])
-                for action in actions_sorted:
-                    server_date_string = action['value'].get('server_date', None)
-                    server_date = datetime.strptime(server_date_string, '%Y-%m-%dT%H:%M:%SZ') \
-                                    if server_date_string else None
-                    sync_log_id = action['value'].get('sync_log_id', None)
-                    if server_date and \
-                       server_date >= last_sync.date and \
-                       sync_log_id != last_sync.get_id:
-                        return True
-            
-            # If we got down here, as a last check make sure the phone
-            # is aware of the case. There are some corner cases where
-            # this won't be true
-            if not last_sync.phone_is_holding_case(case.get_id):
-                return True
-            
-            # We're good.
-            return False
-        
+
         # the world to sync involves
         # Union(cases on the phone, footprint of those,  
         #       cases the server thinks are the phone's, footprint of those) 
@@ -123,8 +108,8 @@ class CaseSyncOperation(object):
                                         _to_case_id_set(self.actual_relevant_cases) | \
                                         _to_case_id_set(self.phone_relevant_cases)])
         
-        self.all_potential_to_sync = filter(case_modified_elsewhere_since_sync,
-                                            list(self.all_potential_cases))
+        self.all_potential_to_sync = filter_cases_modified_elsewhere_since_sync(
+            list(self.all_potential_cases), last_sync)
         
         # this is messy but forces uniqueness at the case_id level, without
         # having to reload all the cases from the DB
@@ -145,3 +130,44 @@ def get_case_updates(user, last_sync):
     """
     return CaseSyncOperation(user, last_sync)
 
+def filter_cases_modified_elsewhere_since_sync(cases, last_sync):
+    # this function is pretty ugly and is heavily optimized to reduce the number
+    # of queries to couch.
+    if not last_sync:
+        return cases
+    else:
+        case_ids = [case._id for case in cases]
+        case_log_map = CommCareCase.get_db().view('phone/cases_to_sync_logs',
+            keys=case_ids,
+            reduce=False,
+        )
+        # {'value': '751830f8f69c2c76050b51ad649da85e', 'id': '473b2d5c-5d70-4e38-9f5a-17301b5d9e15', 'key': '473b2d5c-5d70-4e38-9f5a-17301b5d9e15'}
+        unique_combinations = set((row['key'], row['value']) for row in case_log_map)
+        modification_dates = CommCareCase.get_db().view('phone/case_modification_status',
+            keys=[list(combo) for combo in unique_combinations],
+            reduce=True,
+            group=True,
+        )
+        # we'll build a structure that looks like this for efficiency:
+        # { case_id: [{'token': '[token value', 'date': '[date value]'}, ...]}
+        all_case_updates_by_sync_token = defaultdict(lambda: [])
+        for row in modification_dates:
+            # incoming format is a list of objects that look like this:
+            # {
+            #   'value': '2012-08-22T08:55:14Z', (most recent date updated)
+            #   'key': ['[case id]', '[sync token id]']
+            # }
+            if row['value']:
+                all_case_updates_by_sync_token[row['key'][0]].append(
+                    {'token': row['key'][1], 'date': datetime.strptime(row['value'], '%Y-%m-%dT%H:%M:%SZ')}
+                )
+
+        def case_modified_elsewhere_since_sync(case):
+            # NOTE: uses closures
+            return any([row['date'] >= last_sync.date and row['token'] != last_sync._id
+                        for row in  all_case_updates_by_sync_token[case._id]])
+
+        def relevant(case):
+            return case_modified_elsewhere_since_sync(case) or not last_sync.phone_is_holding_case(case.get_id)
+
+        return filter(relevant, cases)
