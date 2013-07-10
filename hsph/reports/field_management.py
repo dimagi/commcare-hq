@@ -592,47 +592,44 @@ class FacilityWiseFollowUpReport(GenericTabularReport, DatespanMixin,
 
         rows = []
         today = date.today()
-        for item in  rpt_keys:
+        for item in rpt_keys:
             key_start = item['key']
             region_id, district_id, site_number, site_id, user_id = item['key']
             region_name = self.get_region_name(region_id)
             district_name = self.get_district_name(region_id, district_id)
-
-            site_name = self.get_site_name(region_id, district_id,
-                site_number)
-            site_name = facility_map[site_id]
-            fida = self.usernames[user_id]
+            site_name = facility_map.get(site_id, site_id)
+            fida = self.usernames.get(user_id, "")
             births = get_view_results('births', startdate, enddate)
             open_cases = get_view_results('open_cases', startdate, enddate)
 
             # Not closed and If today < date_admission + 8
-            start = today - timedelta(days = 7)
+            start = today - timedelta(days=7)
             not_yet_open_for_follow_up = get_view_results('needing_follow_up',
-            start.strftime('%Y-%m-%d'), today.strftime('%Y-%m-%d'))
+                start.strftime('%Y-%m-%d'), today.strftime('%Y-%m-%d'))
 
             # Not closed and if (date_admission + 8) <= today <= (date_admission + 21)
-            start = today - timedelta(days = 21)
-            end = today - timedelta(days = 8)
+            start = today - timedelta(days=21)
+            end = today - timedelta(days=8)
             open_for_cati_follow_up = get_view_results('needing_follow_up',
-            start.strftime('%Y-%m-%d'), end.strftime('%Y-%m-%d'))
+                start.strftime('%Y-%m-%d'), end.strftime('%Y-%m-%d'))
 
             # Not closed and today > date_admission+21
             end = today - timedelta(days = 22)
             open_for_fada_follow_up = get_view_results('needing_follow_up',
-            "", end.strftime('%Y-%m-%d'))
+                "", end.strftime('%Y-%m-%d'))
 
             closed_cases = get_view_results('closed_cases', startdate, enddate)
 
-            lost_to_follow_up = get_view_results('lost_to_follow_up', startdate,
-                                                                        enddate)
+            lost_to_follow_up = get_view_results('lost_to_follow_up', startdate, enddate)
 
             followed_up_by_call_center = get_view_results(
-                               'followed_up_by_call_center', startdate, enddate)
+                'followed_up_by_call_center', startdate, enddate)
             followed_up_by_field = get_view_results('followed_up_by_field',
-                                                             startdate, enddate)
+                startdate, enddate)
 
             rows.append([region_name, district_name, site_name, fida, births,
-            open_cases, not_yet_open_for_follow_up, open_for_cati_follow_up,
-            open_for_fada_follow_up, closed_cases, followed_up_by_call_center,
-            followed_up_by_field, lost_to_follow_up])
+                open_cases, not_yet_open_for_follow_up, open_for_cati_follow_up,
+                open_for_fada_follow_up, closed_cases, followed_up_by_call_center,
+                followed_up_by_field, lost_to_follow_up])
+
         return rows
