@@ -194,6 +194,23 @@ class Calculator(object):
 
         return results
 
+class AttributeGetter(object):
+    """
+    If you need to do something fancy in your group_by you would use this.
+    """
+    def __init__(self, attribute, getter_function=None):
+        """
+        name is what the attribute is set as in the fluff indicator doc.
+        getter_function is how to get it out of the source doc.
+        if getter_function isn't specified it will use source[name] as
+        the getter.
+        """
+        self.attribute = attribute
+        if getter_function == None:
+            getter_function = lambda item: item[attribute]
+
+        self.getter_function = getter_function
+
 
 class IndicatorDocumentMeta(schema.DocumentMeta):
 
@@ -219,6 +236,24 @@ class IndicatorDocument(schema.Document):
     document_class = None
     group_by = ()
 
+    @property
+    def wrapped_group_by(self):
+        def _wrap_if_necessary(string_or_attribute_getter):
+            if isinstance(string_or_attribute_getter, basestring):
+                getter = AttributeGetter(string_or_attribute_getter)
+            else:
+                getter = string_or_attribute_getter
+            assert isinstance(getter, AttributeGetter)
+            return getter
+
+        return (_wrap_if_necessary(item) for item in self.group_by)
+
+    def get_group_names(self):
+        return [gb.attribute for gb in self.wrapped_group_by]
+
+    def get_group_values(self):
+        return [self[attr] for attr in self.get_group_names()]
+
     @classmethod
     def get_now(cls):
         return datetime.datetime.utcnow().date()
@@ -227,8 +262,8 @@ class IndicatorDocument(schema.Document):
         for attr, calculator in self._calculators.items():
             self[attr] = calculator.calculate(item)
         self.id = item.get_id
-        for attr in self.group_by:
-            self[attr] = item[attr]
+        for getter in self.wrapped_group_by:
+            self[getter.attribute] = getter.getter_function(item)
         # overwrite whatever's in group_by with the default
         self['group_by'] = type(self)().group_by
 
@@ -281,8 +316,8 @@ class IndicatorDocument(schema.Document):
         diff = dict(domains=list(self.domains),
                     database=self.Meta.app_label,
                     doc_type=self._doc_type,
-                    group_names=list(self.group_by),
-                    group_values=[self[calc_name] for calc_name in self.group_by],
+                    group_names=self.get_group_names(),
+                    group_values=self.get_group_values(),
                     indicator_changes=[])
         indicators = diff["indicator_changes"]
 
