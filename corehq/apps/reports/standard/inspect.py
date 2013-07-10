@@ -374,7 +374,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         else:
             group_owners = Group.get_case_sharing_groups(self.domain)
         group_owners = [group._id for group in group_owners]
-        return self.user_ids + group_owners
+        return [user.get('user_id') for user in self.users] + group_owners
 
     @property
     @memoized
@@ -419,11 +419,6 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
     @property
     def user_filter(self):
         return super(CaseListReport, self).user_filter
-
-    @property
-    def report_context(self):
-        rep_context = super(CaseListReport, self).report_context
-        return rep_context
 
     @property
     @memoized
