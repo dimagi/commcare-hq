@@ -200,9 +200,9 @@ class AttributeGetter(object):
     """
     def __init__(self, attribute, getter_function=None):
         """
-        name is what the attribute is set as in the fluff indicator doc.
+        attribute is what the attribute is set as in the fluff indicator doc.
         getter_function is how to get it out of the source doc.
-        if getter_function isn't specified it will use source[name] as
+        if getter_function isn't specified it will use source[attribute] as
         the getter.
         """
         self.attribute = attribute
