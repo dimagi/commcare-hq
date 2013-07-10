@@ -265,7 +265,7 @@ class IndicatorDocument(schema.Document):
         for getter in self.wrapped_group_by:
             self[getter.attribute] = getter.getter_function(item)
         # overwrite whatever's in group_by with the default
-        self['group_by'] = type(self)().group_by
+        self['group_by'] = type(self)().get_group_names()
 
     def diff(self, other_doc):
         """
