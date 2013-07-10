@@ -189,7 +189,6 @@ class Group(UndoableDocument):
         validate_types -- whether to ensure that inner and leaf user nodes have
             the expected user types (by appearing in a group with the
             appropriate user_type metadata value)
-        
         """
         user_types = list(user_types)
 
@@ -251,6 +250,41 @@ class Group(UndoableDocument):
         root_users = root_group.get_users()
 
         return [get_descendants(u, user_types) for u in root_users]
+
+    @classmethod
+    def get_leaf_user_ids_from_hierarchy(cls, domain, user_types,
+                                         root_user_id=None):
+        import collections
+        root_nodes = cls.get_hierarchy(domain, user_types)
+
+        if root_user_id:
+            q = collections.deque(root_nodes)
+            root_node = None
+            while q:
+                node = q.popleft()
+                if node['user']._id == root_user_id:
+                    root_node = node
+                    break
+                q.extend(node.get('descendants', []))
+            if not root_node:
+                raise Exception("Invalid user id %r for hierarchy %r") % (
+                        root_user_id)
+            root_nodes = [root_node]
+
+        def get_leaf_users(node):
+            descendants = node.get('descendants')
+            if descendants:
+                leaves = []
+                for d in descendants:
+                    leaves.extend(get_leaf_users(d))
+            else:
+                leaves = node['child_users']
+            return leaves
+
+        leaf_nodes = []
+        for root_node in root_nodes:
+            leaf_nodes.extend(get_leaf_users(root_node))
+        return [n._id for n in leaf_nodes]
 
     @classmethod
     def get_case_sharing_groups(cls, domain, wrap=True):

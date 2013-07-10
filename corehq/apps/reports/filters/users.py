@@ -41,7 +41,7 @@ class LinkedUserFilter(BaseDrilldownOptionFilter):
             yield (
                 type,
                 _("Select %(child_type)s") % {'child_type': type}, 
-                type.lower()
+                type
             )
 
     @property
@@ -89,3 +89,18 @@ class LinkedUserFilter(BaseDrilldownOptionFilter):
             return ret
 
         return [get_values(top_level_node, 0) for top_level_node in hierarchy]
+
+    @classmethod
+    def get_user_ids(cls, request_params, domain=None):
+        domain = domain or cls.domain
+
+        selected_user_id = None
+
+        for user_type in reversed(cls.user_types):
+            user_id = request_params.get("%s_%s" % (cls.slug, user_type))
+            if user_id:
+                selected_user_id = user_id
+                break
+
+        return Group.get_leaf_user_ids_from_hierarchy(domain, cls.user_types,
+                root_user_id=selected_user_id)
