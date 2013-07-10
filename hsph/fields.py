@@ -110,7 +110,7 @@ class NameOfDCTLField(ReportSelectField):
 
 class DCTLToFIDAFilter(LinkedUserFilter):
     domain = 'hsph'
-    user_types = ["DCTL", "FIDA"]
+    user_types = ("DCTL", "FIDA")
 
 class AllocatedToFilter(BaseSingleOptionFilter):
     slug = "allocated_to"

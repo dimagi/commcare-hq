@@ -73,7 +73,7 @@ class FIDAPerformanceReport(GenericTabularReport, CustomProjectReport,
     def headers(self):
         return DataTablesHeader(
             DataTablesColumn("Name of FIDA"),
-            #DataTablesColumn("Name of Team Leader"),
+            DataTablesColumn("Name of Team Leader"),
             NumericColumn("No. of Facilities Covered"),
             NumericColumn("No. of Facility Visits"),
             NumericColumn("No. of Facilities with less than 2 visits/week"),
@@ -89,15 +89,16 @@ class FIDAPerformanceReport(GenericTabularReport, CustomProjectReport,
 
     @property
     def rows(self):
-        self.override_user_ids = DCTLToFIDAFilter.get_user_ids(
+        user_data = DCTLToFIDAFilter.get_user_data(
                 self.request_params, domain=self.domain)
+        self.override_user_ids = user_data['leaf_user_ids']
 
         user_site_map = get_user_site_map(self.domain)
 
         # ordered keys with default values
         keys = SortedDict([
             ('fidaName', None),
-            #('teamLeaderName', None),
+            ('teamLeaderName', None),
             ('facilitiesCovered', 0),
             ('facilityVisits', 0),
             ('facilitiesVisitedLessThanTwicePerWeek', None),
@@ -141,6 +142,11 @@ class FIDAPerformanceReport(GenericTabularReport, CustomProjectReport,
 
             row['fidaName'] = self.table_cell(
                     user.get('raw_username'), user.get('username_in_report'))
+
+            dctl = user_data['user_parent_map'][user['user_id']]
+            row['teamLeaderName'] = self.table_cell(
+                    dctl.raw_username,
+                    dctl.username_in_report)
             row['facilitiesCovered'] = len(user_site_map[user_id])
             row['facilitiesVisitedLessThanTwicePerWeek'] = len(
                 filter(
@@ -224,7 +230,7 @@ class FacilityRegistrationsReport(GenericTabularReport, CustomProjectReport,
         return DataTablesHeader(
             DataTablesColumn("Facility"),
             DataTablesColumn("FIDA"),
-            #DataTablesColumn("Team Leader"),
+            DataTablesColumn("Team Leader"),
             NumericColumn("No. of visits by FIDA"),
             NumericColumn("No. of birth registrations"),
             NumericColumn("No. of births with no phone details"),
@@ -233,8 +239,9 @@ class FacilityRegistrationsReport(GenericTabularReport, CustomProjectReport,
 
     @property
     def rows(self):
-        self.override_user_ids = DCTLToFIDAFilter.get_user_ids(
+        user_data = DCTLToFIDAFilter.get_user_data(
                 self.request_params, domain=self.domain)
+        self.override_user_ids = user_data['leaf_user_ids']
 
         db = get_db()
         site_map = self.selected_site_map or self.site_map
@@ -257,9 +264,15 @@ class FacilityRegistrationsReport(GenericTabularReport, CustomProjectReport,
                 ).first()
                 
                 if data:
+                    dctl = user_data['user_parent_map'][user['user_id']]
                     rows.append([
                         self.facility_name_map[site_id],
-                        self.table_cell(user.get('raw_username'), user.get('username_in_report')),
+                        self.table_cell(
+                            user.get('raw_username'),
+                            user.get('username_in_report')),
+                        self.table_cell(
+                            dctl.raw_username,
+                            dctl.username_in_report),
                         numeric_cell(data.get('facilityVisits', 0)),
                         numeric_cell(data.get('birthRegistrations', 0)),
                         numeric_cell(data.get('noPhoneDetails', 0)),
