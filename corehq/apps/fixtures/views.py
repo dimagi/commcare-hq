@@ -320,16 +320,16 @@ class UploadItemLists(TemplateView):
             upload_result = run_upload(request, self.domain, workbook)
             if upload_result["unknown_groups"]:
                 for group_name in upload_result["unknown_groups"]:
-                    messages.error(request, _("Unknown group: '%(name)s'" % {'name': group_name}))
+                    messages.error(request, _("Unknown group: '%(name)s'") % {'name': group_name})
             if upload_result["unknown_users"]:
                 for user_name in upload_result["unknown_users"]:
-                    messages.error(request, _("Unknown user: '%(name)s'" % {'name': user_name}))
+                    messages.error(request, _("Unknown user: '%(name)s'") % {'name': user_name})
         except WorksheetNotFound as e:
-            messages.error(request, _("Workbook does not contain a sheet called '%(title)s'" % {'title': e.title}))
+            messages.error(request, _("Workbook does not contain a sheet called '%(title)s'") % {'title': e.title})
             return error_redirect()
         except Exception as e:
             notify_exception(request)
-            messages.error(request, _("Fixture upload could not complete due to the following error: '%(e)s'" % {'e': e}))
+            messages.error(request, _("Fixture upload could not complete due to the following error: '%(e)s'") % {'e': e})
             return error_redirect()
 
         return HttpResponseRedirect(reverse('fixture_view', args=[self.domain]))
@@ -488,19 +488,19 @@ def run_upload(request, domain, workbook):
                         if group:
                             old_data_item.add_group(group, transaction=transaction)
                         else:
-                            messages.error(request, _("Unknown group: '%(name)s'. But the row is successfully added" % {'name': group_name}))
+                            messages.error(request, _("Unknown group: '%(name)s'. But the row is successfully added") % {'name': group_name})
 
                 for raw_username in di.get('user', []):
                         try:
                             username = normalize_username(raw_username, domain)
                         except ValidationError:
-                            messages.error(request, _("Invalid username: '%(name)s'. Row is not added" % {'name': raw_username}))
+                            messages.error(request, _("Invalid username: '%(name)s'. Row is not added") % {'name': raw_username})
                             continue
                         user = CommCareUser.get_by_username(username)
                         if user:
                             old_data_item.add_user(user)
                         else:
-                            messages.error(request, _("Unknown user: '%(name)s'. But the row is successfully added" % {'name': raw_username}))
+                            messages.error(request, _("Unknown user: '%(name)s'. But the row is successfully added") % {'name': raw_username})
 
     return_val["number_of_fixtures"] = number_of_fixtures + 1
     return return_val
