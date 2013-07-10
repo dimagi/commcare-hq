@@ -4,6 +4,7 @@ There's a dropdown report filter that uses this data to narrow down the users
 included in a report. See the hsph-dev project for an example.
 """
 from functools import partial
+from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.groups.models import Group
 
@@ -31,10 +32,10 @@ def get_group_by_hierarchy_type(domain, type, owner_name=None):
     else:
         return view(startkey=key, endkey=key + [{}])
 
-
+@memoized
 def get_hierarchy(domain, user_types, validate_types=False):
     """
-    user_types -- a list of types corresponding to the levels of a tree of
+    user_types -- a tuple of types corresponding to the levels of a tree of
         groups linked by their owner_type, child_type metadata and linked to
         users by their owner_name metadata (username).
         
@@ -44,8 +45,6 @@ def get_hierarchy(domain, user_types, validate_types=False):
         the expected user types (by appearing in a group with the
         appropriate user_type metadata value)
     """
-    user_types = list(user_types)
-
     # first get a dict keyed by the (owner_type, child_type) tuple (it
     # could just as well be a list in order) of dicts keyed by owner name
     # containing all groups that define this hierarchy type
@@ -107,7 +106,7 @@ def get_hierarchy(domain, user_types, validate_types=False):
     return [get_descendants(u, user_types) for u in root_users]
 
 
-def get_leaf_user_ids_from_hierarchy(domain, user_types, root_user_id=None):
+def get_user_data_from_hierarchy(domain, user_types, root_user_id=None):
     import collections
     root_nodes = get_hierarchy(domain, user_types)
 
@@ -125,7 +124,15 @@ def get_leaf_user_ids_from_hierarchy(domain, user_types, root_user_id=None):
                     root_user_id)
         root_nodes = [root_node]
 
+    # this is a minor hack, could probably make the node structure better and
+    # have leaf nodes for each leaf child, and add a parent reference
+    user_parent_map = {}
+
     def get_leaf_users(node):
+        current_user = node['user']
+        for child in node['child_users']:
+            user_parent_map[child._id] = current_user
+
         descendants = node.get('descendants')
         if descendants:
             leaves = []
@@ -138,4 +145,8 @@ def get_leaf_user_ids_from_hierarchy(domain, user_types, root_user_id=None):
     leaf_nodes = []
     for root_node in root_nodes:
         leaf_nodes.extend(get_leaf_users(root_node))
-    return [n._id for n in leaf_nodes]
+
+    return {
+        'leaf_user_ids': [n._id for n in leaf_nodes],
+        'user_parent_map': user_parent_map,
+    }
