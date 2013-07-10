@@ -164,7 +164,7 @@ def production():
         'rabbitmq': ['hqdb0.internal.commcarehq.org'],
         'sofabed': ['hqdb0.internal.commcarehq.org'], #todo, right now group it with celery
         'django_celery': ['hqdb0.internal.commcarehq.org'],
-        'django_app': ['hqdjango0.internal.commcarehq.org', 'hqdjango2.internal.commcarehq.org'],
+        'django_app': ['hqdjango0.internal.commcarehq.org', 'hqdjango1.internal.commcarehq.org', 'hqdjango2.internal.commcarehq.org'],
         'django_pillowtop': ['hqdb0.internal.commcarehq.org'],
 
         # for now, we'll have touchforms run on both hqdb and hqdjango0
