@@ -18,7 +18,7 @@ from corehq.apps.reports import util
 
 from corehq.apps.reports.standard.inspect import CaseDisplay, CaseListReport
 from hsph.reports import HSPHSiteDataMixin
-from hsph.fields import AllocatedToFilter, IHForCHFField
+from hsph.fields import AllocatedToFilter, IHForCHFField, DCTLToFIDAFilter
 from corehq.apps.api.es import FullCaseES
 from django.utils.translation import ugettext as _
 from datetime import date, timedelta
@@ -48,11 +48,11 @@ def get_user_site_map(domain):
 
 
 def get_facility_map(domain):
-        from hsph.fields import FacilityField
+    from hsph.fields import FacilityField
 
-        facilities = FacilityField.getFacilities(domain=domain)
-        return dict([(facility.get('val'), facility.get('text'))
-                     for facility in facilities])
+    facilities = FacilityField.getFacilities(domain=domain)
+    return dict([(facility.get('val'), facility.get('text'))
+                for facility in facilities])
 
 
 class FIDAPerformanceReport(GenericTabularReport, CustomProjectReport,
@@ -63,11 +63,11 @@ class FIDAPerformanceReport(GenericTabularReport, CustomProjectReport,
     name = "FIDA Performance"
     slug = "hsph_fida_performance"
     
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.DatespanField',
-              'hsph.fields.NameOfFIDAField']
-
-    filter_group_name = "Role - FIDA" 
+    fields = [
+        'corehq.apps.reports.fields.FilterUsersField',
+        'corehq.apps.reports.fields.DatespanField',
+        'hsph.fields.DCTLToFIDAFilter',
+    ]
 
     @property
     def headers(self):
@@ -89,6 +89,9 @@ class FIDAPerformanceReport(GenericTabularReport, CustomProjectReport,
 
     @property
     def rows(self):
+        self.override_user_ids = DCTLToFIDAFilter.get_user_ids(
+                self.request_params, domain=self.domain)
+
         user_site_map = get_user_site_map(self.domain)
 
         # ordered keys with default values
@@ -205,9 +208,8 @@ class FacilityRegistrationsReport(GenericTabularReport, CustomProjectReport,
     slug = "hsph_facility_registrations"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.DatespanField',
-              'hsph.fields.NameOfFIDAField',
+              'hsph.fields.DCTLToFIDAFilter',
               'hsph.fields.SiteField']
-    filter_group_name = "Role - FIDA"
 
     @property
     @memoized
@@ -231,6 +233,9 @@ class FacilityRegistrationsReport(GenericTabularReport, CustomProjectReport,
 
     @property
     def rows(self):
+        self.override_user_ids = DCTLToFIDAFilter.get_user_ids(
+                self.request_params, domain=self.domain)
+
         db = get_db()
         site_map = self.selected_site_map or self.site_map
        
@@ -240,8 +245,6 @@ class FacilityRegistrationsReport(GenericTabularReport, CustomProjectReport,
         facilities = facilities['ihf'] + facilities['chf']
 
         rows = []
-
-
 
         for user in self.users:
             for site_id in facilities:
@@ -382,7 +385,7 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin,
         'corehq.apps.reports.fields.DatespanField',
         'hsph.fields.SiteField',
         'hsph.fields.AllocatedToFilter',
-        'hsph.fields.NameOfFIDAField',
+        'hsph.fields.DCTLToFIDAFilter',
         'corehq.apps.reports.fields.SelectOpenCloseField',
     )
 
@@ -465,6 +468,8 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin,
 
     @property
     def shared_pagination_GET_params(self):
+        self.override_user_ids = DCTLToFIDAFilter.get_user_ids(
+                self.request_params, domain=self.domain)
         params = super(CaseReport, self).shared_pagination_GET_params
 
         slugs = [
@@ -512,8 +517,7 @@ class FacilityWiseFollowUpReport(GenericTabularReport, DatespanMixin,
     name = "Facility Wise Follow Up Report"
     slug = "hsph_facility_wise_follow_up"
     fields = ['corehq.apps.reports.fields.DatespanField',
-              'corehq.apps.reports.fields.GroupField',
-              'hsph.fields.NameOfFIDAField',
+              'hsph.fields.DCTLToFIDAFilter',
               'hsph.fields.SiteField']
 
     show_all_rows_option = True
@@ -543,6 +547,9 @@ class FacilityWiseFollowUpReport(GenericTabularReport, DatespanMixin,
 
     @property
     def rows(self):
+        self.override_user_ids = DCTLToFIDAFilter.get_user_ids(
+                self.request_params, domain=self.domain)
+
         startdate = self.datespan.startdate_param_utc[:10]
         enddate = self.datespan.enddate_param_utc[:10]
 
