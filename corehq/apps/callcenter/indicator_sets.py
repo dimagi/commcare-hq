@@ -1,12 +1,9 @@
 from datetime import date, timedelta
 from couchdbkit import NoResultFound
-import sqlagg
 from sqlagg.columns import SumColumn, SimpleColumn
-import sqlalchemy
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 from dimagi.utils.decorators.memoized import memoized
-import settings
 
 
 class IndicatorSetException(Exception):
