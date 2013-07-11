@@ -54,8 +54,9 @@ class CommCareUserMemoizer(object):
 
 class ProjectReportParametersMixin(object):
     """
-        All the parameters necessary for the project reports.
-        Intended to be mixed in with a GenericReportView object.
+    All the parameters necessary for the project reports.
+    Intended to be mixed in with a GenericReportView object.
+
     """
 
     default_case_type = None
@@ -63,17 +64,21 @@ class ProjectReportParametersMixin(object):
     filter_users_field_class = FilterUsersField
     include_inactive = False
 
+    # set this to set the report's user ids from within the report
+    # (i.e. based on a filter's return value).
+    override_user_ids = None
+
     @property
     @memoized
     def CommCareUser(self):
         return CommCareUserMemoizer()
 
     @memoized
-    def get_all_users_by_domain(self, group=None, individual=None, user_filter=None, simplified=False):
+    def get_all_users_by_domain(self, group=None, user_ids=None, user_filter=None, simplified=False):
         return list(util.get_all_users_by_domain(
             domain=self.domain,
             group=group,
-            individual=individual,
+            user_ids=user_ids,
             user_filter=user_filter,
             simplified=simplified,
             CommCareUser=self.CommCareUser
@@ -142,9 +147,15 @@ class ProjectReportParametersMixin(object):
             group = Group.by_name(self.domain, self.filter_group_name)
         else:
             group = self.group
+
+        if self.override_user_ids is not None:
+            user_ids = self.override_user_ids
+        else:
+            user_ids = [self.individual]
+
         return self.get_all_users_by_domain(
             group=group,
-            individual=self.individual,
+            user_ids=tuple(user_ids),
             user_filter=tuple(self.user_filter),
             simplified=True
         )
