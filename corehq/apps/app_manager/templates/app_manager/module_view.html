@@ -73,10 +73,10 @@
 
 <div class="tabbable">
 <ul class="nav nav-tabs" id="module-view-tabs">
-    <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
-    <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
+    <li class="active"><a href="#module-settings" data-toggle="hash-tab">{% trans "Settings" %}</a></li>
+    <li><a href="#case-management" data-toggle="hash-tab">{% trans "Case Management" %}</a></li>
     <li>
-        <a href="#detail-screen-config-tab" data-toggle="tab">
+        <a href="#case-list" data-toggle="hash-tab">
             {% trans "Case List" %}
         </a>
     </li>
@@ -120,7 +120,7 @@
             </fieldset>
         </form>
     </div>
-    <div class="tab-pane" id="case-settings">
+    <div class="tab-pane" id="case-management">
         <form class="form-horizontal save-button-form" action="{% url corehq.apps.app_manager.views.edit_module_attr domain app.id module.id 'all' %}">
             <div class="save-button-holder clearfix"></div>
             <fieldset>
@@ -189,7 +189,7 @@
     </div>
     {% endcomment %}
 
-    <div class="tab-pane" id="detail-screen-config-tab">
+    <div class="tab-pane" id="case-list">
         <div class="alert alert-warning" id="detail-screen-config-warning"
              data-bind="visible: !requires_case_details()">
             {% blocktrans %}

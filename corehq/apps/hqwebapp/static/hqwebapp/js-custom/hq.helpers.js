@@ -1,3 +1,15 @@
+
+var hash = window.location.hash;
+// hack to prevent the default hash scroll behavior when using hash-tabs
+//http://stackoverflow.com/questions/3659072/jquery-disable-anchor-jump-when-loading-a-page#answer-13349759
+if (hash && $('.nav-tabs a[data-toggle="hash-tab"]a[href="' + hash + '"]').length > 0) {
+    $('ul.nav a[href="' + hash + '"]').tab('show');
+    window.scrollTo(0, 0);
+    setTimeout(function() {
+        window.scrollTo(0, 0);
+    }, 1);
+}
+
 $(function() {
     // trick to give a select menu an initial value
     $('select[data-value]').each(function () {
@@ -25,6 +37,17 @@ $(function() {
     $(document).on('submit', 'form', function(ev) {
         var form = $(ev.target);
         form.find('.disable-on-submit').prop('disabled',true).addClass('disabled');
+    });
+
+    // now you can use data-toggle=hash-tab instead of the normal data-toggle=tab to persist the current open tab when
+    // reloading a page or links to people. It also lets you have smart urls that leverage hashes
+    // http://stackoverflow.com/questions/12131273/twitter-bootstrap-tabs-url-doesnt-change#answer-12138756
+    $('.nav-tabs a[data-toggle="hash-tab"]').click(function (e) {
+        e.preventDefault();
+        $(this).tab('show');
+        var scrollmem = $('body').scrollTop();
+        window.location.hash = this.hash;
+        $('html,body').scrollTop(scrollmem);
     });
 
     $(document).on('click', '.notification-close-btn', function() {
