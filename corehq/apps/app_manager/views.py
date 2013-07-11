@@ -562,7 +562,7 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     app = get_app(domain, app_id)
     latest_release = get_app(domain, app_id, latest=True)
     context = get_apps_base_context(request, domain, app)
-    context['sms_contacts'] = get_sms_autocomplete_context(request, domain)["sms_contacts"]
+    context['sms_contacts'] = get_sms_autocomplete_context(request, domain)['sms_contacts']
 
     saved_apps = []
 
