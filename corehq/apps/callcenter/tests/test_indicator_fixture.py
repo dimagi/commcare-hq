@@ -1,10 +1,12 @@
 from datetime import date, timedelta
 from xml.etree import ElementTree
 from sqlagg import SumColumn
+from sqlagg.columns import SimpleColumn
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from corehq.apps.callcenter.fixturegenerators import gen_fixture
 from corehq.apps.callcenter.indicator_sets import SqlIndicatorSet
 from corehq.apps.callcenter.tests.sql_fixture import load_data
+from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase
 
@@ -19,9 +21,10 @@ class CallCenter(SqlIndicatorSet):
     name = 'call_center'
     table_name = 'call_center'
 
-    def __init__(self, config, group):
-        super(CallCenter, self).__init__(config)
+    def __init__(self, domain, user, group=None, keys=None):
+        super(CallCenter, self).__init__(domain, user)
         self.group = group
+        self.test_keys = keys
 
     @property
     def filters(self):
@@ -37,15 +40,20 @@ class CallCenter(SqlIndicatorSet):
 
     @property
     def group_by(self):
-        return self.group
+        return [self.group] if self.group else []
 
     @property
-    def available_columns(self):
-        return [
-            SumColumn('cases_updated', alias='casesUpdatedInLastWeek'),
-            SumColumn('cases_updated',
-                      filters=['date >= :2weekago', 'date < :weekago'],
-                      alias='casesUpdatedInWeekPrior'),
+    def keys(self):
+        return self.test_keys
+
+    @property
+    def columns(self):
+        cols = [DatabaseColumn("case", 'case', SimpleColumn, sortable=False)] if self.group_by else []
+        return cols + [
+            DatabaseColumn('casesUpdatedInLastWeek', 'cases_updated', SumColumn, sortable=False),
+            DatabaseColumn('casesUpdatedInWeekPrior', 'cases_updated', SumColumn,
+                           filters=['date >= :2weekago', 'date < :weekago'],
+                           alias='casesUpdatedInWeekPrior', sortable=False),
         ]
 
 
@@ -61,7 +69,7 @@ class IndicatorFixtureTest(TestCase):
         cls.user.delete()
 
     def test_callcenter_group(self):
-        fixture = gen_fixture(self.user, CallCenter(self.config, 'case'))
+        fixture = gen_fixture(self.user, CallCenter('domain', 'user', 'case'))
         check_xml_line_by_line(self, """
         <fixture id="indicators:call_center" user_id="{userid}">
             <indicators>
@@ -74,7 +82,7 @@ class IndicatorFixtureTest(TestCase):
         """.format(userid=self.user.user_id), ElementTree.tostring(fixture))
 
     def test_callcenter_no_group(self):
-        fixture = gen_fixture(self.user, CallCenter(self.config, None))
+        fixture = gen_fixture(self.user, CallCenter('domain', 'user'))
         check_xml_line_by_line(self, """
         <fixture id="indicators:call_center" user_id="{userid}">
             <indicators>
@@ -84,12 +92,19 @@ class IndicatorFixtureTest(TestCase):
         </fixture>
         """.format(userid=self.user.user_id), ElementTree.tostring(fixture))
 
-    def test_callcenter_columns(self):
-        fixture = gen_fixture(self.user, CallCenter(dict(columns=['casesUpdatedInLastWeek']), None))
+    def test_callcenter_keys(self):
+        fixture = gen_fixture(self.user, CallCenter('domain', 'user', 'case', [['123'], ['456']]))
         check_xml_line_by_line(self, """
         <fixture id="indicators:call_center" user_id="{userid}">
             <indicators>
-                <casesUpdatedInLastWeek>3</casesUpdatedInLastWeek>
+                <case id="123">
+                    <casesUpdatedInLastWeek>3</casesUpdatedInLastWeek>
+                    <casesUpdatedInWeekPrior>4</casesUpdatedInWeekPrior>
+                </case>
+                <case id="456">
+                    <casesUpdatedInLastWeek>0</casesUpdatedInLastWeek>
+                    <casesUpdatedInWeekPrior>0</casesUpdatedInWeekPrior>
+                </case>
             </indicators>
         </fixture>
         """.format(userid=self.user.user_id), ElementTree.tostring(fixture))

@@ -26,7 +26,7 @@ def indicators(user, version=V2, last_sync=None):
     return fixtures
 
 
-def gen_fixture(user, indicator_set, include_empty=True):
+def gen_fixture(user, indicator_set):
     """
     Generate the fixture from the indicator data.
 
@@ -38,7 +38,6 @@ def gen_fixture(user, indicator_set, include_empty=True):
     name = 'demo'
     group = None
     data = {'indicator_a': 1}
-    indicator_names = ['indicator_a', 'indicator_b']
     <fixture id="indicators:demo" user_id="...">
         <indicators>
             <indicator_a>1</indicator_a>
@@ -48,7 +47,7 @@ def gen_fixture(user, indicator_set, include_empty=True):
 
     name = 'demo'
     group = 'user'
-    data = {'user1': {'indicator_a': 1}}
+    data = {'user1': {'user': 'user1', 'indicator_a': 1}}
     <fixture id="indicators:demo" user_id="...">
         <indicators>
             <user id="user1">
@@ -60,27 +59,27 @@ def gen_fixture(user, indicator_set, include_empty=True):
     name = indicator_set.name
     group = indicator_set.group_by
     data = indicator_set.data
-    indicator_names = None
-    if include_empty:
-        indicator_names = [c.name for c in indicator_set.columns]
 
     xFixture = ElementTree.Element('fixture', attrib={'id': 'indicators:%s' % name, 'user_id': user.user_id})
     xIndicators = ElementTree.SubElement(xFixture, 'indicators')
     if group:
-        for group_id, group_data in data.items():
-            xGroup = ElementTree.SubElement(xIndicators, group, attrib={'id': group_id})
-            if not indicator_names:
-                indicator_names = group_data.keys()
+        if len(group) > 1:
+            raise Exception("Only single level grouping supported.")
 
-            for i in indicator_names:
-                if not i == group:
-                    xIndicator = ElementTree.SubElement(xGroup, i)
-                    xIndicator.text = str(group_data.get(i, 0))
+        group_name = group[0]
+        group_columns = [c for c in indicator_set.columns if c.view.name == group_name]
+        for group_id, group_data in data.items():
+            elem_name = group_columns[0].header if group_columns else group_name
+            xGroup = ElementTree.SubElement(xIndicators, elem_name, attrib={'id': group_id})
+            for c in indicator_set.columns:
+                key = c.view.name
+                if key != group_name:
+                    xIndicator = ElementTree.SubElement(xGroup, c.header)
+                    xIndicator.text = str(group_data.get(key, 0))
     else:
-        if not indicator_names:
-            indicator_names = data.keys()
-        for i in indicator_names:
-            xIndicator = ElementTree.SubElement(xIndicators, i)
-            xIndicator.text = str(data.get(i, 0))
+        for c in indicator_set.columns:
+            key = c.view.name
+            xIndicator = ElementTree.SubElement(xIndicators, c.header)
+            xIndicator.text = str(data.get(key, 0))
 
     return xFixture

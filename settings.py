@@ -322,6 +322,7 @@ OPENROSA_VERSION = "1.0"
 FIXTURE_GENERATORS = [
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",
+    "corehq.apps.callcenter.fixturegenerators.indicators",
 ]
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'

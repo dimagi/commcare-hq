@@ -1,7 +1,11 @@
 from datetime import date, timedelta
+from couchdbkit import NoResultFound
 import sqlagg
 from sqlagg.columns import SumColumn, SimpleColumn
 import sqlalchemy
+from casexml.apps.case.models import CommCareCase
+from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
+from dimagi.utils.decorators.memoized import memoized
 import settings
 
 
@@ -9,73 +13,44 @@ class IndicatorSetException(Exception):
     pass
 
 
-class SqlIndicatorSet(object):
+class SqlIndicatorSet(SqlData):
+    no_value = 0
     name = ''
     table_name = None
 
-    def __init__(self, domain, user, config=None):
+    def __init__(self, domain, user):
         self.domain = domain
         self.user = user
-        self.config = config or {}
-
-    @property
-    def columns(self):
-        """
-        Returns a list of Column objects
-        [SumColumn('cases_updated', alias='casesUpdatedInLastWeek'), ...]
-
-        Each column should be self contained and not refer to any other columns
-        i.e. no AliasColumn
-        """
-        raise NotImplementedError()
-
-    @property
-    def group_by(self):
-        """
-        Returns then name of the column to group the data by or None.
-        """
-        raise NotImplementedError()
-
-    @property
-    def filters(self):
-        """
-        Returns a list of filter statements e.g. ["date > :enddate"]
-        """
-        raise NotImplementedError()
-
-    @property
-    def filter_values(self):
-        """
-        Return a dict mapping the filter keys to actual values e.g. {"enddate": date(2013,01,01)}
-        """
-        raise NotImplementedError()
-
-    @property
-    def keys(self):
-        """
-        The list of report keys (e.g. users) or None to just display all the data returned from the query. Each value
-        in this list should be a list of the same dimension as the 'group_by' list.
-
-        e.g.
-            group_by = ['region', 'sub_region']
-            keys = [['region1', 'sub1'], ['region1', 'sub2'] ... ]
-        """
-        return None
 
     @property
     def data(self):
-        group_by = [self.group_by] if self.group_by else []
-        qc = sqlagg.QueryContext(self.table_name, self.filters, group_by)
-        for c in self.columns:
-            qc.append_column(c)
-        engine = sqlalchemy.create_engine(settings.SQL_REPORTING_DATABASE_URL)
-        conn = engine.connect()
-        try:
-            data = qc.resolve(conn, self.filter_values)
-        finally:
-            conn.close()
+        data = super(SqlIndicatorSet, self).data
+
+        if self.keys:
+            for key_group in self.keys:
+                row_key = self._row_key(key_group)
+                row = data.get(row_key, None) if row_key else data
+                if not row:
+                    row = dict(zip(self.group_by, key_group))
+
+                data[row_key] = dict([(c.view.name, self._or_no_value(c.get_value(row))) for c in self.columns])
+        else:
+            if self.group_by:
+                for k, v in data.items():
+                    data[k] = dict([(c.view.name, self._or_no_value(c.get_value(v))) for c in self.columns])
+            else:
+                data = dict([(c.view.name, self._or_no_value(c.get_value(data))) for c in self.columns])
 
         return data
+
+    def _row_key(self, key_group):
+        if len(self.group_by) == 1:
+            return key_group[0]
+        elif len(self.group_by) > 1:
+            return tuple(key_group)
+
+    def _or_no_value(self, value):
+        return value if value is not None else self.no_value
 
 
 class CallCenter(SqlIndicatorSet):
@@ -93,12 +68,11 @@ class CallCenter(SqlIndicatorSet):
 
     @property
     def filters(self):
-        return ['domain_name = :domain', 'date >= :weekago', 'date < :today']
+        return ['date >= :weekago', 'date < :today']
 
     @property
     def filter_values(self):
         return {
-            'domain': self.domain.name,
             'today': date.today() - timedelta(days=1),
             'weekago': date.today() - timedelta(days=7),
             '2weekago': date.today() - timedelta(days=14),
@@ -107,17 +81,37 @@ class CallCenter(SqlIndicatorSet):
 
     @property
     def group_by(self):
-        return 'user_id'
+        return ['user_id']
 
     @property
-    def available_columns(self):
+    def columns(self):
         return [
-            SumColumn('case_updates', alias='casesUpdatedInLastWeek'),
-            SumColumn('case_updates',
-                      filters=['date >= :2weekago', 'date < :weekago'],
-                      alias='casesUpdatedInWeekPrior'),
-            SumColumn('case_updates',
-                      filters=['date >= :30daysago', 'date < :today'],
-                      alias='casesUpdatedIn30Days'),
+            DatabaseColumn("case", 'user_id', SimpleColumn, format_fn=self.get_user_case_id, sortable=False),
+            DatabaseColumn('formsSubmittedInLastWeek', 'sumbission_count', SumColumn,
+                           alias='last_week', sortable=False),
+            DatabaseColumn('formsSubmittedInWeekPrior', 'sumbission_count', SumColumn,
+                filters=['date >= :2weekago', 'date < :weekago'], alias='week_prior', sortable=False),
+            DatabaseColumn('formsSubmittedIn30days', 'sumbission_count', SumColumn,
+                filters=['date >= :30daysago', 'date < :today'], alias='30_days', sortable=False),
         ]
 
+    @property
+    @memoized
+    def keys(self):
+        key = ['open type', self.domain.name, self.domain.call_center_config.case_type]
+        cases = CommCareCase.view('case/all_cases',
+            startkey=key,
+            endkey=key + [{}],
+            reduce=False,
+            include_docs=False).all()
+        return [[c['id']] for c in cases]
+
+    def get_user_case_id(self, user_id):
+        try:
+            case = CommCareCase.view('hqcase/by_domain_hq_user_id',
+                key=[self.domain.name, user_id],
+                reduce=False,
+                include_docs=False).one()
+            return case['id'] if case else user_id
+        except NoResultFound:
+            return user_id
