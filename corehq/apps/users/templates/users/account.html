@@ -59,12 +59,24 @@
         });
 {% if couch_user.is_commcare_user %}
         $(function () {
-            var customDataEditor = uiElement.map_list('{{ couch_user.user_id }}', 'User Data');
-            customDataEditor.val({{ couch_user.user_data_json|safe }});
-            customDataEditor.on("change", function () {
-                $("input#user-data").val(JSON.stringify(this.val()));
-            });
-            $("#user-data-form").prepend(customDataEditor.ui);
+            var customDataEditor;
+
+            function handleChange() {
+                var data = customDataEditor.val();
+
+                $(".user-data-role").each(function (i, el) {
+                    var attrName = $(el).attr('name');
+                    data[attrName] = $(el).is(':checked') ? 'true' : 'false';
+                });
+            
+                $("input#user-data").val(JSON.stringify(data));
+            }
+        
+            customDataEditor = uiElement.map_list('{{ couch_user.user_id }}', 'User Data');
+            customDataEditor.val({{ user_data|JSON }});
+            customDataEditor.on('change', handleChange);
+            $(".user-data-role").change(handleChange);
+            $("#user-data-form .form-actions").before(customDataEditor.ui);
         });
 {% endif %}
     </script>
