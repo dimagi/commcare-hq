@@ -1,15 +1,19 @@
 from django.test import TestCase
-from casexml.apps.case import settings
+from casexml.apps.case.cleanup import rebuild_case
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from datetime import datetime, timedelta
-from copy import copy, deepcopy
-from casexml.apps.case.tests.util import post_util, delete_all_cases
+from copy import deepcopy
+from casexml.apps.case.tests.util import post_util as real_post_util, delete_all_cases
 
+def post_util(**kwargs):
+    form_extras = kwargs.get('form_extras', {})
+    form_extras['domain'] = 'rebuild-test'
+    kwargs['form_extras'] = form_extras
+    return real_post_util(**kwargs)
 
 class CaseRebuildTest(TestCase):
 
     def setUp(self):
-        settings.CASEXML_FORCE_DOMAIN_CHECK = False
         delete_all_cases()
 
     def _assertListEqual(self, l1, l2, include_ordering=True):
@@ -81,15 +85,12 @@ class CaseRebuildTest(TestCase):
         self.assertEqual(case.p3, 'p3-2') # new
 
     def testReconcileActions(self):
-        case_id = post_util(create=True)
-        post_util(case_id=case_id, p1='p1-1', p2='p2-1')
-        post_util(case_id=case_id, p2='p2-2', p3='p3-2')
-        case = CommCareCase.get(case_id)
-
-        # make sure we timestamp everything so they have the right order
         now = datetime.utcnow()
-        for i, a in enumerate(case.actions):
-            a.server_date = now + timedelta(seconds=i)
+        # make sure we timestamp everything so they have the right order
+        case_id = post_util(create=True, form_extras={'received_on': now})
+        post_util(case_id=case_id, p1='p1-1', p2='p2-1', form_extras={'received_on': now + timedelta(seconds=1)})
+        post_util(case_id=case_id, p2='p2-2', p3='p3-2', form_extras={'received_on': now + timedelta(seconds=2)})
+        case = CommCareCase.get(case_id)
 
         original_actions = [deepcopy(a) for a in case.actions]
         self._assertListEqual(original_actions, case.actions)
@@ -122,3 +123,7 @@ class CaseRebuildTest(TestCase):
         self._assertListNotEqual(original_actions, case.actions)
         case.reconcile_actions()
         self._assertListNotEqual(original_actions, case.actions)
+
+        # test clean slate rebuild
+        case = rebuild_case(case_id)
+        self._assertListEqual(original_actions, case.actions)

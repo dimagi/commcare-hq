@@ -141,7 +141,11 @@ def filter_cases_modified_elsewhere_since_sync(cases, last_sync):
             keys=case_ids,
             reduce=False,
         )
-        # {'value': '751830f8f69c2c76050b51ad649da85e', 'id': '473b2d5c-5d70-4e38-9f5a-17301b5d9e15', 'key': '473b2d5c-5d70-4e38-9f5a-17301b5d9e15'}
+        # incoming format is a list of objects that look like this:
+        # {
+        #   'value': '[log id]',
+        #   'key': '[case id]',
+        # }
         unique_combinations = set((row['key'], row['value']) for row in case_log_map)
         modification_dates = CommCareCase.get_db().view('phone/case_modification_status',
             keys=[list(combo) for combo in unique_combinations],
