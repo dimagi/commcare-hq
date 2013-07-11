@@ -20,8 +20,20 @@ from dimagi.utils.couch.database import apply_update
 
 SNAPSHOT_FACETS = ['project_type', 'license', 'author']
 DEPLOYMENT_FACETS = ['deployment.region']
-SNAPSHOT_MAPPING = {'category':'project_type', 'license': 'license', 'author': 'author'}
-DEPLOYMENT_MAPPING = {'region': 'deployment.region'}
+SNAPSHOT_MAPPING = [
+    ("", True, [
+        {"facet": "project_type", "name": "Category", "expanded": True },
+        {"facet": "license", "name": "License", "expanded": True },
+        {"facet": "author", "name": "Author", "expanded": True },
+    ]),
+]
+DEPLOYMENT_MAPPING = [
+    ("", True, [
+        {"facet": "deployment.region", "name": "Region", "expanded": True },
+    ]),
+]
+
+
 
 
 def rewrite_url(request, path):
@@ -121,15 +133,12 @@ def parse_args_for_es(request, prefix=None):
 
     return params, facets
 
-def generate_sortables_from_facets(results, params=None, mapping=None):
+def generate_sortables_from_facets(results, params=None):
     """
     Sortable is a list of tuples containing the field name (e.g. Category) and a list of dictionaries for each facet
     under that field (e.g. HIV and MCH are under Category). Each facet's dict contains the query string, display name,
     count and active-status for each facet.
     """
-
-    mapping = mapping or {}
-    params = dict([(mapping.get(p, p), params[p]) for p in params])
 
     def generate_facet_dict(f_name, ft):
         if isinstance(ft['term'], unicode): #hack to get around unicode encoding issues. However it breaks this specific facet
@@ -152,10 +161,16 @@ def generate_sortables_from_facets(results, params=None, mapping=None):
     res_facets = results.get("facets", [])
     for facet in res_facets:
         if res_facets[facet].has_key("terms"):
-            disp_facet = mapping.get(facet, facet) # the user-facing name for this facet
-            sortable.append((disp_facet, [generate_facet_dict(disp_facet, ft) for ft in res_facets[facet]["terms"]]))
+            sortable.append((facet, [generate_facet_dict(facet, ft) for ft in res_facets[facet]["terms"]]))
 
     return sortable
+
+def fill_mapping_with_facets(facet_mapping, results, params=None):
+    sortables = dict(generate_sortables_from_facets(results, params))
+    for _, _, facets in facet_mapping:
+        for facet_dict in facets:
+            facet_dict["choices"] = sortables.get(facet_dict["facet"], [])
+    return facet_mapping
 
 def appstore(request, template="appstore/appstore_base.html"):
     page_length = 10
@@ -163,7 +178,6 @@ def appstore(request, template="appstore/appstore_base.html"):
     if include_unapproved and not request.user.is_superuser:
         raise Http404()
     params, _ = parse_args_for_es(request)
-    params = dict([(SNAPSHOT_MAPPING.get(p, p), params[p]) for p in params])
     page = params.pop('page', 1)
     page = int(page[0] if isinstance(page, list) else page)
     results = es_snapshot_query(params, SNAPSHOT_FACETS)
@@ -190,7 +204,7 @@ def appstore(request, template="appstore/appstore_base.html"):
 
     more_pages = False if len(d_results) <= page*page_length else True
 
-    facets_sortables = generate_sortables_from_facets(results, params, inverse_dict(SNAPSHOT_MAPPING))
+    facet_map = fill_mapping_with_facets(SNAPSHOT_MAPPING, results, params)
     vals = dict(
         apps=d_results[(page-1)*page_length:page*page_length],
         page=page,
@@ -200,7 +214,7 @@ def appstore(request, template="appstore/appstore_base.html"):
         sort_by=sort_by,
         average_ratings=average_ratings,
         include_unapproved=include_unapproved,
-        sortables=facets_sortables,
+        facet_map=facet_map,
         facets=results.get("facets", []),
         query_str=request.META['QUERY_STRING'],
         search_query=params.get('search', [""])[0],
@@ -210,7 +224,6 @@ def appstore(request, template="appstore/appstore_base.html"):
 
 def appstore_api(request):
     params, facets = parse_args_for_es(request)
-    params = dict([(SNAPSHOT_MAPPING.get(p, p), params[p]) for p in params])
     results = es_snapshot_query(params, facets)
     return HttpResponse(json.dumps(results), mimetype="application/json")
 
@@ -393,12 +406,14 @@ def deployment_info(request, domain, template="appstore/deployment_info.html"):
 
     # get facets
     results = es_deployments_query({}, DEPLOYMENT_FACETS)
-    facets_sortables = generate_sortables_from_facets(results, {}, inverse_dict(DEPLOYMENT_MAPPING))
+    facet_map = fill_mapping_with_facets(DEPLOYMENT_MAPPING, results, {})
 
-    return render(request, template, {'domain': dom,
-                                                  'search_url': reverse('deployments'),
-                                                  'url_base': reverse('deployments'),
-                                                  'sortables': facets_sortables})
+    return render(request, template, {
+        'domain': dom,
+        'search_url': reverse('deployments'),
+        'url_base': reverse('deployments'),
+        'facet_map': facet_map,
+    })
 
 @login_required
 def deployments(request, template="appstore/deployments.html"):

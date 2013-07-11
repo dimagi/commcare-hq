@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load hq_shared_tags %}
 
 <ul class="nav nav-list">
     {% if display_ua %}
@@ -11,25 +12,51 @@
     {% endif %}
 
     <button style="margin: 1em 0" class="btn btn-primary" id="update-facets" data-prefix="{{ facet_prefix }}" data-params="{{ persistent_params }}">{% trans "Apply" %}</button>
-    {% for sortable, choices in sortables %}
-        <li class="nav-header">
-            {{ sortable.title }}
-            {% ifequal sortable.title 'License' %}
-                <a id="license-info-label" target="_blank" href="http://creativecommons.org/licenses/#licenses">
-                    <i class="icon icon-info-sign"></i>
-                </a>
-            {% endifequal %}
-        </li>
-        {% for choice in choices %}
-            <li class="sortable sortable-{{ sortable }}{% if forloop.counter > 5 and choices|length > 6 %} hide{% endif %}" data-name="{{ sortable }}">
-                <input id="s-{{ sortable }}-{{ choice.name }}" name="{{ choice.name }}" class="facet-checkbox pull-right" type="checkbox" {% if choice.active %}checked=checked{% endif %}/>
-                <label for="s-{{ sortable }}-{{ choice.name }}">
-                    <span>{{ choice.name }} ({{ choice.count }})</span>
-                </label>
-            </li>
-        {% endfor %}
-        {% if choices|length > 6 %}
-            <li><a class="more-sortable-button" data-sortable="{{ sortable }}" href="#">{% trans "More..." %}</a></li>
+    {% for facet_group, expanded, facets in facet_map %}
+
+        {% if grouped_facets and facet_group %}
+        <div>
+            <a class="facet-group-btn" data-name="{{ facet_group }}" href="#">
+                <i class="facet-group-chevron icon-double-angle-{% if expanded %}down{% else %}right{% endif %}"></i>
+                <strong>{{ facet_group }}</strong>
+            </a>
+        </div>
         {% endif %}
+
+        <div {% if grouped_facets %}style="margin-left: 1em" {% endif %}class="facet-group {% if not expanded %}hide{% endif %}" data-show="{{ expanded|JSON }}" data-group-name="{{ facet_group }}">
+        {% for f in facets %}
+            <a class="facet-btn" href="#" data-sortable="{{ f.facet }}" data-show="{{ f.expanded|JSON }}">
+                <strong>
+                {% if f.choices %}<i class="facet-chevron icon-double-angle-{% if f.expanded %}down{% else %}right{% endif %}"></i>{% endif %}
+                    {{ f.name|default:f.facet }}
+                </strong>
+                {% ifequal f.name 'License' %}
+                    <a id="license-info-label" target="_blank" href="http://creativecommons.org/licenses/#licenses">
+                        <i class="icon icon-info-sign"></i>
+                    </a>
+                {% endifequal %}
+            </a>
+
+            <li><ul>
+            {% for choice in f.choices %}
+                <li class="sortable sortable-{{ f.facet }}
+                    {% if not f.expanded or forloop.counter > 5 and choices|length > 6 %}
+                        hide
+                    {% endif %}
+                    " data-name="{{ f.facet }}">
+
+                    <input id="s-{{ f.facet }}-{{ choice.name }}" name="{{ choice.name }}" class="facet-checkbox pull-right" type="checkbox" {% if choice.active %}checked=checked{% endif %}/>
+                    <label for="s-{{ f.facet }}-{{ choice.name }}">
+                        <span>{{ choice.name }} ({{ choice.count }})</span>
+                    </label>
+                </li>
+            {% endfor %}
+            </ul></li>
+
+            {% if f.choices|length > 6 and f.expanded %}
+                <li><a class="more-sortable-button" data-sortable="{{ f.facet }}" href="#">{% trans "More..." %}</a></li>
+            {% endif %}
+        {% endfor %}
+        </div>
     {% endfor %}
 </ul>

@@ -2,6 +2,7 @@ from datetime import datetime
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
+from corehq.apps.appstore.views import fill_mapping_with_facets
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.dispatcher import BasicReportDispatcher, AdminReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport, ElasticTabularReport
@@ -156,6 +157,49 @@ DOMAIN_FACETS = [
     "tags",
 ]
 
+FACET_MAPPING = [
+    ("Activity", True, [
+        {"facet": "is_test", "name": "Test Project", "expanded": True },
+        {"facet": "cp_is_active", "name": "Active", "expanded": True },
+        {"facet": "deployment.date", "Deployment Date": "Test Project", "expanded": False },
+        {"facet": "internal.project_state", "name": "Scale", "expanded": False },
+    ]),
+    ("Location", True, [
+        {"facet": "deployment.country", "name": "Country", "expanded": True },
+        {"facet": "deployment.region", "name": "", "expanded": False },
+        {"facet": "deployment.city", "name": "", "expanded": False },
+    ]),
+    ("Type", True, [
+        {"facet": "internal.area", "name": "Area", "expanded": True },
+        {"facet": "internal.sub_area", "name": "Sub Area", "expanded": True },
+        {"facet": "phone_model", "name": "Phone Model", "expanded": False },
+    ]),
+    ("Self Starters", False, [
+        {"facet": "internal.self_started", "name": "Self Started", "expanded": True },
+        {"facet": "cp_has_app", "name": "Has App", "expanded": False },
+    ]),
+    ("Advanced Features", False, [
+        # {"facet": "", "name": "Reminders", "expanded": True },
+        {"facet": "case_sharing", "name": "Case Sharing", "expanded": False },
+        {"facet": "internal.using_adm", "name": "ADM", "expanded": False },
+        {"facet": "internal.using_call_center", "name": "Call Center", "expanded": False },
+        {"facet": "commtrack_enabled", "name": "CommTrack", "expanded": False },
+        {"facet": "survey_management_enabled", "name": "Survey Management", "expanded": False },
+    ]),
+    ("Plans", False, [
+        {"facet": "project_type", "name": "Project Type", "expanded": False },
+        {"facet": "customer_type", "name": "Customer Type", "expanded": False },
+        {"facet": "internal.initiative", "name": "Initiative", "expanded": False },
+        {"facet": "internal.commcare_edition", "name": "CommCare Pricing Edition", "expanded": False },
+        {"facet": "internal.services", "name": "Services", "expanded": False },
+        {"facet": "is_sms_billable", "name": "SMS Billable", "expanded": False },
+    ]),
+    ("Eula", False, [
+        {"facet": "internal.can_use_data", "name": "Public Data", "expanded": True },
+        {"facet": "custom_eula", "name": "Custom Eula", "expanded": False },
+    ]),
+]
+
 def es_domain_query(params=None, facets=None, terms=None, domains=None, return_q_dict=False, start_at=None, size=None, sort=None):
     from corehq.apps.appstore.views import es_query
     if params is None:
@@ -215,9 +259,10 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
 
         ctxt.update({
             'layout_flush_content': True,
-            'sortables': sorted(self.es_sortables),
+            'facet_map': self.es_facet_mapping,
             'query_str': self.request.META['QUERY_STRING'],
             'facet_prefix': ES_PREFIX,
+            'grouped_facets': True,
         })
         return ctxt
 
@@ -232,7 +277,7 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
             self.es_facets = DOMAIN_FACETS
             results = es_domain_query(self.es_params, self.es_facets, sort=self.get_sorting_block(),
                 start_at=self.pagination.start, size=self.pagination.count)
-            self.es_sortables = generate_sortables_from_facets(results, self.es_params)
+            self.es_facet_mapping = fill_mapping_with_facets(FACET_MAPPING, results, self.es_params)
             self.es_queried = True
             self.es_response = results
         return self.es_response
