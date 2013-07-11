@@ -161,7 +161,7 @@ FACET_MAPPING = [
     ("Activity", True, [
         {"facet": "is_test", "name": "Test Project", "expanded": True },
         {"facet": "cp_is_active", "name": "Active", "expanded": True },
-        {"facet": "deployment.date", "Deployment Date": "Test Project", "expanded": False },
+        # {"facet": "deployment.date", "name": "Deployment Date", "expanded": False },
         {"facet": "internal.project_state", "name": "Scale", "expanded": False },
     ]),
     ("Location", True, [
