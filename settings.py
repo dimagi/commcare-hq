@@ -705,7 +705,6 @@ PILLOWTOPS = [
                  'corehq.pillows.fullxform.FullXFormPillow',
                  'corehq.pillows.domain.DomainPillow',
                  'corehq.pillows.user.UserPillow',
-                 'corehq.pillows.exchange.ExchangePillow',
                  'corehq.pillows.commtrack.ConsumptionRatePillow',
 
                  # fluff

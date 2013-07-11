@@ -16,9 +16,10 @@ from corehq.elastic import get_es
 from corehq.apps.domain.models import Domain
 from django.contrib import messages
 from django.utils.translation import ugettext as _
+from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 from dimagi.utils.couch.database import apply_update
 
-SNAPSHOT_FACETS = ['project_type', 'license', 'author']
+SNAPSHOT_FACETS = ['project_type', 'license', 'author.exact']
 DEPLOYMENT_FACETS = ['deployment.region']
 SNAPSHOT_MAPPING = [
     ("", True, [
@@ -36,7 +37,7 @@ SNAPSHOT_MAPPING = [
                 'cc-nc-nd': 'CC BY-NC-ND',
             }
         },
-        {"facet": "author", "name": "Author", "expanded": True },
+        {"facet": "author.exact", "name": "Author", "expanded": True },
     ]),
 ]
 DEPLOYMENT_MAPPING = [
@@ -278,7 +279,7 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
     if dict_only:
         return q
 
-    es_url = es_url or "cc_exchange/domain/_search"
+    es_url = es_url or DOMAIN_INDEX + '/hqdomain/_search'
 
     es = get_es()
     ret_data = es.get(es_url, data=q)

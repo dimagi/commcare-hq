@@ -82,6 +82,7 @@ domain_special_types = {
     "author": type_exact_match_string("author", dual=True),
     "title": type_exact_match_string("title", dual=True),
     "short_description": type_exact_match_string("short_description", dual=True),
+    "project_type": {"type": "string", "analyzer": "comma"},
     "__sub_types": {
         "deployment": {
             "country": type_exact_match_string("country", dual=True),
