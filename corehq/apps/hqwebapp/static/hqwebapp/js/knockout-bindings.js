@@ -514,3 +514,12 @@ ko.bindingHandlers.typeahead = {
         $(element).autocomplete('option', 'source', ko.utils.unwrapObservable(valueAccessor()));
     }
 };
+
+ko.bindingHandlers.multiTypeahead = {
+    init: function(element, valueAccessor) { 
+        var contacts = valueAccessor();
+        $('.tabbable').find("input[name]='recipients'").multiTypeahead({ 
+            source: contacts,
+        }).focus();
+    }
+}

@@ -31,7 +31,7 @@
             users_cannot_share: {{ users_cannot_share|JSON }},
             urls: urls,
             appVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
-            reciepient_contacts: {{ sms_contacts|JSON }}
+            recipient_contacts: {{ sms_contacts|JSON }},
         };
         var el = $('#releases-table');
         ko.applyBindings(new ReleasesMain(o), el.get(0));
@@ -181,7 +181,7 @@
                     </td>
                     <td class="nowrap">
                         <div class="btn-group">
-                            <a class="btn btn-primary" data-bind="openModal: 'deploy-build-modal-template', click: $root.group_deploy">Deploy</a>
+                            <a class="btn btn-primary" data-bind="openModal: 'deploy-build-modal-template'">Deploy</a>
                         </div>
                     </td>
                     {% if edit %}
@@ -366,7 +366,7 @@
                                                 <div data-bind="visible: $data">
                                                     <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
                                                         <label>{% trans "Send to:" %}</label>
-                                                        <input type="text" name="recipients" value=""/>
+                                                        <input type="text" name="recipients" data-bind="multiTypeahead: $root.recipients" value=""/>
                                                         <br />
                                                         <textarea name="message" data-bind="text: 'Update to CommCare: ' +
                                                             $data + ' (&quot;' + $parent.short_name() + '&quot; v. ' + $parent.version() + ')'"></textarea>
