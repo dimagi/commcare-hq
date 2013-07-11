@@ -6,7 +6,7 @@ from dimagi.utils.chunked import chunked
 
 def add_to_case(case):
     forms = {}
-    def xforms(xid):
+    def get_xform(xid):
         xform = forms.get(xid)
         if not xform:
             xform = get_db().get(xid)
@@ -16,22 +16,23 @@ def add_to_case(case):
     should_save = False
 
     def get_user_id(form_id):
-        return xforms(form_id).get('form', {}).get("case", {}).get("@user_id")
+        return get_xform(form_id).get('form', {}).get("case", {}).get("@user_id") or \
+            get_xform(form_id).get('form', {}).get("meta", {}).get("userID")
 
     for action in case.get('actions', []):
-        if 'user_id' not in action:
+        if not action.get('user_id'):
             user_id = get_user_id(action.get('xform_id'))
             if user_id:
                 action['user_id'] = user_id
                 should_save = True
 
-        if 'opened_by' not in case and action.get('action_type') == 'create':
+        if not case.get('opened_by') and action.get('action_type') == 'create':
             opened_by = get_user_id(action.get('xform_id'))
             if opened_by:
                 case['opened_by'] = opened_by
                 should_save = True
 
-        if case.get('closed', False) and 'closed_by' not in case and action.get('action_type') == 'close':
+        if case.get('closed', False) and not case.get('closed_by') and action.get('action_type') == 'close':
             closed_by = get_user_id(action.get('xform_id'))
             if closed_by:
                 case['closed_by'] = closed_by
