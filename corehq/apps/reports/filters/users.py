@@ -3,7 +3,7 @@ from django.utils.translation import ugettext as _
 
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter
 from corehq.apps.groups.hierarchy import (get_hierarchy,
-        get_leaf_user_ids_from_hierarchy)
+        get_user_data_from_hierarchy)
 
 
 class LinkedUserFilter(BaseDrilldownOptionFilter):
@@ -92,7 +92,7 @@ class LinkedUserFilter(BaseDrilldownOptionFilter):
         return [get_values(top_level_node, 0) for top_level_node in hierarchy]
 
     @classmethod
-    def get_user_ids(cls, request_params, domain=None):
+    def get_user_data(cls, request_params, domain=None):
         domain = domain or cls.domain
 
         selected_user_id = None
@@ -103,5 +103,5 @@ class LinkedUserFilter(BaseDrilldownOptionFilter):
                 selected_user_id = user_id
                 break
 
-        return get_leaf_user_ids_from_hierarchy(domain, cls.user_types,
+        return get_user_data_from_hierarchy(domain, cls.user_types,
                 root_user_id=selected_user_id)
