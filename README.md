@@ -46,7 +46,7 @@ class MyIndicators(fluff.IndicatorDocument):
         # this is the standard style of group_by
         'domain',
         # this is the more complicated style of group_by - redundant here, but useful for more complex things
-        fluff.AttributeGetter('owner_id', getter_function = lambda item: item['owner_id']),
+        fluff.AttributeGetter('owner_id', getter_function=lambda item: item['owner_id']),
     ]
     domains = ('droberts', 'test', 'corpora')
 

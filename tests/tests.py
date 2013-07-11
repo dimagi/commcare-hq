@@ -323,7 +323,7 @@ class MockIndicatorsWithGetters(fluff.IndicatorDocument):
     document_class = MockDoc
     group_by = (
         fluff.AttributeGetter('domain'),
-        fluff.AttributeGetter('owner_id', getter_function = lambda item: item['owner_id'])
+        fluff.AttributeGetter('owner_id', getter_function=lambda item: item['owner_id'])
     )
     domains = ('test',)
 

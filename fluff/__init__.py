@@ -206,7 +206,7 @@ class AttributeGetter(object):
         the getter.
         """
         self.attribute = attribute
-        if getter_function == None:
+        if getter_function is None:
             getter_function = lambda item: item[attribute]
 
         self.getter_function = getter_function
