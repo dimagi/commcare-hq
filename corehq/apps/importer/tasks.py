@@ -102,15 +102,17 @@ def bulk_import_async(import_id, config, domain, excel_id):
             )
             submit_case_block(caseblock, domain, username, user_id)
         elif case and case.type == config.case_type:
+            extras = {}
+            if external_id:
+                extras['external_id'] = external_id
             caseblock = CaseBlock(
                 create=False,
                 case_id=case._id,
                 owner_id=owner_id,
                 version=V2,
-                update=fields_to_update
+                update=fields_to_update,
+                **extras
             )
-            if external_id:
-                caseblock['external_id'] = external_id
 
             submit_case_block(caseblock, domain, username, user_id)
 
