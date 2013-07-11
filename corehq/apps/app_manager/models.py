@@ -862,7 +862,9 @@ class VersionedDoc(LazyAttachmentDoc):
     def id(self):
         return self._id
 
-    def save(self, response_json=None, increment_version=True, **params):
+    def save(self, response_json=None, increment_version=None, **params):
+        if increment_version is None:
+            increment_version = not self.copy_of
         if increment_version:
             self.version = self.version + 1 if self.version else 1
         super(VersionedDoc, self).save(**params)
@@ -872,6 +874,8 @@ class VersionedDoc(LazyAttachmentDoc):
             response_json['update']['app-version'] = self.version
 
     def make_build(self):
+        assert self.get_id
+        assert self.copy_of is None
         cls = self.__class__
         copies = cls.view('app_manager/applications', key=[self.domain, self._id, self.version], include_docs=True, limit=1).all()
         if copies:

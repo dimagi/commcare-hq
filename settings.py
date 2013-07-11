@@ -261,6 +261,11 @@ REPORT_CACHE = 'default' # or e.g. 'redis'
 
 DOMAIN_MAX_REGISTRATION_REQUESTS_PER_DAY = 99
 DOMAIN_SELECT_URL = "/domain/select/"
+
+# This is not used by anything in CommCare HQ, leaving it here in case anything
+# in Django unexpectedly breaks without it.  When you need the login url, you
+# should use reverse('login', kwargs={'domain_type': domain_type}) in order to
+# maintain CommCare HQ/CommTrack distinction.
 LOGIN_URL = "/accounts/login/"
 # If a user tries to access domain admin pages but isn't a domain
 # administrator, here's where he/she is redirected
@@ -317,6 +322,7 @@ OPENROSA_VERSION = "1.0"
 FIXTURE_GENERATORS = [
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",
+    "corehq.apps.callcenter.fixturegenerators.indicators",
 ]
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
@@ -407,6 +413,7 @@ TOUCHFORMS_API_PASSWORD = "changeme"
 
 # import local settings if we find them
 LOCAL_APPS = ()
+LOCAL_COUCHDB_APPS = ()
 LOCAL_MIDDLEWARE_CLASSES = ()
 LOCAL_PILLOWTOPS = []
 
@@ -616,6 +623,8 @@ COUCHDB_APPS = [
     'psi',
 ]
 
+COUCHDB_APPS += LOCAL_COUCHDB_APPS
+
 COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label in COUCHDB_APPS]
 
 COUCHDB_DATABASES += [
@@ -713,7 +722,7 @@ PILLOWTOPS = [
              ] + LOCAL_PILLOWTOPS
 
 # List of Fluff pillow classes that ctable should process diffs for
-FLUFF_PILLOW_TYPES_TO_SQL = []
+FLUFF_PILLOW_TYPES_TO_SQL = {}
 
 #Custom workflow for indexing xform data beyond the standard properties
 XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]

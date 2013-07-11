@@ -5,14 +5,15 @@ from couchdbkit import ResourceNotFound
 
 from django.contrib import messages
 from django.core.urlresolvers import reverse
+from django.core.validators import ValidationError
 from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404, HttpResponse
 from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView
 from django.shortcuts import render
 
 from corehq.apps.domain.decorators import login_or_digest
-from corehq.apps.fixtures.exceptions import UploadItemListsException
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, _id_from_doc
 from corehq.apps.groups.models import Group
 from corehq.apps.users.bulkupload import GroupMemoizer
@@ -209,8 +210,7 @@ def view(request, domain, template='fixtures/view.html'):
         'domain': domain
     })
 
-DELETE_HEADER = 'Delete(Y/N)'
-
+DELETE_HEADER = "Delete(Y/N)"
 @require_can_edit_fixtures
 def download_item_lists(request, domain):
     data_types = FixtureDataType.by_domain(domain)
@@ -222,9 +222,13 @@ def download_item_lists(request, domain):
     mmax_users = 0
     data_tables = []
     
+    def _get_empty_list(length):
+        return ["" for x in range(0, length)]
 
+
+    #Fills sheets' schemas and data
     for data_type in data_types:
-        type_schema = [data_type.name, data_type.tag]
+        type_schema = [str(_id_from_doc(data_type)), "N", data_type.name, data_type.tag]
         fields = [field for field in data_type.fields]
         type_id = data_type.get_id
         data_table_of_type = []
@@ -234,10 +238,10 @@ def download_item_lists(request, domain):
             user_len = len(item_row.get_users())
             max_users = user_len if user_len>max_users else max_users
         for item_row in FixtureDataItem.by_data_type(domain, type_id):
-            groups = [group.name for group in item_row.get_groups()] + ["" for x in range(0,max_groups-len(item_row.get_groups()))]
-            users = [user.raw_username for user in item_row.get_users()] + ["" for x in range(0, max_users-len(item_row.get_users()))]
-            data_row = tuple([str(_id_from_doc(item_row)),"N"]+
-                             [item_row.fields[field] for field in fields]+
+            groups = [group.name for group in item_row.get_groups()] + _get_empty_list(max_groups - len(item_row.get_groups()))
+            users = [user.raw_username for user in item_row.get_users()] + _get_empty_list(max_users - len(item_row.get_users()))
+            data_row = tuple([str(_id_from_doc(item_row)), "N"] +
+                             [item_row.fields[field] or "" for field in fields] +
                              groups + users)
             data_table_of_type.append(data_row)
         type_schema.extend(fields)
@@ -250,12 +254,12 @@ def download_item_lists(request, domain):
         max_users = 0
         max_groups = 0
 
-    type_headers = ["name", "tag"] + ["field %d" % x for x in range(1, max_fields - 1)]
+    type_headers = ["UID", DELETE_HEADER, "name", "tag"] + ["field %d" % x for x in range(1, max_fields - 3)]
     type_headers = ("types", tuple(type_headers))
     table_headers = [type_headers]    
     for type_schema in data_type_schemas:
-        item_header = (type_schema[1], tuple(["UID", DELETE_HEADER] +
-                                             ["field: " + x for x in type_schema[2:]] +
+        item_header = (type_schema[3], tuple(["UID", DELETE_HEADER] +
+                                             ["field: " + x for x in type_schema[4:]] +
                                              ["group %d" % x for x in range(1, mmax_groups + 1)] +
                                              ["user %d" % x for x in range(1, mmax_users + 1)]))
         table_headers.append(item_header)
@@ -263,6 +267,21 @@ def download_item_lists(request, domain):
     table_headers = tuple(table_headers)
     type_rows = ("types", tuple(data_type_schemas))
     data_tables = tuple([type_rows]+data_tables)
+
+    """
+    Example of sheets preperation:
+    
+    headers:
+     (("employee", ("id", "name", "gender")),
+      ("building", ("id", "name", "address")))
+    
+    data:
+     (("employee", (("1", "cory", "m"),
+                    ("2", "christian", "m"),
+                    ("3", "amelia", "f"))),
+      ("building", (("1", "dimagi", "585 mass ave."),
+                    ("2", "old dimagi", "529 main st."))))
+    """
     
     fd, path = tempfile.mkstemp()
     with os.fdopen(fd, 'w') as temp:
@@ -286,28 +305,31 @@ class UploadItemLists(TemplateView):
         """View's dispatch method automatically calls this"""
 
         def error_redirect():
-            return HttpResponseRedirect(reverse('upload_item_lists', args=[self.domain]))
+            return HttpResponseRedirect(reverse('upload_fixtures', args=[self.domain]))
 
         try:
             workbook = WorkbookJSONReader(request.file)
         except AttributeError:
-            messages.error(request, "Error processing your Excel (.xlsx) file")
+            messages.error(request, _("Error processing your Excel (.xlsx) file"))
+            return error_redirect()
+        except Exception as e:
+            messages.error(request, _("Invalid file-format. Please upload a valid xlsx file."))
             return error_redirect()
 
         try:
-            upload_result = run_upload_api(request, self.domain, workbook)
+            upload_result = run_upload(request, self.domain, workbook)
             if upload_result["unknown_groups"]:
                 for group_name in upload_result["unknown_groups"]:
-                    messages.error(request, "Unknown group: %s" % group_name)
+                    messages.error(request, _("Unknown group: '%(name)s'") % {'name': group_name})
             if upload_result["unknown_users"]:
                 for user_name in upload_result["unknown_users"]:
-                    messages.error(request, "Unknown user: %s" % user_name)
+                    messages.error(request, _("Unknown user: '%(name)s'") % {'name': user_name})
         except WorksheetNotFound as e:
-            messages.error(request, "Workbook does not have a sheet called '%s'" % e.title)
+            messages.error(request, _("Workbook does not contain a sheet called '%(title)s'") % {'title': e.title})
             return error_redirect()
         except Exception as e:
             notify_exception(request)
-            messages.error(request, "Fixture upload could not complete due to the following error: %s" % e)
+            messages.error(request, _("Fixture upload could not complete due to the following error: '%(e)s'") % {'e': e})
             return error_redirect()
 
         return HttpResponseRedirect(reverse('fixture_view', args=[self.domain]))
@@ -321,11 +343,13 @@ class UploadItemLists(TemplateView):
 @login_or_digest
 def upload_fixture_api(request, domain, **kwargs):
     response_codes = {"fail": 405, "warning": 402, "success": 200}
-    error_messages = {"invalid_post_req": "Invalid post request. Submit the form with field 'file-to-upload' to upload a fixture",
-                      "has_no_permission": "User {attr} doesn't have permission to upload fixtures",
-                      "invalid_file": "Error processing your file. Submit a valid (.xlsx) file",
-                      "has_no_sheet": "Workbook does not have a sheet called {attr}",
-                      "has_no_column": "Fixture upload couldn't succeed due to the following error: {attr}"}
+    error_messages = {
+        "invalid_post_req": "Invalid post request. Submit the form with field 'file-to-upload' to upload a fixture",
+        "has_no_permission": "User {attr} doesn't have permission to upload fixtures",
+        "invalid_file": "Error processing your file. Submit a valid (.xlsx) file",
+        "has_no_sheet": "Workbook does not have a sheet called {attr}",
+        "has_no_column": "Fixture upload couldn't succeed due to the following error: {attr}",
+    }
     
     def _return_response(code, message):
         resp_json = {}
@@ -347,9 +371,8 @@ def upload_fixture_api(request, domain, **kwargs):
     except Exception:
         return _return_response(response_codes["fail"], error_messages["invalid_file"])
 
-
     try:
-        upload_resp = run_upload_api(request, domain, workbook) #error handle for other files
+        upload_resp = run_upload(request, domain, workbook) # error handle for other files
     except WorksheetNotFound as e:
         error_message = error_messages["has_no_sheet"].format(attr=e.title)
         return _return_response(response_codes["fail"], error_message)
@@ -380,10 +403,10 @@ def upload_fixture_api(request, domain, **kwargs):
     return HttpResponse(json.dumps(resp_json), mimetype="application/json")
 
 
-def run_upload_api(request, domain, workbook):
+def run_upload(request, domain, workbook):
     return_val = {
-        "unknown_groups": [],
-        "unknown_users": [],
+        "unknown_groups": [], 
+        "unknown_users": [], 
         "number_of_fixtures": 0,
     }
     group_memoizer = GroupMemoizer(domain)
@@ -400,25 +423,43 @@ def run_upload_api(request, domain, workbook):
     with CouchTransaction() as transaction:
         for number_of_fixtures, dt in enumerate(data_types):
             tag = _get_or_raise(dt, 'tag')
-            data_type_results = FixtureDataType.by_domain_tag(domain, tag)
-            if len(data_type_results) == 0:
-                data_type = FixtureDataType(
+            type_definition_fields = _get_or_raise(dt, 'field')
+
+            new_data_type = FixtureDataType(
                     domain=domain,
                     name=_get_or_raise(dt, 'name'),
                     tag=_get_or_raise(dt, 'tag'),
-                    fields=_get_or_raise(dt, 'field'),
-                )
-                transaction.save(data_type)
-            else:
-                for x in data_type_results:
-                    data_type = x
+                    fields=type_definition_fields,
+            )
+            try:
+                data_type = FixtureDataType.get(dt['UID'])
+                assert data_type.domain == domain
+                assert data_type.doc_type == FixtureDataType._doc_type
+                if dt[DELETE_HEADER] == "Y" or dt[DELETE_HEADER] == "y":
+                    data_type.recursive_delete(transaction)
+                    continue
+                data_type.fields = type_definition_fields
+            except (ResourceNotFound, KeyError) as e:
+                data_type = new_data_type
+            transaction.save(data_type)
 
             data_items = workbook.get_worksheet(data_type.tag)
             for sort_key, di in enumerate(data_items):
+                # Check that type definitions in 'types' sheet vs corresponding columns in the item-sheet MATCH
+                item_fields = di['field']
+                for field in type_definition_fields:
+                    if not item_fields.has_key(field):
+                        raise Exception(_("Workbook '%(tag)s' does not contain the column " +
+                                          "'%(field)s' specified in its 'types' definition") % {'tag': tag, 'field': field})
+                item_fields_list = di['field'].keys()
+                for field in item_fields_list:
+                    if not field in type_definition_fields:
+                        raise Exception(_("""Workbook '%(tag)s' has an extra column 
+                                          '%(field)s' that's not defined in its 'types' definition""") % {'tag': tag, 'field': field})                
                 new_data_item = FixtureDataItem(
                     domain=domain,
                     data_type_id=data_type.get_id,
-                    fields=di['field'],
+                    fields=item_fields,
                     sort_key=sort_key
                 )
                 try:
@@ -426,13 +467,12 @@ def run_upload_api(request, domain, workbook):
                     assert old_data_item.domain == domain
                     assert old_data_item.doc_type == FixtureDataItem._doc_type
                     assert old_data_item.data_type_id == data_type.get_id
-                    if di.get(DELETE_HEADER) in ("Y", "y"):
+                    if di[DELETE_HEADER] == "Y" or di[DELETE_HEADER] == "y":
                         old_data_item.recursive_delete(transaction)
-                        continue
+                        continue   
                     old_data_item.fields = di['field']
-                    transaction.save(old_data_item)
-                except (AttributeError, KeyError, ResourceNotFound,
-                        AssertionError):
+                    transaction.save(old_data_item)                 
+                except (ResourceNotFound, KeyError) as e:
                     old_data_item = new_data_item
                     transaction.save(old_data_item)
 
@@ -448,15 +488,19 @@ def run_upload_api(request, domain, workbook):
                         if group:
                             old_data_item.add_group(group, transaction=transaction)
                         else:
-                            messages.error(request, "Unknown group: %s" % group_name)
+                            messages.error(request, _("Unknown group: '%(name)s'. But the row is successfully added") % {'name': group_name})
 
                 for raw_username in di.get('user', []):
-                        username = normalize_username(raw_username, domain)
+                        try:
+                            username = normalize_username(raw_username, domain)
+                        except ValidationError:
+                            messages.error(request, _("Invalid username: '%(name)s'. Row is not added") % {'name': raw_username})
+                            continue
                         user = CommCareUser.get_by_username(username)
                         if user:
                             old_data_item.add_user(user)
                         else:
-                            messages.error(request, "Unknown user: %s" % raw_username)
+                            messages.error(request, _("Unknown user: '%(name)s'. But the row is successfully added") % {'name': raw_username})
 
     return_val["number_of_fixtures"] = number_of_fixtures + 1
     return return_val
