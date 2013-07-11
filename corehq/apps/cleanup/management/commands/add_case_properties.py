@@ -16,8 +16,14 @@ def add_to_case(case):
     should_save = False
 
     def get_user_id(form_id):
-        return get_xform(form_id).get('form', {}).get("meta", {}).get("userID") or \
-            get_xform(form_id).get('form', {}).get("case", {}).get("@user_id")
+        if form_id:
+            user_id = get_xform(form_id).get('form', {}).get("meta", {}).get("userID") or \
+                get_xform(form_id).get('form', {}).get("case", {}).get("@user_id")
+            if not user_id:
+                print "Could not find a user_id for form %s" % form_id
+            return user_id
+            
+        print "Case %s has actions without a proper xform_id" % case.get('_id')
 
     for action in case.get('actions', []):
         if not action.get('user_id'):
