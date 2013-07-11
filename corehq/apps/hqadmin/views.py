@@ -5,10 +5,10 @@ import logging
 from collections import defaultdict
 from StringIO import StringIO
 import os
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 from pytz import timezone
 
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, HttpResponseNotFound
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
 from django.views.decorators.cache import cache_page
@@ -23,13 +23,15 @@ from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index, check_xform_index
+from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.sms.models import SMSLog
 from corehq.apps.users.models import  CommCareUser, WebUser
+from corehq.apps.users.util import format_username
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
-from corehq.apps.domain.decorators import  require_superuser, login_or_digest
+from corehq.apps.domain.decorators import  require_superuser
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from dimagi.utils.web import json_response
@@ -745,6 +747,21 @@ def all_commcare_settings(request):
                      if app_filter(s)]
     return json_response(settings_list)
 
+@require_superuser
+@require_GET
+def admin_restore(request):
+    full_username = request.GET.get('as', '')
+    if not full_username or '@' not in full_username:
+        return HttpResponseBadRequest('Please specify a user using ?as=user@domain')
+
+    username, domain = full_username.split('@')
+    if not domain.endswith(settings.HQ_ACCOUNT_ROOT):
+        full_username = format_username(username, domain)
+
+    user = CommCareUser.get_by_username(full_username)
+    if not user:
+        return HttpResponseNotFound('User %s not found.' % full_username)
+    return get_restore_response(user, **get_restore_params(request))
 
 @require_superuser
 def management_commands(request, template="hqadmin/management_commands.html"):

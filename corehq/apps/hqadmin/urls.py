@@ -20,6 +20,7 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^commcare_settings/$', 'all_commcare_settings', name="all_commcare_settings"),
     url(r'^management_commands/$', 'management_commands', name="management_commands"),
     url(r'^run_command/$', 'run_command', name="run_management_command"),
+    url(r'^phone/restore/$', 'admin_restore', name="admin_restore"),
     AdminReportDispatcher.url_pattern(),
 )
 

@@ -174,7 +174,8 @@ def get_cases(request, domain):
 
     ids_only = string_to_boolean(request.REQUEST.get("ids_only", "false"))
     case_id = request.REQUEST.get("case_id", "")
-    if case_id:
+    footprint = string_to_boolean(request.REQUEST.get("footprint", "false"))
+    if case_id and not footprint:
         # short circuit everything else and just return the case
         # NOTE: this allows any user in the domain to access any case given
         # they know its ID, which is slightly different from the previous
@@ -185,7 +186,6 @@ def get_cases(request, domain):
         assert case.domain == domain
         cases = [CaseAPIResult(id=case_id, couch_doc=case, id_only=ids_only)]
     else:
-        footprint = string_to_boolean(request.REQUEST.get("footprint", "false"))
         filters = get_filters_from_request(request)
         status = api_closed_to_status(request.REQUEST.get('closed', 'false'))
         case_type = filters.get('properties/case_type', None)
