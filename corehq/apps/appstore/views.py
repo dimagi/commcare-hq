@@ -1,7 +1,7 @@
 import copy
 from datetime import datetime
 import json
-from urllib import urlencode
+from urllib import urlencode, unquote
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponse
@@ -136,12 +136,11 @@ def parse_args_for_es(request, prefix=None):
         if attr[0] == 'facets':
             facets = attr[1][0].split()
             continue
-
         if prefix:
             if attr[0].startswith(prefix):
-                params[attr[0][len(prefix):]] = attr[1]
+                params[attr[0][len(prefix):]] = [unquote(a) for a in attr[1]]
         else:
-            params[attr[0]] = attr[1]
+            params[attr[0]] = [unquote(a) for a in attr[1]]
 
     return params, facets
 
@@ -164,7 +163,7 @@ def generate_sortables_from_facets(results, params=None):
     res_facets = results.get("facets", [])
     for facet in res_facets:
         if res_facets[facet].has_key("terms"):
-            sortable.append((facet, [generate_facet_dict(facet, ft) for ft in res_facets[facet]["terms"]]))
+            sortable.append((facet, [generate_facet_dict(facet, ft) for ft in res_facets[facet]["terms"] if ft["term"]]))
 
     return sortable
 
@@ -252,7 +251,7 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
             return 1
         elif param == 'F' or param is False:
             return 0
-        return param.lower()
+        return param
 
     for attr in params:
         if attr not in terms:
