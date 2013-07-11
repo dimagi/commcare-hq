@@ -23,7 +23,19 @@ DEPLOYMENT_FACETS = ['deployment.region']
 SNAPSHOT_MAPPING = [
     ("", True, [
         {"facet": "project_type", "name": "Category", "expanded": True },
-        {"facet": "license", "name": "License", "expanded": True },
+        {
+            "facet": "license",
+            "name": "License",
+            "expanded": True,
+            "mapping": {
+                'cc': 'CC BY',
+                'cc-sa': 'CC BY-SA',
+                'cc-nd': 'CC BY-ND',
+                'cc-nc': 'CC BY-NC',
+                'cc-nc-sa': 'CC BY-NC-SA',
+                'cc-nc-nd': 'CC BY-NC-ND',
+            }
+        },
         {"facet": "author", "name": "Author", "expanded": True },
     ]),
 ]
@@ -144,16 +156,7 @@ def generate_sortables_from_facets(results, params=None):
         if isinstance(ft['term'], unicode): #hack to get around unicode encoding issues. However it breaks this specific facet
             ft['term'] = ft['term'].encode('ascii','replace')
 
-        ccs = {
-            'cc': 'CC BY',
-            'cc-sa': 'CC BY-SA',
-            'cc-nd': 'CC BY-ND',
-            'cc-nc': 'CC BY-NC',
-            'cc-nc-sa': 'CC BY-NC-SA',
-            'cc-nc-nd': 'CC BY-NC-ND',
-        }
-        license = (f_name == 'license')
-        return {'name': ft["term"] if not license else ccs.get(ft["term"]),
+        return {'name': ft["term"],
                 'count': ft["count"],
                 'active': str(ft["term"]) in params.get(f_name, "")}
 
@@ -170,6 +173,9 @@ def fill_mapping_with_facets(facet_mapping, results, params=None):
     for _, _, facets in facet_mapping:
         for facet_dict in facets:
             facet_dict["choices"] = sortables.get(facet_dict["facet"], [])
+            if facet_dict.get('mapping'):
+                for choice in facet_dict["choices"]:
+                    choice["display"] = facet_dict.get('mapping').get(choice["name"], choice["name"])
     return facet_mapping
 
 def appstore(request, template="appstore/appstore_base.html"):

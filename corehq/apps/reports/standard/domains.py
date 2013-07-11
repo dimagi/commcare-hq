@@ -166,8 +166,8 @@ FACET_MAPPING = [
     ]),
     ("Location", True, [
         {"facet": "deployment.country", "name": "Country", "expanded": True },
-        {"facet": "deployment.region", "name": "", "expanded": False },
-        {"facet": "deployment.city", "name": "", "expanded": False },
+        {"facet": "deployment.region", "name": "Region", "expanded": False },
+        {"facet": "deployment.city", "name": "City", "expanded": False },
     ]),
     ("Type", True, [
         {"facet": "internal.area", "name": "Area", "expanded": True },

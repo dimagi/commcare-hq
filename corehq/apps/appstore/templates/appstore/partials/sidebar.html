@@ -47,7 +47,7 @@
 
                     <input id="s-{{ f.facet }}-{{ choice.name }}" name="{{ choice.name }}" class="facet-checkbox pull-right" type="checkbox" {% if choice.active %}checked=checked{% endif %}/>
                     <label for="s-{{ f.facet }}-{{ choice.name }}">
-                        <span>{{ choice.name }} ({{ choice.count }})</span>
+                        <span>{{ choice.display|default:choice.name }} ({{ choice.count }})</span>
                     </label>
                 </li>
             {% endfor %}
