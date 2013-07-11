@@ -55,10 +55,10 @@ class SqlIndicatorSet(SqlData):
 
 class CallCenter(SqlIndicatorSet):
     """
-    Assumes SQL table with the following columns:
-    * case (string): the case id
+    Assumes SQL table 'call_center' with the following columns:
+    * user_id (string): the user id
     * date (date): the date of the indicator grain
-    * cases_updated (integer): number of cases updated by on date
+    * submission_count (integer): number of forms submitted
     """
     name = 'call_center'
 
