@@ -16,7 +16,7 @@ def indicators(user, version=V2, last_sync=None):
     indicator_sets = []
     for dom in user.get_domains():
         domain = Domain.get_by_name(dom)
-        if domain.call_center_config.enabled:
+        if hasattr(domain, 'call_center_config') and domain.call_center_config.enabled:
             indicator_sets.append(CallCenter(domain, user))
 
     fixtures = []
@@ -35,9 +35,12 @@ def gen_fixture(user, indicator_set):
     :param include_empty: True to include indicators that have no value for the current time period.
     """
     """
-    name = 'demo'
-    group = None
-    data = {'indicator_a': 1}
+    Example output:
+    indicator_set {
+        name = 'demo'
+        group = None
+        data = {'indicator_a': 1}
+    }
     <fixture id="indicators:demo" user_id="...">
         <indicators>
             <indicator_a>1</indicator_a>
@@ -45,9 +48,11 @@ def gen_fixture(user, indicator_set):
         </indicators>
     </fixture>
 
-    name = 'demo'
-    group = 'user'
-    data = {'user1': {'user': 'user1', 'indicator_a': 1}}
+    indicator_set {
+        name = 'demo'
+        group = 'user'
+        data = {'user1': {'user': 'user1', 'indicator_a': 1}}
+    }
     <fixture id="indicators:demo" user_id="...">
         <indicators>
             <user id="user1">
