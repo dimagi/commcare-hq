@@ -1,9 +1,14 @@
+import logging
 from datetime import date, timedelta
 from couchdbkit import NoResultFound
+from sqlagg.base import TableNotFoundException, ColumnNotFoundException
 from sqlagg.columns import SumColumn, SimpleColumn
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 from dimagi.utils.decorators.memoized import memoized
+
+
+logger = logging.getLogger(__name__)
 
 
 class IndicatorSetException(Exception):
@@ -21,7 +26,11 @@ class SqlIndicatorSet(SqlData):
 
     @property
     def data(self):
-        data = super(SqlIndicatorSet, self).data
+        try:
+            data = super(SqlIndicatorSet, self).data
+        except (TableNotFoundException, ColumnNotFoundException) as e:
+            logger.exception(e)
+            return {}
 
         if self.keys:
             for key_group in self.keys:

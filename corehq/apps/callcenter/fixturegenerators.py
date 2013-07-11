@@ -13,13 +13,13 @@ def indicators(user, version=V2, last_sync=None):
     else:
         return []
 
+    fixtures = []
     indicator_sets = []
     for dom in user.get_domains():
         domain = Domain.get_by_name(dom)
         if hasattr(domain, 'call_center_config') and domain.call_center_config.enabled:
             indicator_sets.append(CallCenter(domain, user))
 
-    fixtures = []
     for set in indicator_sets:
         fixtures.append(gen_fixture(user, set))
 
@@ -81,7 +81,7 @@ def gen_fixture(user, indicator_set):
                 if key != group_name:
                     xIndicator = ElementTree.SubElement(xGroup, c.header)
                     xIndicator.text = str(group_data.get(key, 0))
-    else:
+    elif data:
         for c in indicator_set.columns:
             key = c.view.name
             xIndicator = ElementTree.SubElement(xIndicators, c.header)
