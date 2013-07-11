@@ -253,6 +253,7 @@ def account(request, domain, couch_user_id, template="users/account.html"):
     context.update({
         'couch_user': couch_user,
         'editing_commcare_user': editing_commcare_user,
+        'archive_url': reverse('commcare_users', args=[domain]),
     })
     if couch_user.is_commcare_user():
         context.update({
