@@ -16,8 +16,8 @@ def add_to_case(case):
     should_save = False
 
     def get_user_id(form_id):
-        return get_xform(form_id).get('form', {}).get("case", {}).get("@user_id") or \
-            get_xform(form_id).get('form', {}).get("meta", {}).get("userID")
+        return get_xform(form_id).get('form', {}).get("meta", {}).get("userID") or \
+            get_xform(form_id).get('form', {}).get("case", {}).get("@user_id")
 
     for action in case.get('actions', []):
         if not action.get('user_id'):
