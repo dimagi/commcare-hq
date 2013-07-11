@@ -111,15 +111,46 @@
                 {% include "users/partial/edit_user_role.html" %}
             {% endif %}
             {% include "users/partial/edit_phone_numbers.html" %}
-	    {% if commtrack_enabled %}
+            {% if commtrack_enabled %}
                 {% include "users/partial/commtrack.html" %}
-	    {% endif %}
+            {% endif %}
+            
+            {% if editing_commcare_user %}
+            <fieldset>
+                <legend>Reset Password</legend>
+                <a href="#reset_password_{{ couch_user.user_id }}" class="btn btn-info" data-toggle="modal">Reset Password</a>
+
+                <div id="reset_password_{{ couch_user.user_id }}" class="modal hide fade">
+                    <div class="modal-header">
+                        <a class="close" data-dismiss="modal">&times;</a>
+                        <h3>Reset Password for <small>{{ couch_user.html_username|safe }}</small></h3>
+                    </div>
+                    <form class="form form-horizontal reset-password-form" action="{% url change_password domain couch_user.user_id %}" method="post">
+                        <div class="modal-body">
+                            {% include 'users/partial/reset_password.html' %}
+                        </div>
+                        <div class="modal-footer">
+                            <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Reset Password</button>
+                        </div>
+                    </form>
+                </div>
+            </fieldset>
+            <div class="form-actions"></div>
+
+            {% if not current_users_page %}
+                <p><a class="btn btn-danger" href="#delete_user_{{ couch_user.user_id }}" data-toggle="modal"><i class="icon-white icon-trash"></i> Delete {% commcare_user %}</a></p>
+            {% endif %}
+            {% endif %}
         </div>
+
         {% if editing_commcare_user %}
         <div class="tab-pane" id="user-data">
             {% include "users/partial/user_data.html" %}
+
         </div>
         {% endif %}
+
         {% if proj_settings_form %}
             <div class="tab-pane" id="project-settings">
                 {% include "users/partial/project_settings.html" %}
@@ -131,32 +162,6 @@
             </div>
         {% endif %}
     </div>
-    {% if editing_commcare_user %}
-        <fieldset>
-            <legend>Reset Password</legend>
-            <a href="#reset_password_{{ couch_user.user_id }}" class="btn btn-info" data-toggle="modal">Reset Password</a>
-
-            <div id="reset_password_{{ couch_user.user_id }}" class="modal hide fade">
-                <div class="modal-header">
-                    <a class="close" data-dismiss="modal">&times;</a>
-                    <h3>Reset Password for <small>{{ couch_user.html_username|safe }}</small></h3>
-                </div>
-                <form class="form form-horizontal reset-password-form" action="{% url change_password domain couch_user.user_id %}" method="post">
-                    <div class="modal-body">
-                        {% include 'users/partial/reset_password.html' %}
-                    </div>
-                    <div class="modal-footer">
-                        <a href="#" data-dismiss="modal" class="btn">Cancel</a>
-                        <button type="submit" class="btn btn-primary">Reset Password</button>
-                    </div>
-                </form>
-            </div>
-        </fieldset>
-        <div class="form-actions"></div>
-    {% endif %}
-    {% if couch_user.is_commcare_user and not current_users_page %}
-        <p><a class="btn btn-danger" href="#delete_user_{{ couch_user.user_id }}" data-toggle="modal"><i class="icon-white icon-trash"></i> Delete {% commcare_user %}</a></p>
-    {% endif %}
 {% endblock %}
 
 {% block modals %}{{ block.super }}
