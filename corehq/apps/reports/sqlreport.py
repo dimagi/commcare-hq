@@ -59,6 +59,11 @@ class DatabaseColumn(Column):
             :param header_group=None:
                 An instance of corehq.apps.reports.datatables.DataTablesColumnGroup to which this column header will
                 be added.
+            :param sortable:
+                Indicates if the column should be sortable. If true and no format_fn is provided then
+                the default datatables format function is used. Defaults to True.
+            :param sort_type:
+                See corehq.apps.reports.datatables.DTSortType
             :param format_fn=None:
                 Function to apply to value before display. Useful for formatting and sorting.
                 See corehq.apps.reports.util.format_datatables_data
@@ -100,6 +105,7 @@ class DatabaseColumn(Column):
         self.view = column_type(name, **column_kwargs)
 
         self.header_group = kwargs.pop('header_group', None)
+        self.header = header
 
         self.data_tables_column = DataTablesColumn(header, *args, **kwargs)
         if self.header_group:
@@ -128,6 +134,11 @@ class AggregateColumn(Column):
             :param format_fn=None:
                 Function to apply to value before display. Useful for formatting and sorting.
                 See corehq.apps.reports.util.format_datatables_data
+            :param sortable:
+                Indicates if the column should be sortable. If true and no format_fn is provided then
+                the default datatables format function is used. Defaults to True.
+            :param sort_type:
+                See corehq.apps.reports.datatables.DTSortType
         """
         self.aggregate_fn = aggregate_fn
         format_fn = kwargs.pop('format_fn', None)
@@ -152,8 +163,7 @@ class AggregateColumn(Column):
         return self.view.get_value(row) if row else None
 
 
-class SqlTabularReport(GenericTabularReport):
-    exportable = True
+class SqlData(object):
     no_value = '--'
     table_name = None
 
@@ -186,6 +196,7 @@ class SqlTabularReport(GenericTabularReport):
         raise NotImplementedError()
 
     @property
+    @memoized
     def keys(self):
         """
         The list of report keys (e.g. users) or None to just display all the data returned from the query. Each value
@@ -198,20 +209,11 @@ class SqlTabularReport(GenericTabularReport):
         return None
 
     @property
-    def fields(self):
-        return [cls.__module__ + '.' + cls.__name__
-                for cls in self.field_classes]
-
-    @property
-    def headers(self):
-        return DataTablesHeader(*[c.data_tables_column for c in self.columns])
-
-    @property
     def query_context(self):
         return sqlagg.QueryContext(self.table_name, self.filters, self.group_by)
 
     @property
-    def rows(self):
+    def data(self):
         qc = self.query_context
         for c in self.columns:
             qc.append_column(c.view)
@@ -222,6 +224,24 @@ class SqlTabularReport(GenericTabularReport):
         finally:
             conn.close()
 
+        return data
+
+
+class SqlTabularReport(SqlData, GenericTabularReport):
+    exportable = True
+
+    @property
+    def fields(self):
+        return [cls.__module__ + '.' + cls.__name__
+                for cls in self.field_classes]
+
+    @property
+    def headers(self):
+        return DataTablesHeader(*[c.data_tables_column for c in self.columns])
+
+    @property
+    def rows(self):
+        data = self.data
         if self.keys:
             for key_group in self.keys:
                 row_key = self._row_key(key_group)
