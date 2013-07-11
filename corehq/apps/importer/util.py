@@ -185,7 +185,7 @@ def get_value_column_index(config, columns):
 
     return value_column_index
 
-def lookup_case(search_field, search_id, domain):
+def lookup_case(search_field, search_id, domain, case_type):
     """
     Attempt to find the case in CouchDB by the provided search_field and search_id.
 
@@ -196,7 +196,8 @@ def lookup_case(search_field, search_id, domain):
     if search_field == 'case_id':
         try:
             case = CommCareCase.get(search_id)
-            if case.domain == domain:
+
+            if case.domain == domain and case.type == case_type:
                 found = True
         except Exception:
             pass
