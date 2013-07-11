@@ -1,11 +1,7 @@
 from dimagi.utils.couch.database import get_db
 from django.core.management import BaseCommand
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
-from couchforms.models import XFormInstance
 from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.bulk import wrapped_docs
-from dimagi.utils.couch.database import iter_docs
 
 
 def add_to_case(case):
@@ -13,29 +9,32 @@ def add_to_case(case):
     def xforms(xid):
         xform = forms.get(xid)
         if not xform:
-            xform = XFormInstance.get(xid)
+            xform = get_db().get(xid)
             forms[xid] = xform
         return xform
 
     should_save = False
 
-    for action in case.actions:
-        if not action.user_id:
-            user_id = xforms(action.xform_id)._form.get("case", {}).get("@user_id")
+    def get_user_id(form_id):
+        return xforms(form_id).get('form', {}).get("case", {}).get("@user_id")
+
+    for action in case.get('actions', []):
+        if 'user_id' not in action:
+            user_id = get_user_id(action.get('xform_id'))
             if user_id:
-                action.user_id = user_id
+                action['user_id'] = user_id
                 should_save = True
 
-        if not case.opened_by and action.action_type == 'create':
-            opened_by = xforms(action.xform_id)._form.get("case", {}).get("@user_id")
+        if 'opened_by' not in case and action.get('action_type') == 'create':
+            opened_by = get_user_id(action.get('xform_id'))
             if opened_by:
-                case.opened_by = opened_by
+                case['opened_by'] = opened_by
                 should_save = True
 
-        if case.closed and not case.closed_by and action.action_type == 'close':
-            closed_by = xforms(action.xform_id)._form.get("case", {}).get("@user_id")
+        if case.get('closed', False) and 'closed_by' not in case and action.get('action_type') == 'close':
+            closed_by = get_user_id(action.get('xform_id'))
             if closed_by:
-                case.closed_by = closed_by
+                case['closed_by'] = closed_by
                 should_save = True
 
     return should_save
@@ -56,9 +55,11 @@ class Command(BaseCommand):
                 startkey=key,
                 endkey=key + [{}],
                 reduce=False,
-                include_docs=False,
+                include_docs=True,
             )
-            for case_ids in chunked([r['id'] for r in results], 100):
-                for case in wrapped_docs(CommCareCase, case_ids):
+            for cases in chunked([r['doc'] for r in results], 100):
+                cases_to_save = []
+                for case in cases:
                     if add_to_case(case):
-                        case.save()
+                        cases_to_save.append(case)
+                get_db().bulk_save(cases_to_save)
