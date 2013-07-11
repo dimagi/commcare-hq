@@ -2,6 +2,7 @@
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
 {% load field_tags %}
+{% load i18n %}
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
     <script src="{% static 'users/js/key_filters.js' %}"></script>
@@ -91,15 +92,15 @@
 
 {% block user-view %}
     <ul class="nav nav-tabs" id="project-settings-tabs">
-        <li><a href="#basic-info" data-toggle="tab">Basic</a></li>
+        <li><a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a></li>
     {% if editing_commcare_user %}
-        <li><a href="#user-data" data-toggle="tab">Custom Registration Data</a></li>
+        <li><a href="#user-data" data-toggle="tab">{% trans "Custom Registration Data" %}</a></li>
     {% endif %}
     {% if proj_settings_form %}
-        <li><a href="#project-settings" data-toggle="tab">My Settings for this Project</a></li>
+        <li><a href="#project-settings" data-toggle="tab">{% trans "My Settings for this Project" %}</a></li>
     {% endif %}
     {% if current_users_page and not couch_user.is_commcare_user %}
-        <li><a href="#domains" data-toggle="tab">My Projects</a></li>
+        <li><a href="#domains" data-toggle="tab">{% trans "My Projects" %}</a></li>
     {% endif %}
     </ul>
     <div class="tab-content" id="settings">
