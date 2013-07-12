@@ -27,6 +27,6 @@ def rebuild_case(case_id):
         filtered_updates = [u for u in case_updates if u.id == case_id]
         for u in filtered_updates:
             case.update_from_case_update(u, form)
-
+    case.xform_ids = [f._id for f in sorted_forms]
     case.save()
     return case
