@@ -57,8 +57,12 @@ def bulk_import_async(import_id, config, domain, excel_id):
             blank_external_ids.append(i + 1)
             continue
 
-        case, error = importer_util.lookup_case(config.search_field,
-                                                search_id, domain)
+        case, error = importer_util.lookup_case(
+            config.search_field,
+            search_id,
+            domain,
+            config.case_type
+        )
 
         try:
             fields_to_update = importer_util.populate_updated_fields(
@@ -80,12 +84,8 @@ def bulk_import_async(import_id, config, domain, excel_id):
             too_many_matches += 1
             continue
 
-
-        if 'owner_id' in fields_to_update:
-            owner_id = fields_to_update['owner_id']
-            del fields_to_update['owner_id']
-        else:
-            owner_id = user_id
+        owner_id = fields_to_update.pop('owner_id', user_id)
+        external_id = fields_to_update.pop('external_id', None)
 
         if not case:
             id = uuid.uuid4().hex
@@ -102,13 +102,18 @@ def bulk_import_async(import_id, config, domain, excel_id):
             )
             submit_case_block(caseblock, domain, username, user_id)
         elif case and case.type == config.case_type:
+            extras = {}
+            if external_id:
+                extras['external_id'] = external_id
             caseblock = CaseBlock(
                 create=False,
                 case_id=case._id,
                 owner_id=owner_id,
                 version=V2,
-                update=fields_to_update
+                update=fields_to_update,
+                **extras
             )
+
             submit_case_block(caseblock, domain, username, user_id)
 
     return {
@@ -118,7 +123,6 @@ def bulk_import_async(import_id, config, domain, excel_id):
         'blank_externals': blank_external_ids,
         'invalid_dates': invalid_dates,
     }
-
 
 def submit_case_block(caseblock, domain, username, user_id):
     """ Convert a CaseBlock object to xml and submit for creation/update """

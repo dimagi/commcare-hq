@@ -22,7 +22,7 @@ from dimagi.utils.web import json_request
 from dimagi.utils.parsing import string_to_boolean
 from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
 
-CHART_SPAN_MAP = {1: '', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
+CHART_SPAN_MAP = {1: '12', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
 
 class GenericReportView(CacheableRequestMixIn):
     """
@@ -599,9 +599,10 @@ class GenericReportView(CacheableRequestMixIn):
     @request_cache("raw")
     def print_response(self):
         """
-        Returns the raw report data. What gets rendered in the async response.
+        Returns the report for printing.
         """
         self.is_rendered_as_email = True
+        self.use_datatables = False
         self.override_template = "reports/async/print_report.html"
         return HttpResponse(self._async_context()['report'])
 

@@ -31,7 +31,7 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
     # since the API user is a superuser, force touchforms to query only
     # the contact's cases by specifying it as an additional filterp
     if contact.doc_type == "CommCareCase":
-        session_data["additional_filters"] = { "case_id": contact.get_id }
+        session_data["additional_filters"] = { "case_id": contact.get_id, "footprint" : "True" }
     else:
         session_data["additional_filters"] = { "user_id": contact.get_id }
     
