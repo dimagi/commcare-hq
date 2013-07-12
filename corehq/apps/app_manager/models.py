@@ -1550,22 +1550,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def media_suite_loc(self):
         return "media_suite.xml"
 
-    @property
-    def build_version(self):
-        try:
-            # returns a tuple.. ex: (2, 6)
-            version_tuple = self.get_build().minor_release()
-
-            # convert it to '2.6' for easy comparisons
-            version = (
-                str(version_tuple[0]) +
-                '.' +
-                str(version_tuple[1])
-            )
-
-            return version
-        except KeyError:
-            return ''
+    def enable_multi_sort(self):
+        return self.get_build().minor_release() >= (2, 2)
 
     @property
     def default_language(self):

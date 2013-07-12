@@ -433,7 +433,7 @@ class SuiteGenerator(object):
                             d.fields.extend(fields)
 
                         try:
-                            if self.app.build_version < '2.2':
+                            if not self.app.enable_multi_sort:
                                 d.fields[0].sort = 'default'
                         except IndexError:
                             pass
