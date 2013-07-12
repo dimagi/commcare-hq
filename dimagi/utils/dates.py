@@ -314,12 +314,6 @@ class DateSpan(object):
         start = end - timedelta(days=days)
         return DateSpan(start, end, format, inclusive, timezone)
 
-    @classmethod
-    def default_since(cls, days, timezone=pytz.utc, inclusive=True):
-        enddate = datetime.now(tz=timezone)
-        if inclusive:
-            enddate = enddate - timedelta(days=1)
-        return cls.since(days, enddate=enddate, format="%Y-%m-%d", timezone=timezone, inclusive=inclusive)
 
     def parse(self, startdate_str, enddate_str, parse_format, display_format=None):
         """
