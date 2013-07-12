@@ -298,7 +298,7 @@ var DetailScreenConfig = (function () {
                 var $row = $(this).closest('tr');
                 var $field = $row.find('.detail-screen-field code').text();
                 sortRows.addSortRow($field, '', '');
-                e.preventDefault();
+                e.stopImmediatePropagation();
             });
        }
 
