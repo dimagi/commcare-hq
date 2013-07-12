@@ -178,7 +178,6 @@ class ProjectReportParametersMixin(object):
         for group in self.groups:
             user_dict["%s|%s" % (group.name, group._id)] = self.get_all_users_by_domain(
                 group=group,
-                individual=None,
                 user_filter=tuple(self.default_user_filter),
                 simplified=True
             )
@@ -207,7 +206,6 @@ class ProjectReportParametersMixin(object):
         ufilters = ufilters if ufilters is not None else ['1', '2', '3']
         users = self.get_all_users_by_domain(
             group=None,
-            individual=None,
             user_filter=tuple(HQUserType.use_filter(ufilters)),
             simplified=True
         ) if ufilters else []
