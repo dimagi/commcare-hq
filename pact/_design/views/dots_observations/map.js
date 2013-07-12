@@ -156,8 +156,6 @@ function (doc) {
                 new_drug_obs['observed_date'] = toISOString(encounter_date);
                 new_drug_obs['completed_date'] = doc.form['meta']['timeEnd'];
                 new_drug_obs['anchor_date'] = toISOString(encounter_date);
-                new_drug_obs['encounter_datestring'] = doc.form['encounter_date'];
-                new_drug_obs['anchor_datestring'] = anchor_datestring;
                 new_drug_obs['day_index'] = -1;
                 var day_note = "No check, from form";
                 //new_drug_obs['day_note'] = "No check, from form";

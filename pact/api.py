@@ -273,8 +273,6 @@ def submit_case_update_form(casedoc, update_dict, couch_user, submit_date=None, 
     form.append(encounter_date)
 
     submission_xml_string = etree.tostring(form)
-    print "Submit_case_update_form:"
-    print submission_xml_string
     return submit_xform('/a/pact/receiver', PACT_DOMAIN, submission_xml_string)
 
 

@@ -69,7 +69,6 @@ class DOTDay(object):
         else:
             drug_attr='nonart'
         getattr(self,drug_attr).update_total_doses(obs)
-        #if not getattr(self, drug_attr).has_obs(obs):
         getattr(self, drug_attr).add_obs(obs)
 
     @classmethod
@@ -104,8 +103,7 @@ class DOTDay(object):
                 else:
                     day_note = ''
 
-                return [obs.adherence, obs.method, day_note, day_slot] #todo, add regimen_item
-
+                return [obs.adherence, obs.method, day_note, day_slot]
                 #one and done per array
             else:
                 #return pristine unchecked
@@ -116,7 +114,6 @@ class DOTDay(object):
         for ix, dose_data in enumerate([self.nonart, self.art]):
             drug_arr = []
             labels_arr = regimen_labels[ix]
-            #for dose_num, obs_list in day_data[drug_type]['dose_dict'].items():
             dose_nums = dose_data.dose_dict.keys()
             dose_nums.sort()
             for dose_num in dose_nums:
@@ -143,7 +140,6 @@ class DOTDay(object):
 
 def filter_obs_for_day(this_date, observations):
     assert this_date.__class__ == date
-    #todo, normalize for timezone
     ret = filter(lambda x: x['observed_date'].date() == this_date, observations)
 
     return ret
