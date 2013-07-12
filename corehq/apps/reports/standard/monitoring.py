@@ -981,13 +981,15 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
             }
 
             start_date, end_date = dates_for_linked_reports(case_list=True)
+            start_date_sub1 = self.datespan.startdate - datetime.timedelta(days=1)
+            start_date_sub1 = start_date_sub1.strftime(self.datespan.format)
             search_strings = {
                 4: "opened_by: %s AND opened_on: [%s TO %s]" % (owner_id, start_date, end_date), # cases created
                 5: "closed_by: %s AND closed_on: [%s TO %s]" % (owner_id, start_date, end_date), # cases closed
                 # 6: "modified_on: [%s TO %s]" % (start_date, end_date), # cases modified
                 # 8: "opened_on: [* TO %s] AND NOT closed_on [* TO %s] AND NOT modified_on: [%s TO %s]" %
                 #    (start_date, start_date, start_date, end_date), # inactive cases
-                9: "opened_on: [* TO %s] AND NOT closed_on: [* TO %s]" % (end_date, start_date), # total cases
+                9: "opened_on: [* TO %s] AND NOT closed_on: [* TO %s]" % (end_date, start_date_sub1), # total cases
             }
 
             def create_case_url(index):
