@@ -33,7 +33,7 @@ FORM_B = "4ed0045c580d415985c15f09282b4a22"
 CTSIMS_ID = 'ff6c662bfc2a448dadc9084056a4abdf'
 
 
-class dotsSubmission2Tests(TestCase):
+class dotsOrderingTests(TestCase):
     def setUp(self):
         for doc in XFormInstance.get_db().view('couchforms/by_xmlns', reduce=False,
                                                include_docs=True).all():
