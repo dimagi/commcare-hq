@@ -218,15 +218,32 @@
         </div>
         <div id="detail-screen-config-body">
             {% if app.build_version >= '2.2' %}
+                <legend>
+                    {% trans "Sort Properties" %}
+                    <span style="font-size: 13px">
+                        <span class="hq-help-template"
+                              data-title="{% trans "Sort Properties" %}"
+                              data-content=
+                                  "{% blocktrans %}
+                                      Properties in this list determine how
+                                      cases are ordered in your case list. This
+                                      is useful if for example you want higher
+                                      priority cases to appear closer to the
+                                      top of the list. The case list will sort
+                                      by the first property, then the second,
+                                      etc.
+                                  {% endblocktrans %}" ></span>
+                    </span>
+                </legend>
                 <div id="sorting-list" class="ui-sortable">
                     <table data-bind="visible: rowCount() > 0"
                            class="table table-condensed">
                         <thead>
                             <tr>
                                 <th></th>
-                                <th>Property</th>
-                                <th>Direction</th>
-                                <th>Type</th>
+                                <th>{% trans "Property" %}</th>
+                                <th>{% trans "Direction" %}</th>
+                                <th>{% trans "Type" %}</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -281,7 +298,11 @@
                 </div>
             {% endif %}
 
-            <div id="detail-screen-config"></div>
+            <div id="detail-screen-config">
+                <legend>
+                    {% trans "Display Properties" %}
+                </legend>
+            </div>
         </div>
     </div>
 </div>
