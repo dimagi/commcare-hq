@@ -51,6 +51,7 @@ ko.bindingHandlers.sortableList = {
           list.splice(position, 0, item);
         }
         ui.item.remove();
+        window.saveButton.fire('change');
       }
     });
   }
