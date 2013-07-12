@@ -1,8 +1,12 @@
+import logging
 from xml.etree import ElementTree
 from casexml.apps.case.xml import V2
 from corehq.apps.domain.models import Domain
 from corehq.apps.callcenter.indicator_sets import CallCenter
 from corehq.apps.users.models import CommCareUser
+
+
+logger = logging.getLogger(__name__)
 
 
 def indicators(user, version=V2, last_sync=None):
@@ -21,7 +25,10 @@ def indicators(user, version=V2, last_sync=None):
             indicator_sets.append(CallCenter(domain, user))
 
     for set in indicator_sets:
-        fixtures.append(gen_fixture(user, set))
+        try:
+            fixtures.append(gen_fixture(user, set))
+        except Exception as e:  # blanket exception catching intended
+            logger.exception(e)
 
     return fixtures
 
