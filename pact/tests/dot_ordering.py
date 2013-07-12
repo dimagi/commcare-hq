@@ -20,10 +20,7 @@ from datetime import datetime, timedelta
 START_DATE = datetime.utcnow() - timedelta(days=7)
 END_DATE = datetime.utcnow()
 
-#ANCHOR_DATE_A_STR = '2013-06-25'
 ANCHOR_DATE_A = datetime.utcnow() - timedelta(days=1)
-#ANCHOR_DATE_B_STR = '2013-06-26'
-#ANCHOR_DATE_B = datetime.strptime(ANCHOR_DATE_B_STR, "%Y-%m-%d")
 ANCHOR_DATE_B = datetime.utcnow() - timedelta(days=0)
 
 CASE_ID = "b975804a513743738a216246a293e819"
@@ -97,11 +94,7 @@ class dotsOrderingTests(TestCase):
             'submit_idx': -1,
             'check_idx': -2,
         }
-        print "######### TestFormA"
-        print self.form_a
         self._submitAndVerifyBundle(bundle)
-
-        print "######### END TestFormA"
 
     def testFormB(self, verify=True):
         bundle = {
@@ -115,13 +108,10 @@ class dotsOrderingTests(TestCase):
             'submit_idx': -2,
             'check_idx': -2
         }
-        print "######### TestFormB"
         self._submitAndVerifyBundle(bundle, verify=verify)
-        print "######### END TestFormB"
 
     def testForA_B(self):
 
-        print "######### TestFormAB"
         self.testFormA()
         self.testFormB(verify=False)
 
@@ -135,37 +125,23 @@ class dotsOrderingTests(TestCase):
         examine_day = days[-2]
 
         self._verify_dot_cells(nonart, art, examine_day)
-        print "######### END TestFormAB"
 
     def _submitAndVerifyBundle(self, bundle, verify=True):
         start_nums = len(self.case.xform_ids)
         submit_xform(self.submit_url, self.domain.name, bundle['xml'])
         time.sleep(1)
-        #ipdb.set_trace()
         submitted = XFormInstance.get(bundle['xform_id'])
         self.assertTrue(hasattr(submitted, PACT_DOTS_DATA_PROPERTY))
 
         submitted_dots = getattr(submitted, PACT_DOTS_DATA_PROPERTY)
         updated_case = PactPatientCase.get(CASE_ID)
-        #case_json = get_dots_case_json(PactPatientCase.get(CASE_ID), anchor_date=bundle['anchor_date'])
-        #self.assertEqual(start_nums + 2, len(updated_case.xform_ids))
         case_dots = get_dots_case_json(updated_case)
         days = case_dots['days']
-
-        print "anchor: %s" % bundle['anchor_date']
-        print 'form data: %s' % submitted_dots['dots']['days'][bundle['submit_idx']]
-        #print "Case data: %s" % days[bundle['day_idx']]
-        print "Case data -1: %s" % days[-1]
-        print "Case data -2: %s" % days[-2]
-        print "Case data checker: %s" % days[bundle['check_idx']]
 
         if verify:
             nonart_submissions = bundle['nonart']
             art_submissions = bundle['art']
             examine_day = days[bundle['check_idx']]
-
-            print "compare nonart: %s" % nonart_submissions
-            print "compare art: %s" % art_submissions
 
             self._verify_dot_cells(nonart_submissions, art_submissions, examine_day)
 
