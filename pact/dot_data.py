@@ -286,7 +286,6 @@ def get_dots_case_json(casedoc, anchor_date=None):
     ret['anchor'] = "%s 05:00:00 GMT" % anchor_date.strftime("%d %b %Y")
 
     observations = query_observations(casedoc._id, enddate-timedelta(days=DOT_DAYS_INTERVAL),enddate)
-    print "get_dots_case_json: %s" % ret['anchor']
     for delta in range(DOT_DAYS_INTERVAL):
         obs_date = enddate - timedelta(days=delta)
         day_arr = filter_obs_for_day(obs_date.date(), observations)
