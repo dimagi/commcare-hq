@@ -1,7 +1,6 @@
 import logging
 import dateutil
 from django.conf import settings
-import ipdb
 from pytz import timezone
 from datetime import datetime, timedelta, date
 from pact.enums import DAY_SLOTS_BY_TIME, \
@@ -290,9 +289,6 @@ def get_dots_case_json(casedoc, anchor_date=None):
         obs_date = enddate - timedelta(days=delta)
         day_arr = filter_obs_for_day(obs_date.date(), observations)
         day_data = DOTDay.merge_from_observations(day_arr)
-        #if obs_date.month == 6 and obs_date.day == 30 and len(day_arr) == 8:
-        # if len(day_arr) > 4:
-        #     ipdb.set_trace()
         ret['days'].append(day_data.to_case_json(casedoc, ret['regimen_labels']))
     ret['days'].reverse()
     return ret
