@@ -7,7 +7,7 @@ while read line; do
     if [ ! -z "$line" ]; then
         date
         echo pip install --use-mirrors "$line" 
-        pip install --use-mirrors "$line" > "$LOG" 2>&1 || cat "$LOG"
+        pip install --use-mirrors --use-wheel --find-links=/home/$USER/wheelhouse "$line" > "$LOG" 2>&1 || cat "$LOG"
     fi
 done
 date

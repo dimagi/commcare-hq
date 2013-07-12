@@ -9,9 +9,8 @@ install:
  - "bash -ex .travis/upgrade-couchdb.sh"
  - "curl http://127.0.0.1:5984/"
  - "time bash -e .travis/quietly-run-install.sh"
- - "time python .travis/download-requirements-in-parallel.py requirements/requirements.txt requirements/dev-requirements.txt"
- - "time pip install Cython --use-mirrors"
- - "time pip install -r requirements/requirements.txt -r requirements/dev-requirements.txt --use-mirrors"
+ - "time pip install Cython --use-mirrors --use-wheel --find-links=/home/travis/wheelhouse"
+ - "time pip install -r requirements/requirements.txt --use-mirrors --use-wheel --find-links=/home/travis/wheelhouse"
  - "bash -e .travis/misc-setup.sh"
  - "cp .travis/localsettings.py localsettings.py"
  - "pip install coveralls coverage unittest2 mock"
@@ -24,3 +23,8 @@ services:
  - rabbitmq
  - elasticsearch
  - memcache
+env:
+ global:
+  - secure: "LYNNc9DQMSvDKssc6YuP0yE4AWSo8Y0hFd5r/0LLG0b6Fj6YT/I/O4hhnZ1U\nz8O/RPHVPRJoJZtYJUX4cIeXogGQp2/p8oIZ7h5bYBxncfBaBhfNE+FVPSTb\n/Q1k+Zpy4lk11mEHniflBpg6WZ+yaOEd/q1c4Fo9bv+B3sgaB40="
+  - secure: "FeEbC3bJVli9OuL7b8VGQNhgqIFq0uLoclDZ49raKeqGlnV+4qDAVYusenLg\nUYdO8CmhwobWpk6lvDGYWqRPQC/aHkaehmyKLT4aBAxUV+WoCV3oKUyD2p9X\njIAo5iXY9CqkPZ8thoGP+ef+cbgh+FZnPPm0VZ2l559qngCwLmk="
+
