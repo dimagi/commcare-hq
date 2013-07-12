@@ -155,7 +155,8 @@ class SecondaryOutcomeReport(DataSummaryReport):
             def calculate(data):
                 denom = data.get(denom_field, 0)
                 if denom:
-                    return denom_multiplier * data.get(field, 0) / float(denom)
+                    result = denom_multiplier * data.get(field, 0) / float(denom)
+                    return int(round(result))
                 else:
                     return '---'
             return calculate
@@ -215,9 +216,7 @@ class FADAObservationsReport(DataSummaryReport):
         Gets reduced results per unique process_sbr_no for each key and sums
         them together, adding percentage occurences out of total_forms for all
         indicators.
-
         """
-
         site_ids = site_ids or []
         user_ids = user_ids or []
         startdate, enddate = daterange
