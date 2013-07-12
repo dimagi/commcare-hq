@@ -6,10 +6,13 @@ import sqlagg
 from corehq.apps.reports.basic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, \
     DataTablesColumn, DTSortType
-from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 from corehq.apps.reports.util import format_datatables_data
+
+
+class SqlReportException(Exception):
+    pass
 
 
 def format_data(value):
@@ -216,7 +219,7 @@ class SqlData(object):
     @property
     def data(self):
         if self.keys and not self.group_by:
-            raise Exception('Keys supplied without group_by.')
+            raise SqlReportException('Keys supplied without group_by.')
         qc = self.query_context
         for c in self.columns:
             qc.append_column(c.view)

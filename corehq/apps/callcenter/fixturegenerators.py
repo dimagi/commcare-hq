@@ -1,12 +1,8 @@
-import logging
 from xml.etree import ElementTree
 from casexml.apps.case.xml import V2
 from corehq.apps.domain.models import Domain
 from corehq.apps.callcenter.indicator_sets import CallCenter
 from corehq.apps.users.models import CommCareUser
-
-
-logger = logging.getLogger(__name__)
 
 
 def indicators(user, version=V2, last_sync=None):
