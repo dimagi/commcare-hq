@@ -31,7 +31,7 @@
             users_cannot_share: {{ users_cannot_share|JSON }},
             urls: urls,
             appVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
-            recipient_contacts: {{ sms_contacts|JSON }},
+            recipient_contacts: {{ sms_contacts|JSON }}
         };
         var el = $('#releases-table');
         ko.applyBindings(new ReleasesMain(o), el.get(0));
