@@ -11,6 +11,8 @@ def add_to_case(case):
         if not xform:
             xform = get_db().get(xid)
             forms[xid] = xform
+        if len(forms) > 100:
+            forms.popitem()
         return xform
 
     should_save = False
