@@ -1,8 +1,9 @@
 import logging
 import dateutil
 from django.conf import settings
-from datetime import datetime, timedelta
+import ipdb
 from pytz import timezone
+from datetime import datetime, timedelta, date
 from pact.enums import DAY_SLOTS_BY_TIME, \
     DOT_DAYS_INTERVAL, \
     DOT_ART, \
@@ -14,7 +15,6 @@ from pact.enums import DAY_SLOTS_BY_TIME, \
     DOT_OBSERVATION_DIRECT,\
     DOT_UNCHECKED_CELL
 
-from datetime import date
 from pact.models import CObservation
 
 
@@ -69,8 +69,8 @@ class DOTDay(object):
         else:
             drug_attr='nonart'
         getattr(self,drug_attr).update_total_doses(obs)
-        if not getattr(self, drug_attr).has_obs(obs):
-            getattr(self, drug_attr).add_obs(obs)
+        #if not getattr(self, drug_attr).has_obs(obs):
+        getattr(self, drug_attr).add_obs(obs)
 
     @classmethod
     def merge_from_observations(cls, day_observations):
@@ -145,6 +145,7 @@ def filter_obs_for_day(this_date, observations):
     assert this_date.__class__ == date
     #todo, normalize for timezone
     ret = filter(lambda x: x['observed_date'].date() == this_date, observations)
+
     return ret
 
 
@@ -286,13 +287,17 @@ def get_dots_case_json(casedoc, anchor_date=None):
     ret['days'] = []
     #dmyung - hack to have query_observations be timezone be relative specific to the eastern seaboard
     #ret['anchor'] = isodate.strftime(datetime.now(tz=timezone(settings.TIME_ZONE)), "%d %b %Y")
-    ret['anchor'] = anchor_date.strftime("%d %b %Y")
+    ret['anchor'] = "%s 05:00:00 GMT" % anchor_date.strftime("%d %b %Y")
 
     observations = query_observations(casedoc._id, enddate-timedelta(days=DOT_DAYS_INTERVAL),enddate)
+    print "get_dots_case_json: %s" % ret['anchor']
     for delta in range(DOT_DAYS_INTERVAL):
         obs_date = enddate - timedelta(days=delta)
         day_arr = filter_obs_for_day(obs_date.date(), observations)
         day_data = DOTDay.merge_from_observations(day_arr)
+        #if obs_date.month == 6 and obs_date.day == 30 and len(day_arr) == 8:
+        # if len(day_arr) > 4:
+        #     ipdb.set_trace()
         ret['days'].append(day_data.to_case_json(casedoc, ret['regimen_labels']))
     ret['days'].reverse()
     return ret

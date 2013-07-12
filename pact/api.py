@@ -269,8 +269,12 @@ def submit_case_update_form(casedoc, update_dict, couch_user, submit_date=None, 
 
     update_block = prepare_case_update_xml_block(casedoc, couch_user, update_dict, submit_date)
     form.append(update_block)
+    encounter_date = etree.XML('<encounter_date>%s</encounter_date>' % datetime.utcnow().strftime('%Y-%m-%d'))
+    form.append(encounter_date)
 
     submission_xml_string = etree.tostring(form)
+    print "Submit_case_update_form:"
+    print submission_xml_string
     return submit_xform('/a/pact/receiver', PACT_DOMAIN, submission_xml_string)
 
 
