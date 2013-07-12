@@ -16,14 +16,14 @@ class User(object):
     """
     
     def __init__(self, user_id, username, password, date_joined, 
-                 user_data=None, additional_owner_ids=[]):
+                 user_data=None, additional_owner_ids=None):
         self.user_id = user_id
         self.username = username
         self.password = password
         self.date_joined = date_joined
         self.user_data = user_data or {}
-        self.additional_owner_ids = additional_owner_ids
-    
+        self.additional_owner_ids = additional_owner_ids or []
+
     def get_owner_ids(self):
         ret = [self.user_id]
         ret.extend(self.additional_owner_ids)
