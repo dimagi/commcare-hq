@@ -43,7 +43,7 @@
             });
 
             var parsedSortRows = JSON.parse({{ sortElements|JSON }});
-            for (var i=0; i < parsedSortRows.length; i++) {
+            for (var i = 0; i < parsedSortRows.length; i++) {
                 sortRows.addSortRow(
                     parsedSortRows[i].field,
                     parsedSortRows[i].type,
@@ -257,32 +257,31 @@
                                 </td>
 
                                 <td>
-                                    <code data-bind="text: field"
-                                          style="display: inline-block">
+                                    <code data-bind="text: field">
                                     </code>
                                 </td>
 
                                 <td>
                                     <select data-bind="value: direction">
-                                        <option value='ascending'>
-                                            {% trans 'Ascending' %}
+                                        <option value="ascending">
+                                            {% trans "Ascending" %}
                                         </option>
-                                        <option value='descending'>
-                                            {% trans 'Descending' %}
+                                        <option value="descending">
+                                            {% trans "Descending" %}
                                         </option>
                                     </select>
                                 </td>
 
                                 <td>
                                     <select data-bind="value: type">
-                                        <option value='string'>
-                                            {% trans 'Plain' %}
+                                        <option value="string">
+                                            {% trans "Plain" %}
                                         </option>
-                                        <option value='int'>
-                                            {% trans 'Integer' %}
+                                        <option value="int">
+                                            {% trans "Integer" %}
                                         </option>
-                                        <option value='double'>
-                                            {% trans 'Decimal' %}
+                                        <option value="double">
+                                            {% trans "Decimal" %}
                                         </option>
                                     </select>
                                 </td>
