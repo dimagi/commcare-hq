@@ -37,7 +37,7 @@
                 {% endifequal %}
             </a>
 
-            <li><ul>
+            <li style="margin-left: .4em;"><ul>
             {% for choice in f.choices %}
                 <li class="sortable sortable-{{ f.facet }}
                     {% if not f.expanded or forloop.counter > 5 and choices|length > 6 %}
