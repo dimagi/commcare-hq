@@ -3,6 +3,7 @@ import dateutil
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
 import operator
+import pytz
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
@@ -308,10 +309,7 @@ class DatespanMixin(object):
 
     @property
     def default_datespan(self):
-        enddate = datetime.now(tz=self.timezone)
-        if self.inclusive:
-            enddate = enddate - timedelta(days=1)
-        days = self.datespan_default_days - 1 if self.inclusive else self.datespan_default_days
-        datespan = DateSpan.since(days, enddate=enddate, format="%Y-%m-%d", timezone=self.timezone)
+        timezone = getattr(self, "timezone") or pytz.utc
+        datespan = DateSpan.since(self.datespan_default_days, timezone, self.inclusive)
         datespan.is_default = True
         return datespan
