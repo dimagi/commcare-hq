@@ -296,7 +296,8 @@ def account(request, domain, couch_user_id, template="users/account.html"):
         user_data_roles = []
 
     if couch_user.is_commcare_user():
-        user_data = copy.copy(couch_user.user_data) 
+        user_data = copy.copy(dict(couch_user.user_data))
+
         for k, v in user_data.items():
             if k in user_data_roles:
                 user_data_roles[k]['selected'] = (user_data[k] == 'true')
