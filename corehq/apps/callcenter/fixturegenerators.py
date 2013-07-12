@@ -28,7 +28,8 @@ def indicators(user, version=V2, last_sync=None):
         try:
             fixtures.append(gen_fixture(user, set))
         except Exception as e:  # blanket exception catching intended
-            logger.exception(e)
+            logger.exception('problem generating report fixtures for user {user}: {msg}'.format(
+                user=user._id, msg=str(e)))
 
     return fixtures
 
