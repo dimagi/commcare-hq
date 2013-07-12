@@ -1,60 +1,60 @@
 /*globals $, _, uiElement, eventize, lcsMerge, COMMCAREHQ */
 
 var SortRow = function (field, type, direction) {
-  this.field = ko.observable(field);
-  this.type = ko.observable(type);
-  this.direction = ko.observable(direction);
+    this.field = ko.observable(field);
+    this.type = ko.observable(type);
+    this.direction = ko.observable(direction);
 
-  this.type.subscribe(function () {
-    window.saveButton.fire('change');
-  });
-  this.direction.subscribe(function () {
-    window.saveButton.fire('change');
-  });
+    this.type.subscribe(function () {
+        window.saveButton.fire('change');
+    });
+    this.direction.subscribe(function () {
+        window.saveButton.fire('change');
+    });
 };
 
 var SortRows = function () {
-  var self = this;
-  self.sortRows = ko.observableArray([]);
+    var self = this;
+    self.sortRows = ko.observableArray([]);
 
-  self.addSortRow = function (field, type, direction) {
-    self.sortRows.push(new SortRow(field, type, direction));
-  };
+    self.addSortRow = function (field, type, direction) {
+        self.sortRows.push(new SortRow(field, type, direction));
+    };
 
-  self.removeSortRow = function (row) {
-    self.sortRows.remove(row);
-    window.saveButton.fire('change');
-  };
+    self.removeSortRow = function (row) {
+        self.sortRows.remove(row);
+        window.saveButton.fire('change');
+    };
 
-  self.rowCount = ko.computed(function () {
-    return self.sortRows().length;
-  });
+    self.rowCount = ko.computed(function () {
+        return self.sortRows().length;
+    });
 
 };
 
 // http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
 // connect items with observableArrays
 ko.bindingHandlers.sortableList = {
-  init: function(element, valueAccessor) {
-    var list = valueAccessor();
-    $(element).sortable({
-      handle: '.grip',
-      cursor: 'move',
-      update: function(event, ui) {
-        //retrieve our actual data item
-        var item = ko.dataFor(ui.item.get(0));
-        //figure out its new position
-        var position = ko.utils.arrayIndexOf(ui.item.parent().children(), ui.item[0]);
-        //remove the item and add it back in the right spot
-        if (position >= 0) {
-          list.remove(item);
-          list.splice(position, 0, item);
-        }
-        ui.item.remove();
-        window.saveButton.fire('change');
-      }
-    });
-  }
+    init: function(element, valueAccessor) {
+        var list = valueAccessor();
+        $(element).sortable({
+            handle: '.grip',
+            cursor: 'move',
+            update: function(event, ui) {
+                //retrieve our actual data item
+                var item = ko.dataFor(ui.item.get(0));
+                //figure out its new position
+                var position = ko.utils.arrayIndexOf(ui.item.parent().children(), ui.item[0]);
+                //remove the item and add it back in the right spot
+                if (position >= 0) {
+                    list.remove(item);
+                    list.splice(position, 0, item);
+                }
+                ui.item.remove();
+                window.saveButton.fire('change');
+            }
+        });
+    }
 };
 
 sortRows = new SortRows
