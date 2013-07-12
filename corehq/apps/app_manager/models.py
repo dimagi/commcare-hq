@@ -1550,8 +1550,17 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def media_suite_loc(self):
         return "media_suite.xml"
 
+    @property
     def enable_multi_sort(self):
-        return self.get_build().minor_release() >= (2, 2)
+        """
+        Multi (tiered) sort is supported by apps version 2.2 or higher
+        """
+        try:
+            return self.get_build().minor_release() >= (2, 2)
+        except KeyError:
+            # if for some reason there is no build number it's probably
+            # old or bugged
+            return False
 
     @property
     def default_language(self):
