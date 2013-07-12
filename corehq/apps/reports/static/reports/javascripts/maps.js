@@ -304,10 +304,6 @@ CanvasMarker.prototype.draw = function() {
 };
 
 
-
-
-
-
 // initialize the google map pane
 function init_map($div, default_pos, default_zoom, default_map_type) {
     var map = new google.maps.Map($div[0], {
@@ -369,8 +365,10 @@ function annotate(c) {
 
 // take a raw case object and annotate with various methods
 function init_case(c, cases, map) {
-    var config = case_type_config(c.type()) || {};
-
+    var config = case_type_config(c.type()) || null;
+    if (config === null) {
+        return;
+    }
     var geo_field = config.geo_field;
     if (!geo_field && !config.geo_linked_to) {
         geo_field = '_loc';
@@ -516,9 +514,8 @@ function maps_init(config) {
 function maps_refresh(map, cases) {
     var debug_mode = (window.location.href.indexOf('?debug=true') != -1);
     if (debug_mode) {
-	cases = gen_test_data();
+        cases = gen_test_data();
     }
-    
     init_callback(map, cases, CONFIG);
 }
 
@@ -584,8 +581,8 @@ function init_callback(map, case_list) {
     var case_types = topological_sort(case_type_dag);
     var _cases = _.sortBy(case_list, function(e) { return case_types.indexOf(e.type()); });
     $.each(_cases, function(i, c) {
-            init_case(c, cases, map);
-        });
+        init_case(c, cases, map);
+    });
 
     for (var i = 0; i < (window.MARKERS || []).length; i++) {
 	MARKERS[i].setMap(null);
@@ -1206,10 +1203,6 @@ function render_legend(style, context) {
     $('#legend-inner').empty();
     var has_legend = (style != null ? style.legend(context, $('#legend-inner')) : false);
     $('#legend')[has_legend ? 'show' : 'hide']();
-
-    if (has_legend) {
-        console.log('legendary!');
-    }
 }
 
 function hide_nonrelevant(data, cases) {
