@@ -93,6 +93,7 @@ class CaseRebuildTest(TestCase):
         case = CommCareCase.get(case_id)
 
         original_actions = [deepcopy(a) for a in case.actions]
+        original_form_ids = [id for id in case.xform_ids]
         self._assertListEqual(original_actions, case.actions)
 
         # test reordering
@@ -127,3 +128,4 @@ class CaseRebuildTest(TestCase):
         # test clean slate rebuild
         case = rebuild_case(case_id)
         self._assertListEqual(original_actions, case.actions)
+        self._assertListEqual(original_form_ids, case.xform_ids)
