@@ -1,11 +1,12 @@
 import logging
 from zipfile import ZipFile
 from django.core.servers.basehttp import FileWrapper
-from couchexport.models import FakeSavedExportSchema
-from django.http import HttpResponse
+from couchexport.models import FakeSavedExportSchema, SavedExportSchema
+from django.http import HttpResponse, HttpResponseNotFound
 from StringIO import StringIO
 from unidecode import unidecode
 from couchexport.util import get_schema_index_view_keys
+from django.utils.translation import ugettext as _
 
 def get_export_files(export_tag, format=None, previous_export_id=None, filter=None,
                      use_cache=True, max_column_size=2000, separator='|'):
@@ -28,6 +29,10 @@ def export_data_shared(export_tag, format=None, filename=None,
     Shared method for export. If there is data, return an HTTPResponse
     with the appropriate data. If there is not data returns None.
     """
+    if previous_export_id and not SavedExportSchema.get_db().doc_exist(previous_export_id):
+        return HttpResponseNotFound(
+            _('No previous export with id "{id}" found'.format(id=previous_export_id)))
+
     if not filename:
         filename = export_tag
     
