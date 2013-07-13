@@ -347,11 +347,11 @@ CLOSE_ACTION_FUNCTION_MAP = {
     V2: CaseCloseAction.from_v2,
 }
 INDEX_ACTION_FUNCTION_MAP = {
-    V2: CaseIndexAction.from_v1,
+    V1: CaseIndexAction.from_v1,
     V2: CaseIndexAction.from_v2
 }
 
 ATTACHMENT_ACTION_FUNCTION_MAP = {
-    V2: CaseAttachmentAction.from_v1,
+    V1: CaseAttachmentAction.from_v1,
     V2: CaseAttachmentAction.from_v2
 }
