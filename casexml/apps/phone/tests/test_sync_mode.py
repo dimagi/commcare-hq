@@ -1,5 +1,6 @@
 from django.test import TestCase
 import os
+from casexml.apps.phone.xml import SYNC_XMLNS
 from couchforms.util import post_xform_to_couch
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import CaseBlock, check_user_has_case, delete_all_sync_logs, delete_all_xforms, delete_all_cases
@@ -32,9 +33,7 @@ class SyncBaseTest(TestCase):
         self.user = User(user_id=USER_ID, username="syncguy", 
                          password="changeme", date_joined=datetime(2011, 6, 9)) 
         # this creates the initial blank sync token in the database
-        generate_restore_payload(self.user)
-        [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
-        self.sync_log = sync_log
+        self.sync_log = synclog_from_restore_payload(generate_restore_payload(self.user))
     
     def _createCaseStubs(self, id_list, user_id=USER_ID, owner_id=USER_ID):
         for id in id_list:
@@ -349,7 +348,7 @@ class MultiUserSyncTest(SyncBaseTest):
     """
     Tests the interaction of two users in sync mode doing various things
     """
-    
+
     def setUp(self):
         super(MultiUserSyncTest, self).setUp()
         # the other user is an "owner" of the original users cases as well,
@@ -359,15 +358,13 @@ class MultiUserSyncTest(SyncBaseTest):
                                additional_owner_ids=[SHARED_ID])
         
         # this creates the initial blank sync token in the database
-        generate_restore_payload(self.other_user)
-        self.other_sync_log = SyncLog.last_for_user(OTHER_USER_ID)
+        self.other_sync_log = synclog_from_restore_payload(generate_restore_payload(self.other_user))
         
         self.assertTrue(SHARED_ID in self.other_sync_log.owner_ids_on_phone)
         self.assertTrue(OTHER_USER_ID in self.other_sync_log.owner_ids_on_phone)
         
         self.user.additional_owner_ids = [SHARED_ID]
-        generate_restore_payload(self.user)
-        self.sync_log = SyncLog.last_for_user(self.user.user_id)
+        self.sync_log = synclog_from_restore_payload(generate_restore_payload(self.user))
         self.assertTrue(SHARED_ID in self.sync_log.owner_ids_on_phone)
         self.assertTrue(USER_ID in self.sync_log.owner_ids_on_phone)
         
@@ -487,10 +484,8 @@ class MultiUserSyncTest(SyncBaseTest):
         self._createCaseStubs([case_id], owner_id=SHARED_ID)
 
         # both users syncs
-        generate_restore_payload(self.user)
-        generate_restore_payload(self.other_user)
-        self.sync_log = SyncLog.last_for_user(USER_ID)
-        self.other_sync_log = SyncLog.last_for_user(OTHER_USER_ID)
+        self.sync_log = synclog_from_restore_payload(generate_restore_payload(self.user))
+        self.other_sync_log = synclog_from_restore_payload(generate_restore_payload(self.other_user))
 
         # update case from same user
         my_change = CaseBlock(
@@ -546,8 +541,7 @@ class MultiUserSyncTest(SyncBaseTest):
         self._createCaseStubs([case_id], owner_id=SHARED_ID)
 
         # sync then close case from another user
-        generate_restore_payload(self.other_user)
-        self.other_sync_log = SyncLog.last_for_user(OTHER_USER_ID)
+        self.other_sync_log = synclog_from_restore_payload(generate_restore_payload(self.other_user))
         close_block = CaseBlock(
             create=False,
             case_id=case_id,
@@ -641,8 +635,6 @@ class MultiUserSyncTest(SyncBaseTest):
                             line_by_line=False, 
                             restore_id=self.other_sync_log.get_id, version=V2)
         
-        
-    
         
     def testOtherUserUpdatesIndex(self):
         # create a parent and child case (with index) from one user
@@ -739,8 +731,7 @@ class MultiUserSyncTest(SyncBaseTest):
         self._postFakeWithSyncToken(parent_update, self.sync_log.get_id)
         
         # sync cases to second user
-        generate_restore_payload(self.other_user)
-        self.other_sync_log = SyncLog.last_for_user(self.other_user.user_id)
+        self.other_sync_log = synclog_from_restore_payload(generate_restore_payload(self.other_user))
         # change the child's owner from another user
         child_reassignment = CaseBlock(
             create=False,
@@ -856,9 +847,7 @@ class MultiUserSyncTest(SyncBaseTest):
             form = self._postWithSyncToken(os.path.join(folder_path, f), self.sync_log.get_id)
             form = XFormInstance.get(form.get_id)
             self.assertFalse(hasattr(form, "problem"))
-            generate_restore_payload(self.user, version="2.0")
-            self.sync_log = SyncLog.last_for_user(self.user.user_id)
-
+            self.sync_log = synclog_from_restore_payload(generate_restore_payload(self.user, version="2.0"))
 
 
 class SyncTokenReprocessingTest(SyncBaseTest):
@@ -956,3 +945,10 @@ class SyncTokenReprocessingTest(SyncBaseTest):
         except AssertionError:
             # this should fail because it's a true error
             pass
+
+def synclog_id_from_restore_payload(restore_payload):
+    element = ElementTree.fromstring(restore_payload)
+    return element.findall('{%s}Sync' % SYNC_XMLNS)[0].findall('{%s}restore_id' % SYNC_XMLNS)[0].text
+
+def synclog_from_restore_payload(restore_payload):
+    return SyncLog.get(synclog_id_from_restore_payload(restore_payload))
