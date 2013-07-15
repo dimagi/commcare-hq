@@ -1,10 +1,11 @@
 from corehq.apps.importer.util import get_case_properties
+from corehq.apps.users.cases import get_owner_id
 from soil import DownloadBase
 
 
 def export_cases_and_referrals(domain, cases, workbook, users=None, groups=None,
                                process=None):
-    by_user_id = dict([(user.user_id, user) for user in users]) if users else None
+    by_user_id = dict([(user.user_id, user) for user in users]) if users else {}
     by_group_id = dict([(g.get_id, g) for g in groups]) if groups else {}
     case_static_keys = (
         "case_id",
@@ -42,15 +43,29 @@ def export_cases_and_referrals(domain, cases, workbook, users=None, groups=None,
             return attr
 
     num_cases = len(cases)
+
+    def get_matching_owner(case):
+        if by_user_id:
+            if case.user_id in by_user_id:
+                return case.user_id
+            elif get_owner_id(case) in by_user_id:
+                return get_owner_id(case)
+        else:
+            return get_owner_id(case)
+
+    def might_be_relevant(case):
+        return not users or (users and get_matching_owner(case))
+
     for i, case in enumerate(cases):
         if process:
             DownloadBase.set_progress(process, i, num_cases)
-        if not users or users and case.user_id in by_user_id:
+        if might_be_relevant(case):
+            matching_owner = get_matching_owner(case)
             case_row = {'dynamic_properties': {}}
             for key in case_static_keys:
                 if key == 'username':
                     try:
-                        case_row[key] = by_user_id[case.user_id].raw_username
+                        case_row[key] = by_user_id[matching_owner].raw_username
                     except TypeError:
                         case_row[key] = ''
                 elif key == 'owner_name':

@@ -5,9 +5,7 @@ from __future__ import absolute_import
 from datetime import datetime
 import logging
 import re
-import json
 
-from couchdbkit import ResourceConflict, NoResultFound
 from django.utils import html, safestring
 from restkit.errors import NoMoreData
 from django.conf import settings
@@ -43,7 +41,7 @@ from casexml.apps.case.xml import V2
 import uuid
 from xml.etree import ElementTree
 from corehq.apps.hqcase.utils import submit_case_blocks
-from couchdbkit.exceptions import MultipleResultsFound, NoResultFound
+from couchdbkit.exceptions import ResourceConflict, MultipleResultsFound, NoResultFound
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -351,11 +349,14 @@ class CustomDomainMembership(DomainMembership):
         self.custom_role.domain = self.domain
         self.custom_role.permissions.set(permission, value, data)
 
+
 class IsMemberOfMixin(DocumentSchema):
+
     def _is_member_of(self, domain):
-        domain_obj = Domain.get_by_name(domain)
-        return domain in self.get_domains() or \
-            (self.is_global_admin() and not domain_obj.restrict_superusers)
+        return domain in self.get_domains() or (
+            self.is_global_admin() and
+            not Domain.get_by_name(domain).restrict_superusers
+        )
 
     def is_member_of(self, domain_qs):
         """
@@ -962,8 +963,14 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
     @classmethod
     def create(cls, domain, username, password, email=None, uuid='', date='',
                first_name='', last_name='', **kwargs):
-        django_user = create_user(username, password=password, email=email,
-                                  first_name=first_name, last_name=last_name)
+        try:
+            django_user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            django_user = create_user(
+                username, password=password, email=email,
+                first_name=first_name, last_name=last_name
+            )
+
         if uuid:
             if not re.match(r'[\w-]+', uuid):
                 raise cls.InvalidID('invalid id %r' % uuid)
@@ -1095,6 +1102,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return self
 
     def save(self, **params):
+        super(CommCareUser, self).save(**params)
+
         from corehq.apps.users.signals import commcare_user_post_save
         results = commcare_user_post_save.send_robust(sender='couch_user',
                                                      couch_user=self)
@@ -1106,8 +1115,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                     message="Error occured while syncing user %s: %s" %
                             (self.username, str(result[1]))
                 )
-
-        super(CommCareUser, self).save(**params)
 
     def is_domain_admin(self, domain=None):
         # cloudcare workaround
@@ -1411,10 +1418,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         return Group.by_user(self, wrap=False)
 
-    @property
-    def user_data_json(self):
-        return json.dumps(self.user_data)
-
     def get_time_zone(self):
         try:
             time_zone = self.user_data["time_zone"]
@@ -1442,9 +1445,14 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if not (domain and domain.call_center_config.enabled):
             return
 
-        fields = {'name': commcare_user.name,
-                  'email': commcare_user.email,
-                  'language': commcare_user.language or ''} # prevent None
+        # language or phone_number can be null and will break
+        # case submission
+        fields = {
+            'name': commcare_user.name,
+            'email': commcare_user.email,
+            'language': commcare_user.language or '',
+            'phone_number': commcare_user.phone_number or ''
+        }
         # fields comes second to prevent custom user data overriding
         fields = dict(commcare_user.user_data, **fields)
 

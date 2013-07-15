@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from functools import wraps
+import copy
 import json
 import re
 import urllib
@@ -253,11 +254,60 @@ def account(request, domain, couch_user_id, template="users/account.html"):
     context.update({
         'couch_user': couch_user,
         'editing_commcare_user': editing_commcare_user,
+        'archive_url': reverse('commcare_users', args=[domain]),
     })
+
+    if request.project.commtrack_enabled:
+        # https://confluence.dimagi.com/display/commtrack/CommTrack+Roles+and+Responsibilities
+        user_data_roles = dict((u['slug'], u) for u in [
+            {
+                'slug': 'commtrack_requester',
+                'name': _("CommTrack Requester"),
+                'description': _("Responsible for creating requisitions."),
+            },
+            {
+                'slug': 'commtrack_approver',
+                'name': _("CommTrack Approver"),
+                'description': _(
+                    "Responsible for approving requisitions, including "
+                    "updating or modifying quantities as needed. Will receive "
+                    "a notification when new requisitions are created."),
+            },
+            {
+                'slug': 'commtrack_supplier',
+                'name': _("CommTrack Supplier"),
+                'description': _(
+                    "Responsible for packing orders.  Will receive a "
+                    "notification when the approver indicates that "
+                    "requisitions are approved, so that he or she can start "
+                    "packing it."),
+            },
+            {
+                'slug': 'commtrack_receiver',
+                'name': _("CommTrack Receiver"),
+                'description': _(
+                    "Responsible for receiving orders.  Will receive a "
+                    "notification when the supplier indicates that requisitions "
+                    "are packed and are ready for pickup, so that he or she can "
+                    "come pick it up or better anticipate the delivery."),
+            }
+        ])
+    else:
+        user_data_roles = []
+
     if couch_user.is_commcare_user():
+        user_data = copy.copy(dict(couch_user.user_data))
+
+        for k, v in user_data.items():
+            if k in user_data_roles:
+                user_data_roles[k]['selected'] = (user_data[k] == 'true')
+                del user_data[k]
+
         context.update({
             'reset_password_form': SetPasswordForm(user=""),
             'only_numeric': (request.project.password_format() == 'n'),
+            'user_data_roles': user_data_roles,
+            'user_data': user_data,
         })
 
     if couch_user.is_deleted():

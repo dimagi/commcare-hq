@@ -3,13 +3,15 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 from corehq.apps.domain.calculations import CALC_FNS, _all_domain_stats
-from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index, CLUSTER_HEALTH, check_xform_index, check_exchange_index
+from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index, CLUSTER_HEALTH, check_xform_index
+from corehq.apps.reports.export import save_metadata_export_to_tempfile
 from corehq.apps.reports.models import (ReportNotification,
-    UnsupportedScheduledReportError, HQGroupExportConfiguration )
+    UnsupportedScheduledReportError, HQGroupExportConfiguration)
 from corehq.elastic import get_es
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 from couchexport.groupexports import export_for_group
 from dimagi.utils.logging import notify_exception
+from couchexport.tasks import cache_file_to_be_served
 
 logging = get_task_logger(__name__)
 
@@ -25,7 +27,6 @@ def check_es_index():
     es_status.update(check_cluster_health())
     es_status.update(check_case_index())
     es_status.update(check_xform_index())
-    es_status.update(check_exchange_index())
 
     do_notify = False
     message = []
@@ -49,6 +50,23 @@ def send_report(notification_id):
         notification.send()
     except UnsupportedScheduledReportError:
         pass
+
+@task
+def create_metadata_export(download_id, domain, format, filename):
+    tmp_path = save_metadata_export_to_tempfile(domain, format)
+
+    class FakeCheckpoint(object):
+        # for some silly reason the export cache function wants an object that looks like this
+        # so just hack around it with this stub class rather than do a larger rewrite
+
+        def __init__(self, domain):
+            self.domain = domain
+
+        @property
+        def get_id(self):
+            return '%s-form-metadata' % self.domain
+
+    return cache_file_to_be_served(tmp_path, FakeCheckpoint(domain), download_id, format, filename)
 
 @periodic_task(run_every=crontab(hour="*", minute="0", day_of_week="*"))
 def daily_reports():    

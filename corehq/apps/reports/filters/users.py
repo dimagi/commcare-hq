@@ -2,7 +2,8 @@ from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter
-from corehq.apps.groups.models import Group
+from corehq.apps.groups.hierarchy import (get_hierarchy,
+        get_user_data_from_hierarchy)
 
 
 class LinkedUserFilter(BaseDrilldownOptionFilter):
@@ -41,7 +42,7 @@ class LinkedUserFilter(BaseDrilldownOptionFilter):
             yield (
                 type,
                 _("Select %(child_type)s") % {'child_type': type}, 
-                type.lower()
+                type
             )
 
     @property
@@ -57,7 +58,7 @@ class LinkedUserFilter(BaseDrilldownOptionFilter):
     @property
     def drilldown_map(self):
         try:
-            hierarchy = Group.get_hierarchy(self.domain, self.user_types)
+            hierarchy = get_hierarchy(self.domain, self.user_types)
         except Exception:
             return []
 
@@ -89,3 +90,18 @@ class LinkedUserFilter(BaseDrilldownOptionFilter):
             return ret
 
         return [get_values(top_level_node, 0) for top_level_node in hierarchy]
+
+    @classmethod
+    def get_user_data(cls, request_params, domain=None):
+        domain = domain or cls.domain
+
+        selected_user_id = None
+
+        for user_type in reversed(cls.user_types):
+            user_id = request_params.get("%s_%s" % (cls.slug, user_type))
+            if user_id:
+                selected_user_id = user_id
+                break
+
+        return get_user_data_from_hierarchy(domain, cls.user_types,
+                root_user_id=selected_user_id)

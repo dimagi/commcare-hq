@@ -135,9 +135,17 @@ def convert_custom_fields_to_struct(config):
 
     return field_map
 
+class InvalidDateException(Exception):
+    pass
+
 def parse_excel_date(date_val):
     """ Convert field value from excel to a date value """
-    return str(date(*xldate_as_tuple(date_val, 0)[:3]))
+    try:
+        parsed_date = str(date(*xldate_as_tuple(date_val, 0)[:3]))
+    except Exception:
+        raise InvalidDateException
+
+    return parsed_date
 
 def parse_search_id(config, columns, row):
     """ Find and convert the search id in an excel row """
@@ -177,7 +185,7 @@ def get_value_column_index(config, columns):
 
     return value_column_index
 
-def lookup_case(search_field, search_id, domain):
+def lookup_case(search_field, search_id, domain, case_type):
     """
     Attempt to find the case in CouchDB by the provided search_field and search_id.
 
@@ -188,22 +196,26 @@ def lookup_case(search_field, search_id, domain):
     if search_field == 'case_id':
         try:
             case = CommCareCase.get(search_id)
-            if case.domain == domain:
+
+            if case.domain == domain and case.type == case_type:
                 found = True
         except Exception:
             pass
     elif search_field == 'external_id':
-        try:
-            case = CommCareCase.view(
-                'hqcase/by_domain_external_id',
-                key=[domain, search_id],
-                reduce=False,
-                include_docs=True).one()
-            found = bool(case)
-        except NoResultFound:
-            pass
-        except MultipleResultsFound:
-            return (None, LookupErrors.MultipleResults)
+        results = CommCareCase.view(
+            'hqcase/by_domain_external_id',
+            key=[domain, search_id],
+            reduce=False,
+            include_docs=True)
+        if results:
+            cases_by_type = [case for case in results
+                             if case.type == case_type]
+
+            if len(cases_by_type) > 1:
+                return (None, LookupErrors.MultipleResults)
+            else:
+                case = cases_by_type[0]
+                found = True
 
     if found:
         return (case, None)

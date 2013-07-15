@@ -14,6 +14,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab
 from corehq.apps.app_manager import commcare_settings
+from corehq.apps.sms.views import get_sms_autocomplete_context
 from django.utils import html
 from django.utils.http import urlencode as django_urlencode
 from couchdbkit.exceptions import ResourceConflict
@@ -28,7 +29,7 @@ from django.conf import settings
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
-from corehq.apps.app_manager.util import is_valid_case_type, get_case_properties, get_all_case_properties
+from corehq.apps.app_manager.util import is_valid_case_type, get_case_properties, get_all_case_properties, add_odk_profile_after_build
 from corehq.apps.app_manager.util import save_xform, get_settings_values
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
@@ -51,7 +52,6 @@ from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.subprocess_timeout import ProcessTimedOut
 from dimagi.utils.web import json_response, json_request
-from corehq.apps.app_manager.forms import NewXFormForm, NewModuleForm
 from corehq.apps.reports import util as report_utils
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
@@ -561,6 +561,7 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     app = get_app(domain, app_id)
     latest_release = get_app(domain, app_id, latest=True)
     context = get_apps_base_context(request, domain, app)
+    context['sms_contacts'] = get_sms_autocomplete_context(request, domain)['sms_contacts']
 
     saved_apps = []
 
@@ -671,9 +672,6 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
         'case_properties': case_properties,
 
-        'new_module_form': NewModuleForm(),
-        'new_xform_form': NewXFormForm(),
-
         'show_secret_settings': req.GET.get('secret', False)
     }
     context.update(base_context)
@@ -761,7 +759,6 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
 
     context = get_apps_base_context(req, domain, app)
     context.update(locals())
-    app.remove_unused_mappings()
     context.update({
         'edit': True,
         'nav_form': form if not is_user_registration else '',
@@ -1711,16 +1708,39 @@ def download_file(req, domain, app_id, path):
         'ccpr': 'commcare/profile',
         'jad': 'text/vnd.sun.j2me.app-descriptor',
         'jar': 'application/java-archive',
+        'xml': 'application/xml',
+        'txt': 'text/plain',
     }
     try:
         response = HttpResponse(mimetype=mimetype_map[path.split('.')[-1]])
     except KeyError:
         response = HttpResponse()
+
+    if path in ('CommCare.jad', 'CommCare.jar'):
+        set_file_download(response, path)
+        full_path = path
+    else:
+        full_path = 'files/%s' % path
+
     try:
-        response.write(req.app.fetch_attachment('files/%s' % path))
         assert req.app.copy_of
+        payload = req.app.fetch_attachment(full_path)
+        response.write(payload)
+        response['Content-Length'] = len(response.content)
         return response
     except (ResourceNotFound, AssertionError):
+        if req.app.copy_of:
+            if req.META.get('HTTP_USER_AGENT') == 'bitlybot':
+                raise Http404()
+            elif path == 'profile.ccpr':
+                # legacy: should patch build to add odk profile
+                # which wasn't made on build for a long time
+                add_odk_profile_after_build(req.app)
+                req.app.save()
+                return download_file(req, domain, app_id, path)
+            else:
+                notify_exception(req, 'Build resource not found')
+                raise Http404()
         callback, callback_args, callback_kwargs = RegexURLResolver(r'^', 'corehq.apps.app_manager.download_urls').resolve(path)
         return callback(req, domain, app_id, *callback_args, **callback_kwargs)
 

@@ -2,6 +2,7 @@
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
 {% load field_tags %}
+{% load i18n %}
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
     <script src="{% static 'users/js/key_filters.js' %}"></script>
@@ -58,12 +59,24 @@
         });
 {% if couch_user.is_commcare_user %}
         $(function () {
-            var customDataEditor = uiElement.map_list('{{ couch_user.user_id }}', 'User Data');
-            customDataEditor.val({{ couch_user.user_data_json|safe }});
-            customDataEditor.on("change", function () {
-                $("input#user-data").val(JSON.stringify(this.val()));
-            });
-            $("#user-data-form").prepend(customDataEditor.ui);
+            var customDataEditor;
+
+            function handleChange() {
+                var data = customDataEditor.val();
+
+                $(".user-data-role").each(function (i, el) {
+                    var attrName = $(el).attr('name');
+                    data[attrName] = $(el).is(':checked') ? 'true' : 'false';
+                });
+            
+                $("input#user-data").val(JSON.stringify(data));
+            }
+        
+            customDataEditor = uiElement.map_list('{{ couch_user.user_id }}', 'User Data');
+            customDataEditor.val({{ user_data|JSON }});
+            customDataEditor.on('change', handleChange);
+            $(".user-data-role").change(handleChange);
+            $("#user-data-form .form-actions").before(customDataEditor.ui);
         });
 {% endif %}
     </script>
@@ -75,31 +88,31 @@
             {% if not couch_user.is_commcare_user %}
                 <a href="{% url web_users domain %}">{% hq_web_user %}s</a>
             {% else %}
-                <a href="{% url commcare_users domain %}">{% commcare_user %}s</a>
+                <a href="{% url commcare_users domain %}">{% trans "Mobile Workers" %}</a>
             {% endif %}
             <span class="divider">&gt;</span>
         </li>
         <li class="active">
-            <a href="#">User Settings <small>{{ couch_user.username }}</small></a>
+            <a href="#">{% trans "User Settings" %} <small>{{ couch_user.username }}</small></a>
         </li>
     {% else %}
         <li class="active">
-            <a href="#">My Account Settings</a>
+            <a href="#">{% trans "My Account Settings" %}</a>
         </li>
     {% endif %}
 {% endblock %}
 
 {% block user-view %}
     <ul class="nav nav-tabs" id="project-settings-tabs">
-        <li><a href="#basic-info" data-toggle="tab">Basic</a></li>
+        <li><a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a></li>
     {% if editing_commcare_user %}
-        <li><a href="#user-data" data-toggle="tab">Custom Registration Data</a></li>
+        <li><a href="#user-data" data-toggle="tab">{% trans "Custom Registration Data" %}</a></li>
     {% endif %}
     {% if proj_settings_form %}
-        <li><a href="#project-settings" data-toggle="tab">My Settings for this Project</a></li>
+        <li><a href="#project-settings" data-toggle="tab">{% trans "My Settings for this Project" %}</a></li>
     {% endif %}
     {% if current_users_page and not couch_user.is_commcare_user %}
-        <li><a href="#domains" data-toggle="tab">My Projects</a></li>
+        <li><a href="#domains" data-toggle="tab">{% trans "My Projects" %}</a></li>
     {% endif %}
     </ul>
     <div class="tab-content" id="settings">
@@ -110,15 +123,52 @@
                 {% include "users/partial/edit_user_role.html" %}
             {% endif %}
             {% include "users/partial/edit_phone_numbers.html" %}
-	    {% if commtrack_enabled %}
+            {% if commtrack_enabled %}
                 {% include "users/partial/commtrack.html" %}
-	    {% endif %}
+            {% endif %}
+            
+            {% if editing_commcare_user %}
+            <fieldset>
+                <legend>{% trans "Reset Password" %}</legend>
+                <a href="#reset_password_{{ couch_user.user_id }}" class="btn btn-info" data-toggle="modal">Reset Password</a>
+
+                <div id="reset_password_{{ couch_user.user_id }}" class="modal hide fade">
+                    <div class="modal-header">
+                        <a class="close" data-dismiss="modal">&times;</a>
+                        <h3>
+                            {% blocktrans %}
+                            Reset Password for <small>{{ couch_user.html_username|safe }}</small>
+                            {% endblocktrans %}
+                        </h3>
+                    </div>
+                    <form class="form form-horizontal reset-password-form" action="{% url change_password domain couch_user.user_id %}" method="post">
+                        <div class="modal-body">
+                            {% include 'users/partial/reset_password.html' %}
+                        </div>
+                        <div class="modal-footer">
+                            <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
+                            <button type="submit" class="btn btn-primary">{% trans "Reset Password" %}</button>
+                        </div>
+                    </form>
+                </div>
+            </fieldset>
+            <div class="form-actions"></div>
+
+            {% if not current_users_page %}
+            <p><a class="btn btn-danger" href="#delete_user_{{ couch_user.user_id }}" data-toggle="modal">
+                    <i class="icon-white icon-trash"></i> {% trans "Delete Mobile Worker" %}
+            </a></p>
+            {% endif %}
+            {% endif %}
         </div>
+
         {% if editing_commcare_user %}
         <div class="tab-pane" id="user-data">
             {% include "users/partial/user_data.html" %}
+
         </div>
         {% endif %}
+
         {% if proj_settings_form %}
             <div class="tab-pane" id="project-settings">
                 {% include "users/partial/project_settings.html" %}
@@ -130,32 +180,6 @@
             </div>
         {% endif %}
     </div>
-    {% if editing_commcare_user %}
-        <fieldset>
-            <legend>Reset Password</legend>
-            <a href="#reset_password_{{ couch_user.user_id }}" class="btn btn-info" data-toggle="modal">Reset Password</a>
-
-            <div id="reset_password_{{ couch_user.user_id }}" class="modal hide fade">
-                <div class="modal-header">
-                    <a class="close" data-dismiss="modal">&times;</a>
-                    <h3>Reset Password for <small>{{ couch_user.html_username|safe }}</small></h3>
-                </div>
-                <form class="form form-horizontal reset-password-form" action="{% url change_password domain couch_user.user_id %}" method="post">
-                    <div class="modal-body">
-                        {% include 'users/partial/reset_password.html' %}
-                    </div>
-                    <div class="modal-footer">
-                        <a href="#" data-dismiss="modal" class="btn">Cancel</a>
-                        <button type="submit" class="btn btn-primary">Reset Password</button>
-                    </div>
-                </form>
-            </div>
-        </fieldset>
-        <div class="form-actions"></div>
-    {% endif %}
-    {% if couch_user.is_commcare_user and not current_users_page %}
-        <p><a class="btn btn-danger" href="#delete_user_{{ couch_user.user_id }}" data-toggle="modal"><i class="icon-white icon-trash"></i> Delete {% commcare_user %}</a></p>
-    {% endif %}
 {% endblock %}
 
 {% block modals %}{{ block.super }}
@@ -163,7 +187,7 @@
         <div id="delete_phonenumber_{{ forloop.counter }}" class="modal hide fade">
             <div class="modal-header">
                 <a class="close" data-dismiss="modal">&times;</a>
-                <h3>Delete +{{ phone_number }}?</h3>
+                <h3>{% blocktrans %}Delete +{{ phone_number }}?{% endblocktrans %}</h3>
             </div>
             <form class="form form-horizontal hq-form"
                   name="delete_phone_number"
@@ -173,11 +197,11 @@
                 <input type="hidden" name="phone_number" value="{{ phone_number }}"/>
 
                 <div class="modal-body">
-                    <p>Are you sure you want to delete the phone number: "+{{ phone_number }}"?</p>
+                    <p>{% blocktrans %}Are you sure you want to delete the phone number: "+{{ phone_number }}"?{% endblocktrans %}</p>
                 </div>
                 <div class="modal-footer">
-                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
-                    <button type="submit" class="btn btn-danger"><i class="icon icon-remove icon-white"></i> Delete</button>
+                    <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
+                    <button type="submit" class="btn btn-danger"><i class="icon icon-remove icon-white"></i> {% trans "Delete" %}</button>
                 </div>
             </form>
         </div>
@@ -186,15 +210,20 @@
         <div id="reverify_{{phone.number|urlencode}}" class="modal hide fade">
             <div class="modal-header">
                 <a class="close" data-dismiss="modal">&times;</a>
-                <h3>Verify +{{ phone.number }}?</h3>
+                <h3>{% blocktrans %}Verify +{{ phone.number }}?{% endblocktrans %}</h3>
             </div>
             <form class="form form-horizontal hq-form" name="reverify_phone_number" action="{% url verify_phone_number domain couch_user.couch_id %}?phone_number={{phone.number|urlencode}}" method="post">
                 <div class="modal-body">
-                    <p>A verification message has already been sent to this phone. The phone has not replied yet. Send again?</p>
+                    <p>
+                    {% blocktrans %}
+                    A verification message has already been sent to this phone.
+                    The phone has not replied yet. Send again?
+                    {% endblocktrans %}
+                    </p>
                 </div>
                 <div class="modal-footer">
-                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
-                    <button type="submit" class="btn btn-primary"><i class="icon icon-signal icon-white"></i> Verify</button>
+                    <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
+                    <button type="submit" class="btn btn-primary"><i class="icon icon-signal icon-white"></i> {% trans "Verify" %}</button>
                 </div>
             </form>
         </div>
@@ -203,31 +232,49 @@
     <div id="delete_user_{{ couch_user.user_id }}" class="modal hide fade">
         <div class="modal-header">
             <a class="close" data-dismiss="modal">&times;</a>
-            <h3>Delete {% commcare_user %} {{ couch_user.raw_username }}? <small>Permanent Action</small></h3>
+            <h3>{% blocktrans %}Delete Mobile Worker {{ couch_user.raw_username }}?{% endblocktrans %} 
+                <small>{% trans "Permanent Action" %}</small>
+            </h3>
         </div>
         <form class="form form-horizontal" style="margin: 0; padding: 0" action="{% url delete_commcare_user domain couch_user.user_id %}" method="post">
             <div class="modal-body">
                 <p><span class="label label-warning">
                             <i class="icon-white icon-warning-sign"></i>
-                            Bad things will happen if you don't read this
+                            {% trans "Bad things will happen if you don't read this" %}
                         </span></p>
-                <p>Are you sure you want to permanently delete <strong>{{ couch_user.raw_username }}</strong>?</p>
-                <p>This action:</p>
+                        <p>
+                            {% blocktrans %}
+                            Are you sure you want to permanently delete <strong>{{ couch_user.raw_username }}</strong>?
+                            {% endblocktrans %}
+                        </p>
+                        <p>{% trans "This action:" %}</p>
                 <ul>
-                    <li>Will delete {{ couch_user.raw_username }}.</li>
-                    <li>Will delete <strong>all</strong> of {{ couch_user.raw_username }}'s form submissions.</li>
-                    <li>Is permanent.</li>
+                    <li>
+                        {% blocktrans %}Will delete {{ couch_user.raw_username }}.{% endblocktrans %}
+                    </li>
+                    <li>{% blocktrans %}Will delete <strong>all</strong> of {{ couch_user.raw_username }}'s form submissions.{% endblocktrans %}</li>
+                    <li>{% trans "Is permanent." %}</li>
                 </ul>
-                <p>If you ever want to use {{ couch_user.raw_username }}'s data in the future, we suggest that you use the <strong>Archive User</strong> option
-                    <a href="{% url commcare_users domain %}">here</a>.</p>
-                <p>If even after reading this you decide that you really want to delete this user and all of their data, type "I understand" into the box below.</p>
+                <p>
+                    {% blocktrans %}
+                    If you ever want to use {{ couch_user.raw_username }}'s data in the future, we suggest that you use the <strong>Archive User</strong> option
+                    <a href="{{ archive_url }}">here</a>.
+                    {% endblocktrans %}
+                </p>
+                <p>
+                    {% blocktrans %}
+                    If even after reading this you decide that you really want
+                    to delete this user and all of their data, type "I
+                    understand" into the box below.
+                    {% endblocktrans %}
+                </p>
 
                 <input data-bind="value: signOff, valueUpdate: 'textchange'"/>
             </div>
             <div class="modal-footer">
                 <a href="#" data-dismiss="modal" class="btn">Cancel</a>
-                <button type="submit" class="btn btn-danger" data-bind="visible: signOff().toLowerCase() === 'i understand'"><i class="icon icon-white icon-trash"></i> Delete {% commcare_user %}</button>
-                <button class="btn btn-danger disabled" disabled="true" data-bind="visible: signOff().toLowerCase() !== 'i understand'"><i class="icon icon-white icon-trash"></i> Delete {% commcare_user %}</button>
+                <button type="submit" class="btn btn-danger" data-bind="visible: signOff().toLowerCase() === 'i understand'"><i class="icon icon-white icon-trash"></i> {% trans "Delete Mobile Worker" %}</button>
+                <button class="btn btn-danger disabled" disabled="true" data-bind="visible: signOff().toLowerCase() !== 'i understand'"><i class="icon icon-white icon-trash"></i>{% trans "Delete Mobile Worker" %}</button>
             </div>
         </form>
     </div>
