@@ -57,12 +57,9 @@ ko.bindingHandlers.sortableList = {
     }
 };
 
-sortRows = new SortRows();
-ko.applyBindings(sortRows, $('#detail-screen-config-body').get(0));
-
 var DetailScreenConfig = (function () {
     "use strict";
-    var DetailScreenConfig, Screen, Column;
+    var DetailScreenConfig, Screen, Column, sortRows;
 
     function formatEnum(obj, lang, langs) {
         var key,
@@ -297,7 +294,8 @@ var DetailScreenConfig = (function () {
             this.$sortLink = $('<a href="#">Sort by this</a>').click(function (e) {
                 var $row = $(this).closest('tr');
                 var $field = $row.find('.detail-screen-field code').text();
-                sortRows.addSortRow($field, '', '');
+                DetailScreenConfig.sortRows.addSortRow($field, '', '');
+                e.preventDefault();
                 e.stopImmediatePropagation();
             });
        }
@@ -557,7 +555,7 @@ var DetailScreenConfig = (function () {
                     return {
                         'case_short': shortColumns,
                         'case_long': longColumns,
-                        'sort_elements': ko.toJSON(sortRows.sortRows)
+                        'sort_elements': ko.toJSON(DetailScreenConfig.sortRows.sortRows)
                     };
                 } else {
                     return {
@@ -744,6 +742,8 @@ var DetailScreenConfig = (function () {
             }
         };
         DetailScreenConfig.init = function ($home, spec) {
+            this.sortRows = new SortRows();
+            ko.applyBindings(this.sortRows, $('#detail-screen-config-body').get(0));
             return new DetailScreenConfig($home, spec);
         };
         return DetailScreenConfig;

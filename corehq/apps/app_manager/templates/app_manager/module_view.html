@@ -44,7 +44,7 @@
 
             var parsedSortRows = JSON.parse({{ sortElements|JSON }});
             for (var i = 0; i < parsedSortRows.length; i++) {
-                sortRows.addSortRow(
+                DetailScreenConfig.sortRows.addSortRow(
                     parsedSortRows[i].field,
                     parsedSortRows[i].type,
                     parsedSortRows[i].direction
