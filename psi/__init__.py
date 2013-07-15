@@ -1,5 +1,5 @@
 from psi.reports import (PSIEventsReport, PSIHDReport, PSISSReport, PSITSReport)
-from psi.reports.sql_reports import PSISQLEventsReport, PSISQLSensitizationReport
+from psi.reports.sql_reports import PSISQLEventsReport, PSISQLSensitizationReport, PSISQLTrainingReport
 
 CUSTOM_REPORTS = (
     ('Custom Reports', (
@@ -7,7 +7,7 @@ CUSTOM_REPORTS = (
         PSISQLEventsReport,
         PSIHDReport,
         PSISQLSensitizationReport,
-        PSITSReport,
+        PSISQLTrainingReport,
     )),
 
 )

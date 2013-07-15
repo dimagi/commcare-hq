@@ -116,3 +116,41 @@ class PSISQLSensitizationReport(PSISQLReport):
             DatabaseColumn("Others (ANM, MPW, etc.)", "other"),
             DatabaseColumn("VHND Attendees", 'attendees')
         ]
+
+class PSISQLTrainingReport(PSISQLReport):
+    name = "Training Sessions Report"
+    exportable = True
+    emailable = True
+    slug = "training_sessions_sql"
+    section_name = "training sessions"
+    fields = ['corehq.apps.reports.fields.DatespanField',
+              'psi.reports.StateDistrictField',
+              'psi.reports.AASD',]
+    default_aggregation = 'district'
+    table_name = "psi-unicef_training"
+
+    @property
+    def columns(self):
+        return self.initial_columns + [
+            DatabaseColumn("Private: Number of Trainings", "priv_trained"),
+            DatabaseColumn("Private: Ayush trained", "priv_ayush_trained"),
+            DatabaseColumn("Private: Allopathics trained", "priv_allo_trained"),
+            DatabaseColumn("Private: Learning changed", "priv_avg_diff"),
+            DatabaseColumn("Private: Num > 80%", "priv_gt80"),
+            
+            DatabaseColumn("Public: Number of Trainings", "pub_trained"),
+            DatabaseColumn("Public: Ayush trained", "pub_ayush_trained"),
+            DatabaseColumn("Public: Allopathics trained", "pub_allo_trained"),
+            DatabaseColumn("Public: Learning changed", "pub_avg_diff"),
+            DatabaseColumn("Public: Num > 80%", "pub_gt80"),
+            
+            DatabaseColumn("Depot: Number of Trainings", "dep_trained"),
+            DatabaseColumn("Depot: Number of Personnel Trained", "dep_pers_trained"),
+            DatabaseColumn("Depot: Learning changed", "dep_avg_diff"),
+            DatabaseColumn("Depot: Num > 80%", "dep_gt80"),
+            
+            DatabaseColumn("FLW: Number of Trainings", "flw_trained"),
+            DatabaseColumn("FLW: Number of Personnel Trained", "flw_pers_trained"),
+            DatabaseColumn("FLW: Learning changed", "flw_avg_diff"),
+            DatabaseColumn("FLW: Num > 80%", "flw_gt80"),
+        ]
