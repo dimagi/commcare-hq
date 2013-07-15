@@ -27,9 +27,9 @@
             <li {% if view_mode == "submissions" %}class="active"{% endif %}>
                 <a href="{{ pt_root_url }}&view=submissions" >{% trans "Submissions" %}</a></li>
 
-            {#                        <li {% if view_mode == "careplan" %}class="active"{% endif %}>#}
-            {#                            <a href="{% url view_pactpatient patient_doc.get_id 'careplan' %}" data-toggle="tab">{% trans "Care Plan" %}</a>#}
-            {#                        </li>#}
+            <li {% if view_mode == "careplan" %}class="active"{% endif %}>
+                <a href="{{ pt_root_url}}&view=careplan">{% trans "Care Plan" %}</a>
+            </li>
             {#                        <li {% if view_mode == "log" %}class="active"{% endif %}>#}
             {#                            <a href="{% url view_pactpatient patient_doc.get_id 'log' %}" data-toggle="tab">{% trans "Change Log" %}</a>#}
             {#                        </li>#}

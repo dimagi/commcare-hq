@@ -96,9 +96,16 @@ class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMix
             ret['patient_form'] = the_form
             self.report_template_path = "pact/patient/pactpatient_edit.html"
         elif view_mode == 'providers':
-
-
             self.report_template_path = "pact/patient/pactpatient_providers.html"
+        elif view_mode == 'careplan':
+            ret.update({
+                'case_hierarchy_options': {
+                    "get_case_url": lambda case_id: reverse(
+                        'case_details', args=[PACT_DOMAIN, case_id])
+                },
+                'case': patient_doc,
+            })
+            self.report_template_path = "pact/patient/pactpatient_careplan.html"
         else:
             raise Http404
         return ret
@@ -158,14 +165,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMix
 
     @property
     def rows(self):
-        """
-            Override this method to create a functional tabular report.
-            Returns 2D list of rows.
-            [['row1'],[row2']]
-        """
         if self.request.GET.has_key('patient_id'):
-            rows = []
-
             def _format_row(row_field_dict):
                 yield html.mark_safe("<a class='ajax_dialog' href='%s'>View</a>" % (
                 reverse('render_form_data', args=[self.domain, row_field_dict['_id']])))
