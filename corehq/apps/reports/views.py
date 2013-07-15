@@ -346,7 +346,6 @@ def edit_custom_export(req, domain, export_id):
 
 @login_or_digest
 @require_form_export_permission
-@login_and_domain_required
 @require_GET
 def hq_download_saved_export(req, domain, export_id):
     export = SavedBasicExport.get(export_id)
@@ -357,7 +356,6 @@ def hq_download_saved_export(req, domain, export_id):
 
 @login_or_digest
 @require_form_export_permission
-@login_and_domain_required
 @require_GET
 def export_all_form_metadata(req, domain):
     """
@@ -370,7 +368,6 @@ def export_all_form_metadata(req, domain):
 
 @login_or_digest
 @require_form_export_permission
-@login_and_domain_required
 @require_GET
 def export_all_form_metadata_async(req, domain):
     format = req.GET.get("format", Format.XLS_2007)
@@ -810,7 +807,6 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
 
 @login_or_digest
 @require_case_export_permission
-@login_and_domain_required
 @require_GET
 def download_cases(request, domain):
     include_closed = json.loads(request.GET.get('include_closed', 'false'))
@@ -915,8 +911,8 @@ def download_form(request, domain, instance_id):
     assert(domain == instance.domain)
     return couchforms_views.download_form(request, instance_id)
 
+@login_or_digest
 @require_form_view_permission
-@login_and_domain_required
 @require_GET
 def download_attachment(request, domain, instance_id):
     attachment = request.GET.get('attachment', False)
