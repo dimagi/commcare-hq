@@ -37,10 +37,18 @@
 <script type="text/javascript">
     $(function () {
         function clear (all_mws, all_groups, selected_mws, selected_groups) {
-            if (all_mws)            {   $("#all-mobile-workers").prop('checked', false); }
-            if (all_groups)         {   $("#all-groups").prop('checked', false); }
-            if (selected_mws)       {   $("#{{ smwf.field.cssId }} option:selected").removeAttr("selected"); }
-            if (selected_groups)    {   $("#{{ sgf.field.cssId }} option:selected").removeAttr("selected"); }
+            if (all_mws) {
+                $("#all-mobile-workers").prop('checked', false);
+            }
+            if (all_groups) {
+                $("#all-groups").prop('checked', false);
+            }
+            if (selected_mws) {
+                $("#{{ smwf.field.cssId }} option:selected").removeAttr("selected");
+            }
+            if (selected_groups) {
+                $("#{{ sgf.field.cssId }} option:selected").removeAttr("selected");
+            }
         }
 
         $(document).on('click', '#apply-filters', function() {

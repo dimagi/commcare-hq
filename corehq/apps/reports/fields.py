@@ -180,15 +180,18 @@ class FilterUsersField(ReportField):
                 ufilter = request.GET.getlist('ufilter')
             group = request.GET.get('group', '')
             individual = request.GET.get('individual', '')
-        except KeyError: pass
-        except AttributeError: pass
+        except KeyError:
+            pass
+        except AttributeError:
+            pass
 
         show_filter = True
         toggle = HQUserType.use_defaults()
-        if ufilter and (cls.always_show_filter or (not (group or individual))):
-            toggle = HQUserType.use_filter(ufilter)
-        elif not cls.always_show_filter and (group or individual):
+
+        if not cls.always_show_filter and (group or individual):
             show_filter = False
+        elif ufilter:
+            toggle = HQUserType.use_filter(ufilter)
         return toggle, show_filter
 
 class StrongFilterUsersField(FilterUsersField):

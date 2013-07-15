@@ -67,6 +67,7 @@ class ProjectReportParametersMixin(object):
     # set this to set the report's user ids from within the report
     # (i.e. based on a filter's return value).
     override_user_ids = None
+    need_group_ids = False
 
     @property
     @memoized
@@ -182,7 +183,7 @@ class ProjectReportParametersMixin(object):
                 user_filter=tuple(self.default_user_filter),
                 simplified=True
             )
-        if getattr(self, 'need_group_ids', False):
+        if self.need_group_ids:
             for users in user_dict.values():
                 for u in users:
                     u["group_ids"] = Group.by_user(u['user_id'], False)
@@ -197,7 +198,7 @@ class ProjectReportParametersMixin(object):
         for mw in self.mobile_worker_ids:
             user_dict[mw] = _report_user_dict(CommCareUser.get_by_user_id(mw))
 
-        if getattr(self, 'need_group_ids', False):
+        if self.need_group_ids:
             for user in user_dict.values():
                 user["group_ids"] = Group.by_user(user["user_id"], False)
 
@@ -211,7 +212,7 @@ class ProjectReportParametersMixin(object):
             simplified=True
         ) if ufilters else []
 
-        if getattr(self, 'need_group_ids', False):
+        if self.need_group_ids:
             for u in users:
                 u["group_ids"] = Group.by_user(u, False)
         return users
@@ -309,7 +310,6 @@ class DatespanMixin(object):
 
     @property
     def default_datespan(self):
-        timezone = getattr(self, "timezone") or pytz.utc
-        datespan = DateSpan.since(self.datespan_default_days, timezone=timezone, inclusive=self.inclusive)
+        datespan = DateSpan.since(self.datespan_default_days, timezone=self.timezone, inclusive=self.inclusive)
         datespan.is_default = True
         return datespan
