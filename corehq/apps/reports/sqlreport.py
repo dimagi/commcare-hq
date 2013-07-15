@@ -6,10 +6,13 @@ import sqlagg
 from corehq.apps.reports.basic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, \
     DataTablesColumn, DTSortType
-from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 from corehq.apps.reports.util import format_datatables_data
+
+
+class SqlReportException(Exception):
+    pass
 
 
 def format_data(value):
@@ -200,7 +203,8 @@ class SqlData(object):
     def keys(self):
         """
         The list of report keys (e.g. users) or None to just display all the data returned from the query. Each value
-        in this list should be a list of the same dimension as the 'group_by' list.
+        in this list should be a list of the same dimension as the 'group_by' list. If group_by is None then keys
+        must also be None or an empty list.
 
         e.g.
             group_by = ['region', 'sub_region']
@@ -214,6 +218,8 @@ class SqlData(object):
 
     @property
     def data(self):
+        if self.keys and not self.group_by:
+            raise SqlReportException('Keys supplied without group_by.')
         qc = self.query_context
         for c in self.columns:
             qc.append_column(c.view)
@@ -242,19 +248,18 @@ class SqlTabularReport(SqlData, GenericTabularReport):
     @property
     def rows(self):
         data = self.data
-        if self.keys:
+        if self.keys and self.group_by:
             for key_group in self.keys:
                 row_key = self._row_key(key_group)
-                row = data.get(row_key, None) if row_key else data
+                row = data.get(row_key, None)
                 if not row:
                     row = dict(zip(self.group_by, key_group))
                 yield [self._or_no_value(c.get_value(row)) for c in self.columns]
+        elif self.group_by:
+            for k, v in data.items():
+                yield [self._or_no_value(c.get_value(data.get(k))) for c in self.columns]
         else:
-            if self.group_by:
-                for k, v in data.items():
-                    yield [self._or_no_value(c.get_value(data.get(k))) for c in self.columns]
-            else:
-                yield [self._or_no_value(c.get_value(data)) for c in self.columns]
+            yield [self._or_no_value(c.get_value(data)) for c in self.columns]
 
     def _row_key(self, key_group):
         if len(self.group_by) == 1:

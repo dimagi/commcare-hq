@@ -89,8 +89,8 @@ class CustomResourceMeta(object):
     authentication = LoginAndDomainAuthentication()
     serializer = CustomXMLSerializer()
     default_format='application/json'
-    throttle = CacheThrottle(throttle_at=getattr(settings, 'CCHQ_API_THROTTLE_REQUESTS', 20),
-                             timeframe=getattr(settings, 'CCHQ_API_THROTTLE_TIMEFRAME', 10)) 
+    throttle = CacheThrottle(throttle_at=getattr(settings, 'CCHQ_API_THROTTLE_REQUESTS', 25),
+                             timeframe=getattr(settings, 'CCHQ_API_THROTTLE_TIMEFRAME', 15))
 
 class UserResource(JsonResource, DomainSpecificResourceMixin):
     type = "user"
