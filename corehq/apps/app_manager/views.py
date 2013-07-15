@@ -669,7 +669,8 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         template = "app_manager/form_view.html"
         context.update(get_form_view_context(req, form, context['langs'], is_user_registration))
     elif module:
-        sort_elements = [prop.values() for prop in module.sort_elements]
+        sort_elements = [prop.values() for prop in
+                         module.get_detail('case_short').sort_elements]
         context.update({"sortElements": json.dumps(sort_elements)})
         template = "app_manager/module_view.html"
     else:
@@ -966,19 +967,20 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
+    detail = module.get_detail('case_short')
 
-    module.sort_elements = []
+    detail.sort_elements = []
     if 'sort_elements' in screens:
         for sort_element in json.load(StringIO(screens['sort_elements'])):
             item = SortElement()
             item.field = sort_element['field']
             item.type = sort_element['type']
             item.direction = sort_element['direction']
-            module.sort_elements.append(item)
+            detail.sort_elements.append(item)
 
         del screens['sort_elements']
 
-    if app.build_version >= '2.2' and len(module.sort_elements) == 0:
+    if app.enable_multi_sort and len(detail.sort_elements) == 0:
         # if we are using new sort style, we need to force a default
         try:
             default = screens['case_short'][0]
@@ -986,7 +988,7 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
             item.field = default['field']
             item.type = ''
             item.direction = 'ascending'
-            module.sort_elements.append(item)
+            detail.sort_elements.append(item)
         except Exception:
             # if it errors, we don't have any thing to sort by so
             # can just skip it

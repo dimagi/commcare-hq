@@ -16,7 +16,7 @@
     {% include "hqwebapp/ko/value-or-none-ui.html" %}
     {% include "app_manager/partials/nav_menu_media_js.html" with item=module image_default="jr://file/commcare/image/module_name.png" audio_default="jr://file/commcare/audio/module_name.mp3" %}
     <script>
-        {% if app.build_version >= '2.2' %}
+        {% if app.enable_multi_sort %}
             window.enableNewSort = true;
         {% else %}
             window.enableNewSort = false;
@@ -24,7 +24,7 @@
 
         $(function () {
             var $home = $("#detail-screen-config");
-            DetailScreenConfig.init($home, {
+            var detailScreenConfig = DetailScreenConfig.init($home, {
                 state: {
                     case_short: {{ module.details.0|JSON }},
                     case_long: {{ module.details.1|JSON }},
@@ -42,9 +42,10 @@
                 applicationVersion: {{ app.application_version|JSON }}
             });
 
+            //todo: move this
             var parsedSortRows = JSON.parse({{ sortElements|JSON }});
-            for (var i=0; i < parsedSortRows.length; i++) {
-                sortRows.addSortRow(
+            for (var i = 0; i < parsedSortRows.length; i++) {
+                detailScreenConfig.sortRows.addSortRow(
                     parsedSortRows[i].field,
                     parsedSortRows[i].type,
                     parsedSortRows[i].direction
@@ -217,7 +218,7 @@
             {% endblocktrans %}
         </div>
         <div id="detail-screen-config-body">
-            {% if app.build_version >= '2.2' %}
+            {% if app.enable_multi_sort %}
                 <legend>
                     {% trans "Sort Properties" %}
                     <span style="font-size: 13px">
@@ -257,32 +258,31 @@
                                 </td>
 
                                 <td>
-                                    <code data-bind="text: field"
-                                          style="display: inline-block">
+                                    <code data-bind="text: field">
                                     </code>
                                 </td>
 
                                 <td>
                                     <select data-bind="value: direction">
-                                        <option value='ascending'>
-                                            {% trans 'Ascending' %}
+                                        <option value="ascending">
+                                            {% trans "Ascending" %}
                                         </option>
-                                        <option value='descending'>
-                                            {% trans 'Descending' %}
+                                        <option value="descending">
+                                            {% trans "Descending" %}
                                         </option>
                                     </select>
                                 </td>
 
                                 <td>
                                     <select data-bind="value: type">
-                                        <option value='string'>
-                                            {% trans 'Plain' %}
+                                        <option value="string">
+                                            {% trans "Plain" %}
                                         </option>
-                                        <option value='int'>
-                                            {% trans 'Integer' %}
+                                        <option value="int">
+                                            {% trans "Integer" %}
                                         </option>
-                                        <option value='double'>
-                                            {% trans 'Decimal' %}
+                                        <option value="double">
+                                            {% trans "Decimal" %}
                                         </option>
                                     </select>
                                 </td>

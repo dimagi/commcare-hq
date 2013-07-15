@@ -414,14 +414,16 @@ class SuiteGenerator(object):
 
                         if detail.type == 'case_short':
                             detail_fields = [c.field for c in detail_columns]
-                            sort_fields = [e.field for e in module.sort_elements]
+                            sort_fields = [e.field for e in module.detail_sort_elements]
                             sort_only_fields = [field for field in sort_fields
                                                 if field not in detail_fields]
 
                             from corehq.apps.app_manager.models import DetailColumn
                             for sort_field in sort_only_fields:
+                                # set up a fake detailcolumn so we can
+                                # add this field but not actually
+                                # save it
                                 dc = DetailColumn(
-                                    name={'en': sort_field},
                                     model='case',
                                     field=sort_field,
                                     format='invisible',
@@ -433,7 +435,7 @@ class SuiteGenerator(object):
                             d.fields.extend(fields)
 
                         try:
-                            if self.app.build_version < '2.2':
+                            if not self.app.enable_multi_sort:
                                 d.fields[0].sort = 'default'
                         except IndexError:
                             pass

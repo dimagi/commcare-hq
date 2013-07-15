@@ -726,9 +726,11 @@ class Detail(IndexedSchema):
 
     """
     type = StringProperty(choices=DETAIL_TYPES)
-    columns = SchemaListProperty(DetailColumn)
 
+    columns = SchemaListProperty(DetailColumn)
     get_columns = IndexedSchema.Getter('columns')
+
+    sort_elements = SchemaListProperty(SortElement)
 
     @parse_int([1])
     def get_column(self, i):
@@ -800,7 +802,6 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
     case_list = SchemaProperty(CaseList)
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
-    sort_elements = SchemaListProperty(SortElement)
 
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
@@ -824,6 +825,13 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
             if detail.type == detail_type:
                 return detail
         raise Exception("Module %s has no detail type %s" % (self, detail_type))
+
+    @property
+    def detail_sort_elements(self):
+        try:
+            return self.get_detail('case_short').sort_elements
+        except Exception:
+            return []
 
     def export_json(self, dump_json=True, keep_unique_id=False):
         source = self.to_json()
@@ -1549,21 +1557,16 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return "media_suite.xml"
 
     @property
-    def build_version(self):
+    def enable_multi_sort(self):
+        """
+        Multi (tiered) sort is supported by apps version 2.2 or higher
+        """
         try:
-            # returns a tuple.. ex: (2, 6)
-            version_tuple = self.get_build().minor_release()
-
-            # convert it to '2.6' for easy comparisons
-            version = (
-                str(version_tuple[0]) +
-                '.' +
-                str(version_tuple[1])
-            )
-
-            return version
+            return self.get_build().minor_release() >= (2, 2)
         except KeyError:
-            return ''
+            # if for some reason there is no build number it's probably
+            # old or bugged
+            return False
 
     @property
     def default_language(self):

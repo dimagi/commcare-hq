@@ -1,68 +1,65 @@
 /*globals $, _, uiElement, eventize, lcsMerge, COMMCAREHQ */
 
 var SortRow = function (field, type, direction) {
-  this.field = ko.observable(field);
-  this.type = ko.observable(type);
-  this.direction = ko.observable(direction);
+    this.field = ko.observable(field);
+    this.type = ko.observable(type);
+    this.direction = ko.observable(direction);
 
-  this.type.subscribe(function () {
-    window.saveButton.fire('change');
-  });
-  this.direction.subscribe(function () {
-    window.saveButton.fire('change');
-  });
+    this.type.subscribe(function () {
+        window.saveButton.fire('change');
+    });
+    this.direction.subscribe(function () {
+        window.saveButton.fire('change');
+    });
 };
 
 var SortRows = function () {
-  var self = this;
-  self.sortRows = ko.observableArray([]);
+    var self = this;
+    self.sortRows = ko.observableArray([]);
 
-  self.addSortRow = function (field, type, direction) {
-    self.sortRows.push(new SortRow(field, type, direction));
-  };
+    self.addSortRow = function (field, type, direction) {
+        self.sortRows.push(new SortRow(field, type, direction));
+    };
 
-  self.removeSortRow = function (row) {
-    self.sortRows.remove(row);
-    window.saveButton.fire('change');
-  };
+    self.removeSortRow = function (row) {
+        self.sortRows.remove(row);
+        window.saveButton.fire('change');
+    };
 
-  self.rowCount = ko.computed(function () {
-    return self.sortRows().length;
-  });
+    self.rowCount = ko.computed(function () {
+        return self.sortRows().length;
+    });
 
 };
 
 // http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
 // connect items with observableArrays
 ko.bindingHandlers.sortableList = {
-  init: function(element, valueAccessor) {
-    var list = valueAccessor();
-    $(element).sortable({
-      handle: '.grip',
-      cursor: 'move',
-      update: function(event, ui) {
-        //retrieve our actual data item
-        var item = ko.dataFor(ui.item.get(0));
-        //figure out its new position
-        var position = ko.utils.arrayIndexOf(ui.item.parent().children(), ui.item[0]);
-        //remove the item and add it back in the right spot
-        if (position >= 0) {
-          list.remove(item);
-          list.splice(position, 0, item);
-        }
-        ui.item.remove();
-        window.saveButton.fire('change');
-      }
-    });
-  }
+    init: function(element, valueAccessor) {
+        var list = valueAccessor();
+        $(element).sortable({
+            handle: '.grip',
+            cursor: 'move',
+            update: function(event, ui) {
+                //retrieve our actual data item
+                var item = ko.dataFor(ui.item.get(0));
+                //figure out its new position
+                var position = ko.utils.arrayIndexOf(ui.item.parent().children(), ui.item[0]);
+                //remove the item and add it back in the right spot
+                if (position >= 0) {
+                    list.remove(item);
+                    list.splice(position, 0, item);
+                }
+                ui.item.remove();
+                window.saveButton.fire('change');
+            }
+        });
+    }
 };
-
-sortRows = new SortRows
-ko.applyBindings(sortRows, $('#detail-screen-config-body').get(0));
 
 var DetailScreenConfig = (function () {
     "use strict";
-    var DetailScreenConfig, Screen, Column;
+    var DetailScreenConfig, Screen, Column, sortRows;
 
     function formatEnum(obj, lang, langs) {
         var key,
@@ -297,10 +294,11 @@ var DetailScreenConfig = (function () {
             this.$sortLink = $('<a href="#">Sort by this</a>').click(function (e) {
                 var $row = $(this).closest('tr');
                 var $field = $row.find('.detail-screen-field code').text();
-                sortRows.addSortRow($field, '', '');
+                that.screen.config.sortRows.addSortRow($field, '', '');
                 e.preventDefault();
+                e.stopImmediatePropagation();
             });
-       }
+        }
 
         Column.init = function (col, screen) {
             return new Column(col, screen);
@@ -350,12 +348,13 @@ var DetailScreenConfig = (function () {
             'case': "",
             referral: "Referral Details"
         };
-        function Screen($home, spec, options) {
+        function Screen($home, spec, config, options) {
             var i, column, model, property, header,
                 that = this, columns;
             eventize(this);
             this.saveUrl = options.saveUrl;
             this.$home = $home;
+            this.config = config;
             this.edit = options.edit;
             this.columns = [];
             this.suggestedColumns = [];
@@ -524,8 +523,8 @@ var DetailScreenConfig = (function () {
                 });
             });
         }
-        Screen.init = function ($home, spec, lang) {
-            return new Screen($home, spec, lang);
+        Screen.init = function ($home, spec, config, lang) {
+            return new Screen($home, spec, config, lang);
         };
         Screen.prototype = {
             save: function () {
@@ -557,7 +556,7 @@ var DetailScreenConfig = (function () {
                     return {
                         'case_short': shortColumns,
                         'case_long': longColumns,
-                        'sort_elements': ko.toJSON(sortRows.sortRows),
+                        'sort_elements': ko.toJSON(this.config.sortRows.sortRows)
                     };
                 } else {
                     return {
@@ -721,19 +720,25 @@ var DetailScreenConfig = (function () {
             this.$home = $home;
             this.properties = spec.properties;
             this.screens = [];
+            this.sortRows = new SortRows();
             this.lang = spec.lang;
             this.langs = spec.langs || [];
             this.edit = spec.edit;
             this.saveUrl = spec.saveUrl;
 
             function addScreen(short, long) {
-                var screen = Screen.init($('<div/>'), {'short': short, 'long': long}, {
-                    lang: that.lang,
-                    langs: that.langs,
-                    edit: that.edit,
-                    properties: that.properties,
-                    saveUrl: that.saveUrl
-                });
+                var screen = Screen.init(
+                    $('<div/>'),
+                    {'short': short, 'long': long},
+                    that,
+                    {
+                        lang: that.lang,
+                        langs: that.langs,
+                        edit: that.edit,
+                        properties: that.properties,
+                        saveUrl: that.saveUrl
+                    }
+                );
                 that.screens.push(screen);
                 that.$home.append(screen.$home);
             }
@@ -744,7 +749,9 @@ var DetailScreenConfig = (function () {
             }
         };
         DetailScreenConfig.init = function ($home, spec) {
-            return new DetailScreenConfig($home, spec);
+            var ds = new DetailScreenConfig($home, spec);
+            ko.applyBindings(ds.sortRows, $('#detail-screen-config-body').get(0));
+            return ds;
         };
         return DetailScreenConfig;
     }());
@@ -827,3 +834,4 @@ var DetailScreenConfig = (function () {
 
     return DetailScreenConfig;
 }());
+
