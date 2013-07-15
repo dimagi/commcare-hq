@@ -2,9 +2,10 @@
 {% load proptable_tags %}
 {% load timezone_tags %}
 {% load hq_shared_tags %}
+{% load case_tags %}
 
 {# standalone template, js files included at bottom #}
-<script type="text/javascript">
+<script>
     var CASE_DETAILS = {};
 
     CASE_DETAILS.xform_api_url = "/a/{{ case.domain }}/api/v0.1/xform_es/";
@@ -19,14 +20,14 @@
     </div>
     <ul class="nav nav-tabs">
         {% if dynamic_properties %}
-        <li class="active"><a href="#case-details" data-toggle="tab">{% trans "Case Properties" %}</a></li>
+        <li class="active"><a href="#properties" data-toggle="tab">{% trans "Case Properties" %}</a></li>
         {% endif %}
-        <li {% if not dynamic_properties %}class="active"{% endif %}><a href="#case-history-tab" data-toggle="tab">{% trans "Case History" %}</a></li>
+        <li {% if not dynamic_properties %}class="active"{% endif %}><a href="#history" data-toggle="tab">{% trans "Case History" %}</a></li>
         {% if case.referrals %}
-        <li><a href="#case-referrals" data-toggle="tab">{% trans "Referrals" %}</a></li>
+        <li><a href="#referrals" data-toggle="tab">{% trans "Referrals" %}</a></li>
         {% endif %}
-        {% if case.all_indices %}
-        <li><a href="#case-related" data-toggle="tab">{% trans "Related Cases" %}</a></li>
+        {% if case.has_indices %}
+        <li><a href="#related" data-toggle="tab">{% trans "Related Cases" %}</a></li>
         {% endif %}
     {% if case.case_attachments %}
         <li><a href="#case-attachments" data-toggle="tab">{% trans "Attachments" %} ({{ case.case_attachments|length }})</a></li>
@@ -35,15 +36,15 @@
 
     <div class="tab-content">
         {% if dynamic_properties %}
-        <div class="tab-pane active" id="case-details">
+        <div class="tab-pane active" id="properties">
             <div class="row-fluid">
                 {% render_tables dynamic_properties dynamic_properties_options %}
             </div>
-        </div><!-- end case-details tab -->
+        </div><!-- end properties tab -->
         {% endif %}
 
     {% if case.referrals %}
-        <div class="tab-pane" id="case-referrals">
+        <div class="tab-pane" id="referrals">
             <h2>{% trans "Referrals" %}</h2>
             <table class="table table-striped case_history">
                 <thead>
@@ -70,41 +71,12 @@
 
                 </tbody>
             </table>
-        </div> <!-- end case-referrals tab -->
+        </div> <!-- end referrals tab -->
     {% endif %}
-    {% if case.all_indices %}
-        <div class="tab-pane" id="case-related">
-            <table class="table table-striped case_history">
-                <thead>
-                <tr>
-                    <th>{% trans "Name" %}</th>
-                    <th>{%  trans "Relation" %} </th>
-                    <th>{%  trans "Type" %}</th>
-                    <th>{%  trans "Date Opened" %}</th>
-                    <th>{%  trans "Date Modified" %}</th>
-                    <th>{%  trans "Status" %}</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for case_index in case.all_indices %}
-                    <tr>
-                        <td class="case_ref"
-                            data-caseid="{{ case_index.referenced_id }}">{{ case_index.referenced_case.name }}</td>
-                        <td>{{ case_index.is_reverse|yesno:"Child, Parent" }}</td>
-                        <td><code>{{ case_index.referenced_case.type }}</code></td>
-                        <td>{{ case_index.referenced_case.opened_on }}</td>
-                        <td>{{ case_index.referenced_case.modified_on }}</td>
-                        <td>{{ case_index.referenced_case.closed|yesno:"closed,open" }}</td>
-                    </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="4" class="no_data">{%  trans "No related cases" %}</td>
-                    </tr>
-                {% endfor %}
-
-                </tbody>
-            </table>
-        </div> <!-- end case-related tab -->
+    {% if case.has_indices %}
+        <div class="tab-pane" id="related">
+            {% render_case_hierarchy case case_hierarchy_options %}   
+        </div>
     {% endif %}
     {% if case.case_attachments %}
         <div class="tab-pane" id="case-attachments">
@@ -135,7 +107,7 @@
             </table>
         </div> <!-- end case-attachments tab -->
     {% endif %}
-    <div class="tab-pane {% if not dynamic_properties %}active{% endif %}" id="case-history-tab" class="row-fluid">
+    <div class="tab-pane {% if not dynamic_properties %}active{% endif %}" id="history" class="row-fluid">
         <div class="span5">
         <ul data-bind="foreach: $root.form_type_facets">
             <li>
@@ -199,5 +171,6 @@
 </div> {# end tabbed-content-container div #}
 </div> {# end report-container #}
 
+<script src="{% static "hqwebapp/js/lib/bootstrap-tab-hashes.js" %}"></script>
 <script src="{% static "hqwebapp/js/lib/jquery.cachedAjax.js" %}"></script>
 <script src="{% static "case/js/case_details.js" %}"></script>

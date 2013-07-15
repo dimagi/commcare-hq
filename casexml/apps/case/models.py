@@ -14,6 +14,7 @@ from couchdbkit.ext.django.schema import *
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from PIL import Image
 from dimagi.utils.django.cached_object import CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage, IMAGE_SIZE_ORDERING
+from django.utils.translation import ugettext_noop, ugettext as _
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml,\
@@ -26,6 +27,7 @@ from dimagi.utils.indicators import ComputedDocumentMixin
 from receiver.util import spoof_submission
 from couchforms.models import XFormInstance
 from casexml.apps.case.sharedmodels import IndexHoldingMixIn, CommCareCaseIndex, CommCareCaseAttachment
+from copy import copy
 from dimagi.utils.couch.database import get_db, SafeSaveDocument
 from dimagi.utils.couch import LooselyEqualDocumentSchema
 
@@ -58,7 +60,10 @@ class CaseBase(SafeSaveDocument):
         details display by overriding this method.
 
         """
-        return self.to_json()
+        json = self.to_json()
+        json['status'] = _('Closed') if self.closed else _('Open')
+
+        return json
 
 
 class CommCareCaseAction(LooselyEqualDocumentSchema):
@@ -236,6 +241,10 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
 
     def __set_case_id(self, id):
         self._id = id
+    
+    def __repr__(self):
+        return "%s(name=%r, type=%r, id=%r)" % (
+                self.__class__.__name__, self.name, self.type, self._id)
 
     case_id = property(__get_case_id, __set_case_id)
 
@@ -248,23 +257,18 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         except Exception:
             pass
 
-
     @property
+    @memoized
     def reverse_indices(self):
-        def wrap_row(row):
-            index = CommCareCaseIndex.wrap(row['value'])
-            index.is_reverse = True
-            return index
         return get_db().view("case/related",
             key=[self.domain, self.get_id, "reverse_index"],
             reduce=False,
-            wrapper=wrap_row
+            wrapper=lambda r: CommCareCaseIndex.wrap(r['value'])
         ).all()
-        
+
     @property
-    @memoized
-    def all_indices(self):
-        return list(itertools.chain(self.indices, self.reverse_indices))
+    def has_indices(self):
+        return self.indices or self.reverse_indices
         
     def get_json(self):
         
@@ -818,6 +822,8 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         """
         return get_case_xform_ids(self._id)
 
+    # The following methods involving display configuration should probably go
+    # in their own layer, but for now it seems fine.
     @classmethod
     def get_display_config(cls):
         return [
@@ -868,5 +874,28 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
                 ],
             }
         ]
+
+    @property
+    def related_cases_columns(self):
+        return [
+            {
+                'name': _('Status'),
+                'expr': "status"
+            },
+            {
+                'name': _('Date Opened'),
+                'expr': "opened_on",
+                'parse_date': True,
+            },
+            {
+                'name': _('Date Modified'),
+                'expr': "modified_on",
+                'parse_date': True
+            }
+        ]
+
+    @property
+    def related_type_info(self):
+        return None
 
 import casexml.apps.case.signals
