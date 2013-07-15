@@ -2,6 +2,7 @@ from datetime import date, timedelta
 from couchdbkit import NoResultFound
 from sqlagg.columns import SumColumn, SimpleColumn
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.callcenter import utils
 from corehq.apps.reportfixtures.indicator_sets import SqlIndicatorSet
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from dimagi.utils.decorators.memoized import memoized
@@ -18,7 +19,7 @@ class CallCenter(SqlIndicatorSet):
 
     @property
     def table_name(self):
-        return '%s_call_center' % self.domain.name
+        return '%s_%s' % (self.domain.name, utils.MAPPING_NAME)
 
     @property
     def filters(self):
@@ -42,7 +43,7 @@ class CallCenter(SqlIndicatorSet):
         return [
             DatabaseColumn("case", 'user_id', SimpleColumn, format_fn=self.get_user_case_id, sortable=False),
             DatabaseColumn('formsSubmittedInLastWeek', 'sumbission_count', SumColumn,
-                           alias='last_week', sortable=False),
+                alias='last_week', sortable=False),
             DatabaseColumn('formsSubmittedInWeekPrior', 'sumbission_count', SumColumn,
                 filters=['date >= :2weekago', 'date < :weekago'], alias='week_prior', sortable=False),
             DatabaseColumn('formsSubmittedIn30days', 'sumbission_count', SumColumn,
