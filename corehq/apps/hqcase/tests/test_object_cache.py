@@ -1,16 +1,14 @@
 import StringIO
 import hashlib
-
-from django.test import RequestFactory
-from django.test.client import Client
-import ipdb
-from corehq.apps.domain.models import Domain
 import time
 
-from corehq.apps.users.models import CommCareUser, WebUser
+from django.test.client import Client
+
+from corehq.apps.domain.models import Domain
+
+from corehq.apps.users.models import WebUser
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests import TEST_CASE_ID, BaseCaseMultimediaTest, TEST_DOMAIN
-from corehq.apps.api.object_fetch_api import CaseAttachmentAPI
 
 
 TEST_USER = 'case_attachment@hqtesting.com'
