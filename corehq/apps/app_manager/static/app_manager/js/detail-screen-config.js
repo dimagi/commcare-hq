@@ -6,10 +6,10 @@ var SortRow = function (field, type, direction) {
     this.direction = ko.observable(direction);
 
     this.type.subscribe(function () {
-        window.saveButton.fire('change');
+        window.sortRowSaveButton.fire('change');
     });
     this.direction.subscribe(function () {
-        window.saveButton.fire('change');
+        window.sortRowSaveButton.fire('change');
     });
 };
 
@@ -23,7 +23,7 @@ var SortRows = function () {
 
     self.removeSortRow = function (row) {
         self.sortRows.remove(row);
-        window.saveButton.fire('change');
+        window.sortRowSaveButton.fire('change');
     };
 
     self.rowCount = ko.computed(function () {
@@ -51,7 +51,7 @@ ko.bindingHandlers.sortableList = {
                     list.splice(position, 0, item);
                 }
                 ui.item.remove();
-                window.saveButton.fire('change');
+                window.sortRowSaveButton.fire('change');
             }
         });
     }
@@ -477,7 +477,7 @@ var DetailScreenConfig = (function () {
                     that.save();
                 }
             });
-            window.saveButton = this.saveButton;
+            window.sortRowSaveButton = this.saveButton;
 
             this.render();
             this.on('add-column', function (column) {
