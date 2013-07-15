@@ -463,7 +463,7 @@ class DatespanField(ReportField):
 
     def update_context(self):
         self.context["datespan_name"] = self.name
-        self.datespan = DateSpan.since(self.default_days, self.timezone, self.inclusive)
+        self.datespan = DateSpan.since(self.default_days, timezone=self.timezone, inclusive=self.inclusive)
         if self.request.datespan.is_valid():
             self.datespan.startdate = self.request.datespan.startdate
             self.datespan.enddate = self.request.datespan.enddate

@@ -20,7 +20,7 @@ class DatespanFilter(BaseReportFilter):
 
     @property
     def datespan(self):
-        datespan = DateSpan.since(self.default_days, self.timezone, self.inclusive)
+        datespan = DateSpan.since(self.default_days, timezone=self.timezone, inclusive=self.inclusive)
         if self.request.datespan.is_valid() and self.slug == 'datespan':
             datespan.startdate = self.request.datespan.startdate
             datespan.enddate = self.request.datespan.enddate
