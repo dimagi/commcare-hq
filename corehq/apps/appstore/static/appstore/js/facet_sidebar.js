@@ -17,7 +17,7 @@ function chevron_toggle(show, $toggling, $chevron, $holds_toggle_state, after_fn
 $(function () {
     $(".more-sortable-button").click(function() {
         var $this = $(this);
-        var sortable = $this.data('sortable').replace(".", "\\.");
+        var sortable = $this.data('sortable').replace(new RegExp("\\.", "g"), "\\.");
         $('.sortable-' + sortable).show();
         $this.hide();
         return false;
