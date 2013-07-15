@@ -56,6 +56,8 @@ amqp==1.0.8
 amqplib==1.0.2
 sqlagg==0.1.4
 -e submodules/fluff-src
+django-redis==3.2
+redis==2.7.5
 -e submodules/ctable-src
 unittest2
 pycurl==7.19.0
