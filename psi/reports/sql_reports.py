@@ -81,7 +81,7 @@ class PSISQLEventsReport(PSISQLReport):
     table_name = 'psi-unicef_psi_events'
 
     @property
-    def columns(self):
+    def coluvmns(self):
         return self.initial_columns + [
             DatabaseColumn("Number of events", 'events'),
             DatabaseColumn("Number of male attendees", 'males'),
@@ -89,4 +89,30 @@ class PSISQLEventsReport(PSISQLReport):
             DatabaseColumn("Total number of attendees", 'attendees'),
             DatabaseColumn("Total number of leaflets distributed", 'leaflets'),
             DatabaseColumn("Total number of gifts distributed", 'gifts')
+        ]
+
+class PSISQLSensitizationReport(PSISQLReport):
+    name = "Sensitization Sessions Report"
+    exportable = True
+    emailable = True
+    slug = "sensitization_sessions_sql"
+    section_name = "sensitization sessions"
+    fields = ['corehq.apps.reports.fields.DatespanField',
+              'psi.reports.StateDistrictBlockField',
+              'psi.reports.AASDB',]
+    default_aggregation = 'block'
+
+    table_name = 'psi-unicef_sensitization'
+
+    @property
+    def columns(self):
+        return self.initial_columns + [
+            DatabaseColumn("Number of Sessions", "sessions"),
+            DatabaseColumn("Ayush Sensitized", "ayush_doctors"),
+            DatabaseColumn("MBBS Sensitized", "mbbs_doctors"),
+            DatabaseColumn("Asha Supervisors Sensitized", "asha_supervisors"),
+            DatabaseColumn("Ashas Sensitized", "ashas"),
+            DatabaseColumn("AWW Sensitized", "awws"),
+            DatabaseColumn("Others (ANM, MPW, etc.)", "other"),
+            DatabaseColumn("VHND Attendees", 'attendees')
         ]
