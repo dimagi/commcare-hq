@@ -57,8 +57,12 @@ def bulk_import_async(import_id, config, domain, excel_id):
             blank_external_ids.append(i + 1)
             continue
 
-        case, error = importer_util.lookup_case(config.search_field,
-                                                search_id, domain)
+        case, error = importer_util.lookup_case(
+            config.search_field,
+            search_id,
+            domain,
+            config.case_type
+        )
 
         try:
             fields_to_update = importer_util.populate_updated_fields(
@@ -98,15 +102,17 @@ def bulk_import_async(import_id, config, domain, excel_id):
             )
             submit_case_block(caseblock, domain, username, user_id)
         elif case and case.type == config.case_type:
+            extras = {}
+            if external_id:
+                extras['external_id'] = external_id
             caseblock = CaseBlock(
                 create=False,
                 case_id=case._id,
                 owner_id=owner_id,
                 version=V2,
-                update=fields_to_update
+                update=fields_to_update,
+                **extras
             )
-            if external_id:
-                caseblock['external_id'] = external_id
 
             submit_case_block(caseblock, domain, username, user_id)
 

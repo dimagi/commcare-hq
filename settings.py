@@ -206,6 +206,8 @@ HQ_APPS = (
     'corehq.apps.kookoo',
     'corehq.apps.sislog',
     'corehq.apps.yo',
+    'corehq.apps.telerivet',
+    'corehq.apps.mach',
     'corehq.apps.registration',
     'corehq.apps.unicel',
     'corehq.apps.reports',
@@ -232,6 +234,7 @@ HQ_APPS = (
     'a5288',
     'benin',
     'bihar',
+    'cvsu',
     'dca',
     'hsph',
     'mvp',
@@ -322,6 +325,7 @@ OPENROSA_VERSION = "1.0"
 FIXTURE_GENERATORS = [
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",
+    "corehq.apps.callcenter.fixturegenerators.indicators",
 ]
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
@@ -344,6 +348,9 @@ XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 COUCHLOG_BLUEPRINT_HOME = "%s%s" % (STATIC_URL, "hqwebapp/stylesheets/blueprint/")
 COUCHLOG_DATATABLES_LOC = "%s%s" % (
     STATIC_URL, "hqwebapp/js/lib/datatables-1.9/js/jquery.dataTables.min.js")
+
+COUCHLOG_JQMODAL_LOC = "%s%s" % (STATIC_URL, "hqwebapp/js/lib/jqModal.js")
+COUCHLOG_JQMODAL_CSS_LOC = "%s%s" % (STATIC_URL, "hqwebapp/stylesheets/jqModal.css")
 
 # These allow HQ to override what shows up in couchlog (add a domain column)
 COUCHLOG_TABLE_CONFIG = {"id_column": 0,
@@ -601,6 +608,7 @@ COUCHDB_APPS = [
     'reports',
     'sms',
     'smsforms',
+    'telerivet',
     'translations',
     'users',
     'utils',  # dimagi-utils
@@ -613,6 +621,7 @@ COUCHDB_APPS = [
 
     # custom reports
     'benin',
+    'cvsu',
     'dca',
     'hsph',
     'mvp',
@@ -674,17 +683,15 @@ SMS_HANDLERS = [
     'corehq.apps.sms.api.fallback_handler',
 ]
 
-# mapping of phone number prefix (including country code) to a registered
-# outbound sms backend to use for that set of numbers. the backend can be:
-# * the ID of a MobileBackend couch doc ("new-style" backends), or
-# * the python path of a backend module ("old-style" backends)
-# NOTE: Going forward, do not add backends here, add them in localsettings
-if "SMS_BACKENDS" not in globals():
-    SMS_BACKENDS = {}
-
-SMS_BACKENDS[''] = 'MOBILE_BACKEND_MACH' # default backend
-SMS_BACKENDS['91'] = 'MOBILE_BACKEND_UNICEL' # india
-SMS_BACKENDS['999'] = 'MOBILE_BACKEND_TEST' # +999 is an unused country code
+SMS_LOADED_BACKENDS = [
+    "corehq.apps.unicel.api.UnicelBackend",
+    "corehq.apps.mach.api.MachBackend",
+    "corehq.apps.tropo.api.TropoBackend",
+    "corehq.apps.sms.backend.http_api.HttpBackend",
+    "corehq.apps.telerivet.models.TelerivetBackend",
+    "corehq.apps.sms.test_backend.TestSMSBackend",
+    "corehq.apps.sms.backend.test.TestBackend",
+]
 
 SELENIUM_APP_SETTING_DEFAULTS = {
     'cloudcare': {
@@ -713,7 +720,6 @@ PILLOWTOPS = [
                  'corehq.pillows.fullxform.FullXFormPillow',
                  'corehq.pillows.domain.DomainPillow',
                  'corehq.pillows.user.UserPillow',
-                 'corehq.pillows.exchange.ExchangePillow',
                  'corehq.pillows.commtrack.ConsumptionRatePillow',
 
                  # fluff

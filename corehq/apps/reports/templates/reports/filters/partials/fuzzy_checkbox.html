@@ -1,5 +1,7 @@
 {% load i18n %}
-<label class="checkbox">
+    {% trans "This project looks like it has some submissions we don't recognize.  Don't worry this can usually be fixed." %}  
+    Please contact <a href="mailto:{{ support_email }}">CommCare Support</a>.
+<label class="checkbox {{ css_id }}-unknown_controls" data-bind="visible: show">
     <input type="checkbox" name="{{ hide_fuzzy.slug }}" value="yes" {% if hide_fuzzy.checked %}checked{% endif %} /> {% trans 'Hide Fuzzy Submissions' %}
     <a href="#" id="hide-fuzzy-submissions" class="hq-help no-click">
         <i class="icon-question-sign"

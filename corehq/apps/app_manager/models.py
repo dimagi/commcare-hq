@@ -343,11 +343,20 @@ class FormBase(DocumentSchema):
             try:
                 XForm(self.source).validate(version=self.get_app().application_version)
             except XFormValidationError as e:
-                vc = self.validation_cache = unicode(e)
+                validation_dict = {
+                    "fatal_error": e.fatal_error,
+                    "validation_problems": e.validation_problems,
+                    "version": e.version,
+                }
+                vc = self.validation_cache = json.dumps(validation_dict)
             else:
                 vc = self.validation_cache = ""
         if vc:
-            raise XFormValidationError(vc)
+            try:
+                raise XFormValidationError(**json.loads(vc))
+            except ValueError:
+                self.validation_cache = None
+                return self.validate_form()
         return self
 
     def validate_for_build(self):
@@ -696,6 +705,21 @@ class DetailColumn(IndexedSchema):
         return super(DetailColumn, cls).wrap(data)
 
 
+class SortElement(IndexedSchema):
+    field = StringProperty()
+    type = StringProperty()
+    direction = StringProperty()
+
+    def values(self):
+        values = {
+            'field': self.field,
+            'type': self.type,
+            'direction': self.direction,
+        }
+
+        return values
+
+
 class Detail(IndexedSchema):
     """
     Full configuration for a case selection screen
@@ -705,17 +729,19 @@ class Detail(IndexedSchema):
     columns = SchemaListProperty(DetailColumn)
 
     get_columns = IndexedSchema.Getter('columns')
+
     @parse_int([1])
     def get_column(self, i):
         return self.columns[i].with_id(i%len(self.columns), self)
 
     def append_column(self, column):
         self.columns.append(column)
+
     def update_column(self, column_id, column):
         my_column = self.columns[column_id]
 
-        my_column.model  = column.model
-        my_column.field  = column.field
+        my_column.model = column.model
+        my_column.field = column.field
         my_column.format = column.format
         my_column.late_flag = column.late_flag
         my_column.advanced = column.advanced
@@ -774,6 +800,7 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
     case_list = SchemaProperty(CaseList)
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
+    sort_elements = SchemaListProperty(SortElement)
 
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
@@ -1464,7 +1491,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     force_http = BooleanProperty(default=False)
     cloudcare_enabled = BooleanProperty(default=False)
     include_media_resources = BooleanProperty(default=False)
-    
+
     @classmethod
     def wrap(cls, data):
         for module in data.get('modules', []):
@@ -1522,6 +1549,23 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return "media_suite.xml"
 
     @property
+    def build_version(self):
+        try:
+            # returns a tuple.. ex: (2, 6)
+            version_tuple = self.get_build().minor_release()
+
+            # convert it to '2.6' for easy comparisons
+            version = (
+                str(version_tuple[0]) +
+                '.' +
+                str(version_tuple[1])
+            )
+
+            return version
+        except KeyError:
+            return ''
+
+    @property
     def default_language(self):
         return self.build_langs[0] if len(self.build_langs) > 0 else "en"
 
@@ -1564,6 +1608,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def _create_custom_app_strings(self, lang):
         def trans(d):
             return clean_trans(d, langs)
+        def numfirst(text):
+            if self.profile.get('features', {}).get('sense') == 'true':
+                text = "${0} %s" % (text,) if not (text and text[0].isdigit()) else text
+            return text
         id_strings = IdStrings()
         langs = [lang] + self.langs
         yield id_strings.homescreen_title(), self.name
@@ -1580,49 +1628,55 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     if column.format == 'enum':
                         for key, val in column.enum.items():
                             yield id_strings.detail_column_enum_variable(module, detail, column, key), trans(val)
-            yield id_strings.module_locale(module), trans(module.name)
+            yield id_strings.module_locale(module), numfirst(trans(module.name))
             if module.case_list.show:
                 yield id_strings.case_list_locale(module), trans(module.case_list.label) or "Case List"
             if module.referral_list.show:
                 yield id_strings.referral_list_locale(module), trans(module.referral_list.label)
             for form in module.get_forms():
-                yield id_strings.form_locale(form), trans(form.name) + ('${0}' if form.show_count else '')
+                form_name = trans(form.name) + ('${0}' if form.show_count else '')
+                yield id_strings.form_locale(form), numfirst(form_name)
 
-    def create_app_strings(self, lang, include_blank_custom=False):
+    def load_messages(self, lang, include_blank_custom=False):
         def non_empty_only(dct):
             return dict([(key, value) for key, value in dct.items() if value])
-        if lang != "default":
-            messages = {"cchq.case": "Case", "cchq.referral": "Referral"}
 
-            custom = dict(self._create_custom_app_strings(lang))
-            if include_blank_custom:
-                messages.update(custom)
-            else:
-                messages.update(non_empty_only(custom))
+        messages = {"cchq.case": "Case", "cchq.referral": "Referral"}
 
-            # include language code names
-            for lc in self.langs:
-                name = langcodes.get_name(lc) or lc
-                if name:
-                    messages[lc] = name
+        custom = dict(self._create_custom_app_strings(lang))
+        if include_blank_custom:
+            messages.update(custom)
+        else:
+            messages.update(non_empty_only(custom))
 
-            cc_trans = commcare_translations.load_translations(lang)
-            messages.update(cc_trans)
+        # include language code names
+        for lc in self.langs:
+            name = langcodes.get_name(lc) or lc
+            if name:
+                messages[lc] = name
 
-            messages.update(non_empty_only(self.translations.get(lang, {})))
+        cc_trans = commcare_translations.load_translations(lang)
+        messages.update(cc_trans)
+
+        messages.update(non_empty_only(self.translations.get(lang, {})))
+
+        return messages
+
+    def create_app_strings(self, lang, include_blank_custom=False):
+        if lang != 'default':
+            messages = self.load_messages('default')
+            messages.update(self.load_messages(lang, include_blank_custom))
         else:
             messages = {}
-            for lc in reversed(self.langs):
-                if lc == "default":
-                    continue
-                new_messages = commcare_translations.loads(
-                    self.create_app_strings(lc, include_blank_custom=True)
-                )
+            lc = self.default_language
+            if lc != "default":
+                default_messages = self.load_messages('default')
+                messages = default_messages
+                messages.update(
+                    commcare_translations.loads(
+                        self.create_app_strings(lc, include_blank_custom=True)
+                    ))
 
-                for key, val in new_messages.items():
-                    # do not overwrite a real trans with a blank trans
-                    if not (val == '' and key in messages):
-                        messages[key] = val
         return commcare_translations.dumps(messages).encode('utf-8')
 
     @property

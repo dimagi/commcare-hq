@@ -5,9 +5,7 @@ from __future__ import absolute_import
 from datetime import datetime
 import logging
 import re
-import json
 
-from couchdbkit import ResourceConflict, NoResultFound
 from django.utils import html, safestring
 from restkit.errors import NoMoreData
 from django.conf import settings
@@ -43,7 +41,7 @@ from casexml.apps.case.xml import V2
 import uuid
 from xml.etree import ElementTree
 from corehq.apps.hqcase.utils import submit_case_blocks
-from couchdbkit.exceptions import MultipleResultsFound, NoResultFound
+from couchdbkit.exceptions import ResourceConflict, MultipleResultsFound, NoResultFound
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -1420,10 +1418,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         return Group.by_user(self, wrap=False)
 
-    @property
-    def user_data_json(self):
-        return json.dumps(self.user_data)
-
     def get_time_zone(self):
         try:
             time_zone = self.user_data["time_zone"]
@@ -1445,6 +1439,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     @classmethod
     def sync_user_cases(cls, commcare_user):
+        if not commcare_user._id:
+            # hack: this sync happens twice on a user create and the first
+            # time the _id is None which causes a case submission error
+            return
+
         from casexml.apps.case.tests.util import CaseBlock
 
         domain = commcare_user.project

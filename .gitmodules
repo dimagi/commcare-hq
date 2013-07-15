@@ -106,6 +106,9 @@
 [submodule "submodules/care-benin-reports"]
 	path = submodules/care-benin-reports
 	url = git://github.com/dimagi/care-benin-reports.git
+[submodule "submodules/unicef-cvsu-reports"]
+	path = submodules/unicef-cvsu-reports
+	url = git://github.com/dimagi/unicef-cvsu.git
 [submodule "submodules/ctable-src"]
 	path = submodules/ctable-src
 	url = git://github.com/dimagi/ctable.git

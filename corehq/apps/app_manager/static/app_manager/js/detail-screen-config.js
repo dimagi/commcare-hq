@@ -1,8 +1,69 @@
 /*globals $, _, uiElement, eventize, lcsMerge, COMMCAREHQ */
 
+var SortRow = function (field, type, direction) {
+  this.field = ko.observable(field);
+  this.type = ko.observable(type);
+  this.direction = ko.observable(direction);
+
+  this.type.subscribe(function () {
+    window.saveButton.fire('change');
+  });
+  this.direction.subscribe(function () {
+    window.saveButton.fire('change');
+  });
+};
+
+var SortRows = function () {
+  var self = this;
+  self.sortRows = ko.observableArray([]);
+
+  self.addSortRow = function (field, type, direction) {
+    self.sortRows.push(new SortRow(field, type, direction));
+  };
+
+  self.removeSortRow = function (row) {
+    self.sortRows.remove(row);
+    window.saveButton.fire('change');
+  };
+
+  self.rowCount = ko.computed(function () {
+    return self.sortRows().length;
+  });
+
+};
+
+// http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
+// connect items with observableArrays
+ko.bindingHandlers.sortableList = {
+  init: function(element, valueAccessor) {
+    var list = valueAccessor();
+    $(element).sortable({
+      handle: '.grip',
+      cursor: 'move',
+      update: function(event, ui) {
+        //retrieve our actual data item
+        var item = ko.dataFor(ui.item.get(0));
+        //figure out its new position
+        var position = ko.utils.arrayIndexOf(ui.item.parent().children(), ui.item[0]);
+        //remove the item and add it back in the right spot
+        if (position >= 0) {
+          list.remove(item);
+          list.splice(position, 0, item);
+        }
+        ui.item.remove();
+        window.saveButton.fire('change');
+      }
+    });
+  }
+};
+
+sortRows = new SortRows
+ko.applyBindings(sortRows, $('#detail-screen-config-body').get(0));
+
 var DetailScreenConfig = (function () {
     "use strict";
     var DetailScreenConfig, Screen, Column;
+
     function formatEnum(obj, lang, langs) {
         var key,
             translated_pairs = {},
@@ -131,14 +192,25 @@ var DetailScreenConfig = (function () {
             (function () {
                 var f = formatEnum(that.original['enum'], that.lang, that.screen.langs);
                 that.enum_extra = uiElement.map_list(guidGenerator(), that.original.field);
-                that.enum_extra.ui.prepend($('<h4/>').text(DetailScreenConfig.message.ENUM_EXTRA_LABEL));
                 that.enum_extra.val(f.cleaned, f.translations);
+                var div = that.enum_extra.ui.find('div');
+                if (div.is(':empty')) {
+                    div.css('display', 'inline-block')
+                       .css('margin-right', '10px')
+                       .prepend($("<h4/>")
+                       .text(DetailScreenConfig.message.ENUM_EXTRA_LABEL));
+                }
+                that.enum_extra.ui.find('.enum-edit').css({ display: 'inline-block' });
             }());
             this.late_flag_extra = uiElement.input().val(this.original.late_flag.toString());
-            this.late_flag_extra.ui.prepend($('<span/>').text(DetailScreenConfig.message.LATE_FLAG_EXTRA_LABEL));
+            this.late_flag_extra.ui.find('input').css('width', 'auto');
+            this.late_flag_extra.ui.prepend(
+                $('<span/>').css('float', 'left')
+                            .css('padding', '5px 5px 0px 0px')
+                            .text(DetailScreenConfig.message.LATE_FLAG_EXTRA_LABEL));
 
             this.filter_xpath_extra = uiElement.input().val(this.original.filter_xpath.toString());
-            this.filter_xpath_extra.ui.prepend($('<span/>').text(DetailScreenConfig.message.FILTER_XPATH_EXTRA_LABEL));
+            this.filter_xpath_extra.ui.prepend($('<div/>').text(DetailScreenConfig.message.FILTER_XPATH_EXTRA_LABEL));
 
             this.time_ago_extra = uiElement.select([
                 {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.YEARS, value: DetailScreenConfig.TIME_AGO.year},
@@ -149,7 +221,7 @@ var DetailScreenConfig = (function () {
                 {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.WEEKS_UNTIL, value: -DetailScreenConfig.TIME_AGO.week},
                 {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.MONTHS_UNTIL, value: -DetailScreenConfig.TIME_AGO.month},
             ]).val(this.original.time_ago_interval.toString());
-            this.time_ago_extra.ui.prepend($('<span/>').text(DetailScreenConfig.message.TIME_AGO_EXTRA_LABEL));
+            this.time_ago_extra.ui.prepend($('<div/>').text(DetailScreenConfig.message.TIME_AGO_EXTRA_LABEL));
 
             elements = [
                 'includeInShort',
@@ -172,19 +244,38 @@ var DetailScreenConfig = (function () {
                 this[elements[i]].on('change', fireChange);
             }
 
-            this.$extra = $('<div/>');
-            //this.setFormat(this.original.format);
-
             this.format.on('change', function () {
-                that.$extra.find('> *').detach();
-                if (this.val() === "enum") {
-                    that.$extra.append(that.enum_extra.ui);
-                } else if (this.val() === 'late-flag') {
-                    that.$extra.append(that.late_flag_extra.ui);
-                } else if (this.val() === 'filter') {
-                    that.$extra.append(that.filter_xpath_extra.ui);
-                } else if (this.val() === 'time-ago') {
-                    that.$extra.append(that.time_ago_extra.ui);
+                // Prevent this from running on page load before init
+                if (that.format.ui.parent().length > 0) {
+                    that.enum_extra.ui.remove();
+                    that.late_flag_extra.ui.remove();
+                    that.filter_xpath_extra.ui.remove();
+                    that.time_ago_extra.ui.remove();
+
+                    if (this.val() === "enum") {
+                        that.format.ui.parent().append(that.enum_extra.ui);
+                    } else if (this.val() === 'late-flag') {
+                        that.format.ui.parent().append(that.late_flag_extra.ui);
+                        var input = that.late_flag_extra.ui.find('input');
+                        input.change(function() {
+                            that.late_flag_extra.value = input.val();
+                            fireChange();
+                        });
+                    } else if (this.val() === 'filter') {
+                        that.format.ui.parent().append(that.filter_xpath_extra.ui);
+                        var input = that.filter_xpath_extra.ui.find('input');
+                        input.change(function() {
+                            that.filter_xpath_extra.value = input.val();
+                            fireChange();
+                        });
+                    } else if (this.val() === 'time-ago') {
+                        that.format.ui.parent().append(that.time_ago_extra.ui);
+                        var select = that.time_ago_extra.ui.find('select');
+                        select.change(function() {
+                            that.time_ago_extra.value = select.val();
+                            fireChange();
+                        });
+                    }
                 }
             }).fire('change');
 
@@ -202,7 +293,14 @@ var DetailScreenConfig = (function () {
                 $(this).remove();
                 that.screen.fire('delete-column', that);
             }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.DELETE_COLUMN);
-        }
+
+            this.$sortLink = $('<a href="#">Sort by this</a>').click(function (e) {
+                var $row = $(this).closest('tr');
+                var $field = $row.find('.detail-screen-field code').text();
+                sortRows.addSortRow($field, '', '');
+                e.preventDefault();
+            });
+       }
 
         Column.init = function (col, screen) {
             return new Column(col, screen);
@@ -380,6 +478,7 @@ var DetailScreenConfig = (function () {
                     that.save();
                 }
             });
+            window.saveButton = this.saveButton;
 
             this.render();
             this.on('add-column', function (column) {
@@ -457,7 +556,8 @@ var DetailScreenConfig = (function () {
                 if (this.model === 'case') {
                     return {
                         'case_short': shortColumns,
-                        'case_long': longColumns
+                        'case_long': longColumns,
+                        'sort_elements': ko.toJSON(sortRows.sortRows),
                     };
                 } else {
                     return {
@@ -503,7 +603,14 @@ var DetailScreenConfig = (function () {
 
                 $('<td/>').addClass('detail-screen-header').append(column.header.ui).appendTo($tr);
                 $('<td/>').addClass('detail-screen-format').append(column.format.ui).appendTo($tr);
-                $('<td/>').addClass('detail-screen-extra').append(column.$extra).appendTo($tr);
+                column.format.fire('change');
+
+                var sortLine = $('<td/>').addClass('detail-screen-extra');
+                if (window.enableNewSort) {
+                  sortLine.append(column.$sortLink)
+                }
+                sortLine.appendTo($tr);
+
                 if (this.edit) {
                     $('<td/>').addClass('detail-screen-icon').append(
                         suggested ? column.$add : column.$copy
@@ -514,7 +621,6 @@ var DetailScreenConfig = (function () {
                 } else {
                     $('<td/>').addClass('detail-screen-icon').appendTo($tr);
                     $('<td/>').addClass('detail-screen-icon').appendTo($tr);
-
                 }
                 return $tr;
             },
@@ -538,7 +644,8 @@ var DetailScreenConfig = (function () {
                     $('<p/>').text(DetailScreenConfig.message.EMPTY_SCREEN).appendTo($box);
                 } else {
                     if (this.edit) {
-                        $('<div class="clearfix">').append(this.saveButton.ui).appendTo($box);
+                        var $detailBody = $('#detail-screen-config-body');
+                        $('<div id="saveBtn" class="clearfix">').append(this.saveButton.ui).prependTo($detailBody);
                     }
                     $table = $('<table class="table table-condensed"/>'
                         ).addClass('detail-screen-table'
@@ -593,8 +700,9 @@ var DetailScreenConfig = (function () {
                     handle: '.grip',
                     items: ">*:not(:has(.sort-disabled))",
                     update: function (e, ui) {
-                        var fromIndex = ui.item.data('index'),
-                            toIndex = rows.find('tr').get().indexOf(ui.item[0]);
+                        var fromIndex = ui.item.data('index');
+                        var toIndex = rows.find('tr').get().indexOf(ui.item[0]);
+
                         function reorder(list) {
                             var tmp = list.splice(fromIndex, 1)[0];
                             list.splice(toIndex, 0, tmp);
@@ -671,7 +779,7 @@ var DetailScreenConfig = (function () {
         PLAIN_FORMAT: 'Plain',
         DATE_FORMAT: 'Date',
         TIME_AGO_FORMAT: 'Time Since or Until Date',
-        TIME_AGO_EXTRA_LABEL: ' measuring ',
+        TIME_AGO_EXTRA_LABEL: ' Measuring: ',
         TIME_AGO_INTERVAL: {
             YEARS: 'Years since date',
             MONTHS: 'Months since date',
@@ -687,7 +795,7 @@ var DetailScreenConfig = (function () {
         LATE_FLAG_FORMAT: 'Late Flag',
         LATE_FLAG_EXTRA_LABEL: 'Days late: ',
         FILTER_XPATH_FORMAT: 'Filter (Advanced)',
-        FILTER_XPATH_EXTRA_LABEL: 'Filter XPath',
+        FILTER_XPATH_EXTRA_LABEL: '',
         INVISIBLE_FORMAT: 'Search Only',
         ADDRESS_FORMAT: 'Address (Android/CloudCare)',
 

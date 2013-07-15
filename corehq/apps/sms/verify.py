@@ -7,8 +7,8 @@ OUTGOING = "Welcome to CommCareHQ! Is this phone used by %(name)s? If yes, reply
 CONFIRM = "Thank you. This phone has been verified for using SMS with CommCareHQ"
 
 def send_verification(domain, user, phone_number):
-    module = MobileBackend.auto_load(phone_number, domain).backend_module
-    reply_phone = getattr(module, 'receive_phone_number', lambda: None)()
+    backend = MobileBackend.auto_load(phone_number, domain)
+    reply_phone = backend.reply_to_phone_number
 
     message = OUTGOING % {
         'name': user.username.split('@')[0],
@@ -34,7 +34,7 @@ def process_verification(phone_number, text, backend_id=None):
     assert v.owner_doc_type == 'CommCareUser'
     owner = CommCareUser.get(v.owner_id)
 
-    owner.save_verified_number(v.domain, phone_number, True, backend._id)
+    owner.save_verified_number(v.domain, phone_number, True, backend.name)
 
     api.send_sms(v.domain, owner._id, phone_number, CONFIRM)
 

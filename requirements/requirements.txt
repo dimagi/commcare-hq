@@ -60,3 +60,4 @@ django-redis==3.2
 redis==2.7.5
 -e submodules/ctable-src
 unittest2
+pycurl==7.19.0
