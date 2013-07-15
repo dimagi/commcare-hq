@@ -3,9 +3,9 @@ from xml.etree import ElementTree
 from sqlagg import SumColumn
 from sqlagg.columns import SimpleColumn
 from casexml.apps.case.tests.util import check_xml_line_by_line
-from corehq.apps.callcenter.fixturegenerators import gen_fixture
-from corehq.apps.callcenter.indicator_sets import SqlIndicatorSet
-from corehq.apps.callcenter.tests.sql_fixture import load_data
+from corehq.apps.reportfixtures.fixturegenerators import gen_fixture
+from corehq.apps.reportfixtures.indicator_sets import SqlIndicatorSet
+from corehq.apps.reportfixtures.tests.sql_fixture import load_data
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase
