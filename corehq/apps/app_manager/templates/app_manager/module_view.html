@@ -24,7 +24,7 @@
 
         $(function () {
             var $home = $("#detail-screen-config");
-            DetailScreenConfig.init($home, {
+            var detailScreenConfig = DetailScreenConfig.init($home, {
                 state: {
                     case_short: {{ module.details.0|JSON }},
                     case_long: {{ module.details.1|JSON }},
@@ -42,9 +42,10 @@
                 applicationVersion: {{ app.application_version|JSON }}
             });
 
+            //todo: move this
             var parsedSortRows = JSON.parse({{ sortElements|JSON }});
             for (var i = 0; i < parsedSortRows.length; i++) {
-                DetailScreenConfig.sortRows.addSortRow(
+                detailScreenConfig.sortRows.addSortRow(
                     parsedSortRows[i].field,
                     parsedSortRows[i].type,
                     parsedSortRows[i].direction

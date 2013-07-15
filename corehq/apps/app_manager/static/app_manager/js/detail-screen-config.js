@@ -294,11 +294,11 @@ var DetailScreenConfig = (function () {
             this.$sortLink = $('<a href="#">Sort by this</a>').click(function (e) {
                 var $row = $(this).closest('tr');
                 var $field = $row.find('.detail-screen-field code').text();
-                DetailScreenConfig.sortRows.addSortRow($field, '', '');
+                that.screen.config.sortRows.addSortRow($field, '', '');
                 e.preventDefault();
                 e.stopImmediatePropagation();
             });
-       }
+        }
 
         Column.init = function (col, screen) {
             return new Column(col, screen);
@@ -348,12 +348,13 @@ var DetailScreenConfig = (function () {
             'case': "",
             referral: "Referral Details"
         };
-        function Screen($home, spec, options) {
+        function Screen($home, spec, config, options) {
             var i, column, model, property, header,
                 that = this, columns;
             eventize(this);
             this.saveUrl = options.saveUrl;
             this.$home = $home;
+            this.config = config;
             this.edit = options.edit;
             this.columns = [];
             this.suggestedColumns = [];
@@ -522,8 +523,8 @@ var DetailScreenConfig = (function () {
                 });
             });
         }
-        Screen.init = function ($home, spec, lang) {
-            return new Screen($home, spec, lang);
+        Screen.init = function ($home, spec, config, lang) {
+            return new Screen($home, spec, config, lang);
         };
         Screen.prototype = {
             save: function () {
@@ -555,7 +556,7 @@ var DetailScreenConfig = (function () {
                     return {
                         'case_short': shortColumns,
                         'case_long': longColumns,
-                        'sort_elements': ko.toJSON(DetailScreenConfig.sortRows.sortRows)
+                        'sort_elements': ko.toJSON(this.config.sortRows.sortRows)
                     };
                 } else {
                     return {
@@ -719,19 +720,25 @@ var DetailScreenConfig = (function () {
             this.$home = $home;
             this.properties = spec.properties;
             this.screens = [];
+            this.sortRows = new SortRows();
             this.lang = spec.lang;
             this.langs = spec.langs || [];
             this.edit = spec.edit;
             this.saveUrl = spec.saveUrl;
 
             function addScreen(short, long) {
-                var screen = Screen.init($('<div/>'), {'short': short, 'long': long}, {
-                    lang: that.lang,
-                    langs: that.langs,
-                    edit: that.edit,
-                    properties: that.properties,
-                    saveUrl: that.saveUrl
-                });
+                var screen = Screen.init(
+                    $('<div/>'),
+                    {'short': short, 'long': long},
+                    that,
+                    {
+                        lang: that.lang,
+                        langs: that.langs,
+                        edit: that.edit,
+                        properties: that.properties,
+                        saveUrl: that.saveUrl
+                    }
+                );
                 that.screens.push(screen);
                 that.$home.append(screen.$home);
             }
@@ -742,9 +749,9 @@ var DetailScreenConfig = (function () {
             }
         };
         DetailScreenConfig.init = function ($home, spec) {
-            this.sortRows = new SortRows();
-            ko.applyBindings(this.sortRows, $('#detail-screen-config-body').get(0));
-            return new DetailScreenConfig($home, spec);
+            var ds = new DetailScreenConfig($home, spec);
+            ko.applyBindings(ds.sortRows, $('#detail-screen-config-body').get(0));
+            return ds;
         };
         return DetailScreenConfig;
     }());
@@ -827,3 +834,4 @@ var DetailScreenConfig = (function () {
 
     return DetailScreenConfig;
 }());
+
