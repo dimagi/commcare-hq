@@ -3,7 +3,6 @@ import uuid
 from datetime import datetime
 from django.core.mail import send_mail
 from corehq.apps.registration.models import RegistrationRequest
-from corehq.apps.commtrack.util import bootstrap_default
 from dimagi.utils.web import get_ip, get_url_base
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -58,8 +57,6 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
         date_created=datetime.utcnow(),
         commtrack_enabled=commtrack_enabled,
         creating_user=current_user.username)
-
-    bootstrap_default(new_domain)    
 
     if org:
         new_domain.organization = org

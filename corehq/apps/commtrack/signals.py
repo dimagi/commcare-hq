@@ -5,6 +5,8 @@ from corehq.apps.commtrack import const
 from corehq.apps.commtrack.const import is_commtrack_form, RequisitionStatus
 from corehq.apps.commtrack.models import (RequisitionCase, SupplyPointProductCase,
         CommtrackConfig)
+from corehq.apps.commtrack.util import bootstrap_default
+from corehq.apps.domain.signals import commcare_domain_post_save
 from corehq.apps.locations.models import Location
 from corehq.apps.sms.api import send_sms_to_verified_number
 from dimagi.utils import create_unique_filter
@@ -100,3 +102,9 @@ def commtrack_processing(sender, xform, cases, **kwargs):
         send_notifications(xform, cases)
 
 cases_received.connect(commtrack_processing)
+
+
+def bootstrap_domain_signal(sender, **kwargs):
+    bootstrap_default(kwargs['domain'])
+
+commcare_domain_post_save.connect(bootstrap_domain_signal)
