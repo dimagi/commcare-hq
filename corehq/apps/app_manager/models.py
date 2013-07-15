@@ -745,9 +745,11 @@ class Detail(IndexedSchema):
 
     """
     type = StringProperty(choices=DETAIL_TYPES)
-    columns = SchemaListProperty(DetailColumn)
 
+    columns = SchemaListProperty(DetailColumn)
     get_columns = IndexedSchema.Getter('columns')
+
+    sort_elements = SchemaListProperty(SortElement)
 
     @parse_int([1])
     def get_column(self, i):
@@ -819,7 +821,6 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
     case_list = SchemaProperty(CaseList)
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
-    sort_elements = SchemaListProperty(SortElement)
 
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
