@@ -281,8 +281,7 @@ def get_dots_case_json(casedoc, anchor_date=None):
 
     ret['days'] = []
     #dmyung - hack to have query_observations be timezone be relative specific to the eastern seaboard
-    #ret['anchor'] = isodate.strftime(datetime.now(tz=timezone(settings.TIME_ZONE)), "%d %b %Y")
-    ret['anchor'] = "%s 05:00:00 GMT" % anchor_date.strftime("%d %b %Y")
+    ret['anchor'] = anchor_date.strftime("%d %b %Y")
 
     observations = query_observations(casedoc._id, enddate-timedelta(days=DOT_DAYS_INTERVAL),enddate)
     for delta in range(DOT_DAYS_INTERVAL):
