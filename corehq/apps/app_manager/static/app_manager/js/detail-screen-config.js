@@ -57,7 +57,7 @@ ko.bindingHandlers.sortableList = {
     }
 };
 
-sortRows = new SortRows
+sortRows = new SortRows();
 ko.applyBindings(sortRows, $('#detail-screen-config-body').get(0));
 
 var DetailScreenConfig = (function () {
