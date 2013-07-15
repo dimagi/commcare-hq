@@ -158,12 +158,10 @@ TABS = (
     ManageDataTab,
     ApplicationsTab,
     CloudcareTab,
-    MessagesTab,
-    RemindersTab,
+    MessagingTab,
     ProjectSettingsTab,
     OrgReportTab,
     OrgSettingsTab,
     AdminTab,
     ExchangeTab,
-    ManageSurveysTab,
 )

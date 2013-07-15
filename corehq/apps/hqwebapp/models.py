@@ -341,44 +341,101 @@ class CloudcareTab(UITab):
                 self.project.commconnect_only)
 
 
-class MessagesTab(UITab):
-    title = ugettext_noop("Messages")
+class MessagingTab(UITab):
+    title = ugettext_noop("Messaging")
     view = "corehq.apps.sms.views.default"
 
     @property
     def is_viewable(self):
-        return (self.domain and self.project and
-                not (self.project.is_snapshot or
-                     self.couch_user.is_commcare_user() or
-                     self.project.commconnect_only))
+        return (self.project and not
+                (self.project.is_snapshot or
+                 self.couch_user.is_commcare_user()))
 
     @property
     def sidebar_items(self):
-        return [(_("Messaging"), [
+        items = [(_("Messages"), [
             {'title': _('Message History'),
              'url': reverse('messaging', args=[self.domain])},
             {'title': _('Compose SMS Message'),
              'url': reverse('sms_compose_message', args=[self.domain])}
         ])]
 
+        if self.project.commconnect_only or self.project.commtrack_enabled:
+            def reminder_subtitle(form=None, **context):
+                return form['nickname'].value
 
-class RemindersTab(UITab):
-    view = "corehq.apps.reminders.views.default"
+            def keyword_subtitle(keyword=None, **context):
+                return keyword.keyword
 
-    @property
-    def title(self):
-        if self.project.commconnect_only:
-            return _("Messaging")
-        else:
-            return _("Reminders")
+            items.extend([
+                #(_("Data Collection"), [
+                #]),
+                (_("Reminders"), [
+                    {'title': _("Reminders"),
+                     'url': reverse('list_reminders', args=[self.domain]),
+                     'children': [
+                         {'title': reminder_subtitle,
+                          'urlname': 'edit_complex'},
+                         {'title': _("New Reminder Definition"),
+                          'urlname': 'add_complex_reminder_schedule'},
+                    ]},
+
+                    {'title': _("Reminder Calendar"),
+                     'url': reverse('scheduled_reminders', args=[self.domain])},
+
+                    {'title': _("Keywords"),
+                     'url': reverse('manage_keywords', args=[self.domain]),
+                     'children': [
+                         {'title': keyword_subtitle,
+                          'urlname': 'edit_keyword'},
+                         {'title': _("New Keyword"),
+                          'urlname': 'add_keyword'},
+                    ]},
+                    #{'title': _("User Registration"),
+                     #'url': ...},
+                    {'title': _("Reminders in Error"),
+                     'url': reverse('reminders_in_error', args=[self.domain])},
+                ]),
+            ])
+
+        if self.project.survey_management_enabled:
+            def sample_title(form=None, **context):
+                return form['name'].value
+
+            def survey_title(form=None, **context):
+                return form['name'].value
+
+            items.append(
+                (_("Survey Management"), [
+                    {'title': _("Samples"),
+                     'url': reverse('sample_list', args=[self.domain]),
+                     'children': [
+                         {'title': sample_title,
+                          'urlname': 'edit_sample'},
+                         {'title': _("New Sample"),
+                          'urlname': 'add_sample'},
+                     ]},
+                    {'title': _("Surveys"),
+                     'url': reverse('survey_list', args=[self.domain]),
+                     'children': [
+                         {'title': survey_title,
+                          'urlname': 'edit_survey'},
+                         {'title': _("New Survey"),
+                          'urlname': 'add_survey'},
+                     ]},
+                ])
+            )
+
+        #items.append(
+            #(_("Configuration"), [
+            #])
+        #)
+        return items
 
     @property
     def dropdown_items(self):
         return []
 
-    @property
-    def is_viewable(self):
-        return self.project.commtrack_enabled or self.project.commconnect_only
 
 
 class ProjectSettingsTab(UITab):
@@ -696,13 +753,3 @@ class OrgSettingsTab(OrgTab):
             format_submenu_context(_("Teams"), url=reverse("orgs_teams", args=(self.org.name,))),
             format_submenu_context(_("Members"), url=reverse("orgs_stats", args=(self.org.name,))),
         ]
-
-
-class ManageSurveysTab(UITab):
-    title = ugettext_noop("Manage Surveys")
-    view = "corehq.apps.reminders.views.sample_list"
-
-    @property
-    def is_viewable(self):
-        return (self.domain and self.couch_user.can_edit_data() and
-                self.project.survey_management_enabled)

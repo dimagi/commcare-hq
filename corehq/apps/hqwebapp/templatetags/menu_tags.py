@@ -28,7 +28,8 @@ class MainMenuNode(template.Node):
 
         for tab_class in tabs:
             t = tab_class(
-                    request, domain=domain, couch_user=couch_user, project=project, org=org)
+                    request, domain=domain, couch_user=couch_user,
+                    project=project, org=org)
 
             if t.real_is_viewable:
                 visible_tabs.append(t)
