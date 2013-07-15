@@ -11,6 +11,7 @@ function ReleasesMain(o) {
     var self = this;
     self.options = o;
     self.users_cannot_share = self.options.users_cannot_share;
+    self.recipients = self.options.recipient_contacts;
     self.savedApps = ko.observableArray();
     self.doneFetching = ko.observable(false);
     self.buildState = ko.observable('');

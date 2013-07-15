@@ -51,11 +51,10 @@
                     </label>
                 </li>
             {% endfor %}
-            </ul></li>
-
             {% if f.choices|length > 6 and f.expanded %}
-                <li><a class="more-sortable-button" data-sortable="{{ f.facet }}" href="#">{% trans "More..." %}</a></li>
+                <li style="list-style-type: none;"><a class="more-sortable-button" data-sortable="{{ f.facet }}" href="#">{% trans "More..." %}</a></li>
             {% endif %}
+            </ul></li>
         {% endfor %}
         </div>
     {% endfor %}

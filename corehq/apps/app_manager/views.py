@@ -14,6 +14,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab
 from corehq.apps.app_manager import commcare_settings
+from corehq.apps.sms.views import get_sms_autocomplete_context
 from django.utils import html
 from django.utils.http import urlencode as django_urlencode
 from couchdbkit.exceptions import ResourceConflict
@@ -547,6 +548,7 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     app = get_app(domain, app_id)
     latest_release = get_app(domain, app_id, latest=True)
     context = get_apps_base_context(request, domain, app)
+    context['sms_contacts'] = get_sms_autocomplete_context(request, domain)['sms_contacts']
 
     saved_apps = []
 
