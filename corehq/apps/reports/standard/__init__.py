@@ -310,6 +310,6 @@ class DatespanMixin(object):
     @property
     def default_datespan(self):
         timezone = getattr(self, "timezone") or pytz.utc
-        datespan = DateSpan.since(self.datespan_default_days, timezone, self.inclusive)
+        datespan = DateSpan.since(self.datespan_default_days, timezone=timezone, inclusive=self.inclusive)
         datespan.is_default = True
         return datespan
