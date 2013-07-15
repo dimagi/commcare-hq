@@ -16,8 +16,8 @@ class CommCareCaseIndex(LooselyEqualDocumentSchema, UnicodeMixIn):
     
     @property
     def referenced_case(self):
-        from casexml.apps.case.models import CommCareCase
         if not hasattr(self, "_case"):
+            from casexml.apps.case.models import CommCareCase
             self._case = CommCareCase.get(self.referenced_id)
         return self._case
     
