@@ -643,8 +643,16 @@ var DetailScreenConfig = (function () {
                     $('<p/>').text(DetailScreenConfig.message.EMPTY_SCREEN).appendTo($box);
                 } else {
                     if (this.edit) {
-                        var $detailBody = $('#detail-screen-config-body');
-                        $('<div id="saveBtn" class="clearfix">').append(this.saveButton.ui).prependTo($detailBody);
+                        if (window.enableNewSort) {
+                            var $detailBody = $('#detail-screen-config-body');
+                            $('<div id="saveBtn" class="clearfix">')
+                                .append(this.saveButton.ui)
+                                .prependTo($detailBody);
+                        } else {
+                            $('<div class="clearfix">')
+                                .append(this.saveButton.ui)
+                                .prependTo($box);
+                        }
                     }
                     $table = $('<table class="table table-condensed"/>'
                         ).addClass('detail-screen-table'
