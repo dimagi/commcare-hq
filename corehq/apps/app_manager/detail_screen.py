@@ -63,13 +63,13 @@ class FormattedDetailColumn(object):
 
     @property
     def sort_node(self):
-        sort_fields = [s.field for s in self.module.sort_elements]
+        sort_fields = [s.field for s in self.module.detail_sort_elements]
         field = self.column.field
         if field in sort_fields and \
            self.app.enable_multi_sort and \
            self.detail.display == 'short':
             order = sort_fields.index(field)
-            sort_element = self.module.sort_elements[order]
+            sort_element = self.module.detail_sort_elements[order]
 
             sort = sx.Sort(
                 text=sx.Text(xpath_function=self.xpath_function),

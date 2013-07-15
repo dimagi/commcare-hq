@@ -845,6 +845,13 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
                 return detail
         raise Exception("Module %s has no detail type %s" % (self, detail_type))
 
+    @property
+    def detail_sort_elements(self):
+        try:
+            return self.get_detail('case_short').sort_elements
+        except Exception:
+            return []
+
     def export_json(self, dump_json=True):
         source = self.to_json()
         for form in source['forms']:
