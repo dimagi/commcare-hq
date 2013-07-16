@@ -3,5 +3,5 @@
  */
 function(doc, req)
 {
-    return (doc["doc_type"] == "CommCareCase");
+    return (doc["doc_type"] == "CommCareCase" || doc["doc_type"]== "CommCareCase-Deleted");
 }
