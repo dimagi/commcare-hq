@@ -147,6 +147,9 @@ class LicenseAgreement(DocumentSchema):
     user_id = StringProperty()
     user_ip = StringProperty()
 
+class VersionedLicenseAgreement(LicenseAgreement):
+    version = StringProperty(default="1.0")
+
 class InternalProperties(DocumentSchema, UpdatableSchema):
     """
     Project properties that should only be visible/editable by superusers
@@ -194,7 +197,6 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     case_sharing = BooleanProperty(default=False)
     organization = StringProperty()
     hr_name = StringProperty() # the human-readable name for this project within an organization
-    eula = SchemaProperty(LicenseAgreement)
     creating_user = StringProperty() # username of the user who created this domain
 
     # domain metadata
@@ -284,15 +286,6 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             if data.get("license", None) == "public":
                 data["license"] = "cc"
                 should_save = True
-
-        # if not 'creating_user' in data:
-        #     should_save = True
-        #     from corehq.apps.users.models import CouchUser
-        #     admins = CouchUser.view("users/admins_by_domain", key=data["name"], reduce=False, include_docs=True).all()
-        #     if len(admins) == 1:
-        #         data["creating_user"] = admins[0].username
-        #     else:
-        #         data["creating_user"] = None
 
         if 'slug' in data and data["slug"]:
             data["hr_name"] = data["slug"]

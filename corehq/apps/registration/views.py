@@ -289,7 +289,6 @@ def eula_agreement(request):
         current_user = CouchUser.from_django_user(request.user)
         current_user.eula.signed = True
         current_user.eula.date = datetime.utcnow()
-        current_user.eula.type = 'End User License Agreement'
         current_user.eula.user_ip = get_ip(request)
         current_user.save()
 
