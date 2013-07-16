@@ -105,6 +105,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         Returns a list of CommCare Users based on domain, group, and user 
         filter (demo_user, admin, registered, unknown)
     """
+    user_ids = user_ids if user_ids and user_ids[0] else None
     if not CommCareUser:
         from corehq.apps.users.models import CommCareUser
 
