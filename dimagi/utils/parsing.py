@@ -1,8 +1,8 @@
 from datetime import datetime, date, time
 from dateutil.parser import parse
 
-TRUE_STRINGS = ("true", "t", "yes", "y")
-FALSE_STRINGS = ("false", "f", "no", "n")
+TRUE_STRINGS = ("true", "t", "yes", "y", "1")
+FALSE_STRINGS = ("false", "f", "no", "n", "0")
 
 def string_to_boolean(val):
     """
