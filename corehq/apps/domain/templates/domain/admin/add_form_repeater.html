@@ -43,7 +43,14 @@
         <a href="{% url domain_forwarding domain %}">Data Forwarding</a> <span class="divider">&gt;</span>
     </li>
     <li class="active">
-        <a href="#">Forward {% if repeater_type == "FormRepeater" %}Forms{% else %}Cases{% endif %}</a>
+        <a href="#">
+          Forward
+          {# Django 1.4 and up have elif but we are on Django 1.3 #}
+          {% if repeater_type == "CaseRepeater" %}Cases:{% endif %}
+          {% if repeater_type == "FormRepeater" %}Form:{% endif %}
+          {% if repeater_type == "ShortFormRepeater" %}Form Stub:{% endif %}
+          {% if repeater_type == "AppStructureRepeater" %}App Schema Changes:{% endif %}
+        </a>
     </li>
 {% endblock %}
 
