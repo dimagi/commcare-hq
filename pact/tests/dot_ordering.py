@@ -1,20 +1,19 @@
 import time
-import pdb
-import dateutil
 import os
+from datetime import datetime, timedelta
+
 from django.test import TestCase
-import ipdb
 import simplejson
+
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from couchforms.models import XFormInstance
-from pact.dot_data import filter_obs_for_day, query_observations, DOTDay, get_dots_case_json
-from pact.enums import PACT_DOTS_DATA_PROPERTY, PACT_DOMAIN, XMLNS_DOTS_FORM, XMLNS_PATIENT_UPDATE_DOT, DOT_DAYS_INTERVAL, DOT_NONART, DOT_ART, DOT_ART_IDX, DOT_NONART_IDX
+from pact.dot_data import get_dots_case_json
+from pact.enums import PACT_DOTS_DATA_PROPERTY, PACT_DOMAIN, XMLNS_DOTS_FORM, XMLNS_PATIENT_UPDATE_DOT, DOT_NONART, DOT_ART, DOT_ART_IDX, DOT_NONART_IDX
 from pact.models import PactPatientCase
 from pact.regimen import regimen_dict_from_choice
 from pact.utils import submit_xform
-from datetime import datetime, timedelta
 
 
 START_DATE = datetime.utcnow() - timedelta(days=7)
