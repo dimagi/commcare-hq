@@ -13,7 +13,7 @@ function (doc) {
                 visit_date = new Date(meta.timeEnd),
                 case_id = get_case_id(doc);
 
-            if (age >= 180*MS_IN_DAY && age < 1770*MS_IN_DAY) {
+            if (age >= 180*MS_IN_DAY && age < 1825*MS_IN_DAY) {
                 if (indicators.cur_muac && indicators.cur_muac.value) {
                     try {
                         var cur_muac = parseFloat(indicators.cur_muac.value);
@@ -34,7 +34,7 @@ function (doc) {
                 }
             }
 
-            if (age < 1770*MS_IN_DAY && indicators.cur_muac && indicators.cur_muac.value) {
+            if (age < 1825*MS_IN_DAY && indicators.cur_muac && indicators.cur_muac.value) {
                 try {
                     var cur_muac_under5 = parseFloat(indicators.cur_muac.value);
                     visit_indicators["active_gam"] = {
