@@ -158,6 +158,9 @@ def process_case_hierarchy(case_output, get_case_url, type_info):
             'session_data': get_session_data(case, current_case, type_info)
         }
         data = type_info.get(case.type, {})
+        if 'description_property' in data:
+            data['description'] = getattr(
+                    case, data['description_property'], None)
         data.update(common_data)
 
         case.edit_data = data
