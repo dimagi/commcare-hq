@@ -1,8 +1,7 @@
-from dimagi.utils.couch.database import get_db
+from casexml.apps.case.models import CommCareCase
+from dimagi.utils.couch.database import get_db, iter_docs
 from django.core.management import BaseCommand
 from corehq.apps.domain.models import Domain
-from dimagi.utils.chunked import chunked
-
 
 def add_to_case(case):
     forms = {}
@@ -11,8 +10,6 @@ def add_to_case(case):
         if not xform:
             xform = get_db().get(xid)
             forms[xid] = xform
-        if len(forms) > 100:
-            forms.popitem()
         return xform
 
     should_save = False
@@ -64,11 +61,14 @@ class Command(BaseCommand):
                 startkey=key,
                 endkey=key + [{}],
                 reduce=False,
-                include_docs=True,
-            )
-            for cases in chunked([r['doc'] for r in results], 100):
-                cases_to_save = []
-                for case in cases:
-                    if add_to_case(case):
-                        cases_to_save.append(case)
-                get_db().bulk_save(cases_to_save)
+                include_docs=False,
+            ).all()
+
+            cases_to_save = []
+            for i, raw_case in enumerate(iter_docs(CommCareCase.get_db(), [r['id'] for r in results])):
+                if add_to_case(raw_case):
+                    cases_to_save.append(raw_case)
+                if i > 100:
+                    get_db().bulk_save(cases_to_save)
+                    cases_to_save = []
+            get_db().bulk_save(cases_to_save)
