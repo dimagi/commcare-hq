@@ -533,6 +533,21 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     def case_sharing_included(self):
         return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)
 
+    def save(self, **params):
+        super(Domain, self).save(**params)
+
+        from corehq.apps.domain.signals import commcare_domain_post_save
+        results = commcare_domain_post_save.send_robust(sender='domain',
+                                                     domain=self)
+        for result in results:
+            # Second argument is None if there was no error
+            if result[1]:
+                notify_exception(
+                    None,
+                    message="Error occured during domain post_save %s: %s" %
+                            (self.name, str(result[1]))
+                )
+
     def save_copy(self, new_domain_name=None, user=None):
         from corehq.apps.app_manager.models import get_app
         if new_domain_name is not None and Domain.get_by_name(new_domain_name):

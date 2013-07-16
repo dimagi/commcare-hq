@@ -19,8 +19,6 @@ from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 
 
-import corehq.apps.commtrack.util as commtrack_util
-
 def tf_choices(true_txt, false_txt):
     return (('false', false_txt), ('true', true_txt))
 
@@ -347,7 +345,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
                 domain.call_center_config.case_owner_id = self.cleaned_data.get('call_center_case_owner', None)
                 domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type', None)
             domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
-            commtrack_util.bootstrap_default(domain)
             domain.save()
             return True
         except Exception:
