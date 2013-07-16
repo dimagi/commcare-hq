@@ -1483,8 +1483,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             data['build_langs'] = data['langs']
         return super(Application, cls).wrap(data)
 
-    def save(self):
-        super(Application, self).save()
+    def save(self, *args, **kwargs):
+        super(Application, self).save(*args, **kwargs)
         from corehq.apps.app_manager import signals # Import loop if this is imported at the top; TODO: revamp so signal_connections <- models <- signals
         signals.app_post_save.send(Application, application=self)
 
