@@ -133,7 +133,7 @@ class UITab(object):
         request_path = self._request.get_full_path()
 
         if self.urls:
-            return any(url.startswith(request_path) for url in self.urls)
+            return any(request_path.startswith(url) for url in self.urls)
         elif self.url:
             return request_path.startswith(self.url)
         else:
