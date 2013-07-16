@@ -62,7 +62,6 @@ def get_hqadmin_base_context(request):
     }
 
 
-
 @require_superuser
 def active_users(request):
     keys = []
