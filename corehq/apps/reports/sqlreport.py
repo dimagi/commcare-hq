@@ -167,7 +167,6 @@ class AggregateColumn(Column):
 
 
 class SqlData(object):
-    no_value = '--'
     table_name = None
 
     @property
@@ -220,6 +219,7 @@ class SqlData(object):
     def data(self):
         if self.keys and not self.group_by:
             raise SqlReportException('Keys supplied without group_by.')
+
         qc = self.query_context
         for c in self.columns:
             qc.append_column(c.view)
@@ -234,6 +234,7 @@ class SqlData(object):
 
 
 class SqlTabularReport(SqlData, GenericTabularReport):
+    no_value = '--'
     exportable = True
 
     @property
@@ -247,7 +248,21 @@ class SqlTabularReport(SqlData, GenericTabularReport):
 
     @property
     def rows(self):
-        data = self.data
+        return DataTabulator(self, no_value=self.no_value).tabulate()
+
+
+class DataTabulator(object):
+
+    def __init__(self, sqldata, no_value='--'):
+        self.sqldata = sqldata
+        self.columns = sqldata.columns
+        self.keys = sqldata.keys
+        self.group_by = sqldata.group_by
+        self.no_value = no_value
+
+    def tabulate(self):
+        data = self.sqldata.data
+
         if self.keys and self.group_by:
             for key_group in self.keys:
                 row_key = self._row_key(key_group)
@@ -275,12 +290,17 @@ class SummingSqlTabularReport(SqlTabularReport):
     @property
     def rows(self):
         ret = list(super(SummingSqlTabularReport, self).rows)
-        if len(ret) > 0:
-            num_cols = len(ret[0])
-            total_row = []
-            for i in range(num_cols):
-                colrows = [cr[i] for cr in ret if isinstance(cr[i], dict)]
-                colnums = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), (int, long))]
-                total_row.append(reduce(lambda x, y: x + y, colnums, 0))
-            self.total_row = total_row
+        self.total_row = calculate_total_row(ret)
         return ret
+
+
+def calculate_total_row(rows):
+    total_row = []
+    if len(rows) > 0:
+        num_cols = len(rows[0])
+        for i in range(num_cols):
+            colrows = [cr[i] for cr in rows if isinstance(cr[i], dict)]
+            colnums = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), (int, long))]
+            total_row.append(reduce(lambda x, y: x + y, colnums, 0))
+
+    return total_row
