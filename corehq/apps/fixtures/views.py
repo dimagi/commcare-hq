@@ -432,7 +432,8 @@ def run_upload(request, domain, workbook):
                     fields=type_definition_fields,
             )
             try:
-                data_type = FixtureDataType.get(dt['UID'])
+                if dt['UID']:
+                    data_type = FixtureDataType.get(dt['UID'])
                 assert data_type.domain == domain
                 assert data_type.doc_type == FixtureDataType._doc_type
                 if dt[DELETE_HEADER] == "Y" or dt[DELETE_HEADER] == "y":
@@ -463,7 +464,8 @@ def run_upload(request, domain, workbook):
                     sort_key=sort_key
                 )
                 try:
-                    old_data_item = FixtureDataItem.get(di['UID'])
+                    if di['UID']:
+                        old_data_item = FixtureDataItem.get(di['UID'])
                     assert old_data_item.domain == domain
                     assert old_data_item.doc_type == FixtureDataItem._doc_type
                     assert old_data_item.data_type_id == data_type.get_id
