@@ -604,7 +604,45 @@ class DjangoUserMixin(DocumentSchema):
         return dummy.check_password(password)
 
 
-class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
+class EulaMixin(DocumentSchema):
+    CURRENT_VERSION = '2.0' # Set this to the most up to date version of the eula
+    eulas = SchemaListProperty(LicenseAgreement)
+
+    @classmethod
+    def migrate_eula(cls, data):
+        should_save = False
+        if 'eula' in data:
+            data['eulas'] = [data['eula']]
+            data['eulas'][0]['version'] = '1.0'
+            del data['eula']
+            should_save = True
+        return data, should_save
+
+    def is_eula_signed(self, version=CURRENT_VERSION):
+        if self.is_superuser:
+            return True
+        for eula in self.eulas:
+            if eula.version == version:
+                return eula.signed
+        return False
+
+    def get_eula(self, version):
+        for eula in self.eulas:
+            if eula.version == version:
+                return eula
+        return None
+
+    @property
+    def eula(self, version=CURRENT_VERSION):
+        current_eula = self.get_eula(version)
+        if not current_eula:
+            current_eula = LicenseAgreement(type="End User License Agreement", version=version)
+            self.eulas.append(current_eula)
+        assert current_eula.type == "End User License Agreement"
+        return current_eula
+
+
+class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMixin):
     """
     A user (for web and commcare)
     """
@@ -621,8 +659,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
     email_opt_in = BooleanProperty()
     announcements_seen = ListProperty()
 
-    eula = SchemaProperty(LicenseAgreement)
-
     _user = None
     _user_checked = False
 
@@ -631,6 +667,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
         if data.has_key("organizations"):
             del data["organizations"]
             should_save = True
+
+        data, should_save_for_eula = cls.migrate_eula(data)
+        should_save = should_save or should_save_for_eula
+
         couch_user = super(CouchUser, cls).wrap(data)
         if should_save:
             couch_user.save()
@@ -1031,9 +1071,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
 
     def is_deleted(self):
         return self.base_doc.endswith(DELETED_SUFFIX)
-
-    def is_eula_signed(self):
-        return self.eula.signed or self.is_superuser
 
     def get_viewable_reports(self, domain=None, name=True):
         try:
