@@ -7,7 +7,7 @@ from django.core.cache import cache
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 import re
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext
 from corehq.apps.app_manager.const import APP_V1, APP_V2
 from couchdbkit.exceptions import BadValueError
 from couchdbkit.ext.django.schema import *
@@ -522,9 +522,11 @@ class FormBase(DocumentSchema):
                 and not self.actions.open_case.name_path:
             errors.append({
                 'type': 'case_name required',
-                'message': 'You are creating a case '
-                           'but have not given the case a name. '
-                           'The "Name according to question" field is required'
+                'message': ugettext(
+                    'Every case must have a name. '
+                    'Please specify a value for the name property under '
+                    '"Save data to the following case properties"'
+                )
             })
 
         try:
