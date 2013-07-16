@@ -4,10 +4,14 @@ from corehq.pillows.mappings.case_mapping import CASE_MAPPING, CASE_INDEX
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.listener import AliasedElasticPillow
 from django.conf import settings
+import logging
 
 
 UNKNOWN_DOMAIN = "__nodomain__"
 UNKNOWN_TYPE = "__notype__"
+
+pillow_logging = logging.getLogger("pillowtop")
+pillow_logging.setLevel(logging.INFO)
 
 class CasePillow(AliasedElasticPillow):
     """
@@ -36,6 +40,15 @@ class CasePillow(AliasedElasticPillow):
     }
     es_index = CASE_INDEX
     default_mapping = CASE_MAPPING
+
+    def change_trigger(self, changes_dict):
+        doc_dict = super(CasePillow, self).change_trigger(changes_dict)
+        if doc_dict['doc_type'] == 'CommCareCase-Deleted':
+            if self.doc_exists(doc_dict):
+                self.get_es().delete(path=self.get_doc_path_typed(doc_dict))
+            return None
+        else:
+            return doc_dict
 
     @memoized
     def calc_meta(self):
