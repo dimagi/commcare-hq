@@ -1,8 +1,8 @@
 import logging
 import dateutil
 from django.conf import settings
-from datetime import datetime, timedelta
 from pytz import timezone
+from datetime import datetime, timedelta, date
 from pact.enums import DAY_SLOTS_BY_TIME, \
     DOT_DAYS_INTERVAL, \
     DOT_ART, \
@@ -14,7 +14,6 @@ from pact.enums import DAY_SLOTS_BY_TIME, \
     DOT_OBSERVATION_DIRECT,\
     DOT_UNCHECKED_CELL
 
-from datetime import date
 from pact.models import CObservation
 
 
@@ -69,8 +68,7 @@ class DOTDay(object):
         else:
             drug_attr='nonart'
         getattr(self,drug_attr).update_total_doses(obs)
-        if not getattr(self, drug_attr).has_obs(obs):
-            getattr(self, drug_attr).add_obs(obs)
+        getattr(self, drug_attr).add_obs(obs)
 
     @classmethod
     def merge_from_observations(cls, day_observations):
@@ -104,8 +102,7 @@ class DOTDay(object):
                 else:
                     day_note = ''
 
-                return [obs.adherence, obs.method, day_note, day_slot] #todo, add regimen_item
-
+                return [obs.adherence, obs.method, day_note, day_slot]
                 #one and done per array
             else:
                 #return pristine unchecked
@@ -116,7 +113,6 @@ class DOTDay(object):
         for ix, dose_data in enumerate([self.nonart, self.art]):
             drug_arr = []
             labels_arr = regimen_labels[ix]
-            #for dose_num, obs_list in day_data[drug_type]['dose_dict'].items():
             dose_nums = dose_data.dose_dict.keys()
             dose_nums.sort()
             for dose_num in dose_nums:
@@ -143,8 +139,8 @@ class DOTDay(object):
 
 def filter_obs_for_day(this_date, observations):
     assert this_date.__class__ == date
-    #todo, normalize for timezone
     ret = filter(lambda x: x['observed_date'].date() == this_date, observations)
+
     return ret
 
 
@@ -285,7 +281,6 @@ def get_dots_case_json(casedoc, anchor_date=None):
 
     ret['days'] = []
     #dmyung - hack to have query_observations be timezone be relative specific to the eastern seaboard
-    #ret['anchor'] = isodate.strftime(datetime.now(tz=timezone(settings.TIME_ZONE)), "%d %b %Y")
     ret['anchor'] = anchor_date.strftime("%d %b %Y")
 
     observations = query_observations(casedoc._id, enddate-timedelta(days=DOT_DAYS_INTERVAL),enddate)

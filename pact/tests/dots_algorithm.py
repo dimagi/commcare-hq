@@ -118,11 +118,7 @@ class dotsAlgorithmTests(TestCase):
         num = 8
         observed_date = datetime.utcnow()
         encounter_dates = [datetime.utcnow()-timedelta(days=x) for x in range(num)]
-
-
-
         #whole bunch of others
-
         no_direct = [generateAny(x, observed_date) for x in encounter_dates]
         no_direct_winner = no_direct[-1] #earliest is last
 
@@ -140,6 +136,11 @@ class dotsAlgorithmTests(TestCase):
         with_direct_sorted = sort_observations(with_direct)
         self.assertEqual(direct.encounter_date, with_direct_sorted[0].encounter_date)
         self.assertEqual(direct.method, with_direct_sorted[0].method)
+
+    def testDayCellSort(self):
+        day1 = [[['unchecked', 'pillbox', '', 0], ['empty', 'pillbox', '', 3]], [['unchecked', 'pillbox', '', 0], ['empty', 'pillbox', '', 3]]]
+        day2 = [[['full', 'pillbox', '', 0], ['unchecked', 'pillbox', '', 3]], [['full', 'self', '', 0], ['unchecked', 'pillbox', '', 3]]]
+
 
 
 

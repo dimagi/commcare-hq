@@ -30,8 +30,12 @@ TIME_LABEL_LOOKUP = (
     ('Dose', 'Morning', 'Noon', 'Evening', 'Bedtime'),
 )
 
-DOT_ART = "ART"
 DOT_NONART = "NONART"
+DOT_NONART_IDX = 0
+
+DOT_ART = "ART"
+DOT_ART_IDX = 1
+
 DOT_DAYS_INTERVAL = 21
 
 CASE_ART_REGIMEN_PROP = 'artregimen'
