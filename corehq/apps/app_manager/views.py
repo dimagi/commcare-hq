@@ -420,11 +420,9 @@ def get_app_view_context(request, app):
     build_config = CommCareBuildConfig.fetch()
     version = app.application_version
     options = build_config.get_menu(version)
-    options_labels = list()
-    options_builds = list()
-    for option in options:
-        options_labels.append(option.get_label())
-        options_builds.append(option.build.to_string())
+    options_labels = [option.get_label() for option in options]
+    options_builds = [option.build.to_string() for option in options]
+
 
     (build_spec_setting,) = filter(
         lambda x: x['type'] == 'hq' and x['id'] == 'build_spec',
