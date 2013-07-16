@@ -28,9 +28,12 @@
     
         {% block page_imports %}
         {% endblock %}
-        {% if GOOGLE_ANALYTICS_ID %}
         <script type="text/javascript">
             var _gaq = _gaq || [];
+        </script>
+
+        {% if GOOGLE_ANALYTICS_ID %}
+        <script type="text/javascript">
             _gaq.push(['_setAccount', '{{ GOOGLE_ANALYTICS_ID }}']);
             _gaq.push(['_trackPageview']);
             {% if domain %}_gaq.push(['_setCustomVar', 1, 'domain', '{{ domain }}', 3]);{% endif %}
