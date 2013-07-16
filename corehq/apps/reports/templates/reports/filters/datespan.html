@@ -17,8 +17,10 @@
            value="{{ datespan.enddate|date:"Y-m-d" }}">
 
     <span class="helptext help-inline" style="margin-left: 1.5em;">
-        {% if timezone %}{%  trans "This report's timezone is in" %} {{ timezone }}. {% endif %}
-        {% trans 'Showing' %} {{ datespan }}.
+        {% if timezone %}
+        {% blocktrans %}This report's timezone is {{ timezone }}.{% endblocktrans %}
+        {% endif %}
+        {% blocktrans %}Showing {{ datespan }}.{% endblocktrans %}
     </span>
 {% endblock %}
 {% block filter_js %}
