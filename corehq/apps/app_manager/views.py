@@ -178,7 +178,10 @@ def _get_xform_source(request, app, form, filename="form.xml"):
 @login_and_domain_required
 def get_xform_source(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
-    form = app.get_module(module_id).get_form(form_id)
+    try:
+        form = app.get_module(module_id).get_form(form_id)
+    except IndexError:
+        raise Http404()
     return _get_xform_source(req, app, form)
 
 @login_and_domain_required
