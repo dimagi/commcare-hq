@@ -1,4 +1,3 @@
-from casexml.apps.case.models import CommCareCase
 from dimagi.utils.couch.database import get_db, iter_docs
 from django.core.management import BaseCommand
 from corehq.apps.domain.models import Domain
@@ -65,7 +64,7 @@ class Command(BaseCommand):
             ).all()
 
             cases_to_save = []
-            for i, raw_case in enumerate(iter_docs(CommCareCase.get_db(), [r['id'] for r in results])):
+            for i, raw_case in enumerate(iter_docs(get_db(), [r['id'] for r in results])):
                 if add_to_case(raw_case):
                     cases_to_save.append(raw_case)
                 if i > 100:
