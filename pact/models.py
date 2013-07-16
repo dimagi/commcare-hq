@@ -355,6 +355,7 @@ class PactPatientCase(CommCareCase):
                 "create_form_id": "0",
                 "case_id_attr": "case_id_goal",
                 "child_type": "pact_careplan_task",
+                "description_property": "description",
 
                 #'create_form_xmlns': "http://dev.commcarehq.org/pact/careplan/goal/create",
                 #'update_form_xmlns': "http://dev.commcarehq.org/pact/careplan/goal/update"
@@ -370,6 +371,7 @@ class PactPatientCase(CommCareCase):
                 "create_module_id": "1",
                 "create_form_id": "1",
                 "case_id_attr": "case_id_task",
+                "description_property": "description",
 
                 #'create_form_xmlns': "http://dev.commcarehq.org/pact/careplan/task/create",
                 #'update_form_xmlns': "http://dev.commcarehq.org/pact/careplan/task/update"
