@@ -28,7 +28,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import User as CaseXMLUser
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name
-from corehq.apps.domain.models import LicenseAgreement, VersionedLicenseAgreement
+from corehq.apps.domain.models import LicenseAgreement
 from corehq.apps.users.util import normalize_username, user_data_from_registration_form, format_username, raw_username
 from corehq.apps.users.xml import group_fixture
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, VerifiedNumber, PhoneNumberInUseException, InvalidFormatException
@@ -608,7 +608,7 @@ class DjangoUserMixin(DocumentSchema):
 
 class EulaMixin(DocumentSchema):
     CURRENT_VERSION = '2.0' # Set this to the most up to date version of the eula
-    eulas = SchemaListProperty(VersionedLicenseAgreement)
+    eulas = SchemaListProperty(LicenseAgreement)
 
     @classmethod
     def migrate_eula(cls, data):
@@ -638,7 +638,7 @@ class EulaMixin(DocumentSchema):
     def eula(self, version=CURRENT_VERSION):
         current_eula = self.get_eula(version)
         if not current_eula:
-            current_eula = VersionedLicenseAgreement(type="End User License Agreement", version=version)
+            current_eula = LicenseAgreement(type="End User License Agreement", version=version)
             self.eulas.append(current_eula)
         assert current_eula.type == "End User License Agreement"
         return current_eula

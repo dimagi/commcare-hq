@@ -146,9 +146,7 @@ class LicenseAgreement(DocumentSchema):
     date = DateTimeProperty()
     user_id = StringProperty()
     user_ip = StringProperty()
-
-class VersionedLicenseAgreement(LicenseAgreement):
-    version = StringProperty(default="1.0")
+    version = StringProperty()
 
 class InternalProperties(DocumentSchema, UpdatableSchema):
     """
