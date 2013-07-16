@@ -165,6 +165,11 @@ LOGSTASH_HOST = 'localhost'
 
 LOCAL_PILLOWTOPS = []
 
+####### API throttling #####
+
+API_THROTTLE_REQUESTS=20  # number of requests allowed per timeframe
+API_THROTTLE_TIMEFRAME=10 # seconds
+
 ####### django-coverage config ########
 
 COVERAGE_REPORT_HTML_OUTPUT_DIR='coverage-html'

@@ -105,12 +105,9 @@ def domains_for_user(request, selected_domain=None):
             for domain in domain_list:
                 default_url = reverse("domain_homepage", args=[domain.name])
                 lst.append('<li><a href="%s">%s</a></li>' % (default_url, domain.long_display_name()))
-            lst.append('<li class="divider"></li>')
-            lst.append('<li><a href="/a/public/">View Demo Project</a></li>')
         else:
-            lst.append('<li class="nav-header">Example Projects</li>')
-            lst.append('<li><a href="/a/public/">CommCare Demo Project</a></li>')
-            lst.append('<li class="divider"></li>')
+            lst.append('<li class="nav-header">No Projects</li>')
+    lst.append('<li class="divider"></li>')
     lst.append('<li><a href="%s">New Project...</a></li>' % new_domain_url)
     lst.append('<li><a href="%s">CommCare Exchange...</a></li>' % reverse("appstore"))
     lst.append("</ul>")

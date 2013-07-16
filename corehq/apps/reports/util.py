@@ -98,13 +98,14 @@ def get_group_params(domain, group='', users=None, user_id_only=False, **kwargs)
     return group, users
 
 
-def get_all_users_by_domain(domain=None, group=None, individual=None,
+def get_all_users_by_domain(domain=None, group=None, user_ids=None,
                             user_filter=None, simplified=False, CommCareUser=None):
     """
         WHEN THERE ARE A LOT OF USERS, THIS IS AN EXPENSIVE OPERATION.
         Returns a list of CommCare Users based on domain, group, and user 
         filter (demo_user, admin, registered, unknown)
     """
+    user_ids = user_ids if user_ids and user_ids[0] else None
     if not CommCareUser:
         from corehq.apps.users.models import CommCareUser
 
@@ -113,9 +114,9 @@ def get_all_users_by_domain(domain=None, group=None, individual=None,
         if not isinstance(group, Group):
             group = Group.get(group)
         users = group.get_users(only_commcare=True)
-    elif individual:
+    elif user_ids is not None:
         try:
-            users = [CommCareUser.get_by_user_id(individual)]
+            users = [CommCareUser.get_by_user_id(id) for id in user_ids]
         except Exception:
             users = []
         if users and users[0] is None:
@@ -292,7 +293,7 @@ def create_export_filter(request, domain, export_type='form'):
         else:
             filter = SerializableFunction(case_group_filter, group=group)
     else:
-        filter = SerializableFunction(instances) & SerializableFunction(app_export_filter, app_id=app_id)
+        filter = SerializableFunction(app_export_filter, app_id=app_id)
         filter &= SerializableFunction(datespan_export_filter, datespan=request.datespan)
         if user_filters and use_user_filters:
             users_matching_filter = map(lambda x: x.get('user_id'), get_all_users_by_domain(domain,

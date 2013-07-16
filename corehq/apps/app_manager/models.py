@@ -705,26 +705,45 @@ class DetailColumn(IndexedSchema):
         return super(DetailColumn, cls).wrap(data)
 
 
+class SortElement(IndexedSchema):
+    field = StringProperty()
+    type = StringProperty()
+    direction = StringProperty()
+
+    def values(self):
+        values = {
+            'field': self.field,
+            'type': self.type,
+            'direction': self.direction,
+        }
+
+        return values
+
+
 class Detail(IndexedSchema):
     """
     Full configuration for a case selection screen
 
     """
     type = StringProperty(choices=DETAIL_TYPES)
-    columns = SchemaListProperty(DetailColumn)
 
+    columns = SchemaListProperty(DetailColumn)
     get_columns = IndexedSchema.Getter('columns')
+
+    sort_elements = SchemaListProperty(SortElement)
+
     @parse_int([1])
     def get_column(self, i):
         return self.columns[i].with_id(i%len(self.columns), self)
 
     def append_column(self, column):
         self.columns.append(column)
+
     def update_column(self, column_id, column):
         my_column = self.columns[column_id]
 
-        my_column.model  = column.model
-        my_column.field  = column.field
+        my_column.model = column.model
+        my_column.field = column.field
         my_column.format = column.format
         my_column.late_flag = column.late_flag
         my_column.advanced = column.advanced
@@ -807,6 +826,13 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
                 return detail
         raise Exception("Module %s has no detail type %s" % (self, detail_type))
 
+    @property
+    def detail_sort_elements(self):
+        try:
+            return self.get_detail('case_short').sort_elements
+        except Exception:
+            return []
+
     def export_json(self, dump_json=True, keep_unique_id=False):
         source = self.to_json()
         if not keep_unique_id:
@@ -871,7 +897,9 @@ class VersionedDoc(LazyAttachmentDoc):
     def id(self):
         return self._id
 
-    def save(self, response_json=None, increment_version=True, **params):
+    def save(self, response_json=None, increment_version=None, **params):
+        if increment_version is None:
+            increment_version = not self.copy_of
         if increment_version:
             self.version = self.version + 1 if self.version else 1
         super(VersionedDoc, self).save(**params)
@@ -881,6 +909,8 @@ class VersionedDoc(LazyAttachmentDoc):
             response_json['update']['app-version'] = self.version
 
     def make_build(self):
+        assert self.get_id
+        assert self.copy_of is None
         cls = self.__class__
         copies = cls.view('app_manager/applications', key=[self.domain, self._id, self.version], include_docs=True, limit=1).all()
         if copies:
@@ -1469,7 +1499,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     force_http = BooleanProperty(default=False)
     cloudcare_enabled = BooleanProperty(default=False)
     include_media_resources = BooleanProperty(default=False)
-    
+
     @classmethod
     def wrap(cls, data):
         for module in data.get('modules', []):
@@ -1525,6 +1555,18 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @property
     def media_suite_loc(self):
         return "media_suite.xml"
+
+    @property
+    def enable_multi_sort(self):
+        """
+        Multi (tiered) sort is supported by apps version 2.2 or higher
+        """
+        try:
+            return self.get_build().minor_release() >= (2, 2)
+        except KeyError:
+            # if for some reason there is no build number it's probably
+            # old or bugged
+            return False
 
     @property
     def default_language(self):
