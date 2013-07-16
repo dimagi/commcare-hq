@@ -2,7 +2,7 @@ import logging
 from xml.etree import ElementTree
 from casexml.apps.case.xml import V2
 from corehq.apps.domain.models import Domain
-from corehq.apps.reportfixtures.indicator_sets import CallCenter
+from corehq.apps.callcenter.indicator_sets import CallCenter
 from corehq.apps.users.models import CommCareUser
 
 
