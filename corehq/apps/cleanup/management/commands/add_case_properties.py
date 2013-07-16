@@ -64,10 +64,15 @@ class Command(BaseCommand):
             ).all()
 
             cases_to_save = []
-            for i, raw_case in enumerate(iter_docs(get_db(), [r['id'] for r in results])):
+            i = 0
+            for raw_case in iter_docs(get_db(), [r['id'] for r in results]):
+                i += 1
+
                 if add_to_case(raw_case):
                     cases_to_save.append(raw_case)
+
                 if i > 100:
                     get_db().bulk_save(cases_to_save)
                     cases_to_save = []
+                    i = 0
             get_db().bulk_save(cases_to_save)
