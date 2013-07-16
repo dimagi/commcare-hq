@@ -1977,6 +1977,9 @@ def app_summary_from_exchange(request, domain, app_id):
 
 def summary(request, domain, app_id, should_edit=True):
     app = Application.get(app_id)
+    if app.doc_type == 'RemoteApp':
+        return HttpResponse(_('Sorry, the application summary is not supported for remote apps'),
+                            status=501) # not implemented
     context = get_apps_base_context(request, domain, app)
     langs = context['langs']
 
