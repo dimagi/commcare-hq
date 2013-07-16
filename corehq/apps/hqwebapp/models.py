@@ -74,6 +74,7 @@ class UITab(object):
         return []
 
     @property
+    @memoized
     def sidebar_items(self):
         if self.dispatcher:
             context = {
@@ -129,10 +130,32 @@ class UITab(object):
         if self.subtabs and any(st.is_active for st in self.subtabs):
             return True
 
-        if self.url:
-            return self._request.get_full_path().startswith(self.url)
+        request_path = self._request.get_full_path()
+
+        if self.urls:
+            return any(url.startswith(request_path) for url in self.urls)
+        elif self.url:
+            return request_path.startswith(self.url)
         else:
             return False
+
+    @property
+    @memoized
+    def urls(self):
+        urls = []
+        if self.subtabs:
+            for st in self.subtabs:
+                urls.extend(st.urls)
+
+        try:
+            for name, section in self.sidebar_items:
+                urls.extend(item['url'] for item in section)
+        except Exception:
+            # tried to get urls for another tab on a page that doesn't provide
+            # the necessary couch_user, domain, project, etc. value
+            pass
+
+        return urls
 
     @property
     def css_id(self):
@@ -148,14 +171,6 @@ class ProjectReportsTab(UITab):
         return (self.domain and self.project and not self.project.is_snapshot and
                 (self.couch_user.can_view_reports() or
                  self.couch_user.get_viewable_reports()))
-
-    @property
-    def is_active(self):
-        # HACK. We need a more overarching way to avoid doing things this way
-        if 'reports/adm' in self._request.get_full_path():
-            return False
-
-        return super(ProjectReportsTab, self).is_active
 
     @property
     def sidebar_items(self):
@@ -195,14 +210,6 @@ class ADMReportsTab(UITab):
                   (self.couch_user.can_view_reports() or
                    self.couch_user.get_viewable_reports()))
 
-    @property
-    def is_active(self):
-        if not self.domain:
-            return False
-
-        project_reports_url = reverse(ReportsTab.view, args=[self.domain])
-        return (super(ADMReportsTab, self).is_active and self.domain and
-                self._request.get_full_path() != project_reports_url)
 
 class IndicatorAdminTab(UITab):
     title = ugettext_noop("Administer Indicators")
@@ -245,8 +252,7 @@ class ManageDataTab(UITab):
     @property
     @memoized
     def is_active(self):
-        # hack because subpages of excel importer don't follow the url <->
-        # navigation isomorphism
+        # hack because subpages of excel importer are at a different url
         return ('importer/excel' in self._request.get_full_path() or
                 super(ManageDataTab, self).is_active)
 
@@ -378,7 +384,7 @@ class MessagingTab(UITab):
                           'urlname': 'edit_complex'},
                          {'title': _("New Reminder Definition"),
                           'urlname': 'add_complex_reminder_schedule'},
-                    ]},
+                     ]},
 
                     {'title': _("Reminder Calendar"),
                      'url': reverse('scheduled_reminders', args=[self.domain])},
@@ -390,7 +396,7 @@ class MessagingTab(UITab):
                           'urlname': 'edit_keyword'},
                          {'title': _("New Keyword"),
                           'urlname': 'add_keyword'},
-                    ]},
+                     ]},
                     #{'title': _("User Registration"),
                      #'url': ...},
                     {'title': _("Reminders in Error"),
