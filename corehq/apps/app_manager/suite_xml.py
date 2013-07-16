@@ -163,12 +163,35 @@ class Header(AbstractTemplate):
     ROOT_NAME = 'header'
 
 
+class Sort(AbstractTemplate):
+    ROOT_NAME = 'sort'
+
+    type = StringField('@type')
+    order = StringField('@order')
+    direction = StringField('@direction')
+
+
 class Field(XmlObject):
     ROOT_NAME = 'field'
 
     sort = StringField('@sort')
     header = NodeField('header', Header)
     template = NodeField('template', Template)
+    sort_node = NodeField('sort', Sort)
+
+    def __init__(self, *args, **kwargs):
+        super(Field, self).__init__(*args)
+
+        header = kwargs.get('header')
+        template = kwargs.get('template')
+        sort_node = kwargs.get('sort_node')
+
+        if header:
+            self.header = header
+        if template:
+            self.template = template
+        if sort_node:
+            self.sort_node = sort_node
 
 
 class DetailVariable(XmlObject):
@@ -382,21 +405,44 @@ class SuiteGenerator(object):
             for module in self.modules:
                 for detail in module.get_details():
                     detail_columns = detail.get_columns()
+
                     if detail_columns and detail.type in ('case_short', 'case_long'):
                         d = Detail(
                             id=self.id_strings.detail(module, detail),
                             title=Text(locale_id=self.id_strings.detail_title_locale(module, detail))
                         )
-                        for column in detail_columns:
+
+                        if detail.type == 'case_short':
+                            detail_fields = [c.field for c in detail_columns]
+                            sort_fields = [e.field for e in module.detail_sort_elements]
+                            sort_only_fields = [field for field in sort_fields
+                                                if field not in detail_fields]
+
+                            from corehq.apps.app_manager.models import DetailColumn
+                            for sort_field in sort_only_fields:
+                                # set up a fake detailcolumn so we can
+                                # add this field but not actually
+                                # save it
+                                dc = DetailColumn(
+                                    model='case',
+                                    field=sort_field,
+                                    format='invisible',
+                                )
+                                detail.append_column(dc)
+
+                        for column in detail.get_columns():
                             fields = get_column_generator(self.app, module, detail, column).fields
                             d.fields.extend(fields)
+
                         try:
-                            d.fields[0].sort = 'default'
+                            if not self.app.enable_multi_sort:
+                                d.fields[0].sort = 'default'
                         except IndexError:
                             pass
                         else:
                             # only yield the Detail if it has Fields
                             r.append(d)
+
         return r
 
     def get_filter_xpath(self, module, delegation=False):
