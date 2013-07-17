@@ -3,7 +3,8 @@ from corehq.apps.commtrack.models import *
 from corehq.apps.commtrack.util import *
 from corehq.apps.locations.util import defined_location_types
 
-class SupplyPointTypeField(ReportMultiSelectField):
+
+class SupplyPointTypeFilter(ReportMultiSelectField):
     slug = 'outlet_type'
     name = 'Outlet Type'
     default_option = ['_all']
@@ -28,7 +29,8 @@ class SupplyPointTypeField(ReportMultiSelectField):
             choices.append(indent(t))
         return [{'val': e[0], 'text': e[1]} for e in choices]
 
-class ProductField(ReportMultiSelectField):
+
+class ProductFilter(ReportMultiSelectField):
     slug = 'product'
     name = 'Product'
     default_option = ['_all']
@@ -39,7 +41,8 @@ class ProductField(ReportMultiSelectField):
         choices.insert(0, {'text': 'All Products', 'val': '_all'})
         return choices
 
-class LocationTypeField(ReportSelectField):
+
+class LocationTypeFilter(ReportSelectField):
     slug = 'agg_type'
     name = 'Aggregate by'
     default_option = 'choose location type...'
