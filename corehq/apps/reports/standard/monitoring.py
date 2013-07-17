@@ -81,7 +81,7 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
     name = ugettext_noop('Case Activity')
     slug = 'case_activity'
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
-              'corehq.apps.reports.fields.CaseTypeField']
+              'corehq.apps.reports.filters.select.CaseTypeFilter']
     all_users = None
     display_data = ['percent']
     emailable = True

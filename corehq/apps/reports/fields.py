@@ -10,7 +10,7 @@ from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.orgs.models import Organization
 from corehq.apps.reports import util
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.filters.base import BaseReportFilter
+from corehq.apps.reports.filters.base import BaseReportFilter, BaseSingleOptionFilter
 from corehq.apps.reports.models import HQUserType
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
@@ -155,50 +155,7 @@ class StrongFilterUsersField(FilterUsersField):
     always_show_filter = True
     can_be_empty = True
 
-class CaseTypeField(ReportSelectField):
-    slug = "case_type"
-    name = ugettext_noop("Case Type")
-    cssId = "case_type_select"
 
-    def update_params(self):
-        case_types = self.get_case_types(self.domain)
-        case_type = self.request.GET.get(self.slug, '')
-
-        self.selected = case_type
-        self.options = [dict(val=case, text="%s" % case) for case in case_types]
-        self.default_option = _("All Case Types")
-
-    @classmethod
-    def get_case_types(cls, domain):
-        key = ['all type', domain]
-
-        for r in get_db().view('case/all_cases',
-                      startkey=key,
-                      endkey=key + [{}],
-                      group_level=3).all():
-            _, _, case_type = r['key']
-            if case_type:
-                yield case_type
-
-    @classmethod
-    def get_case_counts(cls, domain, case_type=None, user_ids=None):
-        """
-        Returns open count, all count
-        """
-        user_ids = user_ids or [{}]
-        for status in ('all', 'open'):
-            def individual_counts():
-                for user_id in user_ids:
-                    key = CommCareCase.get_all_cases_key(domain, case_type=case_type, owner_id=user_id, status=status)
-                    try:
-                        yield get_db().view('case/all_cases',
-                            startkey=key,
-                            endkey=key + [{}],
-                            reduce=True
-                        ).one()['value']
-                    except TypeError:
-                        yield 0
-            yield sum(individual_counts())
 
 
 class SelectOpenCloseField(ReportSelectField):
