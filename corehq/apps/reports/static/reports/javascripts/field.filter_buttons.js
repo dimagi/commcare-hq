@@ -1,4 +1,4 @@
-var linkButtonGroup = function (groupId) {
+var linkButtonGroup = function (groupId, can_be_empty) {
     // this is used to initialize the buttongroup filters
     // see the user filter for sample usage.
     var jqGroupId = "#" + groupId;
@@ -13,8 +13,9 @@ var linkButtonGroup = function (groupId) {
             $(this).removeClass('btn-success');
             $activeCheckbox.attr("checked", false);
         }
+        $activeCheckbox.trigger('change');
 
-        if(!$(jqGroupId).children().hasClass('btn-success')) {
+        if((!$(jqGroupId).children().hasClass('btn-success')) && !can_be_empty) {
             var $firstChild = $(jqGroupId).children().first();
             $firstChild.addClass('btn-success');
             $('#'+$firstChild.data("checkfilter")).attr("checked", true);

@@ -1,12 +1,14 @@
 import pytz
 from django.template.loader import render_to_string
 #from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
+from corehq.apps.reports.cache import CacheableRequestMixIn
 from dimagi.utils.decorators.memoized import memoized
 # For translations
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
-class BaseReportFilter(object):   # (CacheableRequestMixIn):
+
+class BaseReportFilter(CacheableRequestMixIn):   # (CacheableRequestMixIn):
     """
         For filtering the results of CommCare HQ Reports.
 
@@ -114,6 +116,30 @@ class BaseSingleOptionFilter(BaseReportFilter):
         if value in valid_options:
             return value
         return None
+
+
+class BaseMutipleOptionFilter(BaseSingleOptionFilter):
+    """
+        Displays a multiselect field.
+    """
+    template = "reports/filters/multi_option.html"
+    default_options = [] # specify a list
+
+    @classmethod
+    def get_value(cls, request, domain):
+        return request.GET.getlist(cls.slug)
+
+    @property
+    @memoized
+    def selected(self):
+        return self.get_value(self.request, self.domain) or self.default_options
+
+
+class BaseMultipleOptionTypeaheadFilter(BaseMutipleOptionFilter):
+    """
+        Displays a select2 field
+    """
+    template = "reports/filters/select2_option.html"
 
 
 class BaseSingleOptionTypeaheadFilter(BaseSingleOptionFilter):

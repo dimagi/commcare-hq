@@ -402,7 +402,7 @@ class GenericReportView(CacheableRequestMixIn):
         current_config_id = self.request.GET.get('config_id', '')
         default_config = ReportConfig.default()
 
-        has_datespan = ('corehq.apps.reports.fields.DatespanField' in self.fields)
+        has_datespan = ('corehq.apps.reports.filters.dates.DatespanFilter' in self.fields)
 
         self.context.update(
             report=dict(
@@ -996,6 +996,6 @@ class ElasticProjectInspectionReport(ProjectInspectionReportParamsMixin, Elastic
         so as to get sorting working correctly with the context of the GET params
         """
         ret = super(ElasticTabularReport, self).shared_pagination_GET_params
-        for k, v in self.request.GET.items():
+        for k, v in self.request.GET.iterlists():
             ret.append(dict(name=k, value=v))
         return ret
