@@ -1,27 +1,28 @@
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
+from corehq.apps.reports.filters.fixtures import AsyncDrillableFilter
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.basic import Column, FunctionView, SummingTabularReport
-from corehq.apps.reports.fields import AsyncDrillableField, ReportSelectField
+from corehq.apps.reports.fields import ReportSelectField
 from util import get_unique_combinations
 from couchdbkit_aggregate.fn import mean
 from dimagi.utils.decorators.memoized import memoized
 
 DEMO_TYPES = ["asha", "aww", "anm", "ngo", "cbo", "vhnd"]
 
-class StateDistrictField(AsyncDrillableField):
+class StateDistrictField(AsyncDrillableFilter):
     label = "State and District"
     slug = "location"
     hierarchy = [{"type": "state", "display": "name"},
                  {"type": "district", "parent_ref": "state_id", "references": "id", "display": "name"},]
 
-class StateDistrictBlockField(AsyncDrillableField):
+class StateDistrictBlockField(AsyncDrillableFilter):
     label = "State/District/Block"
     slug = "location"
     hierarchy = [{"type": "state", "display": "name"},
                  {"type": "district", "parent_ref": "state_id", "references": "id", "display": "name"},
                  {"type": "block", "parent_ref": "district_id", "references": "id", "display": "name"}]
 
-class AsyncPlaceField(AsyncDrillableField):
+class AsyncPlaceField(AsyncDrillableFilter):
     label = "State/District/Block/Village"
     slug = "location"
     hierarchy = [{"type": "state", "display": "name"},
