@@ -8,7 +8,6 @@ from django.http import HttpResponseRedirect
 from django.contrib import messages
 from casexml.apps.case.models import CommCareCase
 from couchdbkit.exceptions import ResourceNotFound
-#from fields import FilterUsersField
 #from util import get_all_users_by_domain
 
 @require_case_view_permission
