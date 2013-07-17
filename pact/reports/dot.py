@@ -51,7 +51,7 @@ class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportPara
 
     report_template_path = "pact/dots/dots_report.html"
     flush_layout = True
-    fields = ['pact.reports.dot.PactDOTPatientField', 'corehq.apps.reports.fields.DatespanField']
+    fields = ['pact.reports.dot.PactDOTPatientField', 'corehq.apps.reports.filters.dates.DatespanFilter']
 
     @property
     def report_context(self):

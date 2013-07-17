@@ -24,7 +24,7 @@ class PactCHWProfileReport(PactDrilldownReportMixin, PactElasticTabularReportMix
 
     hide_filters = True
     filters = []
-    #    fields = ['corehq.apps.reports.fields.FilterUsersField', 'corehq.apps.reports.fields.DatespanField',]
+    #    fields = ['corehq.apps.reports.fields.FilterUsersField', 'corehq.apps.reports.filters.dates.DatespanFilter',]
     #    hide_filters=False
 
 
@@ -72,7 +72,7 @@ class PactCHWProfileReport(PactDrilldownReportMixin, PactElasticTabularReportMix
     def get_fields(self):
         if self.view_mode == 'submissions':
             yield 'corehq.apps.reports.fields.FilterUsersField'
-            yield 'corehq.apps.reports.fields.DatespanField'
+            yield 'corehq.apps.reports.filters.dates.DatespanFilter'
 
 
     @memoized
