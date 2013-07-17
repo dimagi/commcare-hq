@@ -60,45 +60,6 @@ class ReportField(CacheableRequestMixIn):
         """
         pass
 
-class ReportSelectField(ReportField):
-    slug = "generic_select"
-    name = ugettext_noop("Generic Select")
-    template = "reports/fields/select_generic.html"
-    default_option = ugettext_noop("Select Something...")
-    options = [dict(val="val", text="text")]
-    cssId = "generic_select_box"
-    cssClasses = "span4"
-    selected = None
-    hide_field = False
-    as_combo = False
-    placeholder = ''
-    help_text = ''
-
-    def __init__(self, *args, **kwargs):
-        super(ReportSelectField, self).__init__(*args, **kwargs)
-        # need to randomize cssId so knockout bindings won't clobber each other
-        # when multiple select controls on screen at once
-        nonce = uuid.uuid4().hex[-12:]
-        self.cssId = '%s-%s' % (self.cssId, nonce)
-
-    def update_params(self):
-        self.selected = self.request.GET.get(self.slug)
-
-    def update_context(self):
-        self.update_params()
-        self.context['hide_field'] = self.hide_field
-        self.context['help_text'] = self.help_text
-        self.context['select'] = dict(
-            options=self.options,
-            default=self.default_option,
-            cssId=self.cssId,
-            cssClasses=self.cssClasses,
-            label=self.name,
-            selected=self.selected,
-            use_combo_box=self.as_combo,
-            placeholder=self.placeholder,
-        )
-
 
 class BooleanField(ReportField):
     slug = "checkbox"
