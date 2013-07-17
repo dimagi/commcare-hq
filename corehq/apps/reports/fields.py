@@ -283,18 +283,6 @@ class SelectApplicationField(ReportSelectField):
         self.selected = self.request.GET.get(self.slug,'')
         self.options = available_apps
 
-class SelectOrganizationField(ReportSelectField):
-    slug = "org"
-    name = ugettext_noop("Organization")
-    cssId = "organization_select"
-    cssClasses = "span6"
-    default_option = ugettext_noop("All Organizations")
-
-    def update_params(self):
-        available_orgs = [{'val': o.name, 'text': o.title} for o in  Organization.get_all()]
-        self.selected = self.request.GET.get(self.slug,'')
-        self.options = available_orgs
-
 
 class SelectMobileWorkerMixin(object):
     slug = "select_mw"
