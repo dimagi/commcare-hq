@@ -7,7 +7,7 @@ from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.orgs.models import Organization
 from corehq.apps.reports import util
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.filters.base import BaseReportFilter
+from corehq.apps.reports.filters.base import BaseReportFilter, BaseSingleOptionFilter
 from corehq.apps.reports.models import HQUserType
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
@@ -119,50 +119,6 @@ class FilterUsersField(ReportField):
             show_filter = False
         return toggle, show_filter
 
-class CaseTypeField(ReportSelectField):
-    slug = "case_type"
-    name = ugettext_noop("Case Type")
-    cssId = "case_type_select"
-
-    def update_params(self):
-        case_types = self.get_case_types(self.domain)
-        case_type = self.request.GET.get(self.slug, '')
-
-        self.selected = case_type
-        self.options = [dict(val=case, text="%s" % case) for case in case_types]
-        self.default_option = _("All Case Types")
-
-    @classmethod
-    def get_case_types(cls, domain):
-        key = [domain]
-        for r in get_db().view('hqcase/all_cases',
-            startkey=key,
-            endkey=key + [{}],
-            group_level=2
-        ).all():
-            _, case_type = r['key']
-            if case_type:
-                yield case_type
-
-    @classmethod
-    def get_case_counts(cls, domain, case_type=None, user_ids=None):
-        """
-        Returns open count, all count
-        """
-        user_ids = user_ids or [{}]
-        for view_name in ('hqcase/open_cases', 'hqcase/all_cases'):
-            def individual_counts():
-                for user_id in user_ids:
-                    key = [domain, case_type or {}, user_id]
-                    try:
-                        yield get_db().view(view_name,
-                            startkey=key,
-                            endkey=key + [{}],
-                            group_level=0
-                        ).one()['value']
-                    except TypeError:
-                        yield 0
-            yield sum(individual_counts())
 
 class SelectFormField(ReportSelectField):
     slug = "form"

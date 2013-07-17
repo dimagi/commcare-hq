@@ -2,6 +2,7 @@ import datetime
 import calendar
 from django.conf import settings
 from django.utils.translation import ugettext_noop
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.groups.models import Group
 from corehq.apps.orgs.models import Organization
@@ -87,3 +88,48 @@ class MonthFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return [("%02d" % m, calendar.month_name[m]) for m in range(1, 13)]
+
+
+class CaseTypeFilter(BaseSingleOptionFilter):
+    slug = "case_type"
+    label = ugettext_noop("Case Type")
+    default_text = ugettext_noop("All Case Types")
+
+    @property
+    def options(self):
+        case_types = self.get_case_types(self.domain)
+        return [(case, "%s" % case) for case in case_types]
+
+    @classmethod
+    def get_case_types(cls, domain):
+        key = [domain]
+        for r in CommCareCase.get_db().view(
+                'hqcase/all_cases',
+                startkey=key,
+                endkey=key + [{}],
+                group_level=2
+            ).all():
+            _, case_type = r['key']
+            if case_type:
+                yield case_type
+
+    @classmethod
+    def get_case_counts(cls, domain, case_type=None, user_ids=None):
+        """
+        Returns open count, all count
+        """
+        user_ids = user_ids or [{}]
+        for view_name in ('hqcase/open_cases', 'hqcase/all_cases'):
+            def individual_counts():
+                for user_id in user_ids:
+                    key = [domain, case_type or {}, user_id]
+                    try:
+                        yield CommCareCase.get_db().view(
+                            view_name,
+                            startkey=key,
+                            endkey=key + [{}],
+                            group_level=0
+                        ).one()['value']
+                    except TypeError:
+                        yield 0
+            yield sum(individual_counts())

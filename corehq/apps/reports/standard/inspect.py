@@ -291,7 +291,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     fields = [
         'corehq.apps.reports.fields.FilterUsersField',
         'corehq.apps.reports.fields.SelectCaseOwnerField',
-        'corehq.apps.reports.fields.CaseTypeField',
+        'corehq.apps.reports.filters.select.CaseTypeFilter',
         'corehq.apps.reports.fields.SelectOpenCloseField',
         'corehq.apps.reports.standard.inspect.CaseSearchFilter',
     ]
