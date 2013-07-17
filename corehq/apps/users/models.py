@@ -610,13 +610,11 @@ class EulaMixin(DocumentSchema):
 
     @classmethod
     def migrate_eula(cls, data):
-        should_save = False
         if 'eula' in data:
             data['eulas'] = [data['eula']]
             data['eulas'][0]['version'] = '1.0'
             del data['eula']
-            should_save = True
-        return data, should_save
+        return data
 
     def is_eula_signed(self, version=CURRENT_VERSION):
         if self.is_superuser:
@@ -668,8 +666,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             del data["organizations"]
             should_save = True
 
-        data, should_save_for_eula = cls.migrate_eula(data)
-        should_save = should_save or should_save_for_eula
+        data = cls.migrate_eula(data)
 
         couch_user = super(CouchUser, cls).wrap(data)
         if should_save:
