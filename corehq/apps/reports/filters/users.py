@@ -176,7 +176,7 @@ class SelectMobileWorkerFilter(BaseSingleOptionTypeaheadFilter):
 
 class SelectCaseOwnerFilter(SelectMobileWorkerFilter):
     label = ugettext_noop("Select Case Owner")
-    default_option = ugettext_noop("All Case Owners")
+    default_text = ugettext_noop("All Case Owners")
 
     @property
     def options(self):
