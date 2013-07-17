@@ -111,13 +111,6 @@ class ReportMultiSelectField(ReportSelectField):
     def update_params(self):
         self.selected = self.request.GET.getlist(self.slug) or self.default_option
 
-class MonthField(ReportField):
-    slug = "month"
-    template = "reports/partials/month-select.html"
-
-    def update_context(self):
-        self.context['month'] = self.request.GET.get('month', datetime.datetime.utcnow().month)
-
 
 class BooleanField(ReportField):
     slug = "checkbox"
