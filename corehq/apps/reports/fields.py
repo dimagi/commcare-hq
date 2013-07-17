@@ -120,15 +120,6 @@ class FilterUsersField(ReportField):
         return toggle, show_filter
 
 
-class SelectOpenCloseField(ReportSelectField):
-    slug = "is_open"
-    name = ugettext_noop("Opened / Closed")
-    cssId = "opened_closed"
-    cssClasses = "span3"
-    default_option = "Show All"
-    options = [dict(val="open", text=ugettext_noop("Only Open")),
-               dict(val="closed", text=ugettext_noop("Only Closed"))]
-
 class SelectApplicationField(ReportSelectField):
     slug = "app"
     name = ugettext_noop("Application")

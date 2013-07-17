@@ -2,6 +2,7 @@ import datetime
 import calendar
 from django.conf import settings
 from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext as _
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.groups.models import Group
@@ -133,3 +134,16 @@ class CaseTypeFilter(BaseSingleOptionFilter):
                     except TypeError:
                         yield 0
             yield sum(individual_counts())
+
+
+class SelectOpenCloseFilter(BaseSingleOptionFilter):
+    slug = "is_open"
+    label = ugettext_noop("Opened / Closed")
+    default_text = ugettext_noop("Show All")
+
+    @property
+    def options(self):
+        return [
+            ('open', _("Only Open")),
+            ('closed', _("Only Closed")),
+        ]

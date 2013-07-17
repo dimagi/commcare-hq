@@ -18,10 +18,11 @@ from casexml.apps.case.models import CommCareCaseAction
 from corehq.apps.api.es import CaseES
 from corehq.apps.hqsofabed.models import HQFormData
 from corehq.apps.reports.filters.search import SearchFilter
+from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.display import xmlns_to_name
-from corehq.apps.reports.fields import SelectOpenCloseField, SelectMobileWorkerField
+from corehq.apps.reports.fields import SelectMobileWorkerField
 from corehq.apps.reports.generic import GenericTabularReport, ProjectInspectionReportParamsMixin, ElasticProjectInspectionReport
 from corehq.apps.users.models import CommCareUser, CouchUser
 from dimagi.utils.couch.database import get_db
@@ -292,7 +293,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         'corehq.apps.reports.fields.FilterUsersField',
         'corehq.apps.reports.fields.SelectCaseOwnerField',
         'corehq.apps.reports.filters.select.CaseTypeFilter',
-        'corehq.apps.reports.fields.SelectOpenCloseField',
+        'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
         'corehq.apps.reports.standard.inspect.CaseSearchFilter',
     ]
 
@@ -408,8 +409,8 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     def shared_pagination_GET_params(self):
         shared_params = super(CaseListMixin, self).shared_pagination_GET_params
         shared_params.append(dict(
-            name=SelectOpenCloseField.slug,
-            value=self.request.GET.get(SelectOpenCloseField.slug, '')
+            name=SelectOpenCloseFilter.slug,
+            value=self.request.GET.get(SelectOpenCloseFilter.slug, '')
         ))
         return shared_params
 

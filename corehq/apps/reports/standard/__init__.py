@@ -147,8 +147,8 @@ class ProjectReportParametersMixin(object):
 
     @property
     def case_status(self):
-        from corehq.apps.reports.fields import SelectOpenCloseField
-        return self.request_params.get(SelectOpenCloseField.slug, '')
+        from corehq.apps.reports.filters.select import SelectOpenCloseFilter
+        return self.request_params.get(SelectOpenCloseFilter.slug, '')
 
 class CouchCachedReportMixin(object):
     """
