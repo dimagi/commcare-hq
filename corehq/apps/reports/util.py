@@ -64,7 +64,7 @@ def all_xmlns_in_domain(domain):
 
 def user_list(domain):
     #todo cleanup
-    #referenced in fields -> SelectMobileWorkerField
+    #referenced in filters.users.SelectMobileWorkerFilter
     users = list(CommCareUser.by_domain(domain))
     users.extend(CommCareUser.by_domain(domain, is_active=False))
     users.sort(key=lambda user: (not user.is_active, user.username))

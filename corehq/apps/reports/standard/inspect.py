@@ -19,10 +19,10 @@ from corehq.apps.api.es import CaseES
 from corehq.apps.hqsofabed.models import HQFormData
 from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
+from corehq.apps.reports.filters.users import SelectMobileWorkerFilter
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.display import xmlns_to_name
-from corehq.apps.reports.fields import SelectMobileWorkerField
 from corehq.apps.reports.generic import GenericTabularReport, ProjectInspectionReportParamsMixin, ElasticProjectInspectionReport
 from corehq.apps.users.models import CommCareUser, CouchUser
 from dimagi.utils.couch.database import get_db
@@ -41,7 +41,7 @@ class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabular
     asynchronous = False
     ajax_pagination = True
     fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
-              'corehq.apps.reports.fields.SelectMobileWorkerField']
+              'corehq.apps.reports.filters.users.SelectMobileWorkerFilter']
 
 
 class SubmitHistory(ProjectInspectionReport):
@@ -429,7 +429,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
         if not self.individual:
             self.name = _("%(report_name)s for %(worker_type)s") % {
                 "report_name": _(self.name),
-                "worker_type": _(SelectMobileWorkerField.get_default_text(self.user_filter))
+                "worker_type": _(SelectMobileWorkerFilter.get_default_text(self.user_filter))
             }
         return self.name
 

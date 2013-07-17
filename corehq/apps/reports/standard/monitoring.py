@@ -519,7 +519,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
                                 "sent to CommCare HQ.")
     
     fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
-              'corehq.apps.reports.fields.SelectMobileWorkerField',
+              'corehq.apps.reports.filters.users.SelectMobileWorkerFilter',
               'corehq.apps.reports.filters.select.GroupFilter',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
               'corehq.apps.reports.filters.dates.DatespanFilter']
@@ -629,7 +629,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
 
 class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
     fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
-              'corehq.apps.reports.fields.SelectMobileWorkerField']
+              'corehq.apps.reports.filters.users.SelectMobileWorkerFilter']
     flush_layout = True
     report_template_path = "reports/async/basic.html"
 

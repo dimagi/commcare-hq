@@ -2,7 +2,7 @@ from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from corehq.apps.reports import util
 
-from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseReportFilter, BaseSingleOptionFilter
+from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseReportFilter, BaseSingleOptionFilter, BaseSingleOptionTypeaheadFilter
 from corehq.apps.groups.hierarchy import (get_hierarchy,
         get_user_data_from_hierarchy)
 from corehq.apps.reports.models import HQUserType
@@ -141,3 +141,34 @@ class UserTypeFilter(BaseReportFilter):
         elif group or individual:
             show_filter = False
         return toggle, show_filter
+
+
+class SelectMobileWorkerFilter(BaseSingleOptionTypeaheadFilter):
+    slug = 'individual'
+    label = ugettext_noop("Select Mobile Worker")
+    default_text = ugettext_noop("All Mobile Workers")
+
+    @property
+    def filter_context(self):
+        user_filter, _ = UserTypeFilter.get_user_filter(self.request)
+        context = super(SelectMobileWorkerFilter, self).filter_context
+        context['select'].update({
+            'default_text': self.get_default_text(user_filter),
+        })
+        return context
+
+    @property
+    def options(self):
+        users = util.user_list(self.domain)
+        return [(user.user_id,
+                 "%s%s" % (user.username_in_report, "" if user.is_active else " (Inactive)"))
+                for user in users]
+
+    @classmethod
+    def get_default_text(cls, user_filter):
+        default = cls.default_text
+        if user_filter[HQUserType.ADMIN].show or \
+           user_filter[HQUserType.DEMO_USER].show or user_filter[HQUserType.UNKNOWN].show:
+            default = _('%s & Others') % _(default)
+        return default
+
