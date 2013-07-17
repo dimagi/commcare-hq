@@ -1,8 +1,8 @@
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
+from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.reports.filters.fixtures import AsyncDrillableFilter
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.basic import Column, FunctionView, SummingTabularReport
-from corehq.apps.reports.fields import ReportSelectField
 from util import get_unique_combinations
 from couchdbkit_aggregate.fn import mean
 from dimagi.utils.decorators.memoized import memoized
@@ -31,43 +31,47 @@ class AsyncPlaceField(AsyncDrillableFilter):
                  {"type": "village", "parent_ref": "block_id", "references": "id", "display": "name"}]
 
 
-class DemoTypeField(ReportSelectField):
+class DemoTypeField(BaseSingleOptionFilter):
     slug = "demo_type"
-    name = "Worker Type"
-    cssId = "demo_type_select"
-    cssClasses = "span6"
-    default_option = "Aggregate"
+    label = "Worker Type"
+    default_text = "Aggregate"
 
-    def update_params(self):
-        self.selected = self.request.GET.get(self.slug, '')
-        self.options = [{'val': '_all', 'text': 'All worker types'}] + [{'val': dt, 'text': dt} for dt in DEMO_TYPES]
+    @property
+    def options(self):
+        return [('_all', 'All worker types')] + [(dt, dt) for dt in DEMO_TYPES]
 
-class AggregateAtField(ReportSelectField):
+
+class AggregateAtField(BaseSingleOptionFilter):
     """
         To Use: SUbclass and specify what the field options should be
     """
     slug = "aggregate_at"
-    name = "Aggregate at what level"
-    cssId = "aggregate_at_select"
-    cssClasses = "span6"
-    # default_option = "All Worker Types"
+    label = "Aggregate at what level"
 
     @property
     def default_option(self):
         return "Default: %s" % self.field_opts[-1]
 
-    def update_params(self):
-        self.selected = self.request.GET.get(self.slug, '')
-        self.options = [{'val': f.lower(), 'text': f} for f in [fo for fo in self.field_opts if fo != self.selected]]
+    @property
+    def field_opts(self):
+        raise NotImplementedError('Subclass me fully!')
+
+    @property
+    def options(self):
+        return [(f.lower(), f) for f in [fo for fo in self.field_opts if fo != self.selected]]
+
 
 class AASD(AggregateAtField):
     field_opts = ["State", "District"]
 
+
 class AASDB(AggregateAtField):
     field_opts = ["State", "District", "Block"]
 
+
 class AASDBV(AggregateAtField):
     field_opts = ["State", "District", "Block", "Village"]
+
 
 @memoized
 def get_village_fdt(domain):
