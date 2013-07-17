@@ -224,15 +224,17 @@ class CaseDisplay(object):
     @property
     @memoized
     def owner_doc(self):
-        try:
-            doc = get_db().get(self.owner_id)
-        except ResourceNotFound:
-            return None, None
-        else:
-            return {
-                'CommCareUser': CommCareUser,
-                'Group': Group,
-            }.get(doc['doc_type']), doc
+        if self.owner_id:
+            try:
+                doc = get_db().get(self.owner_id)
+            except ResourceNotFound:
+                pass
+            else:
+                return {
+                    'CommCareUser': CommCareUser,
+                    'Group': Group,
+                }.get(doc['doc_type']), doc
+        return None, None
 
     @property
     def owner_type(self):
