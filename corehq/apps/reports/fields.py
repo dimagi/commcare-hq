@@ -156,27 +156,6 @@ class StrongFilterUsersField(FilterUsersField):
     can_be_empty = True
 
 
-class SelectApplicationField(ReportSelectField):
-    slug = "app"
-    name = ugettext_noop("Application")
-    cssId = "application_select"
-    cssClasses = "span6"
-    default_option = ugettext_noop("Select Application [Latest Build Version]")
-
-    def update_params(self):
-        apps_for_domain = get_db().view("app_manager/applications_brief",
-            startkey=[self.domain],
-            endkey=[self.domain, {}],
-            include_docs=True).all()
-        available_apps = [dict(val=app['value']['_id'],
-                                text=_("%(name)s [up to build %(version)s]") % {
-                                    'name': app['value']['name'],
-                                    'version': app['value']['version']})
-                          for app in apps_for_domain]
-        self.selected = self.request.GET.get(self.slug,'')
-        self.options = available_apps
-
-
 class SelectMobileWorkerMixin(object):
     slug = "select_mw"
     name = ugettext_noop("Select Mobile Worker")
