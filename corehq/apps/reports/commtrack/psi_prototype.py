@@ -286,7 +286,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     slug = 'visits'
     fields = ['corehq.apps.reports.fields.DatespanField',
               'corehq.apps.reports.commtrack.filters.SupplyPointTypeFilter',
-              'corehq.apps.reports.fields.AsyncLocationField']
+              'corehq.apps.reports.filters.fixtures.AsyncLocationFilter']
     exportable = True
     emailable = True
     is_cacheable = True
@@ -377,7 +377,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
     fields = ['corehq.apps.reports.fields.DatespanField',
               'corehq.apps.reports.commtrack.filters.SupplyPointTypeFilter',
               'corehq.apps.reports.commtrack.filters.ProductFilter',
-              'corehq.apps.reports.fields.AsyncLocationField']
+              'corehq.apps.reports.filters.fixtures.AsyncLocationFilter']
     exportable = True
     emailable = True
     is_cacheable = True
@@ -481,7 +481,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
     fields = ['corehq.apps.reports.fields.DatespanField',
               'corehq.apps.reports.commtrack.filters.SupplyPointTypeFilter',
               'corehq.apps.reports.commtrack.filters.ProductFilter',
-              'corehq.apps.reports.fields.AsyncLocationField',
+              'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
               'corehq.apps.reports.commtrack.filter.LocationTypeFilter']
     exportable = True
     emailable = True
@@ -599,7 +599,7 @@ class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     slug = 'stockouts'
     fields = ['corehq.apps.reports.commtrack.filters.SupplyPointTypeFilter',
               'corehq.apps.reports.commtrack.filters.ProductFilter',
-              'corehq.apps.reports.fields.AsyncLocationField']
+              'corehq.apps.reports.filters.fixtures.AsyncLocationFilter']
     exportable = True
     emailable = True
     is_cacheable = True

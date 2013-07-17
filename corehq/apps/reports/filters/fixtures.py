@@ -1,6 +1,8 @@
 import json
 from django.core.urlresolvers import reverse
+from django.utils.translation import ugettext_noop
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
+from corehq.apps.locations.util import load_locs_json, location_hierarchy_config
 from corehq.apps.reports.filters.base import BaseReportFilter
 
 
@@ -87,4 +89,27 @@ class AsyncDrillableFilter(BaseReportFilter):
             'selected_fdi_id': selected_fdi_id,
             'fdis': json.dumps(root_fdis),
             'hierarchy': self.full_hierarchy
+        }
+
+
+class AsyncLocationFilter(BaseReportFilter):
+    # todo: cleanup template
+    label = ugettext_noop("Location")
+    slug = "location_async"
+    template = "reports/filters/location_async.html"
+
+    @property
+    def filter_context(self):
+        api_root = reverse('api_dispatch_list', kwargs={'domain': self.domain,
+                                                        'resource_name': 'location',
+                                                        'api_name': 'v0.3'})
+        selected_loc_id = self.request.GET.get('location_id')
+
+        return {
+            'api_root': api_root,
+            'control_name': self.label, # todo: cleanup, don't follow this structure
+            'control_slug': self.slug, # todo: cleanup, don't follow this structure
+            'loc_id': selected_loc_id,
+            'locations': json.dumps(load_locs_json(self.domain, selected_loc_id)),
+            'hierarchy': location_hierarchy_config(self.domain),
         }

@@ -1,6 +1,7 @@
 {% load hq_shared_tags %}
 
-<label class="control-label">{{ control_name }}</label>
+{# todo: fix template to properly inherit from filters/base.html #}
+<label class="control-label">{{ control_name }}</label> {# this is wrong, see filters/single_option.html for a proper implementation #}
 <div class="controls">
   <div data-bind="foreach: selected_path" style="display: inline-block;">
     <select data-bind="options: children, optionsText: 'display_name', value: selected_child"></select>

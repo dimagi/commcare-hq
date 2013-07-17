@@ -412,29 +412,6 @@ class DatespanField(ReportField):
         self.context['timezone'] = self.timezone.zone
         self.context['datespan'] = self.datespan
 
-class AsyncLocationField(ReportField):
-    name = ugettext_noop("Location")
-    slug = "location_async"
-    template = "reports/fields/location_async.html"
-
-    def update_context(self):
-        self.context.update(self._get_custom_context())
-
-    def _get_custom_context(self):
-        api_root = reverse('api_dispatch_list', kwargs={'domain': self.domain,
-                                                        'resource_name': 'location', 
-                                                        'api_name': 'v0.3'})
-        selected_loc_id = self.request.GET.get('location_id')
-
-        return {
-            'api_root': api_root,
-            'control_name': self.name,
-            'control_slug': self.slug,
-            'loc_id': selected_loc_id,
-            'locations': json.dumps(load_locs_json(self.domain, selected_loc_id)),
-            'hierarchy': location_hierarchy_config(self.domain),
-        }
-
 
         
 class DeviceLogTagField(ReportField):
