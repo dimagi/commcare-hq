@@ -33,7 +33,7 @@ class ExportReport(ProjectReport, ProjectReportParametersMixin):
 
 class FormExportReportBase(ExportReport, DatespanMixin):
     fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.GroupField',
+              'corehq.apps.reports.filters.select.GroupFilter',
               'corehq.apps.reports.filters.dates.DatespanFilter']
 
     def get_saved_exports(self):
@@ -210,7 +210,7 @@ class CaseExportReport(ExportReport):
     name = "Export Cases, Referrals, & Users"
     slug = "case_export"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.GroupField']
+              'corehq.apps.reports.filters.select.GroupFilter']
     report_template_path = "reports/reportdata/case_export_data.html"
     icon = "icon-share"
 

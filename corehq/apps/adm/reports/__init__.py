@@ -58,7 +58,7 @@ class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectR
     fix_left_col = True
 
     fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.GroupField',
+              'corehq.apps.reports.filters.select.GroupFilter',
               'corehq.apps.reports.filters.dates.DatespanFilter']
 
     hide_filters = False

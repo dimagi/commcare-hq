@@ -20,7 +20,7 @@ import pytz
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
     name = ugettext_noop('SMS Usage')
     slug = 'messages'
-    fields = ['corehq.apps.reports.fields.GroupField',
+    fields = ['corehq.apps.reports.filters.select.GroupFilter',
               'corehq.apps.reports.filters.dates.DatespanFilter']
 
     special_notice = ugettext_noop(

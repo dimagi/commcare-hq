@@ -1,5 +1,6 @@
 from django.utils.translation import ugettext_noop
 from corehq.apps.domain.models import Domain, LICENSES
+from corehq.apps.groups.models import Group
 from corehq.apps.orgs.models import Organization
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 
@@ -50,3 +51,14 @@ class SelectOrganizationFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return [(o.name, o.title) for o in  Organization.get_all()]
+
+
+class GroupFilter(BaseSingleOptionFilter):
+    slug = "group"
+    label = ugettext_noop("Group")
+    default_text = ugettext_noop("Everybody")
+
+    @property
+    def options(self):
+        return [(group.get_id, group.name) for group in Group.get_reporting_groups(self.domain)]
+

@@ -117,33 +117,6 @@ class YearField(ReportField):
         self.context['years'] = range(year, datetime.datetime.utcnow().year + 1)
         self.context['year'] = int(self.request.GET.get('year', datetime.datetime.utcnow().year))
 
-class GroupField(ReportSelectField):
-    slug = "group"
-    name = ugettext_noop("Group")
-    default_option = ugettext_noop("Everybody")
-    cssId = "group_select"
-
-    def update_params(self):
-        super(GroupField, self).update_params()
-        self.groups = Group.get_reporting_groups(self.domain)
-        self.options = [dict(val=group.get_id, text=group.name) for group in self.groups]
-
-class SelectReportingGroupField(GroupField):
-    name = ugettext_noop("Reporting Group")
-    default_option = ugettext_noop("All Groups")
-    cssClasses = "span6"
-
-    def update_params(self):
-        super(SelectReportingGroupField, self).update_params()
-        individual = self.request.GET.get('individual', '')
-        if individual:
-            try:
-                group = Group.get(individual)
-            except Exception:
-                group = None
-            if group:
-                self.hide_field = True
-        self.options = [dict(val=group.get_id, text=group.name) for group in self.groups if not group.case_sharing]
 
 class FilterUsersField(ReportField):
     slug = "ufilter"
