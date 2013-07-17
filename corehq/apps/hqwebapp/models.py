@@ -359,50 +359,46 @@ class MessagingTab(UITab):
 
     @property
     def sidebar_items(self):
-        items = [(_("Messages"), [
-            {'title': _('Message History'),
-             'url': reverse('messaging', args=[self.domain])},
-            {'title': _('Compose SMS Message'),
-             'url': reverse('sms_compose_message', args=[self.domain])}
-        ])]
+        def reminder_subtitle(form=None, **context):
+            return form['nickname'].value
 
-        if self.project.commconnect_only or self.project.commtrack_enabled:
-            def reminder_subtitle(form=None, **context):
-                return form['nickname'].value
+        def keyword_subtitle(keyword=None, **context):
+            return keyword.keyword
 
-            def keyword_subtitle(keyword=None, **context):
-                return keyword.keyword
+        items = [
+            (_("Messages"), [
+                {'title': _('Message History'),
+                 'url': reverse('messaging', args=[self.domain])},
+                {'title': _('Compose SMS Message'),
+                 'url': reverse('sms_compose_message', args=[self.domain])}
+            ]),
+            (_("Reminders"), [
+                {'title': _("Reminders"),
+                 'url': reverse('list_reminders', args=[self.domain]),
+                 'children': [
+                     {'title': reminder_subtitle,
+                      'urlname': 'edit_complex'},
+                     {'title': _("New Reminder Definition"),
+                      'urlname': 'add_complex_reminder_schedule'},
+                 ]},
 
-            items.extend([
-                #(_("Data Collection"), [
-                #]),
-                (_("Reminders"), [
-                    {'title': _("Reminders"),
-                     'url': reverse('list_reminders', args=[self.domain]),
-                     'children': [
-                         {'title': reminder_subtitle,
-                          'urlname': 'edit_complex'},
-                         {'title': _("New Reminder Definition"),
-                          'urlname': 'add_complex_reminder_schedule'},
-                     ]},
+                {'title': _("Reminder Calendar"),
+                 'url': reverse('scheduled_reminders', args=[self.domain])},
 
-                    {'title': _("Reminder Calendar"),
-                     'url': reverse('scheduled_reminders', args=[self.domain])},
-
-                    {'title': _("Keywords"),
-                     'url': reverse('manage_keywords', args=[self.domain]),
-                     'children': [
-                         {'title': keyword_subtitle,
-                          'urlname': 'edit_keyword'},
-                         {'title': _("New Keyword"),
-                          'urlname': 'add_keyword'},
-                     ]},
-                    #{'title': _("User Registration"),
-                     #'url': ...},
-                    {'title': _("Reminders in Error"),
-                     'url': reverse('reminders_in_error', args=[self.domain])},
-                ]),
+                {'title': _("Keywords"),
+                 'url': reverse('manage_keywords', args=[self.domain]),
+                 'children': [
+                     {'title': keyword_subtitle,
+                      'urlname': 'edit_keyword'},
+                     {'title': _("New Keyword"),
+                      'urlname': 'add_keyword'},
+                 ]},
+                #{'title': _("User Registration"),
+                 #'url': ...},
+                {'title': _("Reminders in Error"),
+                 'url': reverse('reminders_in_error', args=[self.domain])},
             ])
+        ]
 
         if self.project.survey_management_enabled:
             def sample_title(form=None, **context):
@@ -432,10 +428,6 @@ class MessagingTab(UITab):
                 ])
             )
 
-        #items.append(
-            #(_("Configuration"), [
-            #])
-        #)
         return items
 
     @property
