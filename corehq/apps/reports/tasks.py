@@ -34,7 +34,7 @@ def check_es_index():
         do_notify=True
         message.append("Cluster health is red - something is up with the ES machine")
 
-    for prefix in ['hqcases', 'xforms','cc_exchange']:
+    for prefix in ['hqcases', 'xforms']:
         if es_status.get('%s_status' % prefix, False) == False:
             do_notify=True
             message.append("Elasticsearch %s Index Issue: %s" % (prefix, es_status['%s_message' % prefix]))
