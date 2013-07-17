@@ -322,20 +322,6 @@ class SelectLicenseField(ReportSelectField):
         self.selected = self.request.GET.get(self.slug,'')
         self.options = available_licenses
 
-class SelectRegionField(ReportSelectField):
-    slug = "region"
-    name = ugettext_noop("Region")
-    cssId = "region_select"
-    cssClasses = "span6"
-    default_option = ugettext_noop("All Regions")
-
-    def update_params(self):
-        if hasattr(Domain, 'regions'):
-            available_regions = [{'val': d.replace(' ', '+'), 'text': d} for d in Domain.regions()]
-        else:
-            available_regions = []
-        self.selected = self.request.GET.get(self.slug,'')
-        self.options = available_regions
 
 class SelectMobileWorkerMixin(object):
     slug = "select_mw"
