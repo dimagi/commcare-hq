@@ -310,18 +310,6 @@ class SelectCategoryField(ReportSelectField):
         self.selected = self.request.GET.get(self.slug,'')
         self.options = available_categories
 
-class SelectLicenseField(ReportSelectField):
-    slug = "license"
-    name = ugettext_noop("License")
-    cssId = "license_select"
-    cssClasses = "span6"
-    default_option = ugettext_noop("All Licenses")
-
-    def update_params(self):
-        available_licenses = [{'val': code, 'text': license} for code, license in LICENSES.items()]
-        self.selected = self.request.GET.get(self.slug,'')
-        self.options = available_licenses
-
 
 class SelectMobileWorkerMixin(object):
     slug = "select_mw"
