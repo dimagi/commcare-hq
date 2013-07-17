@@ -75,6 +75,7 @@ def user_list(domain):
     users.sort(key=lambda user: (not user.is_active, user.username))
     return users
 
+
 def get_group_params(domain, group='', users=None, user_id_only=False, **kwargs):
     # refrenced in reports/views and create_export_filter below
     if group:

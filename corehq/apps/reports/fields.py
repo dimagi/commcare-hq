@@ -156,8 +156,6 @@ class StrongFilterUsersField(FilterUsersField):
     can_be_empty = True
 
 
-
-
 class SelectOpenCloseField(ReportSelectField):
     slug = "is_open"
     name = ugettext_noop("Opened / Closed")
