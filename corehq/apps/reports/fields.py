@@ -118,14 +118,6 @@ class MonthField(ReportField):
     def update_context(self):
         self.context['month'] = self.request.GET.get('month', datetime.datetime.utcnow().month)
 
-class YearField(ReportField):
-    slug = "year"
-    template = "reports/partials/year-select.html"
-
-    def update_context(self):
-        year = getattr(settings, 'START_YEAR', 2008)
-        self.context['years'] = range(year, datetime.datetime.utcnow().year + 1)
-        self.context['year'] = int(self.request.GET.get('year', datetime.datetime.utcnow().year))
 
 class BooleanField(ReportField):
     slug = "checkbox"
@@ -136,6 +128,7 @@ class BooleanField(ReportField):
         self.context['label'] = self.label
         self.context[self.slug] = self.request.GET.get(self.slug, False)
         self.context['checked'] = self.request.GET.get(self.slug, False)
+
 
 class FilterUsersField(ReportField):
     slug = "ufilter"
