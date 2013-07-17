@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import uuid
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.api.es import FullCaseES, FullXFormES
-from corehq.apps.reports.fields import  ReportSelectField
+from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 
@@ -11,20 +11,16 @@ from pact.models import PactPatientCase, DOTSubmission, CObservation
 from pact.reports.dot_calendar import DOTCalendarReporter
 
 
-class PactDOTPatientField(ReportSelectField):
+class PactDOTPatientField(BaseSingleOptionFilter):
     slug = "dot_patient"
-    name = "DOT Patient"
-    default_option = "Select DOT Patient"
-    #    cssId = "case_type_select"
+    label = "DOT Patient"
+    default_text = "Select DOT Patient"
 
-    def update_params(self):
+    @property
+    def options(self):
         patient_cases = self.get_pact_cases()
-        case_type = self.request.GET.get(self.slug, '')
-
-        self.selected = case_type
-        self.options = [
-            dict(val=case['_id'], text="(%s) - %s" % (case.get('pactid', '[none]'), case['name']))
-            for case in patient_cases]
+        return [(case['_id'], "(%s) - %s" % (case.get('pactid', '[none]'), case['name']))
+                for case in patient_cases]
 
     @classmethod
     def get_pact_cases(cls):
