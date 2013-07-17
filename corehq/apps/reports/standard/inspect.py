@@ -31,7 +31,7 @@ class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabular
     asynchronous = False
     ajax_pagination = True
     fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
-              'corehq.apps.reports.fields.SelectMobileWorkerField']
+              'corehq.apps.reports.filters.users.SelectMobileWorkerFilter']
 
 
 class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReportParametersMixin, CompletionOrSubmissionTimeMixin, 
