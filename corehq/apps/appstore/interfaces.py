@@ -25,7 +25,7 @@ class CommCareExchangeAdvanced(GenericTabularReport, AppstoreInterface, Datespan
     slug = "advanced"
     fields = ['corehq.apps.reports.fields.SelectOrganizationField',
               'corehq.apps.reports.filters.select.SelectLicenseFilter',
-              'corehq.apps.reports.fields.SelectCategoryField',
+              'corehq.apps.reports.filters.select.SelectCategoryFilter',
               'corehq.apps.reports.filters.select.SelectRegionFilter']
 
     report_template_path = 'data_interfaces/interfaces/case_management.html'
