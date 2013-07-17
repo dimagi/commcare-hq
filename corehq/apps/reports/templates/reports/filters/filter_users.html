@@ -26,7 +26,7 @@
 <script type="text/javascript" src="{% static 'reports/javascripts/field.filter_buttons.js' %}"></script>
 <script type="text/javascript">
     $(function() {
-        linkButtonGroup("{{ css_id }}");
+        linkButtonGroup("{{ css_id }}", {{ can_be_empty|JSON }});
     });
 </script>
 {% endblock %}

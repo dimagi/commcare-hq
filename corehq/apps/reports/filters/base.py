@@ -127,13 +127,19 @@ class BaseMutipleOptionFilter(BaseSingleOptionFilter):
 
     @classmethod
     def get_value(cls, request, domain):
-        print request.GET.getlist(cls.slug)
         return request.GET.getlist(cls.slug)
 
     @property
     @memoized
     def selected(self):
         return self.get_value(self.request, self.domain) or self.default_options
+
+
+class BaseMultipleOptionTypeaheadFilter(BaseMutipleOptionFilter):
+    """
+        Displays a select2 field
+    """
+    template = "reports/filters/select2_option.html"
 
 
 class BaseSingleOptionTypeaheadFilter(BaseSingleOptionFilter):

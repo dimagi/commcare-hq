@@ -8,7 +8,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.groups.models import Group
 from corehq.apps.orgs.models import Organization
-from corehq.apps.reports.filters.base import BaseSingleOptionFilter
+from corehq.apps.reports.filters.base import BaseSingleOptionFilter, BaseMultipleOptionTypeaheadFilter
 
 
 class SelectRegionFilter(BaseSingleOptionFilter):
@@ -59,14 +59,22 @@ class SelectOrganizationFilter(BaseSingleOptionFilter):
         return [(o.name, o.title) for o in  Organization.get_all()]
 
 
-class GroupFilter(BaseSingleOptionFilter):
+class GroupFilterMixin(object):
     slug = "group"
     label = ugettext_noop("Group")
-    default_text = ugettext_noop("Everybody")
 
     @property
     def options(self):
         return [(group.get_id, group.name) for group in Group.get_reporting_groups(self.domain)]
+
+
+class GroupFilter(GroupFilterMixin, BaseSingleOptionFilter):
+    default_text = ugettext_noop("Everybody")
+
+
+class MultiSelectGroupTypeaheadFilter(GroupFilterMixin, BaseMultipleOptionTypeaheadFilter):
+    default_options = ['_all']
+    help_text = "Start typing to select one or more groups"
 
 
 class YearFilter(BaseSingleOptionFilter):
@@ -166,3 +174,15 @@ class SelectApplicationFilter(BaseSingleOptionFilter):
         return [(app['value']['_id'], _("%(name)s [up to build %(version)s]") % {
             'name': app['value']['name'],
             'version': app['value']['version']}) for app in apps_for_domain]
+
+
+class UserOrGroupFilter(BaseSingleOptionFilter):
+    """
+        To Use: Subclass and specify what the field options should be
+    """
+    slug = "view_by"
+    label = ugettext_noop("View by Users or Groups")
+    default_text = ugettext_noop("Users")
+    options = [
+        ('groups', 'Groups'),
+    ]

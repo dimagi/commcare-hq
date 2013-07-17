@@ -1,8 +1,11 @@
 from _collections import defaultdict
 import datetime
+from urllib import urlencode
 import dateutil
 from django.core.urlresolvers import reverse
+import math
 import numpy
+import operator
 import pytz
 from corehq.apps.reports import util
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
@@ -11,13 +14,18 @@ from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, 
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
+from corehq.pillows.mappings.case_mapping import CASE_INDEX
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import get_url_base
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+from corehq.apps.appstore.views import es_query
+
 
 def cache_report():
     """do nothing until the real cache_report is fixed"""
@@ -110,7 +118,11 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
     display_data = ['percent']
     emailable = True
     description = ugettext_noop("Followup rates on active cases.")
-    special_notice = ugettext_noop("This report currently does not support case sharing. "
+
+    @property
+    def special_notice(self):
+        if self.domain_object.case_sharing_included():
+            return _("This report currently does not support case sharing. "
                        "There might be inconsistencies in case totals if the user is part of a case sharing group. "
                        "We are working to correct this shortly.")
 
@@ -517,7 +529,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
 
     description = ugettext_noop("Time lag between when forms were completed and when forms were successfully "
                                 "sent to CommCare HQ.")
-    
+
     fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
               'corehq.apps.reports.filters.users.SelectMobileWorkerFilter',
               'corehq.apps.reports.filters.select.GroupFilter',
@@ -722,3 +734,372 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
 
         chart.add_marker(1, 1.0, 'o', '333333', 25)
         return chart.get_url() + '&chds=-1,24,-1,7,0,20'
+
+
+class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
+    slug = 'worker_activity'
+    name = ugettext_noop("Worker Activity")
+    description = ugettext_noop("Summary of form and case activity by user or group.")
+    section_name = ugettext_noop("Project Reports")
+    num_avg_intervals = 3 # how many duration intervals we go back to calculate averages
+    need_group_ids = True
+
+    fields = [
+        'corehq.apps.reports.filters.select.MultiSelectGroupTypeaheadFilter',
+        'corehq.apps.reports.filters.select.UserOrGroupFilter',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+    ]
+    fix_left_col = True
+    emailable = True
+
+    @property
+    def special_notice(self):
+        if self.domain_object.case_sharing_included():
+            return _('This report currently does not fully support case sharing. There might be inconsistencies in the cases modified and average cases modified columns.')
+
+    @property
+    def view_by(self):
+        return self.request.GET.get('view_by', None)
+
+    @property
+    def headers(self):
+        by_group = self.view_by == 'groups'
+        columns = [DataTablesColumn(_("Group"))] if by_group else [DataTablesColumn(_("User"))]
+        columns.append(DataTablesColumnGroup(_("Form Data"),
+            DataTablesColumn(_("# Forms Submitted"), sort_type=DTSortType.NUMERIC,
+                help_text=_("Number of forms submitted in chosen date range.")),
+            DataTablesColumn(_("Avg # Forms Submitted"), sort_type=DTSortType.NUMERIC,
+                help_text=_("Average number of forms submitted in the last three date ranges of the same length.")),
+            DataTablesColumn(_("Last Form Submission"),
+                help_text=_("Date of last form submission in time period.  Total row displays proportion of users submitting forms in date range")) \
+            if not by_group else DataTablesColumn(_("# Active Users"), sort_type=DTSortType.NUMERIC,
+                help_text=_("Proportion of users in group who submitted forms in date range."))
+        ))
+        columns.append(DataTablesColumnGroup(_("Case Data"),
+            DataTablesColumn(_("# Cases Created"), sort_type=DTSortType.NUMERIC,
+                help_text=_("Number of cases created in the date range.")),
+            DataTablesColumn(_("# Cases Closed"), sort_type=DTSortType.NUMERIC,
+                help_text=_("Number of cases closed in the date range.")),
+            DataTablesColumn(_("# Cases Modified"), sort_type=DTSortType.NUMERIC,
+                help_text=_("Number of cases created, modified or closed in the date range. If you are using case sharing, this column will only show cases last modified by the user.")),
+            DataTablesColumn(_("Avg # Cases Modified"), sort_type=DTSortType.NUMERIC,
+                help_text=_("Average number of cases, modified or closed in the last three date ranges of the same length. If you are using case sharing, this column will only include cases last modified by that user.")),
+        ))
+        columns.append(DataTablesColumnGroup(_("Case Activity"),
+            DataTablesColumn(_("# Inactive Cases"), sort_type=DTSortType.NUMERIC,
+                help_text=_("Number of cases owned by the user that were not opened, modified or closed in date range.  This includes case sharing cases.")),
+            DataTablesColumn(_("# Total Cases"), sort_type=DTSortType.NUMERIC,
+                help_text=_("Total number of cases owned by the user.  This includes case sharing cases.")),
+            DataTablesColumn(_("% Inactive Cases"), sort_type=DTSortType.NUMERIC,
+                help_text=_("Percentage of cases owned by user that were inactive.  This includes case sharing cases.")),
+        ))
+        return DataTablesHeader(*columns)
+
+    def es_form_submissions(self, datespan=None, dict_only=False):
+        datespan = datespan or self.datespan
+        q = {"query": {
+                "bool": {
+                    "must": [
+                        {"match": {"domain.exact": self.domain}},
+                        {"range": {
+                            "form.meta.timeEnd": {
+                                "from": datespan.startdate_param,
+                                "to": datespan.enddate_param,
+                                "include_upper": True}}}]}}}
+        facets = ['form.meta.userID']
+        return es_query(q=q, facets=facets, es_url=XFORM_INDEX + '/xform/_search', size=1, dict_only=dict_only)
+
+    def es_last_submissions(self, datespan=None, dict_only=False):
+        """
+            Creates a dict of userid => date of last submission
+        """
+        datespan = datespan or self.datespan
+        def es_q(user_id):
+            q = {"query": {
+                    "bool": {
+                        "must": [
+                            {"match": {"domain.exact": self.domain}},
+                            {"match": {"form.meta.userID": user_id}},
+                            {"range": {
+                                "form.meta.timeEnd": {
+                                    "from": datespan.startdate_param,
+                                    "to": datespan.enddate_param,
+                                    "include_upper": True}}}
+                        ]}},
+                "sort": {"form.meta.timeEnd" : {"order": "desc"}}}
+            results = es_query(q=q, es_url=XFORM_INDEX + '/xform/_search', size=1, dict_only=dict_only)['hits']['hits']
+            return results[0]['_source']['form']['meta']['timeEnd'] if results else None
+
+        DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+        def convert_date(date):
+            return datetime.datetime.strptime(date, DATE_FORMAT) if date else None
+
+        return dict([(u["user_id"], convert_date(es_q(u["user_id"]))) for u in self.combined_users])
+
+    def es_case_queries(self, date_field, user_field='user_id', datespan=None, dict_only=False):
+        datespan = datespan or self.datespan
+        q = {"query": {
+                "bool": {
+                    "must": [
+                        {"match": {"domain.exact": self.domain}},
+                        {"range": {
+                            date_field: {
+                                "from": datespan.startdate_param,
+                                "to": datespan.enddate_param,
+                                "include_upper": True}}}
+                    ]}}}
+        facets = [user_field]
+
+        return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
+
+    def es_modified_cases(self, datespan=None, dict_only=False):
+        datespan = datespan or self.datespan
+        q = {"query": {
+                "bool": {
+                    "must": [
+                        {"match": {"domain.exact": self.domain}},
+                        {"nested": {
+                            "path": "actions",
+                            "query": {
+                                "range": {
+                                    "actions.date": {
+                                        "from": datespan.startdate_param,
+                                        "to": datespan.enddate_param,
+                                        "include_upper": True}}}}},
+                    ]}}}
+        facets = ['user_id']
+        return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
+
+    def es_inactive_cases(self, datespan=None, dict_only=False):
+        """
+            Open cases that haven't been modified within time range
+        """
+        datespan = datespan or self.datespan
+        q = {"query": {
+                "bool": {
+                    "must": [
+                        {"match": {"domain.exact": self.domain}},
+                        {"range": {"opened_on": {"lt": datespan.startdate_param}}}],
+                    "must_not": [
+                        {"range": {"closed_on": {"lt": datespan.startdate_param}}},
+                        {"nested": {
+                            "path": "actions",
+                            "query": {
+                                "range": {
+                                    "actions.date": {
+                                        "from": datespan.startdate_param,
+                                        "to": datespan.enddate_param,
+                                        "include_upper": True}}}}},
+                    ]}}}
+        facets = ['owner_id']
+        return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
+
+    def es_total_cases(self, datespan=None, dict_only=False):
+        datespan = datespan or self.datespan
+        q = {"query": {
+                "bool": {
+                    "must": [
+                        {"match": {"domain.exact": self.domain}},
+                        {"range": {"opened_on": {"lte": datespan.enddate_param}}}],
+                    "must_not": {"range": {"closed_on": {"lt": datespan.startdate_param}}}}}}
+        facets = ['owner_id']
+        return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
+
+
+    @property
+    def rows(self):
+        duration = (self.datespan.enddate - self.datespan.startdate) + datetime.timedelta(days=1) # adjust bc inclusive
+        avg_datespan = DateSpan(self.datespan.startdate - (duration * self.num_avg_intervals),
+                                self.datespan.startdate - datetime.timedelta(days=1))
+
+        form_data = self.es_form_submissions()
+        submissions_by_user = dict([(t["term"], t["count"]) for t in form_data["facets"]["form.meta.userID"]["terms"]])
+        avg_form_data = self.es_form_submissions(datespan=avg_datespan)
+        avg_submissions_by_user = dict([(t["term"], t["count"]) for t in avg_form_data["facets"]["form.meta.userID"]["terms"]])
+
+        if self.view_by == 'groups':
+            active_users_by_group = dict([(g, len(filter(lambda u: submissions_by_user.get(u['user_id']), users)))
+                                          for g, users in self.users_by_group.iteritems()])
+        else:
+            last_form_by_user = self.es_last_submissions()
+
+        case_creation_data = self.es_case_queries('opened_on', 'opened_by')
+        creations_by_user = dict([(t["term"], t["count"]) for t in case_creation_data["facets"]["opened_by"]["terms"]])
+
+        case_modification_data = self.es_modified_cases()
+        modifications_by_user = dict([(t["term"], t["count"]) for t in case_modification_data["facets"]["user_id"]["terms"]])
+        avg_case_modification_data = self.es_modified_cases(datespan=avg_datespan)
+        avg_modifications_by_user = dict([(t["term"], t["count"]) for t in avg_case_modification_data["facets"]["user_id"]["terms"]])
+
+        case_closure_data = self.es_case_queries('closed_on', 'closed_by')
+        closures_by_user = dict([(t["term"], t["count"]) for t in case_closure_data["facets"]["closed_by"]["terms"]])
+
+        inactive_case_data = self.es_inactive_cases()
+        inactives_by_owner = dict([(t["term"], t["count"]) for t in inactive_case_data["facets"]["owner_id"]["terms"]])
+
+        total_case_data = self.es_total_cases()
+        totals_by_owner = dict([(t["term"], t["count"]) for t in total_case_data["facets"]["owner_id"]["terms"]])
+
+        def dates_for_linked_reports(case_list=False):
+            start_date = self.datespan.startdate_param
+            end_date = self.datespan.enddate if not case_list else self.datespan.enddate + datetime.timedelta(days=1)
+            end_date = end_date.strftime(self.datespan.format)
+            return start_date, end_date
+
+        def numcell(text, value=None, convert='int'):
+            if value is None:
+                try:
+                    value = int(text) if convert == 'int' else float(text)
+                    if math.isnan(value):
+                        text = '---'
+                    elif not convert == 'int': # assume this is a percentage column
+                        text = '%.f%%' % value
+                except ValueError:
+                    value = text
+            return util.format_datatables_data(text=text, sort_key=value)
+
+        def submit_history_link(owner_id, val, param='select_mw'):
+            """
+                takes a row, and converts certain cells in the row to links that link to the submit history report
+            """
+            fs_url = reverse('project_report_dispatcher', args=(self.domain, 'submit_history'))
+            start_date, end_date = dates_for_linked_reports()
+            url_args = {
+                param: owner_id,
+                "startdate": start_date,
+                "enddate": end_date,
+            }
+
+            return numcell('<a href="%s?%s" target="_blank">%s</a>' % (fs_url, urlencode(url_args, True), val), val)
+
+        def add_case_list_links(owner_id, row):
+            """
+                takes a row, and converts certain cells in the row to links that link to the case list page
+            """
+            cl_url = reverse('project_report_dispatcher', args=(self.domain, 'case_list'))
+            url_args = {
+                "ufilter": range(4), # include all types of users in case list report
+            }
+
+            start_date, end_date = dates_for_linked_reports(case_list=True)
+            start_date_sub1 = self.datespan.startdate - datetime.timedelta(days=1)
+            start_date_sub1 = start_date_sub1.strftime(self.datespan.format)
+            search_strings = {
+                4: "opened_by: %s AND opened_on: [%s TO %s]" % (owner_id, start_date, end_date), # cases created
+                5: "closed_by: %s AND closed_on: [%s TO %s]" % (owner_id, start_date, end_date), # cases closed
+                9: "opened_on: [* TO %s] AND NOT closed_on: [* TO %s]" % (end_date, start_date_sub1), # total cases
+            }
+
+            def create_case_url(index):
+                """
+                    Given an index for a cell in a the row, creates the link to the case list page for that cell
+                """
+                url_params = {"individual": owner_id} if index not in (4, 5) else {}
+                url_params.update(url_args)
+                url_params.update({"search_query": search_strings[index]})
+                return numcell('<a href="%s?%s" target="_blank">%s</a>' % (cl_url, urlencode(url_params, True), row[index]), row[index])
+
+            for i in search_strings:
+                row[i] = create_case_url(i)
+            return row
+
+        def group_cell(group_id, group_name):
+            """
+                takes group info, and creates a cell that links to the user status report focused on the group
+            """
+            us_url = reverse('project_report_dispatcher', args=(self.domain, 'worker_activity'))
+            start_date, end_date = dates_for_linked_reports()
+            url_args = {
+                "group": group_id,
+                "startdate": start_date,
+                "enddate": end_date,
+            }
+            return util.format_datatables_data(
+                '<a href="%s?%s" target="_blank">%s</a>' % (us_url, urlencode(url_args, True), group_name),
+                group_name
+            )
+
+        rows = []
+        NO_FORMS_TEXT = _('No forms submitted in time period')
+        if self.view_by == 'groups':
+            for group, users in self.users_by_group.iteritems():
+                group_name, group_id = tuple(group.split('|'))
+                if group_name == 'no_group':
+                    continue
+
+                case_sharing_groups = set(reduce(operator.add, [u['group_ids'] for u in users], []))
+                inactive_cases = sum([int(inactives_by_owner.get(u["user_id"], 0)) for u in users]) + \
+                    sum([int(inactives_by_owner.get(g_id, 0)) for g_id in case_sharing_groups])
+                total_cases = sum([int(totals_by_owner.get(u["user_id"], 0)) for u in users]) + \
+                    sum([int(totals_by_owner.get(g_id, 0)) for g_id in case_sharing_groups])
+
+                rows.append([
+                    group_cell(group_id, group_name),
+                    submit_history_link(group_id,
+                            sum([int(submissions_by_user.get(user["user_id"], 0)) for user in users]), param="group"),
+                    numcell(sum([int(avg_submissions_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
+                    "%s / %s" % (int(active_users_by_group.get(group, 0)), len(self.users_by_group.get(group, []))),
+                    numcell(sum([int(creations_by_user.get(user["user_id"], 0)) for user in users])),
+                    numcell(sum([int(closures_by_user.get(user["user_id"], 0)) for user in users])),
+                    numcell(sum([int(modifications_by_user.get(user["user_id"], 0)) for user in users])),
+                    numcell(sum([int(avg_modifications_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
+                    numcell(inactive_cases),
+                    numcell(total_cases),
+                    numcell((float(inactive_cases)/total_cases) * 100 if inactive_cases else 'nan', convert='float'),
+                ])
+
+        else:
+
+            def all_users():
+                from corehq.apps.groups.models import Group
+                ret = [util._report_user_dict(u) for u in util.user_list(self.domain)]
+                for r in ret:
+                    r["group_ids"] = Group.by_user(r["user_id"], False)
+                return ret
+
+            users_to_iterate = self.combined_users if '_all' not in self.group_ids else all_users()
+            for user in users_to_iterate:
+                inactive_cases = int(inactives_by_owner.get(user["user_id"], 0)) + \
+                    sum([int(inactives_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
+                total_cases = int(totals_by_owner.get(user["user_id"], 0)) + \
+                    sum([int(totals_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
+
+                rows.append(add_case_list_links(user['user_id'], [
+                    user["username_in_report"],
+                    submit_history_link(user['user_id'], submissions_by_user.get(user["user_id"], 0)),
+                    numcell(int(avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
+                    last_form_by_user.get(user["user_id"]) or NO_FORMS_TEXT,
+                    int(creations_by_user.get(user["user_id"],0)),
+                    int(closures_by_user.get(user["user_id"], 0)),
+                    numcell(int(modifications_by_user.get(user["user_id"], 0))),
+                    numcell(int(avg_modifications_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
+                    numcell(inactive_cases),
+                    total_cases,
+                    numcell((float(inactive_cases)/total_cases) * 100 if inactive_cases else 'nan', convert='float'),
+                ]))
+
+        self.total_row = [_("Total")]
+        summing_cols = [1, 2, 4, 5, 6, 7, 8, 9]
+        for col in range(1, len(self.headers)):
+            if col in summing_cols:
+                self.total_row.append(sum(filter(lambda x: not math.isnan(x), [row[col].get('sort_key', 0) for row in rows])))
+            else:
+                self.total_row.append('---')
+
+        if self.view_by == 'groups':
+            def parse(str):
+                num, denom = tuple(str.split('/'))
+                num = int(num.strip())
+                denom = int(denom.strip())
+                return num, denom
+
+            def add(result_tuple, str):
+                num, denom = parse(str)
+                return num + result_tuple[0], denom + result_tuple[1]
+
+            self.total_row[3] = '%s / %s' % reduce(add, [row[3] for row in rows], (0, 0))
+        else:
+            num = len(filter(lambda row: row[3] != NO_FORMS_TEXT, rows))
+            self.total_row[3] = '%s / %s' % (num, len(rows))
+
+        return rows
