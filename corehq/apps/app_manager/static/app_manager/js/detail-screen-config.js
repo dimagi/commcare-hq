@@ -605,8 +605,10 @@ var DetailScreenConfig = (function () {
                 column.format.fire('change');
 
                 var sortLine = $('<td/>').addClass('detail-screen-extra');
-                if (window.enableNewSort) {
-                  sortLine.append(column.$sortLink)
+                // Only add sort link if we are using new sort feature and
+                // this is not the blank field row
+                if (window.enableNewSort && column.field.value) {
+                    sortLine.append(column.$sortLink)
                 }
                 sortLine.appendTo($tr);
 
