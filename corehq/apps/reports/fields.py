@@ -31,35 +31,6 @@ from corehq.apps.users.models import WebUser
     reporting structure.
 """
 
-class ReportField(CacheableRequestMixIn):
-    slug = ""
-    template = ""
-
-    def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None):
-        warnings.warn(
-            "ReportField (%s) is deprecated. Use ReportFilter instead." % (
-                self.__class__.__name__
-            ),
-            DeprecationWarning,
-        )
-        self.context = Context()
-        self.request = request
-        self.domain = domain
-        self.timezone = timezone
-        self.parent_report = parent_report
-
-    def render(self):
-        if not self.template: return ""
-        self.context["slug"] = self.slug
-        self.update_context()
-        return render_to_string(self.template, self.context)
-
-    def update_context(self):
-        """
-        If your select field needs some context (for example, to set the default) you can set that up here.
-        """
-        pass
-
 
 class BooleanField(ReportField):
     slug = "checkbox"
