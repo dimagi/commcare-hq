@@ -25,7 +25,7 @@ class ApplicationStatusReport(DeploymentsReport):
     name = ugettext_noop("Application Status")
     slug = "app_status"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.GroupField',
+              'corehq.apps.reports.filters.select.GroupFilter',
               'corehq.apps.reports.fields.SelectApplicationField']
 
     @property

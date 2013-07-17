@@ -137,33 +137,6 @@ class BooleanField(ReportField):
         self.context[self.slug] = self.request.GET.get(self.slug, False)
         self.context['checked'] = self.request.GET.get(self.slug, False)
 
-class GroupFieldMixin():
-    slug = "group"
-    name = ugettext_noop("Group")
-    cssId = "group_select"
-
-class GroupField(GroupFieldMixin, ReportSelectField):
-    default_option = ugettext_noop("Everybody")
-
-    def update_params(self):
-        super(GroupField, self).update_params()
-        self.groups = Group.get_reporting_groups(self.domain)
-        self.options = [dict(val=group.get_id, text=group.name) for group in self.groups]
-
-
-class MultiSelectGroupField(GroupFieldMixin, ReportMultiSelectField):
-    default_option = ['_all']
-    placeholder = 'Click to select groups'
-    help_text = "Start typing to select one or more groups"
-
-    @property
-    def options(self):
-        self.groups = Group.get_reporting_groups(self.domain)
-        opts = [dict(val=group.get_id, text=group.name) for group in self.groups]
-        opts.insert(0, {'text': 'All', 'val': '_all'})
-        return opts
-
-
 class FilterUsersField(ReportField):
     slug = "ufilter"
     template = "reports/fields/filter_users.html"
