@@ -7,6 +7,7 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
+
 class BaseReportFilter(CacheableRequestMixIn):   # (CacheableRequestMixIn):
     """
         For filtering the results of CommCare HQ Reports.
