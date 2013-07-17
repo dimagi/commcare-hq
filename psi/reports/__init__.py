@@ -87,7 +87,7 @@ def get_village_class(key, req):
 class PSIReport(SummingTabularReport, CustomProjectReport, DatespanMixin):
     is_cacheable = True
     update_after = True
-    fields = ['corehq.apps.reports.fields.DatespanField','psi.reports.AsyncPlaceField',]
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter','psi.reports.AsyncPlaceField',]
 
     state_name = Column("State", calculate_fn=lambda key, _: key[1])
 
@@ -133,7 +133,7 @@ class PSIReport(SummingTabularReport, CustomProjectReport, DatespanMixin):
 
 
 class PSIEventsReport(PSIReport):
-    fields = ['corehq.apps.reports.fields.DatespanField',
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'psi.reports.StateDistrictField',
               'psi.reports.AASD',]
     name = "Event Demonstration Report"
@@ -175,7 +175,7 @@ class PSIHDReport(PSIReport):
     emailable = True
     slug = "household_demonstations"
     section_name = "household demonstrations"
-    fields = ['corehq.apps.reports.fields.DatespanField',
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'psi.reports.AsyncPlaceField',
               'psi.reports.DemoTypeField',
               'psi.reports.AASDBV',]
@@ -243,7 +243,7 @@ class PSISSReport(PSIReport):
     emailable = True
     slug = "sensitization_sessions"
     section_name = "sensitization sessions"
-    fields = ['corehq.apps.reports.fields.DatespanField',
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'psi.reports.StateDistrictBlockField',
               'psi.reports.AASDB',]
     default_aggregation = 'block'
@@ -285,7 +285,7 @@ class PSITSReport(PSIReport):
     emailable = True
     slug = "training_sessions"
     section_name = "training sessions"
-    fields = ['corehq.apps.reports.fields.DatespanField',
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'psi.reports.StateDistrictField',
               'psi.reports.AASD',]
     default_aggregation = 'district'

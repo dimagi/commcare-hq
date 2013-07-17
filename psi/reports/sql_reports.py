@@ -7,7 +7,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 
 class PSISQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin):
-    fields = ['corehq.apps.reports.fields.DatespanField','psi.reports.AsyncPlaceField',]
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter','psi.reports.AsyncPlaceField',]
 
     @property
     def group_by(self):
@@ -69,7 +69,7 @@ class PSISQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin):
 
 
 class PSISQLEventsReport(PSISQLReport):
-    fields = ['corehq.apps.reports.fields.DatespanField',
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'psi.reports.StateDistrictField',
               'psi.reports.AASD',]
     name = "Event Demonstration Report"
