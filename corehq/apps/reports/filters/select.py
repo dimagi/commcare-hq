@@ -1,4 +1,5 @@
 import datetime
+import calendar
 from django.conf import settings
 from django.utils.translation import ugettext_noop
 from corehq.apps.domain.models import Domain, LICENSES
@@ -76,3 +77,13 @@ class YearFilter(BaseSingleOptionFilter):
         years = [(y, y) for y in range(start_year, datetime.datetime.utcnow().year + 1)]
         years.reverse()
         return years
+
+
+class MonthFilter(BaseSingleOptionFilter):
+    slug = "month"
+    label = ugettext_noop("Month")
+    default_text = None
+
+    @property
+    def options(self):
+        return [("%02d" % m, calendar.month_name[m]) for m in range(1, 13)]
