@@ -52,7 +52,7 @@ ACTIVE_CHILD_CASES_BY_AGE_INDICATORS = dict(
             num_children_6to59months=dict(
                 description="No. of Children 6 to 59 Months of Age during this timespan",
                 title="# Under-5s 6-59 Months",
-                max_age_in_days=1770,
+                max_age_in_days=1825,
                 min_age_in_days=180,
                 indicator_key="",
             ),
