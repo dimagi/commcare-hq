@@ -117,6 +117,24 @@ class BaseSingleOptionFilter(BaseReportFilter):
         return None
 
 
+class BaseMutipleOptionFilter(BaseSingleOptionFilter):
+    """
+        Displays a multiselect field.
+    """
+    template = "reports/filters/multi_option.html"
+    default_options = [] # specify a list
+
+    @classmethod
+    def get_value(cls, request, domain):
+        print request.GET.getlist(cls.slug)
+        return request.GET.getlist(cls.slug)
+
+    @property
+    @memoized
+    def selected(self):
+        return self.get_value(self.request, self.domain) or self.default_options
+
+
 class BaseSingleOptionTypeaheadFilter(BaseSingleOptionFilter):
     """
         Displays a combobox (select field with typeahead).
