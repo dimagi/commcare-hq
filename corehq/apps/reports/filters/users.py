@@ -186,3 +186,23 @@ class SelectCaseOwnerFilter(SelectMobileWorkerFilter):
         return options
 
 
+class BaseGroupedMobileWorkerFilter(BaseSingleOptionFilter):
+    """
+        This is a little field for use when a client really wants to filter by
+        individuals from a specific group.  Since by default we still want to
+        show all the data, no filtering is done unless the special group filter
+        is selected.
+    """
+    group_names = []
+
+    @property
+    def options(self):
+        options = []
+        for group_name in self.group_names:
+            group = Group.by_name(self.domain, group_name)
+            if group:
+                users = group.get_users(is_active=True, only_commcare=True)
+                options.extend([(u.user_id, u.username_in_report) for u in users])
+        return options
+
+
