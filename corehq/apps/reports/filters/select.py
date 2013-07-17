@@ -44,7 +44,7 @@ class SelectCategoryFilter(BaseSingleOptionFilter):
 
 class SelectOrganizationFilter(BaseSingleOptionFilter):
     slug = "org"
-    name = ugettext_noop("Organization")
+    label = ugettext_noop("Organization")
     default_text = ugettext_noop("All Organizations")
 
     @property
