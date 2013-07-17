@@ -208,6 +208,10 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         label=_("Test Project"),
         choices=tf_choices('Test', _('Real'))
     )
+    commconnect_enabled = BooleanField(
+        label=_("CommConnect Enabled"),
+        required=False
+    )
     survey_management_enabled = BooleanField(
         label=_("Survey Management Enabled"),
         required=False
@@ -332,6 +336,8 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             domain.project_type = self.cleaned_data['project_type']
             domain.customer_type = self.cleaned_data['customer_type']
             domain.is_test = self.cleaned_data['is_test'] == 'true'
+            domain.commconnect_enabled = self.cleaned_data.get(
+                    'commconnect_enabled', False)
             domain.survey_management_enabled = self.cleaned_data.get('survey_management_enabled', False)
             domain.sms_case_registration_enabled = self.cleaned_data.get('sms_case_registration_enabled', False)
             domain.sms_case_registration_type = self.cleaned_data.get('sms_case_registration_type')

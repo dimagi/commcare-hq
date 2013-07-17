@@ -262,7 +262,7 @@ class ApplicationsTab(UITab):
 
     @property
     def title(self):
-        if self.project.commconnect_only:
+        if self.project.commconnect_enabled:
             return _("Surveys")
         else:
             return _("Applications")
@@ -344,7 +344,7 @@ class CloudcareTab(UITab):
     @property
     def is_viewable(self):
         return (self.domain and self.couch_user.can_edit_data() and not
-                self.project.commconnect_only)
+                self.project.commconnect_enabled)
 
 
 class MessagingTab(UITab):

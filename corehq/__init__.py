@@ -56,7 +56,7 @@ def REPORTS(project):
         ivr.CallLogReport,
         ivr.ExpectedCallbackReport,
     ))
-    if project.commconnect_only:
+    if project.commconnect_enabled:
         reports.insert(0, messaging)
     else:
         reports.append(messaging)
