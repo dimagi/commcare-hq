@@ -78,10 +78,10 @@ class PSISQLEventsReport(PSISQLReport):
     slug = "event_demonstations_sql"
     section_name = "event demonstrations"
     default_aggregation = 'district'
-    table_name = 'psi-unicef_psi_events'
+    table_name = 'psi-unicef_events'
 
     @property
-    def coluvmns(self):
+    def columns(self):
         return self.initial_columns + [
             DatabaseColumn("Number of events", 'events'),
             DatabaseColumn("Number of male attendees", 'males'),
@@ -90,6 +90,45 @@ class PSISQLEventsReport(PSISQLReport):
             DatabaseColumn("Total number of leaflets distributed", 'leaflets'),
             DatabaseColumn("Total number of gifts distributed", 'gifts')
         ]
+
+
+class PSISQLHouseholdReport(PSISQLReport):
+    name = "Household Demonstrations Report"
+    exportable = True
+    emailable = True
+    slug = "household_demonstrations_sql"
+    section_name = "household demonstrations"
+    fields = ['corehq.apps.reports.fields.DatespanField',
+              'psi.reports.AsyncPlaceField',
+              'psi.reports.DemoTypeField',
+              'psi.reports.AASDBV',]
+    default_aggregation = 'village'
+
+    @property
+    @memoized
+    def selected_dt(self):
+        return self.request.GET.get('demo_type', "")
+
+    @property
+    def keys(self):
+        combos = get_unique_combinations(self.domain, place_types=self.place_types, place=self.selected_fixture())
+        selected_demo_type = self.request.GET.get('demo_type', "")
+        for c in combos:
+            if self.selected_dt:
+                if self.selected_dt == '_all':
+                    for dt in DEMO_TYPES:
+                        yield [self.domain] + [c[pt] for pt in self.place_types] + [dt]
+                else:
+                    yield [self.domain] + [c[pt] for pt in self.place_types] + [selected_demo_type]
+            else:
+                yield [self.domain] + [c[pt] for pt in self.place_types]
+
+    @property
+    def columns():
+        return self.initial_columns + [
+            DatabaseColumn("Worker Types", )
+        ]
+
 
 class PSISQLSensitizationReport(PSISQLReport):
     name = "Sensitization Sessions Report"
