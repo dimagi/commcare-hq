@@ -120,20 +120,6 @@ class FilterUsersField(ReportField):
         return toggle, show_filter
 
 
-class SelectFormField(ReportSelectField):
-    slug = "form"
-    name = ugettext_noop("Form Type")
-    cssId = "form_select"
-    cssClasses = "span6"
-    default_option = ugettext_noop("Select a Form")
-
-    def update_params(self):
-        self.options = util.form_list(self.domain)
-        self.selected = self.request.GET.get(self.slug, None)
-
-class SelectAllFormField(SelectFormField):
-    default_option = ugettext_noop("Show All Forms")
-
 class SelectOpenCloseField(ReportSelectField):
     slug = "is_open"
     name = ugettext_noop("Opened / Closed")
