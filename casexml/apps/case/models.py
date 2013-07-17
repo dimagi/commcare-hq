@@ -1,28 +1,36 @@
 from __future__ import absolute_import
+from StringIO import StringIO
 import re
+from datetime import datetime
+import logging
+from copy import copy
+import itertools
+
 from django.core.cache import cache
 from django.conf import settings
+from django.core.urlresolvers import reverse
+from django.utils.translation import ugettext as _
+from couchdbkit.ext.django.schema import *
+from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
+from PIL import Image
+from dimagi.utils.django.cached_object import CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage, IMAGE_SIZE_ORDERING
 from django.utils.translation import ugettext_noop, ugettext as _
-
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml,\
     couchable_property, get_case_xform_ids
-from datetime import datetime
-from couchdbkit.ext.django.schema import *
 from casexml.apps.case import const
 from dimagi.utils.modules import to_function
 from dimagi.utils import parsing
-import logging
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.indicators import ComputedDocumentMixin
 from receiver.util import spoof_submission
 from couchforms.models import XFormInstance
-from casexml.apps.case.sharedmodels import IndexHoldingMixIn, CommCareCaseIndex
+from casexml.apps.case.sharedmodels import IndexHoldingMixIn, CommCareCaseIndex, CommCareCaseAttachment
 from copy import copy
 from dimagi.utils.couch.database import get_db, SafeSaveDocument
-from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from dimagi.utils.couch import LooselyEqualDocumentSchema
+
 
 """
 Couch models for commcare cases.  
@@ -75,6 +83,7 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
     updated_known_properties = DictProperty()
     updated_unknown_properties = DictProperty()
     indices = SchemaListProperty(CommCareCaseIndex)
+    attachments = SchemaDictProperty(CommCareCaseAttachment)
 
     @classmethod
     def from_parsed_action(cls, action_type, date, user_id, xformdoc, action):
@@ -94,6 +103,8 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
 
         ret.updated_unknown_properties = _couchify(action.dynamic_properties)
         ret.indices = [CommCareCaseIndex.from_case_index_update(i) for i in action.indices]
+        ret.attachments = dict((attach_id, CommCareCaseAttachment.from_case_index_update(attach))
+                               for attach_id, attach in action.attachments.items())
         if hasattr(xformdoc, "last_sync_token"):
             ret.sync_log_id = xformdoc.last_sync_token
         return ret
@@ -208,6 +219,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
     name = StringProperty()
     version = StringProperty()
     indices = SchemaListProperty(CommCareCaseIndex)
+    case_attachments = SchemaDictProperty(CommCareCaseAttachment)
     
     # TODO: move to commtrack.models.SupplyPointCases (and full regression test)
     location_ = StringListProperty()
@@ -343,6 +355,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             return getattr(self, property)
         except Exception:
             return None
+
     def set_case_property(self, property, value):
         setattr(self, property, value)
 
@@ -373,25 +386,123 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         
         forms = [_get(id) for id in self.xform_ids]
         return [form for form in forms if form] 
-    
-    @property
-    def attachments(self):
+
+    def get_attachment(self, attachment_key):
+        return self.fetch_attachment(attachment_key)
+
+    def get_attachment_server_url(self, attachment_key):
         """
-        Get any attachments associated with this.
-        
-        returns (creating_form_id, attachment_name) tuples 
+        A server specific URL for remote clients to access case attachment resources async.
         """
-        attachments = []
-        for action in self.actions:
-            for prop, val in action.updated_unknown_properties.items():
-                # welcome to hard code city!
-                if isinstance(val, dict) and "@tag" in val and val["@tag"] == "attachment":
-                    attachments.append((action.xform_id, val["#text"]))
-        return attachments
-    
-    def get_attachment(self, attachment_tuple):
-        return XFormInstance.get_db().fetch_attachment(attachment_tuple[0], attachment_tuple[1])
-    
+        if attachment_key in self.case_attachments:
+            return reverse("api_case_attachment", kwargs={
+                "domain": self.domain,
+                "case_id": self._id,
+                "attachment_id": attachment_key}
+            )
+        else:
+            return None
+
+    @classmethod
+    def fetch_case_image(cls, case_id, attachment_key, filesize_limit=0, width_limit=0, height_limit=0, fixed_size=None):
+        """
+        Return (metadata, stream) information of best matching image attachment.
+        """
+        do_constrain = False
+
+        if fixed_size is not None:
+            size_key = fixed_size
+        else:
+            size_key = OBJECT_ORIGINAL
+
+        constraint_dict = {}
+        if filesize_limit or width_limit or height_limit:
+            do_constrain=True
+            if filesize_limit:
+                constraint_dict['content_length'] = filesize_limit
+
+            if height_limit:
+                constraint_dict['height'] = filesize_limit
+
+            if width_limit:
+                constraint_dict['width'] = width_limit
+            #do_constrain = False
+
+        #if size key is None, then one of the limit criteria are set
+        attachment_cache_key = "%(case_id)s_%(attachment)s" % {
+            "case_id": case_id,
+            "attachment": attachment_key
+        }
+
+        cached_image = CachedImage(attachment_cache_key)
+        if not cached_image.is_cached():
+            resp = cls.get_db().fetch_attachment(case_id, attachment_key, stream=True)
+            stream = StringIO(resp.read())
+            headers = resp.resp.headers
+            cached_image.cache_image(stream, headers)
+
+        #now that we got it cached, let's check for size constraints
+        meta, stream = cached_image.get_size(size_key)
+
+        if do_constrain:
+            #check this size first
+            #see if the current size matches the criteria
+
+            def meets_constraint(constraints, meta):
+                for c, limit in constraints.items():
+                    if meta[c] > limit:
+                        return False
+                return True
+
+            if meets_constraint(constraint_dict, meta):
+                #yay, do nothing
+                pass
+            else:
+                #this meta is no good, find another one
+                lesser_keys = IMAGE_SIZE_ORDERING[0:IMAGE_SIZE_ORDERING.index(size_key)]
+                lesser_keys.reverse()
+                is_met = False
+                for lesser_size in lesser_keys:
+                    less_meta, less_stream = cached_image.get_size(lesser_size)
+                    if meets_constraint(constraint_dict, less_meta):
+                        meta = less_meta
+                        stream = less_stream
+                        is_met = True
+                        break
+                if not is_met:
+                    meta = None
+                    stream = None
+
+        return meta, stream
+
+
+    @classmethod
+    def fetch_case_attachment(cls, case_id, attachment_key, filesize_limit=0, fixed_size=None, **kwargs):
+        """
+        Return (metadata, stream) information of best matching image attachment.
+        TODO: This should be the primary case_attachment retrieval method, the image one is a silly separation of similar functionality
+        Additional functionality to be abstracted by content_type of underlying attachment
+        """
+        size_key = OBJECT_ORIGINAL
+        if fixed_size is not None and fixed_size in OBJECT_SIZE_MAP:
+            size_key = fixed_size
+
+        #if size key is None, then one of the limit criteria are set
+        attachment_cache_key = "%(case_id)s_%(attachment)s" % {
+            "case_id": case_id,
+            "attachment": attachment_key
+        }
+
+        cobject = CachedObject(attachment_cache_key)
+        if not cobject.is_cached():
+            resp = cls.get_db().fetch_attachment(case_id, attachment_key, stream=True)
+            stream = StringIO(resp.read())
+            headers = resp.resp.headers
+            cobject.cache_put(stream, headers)
+        meta, stream = cobject.get()
+
+        return meta, stream
+
     # this is only used by CommTrack SupplyPointCase cases and should go in
     # that class
     def bind_to_location(self, loc):
@@ -435,7 +546,6 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         self.actions.append(create_action)
     
     def update_from_case_update(self, case_update, xformdoc):
-        
         mod_date = parsing.string_to_datetime(case_update.modified_on_str) \
                     if   case_update.modified_on_str else datetime.utcnow()
         
@@ -501,6 +611,15 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             self.actions.append(index_action)
             self._apply_action(index_action)
 
+        if case_update.has_attachments():
+            attachment_action = CommCareCaseAction.from_parsed_action(const.CASE_ACTION_ATTACHMENT,
+                                                                      mod_date,
+                                                                      case_update.user_id,
+                                                                      xformdoc,
+                                                                      case_update.get_attachment_action())
+            self.actions.append(attachment_action)
+            self._apply_action(attachment_action)
+
         # finally override any explicit properties from the update
         if case_update.user_id:     self.user_id = case_update.user_id
         if case_update.version:     self.version = case_update.version
@@ -512,6 +631,8 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             self.update_indices(action.indices)
         elif action.action_type == const.CASE_ACTION_CLOSE:
             self.apply_close(action)
+        elif action.action_type == const.CASE_ACTION_ATTACHMENT:
+            self.apply_attachments(action)
         else:
             raise ValueError("Can't apply action of type %s" % action.action_type)
 
@@ -527,7 +648,47 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             if item not in const.CASE_TAGS:
                 self[item] = couchable_property(update_action.updated_unknown_properties[item])
             
-        
+    def apply_attachments(self, attachment_action):
+        #the actions and _attachment must be added before the first saves canhappen
+        #todo attach cached attachment info
+
+        stream_dict = {}
+        #cache all attachment streams from xform
+        for k, v in attachment_action.attachments.items():
+            if v.is_present:
+                #fetch attachment, update metadata, get the stream
+                attach_data = XFormInstance.get_db().fetch_attachment(attachment_action.xform_id, v.identifier)
+                stream_dict[k] = attach_data
+                v.attachment_size = len(attach_data)
+
+                if v.is_image:
+                    img = Image.open(StringIO(attach_data))
+                    img_size = img.size
+                    props = dict(width=img_size[0], height=img_size[1])
+                    v.attachment_properties = props
+
+        self.force_save()
+        update_attachments = {}
+        for k, v in self.case_attachments.items():
+            if v.is_present:
+                update_attachments[k] = v
+
+        for k, v in attachment_action.attachments.items():
+            #grab xform_attachments
+            #copy over attachments from form onto case
+            update_attachments[k] = v
+            if v.is_present:
+                #fetch attachment from xform
+                attachment_key = v.attachment_key
+                attach = stream_dict[attachment_key]
+                self.put_attachment(attach, name=attachment_key, content_type=v.server_mime)
+            else:
+                self.delete_attachment(k)
+                del(update_attachments[k])
+
+        self.case_attachments = update_attachments
+
+
     def apply_close(self, close_action):
         self.closed = True
         self.closed_on = close_action.date

@@ -7,7 +7,6 @@ INSTALLED_APPS = (
     'casexml.apps.phone',
     'couchdbkit.ext.django',
     'couchforms',
-    'coverage',
     'django.contrib.contenttypes',
     'django.contrib.auth',
 )
@@ -50,6 +49,7 @@ COVERAGE_REPORT_HTML_OUTPUT_DIR='coverage-html'
 COVERAGE_MODULE_EXCLUDES= ['tests$', 'settings$', 'urls$', 'locale$',
                            'common.views.test', '^django', 'management', 'migrations',
                            '^south', '^djcelery', '^debug_toolbar', '^rosetta']
+ROOT_URLCONF = "reference_urls"
 
 # Disable logging from casexml
 LOGGING = {

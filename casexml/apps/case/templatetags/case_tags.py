@@ -289,4 +289,3 @@ def case_inline_display(case):
         ret = _("Empty Case")
 
     return escape(ret)
-    

@@ -25,6 +25,7 @@ setup(
         'python-digest',
         'pytz',
         'simplejson',
+        'PIL',
         'unittest2', # Actually a missing dimagi-utils dep?
     ],
     tests_require = [

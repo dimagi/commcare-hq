@@ -144,6 +144,9 @@ class V1CaseXMLGenerator(CaseXMLGeneratorBase):
             logging.info("Tried to add indices to version 1 CaseXML restore. This is not supported. "
                          "The case id is %s, domain %s." % (self.case.get_id, self.case.domain))
 
+    def add_attachments(self, element):
+        pass
+
 class V2CaseXMLGenerator(CaseXMLGeneratorBase):
     def get_root_element(self):
         root = safe_element("case")
@@ -153,6 +156,7 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
             "user_id": self.case.user_id or '',
             "date_modified": json_format_datetime(self.case.modified_on)}
         return root
+
 
     def get_case_type_element(self):
         # case_type_id --> case_type
@@ -186,6 +190,20 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
                 index_elem.append(index) # .extend() only works in python 2.7
 
             element.append(index_elem)
+
+    def add_attachments(self, element):
+        if self.case.case_attachments:
+            attachments = []
+            attachment_elem = safe_element("attachment")
+            for k, a in self.case.case_attachments.items():
+                aroot = safe_element(k)
+                # moved to attrs in v2
+                aroot.attrib = {
+                    "src": self.case.get_attachment_server_url(k),
+                    "from": "remote"
+                }
+                attachment_elem.append(aroot)
+            element.append(attachment_elem)
 
 def get_generator(version, case):
     check_version(version)
