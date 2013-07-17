@@ -10,6 +10,13 @@ EQUAL = lambda expected, reference: expected == reference
 NOT_EQUAL = lambda expected, reference: expected != reference
 IN = lambda expected, reference_list: expected in reference_list
 
+class IntegerPropertyReference(object):
+    def __init__(self, property_path):
+        self.property_path = property_path
+
+    def __call__(self, form):
+        return int(form.xpath(self.property_path) or 0)
+
 class FilteredFormPropertyCalculator(fluff.Calculator):
     """
     Enables filtering forms by xmlns and (optionally) property == value.
@@ -27,14 +34,17 @@ class FilteredFormPropertyCalculator(fluff.Calculator):
     xmlns = None
     property_path = None
     property_value = None
+    indicator_calculator = None
     window = timedelta(days=1)
 
     @fluff.date_emitter
     def total(self, form):
+        if self.indicator_calculator is not None:
+            yield [default_date(form), self.indicator_calculator(form)]
         yield default_date(form)
 
     def __init__(self, xmlns=None, property_path=None, property_value=None,
-                 operator=EQUAL, window=None):
+                 operator=EQUAL, indicator_calculator=None, window=None):
         def _conditional_setattr(key, value):
             if value:
                 setattr(self, key, value)
@@ -44,9 +54,11 @@ class FilteredFormPropertyCalculator(fluff.Calculator):
 
         _conditional_setattr('property_path', property_path)
         _conditional_setattr('property_value', property_value)
-        self.operator = operator
         if self.property_path is not None:
             assert self.property_value is not None
+
+        self.operator = operator
+        _conditional_setattr('indicator_calculator', indicator_calculator)
 
         super(FilteredFormPropertyCalculator, self).__init__(window)
 
@@ -59,7 +71,7 @@ class FilteredFormPropertyCalculator(fluff.Calculator):
             )
         )
 
-# meh this is a little redundant but conveneient
+# meh this is a little redundant but convenient
 class FormANDCalculator(ANDCalculator):
     window = timedelta(days=1)
 
