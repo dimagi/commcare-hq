@@ -1,13 +1,15 @@
-from corehq.apps.reports.fields import ReportMultiSelectField, ReportSelectField
+from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext as _
 from corehq.apps.commtrack.models import *
 from corehq.apps.commtrack.util import *
 from corehq.apps.locations.util import defined_location_types
+from corehq.apps.reports.filters.base import BaseSingleOptionFilter, BaseMutipleOptionFilter
 
 
-class SupplyPointTypeFilter(ReportMultiSelectField):
+class SupplyPointTypeFilter(BaseMutipleOptionFilter):
     slug = 'outlet_type'
-    name = 'Outlet Type'
-    default_option = ['_all']
+    label = ugettext_noop('Outlet Type')
+    default_options = ['_all']
 
     @property
     def options(self):
@@ -16,8 +18,7 @@ class SupplyPointTypeFilter(ReportMultiSelectField):
         def indent(type):
             return (type, u'\u2013 %s' % type)
 
-        choices = []
-        choices.append(('_all', 'All Outlet Types'))
+        choices = [('_all', _('All Outlet Types'))]
         for k, v in sorted(categories.items()):
             if k.startswith('_'):
                 continue
@@ -27,26 +28,26 @@ class SupplyPointTypeFilter(ReportMultiSelectField):
         choices.append(('_oth', 'Other'))
         for t in sorted(categories['_oth']):
             choices.append(indent(t))
-        return [{'val': e[0], 'text': e[1]} for e in choices]
-
-
-class ProductFilter(ReportMultiSelectField):
-    slug = 'product'
-    name = 'Product'
-    default_option = ['_all']
-
-    @property
-    def options(self):
-        choices = [{'text': e[0], 'val': e[1]} for e in sorted((p.name, p._id) for p in Product.by_domain(self.domain))]
-        choices.insert(0, {'text': 'All Products', 'val': '_all'})
         return choices
 
 
-class LocationTypeFilter(ReportSelectField):
-    slug = 'agg_type'
-    name = 'Aggregate by'
-    default_option = 'choose location type...'
+class ProductFilter(BaseMutipleOptionFilter):
+    slug = 'product'
+    label = ugettext_noop('Product')
+    default_options = ['_all']
 
     @property
     def options(self):
-        return [{'text': k, 'val': k} for k in defined_location_types(self.domain)]
+        choices = sorted((p._id, p.name) for p in Product.by_domain(self.domain))
+        choices.insert(0, ('_all', _('All Products')))
+        return choices
+
+
+class LocationTypeFilter(BaseSingleOptionFilter):
+    slug = 'agg_type'
+    label = ugettext_noop('Aggregate by')
+    default_text = ugettext_noop('Choose Location Type...')
+
+    @property
+    def options(self):
+        return [(k, k) for k in defined_location_types(self.domain)]
