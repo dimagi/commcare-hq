@@ -100,18 +100,6 @@ class ReportSelectField(ReportField):
         )
 
 
-class ReportMultiSelectField(ReportSelectField):
-    template = "reports/fields/multiselect_generic.html"
-    selected = []
-    # auto_select
-    default_option = []
-
-    # enfore as_combo = False ?
-
-    def update_params(self):
-        self.selected = self.request.GET.getlist(self.slug) or self.default_option
-
-
 class BooleanField(ReportField):
     slug = "checkbox"
     label = "hello"
