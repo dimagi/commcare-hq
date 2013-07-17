@@ -25,3 +25,17 @@ class SelectLicenseFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return [(code, license_name) for code, license_name in LICENSES.items()]
+
+
+class SelectCategoryFilter(BaseSingleOptionFilter):
+    slug = "category"
+    label = ugettext_noop("Category")
+    default_text = ugettext_noop("All Categories")
+
+    @property
+    def options(self):
+        if hasattr(Domain, 'categories'):
+            available_categories = [(d.replace(' ', '+'), d) for d in Domain.categories()]
+        else:
+            available_categories = []
+        return available_categories

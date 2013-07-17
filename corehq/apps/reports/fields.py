@@ -272,21 +272,6 @@ class SelectOrganizationField(ReportSelectField):
         self.selected = self.request.GET.get(self.slug,'')
         self.options = available_orgs
 
-class SelectCategoryField(ReportSelectField):
-    slug = "category"
-    name = ugettext_noop("Category")
-    cssId = "category_select"
-    cssClasses = "span6"
-    default_option = ugettext_noop("All Categories")
-
-    def update_params(self):
-        if hasattr(Domain, 'categories'):
-            available_categories = [{'val': d.replace(' ', '+'), 'text': d} for d in Domain.categories()]
-        else:
-            available_categories = []
-        self.selected = self.request.GET.get(self.slug,'')
-        self.options = available_categories
-
 
 class SelectMobileWorkerField(ReportField):
     slug = "select_mw"
