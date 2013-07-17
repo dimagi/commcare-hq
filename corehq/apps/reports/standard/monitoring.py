@@ -283,7 +283,7 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase, MultiFormDrilldow
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
-        'corehq.apps.reports.fields.DatespanField'
+        'corehq.apps.reports.filters.dates.DatespanFilter'
     ]
     fix_left_col = True
     emailable = True
@@ -347,7 +347,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
 
     fields = [  'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
                 'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
-                'corehq.apps.reports.fields.DatespanField']
+                'corehq.apps.reports.filters.dates.DatespanFilter']
 
     description = ugettext_noop("Number of submissions per day.")
 
@@ -422,7 +422,7 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
     slug = "completion_times"
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.SingleFormByApplicationFilter',
-              'corehq.apps.reports.fields.DatespanField']
+              'corehq.apps.reports.filters.dates.DatespanFilter']
 
     description = ugettext_noop("Statistics on time spent on a particular form.")
     is_cacheable = True
@@ -564,7 +564,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
     
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
-              'corehq.apps.reports.fields.DatespanField']
+              'corehq.apps.reports.filters.dates.DatespanFilter']
 
     @property
     def headers(self):
@@ -689,7 +689,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
         'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
-        'corehq.apps.reports.fields.DatespanField']
+        'corehq.apps.reports.filters.dates.DatespanFilter']
 
     report_partial_path = "reports/partials/punchcard.html"
 

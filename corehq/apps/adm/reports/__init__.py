@@ -59,7 +59,7 @@ class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectR
 
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
-              'corehq.apps.reports.fields.DatespanField']
+              'corehq.apps.reports.filters.dates.DatespanFilter']
 
     hide_filters = False
 

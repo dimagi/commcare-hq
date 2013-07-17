@@ -22,7 +22,7 @@ class CallLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularR
     """
     name = ugettext_noop('Call Log')
     slug = 'call_log'
-    fields = ['corehq.apps.reports.fields.DatespanField']
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter']
     exportable = True
     emailable = True
     
@@ -156,7 +156,7 @@ class ExpectedCallbackReport(ProjectReport, ProjectReportParametersMixin, Generi
     """
     name = ugettext_noop('Expected Callbacks')
     slug = 'expected_callbacks'
-    fields = ['corehq.apps.reports.fields.DatespanField']
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter']
     exportable = True
     
     @property

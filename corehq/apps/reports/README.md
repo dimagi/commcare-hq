@@ -62,3 +62,90 @@ Doing count accross filter ranges becomes a matter or ORing the bit sets and cou
   [2013,01,03,"open_case"] = [0,0,0,0,0,1,0,0,0]
 
 More on this technique here: http://highscalability.com/blog/2012/4/5/big-data-counting-how-to-count-a-billion-distinct-objects-us.html
+
+## Example fully custom report
+```python
+class MyBasicReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
+    name = "My Basic Report"
+    slug = "my_basic_report"
+    fields = (DatespanMixin.datespan_field)
+
+    @property
+    def headers(self):
+        return DataTablesHeader(DataTablesColumn("Col A"),
+                                DataTablesColumnGroup("Goup 1", DataTablesColumn("Col B"),
+                                                      DataTablesColumn("Col C")),
+                                DataTablesColumn("Col D"))
+
+    @property
+    def rows(self):
+        return [
+            ['Row 1', 2, 3, 4],
+            ['Row 2', 3, 2, 1]
+        ]
+```
+
+## Example SQL report
+See SqlTabularReport for more detailed docs.
+
+```python
+class DemoReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
+    name = "SQL Demo"
+    slug = "sql_demo"
+    field_classes = (DatespanFilter,)
+    datespan_default_days = 30
+    group_by = ["user"]
+    table_name = "user_report_data"
+
+    @property
+    def filters(self):
+        return [
+            "date between :startdate and :enddate"
+        ]
+
+    @property
+    def filter_values(self):
+        return {
+            "startdate": self.datespan.startdate_param_utc,
+            "enddate": self.datespan.enddate_param_utc
+        }
+
+    @property
+    def keys(self):
+        # would normally be loaded from couch
+        return [["user1"], ["user2"], ['user3']]
+
+    @property
+    def columns(self):
+        user = DatabaseColumn("Username1", "user", column_type=SimpleColumn, format_fn=self.username)
+        i_a = DatabaseColumn("Indicator A", "indicator_a")
+        i_b = DatabaseColumn("Indicator B", "indicator_b")
+
+        agg_c_d = AggregateColumn("C/D", self.calc_percentage,
+                                  SumColumn("indicator_c"),
+                                  SumColumn("indicator_d"),
+                                  format_fn=self.format_percent)
+
+        return [
+            user,
+            i_a,
+            i_b,
+            agg_c_d
+        ]
+
+    _usernames = {"user1": "Joe", "user2": "Bob", 'user3': "Gill"}  # normally loaded from couch
+    def username(self, key):
+        return self._usernames[key]
+
+    def calc_percentage(num, denom):
+        if isinstance(num, Number) and isinstance(denom, Number):
+            if denom != 0:
+                return num * 100 / denom
+            else:
+                return 0
+        else:
+            return None
+
+    def format_percent(self, value):
+        return format_datatables_data("%d%%" % value, value)
+```

@@ -43,7 +43,7 @@ class ExportReport(DataInterface, ProjectReportParametersMixin):
 class FormExportReportBase(ExportReport, DatespanMixin):
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
-              'corehq.apps.reports.fields.DatespanField']
+              'corehq.apps.reports.filters.dates.DatespanFilter']
 
     @property
     def can_view_deid(self):
