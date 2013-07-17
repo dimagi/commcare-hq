@@ -402,7 +402,7 @@ class GenericReportView(CacheableRequestMixIn):
         current_config_id = self.request.GET.get('config_id', '')
         default_config = ReportConfig.default()
 
-        has_datespan = ('corehq.apps.reports.fields.DatespanField' in self.fields)
+        has_datespan = ('corehq.apps.reports.filters.dates.DatespanFilter' in self.fields)
 
         self.context.update(
             report=dict(

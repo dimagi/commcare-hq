@@ -34,7 +34,7 @@ class ExportReport(ProjectReport, ProjectReportParametersMixin):
 class FormExportReportBase(ExportReport, DatespanMixin):
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
-              'corehq.apps.reports.fields.DatespanField']
+              'corehq.apps.reports.filters.dates.DatespanFilter']
 
     def get_saved_exports(self):
         # add saved exports. because of the way in which the key is stored

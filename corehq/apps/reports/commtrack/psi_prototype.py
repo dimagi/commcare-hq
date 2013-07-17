@@ -284,7 +284,7 @@ def load_all_loc_hierarchy(locs):
 class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Visit Report'
     slug = 'visits'
-    fields = ['corehq.apps.reports.fields.DatespanField',
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'corehq.apps.reports.commtrack.filters.SupplyPointTypeFilter',
               'corehq.apps.reports.filters.fixtures.AsyncLocationFilter']
     exportable = True
@@ -374,7 +374,7 @@ OUTLETS_LIMIT = 500
 class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Sales and Consumption Report'
     slug = 'sales_consumption'
-    fields = ['corehq.apps.reports.fields.DatespanField',
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'corehq.apps.reports.commtrack.filters.SupplyPointTypeFilter',
               'corehq.apps.reports.commtrack.filters.ProductFilter',
               'corehq.apps.reports.filters.fixtures.AsyncLocationFilter']
@@ -478,7 +478,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
 class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Sales and Consumption Report, Cumulative'
     slug = 'cumul_sales_consumption'
-    fields = ['corehq.apps.reports.fields.DatespanField',
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'corehq.apps.reports.commtrack.filters.SupplyPointTypeFilter',
               'corehq.apps.reports.commtrack.filters.ProductFilter',
               'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
