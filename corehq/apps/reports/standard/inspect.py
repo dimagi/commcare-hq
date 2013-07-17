@@ -40,7 +40,7 @@ class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabular
     exportable = False
     asynchronous = False
     ajax_pagination = True
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
+    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
               'corehq.apps.reports.fields.SelectMobileWorkerField']
 
 
@@ -290,7 +290,7 @@ class CaseSearchFilter(SearchFilter):
 
 class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin):
     fields = [
-        'corehq.apps.reports.fields.FilterUsersField',
+        'corehq.apps.reports.filters.users.UserTypeFilter',
         'corehq.apps.reports.fields.SelectCaseOwnerField',
         'corehq.apps.reports.filters.select.CaseTypeFilter',
         'corehq.apps.reports.filters.select.SelectOpenCloseFilter',

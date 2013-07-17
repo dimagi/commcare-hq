@@ -267,13 +267,14 @@ def group_filter(doc, group):
     else:
         return True
 
+
 def create_export_filter(request, domain, export_type='form'):
-    from corehq.apps.reports.fields import FilterUsersField
+    from corehq.apps.reports.filters.users import UserTypeFilter
     app_id = request.GET.get('app_id', None)
 
     group, users = get_group_params(domain, **json_request(request.GET))
 
-    user_filters, use_user_filters = FilterUsersField.get_user_filter(request)
+    user_filters, use_user_filters = UserTypeFilter.get_user_filter(request)
 
     if export_type == 'case':
         if user_filters and use_user_filters:
@@ -292,6 +293,7 @@ def create_export_filter(request, domain, export_type='form'):
         else:
             filter &= SerializableFunction(group_filter, group=group)
     return filter
+
 
 def get_possible_reports(domain):
     from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,

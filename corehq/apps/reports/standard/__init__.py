@@ -3,7 +3,7 @@ from django.core.urlresolvers import reverse
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
-from corehq.apps.reports.fields import FilterUsersField
+from corehq.apps.reports.filters.users import UserTypeFilter
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.dates import DateSpan
@@ -79,7 +79,7 @@ class ProjectReportParametersMixin(object):
     @property
     @memoized
     def user_filter(self):
-        return FilterUsersField.get_user_filter(self.request)[0]
+        return UserTypeFilter.get_user_filter(self.request)[0]
 
     @property
     def group_id(self):

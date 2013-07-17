@@ -59,7 +59,7 @@ class ReportField(CacheableRequestMixIn):
 
 class FilterUsersField(ReportField):
     slug = "ufilter"
-    template = "reports/fields/filter_users.html"
+    template = "reports/filters/filter_users.html"
 
     def update_context(self):
         toggle, show_filter = self.get_user_filter(self.request)
@@ -87,7 +87,7 @@ class FilterUsersField(ReportField):
 
 class SelectMobileWorkerField(ReportField):
     slug = "select_mw"
-    template = "reports/fields/select_mobile_worker.html"
+    template = "reports/filters/select_mobile_worker.html"
     name = ugettext_noop("Select Mobile Worker")
     default_option = ugettext_noop("All Mobile Workers")
 

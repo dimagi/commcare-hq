@@ -22,7 +22,7 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
 class ApplicationStatusReport(DeploymentsReport):
     name = ugettext_noop("Application Status")
     slug = "app_status"
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
+    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
               'corehq.apps.reports.filters.select.GroupFilter',
               'corehq.apps.reports.filters.select.SelectApplicationFilter']
 

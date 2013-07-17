@@ -47,7 +47,7 @@ from django.views.decorators.http import (require_http_methods, require_POST,
     require_GET)
 from couchforms.filters import instances
 from couchdbkit.exceptions import ResourceNotFound
-from fields import FilterUsersField
+from filters.users import UserTypeFilter
 from util import get_all_users_by_domain
 from corehq.apps.groups.models import Group
 from soil import DownloadBase
@@ -141,7 +141,7 @@ def export_data(req, domain):
               "max_column_size": int(req.GET.get("max_column_size", 2000)),
               "separator": req.GET.get("separator", "|")}
 
-    user_filter, _ = FilterUsersField.get_user_filter(req)
+    user_filter, _ = UserTypeFilter.get_user_filter(req)
 
     if user_filter:
         users_matching_filter = map(lambda x: x.get('user_id'), get_all_users_by_domain(domain,
@@ -812,7 +812,7 @@ def download_cases(request, domain):
     include_closed = json.loads(request.GET.get('include_closed', 'false'))
     format = Format.from_format(request.GET.get('format') or Format.XLS_2007)
     group = request.GET.get('group', None)
-    user_filter, _ = FilterUsersField.get_user_filter(request)
+    user_filter, _ = UserTypeFilter.get_user_filter(request)
 
     async = request.GET.get('async') == 'true'
 

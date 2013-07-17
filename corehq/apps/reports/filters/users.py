@@ -1,9 +1,11 @@
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
+from corehq.apps.reports import util
 
-from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter
+from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseReportFilter, BaseSingleOptionFilter
 from corehq.apps.groups.hierarchy import (get_hierarchy,
         get_user_data_from_hierarchy)
+from corehq.apps.reports.models import HQUserType
 
 
 class LinkedUserFilter(BaseDrilldownOptionFilter):
@@ -105,3 +107,37 @@ class LinkedUserFilter(BaseDrilldownOptionFilter):
 
         return get_user_data_from_hierarchy(domain, cls.user_types,
                 root_user_id=selected_user_id)
+
+
+class UserTypeFilter(BaseReportFilter):
+    # note, this is a butchered refactor of the original FilterUsersField.
+    # don't use this as a guideline for anything.
+    slug = "ufilter"
+    label = ugettext_noop("User Type")
+    template = "reports/filters/filter_users.html"
+
+    @property
+    def filter_context(self):
+        toggle, show_filter = self.get_user_filter(self.request)
+        return {
+            'show_user_filter': show_filter,
+            'toggle_users': toggle,
+        }
+
+    @classmethod
+    def get_user_filter(cls, request):
+        ufilter = group = individual = None
+        try:
+            if request.GET.get('ufilter', ''):
+                ufilter = request.GET.getlist('ufilter')
+            group = request.GET.get('group', '')
+            individual = request.GET.get('individual', '')
+        except KeyError:
+            pass
+        show_filter = True
+        toggle = HQUserType.use_defaults()
+        if ufilter and not (group or individual):
+            toggle = HQUserType.use_filter(ufilter)
+        elif group or individual:
+            show_filter = False
+        return toggle, show_filter

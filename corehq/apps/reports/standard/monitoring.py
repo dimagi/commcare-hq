@@ -103,7 +103,7 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
     """
     name = ugettext_noop('Case Activity')
     slug = 'case_activity'
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
+    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
               'corehq.apps.reports.filters.select.CaseTypeFilter',
               'corehq.apps.reports.filters.select.GroupFilter']
     all_users = None
@@ -287,7 +287,7 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase, MultiFormDrilldow
     name = ugettext_noop("Submissions By Form")
     slug = "submissions_by_form"
     fields = [
-        'corehq.apps.reports.fields.FilterUsersField',
+        'corehq.apps.reports.filters.users.UserTypeFilter',
         'corehq.apps.reports.filters.select.GroupFilter',
         'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter'
@@ -349,7 +349,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
     slug = "daily_form_stats"
     name = ugettext_noop("Daily Form Activity")
 
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
+    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
                 'corehq.apps.reports.filters.select.GroupFilter',
                 'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
                 'corehq.apps.reports.filters.dates.DatespanFilter']
@@ -422,7 +422,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
 class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
     name = ugettext_noop("Form Completion Time")
     slug = "completion_times"
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
+    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
               'corehq.apps.reports.filters.select.GroupFilter',
               'corehq.apps.reports.filters.forms.SingleFormByApplicationFilter',
               'corehq.apps.reports.filters.dates.DatespanFilter']
@@ -518,7 +518,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
     description = ugettext_noop("Time lag between when forms were completed and when forms were successfully "
                                 "sent to CommCare HQ.")
     
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
+    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
               'corehq.apps.reports.fields.SelectMobileWorkerField',
               'corehq.apps.reports.filters.select.GroupFilter',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
@@ -628,7 +628,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
 
 
 class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
+    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
               'corehq.apps.reports.fields.SelectMobileWorkerField']
     flush_layout = True
     report_template_path = "reports/async/basic.html"
@@ -642,7 +642,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     description = ugettext_noop("Graphical representation of when forms are submitted.")
 
     fields = [
-        'corehq.apps.reports.fields.FilterUsersField',
+        'corehq.apps.reports.filters.users.UserTypeFilter',
         'corehq.apps.reports.filters.select.GroupFilter',
         'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
         'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
