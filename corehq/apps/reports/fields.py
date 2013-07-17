@@ -91,16 +91,6 @@ class ReportSelectField(ReportField):
             use_combo_box=self.as_combo,
         )
 
-class ReportMultiSelectField(ReportSelectField):
-    template = "reports/fields/multiselect_generic.html"
-    selected = []
-    default_option = []
-
-    # enfore as_combo = False ?
-
-    def update_params(self):
-        self.selected = self.request.GET.getlist(self.slug) or self.default_option
-
 
 class FilterUsersField(ReportField):
     slug = "ufilter"
