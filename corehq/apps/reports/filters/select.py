@@ -1,5 +1,5 @@
 from django.utils.translation import ugettext_noop
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 
 
@@ -15,3 +15,13 @@ class SelectRegionFilter(BaseSingleOptionFilter):
         else:
             available_regions = []
         return available_regions
+
+
+class SelectLicenseFilter(BaseSingleOptionFilter):
+    slug = "license"
+    label = ugettext_noop("License")
+    default_text = ugettext_noop("All Licenses")
+
+    @property
+    def options(self):
+        return [(code, license_name) for code, license_name in LICENSES.items()]
