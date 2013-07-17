@@ -74,7 +74,7 @@ class BooleanField(ReportField):
 
 class FilterUsersField(ReportField):
     slug = "ufilter"
-    template = "reports/fields/filter_users.html"
+    template = "reports/filters/filter_users.html"
     always_show_filter = False
     can_be_empty = False
 
@@ -130,7 +130,7 @@ class SelectMobileWorkerMixin(object):
         return default
 
 class SelectMobileWorkerField(SelectMobileWorkerMixin, ReportField):
-    template = "reports/fields/select_mobile_worker.html"
+    template = "reports/filters/select_mobile_worker.html"
     default_option = ugettext_noop("All Mobile Workers")
     filter_users_field_class = FilterUsersField
 

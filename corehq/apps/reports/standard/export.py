@@ -41,7 +41,7 @@ class ExportReport(DataInterface, ProjectReportParametersMixin):
 
 
 class FormExportReportBase(ExportReport, DatespanMixin):
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
+    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
               'corehq.apps.reports.filters.select.GroupFilter',
               'corehq.apps.reports.filters.dates.DatespanFilter']
 
@@ -241,7 +241,7 @@ class ExcelExportReport(FormExportReportBase):
 class CaseExportReport(ExportReport):
     name = ugettext_lazy("Export Cases")
     slug = "case_export"
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
+    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
               'corehq.apps.reports.filters.select.GroupFilter']
     report_template_path = "reports/reportdata/case_export_data.html"
     icon = "icon-share"
