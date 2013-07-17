@@ -482,6 +482,7 @@ class AsyncLocationField(ReportField):
 
         return context
 
+<<<<<<< HEAD
 class AsyncDrillableField(BaseReportFilter):
     # todo: add documentation
     """
@@ -590,7 +591,10 @@ class AsyncDrillableField(BaseReportFilter):
             'hierarchy': self.full_hierarchy
         }
 
+=======
 
+        
+>>>>>>> - Renamed AsyncDrillableField to AsyncDrillableFilter
 class DeviceLogTagField(ReportField):
     slug = "logtag"
     errors_only_slug = "errors_only"
