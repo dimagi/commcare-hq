@@ -1,3 +1,5 @@
+import datetime
+from django.conf import settings
 from django.utils.translation import ugettext_noop
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.groups.models import Group
@@ -62,3 +64,13 @@ class GroupFilter(BaseSingleOptionFilter):
     def options(self):
         return [(group.get_id, group.name) for group in Group.get_reporting_groups(self.domain)]
 
+
+class YearFilter(BaseSingleOptionFilter):
+    slug = "year"
+    label = ugettext_noop("Year")
+    default_text = None
+
+    @property
+    def options(self):
+        start_year = getattr(settings, 'START_YEAR', 2008)
+        return [(y, y) for y in range(start_year, datetime.datetime.utcnow().year + 1)]

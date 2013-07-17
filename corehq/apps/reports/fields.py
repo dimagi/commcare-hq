@@ -108,15 +108,6 @@ class MonthField(ReportField):
     def update_context(self):
         self.context['month'] = self.request.GET.get('month', datetime.datetime.utcnow().month)
 
-class YearField(ReportField):
-    slug = "year"
-    template = "reports/partials/year-select.html"
-
-    def update_context(self):
-        year = getattr(settings, 'START_YEAR', 2008)
-        self.context['years'] = range(year, datetime.datetime.utcnow().year + 1)
-        self.context['year'] = int(self.request.GET.get('year', datetime.datetime.utcnow().year))
-
 
 class FilterUsersField(ReportField):
     slug = "ufilter"
