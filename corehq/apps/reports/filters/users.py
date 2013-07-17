@@ -1,5 +1,6 @@
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
+from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
 
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseReportFilter, BaseSingleOptionFilter, BaseSingleOptionTypeaheadFilter
@@ -171,4 +172,17 @@ class SelectMobileWorkerFilter(BaseSingleOptionTypeaheadFilter):
            user_filter[HQUserType.DEMO_USER].show or user_filter[HQUserType.UNKNOWN].show:
             default = _('%s & Others') % _(default)
         return default
+
+
+class SelectCaseOwnerFilter(SelectMobileWorkerFilter):
+    label = ugettext_noop("Select Case Owner")
+    default_option = ugettext_noop("All Case Owners")
+
+    @property
+    def options(self):
+        options = [(group._id, "%s (Group)" % group.name) for group in Group.get_case_sharing_groups(self.domain)]
+        user_options = super(SelectCaseOwnerFilter, self).options
+        options.extend(user_options)
+        return options
+
 

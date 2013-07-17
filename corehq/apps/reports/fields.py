@@ -115,14 +115,6 @@ class SelectMobileWorkerField(ReportField):
             default = _('%s & Others') % _(default)
         return default
 
-class SelectCaseOwnerField(SelectMobileWorkerField):
-    name = ugettext_noop("Select Case Owner")
-    default_option = ugettext_noop("All Case Owners")
-
-    def update_params(self):
-        case_sharing_groups = Group.get_case_sharing_groups(self.domain)
-        self.context["groups"] = [dict(group_id=group._id, name=group.name) for group in case_sharing_groups]
-
 
 class SelectFilteredMobileWorkerField(SelectMobileWorkerField):
     """
