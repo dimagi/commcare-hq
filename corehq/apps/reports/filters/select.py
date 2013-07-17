@@ -1,5 +1,6 @@
 from django.utils.translation import ugettext_noop
 from corehq.apps.domain.models import Domain, LICENSES
+from corehq.apps.orgs.models import Organization
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 
 
@@ -39,3 +40,13 @@ class SelectCategoryFilter(BaseSingleOptionFilter):
         else:
             available_categories = []
         return available_categories
+
+
+class SelectOrganizationFilter(BaseSingleOptionFilter):
+    slug = "org"
+    name = ugettext_noop("Organization")
+    default_text = ugettext_noop("All Organizations")
+
+    @property
+    def options(self):
+        return [(o.name, o.title) for o in  Organization.get_all()]
