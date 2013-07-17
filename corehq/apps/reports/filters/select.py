@@ -4,6 +4,7 @@ from django.conf import settings
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.groups.models import Group
 from corehq.apps.orgs.models import Organization
@@ -147,3 +148,21 @@ class SelectOpenCloseFilter(BaseSingleOptionFilter):
             ('open', _("Only Open")),
             ('closed', _("Only Closed")),
         ]
+
+
+class SelectApplicationFilter(BaseSingleOptionFilter):
+    slug = "app"
+    label = ugettext_noop("Application")
+    default_text = ugettext_noop("Select Application [Latest Build Version]")
+
+    @property
+    def options(self):
+        apps_for_domain = Application.get_db().view(
+            "app_manager/applications_brief",
+            startkey=[self.domain],
+            endkey=[self.domain, {}],
+            include_docs=True
+        ).all()
+        return [(app['value']['_id'], _("%(name)s [up to build %(version)s]") % {
+            'name': app['value']['name'],
+            'version': app['value']['version']}) for app in apps_for_domain]
