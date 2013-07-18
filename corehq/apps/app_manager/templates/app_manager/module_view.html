@@ -219,7 +219,7 @@
         </div>
         <div id="detail-screen-config-body">
             {% if app.enable_multi_sort %}
-                <legend>
+                <legend data-bind="visible: rowCount() > 0">
                     {% trans "Sort Properties" %}
                     <span style="font-size: 13px">
                         <span class="hq-help-template"
