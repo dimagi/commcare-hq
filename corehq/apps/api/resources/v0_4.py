@@ -8,7 +8,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import xform as casexml_xform
 
 from corehq.apps.app_manager import util as app_manager_util
-from corehq.apps.app_manager.models import ApplicationBase, Application, RemoteApp, Form
+from corehq.apps.app_manager.models import ApplicationBase, Application, RemoteApp, Form, get_app
 from corehq.apps.receiverwrapper.models import Repeater, repeater_types
 from corehq.apps.groups.models import Group
 from corehq.apps.cloudcare.api import ElasticCaseQuery
@@ -213,12 +213,16 @@ class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
             return []
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        # There should be few enough apps per domain that this is OK.
+        # There should be few enough apps per domain that doing an explicit refresh for each is OK.
         # This is the easiest way to filter remote apps
         # Later we could serialize them to their URL or whatevs but it is not that useful yet
-        apps = ApplicationBase.by_domain(domain)
-        return [get_object_or_not_exist(Application, domain, app.id) for app in application_bases
-                if not app.is_remote_app]
+
+        application_bases = ApplicationBase.by_domain(domain)
+
+        # This wraps in the appropriate class so that is_remote_app() returns the correct answer 
+        applications = [get_app(domain, application_base.id) for application_base in application_bases]
+        
+        return [app for app in applications if not app.is_remote_app()]
 
     def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(Application, kwargs['domain'], kwargs['pk'])
