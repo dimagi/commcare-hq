@@ -454,6 +454,7 @@ class GenericReportView(CacheableRequestMixIn):
             Intention: This probably does not need to be overridden in general.
             Please override template_context instead.
         """
+        self.context.update(rendered_as=self.rendered_as)
         self.context['report'].update(
             show_filters=self.fields or not self.hide_filters,
             breadcrumbs=self.breadcrumbs,
