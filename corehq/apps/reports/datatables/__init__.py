@@ -1,6 +1,7 @@
 from django.template.loader import render_to_string
 from . import DTSortDirection, DTSortType
 
+
 class DataTablesColumn(object):
     rowspan = 1
 
@@ -14,14 +15,14 @@ class DataTablesColumn(object):
         self.help_text = help_text
         self.sortable = sortable
         self.rotate = rotate
-        self.prop_name=prop_name
+        self.prop_name = prop_name
         if isinstance(expected, int):
             expected = "%d" % expected
         self.expected = expected
 
     @property
     def render_html(self):
-        column_params=dict(
+        column_params = dict(
             title=self.html,
             sort=self.sortable,
             rotate=self.rotate,
@@ -154,7 +155,7 @@ class DataTablesHeader(object):
         for column in self.header:
             if isinstance(column, DataTablesColumnGroup):
                 use_groups = True
-                groups.extend([column.html] + [" "]*(len(column.columns)-1))
+                groups.extend([column.html] + [" "] * (len(column.columns) - 1))
                 for child_columns in column.columns:
                     head.append(child_columns.html)
             else:
