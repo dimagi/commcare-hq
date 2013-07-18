@@ -66,3 +66,33 @@ def sync_user_cases(commcare_user):
 
     casexml = ElementTree.tostring(caseblock.as_xml())
     submit_case_blocks(casexml, domain, commcare_user.username, commcare_user._id)
+
+
+def bootstrap_callcenter(domain):
+    if not (domain and domain.name and domain.call_center_config.enabled):
+        return
+
+    mapping = SqlExtractMapping.by_name(domain.name, MAPPING_NAME)
+
+    if not mapping:
+        mapping = SqlExtractMapping()
+
+    mapping.auto_generated = True
+    mapping.domains = [domain.name]
+    mapping.name = MAPPING_NAME
+    mapping.couch_view = 'formtrends/form_duration_by_user'
+    mapping.couch_key_prefix = ['dux', domain.name]
+    mapping.couch_date_range = 1
+    mapping.active = True
+    mapping.columns = [
+        ColumnDef(name="date", data_type="date", value_source="key", value_index=2,
+                  date_format="%Y-%m-%dT%H:%M:%S.%fZ"),
+        ColumnDef(name="user_id", data_type="string", value_source="key", value_index=3),
+        ColumnDef(name="xmlns", data_type="string", value_source="key", value_index=4),
+        ColumnDef(name="duration_sum", data_type="integer", value_source="value",
+                  value_attribute='sum', match_keys=[KeyMatcher(index=0, value="dux")]),
+        ColumnDef(name="sumbission_count", data_type="integer", value_source="value",
+                  value_attribute='count', match_keys=[KeyMatcher(index=0, value="dux")]),
+    ]
+
+    mapping.save()
