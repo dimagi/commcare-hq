@@ -997,6 +997,6 @@ class ElasticProjectInspectionReport(ProjectInspectionReportParamsMixin, Elastic
         so as to get sorting working correctly with the context of the GET params
         """
         ret = super(ElasticTabularReport, self).shared_pagination_GET_params
-        for k, v in self.request.GET.items():
+        for k, v in self.request.GET.iterlists():
             ret.append(dict(name=k, value=v))
         return ret

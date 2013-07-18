@@ -6,7 +6,7 @@ from corehq.apps.importer.const import LookupErrors
 import corehq.apps.importer.util as importer_util
 from corehq.apps.users.models import CouchUser
 from soil import DownloadBase
-from casexml.apps.case.tests.util import CaseBlock
+from casexml.apps.case.tests.util import CaseBlock, CaseBlockError
 from casexml.apps.case.xml import V2
 from dimagi.utils.prime_views import prime_views
 import uuid
@@ -29,7 +29,7 @@ def bulk_import_async(import_id, config, domain, excel_id):
 
     row_count = spreadsheet.get_num_rows()
     columns = spreadsheet.get_header_columns()
-    match_count = created_count = too_many_matches = 0
+    match_count = created_count = too_many_matches = errors = 0
     blank_external_ids = []
     invalid_dates = []
     prime_offset = 1  # used to prevent back-to-back priming
@@ -90,31 +90,40 @@ def bulk_import_async(import_id, config, domain, excel_id):
         if not case:
             id = uuid.uuid4().hex
 
-            caseblock = CaseBlock(
-                create=True,
-                case_id=id,
-                version=V2,
-                user_id=user_id,
-                owner_id=owner_id,
-                case_type=config.case_type,
-                external_id=search_id if config.search_field == 'external_id' else '',
-                update=fields_to_update
-            )
-            submit_case_block(caseblock, domain, username, user_id)
+            try:
+                caseblock = CaseBlock(
+                    create=True,
+                    case_id=id,
+                    version=V2,
+                    user_id=user_id,
+                    owner_id=owner_id,
+                    case_type=config.case_type,
+                    external_id=search_id if config.search_field == 'external_id' else '',
+                    update=fields_to_update
+                )
+                submit_case_block(caseblock, domain, username, user_id)
+            except CaseBlockError:
+                created_count -= 1
+                errors += 1
+
         elif case and case.type == config.case_type:
             extras = {}
             if external_id:
                 extras['external_id'] = external_id
-            caseblock = CaseBlock(
-                create=False,
-                case_id=case._id,
-                owner_id=owner_id,
-                version=V2,
-                update=fields_to_update,
-                **extras
-            )
 
-            submit_case_block(caseblock, domain, username, user_id)
+            try:
+                caseblock = CaseBlock(
+                    create=False,
+                    case_id=case._id,
+                    owner_id=owner_id,
+                    version=V2,
+                    update=fields_to_update,
+                    **extras
+                )
+                submit_case_block(caseblock, domain, username, user_id)
+            except CaseBlockError:
+                match_count -= 1
+                errors += 1
 
     return {
         'created_count': created_count,
@@ -122,6 +131,7 @@ def bulk_import_async(import_id, config, domain, excel_id):
         'too_many_matches': too_many_matches,
         'blank_externals': blank_external_ids,
         'invalid_dates': invalid_dates,
+        'errors': errors,
     }
 
 def submit_case_block(caseblock, domain, username, user_id):

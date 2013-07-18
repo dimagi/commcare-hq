@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 
 from couchdbkit.exceptions import ResourceNotFound
@@ -13,17 +14,21 @@ from django.core import cache
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 import simplejson
+import logging
 
 from casexml.apps.case.models import CommCareCaseAction
 from corehq.apps.api.es import CaseES
 from corehq.apps.hqsofabed.models import HQFormData
 from corehq.apps.reports.filters.search import SearchFilter
-from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin
+from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.display import xmlns_to_name
-from corehq.apps.reports.fields import SelectOpenCloseField, SelectMobileWorkerField
+from corehq.apps.reports.fields import SelectOpenCloseField, SelectMobileWorkerField, StrongFilterUsersField
 from corehq.apps.reports.generic import GenericTabularReport, ProjectInspectionReportParamsMixin, ElasticProjectInspectionReport
+from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
+from dimagi.utils.couch import get_cached_property
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.pagination import CouchFilter
 from dimagi.utils.decorators.memoized import memoized
@@ -43,51 +48,89 @@ class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabular
               'corehq.apps.reports.fields.SelectMobileWorkerField']
 
 
-class SubmitHistory(ProjectInspectionReport):
+class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReportParametersMixin, MultiFormDrilldownMixin, DatespanMixin):
     name = ugettext_noop('Submit History')
     slug = 'submit_history'
+    fields = [
+              'corehq.apps.reports.fields.CombinedSelectUsersField',
+              'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
+              'corehq.apps.reports.fields.DatespanField']
+    ajax_pagination = True
+    filter_users_field_class = StrongFilterUsersField
+    include_inactive = True
+
 
     @property
     def headers(self):
         headers = DataTablesHeader(DataTablesColumn(_("View Form")),
-            DataTablesColumn(_("Username")),
-            DataTablesColumn(_("Submit Time")),
-            DataTablesColumn(_("Form")))
-        headers.no_sort = True
+            DataTablesColumn(_("Username"), prop_name="form.meta.username"),
+            DataTablesColumn(_("Submit Time"), prop_name="form.meta.timeEnd"),
+            DataTablesColumn(_("Form"), prop_name="form.@name"))
         return headers
 
-    _all_history = None
     @property
-    def all_history(self):
-        if self._all_history is None:
-            self._all_history = HQFormData.objects.filter(userID__in=self.user_ids, domain=self.domain)
-        return self._all_history
+    def es_results(self):
+        if not getattr(self, 'es_response', None):
+            self.es_query()
+        return self.es_response
+
+    def es_query(self):
+        from corehq.apps.appstore.views import es_query
+        if not getattr(self, 'es_response', None):
+            q = {
+                "query": {
+                    "range": {
+                        "form.meta.timeEnd": {
+                            "from": self.datespan.startdate_param,
+                            "to": self.datespan.enddate_param}}},
+                "filter": {"and": []}}
+
+            xmlnss = filter(None, [f["xmlns"] for f in self.all_relevant_forms.values()])
+            if xmlnss:
+                q["filter"]["and"].append({"terms": {"xmlns.exact": xmlnss}})
+
+            def any_in(a, b):
+                return any(i in b for i in a)
+            if self.request.GET.get('all_mws', 'off') != 'on' or any_in(['1', '2', '3'], self.request.GET.getlist('ufilter')):
+                q["filter"]["and"].append({"terms": {"form.meta.userID": filter(None, self.combined_user_ids)}})
+            else:
+                ids = filter(None, [user['user_id'] for user in self.get_admins_and_demo_users()])
+                q["filter"]["and"].append({"not": {"terms": {"form.meta.userID": ids}}})
+
+            q["sort"] = self.get_sorting_block() if self.get_sorting_block() else [{"form.meta.timeEnd" : {"order": "desc"}}]
+            self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=XFORM_INDEX + '/xform/_search',
+                start_at=self.pagination.start, size=self.pagination.count)
+        return self.es_response
 
     @property
     def total_records(self):
-        return self.all_history.count()
+        return int(self.es_results['hits']['total'])
 
     @property
     def rows(self):
-        rows = []
-        all_hist = HQFormData.objects.filter(userID__in=self.user_ids, domain=self.domain)
-        history = all_hist.extra(order_by=['-received_on'])[self.pagination.start:self.pagination.start+self.pagination.count]
-        for data in history:
-            if data.userID in self.user_ids:
-                time = tz_utils.adjust_datetime_to_timezone(data.received_on, pytz.utc.zone, self.timezone.zone)
-                time = time.strftime("%Y-%m-%d %H:%M:%S")
-                xmlns = data.xmlns
-                app_id = data.app_id
-                xmlns = xmlns_to_name(self.domain, xmlns, app_id=app_id)
-                rows.append([self._form_data_link(data.instanceID), self.usernames[data.userID], time, xmlns])
-        return rows
+        def form_data_link(instance_id):
+            return "<a class='ajax_dialog' href='%(url)s'>%(text)s</a>" % {
+                "url": reverse('render_form_data', args=[self.domain, instance_id]),
+                "text": _("View Form")
+            }
 
-    def _form_data_link(self, instance_id):
-        return "<a class='ajax_dialog' href='%(url)s'>%(text)s</a>" % {
-            "url": reverse('render_form_data', args=[self.domain, instance_id]),
-            "text": _("View Form")
-        }
+        submissions = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
 
+        for form in submissions:
+            uid = form["form"]["meta"]["userID"]
+            username = form["form"]["meta"].get("username")
+            try:
+                name = ('"%s"' % get_cached_property(CouchUser, uid, 'full_name', expiry=7*24*60*60)) \
+                    if username not in ['demo_user', 'admin'] else ""
+            except ResourceNotFound:
+                name = "<b>[unregistered]</b>"
+
+            yield [
+                form_data_link(form["_id"]),
+                (username or _('No data for username')) + (" %s" % name if name else ""),
+                datetime.strptime(form["form"]["meta"]["timeEnd"], '%Y-%m-%dT%H:%M:%SZ').strftime("%Y-%m-%d %H:%M:%S"),
+                form["form"].get('@name') or _('No data for form name'),
+            ]
 
 class CaseListFilter(CouchFilter):
     view = "case/all_cases"
@@ -334,8 +377,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         if status:
             subterms.append({"term": {"closed": (status == 'closed')}})
 
-        user_filters = list(_filter_gen('owner_id', owner_ids)) + \
-                       list(_filter_gen('user_id', owner_ids))
+        user_filters = list(_filter_gen('owner_id', owner_ids))
         if user_filters:
             subterms.append({'or': user_filters})
 
@@ -368,7 +410,18 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         query = self.build_query(case_type=self.case_type, filter=self.case_filter,
                                  status=self.case_status, owner_ids=self.case_owners,
                                  search_string=SearchFilter.get_value(self.request, self.domain))
-        return case_es.run_query(query)
+        query_results = case_es.run_query(query)
+
+        if query_results is None or 'hits' not in query_results:
+            logging.error("CaseListMixin query error: %s, urlpath: %s, params: %s, user: %s yielded a result indicating a query error: %s, results: %s" % (
+                self.__class__.__name__,
+                self.request.path,
+                self.request.GET.urlencode(),
+                self.request.couch_user.username,
+                simplejson.dumps(query),
+                simplejson.dumps(query_results)
+            ))
+        return query_results
 
     @property
     @memoized
@@ -464,6 +517,8 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
             ]
 
         try:
+            #should this fail due to es_results being None or having no 'hits',
+            #return None, which will fail when trying to render rows, to return an error back to the datatables
             return [_format_row(item) for item in self.es_results['hits'].get('hits', [])]
         except RequestFailed:
             pass

@@ -9,6 +9,7 @@ def default_date(form):
 EQUAL = lambda expected, reference: expected == reference
 NOT_EQUAL = lambda expected, reference: expected != reference
 IN = lambda expected, reference_list: expected in reference_list
+IN_MULTISELECT = lambda expected, value: value in (expected or '').split(' ')
 
 class IntegerPropertyReference(object):
     def __init__(self, property_path):
