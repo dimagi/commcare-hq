@@ -437,17 +437,16 @@ def run_upload(request, domain, workbook):
                 else:
                     data_type = new_data_type
                     pass
-                assert data_type.domain == domain
+                data_type.fields = type_definition_fields
                 assert data_type.doc_type == FixtureDataType._doc_type
+                if data_type.domain != domain:
+                    data_type = new_data_type
+                    messages.error(request, _("'%(UID)s' is not a valid UID. But the new type is created.") % {'UID': dt['UID']})
                 if dt[DELETE_HEADER] == "Y" or dt[DELETE_HEADER] == "y":
                     data_type.recursive_delete(transaction)
                     continue
-                data_type.fields = type_definition_fields
             except (ResourceNotFound, KeyError) as e:
                 data_type = new_data_type
-            except AssertionError:
-                data_type = new_data_type
-                messages.error(request, _("'%(UID)s' is not a valid UID. But the new type is created.") % {'UID': dt['UID'] })
             transaction.save(data_type)
 
             data_items = workbook.get_worksheet(data_type.tag)
@@ -475,18 +474,17 @@ def run_upload(request, domain, workbook):
                     else:
                         old_data_item = new_data_item
                         pass
-                    assert old_data_item.domain == domain
+                    old_data_item.fields = di['field']   
+                    if old_data_item.domain != domain:
+                        old_data_item = new_data_item
+                        messages.error(request, _("'%(UID)s' is not a valid UID. But the new item is created.") % {'UID': di['UID'] })
                     assert old_data_item.doc_type == FixtureDataItem._doc_type
                     assert old_data_item.data_type_id == data_type.get_id
                     if di[DELETE_HEADER] == "Y" or di[DELETE_HEADER] == "y":
                         old_data_item.recursive_delete(transaction)
-                        continue   
-                    old_data_item.fields = di['field']               
+                        continue               
                 except (ResourceNotFound, KeyError) as e:
                     old_data_item = new_data_item
-                except AssertionError:
-                    old_data_item = new_data_item
-                    messages.error(request, _("'%(UID)s' is not a valid UID. But the new item is created.") % {'UID': di['UID'] })
                 transaction.save(old_data_item)
 
                 old_groups = old_data_item.get_groups()
