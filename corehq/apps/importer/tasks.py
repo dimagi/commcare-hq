@@ -84,7 +84,14 @@ def bulk_import_async(import_id, config, domain, excel_id):
             too_many_matches += 1
             continue
 
-        owner_id = fields_to_update.pop('owner_id', user_id)
+        # make sure a valid owner id was supplied before using it
+        uploaded_owner_id = fields_to_update.pop('owner_id', None)
+        if uploaded_owner_id and \
+           CouchUser.get_by_user_id(uploaded_owner_id, domain):
+            owner_id = uploaded_owner_id
+        else:
+            owner_id = user_id
+
         external_id = fields_to_update.pop('external_id', None)
 
         if not case:
