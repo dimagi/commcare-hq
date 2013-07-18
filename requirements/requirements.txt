@@ -48,7 +48,7 @@ gitdb==0.5.4
 #-e git+git://github.com/SiteSupport/gevent.git@1.0rc2#egg=gevent
 gevent==0.13.8
 rawes==0.3.6
-numpy==1.7.0
+numpy==1.7.1
 six==1.2.0
 socketpool==0.5.2
 markdown==2.2.1
