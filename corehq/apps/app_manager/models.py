@@ -18,7 +18,10 @@ from urlparse import urljoin
 from django.core.cache import cache
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext
+from corehq.apps.app_manager.const import APP_V1, APP_V2
+from couchdbkit.exceptions import BadValueError
+from couchdbkit.ext.django.schema import *
 from django.conf import settings
 from django.contrib.auth.models import get_hexdigest
 from django.core.urlresolvers import reverse
@@ -525,9 +528,11 @@ class FormBase(DocumentSchema):
                 and not self.actions.open_case.name_path:
             errors.append({
                 'type': 'case_name required',
-                'message': 'You are creating a case '
-                           'but have not given the case a name. '
-                           'The "Name according to question" field is required'
+                'message': ugettext(
+                    'Every case must have a name. '
+                    'Please specify a value for the name property under '
+                    '"Save data to the following case properties"'
+                )
             })
 
         try:
@@ -699,26 +704,45 @@ class DetailColumn(IndexedSchema):
         return super(DetailColumn, cls).wrap(data)
 
 
+class SortElement(IndexedSchema):
+    field = StringProperty()
+    type = StringProperty()
+    direction = StringProperty()
+
+    def values(self):
+        values = {
+            'field': self.field,
+            'type': self.type,
+            'direction': self.direction,
+        }
+
+        return values
+
+
 class Detail(IndexedSchema):
     """
     Full configuration for a case selection screen
 
     """
     type = StringProperty(choices=DETAIL_TYPES)
-    columns = SchemaListProperty(DetailColumn)
 
+    columns = SchemaListProperty(DetailColumn)
     get_columns = IndexedSchema.Getter('columns')
+
+    sort_elements = SchemaListProperty(SortElement)
+
     @parse_int([1])
     def get_column(self, i):
         return self.columns[i].with_id(i%len(self.columns), self)
 
     def append_column(self, column):
         self.columns.append(column)
+
     def update_column(self, column_id, column):
         my_column = self.columns[column_id]
 
-        my_column.model  = column.model
-        my_column.field  = column.field
+        my_column.model = column.model
+        my_column.field = column.field
         my_column.format = column.format
         my_column.late_flag = column.late_flag
         my_column.advanced = column.advanced
@@ -800,6 +824,13 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
             if detail.type == detail_type:
                 return detail
         raise Exception("Module %s has no detail type %s" % (self, detail_type))
+
+    @property
+    def detail_sort_elements(self):
+        try:
+            return self.get_detail('case_short').sort_elements
+        except Exception:
+            return []
 
     def export_json(self, dump_json=True, keep_unique_id=False):
         source = self.to_json()
@@ -1467,7 +1498,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     force_http = BooleanProperty(default=False)
     cloudcare_enabled = BooleanProperty(default=False)
     include_media_resources = BooleanProperty(default=False)
-    
+
     @classmethod
     def wrap(cls, data):
         for module in data.get('modules', []):
@@ -1528,6 +1559,18 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @property
     def media_suite_loc(self):
         return "media_suite.xml"
+
+    @property
+    def enable_multi_sort(self):
+        """
+        Multi (tiered) sort is supported by apps version 2.2 or higher
+        """
+        try:
+            return self.get_build().minor_release() >= (2, 2)
+        except KeyError:
+            # if for some reason there is no build number it's probably
+            # old or bugged
+            return False
 
     @property
     def default_language(self):

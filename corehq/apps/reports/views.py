@@ -719,8 +719,8 @@ def case_details(request, domain, case_id):
     except ResourceNotFound:
         case = None
     
-    if case == None or case.doc_type != "CommCareCase" or case.domain != domain:
-        messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake plase report an issue.")
+    if case is None or case.doc_type != "CommCareCase" or case.domain != domain:
+        messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake please report an issue.")
         return HttpResponseRedirect(inspect.CaseListReport.get_url(domain=domain))
 
     try:
