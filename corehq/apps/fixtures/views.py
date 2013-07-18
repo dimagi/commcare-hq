@@ -432,13 +432,19 @@ def run_upload(request, domain, workbook):
                     fields=type_definition_fields,
             )
             try:
-                data_type = FixtureDataType.get(dt['UID'])
-                assert data_type.domain == domain
+                if dt['UID']:
+                    data_type = FixtureDataType.get(dt['UID'])
+                else:
+                    data_type = new_data_type
+                    pass
+                data_type.fields = type_definition_fields
                 assert data_type.doc_type == FixtureDataType._doc_type
+                if data_type.domain != domain:
+                    data_type = new_data_type
+                    messages.error(request, _("'%(UID)s' is not a valid UID. But the new type is created.") % {'UID': dt['UID']})
                 if dt[DELETE_HEADER] == "Y" or dt[DELETE_HEADER] == "y":
                     data_type.recursive_delete(transaction)
                     continue
-                data_type.fields = type_definition_fields
             except (ResourceNotFound, KeyError) as e:
                 data_type = new_data_type
             transaction.save(data_type)
@@ -463,18 +469,23 @@ def run_upload(request, domain, workbook):
                     sort_key=sort_key
                 )
                 try:
-                    old_data_item = FixtureDataItem.get(di['UID'])
-                    assert old_data_item.domain == domain
+                    if di['UID']:
+                        old_data_item = FixtureDataItem.get(di['UID'])
+                    else:
+                        old_data_item = new_data_item
+                        pass
+                    old_data_item.fields = di['field']   
+                    if old_data_item.domain != domain:
+                        old_data_item = new_data_item
+                        messages.error(request, _("'%(UID)s' is not a valid UID. But the new item is created.") % {'UID': di['UID'] })
                     assert old_data_item.doc_type == FixtureDataItem._doc_type
                     assert old_data_item.data_type_id == data_type.get_id
                     if di[DELETE_HEADER] == "Y" or di[DELETE_HEADER] == "y":
                         old_data_item.recursive_delete(transaction)
-                        continue   
-                    old_data_item.fields = di['field']
-                    transaction.save(old_data_item)                 
+                        continue               
                 except (ResourceNotFound, KeyError) as e:
                     old_data_item = new_data_item
-                    transaction.save(old_data_item)
+                transaction.save(old_data_item)
 
                 old_groups = old_data_item.get_groups()
                 for group in old_groups:
