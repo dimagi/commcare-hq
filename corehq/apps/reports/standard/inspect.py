@@ -14,6 +14,7 @@ from django.core import cache
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 import simplejson
+import logging
 
 from casexml.apps.case.models import CommCareCaseAction
 from corehq.apps.api.es import CaseES
@@ -409,7 +410,18 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         query = self.build_query(case_type=self.case_type, filter=self.case_filter,
                                  status=self.case_status, owner_ids=self.case_owners,
                                  search_string=SearchFilter.get_value(self.request, self.domain))
-        return case_es.run_query(query)
+        query_results = case_es.run_query(query)
+
+        if query_results is None or 'hits' not in query_results:
+            logging.error("CaseListMixin query error: %s, urlpath: %s, params: %s, user: %s yielded a result indicating a query error: %s, results: %s" % (
+                self.__class__.__name__,
+                self.request.path,
+                self.request.GET.urlencode(),
+                self.request.couch_user.username,
+                simplejson.dumps(query),
+                simplejson.dumps(query_results)
+            ))
+        return query_results
 
     @property
     @memoized
@@ -505,6 +517,8 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
             ]
 
         try:
+            #should this fail due to es_results being None or having no 'hits',
+            #return None, which will fail when trying to render rows, to return an error back to the datatables
             return [_format_row(item) for item in self.es_results['hits'].get('hits', [])]
         except RequestFailed:
             pass
