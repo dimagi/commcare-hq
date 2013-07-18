@@ -244,6 +244,8 @@ def login(req, domain_type='commcare'):
     
 def domain_login(req, domain, template_name="login_and_password/login.html"):
     project = Domain.get_by_name(domain)
+    if not project:
+        raise Http404
     return _login(req, domain, project.domain_type, template_name)
 
 def is_mobile_url(url):

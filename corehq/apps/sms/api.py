@@ -394,6 +394,7 @@ def structured_sms_handler(verified_number, text):
                 error_occurred = False
                 error_msg = ""
                 form_complete = False
+                session = None
                 
                 # Close any open sessions
                 close_open_sessions(verified_number.domain, verified_number.owner_id)
@@ -529,7 +530,7 @@ def structured_sms_handler(verified_number, text):
             if error_occurred:
                 send_sms_to_verified_number(verified_number, error_msg)
             
-            if error_occurred or not form_complete:
+            if session is not None and (error_occurred or not form_complete):
                 session = XFormsSession.get(session._id)
                 session.end(False)
                 session.save()

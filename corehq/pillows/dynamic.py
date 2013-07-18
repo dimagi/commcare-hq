@@ -6,12 +6,13 @@ def type_full_date(formats=DATE_FORMATS_STRING):
     return dict(type="date", format=formats)
 
 
-def prop_subtype(prop_type, nested=False, dynamic=False):
+def prop_subtype(prop_type, nested=False, dynamic=False, sub_types=None):
     #schemalist, schemadict
+    sub_types = sub_types or default_special_types
     return {
         'type': 'nested' if nested else 'object',
         'dynamic': dynamic,
-        'properties': set_properties(prop_type)
+        'properties': set_properties(prop_type, custom_types=sub_types)
     }
 
 
@@ -78,13 +79,26 @@ case_special_types = {
 
 domain_special_types = {
     "name": type_exact_match_string("name", dual=True),
-    "deployment.country": {"type": "string", "index": "not_analyzed"},
-    "author": {"type": "string", "index": "not_analyzed"},
-    "title": {"type": "string", "index": "not_analyzed"},
-    "deployment.description": {"type": "string", "index": "not_analyzed"},
-    "short_description": {"type": "string", "index": "not_analyzed"},
-    "internal.area": {"type": "string", "index": "not_analyzed"},
-    "cda.type": {"type": "string", "index": "not_analyzed"},
+    "author": type_exact_match_string("author", dual=True),
+    "title": type_exact_match_string("title", dual=True),
+    "short_description": type_exact_match_string("short_description", dual=True),
+    "project_type": {"type": "string", "analyzer": "comma"},
+    "__sub_types": {
+        "deployment": {
+            "country": type_exact_match_string("country", dual=True),
+            "region": type_exact_match_string("region", dual=True),
+            "city": type_exact_match_string("city", dual=True),
+            "description": type_exact_match_string("description", dual=True),
+        },
+        "internal": {
+            "area": type_exact_match_string("area", dual=True),
+            "sub_area": type_exact_match_string("sub_area", dual=True),
+            "initiative": type_exact_match_string("initiative", dual=True),
+        },
+        "cda": {
+            "type": {"type": "string", "index": "not_analyzed"},
+        }
+    }
 }
 
 def set_properties(schema_class, custom_types=default_special_types, init_dict=None):
@@ -100,7 +114,8 @@ def set_properties(schema_class, custom_types=default_special_types, init_dict=N
             props_dict[prop_name] = simple_type_mapper[prop_type.__class__]
         elif complex_type_mapper.has_key(prop_type.__class__):
             func = complex_type_mapper[prop_type.__class__]
-            props_dict[prop_name] = func(prop_type._schema, nested=False, dynamic=False)
+            sub_types = custom_types.get("__sub_types", {}).get(prop_name)
+            props_dict[prop_name] = func(prop_type._schema, nested=False, dynamic=False, sub_types=sub_types)
 
     if not props_dict.get('doc_type'):
         props_dict["doc_type"] = {"type": "string", "index": "not_analyzed"}

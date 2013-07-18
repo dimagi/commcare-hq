@@ -17,13 +17,7 @@
                 }
             }).change();
 
-            $('#create_new_cases').change(function() {
-                if ($(this).attr('checked') === 'checked') {
-                    $('#case_type').show();
-                } else {
-                    $('#case_type').hide();
-                }
-            }).change();
+            $('#key_value_columns').change();
 
             $('#back_button').click(function() {
                 history.back();
@@ -38,6 +32,28 @@
           action="{% url corehq.apps.importer.views.excel_fields domain %}"
           method="post">
         <input type="hidden" name="named_columns" value="{{named_columns}}" />
+
+        <fieldset>
+            <legend>{% trans "Case Type to Update/Create" %}</legend>
+            <div class="control-group">
+                <label class="control-label" for="case_type">
+                    {% trans "Case type" %}
+                </label>
+                <div class="controls">
+                    <select name="case_type" id="case_type">
+                        <option disabled>{% trans "Used in existing applications:" %}</option>
+                        {% for case_type in case_types_from_apps %}
+                        <option value="{{case_type|escape}}">{{case_type|escape}}</option>
+                        {% endfor %}
+
+                        <option disabled>{% trans "From unknown or deleted applications:" %}</option>
+                        {% for case_type in case_types_from_cases %}
+                        <option value="{{case_type|escape}}">{{case_type|escape}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </fieldset>
 
         <fieldset>
             <legend>{% trans "Identifying Cases to Update/Create" %}</legend>
@@ -80,24 +96,6 @@
                                id="create_new_cases" />
                         {% trans "Create new records if there is no matching case" %}
                     </label>
-                </div>
-                <div id="case_type">
-                    <label class="control-label" for="case_type">
-                        {% trans "Case type for new cases" %}
-                    </label>
-                    <div class="controls">
-                        <select name="case_type" id="case_type">
-                            <option disabled>{% trans "Used in existing applications:" %}</option>
-                            {% for case_type in case_types_from_apps %}
-                            <option value="{{case_type|escape}}">{{case_type|escape}}</option>
-                            {% endfor %}
-
-                            <option disabled>{% trans "From unknown or deleted applications:" %}</option>
-                            {% for case_type in case_types_from_cases %}
-                            <option value="{{case_type|escape}}">{{case_type|escape}}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
                 </div>
             </div>
         </fieldset>

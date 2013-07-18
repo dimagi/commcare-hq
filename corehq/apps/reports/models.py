@@ -504,7 +504,7 @@ class AppNotFound(Exception):
 class FormExportSchema(SavedExportSchema):
     doc_type = 'SavedExportSchema'
     app_id = StringProperty()
-    include_errors = BooleanProperty(default=True)
+    include_errors = BooleanProperty(default=False)
 
     @property
     @memoized

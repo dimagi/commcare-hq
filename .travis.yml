@@ -3,6 +3,9 @@ python:
  - "2.6"
 env:
  - CFLAGS=-O0
+branches:
+  only:
+   - master
 install:
  - "uname -a"
  - "lsb_release -a"

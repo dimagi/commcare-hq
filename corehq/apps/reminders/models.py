@@ -15,6 +15,7 @@ from couchdbkit.exceptions import ResourceConflict
 from corehq.apps.sms.util import create_task, close_task, update_task
 from corehq.apps.smsforms.app import submit_unfinished_form
 from dimagi.utils.couch import LockableMixIn
+from random import randint
 
 METHOD_SMS = "sms"
 METHOD_SMS_CALLBACK = "callback"
@@ -54,7 +55,8 @@ RECIPIENT_CHOICES = [RECIPIENT_USER, RECIPIENT_OWNER, RECIPIENT_CASE, RECIPIENT_
 
 FIRE_TIME_DEFAULT = "DEFAULT"
 FIRE_TIME_CASE_PROPERTY = "CASE_PROPERTY"
-FIRE_TIME_CHOICES = [FIRE_TIME_DEFAULT, FIRE_TIME_CASE_PROPERTY]
+FIRE_TIME_RANDOM = "RANDOM"
+FIRE_TIME_CHOICES = [FIRE_TIME_DEFAULT, FIRE_TIME_CASE_PROPERTY, FIRE_TIME_RANDOM]
 
 MATCH_EXACT = "EXACT"
 MATCH_REGEX = "REGEX"
@@ -166,6 +168,11 @@ class CaseReminderEvent(DocumentSchema):
     fire_time_type              FIRE_TIME_DEFAULT: the event will be scheduled at the time specified by fire_time.
                                 FIRE_TIME_CASE_PROPERTY: the event will be scheduled at the time specified by the 
                                 case property named in fire_time_aux.
+                                FIRE_TIME_RANDOM: the event will be scheduled at a random minute on the interval that
+                                starts with fire_time and lasts for time_window_length minutes
+
+    time_window_length          Used in FIRE_TIME_RANDOM to define a time interval that starts at fire_time and lasts
+                                for this many minutes
 
     message                     The text to send along with language to send it, represented 
                                 as a dictionary: {"en": "Hello, {user.full_name}, you're having issues."}
@@ -182,6 +189,7 @@ class CaseReminderEvent(DocumentSchema):
     fire_time = TimeProperty()
     fire_time_aux = StringProperty()
     fire_time_type = StringProperty(choices=FIRE_TIME_CHOICES, default=FIRE_TIME_DEFAULT)
+    time_window_length = IntegerProperty()
     message = DictProperty()
     callback_timeout_intervals = ListProperty(IntegerProperty)
     form_unique_id = StringProperty()
@@ -380,6 +388,7 @@ class CaseReminderHandler(Document):
     # For use with event_interpretation = EVENT_AS_SCHEDULE
     def get_current_reminder_event_timestamp(self, reminder, recipient, case):
         event = self.events[reminder.current_event_sequence_num]
+        additional_minute_offset = 0
         if event.fire_time_type == FIRE_TIME_DEFAULT:
             fire_time = event.fire_time
         elif event.fire_time_type == FIRE_TIME_CASE_PROPERTY:
@@ -388,11 +397,14 @@ class CaseReminderHandler(Document):
                 fire_time = parse(fire_time).time()
             except Exception:
                 fire_time = DEFAULT_REMINDER_TIME
+        elif event.fire_time_type == FIRE_TIME_RANDOM:
+            additional_minute_offset = randint(0, event.time_window_length - 1) + (event.fire_time.hour * 60) + event.fire_time.minute
+            fire_time = time(0, 0)
         else:
             fire_time = DEFAULT_REMINDER_TIME
         
         day_offset = self.start_offset + (self.schedule_length * (reminder.schedule_iteration_num - 1)) + event.day_num
-        timestamp = datetime.combine(reminder.start_date, fire_time) + timedelta(days = day_offset)
+        timestamp = datetime.combine(reminder.start_date, fire_time) + timedelta(days = day_offset) + timedelta(minutes=additional_minute_offset)
         return CaseReminderHandler.timestamp_to_utc(recipient, timestamp)
     
     def spawn_reminder(self, case, now, recipient=None):

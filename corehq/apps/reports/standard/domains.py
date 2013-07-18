@@ -2,6 +2,7 @@ from datetime import datetime
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
+from corehq.apps.appstore.views import fill_mapping_with_facets
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.dispatcher import BasicReportDispatcher, AdminReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport, ElasticTabularReport
@@ -119,23 +120,23 @@ DOMAIN_FACETS = [
     "case_sharing",
     "commtrack_enabled",
     "customer_type",
-    "deployment.city",
-    "deployment.country",
+    "deployment.city.exact",
+    "deployment.country.exact",
     "deployment.date",
     "deployment.public",
-    "deployment.region",
+    "deployment.region.exact",
     "hr_name",
-    "internal.area",
+    "internal.area.exact",
     "internal.can_use_data",
     "internal.commcare_edition",
     "internal.custom_eula",
-    "internal.initiative",
+    "internal.initiative.exact",
     "internal.project_state",
     "internal.self_started",
     "internal.services",
     "internal.sf_account_id",
     "internal.sf_contract_id",
-    "internal.sub_area",
+    "internal.sub_area.exact",
     "internal.using_adm",
     "internal.using_call_center",
     "internal.platform",
@@ -154,6 +155,49 @@ DOMAIN_FACETS = [
     "sub_area",
     "survey_management_enabled",
     "tags",
+]
+
+FACET_MAPPING = [
+    ("Activity", True, [
+        {"facet": "is_test", "name": "Test Project", "expanded": True },
+        {"facet": "cp_is_active", "name": "Active", "expanded": True },
+        # {"facet": "deployment.date", "name": "Deployment Date", "expanded": False },
+        {"facet": "internal.project_state", "name": "Scale", "expanded": False },
+    ]),
+    ("Location", True, [
+        {"facet": "deployment.country.exact", "name": "Country", "expanded": True },
+        {"facet": "deployment.region.exact", "name": "Region", "expanded": False },
+        {"facet": "deployment.city.exact", "name": "City", "expanded": False },
+    ]),
+    ("Type", True, [
+        {"facet": "internal.area.exact", "name": "Area", "expanded": True },
+        {"facet": "internal.sub_area.exact", "name": "Sub Area", "expanded": True },
+        {"facet": "phone_model", "name": "Phone Model", "expanded": False },
+    ]),
+    ("Self Starters", False, [
+        {"facet": "internal.self_started", "name": "Self Started", "expanded": True },
+        {"facet": "cp_has_app", "name": "Has App", "expanded": False },
+    ]),
+    ("Advanced Features", False, [
+        # {"facet": "", "name": "Reminders", "expanded": True },
+        {"facet": "case_sharing", "name": "Case Sharing", "expanded": False },
+        {"facet": "internal.using_adm", "name": "ADM", "expanded": False },
+        {"facet": "internal.using_call_center", "name": "Call Center", "expanded": False },
+        {"facet": "commtrack_enabled", "name": "CommTrack", "expanded": False },
+        {"facet": "survey_management_enabled", "name": "Survey Management", "expanded": False },
+    ]),
+    ("Plans", False, [
+        {"facet": "project_type", "name": "Project Type", "expanded": False },
+        {"facet": "customer_type", "name": "Customer Type", "expanded": False },
+        {"facet": "internal.initiative.exact", "name": "Initiative", "expanded": False },
+        {"facet": "internal.commcare_edition", "name": "CommCare Pricing Edition", "expanded": False },
+        {"facet": "internal.services", "name": "Services", "expanded": False },
+        {"facet": "is_sms_billable", "name": "SMS Billable", "expanded": False },
+    ]),
+    ("Eula", False, [
+        {"facet": "internal.can_use_data", "name": "Public Data", "expanded": True },
+        {"facet": "custom_eula", "name": "Custom Eula", "expanded": False },
+    ]),
 ]
 
 def es_domain_query(params=None, facets=None, terms=None, domains=None, return_q_dict=False, start_at=None, size=None, sort=None):
@@ -215,8 +259,10 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
 
         ctxt.update({
             'layout_flush_content': True,
-            'sortables': sorted(self.es_sortables),
+            'facet_map': self.es_facet_mapping,
             'query_str': self.request.META['QUERY_STRING'],
+            'facet_prefix': ES_PREFIX,
+            'grouped_facets': True,
         })
         return ctxt
 
@@ -231,7 +277,7 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
             self.es_facets = DOMAIN_FACETS
             results = es_domain_query(self.es_params, self.es_facets, sort=self.get_sorting_block(),
                 start_at=self.pagination.start, size=self.pagination.count)
-            self.es_sortables = generate_sortables_from_facets(results, self.es_params, prefix=ES_PREFIX)
+            self.es_facet_mapping = fill_mapping_with_facets(FACET_MAPPING, results, self.es_params)
             self.es_queried = True
             self.es_response = results
         return self.es_response
@@ -245,7 +291,7 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
             DataTablesColumn("Project", prop_name="name.exact"),
             DataTablesColumn(_("Organization"), prop_name="internal.organization_name"),
             DataTablesColumn(_("Deployment Date"), prop_name="deployment.date"),
-            DataTablesColumn(_("Deployment Country"), prop_name="deployment.country"),
+            DataTablesColumn(_("Deployment Country"), prop_name="deployment.country.exact"),
             DataTablesColumn(_("# Active Mobile Workers"), sort_type=DTSortType.NUMERIC,
                 prop_name="cp_n_active_cc_users",
                 help_text=_("The number of mobile workers who have submitted a form in the last 30 days")),
