@@ -28,6 +28,7 @@
         chart.margin(chart_config.margin);
         chart.staggerLabels(chart_config.staggerLabels);
         chart.multibar.groupSpacing(chart_config.groupSpacing);
+        chart.multibar.forceY(chart_config.forceY);
 
         d3.select(chart_id + ' svg')
                 .datum(chart_data)
