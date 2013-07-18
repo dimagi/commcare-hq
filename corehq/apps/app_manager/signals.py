@@ -1,10 +1,15 @@
 from datetime import timedelta
+
+from django.dispatch.dispatcher import Signal
+
+from casexml.apps.case.signals import case_post_save
+from receiver.signals import successful_form_received, Certainty, ReceiverResult
+from receiver.xml import ResponseNature
+from receiver import xml
+
+from corehq.middleware import OPENROSA_ACCEPT_LANGUAGE
 from corehq.apps.app_manager.models import Application, get_app
 from corehq.apps.app_manager.success_message import SuccessMessage
-from receiver.signals import successful_form_received, Certainty, ReceiverResult
-from receiver import xml
-from corehq.middleware import OPENROSA_ACCEPT_LANGUAGE
-from receiver.xml import ResponseNature
 
 def get_custom_response_message(sender, xform, **kwargs):
     """
@@ -35,4 +40,16 @@ def get_custom_response_message(sender, xform, **kwargs):
                     success_message, nature=ResponseNature.SUBMIT_SUCCESS),
                     Certainty.STRONG)
 
+def create_app_structure_repeat_records(sender, application, **kwargs):
+    from corehq.apps.app_manager.models import AppStructureRepeater
+    domain = application.domain
+    if domain:
+        repeaters = AppStructureRepeater.by_domain(domain)
+        for repeater in repeaters:
+            repeater.register(application)
+
 successful_form_received.connect(get_custom_response_message)
+
+app_post_save = Signal(providing_args=['application'])
+
+app_post_save.connect(create_app_structure_repeat_records)
