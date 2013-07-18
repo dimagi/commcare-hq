@@ -44,8 +44,9 @@ old_reports = (
     )),
 )
 
-CUSTOM_REPORTS = {
-    'hsph': old_reports,
-    'hsph-dev': new_reports,
-    'hsph-betterbirth-pilot-2': new_reports
-}
+def CUSTOM_REPORTS(project):
+    return {
+        'hsph': old_reports,
+        'hsph-dev': new_reports,
+        'hsph-betterbirth-pilot-2': new_reports
+    }[project.name]
