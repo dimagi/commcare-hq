@@ -105,6 +105,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         Returns a list of CommCare Users based on domain, group, and user 
         filter (demo_user, admin, registered, unknown)
     """
+    user_ids = user_ids if user_ids and user_ids[0] else None
     if not CommCareUser:
         from corehq.apps.users.models import CommCareUser
 
@@ -294,7 +295,7 @@ def create_export_filter(request, domain, export_type='form'):
         else:
             filter = SerializableFunction(case_group_filter, group=group)
     else:
-        filter = SerializableFunction(instances) & SerializableFunction(app_export_filter, app_id=app_id)
+        filter = SerializableFunction(app_export_filter, app_id=app_id)
         filter &= SerializableFunction(datespan_export_filter, datespan=request.datespan)
         if user_filters and use_user_filters:
             users_matching_filter = map(lambda x: x.get('user_id'), get_all_users_by_domain(domain,

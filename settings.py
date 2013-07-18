@@ -446,6 +446,10 @@ MESSAGE_LOG_OPTIONS = {
 IVR_OUTBOUND_RETRIES = 3
 IVR_OUTBOUND_RETRY_INTERVAL = 10
 
+
+# List of Fluff pillow classes that ctable should process diffs for
+FLUFF_PILLOW_TYPES_TO_SQL = {}
+
 try:
     #try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
@@ -723,8 +727,6 @@ PILLOWTOPS = [
                  'bihar.models.CareBiharFluffPillow',
              ] + LOCAL_PILLOWTOPS
 
-# List of Fluff pillow classes that ctable should process diffs for
-FLUFF_PILLOW_TYPES_TO_SQL = {}
 
 #Custom workflow for indexing xform data beyond the standard properties
 XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]

@@ -147,3 +147,24 @@ class DemoReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
     def format_percent(self, value):
         return format_datatables_data("%d%%" % value, value)
 ```
+
+## Hooking up reports to CommCare HQ
+
+Custom reports can be configured in code or in the database. To configure custom reports in code
+follow the following instructions.
+
+First add a mapping for your domain(s) to the custom reports module root to the `DOMAIN_MODULE_MAP`
+variable in `settings.py`.
+
+Next, add the following to your `__init__.py` in your custom reports submodule:
+
+```
+from myproject import reports
+
+CUSTOM_REPORTS = (
+    ('Custom Reports', (
+        reports.MyCustomReport,
+        reports.AnotherCustomReport,
+    )),
+)
+```
