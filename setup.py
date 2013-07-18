@@ -22,5 +22,6 @@ setup(
         'pytz',
         'simplejson',
         'unittest2',
+        "celery",
     ],
 )
