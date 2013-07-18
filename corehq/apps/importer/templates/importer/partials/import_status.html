@@ -24,7 +24,7 @@
 
             {% if result.match_count == 0 and result.created_count == 0 %}
                 <p>
-                    {% trans "No cases were matched or updated during this import." %}
+                    {% trans "No cases were created or updated during this import." %}
                 </p>
             {% endif %}
 
@@ -58,6 +58,15 @@
                         were ignored:
                     {% endblocktrans %}
                     {{ result.invalid_dates|join:", " }}
+                </p>
+            {% endif %}
+
+            {% if result.errors > 0 %}
+                <p>
+                    {% blocktrans with errors=result.errors %}
+                        <strong>{{ errors }}</strong> rows had unknown case
+                        submission errors.
+                    {% endblocktrans %}
                 </p>
             {% endif %}
         </div>
