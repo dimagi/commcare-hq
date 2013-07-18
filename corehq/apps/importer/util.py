@@ -211,7 +211,9 @@ def lookup_case(search_field, search_id, domain, case_type):
             cases_by_type = [case for case in results
                              if case.type == case_type]
 
-            if len(cases_by_type) > 1:
+            if not cases_by_type:
+                return (None, LookupErrors.NotFound)
+            elif len(cases_by_type) > 1:
                 return (None, LookupErrors.MultipleResults)
             else:
                 case = cases_by_type[0]
