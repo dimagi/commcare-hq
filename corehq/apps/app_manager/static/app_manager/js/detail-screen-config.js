@@ -124,6 +124,40 @@ var DetailScreenConfig = (function () {
         return orig;
     }
 
+    var setText = function () {
+        // Using index is hacky but sort of needed. There are
+        // multiple items with the same value (plain and date) and
+        // translations could mean the text value is varying....
+        var idx = $(this).prop("selectedIndex");
+        var options;
+
+        if (idx === 0) {
+            options = [
+                'Increasing (a, b, c)',
+                'Decreasing (c, b, a)'
+            ]
+        } else if (idx === 1) {
+            options = [
+                'Increasing (May 1st, May 2nd)',
+                'Decreasing (May 2nd, May 1st)'
+            ]
+        } else if (idx === 2) {
+            options = [
+                'Increasing (1, 2, 3)',
+                'Decreasing (3, 2, 1)'
+            ]
+        } else if (idx === 3) {
+            options = [
+                'Increasing (1.1, 1.2, 1.3)',
+                'Decreasing (1.3, 1.2, 1.1)'
+            ]
+        }
+
+        var $order = $(this).closest('tr').find('.sort-direction');
+        $order.find('option[value="ascending"]').text(options[0]);
+        $order.find('option[value="descending"]').text(options[1]);
+    };
+
     var field_val_re = /^[a-zA-Z][\w_-]*(\/[a-zA-Z][\w_-]*)*$/;
     var field_format_warning = $('<span/>').addClass('help-inline')
         .text("Must begin with a letter and contain only letters, numbers, '-', and '_'");
@@ -295,6 +329,8 @@ var DetailScreenConfig = (function () {
                 var $row = $(this).closest('tr');
                 var $field = $row.find('.detail-screen-field code').text();
                 that.screen.config.sortRows.addSortRow($field, '', '');
+                $('.sort-format').last().change(setText).change();
+
                 e.preventDefault();
                 e.stopImmediatePropagation();
             });
