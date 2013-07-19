@@ -13,13 +13,12 @@ install:
  - "bash -ex .travis/upgrade-couchdb.sh | ts"
  - "curl http://127.0.0.1:5984/"
  - "git clone https://github.com/dimagi/commcarehq-venv.git"
- - ". commcarehq-venv/hq_env/bin/activate"
  - "time (bash -e .travis/quietly-run-install.sh | ts)"
- - "time (pip install -r requirements/requirements.txt -r requirements/dev-requirements.txt --use-mirrors | ts)"
+ - "time (commcarehq-venv/hq_env/bin/pip install -r requirements/requirements.txt -r requirements/dev-requirements.txt --use-mirrors | ts)"
  - "time (bash -e .travis/misc-setup.sh | ts)"
  - "cp .travis/localsettings.py localsettings.py"
- - "pip install coveralls coverage unittest2 mock"
-script: "cat .travis/apps_under_test | grep -v '^#' | xargs coverage run manage.py test --noinput --failfast | ts"
+ - "commcarehq-venv/hq_env/bin/pip install coveralls coverage unittest2 mock"
+script: "cat .travis/apps_under_test | grep -v '^#' | xargs commcarehq-venv/hq_env/bin/coverage run manage.py test --noinput --failfast | ts"
 after_success:
  - coveralls
 services:
