@@ -171,13 +171,9 @@ class XForm(WrappedNode):
             self.namespaces.update(x="{%s}" % xmlns)
 
     def validate(self, version='1.0'):
-        r = formtranslate.api.validate(ET.tostring(self.xml), version=version)
-        valid_key = 'success' if version == '1.0' else 'validated'
-        if not r[valid_key]:
-            if version == '2.0':
-                raise XFormValidationError(r["fatal_error"], version, r["problems"])
-            else:
-                raise XFormValidationError(r["errstring"], version)
+        validation_results = formtranslate.api.validate(ET.tostring(self.xml), version=version)
+        if not validation_results.success:
+            raise XFormValidationError(validation_results.fatal_error, version, validation_results.problems)
         return self
 
     @property
