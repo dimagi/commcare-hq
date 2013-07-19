@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, date
 from couchdbkit import ResourceNotFound
+from casexml.apps.case.models import CommCareCase
 from dimagi.utils.couch.database import get_db
 from django.core.urlresolvers import reverse
 from django.db import transaction
@@ -610,12 +611,10 @@ def stats_data(request, org):
         return r['value'] if r else 0
 
     def _total_cases_until_date(dom, date):
-        key = [dom, {}, {}]
-        r = get_db().view('hqcase/all_cases',
-            startkey=key+[""],
-            endkey=key+[json_format_datetime(date)],
-            group=False
-        ).one()
+        key = ["", dom]
+        r = get_db().view('reports/case_activity',
+            startkey=key + [""],
+            endkey=key + [json_format_datetime(date), '{}']).one()
         return r['value'] if r else 0
 
     def es_domain_query(params=None, facets=None, terms=None, domains=None, return_q_dict=False, start_at=None, size=None, sort=None):
