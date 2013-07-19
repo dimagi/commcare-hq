@@ -32,11 +32,15 @@ def bulk_import_async(import_id, config, domain, excel_id):
     match_count = created_count = too_many_matches = errors = 0
     blank_external_ids = []
     invalid_dates = []
+    owner_id_errors = []
     prime_offset = 1  # used to prevent back-to-back priming
 
     user = CouchUser.get_by_user_id(config.couch_user_id, domain)
     username = user.username
     user_id = user._id
+
+    # keep a cache of id lookup successes to help performance
+    id_cache = {}
 
     for i in range(row_count):
         DownloadBase.set_progress(task, i, row_count)
@@ -75,11 +79,10 @@ def bulk_import_async(import_id, config, domain, excel_id):
             continue
 
         if case:
-            match_count += 1
+            pass
         elif error == LookupErrors.NotFound:
             if not config.create_new_cases:
                 continue
-            created_count += 1
         elif error == LookupErrors.MultipleResults:
             too_many_matches += 1
             continue
@@ -87,10 +90,13 @@ def bulk_import_async(import_id, config, domain, excel_id):
         # make sure a valid owner id was supplied before using it
         uploaded_owner_id = fields_to_update.pop('owner_id', None)
         if uploaded_owner_id and \
-           CouchUser.get_by_user_id(uploaded_owner_id, domain):
+           importer_util.is_valid_id(uploaded_owner_id, domain, id_cache):
             owner_id = uploaded_owner_id
+            id_cache[uploaded_owner_id] = True
         else:
-            owner_id = user_id
+            owner_id_errors.append(i + 1)
+            id_cache[uploaded_owner_id] = False
+            continue
 
         external_id = fields_to_update.pop('external_id', None)
 
@@ -111,8 +117,8 @@ def bulk_import_async(import_id, config, domain, excel_id):
                     caseblock['external_id'] = search_id
 
                 submit_case_block(caseblock, domain, username, user_id)
+                created_count += 1
             except CaseBlockError:
-                created_count -= 1
                 errors += 1
         elif case and case.type == config.case_type:
             extras = {}
@@ -129,8 +135,8 @@ def bulk_import_async(import_id, config, domain, excel_id):
                     **extras
                 )
                 submit_case_block(caseblock, domain, username, user_id)
+                match_count += 1
             except CaseBlockError:
-                match_count -= 1
                 errors += 1
 
     return {
@@ -139,6 +145,7 @@ def bulk_import_async(import_id, config, domain, excel_id):
         'too_many_matches': too_many_matches,
         'blank_externals': blank_external_ids,
         'invalid_dates': invalid_dates,
+        'owner_id_errors': owner_id_errors,
         'errors': errors,
     }
 
