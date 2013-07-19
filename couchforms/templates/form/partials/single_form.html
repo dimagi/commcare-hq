@@ -128,8 +128,8 @@ requires imports/proptable.html to be included in the main template
                             {% if case_data.is_current_case %}
                             <strong class="muted">{% trans "(this case)" %}</strong>
                             {% else %}
-                            <a href="{{ case_data.url }}">
-                                {% trans "view case" %}
+                            <a class="btn-small btn-primary" href="{{ case_data.url }}">
+                                {% trans "View" %}
                             </a>
                             {% endif %}
                         </span>
