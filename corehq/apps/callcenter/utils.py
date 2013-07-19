@@ -30,13 +30,8 @@ def sync_user_cases(commcare_user):
 
     found = False
     try:
-        case = CommCareCase.view('hqcase/by_domain_hq_user_id',
-                                 key=[domain.name, commcare_user._id],
-                                 reduce=False,
-                                 include_docs=True).one()
+        case = CommCareCase.get_by_domain_hq_user_id(domain.name, commcare_user._id, include_docs=True)
         found = bool(case)
-    except NoResultFound:
-        pass
     except MultipleResultsFound:
         return
 
