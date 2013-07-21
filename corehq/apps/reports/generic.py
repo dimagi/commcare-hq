@@ -406,7 +406,7 @@ class GenericReportView(CacheableRequestMixIn):
 
         self.context.update(
             report=dict(
-                title=self.name,
+                title=self.rendered_report_title,
                 description=self.description,
                 section_name=self.section_name,
                 slug=self.slug,
@@ -460,7 +460,7 @@ class GenericReportView(CacheableRequestMixIn):
             breadcrumbs=self.breadcrumbs,
             default_url=self.default_report_url,
             url=self.get_url(domain=self.domain),
-            title=self.name
+            title=self.rendered_report_title
         )
         if hasattr(self, 'datespan'):
             self.context.update(datespan=self.datespan)
