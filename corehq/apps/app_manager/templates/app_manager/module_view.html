@@ -264,21 +264,21 @@
 
                                 <td>
                                     <select data-bind="value: direction">
-                                        <option value="ascending">
-                                            {% trans "Increasing" %}
+                                        <option value="ascending"
+                                                data-bind="text: ascendText">
                                         </option>
-                                        <option value="descending">
-                                            {% trans "Decreasing" %}
+                                        <option value="descending"
+                                                data-bind="text: descendText">
                                         </option>
                                     </select>
                                 </td>
 
                                 <td>
                                     <select data-bind="value: type">
-                                        <option value="string">
+                                        <option value="plain">
                                             {% trans "Plain" %}
                                         </option>
-                                        <option value="string">
+                                        <option value="date">
                                             {% trans "Date" %}
                                         </option>
                                         <option value="int">
