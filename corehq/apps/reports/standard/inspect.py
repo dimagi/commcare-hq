@@ -427,11 +427,17 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     @memoized
     def case_owners(self):
         if self.individual:
-            group_owners = self.case_sharing_groups
+            group_owners_raw = self.case_sharing_groups
         else:
-            group_owners = Group.get_case_sharing_groups(self.domain)
-        group_owners = [group._id for group in group_owners]
-        return [user.get('user_id') for user in self.users] + group_owners
+            group_owners_raw = Group.get_case_sharing_groups(self.domain)
+        group_owners = [group._id for group in group_owners_raw]
+        ret = [user.get('user_id') for user in self.users]
+        if len(self.request.GET.getlist('ufilter')) == 1 and '3' in self.request.GET.getlist('ufilter'):
+            #not applying group filter
+            pass
+        else:
+            ret += group_owners
+        return ret
 
     @property
     @memoized
