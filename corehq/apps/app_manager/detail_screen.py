@@ -71,10 +71,17 @@ class FormattedDetailColumn(object):
             order = sort_fields.index(field)
             sort_element = self.module.detail_sort_elements[order]
 
+            # these have to be distinguished for the UI to be able to give
+            # user friendly choices
+            if sort_element.type == 'date' or sort_element.type == 'plain':
+                sort_type = 'string'
+            else:
+                sort_type = sort_element.type
+
             sort = sx.Sort(
                 text=sx.Text(xpath_function=self.xpath_function),
                 width=self.sort_width,
-                type=sort_element.type,
+                type=sort_type,
                 order=order + 1,  # order is 1 indexed on mobile
                 direction=sort_element.direction,
             )
