@@ -10,6 +10,7 @@ EQUAL = lambda expected, reference: expected == reference
 NOT_EQUAL = lambda expected, reference: expected != reference
 IN = lambda expected, reference_list: expected in reference_list
 IN_MULTISELECT = lambda expected, value: value in (expected or '').split(' ')
+ANY = lambda expected, reference: bool(expected)
 
 class IntegerPropertyReference(object):
     def __init__(self, property_path):
@@ -55,7 +56,7 @@ class FilteredFormPropertyCalculator(fluff.Calculator):
 
         _conditional_setattr('property_path', property_path)
         _conditional_setattr('property_value', property_value)
-        if self.property_path is not None:
+        if self.property_path is not None and operator != ANY:
             assert self.property_value is not None
 
         self.operator = operator
