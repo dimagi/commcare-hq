@@ -345,20 +345,7 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         except AppError as e:
             form_errors.append("Error in application: %s" % e)
         except XFormValidationError as e:
-
-            # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'
-            #
-            # ... and if possible split the third line that looks like e.g. "org.javarosa.xform.parse.XFormParseException: Select question has no choices"
-            # and just return the undecorated string
-            #
-            # ... unless the first line says
-            message_lines = unicode(e).split('\n')[2:]
-            if len(message_lines) > 0 and ':' in message_lines[0] and 'XPath Dependency Cycle' not in unicode(e):
-                message = ' '.join(message_lines[0].split(':')[1:])
-            else:
-                message = '\n'.join(message_lines)
-                
-            message = "Validation Error: " + message
+            message = unicode(e)
             form_errors.append((html.escape(message).replace('\n', '<br/>'), {'extra_tags': 'html'}))
 
         except XFormError as e:

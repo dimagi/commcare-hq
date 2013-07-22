@@ -1,3 +1,4 @@
+import logging
 import simplejson
 import six
 import copy
@@ -89,7 +90,7 @@ class ESView(View):
         Returns the raw query json back, or None if there's an error
         """
         
-        #todo: backend audit logging of all these types of queries
+        logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(es_query)))
         if 'fields' in es_query or 'script_fields' in es_query:
             #nasty hack to add domain field to query that does specific fields.
             #do nothing if there's no field query because we get everything

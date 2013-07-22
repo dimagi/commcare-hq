@@ -3,10 +3,10 @@ from dimagi.utils.couch.database import get_db
 from corehq.apps.importer.const import LookupErrors
 from datetime import date
 from casexml.apps.case.models import CommCareCase
-from couchdbkit.exceptions import MultipleResultsFound, NoResultFound
 from xlrd import xldate_as_tuple
-from soil import DownloadBase
-from corehq.apps import importer
+from corehq.apps.groups.models import Group
+from corehq.apps.users.models import CouchUser
+from couchdbkit.exceptions import ResourceNotFound
 
 def get_case_properties(domain, case_type=None):
     """
@@ -266,3 +266,18 @@ def get_spreadsheet(download_ref, column_headers=True):
     if not download_ref:
         return None
     return ExcelFile(download_ref.get_filename(), column_headers)
+
+def is_valid_id(uploaded_id, domain, cache):
+    if uploaded_id in cache:
+        return cache[uploaded_id]
+
+    # see if it's a user on this domain
+    if CouchUser.get_by_user_id(uploaded_id, domain):
+        return True
+
+    # or if it is a case sharing enabled group
+    try:
+        group = Group.get(uploaded_id)
+        return group.case_sharing
+    except ResourceNotFound:
+        return False
