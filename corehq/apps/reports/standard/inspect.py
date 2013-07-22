@@ -20,6 +20,7 @@ from casexml.apps.case.models import CommCareCaseAction
 from corehq.apps.api.es import CaseES
 from corehq.apps.hqsofabed.models import HQFormData
 from corehq.apps.reports.filters.search import SearchFilter
+from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.display import xmlns_to_name
@@ -91,8 +92,12 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
 
             def any_in(a, b):
                 return any(i in b for i in a)
-            if self.request.GET.get('all_mws', 'off') != 'on' or any_in(['1', '2', '3'], self.request.GET.getlist('ufilter')):
-                q["filter"]["and"].append({"terms": {"form.meta.userID": filter(None, self.combined_user_ids)}})
+
+            if self.request.GET.get('all_mws', 'off') != 'on' or any_in(
+                    [str(HQUserType.DEMO_USER), str(HQUserType.ADMIN), str(HQUserType.UNKNOWN)],
+                    self.request.GET.getlist('ufilter')):
+                q["filter"]["and"].append(
+                    {"terms": {"form.meta.userID": filter(None, self.combined_user_ids)}})
             else:
                 ids = filter(None, [user['user_id'] for user in self.get_admins_and_demo_users()])
                 q["filter"]["and"].append({"not": {"terms": {"form.meta.userID": ids}}})
@@ -427,11 +432,17 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     @memoized
     def case_owners(self):
         if self.individual:
-            group_owners = self.case_sharing_groups
+            group_owners_raw = self.case_sharing_groups
         else:
-            group_owners = Group.get_case_sharing_groups(self.domain)
-        group_owners = [group._id for group in group_owners]
-        return [user.get('user_id') for user in self.users] + group_owners
+            group_owners_raw = Group.get_case_sharing_groups(self.domain)
+        group_owners = [group._id for group in group_owners_raw]
+        ret = [user.get('user_id') for user in self.users]
+        if len(self.request.GET.getlist('ufilter')) == 1 and str(HQUserType.UNKNOWN) in self.request.GET.getlist('ufilter'):
+            #not applying group filter
+            pass
+        else:
+            ret += group_owners
+        return ret
 
     @property
     @memoized
