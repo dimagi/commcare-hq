@@ -94,7 +94,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
                 return any(i in b for i in a)
 
             if self.request.GET.get('all_mws', 'off') != 'on' or any_in(
-                    [HQUserType.DEMO_USER, HQUserType.ADMIN, HQUserType.UNKNOWN],
+                    [str(HQUserType.DEMO_USER), str(HQUserType.ADMIN), str(HQUserType.UNKNOWN)],
                     self.request.GET.getlist('ufilter')):
                 q["filter"]["and"].append(
                     {"terms": {"form.meta.userID": filter(None, self.combined_user_ids)}})
@@ -437,7 +437,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             group_owners_raw = Group.get_case_sharing_groups(self.domain)
         group_owners = [group._id for group in group_owners_raw]
         ret = [user.get('user_id') for user in self.users]
-        if len(self.request.GET.getlist('ufilter')) == 1 and HQUserType.UNKNOWN in self.request.GET.getlist('ufilter'):
+        if len(self.request.GET.getlist('ufilter')) == 1 and str(HQUserType.UNKNOWN) in self.request.GET.getlist('ufilter'):
             #not applying group filter
             pass
         else:
