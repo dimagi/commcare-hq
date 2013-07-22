@@ -27,7 +27,6 @@ class CareSAFluff(fluff.IndicatorDocument):
     )
 
     #1b
-    # tested MAYBE
     hiv_tested = xcalculators.FilteredFormPropertyCalculator(
         xmlns=HCT_XMLNS,
         property_path='form/hiv_tested',
@@ -45,27 +44,38 @@ class CareSAFluff(fluff.IndicatorDocument):
         [hiv_tested, internal_hiv_pos_test]
     )
 
-    #1d TODO
-    #new_hiv_tb_screen = xcalculators.FilteredFormPropertyCalculator(
-        #xmlns=HCT_XMLNS,
-        #property_path='form/test_results',
-        #operator=xcalculators.ANY,
-    #)
+    #1d
+    new_hiv_tb_screen = xcalculators.FilteredFormPropertyCalculator(
+        xmlns=HCT_XMLNS,
+        property_path='form/test_results',
+        operator=xcalculators.ANY,
+    )
 
-    #1e TODO
+    #1e
+    internal_tb_screening = xcalculators.FilteredFormPropertyCalculator(
+        xmlns=HCT_XMLNS,
+        property_path='form/tb_screening',
+        operator=xcalculators.ANY,
+    )
+    internal_tested_before = xcalculators.FilteredFormPropertyCalculator(
+        xmlns=HCT_XMLNS,
+        property_path='form/tested_b4',
+        property_value='yes',
+    )
+    hiv_known_screened = xcalculators.FormANDCalculator(
+        [internal_tb_screening, internal_tested_before]
+    )
 
     #1f
-    # no results
     referred_tb_signs = xcalculators.FilteredFormPropertyCalculator(
         xmlns=HCT_XMLNS,
         property_path='form/refer_phcf_tb',
         property_value='yes',
     )
 
-    #1g TODO
+    #1g TODO NOT IN FORM
 
     #1h
-    # no results
     internal_refer_phcf = xcalculators.FilteredFormPropertyCalculator(
         xmlns=HCT_XMLNS,
         property_path='form/refer_phcf',
@@ -101,7 +111,6 @@ class CareSAFluff(fluff.IndicatorDocument):
     )
 
     #1k
-    # no results on any of these..
     internal_refer_hbc = xcalculators.FilteredFormPropertyCalculator(
         xmlns=HCT_XMLNS,
         property_path='form/refer_hbc',
@@ -131,9 +140,12 @@ class CareSAFluff(fluff.IndicatorDocument):
         property_value='single',
     )
 
-    #1m TODO
-
-    #1n TODO
+    #1m
+    couple_tests = xcalculators.FilteredFormPropertyCalculator(
+        xmlns=HCT_XMLNS,
+        property_path='form/couple_number',
+        operator=xcalculators.ANY,
+    )
 
     #2a
     deceased = xcalculators.FilteredFormPropertyCalculator(
