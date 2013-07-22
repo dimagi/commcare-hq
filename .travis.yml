@@ -11,7 +11,6 @@ install:
  - "lsb_release -a"
  - "sudo apt-get install moreutils"
  - "bash -ex .travis/upgrade-couchdb.sh | ts"
- - "curl http://127.0.0.1:5984/"
  - "git clone https://github.com/dimagi/commcarehq-venv.git"
  - "time (bash -e .travis/quietly-run-install.sh | ts)"
  - "time (commcarehq-venv/hq_env/bin/pip install -r requirements/requirements.txt -r requirements/dev-requirements.txt --use-mirrors | ts)"
