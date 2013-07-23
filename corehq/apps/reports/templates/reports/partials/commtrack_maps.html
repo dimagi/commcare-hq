@@ -28,7 +28,7 @@ function ProductModel(data, root) {
 
   this.clicked = function() {
     var p = this;
-    $.get(CASE_API_URL + '?properties/product=' + this.uuid(), null, function(data) {
+    $.get(CASE_API_URL + '?properties/case_type=supply-point-product&properties/product=' + this.uuid(), null, function(data) {
       maps_refresh(root.map, data);
 
       $.each(root.products(), function(i, e) {
