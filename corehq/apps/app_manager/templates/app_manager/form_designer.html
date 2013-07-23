@@ -25,6 +25,7 @@
     <script src="{% static 'formdesigner/js/controller.js' %}"></script>
     <script src="{% static 'formdesigner/js/widgets.js' %}"></script>
     <script src="{% static 'formdesigner/js/multimedia.js' %}"></script>
+    <script src="{% static 'formdesigner/js/window.js' %}"></script>
 
     {% include 'hqmedia/partials/multimedia_js.html' %} {# todo We should have a discussion at some point how we'd like to organize this in the future. #}
 {% endblock %}
@@ -50,6 +51,15 @@
                     objectMap: {{ multimedia_object_map|JSON }},
                     uploadControllerClass: HQMediaFileUploadController
                 },
+                windowConfig: {
+                    bottomOffset: 50,
+                    leftOffset: function () {
+                        return $('.sidebar').outerWidth() + 2;
+                    },
+                    topOffset: function () {
+                        return $('header').outerHeight() + $('.hq-page-header-container').outerHeight();
+                    }
+                },
                 saveType: 'patch',
                 form: {{ form.source|JSON }},
                 langs: {{ app.langs|JSON }},
@@ -70,6 +80,16 @@
     <link href="{% static 'formdesigner/css/chosen.css' %}" rel="stylesheet" />
     <link rel="stylesheet" href="{% static 'formdesigner/css/jquery.fancybox-1.3.4.css' %}" media="screen" />
     <link href="{% static 'formdesigner/css/main.css' %}" rel="stylesheet" media="screen, projection" />
+
+    <style type="text/css">
+        body > footer {
+            position: relative;
+        }
+        body > footer > .row-fluid {
+          width: 98%;
+          position: absolute;
+        }
+    </style>
 
 {% endblock %}
 
