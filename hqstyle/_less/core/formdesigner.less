@@ -1,3 +1,7 @@
+#formdesigner {
+  top: 0;
+}
+
 #formdesigner .fd-toolbar {
   border-left: 1px solid #ddd;
   border-right: 1px solid #ddd;
@@ -29,9 +33,16 @@
     .btn:only-of-type {
       padding: 0;
     }
-    .btn.disabled i {
-      color: @gray;
+    .btn {
+      &.disabled,
+      &[disabled] {
+        .opacity(100);
+        border: 1px solid @btnBackgroundHighlight;
+        > span { #gradient > .vertical(lighten(@btnBackgroundHighlight, 5), @btnBackground); }
+        i { .opacity(30); }
+      }
     }
+
     &.fd-question-type-group-advanced {
       .btn {
         padding: @toolbarButtonPadding;
@@ -39,11 +50,8 @@
       }
     }
   }
-}
 
-#formdesigner .fd-tree,
-#formdesigner .fd-question-properties {
-    margin-top: 0 !important; // HACK HACK HACK, this needs to get cleaned up
+
 }
 
 #formdesigner .fd-question-type .tooltip {
@@ -140,4 +148,18 @@
 
 #formdesigner .itext-language-section .control-label {
   text-transform: capitalize;
+}
+
+#formdesigner #fd-messages {
+  .alert {
+    .box-shadow(0px 0px 10px rgba(0, 0, 0, 0.4));
+    margin: @gridGutterWidth;
+  }
+}
+
+#formdesigner .fd-toolbar .tooltip {
+  .tooltip-inner { .box-shadow(0px 0px 10px rgba(255, 255, 255, 0.75)); }
+  &.in {
+    .opacity(100);
+  }
 }

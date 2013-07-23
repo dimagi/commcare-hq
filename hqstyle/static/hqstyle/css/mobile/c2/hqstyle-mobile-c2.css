@@ -395,7 +395,7 @@ a:hover {
   min-height: 100%;
   height: auto !important;
   height: 100%;
-  margin-bottom: -108px;
+  margin-bottom: -45px;
   *zoom: 1;
 }
 .hq-container-fluid:before,
@@ -408,7 +408,7 @@ a:hover {
   clear: both;
 }
 .hq-container-fluid:after {
-  height: 116px;
+  height: 47px;
 }
 .hq-container-fluid .sidebar nav {
   padding: 8px 0;
@@ -631,8 +631,8 @@ ol.inline {
   margin-left: 0;
   list-style: none;
 }
-ul.inline  > li,
-ol.inline  > li {
+ul.inline > li,
+ol.inline > li {
   display: inline-block;
   padding-left: 5px;
   padding-right: 5px;
