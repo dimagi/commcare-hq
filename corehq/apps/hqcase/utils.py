@@ -1,5 +1,6 @@
 import datetime
 import uuid
+from dimagi.utils.couch.database import get_db
 from dimagi.utils.parsing import json_format_datetime
 from django.template.loader import render_to_string
 
@@ -7,6 +8,7 @@ from receiver.util import spoof_submission
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.util import get_submit_url
+
 
 def submit_case_blocks(case_blocks, domain, username="system", user_id="",
                        xmlns='http://commcarehq.org/case'):
@@ -27,9 +29,10 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id="",
         hqsubmission=False,
     )
 
+
 def get_case_wrapper(data):
     from corehq.apps.commtrack.models import get_case_wrapper
-    
+
     wrapper = None
 
     if data['domain'] == 'pact' and data['type'] == 'cc_path_client':
@@ -43,3 +46,13 @@ def get_case_wrapper(data):
         pass
 
     return wrapper
+
+
+def get_case_by_domain_hq_user_id(domain, user_id, include_docs=False):
+    """
+    Get the 'user case' for user_id. User cases are part of the call center feature.
+    """
+    return get_db().view('hqcase/by_domain_hq_user_id',
+                         key=[domain, user_id],
+                         reduce=False,
+                         include_docs=include_docs).one()

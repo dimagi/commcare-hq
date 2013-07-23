@@ -1,9 +1,8 @@
 from __future__ import absolute_import
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
 import uuid
 from xml.etree import ElementTree
-from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_domain_hq_user_id
 from couchdbkit.exceptions import MultipleResultsFound, NoResultFound
 from ctable.models import SqlExtractMapping, ColumnDef, KeyMatcher
 
@@ -30,7 +29,7 @@ def sync_user_cases(commcare_user):
 
     found = False
     try:
-        case = CommCareCase.get_by_domain_hq_user_id(domain.name, commcare_user._id, include_docs=True)
+        case = get_case_by_domain_hq_user_id(domain.name, commcare_user._id, include_docs=True)
         found = bool(case)
     except MultipleResultsFound:
         return
