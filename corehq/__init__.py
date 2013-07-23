@@ -33,8 +33,6 @@ REPORTS = (
         inspect.SubmitHistory,
         inspect.CaseListReport,
         inspect.MapReport,
-        inspect.PieChartReportCaseExample,
-        inspect.PieChartReportFormExample,
     )),
     (_("Raw Data"), (
         export.ExcelExportReport,
