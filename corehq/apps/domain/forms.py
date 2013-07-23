@@ -210,11 +210,17 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
     )
     commconnect_enabled = BooleanField(
         label=_("CommConnect Enabled"),
-        required=False
+        required=False,
+        help_text=_("CommConnect is a CommCareHQ module for SMS messages, "
+                    "reminders and data collection.")
     )
     survey_management_enabled = BooleanField(
         label=_("Survey Management Enabled"),
-        required=False
+        required=False,
+        help_text=_("Survey Management is a CommCareHQ module for SMS and "
+                    "Call Center based surveys for large samples.  It is "
+                    "under active development. Do not enable for your domain "
+                    "unless you're piloting it.")
     )
     sms_case_registration_enabled = BooleanField(
         label=_("Enable Case Registration Via SMS"),
