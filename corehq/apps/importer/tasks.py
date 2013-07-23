@@ -87,16 +87,21 @@ def bulk_import_async(import_id, config, domain, excel_id):
             too_many_matches += 1
             continue
 
-        # make sure a valid owner id was supplied before using it
         uploaded_owner_id = fields_to_update.pop('owner_id', None)
-        if uploaded_owner_id and \
-           importer_util.is_valid_id(uploaded_owner_id, domain, id_cache):
-            owner_id = uploaded_owner_id
-            id_cache[uploaded_owner_id] = True
+        if uploaded_owner_id:
+            # If an owner_id mapping exists, verify it is a valid user
+            # or case sharing group
+            if importer_util.is_valid_id(uploaded_owner_id, domain, id_cache):
+                owner_id = uploaded_owner_id
+                id_cache[uploaded_owner_id] = True
+            else:
+                owner_id_errors.append(i + 1)
+                id_cache[uploaded_owner_id] = False
+                continue
         else:
-            owner_id_errors.append(i + 1)
-            id_cache[uploaded_owner_id] = False
-            continue
+            # if they didn't supply an owner_id mapping, default to current
+            # user
+            owner_id = user_id
 
         external_id = fields_to_update.pop('external_id', None)
 
