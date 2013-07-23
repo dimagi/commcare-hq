@@ -242,7 +242,7 @@ def preview():
         'django_app': ['hqdjango0-preview.internal.commcarehq.org','hqdjango1-preview.internal.commcarehq.org'],
         'django_pillowtop': ['hqdb0-preview.internal.commcarehq.org'],
 
-        'formsplayer': ['hqdjango1-preview.internal.commcarehq.org'],
+        'formsplayer': ['hqdjango0-preview.internal.commcarehq.org'],
         'lb': [], #todo on apache level config
         'staticfiles': ['hqproxy0.internal.commcarehq.org'],
         'deploy': ['hqdb0-preview.internal.commcarehq.org'], #this is a stub because we don't want to be prompted for a host or run deploy too many times
