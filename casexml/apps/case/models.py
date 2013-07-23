@@ -31,6 +31,10 @@ For details on casexml check out:
 http://bitbucket.org/javarosa/javarosa/wiki/casexml
 """
 
+CASE_STATUS_OPEN = 'open'
+CASE_STATUS_CLOSED = 'closed'
+CASE_STATUS_ALL = 'all'
+
 if getattr(settings, 'CASE_WRAPPER', None):
     CASE_WRAPPER = to_function(getattr(settings, 'CASE_WRAPPER'))
 else:
@@ -216,11 +220,11 @@ class CaseQueryMixin(object):
         """
         :param status: One of 'all', 'open' or 'closed'.
         """
-        if status and status not in ['all', 'open', 'closed']:
+        if status and status not in [CASE_STATUS_ALL, CASE_STATUS_OPEN, CASE_STATUS_CLOSED]:
             raise ValueError("Invalid value for 'status': '%s'" % status)
 
         key = [domain]
-        prefix = status or 'all'
+        prefix = status or CASE_STATUS_ALL
         if case_type:
             prefix += ' type'
             key += [case_type]
