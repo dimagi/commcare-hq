@@ -970,21 +970,6 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
 
         del screens['sort_elements']
 
-    if app.enable_multi_sort and len(detail.sort_elements) == 0:
-        # if we are using new sort style, we need to force a default
-        try:
-            default = screens['case_short'][0]
-            item = SortElement()
-            item.field = default['field']
-            item.type = ''
-            item.direction = 'ascending'
-            detail.sort_elements.append(item)
-        except Exception:
-            # if it errors, we don't have any thing to sort by so
-            # can just skip it
-            pass
-
-
     for detail_type in screens:
         if detail_type not in DETAIL_TYPES:
             return HttpResponseBadRequest("All detail types must be in %r"

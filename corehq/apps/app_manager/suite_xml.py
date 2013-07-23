@@ -430,6 +430,20 @@ class SuiteGenerator(object):
                                 )
                                 detail.append_column(dc)
 
+                            # need to add a default here so that it doesn't
+                            # get persisted
+                            if self.app.enable_multi_sort and \
+                               len(module.detail_sort_elements) == 0:
+                                from corehq.apps.app_manager.models import SortElement
+                                try:
+                                    se = SortElement()
+                                    se.field = detail.columns[0].field
+                                    se.type = 'string'
+                                    se.direction = 'ascending'
+                                    module.detail_sort_elements.append(se)
+                                except Exception:
+                                    pass
+
                         for column in detail.get_columns():
                             fields = get_column_generator(self.app, module, detail, column).fields
                             d.fields.extend(fields)
