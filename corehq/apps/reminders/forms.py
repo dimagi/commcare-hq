@@ -142,7 +142,7 @@ class EventWidget(Widget):
         event_dict = DotExpandedDict(reminder_events_raw)
         events = []
         if len(event_dict) > 0:
-            for key in sorted(event_dict["reminder_events"].iterkeys()):
+            for key in sorted(event_dict["reminder_events"].iterkeys(), key=lambda a : int(a)):
                 events.append(event_dict["reminder_events"][key])
         
         return events
