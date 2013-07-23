@@ -372,7 +372,7 @@ class MessagingTab(UITab):
                 {'title': _('Compose SMS Message'),
                  'url': reverse('sms_compose_message', args=[self.domain])}
             ]),
-            (_("Reminders"), [
+            (_("Data Collection and Reminders"), [
                 {'title': _("Reminders"),
                  'url': reverse('list_reminders', args=[self.domain]),
                  'children': [
