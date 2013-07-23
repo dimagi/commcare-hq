@@ -693,7 +693,7 @@ class CaseReminderHandler(Document):
         except Exception:
             user = None
         
-        if not self.active or case.closed or case.type != self.case_type or (self.recipient == RECIPIENT_USER and not user):
+        if not self.active or case.closed or case.type != self.case_type or case.doc_type.endswith("-Deleted") or (self.recipient == RECIPIENT_USER and not user):
             if reminder:
                 reminder.retire()
         else:
