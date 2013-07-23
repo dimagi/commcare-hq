@@ -23,15 +23,16 @@ class FullCasePillow(CasePillow):
         those enabled for fully indexed case docs
         """
         doc_dict = super(FullCasePillow, self).change_trigger(changes_dict)
-        domain = doc_dict.get('domain', None)
-        if domain is None:
-            domain = UNKNOWN_DOMAIN
+        if doc_dict is not None:
+            domain = doc_dict.get('domain', None)
+            if domain is None:
+                domain = UNKNOWN_DOMAIN
 
-        dynamic_domains = getattr(settings, 'ES_CASE_FULL_INDEX_DOMAINS', [])
-        if domain in dynamic_domains:
-            return doc_dict
-        else:
-            return None
+            dynamic_domains = getattr(settings, 'ES_CASE_FULL_INDEX_DOMAINS', [])
+            if domain in dynamic_domains:
+                return doc_dict
+            else:
+                return None
 
 
     def get_type_string(self, doc_dict):

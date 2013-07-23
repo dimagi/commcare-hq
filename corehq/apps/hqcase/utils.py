@@ -32,6 +32,10 @@ def get_case_wrapper(data):
     
     wrapper = None
 
+    if data['domain'] == 'pact' and data['type'] == 'cc_path_client':
+        from pact.models import PactPatientCase
+        return PactPatientCase
+
     try:
         if Domain.get_by_name(data['domain']).commtrack_enabled:
             wrapper = get_case_wrapper(data)

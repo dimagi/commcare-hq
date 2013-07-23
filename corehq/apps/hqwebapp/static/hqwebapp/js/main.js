@@ -1,3 +1,5 @@
+/*global $:false, jQuery:false, window:false, document:false */
+
 $.prototype.iconify = function (icon) {
     'use strict';
     var $icon = $("<i/>").addClass(icon).css('float', 'left');

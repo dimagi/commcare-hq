@@ -1,9 +1,7 @@
 import rawes
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.domain.models import Domain
 from corehq.elastic import get_es
 from corehq.pillows.case import CasePillow
-from corehq.pillows.exchange import ExchangePillow
 from corehq.pillows.xform import XFormPillow
 from couchforms.models import XFormInstance
 from django.conf import settings
@@ -21,15 +19,6 @@ def check_cluster_health():
     cluster_health = es.get('_cluster/health')
     ret[CLUSTER_HEALTH] = cluster_health['status']
     return ret
-
-def check_exchange_index():
-    latest_snapshot = Domain.get_db().view('domain/published_snapshots', limit=1, descending=True, include_docs=True).one()
-    if latest_snapshot is not None:
-        doc_id = latest_snapshot['id']
-        couch_rev = latest_snapshot['doc']['_rev']
-        return _check_es_rev(ExchangePillow.es_index, doc_id, couch_rev)
-    else:
-        return {"%s_status" % ExchangePillow.es_index: False, "%s_message" % ExchangePillow.es_index: "Exchange stale" }
 
 def check_xform_index():
     latest_xforms = _get_latest_xforms()

@@ -1,10 +1,15 @@
+from datetime import timedelta, datetime
 import dateutil
+from django.core.cache import cache
 from django.core.urlresolvers import reverse
+import operator
+import pytz
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
 from corehq.apps.reports.fields import FilterUsersField
 from corehq.apps.reports.generic import GenericReportView
+from corehq.apps.reports.models import HQUserType
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.dates import DateSpan
 from django.utils.translation import ugettext_noop
@@ -35,8 +40,8 @@ class CustomProjectReport(ProjectReport):
 class CommCareUserMemoizer(object):
 
     @memoized
-    def by_domain(self, domain):
-        users = CommCareUser.by_domain(domain)
+    def by_domain(self, domain, is_active=True):
+        users = CommCareUser.by_domain(domain, is_active=is_active)
         for user in users:
             # put users in the cache for get_by_user_id
             # so that function never has to touch the database
@@ -56,9 +61,13 @@ class ProjectReportParametersMixin(object):
 
     default_case_type = None
     filter_group_name = None
-    # set this to set the report's user ids from within the report 
+    filter_users_field_class = FilterUsersField
+    include_inactive = False
+
+    # set this to set the report's user ids from within the report
     # (i.e. based on a filter's return value).
     override_user_ids = None
+    need_group_ids = False
 
     @property
     @memoized
@@ -79,19 +88,36 @@ class ProjectReportParametersMixin(object):
     @property
     @memoized
     def user_filter(self):
-        return FilterUsersField.get_user_filter(self.request)[0]
+        return self.filter_users_field_class.get_user_filter(self.request)[0]
+
+    @property
+    @memoized
+    def default_user_filter(self):
+        return self.filter_users_field_class.get_user_filter(None)[0]
 
     @property
     def group_id(self):
-        return self.request_params.get('group', '')
+        return self.group_ids[0] if len(self.group_ids) else ''
 
     @property
     @memoized
     def group(self):
-        if self.group_id:
+        if self.group_id and self.group_id != '_all':
             return Group.get(self.group_id)
         else:
-            return None
+            return self.groups[0] if len(self.groups) else None
+
+    @property
+    def group_ids(self):
+        return filter(None, self.request.GET.getlist('group'))
+
+    @property
+    @memoized
+    def groups(self):
+        from corehq.apps.groups.models import Group
+        if '_all' in self.group_ids or self.request.GET.get('all_groups', 'off') == 'on':
+            return Group.get_reporting_groups(self.domain)
+        return [Group.get(g) for g in self.group_ids]
 
     @property
     def individual(self):
@@ -100,6 +126,20 @@ class ProjectReportParametersMixin(object):
             self.name = "%s for %s" % (self.name, self.users[0].get('raw_username'))
         """
         return self.request_params.get('individual', '')
+
+    @property
+    def mobile_worker_ids(self):
+        ids = self.request.GET.getlist('select_mw')
+        if '_all' in ids or self.request.GET.get('all_mws', 'off') == 'on':
+            cache_str = "mw_ids:%s" % self.domain
+            ids = cache.get(cache_str)
+            if not ids:
+                cc_users = CommCareUser.by_domain(self.domain)
+                if self.include_inactive:
+                    cc_users += CommCareUser.by_domain(self.domain, is_active=False)
+                ids = [ccu._id for ccu in cc_users]
+                cache.set(cache_str, ids, 24*60*60)
+        return ids
 
     @property
     @memoized
@@ -131,6 +171,83 @@ class ProjectReportParametersMixin(object):
     @memoized
     def usernames(self):
         return dict([(user.get('user_id'), user.get('username_in_report')) for user in self.users])
+
+    @property
+    @memoized
+    def users_by_group(self):
+        from corehq.apps.groups.models import Group
+        user_dict = {}
+        for group in self.groups:
+            user_dict["%s|%s" % (group.name, group._id)] = self.get_all_users_by_domain(
+                group=group,
+                user_filter=tuple(self.default_user_filter),
+                simplified=True
+            )
+        if self.need_group_ids:
+            for users in user_dict.values():
+                for u in users:
+                    u["group_ids"] = Group.by_user(u['user_id'], False)
+
+        return user_dict
+
+    @property
+    @memoized
+    def users_by_mobile_workers(self):
+        from corehq.apps.reports.util import _report_user_dict
+        user_dict = {}
+        for mw in self.mobile_worker_ids:
+            user_dict[mw] = _report_user_dict(CommCareUser.get_by_user_id(mw))
+
+        if self.need_group_ids:
+            for user in user_dict.values():
+                user["group_ids"] = Group.by_user(user["user_id"], False)
+
+        return user_dict
+
+    def get_admins_and_demo_users(self, ufilters=None):
+        ufilters = ufilters if ufilters is not None else ['1', '2', '3']
+        users = self.get_all_users_by_domain(
+            group=None,
+            user_filter=tuple(HQUserType.use_filter(ufilters)),
+            simplified=True
+        ) if ufilters else []
+
+        if self.need_group_ids:
+            for u in users:
+                u["group_ids"] = Group.by_user(u, False)
+        return users
+
+    @property
+    @memoized
+    def admins_and_demo_users(self):
+        ufilters = [uf for uf in ['1', '2', '3'] if uf in self.request.GET.getlist('ufilter')]
+        users = self.get_admins_and_demo_users(ufilters)
+        return users
+
+    @property
+    @memoized
+    def admins_and_demo_user_ids(self):
+        return [user.get('user_id') for user in self.admins_and_demo_users]
+
+
+    @property
+    @memoized
+    def combined_users(self):
+        #todo: replace users with this and make sure it doesn't break existing reports
+        all_users = [user for sublist in self.users_by_group.values() for user in sublist]
+        all_users.extend([user for user in self.users_by_mobile_workers.values()])
+        all_users.extend([user for user in self.admins_and_demo_users])
+        return dict([(user['user_id'], user) for user in all_users]).values()
+
+    @property
+    @memoized
+    def combined_user_ids(self):
+        return [user.get('user_id') for user in self.combined_users]
+
+    @property
+    @memoized
+    def case_sharing_groups(self):
+        return set(reduce(operator.add, [[u['group_ids'] for u in self.combined_users]]))
 
     @property
     def history(self):
@@ -174,6 +291,7 @@ class DatespanMixin(object):
     """
     datespan_field = 'corehq.apps.reports.fields.DatespanField'
     datespan_default_days = 7
+    inclusive = True
 
     _datespan = None
     @property
@@ -192,6 +310,6 @@ class DatespanMixin(object):
 
     @property
     def default_datespan(self):
-        datespan = DateSpan.since(self.datespan_default_days, format="%Y-%m-%d", timezone=self.timezone)
+        datespan = DateSpan.since(self.datespan_default_days, timezone=self.timezone, inclusive=self.inclusive)
         datespan.is_default = True
         return datespan

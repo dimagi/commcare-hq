@@ -4,10 +4,8 @@ import six
 import copy
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator, classonlymethod
-from django.views.decorators.csrf import csrf_protect
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
-from dimagi.utils.decorators import inline
 from corehq.elastic import get_es
 from django.views.generic import View
 from dimagi.utils.logging import notify_exception
@@ -92,7 +90,7 @@ class ESView(View):
         Returns the raw query json back, or None if there's an error
         """
         
-        #todo: backend audit logging of all these types of queries
+        logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(es_query)))
         if 'fields' in es_query or 'script_fields' in es_query:
             #nasty hack to add domain field to query that does specific fields.
             #do nothing if there's no field query because we get everything
@@ -212,26 +210,27 @@ class XFormES(ESView):
         # not necessarily available here. So `None` is passed here.
         form_filter = FormsByApplicationFilter(None, domain=self.domain)
 
-        for res in es_results['hits']['hits']:
-            if '_source' in res:
-                xmlns = res['_source'].get('xmlns', None)
-                name = None
-                if xmlns:
-                    name = form_filter.get_unknown_form_name(xmlns, none_if_not_found=True)
-                if not name:
-                    name = 'unknown' # try to fix it below but this will be the default
-                    # fall back
-                    try:
-                        if res['_source']['form'].get('@name', None):
-                            name = res['_source']['form']['@name']
-                        else:
-                            backup = res['_source']['form'].get('#type', 'data')
-                            if backup != 'data':
-                                name = backup
-                    except (TypeError, KeyError):
-                        pass
+        if es_results:
+            for res in es_results.get('hits', {}).get('hits', []):
+                if '_source' in res:
+                    xmlns = res['_source'].get('xmlns', None)
+                    name = None
+                    if xmlns:
+                        name = form_filter.get_unknown_form_name(xmlns, none_if_not_found=True)
+                    if not name:
+                        name = 'unknown' # try to fix it below but this will be the default
+                        # fall back
+                        try:
+                            if res['_source']['form'].get('@name', None):
+                                name = res['_source']['form']['@name']
+                            else:
+                                backup = res['_source']['form'].get('#type', 'data')
+                                if backup != 'data':
+                                    name = backup
+                        except (TypeError, KeyError):
+                            pass
 
-                res['_source']['es_readable_name'] = name
+                    res['_source']['es_readable_name'] = name
         return es_results
 
 

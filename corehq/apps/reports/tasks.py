@@ -3,7 +3,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 from corehq.apps.domain.calculations import CALC_FNS, _all_domain_stats
-from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index, CLUSTER_HEALTH, check_xform_index, check_exchange_index
+from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index, CLUSTER_HEALTH, check_xform_index
 from corehq.apps.reports.export import save_metadata_export_to_tempfile
 from corehq.apps.reports.models import (ReportNotification,
     UnsupportedScheduledReportError, HQGroupExportConfiguration)
@@ -27,7 +27,6 @@ def check_es_index():
     es_status.update(check_cluster_health())
     es_status.update(check_case_index())
     es_status.update(check_xform_index())
-    es_status.update(check_exchange_index())
 
     do_notify = False
     message = []
@@ -35,7 +34,7 @@ def check_es_index():
         do_notify=True
         message.append("Cluster health is red - something is up with the ES machine")
 
-    for prefix in ['hqcases', 'xforms','cc_exchange']:
+    for prefix in ['hqcases', 'xforms']:
         if es_status.get('%s_status' % prefix, False) == False:
             do_notify=True
             message.append("Elasticsearch %s Index Issue: %s" % (prefix, es_status['%s_message' % prefix]))
