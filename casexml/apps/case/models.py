@@ -237,13 +237,6 @@ class CaseQueryMixin(object):
 
         return [prefix] + key
 
-    @classmethod
-    def get_by_domain_hq_user_id(cls, domain, user_id, include_docs=False):
-        return CommCareCase.view('hqcase/by_domain_hq_user_id',
-                                 key=[domain, user_id],
-                                 reduce=False,
-                                 include_docs=include_docs).one(),
-
 
 class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQueryMixin):
     """
