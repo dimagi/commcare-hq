@@ -94,7 +94,10 @@ class Repeater(Document, UnicodeMixIn):
     def wrap(cls, data):
         doc_type = data['doc_type'].replace(DELETED, '')
         if cls.__name__ == Repeater.__name__:
-            return repeater_types.get(doc_type, cls).wrap(data)
+            if doc_type in repeater_types:
+                return repeater_types[doc_type].wrap(data)
+            else:
+                raise Exception('Unknown repeater type: %s', data)
         else:
             return super(Repeater, cls).wrap(data)
 
