@@ -168,6 +168,123 @@ XFORM_SINGLE_CASE = {
     }
 }
 
+CASE_WITH_OWNER_ID = {
+   "_id": "case_with_owner_id",
+   "opened_on": "2013-05-03T11:26:54Z",
+   "location_": [
+   ],
+   "domain": "owner_case",
+   "xform_ids": [
+       "98e6b3d7-7c4f-466b-a3f4-0395c1db7f4f"
+   ],
+   "server_modified_on": "2013-06-11T15:40:10Z",
+   "initial_processing_complete": False,
+   "export_tag": [
+   ],
+   "computed_modified_on_": None,
+   "actions": [
+       {
+           "doc_type": "CommCareCaseAction",
+           "xform_id": "98e6b3d7-7c4f-466b-a3f4-0395c1db7f4f",
+           "user_id": "testuser",
+           "xform_name": "New Form",
+           "sync_log_id": None,
+           "server_date": "2013-05-03T05:57:03Z",
+           "action_type": "create",
+           "updated_known_properties": {
+               "type": "testcase",
+               "name": "75",
+               "owner_id": "testuser"
+           },
+           "updated_unknown_properties": {
+           },
+           "indices": [
+           ],
+           "xform_xmlns": "http://openrosa.org/formdesigner/150B838E-B49C-44A3-B037-928DC787F17D",
+           "date": "2013-05-03T11:26:54Z"
+       }
+   ],
+   "modified_on": "2013-05-03T11:26:54Z",
+   "closed_by": None,
+   "closed_on": None,
+   "referrals": [
+   ],
+   "user_id": "testuser",
+   "name": "75",
+   "doc_type": "CommCareCase",
+   "external_id": None,
+   "#export_tag": [
+       "domain",
+       "type"
+   ],
+   "opened_by": "testuser",
+   "computed_": {
+   },
+   "version": "2.0",
+   "closed": False,
+   "indices": [
+   ],
+   "type": "testcase",
+   "owner_id": "testuser"
+}
+
+CASE_NO_OWNER_ID = {
+   "_id": "case_no_owner_id",
+   "opened_on": "2013-05-03T11:26:54Z",
+   "location_": [
+   ],
+   "domain": "no_owner_case",
+   "xform_ids": [
+       "98e6b3d7-7c4f-466b-a3f4-0395c1db7f4f"
+   ],
+   "server_modified_on": "2013-06-11T15:40:10Z",
+   "initial_processing_complete": False,
+   "export_tag": [
+   ],
+   "computed_modified_on_": None,
+   "actions": [
+       {
+           "doc_type": "CommCareCaseAction",
+           "xform_id": "98e6b3d7-7c4f-466b-a3f4-0395c1db7f4f",
+           "user_id": "testuser",
+           "xform_name": "New Form",
+           "sync_log_id": None,
+           "server_date": "2013-05-03T05:57:03Z",
+           "action_type": "create",
+           "updated_known_properties": {
+               "type": "testcase",
+               "name": "75",
+           },
+           "updated_unknown_properties": {
+           },
+           "indices": [
+           ],
+           "xform_xmlns": "http://openrosa.org/formdesigner/150B838E-B49C-44A3-B037-928DC787F17D",
+           "date": "2013-05-03T11:26:54Z"
+       }
+   ],
+   "modified_on": "2013-05-03T11:26:54Z",
+   "closed_by": None,
+   "closed_on": None,
+   "referrals": [
+   ],
+   "user_id": "testuser",
+   "name": "75",
+   "doc_type": "CommCareCase",
+   "external_id": None,
+   "#export_tag": [
+       "domain",
+       "type"
+   ],
+   "opened_by": "testuser",
+   "computed_": {
+   },
+   "version": "2.0",
+   "closed": False,
+   "indices": [
+   ],
+   "type": "testcase",
+}
 
 class testPillowTopProcessing(TestCase):
     def testXFormMapping(self):
@@ -208,4 +325,18 @@ class testPillowTopProcessing(TestCase):
 
         [self.assertIsNotNone(x['@date_modified']) for x in orig_cases]
         [self.assertIsNone(x['@date_modified']) for x in changed_cases]
+
+    def testOwnerIDSetOnTransform(self):
+        """
+        Test that the owner_id gets set to the case when the pillow calls change transform
+        """
+        case_owner_id = CASE_WITH_OWNER_ID
+        case_no_owner_id = CASE_NO_OWNER_ID
+
+        pillow = CasePillow(create_index=False, online=False)
+        changed_with_owner_id = pillow.change_transform(case_owner_id)
+        changed_with_no_owner_id = pillow.change_transform(case_no_owner_id)
+
+        self.assertEqual(changed_with_owner_id.get("owner_id"), "testuser")
+        self.assertEqual(changed_with_no_owner_id.get("owner_id"), "testuser")
 

@@ -234,6 +234,10 @@ def appstore_api(request):
     return HttpResponse(json.dumps(results), mimetype="application/json")
 
 def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at=None, size=None, dict_only=False):
+    """
+        Any filters you include in your query should an and filter
+        todo: intelligently deal with preexisting filters
+    """
     if terms is None:
         terms = []
     if q is None:

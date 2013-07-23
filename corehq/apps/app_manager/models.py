@@ -1,13 +1,24 @@
 # coding=utf-8
+import tempfile
+import os
+import logging
+import hashlib
+import random
+import json
+import langcodes
+import types
+import re
 from collections import defaultdict
 from datetime import datetime
 from functools import wraps
-import types
+from copy import deepcopy
+from urllib2 import urlopen
+from urlparse import urljoin
+
 from django.core.cache import cache
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
-import re
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext
 from corehq.apps.app_manager.const import APP_V1, APP_V2
 from couchdbkit.exceptions import BadValueError
 from couchdbkit.ext.django.schema import *
@@ -15,13 +26,22 @@ from django.conf import settings
 from django.contrib.auth.models import get_hexdigest
 from django.core.urlresolvers import reverse
 from django.http import Http404
+from django.template.loader import render_to_string
+
 from restkit.errors import ResourceError
+from couchdbkit.resource import ResourceNotFound
+from couchdbkit.exceptions import BadValueError
+from couchdbkit.ext.django.schema import *
+
+from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
+from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
+from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.web import get_url_base, parse_int
+from dimagi.utils.couch.database import get_db
 import commcare_translations
-from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings, build_error_utils
-from corehq.apps.app_manager.suite_xml import IdStrings
-from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
-from corehq.apps.app_manager.util import split_path, save_xform
-from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, XFormError, XFormValidationError, WrappedNode, CaseXPath
+
+from corehq.util import bitly
+from corehq.apps.receiverwrapper.models import Repeater, register_repeater_type
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
@@ -29,29 +49,15 @@ from corehq.apps.reports.templatetags.timezone_tags import utc_to_timezone
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import cc_user_domain
-from corehq.util import bitly
-import current_builds
-from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
-from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
-from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.web import get_url_base, parse_int
-from copy import deepcopy
 from corehq.apps.domain.models import cached_property
-from django.template.loader import render_to_string
-from urllib2 import urlopen
-from urlparse import urljoin
-import langcodes
 
-
-import random
-from dimagi.utils.couch.database import get_db
-import json
-from couchdbkit.resource import ResourceNotFound
-import tempfile
-import os
-
-import logging
-import hashlib
+from corehq.apps.app_manager import current_builds
+from corehq.apps.app_manager.const import APP_V1, APP_V2
+from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings, build_error_utils
+from corehq.apps.app_manager.suite_xml import IdStrings
+from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
+from corehq.apps.app_manager.util import split_path, save_xform
+from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, XFormError, XFormValidationError, WrappedNode, CaseXPath
 
 MISSING_DEPENDECY = \
 """Aw shucks, someone forgot to install the google chart library
@@ -343,11 +349,20 @@ class FormBase(DocumentSchema):
             try:
                 XForm(self.source).validate(version=self.get_app().application_version)
             except XFormValidationError as e:
-                vc = self.validation_cache = unicode(e)
+                validation_dict = {
+                    "fatal_error": e.fatal_error,
+                    "validation_problems": e.validation_problems,
+                    "version": e.version,
+                }
+                vc = self.validation_cache = json.dumps(validation_dict)
             else:
                 vc = self.validation_cache = ""
         if vc:
-            raise XFormValidationError(vc)
+            try:
+                raise XFormValidationError(**json.loads(vc))
+            except ValueError:
+                self.validation_cache = None
+                return self.validate_form()
         return self
 
     def validate_for_build(self):
@@ -522,9 +537,11 @@ class FormBase(DocumentSchema):
                 and not self.actions.open_case.name_path:
             errors.append({
                 'type': 'case_name required',
-                'message': 'You are creating a case '
-                           'but have not given the case a name. '
-                           'The "Name according to question" field is required'
+                'message': ugettext(
+                    'Every case must have a name. '
+                    'Please specify a value for the name property under '
+                    '"Save data to the following case properties"'
+                )
             })
 
         try:
@@ -1506,6 +1523,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             data['build_langs'] = data['langs']
         return super(Application, cls).wrap(data)
 
+    def save(self, *args, **kwargs):
+        super(Application, self).save(*args, **kwargs)
+        from corehq.apps.app_manager import signals # Import loop if this is imported at the top; TODO: revamp so signal_connections <- models <- signals
+        signals.app_post_save.send(Application, application=self)
+
     def make_reversion_to_copy(self, copy):
         app = super(Application, self).make_reversion_to_copy(copy)
 
@@ -2318,3 +2340,8 @@ Module.get_case_list_locale_id = lambda self: "case_lists.m{module.id}".format(m
 Module.get_referral_list_command_id = lambda self: "m{module.id}-referral-list".format(module=self)
 Module.get_referral_list_locale_id = lambda self: "referral_lists.m{module.id}".format(module=self)
 import corehq.apps.app_manager.signals
+
+@register_repeater_type
+class AppStructureRepeater(Repeater):
+    def get_payload(self, repeat_record):
+        return repeat_record.payload_id # This is the id of the application, currently all we forward

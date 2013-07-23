@@ -1,15 +1,42 @@
 /*globals $, _, uiElement, eventize, lcsMerge, COMMCAREHQ */
 
 var SortRow = function (field, type, direction) {
-    this.field = ko.observable(field);
-    this.type = ko.observable(type);
-    this.direction = ko.observable(direction);
+    var self = this;
+    self.field = ko.observable(field);
+    self.type = ko.observable(type);
+    self.direction = ko.observable(direction);
 
-    this.type.subscribe(function () {
+    self.type.subscribe(function () {
         window.sortRowSaveButton.fire('change');
     });
-    this.direction.subscribe(function () {
+    self.direction.subscribe(function () {
         window.sortRowSaveButton.fire('change');
+    });
+
+    self.ascendText = ko.computed(function () {
+        var type = self.type();
+        if (type === 'plain') {
+            return 'Increasing (a, b, c)';
+        } else if (type === 'date') {
+            return 'Increasing (May 1st, May 2nd)';
+        } else if (type === 'int') {
+            return 'Increasing (1, 2, 3)';
+        } else if (type === 'double') {
+            return 'Increasing (1.1, 1.2, 1.3)';
+        }
+    });
+
+    self.descendText = ko.computed(function () {
+        var type = self.type();
+        if (type === 'plain') {
+            return 'Decreasing (c, b, a)';
+        } else if (type === 'date') {
+            return 'Decreasing (May 2nd, May 1st)'
+        } else if (type === 'int') {
+            return 'Decreasing (3, 2, 1)';
+        } else if (type === 'double') {
+            return 'Decreasing (1.3, 1.2, 1.1)';
+        }
     });
 };
 
@@ -605,8 +632,10 @@ var DetailScreenConfig = (function () {
                 column.format.fire('change');
 
                 var sortLine = $('<td/>').addClass('detail-screen-extra');
-                if (window.enableNewSort) {
-                  sortLine.append(column.$sortLink)
+                // Only add sort link if we are using new sort feature and
+                // this is not the blank field row
+                if (window.enableNewSort && column.field.value) {
+                    sortLine.append(column.$sortLink)
                 }
                 sortLine.appendTo($tr);
 

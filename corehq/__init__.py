@@ -11,6 +11,7 @@ from django.utils.translation import ugettext_noop as _
 def REPORTS(project):
     reports = [
         (_("Monitor Workers"), (
+            monitoring.WorkerActivityReport,
             monitoring.DailyFormStatsReport,
             monitoring.SubmissionsByFormReport,
             monitoring.FormCompletionTimeReport,

@@ -178,7 +178,10 @@ def _get_xform_source(request, app, form, filename="form.xml"):
 @login_and_domain_required
 def get_xform_source(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
-    form = app.get_module(module_id).get_form(form_id)
+    try:
+        form = app.get_module(module_id).get_form(form_id)
+    except IndexError:
+        raise Http404()
     return _get_xform_source(req, app, form)
 
 @login_and_domain_required
@@ -342,20 +345,7 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         except AppError as e:
             form_errors.append("Error in application: %s" % e)
         except XFormValidationError as e:
-
-            # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'
-            #
-            # ... and if possible split the third line that looks like e.g. "org.javarosa.xform.parse.XFormParseException: Select question has no choices"
-            # and just return the undecorated string
-            #
-            # ... unless the first line says
-            message_lines = unicode(e).split('\n')[2:]
-            if len(message_lines) > 0 and ':' in message_lines[0] and 'XPath Dependency Cycle' not in unicode(e):
-                message = ' '.join(message_lines[0].split(':')[1:])
-            else:
-                message = '\n'.join(message_lines)
-                
-            message = "Validation Error: " + message
+            message = unicode(e)
             form_errors.append((html.escape(message).replace('\n', '<br/>'), {'extra_tags': 'html'}))
 
         except XFormError as e:
@@ -979,21 +969,6 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
             detail.sort_elements.append(item)
 
         del screens['sort_elements']
-
-    if app.enable_multi_sort and len(detail.sort_elements) == 0:
-        # if we are using new sort style, we need to force a default
-        try:
-            default = screens['case_short'][0]
-            item = SortElement()
-            item.field = default['field']
-            item.type = ''
-            item.direction = 'ascending'
-            detail.sort_elements.append(item)
-        except Exception:
-            # if it errors, we don't have any thing to sort by so
-            # can just skip it
-            pass
-
 
     for detail_type in screens:
         if detail_type not in DETAIL_TYPES:
@@ -1996,10 +1971,9 @@ def app_summary_from_exchange(request, domain, app_id):
         return HttpResponseForbidden()
 
 def summary(request, domain, app_id, should_edit=True):
-    app = Application.get(app_id)
+    app = get_app(domain, app_id)
     if app.doc_type == 'RemoteApp':
-        return HttpResponse(_('Sorry, the application summary is not supported for remote apps'),
-                            status=501) # not implemented
+        raise Http404()
     context = get_apps_base_context(request, domain, app)
     langs = context['langs']
 
