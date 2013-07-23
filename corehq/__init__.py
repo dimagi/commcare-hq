@@ -21,6 +21,7 @@ REPORTS = (
         commtrack_maps.StockStatusMapReport,
     )),
     (_("Monitor Workers"), (
+        monitoring.WorkerActivityReport,
         monitoring.DailyFormStatsReport,
         monitoring.SubmissionsByFormReport,
         monitoring.FormCompletionTimeReport,

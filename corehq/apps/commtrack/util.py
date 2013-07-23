@@ -56,7 +56,7 @@ def make_product(domain, name, code):
     p.save()
     return p
 
-def bootstrap_default(domain, requisitions_enabled=True):
+def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=True):
     if not(domain and domain.commtrack_enabled and not domain.commtrack_settings):
         return
 
@@ -76,6 +76,12 @@ def bootstrap_default(domain, requisitions_enabled=True):
                 keyword='c',
                 caption='Consumed',
                 name='consumed',
+            ),
+            CommtrackActionConfig(
+                action_type='consumption',
+                keyword='l',
+                caption='Losses',
+                name='lost',
             ),
             CommtrackActionConfig(
                 action_type='stockonhand',

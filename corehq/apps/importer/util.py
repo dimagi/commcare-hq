@@ -3,10 +3,10 @@ from dimagi.utils.couch.database import get_db
 from corehq.apps.importer.const import LookupErrors
 from datetime import date
 from casexml.apps.case.models import CommCareCase
-from couchdbkit.exceptions import MultipleResultsFound, NoResultFound
 from xlrd import xldate_as_tuple
-from soil import DownloadBase
-from corehq.apps import importer
+from corehq.apps.groups.models import Group
+from corehq.apps.users.models import CouchUser
+from couchdbkit.exceptions import ResourceNotFound
 
 def get_case_properties(domain, case_type=None):
     """
@@ -185,7 +185,7 @@ def get_value_column_index(config, columns):
 
     return value_column_index
 
-def lookup_case(search_field, search_id, domain):
+def lookup_case(search_field, search_id, domain, case_type):
     """
     Attempt to find the case in CouchDB by the provided search_field and search_id.
 
@@ -196,22 +196,28 @@ def lookup_case(search_field, search_id, domain):
     if search_field == 'case_id':
         try:
             case = CommCareCase.get(search_id)
-            if case.domain == domain:
+
+            if case.domain == domain and case.type == case_type:
                 found = True
         except Exception:
             pass
     elif search_field == 'external_id':
-        try:
-            case = CommCareCase.view(
-                'hqcase/by_domain_external_id',
-                key=[domain, search_id],
-                reduce=False,
-                include_docs=True).one()
-            found = bool(case)
-        except NoResultFound:
-            pass
-        except MultipleResultsFound:
-            return (None, LookupErrors.MultipleResults)
+        results = CommCareCase.view(
+            'hqcase/by_domain_external_id',
+            key=[domain, search_id],
+            reduce=False,
+            include_docs=True)
+        if results:
+            cases_by_type = [case for case in results
+                             if case.type == case_type]
+
+            if not cases_by_type:
+                return (None, LookupErrors.NotFound)
+            elif len(cases_by_type) > 1:
+                return (None, LookupErrors.MultipleResults)
+            else:
+                case = cases_by_type[0]
+                found = True
 
     if found:
         return (case, None)
@@ -260,3 +266,18 @@ def get_spreadsheet(download_ref, column_headers=True):
     if not download_ref:
         return None
     return ExcelFile(download_ref.get_filename(), column_headers)
+
+def is_valid_id(uploaded_id, domain, cache):
+    if uploaded_id in cache:
+        return cache[uploaded_id]
+
+    # see if it's a user on this domain
+    if CouchUser.get_by_user_id(uploaded_id, domain):
+        return True
+
+    # or if it is a case sharing enabled group
+    try:
+        group = Group.get(uploaded_id)
+        return group.case_sharing
+    except ResourceNotFound:
+        return False

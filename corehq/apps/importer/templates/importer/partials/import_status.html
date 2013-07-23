@@ -24,7 +24,7 @@
 
             {% if result.match_count == 0 and result.created_count == 0 %}
                 <p>
-                    {% trans "No cases were matched or updated during this import." %}
+                    {% trans "No cases were created or updated during this import." %}
                 </p>
             {% endif %}
 
@@ -58,6 +58,28 @@
                         were ignored:
                     {% endblocktrans %}
                     {{ result.invalid_dates|join:", " }}
+                </p>
+            {% endif %}
+
+            {% if result.owner_id_errors|length > 0 %}
+                <p>
+                    {% blocktrans %}
+                        Owner ID was used in the mapping but there were errors
+                        when uploading because of these values. Make sure
+                        the values in this column are ID's for users or
+                        case sharing groups. The following row numbers had
+                        this issue and were ignored:
+                    {% endblocktrans %}
+                    {{ result.owner_id_errors|join:", " }}
+                </p>
+            {% endif %}
+
+            {% if result.errors > 0 %}
+                <p>
+                    {% blocktrans with errors=result.errors %}
+                        <strong>{{ errors }}</strong> rows had unknown case
+                        submission errors.
+                    {% endblocktrans %}
                 </p>
             {% endif %}
         </div>

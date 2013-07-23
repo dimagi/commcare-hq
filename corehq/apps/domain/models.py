@@ -146,6 +146,7 @@ class LicenseAgreement(DocumentSchema):
     date = DateTimeProperty()
     user_id = StringProperty()
     user_ip = StringProperty()
+    version = StringProperty()
 
 class InternalProperties(DocumentSchema, UpdatableSchema):
     """
@@ -194,7 +195,6 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     case_sharing = BooleanProperty(default=False)
     organization = StringProperty()
     hr_name = StringProperty() # the human-readable name for this project within an organization
-    eula = SchemaProperty(LicenseAgreement)
     creating_user = StringProperty() # username of the user who created this domain
 
     # domain metadata
@@ -256,6 +256,17 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     # to be eliminated from projects and related documents when they are copied for the exchange
     _dirty_fields = ('admin_password', 'admin_password_charset', 'city', 'country', 'region', 'customer_type')
 
+    @property
+    def domain_type(self):
+        """
+        The primary type of this domain.  Used to determine site-specific
+        branding.
+        """
+        if self.commtrack_enabled:
+            return 'commtrack'
+        else:
+            return 'commcare'
+
     @classmethod
     def wrap(cls, data):
         # for domains that still use original_doc
@@ -273,15 +284,6 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             if data.get("license", None) == "public":
                 data["license"] = "cc"
                 should_save = True
-
-        # if not 'creating_user' in data:
-        #     should_save = True
-        #     from corehq.apps.users.models import CouchUser
-        #     admins = CouchUser.view("users/admins_by_domain", key=data["name"], reduce=False, include_docs=True).all()
-        #     if len(admins) == 1:
-        #         data["creating_user"] = admins[0].username
-        #     else:
-        #         data["creating_user"] = None
 
         if 'slug' in data and data["slug"]:
             data["hr_name"] = data["slug"]
@@ -521,6 +523,21 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
     def case_sharing_included(self):
         return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)
+
+    def save(self, **params):
+        super(Domain, self).save(**params)
+
+        from corehq.apps.domain.signals import commcare_domain_post_save
+        results = commcare_domain_post_save.send_robust(sender='domain',
+                                                     domain=self)
+        for result in results:
+            # Second argument is None if there was no error
+            if result[1]:
+                notify_exception(
+                    None,
+                    message="Error occured during domain post_save %s: %s" %
+                            (self.name, str(result[1]))
+                )
 
     def save_copy(self, new_domain_name=None, user=None):
         from corehq.apps.app_manager.models import get_app

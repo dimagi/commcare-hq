@@ -1,3 +1,4 @@
+from couchdbkit import ResourceNotFound
 from corehq.apps.app_manager.models import Application
 from corehq.apps.reports import util
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
@@ -36,12 +37,14 @@ class ApplicationStatusReport(DeploymentsReport):
         rows = []
         selected_app = self.request_params.get(SelectApplicationField.slug, '')
         UNKNOWN = _("unknown")
+
         for user in self.users:
             last_seen = self.table_cell(-1, _("Never"))
-            app_name = "---"
-            is_unknown = True
-            key = make_form_couch_key(self.domain, user_id=user.get('user_id'))
-            data = XFormInstance.view("reports_forms/all_forms",
+            app_name = None
+
+            key = make_form_couch_key(self.domain, user_id=user.get('user_id'), app_id=selected_app if selected_app else None)
+            data = XFormInstance.view(
+                "reports_forms/all_forms",
                 startkey=key+[{}],
                 endkey=key,
                 include_docs=True,
@@ -58,20 +61,23 @@ class ApplicationStatusReport(DeploymentsReport):
                 else:
                     build_id = UNKNOWN
 
-                form_data = data.get_form
-                try:
-                    app_name = form_data['meta']['appVersion']['#text']
-                except KeyError:
+                if data.app_id:
                     try:
                         app = Application.get(data.app_id)
-                        is_unknown = False
-                        if selected_app and selected_app != data.app_id:
-                            continue
                         app_name = "%s [%s]" % (app.name, build_id)
-                    except Exception:
-                        app_name = UNKNOWN
-            if is_unknown and selected_app:
+                    except ResourceNotFound:
+                        pass
+                else:
+                    try:
+                        form_data = data.get_form
+                        app_name = form_data['meta']['appVersion']['#text']
+                    except KeyError:
+                        pass
+                    
+                app_name = app_name or _("Unknown App")
+
+            if app_name is None and selected_app:
                 continue
-            row = [user.get('username_in_report'), last_seen, app_name]
-            rows.append(row)
+
+            rows.append([user.get('username_in_report'), last_seen, app_name or "---"])
         return rows

@@ -406,7 +406,7 @@ class GenericReportView(CacheableRequestMixIn):
 
         self.context.update(
             report=dict(
-                title=self.name,
+                title=self.rendered_report_title,
                 description=self.description,
                 section_name=self.section_name,
                 slug=self.slug,
@@ -454,12 +454,13 @@ class GenericReportView(CacheableRequestMixIn):
             Intention: This probably does not need to be overridden in general.
             Please override template_context instead.
         """
+        self.context.update(rendered_as=self.rendered_as)
         self.context['report'].update(
             show_filters=self.fields or not self.hide_filters,
             breadcrumbs=self.breadcrumbs,
             default_url=self.default_report_url,
             url=self.get_url(domain=self.domain),
-            title=self.name
+            title=self.rendered_report_title
         )
         if hasattr(self, 'datespan'):
             self.context.update(datespan=self.datespan)
@@ -599,9 +600,10 @@ class GenericReportView(CacheableRequestMixIn):
     @request_cache("raw")
     def print_response(self):
         """
-        Returns the raw report data. What gets rendered in the async response.
+        Returns the report for printing.
         """
         self.is_rendered_as_email = True
+        self.use_datatables = False
         self.override_template = "reports/async/print_report.html"
         return HttpResponse(self._async_context()['report'])
 
@@ -995,6 +997,6 @@ class ElasticProjectInspectionReport(ProjectInspectionReportParamsMixin, Elastic
         so as to get sorting working correctly with the context of the GET params
         """
         ret = super(ElasticTabularReport, self).shared_pagination_GET_params
-        for k, v in self.request.GET.items():
+        for k, v in self.request.GET.iterlists():
             ret.append(dict(name=k, value=v))
         return ret

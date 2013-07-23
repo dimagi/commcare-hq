@@ -14,6 +14,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab
 from corehq.apps.app_manager import commcare_settings
+from corehq.apps.sms.views import get_sms_autocomplete_context
 from django.utils import html
 from django.utils.http import urlencode as django_urlencode
 from couchdbkit.exceptions import ResourceConflict
@@ -28,7 +29,7 @@ from django.conf import settings
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
-from corehq.apps.app_manager.util import is_valid_case_type, get_case_properties, get_all_case_properties
+from corehq.apps.app_manager.util import is_valid_case_type, get_case_properties, get_all_case_properties, add_odk_profile_after_build
 from corehq.apps.app_manager.util import save_xform, get_settings_values
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
@@ -51,12 +52,11 @@ from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.subprocess_timeout import ProcessTimedOut
 from dimagi.utils.web import json_response, json_request
-from corehq.apps.app_manager.forms import NewXFormForm, NewModuleForm
 from corehq.apps.reports import util as report_utils
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
     AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, EXAMPLE_DOMAIN, str_to_cls, validate_lang, SavedAppBuild
-from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util
+from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download
 
@@ -178,7 +178,10 @@ def _get_xform_source(request, app, form, filename="form.xml"):
 @login_and_domain_required
 def get_xform_source(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
-    form = app.get_module(module_id).get_form(form_id)
+    try:
+        form = app.get_module(module_id).get_form(form_id)
+    except IndexError:
+        raise Http404()
     return _get_xform_source(req, app, form)
 
 @login_and_domain_required
@@ -342,20 +345,7 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         except AppError as e:
             form_errors.append("Error in application: %s" % e)
         except XFormValidationError as e:
-
-            # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'
-            #
-            # ... and if possible split the third line that looks like e.g. "org.javarosa.xform.parse.XFormParseException: Select question has no choices"
-            # and just return the undecorated string
-            #
-            # ... unless the first line says
-            message_lines = unicode(e).split('\n')[2:]
-            if len(message_lines) > 0 and ':' in message_lines[0] and 'XPath Dependency Cycle' not in unicode(e):
-                message = ' '.join(message_lines[0].split(':')[1:])
-            else:
-                message = '\n'.join(message_lines)
-                
-            message = "Validation Error: " + message
+            message = unicode(e)
             form_errors.append((html.escape(message).replace('\n', '<br/>'), {'extra_tags': 'html'}))
 
         except XFormError as e:
@@ -417,16 +407,12 @@ def get_app_view_context(request, app):
         'settings_values': get_settings_values(app),
     }
 
-    commcare_build_options = {}
     build_config = CommCareBuildConfig.fetch()
-    for version in [app.application_version]:
-        options = build_config.get_menu(version)
-        options_labels = list()
-        options_builds = list()
-        for option in options:
-            options_labels.append(option.get_label())
-            options_builds.append(option.build.to_string())
-            commcare_build_options[version] = {"options" : options, "labels" : options_labels, "builds" : options_builds}
+    version = app.application_version
+    options = build_config.get_menu(version)
+    options_labels = [option.get_label() for option in options]
+    options_builds = [option.build.to_string() for option in options]
+
 
     (build_spec_setting,) = filter(
         lambda x: x['type'] == 'hq' and x['id'] == 'build_spec',
@@ -437,21 +423,11 @@ def get_app_view_context(request, app):
     build_spec_setting['value_names'] = options_labels
     build_spec_setting['default'] = build_config.get_default(app.application_version).to_string()
 
-    app_build_spec_string = app.build_spec.to_string()
-    app_build_spec_label = app.build_spec.get_label()
-
-    context.update({
-        "commcare_build_options" : commcare_build_options,
-        "app_build_spec_string" : app_build_spec_string,  # todo: remove
-        "app_build_spec_label" : app_build_spec_label,  # todo: remove
-        "app_version" : app.application_version,  # todo: remove
-    })
-
     if app.get_doc_type() == 'Application':
         try:
             # todo remove get_media_references
             multimedia = app.get_media_references()
-        except ProcessTimedOut as e:
+        except ProcessTimedOut:
             notify_exception(request)
             messages.warning(request, (
                 "We were unable to check if your forms had errors. "
@@ -466,6 +442,7 @@ def get_app_view_context(request, app):
             'multimedia': multimedia,
         })
     return context
+
 
 def get_langs(request, app):
     lang = request.GET.get('lang',
@@ -561,6 +538,7 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     app = get_app(domain, app_id)
     latest_release = get_app(domain, app_id, latest=True)
     context = get_apps_base_context(request, domain, app)
+    context['sms_contacts'] = get_sms_autocomplete_context(request, domain)['sms_contacts']
 
     saved_apps = []
 
@@ -671,9 +649,6 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
         'case_properties': case_properties,
 
-        'new_module_form': NewModuleForm(),
-        'new_xform_form': NewXFormForm(),
-
         'show_secret_settings': req.GET.get('secret', False)
     }
     context.update(base_context)
@@ -684,6 +659,9 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         template = "app_manager/form_view.html"
         context.update(get_form_view_context(req, form, context['langs'], is_user_registration))
     elif module:
+        sort_elements = [prop.values() for prop in
+                         module.get_detail('case_short').sort_elements]
+        context.update({"sortElements": json.dumps(sort_elements)})
         template = "app_manager/module_view.html"
     else:
         template = "app_manager/app_view.html"
@@ -971,21 +949,36 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     Called to over write entire detail screens at a time
 
     """
-
     params = json_request(req.POST)
     screens = params.get('screens')
 
     if not screens:
         return HttpResponseBadRequest("Requires JSON encoded param 'screens'")
-    for detail_type in screens:
-        if detail_type not in DETAIL_TYPES:
-            return HttpResponseBadRequest("All detail types must be in %r" % DETAIL_TYPES)
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
+    detail = module.get_detail('case_short')
+
+    detail.sort_elements = []
+    if 'sort_elements' in screens:
+        for sort_element in json.load(StringIO(screens['sort_elements'])):
+            item = SortElement()
+            item.field = sort_element['field']
+            item.type = sort_element['type']
+            item.direction = sort_element['direction']
+            detail.sort_elements.append(item)
+
+        del screens['sort_elements']
 
     for detail_type in screens:
-        module.get_detail(detail_type).columns = [DetailColumn.wrap(c) for c in screens[detail_type]]
+        if detail_type not in DETAIL_TYPES:
+            return HttpResponseBadRequest("All detail types must be in %r"
+                                          % DETAIL_TYPES)
+
+    for detail_type in screens:
+        module.get_detail(detail_type).columns = \
+            [DetailColumn.wrap(c) for c in screens[detail_type]]
+
     resp = {}
     app.save(resp)
     return json_response(resp)
@@ -1677,16 +1670,39 @@ def download_file(req, domain, app_id, path):
         'ccpr': 'commcare/profile',
         'jad': 'text/vnd.sun.j2me.app-descriptor',
         'jar': 'application/java-archive',
+        'xml': 'application/xml',
+        'txt': 'text/plain',
     }
     try:
         response = HttpResponse(mimetype=mimetype_map[path.split('.')[-1]])
     except KeyError:
         response = HttpResponse()
+
+    if path in ('CommCare.jad', 'CommCare.jar'):
+        set_file_download(response, path)
+        full_path = path
+    else:
+        full_path = 'files/%s' % path
+
     try:
-        response.write(req.app.fetch_attachment('files/%s' % path))
         assert req.app.copy_of
+        payload = req.app.fetch_attachment(full_path)
+        response.write(payload)
+        response['Content-Length'] = len(response.content)
         return response
     except (ResourceNotFound, AssertionError):
+        if req.app.copy_of:
+            if req.META.get('HTTP_USER_AGENT') == 'bitlybot':
+                raise Http404()
+            elif path == 'profile.ccpr':
+                # legacy: should patch build to add odk profile
+                # which wasn't made on build for a long time
+                add_odk_profile_after_build(req.app)
+                req.app.save()
+                return download_file(req, domain, app_id, path)
+            else:
+                notify_exception(req, 'Build resource not found')
+                raise Http404()
         callback, callback_args, callback_kwargs = RegexURLResolver(r'^', 'corehq.apps.app_manager.download_urls').resolve(path)
         return callback(req, domain, app_id, *callback_args, **callback_kwargs)
 
@@ -1955,7 +1971,9 @@ def app_summary_from_exchange(request, domain, app_id):
         return HttpResponseForbidden()
 
 def summary(request, domain, app_id, should_edit=True):
-    app = Application.get(app_id)
+    app = get_app(domain, app_id)
+    if app.doc_type == 'RemoteApp':
+        raise Http404()
     context = get_apps_base_context(request, domain, app)
     langs = context['langs']
 
