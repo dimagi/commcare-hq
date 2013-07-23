@@ -230,16 +230,16 @@ def preview():
     env.code_branch = 'master':
     env.sudo_user = 'cchq'
     env.environment = 'preview'
-    env.django_port = '9010'
+    env.django_port = '7999'
     #env.hosts = None
 
     env.roledefs = {
-        'couch': ['hqdb0-preview.internal.commcarehq.org'],
-        'pg': ['hqdb0-preview.internal.commcarehq.org'],
+        'couch': [],
+        'pg': [],
         'rabbitmq': ['hqdb0-preview.internal.commcarehq.org'],
-        'sofabed': ['hqdb0-preview.internal.commcarehq.org'], #todo, right now group it with celery
+        'sofabed': [], #todo, right now group it with celery
         'django_celery': ['hqdb0-preview.internal.commcarehq.org'],
-        'django_app': ['hqdjango0-preview.internal.commcarehq.org','hqdjango1-staging.internal.commcarehq.org'],
+        'django_app': ['hqdjango0-preview.internal.commcarehq.org','hqdjango1-preview.internal.commcarehq.org'],
         'django_pillowtop': ['hqdb0-preview.internal.commcarehq.org'],
 
         'formsplayer': ['hqdjango1-preview.internal.commcarehq.org'],
