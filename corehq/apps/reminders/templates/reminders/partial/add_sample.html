@@ -19,16 +19,6 @@
 
 {% endblock %}
 
-{% block sample_nav %}
-<ul class="nav nav-list">
-    {% if sample_id %}
-    <li class="active"><a href="{% url edit_sample domain sample_id %}">{{ form.name.value }}</a></li>
-    {% else %}
-    <li class="active"><a href="{% url add_sample domain %}">New Sample</a></li>
-    {% endif %}
-</ul>
-{% endblock %}
-
 {% block js-inline %}{{ block.super }}
 <script type="text/javascript">
     function remove_contact_record(ref) {
