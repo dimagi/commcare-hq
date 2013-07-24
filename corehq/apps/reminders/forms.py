@@ -395,10 +395,14 @@ class ComplexCaseReminderForm(Form):
         start_condition_type = self.cleaned_data.get("start_condition_type")
         enable_advanced_time_choices = self.cleaned_data.get("enable_advanced_time_choices")
         events = []
+        has_fire_time_case_property = False
+        max_day = 0
         for e in value:
             try:
                 day = int(e["day"])
                 assert day >= 0
+                if day > max_day:
+                    max_day = day
             except (ValueError, AssertionError):
                 raise ValidationError("Day must be specified and must be a non-negative number.")
             
@@ -408,6 +412,7 @@ class ComplexCaseReminderForm(Form):
                 fire_time_type = FIRE_TIME_DEFAULT
             
             if fire_time_type == FIRE_TIME_CASE_PROPERTY:
+                has_fire_time_case_property = True
                 time = None
                 fire_time_aux = e["time"].strip()
                 if len(fire_time_aux) == 0:
@@ -472,8 +477,15 @@ class ComplexCaseReminderForm(Form):
                 time_window_length = time_window_length,
             ))
         
+        min_schedule_length = max_day + 1
+        if event_interpretation == EVENT_AS_SCHEDULE and self.cleaned_data.get("schedule_length") < min_schedule_length:
+            raise ValidationError(_("Schedule length must be at least ") + str(min_schedule_length) + _(" according to current event schedule."))
+        
         if len(events) == 0:
             raise ValidationError("You must have at least one reminder event.")
+        else:
+            if event_interpretation == EVENT_AS_SCHEDULE and not has_fire_time_case_property:
+                events.sort(key=lambda e : ((1440 * e.day_num) + (60 * e.fire_time.hour) + e.fire_time.minute))
         
         return events
     
