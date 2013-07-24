@@ -2126,17 +2126,23 @@ class RemoteApp(ApplicationBase):
         }
         tree = _parse_xml(files['profile.xml'])
 
-        def add_file_from_path(path):
+        def add_file_from_path(path, strict=False):
             try:
                 loc = tree.find(path).text
             except (TypeError, AttributeError):
-                return
+                if strict:
+                    raise AppError("problem with file path reference!")
+                else:
+                    return
             loc, file = self.fetch_file(loc)
             files[loc] = file
             return loc, file
 
         add_file_from_path('features/users/logo')
-        _, suite = add_file_from_path(self.SUITE_XPATH)
+        try:
+            _, suite = add_file_from_path(self.SUITE_XPATH, strict=True)
+        except AppError:
+            raise AppError(ugettext('Problem loading suite file from profile file. Is your profile file correct?'))
 
         suite_xml = _parse_xml(suite)
 
