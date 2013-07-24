@@ -12,6 +12,7 @@ install:
  - "sudo apt-get install moreutils libblas-dev liblapack-dev"
  - "bash -ex .travis/upgrade-couchdb.sh | ts"
  - "git clone https://github.com/dimagi/commcarehq-venv.git"
+ - "source commcarehq-venv/hq_env/bin/activate"
  - "commcarehq-venv/hq_env/bin/pip install distribute"
  - "time (bash -e .travis/quietly-run-install.sh | ts)"
  - "time (commcarehq-venv/hq_env/bin/pip install --exists-action w -r requirements/requirements.txt -r requirements/dev-requirements.txt --use-mirrors | ts)"
