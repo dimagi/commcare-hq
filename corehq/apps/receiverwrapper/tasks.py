@@ -36,7 +36,7 @@ def run_only_once(fn):
     return _fn
 
 CHECK_REPEATERS_INTERVAL = timedelta(minutes=1)
-@periodic_task(run_every=CHECK_REPEATERS_INTERVAL, queue=settings.CELERY_PERIODIC_QUEUE)
+@periodic_task(run_every=CHECK_REPEATERS_INTERVAL, queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def check_repeaters():
     start = datetime.utcnow()
     LIMIT = 100
