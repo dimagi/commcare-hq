@@ -1,0 +1,64 @@
+{% extends "hqwebapp/two_column.html" %}
+{% load hq_shared_tags %}
+
+{% block js %} {{ block.super }}
+    <script type="text/javascript" src="{% static 'hqwebapp/js-custom/hq.legacy.js' %}"></script>
+{% endblock %}
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        $(function () {
+            var path = '{{ request.path }}';
+            COMMCAREHQ.initBlock($('.hq-content'));
+            $('#users-main-nav li a').each(function(e) {
+                if ($(this).attr('href') == path) {
+                    $(this).parent().addClass('active');
+                }
+            });
+            $('.hq-help-template').each(function () {
+                COMMCAREHQ.makeHqHelp({
+                    content: $(this).data('content'),
+                    title: $(this).data('title')
+                }, false).insertAfter(this);
+                $(this).remove();
+            });
+            $('.hq-help').hqHelp();
+            var activeTabCookie = 'active_tab',
+                last_active_tab = $.cookie(activeTabCookie);
+            if(last_active_tab) {
+                $(last_active_tab).addClass('active');
+                $('#project-settings-tabs a[href="'+last_active_tab+'"]').parent().addClass('active');
+            } else {
+                var first_tab = $('#project-settings-tabs a[data-toggle="tab"]').first();
+                first_tab.parent().addClass('active');
+                $(first_tab.attr('href')).addClass('active');
+            }
+            $('#project-settings-tabs a[data-toggle="tab"]').on('shown', function (e) {
+                $.cookie(activeTabCookie, $(this).attr('href'),
+                        {path: '{{ request.path }}',
+                        expires: 1});
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block title %}{{ section.name }}{% if settingspage.name %}: {{ settingspage.name }}{% endif %}{% endblock %}
+
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{{ section.url }}"><strong>{{ section.name }}</strong></a> <span class="divider">&gt;</span>
+        </li>
+        {% block subsection-title %}
+            {% if settingspage.parents %}
+                {% for parent in settingspage.parents %}
+                    <li><a href="{{ parent.url }}">{{ parent.name }}</a> <span class="divider">&gt;</span></li>
+                {% endfor %}
+            {% endif %}
+            {% if settingspage.name %}
+            <li class="active">
+                <a hråef="{{ settingspage.url }}">{{ settingspage.name }}</a>
+            </li>
+            {% endif %}
+        {% endblock %}
+    </ul>
+{% endblock %}
