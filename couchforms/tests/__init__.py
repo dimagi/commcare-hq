@@ -4,6 +4,7 @@ try:
     from .test_duplicates import *
     from .test_edits import *
     from .test_namespaces import *
+    from .test_auth import *
 except ImportError, e:
     # for some reason the test harness squashes these so log them here for clarity
     # otherwise debugging is a pain
