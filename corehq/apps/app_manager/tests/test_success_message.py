@@ -3,6 +3,7 @@ from django.test import TestCase
 from django.test.client import Client
 from corehq.apps.app_manager.models import Application, APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from datetime import datetime, timedelta
 from dimagi.utils.parsing import json_format_datetime
@@ -10,12 +11,13 @@ from receiver.xml import get_simple_response_xml, ResponseNature
 
 submission_template = """<?xml version='1.0' ?>
 <data xmlns="%(xmlns)s">
-	<meta>
-		<username>%(username)s</username>
-		<userID>%(userID)s</userID>
-	</meta>
+    <meta>
+        <username>%(username)s</username>
+        <userID>%(userID)s</userID>
+    </meta>
 </data>
 """
+
 
 class SuccessMessageTest(TestCase):
     message = "Thanks $first_name ($name)! You have submitted $today forms today and $week forms since Monday."
@@ -26,7 +28,9 @@ class SuccessMessageTest(TestCase):
     password = "123"
     xmlns = "http://dimagi.com/does_not_matter"
     tz = timedelta(hours=0)
+
     def setUp(self):
+        create_domain(self.domain)
         couch_user = CommCareUser.create(self.domain, self.username, self.password)
         userID = couch_user.user_id
         couch_user.first_name = self.first_name
@@ -56,7 +60,6 @@ class SuccessMessageTest(TestCase):
                 'xml_submission_file': f,
             }, **kwargs)
             return response
-
 
         self.num_forms_today = 0
         self.num_forms_this_week = 0
