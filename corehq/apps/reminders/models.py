@@ -539,7 +539,7 @@ class CaseReminderHandler(Document):
         while now >= reminder.next_fire and reminder.active:
             iteration += 1
             # If it is a callback reminder, check the callback_timeout_intervals
-            if (reminder.method in [METHOD_SMS_CALLBACK, METHOD_SMS_CALLBACK_TEST, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY]) and len(reminder.current_event.callback_timeout_intervals) > 0:
+            if (self.method in [METHOD_SMS_CALLBACK, METHOD_SMS_CALLBACK_TEST, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY]) and len(reminder.current_event.callback_timeout_intervals) > 0:
                 if reminder.skip_remaining_timeouts or reminder.callback_try_count >= len(reminder.current_event.callback_timeout_intervals):
                     if self.method == METHOD_SMS_SURVEY and self.submit_partial_forms and iteration > 1:
                         # This is to make sure we submit the unfinished forms even when fast-forwarding to the next event after system downtime
@@ -571,6 +571,41 @@ class CaseReminderHandler(Document):
         
         # Preserve the current next fire time since next_fire can be manipulated for error retries
         reminder.last_scheduled_fire_time = reminder.next_fire
+    
+    def recalculate_schedule(self, reminder, prev_definition=None):
+        """
+        Recalculates which iteration / event number a schedule-based reminder should be on.
+        Only meant to be called on schedule-based reminders.
+        """
+        if reminder.callback_try_count > 0 and prev_definition is not None and len(prev_definition.events) > reminder.current_event_sequence_num:
+            preserve_current_session_ids = True
+            old_form_unique_id = prev_definition.events[reminder.current_event_sequence_num].form_unique_id
+            old_xforms_session_ids = reminder.xforms_session_ids
+        else:
+            preserve_current_session_ids = False
+        
+        case = reminder.case
+        
+        reminder.last_fired = None
+        reminder.error_retry_count = 0
+        reminder.event_initiation_timestamp = None
+        reminder.active = True
+        reminder.schedule_iteration_num = 1
+        reminder.current_event_sequence_num = 0
+        reminder.callback_try_count = 0
+        reminder.skip_remaining_timeouts = False
+        reminder.last_scheduled_fire_time = None
+        reminder.xforms_session_ids = []
+        reminder.next_fire = self.get_current_reminder_event_timestamp(reminder, reminder.recipient, case)
+        reminder.active = self.get_active(reminder, reminder.next_fire, case)
+        self.set_next_fire(reminder, self.get_now())
+        
+        if preserve_current_session_ids:
+            if reminder.callback_try_count > 0 and self.events[reminder.current_event_sequence_num].form_unique_id == old_form_unique_id and self.method == METHOD_SMS_SURVEY:
+                reminder.xforms_session_ids = old_xforms_session_ids
+            elif prev_definition is not None and prev_definition.submit_partial_forms:
+                for session_id in old_xforms_session_ids:
+                    submit_unfinished_form(session_id, prev_definition.include_case_side_effects)
     
     def get_active(self, reminder, now, case):
         schedule_not_finished = not (self.max_iteration_count != REPEAT_SCHEDULE_INDEFINITELY and reminder.schedule_iteration_num > self.max_iteration_count)
@@ -668,7 +703,7 @@ class CaseReminderHandler(Document):
         else:
             return False
 
-    def case_changed(self, case, now=None):
+    def case_changed(self, case, now=None, schedule_changed=False, prev_definition=None):
         """
         This method is used to manage updates to CaseReminderHandler's whose start_condition_type == CASE_CRITERIA.
         
@@ -727,20 +762,25 @@ class CaseReminderHandler(Document):
                     reminder = None
             
             # Spawn a reminder if need be
+            just_spawned = False
             if reminder is None:
                 if start_condition_reached:
                     reminder = self.spawn_reminder(case, start)
                     reminder.start_condition_datetime = start_condition_datetime
                     self.set_next_fire(reminder, now) # This will fast-forward to the next event that does not occur in the past
+                    just_spawned = True
             
             # Check to see if the reminder should still be active
             if reminder is not None:
-                active = self.get_active(reminder, reminder.next_fire, case)
-                if active and not reminder.active:
-                    reminder.active = True
-                    self.set_next_fire(reminder, now) # This will fast-forward to the next event that does not occur in the past
+                if schedule_changed and self.event_interpretation == EVENT_AS_SCHEDULE and not just_spawned:
+                    self.recalculate_schedule(reminder, prev_definition)
                 else:
-                    reminder.active = active
+                    active = self.get_active(reminder, reminder.next_fire, case)
+                    if active and not reminder.active:
+                        reminder.active = True
+                        self.set_next_fire(reminder, now) # This will fast-forward to the next event that does not occur in the past
+                    else:
+                        reminder.active = active
                 
                 reminder.save()
     
@@ -773,6 +813,8 @@ class CaseReminderHandler(Document):
             reminder.save()
     
     def save(self, **params):
+        schedule_changed = params.pop("schedule_changed", False)
+        prev_definition = params.pop("prev_definition", None)
         super(CaseReminderHandler, self).save(**params)
         if not self.deleted():
             if self.start_condition_type == CASE_CRITERIA:
@@ -783,7 +825,7 @@ class CaseReminderHandler(Document):
                     include_docs=True,
                 ).all()
                 for case in cases:
-                    self.case_changed(case)
+                    self.case_changed(case, schedule_changed=schedule_changed, prev_definition=prev_definition)
             elif self.start_condition_type == ON_DATETIME:
                 self.datetime_definition_changed()
     
