@@ -1,5 +1,5 @@
 from corehq.apps.app_manager import suite_xml as sx
-from corehq.apps.app_manager.xform import CaseXPath, IndicatorXpath, FIELD_TYPE_INDICATORS
+from corehq.apps.app_manager.xform import CaseXPath, IndicatorXpath
 
 CASE_PROPERTY_MAP = {
     # IMPORTANT: if you edit this you probably want to also edit
@@ -293,7 +293,7 @@ class Address(HideShortColumn):
     template_form = 'address'
     template_width = 0
 
-@register_type_processor(FIELD_TYPE_INDICATORS)
+@register_type_processor(sx.FIELD_TYPE_INDICATORS)
 class IndicatorXpathGenerator(ColumnXpathGenerator):
     @property
     def xpath(self):

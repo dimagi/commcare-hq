@@ -2,9 +2,11 @@ from django.core.urlresolvers import reverse
 from lxml import etree
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField
 from corehq.apps.app_manager.util import split_path
-from corehq.apps.app_manager.xform import SESSION_CASE_ID, VARIABLE_CASE_ID, FIELD_TYPE_INDICATORS
+from corehq.apps.app_manager.xform import SESSION_CASE_ID
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
+
+FIELD_TYPE_INDICATORS = 'indicators'
 
 
 class IdNode(XmlObject):
@@ -434,9 +436,6 @@ class SuiteGenerator(object):
                             id=self.id_strings.detail(module, detail),
                             title=Text(locale_id=self.id_strings.detail_title_locale(module, detail))
                         )
-
-                        if any([column for column in detail_columns if column.field_type == FIELD_TYPE_INDICATORS]):
-                            d.variables.append(DetailVariable(name=VARIABLE_CASE_ID, function='@case_id'))
 
                         if detail.type == 'case_short':
                             detail_fields = [c.field for c in detail_columns]

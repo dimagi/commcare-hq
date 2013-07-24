@@ -35,9 +35,6 @@
             <locale id="m0.case_short.title"/>
         </text>
     </title>
-    <variables>
-        <case_id function="@case_id"/>
-    </variables>
     <field sort="default">
         <header>
             <text>
@@ -159,7 +156,7 @@
         </header>
         <template>
             <text>
-                <xpath function="instance('indicators_call-center')/indicators/case[@id=$case_id]/activeClientsLast30Day"/>
+                <xpath function="instance('indicators_call-center')/indicators/case[@id = current()/@case_id]/activeClientsLast30Day"/>
             </text>
         </template>
     </field>
@@ -182,7 +179,6 @@
             </text>
         </template>
     </field>
-
     <field>
         <header>
             <text>
