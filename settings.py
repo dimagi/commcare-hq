@@ -333,6 +333,9 @@ SMS_GATEWAY_PARAMS = "user=my_username&password=my_password&id=%(phone_number)s&
 # celery
 BROKER_URL = 'django://' #default django db based
 
+#this is the default celery queue - for periodic tasks on a separate queue override this to something else
+CELERY_PERIODIC_QUEUE = 'celery'
+
 SKIP_SOUTH_TESTS = True
 #AUTH_PROFILE_MODULE = 'users.HqUserProfile'
 TEST_RUNNER = 'testrunner.HqTestSuiteRunner'
