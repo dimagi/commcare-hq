@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from casexml.apps.case.xml import V1
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.models import RepeatRecord, CaseRepeater, FormRepeater
 from couchforms.models import XFormInstance
 from django.core.urlresolvers import reverse
@@ -39,26 +40,28 @@ update_block = """
 
 xform_xml_template = """<?xml version='1.0' ?>
 <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="https://www.commcarehq.org/test/repeater/">
-	<woman_name>Alpha</woman_name>
-	<husband_name>Beta</husband_name>
-	<meta>
-		<deviceID>O2XLT0WZW97W1A91E2W1Y0NJG</deviceID>
-		<timeStart>2011-10-01T15:25:18.404-04</timeStart>
-		<timeEnd>2011-10-01T15:26:29.551-04</timeEnd>
-		<username>admin</username>
-		<userID>O2XLT0WZW97W1A91E2W1Y0NJG</userID>
-		<instanceID>%s</instanceID>
-	</meta>
+    <woman_name>Alpha</woman_name>
+    <husband_name>Beta</husband_name>
+    <meta>
+        <deviceID>O2XLT0WZW97W1A91E2W1Y0NJG</deviceID>
+        <timeStart>2011-10-01T15:25:18.404-04</timeStart>
+        <timeEnd>2011-10-01T15:26:29.551-04</timeEnd>
+        <username>admin</username>
+        <userID>O2XLT0WZW97W1A91E2W1Y0NJG</userID>
+        <instanceID>%s</instanceID>
+    </meta>
 %s
 </data>
 """
 xform_xml = xform_xml_template % (instance_id, case_block)
 update_xform_xml = xform_xml_template % (update_instance_id, update_block)
 
+
 class RepeaterTest(TestCase):
     def setUp(self):
         self.client = Client()
         self.domain = "test-domain"
+        create_domain(self.domain)
         self.case_repeater = CaseRepeater(domain=self.domain, url='case-repeater-url', version=V1)
         self.case_repeater.save()
         self.form_repeater = FormRepeater(domain=self.domain, url='form-repeater-url')
@@ -87,6 +90,7 @@ class RepeaterTest(TestCase):
                 status = status_code
             return resp
         return post_fn
+
     def tearDown(self):
         self.case_repeater.delete()
         self.form_repeater.delete()
@@ -95,7 +99,6 @@ class RepeaterTest(TestCase):
         for repeat_record in repeat_records:
             repeat_record.delete()
 
-
     def test_repeater(self):
 
         CommCareCase.get(case_id)
@@ -103,12 +106,10 @@ class RepeaterTest(TestCase):
         def now():
             return datetime.utcnow()
 
-
         repeat_records = RepeatRecord.all(domain=self.domain, due_before=now())
         self.assertEqual(len(repeat_records), 2)
 
         self.clear_log()
-
 
         for repeat_record in repeat_records:
             repeat_record.fire(post_fn=self.make_post_fn([404, 404, 404]))
@@ -144,7 +145,6 @@ class RepeaterTest(TestCase):
             self.assertEqual(repeat_record.succeeded, True)
             self.assertEqual(repeat_record.next_check, None)
 
-
         repeat_records = RepeatRecord.all(domain=self.domain, due_before=now())
         self.assertEqual(len(repeat_records), 0)
 
@@ -167,4 +167,3 @@ class RepeaterLockTest(TestCase):
         r.release_lock()
         r4 = RepeatRecord.get(r._id)
         self.assertTrue(r4.acquire_lock(datetime.utcnow()))
-        
