@@ -9,6 +9,8 @@
         <script src="assets/js/jquery-1.10.1.min.js"></script>
         <script src="assets/js/knockout-2.2.1.js"></script>
         <script src="assets/js/bootstrap.min.js"></script>
+        <script src="assets/js/showdown.js"></script>
+        <script src="assets/js/showdown_ext/github.js"></script>
         <script src="assets/js/dashboard.js"></script>
         <link rel="stylesheet" href="assets/css/bootstrap.min.css" />
 
@@ -138,7 +140,8 @@
                             <h4>
                                 <a data-bind="attr: {href: url}, text: title" target="_blank"></a>
                             </h4>
-
+                            <div data-bind="html: body">
+                            </div>
                             <ul>
                                 <li>
                                     <a data-bind="attr: {href: user.url}"><img height="16" data-bind="attr: {src: user.avatar_url}" width="16"></a>

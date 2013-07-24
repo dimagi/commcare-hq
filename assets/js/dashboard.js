@@ -129,6 +129,8 @@ var Pulls = function(dash) {
 
     self.loadPulls = function(repo) {
         var reponame = repo.name;
+        var converter = new Showdown.converter();
+
         $.get('https://api.github.com/repos/dimagi/'+ reponame +'/pulls', function(pulls) {
             $.each(pulls, function(i, pull){
                 self.pulls.push({
@@ -136,6 +138,7 @@ var Pulls = function(dash) {
                     url: pull.html_url,
                     number: pull.number,
                     title: pull.title,
+                    body: converter.makeHtml(pull.body),
                     created: pull.created_at,
                     updated: pull.updated_at,
                     hoursSinceUpdate: Math.round(Math.abs(new Date() - Date.parse(pull.updated_at)) / ( 60*60) / 1000),
