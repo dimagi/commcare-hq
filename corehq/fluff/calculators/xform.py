@@ -92,6 +92,6 @@ class FormSUMCalculator(ORCalculator):
     @fluff.custom_date_emitter(reduce_type='sum')
     def total(self, form):
         for calc in self.calculators:
-            if calc.filter(form):
+            if calc.passes_filter(form):
                 for total in calc.total(form):
                     yield total
