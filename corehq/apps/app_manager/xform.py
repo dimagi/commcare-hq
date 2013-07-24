@@ -4,6 +4,9 @@ from corehq.apps.app_manager.const import APP_V1
 from lxml import etree as ET
 import formtranslate.api
 
+VARIABLE_CASE_ID = u"case_id"
+FIELD_TYPE_INDICATORS = 'indicators'
+
 
 def parse_xml(string):
     # Work around: ValueError: Unicode strings with encoding
@@ -94,6 +97,11 @@ class CaseXPath(XPath):
         return self.slash(property)
 
 SESSION_CASE_ID = CaseIDXPath(u"instance('commcaresession')/session/data/case_id")
+
+class IndicatorXpath(XPath):
+
+    def indicator(self, indicator_name):
+        return XPath(u"instance('%s')/indicators/case[@id=$%s]" % (self, VARIABLE_CASE_ID)).slash(indicator_name)
 
 
 class WrappedNode(object):
