@@ -9,7 +9,7 @@ branches:
 install:
  - "uname -a"
  - "lsb_release -a"
- - "sudo apt-get install moreutils libblas liblapack3"
+ - "sudo apt-get install moreutils libblas-dev liblapack-dev"
  - "bash -ex .travis/upgrade-couchdb.sh | ts"
  - "git clone https://github.com/dimagi/commcarehq-venv.git"
  - "commcarehq-venv/hq_env/bin/pip install distribute"
