@@ -12,6 +12,7 @@ install:
  - "sudo apt-get install moreutils"
  - "bash -ex .travis/upgrade-couchdb.sh | ts"
  - "git clone https://github.com/dimagi/commcarehq-venv.git"
+ - "commcarehq-venv/hq_env/bin/pip install distribute"
  - "time (bash -e .travis/quietly-run-install.sh | ts)"
  - "time (commcarehq-venv/hq_env/bin/pip install --exists-action w -r requirements/requirements.txt -r requirements/dev-requirements.txt --use-mirrors | ts)"
  - "time (bash -e .travis/misc-setup.sh | ts)"
