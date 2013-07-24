@@ -17,8 +17,10 @@ install:
  - "time (commcarehq-venv/hq_env/bin/pip install --exists-action w -r requirements/requirements.txt -r requirements/dev-requirements.txt --use-mirrors | ts)"
  - "time (bash -e .travis/misc-setup.sh | ts)"
  - "cp .travis/localsettings.py localsettings.py"
- - ". commcarehq-venv/hq_env/bin/activate; commcarehq-venv/hq_env/bin/pip install coverage unittest2 mock --use-mirrors"
+ - "commcarehq-venv/hq_env/bin/pip install coverage unittest2 mock --use-mirrors"
 script: "cat .travis/apps_under_test | grep -v '^#' | xargs commcarehq-venv/hq_env/bin/coverage run manage.py test --noinput --failfast"
+after_success:
+ - coverage report
 services:
  - postgresql
  - couchdb
