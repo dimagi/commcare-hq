@@ -1,10 +1,11 @@
 #from django.conf.urls.defaults import patterns, url
+from corehq.apps.users.views import DefaultProjectUserSettingsView
 from corehq.apps.users.views.mobile.users import UploadCommCareUsers
 from django.conf.urls.defaults import *
 from corehq.apps.domain.utils import grandfathered_domain_re
 
 urlpatterns = patterns('corehq.apps.users.views',
-    url(r'^$', 'users', name="users_default"),
+    url(r'^$', DefaultProjectUserSettingsView.as_view(), name=DefaultProjectUserSettingsView.name),
     #url(r'my_domains/$', 'my_domains', name='my_domains'),
     url(r'^my_account/$', 'my_account', name='my_account'),
     url(r'^change_my_password/$', 'change_my_password', name="change_my_password"),

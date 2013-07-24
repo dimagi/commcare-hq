@@ -4,6 +4,8 @@ import copy
 import json
 import re
 import urllib
+from corehq.apps.settings.views import BaseSettingsView
+from dimagi.utils.decorators.memoized import memoized
 import langcodes
 from datetime import datetime
 from couchdbkit.exceptions import ResourceNotFound
@@ -39,6 +41,7 @@ from django.utils.translation import ugettext as _, ugettext_noop
 require_can_edit_web_users = require_permission('edit_web_users')
 require_can_edit_commcare_users = require_permission('edit_commcare_users')
 
+
 def require_permission_to_edit_user(view_func):
     @wraps(view_func)
     def _inner(request, domain, couch_user_id, *args, **kwargs):
@@ -61,6 +64,7 @@ def require_permission_to_edit_user(view_func):
             raise Http404()
     return _inner
 
+
 def _users_context(request, domain):
     couch_user = request.couch_user
     web_users = WebUser.by_domain(domain)
@@ -80,24 +84,74 @@ def _users_context(request, domain):
         'couch_user': couch_user,
     }
 
-@login_and_domain_required
-def users(request, domain):
-    redirect = redirect_users_to(request, domain)
-    if not redirect:
-        raise Http404
-    return HttpResponseRedirect(redirect)
 
-def redirect_users_to(request, domain):
-    redirect = None
-    # good ol' public domain...
-    if not isinstance(request.couch_user, PublicUser):
-        user = CouchUser.get_by_user_id(request.couch_user._id, domain)
+class BaseUserSettingsView(BaseSettingsView):
+    section_name = "Users"
+
+    @property
+    @memoized
+    def couch_user(self):
+        user = self.request.couch_user
         if user:
-            if user.has_permission(domain, 'edit_commcare_users'):
-                redirect = reverse("commcare_users", args=[domain])
-            else:
-                redirect = reverse("user_account", args=[domain, request.couch_user._id])
-    return redirect
+            user.current_domain = self.domain
+        return user
+
+    @property
+    @memoized
+    def web_users(self):
+        web_users = WebUser.by_domain(self.domain)
+        teams = Team.get_by_domain(self.domain)
+        for team in teams:
+            for user in team.get_members():
+                if user.get_id not in [web_user.get_id for web_user in web_users]:
+                    user.from_team = True
+                    web_users.append(user)
+        for user in web_users:
+            user.current_domain = self.domain
+        return web_users
+
+    @property
+    def main_context(self):
+        context = super(BaseUserSettingsView, self).main_context
+        context.update({
+            'web_users': self.web_users,
+        })
+        return context
+
+    @property
+    @memoized
+    def section_url(self):
+        return reverse(DefaultProjectUserSettingsView.name, args=[self.domain])
+
+    @property
+    @memoized
+    def page_url(self):
+        if self.name:
+            return reverse(self.name, args=[self.domain])
+
+
+class DefaultProjectUserSettingsView(BaseUserSettingsView):
+    name = "users_default"
+
+    @property
+    @memoized
+    def redirect(self):
+        redirect = None
+        # good ol' public domain...
+        if not isinstance(self.couch_user, PublicUser):
+            user = CouchUser.get_by_user_id(self.couch_user._id, self.domain)
+            if user:
+                if user.has_permission(self.domain, 'edit_commcare_users'):
+                    redirect = reverse("commcare_users", args=[self.domain])
+                elif user.has_permission(self.domain, 'edit_web_users'):
+                    redirect = reverse("web_users", args=[self.domain])
+        return redirect
+
+    def get(self, request, *args, **kwargs):
+        if not self.redirect:
+            raise Http404
+        return HttpResponseRedirect(self.redirect)
+
 
 @require_can_edit_web_users
 def web_users(request, domain, template="users/web_users.html"):
@@ -162,6 +216,7 @@ def post_user_role(request, domain):
     role.save()
     return json_response(role)
 
+
 class UserInvitationView(InvitationView):
     inv_type = DomainInvitation
     template = "users/accept_invite.html"
@@ -193,8 +248,10 @@ class UserInvitationView(InvitationView):
         user.set_role(self.domain, invitation.role)
         user.save()
 
+
 def accept_invitation(request, domain, invitation_id):
     return UserInvitationView()(request, invitation_id, domain=domain)
+
 
 @require_POST
 @require_can_edit_web_users
@@ -206,6 +263,7 @@ def reinvite_web_user(request, domain):
         return json_response({'response': _("Invitation resent"), 'status': 'ok'})
     except ResourceNotFound:
         return json_response({'response': _("Error while attempting resend"), 'status': 'error'})
+
 
 @require_can_edit_web_users
 def invite_web_user(request, domain, template="users/invite_web_user.html"):
@@ -236,8 +294,10 @@ def invite_web_user(request, domain, template="users/invite_web_user.html"):
     )
     return render(request, template, context)
 
+
 def my_account(request, domain, couch_user_id=None):
     return account(request, domain, request.couch_user._id)
+
 
 @require_permission_to_edit_user
 def account(request, domain, couch_user_id, template="users/account.html"):
