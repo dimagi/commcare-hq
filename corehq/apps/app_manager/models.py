@@ -1374,6 +1374,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         except Exception as e:
             if settings.DEBUG:
                 raise
+            logging.exception('Unexpected error building app')
             errors.append({'type': 'error', 'message': 'unexpected error: %s' % e})
         return errors
 
