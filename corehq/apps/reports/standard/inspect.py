@@ -541,7 +541,18 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
             ('%Y-%m-%d %H:%M:%S') if date else ""
 
 class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
-    name = 'Generic Pie Chart (sandbox)'
+    """this is a report TEMPLATE to conduct analytics on an arbitrary case property
+    or form question. all values for the property/question from cases/forms matching
+    the filters are tabulated and displayed as a pie chart. values are compared via
+    string comparison only.
+
+    this report class is a TEMPLATE -- it must be subclassed and configured with the
+    actual case/form info to be useful. coming up with a better way to configure this
+    is a work in progress. for now this report is effectively de-activated, with no
+    way to reach it from production HQ.
+    """
+
+    name = ugettext_noop('Generic Pie Chart (sandbox)')
     slug = 'generic_pie'
     fields = ['corehq.apps.reports.fields.DatespanField',
               'corehq.apps.reports.fields.AsyncLocationField']
@@ -557,7 +568,7 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
     @property
     def headers(self):
         return DataTablesHeader(*(DataTablesColumn(text) for text in [
-                    'Response', '# Responses', '% of responses',
+                    _('Response'), _('# Responses'), _('% of responses'),
                 ]))
 
     def _es_query(self):
@@ -616,7 +627,7 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
 
         raw = dict((k['term'], k['count']) for k in result['terms'])
         if result['other']:
-            raw['Other'] = result['other']
+            raw[_('Other')] = result['other']
         return raw
 
     def _data(self):
@@ -657,14 +668,14 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
             return [PieChart(None, **self._chart_data())]
 
 class PieChartReportCaseExample(GenericPieChartReportTemplate):
-    name = 'Pie Chart (Case)'
+    name = ugettext_noop('Pie Chart (Case)')
     slug = 'case_pie'
     mode = 'case'
     submission_type = 'supply-point-product'
     field = 'product'
 
 class PieChartReportFormExample(GenericPieChartReportTemplate):
-    name = 'Pie Chart (Form)'
+    name = ugettext_noop('Pie Chart (Form)')
     slug = 'form_pie'
     mode = 'form'
     submission_type = 'http://openrosa.org/commtrack/stock_report'
