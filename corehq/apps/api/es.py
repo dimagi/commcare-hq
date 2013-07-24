@@ -106,15 +106,20 @@ class ESView(View):
             notify_exception(None, message=msg)
             return None
 
+        hits = []
         for res in es_results['hits']['hits']:
-            res_domain = None
             if '_source' in res:
-                #check source
                 res_domain = res['_source'].get('domain', None)
             elif 'fields' in res:
                 res_domain = res['fields'].get('domain', None)
-                #check fields
-            assert res_domain == self.domain, "Security check failed, search result domain did not match requester domain: %s != %s" % (res_domain, self.domain)
+
+            # security check
+            if res_domain == self.domain:
+                hits.append(res)
+            else:
+                logging.info("Requester domain %s does not match result domain %s" % (
+                    self.domain, res_domain))
+        es_results['hits']['hits'] = hits
         return es_results
 
     def base_query(self, terms={}, fields=[], start=0, size=DEFAULT_SIZE):
