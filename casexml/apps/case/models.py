@@ -31,6 +31,10 @@ For details on casexml check out:
 http://bitbucket.org/javarosa/javarosa/wiki/casexml
 """
 
+CASE_STATUS_OPEN = 'open'
+CASE_STATUS_CLOSED = 'closed'
+CASE_STATUS_ALL = 'all'
+
 if getattr(settings, 'CASE_WRAPPER', None):
     CASE_WRAPPER = to_function(getattr(settings, 'CASE_WRAPPER'))
 else:
@@ -187,7 +191,54 @@ class Referral(CaseBase):
         
         return ref_list
 
-class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
+
+class CaseQueryMixin(object):
+    @classmethod
+    def get_by_xform_id(cls, xform_id):
+        return cls.view("case/by_xform_id", reduce=False, include_docs=True,
+                        key=xform_id)
+
+    @classmethod
+    def get_all_cases(cls, domain, case_type=None, owner_id=None, status=None,
+                      reduce=False, include_docs=False, **kwargs):
+        """
+        :param domain: The domain the cases belong to.
+        :param type: Restrict results to only cases of this type.
+        :param owner_id: Restrict results to only cases owned by this user / group.
+        :param status: Restrict results to cases with this status. Either 'open' or 'closed'.
+        """
+        key = cls.get_all_cases_key(domain, case_type=case_type, owner_id=owner_id, status=status)
+        return CommCareCase.view('case/all_cases',
+            startkey=key,
+            endkey=key + [{}],
+            reduce=reduce,
+            include_docs=include_docs,
+            **kwargs).all()
+
+    @classmethod
+    def get_all_cases_key(cls, domain, case_type=None, owner_id=None, status=None):
+        """
+        :param status: One of 'all', 'open' or 'closed'.
+        """
+        if status and status not in [CASE_STATUS_ALL, CASE_STATUS_OPEN, CASE_STATUS_CLOSED]:
+            raise ValueError("Invalid value for 'status': '%s'" % status)
+
+        key = [domain]
+        prefix = status or CASE_STATUS_ALL
+        if case_type:
+            prefix += ' type'
+            key += [case_type]
+            if owner_id:
+                prefix += ' owner'
+                key += [owner_id]
+        elif owner_id:
+            prefix += ' owner'
+            key += [owner_id]
+
+        return [prefix] + key
+
+
+class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQueryMixin):
     """
     A case, taken from casexml.  This represents the latest
     representation of the case - the result of playing all
@@ -659,11 +710,6 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             elem = get_case_element(self, ('create', 'update'), version)
         return ElementTree.tostring(elem)
     
-    @classmethod
-    def get_by_xform_id(cls, xform_id):
-        return cls.view("case/by_xform_id", reduce=False, include_docs=True, 
-                        key=xform_id)
-
     def get_xform_ids_from_couch(self):
         """
         Like xform_ids, but will grab the raw output from couch (including
@@ -747,5 +793,6 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
     @property
     def related_type_info(self):
         return None
+
 
 import casexml.apps.case.signals
