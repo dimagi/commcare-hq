@@ -5,6 +5,7 @@ import json
 from celery.task import periodic_task
 from celery.utils.log import get_task_logger
 from django.core.cache import cache
+from django.conf import settings
 
 from corehq.apps.receiverwrapper.models import RepeatRecord
 
@@ -35,7 +36,7 @@ def run_only_once(fn):
     return _fn
 
 CHECK_REPEATERS_INTERVAL = timedelta(minutes=1)
-@periodic_task(run_every=CHECK_REPEATERS_INTERVAL)
+@periodic_task(run_every=CHECK_REPEATERS_INTERVAL, queue=settings.CELERY_PERIODIC_QUEUE)
 def check_repeaters():
     start = datetime.utcnow()
     LIMIT = 100

@@ -53,6 +53,7 @@ LOG_FILE = "/tmp/commcare-hq.log"
 
 SEND_BROKEN_LINK_EMAILS = True
 CELERY_SEND_TASK_ERROR_EMAILS = True
+CELERY_PERIODIC_QUEUE = 'celery' # change this to something else if you want a different queue for periodic tasks
 
 ####### Bitly ########
 

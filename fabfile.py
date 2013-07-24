@@ -695,13 +695,14 @@ def _upload_supervisor_conf_file(filename):
 
 @roles('django_celery', 'django_monolith')
 def upload_celery_supervisorconf():
-    _upload_supervisor_conf_file('supervisor_celery.conf')
+    _upload_supervisor_conf_file('supervisor_celery_main.conf')
 
     #hacky hack to not
     #have staging environments send out reminders
     if env.environment not in ['staging', 'preview', 'realstaging']:
-        _upload_supervisor_conf_file('supervisor_celerybeat.conf')
-    _upload_supervisor_conf_file('supervisor_celerymon.conf')
+        _upload_supervisor_conf_file('supervisor_celery_beat.conf')
+        _upload_supervisor_conf_file('supervisor_celery_periodic.conf')
+    _upload_supervisor_conf_file('supervisor_celery_flower.conf')
     _upload_supervisor_conf_file('supervisor_couchdb_lucene.conf') #to be deprecated
 
     #in reality this also should be another machine if the number of listeners gets too high
