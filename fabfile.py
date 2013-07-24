@@ -227,7 +227,7 @@ def realstaging():
 @task
 def preview():
     """ Use production data in a safe preview environment on remote host"""
-    env.code_branch = 'master':
+    env.code_branch = 'master'
     env.sudo_user = 'cchq'
     env.environment = 'preview'
     env.django_port = '7999'
