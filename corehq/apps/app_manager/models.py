@@ -1310,11 +1310,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
                 i = setting['values'].index(value)
                 assert i != -1
                 name = _(setting['value_names'][i])
-                raise AppError(_(
+                raise AppError(
                     '%s Text Input is not supported '
                     'in CommCare versions before %s.%s. '
                     '(You are using %s.%s)'
-                ) % ((name,) + setting_version + my_version))
+                ) % ((name,) + setting_version + my_version)
 
 
     @property
