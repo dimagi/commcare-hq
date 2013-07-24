@@ -2,13 +2,13 @@ from datetime import timedelta, datetime, time
 import json
 import pytz
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, Http404, HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render
 
 from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm, SurveySampleForm, EditContactForm, RemindersInErrorForm, KeywordForm
 from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, CaseReminder, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET, EVENT_AS_SCHEDULE, SurveyKeyword, Survey, SurveySample, SURVEY_METHOD_LIST, SurveyWave, ON_DATETIME, RECIPIENT_SURVEY_SAMPLE, QUESTION_RETRY_CHOICES
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import CouchUser, CommCareUser, Permissions
+from corehq.apps.users.models import CommCareUser, Permissions
 from .models import UI_SIMPLE_FIXED, UI_COMPLEX
 from .util import get_form_list, get_sample_list, get_recipient_name
 from corehq.apps.sms.mixin import VerifiedNumber
@@ -17,7 +17,6 @@ from corehq.apps.domain.models import DomainCounter
 from casexml.apps.case.models import CommCareCase
 from dateutil.parser import parse
 from corehq.apps.sms.util import close_task
-from corehq.apps.groups.models import Group
 from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.reports import util as report_utils
 from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count

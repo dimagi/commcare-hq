@@ -211,6 +211,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     case_display = SchemaProperty(CaseDisplaySettings)
 
     # CommConnect settings
+    commconnect_enabled = BooleanProperty(default=False)
     survey_management_enabled = BooleanProperty(default=False)
     sms_case_registration_enabled = BooleanProperty(default=False) # Whether or not a case can register via sms
     sms_case_registration_type = StringProperty() # Case type to apply to cases registered via sms

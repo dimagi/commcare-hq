@@ -174,6 +174,7 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
                 'project_type': domain.project_type,
                 'customer_type': domain.customer_type,
                 'is_test': json.dumps(domain.is_test),
+                'commconnect_enabled': domain.commconnect_enabled,
                 'survey_management_enabled': domain.survey_management_enabled,
                 'sms_case_registration_enabled': domain.sms_case_registration_enabled,
                 'sms_case_registration_type': domain.sms_case_registration_type,

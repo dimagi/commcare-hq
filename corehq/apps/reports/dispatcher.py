@@ -61,12 +61,18 @@ class ReportDispatcher(View):
         attr_name = self.map_name
         import corehq
         domain_module = Domain.get_module_by_name(domain)
-        corehq_reports = tuple(getattr(corehq, attr_name, ()))
-        custom_reports = getattr(domain_module, attr_name, ())
+        if domain:
+            project = Domain.get_by_name(domain)
+        else:
+            project = None
 
-        if isinstance(custom_reports, dict):
-            custom_reports = custom_reports[domain]
-        custom_reports = tuple(custom_reports)
+        def process(reports):
+            if project and callable(reports):
+                reports = reports(project)
+            return tuple(reports)
+
+        corehq_reports = process(getattr(corehq, attr_name, ()))
+        custom_reports = process(getattr(domain_module, attr_name, ()))
 
         return corehq_reports + custom_reports
 
