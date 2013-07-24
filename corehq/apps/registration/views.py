@@ -7,6 +7,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
+import sys
 
 from corehq.apps.domain.decorators import login_required_late_eval_of_LOGIN_URL
 from corehq.apps.domain.models import Domain
@@ -155,9 +156,9 @@ def register_domain(request, domain_type=None):
                         context)
             else:
                 messages.success(request, _(
-                    '<strong>The project %s was successfully created!</strong> '
-                    'An email has been sent to %s for your records.') % (
-                        requested_domain, request.user.username),
+                    '<strong>The project {project} was successfully created!</strong> '
+                    'An email has been sent to {user} for your records.').format(
+                    project=requested_domain, user=request.user.username),
                     extra_tags="html")
 
                 if nextpage:
