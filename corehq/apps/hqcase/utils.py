@@ -28,18 +28,17 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id="",
     )
 
 def get_case_wrapper(data):
-    from corehq.apps.commtrack.models import get_case_wrapper
-    
+    from corehq.apps.commtrack.models import get_case_wrapper as commtrack_wrapper
+    def pact_wrapper(data):
+        if data['domain'] == 'pact' and data['type'] == 'cc_path_client':
+            from pact.models import PactPatientCase
+            return PactPatientCase
+
+    wrapper_funcs = [pact_wrapper, commtrack_wrapper]
+
     wrapper = None
-
-    if data['domain'] == 'pact' and data['type'] == 'cc_path_client':
-        from pact.models import PactPatientCase
-        return PactPatientCase
-
-    try:
-        if Domain.get_by_name(data['domain']).commtrack_enabled:
-            wrapper = get_case_wrapper(data)
-    except Exception:
-        pass
-
+    for wf in wrapper_funcs:
+        wrapper = wf(data)
+        if wrapper is not None:
+            break
     return wrapper
