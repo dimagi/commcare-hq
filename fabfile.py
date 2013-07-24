@@ -498,7 +498,7 @@ def update_virtualenv(preindex=False):
         env_to_use = env.virtualenv_root
     requirements = posixpath.join(root_to_use, 'requirements')
     with cd(root_to_use):
-        cmd = ['source %s/bin/activate && pip install' % env_to_use]
+        cmd = ['export HOME=/home/%s && source %s/bin/activate && pip install' % (env.sudo_user, env_to_use)]
         cmd += ['--requirement %s' % posixpath.join(requirements, 'prod-requirements.txt')]
         cmd += ['--requirement %s' % posixpath.join(requirements, 'requirements.txt')]
         sudo(' '.join(cmd), user=env.sudo_user)
