@@ -38,7 +38,7 @@ def case_update_from_block(case_block):
 
 class CaseActionBase(object):
     
-    def __init__(self, block, type=None, name=None, external_id=None, 
+    def __init__(self, block, type=None, name=None, external_id=None,
                  user_id=None, owner_id=None, opened_on=None, 
                  dynamic_properties=None, indices=None, attachments=None):
         self.raw_block = block

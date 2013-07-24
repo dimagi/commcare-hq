@@ -236,6 +236,17 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
     def __unicode__(self):
         return "CommCareCase: %s (%s)" % (self.case_id, self.get_id)
 
+    def __setattr__(self, key, value):
+        # couchdbkit's auto-type detection gets us into problems for various
+        # workflows here, so just force known string properties to strings
+        # before setting them. this would just end up failing hard later if
+        # it wasn't a string
+        _STRING_ATTRS = ('external_id', 'user_id', 'owner_id', 'opened_by',
+                         'closed_by', 'type', 'name')
+        if key in _STRING_ATTRS:
+            value = unicode(value or '')
+        super(CommCareCase, self).__setattr__(key, value)
+
     def __get_case_id(self):
         return self._id
 
