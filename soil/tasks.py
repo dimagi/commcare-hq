@@ -33,7 +33,7 @@ def prepare_download(download_id, payload_func, content_disposition, mimetype, e
                     download_id=download_id)
     
 
-@periodic_task(run_every=crontab(hour="*", minute="*", day_of_week="*"), queue=settings.CELERY_PERIODIC_QUEUE)
+@periodic_task(run_every=crontab(hour="*", minute="*", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def heartbeat():
     """
     A heartbeat, used to confirm that celery is alive and kicking.
