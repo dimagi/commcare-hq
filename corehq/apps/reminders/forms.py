@@ -479,7 +479,7 @@ class ComplexCaseReminderForm(Form):
         
         min_schedule_length = max_day + 1
         if event_interpretation == EVENT_AS_SCHEDULE and self.cleaned_data.get("schedule_length") < min_schedule_length:
-            raise ValidationError(_("Schedule length must be at least ") + str(min_schedule_length) + _(" according to current event schedule."))
+            raise ValidationError(_("Schedule length must be at least %(min_schedule_length)s according to the current event schedule.") % {"min_schedule_length" : min_schedule_length})
         
         if len(events) == 0:
             raise ValidationError("You must have at least one reminder event.")
