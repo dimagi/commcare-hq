@@ -1,6 +1,6 @@
 from sqlagg.columns import *
 from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn
-from corehq.apps.reports.fields import AsyncDrillableField, ReportSelectField
+from corehq.apps.reports.fields import AsyncDrillableField, GroupField
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 
 REPORT_COLUMNS = [
@@ -27,6 +27,11 @@ class ProvinceField(AsyncDrillableField):
     hierarchy = [{"type": "province", "display": "name"}]
 
 
+class CBOField(GroupField):
+    name = 'CBO'
+    default_option = 'All'
+
+
 class TestingAndCounseling(SqlTabularReport,
                            CustomProjectReport,
                            DatespanMixin):
@@ -39,15 +44,25 @@ class TestingAndCounseling(SqlTabularReport,
     fields = [
         'corehq.apps.reports.fields.DatespanField',
         'care-sa.reports.sql.ProvinceField',
+        'care-sa.reports.sql.CBOField',
     ]
 
     def selected_province(self):
         fixture = self.request.GET.get('fixture_id', "")
         return fixture.split(':')[1] if fixture else None
 
+    def selected_cbo(self):
+        group = self.request.GET.get('group', '')
+        return group
+
     @property
     def filters(self):
-        return ["domain = :domain", "date between :startdate and :enddate", "province = :province"]
+        return [
+            "domain = :domain",
+            "date between :startdate and :enddate",
+            "province = :province",
+            "cbo = :cbo",
+        ]
 
     @property
     def group_by(self):
@@ -60,6 +75,7 @@ class TestingAndCounseling(SqlTabularReport,
             startdate=self.datespan.startdate_param_utc,
             enddate=self.datespan.enddate_param_utc,
             province=self.selected_province(),
+            cbo=self.selected_cbo(),
         )
 
     @property
