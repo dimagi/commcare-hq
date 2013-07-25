@@ -54,10 +54,11 @@ def post_from_settings(instance, extras=None):
 def post_xform_to_couch(instance, attachments={}):
     """
     Post an xform to couchdb, based on the settings.XFORMS_POST_URL.
-    Returns the newly created document from couchdb, or raises an
-    exception if anything goes wrong.
+    Returns the newly created document from couchdb,
+    or raises an exception if anything goes wrong.
 
-    attachments is a dictionary of the request.FILES that are not the xform.  Key is the parameter name, and the value is the django MemoryFile object stream.
+    attachments is a dictionary of the request.FILES that are not the xform;
+    key is parameter name, value is django MemoryFile object stream
     """
     try:
         response, errors = post_from_settings(instance)
@@ -65,12 +66,16 @@ def post_xform_to_couch(instance, attachments={}):
             doc_id = response
             try:
                 xform = XFormInstance.get(doc_id)
-                #put attachments onto the saved xform instance
-                for key, val in attachments.items():
-                    res = xform.put_attachment(val, name=key, content_type=val.content_type, content_length=val.size)
+                for key, value in attachments.items():
+                    xform.put_attachment(
+                        value,
+                        name=key,
+                        content_type=value.content_type,
+                        content_length=value.size
+                    )
 
                 # fire signals
-                # We don't trap any exceptions here. This is by design. 
+                # We don't trap any exceptions here. This is by design.
                 # If something fails (e.g. case processing), we quarantine the
                 # form into an error location.
                 xform_saved.send(sender="couchforms", xform=xform)
@@ -79,16 +84,20 @@ def post_xform_to_couch(instance, attachments={}):
                 logging.error("Problem with form %s" % doc_id)
                 logging.exception(e)
                 # "rollback" by changing the doc_type to XFormError
-                try: 
+                try:
                     bad = XFormError.get(doc_id)
                     bad.problem = "%s" % e
                     bad.save()
                     return bad
-                except ResourceNotFound: 
-                    pass # no biggie, the failure must have been in getting it back 
+                except ResourceNotFound:
+                    # no biggie, the failure must have been in getting it back
+                    pass
                 raise
         else:
-            raise CouchFormException("Problem POSTing form to couch! errors/response: %s/%s" % (errors, response))
+            raise CouchFormException(
+                "Problem POSTing form to couch! errors/response: "
+                "%s/%s" % (errors, response)
+            )
     except RequestFailed, e:
         if e.status_int == 409:
             # this is an update conflict, i.e. the uid in the form was the same.
@@ -96,6 +105,7 @@ def post_xform_to_couch(instance, attachments={}):
         else:
             doc = _log_hard_failure(instance, attachments, e)
             raise SubmissionError(doc)
+
 
 def _has_errors(response, errors):
     return errors or "error" in response
