@@ -408,7 +408,7 @@ class ESQuerySet(object):
         else:
             raise TypeError('Unsupported type: %s', type(idx))
 
-RESERVED_QUERY_PARAMS=set(['limit', 'offset', 'q', '_search'])
+RESERVED_QUERY_PARAMS=set(['limit', 'offset', 'order_by', 'q', '_search'])
 
 # Note that dates are already in a string format when they arrive as query params
 query_param_transforms = {
