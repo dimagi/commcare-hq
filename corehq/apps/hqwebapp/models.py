@@ -359,6 +359,7 @@ class MessagingTab(UITab):
 
     @property
     def sidebar_items(self):
+        from corehq.apps.reports.standard.sms import MessageLogReport
         def reminder_subtitle(form=None, **context):
             return form['nickname'].value
 
@@ -368,7 +369,9 @@ class MessagingTab(UITab):
         items = [
             (_("Messages"), [
                 {'title': _('Compose SMS Message'),
-                 'url': reverse('sms_compose_message', args=[self.domain])}
+                 'url': reverse('sms_compose_message', args=[self.domain])},
+                {'title': _('Message Log'),
+                 'url': MessageLogReport.get_url(domain=self.domain)},
             ]),
             (_("Data Collection and Reminders"), [
                 {'title': _("Reminders"),
