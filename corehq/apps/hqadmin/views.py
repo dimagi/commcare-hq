@@ -5,6 +5,7 @@ import logging
 from collections import defaultdict
 from StringIO import StringIO
 import os
+from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST, require_GET
 from pytz import timezone
 
@@ -55,6 +56,14 @@ datespan_default = datespan_in_request(
     default_days=30,
 )
 
+
+def get_rabbitmq_management_url():
+    if settings.BROKER_URL.startswith('amqp'):
+        amqp_parts = settings.BROKER_URL.replace('amqp://','').split('/')
+        mq_management_url = amqp_parts[0].replace('5672', '15672')
+        return "http://%s" % mq_management_url.split('@')[-1]
+    else:
+        return None
 
 def get_hqadmin_base_context(request):
     return {
@@ -523,8 +532,8 @@ def system_ajax(request):
     Utility ajax functions for polling couch and celerymon
     """
     type = request.GET.get('api', None)
-    task_limit = getattr(settings, 'CELERYMON_TASK_LIMIT', 5)
-    celerymon_url = getattr(settings, 'CELERYMON_URL', '')
+    task_limit = getattr(settings, 'CELERYMON_TASK_LIMIT', 12)
+    celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
     db = XFormInstance.get_db()
     ret = {}
     if type == "_active_tasks":
@@ -544,42 +553,26 @@ def system_ajax(request):
     elif type == "_logs":
         pass
 
-    if celerymon_url != '':
-        cresource = Resource(celerymon_url, timeout=3)
-        if type == "celerymon_poll":
-            #inefficient way to just get everything in one fell swoop
-            #first, get all task types:
+    if celery_monitoring:
+        cresource = Resource(celery_monitoring, timeout=3)
+        if type == "flower_poll":
             ret = []
             try:
-                t = cresource.get("api/task/name/").body_string()
-                task_names = json.loads(t)
+                t = cresource.get("api/tasks", params_dict={'limit': task_limit}).body_string()
+                all_tasks = json.loads(t)
             except Exception, ex:
-                task_names = []
+                all_tasks = []
                 t = {}
-                logging.error("Error with getting celerymon: %s" % ex)
+                logging.error("Error with getting from celery_flower: %s" % ex)
 
-            for tname in task_names:
-                taskinfo_raw = json.loads(cresource.get('api/task/name/%s' % (tname), params_dict={'limit': task_limit}).body_string())
-                for traw in taskinfo_raw:
-                    # it's an array of arrays - looping through [<id>, {task_info_dict}]
-                    tinfo = traw[1]
-                    tinfo['name'] = '.'.join(tinfo['name'].split('.')[-2:])
-                    ret.append(tinfo)
+            for task_id, traw in all_tasks.items():
+                # it's an array of arrays - looping through [<id>, {task_info_dict}]
+                traw['name'] = '.'.join(traw['name'].split('.')[-2:])
+                ret.append(traw)
             ret = sorted(ret, key=lambda x: x['succeeded'], reverse=True)
             return HttpResponse(json.dumps(ret), mimetype = 'application/json')
+    return HttpResponse('{}', mimetype='application/json')
 
-#        if type=="celerymon_tasks_types":
-#            #call CELERYMON_URL/api/task/name/ to get seen task types
-#            t = cresource.get("api/task/name/")
-#            return HttpResponse(t.body_string(), mimetype = 'application/json')
-#        elif type == "celerymon_tasks_by_type":
-#            #call CELERYMON_URL/api/task/name/ to get seen task types
-#            task_name = request.GET.get('task_name', '')
-#            if task_name != '':
-#                t = cresource.get("/api/task/name/%s/?limit=%d" % (task_name, task_limit))
-#                return HttpResponse(t.body_string(), mimetype = 'application/json')
-
-    return HttpResponse('{}', mimetype = 'application/json')
 
 @require_superuser
 def system_info(request):
@@ -604,6 +597,10 @@ def system_info(request):
 
     context['couch_update'] = request.GET.get('couch_update', 5000)
     context['celery_update'] = request.GET.get('celery_update', 10000)
+    context['celery_flower_url'] = settings.CELERY_FLOWER_URL
+
+    context['rabbitmq_url'] = get_rabbitmq_management_url()
+
 
     context['hide_filters'] = True
     if hasattr(os, 'uname'):
@@ -649,7 +646,7 @@ def system_info(request):
     mq_status = "Unknown"
     if settings.BROKER_URL.startswith('amqp'):
         amqp_parts = settings.BROKER_URL.replace('amqp://','').split('/')
-        mq_management_url = amqp_parts[0].replace('5672', '55672')
+        mq_management_url = amqp_parts[0].replace('5672', '15672')
         vhost = amqp_parts[1]
         try:
             mq = Resource('http://%s' % mq_management_url, timeout=2)
@@ -657,12 +654,35 @@ def system_info(request):
             mq_status = "Offline"
             for d in vhost_dict:
                 if d['name'] == vhost:
-                    mq_status='OK'
+                    mq_status='RabbitMQ OK'
         except Exception, ex:
-            mq_status = "Error connecting: %s" % ex
+            mq_status = "RabbitMQ Error: %s" % ex
     else:
-        mq_status = "Not configured"
+        mq_status = "RabbitMQ Not configured"
     context['rabbitmq_status'] = mq_status
+
+    #celery task monitoring status
+    celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
+    worker_status = ""
+    if celery_monitoring:
+        cresource = Resource(celery_monitoring, timeout=3)
+        t = cresource.get("api/workers").body_string()
+        all_workers = json.loads(t)
+        worker_ok = '<span class="label label-success">OK</span>'
+        worker_bad = '<span class="label label-important">Down</span>'
+
+        tasks_ok = 'label-success'
+        tasks_full = 'label-warning'
+
+
+        worker_info = []
+        for hostname, w in all_workers.items():
+            status_html = mark_safe(worker_ok if w['status'] else worker_bad)
+            tasks_class = tasks_full if w['running_tasks'] == w['concurrency'] else tasks_ok
+            tasks_html = mark_safe('<span class="label %s">%d / %d</span> :: %d' % (tasks_class, w['running_tasks'], w['concurrency'], w['completed_tasks']))
+            worker_info.append(' '.join([hostname, status_html, tasks_html]))
+        worker_status = '<br>'.join(worker_info)
+    context['worker_status'] = mark_safe(worker_status)
 
 
     #memcached_status
