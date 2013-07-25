@@ -57,12 +57,17 @@ class TestingAndCounseling(SqlTabularReport,
 
     @property
     def filters(self):
-        return [
+        filters = [
             "domain = :domain",
             "date between :startdate and :enddate",
-            "province = :province",
-            "cbo = :cbo",
         ]
+
+        if self.selected_province():
+            filters.append("province = :province")
+        if self.selected_cbo():
+            filters.append("cbo = :cbo")
+
+        return filters
 
     @property
     def group_by(self):
