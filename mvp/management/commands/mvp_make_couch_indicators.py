@@ -110,14 +110,14 @@ class Command(LabelCommand):
 
             for indicator_slug, indicator_kwargs in COMPOSITE_INDICATORS.items():
                 indicator_kwargs.update(shared_kwargs)
-                indicator_def = CombinedCouchViewIndicatorDefinition.update_or_create_unique(
+                indicator_def = CombinedCouchViewIndicatorDefinition.increment_or_create_unique(
                     *shared_args,
                     slug=indicator_slug,
                     **indicator_kwargs
                 )
                 indicator_def.save()
 
-            days_since_last_transmission = MVPDaysSinceLastTransmission.update_or_create_unique(
+            days_since_last_transmission = MVPDaysSinceLastTransmission.increment_or_create_unique(
                 *shared_args,
                 slug="days_since_last_transmission",
                 description="Days since last transmission",
@@ -132,7 +132,7 @@ class Command(LabelCommand):
             for couch_view, indicator_defs in app_indicators['indicators'].items():
                 for indicator_slug, indicator_kwargs in indicator_defs.items():
                     indicator_kwargs.update(shared_kwargs)
-                    indicator_def = indicator_type_class.update_or_create_unique(
+                    indicator_def = indicator_type_class.increment_or_create_unique(
                         *shared_args,
                         slug=indicator_slug,
                         couch_view="%s/%s" % (mvp_app, couch_view),

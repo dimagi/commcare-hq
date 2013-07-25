@@ -37,7 +37,7 @@ class Command(LabelCommand):
             self.create_form_alias_indicators(PREGNANCY_CLOSE_FORM_QUESTION_IDS,
                 MVP.CLOSE_FORMS.get('pregnancy_close'), domain, shared_args)
 
-            pregnancy_edd = CaseDataInFormIndicatorDefinition.update_or_create_unique(
+            pregnancy_edd = CaseDataInFormIndicatorDefinition.increment_or_create_unique(
                 *shared_args,
                 slug="pregnancy_edd",
                 xmlns=MVP.VISIT_FORMS.get('pregnancy_visit'),
@@ -46,7 +46,7 @@ class Command(LabelCommand):
             )
             print pregnancy_edd
 
-            pregnancy_end = CaseDataInFormIndicatorDefinition.update_or_create_unique(
+            pregnancy_end = CaseDataInFormIndicatorDefinition.increment_or_create_unique(
                 *shared_args,
                 slug="pregnancy_end",
                 xmlns=MVP.VISIT_FORMS.get('pregnancy_visit'),
@@ -57,7 +57,7 @@ class Command(LabelCommand):
 
             child_visit_referral = CHILD_VISIT_QUESTION_IDS.get('referral_type', {}).get(domain)
             if child_visit_referral:
-                child_case_referral_type = FormDataInCaseIndicatorDefinition.update_or_create_unique(
+                child_case_referral_type = FormDataInCaseIndicatorDefinition.increment_or_create_unique(
                     *shared_args,
                     slug="referral_type",
                     case_type='child',
@@ -68,7 +68,7 @@ class Command(LabelCommand):
 
             pregnancy_visit_referral = PREGNANCY_VISIT_QUESTION_IDS.get('referral_type', {}).get(domain)
             if pregnancy_visit_referral:
-                pregnancy_case_referral_type = FormDataInCaseIndicatorDefinition.update_or_create_unique(
+                pregnancy_case_referral_type = FormDataInCaseIndicatorDefinition.increment_or_create_unique(
                     *shared_args,
                     slug="referral_type",
                     case_type='pregnancy',
@@ -79,7 +79,7 @@ class Command(LabelCommand):
 
             visit_hospital = CHILD_VISIT_QUESTION_IDS.get('visit_hospital', {}).get(domain)
             if visit_hospital:
-                visit_hospital_case = FormDataInCaseIndicatorDefinition.update_or_create_unique(
+                visit_hospital_case = FormDataInCaseIndicatorDefinition.increment_or_create_unique(
                     *shared_args,
                     slug="visit_hospital",
                     case_type='child',
@@ -90,7 +90,7 @@ class Command(LabelCommand):
 
             immediate_danger_sign = CHILD_VISIT_QUESTION_IDS.get('immediate_danger_sign', {}).get(domain)
             if immediate_danger_sign:
-                immediate_danger_sign_case = FormDataInCaseIndicatorDefinition.update_or_create_unique(
+                immediate_danger_sign_case = FormDataInCaseIndicatorDefinition.increment_or_create_unique(
                     *shared_args,
                     slug="immediate_danger_sign",
                     case_type='child',
@@ -101,7 +101,7 @@ class Command(LabelCommand):
 
             diarrhea_medication_in_case = CHILD_VISIT_QUESTION_IDS.get('diarrhea_medication', {}).get(domain)
             if diarrhea_medication_in_case:
-                diarrhea_medication_case = FormDataInCaseIndicatorDefinition.update_or_create_unique(
+                diarrhea_medication_case = FormDataInCaseIndicatorDefinition.increment_or_create_unique(
                     *shared_args,
                     slug="diarrhea_medication",
                     case_type='child',
@@ -112,7 +112,7 @@ class Command(LabelCommand):
 
             fever_medication_in_case = CHILD_VISIT_QUESTION_IDS.get('fever_medication', {}).get(domain)
             if fever_medication_in_case:
-                fever_medication_case = FormDataInCaseIndicatorDefinition.update_or_create_unique(
+                fever_medication_case = FormDataInCaseIndicatorDefinition.increment_or_create_unique(
                     *shared_args,
                     slug="fever_medication",
                     case_type='child',
@@ -129,7 +129,7 @@ class Command(LabelCommand):
 
 
     def insert_dob_into_form(self, indicator_slug, xmlns, shared_args, version=1):
-        child_dob = CaseDataInFormIndicatorDefinition.update_or_create_unique(
+        child_dob = CaseDataInFormIndicatorDefinition.increment_or_create_unique(
             *shared_args,
             slug=indicator_slug,
             xmlns=xmlns,
@@ -143,7 +143,7 @@ class Command(LabelCommand):
         for indicator_slug, ids_per_domain in question_ids.items():
             indicator_info = ids_per_domain.get(domain)
             if indicator_info:
-                form_question = FormDataAliasIndicatorDefinition.update_or_create_unique(
+                form_question = FormDataAliasIndicatorDefinition.increment_or_create_unique(
                     *shared_args,
                     slug=indicator_slug,
                     xmlns=xmlns,
