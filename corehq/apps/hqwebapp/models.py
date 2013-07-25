@@ -367,8 +367,6 @@ class MessagingTab(UITab):
 
         items = [
             (_("Messages"), [
-                {'title': _('Message History'),
-                 'url': reverse('messaging', args=[self.domain])},
                 {'title': _('Compose SMS Message'),
                  'url': reverse('sms_compose_message', args=[self.domain])}
             ]),
