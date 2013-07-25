@@ -1,6 +1,6 @@
 import hashlib
 from django.conf import settings
-from django.http import HttpResponse, HttpResponseServerError, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseServerError, HttpResponseBadRequest, HttpResponseForbidden
 from django.utils.datastructures import MultiValueDictKeyError
 from dimagi.utils.mixins import UnicodeMixIn
 import urllib
@@ -10,7 +10,7 @@ except ImportError:
     from django.utils import simplejson
 
 from couchforms.models import XFormInstance, XFormDuplicate, XFormError, XFormDeprecated,\
-    SubmissionErrorLog
+    SubmissionErrorLog, DefaultAuthContext
 import logging
 from couchdbkit.resource import RequestFailed
 from couchforms.exceptions import CouchFormException
@@ -51,7 +51,15 @@ def post_from_settings(instance, extras=None):
         return post_unauthenticated_data(instance, url)
 
 
-def post_xform_to_couch(instance, attachments={}):
+def post_xform_to_couch(instance, attachments=None, auth_context=None):
+    auth_context = auth_context or DefaultAuthContext()
+    doc = _post_xform_to_couch(instance, attachments=attachments)
+    doc.auth_context = auth_context.to_json()
+    doc.save()
+    return doc
+
+
+def _post_xform_to_couch(instance, attachments=None):
     """
     Post an xform to couchdb, based on the settings.XFORMS_POST_URL.
     Returns the newly created document from couchdb,
@@ -60,6 +68,7 @@ def post_xform_to_couch(instance, attachments={}):
     attachments is a dictionary of the request.FILES that are not the xform;
     key is parameter name, value is django MemoryFile object stream
     """
+    attachments = attachments or {}
     try:
         response, errors = post_from_settings(instance)
         if not _has_errors(response, errors):
@@ -198,10 +207,13 @@ class SubmissionPost(object):
 
     magic_property = 'xml_submission_file'
 
-    def __init__(self, request):
+    def __init__(self, request, auth_context=None):
         self.request = request
+        self.auth_context = auth_context or DefaultAuthContext()
 
     def get_response(self):
+        if not self.auth_context.is_valid():
+            return self.get_failed_auth_response()
         attachments = {}
         if self.request.META['CONTENT_TYPE'].startswith('multipart/form-data'):
             # it's an standard form submission (eg ODK)
@@ -225,7 +237,8 @@ class SubmissionPost(object):
             instance = self.request.raw_post_data
 
         try:
-            doc = post_xform_to_couch(instance, attachments=attachments)
+            doc = post_xform_to_couch(instance, attachments=attachments,
+                                      auth_context=self.auth_context)
             return self.get_success_response(doc)
         except SubmissionError as e:
             logging.exception(
@@ -236,9 +249,12 @@ class SubmissionPost(object):
             )
             return self.get_error_response(e.error_log)
 
+    def get_failed_auth_response(self):
+        return HttpResponseForbidden('Bad auth')
+
     def get_success_response(self, doc):
         return HttpResponse(
-            "Thanks! Your new xform id is: %s" % doc["_id"],
+            "Thanks! Your new xform id is: %s" % doc.get_id,
             status=201,
         )
 

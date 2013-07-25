@@ -318,4 +318,9 @@ class SubmissionErrorLog(XFormError):
         error.put_attachment(instance, ATTACHMENT_NAME)
         error.save()
         return error
-    
+
+
+class DefaultAuthContext(DocumentSchema):
+
+    def is_valid(self):
+        return True
