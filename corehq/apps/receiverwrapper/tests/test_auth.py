@@ -46,12 +46,17 @@ class AuthTest(TestCase):
         client = django_digest.test.Client()
         client.set_authorization(self.user.username, '1234',
                                  method='Digest')
-        self._test_post(client, self.url, {
+        expected_auth_context = {
             'doc_type': 'AuthContext',
             'domain': self.domain,
             'authenticated': True,
             'user_id': self.user.get_id,
-        })
+        }
+        self._test_post(client, self.url, expected_auth_context)
+        # ?authtype=digest should be equivalent to having no authtype
+        self._test_post(client,
+                        self.url + '?authtype=digest',
+                        expected_auth_context)
 
     def test_noauth(self):
         client = django.test.Client()
