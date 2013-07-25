@@ -481,8 +481,9 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin,
 
     @property
     def shared_pagination_GET_params(self):
-        self.override_user_ids = DCTLToFIDAFilter.get_user_ids(
+        user_data = DCTLToFIDAFilter.get_user_data(
                 self.request_params, domain=self.domain)
+        self.override_user_ids = user_data['leaf_user_ids']
         params = super(CaseReport, self).shared_pagination_GET_params
 
         slugs = [
@@ -560,8 +561,9 @@ class FacilityWiseFollowUpReport(GenericTabularReport, DatespanMixin,
 
     @property
     def rows(self):
-        self.override_user_ids = DCTLToFIDAFilter.get_user_ids(
+        user_data = DCTLToFIDAFilter.get_user_data(
                 self.request_params, domain=self.domain)
+        self.override_user_ids = user_data['leaf_user_ids']
 
         startdate = self.datespan.startdate_param_utc[:10]
         enddate = self.datespan.enddate_param_utc[:10]
