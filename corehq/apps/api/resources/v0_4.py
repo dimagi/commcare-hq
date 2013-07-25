@@ -48,11 +48,13 @@ class XFormInstanceResource(v0_3.XFormInstanceResource, DomainSpecificResourceMi
         es_query = es_search(bundle.request, domain)
         es_query['filter']['and'].append({'term': {'doc_type': 'xforminstance'}})
 
+        # Note that XFormES is used only as an ES client, for `run_query` against the proper index
         return ESQuerySet(payload = es_query,
                           model = XFormInstance, 
-                          es_client=self.xform_es(domain)) # Not that XFormES is used only as an ES client, for `run_query` against the proper index
+                          es_client=self.xform_es(domain)).order_by('received_on')
 
     class Meta(v0_3.XFormInstanceResource.Meta):
+        ordering = ['received_on']
         list_allowed_methods = ['get']
 
 class RepeaterResource(JsonResource, DomainSpecificResourceMixin):

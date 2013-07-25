@@ -197,6 +197,28 @@ class TestXFormInstanceResource(APIResourceTest):
 
         self.assertEqual(response.status_code, 200)
 
+    def test_get_list_ordering(self):
+        '''
+        Forms can be ordering ascending or descending on received_on; by default
+        ascending.
+        '''
+
+        fake_xform_es = FakeXFormES()
+
+        # A bit of a hack since none of Python's mocking libraries seem to do basic spies easily...
+        prior_run_query = fake_xform_es.run_query
+        def mock_run_query(es_query):
+            self.assertEqual(es_query['sort'], [{'received_on': 'asc'}])
+            return prior_run_query(es_query)
+            
+        fake_xform_es.run_query = mock_run_query
+        v0_4.MOCK_XFORM_ES = fake_xform_es
+
+        self.client.login(username=self.username, password=self.password)
+
+        response = self.client.get('%s?order_by=received_on' % self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+
 class TestCommCareCaseResource(APIResourceTest):
     """
     Tests the CommCareCaseREsource, currently only v0_4
