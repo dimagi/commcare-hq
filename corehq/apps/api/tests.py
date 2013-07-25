@@ -207,8 +207,9 @@ class TestXFormInstanceResource(APIResourceTest):
 
         # A bit of a hack since none of Python's mocking libraries seem to do basic spies easily...
         prior_run_query = fake_xform_es.run_query
+        queries = []
         def mock_run_query(es_query):
-            self.assertEqual(es_query['sort'], [{'received_on': 'asc'}])
+            queries.append(es_query)
             return prior_run_query(es_query)
             
         fake_xform_es.run_query = mock_run_query
@@ -216,8 +217,13 @@ class TestXFormInstanceResource(APIResourceTest):
 
         self.client.login(username=self.username, password=self.password)
 
-        response = self.client.get('%s?order_by=received_on' % self.list_endpoint)
+        response = self.client.get('%s?order_by=received_on' % self.list_endpoint) # Runs *2* queries
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(queries[0]['sort'], [{'received_on': 'asc'}])
+
+        response = self.client.get('%s?order_by=-received_on' % self.list_endpoint) # Runs *2* queries
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(queries[2]['sort'], [{'received_on': 'desc'}])
 
 class TestCommCareCaseResource(APIResourceTest):
     """

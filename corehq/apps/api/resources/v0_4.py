@@ -13,7 +13,7 @@ from corehq.apps.receiverwrapper.models import Repeater, repeater_types
 from corehq.apps.groups.models import Group
 from corehq.apps.cloudcare.api import ElasticCaseQuery
 
-from corehq.apps.api.resources import v0_1, v0_3, JsonResource, DomainSpecificResourceMixin, dict_object
+from corehq.apps.api.resources import v0_1, v0_3, JsonResource, DomainSpecificResourceMixin, dict_object, SimpleSortableResourceMixin
 from corehq.apps.api.es import XFormES, CaseES, ESQuerySet, es_search
 from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField
 from corehq.apps.api.serializers import CommCareCaseSerializer
@@ -25,7 +25,7 @@ from corehq.apps.api.serializers import CommCareCaseSerializer
 MOCK_XFORM_ES = None
 MOCK_CASE_ES = None
 
-class XFormInstanceResource(v0_3.XFormInstanceResource, DomainSpecificResourceMixin):
+class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResource, DomainSpecificResourceMixin):
 
     # Some fields that were present when just fetching individual docs are
     # not present for e.g. devicelogs and must be allowed blank
