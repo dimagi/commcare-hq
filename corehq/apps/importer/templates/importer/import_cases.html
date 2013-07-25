@@ -11,6 +11,17 @@
             <legend>
                 {% trans "Upload an Excel File From Your Computer to Import From" %}
             </legend>
+            <div class="alert">
+                <p>
+                    {% blocktrans %}
+                        Case importer is a tool for advanced users that
+                        allows you to bulk upload new cases or modify existing
+                        ones. This tool can make changes to your data that
+                        might confuse your reports or applications. Please
+                        exercise caution.
+                    {% endblocktrans %}
+                </p>
+            </div>
             <div class="control-group">
                 <label class="control-label" for="file">
                     {% trans "Select a file to upload" %}
