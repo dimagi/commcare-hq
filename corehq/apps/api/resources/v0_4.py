@@ -51,7 +51,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResou
         # Note that XFormES is used only as an ES client, for `run_query` against the proper index
         return ESQuerySet(payload = es_query,
                           model = XFormInstance, 
-                          es_client=self.xform_es(domain)).order_by('received_on')
+                          es_client=self.xform_es(domain)).order_by('-received_on')
 
     class Meta(v0_3.XFormInstanceResource.Meta):
         ordering = ['received_on']
