@@ -34,7 +34,7 @@ def get_column_xpath_generator(app, module, detail, column):
 
 
 def get_class_for_type(slug):
-    return get_class_for_type._type_map.get(slug, ColumnXpathGenerator)
+    return get_class_for_type._type_map.get(slug, BaseXpathGenerator)
 get_class_for_type._type_map = {}
 
 
@@ -48,7 +48,7 @@ class register_type_processor(object):
         return klass
 
 
-class ColumnXpathGenerator(object):
+class BaseXpathGenerator(object):
     def __init__(self, app, module, detail, column):
         self.app = app
         self.module = module
@@ -58,15 +58,7 @@ class ColumnXpathGenerator(object):
 
     @property
     def xpath(self):
-        parts = self.column.field.split('/')
-        parts[-1] = CASE_PROPERTY_MAP.get(parts[-1], parts[-1])
-        property = parts.pop()
-        indexes = parts
-
-        case = CaseXPath('')
-        for index in indexes:
-            case = case.index_id(index).case()
-        return case.property(property)
+        return self.column.field
 
 
 class FormattedDetailColumn(object):
@@ -293,13 +285,30 @@ class Address(HideShortColumn):
     template_form = 'address'
     template_width = 0
 
-@register_type_processor(sx.FIELD_TYPE_INDICATORS)
-class IndicatorXpathGenerator(ColumnXpathGenerator):
+
+@register_type_processor(sx.FIELD_TYPE_PROPERTY)
+class PropertyXpathGenerator(BaseXpathGenerator):
+    @property
+    def xpath(self):
+        parts = self.column.field.split('/')
+        parts[-1] = CASE_PROPERTY_MAP.get(parts[-1], parts[-1])
+        property = parts.pop()
+        indexes = parts
+
+        case = CaseXPath('')
+        for index in indexes:
+            case = case.index_id(index).case()
+        return case.property(property)
+
+
+@register_type_processor(sx.FIELD_TYPE_INDICATOR)
+class IndicatorXpathGenerator(BaseXpathGenerator):
     @property
     def xpath(self):
         indicator_set, indicator = self.column.field_property.split('/', 1)
         instance_id = self.id_strings.indicator_instance(indicator_set)
         return IndicatorXpath(instance_id).indicator(indicator)
+
 
 # todo: These two were never actually supported, and 'advanced' certainly never worked
 # but for some reason have been hanging around in the suite.xml template since September 2010

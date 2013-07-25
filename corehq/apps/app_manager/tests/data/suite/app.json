@@ -489,7 +489,7 @@
             },
             {
               "filter_xpath": "",
-              "field": "indicators:call-center/activeClientsLast30Day",
+              "field": "indicator:call-center/activeClientsLast30Day",
               "late_flag": 30,
               "format": "plain",
               "enum": {},

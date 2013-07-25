@@ -151,7 +151,7 @@
     <field>
         <header>
             <text>
-                <locale id="m0.case_short.case_indicators:call-center/activeClientsLast30Day_10.header"/>
+                <locale id="m0.case_short.case_indicator:call-center/activeClientsLast30Day_10.header"/>
             </text>
         </header>
         <template>

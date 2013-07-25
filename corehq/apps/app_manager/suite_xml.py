@@ -6,7 +6,8 @@ from corehq.apps.app_manager.xform import SESSION_CASE_ID
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
 
-FIELD_TYPE_INDICATORS = 'indicators'
+FIELD_TYPE_INDICATOR = 'indicator'
+FIELD_TYPE_PROPERTY = 'property'
 
 
 class IdNode(XmlObject):
@@ -514,7 +515,7 @@ class SuiteGenerator(object):
                 indicator_sets = []
                 for detail in module.get_details():
                     for column in detail.get_columns():
-                        if column.field_type == FIELD_TYPE_INDICATORS:
+                        if column.field_type == FIELD_TYPE_INDICATOR:
                             indicator_set, _ = column.field_property.split('/', 1)
                             if indicator_set not in indicator_sets:
                                 indicator_sets.append(indicator_set)

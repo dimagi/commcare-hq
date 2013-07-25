@@ -672,7 +672,7 @@ class DetailColumn(IndexedSchema):
         if FIELD_SEPARATOR in self.field:
             return self.field.split(FIELD_SEPARATOR, 1)[0]
         else:
-            return None
+            return 'property'  # equivalent to property:parent/case_property
 
     @property
     def field_property(self):
