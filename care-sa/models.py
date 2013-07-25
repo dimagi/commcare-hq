@@ -1,19 +1,41 @@
 from couchforms.models import XFormInstance
 import fluff
 from corehq.fluff.calculators import xform as xcalculators
+from casexml.apps.case.models import CommCareCase
+from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
+
+def lookup_province_id_from_form_id(form_id):
+    case = CommCareCase.get_by_xform_id(form_id).one()
+    fixture_type = FixtureDataType.by_domain_tag('care-ihapc-live',
+                                                 'province').first()
+
+    fixture_item = FixtureDataItem.by_field_value(
+        'care-ihapc-live',
+        fixture_type,
+        'id',
+        case.province
+    ).first()
+
+    return fixture_item.get_id
 
 get_user_id = lambda form: form.metadata.userID
+get_province = lambda form: lookup_province_id_from_form_id(form.get_id)
 
 HCT_XMLNS = 'http://openrosa.org/formdesigner/BA7D3B3F-151C-4709-A020-CF79B7F2E876'
 HBC_XMLNS = "http://openrosa.org/formdesigner/19A3BDCB-5EE6-4D1B-B64B-79361D7D9885"
 PMM_XMLNS = "http://openrosa.org/formdesigner/d234f78e65e30eb72527c1118cf0de15e1181ddc"
 IACT_XMLNS = "http://openrosa.org/formdesigner/BE27B9F4-A260-4110-B187-28D572B46DB0"
 
+
 class CareSAFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
 
     domains = ('care-ihapc-live',)
-    group_by = ('domain', fluff.AttributeGetter('user_id', get_user_id))
+    group_by = (
+        'domain',
+        fluff.AttributeGetter('user_id', get_user_id),
+        fluff.AttributeGetter('province', get_province),
+    )
 
     # Report 1
     # Testing and Counseling

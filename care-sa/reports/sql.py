@@ -1,5 +1,6 @@
 from sqlagg.columns import *
 from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn
+from corehq.apps.reports.fields import AsyncDrillableField, ReportSelectField
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 
 REPORT_COLUMNS = [
@@ -20,6 +21,12 @@ REPORT_COLUMNS = [
 ]
 
 
+class ProvinceField(AsyncDrillableField):
+    label = "Province"
+    slug = "province"
+    hierarchy = [{"type": "province", "display": "name"}]
+
+
 class TestingAndCounseling(SqlTabularReport,
                            CustomProjectReport,
                            DatespanMixin):
@@ -29,11 +36,18 @@ class TestingAndCounseling(SqlTabularReport,
     name = "Testing and Counseling"
     table_name = "care-ihapc-live_CareSAFluff"
 
-    fields = ['corehq.apps.reports.fields.DatespanField']
+    fields = [
+        'corehq.apps.reports.fields.DatespanField',
+        'care-sa.reports.sql.ProvinceField',
+    ]
+
+    def selected_province(self):
+        fixture = self.request.GET.get('fixture_id', "")
+        return fixture.split(':')[1] if fixture else None
 
     @property
     def filters(self):
-        return ["domain = :domain", "date between :startdate and :enddate"]
+        return ["domain = :domain", "date between :startdate and :enddate", "province = :province"]
 
     @property
     def group_by(self):
@@ -41,9 +55,12 @@ class TestingAndCounseling(SqlTabularReport,
 
     @property
     def filter_values(self):
-        return dict(domain=self.domain,
-                    startdate=self.datespan.startdate_param_utc,
-                    enddate=self.datespan.enddate_param_utc)
+        return dict(
+            domain=self.domain,
+            startdate=self.datespan.startdate_param_utc,
+            enddate=self.datespan.enddate_param_utc,
+            province=self.selected_province(),
+        )
 
     @property
     def columns(self):
@@ -54,3 +71,7 @@ class TestingAndCounseling(SqlTabularReport,
             columns.append(DatabaseColumn(text, '%s_total' % column))
 
         return columns
+
+    @property
+    def keys(self):
+        [self.domain]
