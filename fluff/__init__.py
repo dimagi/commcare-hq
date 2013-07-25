@@ -114,13 +114,21 @@ class Calculator(object):
     def filter(self, item):
         return True
 
+    def passes_filter(self, item):
+        """
+        This is pretty confusing, but there are two mechanisms for having a filter,
+        one via the explicit filter function and the other being the @filter_by decorator
+        that can be applied to other functions.
+        """
+        return self.filter(item) and all(
+            (getattr(self, slug)(item) for slug in self._fluff_filters)
+        )
+
     def to_python(self, value):
         return value
 
     def calculate(self, item):
-        passes_filter = self.filter(item) and all(
-            (getattr(self, slug)(item) for slug in self._fluff_filters)
-        )
+        passes_filter = self.passes_filter(item)
         values = {}
         for slug in self._fluff_emitters:
             fn = getattr(self, slug)
