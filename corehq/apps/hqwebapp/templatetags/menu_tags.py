@@ -28,13 +28,20 @@ class MainMenuNode(template.Node):
 
         for tab_class in tabs:
             t = tab_class(
-                    request, domain=domain, couch_user=couch_user, project=project, org=org)
+                    request, domain=domain, couch_user=couch_user,
+                    project=project, org=org)
 
             if t.real_is_viewable:
                 visible_tabs.append(t)
 
             if t.is_active:
                 active_tab = t
+
+        if active_tab is None:
+            for t in visible_tabs:
+                if t.url and request.get_full_path().startswith(t.url):
+                    active_tab = t
+                    break
 
         # set the context variable in the highest scope so it can be used in
         # other blocks
@@ -80,6 +87,11 @@ def format_sidebar(context):
             if s.is_active:
                 sections = s.sidebar_items
                 break
+        if sections is None:
+            for s in active_tab.subtabs:
+                if s.url and request.get_full_path().startswith(s.url):
+                    sections = s.sidebar_items
+                    break
     else:
         sections = active_tab.sidebar_items if active_tab else None
 

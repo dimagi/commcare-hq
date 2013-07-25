@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import json
 
 from couchdbkit.ext.django.schema import *
+from couchdbkit.exceptions import ResourceNotFound
 from django.core.cache import cache
 import socket
 import hashlib
@@ -79,16 +80,25 @@ class Repeater(Document, UnicodeMixIn):
         if repeater_types.has_key(cls.__name__):
             key.append(cls.__name__)
         elif cls.__name__ == Repeater.__name__:
+            # In this case the wrap function delegates to the
+            # appropriate sub-repeater types.
             pass
         else:
-            raise Exception("Unknown Repeater type: %s" % cls.__name__)
+            # Any repeater type can be posted to the API, and the installed apps
+            # determine whether we actually know about it.
+            # But if we do not know about it, then may as well return nothing now
+            return []
 
-        return cls.view('receiverwrapper/repeaters',
+        raw_docs = cls.view('receiverwrapper/repeaters',
             startkey=key,
             endkey=key + [{}],
             include_docs=True,
-            reduce=False
+            reduce=False,
+            wrap_doc=False
         )
+
+        return [cls.wrap(repeater_doc['doc']) for repeater_doc in raw_docs
+                if repeater_doc['doc']['doc_type'].replace(DELETED, '') in repeater_types]
 
     @classmethod
     def wrap(cls, data):
@@ -97,7 +107,7 @@ class Repeater(Document, UnicodeMixIn):
             if doc_type in repeater_types:
                 return repeater_types[doc_type].wrap(data)
             else:
-                raise Exception('Unknown repeater type: %s', data)
+                raise ResourceNotFound('Unknown repeater type: %s', data)
         else:
             return super(Repeater, cls).wrap(data)
 

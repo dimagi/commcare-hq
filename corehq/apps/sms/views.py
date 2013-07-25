@@ -22,7 +22,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 @login_and_domain_required
 def default(request, domain):
-    return HttpResponseRedirect(reverse(messaging, args=[domain]))
+    return HttpResponseRedirect(reverse(compose_message, args=[domain]))
 
 @login_and_domain_required
 def messaging(request, domain, template="sms/default.html"):
