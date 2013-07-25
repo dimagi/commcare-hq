@@ -349,6 +349,25 @@ class ESQuerySet(object):
         # Just asks ES for the count by limiting results to zero, leveraging slice implementation
         return self[0:0].results['hits']['total']
 
+    def order_by(self, *fields):
+        
+        new_payload = copy.deepcopy(self.payload)
+
+        new_payload['sort'] = []
+
+        for field in fields:
+            if not field:
+                continue
+            
+            direction = 'asc'
+            if field[0] == '-':
+                direction = 'desc'
+                field = field[1:]
+
+            new_payload['sort'].append({field: direction})
+
+        return self.with_fields(payload=new_payload)
+
     def __len__(self):
         # Note that this differs from `count` in that it actually performs the query and measures
         # only those objects returned

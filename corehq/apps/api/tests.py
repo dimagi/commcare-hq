@@ -462,6 +462,24 @@ class TestESQuerySet(TestCase):
         self.assertEqual(es.queries[2]['size'], 500)
         self.assertEqual(len(qs_slice), 500)
 
+    def test_order_by(self):
+        es = FakeXFormES()
+        for i in xrange(0, 1300):
+            es.add_doc(i, {'i': i})
+        
+        queryset = ESQuerySet(es_client=es, payload={})
+        qs_asc = list(queryset.order_by('foo'))
+        self.assertEqual(es.queries[0]['sort'], [{'foo': 'asc'}])
+
+        qs_desc = list(queryset.order_by('-foo'))
+        self.assertEqual(es.queries[1]['sort'], [{'foo': 'desc'}])
+
+        qs_overwrite = list(queryset.order_by('bizzle').order_by('-baz'))
+        self.assertEqual(es.queries[2]['sort'], [{'baz': 'desc'}])
+
+        qs_multi = list(queryset.order_by('one', '-two', 'three'))
+        self.assertEqual(es.queries[3]['sort'], [{'one': 'asc'}, {'two': 'desc'}, {'three': 'asc'}])
+
 
 class ToManySourceModel(object):
     def __init__(self, other_model_ids, other_model_dict):
