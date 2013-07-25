@@ -1,5 +1,3 @@
-from __future__ import print_function, absolute_import, unicode_literals, division
-
 from tastypie.resources import Resource
 from tastypie.exceptions import InvalidSortError
 
