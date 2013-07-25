@@ -227,7 +227,7 @@ def realstaging():
 @task
 def preview():
     """ Use production data in a safe preview environment on remote host"""
-    env.code_branch = 'master':
+    env.code_branch = 'master'
     env.sudo_user = 'cchq'
     env.environment = 'preview'
     env.django_port = '7999'
@@ -460,6 +460,7 @@ def deploy():
        not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False):
         utils.abort('Deployment aborted.')
 
+
     require('root', provided_by=('staging', 'preview', 'production', 'india'))
     run('echo ping!') #hack/workaround for delayed console response
 
@@ -498,7 +499,7 @@ def update_virtualenv(preindex=False):
         env_to_use = env.virtualenv_root
     requirements = posixpath.join(root_to_use, 'requirements')
     with cd(root_to_use):
-        cmd = ['source %s/bin/activate && pip install' % env_to_use]
+        cmd = ['export HOME=/home/%s && source %s/bin/activate && pip install' % (env.sudo_user, env_to_use)]
         cmd += ['--requirement %s' % posixpath.join(requirements, 'prod-requirements.txt')]
         cmd += ['--requirement %s' % posixpath.join(requirements, 'requirements.txt')]
         sudo(' '.join(cmd), user=env.sudo_user)
@@ -682,6 +683,7 @@ def commit_locale_changes():
 
 def _upload_supervisor_conf_file(filename):
     upload_dict = {}
+    upload_dict['hostname'] = env.host_string
     upload_dict["template"] = posixpath.join(os.path.dirname(__file__), 'services', 'templates', filename)
     upload_dict["destination"] = '/tmp/%s.blah' % filename
     upload_dict["enabled"] =  posixpath.join(env.services, u'supervisor/%s' % filename)
@@ -695,13 +697,14 @@ def _upload_supervisor_conf_file(filename):
 
 @roles('django_celery', 'django_monolith')
 def upload_celery_supervisorconf():
-    _upload_supervisor_conf_file('supervisor_celery.conf')
+    _upload_supervisor_conf_file('supervisor_celery_main.conf')
 
     #hacky hack to not
     #have staging environments send out reminders
     if env.environment not in ['staging', 'preview', 'realstaging']:
-        _upload_supervisor_conf_file('supervisor_celerybeat.conf')
-    _upload_supervisor_conf_file('supervisor_celerymon.conf')
+        _upload_supervisor_conf_file('supervisor_celery_beat.conf')
+        _upload_supervisor_conf_file('supervisor_celery_periodic.conf')
+    _upload_supervisor_conf_file('supervisor_celery_flower.conf')
     _upload_supervisor_conf_file('supervisor_couchdb_lucene.conf') #to be deprecated
 
     #in reality this also should be another machine if the number of listeners gets too high
