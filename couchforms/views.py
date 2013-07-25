@@ -1,6 +1,6 @@
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from couchforms.models import XFormInstance
 from couchforms.util import SubmissionPost
 
@@ -28,9 +28,13 @@ def download_form(request, instance_id):
     # response['Content-Disposition'] = 'attachment; filename=%s.xml' % instance_id
     return response
 
+
 def download_attachment(request, instance_id, attachment):
     instance = XFormInstance.get(instance_id)
-    attach = instance._attachments[attachment]
+    try:
+        attach = instance._attachments[attachment]
+    except KeyError:
+        raise Http404()
     response = HttpResponse(mimetype=attach["content_type"])
     response.write(instance.fetch_attachment(attachment))
     return response
