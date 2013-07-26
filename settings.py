@@ -183,6 +183,7 @@ HQ_APPS = (
     'langcodes',
     'corehq.apps.adm',
     'corehq.apps.announcements',
+    'corehq.apps.callcenter',
     'corehq.apps.crud',
     'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
@@ -322,7 +323,7 @@ OPENROSA_VERSION = "1.0"
 FIXTURE_GENERATORS = [
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",
-    "corehq.apps.callcenter.fixturegenerators.indicators",
+    "corehq.apps.reportfixtures.fixturegenerators.indicators",
 ]
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
@@ -582,6 +583,7 @@ COUCHDB_APPS = [
     'auditcare',
     'builds',
     'case',
+    'callcenter',
     'cleanup',
     'cloudcare',
     'commtrack',
