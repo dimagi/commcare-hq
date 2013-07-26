@@ -20,7 +20,6 @@ setup(
         "requests",
         "restkit",
         "simplejson",
-        "unittest2"  # required by dimagi-utils
     ],
     tests_require = [
         'coverage',
