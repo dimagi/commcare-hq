@@ -3,3 +3,8 @@
 build/*
 dist/*
 dimagi_utils.egg-info*
+
+/*.egg
+
+.coverage
+/coverage-report

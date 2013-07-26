@@ -1,3 +1,4 @@
+from optparse import make_option
 from gevent import monkey
 monkey.patch_all()
 from restkit.session import set_session
@@ -8,8 +9,6 @@ from django.core.management.base import BaseCommand
 from django.core.mail import send_mail
 from datetime import datetime
 from gevent.pool import Pool
-import logging
-import time
 from django.conf import settings
 setattr(settings, 'COUCHDB_TIMEOUT', 999999)
 from couchdbkit.ext.django.loading import couchdbkit_handler
@@ -38,8 +37,11 @@ def do_sync(app_index):
 class Command(BaseCommand):
     help = 'Sync design docs to temporary ids...but multithreaded'
 
-    def handle(self, *args, **options):
+    option_list = BaseCommand.option_list + (
+        make_option('--no-mail', help="Don't send email confirmation", action='store_true', default=False),
+    )
 
+    def handle(self, *args, **options):
 
         start = datetime.utcnow()
         if len(args) == 0:
@@ -51,6 +53,8 @@ class Command(BaseCommand):
             username = args[1]
         else:
             username = 'unknown'
+
+        no_email = options['no_mail']
 
         pool = Pool(num_pool)
 
@@ -80,22 +84,28 @@ class Command(BaseCommand):
         else:
             mvp_sync(get_db(), temp="tmp")
 
+        # same hack above for MVP
+        try:
+            from fluff.sync_couchdb import sync_design_docs as fluff_sync
+        except ImportError:
+            pass
+        else:
+            fluff_sync(temp="tmp")
+
         print "All apps loaded into jobs, waiting..."
         pool.join()
         print "All apps reported complete."
 
-        #Git info
         message = "Preindex results:\n"
         message += "\tInitiated by: %s\n" % username
 
         delta = datetime.utcnow() - start
         message += "Total time: %d seconds" % delta.seconds
-        print message
 
-        #todo: customize this more for other users
-        send_mail('[commcare-hq] Preindex Complete', message, 'hq-noreply@dimagi.com', ['commcarehq-dev@dimagi.com'], fail_silently=True)
-
-
-
-
-
+        if not no_email:
+            print message
+            send_mail('%s CouchDB Preindex Complete' % settings.EMAIL_SUBJECT_PREFIX,
+                      message,
+                      settings.SERVER_EMAIL,
+                      [x[1] for x in settings.ADMINS],
+                      fail_silently=True)

@@ -270,9 +270,9 @@ class DateSpan(object):
 
         # if the end date is today or tomorrow, use "last N days syntax"  
         today = datetime.combine(datetime.today(), time())
-        day_after_tomorrow = today + timedelta (days=2)
-        if today <= self.enddate < day_after_tomorrow:
-            return "last %s days" % (self.enddate - self.startdate).days
+        day_after_tomorrow = today + timedelta(days=2)
+        if today <= self.enddate + timedelta(days=(1 if self.inclusive else 0)) < day_after_tomorrow:
+            return "last %s days" % ((self.enddate - self.startdate).days + (1 if self.inclusive else 0))
         
         return "%s to %s" % (self.startdate.strftime(self.format), 
                              self.enddate.strftime(self.format))
@@ -286,23 +286,35 @@ class DateSpan(object):
         nextmonth = start + timedelta(days=32)
         end = datetime(nextmonth.year, nextmonth.month, 1) - timedelta(milliseconds=1)
         return DateSpan(start, end, format)
-    
+
     @classmethod
     def since(cls, days, enddate=None, format=DEFAULT_DATE_FORMAT, inclusive=True, timezone=pytz.utc):
         """
-        Generate a DateSpan ending with a certain date, and going back 
-        N days. The enddate defaults to today midnight but is inclusive
-        (which means it will look like tomorrow midnight)
-        
+        Generate a DateSpan ending with a certain date, and starting at a date that will
+        include N number of days.
+
+        The endddate defaults to yesterday midnight for inclusive request
+        (which means it will look like today midnight);
+        defaults to today midnight for non inclusive requests
+
+        e.g: enddate=7/21/2013, days=7, inclusive=True => 7/15/2013 - 7/21/2013 (15, 16, 17, 18, 19, 20, 21)
+        e.g: enddate=7/21/2013, days=7, inclusive=False => 7/14/2013 - 7/21/2013 (14, 15, 16, 17, 18, 19, 20)
+
         Will always ignore times.
         """
         if enddate is None:
-            enddate = datetime.now(tz=timezone) 
+            enddate = datetime.now(tz=timezone)
+            if inclusive:
+                enddate = enddate - timedelta(days=1)
+
+        if inclusive:
+            days += -1
+
         end = datetime(enddate.year, enddate.month, enddate.day)
         start = end - timedelta(days=days)
         return DateSpan(start, end, format, inclusive, timezone)
-                    
-    
+
+
     def parse(self, startdate_str, enddate_str, parse_format, display_format=None):
         """
         Generate a DateSpan with string formats. 

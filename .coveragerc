@@ -1,0 +1,6 @@
+[run]
+branch = True
+source = dimagi
+
+[html]
+directory = coverage-report

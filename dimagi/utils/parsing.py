@@ -1,8 +1,9 @@
 from datetime import datetime, date, time
 from dateutil.parser import parse
+import dateutil.tz
 
-TRUE_STRINGS = ("true", "t", "yes", "y")
-FALSE_STRINGS = ("false", "f", "no", "n")
+TRUE_STRINGS = ("true", "t", "yes", "y", "1")
+FALSE_STRINGS = ("false", "f", "no", "n", "0")
 
 def string_to_boolean(val):
     """
@@ -29,12 +30,23 @@ def string_to_datetime(val):
     elif isinstance(val, date):
         return datetime.combine(val, time())
     return parse(val)
-    
+
+
+def string_to_utc_datetime(val):
+    val = string_to_datetime(val)
+    return val.astimezone(dateutil.tz.tzutc()).replace(tzinfo=None)
+  
+
 # some date to json tricks from 
 # http://stackoverflow.com/questions/455580/json-datetime-between-python-and-javascript
 ISO_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 def json_format_datetime(time):
     return time.strftime(ISO_FORMAT)
+
+ISO_DATE_FORMAT = '%Y-%m-%d'
+def json_format_date(time):
+    return time.strftime(ISO_DATE_FORMAT)
+
 
 ISO_MIN = datetime(1900, 1, 1)
 

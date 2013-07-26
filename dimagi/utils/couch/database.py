@@ -1,3 +1,4 @@
+from couchdbkit import ResourceConflict
 from couchdbkit.client import Database
 from couchdbkit.ext.django.schema import Document
 from django.conf import settings
@@ -49,7 +50,9 @@ def get_view_names(database):
 def iter_docs(database, ids, chunksize=100):
     for doc_ids in chunked(ids, chunksize):
         for doc in get_docs(database, keys=doc_ids):
-            yield doc['doc']
+            doc_dict = doc.get('doc')
+            if doc_dict:
+                yield doc_dict
 
 def is_bigcouch():
     # this is a bit of a hack but we'll use it for now
@@ -80,3 +83,24 @@ class SafeSaveDocument(Document):
         if is_bigcouch() and 'w' not in params:
             params['w'] = bigcouch_quorum_count()
         return super(SafeSaveDocument, self).save(**params)
+
+def safe_delete(db, doc_or_id):
+    if not isinstance(doc_or_id, basestring):
+        doc_or_id = doc_or_id._id
+    db.delete_doc(doc_or_id, **get_safe_write_kwargs())
+
+def apply_update(doc, update_fn, max_tries=5):
+    """
+    A function for safely applying a change to a couch doc. For getting around ResourceConflict
+    errors that stem from the distributed cloudant nodes
+    """
+    tries = 0
+    while tries < max_tries:
+        try:
+            update_fn(doc)
+            doc.save()
+            return doc
+        except ResourceConflict:
+            doc = doc.__class__.get(doc._id)
+        tries+=1
+    raise ResourceConflict("Document update conflict. -- Max Retries Reached")

@@ -7,7 +7,6 @@ try:
     import simplejson as json
 except ImportError:
     import json
-import unittest
 
 # this is a utility toolkit to perform data analysis on couchdb. couchdb temp views are
 # excruciatingly slow. this toolkit dumps the entire db into memory in python, where
@@ -239,77 +238,3 @@ def coalesce(*args):
         if arg is not None:
             return arg
     return None
-
-
-
-class Test(unittest.TestCase):
-    def test_assoc_array(self):
-        d1 = {'a': 3, 'b': None, '@c': 'ss'}
-        aa1 = AssocArray(d1)
-
-        self.assertEqual(aa1._, d1)
-        self.assertEqual(repr(aa1), repr(d1))
-
-        self.assertEqual(aa1.a, 3)
-        self.assertEqual(aa1('a'), 3)
-        self.assertEqual(aa1['a'], 3)
-        #key 'b' exists but val is None
-        self.assertEqual(aa1.b, None)
-        self.assertEqual(aa1('b'), None)
-        self.assertEqual(aa1['b'], None)
-        self.assertEqual(aa1('@c'), 'ss')
-        self.assertEqual(aa1['@c'], 'ss')
-        #key 'd' doesn't exist
-        self.assertEqual(aa1.d, None)
-        self.assertEqual(aa1('d'), None)
-        self.assertEqual(aa1['d'], None)
-
-        self.assertEqual(aa1.__('@c'), 'ss')
-        self.assertEqual(aa1.__('@c', '__none'), 'ss')
-        self.assertEqual(aa1.__('@c', ex=1), 'ss')
-        self.assertEqual(aa1.__('b', 'default'), None)
-        self.assertEqual(aa1.__('b', ex=1), None)
-        self.assertEqual(aa1.__('d', 'default'), 'default')
-        self.assertRaises(AttributeError, lambda: aa1.__('d', ex=1))
-
-        aa2 = AssocArray({'_': True, '__': 4})
-
-        self.assertNotEqual(aa2._, True)
-        self.assertNotEqual(aa2.__, 4)
-        self.assertEqual(aa2('_'), True)
-        self.assertEqual(aa2['_'], True)
-        self.assertEqual(aa2.__('_'), True)
-        self.assertEqual(aa2('__'), 4)
-        self.assertEqual(aa2['__'], 4)
-        self.assertEqual(aa2.__('__'), 4)
-        self.assertEqual(aa1('_'), None)
-        self.assertEqual(aa1.__('__', 'missing'), 'missing')
-
-        d3 = {'a': 1, 'b': aa1, 'a.b': 'x'}
-        aa3 = AssocArray(d3)
-
-        self.assertEqual(aa3.b, aa1)
-        self.assertEqual(aa3._, d3)
-        self.assertEqual(aa3['b'], aa1)
-        self.assertEqual(aa3['b', '@c'], 'ss')
-        self.assertEqual(aa3['b', 'd'], None) #aa3.b.d doesn't exist
-        self.assertEqual(aa3['f', 'f'], None) #aa3.f doesn't exist
-        self.assertEqual(aa3('b.@c'), 'ss')
-        self.assertEqual(aa3('b.d'), None)
-        self.assertEqual(aa3('f.f'), None)
-        self.assertEqual(aa3['a.b'], 'x') #'a.b' is a single key
-        self.assertEqual(aa3.__('a.b'), 'x')
-
-        aa4 = AssocArray({'a': AssocArray({'b': AssocArray({'c': AssocArray({'d': 1})})}), 'x': 5})
-        self.assertEqual(aa4('a.b.c.d'), 1)
-        self.assertEqual(aa4('a.b.f'), None)
-        self.assertEqual(aa4('a.q'), None)
-        self.assertEqual(aa4('x.x'), None) #aa4.x exists, but is not an AssocArray
-
-        aa5 = AssocArray({'_': AssocArray({'__': AssocArray({'_': 2})})})
-        self.assertEqual(aa5('_.__._'), 2)
-
-        aa6 = AssocArray({'a.b': AssocArray({'c.d': 3})})
-        self.assertEqual(aa6['a.b', 'c.d'], 3)
-        self.assertNotEqual(aa6('a.b.c.d'), 3)
-

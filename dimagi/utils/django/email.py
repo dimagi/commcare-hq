@@ -8,7 +8,7 @@ is only supported in HTML. Please set your email client to display this message
 in HTML, or use an email client that supports HTML emails.
 """
 
-def send_HTML_email(subject, recipient, html_content, text_content=None, cc=None):
+def send_HTML_email(subject, recipient, html_content, text_content=None, cc=None, email_from=None):
     if not text_content:
         text_content = getattr(settings, 'NO_HTML_EMAIL_MESSAGE',
                                NO_HTML_EMAIL_MESSAGE)
@@ -16,15 +16,18 @@ def send_HTML_email(subject, recipient, html_content, text_content=None, cc=None
     # If you get the return_path header wrong, this may impede mail delivery. It appears that the SMTP server
     # has to recognize the return_path as being valid for the sending host. If we set it to, say, our SMTP
     # server, this will always be the case (as the server is explicitly serving the host).
-    email_return_path = getattr(settings, 'EMAIL_RETURN_PATH', None)
-    if email_return_path is None: 
-        # Get last two parts of the SMTP server as a proxy for the domain name from which this mail is sent.
-        # This works for gmail, anyway.
-        email_return_path = settings.EMAIL_LOGIN
-    
-    email_from = getattr(settings, 'EMAIL_FROM', None)
     if email_from is None:
-        email_from = email_return_path
+        #todo: verify that this is even necessary here since it seems like email_return_path == email_from
+        email_return_path = getattr(settings, 'EMAIL_RETURN_PATH', None)
+        if email_return_path is None:
+            email_return_path = settings.EMAIL_LOGIN
+
+        email_from = getattr(settings, 'EMAIL_FROM', None)
+        if email_from is None:
+            email_from = email_return_path
+    else:
+        email_return_path = email_from
+
     from_header = {'From': email_from}  # From-header
     connection = get_connection()
     
