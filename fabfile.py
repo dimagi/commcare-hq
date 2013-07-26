@@ -683,7 +683,6 @@ def commit_locale_changes():
 
 def _upload_supervisor_conf_file(filename):
     upload_dict = {}
-    upload_dict['hostname'] = env.host_string
     upload_dict["template"] = posixpath.join(os.path.dirname(__file__), 'services', 'templates', filename)
     upload_dict["destination"] = '/tmp/%s.blah' % filename
     upload_dict["enabled"] =  posixpath.join(env.services, u'supervisor/%s' % filename)
