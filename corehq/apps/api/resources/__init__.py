@@ -1,4 +1,5 @@
 from tastypie.resources import Resource
+from tastypie.exceptions import InvalidSortError
 
 class dict_object(object):
     def __init__(self, dict):
@@ -27,6 +28,36 @@ class JsonResource(Resource):
 
         return format
 
+class SimpleSortableResourceMixin(object):
+    '''
+    In toastdriven/tastypie the apply_sorting method is moderately Django-specific so it is not
+    implemented in the Resource class but only in the ModelResource class. This is a
+    version that is simplified to only support direct field ordering (none of Django's fancy `__` field access)
+
+    This can only be mixed in to a resource that passes `obj_list` with type
+
+      order_by :: (*str) -> self.__class__
+
+    and should also have a meta field `ordering` that specifies the allowed fields
+
+      _meta :: [str]
+    
+    '''
+
+    def apply_sorting(self, obj_list, options=None):
+        if options is None:
+            options = {}
+
+        if 'order_by' not in options:
+            return obj_list
+
+        order_by = options.getlist('order_by')
+        for field in order_by:
+            stripped_field = field[1:] if field.startswith('-') else field
+            if stripped_field not in self._meta.ordering:
+                raise InvalidSortError("The '%s' field does not allow ordering" % stripped_field)
+
+        return obj_list.order_by(*order_by)
     
 class DomainSpecificResourceMixin(object):
     def get_list(self, request, **kwargs):
