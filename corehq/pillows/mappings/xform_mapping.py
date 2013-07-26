@@ -62,6 +62,8 @@ XFORM_MAPPING = {
                             "type": "date",
                             "format": DATE_FORMATS_STRING
                         },
+                        #note, the case_id method here assumes single case properties within a form
+                        #in order to support multi case properties, a dynamic template needs to be added along with fundamentally altering case queries
 
                         "@case_id": {"type": "string", "index": "not_analyzed"},
                         "@user_id": {"type": "string", "index": "not_analyzed"},
