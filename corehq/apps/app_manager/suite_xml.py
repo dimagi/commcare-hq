@@ -6,6 +6,9 @@ from corehq.apps.app_manager.xform import SESSION_CASE_ID
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
 
+FIELD_TYPE_INDICATOR = 'indicator'
+FIELD_TYPE_PROPERTY = 'property'
+
 
 class IdNode(XmlObject):
     id = StringField('@id')
@@ -207,6 +210,12 @@ class DetailVariable(XmlObject):
     name = property(get_name, set_name)
 
 
+class DetailVariableList(XmlObject):
+    ROOT_NAME = 'variables'
+
+    variables = NodeListField('_', DetailVariable)
+
+
 class Detail(IdNode):
     """
     <detail id="">
@@ -224,8 +233,22 @@ class Detail(IdNode):
     ROOT_NAME = 'detail'
 
     title = NodeField('title/text', Text)
-    variables = NodeListField('variables/*', DetailVariable)
     fields = NodeListField('field', Field)
+    _variables = NodeField('variables', DetailVariableList)
+
+    def _init_variables(self):
+        if self._variables is None:
+            self._variables = DetailVariableList()
+
+    def get_variables(self):
+        self._init_variables()
+        return self._variables.variables
+
+    def set_variables(self, value):
+        self._init_variables()
+        self._variables.variables = value
+
+    variables = property(get_variables, set_variables)
 
 
 class Fixture(IdNode):
@@ -320,6 +343,9 @@ class IdStrings(object):
     def referral_list_locale(self, module):
         """1.0 holdover"""
         return module.get_referral_list_locale_id()
+
+    def indicator_instance(self, indicator_set_name):
+        return u"indicators_%s" % indicator_set_name
 
 
 class MediaResourceError(Exception):
@@ -430,6 +456,20 @@ class SuiteGenerator(object):
                                 )
                                 detail.append_column(dc)
 
+                            # need to add a default here so that it doesn't
+                            # get persisted
+                            if self.app.enable_multi_sort and \
+                               len(module.detail_sort_elements) == 0:
+                                from corehq.apps.app_manager.models import SortElement
+                                try:
+                                    se = SortElement()
+                                    se.field = detail.columns[0].field
+                                    se.type = 'string'
+                                    se.direction = 'ascending'
+                                    module.detail_sort_elements.append(se)
+                                except Exception:
+                                    pass
+
                         for column in detail.get_columns():
                             fields = get_column_generator(self.app, module, detail, column).fields
                             d.fields.extend(fields)
@@ -471,18 +511,29 @@ class SuiteGenerator(object):
                         module.all_forms_require_a_case():
                     yield Instance(id='commcaresession',
                                    src='jr://instance/session')
+
+                indicator_sets = []
+                for detail in module.get_details():
+                    for column in detail.get_columns():
+                        if column.field_type == FIELD_TYPE_INDICATOR:
+                            indicator_set, _ = column.field_property.split('/', 1)
+                            if indicator_set not in indicator_sets:
+                                indicator_sets.append(indicator_set)
+                                yield Instance(id=self.id_strings.indicator_instance(indicator_set),
+                                       src='jr://fixture/indicators:%s' % indicator_set)
+
             e.instances.extend(get_instances())
 
 
             # I'm setting things individually instead of in the constructor
             # so that they appear in the correct order
             e.datum = SessionDatum()
-            e.datum.id='case_id'
-            e.datum.nodeset="instance('casedb')/casedb/case[@case_type='{module.case_type}'][@status='open']{filter_xpath}".format(
+            e.datum.id = 'case_id'
+            e.datum.nodeset = "instance('casedb')/casedb/case[@case_type='{module.case_type}'][@status='open']{filter_xpath}".format(
                 module=module,
                 filter_xpath=self.get_filter_xpath(module) if use_filter else ''
             )
-            e.datum.value="./@case_id"
+            e.datum.value = "./@case_id"
 
             detail_ids = [detail.id for detail in self.details]
 

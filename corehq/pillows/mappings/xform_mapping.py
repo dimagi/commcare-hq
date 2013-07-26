@@ -1,8 +1,6 @@
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
 
-XFORM_INDEX="xforms_4a74e23cb420bda178b0d426cd4a4694"
-
-
+XFORM_INDEX="xforms_173a2feff06a9065ee69fd232ae090ef"
 
 
 XFORM_MAPPING = {
@@ -64,6 +62,8 @@ XFORM_MAPPING = {
                             "type": "date",
                             "format": DATE_FORMATS_STRING
                         },
+                        #note, the case_id method here assumes single case properties within a form
+                        #in order to support multi case properties, a dynamic template needs to be added along with fundamentally altering case queries
 
                         "@case_id": {"type": "string", "index": "not_analyzed"},
                         "@user_id": {"type": "string", "index": "not_analyzed"},
@@ -89,7 +89,18 @@ XFORM_MAPPING = {
                         "userID": {"type": "string", "index": "not_analyzed"},
                         "deviceID": {"type": "string", "index": "not_analyzed"},
                         "instanceID": {"type": "string", "index": "not_analyzed"},
-                        "username": {"type": "string", "index": "not_analyzed"}
+                        "username": {"type": "string", "index": "not_analyzed"},
+                        "appVersion": {
+                            'dynamic': False,
+                            'properties': {
+                                '@xmlns':
+                                    {"type": "string", "index": "not_analyzed"},
+                                '#text':
+                                    {"type": "string", "index": "not_analyzed"},
+
+                            }
+                        },
+                        "CommCareVersion": {"type": "string", "index": "not_analyzed"},
                     }
                 },
             },

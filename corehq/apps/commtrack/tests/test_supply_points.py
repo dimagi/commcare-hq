@@ -4,16 +4,18 @@ from corehq.apps.commtrack.helpers import make_supply_point,\
     get_commtrack_user_id
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.tests.util import (make_loc, TEST_DOMAIN,
-    CommTrackTest)
+    CommTrackTest, bootstrap_domain)
 from datetime import datetime
 
 class SupplyPointTest(TestCase):
 
     def setUp(self):
+        self.domain = bootstrap_domain(TEST_DOMAIN)
         self.loc = make_loc('loc1')
 
     def tearDown(self):
         self.loc.delete()
+        self.domain.delete()
 
     def testMakeSupplyPoint(self):
         sp = make_supply_point(TEST_DOMAIN, self.loc)

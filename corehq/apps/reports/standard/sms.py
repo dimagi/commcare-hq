@@ -9,7 +9,6 @@ from dimagi.utils.web import get_url_base
 from django.core.urlresolvers import reverse
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.sms.models import INCOMING, OUTGOING, SMSLog
-from datetime import timedelta
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase

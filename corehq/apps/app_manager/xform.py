@@ -95,6 +95,11 @@ class CaseXPath(XPath):
 
 SESSION_CASE_ID = CaseIDXPath(u"instance('commcaresession')/session/data/case_id")
 
+class IndicatorXpath(XPath):
+
+    def indicator(self, indicator_name):
+        return XPath(u"instance('%s')/indicators/case[@id = current()/@case_id]" % self).slash(indicator_name)
+
 
 class WrappedNode(object):
     def __init__(self, xml, namespaces=namespaces):

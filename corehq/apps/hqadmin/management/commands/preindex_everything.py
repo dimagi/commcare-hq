@@ -50,6 +50,7 @@ class Command(BaseCommand):
         message += "Total time: %d seconds" % delta.seconds
         message += "\n\nYou may now deploy"
 
-        print message
         if email:
-            mail_admins("[%s] HQAdmin preindex_everything complete" % settings.EMAIL_SUBJECT_PREFIX, message)
+            mail_admins(" HQAdmin preindex_everything complete" % settings.EMAIL_SUBJECT_PREFIX, message)
+        else:
+            print message
