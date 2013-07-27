@@ -448,7 +448,7 @@ def mail_admins(subject, message):
 @roles('pg', 'django_monolith')
 def record_successful_deploy():
     with cd(env.code_root):
-        sudo('%(virtualenv_root)s/bin/python manage.py record_deploy_success --user "%(user)s" --environment "%(environment)s"' % \
+        sudo('%(virtualenv_root)s/bin/python manage.py record_deploy_success --user "%(user)s" --environment "%(environment)s" --mail_admins' % \
              {'virtualenv_root': env.virtualenv_root,
               'user': env.user,
               'environment': env.environment},
