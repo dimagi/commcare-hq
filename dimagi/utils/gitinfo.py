@@ -70,7 +70,7 @@ def sub_git_info(git_dir, log_count=1):
     url = sub_git_remote_url(git_dir)
     revsstring = '[%s]' % ','.join(revs)
 
-    commit_list = simplejson.loads(revsstring)
+    commit_list = simplejson.loads(revsstring.replace('\t', '\u0009'))
     for commit in commit_list:
         commit['commit_url'] = get_commit_url(url, commit['sha'])
         commit['compare_master'] = get_compare_url(url, commit['sha'], 'master')
