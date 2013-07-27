@@ -84,6 +84,29 @@ ko.bindingHandlers.sortableList = {
     }
 };
 
+function ParentSelect(init) {
+    var self = this;
+    self.active = ko.observable(init.active);
+    self.moduleId = ko.observable(init.moduleId);
+    self.parentModules = ko.observable(init.parentModules);
+    self.lang = ko.observable(init.lang);
+    self.langs = ko.observable(init.langs);
+    function getTranslation(name, langs) {
+        var firstLang = _(langs).find(function (lang) {
+            return name[lang];
+        });
+        return name[firstLang];
+    }
+    self.moduleOptions = ko.computed(function () {
+        return _(self.parentModules()).map(function (module) {
+            return {
+                value: module.unique_id,
+                label: getTranslation(module.name, [self.lang()].concat(self.langs()))
+            };
+        });
+    });
+}
+
 var DetailScreenConfig = (function () {
     "use strict";
     var DetailScreenConfig, Screen, Column, sortRows;
@@ -555,10 +578,18 @@ var DetailScreenConfig = (function () {
         };
         Screen.prototype = {
             save: function () {
+                var parentSelect = this.config.parentSelect;
                 this.saveButton.ajax({
                     url: this.saveUrl,
                     type: "POST",
-                    data: {screens: JSON.stringify(this.serialize())},
+                    data: {
+                        screens: JSON.stringify(this.serialize()),
+                        parent_select: JSON.stringify({
+                            module_id: parentSelect.moduleId(),
+                            relationship: 'parent',
+                            active: parentSelect.active()
+                        })
+                    },
                     dataType: 'json',
                     success: function (data) {
                         COMMCAREHQ.app_manager.updateDOM(data.update);
@@ -760,6 +791,13 @@ var DetailScreenConfig = (function () {
             this.sortRows = new SortRows();
             this.lang = spec.lang;
             this.langs = spec.langs || [];
+            this.parentSelect = new ParentSelect({
+                active: spec.parentSelect.active,
+                moduleId: spec.parentSelect.moduleId,
+                parentModules: spec.parentModules,
+                lang: this.lang,
+                langs: this.langs
+            });
             this.edit = spec.edit;
             this.saveUrl = spec.saveUrl;
 
@@ -787,7 +825,8 @@ var DetailScreenConfig = (function () {
         };
         DetailScreenConfig.init = function ($home, spec) {
             var ds = new DetailScreenConfig($home, spec);
-            ko.applyBindings(ds.sortRows, $('#detail-screen-config-body').get(0));
+            ko.applyBindings(ds.sortRows, $('#detail-screen-sort').get(0));
+            ko.applyBindings(ds.parentSelect, $('#detail-screen-parent').get(0));
             return ds;
         };
         return DetailScreenConfig;

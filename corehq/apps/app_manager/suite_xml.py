@@ -339,6 +339,9 @@ class IdStrings(object):
 class MediaResourceError(Exception):
     pass
 
+class ParentModuleReferenceError(Exception):
+    pass
+
 
 class SuiteGenerator(object):
     def __init__(self, app):
@@ -490,13 +493,25 @@ class SuiteGenerator(object):
             xpath += "[start_date = '' or double(date(start_date)) <= double(now())]"
         return xpath
 
+    def get_nodeset_xpath(self, module, use_filter):
+        return "instance('casedb')/casedb/case[@case_type='{case_type}'][@status='open']{filter_xpath}".format(
+            case_type=module.case_type,
+            filter_xpath=self.get_filter_xpath(module) if use_filter else '',
+        )
+
+    def get_parent_filter(self, module):
+        return "[index/{relationship}=instance('commcaresession')/session/data/parent_id]".format(
+            relationship=module.parent_select.relationship
+        )
+
     @property
     def entries(self):
         def add_case_stuff(module, e, use_filter=False):
             def get_instances():
                 yield Instance(id='casedb', src='jr://instance/casedb')
-                if any([form.form_filter for form in module.get_forms()]) and \
-                        module.all_forms_require_a_case():
+                if (any(form.form_filter for form in module.get_forms())
+                    and module.all_forms_require_a_case()) \
+                    or module.parent_select.active:
                     yield Instance(id='commcaresession',
                                    src='jr://instance/session')
 
@@ -514,23 +529,49 @@ class SuiteGenerator(object):
 
             detail_ids = [detail.id for detail in self.details]
 
-            def get_detail_id_safe(detail_type):
+            def get_detail_id_safe(module, detail_type):
                 detail_id = self.id_strings.detail(
                     module=module,
                     detail=module.get_detail(detail_type)
                 )
                 return detail_id if detail_id in detail_ids else None
 
-            e.datum = SessionDatum(
-                id='case_id',
-                nodeset="instance('casedb')/casedb/case[@case_type='{module.case_type}'][@status='open']{filter_xpath}".format(
-                    module=module,
-                    filter_xpath=self.get_filter_xpath(module) if use_filter else '',
-                ),
-                value="./@case_id",
-                detail_select=get_detail_id_safe('case_short'),
-                detail_confirm=get_detail_id_safe('case_long'),
-            )
+            if not module.parent_select.active:
+                e.datum = SessionDatum(
+                    id='case_id',
+                    nodeset=self.get_nodeset_xpath(module, use_filter),
+                    value="./@case_id",
+                    detail_select=get_detail_id_safe(module, 'case_short'),
+                    detail_confirm=get_detail_id_safe(module, 'case_long'),
+                )
+            else:
+                module_id = module.parent_select.module_id
+                try:
+                    # "clever" way of getting the first matching module
+                    # ...too clever?
+                    parent_module = (
+                        module for module in self.app.get_modules()
+                        if module.unique_id == module_id
+                    ).next()
+                except StopIteration:
+                    raise ParentModuleReferenceError(
+                        "Module %s in app %s not found" % (module_id, self.app)
+                    )
+                e.datums.append(SessionDatum(
+                    id='parent_id',
+                    nodeset=self.get_nodeset_xpath(parent_module, use_filter),
+                    value="./@case_id",
+                    detail_select=get_detail_id_safe(parent_module, 'case_short'),
+                    detail_confirm=get_detail_id_safe(parent_module, 'case_long'),
+                ))
+                e.datums.append(SessionDatum(
+                    id='case_id',
+                    nodeset=(self.get_nodeset_xpath(module, use_filter)
+                             + self.get_parent_filter(module)),
+                    value="./@case_id",
+                    detail_select=get_detail_id_safe(module, 'case_short'),
+                    detail_confirm=get_detail_id_safe(module, 'case_long'),
+                ))
 
         for module in self.modules:
             for form in module.get_forms():
