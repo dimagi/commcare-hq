@@ -257,61 +257,6 @@
     </div>
 
     <div class="row-fluid">
-    <h3>Couch _log</h3>
-    <small>Last 2000 bytes</small>
-    <pre>{{ couch_log }}</pre>
-    </div>
-
-    <div class="row-fluid">
-        <h3>Current Build</h3>
-        <h4>Temporarily offline</h4>
-
-        <div class="well">
-            <h5>Active Branch</h5>
-            {{ current_ref.repo.active_branch.name }}
-        </div>
-        <div>
-            <h4>Last Commits</h4>
-            <table class="table table-striped">
-                <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Author</th>
-                    <th>Message</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for commit in current_ref.last_commits %}
-                    {% if forloop.first %}
-                        <tr class="success">
-                            {% else %}
-                        <tr>
-                    {% endif %}
-
-                <td>{{ commit.date|date:"m/d/Y H:i T" }}<br>
-                    <small>
-                        <a href="{{ commit.commit_url }}">View</a> | <a
-                            href="{{ commit.compare_url }}">Compare</a>
-                    </small>
-                </td>
-                <td> {{ commit.author }}</td>
-                <td>
-                    <pre>{{ commit.message }}</pre>
-                </td>
-                </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-
-            <h4>Submodules</h4>
-            {% for sub in current_ref.submodules %}
-                <h5>{{ sub.name }}
-                    <small><a href="{{ sub.commit_url }}">Commit</a> | <a href=
-                                                                                  "{{ sub.compare_url }}">Compare</a>
-                    </small>
-                </h5>
-                <pre>{{ sub.info }}</pre>
-            {% endfor %}
-        </div>
+    {% include "hqadmin/partials/project_snapshot.html" %}
     </div>
 {% endblock %}
