@@ -50,11 +50,11 @@ def sub_get_current_branch(git_dir):
     return p.stdout.read().strip()
 
 
-def get_project_snapshot(git_dir, submodules=False):
-    root_info = sub_git_info(git_dir)
+def get_project_snapshot(git_dir, submodules=False, log_count=1, submodule_count=1):
+    root_info = sub_git_info(git_dir, log_count=log_count)
     root_info['current_branch'] = sub_get_current_branch(git_dir)
     if submodules:
-        root_info['submodules'] = list(sub_git_submodules(git_dir))
+        root_info['submodules'] = list(sub_git_submodules(git_dir, log_count=submodule_count))
     return root_info
 
 def sub_git_info(git_dir, log_count=1):
@@ -71,9 +71,11 @@ def sub_git_info(git_dir, log_count=1):
     revsstring = '[%s]' % ','.join(revs)
 
     commit_list = simplejson.loads(revsstring)
+    for commit in commit_list:
+        commit['commit_url'] = get_commit_url(url, commit['sha'])
+        commit['compare_master'] = get_compare_url(url, commit['sha'], 'master')
+
     info_dict['commits'] = commit_list
-    info_dict['commit_url'] = get_commit_url(url, commit_list[0]['sha'])
-    info_dict['compare_master'] = get_compare_url(url, commit_list[0]['sha'], 'master')
     return info_dict
 
 
