@@ -3,6 +3,12 @@ import os
 from subprocess import Popen, PIPE
 import simplejson
 
+
+def git_file_deltas(git_dir, commit, compare=None):
+    #source: http://stackoverflow.com/a/2713363
+    pass
+
+
 def sub_git_remote_url(git_dir):
     args = ['config', '--get', "remote.origin.url"]
     p = sub_git_cmd(git_dir, args)
