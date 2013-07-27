@@ -41,6 +41,7 @@ SERVER_EMAIL = 'commcarehq-noreply@dimagi.com' #the physical server emailing - d
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
+SERVER_ENVIRONMENT = 'changeme' #identify the target type of this running environment
 
 ####### Log/debug setup ########
 

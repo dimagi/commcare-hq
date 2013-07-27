@@ -5,6 +5,8 @@ import logging
 from collections import defaultdict
 from StringIO import StringIO
 import os
+import socket
+from dimagi.utils import gitinfo
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST, require_GET
 from pytz import timezone
@@ -601,25 +603,10 @@ def system_info(request):
 
     context['rabbitmq_url'] = get_rabbitmq_management_url()
 
-
     context['hide_filters'] = True
-    if hasattr(os, 'uname'):
-        context['current_system'] = os.uname()[1]
+    context['current_system'] = socket.gethostname()
 
-    #from dimagi.utils import gitinfo
-    #context['current_ref'] = gitinfo.get_project_info()
-    #removing until the async library is updated
-    context['current_ref'] = {}
-    if settings.COUCH_USERNAME == '' and settings.COUCH_PASSWORD == '':
-        couchlog_resource = Resource("http://%s/" % (settings.COUCH_SERVER_ROOT))
-    else:
-        couchlog_resource = Resource("http://%s:%s@%s/" % (settings.COUCH_USERNAME, settings.COUCH_PASSWORD, settings.COUCH_SERVER_ROOT))
-    try:
-        #todo, fix on bigcouch/cloudant
-        context['couch_log'] = "Will be back online shortly" if is_bigcouch() \
-            else couchlog_resource.get('_log', params_dict={'bytes': 2000 }).body_string()
-    except Exception, ex:
-        context['couch_log'] = "unable to open couch log: %s" % ex
+    context['snapshot'] = gitinfo.get_project_snapshot(settings.FILEPATH, submodules=True, log_count=5, submodule_count=1)
 
     #redis status
     redis_status = ""
@@ -706,7 +693,8 @@ def system_info(request):
     context['memcached_status'] = mc_status
     context['memcached_results'] = mc_results
 
-    context['last_deploy'] = HqDeploy.get_latest()
+    environment = settings.SERVER_ENVIRONMENT
+    context['last_deploy'] = HqDeploy.get_latest(environment)
 
     #elasticsearch status
     #node status
