@@ -448,9 +448,10 @@ def mail_admins(subject, message):
 @roles('pg', 'django_monolith')
 def record_successful_deploy():
     with cd(env.code_root):
-        sudo('%(virtualenv_root)s/bin/python manage.py record_deploy_success --user "%(user)s"' % \
+        sudo('%(virtualenv_root)s/bin/python manage.py record_deploy_success --user "%(user)s" --environment "%(environment)s"' % \
              {'virtualenv_root': env.virtualenv_root,
-              'user': env.user },
+              'user': env.user,
+              'environment': env.environment},
         user=env.sudo_user)
 
 @task
@@ -477,7 +478,6 @@ def deploy():
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
         raise
     else:
-        execute(mail_admins, "Deploy successful", "Cheers.")
         execute(record_successful_deploy)
     finally:
         # hopefully bring the server back to life if anything goes wrong

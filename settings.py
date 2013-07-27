@@ -312,6 +312,8 @@ DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
+SERVER_ENVIRONMENT = 'localdev'
+
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
 
