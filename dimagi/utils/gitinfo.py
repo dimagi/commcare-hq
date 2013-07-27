@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import os
 from subprocess import Popen, PIPE
 import simplejson
 
@@ -17,18 +18,29 @@ def sub_git_cmd(git_dir, args):
 
     returns popen object for access to stdout+stderr
     """
+    git_dir_to_use = None
+    if os.path.exists(os.path.join(git_dir, '.git')):
+        #ok file exists
+        git_dir_to_use = os.path.join(git_dir, '.git')
+    elif os.path.isfile(os.path.join(git_dir, '.git')):
+        #it's a submodule, dereference the actual git info
+        git_dir_to_use = os.path.join(git_dir, '.git')
+
     p = Popen(
         [
             'git',
             '--git-dir',
-            git_dir
+            git_dir_to_use,
         ] + args,
         stdout=PIPE, stderr=PIPE
     )
+    # else:
+    #     raise Exception("Error, the .git location for %s doesn't exists" % git_dir)
     return p
 
 
 def sub_get_current_branch(git_dir):
+    #HT: http://stackoverflow.com/a/12142066
     args = [
         'rev-parse',
         '--abbrev-ref',
@@ -45,14 +57,11 @@ def get_project_snapshot(git_dir, submodules=False):
         root_info['submodules'] = list(sub_git_submodules(git_dir))
     return root_info
 
-
-
-def sub_git_info(git_dir, ref_count=1):
+def sub_git_info(git_dir, log_count=1):
     info_dict = {}
 
     args = ['log',
-            '-%s' % ref_count,
-            #"""--pretty=format:{%n \"sha\": \"%H\",%n  \"author\": \"%an <%ae>\",%n \"date\": \"%ai\",%n \"subject\": \"%s\",%n \"message\": \"%b\"%n}"""
+            '-%s' % log_count,
             """--pretty=format:{ \"sha\": \"%H\",  \"author\": \"%an <%ae>\", \"date\": \"%ai\", \"subject\": \"%s\", \"message\": \"%b\"}"""
         ]
     p = sub_git_cmd(git_dir, args)
@@ -68,8 +77,12 @@ def sub_git_info(git_dir, ref_count=1):
     return info_dict
 
 
+def get_git_sub_info(git_dir, sub_path, log_count=1):
+    full_sub_path = os.path.join(git_dir, sub_path)
+    sub_info = sub_git_info(full_sub_path, log_count=log_count)
+    return sub_info
 
-def sub_git_submodules(git_dir):
+def sub_git_submodules(git_dir, log_count=1):
     """
     Using shell, get the active submodule info
     """
@@ -80,84 +93,13 @@ def sub_git_submodules(git_dir):
     for x in gitout:
         splits = x.strip().split(' ')
         if len(splits) == 3:
-            yield {
-                'sha': splits[0].strip(),
-                'path': splits[1],
-                'branch': splits[2],
-            }
-
-
-######
-# bad gitypython stuff
-# def get_project_repo():
-#     """
-#     Get the root git repo object for the project's root settings.
-#     """
-#     repo = git.Repo(settings.FILEPATH)
-#     return repo
-
-
-# def submodule_info_hack(repo, prior_project=None):
-#     """
-#     A hacky thing to get at least the submodule commit URL from the submodule info.
-#     It's a bit of a mess due to how we submodule call, gitpython has issues figuring out what's
-#     going on.
-#     """
-#
-#     ret = {}
-#     for s in repo.iter_submodules():
-#         git_dir = os.path.join(settings.FILEPATH, '.git', 'modules', s.name)
-#
-#         subm = {}
-#         sub_key = s.url.split('/')[-1].split('.')[0]
-#         subm['local_name'] = s.name.replace('submodules/', '')
-#         #p = Popen(['git', '--git-dir', git_dir, 'log', '-1'], stdout=PIPE, stderr=PIPE)
-#         #http://cfmumbojumbo.com/cf/index.cfm/coding/convert-your-git-log-to-json/
-#         p = Popen(['git', '--git-dir', git_dir, 'log', '-1', "--pretty=format:{%n  \"sha\": \"%H\",%n  \"author\": \"%an <%ae>\",%n  \"date\": \"%ai\",%n  \"subject\": \"%s\"%n, \"message\": \"%b\"%n}"], stdout=PIPE, stderr=PIPE)
-#         gitout = p.stdout.read().strip()
-#         commit_dict = simplejson.loads(gitout)
-#         commit_dict['commit_url'] = get_commit_url(s.url, s.hexsha)
-#         commit_dict['compare_master'] = get_compare_url(s.url, s.hexsha, 'master')
-#
-#         subm['commit'] = commit_dict
-#
-#         # if prior_project:
-#         #     prev_submodules = prior_project['submodules']
-#         #     if sub_key in prev_submodules:
-#         #         subm['prior_commit'] =
-#
-#         ret[sub_key] = subm
-#     return ret
-
-
-# def get_latest_commit_info(repo, commit_limit=5, from_sha=None):
-#     """
-#     Snapshot the commit info for current running repo.
-#     Args:
-#     commit_limit: basic check for last <int> commits
-#     from_sha: compare directly via a
-#     """
-#     commits = repo.iter_commits()
-#     commit_count = 0
-#
-#     if from_sha:
-#         # find last commit for given type
-#         pass
-#
-#
-#     while True:
-#         commit = commit_info(commits.next())
-#         yield commit
-#         commit_count += 1
-#         if from_sha is None:
-#             if commit_count == commit_limit:
-#                 break
-#         if from_sha == commit['sha']:
-#             #print "it's equal, break"
-#             break
-#         # else:
-#         #     print "#%s# != #%s#" % (from_sha, commit['sha'])
-
+            sub_sha = splits[0].strip()
+            sub_path = splits[1]
+            sub_log = get_git_sub_info(git_dir, sub_path, log_count=log_count)
+            sub_log['path'] = sub_path
+            sub_log['branch'] = splits[2]
+            sub_log['sha_sha'] = sub_sha
+            yield sub_log
 
 def split_repo_url(repo_url):
     """
