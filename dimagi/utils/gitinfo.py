@@ -68,7 +68,7 @@ def sub_git_info(git_dir, log_count=1):
 
     args = ['log',
             '-%s' % log_count,
-            """--pretty=format:{ \"sha\": \"%H\",  \"author\": \"%an <%ae>\", \"date\": \"%ai\", \"subject\": \"%s\", \"message\": \"%b\"}"""
+            """--pretty=format:{ \"sha\": \"%H\",  \"author\": \"%an <%ae>\", \"date\": \"%ai\", \"subject\": \"##hackescape1##%s##hackescape2##\", \"message\": \"##hackescape3##%b##hackescape4##\"}"""
         ]
     p = sub_git_cmd(git_dir, args)
     gitout = p.stdout.read().strip()
@@ -76,7 +76,38 @@ def sub_git_info(git_dir, log_count=1):
     url = sub_git_remote_url(git_dir)
     revsstring = '[%s]' % ','.join(revs)
 
-    commit_list = simplejson.loads(revsstring.replace('\t', '\u0009'))
+    subject_hacks = ['##hackescape1##', '##hackescape2##']
+    message_hacks = ['##hackescape3##', '##hackescape4##']
+
+    subject_raw = revsstring[revsstring.index(subject_hacks[0]) + len(subject_hacks[0]): revsstring.index(subject_hacks[1])]
+    message_raw = revsstring[revsstring.index(message_hacks[0]) + len(subject_hacks[0]): revsstring.index(message_hacks[1])]
+
+    def escape_git(raw_string):
+        replaces = {'\t': '\u0009'} #, '"': '\\"'}
+        for k, v in replaces.items():
+            raw_string = raw_string.replace(k, v)
+        return raw_string
+
+    subject_escaped = escape_git(subject_raw)
+    message_escaped = escape_git(message_raw)
+
+    fixed_revsstring = revsstring[:revsstring.index(subject_hacks[0])] + \
+                       subject_escaped + \
+                       revsstring[revsstring.index(subject_hacks[1]) +len(subject_hacks[1]):revsstring.index(message_hacks[0])] + \
+                       message_escaped + \
+                       revsstring[revsstring.index(message_hacks[1]) + len(message_hacks[1]):]
+    try:
+        commit_list = simplejson.loads(fixed_revsstring)
+    except Exception, ex:
+        commit_list = [
+            {
+            "subject": "Error parsing revision string, likely some unescaped character in the git log: %s",
+            "message": fixed_revsstring,
+            "sha": "",
+            "author": "this error brought to you by: %s" % ex
+            }
+        ]
+
     for commit in commit_list:
         commit['commit_url'] = get_commit_url(url, commit['sha'])
         commit['compare_master'] = get_compare_url(url, commit['sha'], 'master')
