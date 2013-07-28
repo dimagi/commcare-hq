@@ -2,12 +2,14 @@ from datetime import datetime
 from corehq.apps.commtrack.helpers import make_supply_point,\
     make_supply_point_product, make_product, get_commtrack_user_id
 from corehq.apps.commtrack.tests.util import (TEST_DOMAIN, make_loc,
-    CommTrackTest)
+    CommTrackTest, bootstrap_domain)
 from corehq.apps.commtrack import const
+
 
 class SupplyPointProductTest(CommTrackTest):
 
     def setUp(self):
+        self.domain = bootstrap_domain(TEST_DOMAIN)
         self.loc = make_loc('loc1')
         self.sp = make_supply_point(TEST_DOMAIN, self.loc)
         self.product = make_product(TEST_DOMAIN, 'product 1', 'p1')

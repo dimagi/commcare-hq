@@ -52,7 +52,7 @@ to not move the reminder forward to the next event.
 
 def fire_sms_event(reminder, handler, recipients, verified_numbers):
     current_event = reminder.current_event
-    if reminder.method in [METHOD_SMS, METHOD_SMS_CALLBACK]:
+    if handler.method in [METHOD_SMS, METHOD_SMS_CALLBACK]:
         for recipient in recipients:
             try:
                 lang = recipient.get_language_code()
@@ -105,7 +105,7 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers):
         # For multiple recipients, always move to the next event
         return True
     
-    elif reminder.method in [METHOD_TEST, METHOD_SMS_CALLBACK_TEST]:
+    elif handler.method in [METHOD_TEST, METHOD_SMS_CALLBACK_TEST]:
         # Used for automated tests
         return True
 

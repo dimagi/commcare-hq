@@ -632,6 +632,13 @@ class SupplyPointProductCase(CommCareCase):
         })
         return data
 
+    # block extra couch query per case to fetch reverse index info
+    @memoized
+    def get_index_map(self, reversed=False):
+        if reversed:
+            return None
+        return super(SupplyPointProductCase, self).get_index_map(reversed)
+
 
 class RequisitionCase(CommCareCase):
     """
