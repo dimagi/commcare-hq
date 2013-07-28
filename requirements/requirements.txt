@@ -58,5 +58,5 @@ sqlagg==0.1.4
 -e submodules/fluff-src
 django-redis==3.2
 redis==2.7.5
--e submodules/ctable-src
+ctable==0.0.3
 unittest2

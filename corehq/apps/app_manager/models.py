@@ -67,15 +67,7 @@ easy_install pygooglechart.  Until you do that this won't work.
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
-CASE_PROPERTY_MAP = {
-    # IMPORTANT: if you edit this you probably want to also edit
-    # the corresponding map in cloudcare 
-    # (corehq.apps.cloudcare.static.cloudcare.js.backbone.cases.js)
-    'external-id': 'external_id',
-    'date-opened': 'date_opened',
-    'status': '@status',
-    'name': 'case_name',
-}
+FIELD_SEPARATOR = ':'
 
 ATTACHMENT_REGEX = r'[^/]*\.xml'
 
@@ -675,6 +667,20 @@ class DetailColumn(IndexedSchema):
         for dct in (self.header, self.enum):
             _rename_key(dct, old_lang, new_lang)
 
+    @property
+    def field_type(self):
+        if FIELD_SEPARATOR in self.field:
+            return self.field.split(FIELD_SEPARATOR, 1)[0]
+        else:
+            return 'property'  # equivalent to property:parent/case_property
+
+    @property
+    def field_property(self):
+        if FIELD_SEPARATOR in self.field:
+            return self.field.split(FIELD_SEPARATOR, 1)[1]
+        else:
+            return self.field
+
     class TimeAgoInterval(object):
         map = {
             'day': 1.0,
@@ -688,22 +694,6 @@ class DetailColumn(IndexedSchema):
                 return cls.map['year']
             elif format == 'months-ago':
                 return cls.map['month']
-
-    @property
-    def xpath(self):
-        """
-        Convert special names like date-opened to their casedb xpath equivalent (e.g. @date_opened).
-        Only ever called by 2.0 apps.
-        """
-        parts = self.field.split('/')
-        parts[-1] = CASE_PROPERTY_MAP.get(parts[-1], parts[-1])
-        property = parts.pop()
-        indexes = parts
-
-        case = CaseXPath('')
-        for index in indexes:
-            case = case.index_id(index).case()
-        return case.property(property)
 
     @classmethod
     def wrap(cls, data):
@@ -776,7 +766,6 @@ class Detail(IndexedSchema):
     def display(self):
         return "short" if self.type.endswith('short') else 'long'
 
-
     def filter_xpath(self):
 
         filters = []
@@ -785,6 +774,7 @@ class Detail(IndexedSchema):
                 filters.append("(%s)" % column.filter_xpath.replace('.', '%s_%s_%s' % (column.model, column.field, i + 1)))
         xpath = ' and '.join(filters)
         return partial_escape(xpath)
+
 
 class CaseList(IndexedSchema):
     label = DictProperty()
@@ -862,12 +852,14 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
         for val in ("referral", "case", "none"):
             if val in r:
                 return val
+
     def detail_types(self):
         return {
             "referral": ["case_short", "case_long", "ref_short", "ref_long"],
             "case": ["case_short", "case_long"],
             "none": []
         }[self.requires()]
+
     def requires_case_details(self):
         ret = False
         if self.case_list.show:
@@ -1503,7 +1495,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     show_user_registration = BooleanProperty(default=False, required=True)
     modules = SchemaListProperty(Module)
     name = StringProperty()
-    profile = DictProperty() #SchemaProperty(Profile)
+    profile = DictProperty()  # SchemaProperty(Profile)
     use_custom_suite = BooleanProperty(default=False)
     force_http = BooleanProperty(default=False)
     cloudcare_enabled = BooleanProperty(default=False)

@@ -227,7 +227,7 @@ def realstaging():
 @task
 def preview():
     """ Use production data in a safe preview environment on remote host"""
-    env.code_branch = 'master':
+    env.code_branch = 'master'
     env.sudo_user = 'cchq'
     env.environment = 'preview'
     env.django_port = '7999'
@@ -448,9 +448,10 @@ def mail_admins(subject, message):
 @roles('pg', 'django_monolith')
 def record_successful_deploy():
     with cd(env.code_root):
-        sudo('%(virtualenv_root)s/bin/python manage.py record_deploy_success --user "%(user)s"' % \
+        sudo('%(virtualenv_root)s/bin/python manage.py record_deploy_success --user "%(user)s" --environment "%(environment)s" --mail_admins' % \
              {'virtualenv_root': env.virtualenv_root,
-              'user': env.user },
+              'user': env.user,
+              'environment': env.environment},
         user=env.sudo_user)
 
 @task
@@ -459,6 +460,7 @@ def deploy():
     if not console.confirm('Are you sure you want to deploy {env.environment}?'.format(env=env), default=False) or \
        not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False):
         utils.abort('Deployment aborted.')
+
 
     require('root', provided_by=('staging', 'preview', 'production', 'india'))
     run('echo ping!') #hack/workaround for delayed console response
@@ -476,7 +478,6 @@ def deploy():
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
         raise
     else:
-        execute(mail_admins, "Deploy successful", "Cheers.")
         execute(record_successful_deploy)
     finally:
         # hopefully bring the server back to life if anything goes wrong
@@ -498,7 +499,7 @@ def update_virtualenv(preindex=False):
         env_to_use = env.virtualenv_root
     requirements = posixpath.join(root_to_use, 'requirements')
     with cd(root_to_use):
-        cmd = ['source %s/bin/activate && pip install' % env_to_use]
+        cmd = ['export HOME=/home/%s && source %s/bin/activate && pip install' % (env.sudo_user, env_to_use)]
         cmd += ['--requirement %s' % posixpath.join(requirements, 'prod-requirements.txt')]
         cmd += ['--requirement %s' % posixpath.join(requirements, 'requirements.txt')]
         sudo(' '.join(cmd), user=env.sudo_user)
@@ -695,13 +696,14 @@ def _upload_supervisor_conf_file(filename):
 
 @roles('django_celery', 'django_monolith')
 def upload_celery_supervisorconf():
-    _upload_supervisor_conf_file('supervisor_celery.conf')
+    _upload_supervisor_conf_file('supervisor_celery_main.conf')
 
     #hacky hack to not
     #have staging environments send out reminders
     if env.environment not in ['staging', 'preview', 'realstaging']:
-        _upload_supervisor_conf_file('supervisor_celerybeat.conf')
-    _upload_supervisor_conf_file('supervisor_celerymon.conf')
+        _upload_supervisor_conf_file('supervisor_celery_beat.conf')
+        _upload_supervisor_conf_file('supervisor_celery_periodic.conf')
+    _upload_supervisor_conf_file('supervisor_celery_flower.conf')
     _upload_supervisor_conf_file('supervisor_couchdb_lucene.conf') #to be deprecated
 
     #in reality this also should be another machine if the number of listeners gets too high
