@@ -82,10 +82,11 @@ def format_env(current_env):
         'code_root',
         'log_dir',
         'sudo_user',
-        'hostname',
+        'host_string',
         'project',
         'es_endpoint',
         'jython_home',
+        'virtualenv_root'
     ]
 
     for prop in important_props:
