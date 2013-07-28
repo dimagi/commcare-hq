@@ -21,8 +21,10 @@ class XmlTest(TestCase):
 class SuiteTest(XmlTest, TestFileMixin):
     file_path = ('data', 'suite')
 
-    def setUp(self):
-        self.app = Application.wrap(self.get_json('app'))
-
     def test_normal_suite(self):
-        self.assertXmlEqual(self.app.create_suite(), self.get_xml('normal-suite'))
+        app = Application.wrap(self.get_json('app'))
+        self.assertXmlEqual(self.get_xml('normal-suite'), app.create_suite())
+
+    def test_tiered_select(self):
+        app = Application.wrap(self.get_json('tiered-select'))
+        self.assertXmlEqual(self.get_xml('tiered-select'), app.create_suite())
