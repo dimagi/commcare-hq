@@ -25,7 +25,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.users.bulkupload import create_or_update_users_and_groups,\
     check_headers, dump_users_and_groups, GroupNameError, UserUploadError
 from corehq.apps.users.tasks import bulk_upload_async
-from corehq.apps.users.views import (_users_context, require_can_edit_commcare_users, BaseFullEditUserView)
+from corehq.apps.users.views import (_users_context, require_can_edit_commcare_users, BaseFullEditUserView, BaseUserSettingsView)
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.decorators.view import get_file
@@ -185,97 +185,164 @@ class EditCommCareUserView(BaseFullEditUserView):
         return super(EditCommCareUserView, self).post(request, *args, **kwargs)
 
 
-@require_can_edit_commcare_users
-def base_view(request, domain, template="users/mobile/users_list.html"):
-    page = request.GET.get('page', 1)
-    limit = request.GET.get('limit', DEFAULT_USER_LIST_LIMIT)
+class ListCommCareUsersView(BaseUserSettingsView):
+    template_name = "users/mobile/users_list.html"
+    name = 'commcare_users'
+    page_title = ugettext_noop("Mobile Workers")
 
-    more_columns = json.loads(request.GET.get('more_columns', 'false'))
-    cannot_share = json.loads(request.GET.get('cannot_share', 'false'))
-    show_inactive = json.loads(request.GET.get('show_inactive', 'false'))
+    DEFAULT_LIMIT = 10
 
-    total = CommCareUser.total_by_domain(domain, is_active=not show_inactive)
+    @method_decorator(require_can_edit_commcare_users)
+    def dispatch(self, request, *args, **kwargs):
+        return super(ListCommCareUsersView, self).dispatch(request, *args, **kwargs)
 
-    context = _users_context(request, domain)
-    context.update(
-        users_list=dict(
-            page=page,
-            limit=limit,
-            total=total,
-        ),
-        cannot_share=cannot_share,
-        show_inactive=show_inactive,
-        more_columns=more_columns,
-        show_case_sharing=request.project.case_sharing_included(),
-        pagination_limit_options=range(DEFAULT_USER_LIST_LIMIT, 51, DEFAULT_USER_LIST_LIMIT)
-    )
-    return render(request, template, context)
+    def _escape_val_error(self, expression, default):
+        try:
+            return expression()
+        except ValueError:
+            return default
 
-@require_can_edit_commcare_users
-def user_list(request, domain):
-    page = int(request.GET.get('page', 1))
-    limit = int(request.GET.get('limit', DEFAULT_USER_LIST_LIMIT))
-    skip = (page-1)*limit
-
-    sort_by = request.GET.get('sortBy', 'abc')
-
-    more_columns = json.loads(request.GET.get('more_columns', 'false'))
-    cannot_share = json.loads(request.GET.get('cannot_share', 'false'))
-    show_inactive = json.loads(request.GET.get('show_inactive', 'false'))
-
-    if cannot_share:
-        users = CommCareUser.cannot_share(domain, limit=limit, skip=skip)
-    else:
-        users = CommCareUser.by_domain(domain, is_active=not show_inactive, limit=limit, skip=skip)
-
-    if sort_by == 'forms':
-        users.sort(key=lambda user: -user.form_count)
-
-    users_list = []
-    for user in users:
-        user_data = dict(
-            user_id=user.user_id,
-            status="" if user.is_active else "Archived",
-            edit_url=reverse(EditCommCareUserView.name, args=[domain, user.user_id]),
-            username=user.raw_username,
-            full_name=user.full_name,
-            joined_on=user.date_joined.strftime("%d %b %Y"),
-            phone_numbers=user.phone_numbers,
-            form_count="--",
-            case_count="--",
-            case_sharing_groups=[],
+    @property
+    def users_list_page(self):
+        return self._escape_val_error(
+            lambda: int(self.request.GET.get('page', 1)),
+            1
         )
-        if more_columns:
-            user_data.update(
-                form_count=user.form_count,
-                case_count=user.case_count,
-            )
-            if request.project.case_sharing_included():
-                user_data.update(
-                    case_sharing_groups=[g.name for g in user.get_case_sharing_groups()]
-                )
-        if request.couch_user.can_edit_commcare_user:
-            if user.is_active:
-                archive_action_desc = "As a result of archiving, this user will no longer " \
-                                      "appear in reports. This action is reversable; you can " \
-                                      "reactivate this user by viewing Show Archived Mobile Workers and " \
-                                      "clicking 'Unarchive'."
-            else:
-                archive_action_desc = "This will re-activate the user, and the user will show up in reports again."
-            user_data.update(
-                archive_action_text="Archive" if user.is_active else "Un-Archive",
-                archive_action_url=reverse('%s_commcare_user' % ('archive' if user.is_active else 'unarchive'),
-                    args=[domain, user.user_id]),
-                archive_action_desc=archive_action_desc,
-                archive_action_complete=False,
-            )
-        users_list.append(user_data)
 
-    return HttpResponse(json.dumps(dict(
-        success=True,
-        current_page=page,
-        users_list=users_list,
-    )))
+    @property
+    def users_list_limit(self):
+        return self._escape_val_error(
+            lambda: int(self.request.GET.get('limit', self.DEFAULT_LIMIT)),
+            self.DEFAULT_LIMIT
+        )
+
+    @property
+    @memoized
+    def users_list_total(self):
+        return CommCareUser.total_by_domain(self.domain, is_active=not self.show_inactive)
+
+    @property
+    @memoized
+    def more_columns(self):
+        return self._escape_val_error(
+            lambda: json.loads(self.request.GET.get('more_columns', 'false')),
+            False
+        )
+
+    @property
+    @memoized
+    def cannot_share(self):
+        return self._escape_val_error(
+            lambda: json.loads(self.request.GET.get('cannot_share', 'false')),
+            False
+        )
+
+    @property
+    @memoized
+    def show_inactive(self):
+        return self._escape_val_error(
+            lambda: json.loads(self.request.GET.get('show_inactive', 'false')),
+            False
+        )
+
+    @property
+    def show_case_sharing(self):
+        return self.request.project.case_sharing_included()
+
+    @property
+    def page_context(self):
+        return {
+            'users_list': {
+                'page': self.users_list_page,
+                'limit': self.users_list_limit,
+                'total': self.users_list_total,
+            },
+            'cannot_share': self.cannot_share,
+            'show_inactive': self.show_inactive,
+            'more_columns': self.more_columns,
+            'show_case_sharing': self.show_case_sharing,
+            'pagination_limit_options': range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT),
+        }
+
+
+class AsyncListCommCareUsersView(ListCommCareUsersView):
+    name = 'user_list'
+
+    @property
+    def sort_by(self):
+        return self.request.GET.get('sortBy', 'abc')
+
+    @property
+    def users_list_skip(self):
+        return (self.users_list_page - 1) * self.users_list_limit
+
+    @property
+    @memoized
+    def users(self):
+        if self.cannot_share:
+            users = CommCareUser.cannot_share(
+                self.domain,
+                limit=self.users_list_limit,
+                skip=self.users_list_skip
+            )
+        else:
+            users = CommCareUser.by_domain(
+                self.domain,
+                is_active=not self.show_inactive,
+                limit=self.users_list_limit,
+                skip=self.users_list_skip
+            )
+        if self.sort_by == 'forms':
+            users.sort(key=lambda user: -user.form_count)
+        return users
+
+    def get_archive_text(self, is_active):
+        if is_active:
+            return _("As a result of archiving, this user will no longer appear in reports. "
+                     "This action is reversable; you can reactivate this user by viewing "
+                     "Show Archived Mobile Workers and clicking 'Unarchive'.")
+        return _("This will re-activate the user, and the user will show up in reports again.")
+
+    @property
+    def users_list(self):
+        users_list = []
+        for user in self.users:
+            u_data = {
+                'user_id': user.user_id,
+                'status': "" if user.is_active else _("Archived"),
+                'edit_url': reverse(EditCommCareUserView.name, args=[self.domain, user.user_id]),
+                'username': user.raw_username,
+                'full_name': user.full_name,
+                'joined_on': user.date_joined.strftime("%d %b %Y"),
+                'phone_numbers': user.phone_numbers,
+                'form_count': '--',
+                'case_count': '--',
+                'case_sharing_groups': [],
+                'archive_action_text': _("Archive") if user.is_active else _("Un-Archive"),
+                'archive_action_desc': self.get_archive_text(user.is_active),
+                'archive_action_url': reverse('%s_commcare_user' % ('archive' if user.is_active else 'unarchive'),
+                    args=[self.domain, user.user_id]),
+                'archive_action_complete': False,
+            }
+            if self.more_columns:
+                u_data.update({
+                    'form_count': user.form_count,
+                    'case_count': user.case_count,
+                })
+                if self.show_case_sharing:
+                    u_data.update({
+                        'case_sharing_groups': [g.name for g in user.get_case_sharing_groups()],
+                    })
+            users_list.append(u_data)
+        return users_list
+
+    def render_to_response(self, context, **response_kwargs):
+        return HttpResponse(json.dumps({
+            'success': True,
+            'current_page': self.users_list_page,
+            'users_list': self.users_list,
+        }))
+
 
 # this was originally written with a GET, which is wrong
 # I'm not fixing for now, just adding the require_POST to make it unusable

@@ -1,6 +1,6 @@
 #from django.conf.urls.defaults import patterns, url
 from corehq.apps.users.views import DefaultProjectUserSettingsView, EditWebUserView, EditMyAccountView, ListWebUsersView
-from corehq.apps.users.views.mobile.users import UploadCommCareUsers, EditCommCareUserView
+from corehq.apps.users.views.mobile.users import UploadCommCareUsers, EditCommCareUserView, ListCommCareUsersView, AsyncListCommCareUsersView
 from django.conf.urls.defaults import *
 from corehq.apps.domain.utils import grandfathered_domain_re
 
@@ -41,10 +41,10 @@ urlpatterns = patterns('corehq.apps.users.views',
     url(r'^audit_logs/$', 'audit_logs', name='user_audit_logs')
 ) + \
 patterns("corehq.apps.users.views.mobile.users",
-    url(r'^commcare/$', 'base_view', name='commcare_users'),
+    url(r'^commcare/$', ListCommCareUsersView.as_view(), name=ListCommCareUsersView.name),
     url(r'^commcare/account/(?P<couch_user_id>[\w-]+)/$', EditCommCareUserView.as_view(), name=EditCommCareUserView.name),
     url(r'^commcare/account/(?P<couch_user_id>[\w-]+)/user_data/$', 'update_user_data', name='update_user_data'),
-    url(r'^commcare/list/$', 'user_list', name='user_list'),
+    url(r'^commcare/list/$', AsyncListCommCareUsersView.as_view(), name=AsyncListCommCareUsersView.name),
     url(r'^commcare/archive/(?P<user_id>[\w-]+)/$', 'archive_commcare_user', name='archive_commcare_user'),
     url(r'^commcare/unarchive/(?P<user_id>[\w-]+)/$', 'archive_commcare_user', name='unarchive_commcare_user', kwargs={'is_active': True}),
     url(r'^commcare/delete/(?P<user_id>[\w-]+)/$', 'delete_commcare_user', name='delete_commcare_user'),
