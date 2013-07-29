@@ -6,7 +6,7 @@ from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.groups.models import Group
 
 def lookup_province_id_from_form_id(form_id):
-    case = CommCareCase.get_by_xform_id(form_id).one()
+    case = CommCareCase.get_by_xform_id(form_id).first()
     fixture_type = FixtureDataType.by_domain_tag('care-ihapc-live',
                                                  'province').first()
 
@@ -20,7 +20,7 @@ def lookup_province_id_from_form_id(form_id):
     return fixture_item.get_id
 
 def lookup_cbo_id_from_form_id(form_id):
-    case = CommCareCase.get_by_xform_id(form_id).one()
+    case = CommCareCase.get_by_xform_id(form_id).first()
     group = Group.by_user(case.user_id).one()
 
     # if the id doesn't belong to a user, maybe its a group?
