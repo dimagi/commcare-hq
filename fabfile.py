@@ -442,6 +442,10 @@ def clone_repo():
 @task
 @roles('pg', 'django_monolith')
 def preindex_views():
+    if not env.should_migrate:
+        print 'Skipping preindex_views for "%s" because should_migrate = False' % env.environment
+        return
+        
     with cd(env.code_root_preindex):
         #update the codebase of the preindex dir...
         update_code(preindex=True)
@@ -506,7 +510,8 @@ def deploy():
             execute(migrate)
         execute(_do_collectstatic)
         execute(version_static)
-        execute(flip_es_aliases)
+        if env.should_migrate:
+            execute(flip_es_aliases)
     except Exception:
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
         raise
