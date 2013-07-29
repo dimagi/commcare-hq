@@ -6,6 +6,7 @@ from couchforms.models import XFormInstance
 from dimagi.utils.modules import to_function
 from django.conf import settings
 
+
 CHUNK_SIZE = 500
 POOL_SIZE = 15
 
@@ -18,17 +19,11 @@ class Command(PtopReindexer):
     pillow_class = FullXFormPillow
     file_prefix = "ptop_fast_reindex_Full"
 
-
-
     def load_from_view(self):
         """
         Loads entire view, saves to file, set pillowtop checkpoint
         """
-        xform_handlers = []
-        for full_str in getattr(settings, 'XFORM_PILLOW_HANDLERS', []):
-            func = to_function(full_str)
-            xform_handlers.append(func())
-        dynamic_domains = [x.domain for x in xform_handlers]
+        dynamic_domains = FullXFormPillow.load_domains().keys()
         print "loaded full xform domains: %s" % dynamic_domains
 
         def full_view_iter():

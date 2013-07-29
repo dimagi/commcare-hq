@@ -1,0 +1,15 @@
+<h3>Current Build :: {{ snapshot.current_branch }}</h3>
+<div>
+    <h4>Last Commits</h4>
+    {% with snapshot.commits as commits %}
+        {% include "hqadmin/partials/commit_table.html" %}
+    {% endwith %}
+
+    <h4>Submodules</h4>
+    {% for sub in snapshot.submodules %}
+        <h4>{{ sub.path }} {{ sub.branch }}</h4>
+        {% with sub.commits as commits %}
+            {% include "hqadmin/partials/commit_table.html" %}
+        {% endwith %}
+    {% endfor %}
+</div>

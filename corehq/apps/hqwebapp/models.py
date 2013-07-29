@@ -359,6 +359,7 @@ class MessagingTab(UITab):
 
     @property
     def sidebar_items(self):
+        from corehq.apps.reports.standard.sms import MessageLogReport
         def reminder_subtitle(form=None, **context):
             return form['nickname'].value
 
@@ -368,7 +369,9 @@ class MessagingTab(UITab):
         items = [
             (_("Messages"), [
                 {'title': _('Compose SMS Message'),
-                 'url': reverse('sms_compose_message', args=[self.domain])}
+                 'url': reverse('sms_compose_message', args=[self.domain])},
+                {'title': _('Message Log'),
+                 'url': MessageLogReport.get_url(domain=self.domain)},
             ]),
             (_("Data Collection and Reminders"), [
                 {'title': _("Reminders"),
@@ -733,14 +736,6 @@ class OrgReportTab(OrgTab):
 class OrgSettingsTab(OrgTab):
     title = ugettext_noop("Settings")
     view = "corehq.apps.orgs.views.orgs_landing"
-
-    @property
-    def is_active(self):
-        # HACK. We need a more overarching way to avoid doing things this way -- copied this strat from above usage...
-        if self.org and 'o/%s/reports' % self.org.name in self._request.get_full_path():
-            return False
-
-        return super(OrgSettingsTab, self).is_active
 
     @property
     def dropdown_items(self):
