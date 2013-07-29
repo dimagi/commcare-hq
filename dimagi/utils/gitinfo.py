@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 import os
 from subprocess import Popen, PIPE
-import simplejson
 
 
 def git_file_deltas(git_dir, commit, compare=None):
