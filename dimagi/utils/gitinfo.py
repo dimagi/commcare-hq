@@ -66,76 +66,58 @@ def get_project_snapshot(git_dir, submodules=False, log_count=1, submodule_count
 
 def sub_git_info(git_dir, log_count=1):
     """
-    Given a git dir and log count, get in json all the logs for the given repo.
+    Given a git dir and log count, return a json formatted representation
     """
+    return_dict = {}
+    kv_line_format = {
+        'sha': '%H',
+        'author': '%an <%ae>',
+        'date': '%ai',
+        'subject': '%s',
+        'message': '%b'
+    }
 
-    info_dict = {}
+    KV_DELIMITER = ':~@#$~:'
+    LINE_DELIMITER = '@#\n#@'
 
-    #this is a hand crafted json log to makes a log fit into json...with some gotchas.
-    #the json log format needs to be one line json so when multiple logs are printed out, it's trivial to make an array for json parsing
-    #Note on hacky hacks:
-    #Git log doesn't care about string escapes, namely tab and quotes, since it assumes you will just print this out to the console
-    #hacky way to address this (see below)
-    #has us snip out the subject and message formats and escape them and snip them back in.
-    #a righter way to do this would be to format the log to be key, value pairs in null delimited "lines" that we reconstitute to the right
-    #json dict after all the output is parsed and escaped
-    #...should time permit.
+    #construct an output of git log that is essentially a:
+    # key=value
+    # key=value, etc
+    # but a sing a custom Key=Value delimiter, and a custom Line delimiter
+    # the git log -z format delimits the entire log by null, but we need separation of each property
+    #
+    line_by_line_format = LINE_DELIMITER.join(['%s%s%s' % (k, KV_DELIMITER, v) for k, v in kv_line_format.items()])
 
-    #for more info see: http://stackoverflow.com/questions/9301673/can-i-escape-chars-in-git-log-output
-
-    #log format vars from git log --help
-    hack_log_json_format = """--pretty=format:{ "sha": "%H",  "author": "%an <%ae>", "date": "%ai", "subject": "##hackescape1##%s##hackescape2##", "message": "##hackescape3##%b##hackescape4##"}"""
     args = ['log',
             '-%s' % log_count,
-            hack_log_json_format,
-        ]
+            '-z',
+            '--pretty=format:%s' % line_by_line_format
+    ]
     p = sub_git_cmd(git_dir, args)
-    gitout = p.stdout.read().strip()
-    revs = gitout.split('\n')
     url = sub_git_remote_url(git_dir)
-    revsstring = '[%s]' % ','.join(revs)
+    gitout = p.stdout.read().strip()
+    all_raw_revs = gitout.split('\0')
 
-    subject_hacks = ['##hackescape1##', '##hackescape2##']
-    message_hacks = ['##hackescape3##', '##hackescape4##']
-
-    subject_raw = revsstring[revsstring.index(subject_hacks[0]) + len(subject_hacks[0]): revsstring.index(subject_hacks[1])]
-    message_raw = revsstring[revsstring.index(message_hacks[0]) + len(subject_hacks[0]): revsstring.index(message_hacks[1])]
-
-    def escape_git(raw_string):
-        replaces = {'\t': '\u0009', '"': '\\"'}
-        for k, v in replaces.items():
-            raw_string = raw_string.replace(k, v)
-        return raw_string
-
-    subject_escaped = escape_git(subject_raw)
-    message_escaped = escape_git(message_raw)
-
-
-    fixed_revsstring = revsstring[:revsstring.index(subject_hacks[0])] + \
-                       subject_escaped + \
-                       revsstring[revsstring.index(subject_hacks[1]) +len(subject_hacks[1]):revsstring.index(message_hacks[0])] + \
-                       message_escaped + \
-                       revsstring[revsstring.index(message_hacks[1]) + len(message_hacks[1]):]
-
-
-    try:
-        commit_list = simplejson.loads(fixed_revsstring)
-    except Exception, ex:
-        commit_list = [
-            {
-            "subject": "Error parsing revision string, likely some unescaped character in the git log",
-            "message": fixed_revsstring,
-            "sha": "",
-            "author": "this error brought to you by: %s" % ex
-            }
-        ]
+    def parse_rev_block(block_text):
+        ret = {}
+        for prop in block_text.split(LINE_DELIMITER):
+            if len(prop) == 0:
+                continue
+            try:
+                k, v = prop.split(KV_DELIMITER)
+            except ValueError:
+                k = "GitParseError"
+                v = prop
+            ret[k] = v
+        return ret
+    commit_list = [parse_rev_block(s) for s in all_raw_revs]
 
     for commit in commit_list:
         commit['commit_url'] = get_commit_url(url, commit['sha'])
         commit['compare_master'] = get_compare_url(url, commit['sha'], 'master')
 
-    info_dict['commits'] = commit_list
-    return info_dict
+    return_dict['commits'] = commit_list
+    return return_dict
 
 
 def get_git_sub_info(git_dir, sub_path, log_count=1):
