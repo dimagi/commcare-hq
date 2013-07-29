@@ -314,6 +314,8 @@ DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
+SERVER_ENVIRONMENT = 'localdev'
+
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
 
@@ -746,6 +748,15 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'care-bihar',
     'hsph-dev',
     'hsph-betterbirth-pilot-2',
+    'commtrack-public-demo',
+]
+
+#Custom fully indexed domains for FullXForm index/pillowtop --
+# only those domains that don't require custom pre-processing before indexing,
+# otherwise list in XFORM_PILLOW_HANDLERS
+# Adding a domain will not automatically index that domain's existing forms
+ES_XFORM_FULL_INDEX_DOMAINS = [
+    'commtrack-public-demo',
 ]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"

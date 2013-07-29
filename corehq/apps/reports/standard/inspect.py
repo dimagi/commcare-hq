@@ -84,7 +84,8 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
                     "range": {
                         "form.meta.timeEnd": {
                             "from": self.datespan.startdate_param,
-                            "to": self.datespan.enddate_param}}},
+                            "to": self.datespan.enddate_param,
+                            "include_upper": False}}},
                 "filter": {"and": []}}
 
             xmlnss = filter(None, [f["xmlns"] for f in self.all_relevant_forms.values()])
