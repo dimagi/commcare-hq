@@ -47,6 +47,10 @@ class FullXFormPillow(XFormPillow):
             self.xform_handlers.append(func())
         self.handler_domain_map = dict((x.domain, x) for x in self.xform_handlers)
 
+        # full xforms-indexed domains that don't require custom processing
+        noncustom_domains = getattr(settings, 'ES_XFORM_FULL_INDEX_DOMAINS', [])
+        self.handler_domain_map.update((domain, XFormPillowHandler()) for domain in noncustom_domains)
+
     def get_type_string(self, doc_dict):
         domain = self.get_domain(doc_dict)
         if domain is None:
@@ -88,9 +92,7 @@ class FullXFormPillow(XFormPillow):
             if doc_ret['domain'] in self.handler_domain_map:
                 doc_ret = self.handler_domain_map[doc_ret['domain']].handle_transform(doc_ret)
             else:
-                #it's not in our custom handlers. return NOne
+                #it's not in our custom handlers. return None
                 doc_ret = None
         return doc_ret
-
-
 
