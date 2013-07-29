@@ -72,6 +72,7 @@ def sub_git_info(git_dir, log_count=1):
     info_dict = {}
 
     #this is a hand crafted json log to makes a log fit into json...with some gotchas.
+    #the json log format needs to be one line json so when multiple logs are printed out, it's trivial to make an array for json parsing
     #Note on hacky hacks:
     #Git log doesn't care about string escapes, namely tab and quotes, since it assumes you will just print this out to the console
     #hacky way to address this (see below)
