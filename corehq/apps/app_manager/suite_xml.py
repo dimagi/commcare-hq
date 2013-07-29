@@ -504,6 +504,19 @@ class SuiteGenerator(object):
             relationship=module.parent_select.relationship
         )
 
+    def get_module_by_id(self, module_id):
+        try:
+            [parent_module] = (
+                module for module in self.app.get_modules()
+                if module.unique_id == module_id
+            )
+        except ValueError:
+            raise ParentModuleReferenceError(
+                "Module %s in app %s not found" % (module_id, self.app)
+            )
+        else:
+            return parent_module
+
     @property
     def entries(self):
         def add_case_stuff(module, e, use_filter=False):
@@ -545,18 +558,9 @@ class SuiteGenerator(object):
                     detail_confirm=get_detail_id_safe(module, 'case_long'),
                 )
             else:
-                module_id = module.parent_select.module_id
-                try:
-                    # "clever" way of getting the first matching module
-                    # ...too clever?
-                    parent_module = (
-                        module for module in self.app.get_modules()
-                        if module.unique_id == module_id
-                    ).next()
-                except StopIteration:
-                    raise ParentModuleReferenceError(
-                        "Module %s in app %s not found" % (module_id, self.app)
-                    )
+                parent_module = self.get_module_by_id(
+                    module.parent_select.module_id
+                )
                 e.datums.append(SessionDatum(
                     id='parent_id',
                     nodeset=self.get_nodeset_xpath(parent_module, use_filter),
