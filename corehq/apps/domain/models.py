@@ -193,6 +193,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     date_created = DateTimeProperty()
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     case_sharing = BooleanProperty(default=False)
+    secure_submissions = BooleanProperty(default=False)
     organization = StringProperty()
     hr_name = StringProperty() # the human-readable name for this project within an organization
     creating_user = StringProperty() # username of the user who created this domain
