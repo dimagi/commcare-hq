@@ -299,16 +299,6 @@ class DateSpan(object):
         
         return "%s to %s" % (self.startdate.strftime(self.format), 
                              self.enddate.strftime(self.format))
-        
-    @classmethod
-    def month(cls, year, month, format=DEFAULT_DATE_FORMAT):
-        """
-        Generate a datespan covering a month.
-        """
-        start = datetime.datetime(year, month, 1)
-        nextmonth = start + datetime.timedelta(days=32)
-        end = datetime.datetime(nextmonth.year, nextmonth.month, 1) - datetime.timedelta(milliseconds=1)
-        return DateSpan(start, end, format)
 
     @classmethod
     def since(cls, days, enddate=None, format=DEFAULT_DATE_FORMAT, inclusive=True, timezone=pytz.utc):
@@ -352,19 +342,6 @@ class DateSpan(object):
         enddate = date_or_nothing(enddate_str)
         return DateSpan(startdate, enddate, format)
 
-    def months_iterator(self):
-        """
-        Iterate over (year, month) pairs (inclusive) in this datespan.
-        """
-        for year in range(self.startdate.year, self.enddate.year + 1):
-            startmonth = 1
-            endmonth = 12
-            if year == int(self.startdate.year):
-                startmonth = self.startdate.month
-            if year == int(self.enddate.year):
-                endmonth = self.enddate.month
-            for month in range(startmonth, endmonth + 1):
-                yield (year, month)
 
 def is_business_day(day):
     """
