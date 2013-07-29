@@ -389,6 +389,13 @@ class FormBase(DocumentSchema):
             logging.error("Failed: _parse_xml(string=%r)" % self.source)
             raise
         else:
+            try:
+                self.validate_form()
+            except XFormValidationError as e:
+                error = {'type': 'validation error', 'validation_message': unicode(e)}
+                error.update(meta)
+                errors.append(error)
+
             for error in self.check_actions():
                 error.update(meta)
                 errors.append(error)
