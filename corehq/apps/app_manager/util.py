@@ -153,6 +153,8 @@ def get_settings_values(app):
         hq_settings.update({'custom_suite': app.custom_suite})
 
     hq_settings['build_spec'] = app.build_spec.to_string()
+    # the admin_password hash shouldn't be sent to the client
+    hq_settings.pop('admin_password', None)
 
     return {
         'properties': profile.get('properties', {}),
