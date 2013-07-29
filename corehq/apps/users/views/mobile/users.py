@@ -1,29 +1,32 @@
+import copy
 import json
 import csv
 import io
 import uuid
+from couchdbkit import ResourceNotFound
+from django.contrib.auth.forms import SetPasswordForm
 from django.utils.safestring import mark_safe
 
 from openpyxl.shared.exc import InvalidFileException
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse,\
-    HttpResponseForbidden, HttpResponseBadRequest
+    HttpResponseForbidden, HttpResponseBadRequest, Http404
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.views.generic.base import TemplateView
 from django.shortcuts import render
 
 from couchexport.models import Format
-from corehq.apps.users.forms import CommCareAccountForm
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.forms import CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm
+from corehq.apps.users.models import CommCareUser, UserRole, CouchUser
 from corehq.apps.groups.models import Group
 from corehq.apps.users.bulkupload import create_or_update_users_and_groups,\
     check_headers, dump_users_and_groups, GroupNameError, UserUploadError
 from corehq.apps.users.tasks import bulk_upload_async
-from corehq.apps.users.views import (_users_context, require_can_edit_web_users,
-    require_can_edit_commcare_users, account as users_account)
+from corehq.apps.users.views import (_users_context, require_can_edit_commcare_users, BaseFullEditUserView)
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReaderError
@@ -31,8 +34,156 @@ from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReader
 
 DEFAULT_USER_LIST_LIMIT = 10
 
-def account(*args, **kwargs):
-    return users_account(*args, **kwargs)
+
+class EditCommCareUserView(BaseFullEditUserView):
+    template_name = "users/edit_commcare_user.html"
+    name = "edit_commcare_user"
+    user_update_form_class = UpdateCommCareUserInfoForm
+    page_name = ugettext_noop("Edit Mobile Worker")
+
+    @method_decorator(require_can_edit_commcare_users)
+    def dispatch(self, request, *args, **kwargs):
+        return super(EditCommCareUserView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def editable_user(self):
+        try:
+            user = CommCareUser.get_by_user_id(self.editable_user_id, self.domain)
+            if user.is_deleted():
+                self.template_name = "users/deleted_account.html"
+            return user
+        except (ResourceNotFound, CouchUser.AccountTypeError):
+            raise Http404
+
+    @property
+    def edit_user_form_title(self):
+        return _("Information for %s") % self.editable_user.human_friendly_name
+
+    @property
+    def is_currently_logged_in_user(self):
+        return self.editable_user_id == self.couch_user._id
+
+    @property
+    @memoized
+    def reset_password_form(self):
+        return SetPasswordForm(user="")
+
+    @property
+    def commtrack_user_roles(self):
+        # Copied this over from the original view. mwhite, is this the best place for this?
+        data_roles = dict((u['slug'], u) for u in [
+            {
+                'slug': 'commtrack_requester',
+                'name': _("CommTrack Requester"),
+                'description': _("Responsible for creating requisitions."),
+            },
+            {
+                'slug': 'commtrack_approver',
+                'name': _("CommTrack Approver"),
+                'description': _(
+                    "Responsible for approving requisitions, including "
+                    "updating or modifying quantities as needed. Will receive "
+                    "a notification when new requisitions are created."),
+            },
+            {
+                'slug': 'commtrack_supplier',
+                'name': _("CommTrack Supplier"),
+                'description': _(
+                    "Responsible for packing orders.  Will receive a "
+                    "notification when the approver indicates that "
+                    "requisitions are approved, so that he or she can start "
+                    "packing it."),
+            },
+            {
+                'slug': 'commtrack_receiver',
+                'name': _("CommTrack Receiver"),
+                'description': _(
+                    "Responsible for receiving orders.  Will receive a "
+                    "notification when the supplier indicates that requisitions "
+                    "are packed and are ready for pickup, so that he or she can "
+                    "come pick it up or better anticipate the delivery."),
+            }
+        ])
+
+        for k, v in self.custom_user_data.items():
+            if k in data_roles:
+                data_roles[k]['selected'] = (self.custom_user_data[k] == 'true')
+                del self.custom_user_data[k]
+        return data_roles
+
+    @property
+    @memoized
+    def custom_user_data(self):
+        return copy.copy(dict(self.editable_user.user_data))
+
+    @property
+    @memoized
+    def update_commtrack_form(self):
+        if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
+            return CommtrackUserForm(self.request.POST, domain=self.domain)
+        linked_loc = self.editable_user.dynamic_properties().get('commtrack_location') # FIXME update user model appropriately
+        return CommtrackUserForm(domain=self.domain, initial={'supply_point': linked_loc})
+
+    @property
+    def page_context(self):
+        context = super(EditCommCareUserView, self).page_context
+        context.update({
+            'custom_user_data': self.custom_user_data,
+            'reset_password_form': self.reset_password_form,
+            'is_currently_logged_in_user': self.is_currently_logged_in_user
+        })
+        if self.request.project.commtrack_enabled:
+            context.update({
+                'commtrack': {
+                    'roles': self.commtrack_user_roles,
+                    'update_form': self.update_commtrack_form,
+                },
+            })
+        return context
+
+    @property
+    def user_role_choices(self):
+        return UserRole.commcareuser_role_choices(self.domain)
+
+    @property
+    def can_change_user_roles(self):
+        return ((self.request.user.is_superuser or self.request.couch_user.can_edit_web_users(domain=self.domain))
+                and self.request.couch_user.user_id != self.editable_user_id)
+
+    @property
+    def existing_role(self):
+        role = self.editable_user.get_role(self.domain)
+        if role is None:
+            role = "none"
+        else:
+            role = role.get_qualified_id()
+        return role
+
+    @property
+    @memoized
+    def form_user_update(self):
+        form = super(EditCommCareUserView, self).form_user_update
+        if self.can_change_user_roles:
+            form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
+        else:
+            del form.fields['role']
+        return form
+
+    @property
+    def parent_pages(self):
+        return [{
+            'name': _("Mobile Workers"),
+            'url': '#,'
+        }]
+
+    def post(self, request, *args, **kwargs):
+        if request.POST['form_type'] == "commtrack":
+            if self.update_commtrack_form.is_valid():
+                self.update_commtrack_form.save(self.editable_user)
+                messages.success(request, _("CommTrack information updated!"))
+        return super(EditCommCareUserView, self).post(request, *args, **kwargs)
+
 
 @require_can_edit_commcare_users
 def base_view(request, domain, template="users/mobile/users_list.html"):
@@ -85,7 +236,7 @@ def user_list(request, domain):
         user_data = dict(
             user_id=user.user_id,
             status="" if user.is_active else "Archived",
-            edit_url=reverse('commcare_user_account', args=[domain, user.user_id]),
+            edit_url=reverse(EditCommCareUserView.name, args=[domain, user.user_id]),
             username=user.raw_username,
             full_name=user.full_name,
             joined_on=user.date_joined.strftime("%d %b %Y"),
@@ -167,7 +318,7 @@ def restore_commcare_user(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
     user.unretire()
     messages.success(request, "User %s and all their submissions have been restored" % user.username)
-    return HttpResponseRedirect(reverse('user_account', args=[domain, user_id]))
+    return HttpResponseRedirect(reverse(EditCommCareUserView.name, args=[domain, user_id]))
 
 @require_can_edit_commcare_users
 @require_POST
@@ -179,9 +330,9 @@ def update_user_data(request, domain, couch_user_id):
     user.user_data = updated_data
     user.save()
     messages.success(request, "User data updated!")
-    return HttpResponseRedirect(reverse('user_account', args=[domain, couch_user_id]))
+    return HttpResponseRedirect(reverse(EditCommCareUserView.name, args=[domain, couch_user_id]))
 
-@require_can_edit_web_users
+@require_can_edit_commcare_users
 def add_commcare_account(request, domain, template="users/add_commcare_account.html"):
     """
     Create a new commcare account
@@ -196,7 +347,7 @@ def add_commcare_account(request, domain, template="users/add_commcare_account.h
 
             couch_user = CommCareUser.create(domain, username, password, device_id='Generated from HQ')
 
-            return HttpResponseRedirect(reverse("user_account", args=[domain, couch_user.userID]))
+            return HttpResponseRedirect(reverse(EditCommCareUserView.name, args=[domain, couch_user.userID]))
     else:
         form = CommCareAccountForm()
     context.update(form=form)

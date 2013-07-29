@@ -4,6 +4,8 @@ import copy
 import json
 import re
 import urllib
+from django.utils.decorators import method_decorator
+from django.utils.safestring import mark_safe
 from corehq.apps.settings.views import BaseSettingsView
 from dimagi.utils.decorators.memoized import memoized
 import langcodes
@@ -28,9 +30,9 @@ from corehq.apps.prescriptions.models import Prescription
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.forms import WebUserForm, UserForm, ProjectSettingsForm, CommtrackUserForm
+from corehq.apps.users.forms import (UpdateUserRoleForm, BaseUserInfoForm, UpdateMyAccountInfoForm)
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser, \
-    DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser
+    DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser, DomainMembershipError
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required
 from corehq.apps.orgs.models import Team
 from corehq.apps.reports.util import get_possible_reports
@@ -151,6 +153,194 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
         if not self.redirect:
             raise Http404
         return HttpResponseRedirect(self.redirect)
+
+
+class BaseEditUserView(BaseUserSettingsView):
+    user_update_form_class = None
+
+    @property
+    @memoized
+    def page_url(self):
+        if self.name:
+            return reverse(self.name, args=[self.domain, self.editable_user_id])
+
+    @property
+    def parent_pages(self):
+        return [{
+            'name': _("Web Users & Roles"),
+            'url': '#,'
+        }]
+
+    @property
+    def editable_user_id(self):
+        return self.kwargs.get('couch_user_id')
+
+    @property
+    @memoized
+    def editable_user(self):
+        try:
+            return WebUser.get(self.editable_user_id)
+        except (ResourceNotFound, CouchUser.AccountTypeError):
+            raise Http404
+
+    @property
+    def existing_role(self):
+        try:
+            return (self.editable_user.get_role(self.domain,
+                                                include_teams=False).get_qualified_id() or '')
+        except DomainMembershipError:
+            raise Http404
+
+    @property
+    @memoized
+    def form_user_update(self):
+        if self.user_update_form_class is None:
+            raise NotImplementedError("You must specify a form to update the user!")
+
+        if self.request.method == "POST" and self.request.POST['form_type'] == "update-user":
+            return self.user_update_form_class(data=self.request.POST)
+
+        form = self.user_update_form_class()
+        form.initialize_form(existing_user=self.editable_user)
+        return form
+
+    @property
+    def page_context(self):
+        return {
+            'couch_user': self.editable_user,
+            'form_user_update': self.form_user_update,
+            'phonenumbers': self.editable_user.phone_numbers_extended(self.request.couch_user),
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.request.POST['form_type'] == "update-user":
+            if self.form_user_update.is_valid():
+                if self.form_user_update.update_user(existing_user=self.editable_user, domain=self.domain):
+                    messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.username)
+        return super(BaseEditUserView, self).get(request, *args, **kwargs)
+
+
+class EditWebUserView(BaseEditUserView):
+    template_name = "users/edit_web_user.html"
+    name = "user_account"
+    page_name = ugettext_noop("Edit User Role")
+    user_update_form_class = UpdateUserRoleForm
+
+    @property
+    def user_role_choices(self):
+        return UserRole.role_choices(self.domain)
+
+    @property
+    @memoized
+    def form_user_update(self):
+        form = super(EditWebUserView, self).form_user_update
+        form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
+        return form
+
+    @property
+    def page_context(self):
+        context = super(EditWebUserView, self).page_context
+        context.update({
+            'form_uneditable': BaseUserInfoForm(),
+        })
+        return context
+
+    @method_decorator(require_can_edit_web_users)
+    def dispatch(self, request, *args, **kwargs):
+        return super(EditWebUserView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        if self.editable_user_id == self.couch_user._id:
+            return HttpResponseRedirect(reverse(EditMyAccountView.name, args=[self.domain]))
+        return super(EditWebUserView, self).get(request, *args, **kwargs)
+
+
+class BaseFullEditUserView(BaseEditUserView):
+    edit_user_form_title = ""
+
+    @property
+    def page_context(self):
+        context = super(BaseFullEditUserView, self).page_context
+        context.update({
+            'edit_user_form_title': self.edit_user_form_title,
+        })
+        return context
+
+    @property
+    @memoized
+    def language_choices(self):
+        language_choices = []
+        results = get_db().view('languages/list', startkey=[self.domain], endkey=[self.domain, {}], group='true').all()
+        if results:
+            for result in results:
+                lang_code = result['key'][1]
+                label = result['key'][1]
+                long_form = langcodes.get_name(lang_code)
+                if long_form:
+                    label += " (" + langcodes.get_name(lang_code) + ")"
+                language_choices.append((lang_code, label))
+        else:
+            language_choices = langcodes.get_all_langs_for_select()
+        return language_choices
+
+    @property
+    @memoized
+    def form_user_update(self):
+        form = super(BaseFullEditUserView, self).form_user_update
+        form.load_language(language_choices=self.language_choices)
+        return form
+
+    def post(self, request, *args, **kwargs):
+        if self.request.POST['form_type'] == "add-phonenumber":
+            phone_number = self.request.POST['phone_number']
+            phone_number = re.sub('\s', '', phone_number)
+            if re.match(r'\d+$', phone_number):
+                self.editable_user.add_phone_number(phone_number)
+                self.editable_user.save()
+                messages.success(request, _("Phone number added!"))
+            else:
+                messages.error(request, _("Please enter digits only."))
+        return super(BaseFullEditUserView, self).post(request, *args, **kwargs)
+
+
+class EditMyAccountView(BaseFullEditUserView):
+    # todo handle "My Settings for this Project"
+    # todo handle "My Projects"
+    template_name = "users/edit_full_user.html"
+    name = "my_account"
+    page_name = ugettext_noop("Edit My Information")
+    edit_user_form_title = ugettext_noop("My Information")
+    user_update_form_class = UpdateMyAccountInfoForm
+
+    @property
+    def editable_user_id(self):
+        return self.couch_user._id
+
+    @property
+    def editable_user(self):
+        return self.couch_user
+
+    @property
+    @memoized
+    def page_url(self):
+        if self.name:
+            return reverse(self.name, args=[self.domain])
+
+    @property
+    def all_domains(self):
+        # todo hook this in properly in the overall my account view
+        all_domains = self.couch_user.get_domains()
+        admin_domains = []
+        for d in all_domains:
+            if self.couch_user.is_domain_admin(d):
+                admin_domains.append(d)
+        return all_domains
+
+    def get(self, request, *args, **kwargs):
+        if self.couch_user.is_commcare_user():
+            from corehq.apps.users.views.mobile import EditCommCareUserView
+            return HttpResponseRedirect(reverse(EditCommCareUserView.name, args=[self.domain, self.editable_user_id]))
+        return super(EditMyAccountView, self).get(request, *args, **kwargs)
 
 
 @require_can_edit_web_users
@@ -295,153 +485,6 @@ def invite_web_user(request, domain, template="users/invite_web_user.html"):
     return render(request, template, context)
 
 
-def my_account(request, domain, couch_user_id=None):
-    return account(request, domain, request.couch_user._id)
-
-
-@require_permission_to_edit_user
-def account(request, domain, couch_user_id, template="users/account.html"):
-    context = _users_context(request, domain)
-    try:
-        couch_user = CouchUser.get_by_user_id(couch_user_id, domain)
-    except ResourceNotFound:
-        raise Http404
-
-    if not couch_user:
-        raise Http404
-
-    editing_commcare_user = couch_user.is_commcare_user() and request.couch_user.can_edit_commcare_users
-    context.update({
-        'couch_user': couch_user,
-        'editing_commcare_user': editing_commcare_user,
-        'archive_url': reverse('commcare_users', args=[domain]),
-    })
-
-    if request.project.commtrack_enabled:
-        # https://confluence.dimagi.com/display/commtrack/CommTrack+Roles+and+Responsibilities
-        user_data_roles = dict((u['slug'], u) for u in [
-            {
-                'slug': 'commtrack_requester',
-                'name': _("CommTrack Requester"),
-                'description': _("Responsible for creating requisitions."),
-            },
-            {
-                'slug': 'commtrack_approver',
-                'name': _("CommTrack Approver"),
-                'description': _(
-                    "Responsible for approving requisitions, including "
-                    "updating or modifying quantities as needed. Will receive "
-                    "a notification when new requisitions are created."),
-            },
-            {
-                'slug': 'commtrack_supplier',
-                'name': _("CommTrack Supplier"),
-                'description': _(
-                    "Responsible for packing orders.  Will receive a "
-                    "notification when the approver indicates that "
-                    "requisitions are approved, so that he or she can start "
-                    "packing it."),
-            },
-            {
-                'slug': 'commtrack_receiver',
-                'name': _("CommTrack Receiver"),
-                'description': _(
-                    "Responsible for receiving orders.  Will receive a "
-                    "notification when the supplier indicates that requisitions "
-                    "are packed and are ready for pickup, so that he or she can "
-                    "come pick it up or better anticipate the delivery."),
-            }
-        ])
-    else:
-        user_data_roles = []
-
-    if couch_user.is_commcare_user():
-        user_data = copy.copy(dict(couch_user.user_data))
-
-        for k, v in user_data.items():
-            if k in user_data_roles:
-                user_data_roles[k]['selected'] = (user_data[k] == 'true')
-                del user_data[k]
-
-        context.update({
-            'reset_password_form': SetPasswordForm(user=""),
-            'only_numeric': (request.project.password_format() == 'n'),
-            'user_data_roles': user_data_roles,
-            'user_data': user_data,
-        })
-
-    if couch_user.is_deleted():
-        if couch_user.is_commcare_user():
-            return render(request, 'users/deleted_account.html', context)
-        else:
-            raise Http404
-
-    # phone-numbers tab
-    if request.method == "POST" and \
-       request.POST['form_type'] == "phone-numbers" and \
-       (couch_user.is_current_web_user(request) or couch_user.is_commcare_user()):
-        phone_number = request.POST['phone_number']
-        phone_number = re.sub('\s', '', phone_number)
-        if re.match(r'\d+$', phone_number):
-            couch_user.add_phone_number(phone_number)
-            couch_user.save()
-        else:
-            messages.error(request, "Please enter digits only")
-
-    # domain-accounts tab
-    if not couch_user.is_commcare_user():
-        all_domains = couch_user.get_domains()
-        admin_domains = []
-        for d in all_domains:
-            if couch_user.is_domain_admin(d):
-                admin_domains.append(d)
-        context.update({"user": request.user,
-                        "domains": admin_domains
-        })
-        # scheduled reports tab
-    context.update({
-        'phone_numbers_extended': couch_user.phone_numbers_extended(request.couch_user),
-    })
-
-    #project settings tab
-    if couch_user.user_id == request.couch_user.user_id:
-        dm = couch_user.get_domain_membership(domain)
-        if dm:
-            domain_obj = Domain.get_by_name(domain)
-            if request.method == "POST" and request.POST['form_type'] == "project-settings":
-                # deal with project settings data
-                project_settings_form = ProjectSettingsForm(request.POST)
-                if project_settings_form.is_valid():
-                    if project_settings_form.save(couch_user, domain):
-                        messages.success(request, "Your project settings were successfully saved!")
-                    else:
-                        messages.error(request, "There seems to have been an error saving your project settings. Please try again!")
-            else:
-                project_settings_form = ProjectSettingsForm(initial={'global_timezone': domain_obj.default_timezone,
-                                                                     'user_timezone': dm.timezone,
-                                                                     'override_global_tz': dm.override_global_tz})
-            context.update({
-                'proj_settings_form': project_settings_form,
-                'override_global_tz': dm.override_global_tz
-            })
-
-    # commtrack
-    if request.method == "POST" and request.POST['form_type'] == "commtrack":
-        commtrack_form = CommtrackUserForm(request.POST, domain=domain)
-        if commtrack_form.is_valid():
-            commtrack_form.save(couch_user)
-    else:
-        linked_loc = couch_user.dynamic_properties().get('commtrack_location') # FIXME update user model appropriately
-        commtrack_form = CommtrackUserForm(domain=domain, initial={'supply_point': linked_loc})
-    context.update({
-            'commtrack_enabled': Domain.get_by_name(domain).commtrack_enabled,
-            'commtrack_form': commtrack_form,
-    })
-
-    # for basic tab
-    context.update(_handle_user_form(request, domain, couch_user))
-    return render(request, template, context)
-
 @require_POST
 @require_permission_to_edit_user
 def make_phone_number_default(request, domain, couch_user_id):
@@ -454,7 +497,12 @@ def make_phone_number_default(request, domain, couch_user_id):
         return Http404('Must include phone number in request.')
 
     user.set_default_phone_number(phone_number)
-    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id)))
+    if user.is_commcare_user():
+        from corehq.apps.users.views.mobile import EditCommCareUserView
+        redirect = reverse(EditCommCareUserView.name, args=[domain, couch_user_id])
+    else:
+        redirect = reverse(EditMyAccountView.name, args=[domain])
+    return HttpResponseRedirect(redirect)
 
 @require_POST
 @require_permission_to_edit_user
@@ -468,7 +516,12 @@ def delete_phone_number(request, domain, couch_user_id):
         return Http404('Must include phone number in request.')
 
     user.delete_phone_number(phone_number)
-    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id)))
+    if user.is_commcare_user():
+        from corehq.apps.users.views.mobile import EditCommCareUserView
+        redirect = reverse(EditCommCareUserView.name, args=[domain, couch_user_id])
+    else:
+        redirect = reverse(EditMyAccountView.name, args=[domain])
+    return HttpResponseRedirect(redirect)
 
 @require_permission_to_edit_user
 def verify_phone_number(request, domain, couch_user_id):
@@ -487,7 +540,12 @@ def verify_phone_number(request, domain, couch_user_id):
     # create pending verified entry if doesn't exist already
     user.save_verified_number(domain, phone_number, False, None)
 
-    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
+    if user.is_commcare_user():
+        from corehq.apps.users.views.mobile import EditCommCareUserView
+        redirect = reverse(EditCommCareUserView.name, args=[domain, couch_user_id])
+    else:
+        redirect = reverse(EditMyAccountView.name, args=[domain])
+    return HttpResponseRedirect(redirect)
 
 
 #@require_POST
@@ -615,94 +673,6 @@ def change_my_password(request, domain, template="users/change_my_password.html"
         'form': form,
     })
     return render(request, template, context)
-
-
-def _handle_user_form(request, domain, couch_user=None):
-    context = {}
-    if couch_user:
-        create_user = False
-    else:
-        create_user = True
-    can_change_admin_status = ((request.user.is_superuser or request.couch_user.can_edit_web_users(domain=domain))
-        and request.couch_user.user_id != couch_user.user_id)
-
-    if couch_user.is_commcare_user():
-        role_choices = UserRole.commcareuser_role_choices(domain)
-    else:
-        role_choices = UserRole.role_choices(domain)
-
-    results = get_db().view('languages/list', startkey=[domain], endkey=[domain, {}], group='true').all()
-    language_choices = []
-
-    if results:
-        for result in results:
-            lang_code = result['key'][1]
-            label = result['key'][1]
-            long_form = langcodes.get_name(lang_code)
-            if long_form:
-                label += " (" + langcodes.get_name(lang_code) + ")"
-            language_choices.append((lang_code, label))
-    else:
-        language_choices = langcodes.get_all_langs_for_select()
-
-    if request.method == "POST" and request.POST['form_type'] == "basic-info":
-        if couch_user.is_commcare_user():
-            form = UserForm(request.POST, role_choices=role_choices, language_choices=language_choices)
-        else:
-            form = WebUserForm(request.POST, role_choices=role_choices, language_choices=language_choices)
-        if form.is_valid():
-            if create_user:
-                django_user = User()
-                django_user.username = form.cleaned_data['email']
-                django_user.save()
-                couch_user = CouchUser.from_django_user(django_user)
-            if couch_user.is_current_web_user(request) or couch_user.is_commcare_user():
-                couch_user.first_name = form.cleaned_data['first_name']
-                couch_user.last_name = form.cleaned_data['last_name']
-                couch_user.email = form.cleaned_data['email']
-                if not couch_user.is_commcare_user():
-                    couch_user.email_opt_in = form.cleaned_data['email_opt_in']
-                couch_user.language = form.cleaned_data['language']
-            if can_change_admin_status:
-                role = form.cleaned_data['role']
-                if role:
-                    couch_user.set_role(domain, role)
-            couch_user.save()
-            if request.couch_user.get_id == couch_user.get_id and couch_user.language:
-                # update local language in the session
-                request.session['django_language'] = couch_user.language
-
-            messages.success(request, 'Changes saved for user "%s"' % couch_user.username)
-    else:
-        form = UserForm(role_choices=role_choices, language_choices=language_choices)
-        if couch_user.is_commcare_user():
-            form = UserForm(role_choices=role_choices, language_choices=language_choices)
-        else:
-            form = WebUserForm(role_choices=role_choices, language_choices=language_choices)
-
-        if not create_user:
-            form.initial['first_name'] = couch_user.first_name
-            form.initial['last_name'] = couch_user.last_name
-            form.initial['email'] = couch_user.email
-            form.initial['email_opt_in'] = couch_user.email_opt_in
-            form.initial['language'] = couch_user.language
-            if can_change_admin_status:
-                if couch_user.is_commcare_user():
-                    role = couch_user.get_role(domain)
-                    if role is None:
-                        initial = "none"
-                    else:
-                        initial = role.get_qualified_id()
-                    form.initial['role'] = initial
-                else:
-                    form.initial['role'] = couch_user.get_role(domain, include_teams=False).get_qualified_id() or ''
-
-    if not can_change_admin_status:
-        del form.fields['role']
-
-    context.update({"form": form,
-                    "current_users_page": couch_user.is_current_web_user(request)})
-    return context
 
 @httpdigest
 @login_and_domain_required

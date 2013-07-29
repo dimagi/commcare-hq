@@ -7,7 +7,8 @@ from django.utils.translation import ugettext_noop
 from corehq.apps.domain.utils import get_adm_enabled_domains
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
-from corehq.apps.users.views import DefaultProjectUserSettingsView
+from corehq.apps.users.views import DefaultProjectUserSettingsView, EditWebUserView, EditMyAccountView
+from corehq.apps.users.views.mobile import EditCommCareUserView
 
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -481,7 +482,7 @@ class ProjectUsersTab(UITab):
                  'description': _("Create and manage users for CommCare and CloudCare."),
                  'children': [
                      {'title': commcare_username,
-                      'urlname': 'commcare_user_account'},
+                      'urlname': EditCommCareUserView.name},
                      {'title': _('New Mobile Worker'),
                       'urlname': 'add_commcare_account'},
                      {'title': _('Bulk Upload'),
@@ -515,7 +516,7 @@ class ProjectUsersTab(UITab):
             def web_username(request=None, couch_user=None, **context):
                 if (couch_user.user_id != request.couch_user.user_id and
                     not couch_user.is_commcare_user()):
-                    username = couch_user.html_username()
+                    username = couch_user.human_friendly_name
                     if couch_user.is_deleted():
                         username += " (%s)" % _("Deleted")
                     return mark_safe(username)
@@ -527,10 +528,18 @@ class ProjectUsersTab(UITab):
                  'url': reverse('web_users', args=[self.domain]),
                  'description': _("Grant other CommCare HQ users access to your project and manage user roles."),
                  'children': [
-                     {'title': _("Invite Web User"),
-                      'urlname': 'invite_web_user'},
-                     {'title': web_username,
-                      'urlname': 'user_account'}
+                     {
+                         'title': _("Invite Web User"),
+                         'urlname': 'invite_web_user'
+                     },
+                     {
+                         'title': web_username,
+                         'urlname': EditWebUserView.name
+                     },
+                     {
+                         'title': _('My Information'),
+                         'urlname': EditMyAccountView.name
+                     }
                  ]}
             ]))
 

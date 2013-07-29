@@ -4,6 +4,7 @@ from django.core.validators import EmailValidator, email_re
 from django.core.urlresolvers import reverse
 from django.forms.widgets import PasswordInput, HiddenInput
 from django.utils.encoding import smart_str
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 from django.template.loader import get_template
 from django.template import Template, Context
@@ -15,12 +16,14 @@ from corehq.apps.users.util import format_username
 from corehq.apps.app_manager.models import validate_lang
 import re
 
+
 def wrapped_language_validation(value):
     try:
         validate_lang(value)
     except ValueError:
         raise forms.ValidationError("%s is not a valid language code! Please "
                                     "enter a valid two or three digit code." % value)
+
 
 class LanguageField(forms.CharField):
     """
@@ -35,6 +38,7 @@ class LanguageField(forms.CharField):
         'invalid': _(u'Please enter a valid two or three digit language code.'),
     }
     default_validators = [wrapped_language_validation]
+
 
 class ProjectSettingsForm(forms.Form):
     """
@@ -73,6 +77,99 @@ class ProjectSettingsForm(forms.Form):
         except Exception:
             return False
 
+
+class BaseUpdateUserForm(forms.Form):
+
+    @property
+    def direct_properties(self):
+        return []
+
+    def update_user(self, existing_user=None, **kwargs):
+        is_update_successful = False
+        if not existing_user and 'email' in self.cleaned_data:
+            from django.contrib.auth.models import User
+            django_user = User()
+            django_user.username = self.cleaned_data['email']
+            django_user.save()
+            existing_user = CouchUser.from_django_user(django_user)
+            existing_user.save()
+            is_update_successful = True
+
+        for prop in self.direct_properties:
+            setattr(existing_user, prop, self.cleaned_data[prop])
+            is_update_successful = True
+
+        if is_update_successful:
+            existing_user.save()
+        return is_update_successful
+
+    def initialize_form(self, existing_user=None, **kwargs):
+        if existing_user is None:
+            return
+
+        for prop in self.direct_properties:
+            self.initial[prop] = getattr(existing_user, prop, "")
+
+
+class UpdateUserRoleForm(BaseUpdateUserForm):
+    role = forms.ChoiceField(choices=(), required=False)
+
+    def update_user(self, existing_user=None, domain=None, **kwargs):
+        is_update_successful = super(UpdateUserRoleForm, self).update_user(existing_user)
+
+        if domain and 'role' in self.cleaned_data:
+            role = self.cleaned_data['role']
+            try:
+                existing_user.set_role(domain, role)
+                existing_user.save()
+                is_update_successful = True
+            except KeyError:
+                pass
+
+        return is_update_successful
+
+    def load_roles(self, role_choices=None, current_role=None):
+        if role_choices is None:
+            role_choices = []
+        self.fields['role'].choices = role_choices
+
+        if current_role:
+            self.initial['role'] = current_role
+
+
+class BaseUserInfoForm(forms.Form):
+    first_name = forms.CharField(max_length=50, required=False)
+    last_name = forms.CharField(max_length=50, required=False)
+    email = forms.EmailField(label=_("E-mail"), max_length=75, required=False)
+    language = forms.ChoiceField(choices=(), initial=None, required=False, help_text=mark_safe(_(
+        "<i class=\"icon-info-sign\"></i> Becomes default language seen in CloudCare and reports (if applicable). "
+        "Supported languages for reports are en, fr (partial), and hin (partial)."
+    )))
+
+    def load_language(self, language_choices=None):
+        if language_choices is None:
+            language_choices = []
+        self.fields['language'].choices = [('', '')] + language_choices
+
+
+class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
+    email_opt_in = forms.BooleanField(required=False,
+                                      label="",
+                                      help_text=_("Join the mailing list to receive important announcements."))
+
+    @property
+    def direct_properties(self):
+        return self.fields.keys()
+
+
+class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
+
+    @property
+    def direct_properties(self):
+        indirect_props = ['role']
+        return [k for k in self.fields.keys() if k not in indirect_props]
+
+
 class RoleForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
@@ -83,34 +180,6 @@ class RoleForm(forms.Form):
         super(RoleForm, self).__init__(*args, **kwargs)
         self.fields['role'].choices = role_choices
 
-class UserForm(RoleForm):
-    """
-    Form for Users
-    """
-
-    #username = forms.CharField(max_length=15)
-    first_name = forms.CharField(max_length=50, required=False)
-    last_name = forms.CharField(max_length=50, required=False)
-    email = forms.EmailField(label=_("E-mail"), max_length=75, required=False)
-    language = forms.ChoiceField(choices=(), initial=None, required=False, help_text=_(
-        "Set the default language this user "
-        "sees in CloudCare applications and in reports (if applicable). "
-        "Current supported languages for reports are en, fr (partial), "
-        "and hin (partial)."))
-    role = forms.ChoiceField(choices=(), required=False)
-
-    def __init__(self, *args, **kwargs):
-        if kwargs.has_key('language_choices'):
-            language_choices = kwargs.pop('language_choices')
-        else:
-            language_choices = ()
-        super(UserForm, self).__init__(*args, **kwargs)
-        self.fields['language'].choices = [('', '')] + language_choices
-
-class WebUserForm(UserForm):
-    email_opt_in = forms.BooleanField(required=False,
-                                      label="",
-                                      help_text=_("Join the mailing list to receive important announcements."))
 
 class Meta:
         app_label = 'users'

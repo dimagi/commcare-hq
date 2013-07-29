@@ -1,13 +1,13 @@
 #from django.conf.urls.defaults import patterns, url
-from corehq.apps.users.views import DefaultProjectUserSettingsView
-from corehq.apps.users.views.mobile.users import UploadCommCareUsers
+from corehq.apps.users.views import DefaultProjectUserSettingsView, EditWebUserView, EditMyAccountView
+from corehq.apps.users.views.mobile.users import UploadCommCareUsers, EditCommCareUserView
 from django.conf.urls.defaults import *
 from corehq.apps.domain.utils import grandfathered_domain_re
 
 urlpatterns = patterns('corehq.apps.users.views',
     url(r'^$', DefaultProjectUserSettingsView.as_view(), name=DefaultProjectUserSettingsView.name),
     #url(r'my_domains/$', 'my_domains', name='my_domains'),
-    url(r'^my_account/$', 'my_account', name='my_account'),
+    url(r'^my_account/$', EditMyAccountView.as_view(), name=EditMyAccountView.name),
     url(r'^change_my_password/$', 'change_my_password', name="change_my_password"),
     url(r'^change_password/(?P<login_id>[\w-]+)/$', 'change_password', name="change_password"),
     url(r'^domain_accounts/(?P<couch_user_id>[\w-]+)/$', 'domain_accounts', name='domain_accounts'),
@@ -26,7 +26,7 @@ urlpatterns = patterns('corehq.apps.users.views',
     url(r'^delete_domain_membership/(?P<couch_user_id>[\w-]+)/(?P<domain_name>%s)/$' % grandfathered_domain_re,
         'delete_domain_membership',
         name='delete_domain_membership'),
-    url(r'^web/account/(?P<couch_user_id>[\w-]+)/$', 'account', name='user_account'),
+    url(r'^web/account/(?P<couch_user_id>[\w-]+)/$', EditWebUserView.as_view(), name=EditWebUserView.name),
     url(r'^web/remove/(?P<couch_user_id>[\w-]+)/$', 'remove_web_user', name='remove_web_user'),
     url(r'^web/undo_remove/(?P<record_id>[\w-]+)/$', 'undo_remove_web_user', name='undo_remove_web_user'),
     url(r'^web/invite/$', 'invite_web_user', name='invite_web_user'),
@@ -42,7 +42,7 @@ urlpatterns = patterns('corehq.apps.users.views',
 ) + \
 patterns("corehq.apps.users.views.mobile.users",
     url(r'^commcare/$', 'base_view', name='commcare_users'),
-    url(r'^commcare/account/(?P<couch_user_id>[\w-]+)/$', 'account', name='commcare_user_account'),
+    url(r'^commcare/account/(?P<couch_user_id>[\w-]+)/$', EditCommCareUserView.as_view(), name=EditCommCareUserView.name),
     url(r'^commcare/account/(?P<couch_user_id>[\w-]+)/user_data/$', 'update_user_data', name='update_user_data'),
     url(r'^commcare/list/$', 'user_list', name='user_list'),
     url(r'^commcare/archive/(?P<user_id>[\w-]+)/$', 'archive_commcare_user', name='archive_commcare_user'),
