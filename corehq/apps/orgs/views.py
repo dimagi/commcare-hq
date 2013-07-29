@@ -299,6 +299,7 @@ class OrgInvitationView(InvitationView):
 
 @transaction.commit_on_success
 def accept_invitation(request, org, invitation_id):
+    # todo, why wasn't this a TemplateView?
     return OrgInvitationView()(request, invitation_id, organization=org)
 
 @org_admin_required
