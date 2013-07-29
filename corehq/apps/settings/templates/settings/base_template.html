@@ -1,9 +1,10 @@
-{% extends "hqwebapp/two_column.html" %}
+{% extends "hqwebapp/base_section.html" %}
 {% load hq_shared_tags %}
 
 {% block js %} {{ block.super }}
     <script type="text/javascript" src="{% static 'hqwebapp/js-custom/hq.legacy.js' %}"></script>
 {% endblock %}
+
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
         $(function () {
@@ -39,26 +40,4 @@
             });
         });
     </script>
-{% endblock %}
-
-{% block title %}{{ section.name }}{% if settingspage.name %}: {{ settingspage.name }}{% endif %}{% endblock %}
-
-{% block page-title %}
-    <ul class="breadcrumb">
-        <li>
-            <a href="{{ section.url }}"><strong>{{ section.name }}</strong></a> <span class="divider">&gt;</span>
-        </li>
-        {% block subsection-title %}
-            {% if settingspage.parents %}
-                {% for parent in settingspage.parents %}
-                    <li><a href="{{ parent.url }}">{{ parent.name }}</a> <span class="divider">&gt;</span></li>
-                {% endfor %}
-            {% endif %}
-            {% if settingspage.name %}
-            <li class="active">
-                <a href="{{ settingspage.url }}">{{ settingspage.name }}</a>
-            </li>
-            {% endif %}
-        {% endblock %}
-    </ul>
 {% endblock %}

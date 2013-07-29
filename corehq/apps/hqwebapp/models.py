@@ -524,7 +524,7 @@ class ProjectUsersTab(UITab):
                     return None
 
             items.append((_('Project Users'), [
-                {'title': ListWebUsersView.page_name,
+                {'title': ListWebUsersView.page_title,
                  'url': reverse(ListWebUsersView.name, args=[self.domain]),
                  'description': _("Grant other CommCare HQ users access to your project and manage user roles."),
                  'children': [

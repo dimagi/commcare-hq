@@ -224,7 +224,7 @@ class BaseEditUserView(BaseUserSettingsView):
 class EditWebUserView(BaseEditUserView):
     template_name = "users/edit_web_user.html"
     name = "user_account"
-    page_name = ugettext_noop("Edit User Role")
+    page_title = ugettext_noop("Edit User Role")
     user_update_form_class = UpdateUserRoleForm
 
     @property
@@ -309,7 +309,7 @@ class EditMyAccountView(BaseFullEditUserView):
     # todo handle "My Projects"
     template_name = "users/edit_full_user.html"
     name = "my_account"
-    page_name = ugettext_noop("Edit My Information")
+    page_title = ugettext_noop("Edit My Information")
     edit_user_form_title = ugettext_noop("My Information")
     user_update_form_class = UpdateMyAccountInfoForm
 
@@ -346,7 +346,7 @@ class EditMyAccountView(BaseFullEditUserView):
 
 class ListWebUsersView(BaseUserSettingsView):
     template_name = 'users/web_users.html'
-    page_name = ugettext_noop("Web Users & Roles")
+    page_title = ugettext_noop("Web Users & Roles")
     name = 'web_users'
 
     @method_decorator(require_can_edit_web_users)

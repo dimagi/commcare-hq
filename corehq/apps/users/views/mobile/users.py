@@ -39,7 +39,7 @@ class EditCommCareUserView(BaseFullEditUserView):
     template_name = "users/edit_commcare_user.html"
     name = "edit_commcare_user"
     user_update_form_class = UpdateCommCareUserInfoForm
-    page_name = ugettext_noop("Edit Mobile Worker")
+    page_title = ugettext_noop("Edit Mobile Worker")
 
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, request, *args, **kwargs):
