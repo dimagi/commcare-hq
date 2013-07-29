@@ -63,12 +63,31 @@ def get_project_snapshot(git_dir, submodules=False, log_count=1, submodule_count
         root_info['submodules'] = list(sub_git_submodules(git_dir, log_count=submodule_count))
     return root_info
 
+
 def sub_git_info(git_dir, log_count=1):
+    """
+    Given a git dir and log count, get in json all the logs for the given repo.
+    """
+
     info_dict = {}
 
+    #this is a hand crafted json log to makes a log fit into json...with some gotchas.
+    #the json log format needs to be one line json so when multiple logs are printed out, it's trivial to make an array for json parsing
+    #Note on hacky hacks:
+    #Git log doesn't care about string escapes, namely tab and quotes, since it assumes you will just print this out to the console
+    #hacky way to address this (see below)
+    #has us snip out the subject and message formats and escape them and snip them back in.
+    #a righter way to do this would be to format the log to be key, value pairs in null delimited "lines" that we reconstitute to the right
+    #json dict after all the output is parsed and escaped
+    #...should time permit.
+
+    #for more info see: http://stackoverflow.com/questions/9301673/can-i-escape-chars-in-git-log-output
+
+    #log format vars from git log --help
+    hack_log_json_format = """--pretty=format:{ "sha": "%H",  "author": "%an <%ae>", "date": "%ai", "subject": "##hackescape1##%s##hackescape2##", "message": "##hackescape3##%b##hackescape4##"}"""
     args = ['log',
             '-%s' % log_count,
-            """--pretty=format:{ \"sha\": \"%H\",  \"author\": \"%an <%ae>\", \"date\": \"%ai\", \"subject\": \"##hackescape1##%s##hackescape2##\", \"message\": \"##hackescape3##%b##hackescape4##\"}"""
+            hack_log_json_format,
         ]
     p = sub_git_cmd(git_dir, args)
     gitout = p.stdout.read().strip()
@@ -83,7 +102,7 @@ def sub_git_info(git_dir, log_count=1):
     message_raw = revsstring[revsstring.index(message_hacks[0]) + len(subject_hacks[0]): revsstring.index(message_hacks[1])]
 
     def escape_git(raw_string):
-        replaces = {'\t': '\u0009'} #, '"': '\\"'}
+        replaces = {'\t': '\u0009', '"': '\\"'}
         for k, v in replaces.items():
             raw_string = raw_string.replace(k, v)
         return raw_string
@@ -91,17 +110,20 @@ def sub_git_info(git_dir, log_count=1):
     subject_escaped = escape_git(subject_raw)
     message_escaped = escape_git(message_raw)
 
+
     fixed_revsstring = revsstring[:revsstring.index(subject_hacks[0])] + \
                        subject_escaped + \
                        revsstring[revsstring.index(subject_hacks[1]) +len(subject_hacks[1]):revsstring.index(message_hacks[0])] + \
                        message_escaped + \
                        revsstring[revsstring.index(message_hacks[1]) + len(message_hacks[1]):]
+
+
     try:
         commit_list = simplejson.loads(fixed_revsstring)
     except Exception, ex:
         commit_list = [
             {
-            "subject": "Error parsing revision string, likely some unescaped character in the git log: %s",
+            "subject": "Error parsing revision string, likely some unescaped character in the git log",
             "message": fixed_revsstring,
             "sha": "",
             "author": "this error brought to you by: %s" % ex
