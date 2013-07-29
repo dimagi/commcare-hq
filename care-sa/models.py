@@ -176,10 +176,9 @@ class CareSAFluff(fluff.IndicatorDocument):
     )
 
     #1m
-    couple_tests = xcalculators.FilteredFormPropertyCalculator(
+    couple_tests = xcalculators.SumPropertyCalculator(
         xmlns=HCT_XMLNS,
-        property_path='form/couple_number',
-        operator=xcalculators.ANY,
+        indicator_calculator=xcalculators.IntegerPropertyReference('form/couple_number'),
     )
 
     #2a
