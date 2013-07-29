@@ -825,8 +825,13 @@ var DetailScreenConfig = (function () {
         };
         DetailScreenConfig.init = function ($home, spec) {
             var ds = new DetailScreenConfig($home, spec);
-            ko.applyBindings(ds.sortRows, $('#detail-screen-sort').get(0));
-            ko.applyBindings(ds.parentSelect, $('#detail-screen-parent').get(0));
+            var $sortRowsHome = $('#detail-screen-sort');
+            var $parentSelectHome = $('#detail-screen-parent');
+            ko.applyBindings(ds.sortRows, $sortRowsHome.get(0));
+            ko.applyBindings(ds.parentSelect, $parentSelectHome.get(0));
+            $parentSelectHome.on('change', '*', function () {
+                ds.screens[0].fire('change');
+            });
             return ds;
         };
         return DetailScreenConfig;
