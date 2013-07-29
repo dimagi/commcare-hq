@@ -59,6 +59,17 @@
                 if (value !== valueNoSpaces) {
                     $(this).val(valueNoSpaces);
                 }
+                if ($('#case_type').is(':invalid')) {
+                    $('#case_type_error').css('display', 'inline');
+                } else {
+                    $('#case_type_error').css('display', 'none');
+                }
+            });
+        });
+        $(function () {
+            $('.save-button-holder').click(function () {
+                console.log("save button clicked");
+                $('#case_type_error').css('display', 'none');
             });
         });
         $(function () {
@@ -151,7 +162,10 @@
                     </label>
                     <div class="controls">
                         {% if edit %}
-                            <input class="code" type="text" id="case_type" name="case_type" value="{{ module.case_type }}"/>
+                            <input class="code" type="text" id="case_type" name="case_type" value="{{ module.case_type }}" pattern="^[\w-]+$"/>
+                            <span class="text-error" id="case_type_error" style="display: none;">
+                                {% trans "Case types can only include the characters a-z, 0-9, and _" %}
+                            </span>
                         {% else %}
                             <code>{{ module.case_type }}</code>
                         {% endif %}
