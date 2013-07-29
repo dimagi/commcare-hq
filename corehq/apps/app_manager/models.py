@@ -775,6 +775,7 @@ class Detail(IndexedSchema):
         xpath = ' and '.join(filters)
         return partial_escape(xpath)
 
+
 class CaseList(IndexedSchema):
     label = DictProperty()
     show = BooleanProperty(default=False)
@@ -1494,7 +1495,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     show_user_registration = BooleanProperty(default=False, required=True)
     modules = SchemaListProperty(Module)
     name = StringProperty()
-    profile = DictProperty() #SchemaProperty(Profile)
+    profile = DictProperty()  # SchemaProperty(Profile)
     use_custom_suite = BooleanProperty(default=False)
     force_http = BooleanProperty(default=False)
     cloudcare_enabled = BooleanProperty(default=False)
