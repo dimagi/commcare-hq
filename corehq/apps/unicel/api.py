@@ -52,22 +52,31 @@ DATE_FORMAT = "%m/%d/%y %I:%M:%S %p"
 DATE_FORMAT2 = "%Y-%m-%d %H:%M:%S"
 DATE_FORMAT3 = "%Y-%m-%d%%20%H:%M:%S"
 
-def convert_timestamp(timestamp):
-    actual_timestamp = None
-    try:
-        actual_timestamp = datetime.strptime(timestamp, DATE_FORMAT)
-    except ValueError:
-        try:
-            actual_timestamp = datetime.strptime(timestamp, DATE_FORMAT2)
-        except ValueError:
-            try:
-                actual_timestamp = datetime.strptime(timestamp, DATE_FORMAT3)
-            except ValueError, e:
-                logging.warning('could not parse unicel inbound timestamp [%s]' % timestamp)
-    if actual_timestamp:
-        actual_timestamp = pytz.timezone('Asia/Kolkata').localize(actual_timestamp).astimezone(pytz.utc)
-    return actual_timestamp
+# def convert_timestamp(timestamp):
+#     actual_timestamp = None
+#     for format in [DATE_FORMAT, DATE_FORMAT2, DATE_FORMAT3]:
+#         try:
+#             actual_timestamp = datetime.strptime(timestamp, format)
+#         except ValueError:
+#             pass
+#         else:
+#             break
+#     if actual_timestamp:
+#         actual_timestamp = pytz.timezone('Asia/Kolkata').localize(actual_timestamp).astimezone(pytz.utc)
+#     else:
+#         logging.warning('could not parse unicel inbound timestamp [%s]' % timestamp)
+#     return actual_timestamp
 
+
+def convert_timestamp(timestamp):
+    for format in [DATE_FORMAT, DATE_FORMAT2, DATE_FORMAT3]:
+        try:
+            actual_timestamp = datetime.strptime(timestamp, format)
+        except ValueError:
+            pass
+        else:
+            return pytz.timezone('Asia/Kolkata').localize(actual_timestamp).astimezone(pytz.utc)
+    raise ValueError('could not parse unicel inbound timestamp [%s]' % timestamp)
 
 def create_from_request(request, delay=True):
     """
@@ -84,7 +93,11 @@ def create_from_request(request, delay=True):
 
     # parse date or default to current utc time
     if timestamp:
-        actual_timestamp = convert_timestamp(timestamp)
+        try:
+            actual_timestamp = convert_timestamp(timestamp)
+        except ValueError:
+            logging.warning('could not parse unicel inbound timestamp [%s]' % timestamp)
+            actual_timestamp = None
 
     # not sure yet if this check is valid
     is_unicode = request.REQUEST.get(InboundParams.UDHI, "") == "1"

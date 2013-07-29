@@ -35,6 +35,9 @@ class IncomingPostTest(TestCase):
         for date_format in ["2013-07-16 08:29:01", "2013-07-03%2015:34:21"]:
             actual_timestamp = convert_timestamp(date_format)
             self.assertIsNotNone(actual_timestamp)
+        # assure that bad format still gets logged
+        with self.assertRaises(ValueError):
+            convert_timestamp("This string isn't formatted properly")
 
 
     def testPostToIncomingAscii(self):
