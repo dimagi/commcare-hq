@@ -694,10 +694,6 @@ class GenericTabularReport(GenericReportView):
     # the report context
     extra_context_providers = []
 
-#    @property
-#    def searchable(self):
-#        return not self.ajax_pagination
-
     @property
     def headers(self):
         """

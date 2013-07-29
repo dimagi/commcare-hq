@@ -52,22 +52,6 @@ DATE_FORMAT = "%m/%d/%y %I:%M:%S %p"
 DATE_FORMAT2 = "%Y-%m-%d %H:%M:%S"
 DATE_FORMAT3 = "%Y-%m-%d%%20%H:%M:%S"
 
-# def convert_timestamp(timestamp):
-#     actual_timestamp = None
-#     for format in [DATE_FORMAT, DATE_FORMAT2, DATE_FORMAT3]:
-#         try:
-#             actual_timestamp = datetime.strptime(timestamp, format)
-#         except ValueError:
-#             pass
-#         else:
-#             break
-#     if actual_timestamp:
-#         actual_timestamp = pytz.timezone('Asia/Kolkata').localize(actual_timestamp).astimezone(pytz.utc)
-#     else:
-#         logging.warning('could not parse unicel inbound timestamp [%s]' % timestamp)
-#     return actual_timestamp
-
-
 def convert_timestamp(timestamp):
     for format in [DATE_FORMAT, DATE_FORMAT2, DATE_FORMAT3]:
         try:
