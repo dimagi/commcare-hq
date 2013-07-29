@@ -84,7 +84,7 @@ def sub_git_info(git_dir, log_count=1):
     #for more info see: http://stackoverflow.com/questions/9301673/can-i-escape-chars-in-git-log-output
 
     #log format vars from git log --help
-    hack_log_json_format = """--pretty=format:{ \"sha\": \"%H\",  \"author\": \"%an <%ae>\", \"date\": \"%ai\", \"subject\": \"##hackescape1##%s##hackescape2##\", \"message\": \"##hackescape3##%b##hackescape4##\"}"""
+    hack_log_json_format = """--pretty=format:{ "sha": "%H",  "author": "%an <%ae>", "date": "%ai", "subject": "##hackescape1##%s##hackescape2##", "message": "##hackescape3##%b##hackescape4##"}"""
     args = ['log',
             '-%s' % log_count,
             hack_log_json_format,
