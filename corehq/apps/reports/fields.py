@@ -707,8 +707,7 @@ class CombinedSelectUsersField(ReportField):
                 self.show_group_field and (ctxt["sgf"]["select"]["selected"] or all_groups)))
 
         if self.show_group_field:
-            ctxt["sgf"]["checked"] = all_groups or (not ctxt["sgf"]["select"]["selected"] and not (
-                self.show_mobile_worker_field and (ctxt["smwf"]["select"]["selected"] or all_mws)))
+            ctxt["sgf"]["checked"] = all_groups
 
         self.context.update(ctxt)
 
