@@ -350,11 +350,12 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
 
         except XFormError as e:
             form_errors.append("Error in form: %s" % e)
-        # any other kind of error should fail hard, but for now there are too many for that to be practical
+        # any other kind of error should fail hard,
+        # but for now there are too many for that to be practical
         except Exception as e:
             if settings.DEBUG:
                 raise
-            logging.exception(e)
+            notify_exception(request, 'Unexpected Build Error')
             form_errors.append("Unexpected System Error: %s" % e)
 
         try:
