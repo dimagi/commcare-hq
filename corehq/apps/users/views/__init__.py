@@ -117,6 +117,7 @@ class BaseUserSettingsView(BaseSettingsView):
         context = super(BaseUserSettingsView, self).main_context
         context.update({
             'web_users': self.web_users,
+            'couch_user': self.couch_user,
         })
         return context
 
@@ -146,7 +147,7 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
                 if user.has_permission(self.domain, 'edit_commcare_users'):
                     redirect = reverse("commcare_users", args=[self.domain])
                 elif user.has_permission(self.domain, 'edit_web_users'):
-                    redirect = reverse("web_users", args=[self.domain])
+                    redirect = reverse(ListWebUsersView.name, args=[self.domain])
         return redirect
 
     def get(self, request, *args, **kwargs):
@@ -167,7 +168,7 @@ class BaseEditUserView(BaseUserSettingsView):
     @property
     def parent_pages(self):
         return [{
-            'name': _("Web Users & Roles"),
+            'name': ListWebUsersView.name,
             'url': '#,'
         }]
 
@@ -343,28 +344,49 @@ class EditMyAccountView(BaseFullEditUserView):
         return super(EditMyAccountView, self).get(request, *args, **kwargs)
 
 
-@require_can_edit_web_users
-def web_users(request, domain, template="users/web_users.html"):
-    context = _users_context(request, domain)
-    user_roles = [AdminUserRole(domain=domain)]
-    user_roles.extend(sorted(UserRole.by_domain(domain), key=lambda role: role.name if role.name else u'\uFFFF'))
+class ListWebUsersView(BaseUserSettingsView):
+    template_name = 'users/web_users.html'
+    page_name = ugettext_noop("Web Users & Roles")
+    name = 'web_users'
 
-    role_labels = {}
-    for r in user_roles:
-        key = 'user-role:%s' % r.get_id if r.get_id else r.get_qualified_id()
-        role_labels[key] = r.name
+    @method_decorator(require_can_edit_web_users)
+    def dispatch(self, request, *args, **kwargs):
+        return super(ListWebUsersView, self).dispatch(request, *args, **kwargs)
 
-    invitations = DomainInvitation.by_domain(domain)
-    for invitation in invitations:
-        invitation.role_label = role_labels.get(invitation.role, "")
+    @property
+    @memoized
+    def user_roles(self):
+        user_roles = [AdminUserRole(domain=self.domain)]
+        user_roles.extend(sorted(UserRole.by_domain(self.domain),
+                                 key=lambda role: role.name if role.name else u'\uFFFF'))
+        return user_roles
 
-    context.update({
-        'user_roles': user_roles,
-        'default_role': UserRole.get_default(),
-        'report_list': get_possible_reports(domain),
-        'invitations': invitations
-    })
-    return render(request, template, context)
+    @property
+    @memoized
+    def role_labels(self):
+        role_labels = {}
+        for r in self.user_roles:
+            key = 'user-role:%s' % r.get_id if r.get_id else r.get_qualified_id()
+            role_labels[key] = r.name
+        return role_labels
+
+    @property
+    @memoized
+    def invitations(self):
+        invitations = DomainInvitation.by_domain(self.domain)
+        for invitation in invitations:
+            invitation.role_label = self.role_labels.get(invitation.role, "")
+        return invitations
+
+    @property
+    def page_context(self):
+        return {
+            'user_roles': self.user_roles,
+            'default_role': UserRole.get_default(),
+            'report_list': get_possible_reports(self.domain),
+            'invitations': self.invitations
+        }
+
 
 @require_can_edit_web_users
 @require_POST
@@ -379,7 +401,7 @@ def remove_web_user(request, domain, couch_user_id):
             username=user.username,
             url=reverse('undo_remove_web_user', args=[domain, record.get_id])
         ), extra_tags="html")
-    return HttpResponseRedirect(reverse('web_users', args=[domain]))
+    return HttpResponseRedirect(reverse(ListWebUsersView.name, args=[domain]))
 
 @require_can_edit_web_users
 def undo_remove_web_user(request, domain, record_id):
@@ -388,7 +410,7 @@ def undo_remove_web_user(request, domain, record_id):
     messages.success(request, 'You have successfully restored {username}.'.format(
         username=WebUser.get_by_user_id(record.user_id).username
     ))
-    return HttpResponseRedirect(reverse('web_users', args=[domain]))
+    return HttpResponseRedirect(reverse(ListWebUsersView.name, args=[domain]))
 
 # If any permission less than domain admin were allowed here, having that permission would give you the permission
 # to change the permissions of your own role such that you could do anything, and would thus be equivalent to having
@@ -475,7 +497,7 @@ def invite_web_user(request, domain, template="users/invite_web_user.html"):
             invite.save()
             invite.send_activation_email()
             messages.success(request, "Invitation sent to %s" % invite.email)
-            return HttpResponseRedirect(reverse("web_users", args=[domain]))
+            return HttpResponseRedirect(reverse(ListWebUsersView.name, args=[domain]))
     else:
         form = AdminInvitesUserForm(role_choices=role_choices)
     context = _users_context(request, domain)

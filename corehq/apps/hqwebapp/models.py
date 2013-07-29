@@ -7,7 +7,7 @@ from django.utils.translation import ugettext_noop
 from corehq.apps.domain.utils import get_adm_enabled_domains
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
-from corehq.apps.users.views import DefaultProjectUserSettingsView, EditWebUserView, EditMyAccountView
+from corehq.apps.users.views import DefaultProjectUserSettingsView, EditWebUserView, EditMyAccountView, ListWebUsersView
 from corehq.apps.users.views.mobile import EditCommCareUserView
 
 from dimagi.utils.couch.database import get_db
@@ -524,8 +524,8 @@ class ProjectUsersTab(UITab):
                     return None
 
             items.append((_('Project Users'), [
-                {'title': _('Web Users & Roles'),
-                 'url': reverse('web_users', args=[self.domain]),
+                {'title': ListWebUsersView.page_name,
+                 'url': reverse(ListWebUsersView.name, args=[self.domain]),
                  'description': _("Grant other CommCare HQ users access to your project and manage user roles."),
                  'children': [
                      {

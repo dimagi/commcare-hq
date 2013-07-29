@@ -1,5 +1,5 @@
 #from django.conf.urls.defaults import patterns, url
-from corehq.apps.users.views import DefaultProjectUserSettingsView, EditWebUserView, EditMyAccountView
+from corehq.apps.users.views import DefaultProjectUserSettingsView, EditWebUserView, EditMyAccountView, ListWebUsersView
 from corehq.apps.users.views.mobile.users import UploadCommCareUsers, EditCommCareUserView
 from django.conf.urls.defaults import *
 from corehq.apps.domain.utils import grandfathered_domain_re
@@ -31,7 +31,7 @@ urlpatterns = patterns('corehq.apps.users.views',
     url(r'^web/undo_remove/(?P<record_id>[\w-]+)/$', 'undo_remove_web_user', name='undo_remove_web_user'),
     url(r'^web/invite/$', 'invite_web_user', name='invite_web_user'),
     url(r'^web/reinvite/$', 'reinvite_web_user', name='reinvite_web_user'),
-    url(r'^web/$', 'web_users', name='web_users'),
+    url(r'^web/$', ListWebUsersView.as_view(), name=ListWebUsersView.name),
     url(r'^join/(?P<invitation_id>[\w-]+)/$', 'accept_invitation', name='domain_accept_invitation'),
     url(r'^web/role/$', 'post_user_role', name='post_user_role'),
 
