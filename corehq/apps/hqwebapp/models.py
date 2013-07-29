@@ -738,14 +738,6 @@ class OrgSettingsTab(OrgTab):
     view = "corehq.apps.orgs.views.orgs_landing"
 
     @property
-    def is_active(self):
-        # HACK. We need a more overarching way to avoid doing things this way -- copied this strat from above usage...
-        if self.org and 'o/%s/reports' % self.org.name in self._request.get_full_path():
-            return False
-
-        return super(OrgSettingsTab, self).is_active
-
-    @property
     def dropdown_items(self):
         return [
             format_submenu_context(_("Projects"), url=reverse("orgs_landing", args=(self.org.name,))),
