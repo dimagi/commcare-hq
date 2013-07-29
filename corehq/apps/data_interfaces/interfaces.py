@@ -13,7 +13,7 @@ from django.utils.translation import ugettext as _
 
 class DataInterface(GenericReportView):
     # overriding properties from GenericReportView
-    section_name = ugettext_noop('Manage Data')
+    section_name = ugettext_noop('Users')
     base_template = "reports/standard/base_template.html"
     asynchronous = True
     dispatcher = DataInterfaceDispatcher
