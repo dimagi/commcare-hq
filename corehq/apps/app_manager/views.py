@@ -345,6 +345,7 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         except AppError as e:
             form_errors.append("Error in application: %s" % e)
         except XFormValidationError:
+            # showing these messages is handled by validate_form_for_build ajax
             pass
         except XFormError as e:
             form_errors.append("Error in form: %s" % e)
