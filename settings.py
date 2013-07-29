@@ -215,6 +215,7 @@ HQ_APPS = (
     'corehq.apps.api',
     'corehq.apps.indicators',
     'corehq.couchapps',
+    'custom.apps.wisepill',
     'fluff',
     'fluff.fluff_filter',
     'sofabed.forms',
@@ -618,6 +619,7 @@ COUCHDB_APPS = [
     'hutch',
     'hqbilling',
     'couchlog',
+    'wisepill',
 
     # custom reports
     'benin',
