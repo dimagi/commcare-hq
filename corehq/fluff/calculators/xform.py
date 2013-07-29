@@ -73,6 +73,21 @@ class FilteredFormPropertyCalculator(fluff.Calculator):
             )
         )
 
+
+class SumPropertyCalculator(FilteredFormPropertyCalculator):
+    """
+    Overrides the standard property calculator to sum the contents of the
+    indicator rather than count.
+
+    Normally the total value would only have the value 1 to mark that it
+    passed the filter so to use this an indicator_calculator needs to be
+    specified.
+    """
+    @fluff.custom_date_emitter(reduce_type="sum")
+    def total(self, form):
+        yield [default_date(form), self.indicator_calculator(form)]
+
+
 # meh this is a little redundant but convenient
 class FormANDCalculator(ANDCalculator):
     window = timedelta(days=1)
