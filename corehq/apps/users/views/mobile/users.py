@@ -367,8 +367,8 @@ def archive_commcare_user(request, domain, user_id, is_active=False):
     user.save()
     return HttpResponse(json.dumps(dict(
         success=True,
-        message="User '%s' has successfully been %s." %
-                (user.raw_username, "Un-Archived" if user.is_active else "Archived")
+        message=_("User '%s' has successfully been %s.") %
+                (user.raw_username, _("Un-Archived") if user.is_active else _("Archived"))
     )))
 
 @require_can_edit_commcare_users
