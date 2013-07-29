@@ -86,7 +86,8 @@ def format_env(current_env):
         'project',
         'es_endpoint',
         'jython_home',
-        'virtualenv_root'
+        'virtualenv_root',
+        'django_port'
     ]
 
     for prop in important_props:
@@ -563,12 +564,14 @@ def clear_services_dir():
     and delete them matching the prefix of the current server environment
     """
     services_dir = posixpath.join(env.services, u'supervisor')
-    sudo('%(virtualenv_root)s/bin/python manage.py clear_supervisor_confs --conf_location "%(conf_location)s"' %
-        {
-            'virtualenv_root': env.virtualenv_root,
-            'conf_location': services_dir,
-        }, user=env.sudo_user
-    )
+    with cd(env.code_root):
+        sudo(
+            '%(virtualenv_root)s/bin/python manage.py clear_supervisor_confs --conf_location "%(conf_location)s"' %
+            {
+                'virtualenv_root': env.virtualenv_root,
+                'conf_location': services_dir,
+            }, user=env.sudo_user
+        )
 
 
 @roles('lb')
