@@ -80,12 +80,13 @@ def sub_git_info(git_dir, log_count=1):
     KV_DELIMITER = ':~@#$~:'
     LINE_DELIMITER = '@#\n#@'
 
-    #construct an output of git log that is essentially a:
+    # construct an output of git log that is essentially a:
     # key=value
     # key=value, etc
-    # but a sing a custom Key=Value delimiter, and a custom Line delimiter
+    # but a sing a custom Key=Value delimiter, and a custom Line delimiter since
+    # there might be newlines in messages and subjects
     # the git log -z format delimits the entire log by null, but we need separation of each property
-    #
+
     line_by_line_format = LINE_DELIMITER.join(['%s%s%s' % (k, KV_DELIMITER, v) for k, v in kv_line_format.items()])
 
     args = ['log',
