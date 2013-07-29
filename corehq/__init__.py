@@ -5,6 +5,8 @@ import phonelog.reports as phonelog
 from corehq.apps.reports.commtrack import psi_prototype
 from corehq.apps.reports.commtrack import standard as commtrack_reports
 from corehq.apps.reports.commtrack import maps as commtrack_maps
+import hashlib
+from dimagi.utils.modules import to_function
 
 from django.utils.translation import ugettext_noop as _
 
@@ -61,8 +63,51 @@ def REPORTS(project):
         reports.insert(0, messaging)
     else:
         reports.append(messaging)
+
+    reports.extend(dynamic_reports(project))
+
     return reports
     
+def dynamic_reports(project):
+    config = get_dynamic_report_config(project.name) or []
+    for section, reports in config:
+        yield (section, [make_dynamic_report(report, section) for report in reports])
+
+def make_dynamic_report(report_config, section):
+    report_key = '%s:%s:%s' % (report_config['report'], section, report_config['name'])
+    slug = hashlib.sha1(report_key).hexdigest()[:12]
+    metaclass = to_function(report_config['report'])
+    kwargs = report_config['kwargs']
+    kwargs.update({
+            'name': report_config['name'],
+            'slug': slug,
+        })
+    return type('DynamicReport%s' % slug, (metaclass,), kwargs)
+
+def get_dynamic_report_config(domain):
+    if domain == 'commtrack-public-demo':
+        return [('Dynamic', [
+                    {
+                        'report': 'corehq.apps.reports.standard.inspect.GenericPieChartReportTemplate',
+                        'name': 'Pie Chart - Case Property: Product',
+                        'kwargs': {
+                            'mode': 'case',
+                            'submission_type': 'supply-point-product',
+                            'field': 'product',
+                        },
+                    },
+                    {
+                        'report': 'corehq.apps.reports.standard.inspect.GenericPieChartReportTemplate',
+                        'name': 'Pie Chart - Form Field: Location',
+                        'kwargs': {
+                            'mode': 'form',
+                            'submission_type': 'http://openrosa.org/commtrack/stock_report',
+                            'field': 'location',
+                        },
+                    },
+                ])]
+
+
 
 from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface
 from corehq.apps.importer.base import ImportCases
