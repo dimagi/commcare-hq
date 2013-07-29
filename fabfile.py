@@ -443,8 +443,7 @@ def clone_repo():
 @roles('pg', 'django_monolith')
 def preindex_views():
     if not env.should_migrate:
-        print 'Skipping preindex_views for "%s" because should_migrate = False' % env.environment
-        return
+        utils.abort('Skipping preindex_views for "%s" because should_migrate = False' % env.environment)
         
     with cd(env.code_root_preindex):
         #update the codebase of the preindex dir...
