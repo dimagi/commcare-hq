@@ -1993,7 +1993,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     )
                 )
 
-
         for form in self.get_forms():
             errors.extend(form.validate_for_build())
 
