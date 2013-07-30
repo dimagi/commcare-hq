@@ -13,11 +13,15 @@ IN_MULTISELECT = lambda expected, value: value in (expected or '').split(' ')
 ANY = lambda expected, reference: bool(expected)
 
 class IntegerPropertyReference(object):
-    def __init__(self, property_path):
+    def __init__(self, property_path, block=None):
         self.property_path = property_path
+        self.block = block
 
     def __call__(self, form):
-        return int(form.xpath(self.property_path) or 0)
+        value = int(form.xpath(self.property_path) or 0)
+        if value and self.block:
+            value = self.block(value)
+        return value
 
 class FilteredFormPropertyCalculator(fluff.Calculator):
     """
