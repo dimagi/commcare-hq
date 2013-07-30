@@ -150,8 +150,8 @@ var DetailScreenConfig = (function () {
         }
         return orig;
     }
-
-    var field_val_re = /^[a-zA-Z][\w_-]*(\/[a-zA-Z][\w_-]*)*$/;
+    var word = '[a-zA-Z][\\w_-]*';
+    var field_val_re = RegExp('^('+word+':)?'+word+'(\\/'+word+')*$');
     var field_format_warning = $('<span/>').addClass('help-inline')
         .text("Must begin with a letter and contain only letters, numbers, '-', and '_'");
 
