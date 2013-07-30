@@ -39,7 +39,7 @@ class FilteredFormPropertyCalculator(fluff.Calculator):
     indicator_calculator = None
     window = timedelta(days=1)
 
-    @fluff.custom_date_emitter(reduce_type="sum")
+    @fluff.date_emitter
     def total(self, form):
         if self.indicator_calculator:
             yield default_date(form)
@@ -93,7 +93,7 @@ class FormORCalculator(ORCalculator):
 class FormSUMCalculator(ORCalculator):
     window = timedelta(days=1)
 
-    @fluff.custom_date_emitter(reduce_type='sum')
+    @fluff.date_emitter
     def total(self, form):
         for calc in self.calculators:
             if calc.passes_filter(form):
