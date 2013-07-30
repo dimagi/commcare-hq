@@ -13,14 +13,23 @@ IN_MULTISELECT = lambda expected, value: value in (expected or '').split(' ')
 ANY = lambda expected, reference: bool(expected)
 
 class IntegerPropertyReference(object):
-    def __init__(self, property_path, block=None):
+    """
+    Returns the integer value of the property_path passed in.
+
+    By default FilteredFormPropertyCalculator would use 1 for all results
+    but this will let you return the actual number to be summed.
+
+    Accepts an optional transform lambda/method that would modify the
+    resulting integer before returning it.
+    """
+    def __init__(self, property_path, transform=None):
         self.property_path = property_path
-        self.block = block
+        self.transform = transform
 
     def __call__(self, form):
         value = int(form.xpath(self.property_path) or 0)
-        if value and self.block:
-            value = self.block(value)
+        if value and self.transform:
+            value = self.transform(value)
         return value
 
 class FilteredFormPropertyCalculator(fluff.Calculator):
