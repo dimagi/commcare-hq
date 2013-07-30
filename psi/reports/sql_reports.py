@@ -43,14 +43,14 @@ class PSISQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin):
 
     @property
     def initial_columns(self):
-        initial_cols = dict(state_name=DatabaseColumn("State", 'state', column_type=SimpleColumn),
-                            district_name=DatabaseColumn("District", 'district', column_type=SimpleColumn),
-                            block_name=DatabaseColumn("Block", 'block', column_type=SimpleColumn),
-                            village_name=DatabaseColumn("Village", 'village_id', format_fn=self.get_village_name,
-                                                        column_type=SimpleColumn),
-                            village_code=DatabaseColumn("Village Code", 'village_code', column_type=SimpleColumn),
-                            village_class=DatabaseColumn("Village Class", 'village_class',
-                                                         format_fn=self.get_village_class, column_type=SimpleColumn))
+        initial_cols = dict(state_name=DatabaseColumn("State", SimpleColumn('state')),
+                            district_name=DatabaseColumn("District", SimpleColumn('district')),
+                            block_name=DatabaseColumn("Block", SimpleColumn('block')),
+                            village_name=DatabaseColumn("Village", SimpleColumn('village_id'),
+                                                        format_fn=self.get_village_name),
+                            village_code=DatabaseColumn("Village Code", SimpleColumn('village_code')),
+                            village_class=DatabaseColumn("Village Class", SimpleColumn('village_class'),
+                                                         format_fn=self.get_village_class))
         ret = tuple([col + '_name' for col in self.place_types[:3]])
         if len(self.place_types) > 3:
             ret += ('village_name', 'village_code', 'village_class')
@@ -83,10 +83,10 @@ class PSISQLEventsReport(PSISQLReport):
     @property
     def columns(self):
         return self.initial_columns + [
-            DatabaseColumn("Number of events", 'events'),
-            DatabaseColumn("Number of male attendees", 'males'),
-            DatabaseColumn("Number of female attendees", 'females'),
-            DatabaseColumn("Total number of attendees", 'attendees'),
-            DatabaseColumn("Total number of leaflets distributed", 'leaflets'),
-            DatabaseColumn("Total number of gifts distributed", 'gifts')
+            DatabaseColumn("Number of events", SumColumn('events')),
+            DatabaseColumn("Number of male attendees", SumColumn('males')),
+            DatabaseColumn("Number of female attendees", SumColumn('females')),
+            DatabaseColumn("Total number of attendees", SumColumn('attendees')),
+            DatabaseColumn("Total number of leaflets distributed", SumColumn('leaflets')),
+            DatabaseColumn("Total number of gifts distributed", SumColumn('gifts'))
         ]
