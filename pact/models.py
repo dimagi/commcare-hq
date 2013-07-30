@@ -60,31 +60,28 @@ class PactPatientCase(CommCareCase):
     class Meta:
         app_label='pact'
 
-    def __init__(self, *args, **kwargs):
-        super(PactPatientCase, self).__init__(*args, **kwargs)
-
-        self._set_display_methods()
-
     @memoized
     def get_user_map(self):
         domain_users = CommCareUser.by_domain(enums.PACT_DOMAIN)
         return dict((du.get_id, du.username_in_report) for du in domain_users)
 
-    def _set_display_methods(self):
-        properties =[
-                    ('race', enums.PACT_RACE_CHOICES_DICT),
-                     ('gender', enums.GENDER_CHOICES_DICT),
-                     ('preferred_language', enums.PACT_LANGUAGE_CHOICES_DICT),
-                     ('hp_status',enums.PACT_HP_CHOICES_DICT),
-                     ('dot_status', enums.PACT_DOT_CHOICES_DICT),
-                     ('artregimen',enums.PACT_REGIMEN_CHOICES_FLAT_DICT),
-                     ('nonartregimen',enums.PACT_REGIMEN_CHOICES_FLAT_DICT),
-                     ('hiv_care_clinic', enums.PACT_HIV_CLINIC_CHOICES_DICT),
-                     ('primary_hp', self.get_user_map),
-                     ]
-        for prop, source_dict in properties:
-            setattr(self, 'get_%s_display' % prop, partial(self._get_display_string, prop, source_dict))
+    @property
+    def gender_display(self):
+        return self._get_display_string('gender', enums.GENDER_CHOICES_DICT)
 
+    @property
+    def race_display(self):
+        return self._get_display_string('race', enums.PACT_RACE_CHOICES_DICT)
+
+    @property
+    def hp_status_display(self):
+        return self._get_display_string(
+            'hp_status', enums.PACT_HP_CHOICES_DICT)
+
+    @property
+    def dot_status_display(self):
+        return self._get_display_string(
+            'dot_status', enums.PACT_DOT_CHOICES_DICT)
 
     def update_providers(self, cc_user, provider_ids):
         from pact.api import submit_case_update_form
