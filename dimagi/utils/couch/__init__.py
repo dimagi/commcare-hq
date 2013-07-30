@@ -1,6 +1,5 @@
 from datetime import timedelta
 from django.core.cache import cache
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.delete import delete
 from dimagi.utils.couch.safe_index import safe_index
 from couchdbkit.ext.django.schema import DateTimeProperty, DocumentSchema
@@ -57,7 +56,7 @@ def get_cached_property(couch_cls, obj_id, prop_name, expiry=12*60*60):
     cache_str = "{0}:{1}:{2}".format(couch_cls.__name__, obj_id, prop_name)
     ret = cache.get(cache_str)
     if not ret:
-        data = get_db().get(obj_id)
+        data = couch_cls.get_db().get(obj_id)
         if data.get("doc_type") == couch_cls._doc_type:
             obj = couch_cls.wrap(data)
             ret = getattr(obj, prop_name)
