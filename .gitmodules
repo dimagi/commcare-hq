@@ -108,4 +108,4 @@
 	url = git://github.com/dimagi/care-benin-reports.git
 [submodule "submodules/unicef-cvsu-reports"]
 	path = submodules/unicef-cvsu-reports
-	url = git://github.com/dimagis/unicef-cvsu.git
+	url = git://github.com/dimagi/unicef-cvsu.git
