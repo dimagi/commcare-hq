@@ -233,7 +233,7 @@ HQ_APPS = (
     'a5288',
     'benin',
     'bihar',
-    'care-sa',
+    'care_sa',
     'dca',
     'hsph',
     'mvp',
@@ -644,8 +644,8 @@ COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label
 COUCHDB_DATABASES += [
     ('bihar', COUCH_DATABASE + '__fluff-bihar'),
     ('fluff', COUCH_DATABASE + '__fluff-bihar'),
-    ('care-sa', COUCH_DATABASE + '__fluff-care-sa'),
-    ('fluff', COUCH_DATABASE + '__fluff-care-sa'),
+    ('care_sa', COUCH_DATABASE + '__fluff-care_sa'),
+    ('fluff', COUCH_DATABASE + '__fluff-care_sa'),
 ]
 
 INSTALLED_APPS += LOCAL_APPS
@@ -734,7 +734,7 @@ PILLOWTOPS = [
 
     # fluff
     'bihar.models.CareBiharFluffPillow',
-    'care-sa.models.CareSAFluffPillow',
+    'care_sa.models.CareSAFluffPillow',
 ] + LOCAL_PILLOWTOPS
 
 #Custom workflow for indexing xform data beyond the standard properties
@@ -768,7 +768,7 @@ DOMAIN_MODULE_MAP = {
     'a5288-test': 'a5288',
     'a5288-study': 'a5288',
     'care-bihar': 'bihar',
-    'care-ihapc-live': 'care-sa',
+    'care-ihapc-live': 'care_sa',
     'dca-malawi': 'dca',
     'eagles-fahu': 'dca',
     'hsph-dev': 'hsph',
