@@ -69,43 +69,23 @@ def REPORTS(project):
     return reports
     
 def dynamic_reports(project):
-    config = get_dynamic_report_config(project.name) or []
-    for section, reports in config:
-        yield (section, [make_dynamic_report(report, section) for report in reports])
+    """include any reports that can be configured/customized with static parameters for this domain"""
+    for reportset in project.dynamic_reports:
+        yield (reportset.section_title, [make_dynamic_report(report, [reportset.section_title]) for report in reportset.reports])
 
-def make_dynamic_report(report_config, section):
-    report_key = '%s:%s:%s' % (report_config['report'], section, report_config['name'])
-    slug = hashlib.sha1(report_key).hexdigest()[:12]
-    metaclass = to_function(report_config['report'])
-    kwargs = report_config['kwargs']
+def make_dynamic_report(report_config, keyprefix):
+    """create a report class the descends from a generic report class but has specific parameters set"""
+    # a unique key to distinguish this particular configuration of the generic report
+    report_key = keyprefix + [report_config.report, report_config.name]
+    slug = hashlib.sha1(':'.join(report_key)).hexdigest()[:12]
+    kwargs = report_config.kwargs
     kwargs.update({
-            'name': report_config['name'],
+            'name': report_config.name,
             'slug': slug,
         })
+    metaclass = to_function(report_config.report)
+    # dynamically create a report class
     return type('DynamicReport%s' % slug, (metaclass,), kwargs)
-
-def get_dynamic_report_config(domain):
-    if domain == 'commtrack-public-demo':
-        return [('Dynamic', [
-                    {
-                        'report': 'corehq.apps.reports.standard.inspect.GenericPieChartReportTemplate',
-                        'name': 'Pie Chart - Case Property: Product',
-                        'kwargs': {
-                            'mode': 'case',
-                            'submission_type': 'supply-point-product',
-                            'field': 'product',
-                        },
-                    },
-                    {
-                        'report': 'corehq.apps.reports.standard.inspect.GenericPieChartReportTemplate',
-                        'name': 'Pie Chart - Form Field: Location',
-                        'kwargs': {
-                            'mode': 'form',
-                            'submission_type': 'http://openrosa.org/commtrack/stock_report',
-                            'field': 'location',
-                        },
-                    },
-                ])]
 
 
 
