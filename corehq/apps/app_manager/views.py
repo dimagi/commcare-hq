@@ -642,16 +642,19 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
                 """
                 parent_types = builder.get_parent_types(case_type)
-                parent_modules = [module for module in app.modules
-                                  if module.case_type in parent_types]
-                if any(not module.unique_id for module in parent_modules):
-                    for module in parent_modules:
+                modules = app.modules
+                # make sure all modules have unique ids
+                if any(not module.unique_id for module in modules):
+                    for module in modules:
                         module.get_or_create_unique_id()
                     app.save()
+                parent_module_ids = [module.unique_id for module in modules
+                                     if module.case_type in parent_types]
                 return [{
                     'unique_id': module.unique_id,
-                    'name': module.name
-                } for module in parent_modules]
+                    'name': module.name,
+                    'is_parent': module.unique_id in parent_module_ids,
+                } for module in app.modules if module.case_type != case_type]
             context.update({
                 'parent_modules': get_parent_modules_and_save(),
                 'case_properties': sorted(builder.get_properties(case_type)),
