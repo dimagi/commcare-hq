@@ -100,6 +100,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMix
         elif view_mode == 'careplan':
             ret.update({
                 'case_hierarchy_options': {
+                    "show_view_buttons": False,
                     "get_case_url": lambda case_id: reverse(
                         'case_details', args=[PACT_DOMAIN, case_id])
                 },
