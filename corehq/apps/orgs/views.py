@@ -9,14 +9,14 @@ from django.views.decorators.http import require_POST
 from django.shortcuts import render
 from django.contrib import messages
 from corehq.apps.announcements.models import Notification
-from corehq.apps.appstore.views import generate_sortables_from_facets, parse_args_for_es
+from corehq.apps.appstore.views import parse_args_for_es
 
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.orgs.decorators import org_admin_required, org_member_required
 from corehq.apps.registration.forms import DomainRegistrationForm
 from corehq.apps.orgs.forms import AddProjectForm, InviteMemberForm, AddTeamForm, UpdateOrgInfo
-from corehq.apps.reports.standard.domains import DomainStatsReport, OrgDomainStatsReport
+from corehq.apps.reports.standard.domains import OrgDomainStatsReport
 from corehq.apps.users.models import WebUser, UserRole, OrgRemovalRecord
 from corehq.elastic import get_es
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
@@ -161,7 +161,6 @@ def orgs_update_info(request, org):
     organization = request.organization
     form = UpdateOrgInfo(request.POST, request.FILES)
     if form.is_valid():
-        # logo = None
         if form.cleaned_data['org_title'] or organization.title:
             organization.title = form.cleaned_data['org_title']
         if form.cleaned_data['email'] or organization.email:
@@ -170,16 +169,8 @@ def orgs_update_info(request, org):
             organization.url = form.cleaned_data['url']
         if form.cleaned_data['location'] or organization.location:
             organization.location = form.cleaned_data['location']
-            #logo not working, need to look into this
-        # if form.cleaned_data['logo']:
-        #     logo = form.cleaned_data['logo']
-        #     if organization.logo_filename:
-        #         organization.delete_attachment(organization.logo_filename)
-        #     organization.logo_filename = logo.name
 
         organization.save()
-        # if logo:
-        #     organization.put_attachment(content=logo.read(), name=logo.name)
         return HttpResponseRedirect(request.META.get('HTTP_REFERER') or reverse('orgs_landing', args=[org]))
     else:
         return orgs_landing(request, org, update_form=form)
@@ -617,24 +608,6 @@ def stats_data(request, org):
             group=False
         ).one()
         return r['value'] if r else 0
-
-    def es_domain_query(params=None, facets=None, terms=None, domains=None, return_q_dict=False, start_at=None, size=None, sort=None):
-        from corehq.apps.appstore.views import es_query
-        if params is None:
-            params = {}
-        if terms is None:
-            terms = ['search']
-        if facets is None:
-            facets = []
-        q = {
-            "query": {"term": dom},
-            "filter": {
-                "and": [{"range": {"created_on": {"lt": startdate}}}]
-            }
-        }
-
-        return es_query(params, facets, terms, q, USER_INDEX + '/user/_search')["hits"]["total"]
-
 
     def _total_users_until_date(dom, date):
         from corehq.apps.appstore.views import es_query
