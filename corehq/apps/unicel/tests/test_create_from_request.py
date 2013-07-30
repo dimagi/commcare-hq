@@ -3,7 +3,7 @@ from django.test import TestCase
 from django.test.client import Client
 from corehq.apps.sms.models import SMSLog, INCOMING
 from corehq.apps.users.models import CouchUser, WebUser
-from corehq.apps.unicel.api import InboundParams, DATE_FORMAT
+from corehq.apps.unicel.api import InboundParams, DATE_FORMAT, convert_timestamp
 import json
 
 class IncomingPostTest(TestCase):
@@ -27,6 +27,18 @@ class IncomingPostTest(TestCase):
 
     def tearDown(self):
         self.couch_user.delete()
+
+    def testDateFormats(self):
+        """
+        add other date formats to this list to verify that they work
+        """
+        for date_format in ["2013-07-16 08:29:01", "2013-07-03%2015:34:21"]:
+            actual_timestamp = convert_timestamp(date_format)
+            self.assertIsNotNone(actual_timestamp)
+        # assure that bad format still gets logged
+        with self.assertRaises(ValueError):
+            convert_timestamp("This string isn't formatted properly")
+
 
     def testPostToIncomingAscii(self):
         fake_post = {InboundParams.SENDER: str(self.number),

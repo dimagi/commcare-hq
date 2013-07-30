@@ -344,17 +344,17 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
             form_errors.append("Syntax Error: %s" % e)
         except AppError as e:
             form_errors.append("Error in application: %s" % e)
-        except XFormValidationError as e:
-            message = unicode(e)
-            form_errors.append((html.escape(message).replace('\n', '<br/>'), {'extra_tags': 'html'}))
-
+        except XFormValidationError:
+            # showing these messages is handled by validate_form_for_build ajax
+            pass
         except XFormError as e:
             form_errors.append("Error in form: %s" % e)
-        # any other kind of error should fail hard, but for now there are too many for that to be practical
+        # any other kind of error should fail hard,
+        # but for now there are too many for that to be practical
         except Exception as e:
             if settings.DEBUG:
                 raise
-            logging.exception(e)
+            notify_exception(request, 'Unexpected Build Error')
             form_errors.append("Unexpected System Error: %s" % e)
 
         try:
@@ -942,7 +942,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
             # todo: something better than nothing when invalid
             module["case_type"] = case_type
         else:
-            resp['update'].update({'#case_type': module['case_type']})
+            return HttpResponseBadRequest("case type is improperly formatted")
     if should_edit("put_in_root"):
         module["put_in_root"] = json.loads(req.POST.get("put_in_root"))
     for attribute in ("name", "case_label", "referral_label"):
