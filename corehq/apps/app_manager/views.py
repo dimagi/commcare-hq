@@ -344,17 +344,17 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
             form_errors.append("Syntax Error: %s" % e)
         except AppError as e:
             form_errors.append("Error in application: %s" % e)
-        except XFormValidationError as e:
-            message = unicode(e)
-            form_errors.append((html.escape(message).replace('\n', '<br/>'), {'extra_tags': 'html'}))
-
+        except XFormValidationError:
+            # showing these messages is handled by validate_form_for_build ajax
+            pass
         except XFormError as e:
             form_errors.append("Error in form: %s" % e)
-        # any other kind of error should fail hard, but for now there are too many for that to be practical
+        # any other kind of error should fail hard,
+        # but for now there are too many for that to be practical
         except Exception as e:
             if settings.DEBUG:
                 raise
-            logging.exception(e)
+            notify_exception(request, 'Unexpected Build Error')
             form_errors.append("Unexpected System Error: %s" % e)
 
         try:
@@ -642,16 +642,19 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
                 """
                 parent_types = builder.get_parent_types(case_type)
-                parent_modules = [module for module in app.modules
-                                  if module.case_type in parent_types]
-                if any(not module.unique_id for module in parent_modules):
-                    for module in parent_modules:
+                modules = app.modules
+                # make sure all modules have unique ids
+                if any(not module.unique_id for module in modules):
+                    for module in modules:
                         module.get_or_create_unique_id()
                     app.save()
+                parent_module_ids = [module.unique_id for module in modules
+                                     if module.case_type in parent_types]
                 return [{
                     'unique_id': module.unique_id,
-                    'name': module.name
-                } for module in parent_modules]
+                    'name': module.name,
+                    'is_parent': module.unique_id in parent_module_ids,
+                } for module in app.modules if module.case_type != case_type]
             context.update({
                 'parent_modules': get_parent_modules_and_save(),
                 'case_properties': sorted(builder.get_properties(case_type)),
@@ -942,7 +945,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
             # todo: something better than nothing when invalid
             module["case_type"] = case_type
         else:
-            resp['update'].update({'#case_type': module['case_type']})
+            return HttpResponseBadRequest("case type is improperly formatted")
     if should_edit("put_in_root"):
         module["put_in_root"] = json.loads(req.POST.get("put_in_root"))
     for attribute in ("name", "case_label", "referral_label"):

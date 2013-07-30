@@ -47,7 +47,7 @@ if not hasattr(env, 'code_branch'):
 
 env.home = "/home/cchq"
 env.selenium_url = 'http://jenkins.dimagi.com/job/commcare-hq-post-deploy/buildWithParameters?token=%(token)s&TARGET=%(environment)s'
-
+env.should_migrate = False # Default to safety
 env.roledefs = {
         'django_celery': [],
         'django_app': [],
@@ -86,7 +86,8 @@ def format_env(current_env):
         'project',
         'es_endpoint',
         'jython_home',
-        'virtualenv_root'
+        'virtualenv_root',
+        'django_port'
     ]
 
     for prop in important_props:
@@ -143,6 +144,7 @@ def staging():
     _setup_path()
     env.user = prompt("Username: ", default='dimagivm')
     env.es_endpoint = 'localhost'
+    env.should_migrate = True
 
 @task
 def india():
@@ -153,6 +155,7 @@ def india():
     env.hosts = ['220.226.209.82']
     env.user = prompt("Username: ", default=env.user)
     env.django_port = '8001'
+    env.should_migrate = True
 
     _setup_path()
     env.virtualenv_root = posixpath.join(env.home, '.virtualenvs/commcarehq')
@@ -183,6 +186,7 @@ def production():
     env.environment = 'production'
     env.django_port = '9010'
     env.code_branch = 'master'
+    env.should_migrate = True
 
     #env.hosts = None
     env.roledefs = {
@@ -224,6 +228,7 @@ def realstaging():
     env.environment = 'staging'
     env.django_port = '9010'
 
+    env.should_migrate = True
 
     #env.hosts = None
     env.roledefs = {
@@ -259,6 +264,7 @@ def preview():
     env.environment = 'preview'
     env.django_port = '7999'
     #env.hosts = None
+    env.should_migrate = False
 
     env.roledefs = {
         'couch': [],
@@ -436,6 +442,9 @@ def clone_repo():
 @task
 @roles('pg', 'django_monolith')
 def preindex_views():
+    if not env.should_migrate:
+        utils.abort('Skipping preindex_views for "%s" because should_migrate = False' % env.environment)
+        
     with cd(env.code_root_preindex):
         #update the codebase of the preindex dir...
         update_code(preindex=True)
@@ -496,10 +505,12 @@ def deploy():
         execute(update_virtualenv)
         execute(clear_services_dir)
         set_supervisor_config()
-        execute(migrate)
+        if env.should_migrate:
+            execute(migrate)
         execute(_do_collectstatic)
         execute(version_static)
-        execute(flip_es_aliases)
+        if env.should_migrate:
+            execute(flip_es_aliases)
     except Exception:
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
         raise
@@ -563,12 +574,14 @@ def clear_services_dir():
     and delete them matching the prefix of the current server environment
     """
     services_dir = posixpath.join(env.services, u'supervisor')
-    sudo('%(virtualenv_root)s/bin/python manage.py clear_supervisor_confs --conf_location "%(conf_location)s"' %
-        {
-            'virtualenv_root': env.virtualenv_root,
-            'conf_location': services_dir,
-        }, user=env.sudo_user
-    )
+    with cd(env.code_root):
+        sudo(
+            '%(virtualenv_root)s/bin/python manage.py clear_supervisor_confs --conf_location "%(conf_location)s"' %
+            {
+                'virtualenv_root': env.virtualenv_root,
+                'conf_location': services_dir,
+            }, user=env.sudo_user
+        )
 
 
 @roles('lb')

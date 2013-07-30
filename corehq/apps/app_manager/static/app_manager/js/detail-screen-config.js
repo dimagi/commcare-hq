@@ -86,8 +86,9 @@ ko.bindingHandlers.sortableList = {
 
 function ParentSelect(init) {
     var self = this;
+    var defaultModule = _(init.parentModules).findWhere({is_parent: true});
+    self.moduleId = ko.observable(init.moduleId || defaultModule.unique_id);
     self.active = ko.observable(init.active);
-    self.moduleId = ko.observable(init.moduleId);
     self.parentModules = ko.observable(init.parentModules);
     self.lang = ko.observable(init.lang);
     self.langs = ko.observable(init.langs);
@@ -99,9 +100,11 @@ function ParentSelect(init) {
     }
     self.moduleOptions = ko.computed(function () {
         return _(self.parentModules()).map(function (module) {
+            var STAR = '\u2605', SPACE = '\u3000';
+            var marker = (module.is_parent ? STAR : SPACE);
             return {
                 value: module.unique_id,
-                label: getTranslation(module.name, [self.lang()].concat(self.langs()))
+                label: marker + ' ' + getTranslation(module.name, [self.lang()].concat(self.langs()))
             };
         });
     });
@@ -173,8 +176,8 @@ var DetailScreenConfig = (function () {
         }
         return orig;
     }
-
-    var field_val_re = /^[a-zA-Z][\w_-]*(\/[a-zA-Z][\w_-]*)*$/;
+    var word = '[a-zA-Z][\\w_-]*';
+    var field_val_re = RegExp('^('+word+':)?'+word+'(\\/'+word+')*$');
     var field_format_warning = $('<span/>').addClass('help-inline')
         .text("Must begin with a letter and contain only letters, numbers, '-', and '_'");
 
@@ -793,7 +796,7 @@ var DetailScreenConfig = (function () {
             this.langs = spec.langs || [];
             this.parentSelect = new ParentSelect({
                 active: spec.parentSelect.active,
-                moduleId: spec.parentSelect.moduleId,
+                moduleId: spec.parentSelect.module_id,
                 parentModules: spec.parentModules,
                 lang: this.lang,
                 langs: this.langs

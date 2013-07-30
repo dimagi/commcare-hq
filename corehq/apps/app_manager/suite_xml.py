@@ -499,9 +499,10 @@ class SuiteGenerator(object):
             filter_xpath=self.get_filter_xpath(module) if use_filter else '',
         )
 
-    def get_parent_filter(self, module):
-        return "[index/{relationship}=instance('commcaresession')/session/data/parent_id]".format(
-            relationship=module.parent_select.relationship
+    def get_parent_filter(self, module, parent_id):
+        return "[index/{relationship}=instance('commcaresession')/session/data/{parent_id}]".format(
+            relationship=module.parent_select.relationship,
+            parent_id=parent_id,
         )
 
     def get_module_by_id(self, module_id):
@@ -516,6 +517,16 @@ class SuiteGenerator(object):
             )
         else:
             return parent_module
+
+    def get_select_chain(self, module):
+        select_chain = [module]
+        current_module = module
+        while current_module.parent_select.active:
+            current_module = self.get_module_by_id(
+                current_module.parent_select.module_id
+            )
+            select_chain.append(current_module)
+        return select_chain
 
     @property
     def entries(self):
@@ -549,29 +560,21 @@ class SuiteGenerator(object):
                 )
                 return detail_id if detail_id in detail_ids else None
 
-            if not module.parent_select.active:
-                e.datum = SessionDatum(
-                    id='case_id',
-                    nodeset=self.get_nodeset_xpath(module, use_filter),
-                    value="./@case_id",
-                    detail_select=get_detail_id_safe(module, 'case_short'),
-                    detail_confirm=get_detail_id_safe(module, 'case_long'),
-                )
-            else:
-                parent_module = self.get_module_by_id(
-                    module.parent_select.module_id
-                )
+            select_chain = self.get_select_chain(module)
+            # generate names ['child_id', 'parent_id', 'parent_parent_id', ...]
+            datum_ids = [('parent_' * i or 'case_') + 'id'
+                         for i in range(len(select_chain))]
+            for i, module in reversed(list(enumerate(select_chain))):
+                try:
+                    parent_id = datum_ids[i + 1]
+                except IndexError:
+                    parent_filter = ''
+                else:
+                    parent_filter = self.get_parent_filter(module, parent_id)
                 e.datums.append(SessionDatum(
-                    id='parent_id',
-                    nodeset=self.get_nodeset_xpath(parent_module, use_filter),
-                    value="./@case_id",
-                    detail_select=get_detail_id_safe(parent_module, 'case_short'),
-                    detail_confirm=get_detail_id_safe(parent_module, 'case_long'),
-                ))
-                e.datums.append(SessionDatum(
-                    id='case_id',
+                    id=datum_ids[i],
                     nodeset=(self.get_nodeset_xpath(module, use_filter)
-                             + self.get_parent_filter(module)),
+                             + parent_filter),
                     value="./@case_id",
                     detail_select=get_detail_id_safe(module, 'case_short'),
                     detail_confirm=get_detail_id_safe(module, 'case_long'),
