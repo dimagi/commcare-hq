@@ -102,6 +102,14 @@ class ESView(View):
         es_results = es_base.get('_search', data=es_query)
 
         if 'error' in es_results:
+            # test stuff
+            query_string = es_query['query']['filtered']['query']['query_string']['query']
+            print "***query string is `%s`" % query_string
+            if query_string:
+                new_query = es_query
+                new_query['query']['filtered']['query']['query_string']['query'] = ""
+                return self.run_query(new_query, es_type)
+
             msg = "Error in elasticsearch query [%s]: %s\nquery: %s" % (self.index, es_results['error'], es_query)
             notify_exception(None, message=msg)
             return None
