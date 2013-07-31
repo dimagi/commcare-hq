@@ -35,6 +35,7 @@ class CaseAttachmentAPI(View):
             raise Http404
 
         attachment_key = kwargs.get('attachment_id', None)
+        attachment_src = kwargs.get('attachment_src', None)
 
         if img is not None:
             if size == "debug_all":
@@ -43,7 +44,7 @@ class CaseAttachmentAPI(View):
                 r.write('<html><body>')
                 r.write('<ul>')
                 for fsize in IMAGE_SIZE_ORDERING:
-                    meta, stream = CommCareCase.fetch_case_image(case_id, attachment_key, filesize_limit=max_filesize, width_limit=max_width, height_limit=max_height, fixed_size=fsize)
+                    meta, stream = CommCareCase.fetch_case_image(case_id, attachment_key, attachment_src, filesize_limit=max_filesize, width_limit=max_width, height_limit=max_height, fixed_size=fsize)
 
                     r.write('<li>')
                     r.write('Size: %s<br>' % fsize)
@@ -78,10 +79,10 @@ class CaseAttachmentAPI(View):
                 return r
             else:
                 #image workflow
-                attachment_meta, attachment_stream = CommCareCase.fetch_case_image(case_id, attachment_key, filesize_limit=max_filesize, width_limit=max_width, height_limit=max_height, fixed_size=size)
+                attachment_meta, attachment_stream = CommCareCase.fetch_case_image(case_id, attachment_key, attachment_src, filesize_limit=max_filesize, width_limit=max_width, height_limit=max_height, fixed_size=size)
         else:
             #default stream
-            attachment_meta, attachment_stream = CommCareCase.fetch_case_attachment(case_id, attachment_key)#, filesize_limit=max_size, width_limit=max_width, height_limit=max_height)
+            attachment_meta, attachment_stream = CommCareCase.fetch_case_attachment(case_id, attachment_key, attachment_src)#, filesize_limit=max_size, width_limit=max_width, height_limit=max_height)
 
         wrapper = FileWrapper(attachment_stream)
         if attachment_meta is not None:
