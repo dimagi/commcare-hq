@@ -670,6 +670,7 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff
 
     if histo_type == "forms":
         q["facets"]["histo"]["facet_filter"]["and"].append({"not": {"in": {"doc_type": ["xformduplicate", "xformdeleted"]}}})
+        q["facets"]["histo"]["facet_filter"]["and"].append({"not": {"missing": {"field": "xmlns"}}})
 
     if histo_type == "users":
         q["facets"]["histo"]["facet_filter"]["and"].append({"term": {"doc_type": "CommCareUser"}})
