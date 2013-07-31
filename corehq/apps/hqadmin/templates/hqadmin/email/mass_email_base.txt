@@ -1,0 +1,10 @@
+{{ email_body }}
+
+---
+
+You are receiving this email because you are a member of
+http://www.commcarehq.org/ and have not opted out of the mailing list.
+
+If you do not wish to receive any more emails like this, please log into your
+account on http://www.commcarehq.org/ and opt out of the mailing list from
+your account settings page.

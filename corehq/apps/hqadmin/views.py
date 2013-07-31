@@ -23,6 +23,7 @@ from django.core import cache
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.app_manager.util import get_settings_values
 from corehq.apps.hqadmin.models import HqDeploy
+from corehq.apps.hqadmin.forms import EmailForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index, check_xform_index
@@ -47,6 +48,8 @@ from django.utils import html
 from dimagi.utils.timezones import utils as tz_utils
 from django.utils.translation import ugettext as _
 from django.core import management
+from dimagi.utils.django.email import send_HTML_email
+from django.template.loader import render_to_string
 
 @require_superuser
 def default(request):
@@ -421,6 +424,37 @@ def mobile_user_reports(request):
     context["rows"] = rows
 
     return render(request, template, context)
+
+@require_superuser
+def mass_email(request):
+    if request.method == "POST":
+
+        form = EmailForm(request.POST)
+        if form.is_valid():
+            subject = form.cleaned_data['email_subject']
+            body = form.cleaned_data['email_body']
+
+            params = { 'email_body': body }
+            text_content = render_to_string("hqadmin/email/mass_email_base.txt", params)
+            html_content = render_to_string("hqadmin/email/mass_email_base.html", params)
+
+            recipients = WebUser.view(
+                'users/mailing_list_emails',
+                reduce=False,
+                include_docs=True,
+            ).all()
+
+            for recipient in recipients:
+                send_HTML_email(subject, recipient.email, html_content, text_content)
+
+    else:
+        form = EmailForm()
+
+    context = get_hqadmin_base_context(request)
+    context['hide_filters'] = True
+    context['form'] = form
+    return render(request, "hqadmin/mass_email.html", context)
+
 
 @require_superuser
 @get_file("file")
