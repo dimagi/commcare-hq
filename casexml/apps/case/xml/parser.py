@@ -2,6 +2,7 @@
 This isn't really a parser, but it's the code that generates case-like
 objects from things from xforms.
 """
+import os
 
 from casexml.apps.case import const
 from casexml.apps.case.xml import DEFAULT_VERSION, V1, V2, NS_REVERSE_LOOKUP_MAP
@@ -154,6 +155,9 @@ class CaseAttachmentAction(CaseActionBase):
             else:
                 attachment_from = data.get('@from', None)
                 attachment_src = data.get('@src', None)
+                if attachment_from == 'local':
+                    #if it's a local resource just get the last element - the filename
+                    attachment_src = os.path.split(attachment_src)[-1]
                 attachment_name = data.get('@name', None)
 
             if attachment_from == attachment_src == attachment_name == None:

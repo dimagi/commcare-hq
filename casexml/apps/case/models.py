@@ -21,7 +21,7 @@ from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml,\
     couchable_property, get_case_xform_ids
 from casexml.apps.case import const
 from dimagi.utils.modules import to_function
-from dimagi.utils import parsing
+from dimagi.utils import parsing, web
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.indicators import ComputedDocumentMixin
 from receiver.util import spoof_submission
@@ -457,18 +457,23 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
         A server specific URL for remote clients to access case attachment resources async.
         """
         if attachment_key in self.case_attachments:
-            return reverse("api_case_attachment", kwargs={
-                "domain": self.domain,
-                "case_id": self._id,
-                "attachment_id": attachment_key}
+            return "%s%s" % (web.get_url_base(),
+                             reverse("api_case_attachment", kwargs={
+                                 "domain": self.domain,
+                                 "case_id": self._id,
+                                 "attachment_id": attachment_key,
+                                 "attachment_src": self.case_attachments[attachment_key]['attachment_src']}
+                             )
             )
         else:
             return None
 
     @classmethod
-    def fetch_case_image(cls, case_id, attachment_key, filesize_limit=0, width_limit=0, height_limit=0, fixed_size=None):
+    def fetch_case_image(cls, case_id, attachment_key, attachment_filename, filesize_limit=0, width_limit=0, height_limit=0, fixed_size=None):
         """
         Return (metadata, stream) information of best matching image attachment.
+        attachment_key is the case property of the attachment
+        attachment filename is the filename of the original submission - full extension and all.
         """
         do_constrain = False
 
@@ -491,9 +496,10 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
             #do_constrain = False
 
         #if size key is None, then one of the limit criteria are set
-        attachment_cache_key = "%(case_id)s_%(attachment)s" % {
+        attachment_cache_key = "%(case_id)s_%(attachment)s_%(filename)s" % {
             "case_id": case_id,
-            "attachment": attachment_key
+            "attachment": attachment_key,
+            "filename": attachment_filename
         }
 
         cached_image = CachedImage(attachment_cache_key)

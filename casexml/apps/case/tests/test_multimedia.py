@@ -19,12 +19,12 @@ CREATE_XFORM_ID = "6RGAZTETE3Z2QC0PE2DKM88MO"
 media_path = os.path.join(os.path.dirname(__file__), "data", "attachments")
 
 MEDIA_FILES = {
-    "fruity": os.path.join(media_path, "fruity.jpg"), #first
+    "fruity_file": os.path.join(media_path, "fruity.jpg"), #first
 
-    "dimagi_logo": os.path.join(media_path, "dimagi_logo.jpg"),
-    "commcare_logo": os.path.join(media_path, "commcare-logo.png"),
-    "globe": os.path.join(media_path, "globe.pdf"),
-    "house": os.path.join(media_path, "house.jpg"),
+    "dimagi_logo_file": os.path.join(media_path, "dimagi_logo.jpg"),
+    "commcare_logo_file": os.path.join(media_path, "commcare-logo.png"),
+    "globe_file": os.path.join(media_path, "globe.pdf"),
+    "house_file": os.path.join(media_path, "house.jpg"),
 
 }
 
@@ -36,7 +36,6 @@ TEST_DOMAIN = "test-domain"
 
 class BaseCaseMultimediaTest(TestCase):
     def setUp(self):
-
         for item in CommCareCase.view("case/by_user", include_docs=True, reduce=False).all():
             item.delete()
         for item in XFormInstance.view("couchforms/by_xmlns", include_docs=True, reduce=False).all():
@@ -87,6 +86,7 @@ class BaseCaseMultimediaTest(TestCase):
         RequestFactory submitter - simulates direct submission to server directly (no need to call process case after fact)
         """
         form = post_xform_to_couch(xml_data, dict_attachments)
+        form.domain = TEST_DOMAIN
         self.assertEqual(len(dict_attachments.keys()), len(form.attachments))
         process_cases(sender="testharness", xform=form)
 
@@ -106,14 +106,14 @@ class BaseCaseMultimediaTest(TestCase):
             self.assertEqual(hashlib.md5(fileback).hexdigest(), hashlib.md5(orig_attachment.read()).hexdigest())
         return form
 
-    def _doCreateCaseWithMultimedia(self, attachments=['fruity']):
+    def _doCreateCaseWithMultimedia(self, attachments=['fruity_file']):
         xml_data = self._getXFormString('multimedia_create.xml')
         attachment_block, dict_attachments = self._prepAttachments(attachments)
         final_xml = self._formatXForm(CREATE_XFORM_ID, xml_data, attachment_block)
         form = self._submit_and_verify(CREATE_XFORM_ID, final_xml, dict_attachments)
 
-    def _doSubmitUpdateWithMultimedia(self, new_attachments=['commcare_logo', 'dimagi_logo'],
-                                      removes=['fruity']):
+    def _doSubmitUpdateWithMultimedia(self, new_attachments=['commcare_logo_file', 'dimagi_logo_file'],
+                                      removes=['fruity_file']):
         attachment_block, dict_attachments = self._prepAttachments(new_attachments, removes=removes)
 
         raw_xform = self._getXFormString('multimedia_update.xml')
@@ -131,7 +131,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
     def testAttachInCreate(self):
         self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
 
-        single_attach = 'fruity'
+        single_attach = 'fruity_file'
         self._doCreateCaseWithMultimedia(attachments=[single_attach])
 
         case = CommCareCase.get(TEST_CASE_ID)
@@ -143,7 +143,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
     def testAttachRemoveSingle(self):
         self.testAttachInCreate()
         new_attachments = []
-        removes = ['fruity']
+        removes = ['fruity_file']
         self._doSubmitUpdateWithMultimedia(new_attachments=new_attachments, removes=removes)
         case = CommCareCase.get(TEST_CASE_ID)
 
@@ -158,8 +158,8 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
     def testAttachRemoveMultiple(self):
         self.testAttachInCreate()
 
-        new_attachments = ['commcare_logo', 'dimagi_logo']
-        removes = ['fruity']
+        new_attachments = ['commcare_logo_file', 'dimagi_logo_file']
+        removes = ['fruity_file']
         self._doSubmitUpdateWithMultimedia(new_attachments=new_attachments, removes=removes)
 
         case = CommCareCase.get(TEST_CASE_ID)
@@ -173,12 +173,12 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
 
     def testOTARestoreSingle(self):
         self.testAttachInCreate()
-        restore_attachments = ['fruity']
+        restore_attachments = ['fruity_file']
         self._validateOTARestore(TEST_CASE_ID, restore_attachments)
 
     def testOTARestoreMultiple(self):
         self.testAttachRemoveMultiple()
-        restore_attachments = ['commcare_logo', 'dimagi_logo']
+        restore_attachments = ['commcare_logo_file', 'dimagi_logo_file']
         self._validateOTARestore(TEST_CASE_ID, restore_attachments)
 
     def _validateOTARestore(self, case_id, restore_attachments):
@@ -188,19 +188,25 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         output = lxml.etree.tostring(root_node, pretty_print=True)
         attaches = root_node.find('{http://commcarehq.org/case/transaction/v2}attachment')
         self.assertEqual(len(restore_attachments), len(attaches))
+        restore_attachments_filenames = [os.path.split(MEDIA_FILES[k])[-1] for k in restore_attachments]
+
         for attach in attaches:
             url = attach.values()[1]
-            case_id = url.split('/')[-2]
-            name = url.split('/')[-1]
+            case_id = url.split('/')[-3]
+            attach_key_from_url = url.split('/')[-2]
+            attach_filename = url.split('/')[-1]
             tag = attach.tag
             clean_tag = tag.replace('{http://commcarehq.org/case/transaction/v2}', '')
-            self.assertEqual(clean_tag, name)
+
+            self.assertEqual(clean_tag, attach_key_from_url)
             self.assertEqual(case_id, TEST_CASE_ID)
-            self.assertIn(name, restore_attachments)
+
+            self.assertIn(attach_key_from_url, restore_attachments)
+            self.assertIn(attach_filename, restore_attachments_filenames)
             restore_attachments.remove(clean_tag)
         self.assertEqual(0, len(restore_attachments))
 
-    def testAttachInUpdate(self, new_attachments=['commcare_logo', 'dimagi_logo']):
+    def testAttachInUpdate(self, new_attachments=['commcare_logo_file', 'dimagi_logo_file']):
         self.testAttachInCreate()
         removes = []
         self._doSubmitUpdateWithMultimedia(new_attachments=new_attachments, removes=removes)
