@@ -1,8 +1,9 @@
 from datetime import date, timedelta
-from couchdbkit import NoResultFound
+from couchdbkit.exceptions import MultipleResultsFound
 from sqlagg.columns import SumColumn, SimpleColumn
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter import utils
+from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.reportfixtures.indicator_sets import SqlIndicatorSet
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from dimagi.utils.decorators.memoized import memoized
@@ -41,32 +42,32 @@ class CallCenter(SqlIndicatorSet):
     @property
     def columns(self):
         return [
-            DatabaseColumn("case", 'user_id', SimpleColumn, format_fn=self.get_user_case_id, sortable=False),
-            DatabaseColumn('formsSubmittedInLastWeek', 'sumbission_count', SumColumn,
-                alias='last_week', sortable=False),
-            DatabaseColumn('formsSubmittedInWeekPrior', 'sumbission_count', SumColumn,
-                filters=['date >= :2weekago', 'date < :weekago'], alias='week_prior', sortable=False),
-            DatabaseColumn('formsSubmittedIn30days', 'sumbission_count', SumColumn,
-                filters=['date >= :30daysago', 'date < :today'], alias='30_days', sortable=False),
+            DatabaseColumn("case", SimpleColumn('user_id'), format_fn=self.get_user_case_id, sortable=False),
+            DatabaseColumn('formsSubmittedInLastWeek', SumColumn('sumbission_count', alias='last_week'),
+                sortable=False),
+            DatabaseColumn('formsSubmittedInWeekPrior', SumColumn('sumbission_count',
+                                                                  filters=['date >= :2weekago', 'date < :weekago'],
+                                                                  alias='week_prior'),
+                sortable=False),
+            DatabaseColumn('formsSubmittedIn30days', SumColumn('sumbission_count',
+                                                               filters=['date >= :30daysago', 'date < :today'],
+                                                               alias='30_days'),
+                sortable=False),
         ]
 
     @property
     @memoized
     def keys(self):
-        key = ['open type', self.domain.name, self.domain.call_center_config.case_type]
-        cases = CommCareCase.view('case/all_cases',
-            startkey=key,
-            endkey=key + [{}],
-            reduce=False,
-            include_docs=False).all()
+        cases = CommCareCase.get_all_cases(
+            self.domain.name,
+            case_type=self.domain.call_center_config.case_type,
+            status='open')
+
         return [[c['id']] for c in cases]
 
     def get_user_case_id(self, user_id):
         try:
-            case = CommCareCase.view('hqcase/by_domain_hq_user_id',
-                key=[self.domain.name, user_id],
-                reduce=False,
-                include_docs=False).one()
+            case = get_case_by_domain_hq_user_id(self.domain.name, user_id)
             return case['id'] if case else user_id
-        except NoResultFound:
+        except MultipleResultsFound:
             return user_id

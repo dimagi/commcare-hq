@@ -29,7 +29,7 @@ from corehq.apps.reports.generic import GenericTabularReport, ProjectInspectionR
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
-from dimagi.utils.couch import get_cached_property
+from dimagi.utils.couch import get_cached_property, IncompatibleDocument
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.pagination import CouchFilter
 from dimagi.utils.decorators.memoized import memoized
@@ -84,7 +84,8 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
                     "range": {
                         "form.meta.timeEnd": {
                             "from": self.datespan.startdate_param,
-                            "to": self.datespan.enddate_param}}},
+                            "to": self.datespan.enddate_param,
+                            "include_upper": False}}},
                 "filter": {"and": []}}
 
             xmlnss = filter(None, [f["xmlns"] for f in self.all_relevant_forms.values()])
@@ -128,7 +129,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
             try:
                 name = ('"%s"' % get_cached_property(CouchUser, uid, 'full_name', expiry=7*24*60*60)) \
                     if username not in ['demo_user', 'admin'] else ""
-            except ResourceNotFound:
+            except (ResourceNotFound, IncompatibleDocument):
                 name = "<b>[unregistered]</b>"
 
             yield [
@@ -550,6 +551,8 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
     actual case/form info to be useful. coming up with a better way to configure this
     is a work in progress. for now this report is effectively de-activated, with no
     way to reach it from production HQ.
+
+    see below for configuration example
     """
 
     name = ugettext_noop('Generic Pie Chart (sandbox)')
@@ -667,19 +670,38 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
         if 'location_id' in self.request.GET: # hack: only get data if we're loading an actual report
             return [PieChart(None, **self._chart_data())]
 
-class PieChartReportCaseExample(GenericPieChartReportTemplate):
-    name = ugettext_noop('Pie Chart (Case)')
-    slug = 'case_pie'
-    mode = 'case'
-    submission_type = 'supply-point-product'
-    field = 'product'
+"""
+to configure the above report and activate for a domain:
 
-class PieChartReportFormExample(GenericPieChartReportTemplate):
-    name = ugettext_noop('Pie Chart (Form)')
-    slug = 'form_pie'
-    mode = 'form'
-    submission_type = 'http://openrosa.org/commtrack/stock_report'
-    field = 'location'
+from corehq.apps.domain.models import *
+domain = Domain.get_by_name('commtrack-public-demo')
+domain.dynamic_reports = [
+  DynamicReportSet(
+    section_title='Analytics',
+    reports=[
+      DynamicReportConfig(
+        report='corehq.apps.reports.standard.inspect.GenericPieChartReportTemplate',
+        name='Report 1',
+        kwargs={
+          'mode': 'case',
+          'submission_type': 'supply-point-product',
+          'field': 'product',
+        }
+      ),
+      DynamicReportConfig(
+        report='corehq.apps.reports.standard.inspect.GenericPieChartReportTemplate',
+        name='Report 2',
+        kwargs={
+          'mode': 'form',
+          'submission_type': 'http://openrosa.org/commtrack/stock_report',
+          'field': 'location',
+        }
+      ),
+    ]
+  ),
+]
+domain.save()
+"""
 
 
 class MapReport(ProjectReport, ProjectReportParametersMixin):

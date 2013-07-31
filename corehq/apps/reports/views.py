@@ -764,15 +764,8 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
     Returns a FileWrapper object, which only the file backend in django-soil supports
 
     """
-    view_name = 'hqcase/all_cases' if include_closed else 'hqcase/open_cases'
-    key = [domain, {}, {}]
-    case_ids = CommCareCase.view(view_name,
-        startkey=key,
-        endkey=key + [{}],
-        reduce=False,
-        include_docs=False,
-        wrapper=lambda r: r['id']
-    )
+    status = 'all' if include_closed else 'open'
+    case_ids = CommCareCase.get_all_cases(domain, status=status, wrapper=lambda r: r['id'])
 
     class stream_cases(object):
         def __init__(self, all_case_ids):

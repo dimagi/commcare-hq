@@ -61,13 +61,7 @@ class CaseAPITest(TestCase):
     def _clearData(self):
         for case_type in self.case_types:
             for subtype in [case_type, _child_case_type(case_type)]:
-                startkey = [self.domain, subtype, {}]
-                endkey = startkey + [{}]
-                for c in CommCareCase.view("hqcase/all_cases",
-                                           startkey=startkey,
-                                           endkey=endkey,
-                                           include_docs=True,
-                                           reduce=False):
+                for c in CommCareCase.get_all_cases(self.domain, case_type=subtype, include_docs=True):
                     c.delete()
 
     def assertListMatches(self, list, function):

@@ -13,15 +13,7 @@ class Command(LabelCommand):
             raise CommandError('Usage: %s\n%s' % (self.args, self.help))
 
         domain = args[0]
-        view_name = 'hqcase/all_cases'
-        key = [domain, {}, {}]
-        case_ids = CommCareCase.view(view_name,
-            startkey=key,
-            endkey=key + [{}],
-            reduce=False,
-            include_docs=False,
-            wrapper=lambda r: r['id']
-        )
+        case_ids = CommCareCase.get_all_cases(domain, wrapper=lambda r: r['id'])
 
         print 'loading %s cases in %s' % (len(case_ids), domain)
         def stream_cases(all_case_ids):
