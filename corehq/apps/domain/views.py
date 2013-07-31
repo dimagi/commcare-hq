@@ -176,6 +176,8 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
         if form.is_valid():
             if form.save(request, domain):
                 messages.success(request, "Project settings saved!")
+                return HttpResponseRedirect(
+                        reverse(project_settings, args=[domain]))
             else:
                 messages.error(request, "There seems to have been an error saving your settings. Please try again!")
     else:
