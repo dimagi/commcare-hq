@@ -104,8 +104,14 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
 
     @property
     def xform(self):
-        return XFormInstance.get(self.xform_id) if self.xform_id else None
-        
+        try:
+            return XFormInstance.get(self.xform_id) if self.xform_id else None
+        except ResourceNotFound:
+            logging.exception("couldn't access form {form} inside of a referenced case.".format(
+                form=self.xform_id,
+            ))
+            return None
+
     def get_user_id(self):
         key = 'xform-%s-user_id' % self.xform_id
         id = cache.get(key)
@@ -147,9 +153,9 @@ class Referral(CaseBase):
         
         update_block = referral_block[const.REFERRAL_ACTION_UPDATE] 
         if not self.type == update_block[const.REFERRAL_TAG_TYPE]:
-            raise logging.warn("Tried to update from a block with a mismatched type!")
+            logging.warn("Tried to update from a block with a mismatched type!")
             return
-        
+
         if date > self.modified_on:
             self.modified_on = date
         
