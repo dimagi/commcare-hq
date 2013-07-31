@@ -3,6 +3,7 @@
 SECRET_KEY = 'this is not a secret key'
 
 INSTALLED_APPS = (
+    'django.contrib.sites',
     'casexml.apps.case',
     'casexml.apps.phone',
     'couchdbkit.ext.django',
@@ -68,3 +69,5 @@ LOGGING = {
         }
     }
 }
+
+SITE_ID = 1
