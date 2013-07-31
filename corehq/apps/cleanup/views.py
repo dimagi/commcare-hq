@@ -177,7 +177,7 @@ def cases_json(request, domain):
 #            cases = _get_cases(_get_submissions(domain, [sub]))
 #            sub['cases'] = len([None for case in cases if not case.closed])
 
-        open_cases = CommCareCase.view('hqcase/open_cases', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True).all()
+        open_cases = CommCareCase.get_all_cases(domain, status='open', include_docs=True)
         xform_ids = [case.xform_ids[0] for case in open_cases]
         case_count = defaultdict(int)
         for xform_id in xform_ids:
@@ -308,7 +308,7 @@ def reassign_cases_to_correct_owner(request, domain, template='cleanup/reassign_
             'doc_type': doc['doc_type']
         }
 
-    for case in CommCareCase.view('hqcase/all_cases', startkey=[domain, {}, {}], endkey=[domain, {}, {}, {}], include_docs=True, reduce=False):
+    for case in CommCareCase.get_all_cases(domain, include_docs=True):
         group_id = get_correct_group_id(case.user_id, case.owner_id)
         case_data = {
             'case': {'id': case.case_id, 'meta': {'name': case.name, 'doc_type': case.doc_type}, 'modified': case.modified_on},
