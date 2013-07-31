@@ -577,7 +577,10 @@ class SuiteGenerator(object):
                              + parent_filter),
                     value="./@case_id",
                     detail_select=get_detail_id_safe(module, 'case_short'),
-                    detail_confirm=get_detail_id_safe(module, 'case_long'),
+                    detail_confirm=(
+                        get_detail_id_safe(module, 'case_long')
+                        if i == 0 else None
+                    )
                 ))
 
         for module in self.modules:
