@@ -197,6 +197,34 @@ class TestXFormInstanceResource(APIResourceTest):
 
         self.assertEqual(response.status_code, 200)
 
+    def test_get_list_ordering(self):
+        '''
+        Forms can be ordering ascending or descending on received_on; by default
+        ascending.
+        '''
+
+        fake_xform_es = FakeXFormES()
+
+        # A bit of a hack since none of Python's mocking libraries seem to do basic spies easily...
+        prior_run_query = fake_xform_es.run_query
+        queries = []
+        def mock_run_query(es_query):
+            queries.append(es_query)
+            return prior_run_query(es_query)
+            
+        fake_xform_es.run_query = mock_run_query
+        v0_4.MOCK_XFORM_ES = fake_xform_es
+
+        self.client.login(username=self.username, password=self.password)
+
+        response = self.client.get('%s?order_by=received_on' % self.list_endpoint) # Runs *2* queries
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(queries[0]['sort'], [{'received_on': 'asc'}])
+
+        response = self.client.get('%s?order_by=-received_on' % self.list_endpoint) # Runs *2* queries
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(queries[2]['sort'], [{'received_on': 'desc'}])
+
 class TestCommCareCaseResource(APIResourceTest):
     """
     Tests the CommCareCaseREsource, currently only v0_4
@@ -461,6 +489,24 @@ class TestESQuerySet(TestCase):
         self.assertEqual(es.queries[2]['from'], 500)
         self.assertEqual(es.queries[2]['size'], 500)
         self.assertEqual(len(qs_slice), 500)
+
+    def test_order_by(self):
+        es = FakeXFormES()
+        for i in xrange(0, 1300):
+            es.add_doc(i, {'i': i})
+        
+        queryset = ESQuerySet(es_client=es, payload={})
+        qs_asc = list(queryset.order_by('foo'))
+        self.assertEqual(es.queries[0]['sort'], [{'foo': 'asc'}])
+
+        qs_desc = list(queryset.order_by('-foo'))
+        self.assertEqual(es.queries[1]['sort'], [{'foo': 'desc'}])
+
+        qs_overwrite = list(queryset.order_by('bizzle').order_by('-baz'))
+        self.assertEqual(es.queries[2]['sort'], [{'baz': 'desc'}])
+
+        qs_multi = list(queryset.order_by('one', '-two', 'three'))
+        self.assertEqual(es.queries[3]['sort'], [{'one': 'asc'}, {'two': 'desc'}, {'three': 'asc'}])
 
 
 class ToManySourceModel(object):

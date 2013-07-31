@@ -15,11 +15,14 @@ def parse_xml(string):
     except ET.ParseError, e:
         raise XFormError("Error parsing XML" + (": %s" % e if e.message else ""))
 
+
 class XFormError(Exception):
     pass
 
+
 class CaseError(XFormError):
     pass
+
 
 class XFormValidationError(XFormError):
     def __init__(self, fatal_error, version="1.0", validation_problems=None):
@@ -28,7 +31,7 @@ class XFormValidationError(XFormError):
         self.validation_problems = validation_problems
 
     def __str__(self):
-        fatal_error_text = self.format_v_one(self.fatal_error)
+        fatal_error_text = self.format_v1(self.fatal_error)
         ret = "Validation Error%s" % (': %s' % fatal_error_text if fatal_error_text else '')
         problems = filter(lambda problem: problem['message'] != self.fatal_error, self.validation_problems)
         if problems:
@@ -37,7 +40,7 @@ class XFormValidationError(XFormError):
                 ret += "\n{type}: {msg}".format(type=problem['type'].title(), msg=problem['message'])
         return ret
 
-    def format_v_one(self, msg):
+    def format_v1(self, msg):
         if self.version != '1.0':
             return msg
         # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'

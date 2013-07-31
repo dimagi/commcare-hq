@@ -34,8 +34,14 @@ class MainMenuNode(template.Node):
             if t.real_is_viewable:
                 visible_tabs.append(t)
 
-            if t.is_active:
+            # only highlight the first tab considered active.  This allows
+            # multiple tabs to contain the same sidebar item, but in all but
+            # the first it will effectively be a link to the other tabs.
+            if not active_tab and t.is_active:
+                t.is_active_tab = True
                 active_tab = t
+            else:
+                t.is_active_tab = False
 
         if active_tab is None:
             for t in visible_tabs:

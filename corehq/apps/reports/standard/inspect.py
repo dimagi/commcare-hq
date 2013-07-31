@@ -29,7 +29,7 @@ from corehq.apps.reports.generic import GenericTabularReport, ProjectInspectionR
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
-from dimagi.utils.couch import get_cached_property
+from dimagi.utils.couch import get_cached_property, IncompatibleDocument
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.pagination import CouchFilter
 from dimagi.utils.decorators.memoized import memoized
@@ -84,7 +84,8 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
                     "range": {
                         "form.meta.timeEnd": {
                             "from": self.datespan.startdate_param,
-                            "to": self.datespan.enddate_param}}},
+                            "to": self.datespan.enddate_param,
+                            "include_upper": False}}},
                 "filter": {"and": []}}
 
             xmlnss = filter(None, [f["xmlns"] for f in self.all_relevant_forms.values()])
@@ -128,7 +129,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
             try:
                 name = ('"%s"' % get_cached_property(CouchUser, uid, 'full_name', expiry=7*24*60*60)) \
                     if username not in ['demo_user', 'admin'] else ""
-            except ResourceNotFound:
+            except (ResourceNotFound, IncompatibleDocument):
                 name = "<b>[unregistered]</b>"
 
             yield [
