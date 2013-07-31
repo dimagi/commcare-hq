@@ -10,8 +10,8 @@ requires imports/proptable.html to be included in the main template
 <script>
     $(function () {
         var help_text = {
-            "{% trans "Archiving Forms" %}": "{% trans "Archived forms will no longer show up in reports. However, case data submitted from archived forms is still maintained." %}",
-            "{% trans "Restoring Forms" %}": "{% trans "Restoring this form will cause it to show up in reports again." %}",
+            "{% trans "Archiving Forms" %}": "{% trans "Archived forms will no longer show up in reports and they will be removed from any relevant case histories. " %}",
+            "{% trans "Restoring Forms" %}": "{% trans "Restoring this form will cause it to show up in reports again." %}"
         };
         $('.help_popover').popover({
             placement: 'left',
@@ -30,8 +30,8 @@ requires imports/proptable.html to be included in the main template
 <div class="alert alert-full alert-block">
     {% blocktrans %}
     This form is archived and will not be included in reports. 
-    However, case data submitted from archived forms is retained.
     To unarchive this form, click the "Restore" button.
+    This will also restore case data associated with the form.
     {% endblocktrans %}
 </div>
 {% endif %}
