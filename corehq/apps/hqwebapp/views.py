@@ -23,6 +23,7 @@ from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthent
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from dimagi.utils.logging import notify_exception
+from django.utils.translation import ugettext as _
 
 from dimagi.utils.web import get_url_base, json_response
 from django.core.urlresolvers import reverse
@@ -396,6 +397,11 @@ def unsubscribe(request, user_id):
     try:
         user = CouchUser.get_by_user_id(user_id)
         domain = user.get_domains()[0]
+        from django.contrib import messages
+        messages.add_message(request, messages.INFO,
+                             _('Uncheck "Join the mailing list to receive \
+                                important announcements" to opt out of \
+                                future emails.'))
         return HttpResponseRedirect(reverse('commcare_user_account', args=[domain, user_id]))
     except Exception:
         pass
