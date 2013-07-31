@@ -12,9 +12,14 @@ def rebuild_case(case_id):
     """
     case = CommCareCase.get(case_id)
 
-    # clear actions and xform_ids
+    # clear actions, xform_ids, and close state
+    # todo: properties too?
+    case.doc_type = 'CommCareCase'
     case.xform_ids = []
     case.actions = []
+    case.closed = False
+    case.closed_on = None
+    case.closed_by = ''
 
     form_ids = get_case_xform_ids(case_id)
     forms = [get_form(id) for id in form_ids]
@@ -27,6 +32,10 @@ def rebuild_case(case_id):
         filtered_updates = [u for u in case_updates if u.id == case_id]
         for u in filtered_updates:
             case.update_from_case_update(u, form)
+
     case.xform_ids = [f._id for f in sorted_forms]
+    if not case.xform_ids:
+        # there were no more forms. 'delete' the case
+        case.doc_type = 'CommCareCase-Deleted'
     case.save()
     return case

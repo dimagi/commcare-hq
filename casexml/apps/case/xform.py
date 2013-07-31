@@ -4,6 +4,7 @@ Work on cases based on XForms. In our world XForms are special couch documents.
 import logging
 
 from couchdbkit.resource import ResourceNotFound
+from couchdbkit.schema.properties_proxy import LazySchemaList
 from dimagi.utils.chunked import chunked
 from casexml.apps.case.exceptions import IllegalCaseId, NoDomainProvided
 from casexml.apps.case import settings
@@ -146,12 +147,19 @@ def _get_or_update_model(case_block, xform, case_db):
 
 def is_excluded(doc):
     # exclude anything matching a certain set of conditions from case processing.
-    # as of today, the only things that meet these requirements are device logs.
+
+    # exclued schemalistproperites (which are expected to be native metadata on
+    # the form not to be seearched, and also there's a bug in couchdbkit that causes
+    # the 'in' operator to raise an AttributeErrorn
+    if isinstance(doc, LazySchemaList):
+        return True
+
+    # also exclude device reports.
     device_report_xmlns = "http://code.javarosa.org/devicereport"
-    try: 
+    try:
         return (hasattr(doc, "xmlns") and doc.xmlns == device_report_xmlns) or \
                ("@xmlns" in doc and doc["@xmlns"] == device_report_xmlns)
-    except TypeError:
+    except (TypeError):
         # wasn't iterable, don't exclude
         return False
 
@@ -195,17 +203,15 @@ def extract_case_blocks(doc):
                 const.CASE_ATTR_ID in case_block)
     return [block for block in block_list if _has_case_id(block)]
 
+def get_case_ids_from_form(xform):
+    case_updates = [case_update_from_block(cb) for cb in extract_case_blocks(xform)]
+    return set(cu.id for cu in case_updates)
 
 def cases_referenced_by_xform(xform):
     """
     JSON repr of XFormInstance -> [CommCareCase]
     """
-    def extract_case_id(case_block):
-        return (case_block.get(const.CASE_TAG_ID) or
-                case_block.get(const.CASE_ATTR_ID))
-
-    case_ids = [extract_case_id(case_block)
-                for case_block in extract_case_blocks(xform)]
+    case_ids = get_case_ids_from_form(xform)
 
     cases = [CommCareCase.wrap(doc)
              for doc in iter_docs(CommCareCase.get_db(), case_ids)]

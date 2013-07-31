@@ -4,6 +4,7 @@ from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from datetime import datetime, timedelta
 from copy import deepcopy
 from casexml.apps.case.tests.util import post_util as real_post_util, delete_all_cases
+from couchforms.models import XFormInstance
 
 def post_util(**kwargs):
     form_extras = kwargs.get('form_extras', {})
@@ -129,3 +130,129 @@ class CaseRebuildTest(TestCase):
         case = rebuild_case(case_id)
         self._assertListEqual(original_actions, case.actions)
         self._assertListEqual(original_form_ids, case.xform_ids)
+
+
+    def testArchivingOnlyForm(self):
+        """
+        Checks that archiving the only form associated with the case archives
+        the case and unarchiving unarchives it.
+        """
+        case_id = post_util(create=True, p1='p1-1', p2='p2-1')
+        case = CommCareCase.get(case_id)
+
+        self.assertEqual('CommCareCase', case._doc['doc_type'])
+        self.assertEqual(2, len(case.actions))
+        [form_id] = case.xform_ids
+        form = XFormInstance.get(form_id)
+
+        form.archive()
+        case = CommCareCase.get(case_id)
+
+        self.assertEqual('CommCareCase-Deleted', case._doc['doc_type'])
+        self.assertEqual(0, len(case.actions))
+
+        form.unarchive()
+        case = CommCareCase.get(case_id)
+        self.assertEqual('CommCareCase', case._doc['doc_type'])
+        self.assertEqual(2, len(case.actions))
+
+
+    def testFormArchiving(self):
+        now = datetime.utcnow()
+        # make sure we timestamp everything so they have the right order
+        case_id = post_util(create=True, p1='p1-1', p2='p2-1',
+                            form_extras={'received_on': now})
+        post_util(case_id=case_id, p2='p2-2', p3='p3-2', p4='p4-2',
+                  form_extras={'received_on': now + timedelta(seconds=1)})
+        post_util(case_id=case_id, p4='p4-3', p5='p5-3', close=True,
+                  form_extras={'received_on': now + timedelta(seconds=2)})
+
+        case = CommCareCase.get(case_id)
+        closed_by = case.closed_by
+        closed_on = case.closed_on
+        self.assertNotEqual('', closed_by)
+        self.assertNotEqual(None, closed_on)
+
+        def _check_initial_state(case):
+            self.assertTrue(case.closed)
+            self.assertEqual(closed_by, case.closed_by)
+            self.assertEqual(closed_on, case.closed_on)
+            self.assertEqual(case.p1, 'p1-1') # original
+            self.assertEqual(case.p2, 'p2-2') # updated in second post
+            self.assertEqual(case.p3, 'p3-2') # new in second post
+            self.assertEqual(case.p4, 'p4-3') # updated in third post
+            self.assertEqual(case.p5, 'p5-3') # new in third post
+            self.assertEqual(5, len(case.actions)) # create + 3 updates + close
+
+
+        _check_initial_state(case)
+
+        # verify xform/action states
+        [create, u1, u2, u3, close] = case.actions
+        [f1, f2, f3] = case.xform_ids
+        self.assertEqual(f1, create.xform_id)
+        self.assertEqual(f1, u1.xform_id)
+        self.assertEqual(f2, u2.xform_id)
+        self.assertEqual(f3, u3.xform_id)
+
+        # todo: should this be the behavior for archiving the create form?
+        f1_doc = XFormInstance.get(f1)
+        f1_doc.archive()
+        case = CommCareCase.get(case_id)
+
+        self.assertEqual(3, len(case.actions))
+        [u2, u3] = case.xform_ids
+        self.assertEqual(f2, u2)
+        self.assertEqual(f3, u3)
+
+        self.assertTrue(case.closed) # no change
+        # self.assertFalse('p1' in case._doc) # todo: should disappear entirely
+        self.assertEqual(case.p2, 'p2-2') # no change
+        self.assertEqual(case.p3, 'p3-2') # no change
+        self.assertEqual(case.p4, 'p4-3') # no change
+        self.assertEqual(case.p5, 'p5-3') # no change
+
+        def _reset(form_id):
+            form_doc = XFormInstance.get(form_id)
+            form_doc.unarchive()
+            case = CommCareCase.get(case_id)
+            _check_initial_state(case)
+
+        _reset(f1)
+
+        f2_doc = XFormInstance.get(f2)
+        f2_doc.archive()
+        case = CommCareCase.get(case_id)
+
+        self.assertEqual(4, len(case.actions))
+        [u1, u3] = case.xform_ids
+        self.assertEqual(f1, u1)
+        self.assertEqual(f3, u3)
+
+        self.assertTrue(case.closed) # no change
+        self.assertEqual(case.p1, 'p1-1') # original
+        self.assertEqual(case.p2, 'p2-1') # loses second form update
+        # self.assertFalse('p3' in case._doc) # todo: should disappear entirely
+        self.assertEqual(case.p4, 'p4-3') # no change
+        self.assertEqual(case.p5, 'p5-3') # no change
+
+        _reset(f2)
+
+        f3_doc = XFormInstance.get(f3)
+        f3_doc.archive()
+        case = CommCareCase.get(case_id)
+
+        self.assertEqual(3, len(case.actions))
+        [u1, u2] = case.xform_ids
+        self.assertEqual(f1, u1)
+        self.assertEqual(f2, u2)
+
+        self.assertFalse(case.closed) # reopened!
+        self.assertEqual('', case.closed_by)
+        self.assertEqual(None, case.closed_on)
+        self.assertEqual(case.p1, 'p1-1') # original
+        self.assertEqual(case.p2, 'p2-2') # original
+        self.assertEqual(case.p3, 'p3-2') # new in second post
+        self.assertEqual(case.p4, 'p4-2') # loses third form update
+        # self.assertFalse('p5' in case._doc) # todo: should disappear entirely
+        _reset(f3)
