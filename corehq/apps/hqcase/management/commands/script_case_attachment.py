@@ -135,11 +135,10 @@ class Command(BaseCommand):
 
         case_doc = CommCareCase.get(self.case_id)
         domain = case_doc.domain
-        print domain
         submit_id = uuid.uuid4().hex
 
         def attach_block(key, filename):
-            return '<n0:%s src="%s" from="local"/>' % (key, os.path.split(filename)[1])
+            return '<n0:%s src="%s" from="local"/>' % (key, os.path.split(filename)[-1])
         attachments = [attach_block(k, v) for k, v in options['files'].items()]
         format_dict = {
             "time_start": (datetime.utcnow() - timedelta(seconds=5)).strftime('%Y-%m-%dT%H:%M:%SZ'),
@@ -156,7 +155,7 @@ class Command(BaseCommand):
         attachment_tuples = [(k, v) for k, v in options['files'].items()]
 
         final_xml = XFORM_TEMPLATE % format_dict
-        print post_data(final_xml, url, path=None, use_curl=True, use_chunked=False, is_odk=True, attachments=attachment_tuples)
+        print post_data(final_xml, url, path=None, use_curl=True, use_chunked=True, is_odk=True, attachments=attachment_tuples)
 
 
 
