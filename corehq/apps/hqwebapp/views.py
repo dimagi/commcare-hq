@@ -392,3 +392,12 @@ def apache_license(request):
 def bsd_license(request):
     return render_static(request, "bsd_license.html")
 
+def unsubscribe(request, user_id):
+    try:
+        user = CouchUser.get_by_user_id(user_id)
+        domain = user.get_domains()[0]
+        return HttpResponseRedirect(reverse('commcare_user_account', args=[domain, user_id]))
+    except Exception:
+        pass
+
+    return HttpResponseRedirect(reverse('homepage'))

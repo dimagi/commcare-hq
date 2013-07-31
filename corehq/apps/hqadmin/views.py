@@ -38,7 +38,7 @@ from dimagi.utils.couch.database import get_db, is_bigcouch
 from corehq.apps.domain.decorators import  require_superuser
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
-from dimagi.utils.web import json_response
+from dimagi.utils.web import json_response, get_url_base
 from couchexport.export import export_raw, export_from_tables
 from couchexport.shortcuts import export_response
 from couchexport.models import Format
@@ -434,10 +434,6 @@ def mass_email(request):
             subject = form.cleaned_data['email_subject']
             body = form.cleaned_data['email_body']
 
-            params = { 'email_body': body }
-            text_content = render_to_string("hqadmin/email/mass_email_base.txt", params)
-            html_content = render_to_string("hqadmin/email/mass_email_base.html", params)
-
             recipients = WebUser.view(
                 'users/mailing_list_emails',
                 reduce=False,
@@ -445,6 +441,15 @@ def mass_email(request):
             ).all()
 
             for recipient in recipients:
+                params = {
+                    'email_body': body,
+                    'user_id': recipient.get_id,
+                    'unsub_url': get_url_base() +
+                                 reverse('unsubscribe', args=[recipient.get_id])
+                }
+                text_content = render_to_string("hqadmin/email/mass_email_base.txt", params)
+                html_content = render_to_string("hqadmin/email/mass_email_base.html", params)
+
                 send_HTML_email(subject, recipient.email, html_content, text_content)
 
     else:
