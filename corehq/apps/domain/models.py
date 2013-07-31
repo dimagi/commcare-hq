@@ -847,9 +847,12 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     @property
     def has_custom_logo(self):
         return (self['_attachments'] and
-               LOGO_ATTACHMENT in self['_attachments'])
+                LOGO_ATTACHMENT in self['_attachments'])
 
     def get_custom_logo(self):
+        if not self.has_custom_logo:
+            return None
+
         return (
             self.fetch_attachment(LOGO_ATTACHMENT),
             self['_attachments'][LOGO_ATTACHMENT]['content_type']

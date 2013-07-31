@@ -149,14 +149,12 @@ def legacy_domain_name(request, domain, path):
     return HttpResponseRedirect(get_domained_url(domain, path))
 
 
-@login_and_domain_required
 def logo(request, domain):
-    domain = Domain.get_by_name(domain)
-    if not domain.has_custom_logo:
+    logo = Domain.get_by_name(domain).get_custom_logo()
+    if logo is None:
         raise Http404()
 
-    data, mimetype = domain.get_custom_logo()
-    return HttpResponse(data, mimetype=mimetype)
+    return HttpResponse(logo[0], mimetype=logo[1])
 
 
 @domain_admin_required

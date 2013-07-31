@@ -1,8 +1,11 @@
 from urlparse import urlparse, parse_qs
 import dateutil
 import re
-from django import forms
+import io
+from PIL import Image
+import uuid
 
+from django import forms
 from django.forms.fields import (ChoiceField, CharField, BooleanField,
     ImageField)
 from django.forms.widgets import  Select
@@ -358,9 +361,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         try:
             logo = self.cleaned_data['logo']
             if logo:
-                import io
-                from PIL import Image
-                import uuid
 
                 input_image = Image.open(io.BytesIO(logo.read()))
                 input_image.load()
@@ -372,7 +372,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
                 with open(tmpfilename) as tmpfile:
                     domain.put_attachment(tmpfile, name=LOGO_ATTACHMENT)
             elif self.cleaned_data['delete_logo']:
-                print self.cleaned_data
                 domain.delete_attachment(LOGO_ATTACHMENT)
 
             domain.project_type = self.cleaned_data['project_type']
