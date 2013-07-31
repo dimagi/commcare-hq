@@ -148,6 +148,17 @@ def legacy_domain_name(request, domain, path):
     domain = normalize_domain_name(domain)
     return HttpResponseRedirect(get_domained_url(domain, path))
 
+
+@login_and_domain_required
+def logo(request, domain):
+    domain = Domain.get_by_name(domain)
+    if not domain.has_custom_logo:
+        raise Http404()
+
+    data, mimetype = domain.get_custom_logo()
+    return HttpResponse(data, mimetype=mimetype)
+
+
 @domain_admin_required
 def project_settings(request, domain, template="domain/admin/project_settings.html"):
     domain = Domain.get_by_name(domain)
@@ -158,7 +169,8 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
        'deployment_info_form' not in request.POST:
         # deal with saving the settings data
         if user_sees_meta:
-            form = DomainMetadataForm(request.POST, user=request.couch_user, domain=domain.name)
+            form = DomainMetadataForm(request.POST, request.FILES,
+                    user=request.couch_user, domain=domain.name)
         else:
             form = DomainGlobalSettingsForm(request.POST)
         if form.is_valid():

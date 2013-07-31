@@ -23,6 +23,7 @@ from corehq.apps.adm.urls import adm_admin_interface_urls
 
 
 domain_specific = patterns('',
+    url(r'^logo.png', 'corehq.apps.domain.views.logo', name='logo'),
     (r'^apps/', include('corehq.apps.app_manager.urls')),
     (r'^api/', include('corehq.apps.api.urls')),
     # the receiver needs to accept posts at an endpoint that might
