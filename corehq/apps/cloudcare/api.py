@@ -1,6 +1,6 @@
 import json
 from corehq.apps.users.models import CouchUser
-from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.models import CommCareCase, CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN
 from corehq.apps.locations.models import Location
 from corehq.apps.app_manager.models import ApplicationBase, Application
 from dimagi.utils.couch.safe_index import safe_index
@@ -12,9 +12,6 @@ import urllib
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.chunked import chunked
 
-CASE_STATUS_OPEN = 'open'
-CASE_STATUS_CLOSED = 'closed'
-CASE_STATUS_ALL = 'all'
 
 def api_closed_to_status(closed_string):
     # legacy api support
@@ -73,7 +70,7 @@ class CaseAPIHelper(object):
     """
     Simple config object for querying the APIs
     """
-    def __init__(self, status='open', case_type=None, ids_only=False,
+    def __init__(self, status=CASE_STATUS_OPEN, case_type=None, ids_only=False,
                  footprint=False, strip_history=False, filters=None):
         if status not in [CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN]:
             raise ValueError("invalid case status %s" % status)
