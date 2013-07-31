@@ -28,13 +28,17 @@ class CaseDbCache(object):
     def validate_doc(self, doc):
         # some forms recycle case ids as other ids (like xform ids)
         # disallow that hard.
-        if doc.doc_type not in ["CommCareCase", "CommCareCase-Deleted"]:
+        if self.domain and doc.domain != self.domain:
+            raise IllegalCaseId("Bad case id")
+
+        if doc.doc_type == 'CommCareCase-Deleted':
+            raise IllegalCaseId("Case [%s] is deleted " % doc.get_id)
+
+        if doc.doc_type != 'CommCareCase':
             raise IllegalCaseId(
                 "Bad case doc type! "
                 "This usually means you are using a bad value for case_id."
             )
-        if self.domain and doc.domain != self.domain:
-            raise IllegalCaseId("Bad case id")
 
     def get(self, case_id):
         if case_id in self.cache:
