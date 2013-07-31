@@ -100,7 +100,6 @@ class BasicPillow(object):
     document_class = None  # couchdbkit Document class
     changes_seen = 0
 
-    @property
     def couch_db(self):
         return self.document_class.get_db()
 
@@ -111,7 +110,7 @@ class BasicPillow(object):
         """
         from couchdbkit import Consumer
 
-        c = Consumer(self.couch_db, backend='gevent')
+        c = Consumer(self.couch_db(), backend='gevent')
         while True:
             try:
                 c.wait(self.parsing_processor, since=self.since, filter=self.couch_filter,
@@ -125,7 +124,7 @@ class BasicPillow(object):
         Couchdbkit > 0.6.0 changes feed listener handler (api changes after this)
         http://couchdbkit.org/docs/changes.html
         """
-        with ChangesStream(self.couch_db, feed='continuous', heartbeat=True, since=self.since,
+        with ChangesStream(self.couch_db(), feed='continuous', heartbeat=True, since=self.since,
                            filter=self.couch_filter, **self.extra_args) as st:
             for c in st:
                 self.processor(c)
@@ -158,16 +157,16 @@ class BasicPillow(object):
     def get_checkpoint(self):
         doc_name = self.get_checkpoint_doc_name()
 
-        if self.couch_db.doc_exist(doc_name):
-            checkpoint_doc = self.couch_db.open_doc(doc_name)
+        if self.couch_db().doc_exist(doc_name):
+            checkpoint_doc = self.couch_db().open_doc(doc_name)
         else:
             #legacy check
             #split doc and see if non_hostname setup exists.
             legacy_name = '.'.join(doc_name.split('.')[0:-1])
             starting_seq = "0"
-            if self.couch_db.doc_exist(legacy_name):
+            if self.couch_db().doc_exist(legacy_name):
                 pillow_logging.info("hostname specific checkpoint not found, searching legacy")
-                legacy_checkpoint = self.couch_db.open_doc(legacy_name)
+                legacy_checkpoint = self.couch_db().open_doc(legacy_name)
                 if not isinstance(legacy_checkpoint['seq'], int):
                     #if it's not an explicit integer, copy it over directly
                     pillow_logging.info("Legacy checkpoint set")
@@ -177,14 +176,14 @@ class BasicPillow(object):
                 "_id": doc_name,
                 "seq": starting_seq
             }
-            self.couch_db.save_doc(checkpoint_doc)
+            self.couch_db().save_doc(checkpoint_doc)
         return checkpoint_doc
 
     def reset_checkpoint(self):
         checkpoint_doc = self.get_checkpoint()
         checkpoint_doc['old_seq'] = checkpoint_doc['seq']
         checkpoint_doc['seq'] = "0"
-        self.couch_db.save_doc(checkpoint_doc)
+        self.couch_db().save_doc(checkpoint_doc)
 
     @property
     def since(self):
@@ -194,7 +193,7 @@ class BasicPillow(object):
     def set_checkpoint(self, change):
         checkpoint = self.get_checkpoint()
         checkpoint['seq'] = change['seq']
-        self.couch_db.save_doc(checkpoint)
+        self.couch_db().save_doc(checkpoint)
 
     def parsing_processor(self, change):
         """
@@ -239,7 +238,7 @@ class BasicPillow(object):
         if changes_dict.get('deleted', False):
             #override deleted behavior on consumers that care/deal with deletions
             return None
-        return self.couch_db.open_doc(changes_dict['id'])
+        return self.couch_db().open_doc(changes_dict['id'])
 
     def change_transform(self, doc_dict):
         """
@@ -351,7 +350,7 @@ class ElasticPillow(BasicPillow):
                               (self.get_doc_path(changes_dict['id']), ex))
             return None
         else:
-            return self.couch_db.open_doc(changes_dict['id'])
+            return self.couch_db().open_doc(changes_dict['id'])
 
     @autoretry_connection()
     def doc_exists(self, doc_id):
