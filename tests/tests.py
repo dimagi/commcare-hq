@@ -161,7 +161,7 @@ class Test(TestCase):
             self.fakedb.add_view('fluff/generic', [
                 (
                     {'reduce': True, 'key': [classname, 'a', 'b', 'value_week', 'null', None]},
-                    [{"key": None, "value": {"count": 3}}]
+                    [{"key": None, "value": {"sum": 3}}]
                 ),
                 (
                     {'reduce': True, 'key': [classname, 'a', 'b', 'value_week', 'null_value', None]},
@@ -179,7 +179,7 @@ class Test(TestCase):
                         'reduce': True},
                     [{"key": None, "value": {"sum": 11}}]
                 )
-                ])
+            ])
             value = cls.get_result('value_week', key, reduce=True)
             self.assertEqual(value['null'], 3)
             self.assertEqual(value['date'], 7)
@@ -271,7 +271,7 @@ class Test(TestCase):
                                 dict(calculator='value_week',
                                      emitter='null',
                                      emitter_type='null',
-                                     reduce_type='count',
+                                     reduce_type='sum',
                                      values=[[None, 1]]),
                                 dict(calculator='value_week',
                                      emitter='null_value',
@@ -287,7 +287,7 @@ class MockDoc(Document):
 
 
 class ValueCalculator(fluff.Calculator):
-    @fluff.custom_date_emitter('sum')
+    @fluff.date_emitter
     def date_value(self, case):
         for action in case.actions:
             yield [action['date'], action['x']]
@@ -296,7 +296,7 @@ class ValueCalculator(fluff.Calculator):
     def null_value(self, case):
         yield [None, 2]
 
-    @fluff.date_emitter
+    @fluff.custom_date_emitter('count')
     def date(self, case):
         for action in case.actions:
             yield action['date']
