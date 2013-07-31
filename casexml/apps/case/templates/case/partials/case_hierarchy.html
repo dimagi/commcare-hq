@@ -97,7 +97,7 @@
                     {% endwith %}
                     {% endif %}
                     
-                    {% if case.case_id != current_case.case_id %}
+                    {% if show_view_buttons and case.case_id != current_case.case_id %}
                     <a class="btn btn-small" href="{{ case.edit_data.view_url }}">
                         <i class="icon-eye-open"></i> {% trans "View" %}
                     </a>

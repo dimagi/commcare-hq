@@ -78,6 +78,7 @@ def render_case(case, options):
         "timezone": timezone,
         "tz_abbrev": tz_abbrev,
         "case_hierarchy_options": {
+            "show_view_buttons": True,
             "get_case_url": get_case_url,
             "timezone": timezone
         }
@@ -237,6 +238,7 @@ def render_case_hierarchy(case, options):
     get_case_url = options.get('get_case_url')
     timezone = options.get('timezone', pytz.utc)
     columns = options.get('columns') or case.related_cases_columns
+    show_view_buttons = options.get('show_view_buttons', True)
     type_info = case.related_type_info
 
     case_list = get_flat_descendant_case_list(
@@ -271,7 +273,8 @@ def render_case_hierarchy(case, options):
         'domain': case.domain,
         'case_list': case_list,
         'columns': columns,
-        'num_columns': len(columns) + 1
+        'num_columns': len(columns) + 1,
+        'show_view_buttons': show_view_buttons,
     })
 
     
