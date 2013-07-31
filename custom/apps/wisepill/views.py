@@ -1,9 +1,8 @@
 from datetime import datetime
 from django.http import HttpResponse, HttpResponseBadRequest
-from django.views.decorators.csrf import csrf_exempt
 from custom.apps.wisepill.models import WisePillDeviceEvent
 from corehq.apps.sms.api import structured_sms_handler
-from casexml.apps.case.models import CommCareCase
+from corehq.apps.sms.models import CommConnectCase
 from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_WISEPILL
 
 @require_api_user_permission(PERMISSION_POST_WISEPILL)
@@ -26,7 +25,9 @@ def device_data(request):
     if device_id is None:
         return HttpResponseBadRequest("Missing 'SN' in data string.")
     
-    case = CommCareCase.view("wisepill/device",
+    # This view lookup is an implicit assert that either one device exists
+    # with the given device_id, or no devices exist with this device_id.
+    case = CommConnectCase.view("wisepill/device",
                              key=[device_id],
                              include_docs=True).one()
     
