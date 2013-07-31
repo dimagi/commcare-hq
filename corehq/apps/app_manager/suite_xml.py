@@ -564,6 +564,8 @@ class SuiteGenerator(object):
             # generate names ['child_id', 'parent_id', 'parent_parent_id', ...]
             datum_ids = [('parent_' * i or 'case_') + 'id'
                          for i in range(len(select_chain))]
+            # iterate backwards like
+            # [..., (2, 'parent_parent_id'), (1, 'parent_id'), (0, 'child_id')]
             for i, module in reversed(list(enumerate(select_chain))):
                 try:
                     parent_id = datum_ids[i + 1]
@@ -577,7 +579,10 @@ class SuiteGenerator(object):
                              + parent_filter),
                     value="./@case_id",
                     detail_select=get_detail_id_safe(module, 'case_short'),
-                    detail_confirm=get_detail_id_safe(module, 'case_long'),
+                    detail_confirm=(
+                        get_detail_id_safe(module, 'case_long')
+                        if i == 0 else None
+                    )
                 ))
 
         for module in self.modules:
