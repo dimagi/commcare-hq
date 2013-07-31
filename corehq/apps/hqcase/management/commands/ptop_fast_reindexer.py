@@ -260,7 +260,7 @@ class PtopReindexer(NoArgsCommand):
             doc_ids = [x['id'] for x in bulk_slice]
             slice_docs = doc_couch_db.all_docs(keys=doc_ids, include_docs=True)
             raw_doc_dict = dict((x['id'], x['doc']) for x in slice_docs.all())
-            self.pillow.couch_db.set_docs(raw_doc_dict)
+            self.pillow.couch_db.set_docs(raw_doc_dict) # update the fake couch instance's set of bulk loaded docs
 
             retries = 0
             bulk_start = datetime.utcnow()
