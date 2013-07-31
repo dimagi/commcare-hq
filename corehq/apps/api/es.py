@@ -9,11 +9,12 @@ from corehq.apps.reports.filters.forms import FormsByApplicationFilter
 from corehq.elastic import get_es
 from django.views.generic import View
 from dimagi.utils.logging import notify_exception
+from corehq.apps.reports.exceptions import BadRequestError
 
 
 DEFAULT_SIZE = 10
 
-class ESUserError(Exception):
+class ESUserError(BadRequestError):
     pass
 
 class ESView(View):
@@ -112,14 +113,15 @@ class ESView(View):
                 new_query = es_query
                 new_query['query']['filtered']['query'] = {"match_all": {}}
                 new_results = self.run_query(new_query, es_type)
-                # if new_query succeeds, raise 400
-                if new_results: # an error with a blank query will return None
+                if new_results: 
+                    # the request succeeded without that query string
+                    # an error with a blank query will return None
                     raise ESUserError("Error with elasticsearch query: %s" %
                         querystring)
 
             msg = "Error in elasticsearch query [%s]: %s\nquery: %s" % (self.index, es_results['error'], es_query)
             notify_exception(None, message=msg)
-            return None # best choice?  Should we raise here?
+            return None
 
         hits = []
         for res in es_results['hits']['hits']:
