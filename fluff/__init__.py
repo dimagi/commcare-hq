@@ -16,7 +16,7 @@ REDUCE_TYPES = set(['sum', 'count', 'min', 'max', 'sumsqr'])
 class base_emitter(object):
     fluff_emitter = ''
 
-    def __init__(self, reduce_type='count'):
+    def __init__(self, reduce_type='sum'):
         assert reduce_type in REDUCE_TYPES, 'Unknown reduce type'
         self.reduce_type = reduce_type
 
