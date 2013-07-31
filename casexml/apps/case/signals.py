@@ -1,8 +1,9 @@
-from django.dispatch.dispatcher import Signal
+from django.dispatch.dispatcher import Signal, receiver
 from dimagi.utils.logging import notify_exception
 from receiver.signals import successful_form_received
 from casexml.apps.phone.models import SyncLog
 from dimagi.utils.decorators.log_exception import log_exception
+from couchforms.signals import xform_archived, xform_unarchived
 
 
 class CaseProcessingConfig(object):
@@ -85,8 +86,16 @@ def process_cases(sender, xform, config=None, **kwargs):
         case.force_save()
     return cases
 
-
 successful_form_received.connect(process_cases)
+
+def rebuild_form_cases(sender, xform, *args, **kwargs):
+    from casexml.apps.case.xform import get_case_ids_from_form
+    from casexml.apps.case.cleanup import rebuild_case
+    for case_id in get_case_ids_from_form(xform):
+        rebuild_case(case_id)
+
+xform_archived.connect(rebuild_form_cases)
+xform_unarchived.connect(rebuild_form_cases)
 
 # any time a case is saved
 case_post_save = Signal(providing_args=["case"])
