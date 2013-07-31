@@ -199,13 +199,8 @@ class CommCareCaseResource(JsonResource, DomainSpecificResourceMixin):
         key = [domain]
         if case_type:
             key.append(case_type)
-        cases = CommCareCase.view('hqcase/all_cases' if closed_only else 'hqcase/open_cases',
-                                  startkey=key,
-                                  endkey=key + [{}],
-                                  include_docs=True,
-                                  reduce=False,
-        ).all()
-
+        status = 'all' if closed_only else 'open'
+        cases = CommCareCase.get_all_cases(domain, case_type=case_type, status=status, include_docs=True)
         return list(cases)
 
 

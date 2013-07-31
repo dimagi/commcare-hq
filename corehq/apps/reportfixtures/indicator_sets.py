@@ -26,6 +26,7 @@ class SqlIndicatorSet(SqlData):
             logger.exception(e)
             return {}
 
+        ret = dict()
         if self.keys and self.group_by:
             for key_group in self.keys:
                 row_key = self._row_key(key_group)
@@ -33,14 +34,14 @@ class SqlIndicatorSet(SqlData):
                 if not row:
                     row = dict(zip(self.group_by, key_group))
 
-                data[row_key] = dict([(c.view.name, self._or_no_value(c.get_value(row))) for c in self.columns])
+                ret[row_key] = dict([(c.view.name, self._or_no_value(c.get_value(row))) for c in self.columns])
         elif self.group_by:
             for k, v in data.items():
-                data[k] = dict([(c.view.name, self._or_no_value(c.get_value(v))) for c in self.columns])
+                ret[k] = dict([(c.view.name, self._or_no_value(c.get_value(v))) for c in self.columns])
         else:
-            data = dict([(c.view.name, self._or_no_value(c.get_value(data))) for c in self.columns])
+            ret = dict([(c.view.name, self._or_no_value(c.get_value(data))) for c in self.columns])
 
-        return data
+        return ret
 
     def _row_key(self, key_group):
         if len(self.group_by) == 1:
