@@ -56,5 +56,5 @@ amqp==1.0.8
 amqplib==1.0.2
 sqlagg==0.1.4
 -e submodules/fluff-src
-ctable==0.0.4
+ctable==0.0.5
 unittest2
