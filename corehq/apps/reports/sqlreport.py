@@ -179,7 +179,7 @@ class SqlData(object):
         """
         The list of report keys (e.g. users) or None to just display all the data returned from the query. Each value
         in this list should be a list of the same dimension as the 'group_by' list. If group_by is None then keys
-        must also be None or an empty list.
+        must also be None.
 
         e.g.
             group_by = ['region', 'sub_region']
@@ -193,7 +193,7 @@ class SqlData(object):
 
     @property
     def data(self):
-        if self.keys and not self.group_by:
+        if self.keys is not None and not self.group_by:
             raise SqlReportException('Keys supplied without group_by.')
 
         qc = self.query_context
@@ -239,7 +239,7 @@ class DataTabulator(object):
     def tabulate(self):
         data = self.sqldata.data
 
-        if self.keys and self.group_by:
+        if self.keys is not None and self.group_by:
             for key_group in self.keys:
                 row_key = self._row_key(key_group)
                 row = data.get(row_key, None)

@@ -54,9 +54,10 @@ class FilteredFormPropertyCalculator(fluff.Calculator):
 
     @fluff.date_emitter
     def total(self, form):
-        if self.indicator_calculator is not None:
+        if self.indicator_calculator:
+            yield default_date(form)
+        else:
             yield [default_date(form), self.indicator_calculator(form)]
-        yield default_date(form)
 
     def __init__(self, xmlns=None, property_path=None, property_value=None,
                  operator=EQUAL, indicator_calculator=None, window=None):
@@ -86,6 +87,7 @@ class FilteredFormPropertyCalculator(fluff.Calculator):
             )
         )
 
+
 # meh this is a little redundant but convenient
 class FormANDCalculator(ANDCalculator):
     window = timedelta(days=1)
@@ -104,7 +106,7 @@ class FormORCalculator(ORCalculator):
 class FormSUMCalculator(ORCalculator):
     window = timedelta(days=1)
 
-    @fluff.custom_date_emitter(reduce_type='sum')
+    @fluff.date_emitter
     def total(self, form):
         for calc in self.calculators:
             if calc.passes_filter(form):
