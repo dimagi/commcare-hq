@@ -15,13 +15,19 @@ RETRY_TIME_DELAY_FACTOR = 15
 
 
 
-class FakeCouchDB(object):
+class FakeCouchDBLoader(object):
     docs = {}
 
     def open_doc(self, doc_id):
         return self.docs.get(doc_id, None)
 
-    def set_docs(self, doc_dict_by_id):
+    def save_doc(self):
+        raise NotImplementedError("Wtf, this is a loader class")
+
+    def fake_set_docs(self, doc_dict_by_id):
+        """
+        A non overriding method - fake set the docs in a dict so open_doc will get it like a regular couch database.
+        """
         self.docs = doc_dict_by_id
 
     def __call__(self):
@@ -255,12 +261,12 @@ class PtopReindexer(NoArgsCommand):
             else:
                 bulk_slice = self.full_view_data[start:]
 
-            self.pillow.couch_db = FakeCouchDB()
+            self.pillow.couch_db = FakeCouchDBLoader()
 
             doc_ids = [x['id'] for x in bulk_slice]
             slice_docs = doc_couch_db.all_docs(keys=doc_ids, include_docs=True)
             raw_doc_dict = dict((x['id'], x['doc']) for x in slice_docs.all())
-            self.pillow.couch_db.set_docs(raw_doc_dict) # update the fake couch instance's set of bulk loaded docs
+            self.pillow.couch_db.fake_set_docs(raw_doc_dict) # update the fake couch instance's set of bulk loaded docs
 
             retries = 0
             bulk_start = datetime.utcnow()
