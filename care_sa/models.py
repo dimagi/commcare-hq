@@ -176,10 +176,11 @@ class CareSAFluff(fluff.IndicatorDocument):
     )
 
     #1m
-    couple_tests = xcalculators.FilteredFormPropertyCalculator(
-        xmlns=HCT_XMLNS,
-        indicator_calculator=xcalculators.IntegerPropertyReference('form/couple_number'),
-    )
+    # TODO ENABLE
+    #couple_tests = xcalculators.FilteredFormPropertyCalculator(
+        #xmlns=HCT_XMLNS,
+        #indicator_calculator=xcalculators.IntegerPropertyReference('form/couple_number'),
+    #)
 
     #2a
     deceased = xcalculators.FilteredFormPropertyCalculator(
@@ -230,7 +231,7 @@ class CareSAFluff(fluff.IndicatorDocument):
         [internal_new_patient, internal_on_bactrim]
     )
 
-    #2k TODO
+    #2k
     internal_on_arv = xcalculators.FilteredFormPropertyCalculator(
         xmlns=HBC_XMLNS,
         property_path='form/on_arv',
@@ -249,13 +250,21 @@ class CareSAFluff(fluff.IndicatorDocument):
             internal_on_arv
         ]
     )
-    #internal_tb_re_screening = xcalculators.FilteredFormPropertyCalculator(
+    internal_tb_re_screening = xcalculators.FilteredFormPropertyCalculator(
+        xmlns=HBC_XMLNS,
+        property_path='form/tb_re_screening',
+        operator=xcalculators.ANY,
+    )
 
-    #hiv_on_care_screened_for_tb = xcalculators.FormANDCalculator(
-        #[internal_hiv_care, internal_tb_re_screening]
-    #)
+    hiv_on_care_screened_for_tb = xcalculators.FormANDCalculator(
+        [internal_hiv_care, internal_tb_re_screening]
+    )
 
-    #2l TODO
+    #2l
+    family_screened = xcalculators.FilteredFormPropertyCalculator(
+        xmlns=HBC_XMLNS,
+        indicator_calculator=xcalculators.IntegerPropertyReference('form/number_family', lambda x: x-1),
+    )
 
     #3a
     hiv_pos_enrolled = xcalculators.FilteredFormPropertyCalculator(
@@ -304,11 +313,10 @@ class CareSAFluff(fluff.IndicatorDocument):
     iact_participant_arv = xcalculators.FormANDCalculator(
         [internal_iact_not_complete, internal_on_arv]
     )
-
     #3j...n TODO
 
 
     class Meta:
-        app_label = 'care-sa'
+        app_label = 'care_sa'
 
 CareSAFluffPillow = CareSAFluff.pillow()

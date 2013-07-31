@@ -24,8 +24,8 @@ class CareReport(SqlTabularReport,
 
     fields = [
         'corehq.apps.reports.fields.DatespanField',
-        'care-sa.reports.sql.ProvinceField',
-        'care-sa.reports.sql.CBOField',
+        'care_sa.reports.sql.ProvinceField',
+        'care_sa.reports.sql.CBOField',
     ]
 
     def selected_province(self):
@@ -117,14 +117,14 @@ class CareAndTBHIV(CareReport):
     report_columns = [
         ['Number of deceased patients', 'deceased'],  # 2a
         #['Number of patients lost to follow-up', TODO],  # 2b
-        #TODO not in form['Patients discharged from the program',  # 2c
+        #not in form['Patients discharged from the program',  # 2c
         ['Patients completed TB treatment', 'tb_treatment_completed'],  # 2d
         #TODO NO DATA ['Existing HIV+ individuals who received CBC', 'received_cbc'],  # 2e
         #['New HIV+ individuals who received CBC', TODO],  # 2f
         # 2g
         ['HIV infected patients newly started on IPT', 'new_hiv_starting_ipt'],  # 2h
         ['HIV infected patients newly receiving Bactrim', 'new_hiv_starting_bactrim'],  # 2i
-        #['Clinically malnourished patients newly received therapeutic or supl food',  # 2k
-        #['HIV+ patients receiving HIV care who are screened for symptoms of TB',
-        #['Family members screened for symptoms of TB',
+        #not in form['Clinically malnourished patients newly received therapeutic or supl food',  # 2j
+        ['HIV+ patients receiving HIV care who are screened for symptoms of TB', 'hiv_on_care_screened_for_tb'],  # 2k
+        ['Family members screened for symptoms of TB', 'family_screened'],  # 2l
     ]
