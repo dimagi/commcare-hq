@@ -115,9 +115,9 @@ class DemoReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
 
     @property
     def columns(self):
-        user = DatabaseColumn("Username1", "user", column_type=SimpleColumn, format_fn=self.username)
-        i_a = DatabaseColumn("Indicator A", "indicator_a")
-        i_b = DatabaseColumn("Indicator B", "indicator_b")
+        user = DatabaseColumn("Username1", SimpleColumn("user"), format_fn=self.username)
+        i_a = DatabaseColumn("Indicator A", SumColumn("indicator_a"))
+        i_b = DatabaseColumn("Indicator B", SumColumn("indicator_b"))
 
         agg_c_d = AggregateColumn("C/D", self.calc_percentage,
                                   SumColumn("indicator_c"),
