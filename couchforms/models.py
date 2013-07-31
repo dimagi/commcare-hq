@@ -13,7 +13,7 @@ from couchdbkit.resource import ResourceNotFound
 import logging
 import hashlib
 from copy import copy
-from couchforms.signals import xform_archived
+from couchforms.signals import xform_archived, xform_unarchived
 from dimagi.utils.mixins import UnicodeMixIn
 from couchforms.const import ATTACHMENT_NAME
 from couchdbkit.exceptions import PreconditionFailed
@@ -69,11 +69,22 @@ class Metadata(DocumentSchema):
     deprecatedID = StringProperty()
     username = StringProperty()
 
+class XFormOperation(DocumentSchema):
+    """
+    Simple structure to represent something happening to a form.
+
+    Currently used just by the archive workflow.
+    """
+    user = StringProperty()
+    date = DateTimeProperty(default=datetime.datetime.utcnow)
+    operation = StringProperty() # e.g. "archived", "unarchived"
+
 class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin):
     """An XForms instance."""
     xmlns = StringProperty()
     received_on = DateTimeProperty()
     partial_submission = BooleanProperty(default=False) # Used to tag forms that were forcefully submitted without a touchforms session completing normally
+    history = SchemaListProperty(XFormOperation)
     
     @property
     def get_form(self):
@@ -96,7 +107,7 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin):
     @property
     def _form(self):
         return self[const.TAG_FORM]
-    
+
     @property
     def type(self):
         return self._form.get(const.TAG_TYPE, "")
@@ -229,10 +240,23 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin):
             to_return[key] = self.xpath('form/' + key)
         return to_return
 
-    def archive(self):
+    def archive(self, user=None):
         self.doc_type = "XFormArchived"
+        self.history.append(XFormOperation(
+            user=user,
+            operation='archive',
+        ))
         self.save()
         xform_archived.send(sender="couchforms", xform=self)
+
+    def unarchive(self, user=None):
+        self.doc_type = "XFormInstance"
+        self.history.append(XFormOperation(
+            user=user,
+            operation='unarchive',
+        ))
+        XFormInstance.save(self) # subclasses explicitly set the doc type so force regular save
+        xform_unarchived.send(sender="couchforms", xform=self)
 
 class XFormError(XFormInstance):
     """
@@ -276,7 +300,6 @@ class XFormArchived(XFormError):
     """
     Archived forms don't show up in reports
     """
-    archived_date = DateTimeProperty(default=datetime.datetime.utcnow)
 
     def save(self, *args, **kwargs):
         # force set the doc type and call the right superclass
