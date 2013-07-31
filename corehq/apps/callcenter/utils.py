@@ -3,8 +3,8 @@ from casexml.apps.case.xml import V2
 import uuid
 from xml.etree import ElementTree
 from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_domain_hq_user_id
-from couchdbkit.exceptions import MultipleResultsFound, NoResultFound
-from ctable.models import SqlExtractMapping, ColumnDef, KeyMatcher
+from couchdbkit.exceptions import MultipleResultsFound
+from ctable.models import SqlExtractMapping, ColumnDef
 
 
 MAPPING_NAME_FORMS = 'cc_form_submissions'
@@ -72,7 +72,6 @@ def bootstrap_callcenter(domain):
     create_case_mapping(domain)
 
 
-# TODO: remove match_keys from columns once ctable 0.0.5 is out
 def create_form_mapping(domain):
     mapping = get_or_create_mapping(domain, MAPPING_NAME_FORMS)
 
@@ -84,9 +83,9 @@ def create_form_mapping(domain):
         ColumnDef(name="user_id", data_type="string", value_source="key", value_index=3),
         ColumnDef(name="xmlns", data_type="string", value_source="key", value_index=4),
         ColumnDef(name="duration_sum", data_type="integer", value_source="value",
-                  value_attribute='sum', match_keys=[KeyMatcher(index=0, value="dux")]),
+                  value_attribute='sum'),
         ColumnDef(name="sumbission_count", data_type="integer", value_source="value",
-                  value_attribute='count', match_keys=[KeyMatcher(index=0, value="dux")]),
+                  value_attribute='count'),
     ]
     mapping.save()
 
@@ -101,8 +100,7 @@ def create_case_mapping(domain):
                   date_format="%Y-%m-%dT%H:%M:%SZ"),
         ColumnDef(name="user_id", data_type="string", value_source="key", value_index=2),
         ColumnDef(name="case_type", data_type="string", value_source="key", value_index=3),
-        ColumnDef(name="case_updates", data_type="integer", value_source="value",
-                  match_keys=[KeyMatcher(index=0, value=domain.name)]),
+        ColumnDef(name="case_updates", data_type="integer", value_source="value"),
     ]
     mapping.save()
 
