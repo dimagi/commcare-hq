@@ -3,6 +3,7 @@ from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml
 from casexml.apps.case.models import CommCareCase
 from datetime import datetime
 from django.test import TestCase
+from corehq.apps.domain.shortcuts import create_domain
 from dimagi.utils.parsing import json_format_datetime
 
 CLOSE_CASE_XML = """<?xml version='1.0' ?>
@@ -68,6 +69,7 @@ class ForceCloseCaseTest(TestCase):
     def test_close(self):
         case_id = 'uid_blah_3'
         domain = "test.domain"
+        create_domain(domain)
         case = bootstrap_case_from_xml(
             self,
             filename='create.xml',

@@ -2,10 +2,10 @@
 {% load cache %}
 <ul class="nav" role="menu">
     {% for tab in tabs %}
-    {% cache 500 header_tab tab.domain tab.org tab.view tab.is_active tab.couch_user.get_id %}
+    {% cache 500 header_tab tab.domain tab.org tab.view tab.is_active_tab tab.couch_user.get_id %}
     {% with tab.dropdown_items as items %}
         <li id="mainmenu-{{ tab.css_id }}"
-            class="{% if items %}dropdown{% endif %}{% if tab.is_active %} active{% endif %}">
+            class="{% if items %}dropdown{% endif %}{% if tab.is_active_tab %} active{% endif %}">
             <a {% if items %}class="dropdown-toggle" data-toggle="dropdown"{% endif %}
                href="{{ tab.url }}">
                 {% trans tab.title %}{% if items %} <b class="caret"></b>{% endif %}

@@ -12,10 +12,11 @@ from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 from couchexport.groupexports import export_for_group
 from dimagi.utils.logging import notify_exception
 from couchexport.tasks import cache_file_to_be_served
+from django.conf import settings
 
 logging = get_task_logger(__name__)
 
-@periodic_task(run_every=crontab(hour=[8,14], minute="0", day_of_week="*"))
+@periodic_task(run_every=crontab(hour=[8,14], minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def check_es_index():
     """
     Verify that the Case and soon to be added XForm Elastic indices are up to date with what's in couch
@@ -68,7 +69,7 @@ def create_metadata_export(download_id, domain, format, filename):
 
     return cache_file_to_be_served(tmp_path, FakeCheckpoint(domain), download_id, format, filename)
 
-@periodic_task(run_every=crontab(hour="*", minute="0", day_of_week="*"))
+@periodic_task(run_every=crontab(hour="*", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def daily_reports():    
     # this should get called every hour by celery
     reps = ReportNotification.view("reportconfig/daily_notifications",
@@ -77,7 +78,7 @@ def daily_reports():
     for rep in reps:
         send_report.delay(rep._id)
 
-@periodic_task(run_every=crontab(hour="*", minute="1", day_of_week="*"))
+@periodic_task(run_every=crontab(hour="*", minute="1", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def weekly_reports():    
     # this should get called every hour by celery
     now = datetime.utcnow()
@@ -87,12 +88,12 @@ def weekly_reports():
     for rep in reps:
         send_report.delay(rep._id)
 
-@periodic_task(run_every=crontab(hour=[0,12], minute="0", day_of_week="*"))
+@periodic_task(run_every=crontab(hour=[0,12], minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def saved_exports():    
     for row in HQGroupExportConfiguration.view("groupexport/by_domain", reduce=False).all():
         export_for_group(row["id"], "couch")
 
-@periodic_task(run_every=crontab(hour="12, 22", minute="0", day_of_week="*"))
+@periodic_task(run_every=crontab(hour="12, 22", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def update_calculated_properties():
     es = get_es()
 
