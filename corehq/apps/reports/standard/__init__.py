@@ -40,7 +40,7 @@ class CustomProjectReport(ProjectReport):
 class CommCareUserMemoizer(object):
 
     @memoized
-    def by_domain(self, domain, is_active=False):
+    def by_domain(self, domain, is_active=True):
         users = CommCareUser.by_domain(domain, is_active=is_active)
         for user in users:
             # put users in the cache for get_by_user_id

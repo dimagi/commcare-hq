@@ -59,6 +59,13 @@
                 if (value !== valueNoSpaces) {
                     $(this).val(valueNoSpaces);
                 }
+                if (!valueNoSpaces.match(/^[\w-]+$/g)) {
+                    $(this).closest('.control-group').addClass('error')
+                    $('#case_type_error').css('display', 'inline');
+                } else {
+                    $(this).closest('.control-group').removeClass('error')
+                    $('#case_type_error').css('display', 'none');
+                }
             });
         });
         $(function () {
@@ -151,7 +158,10 @@
                     </label>
                     <div class="controls">
                         {% if edit %}
-                            <input class="code" type="text" id="case_type" name="case_type" value="{{ module.case_type }}"/>
+                            <input class="code" type="text" id="case_type" name="case_type" value="{{ module.case_type }}" />
+                            <span class="help-inline" id="case_type_error" style="display: none;">
+                                {% trans "Case types can only include the characters a-z, 0-9, and _" %}
+                            </span>
                         {% else %}
                             <code>{{ module.case_type }}</code>
                         {% endif %}
@@ -244,7 +254,7 @@
                                 <th></th>
                                 <th>{% trans "Property" %}</th>
                                 <th>{% trans "Direction" %}</th>
-                                <th>{% trans "Type" %}</th>
+                                <th>{% trans "Format" %}</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -264,19 +274,22 @@
 
                                 <td>
                                     <select data-bind="value: direction">
-                                        <option value="ascending">
-                                            {% trans "Ascending" %}
+                                        <option value="ascending"
+                                                data-bind="text: ascendText">
                                         </option>
-                                        <option value="descending">
-                                            {% trans "Descending" %}
+                                        <option value="descending"
+                                                data-bind="text: descendText">
                                         </option>
                                     </select>
                                 </td>
 
                                 <td>
                                     <select data-bind="value: type">
-                                        <option value="string">
+                                        <option value="plain">
                                             {% trans "Plain" %}
+                                        </option>
+                                        <option value="date">
+                                            {% trans "Date" %}
                                         </option>
                                         <option value="int">
                                             {% trans "Integer" %}

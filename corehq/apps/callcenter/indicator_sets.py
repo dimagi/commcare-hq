@@ -42,13 +42,17 @@ class CallCenter(SqlIndicatorSet):
     @property
     def columns(self):
         return [
-            DatabaseColumn("case", 'user_id', SimpleColumn, format_fn=self.get_user_case_id, sortable=False),
-            DatabaseColumn('formsSubmittedInLastWeek', 'sumbission_count', SumColumn,
-                alias='last_week', sortable=False),
-            DatabaseColumn('formsSubmittedInWeekPrior', 'sumbission_count', SumColumn,
-                filters=['date >= :2weekago', 'date < :weekago'], alias='week_prior', sortable=False),
-            DatabaseColumn('formsSubmittedIn30days', 'sumbission_count', SumColumn,
-                filters=['date >= :30daysago', 'date < :today'], alias='30_days', sortable=False),
+            DatabaseColumn("case", SimpleColumn('user_id'), format_fn=self.get_user_case_id, sortable=False),
+            DatabaseColumn('formsSubmittedInLastWeek', SumColumn('sumbission_count', alias='last_week'),
+                sortable=False),
+            DatabaseColumn('formsSubmittedInWeekPrior', SumColumn('sumbission_count',
+                                                                  filters=['date >= :2weekago', 'date < :weekago'],
+                                                                  alias='week_prior'),
+                sortable=False),
+            DatabaseColumn('formsSubmittedIn30days', SumColumn('sumbission_count',
+                                                               filters=['date >= :30daysago', 'date < :today'],
+                                                               alias='30_days'),
+                sortable=False),
         ]
 
     @property

@@ -147,12 +147,6 @@ def commcare_user():
 def hq_web_user():
     return _(settings.WEB_USER_TERM)
 
-@register.simple_tag
-def is_url_active(request, matching_string=""):
-    if request.path_info.startswith(matching_string):
-        return ' class="active"'
-    return ""
-
 @register.filter
 def mod(value, arg):
     return value % arg

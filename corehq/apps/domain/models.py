@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from couchdbkit.ext.django.schema import (Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
                                           DocumentSchema, SchemaProperty, DictProperty, ListProperty,
-                                          StringListProperty)
+                                          StringListProperty, SchemaListProperty)
 from django.utils.safestring import mark_safe
 from corehq.apps.appstore.models import Review, SnapshotMixin
 from corehq.apps.domain.utils import get_domain_module_map
@@ -180,6 +180,19 @@ class CaseDisplaySettings(DocumentSchema):
 
     # todo: case list
 
+class DynamicReportConfig(DocumentSchema):
+    """configurations of generic/template reports to be set up for this domain"""
+    report = StringProperty() # fully-qualified path to template report class
+    name = StringProperty() # report display name in sidebar
+    kwargs = DictProperty() # arbitrary settings to configure report
+
+class DynamicReportSet(DocumentSchema):
+    """a set of dynamic reports grouped under a section header in the sidebar"""
+    section_title = StringProperty()
+    reports = SchemaListProperty(DynamicReportConfig)
+
+
+
 
 class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     """Domain is the highest level collection of people/stuff
@@ -211,6 +224,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     case_display = SchemaProperty(CaseDisplaySettings)
 
     # CommConnect settings
+    commconnect_enabled = BooleanProperty(default=False)
     survey_management_enabled = BooleanProperty(default=False)
     sms_case_registration_enabled = BooleanProperty(default=False) # Whether or not a case can register via sms
     sms_case_registration_type = StringProperty() # Case type to apply to cases registered via sms
@@ -246,6 +260,8 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     cached_properties = DictProperty()
 
     internal = SchemaProperty(InternalProperties)
+
+    dynamic_reports = SchemaListProperty(DynamicReportSet)
 
     # extra user specified properties
     tags = StringListProperty()

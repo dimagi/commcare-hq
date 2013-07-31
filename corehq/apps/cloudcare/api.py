@@ -126,15 +126,7 @@ class CaseAPIHelper(object):
             return base_results
 
     def get_all(self, domain):
-        key = [domain, self.case_type or {}, {}]
-        view_name = 'hqcase/open_cases' if self.status == CASE_STATUS_OPEN else 'hqcase/all_cases'
-        view_results = CommCareCase.get_db().view(
-            view_name,
-            startkey=key,
-            endkey=key + [{}],
-            include_docs=False,
-            reduce=False,
-        )
+        view_results = CommCareCase.get_all_cases(domain, case_type=self.case_type, status=self.status)
         ids = [res["id"] for res in view_results]
         return self._case_results(ids)
 

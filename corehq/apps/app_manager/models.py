@@ -67,15 +67,7 @@ easy_install pygooglechart.  Until you do that this won't work.
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
-CASE_PROPERTY_MAP = {
-    # IMPORTANT: if you edit this you probably want to also edit
-    # the corresponding map in cloudcare 
-    # (corehq.apps.cloudcare.static.cloudcare.js.backbone.cases.js)
-    'external-id': 'external_id',
-    'date-opened': 'date_opened',
-    'status': '@status',
-    'name': 'case_name',
-}
+FIELD_SEPARATOR = ':'
 
 ATTACHMENT_REGEX = r'[^/]*\.xml'
 
@@ -349,11 +341,20 @@ class FormBase(DocumentSchema):
             try:
                 XForm(self.source).validate(version=self.get_app().application_version)
             except XFormValidationError as e:
-                vc = self.validation_cache = unicode(e)
+                validation_dict = {
+                    "fatal_error": e.fatal_error,
+                    "validation_problems": e.validation_problems,
+                    "version": e.version,
+                }
+                vc = self.validation_cache = json.dumps(validation_dict)
             else:
                 vc = self.validation_cache = ""
         if vc:
-            raise XFormValidationError(vc)
+            try:
+                raise XFormValidationError(**json.loads(vc))
+            except ValueError:
+                self.validation_cache = None
+                return self.validate_form()
         return self
 
     def validate_for_build(self):
@@ -388,6 +389,13 @@ class FormBase(DocumentSchema):
             logging.error("Failed: _parse_xml(string=%r)" % self.source)
             raise
         else:
+            try:
+                self.validate_form()
+            except XFormValidationError as e:
+                error = {'type': 'validation error', 'validation_message': unicode(e)}
+                error.update(meta)
+                errors.append(error)
+
             for error in self.check_actions():
                 error.update(meta)
                 errors.append(error)
@@ -666,6 +674,20 @@ class DetailColumn(IndexedSchema):
         for dct in (self.header, self.enum):
             _rename_key(dct, old_lang, new_lang)
 
+    @property
+    def field_type(self):
+        if FIELD_SEPARATOR in self.field:
+            return self.field.split(FIELD_SEPARATOR, 1)[0]
+        else:
+            return 'property'  # equivalent to property:parent/case_property
+
+    @property
+    def field_property(self):
+        if FIELD_SEPARATOR in self.field:
+            return self.field.split(FIELD_SEPARATOR, 1)[1]
+        else:
+            return self.field
+
     class TimeAgoInterval(object):
         map = {
             'day': 1.0,
@@ -679,22 +701,6 @@ class DetailColumn(IndexedSchema):
                 return cls.map['year']
             elif format == 'months-ago':
                 return cls.map['month']
-
-    @property
-    def xpath(self):
-        """
-        Convert special names like date-opened to their casedb xpath equivalent (e.g. @date_opened).
-        Only ever called by 2.0 apps.
-        """
-        parts = self.field.split('/')
-        parts[-1] = CASE_PROPERTY_MAP.get(parts[-1], parts[-1])
-        property = parts.pop()
-        indexes = parts
-
-        case = CaseXPath('')
-        for index in indexes:
-            case = case.index_id(index).case()
-        return case.property(property)
 
     @classmethod
     def wrap(cls, data):
@@ -767,7 +773,6 @@ class Detail(IndexedSchema):
     def display(self):
         return "short" if self.type.endswith('short') else 'long'
 
-
     def filter_xpath(self):
 
         filters = []
@@ -776,6 +781,7 @@ class Detail(IndexedSchema):
                 filters.append("(%s)" % column.filter_xpath.replace('.', '%s_%s_%s' % (column.model, column.field, i + 1)))
         xpath = ' and '.join(filters)
         return partial_escape(xpath)
+
 
 class CaseList(IndexedSchema):
     label = DictProperty()
@@ -853,12 +859,14 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
         for val in ("referral", "case", "none"):
             if val in r:
                 return val
+
     def detail_types(self):
         return {
             "referral": ["case_short", "case_long", "ref_short", "ref_long"],
             "case": ["case_short", "case_long"],
             "none": []
         }[self.requires()]
+
     def requires_case_details(self):
         ret = False
         if self.case_list.show:
@@ -1301,11 +1309,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
                 i = setting['values'].index(value)
                 assert i != -1
                 name = _(setting['value_names'][i])
-                raise AppError(_(
+                raise AppError(
                     '%s Text Input is not supported '
                     'in CommCare versions before %s.%s. '
                     '(You are using %s.%s)'
-                ) % ((name,) + setting_version + my_version))
+                ) % ((name,) + setting_version + my_version)
 
 
     @property
@@ -1365,6 +1373,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         except Exception as e:
             if settings.DEBUG:
                 raise
+            logging.exception('Unexpected error building app')
             errors.append({'type': 'error', 'message': 'unexpected error: %s' % e})
         return errors
 
@@ -1493,7 +1502,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     show_user_registration = BooleanProperty(default=False, required=True)
     modules = SchemaListProperty(Module)
     name = StringProperty()
-    profile = DictProperty() #SchemaProperty(Profile)
+    profile = DictProperty()  # SchemaProperty(Profile)
     use_custom_suite = BooleanProperty(default=False)
     force_http = BooleanProperty(default=False)
     cloudcare_enabled = BooleanProperty(default=False)
@@ -1991,7 +2000,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     )
                 )
 
-
         for form in self.get_forms():
             errors.extend(form.validate_for_build())
 
@@ -2117,17 +2125,23 @@ class RemoteApp(ApplicationBase):
         }
         tree = _parse_xml(files['profile.xml'])
 
-        def add_file_from_path(path):
+        def add_file_from_path(path, strict=False):
             try:
                 loc = tree.find(path).text
             except (TypeError, AttributeError):
-                return
+                if strict:
+                    raise AppError("problem with file path reference!")
+                else:
+                    return
             loc, file = self.fetch_file(loc)
             files[loc] = file
             return loc, file
 
         add_file_from_path('features/users/logo')
-        _, suite = add_file_from_path(self.SUITE_XPATH)
+        try:
+            _, suite = add_file_from_path(self.SUITE_XPATH, strict=True)
+        except AppError:
+            raise AppError(ugettext('Problem loading suite file from profile file. Is your profile file correct?'))
 
         suite_xml = _parse_xml(suite)
 

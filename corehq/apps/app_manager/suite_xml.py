@@ -6,6 +6,23 @@ from corehq.apps.app_manager.xform import SESSION_CASE_ID
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
 
+FIELD_TYPE_INDICATOR = 'indicator'
+FIELD_TYPE_PROPERTY = 'property'
+
+
+class OrderedXmlObject(XmlObject):
+    ORDER = ()
+
+    def __init__(self, *args, **kwargs):
+        ordered_pairs = []
+        for attr in self.ORDER:
+            value = kwargs.pop(attr, None)
+            if value:
+                ordered_pairs.append((attr, value))
+        super(OrderedXmlObject, self).__init__(*args, **kwargs)
+        for attr, value in ordered_pairs:
+            setattr(self, attr, value)
+
 
 class IdNode(XmlObject):
     id = StringField('@id')
@@ -45,8 +62,8 @@ class Text(XmlObject):
     locale_id = StringField('locale/@id')
 
 
-class AbstractResource(XmlObject):
-
+class AbstractResource(OrderedXmlObject):
+    ORDER = ('id', 'version', 'local', 'remote')
     LOCATION_TEMPLATE = 'resource/location[@authority="%s"]'
 
     local = StringField(LOCATION_TEMPLATE % 'local', required=True)
@@ -54,13 +71,6 @@ class AbstractResource(XmlObject):
 
     version = IntegerField('resource/@version')
     id = StringField('resource/@id')
-
-    def __init__(self, id=None, version=None, local=None, remote=None, **kwargs):
-        super(AbstractResource, self).__init__(**kwargs)
-        self.id = id
-        self.version = version
-        self.local = local
-        self.remote = remote
 
 
 class XFormResource(AbstractResource):
@@ -77,16 +87,12 @@ class MediaResource(AbstractResource):
     path = StringField('@path')
 
 
-class Display(XmlObject):
+class Display(OrderedXmlObject):
     ROOT_NAME = 'display'
+    ORDER = ('text', 'media_image', 'media_audio')
     text = NodeField('text', Text)
     media_image = StringField('media/@image')
     media_audio = StringField('media/@audio')
-
-    def __init__(self, text=None, media_image=None, media_audio=None, **kwargs):
-        super(Display, self).__init__(text=text, **kwargs)
-        self.media_image = media_image
-        self.media_audio = media_audio
 
 
 class DisplayNode(XmlObject):
@@ -112,18 +118,16 @@ class Command(DisplayNode, IdNode):
     relevant = StringField('@relevant')
 
 
-class Instance(IdNode):
+class Instance(IdNode, OrderedXmlObject):
     ROOT_NAME = 'instance'
+    ORDER = ('id', 'src')
 
     src = StringField('@src')
 
-    def __init__(self, id=None, src=None, **kwargs):
-        super(Instance, self).__init__(id=id, **kwargs)
-        self.src = src
 
-
-class SessionDatum(IdNode):
+class SessionDatum(IdNode, OrderedXmlObject):
     ROOT_NAME = 'datum'
+    ORDER = ('id', 'nodeset', 'value', 'detail_select', 'detail_confirm')
 
     nodeset = StringField('@nodeset')
     value = StringField('@value')
@@ -171,27 +175,14 @@ class Sort(AbstractTemplate):
     direction = StringField('@direction')
 
 
-class Field(XmlObject):
+class Field(OrderedXmlObject):
     ROOT_NAME = 'field'
+    ORDER = ('header', 'template', 'sort_node')
 
     sort = StringField('@sort')
     header = NodeField('header', Header)
     template = NodeField('template', Template)
     sort_node = NodeField('sort', Sort)
-
-    def __init__(self, *args, **kwargs):
-        super(Field, self).__init__(*args)
-
-        header = kwargs.get('header')
-        template = kwargs.get('template')
-        sort_node = kwargs.get('sort_node')
-
-        if header:
-            self.header = header
-        if template:
-            self.template = template
-        if sort_node:
-            self.sort_node = sort_node
 
 
 class DetailVariable(XmlObject):
@@ -205,6 +196,12 @@ class DetailVariable(XmlObject):
         self.node.tag = value
 
     name = property(get_name, set_name)
+
+
+class DetailVariableList(XmlObject):
+    ROOT_NAME = 'variables'
+
+    variables = NodeListField('_', DetailVariable)
 
 
 class Detail(IdNode):
@@ -224,8 +221,22 @@ class Detail(IdNode):
     ROOT_NAME = 'detail'
 
     title = NodeField('title/text', Text)
-    variables = NodeListField('variables/*', DetailVariable)
     fields = NodeListField('field', Field)
+    _variables = NodeField('variables', DetailVariableList)
+
+    def _init_variables(self):
+        if self._variables is None:
+            self._variables = DetailVariableList()
+
+    def get_variables(self):
+        self._init_variables()
+        return self._variables.variables
+
+    def set_variables(self, value):
+        self._init_variables()
+        self._variables.variables = value
+
+    variables = property(get_variables, set_variables)
 
 
 class Fixture(IdNode):
@@ -320,6 +331,9 @@ class IdStrings(object):
     def referral_list_locale(self, module):
         """1.0 holdover"""
         return module.get_referral_list_locale_id()
+
+    def indicator_instance(self, indicator_set_name):
+        return u"indicators_%s" % indicator_set_name
 
 
 class MediaResourceError(Exception):
@@ -430,6 +444,20 @@ class SuiteGenerator(object):
                                 )
                                 detail.append_column(dc)
 
+                            # need to add a default here so that it doesn't
+                            # get persisted
+                            if self.app.enable_multi_sort and \
+                               len(module.detail_sort_elements) == 0:
+                                from corehq.apps.app_manager.models import SortElement
+                                try:
+                                    se = SortElement()
+                                    se.field = detail.columns[0].field
+                                    se.type = 'string'
+                                    se.direction = 'ascending'
+                                    module.detail_sort_elements.append(se)
+                                except Exception:
+                                    pass
+
                         for column in detail.get_columns():
                             fields = get_column_generator(self.app, module, detail, column).fields
                             d.fields.extend(fields)
@@ -471,18 +499,18 @@ class SuiteGenerator(object):
                         module.all_forms_require_a_case():
                     yield Instance(id='commcaresession',
                                    src='jr://instance/session')
+
+                indicator_sets = []
+                for detail in module.get_details():
+                    for column in detail.get_columns():
+                        if column.field_type == FIELD_TYPE_INDICATOR:
+                            indicator_set, _ = column.field_property.split('/', 1)
+                            if indicator_set not in indicator_sets:
+                                indicator_sets.append(indicator_set)
+                                yield Instance(id=self.id_strings.indicator_instance(indicator_set),
+                                       src='jr://fixture/indicators:%s' % indicator_set)
+
             e.instances.extend(get_instances())
-
-
-            # I'm setting things individually instead of in the constructor
-            # so that they appear in the correct order
-            e.datum = SessionDatum()
-            e.datum.id='case_id'
-            e.datum.nodeset="instance('casedb')/casedb/case[@case_type='{module.case_type}'][@status='open']{filter_xpath}".format(
-                module=module,
-                filter_xpath=self.get_filter_xpath(module) if use_filter else ''
-            )
-            e.datum.value="./@case_id"
 
             detail_ids = [detail.id for detail in self.details]
 
@@ -493,8 +521,16 @@ class SuiteGenerator(object):
                 )
                 return detail_id if detail_id in detail_ids else None
 
-            e.datum.detail_select = get_detail_id_safe('case_short')
-            e.datum.detail_confirm = get_detail_id_safe('case_long')
+            e.datum = SessionDatum(
+                id='case_id',
+                nodeset="instance('casedb')/casedb/case[@case_type='{module.case_type}'][@status='open']{filter_xpath}".format(
+                    module=module,
+                    filter_xpath=self.get_filter_xpath(module) if use_filter else '',
+                ),
+                value="./@case_id",
+                detail_select=get_detail_id_safe('case_short'),
+                detail_confirm=get_detail_id_safe('case_long'),
+            )
 
         for module in self.modules:
             for form in module.get_forms():

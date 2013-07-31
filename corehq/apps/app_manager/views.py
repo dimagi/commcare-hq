@@ -344,30 +344,17 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
             form_errors.append("Syntax Error: %s" % e)
         except AppError as e:
             form_errors.append("Error in application: %s" % e)
-        except XFormValidationError as e:
-
-            # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'
-            #
-            # ... and if possible split the third line that looks like e.g. "org.javarosa.xform.parse.XFormParseException: Select question has no choices"
-            # and just return the undecorated string
-            #
-            # ... unless the first line says
-            message_lines = unicode(e).split('\n')[2:]
-            if len(message_lines) > 0 and ':' in message_lines[0] and 'XPath Dependency Cycle' not in unicode(e):
-                message = ' '.join(message_lines[0].split(':')[1:])
-            else:
-                message = '\n'.join(message_lines)
-                
-            message = "Validation Error: " + message
-            form_errors.append((html.escape(message).replace('\n', '<br/>'), {'extra_tags': 'html'}))
-
+        except XFormValidationError:
+            # showing these messages is handled by validate_form_for_build ajax
+            pass
         except XFormError as e:
             form_errors.append("Error in form: %s" % e)
-        # any other kind of error should fail hard, but for now there are too many for that to be practical
+        # any other kind of error should fail hard,
+        # but for now there are too many for that to be practical
         except Exception as e:
             if settings.DEBUG:
                 raise
-            logging.exception(e)
+            notify_exception(request, 'Unexpected Build Error')
             form_errors.append("Unexpected System Error: %s" % e)
 
         try:
@@ -691,7 +678,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'force_edit': force_edit,
         'error':error,
         'app': app,
-        })
+    })
     response = render(req, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
@@ -935,7 +922,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
             # todo: something better than nothing when invalid
             module["case_type"] = case_type
         else:
-            resp['update'].update({'#case_type': module['case_type']})
+            return HttpResponseBadRequest("case type is improperly formatted")
     if should_edit("put_in_root"):
         module["put_in_root"] = json.loads(req.POST.get("put_in_root"))
     for attribute in ("name", "case_label", "referral_label"):
@@ -982,21 +969,6 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
             detail.sort_elements.append(item)
 
         del screens['sort_elements']
-
-    if app.enable_multi_sort and len(detail.sort_elements) == 0:
-        # if we are using new sort style, we need to force a default
-        try:
-            default = screens['case_short'][0]
-            item = SortElement()
-            item.field = default['field']
-            item.type = ''
-            item.direction = 'ascending'
-            detail.sort_elements.append(item)
-        except Exception:
-            # if it errors, we don't have any thing to sort by so
-            # can just skip it
-            pass
-
 
     for detail_type in screens:
         if detail_type not in DETAIL_TYPES:

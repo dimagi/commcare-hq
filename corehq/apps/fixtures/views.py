@@ -241,7 +241,7 @@ def download_item_lists(request, domain):
             groups = [group.name for group in item_row.get_groups()] + _get_empty_list(max_groups - len(item_row.get_groups()))
             users = [user.raw_username for user in item_row.get_users()] + _get_empty_list(max_users - len(item_row.get_users()))
             data_row = tuple([str(_id_from_doc(item_row)), "N"] +
-                             [item_row.fields[field] or "" for field in fields] +
+                             [item_row.fields.get(field, None) or "" for field in fields] +
                              groups + users)
             data_table_of_type.append(data_row)
         type_schema.extend(fields)
