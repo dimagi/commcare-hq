@@ -927,7 +927,7 @@ def archive_form(request, domain, instance_id):
     elif instance.doc_type == "XFormArchived":
         notif_msg = _("Form was already archived.")
     else:
-        notif_msg = _("Can't archive documents of type %(s). How did you get here??") % instance.doc_type
+        notif_msg = _("Can't archive documents of type %s. How did you get here??") % instance.doc_type
     
     params = {
         "notif": notif_msg,
