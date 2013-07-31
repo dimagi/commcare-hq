@@ -132,6 +132,31 @@ class CaseRebuildTest(TestCase):
         self._assertListEqual(original_form_ids, case.xform_ids)
 
 
+    def testArchivingOnlyForm(self):
+        """
+        Checks that archiving the only form associated with the case archives
+        the case and unarchiving unarchives it.
+        """
+        case_id = post_util(create=True, p1='p1-1', p2='p2-1')
+        case = CommCareCase.get(case_id)
+
+        self.assertEqual('CommCareCase', case._doc['doc_type'])
+        self.assertEqual(2, len(case.actions))
+        [form_id] = case.xform_ids
+        form = XFormInstance.get(form_id)
+
+        form.archive()
+        case = CommCareCase.get(case_id)
+
+        self.assertEqual('CommCareCase-Deleted', case._doc['doc_type'])
+        self.assertEqual(0, len(case.actions))
+
+        form.unarchive()
+        case = CommCareCase.get(case_id)
+        self.assertEqual('CommCareCase', case._doc['doc_type'])
+        self.assertEqual(2, len(case.actions))
+
+
     def testFormArchiving(self):
         now = datetime.utcnow()
         # make sure we timestamp everything so they have the right order
