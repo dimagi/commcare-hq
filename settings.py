@@ -245,6 +245,9 @@ HQ_APPS = (
     'pathindia',
     'pact',
     'psi',
+
+    'custom.reports.mc',
+
 )
 
 TEST_APPS = ()
@@ -655,6 +658,8 @@ COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label
 COUCHDB_DATABASES += [
     ('bihar', COUCH_DATABASE + '__fluff-bihar'),
     ('fluff', COUCH_DATABASE + '__fluff-bihar'),
+    ('mc', COUCH_DATABASE + '__fluff-mc'),
+    ('fluff', COUCH_DATABASE + '__fluff-mc'),
 ]
 
 INSTALLED_APPS += LOCAL_APPS
@@ -743,6 +748,7 @@ PILLOWTOPS = [
 
                  # fluff
                  'bihar.models.CareBiharFluffPillow',
+                 'mc.models.MalariaConsortiumFluffPillow',
              ] + LOCAL_PILLOWTOPS
 
 
@@ -781,6 +787,7 @@ DOMAIN_MODULE_MAP = {
     'eagles-fahu': 'dca',
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
+    'mc-inscale': 'custom.reports.mc',
     'mvp-potou': 'mvp',
     'mvp-sauri': 'mvp',
     'mvp-bonsaaso': 'mvp',
