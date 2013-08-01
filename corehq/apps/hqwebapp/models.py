@@ -622,7 +622,9 @@ class AdminReportsTab(UITab):
             ]),
             (_('Administrative Operations'), [
                 {'title': _('View/Update Domain Information'),
-                 'url': reverse('domain_update')}
+                 'url': reverse('domain_update')},
+                {'title': _('Mass Email Users'),
+                 'url': reverse('mass_email')}
             ])
         ]
     
