@@ -23,6 +23,7 @@ from django.core import cache
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.app_manager.util import get_settings_values
 from corehq.apps.hqadmin.models import HqDeploy
+from corehq.apps.hqadmin.forms import EmailForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index, check_xform_index
@@ -37,7 +38,7 @@ from dimagi.utils.couch.database import get_db, is_bigcouch
 from corehq.apps.domain.decorators import  require_superuser
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
-from dimagi.utils.web import json_response
+from dimagi.utils.web import json_response, get_url_base
 from couchexport.export import export_raw, export_from_tables
 from couchexport.shortcuts import export_response
 from couchexport.models import Format
@@ -47,6 +48,8 @@ from django.utils import html
 from dimagi.utils.timezones import utils as tz_utils
 from django.utils.translation import ugettext as _
 from django.core import management
+from dimagi.utils.django.email import send_HTML_email
+from django.template.loader import render_to_string
 
 @require_superuser
 def default(request):
@@ -421,6 +424,50 @@ def mobile_user_reports(request):
     context["rows"] = rows
 
     return render(request, template, context)
+
+@require_superuser
+def mass_email(request):
+    if request.method == "POST":
+
+        form = EmailForm(request.POST)
+        if form.is_valid():
+            subject = form.cleaned_data['email_subject']
+            body = form.cleaned_data['email_body']
+
+            #recipients = WebUser.view(
+                #'users/mailing_list_emails',
+                #reduce=False,
+                #include_docs=True,
+            #).all()
+
+            recipients = [
+                CommCareUser.get_by_username('twymer@dimagi.com'),
+                CommCareUser.get_by_username('asagoff@dimagi.com'),
+            ]
+
+            for recipient in recipients:
+                params = {
+                    'email_body': body,
+                    'user_id': recipient.get_id,
+                    'unsub_url': get_url_base() +
+                                 reverse('unsubscribe', args=[recipient.get_id])
+                }
+                text_content = render_to_string("hqadmin/email/mass_email_base.txt", params)
+                html_content = render_to_string("hqadmin/email/mass_email_base.html", params)
+
+                send_HTML_email(subject, recipient.email, html_content, text_content)
+
+            from django.contrib import messages
+            messages.add_message(request, messages.SUCCESS, 'Your email(s) were sent successfully.')
+
+    else:
+        form = EmailForm()
+
+    context = get_hqadmin_base_context(request)
+    context['hide_filters'] = True
+    context['form'] = form
+    return render(request, "hqadmin/mass_email.html", context)
+
 
 @require_superuser
 @get_file("file")
