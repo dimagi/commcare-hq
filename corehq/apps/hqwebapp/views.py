@@ -23,6 +23,7 @@ from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthent
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from dimagi.utils.logging import notify_exception
+from django.utils.translation import ugettext as _
 
 from dimagi.utils.web import get_url_base, json_response
 from django.core.urlresolvers import reverse
@@ -392,3 +393,13 @@ def apache_license(request):
 def bsd_license(request):
     return render_static(request, "bsd_license.html")
 
+def unsubscribe(request, user_id):
+    user = CouchUser.get_by_user_id(user_id)
+    domain = user.get_domains()[0]
+    from django.contrib import messages
+    messages.info(request,
+                  _('Check "Opt out of emails about new features '
+                    'and other CommCare updates." below and then '
+                    'click "Update Information" if you do '
+                    'not want to receive future emails from us.'))
+    return HttpResponseRedirect(reverse('commcare_user_account', args=[domain, user_id]))
