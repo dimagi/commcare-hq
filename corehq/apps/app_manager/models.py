@@ -1713,7 +1713,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         })
         return s
 
-    def create_profile(self, is_odk=False, template='app_manager/profile.xml'):
+    def create_profile(self, is_odk=False, with_media=False, template='app_manager/profile.xml'):
         app_profile = defaultdict(dict)
         app_profile.update(self.profile)
         # the following code is to let HQ override CommCare defaults
@@ -1739,7 +1739,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'key_server_url': self.key_server_url,
             'post_test_url': self.post_url,
             'ota_restore_url': self.ota_restore_url,
-            'cc_user_domain': cc_user_domain(self.domain)
+            'cc_user_domain': cc_user_domain(self.domain),
+            'include_media_suite': with_media,
         }).decode('utf-8')
 
     @property
@@ -1778,10 +1779,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         files = {
             'profile.xml': self.create_profile(is_odk=False),
             'profile.ccpr': self.create_profile(is_odk=True),
+            'media_profile.xml': self.create_profile(is_odk=False, with_media=True),
+            'media_profile.ccpr': self.create_profile(is_odk=True, with_media=True),
             'suite.xml': self.create_suite(),
+            'media_suite.xml': self.create_media_suite(),
         }
-        if self.include_media_resources:
-            files['media_suite.xml'] = self.create_media_suite()
 
         for lang in ['default'] + self.build_langs:
             files["%s/app_strings.txt" % lang] = self.create_app_strings(lang)
