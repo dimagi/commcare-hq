@@ -111,15 +111,15 @@ def format_sidebar(context):
                 else:
                     nav['is_active'] = False
 
-                if 'children' in nav:
-                    for child in nav['children']:
-                        if child['urlname'] == current_url_name:
-                            if callable(child['title']):
+                if 'subpages' in nav:
+                    for subpage in nav['subpages']:
+                        if subpage['urlname'] == current_url_name:
+                            if callable(subpage['title']):
                                 actual_context = {}
                                 for d in context.dicts:
                                     actual_context.update(d)
-                                child['title'] = child['title'](**actual_context)
-                            nav['child'] = child
+                                subpage['title'] = subpage['title'](**actual_context)
+                            nav['subpage'] = subpage
                             break
 
     return mark_safe(render_to_string("hqwebapp/partials/sidebar.html", {

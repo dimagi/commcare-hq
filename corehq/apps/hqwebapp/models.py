@@ -393,7 +393,7 @@ class MessagingTab(UITab):
             (_("Data Collection and Reminders"), [
                 {'title': _("Reminders"),
                  'url': reverse('list_reminders', args=[self.domain]),
-                 'children': [
+                 'subpages': [
                      {'title': reminder_subtitle,
                       'urlname': 'edit_complex'},
                      {'title': _("New Reminder Definition"),
@@ -405,7 +405,7 @@ class MessagingTab(UITab):
 
                 {'title': _("Keywords"),
                  'url': reverse('manage_keywords', args=[self.domain]),
-                 'children': [
+                 'subpages': [
                      {'title': keyword_subtitle,
                       'urlname': 'edit_keyword'},
                      {'title': _("New Keyword"),
@@ -429,7 +429,7 @@ class MessagingTab(UITab):
                 (_("Survey Management"), [
                     {'title': _("Samples"),
                      'url': reverse('sample_list', args=[self.domain]),
-                     'children': [
+                     'subpages': [
                          {'title': sample_title,
                           'urlname': 'edit_sample'},
                          {'title': _("New Sample"),
@@ -437,7 +437,7 @@ class MessagingTab(UITab):
                      ]},
                     {'title': _("Surveys"),
                      'url': reverse('survey_list', args=[self.domain]),
-                     'children': [
+                     'subpages': [
                          {'title': survey_title,
                           'urlname': 'edit_survey'},
                          {'title': _("New Survey"),
@@ -451,7 +451,6 @@ class MessagingTab(UITab):
     @property
     def dropdown_items(self):
         return []
-
 
 
 class ProjectSettingsTab(UITab):
@@ -490,7 +489,7 @@ class ProjectSettingsTab(UITab):
             items.append((_('Mobile Users'), [
                 {'title': _('Mobile Workers'),
                  'url': reverse('commcare_users', args=[self.domain]),
-                 'children': [
+                 'subpages': [
                      {'title': commcare_username,
                       'urlname': 'commcare_user_account'},
                      {'title': _('New Mobile Worker'),
@@ -503,7 +502,7 @@ class ProjectSettingsTab(UITab):
 
                 {'title': _('Groups'),
                  'url': reverse('all_groups', args=[self.domain]),
-                 'children': [
+                 'subpages': [
                      {'title': lambda **context: (
                          "%s %s" % (_("Editing"), context['group'].name)),
                       'urlname': 'group_members'},
@@ -526,7 +525,7 @@ class ProjectSettingsTab(UITab):
             items.append((_('CommCare HQ Users'), [
                 {'title': _('Web Users'),
                  'url': reverse('web_users', args=[self.domain]),
-                 'children': [
+                 'subpages': [
                      {'title': _("Invite Web User"),
                       'urlname': 'invite_web_user'},
                      {'title': web_username,
@@ -579,7 +578,7 @@ class ProjectSettingsTab(UITab):
             administration.extend([
                 {'title': _('Data Forwarding'),
                  'url': reverse('domain_forwarding', args=[self.domain]),
-                 'children': [
+                 'subpages': [
                      {'title': forward_name,
                       'urlname': 'add_repeater'}
                  ]}
