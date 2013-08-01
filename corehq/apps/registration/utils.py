@@ -17,14 +17,14 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     username = form.cleaned_data['email']
     password = form.cleaned_data['password']
     full_name = form.cleaned_data['full_name']
-    email_opt_in = form.cleaned_data['email_opt_in']
+    mailing_list_choice = form.cleaned_data['mailing_list_choice']
     now = datetime.utcnow()
 
     new_user = WebUser.create(domain, username, password, is_admin=is_domain_admin)
     new_user.first_name = full_name[0]
     new_user.last_name = full_name[1]
     new_user.email = username
-    new_user.email_opt_in = email_opt_in
+    new_user.email_opt_out = not mailing_list_choice
 
     new_user.eula.signed = True
     new_user.eula.date = now

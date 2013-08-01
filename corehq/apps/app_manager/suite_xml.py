@@ -10,6 +10,20 @@ FIELD_TYPE_INDICATOR = 'indicator'
 FIELD_TYPE_PROPERTY = 'property'
 
 
+class OrderedXmlObject(XmlObject):
+    ORDER = ()
+
+    def __init__(self, *args, **kwargs):
+        ordered_pairs = []
+        for attr in self.ORDER:
+            value = kwargs.pop(attr, None)
+            if value:
+                ordered_pairs.append((attr, value))
+        super(OrderedXmlObject, self).__init__(*args, **kwargs)
+        for attr, value in ordered_pairs:
+            setattr(self, attr, value)
+
+
 class IdNode(XmlObject):
     id = StringField('@id')
 
@@ -48,8 +62,8 @@ class Text(XmlObject):
     locale_id = StringField('locale/@id')
 
 
-class AbstractResource(XmlObject):
-
+class AbstractResource(OrderedXmlObject):
+    ORDER = ('id', 'version', 'local', 'remote')
     LOCATION_TEMPLATE = 'resource/location[@authority="%s"]'
 
     local = StringField(LOCATION_TEMPLATE % 'local', required=True)
@@ -57,13 +71,6 @@ class AbstractResource(XmlObject):
 
     version = IntegerField('resource/@version')
     id = StringField('resource/@id')
-
-    def __init__(self, id=None, version=None, local=None, remote=None, **kwargs):
-        super(AbstractResource, self).__init__(**kwargs)
-        self.id = id
-        self.version = version
-        self.local = local
-        self.remote = remote
 
 
 class XFormResource(AbstractResource):
@@ -80,16 +87,12 @@ class MediaResource(AbstractResource):
     path = StringField('@path')
 
 
-class Display(XmlObject):
+class Display(OrderedXmlObject):
     ROOT_NAME = 'display'
+    ORDER = ('text', 'media_image', 'media_audio')
     text = NodeField('text', Text)
     media_image = StringField('media/@image')
     media_audio = StringField('media/@audio')
-
-    def __init__(self, text=None, media_image=None, media_audio=None, **kwargs):
-        super(Display, self).__init__(text=text, **kwargs)
-        self.media_image = media_image
-        self.media_audio = media_audio
 
 
 class DisplayNode(XmlObject):
@@ -115,18 +118,16 @@ class Command(DisplayNode, IdNode):
     relevant = StringField('@relevant')
 
 
-class Instance(IdNode):
+class Instance(IdNode, OrderedXmlObject):
     ROOT_NAME = 'instance'
+    ORDER = ('id', 'src')
 
     src = StringField('@src')
 
-    def __init__(self, id=None, src=None, **kwargs):
-        super(Instance, self).__init__(id=id, **kwargs)
-        self.src = src
 
-
-class SessionDatum(IdNode):
+class SessionDatum(IdNode, OrderedXmlObject):
     ROOT_NAME = 'datum'
+    ORDER = ('id', 'nodeset', 'value', 'detail_select', 'detail_confirm')
 
     nodeset = StringField('@nodeset')
     value = StringField('@value')
@@ -174,27 +175,14 @@ class Sort(AbstractTemplate):
     direction = StringField('@direction')
 
 
-class Field(XmlObject):
+class Field(OrderedXmlObject):
     ROOT_NAME = 'field'
+    ORDER = ('header', 'template', 'sort_node')
 
     sort = StringField('@sort')
     header = NodeField('header', Header)
     template = NodeField('template', Template)
     sort_node = NodeField('sort', Sort)
-
-    def __init__(self, *args, **kwargs):
-        super(Field, self).__init__(*args)
-
-        header = kwargs.get('header')
-        template = kwargs.get('template')
-        sort_node = kwargs.get('sort_node')
-
-        if header:
-            self.header = header
-        if template:
-            self.template = template
-        if sort_node:
-            self.sort_node = sort_node
 
 
 class DetailVariable(XmlObject):
@@ -351,6 +339,9 @@ class IdStrings(object):
 class MediaResourceError(Exception):
     pass
 
+class ParentModuleReferenceError(Exception):
+    pass
+
 
 class SuiteGenerator(object):
     def __init__(self, app):
@@ -502,13 +493,49 @@ class SuiteGenerator(object):
             xpath += "[start_date = '' or double(date(start_date)) <= double(now())]"
         return xpath
 
+    def get_nodeset_xpath(self, module, use_filter):
+        return "instance('casedb')/casedb/case[@case_type='{case_type}'][@status='open']{filter_xpath}".format(
+            case_type=module.case_type,
+            filter_xpath=self.get_filter_xpath(module) if use_filter else '',
+        )
+
+    def get_parent_filter(self, module, parent_id):
+        return "[index/{relationship}=instance('commcaresession')/session/data/{parent_id}]".format(
+            relationship=module.parent_select.relationship,
+            parent_id=parent_id,
+        )
+
+    def get_module_by_id(self, module_id):
+        try:
+            [parent_module] = (
+                module for module in self.app.get_modules()
+                if module.unique_id == module_id
+            )
+        except ValueError:
+            raise ParentModuleReferenceError(
+                "Module %s in app %s not found" % (module_id, self.app)
+            )
+        else:
+            return parent_module
+
+    def get_select_chain(self, module):
+        select_chain = [module]
+        current_module = module
+        while current_module.parent_select.active:
+            current_module = self.get_module_by_id(
+                current_module.parent_select.module_id
+            )
+            select_chain.append(current_module)
+        return select_chain
+
     @property
     def entries(self):
         def add_case_stuff(module, e, use_filter=False):
             def get_instances():
                 yield Instance(id='casedb', src='jr://instance/casedb')
-                if any([form.form_filter for form in module.get_forms()]) and \
-                        module.all_forms_require_a_case():
+                if (any(form.form_filter for form in module.get_forms())
+                    and module.all_forms_require_a_case()) \
+                    or module.parent_select.active:
                     yield Instance(id='commcaresession',
                                    src='jr://instance/session')
 
@@ -524,28 +551,39 @@ class SuiteGenerator(object):
 
             e.instances.extend(get_instances())
 
-
-            # I'm setting things individually instead of in the constructor
-            # so that they appear in the correct order
-            e.datum = SessionDatum()
-            e.datum.id = 'case_id'
-            e.datum.nodeset = "instance('casedb')/casedb/case[@case_type='{module.case_type}'][@status='open']{filter_xpath}".format(
-                module=module,
-                filter_xpath=self.get_filter_xpath(module) if use_filter else ''
-            )
-            e.datum.value = "./@case_id"
-
             detail_ids = [detail.id for detail in self.details]
 
-            def get_detail_id_safe(detail_type):
+            def get_detail_id_safe(module, detail_type):
                 detail_id = self.id_strings.detail(
                     module=module,
                     detail=module.get_detail(detail_type)
                 )
                 return detail_id if detail_id in detail_ids else None
 
-            e.datum.detail_select = get_detail_id_safe('case_short')
-            e.datum.detail_confirm = get_detail_id_safe('case_long')
+            select_chain = self.get_select_chain(module)
+            # generate names ['child_id', 'parent_id', 'parent_parent_id', ...]
+            datum_ids = [('parent_' * i or 'case_') + 'id'
+                         for i in range(len(select_chain))]
+            # iterate backwards like
+            # [..., (2, 'parent_parent_id'), (1, 'parent_id'), (0, 'child_id')]
+            for i, module in reversed(list(enumerate(select_chain))):
+                try:
+                    parent_id = datum_ids[i + 1]
+                except IndexError:
+                    parent_filter = ''
+                else:
+                    parent_filter = self.get_parent_filter(module, parent_id)
+                e.datums.append(SessionDatum(
+                    id=datum_ids[i],
+                    nodeset=(self.get_nodeset_xpath(module, use_filter)
+                             + parent_filter),
+                    value="./@case_id",
+                    detail_select=get_detail_id_safe(module, 'case_short'),
+                    detail_confirm=(
+                        get_detail_id_safe(module, 'case_long')
+                        if i == 0 else None
+                    )
+                ))
 
         for module in self.modules:
             for form in module.get_forms():

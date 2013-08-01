@@ -47,7 +47,7 @@ if not hasattr(env, 'code_branch'):
 
 env.home = "/home/cchq"
 env.selenium_url = 'http://jenkins.dimagi.com/job/commcare-hq-post-deploy/buildWithParameters?token=%(token)s&TARGET=%(environment)s'
-
+env.should_migrate = False # Default to safety
 env.roledefs = {
         'django_celery': [],
         'django_app': [],
@@ -67,6 +67,35 @@ env.roledefs = {
         'deploy': [], #a placeholder to ensure deploy only runs once on a bogus, non functioning task, to split out the real tasks in the execute() block
 
     }
+
+def format_env(current_env):
+    """
+    formats the current env to be a foo=bar,sna=fu type paring
+    this is used for the make_supervisor_conf management command to pass current enviroment to make the supervisor conf files remotely
+    instead of having to upload them from the fabfile.
+
+    This is somewhat hacky in that we're going to cherry pick the env vars we want and make a custom dict to return
+    """
+    ret = dict()
+    important_props = [
+        'environment',
+        'code_root',
+        'log_dir',
+        'sudo_user',
+        'host_string',
+        'project',
+        'es_endpoint',
+        'jython_home',
+        'virtualenv_root',
+        'django_port',
+        'flower_port',
+    ]
+
+    for prop in important_props:
+        ret[prop] = current_env.get(prop, '')
+    return ','.join(['%s=%s' % (k, v) for k, v in ret.items()])
+
+
 
 @task
 def _setup_path():
@@ -116,6 +145,7 @@ def staging():
     _setup_path()
     env.user = prompt("Username: ", default='dimagivm')
     env.es_endpoint = 'localhost'
+    env.should_migrate = True
 
 @task
 def india():
@@ -126,6 +156,7 @@ def india():
     env.hosts = ['220.226.209.82']
     env.user = prompt("Username: ", default=env.user)
     env.django_port = '8001'
+    env.should_migrate = True
 
     _setup_path()
     env.virtualenv_root = posixpath.join(env.home, '.virtualenvs/commcarehq')
@@ -148,6 +179,7 @@ def india():
     }
     env.roles = ['django_monolith']
     env.es_endpoint = 'localhost'
+    env.flower_port = 5555
 
 @task
 def production():
@@ -156,6 +188,7 @@ def production():
     env.environment = 'production'
     env.django_port = '9010'
     env.code_branch = 'master'
+    env.should_migrate = True
 
     #env.hosts = None
     env.roledefs = {
@@ -182,6 +215,7 @@ def production():
     env.host_os_map = None # e.g. 'ubuntu' or 'redhat'.  Gets autopopulated by what_os() if you don't know what it is or don't want to specify.
     env.roles = ['deploy', ]
     env.es_endpoint = 'hqes0.internal.commcarehq.org'''
+    env.flower_port = 5555
 
     _setup_path()
 
@@ -197,6 +231,7 @@ def realstaging():
     env.environment = 'staging'
     env.django_port = '9010'
 
+    env.should_migrate = True
 
     #env.hosts = None
     env.roledefs = {
@@ -221,6 +256,7 @@ def realstaging():
     env.settings = '%(project)s.localsettings' % env
     env.host_os_map = None # e.g. 'ubuntu' or 'redhat'.  Gets autopopulated by what_os() if you don't know what it is or don't want to specify.
     env.roles = ['deploy', ]
+    env.flower_port = 5555
 
     _setup_path()
     
@@ -232,6 +268,7 @@ def preview():
     env.environment = 'preview'
     env.django_port = '7999'
     #env.hosts = None
+    env.should_migrate = False
 
     env.roledefs = {
         'couch': [],
@@ -255,6 +292,7 @@ def preview():
     env.settings = '%(project)s.localsettings' % env
     env.host_os_map = None # e.g. 'ubuntu' or 'redhat'.  Gets autopopulated by what_os() if you don't know what it is or don't want to specify.
     env.roles = ['deploy', ]
+    env.flower_port = 5556
 
     _setup_path()
 
@@ -409,6 +447,9 @@ def clone_repo():
 @task
 @roles('pg', 'django_monolith')
 def preindex_views():
+    if not env.should_migrate:
+        utils.abort('Skipping preindex_views for "%s" because should_migrate = False' % env.environment)
+        
     with cd(env.code_root_preindex):
         #update the codebase of the preindex dir...
         update_code(preindex=True)
@@ -448,9 +489,10 @@ def mail_admins(subject, message):
 @roles('pg', 'django_monolith')
 def record_successful_deploy():
     with cd(env.code_root):
-        sudo('%(virtualenv_root)s/bin/python manage.py record_deploy_success --user "%(user)s"' % \
+        sudo('%(virtualenv_root)s/bin/python manage.py record_deploy_success --user "%(user)s" --environment "%(environment)s" --mail_admins' % \
              {'virtualenv_root': env.virtualenv_root,
-              'user': env.user },
+              'user': env.user,
+              'environment': env.environment},
         user=env.sudo_user)
 
 @task
@@ -460,7 +502,6 @@ def deploy():
        not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False):
         utils.abort('Deployment aborted.')
 
-
     require('root', provided_by=('staging', 'preview', 'production', 'india'))
     run('echo ping!') #hack/workaround for delayed console response
 
@@ -468,16 +509,17 @@ def deploy():
         execute(update_code)
         execute(update_virtualenv)
         execute(clear_services_dir)
-        upload_and_set_supervisor_config()
-        execute(migrate)
+        set_supervisor_config()
+        if env.should_migrate:
+            execute(migrate)
         execute(_do_collectstatic)
         execute(version_static)
-        execute(flip_es_aliases)
+        if env.should_migrate:
+            execute(flip_es_aliases)
     except Exception:
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
         raise
     else:
-        execute(mail_admins, "Deploy successful", "Cheers.")
         execute(record_successful_deploy)
     finally:
         # hopefully bring the server back to life if anything goes wrong
@@ -531,9 +573,21 @@ def touch_supervisor():
 @roles('django_app', 'django_celery', 'django_monolith')
 @parallel
 def clear_services_dir():
-    #remove old confs from directory first
-    services_dir =  posixpath.join(env.services, u'supervisor', 'supervisor_*.conf')
-    sudo('rm -f %s' % services_dir, user=env.sudo_user)
+    """
+    remove old confs from directory first
+    the clear_supervisor_confs management command will scan the directory and find prefixed conf files of the supervisord files
+    and delete them matching the prefix of the current server environment
+    """
+    services_dir = posixpath.join(env.services, u'supervisor')
+    with cd(env.code_root):
+        sudo(
+            '%(virtualenv_root)s/bin/python manage.py clear_supervisor_confs --conf_location "%(conf_location)s"' %
+            {
+                'virtualenv_root': env.virtualenv_root,
+                'conf_location': services_dir,
+            }, user=env.sudo_user
+        )
+
 
 @roles('lb')
 def configtest():
@@ -681,66 +735,63 @@ def commit_locale_changes():
         sudo('-H -u %s git commit -m "updating translation"' % env.sudo_user, user=env.sudo_user)
     local('git pull ssh://%s%s' % (env.host, env.code_root))
 
-def _upload_supervisor_conf_file(filename):
-    upload_dict = {}
-    upload_dict['hostname'] = env.host_string
-    upload_dict["template"] = posixpath.join(os.path.dirname(__file__), 'services', 'templates', filename)
-    upload_dict["destination"] = '/tmp/%s.blah' % filename
-    upload_dict["enabled"] =  posixpath.join(env.services, u'supervisor/%s' % filename)
-
-    sudo ('rm -f /tmp/%s' % filename, shell=False)
-    files.upload_template(upload_dict["template"], upload_dict["destination"], context=env, use_sudo=False, backup=False)
-    sudo('chown -R %s %s' % (env.sudo_user, upload_dict["destination"]), shell=False)
-    #sudo('chgrp -R %s %s' % (env.apache_user, upload_dict["destination"]))
-    sudo('chmod -R g+w %(destination)s' % upload_dict, shell=False)
-    sudo('mv -f %(destination)s %(enabled)s' % upload_dict, shell=False)
+def _rebuild_supervisor_conf_file(filename):
+    with cd(env.code_root):
+        sudo(
+            '%(virtualenv_root)s/bin/python manage.py make_supervisor_conf --conf_file "%(filename)s" --conf_destination "%(destination)s" --params "%(params)s"' % {
+                'virtualenv_root': env.virtualenv_root,
+                'filename': filename,
+                'destination': posixpath.join(env.services, 'supervisor'),
+                'params': format_env(env)
+            },
+            user=env.sudo_user)
 
 @roles('django_celery', 'django_monolith')
-def upload_celery_supervisorconf():
-    _upload_supervisor_conf_file('supervisor_celery_main.conf')
+def set_celery_supervisorconf():
+    _rebuild_supervisor_conf_file('supervisor_celery_main.conf')
 
     #hacky hack to not
     #have staging environments send out reminders
     if env.environment not in ['staging', 'preview', 'realstaging']:
-        _upload_supervisor_conf_file('supervisor_celery_beat.conf')
-        _upload_supervisor_conf_file('supervisor_celery_periodic.conf')
-    _upload_supervisor_conf_file('supervisor_celery_flower.conf')
-    _upload_supervisor_conf_file('supervisor_couchdb_lucene.conf') #to be deprecated
+        _rebuild_supervisor_conf_file('supervisor_celery_beat.conf')
+        _rebuild_supervisor_conf_file('supervisor_celery_periodic.conf')
+    _rebuild_supervisor_conf_file('supervisor_celery_flower.conf')
+    _rebuild_supervisor_conf_file('supervisor_couchdb_lucene.conf') #to be deprecated
 
     #in reality this also should be another machine if the number of listeners gets too high
-    _upload_supervisor_conf_file('supervisor_pillowtop.conf')
+    _rebuild_supervisor_conf_file('supervisor_pillowtop.conf')
 
 
 
 
 @roles('django_celery', 'django_monolith')
-def upload_sofabed_supervisorconf():
-    _upload_supervisor_conf_file('supervisor_sofabed.conf')
-    _upload_supervisor_conf_file('supervisor_sync_domains.conf')
+def set_sofabed_supervisorconf():
+    _rebuild_supervisor_conf_file('supervisor_sofabed.conf')
+    _rebuild_supervisor_conf_file('supervisor_sync_domains.conf')
 
 @roles('django_app', 'django_monolith')
-def upload_djangoapp_supervisorconf():
-    _upload_supervisor_conf_file('supervisor_django.conf')
+def set_djangoapp_supervisorconf():
+    _rebuild_supervisor_conf_file('supervisor_django.conf')
 
 
 @roles('remote_es')
-def upload_elasticsearch_supervisorconf():
-    _upload_supervisor_conf_file('supervisor_elasticsearch.conf')
+def set_elasticsearch_supervisorconf():
+    _rebuild_supervisor_conf_file('supervisor_elasticsearch.conf')
 
 @roles('formsplayer', 'django_monolith')
-def upload_formsplayer_supervisorconf():
-    _upload_supervisor_conf_file('supervisor_formsplayer.conf')
+def set_formsplayer_supervisorconf():
+    _rebuild_supervisor_conf_file('supervisor_formsplayer.conf')
 
-def upload_and_set_supervisor_config():
+def set_supervisor_config():
     """Upload and link Supervisor configuration from the template."""
     require('environment', provided_by=('staging', 'preview', 'demo', 'production', 'india'))
-    execute(upload_celery_supervisorconf)
-    execute(upload_sofabed_supervisorconf)
-    execute(upload_djangoapp_supervisorconf)
-    execute(upload_formsplayer_supervisorconf)
+    execute(set_celery_supervisorconf)
+    execute(set_sofabed_supervisorconf)
+    execute(set_djangoapp_supervisorconf)
+    execute(set_formsplayer_supervisorconf)
 
     #if needing tunneled ES setup, comment this back in
-    #execute(upload_elasticsearch_supervisorconf)
+    #execute(set_elasticsearch_supervisorconf)
 
 
 

@@ -389,6 +389,13 @@ class FormBase(DocumentSchema):
             logging.error("Failed: _parse_xml(string=%r)" % self.source)
             raise
         else:
+            try:
+                self.validate_form()
+            except XFormValidationError as e:
+                error = {'type': 'validation error', 'validation_message': unicode(e)}
+                error.update(meta)
+                errors.append(error)
+
             for error in self.check_actions():
                 error.update(meta)
                 errors.append(error)
@@ -775,6 +782,7 @@ class Detail(IndexedSchema):
         xpath = ' and '.join(filters)
         return partial_escape(xpath)
 
+
 class CaseList(IndexedSchema):
     label = DictProperty()
     show = BooleanProperty(default=False)
@@ -782,6 +790,13 @@ class CaseList(IndexedSchema):
     def rename_lang(self, old_lang, new_lang):
         for dct in (self.label,):
             _rename_key(dct, old_lang, new_lang)
+
+
+class ParentSelect(DocumentSchema):
+    active = BooleanProperty(default=False)
+    relationship = StringProperty(default='parent')
+    module_id = StringProperty()
+
 
 class Module(IndexedSchema, NavMenuItemMediaMixin):
     """
@@ -799,6 +814,22 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
     case_list = SchemaProperty(CaseList)
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
+    parent_select = SchemaProperty(ParentSelect)
+    unique_id = StringProperty()
+
+    def get_or_create_unique_id(self):
+        """
+        It is the caller's responsibility to save the Application
+        after calling this function.
+
+        WARNING: If called on the same doc in different requests without saving,
+        this function will return a different uuid each time,
+        likely causing unexpected behavior
+
+        """
+        if not self.unique_id:
+            self.unique_id = FormBase.generate_id()
+        return self.unique_id
 
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
@@ -1494,7 +1525,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     show_user_registration = BooleanProperty(default=False, required=True)
     modules = SchemaListProperty(Module)
     name = StringProperty()
-    profile = DictProperty() #SchemaProperty(Profile)
+    profile = DictProperty()  # SchemaProperty(Profile)
     use_custom_suite = BooleanProperty(default=False)
     force_http = BooleanProperty(default=False)
     cloudcare_enabled = BooleanProperty(default=False)
@@ -1991,7 +2022,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                         needs_case_detail=True
                     )
                 )
-
 
         for form in self.get_forms():
             errors.extend(form.validate_for_build())

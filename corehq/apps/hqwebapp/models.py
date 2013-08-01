@@ -615,7 +615,9 @@ class AdminReportsTab(UITab):
             ]),
             (_('Administrative Operations'), [
                 {'title': _('View/Update Domain Information'),
-                 'url': reverse('domain_update')}
+                 'url': reverse('domain_update')},
+                {'title': _('Mass Email Users'),
+                 'url': reverse('mass_email')}
             ])
         ]
     
@@ -736,14 +738,6 @@ class OrgReportTab(OrgTab):
 class OrgSettingsTab(OrgTab):
     title = ugettext_noop("Settings")
     view = "corehq.apps.orgs.views.orgs_landing"
-
-    @property
-    def is_active(self):
-        # HACK. We need a more overarching way to avoid doing things this way -- copied this strat from above usage...
-        if self.org and 'o/%s/reports' % self.org.name in self._request.get_full_path():
-            return False
-
-        return super(OrgSettingsTab, self).is_active
 
     @property
     def dropdown_items(self):

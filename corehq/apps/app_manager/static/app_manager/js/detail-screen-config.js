@@ -84,6 +84,32 @@ ko.bindingHandlers.sortableList = {
     }
 };
 
+function ParentSelect(init) {
+    var self = this;
+    var defaultModule = _(init.parentModules).findWhere({is_parent: true});
+    self.moduleId = ko.observable(init.moduleId || defaultModule.unique_id);
+    self.active = ko.observable(init.active);
+    self.parentModules = ko.observable(init.parentModules);
+    self.lang = ko.observable(init.lang);
+    self.langs = ko.observable(init.langs);
+    function getTranslation(name, langs) {
+        var firstLang = _(langs).find(function (lang) {
+            return name[lang];
+        });
+        return name[firstLang];
+    }
+    self.moduleOptions = ko.computed(function () {
+        return _(self.parentModules()).map(function (module) {
+            var STAR = '\u2605', SPACE = '\u3000';
+            var marker = (module.is_parent ? STAR : SPACE);
+            return {
+                value: module.unique_id,
+                label: marker + ' ' + getTranslation(module.name, [self.lang()].concat(self.langs()))
+            };
+        });
+    });
+}
+
 var DetailScreenConfig = (function () {
     "use strict";
     var DetailScreenConfig, Screen, Column, sortRows;
@@ -150,8 +176,8 @@ var DetailScreenConfig = (function () {
         }
         return orig;
     }
-
-    var field_val_re = /^[a-zA-Z][\w_-]*(\/[a-zA-Z][\w_-]*)*$/;
+    var word = '[a-zA-Z][\\w_-]*';
+    var field_val_re = RegExp('^('+word+':)?'+word+'(\\/'+word+')*$');
     var field_format_warning = $('<span/>').addClass('help-inline')
         .text("Must begin with a letter and contain only letters, numbers, '-', and '_'");
 
@@ -555,10 +581,18 @@ var DetailScreenConfig = (function () {
         };
         Screen.prototype = {
             save: function () {
+                var parentSelect = this.config.parentSelect;
                 this.saveButton.ajax({
                     url: this.saveUrl,
                     type: "POST",
-                    data: {screens: JSON.stringify(this.serialize())},
+                    data: {
+                        screens: JSON.stringify(this.serialize()),
+                        parent_select: JSON.stringify({
+                            module_id: parentSelect.moduleId(),
+                            relationship: 'parent',
+                            active: parentSelect.active()
+                        })
+                    },
                     dataType: 'json',
                     success: function (data) {
                         COMMCAREHQ.app_manager.updateDOM(data.update);
@@ -760,6 +794,13 @@ var DetailScreenConfig = (function () {
             this.sortRows = new SortRows();
             this.lang = spec.lang;
             this.langs = spec.langs || [];
+            this.parentSelect = new ParentSelect({
+                active: spec.parentSelect.active,
+                moduleId: spec.parentSelect.module_id,
+                parentModules: spec.parentModules,
+                lang: this.lang,
+                langs: this.langs
+            });
             this.edit = spec.edit;
             this.saveUrl = spec.saveUrl;
 
@@ -787,7 +828,13 @@ var DetailScreenConfig = (function () {
         };
         DetailScreenConfig.init = function ($home, spec) {
             var ds = new DetailScreenConfig($home, spec);
-            ko.applyBindings(ds.sortRows, $('#detail-screen-config-body').get(0));
+            var $sortRowsHome = $('#detail-screen-sort');
+            var $parentSelectHome = $('#detail-screen-parent');
+            ko.applyBindings(ds.sortRows, $sortRowsHome.get(0));
+            ko.applyBindings(ds.parentSelect, $parentSelectHome.get(0));
+            $parentSelectHome.on('change', '*', function () {
+                ds.screens[0].fire('change');
+            });
             return ds;
         };
         return DetailScreenConfig;

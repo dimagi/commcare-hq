@@ -1,0 +1,148 @@
+  <suite version="1">
+    <xform>
+      <resource id="e63a67c26c5a68defa91fdfff47d2a4d18a67f11" version="1">
+        <location authority="local">./modules-0/forms-0.xml</location>
+        <location authority="remote">./modules-0/forms-0.xml</location>
+      </resource>
+    </xform>
+    <xform>
+      <resource id="ec5e9c2860d4bdb36ebaf2311bf5c102fb516e62" version="1">
+        <location authority="local">./modules-1/forms-0.xml</location>
+        <location authority="remote">./modules-1/forms-0.xml</location>
+      </resource>
+    </xform>
+    <locale language="default">
+      <resource id="app_default_strings" version="1">
+        <location authority="local">./default/app_strings.txt</location>
+        <location authority="remote">./default/app_strings.txt</location>
+      </resource>
+    </locale>
+    <locale language="en">
+      <resource id="app_en_strings" version="1">
+        <location authority="local">./en/app_strings.txt</location>
+        <location authority="remote">./en/app_strings.txt</location>
+      </resource>
+    </locale>
+    <detail id="m0_case_short">
+      <title>
+        <text>
+          <locale id="m0.case_short.title"></locale>
+        </text>
+      </title>
+      <field sort="default">
+        <header>
+          <text>
+            <locale id="m0.case_short.case_name_1.header"></locale>
+          </text>
+        </header>
+        <template>
+          <text>
+            <xpath function="case_name"></xpath>
+          </text>
+        </template>
+      </field>
+    </detail>
+    <detail id="m0_case_long">
+      <title>
+        <text>
+          <locale id="m0.case_long.title"></locale>
+        </text>
+      </title>
+      <field sort="default">
+        <header>
+          <text>
+            <locale id="m0.case_long.case_name_1.header"></locale>
+          </text>
+        </header>
+        <template>
+          <text>
+            <xpath function="case_name"></xpath>
+          </text>
+        </template>
+      </field>
+    </detail>
+    <detail id="m1_case_short">
+      <title>
+        <text>
+          <locale id="m1.case_short.title"></locale>
+        </text>
+      </title>
+      <field sort="default">
+        <header>
+          <text>
+            <locale id="m1.case_short.case_name_1.header"></locale>
+          </text>
+        </header>
+        <template>
+          <text>
+            <xpath function="case_name"></xpath>
+          </text>
+        </template>
+      </field>
+    </detail>
+    <detail id="m1_case_long">
+      <title>
+        <text>
+          <locale id="m1.case_long.title"></locale>
+        </text>
+      </title>
+      <field sort="default">
+        <header>
+          <text>
+            <locale id="m1.case_long.case_name_1.header"></locale>
+          </text>
+        </header>
+        <template>
+          <text>
+            <xpath function="case_name"></xpath>
+          </text>
+        </template>
+      </field>
+    </detail>
+    <entry>
+      <form>http://openrosa.org/formdesigner/24239268-EE20-4F1C-B392-9CD65DECCBEF</form>
+      <command id="m0-f0">
+        <text>
+          <locale id="forms.m0f0"></locale>
+        </text>
+      </command>
+    </entry>
+    <entry>
+      <command id="m0-case-list">
+        <text>
+          <locale id="case_lists.m0"></locale>
+        </text>
+      </command>
+      <instance id="casedb" src="jr://instance/casedb"></instance>
+      <session>
+        <datum detail-confirm="m0_case_long" detail-select="m0_case_short" id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='parent'][@status='open']" value="./@case_id"></datum>
+      </session>
+    </entry>
+    <entry>
+      <form>http://openrosa.org/formdesigner/A608C522-E903-4643-8EE1-85DBE4339C40</form>
+      <command id="m1-f0">
+        <text>
+          <locale id="forms.m1f0"></locale>
+        </text>
+      </command>
+      <instance id="casedb" src="jr://instance/casedb"></instance>
+      <instance id="commcaresession" src="jr://instance/session"></instance>
+      <session>
+        <datum detail-select="m0_case_short" id="parent_id" nodeset="instance('casedb')/casedb/case[@case_type='parent'][@status='open']" value="./@case_id"></datum>
+        <datum detail-confirm="m1_case_long" detail-select="m1_case_short" id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='child'][@status='open'][index/parent=instance('commcaresession')/session/data/parent_id]" value="./@case_id"></datum>
+      </session>
+    </entry>
+    <menu id="m0">
+      <text>
+        <locale id="modules.m0"></locale>
+      </text>
+      <command id="m0-f0"></command>
+      <command id="m0-case-list"></command>
+    </menu>
+    <menu id="m1">
+      <text>
+        <locale id="modules.m1"></locale>
+      </text>
+      <command id="m1-f0"></command>
+    </menu>
+  </suite>

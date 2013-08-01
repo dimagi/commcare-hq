@@ -1,5 +1,4 @@
 from django.utils.unittest.case import TestCase
-from casexml.apps.case.tests import check_xml_line_by_line
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.util import TestFileMixin
 
@@ -7,6 +6,7 @@ from corehq.apps.app_manager.tests.util import TestFileMixin
 # snippet from http://stackoverflow.com/questions/321795/comparing-xml-in-a-unit-test-in-python/7060342#7060342
 from doctest import Example
 from lxml.doctestcompare import LXMLOutputChecker
+
 
 class XmlTest(TestCase):
 
@@ -17,10 +17,19 @@ class XmlTest(TestCase):
             raise AssertionError(message)
 # end snippet
 
+
 class SuiteTest(XmlTest, TestFileMixin):
     file_path = ('data', 'suite')
-    def setUp(self):
-        self.app = Application.wrap(self.get_json('app'))
+
+    def _test_generic_suite(self, app_tag, suite_tag):
+        app = Application.wrap(self.get_json(app_tag))
+        self.assertXmlEqual(self.get_xml(suite_tag), app.create_suite())
 
     def test_normal_suite(self):
-        self.assertXmlEqual(self.get_xml('normal-suite'), self.app.create_suite())
+        self._test_generic_suite('app', 'normal-suite')
+
+    def test_tiered_select(self):
+        self._test_generic_suite('tiered-select', 'tiered-select')
+
+    def test_3_tiered_select(self):
+        self._test_generic_suite('tiered-select-3', 'tiered-select-3')

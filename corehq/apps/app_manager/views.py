@@ -29,7 +29,7 @@ from django.conf import settings
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
-from corehq.apps.app_manager.util import is_valid_case_type, get_case_properties, get_all_case_properties, add_odk_profile_after_build
+from corehq.apps.app_manager.util import is_valid_case_type, get_case_properties, get_all_case_properties, add_odk_profile_after_build, ParentCasePropertyBuilder
 from corehq.apps.app_manager.util import save_xform, get_settings_values
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
@@ -55,7 +55,7 @@ from dimagi.utils.web import json_response, json_request
 from corehq.apps.reports import util as report_utils
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
-    AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, EXAMPLE_DOMAIN, str_to_cls, validate_lang, SavedAppBuild
+    AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, EXAMPLE_DOMAIN, str_to_cls, validate_lang, SavedAppBuild, ParentSelect
 from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download
@@ -344,17 +344,17 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
             form_errors.append("Syntax Error: %s" % e)
         except AppError as e:
             form_errors.append("Error in application: %s" % e)
-        except XFormValidationError as e:
-            message = unicode(e)
-            form_errors.append((html.escape(message).replace('\n', '<br/>'), {'extra_tags': 'html'}))
-
+        except XFormValidationError:
+            # showing these messages is handled by validate_form_for_build ajax
+            pass
         except XFormError as e:
             form_errors.append("Error in form: %s" % e)
-        # any other kind of error should fail hard, but for now there are too many for that to be practical
+        # any other kind of error should fail hard,
+        # but for now there are too many for that to be practical
         except Exception as e:
             if settings.DEBUG:
                 raise
-            logging.exception(e)
+            notify_exception(request, 'Unexpected Build Error')
             form_errors.append("Unexpected System Error: %s" % e)
 
         try:
@@ -627,19 +627,44 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         del app['use_commcare_sense']
         app.save()
 
-    case_properties = None
+    context = {}
     if module:
         if not form:
             case_type = module.case_type
-            case_properties = get_case_properties(
+            builder = ParentCasePropertyBuilder(
                 app,
-                [case_type],
                 defaults=('name', 'date-opened', 'status')
-            )[case_type]
-        else:
-            case_properties = get_all_case_properties(app)
+            )
 
-    context = {
+            def get_parent_modules_and_save():
+                """
+                This closure is so we don't override the `module` variable
+
+                """
+                parent_types = builder.get_parent_types(case_type)
+                modules = app.modules
+                # make sure all modules have unique ids
+                if any(not module.unique_id for module in modules):
+                    for module in modules:
+                        module.get_or_create_unique_id()
+                    app.save()
+                parent_module_ids = [module.unique_id for module in modules
+                                     if module.case_type in parent_types]
+                return [{
+                    'unique_id': module.unique_id,
+                    'name': module.name,
+                    'is_parent': module.unique_id in parent_module_ids,
+                } for module in app.modules if module.case_type != case_type]
+            context.update({
+                'parent_modules': get_parent_modules_and_save(),
+                'case_properties': sorted(builder.get_properties(case_type)),
+            })
+        else:
+            context.update({
+                'case_properties': get_all_case_properties(app),
+            })
+
+    context.update({
         'domain': domain,
         'applications': applications,
 
@@ -647,10 +672,8 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'module': module,
         'form': form,
 
-        'case_properties': case_properties,
-
         'show_secret_settings': req.GET.get('secret', False)
-    }
+    })
     context.update(base_context)
     if app and not module and hasattr(app, 'translations'):
         context.update({"translations": app.translations.get(context['lang'], {})})
@@ -678,7 +701,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'force_edit': force_edit,
         'error':error,
         'app': app,
-        })
+    })
     response = render(req, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
@@ -922,7 +945,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
             # todo: something better than nothing when invalid
             module["case_type"] = case_type
         else:
-            resp['update'].update({'#case_type': module['case_type']})
+            return HttpResponseBadRequest("case type is improperly formatted")
     if should_edit("put_in_root"):
         module["put_in_root"] = json.loads(req.POST.get("put_in_root"))
     for attribute in ("name", "case_label", "referral_label"):
@@ -951,6 +974,7 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     """
     params = json_request(req.POST)
     screens = params.get('screens')
+    parent_select = params.get('parent_select')
 
     if not screens:
         return HttpResponseBadRequest("Requires JSON encoded param 'screens'")
@@ -979,6 +1003,7 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
         module.get_detail(detail_type).columns = \
             [DetailColumn.wrap(c) for c in screens[detail_type]]
 
+    module.parent_select = ParentSelect.wrap(parent_select)
     resp = {}
     app.save(resp)
     return json_response(resp)
