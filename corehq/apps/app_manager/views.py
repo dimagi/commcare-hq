@@ -14,6 +14,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab
 from corehq.apps.app_manager import commcare_settings
+from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from django.utils import html
 from django.utils.http import urlencode as django_urlencode
@@ -385,7 +386,8 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         else:
             messages.error(request, err)
     module_case_types = [
-        {'module_name': module.name.get('en'), 'case_type': module.case_type}
+        {'module_name': trans(module.name, langs),
+         'case_type': module.case_type}
         for module in form.get_app().modules if module.case_type
     ] if not is_user_registration else None
     return {
