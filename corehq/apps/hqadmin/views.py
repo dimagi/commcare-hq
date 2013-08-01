@@ -608,7 +608,8 @@ def system_info(request):
 
     environment = settings.SERVER_ENVIRONMENT
     context['last_deploy'] = HqDeploy.get_latest(environment)
-    context['snapshot'] = context['last_deploy'].code_snapshot
+
+    context['snapshot'] = context['last_deploy'].code_snapshot if context['last_deploy'] else {}
 
     #redis status
     redis_status = ""
