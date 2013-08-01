@@ -434,16 +434,11 @@ def mass_email(request):
             subject = form.cleaned_data['email_subject']
             body = form.cleaned_data['email_body']
 
-            #recipients = WebUser.view(
-                #'users/mailing_list_emails',
-                #reduce=False,
-                #include_docs=True,
-            #).all()
-
-            recipients = [
-                CommCareUser.get_by_username('twymer@dimagi.com'),
-                CommCareUser.get_by_username('asagoff@dimagi.com'),
-            ]
+            recipients = WebUser.view(
+                'users/mailing_list_emails',
+                reduce=False,
+                include_docs=True,
+            ).all()
 
             for recipient in recipients:
                 params = {
