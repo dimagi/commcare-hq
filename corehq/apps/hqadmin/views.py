@@ -434,11 +434,16 @@ def mass_email(request):
             subject = form.cleaned_data['email_subject']
             body = form.cleaned_data['email_body']
 
-            recipients = WebUser.view(
-                'users/mailing_list_emails',
-                reduce=False,
-                include_docs=True,
-            ).all()
+            #recipients = WebUser.view(
+                #'users/mailing_list_emails',
+                #reduce=False,
+                #include_docs=True,
+            #).all()
+
+            recipients = [
+                CommCareUser.get_by_username('twymer@dimagi.com'),
+                CommCareUser.get_by_username('asagoff@dimagi.com'),
+            ]
 
             for recipient in recipients:
                 params = {
@@ -451,6 +456,9 @@ def mass_email(request):
                 html_content = render_to_string("hqadmin/email/mass_email_base.html", params)
 
                 send_HTML_email(subject, recipient.email, html_content, text_content)
+
+            from django.contrib import messages
+            messages.add_message(request, messages.SUCCESS, 'Your email(s) were sent successfully.')
 
     else:
         form = EmailForm()
