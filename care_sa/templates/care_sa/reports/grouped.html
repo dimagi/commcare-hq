@@ -1,0 +1,33 @@
+{% extends "reports/async/tabular.html" %}
+{% load i18n %}
+{% block tabular-body %}
+    {% if report_table.pagination.is_on %}
+    <tr>
+        <td colspan="{{ report_table.headers.header|length }}" class="dataTables_empty">
+          {% trans "Fetching additional data, please wait..." %}
+        </td>
+    </tr>
+    {% endif %}
+
+    {% for group in report_table.rows %}
+        <tr>
+            <td>{{ group.username }}</td>
+
+            {% ifequal group.gender 'no_grouping' %}
+                <td>{% trans "All genders and ages" %}</td>
+            {% else %}
+                {% if group.gender %}
+                    <td>{{ group.gender.html }}</td>
+                {% endif %}
+
+                {% if group.age_group %}
+                    <td>{{ group.age_group }}</td>
+                {% endif %}
+            {% endifequal %}
+
+            {% for col in group.row_data %}
+                {% include 'reports/async/partials/tabular_cell.html' %}
+            {% endfor %}
+        </tr>
+    {% endfor %}
+{% endblock %}

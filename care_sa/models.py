@@ -29,9 +29,32 @@ def lookup_cbo_id_from_form_id(form_id):
 
     return group.get_id
 
+def lookup_age_group_from_form_id(form_id):
+    case = CommCareCase.get_by_xform_id(form_id).first()
+
+    #TODO property handle invalid age data
+    try:
+        age = int(case.patient_age)
+    except Exception:
+        age = 0
+
+    if age < 15:
+        return 0
+    elif age < 25:
+        return 1
+    else:
+        return 2
+
+def lookup_gender_from_form_id(form_id):
+    case = CommCareCase.get_by_xform_id(form_id).first()
+    return case.gender
+
+
 get_user_id = lambda form: form.metadata.userID
 get_province = lambda form: lookup_province_id_from_form_id(form.get_id)
 get_cbo = lambda form: lookup_cbo_id_from_form_id(form.get_id)
+get_age_group = lambda form: lookup_age_group_from_form_id(form.get_id)
+get_gender = lambda form: lookup_gender_from_form_id(form.get_id)
 
 HCT_XMLNS = 'http://openrosa.org/formdesigner/BA7D3B3F-151C-4709-A020-CF79B7F2E876'
 HBC_XMLNS = "http://openrosa.org/formdesigner/19A3BDCB-5EE6-4D1B-B64B-79361D7D9885"
@@ -48,6 +71,8 @@ class CareSAFluff(fluff.IndicatorDocument):
         fluff.AttributeGetter('user_id', get_user_id),
         fluff.AttributeGetter('province', get_province),
         fluff.AttributeGetter('cbo', get_cbo),
+        fluff.AttributeGetter('age_group', get_age_group),
+        fluff.AttributeGetter('gender', get_gender),
     )
 
     # Report 1

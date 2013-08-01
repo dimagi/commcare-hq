@@ -2,6 +2,7 @@ from sqlagg.columns import *
 from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn
 from corehq.apps.reports.fields import AsyncDrillableField, GroupField
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
+from corehq.apps.users.models import CommCareUser
 
 
 class ProvinceField(AsyncDrillableField):
@@ -21,6 +22,10 @@ class CareReport(SqlTabularReport,
     exportable = True
     emailable = True
     table_name = "care-ihapc-live_CareSAFluff"
+    report_template_path = "care_sa/reports/grouped.html"
+
+    show_age = True
+    show_gender = True
 
     fields = [
         'corehq.apps.reports.fields.DatespanField',
@@ -52,7 +57,13 @@ class CareReport(SqlTabularReport,
 
     @property
     def group_by(self):
-        return ['user_id']
+        groups = ['user_id']
+        if self.show_age:
+            groups.append('age_group')
+        if self.show_gender:
+            groups.append('gender')
+
+        return groups
 
     @property
     def filter_values(self):
@@ -68,6 +79,15 @@ class CareReport(SqlTabularReport,
     def columns(self):
         user = DatabaseColumn("User", "user_id", column_type=SimpleColumn)
         columns = [user]
+
+        if not self.show_gender and not self.show_age:
+            # hack: we have to give it a column type so there are no errors
+            # but this isn't a column we let be auto populated anyway
+            columns.append(DatabaseColumn("", "gender", column_type=SimpleColumn))
+        if self.show_gender:
+            columns.append(DatabaseColumn("Gender", "gender", column_type=SimpleColumn))
+        if self.show_age:
+            columns.append(DatabaseColumn("Age", "age_group", column_type=SimpleColumn))
 
         for column_attrs in self.report_columns:
             text, name = column_attrs[:2]
@@ -87,6 +107,39 @@ class CareReport(SqlTabularReport,
     def keys(self):
         [self.domain]
 
+    @property
+    def rows(self):
+        rows = list(super(CareReport, self).rows)
+
+        result = []
+        for row in rows:
+            u = CommCareUser.get_by_user_id(row.pop(0)['html'])
+            group = {
+                'username': u.username,
+                'row_data': row,
+            }
+
+            if self.show_gender:
+                gender = row.pop(0)
+                group['gender'] = gender
+
+            if self.show_age:
+                age_group = row.pop(0)['html']
+                if age_group == '0':
+                    group['age_group'] = '0-14 years'
+                elif age_group == '1':
+                    group['age_group'] = '15-24 years'
+                else:
+                    group['age_group'] = '25+ years'
+
+            if not self.show_gender and not self.show_age:
+                # discard the gender column from blank header hack
+                row.pop(0)
+                group['gender'] = "no_grouping"
+
+            result.append(group)
+
+        return result
 
 class TestingAndCounseling(CareReport):
     slug = 'tac'
