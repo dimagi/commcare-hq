@@ -453,8 +453,7 @@ def mass_email(request):
                 send_HTML_email(subject, recipient.email, html_content, text_content,
                                 email_from=settings.DEFAULT_FROM_EMAIL)
 
-            from django.contrib import messages
-            messages.add_message(request, messages.SUCCESS, 'Your email(s) were sent successfully.')
+            messages.success(request, 'Your email(s) were sent successfully.')
 
     else:
         form = EmailForm()
