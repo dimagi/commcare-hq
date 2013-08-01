@@ -398,11 +398,11 @@ def unsubscribe(request, user_id):
         user = CouchUser.get_by_user_id(user_id)
         domain = user.get_domains()[0]
         from django.contrib import messages
-        messages.add_message(request, messages.INFO,
-                             _('Check "Opt out of emails about new features \
-                                and other CommCare updates." below and then \
-                                click "Update Information" if you do \
-                               not want to receive future emails from us.'))
+        messages.info(request,
+                      _('Check "Opt out of emails about new features '
+                        'and other CommCare updates." below and then '
+                        'click "Update Information" if you do '
+                        'not want to receive future emails from us.'))
         return HttpResponseRedirect(reverse('commcare_user_account', args=[domain, user_id]))
     except Exception:
         pass
