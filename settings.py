@@ -216,6 +216,7 @@ HQ_APPS = (
     'corehq.apps.api',
     'corehq.apps.indicators',
     'corehq.couchapps',
+    'custom.apps.wisepill',
     'fluff',
     'fluff.fluff_filter',
     'sofabed.forms',
@@ -626,6 +627,7 @@ COUCHDB_APPS = [
     'hutch',
     'hqbilling',
     'couchlog',
+    'wisepill',
 
     # custom reports
     'benin',
@@ -658,6 +660,7 @@ EMAIL_PORT = EMAIL_SMTP_PORT
 EMAIL_HOST_USER = EMAIL_LOGIN
 EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
 EMAIL_USE_TLS = True
+SEND_BROKEN_LINK_EMAILS = True
 
 NO_HTML_EMAIL_MESSAGE = """
 This is an email from CommCare HQ. You're seeing this message because your

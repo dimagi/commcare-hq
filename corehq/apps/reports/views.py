@@ -922,12 +922,12 @@ def archive_form(request, domain, instance_id):
     instance = _get_form_or_404(instance_id)
     assert instance.domain == domain
     if instance.doc_type == "XFormInstance": 
-        instance.archive()
+        instance.archive(user=request.couch_user._id)
         notif_msg = _("Form was successfully archived.")
     elif instance.doc_type == "XFormArchived":
         notif_msg = _("Form was already archived.")
     else:
-        notif_msg = _("Can't archive documents of type %(s). How did you get here??") % instance.doc_type
+        notif_msg = _("Can't archive documents of type %s. How did you get here??") % instance.doc_type
     
     params = {
         "notif": notif_msg,
@@ -949,8 +949,7 @@ def unarchive_form(request, domain, instance_id):
     instance = _get_form_or_404(instance_id)
     assert instance.domain == domain
     if instance.doc_type == "XFormArchived":
-        instance.doc_type = "XFormInstance"
-        instance.save()
+        instance.unarchive(user=request.couch_user._id)
     else:
         assert instance.doc_type == "XFormInstance"
     messages.success(request, _("Form was successfully restored."))

@@ -136,7 +136,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
                 form_data_link(form["_id"]),
                 (username or _('No data for username')) + (" %s" % name if name else ""),
                 datetime.strptime(form["form"]["meta"]["timeEnd"], '%Y-%m-%dT%H:%M:%SZ').strftime("%Y-%m-%d %H:%M:%S"),
-                form["form"].get('@name') or _('No data for form name'),
+                xmlns_to_name(self.domain, form.get("xmlns"), app_id=form.get("app_id")),
             ]
 
 class CaseListFilter(CouchFilter):

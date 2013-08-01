@@ -61,7 +61,7 @@ class ReindexCommand(BaseCommand):
         # we're going to set the checkpoint BEFORE we start our operation so that any changes
         # that happen to cases while we're doing our reindexing would not get skipped once we
         # finish.
-        pillow_instance.set_checkpoint({ 'seq': pillow_instance.couch_db.info()['update_seq'] } )
+        pillow_instance.set_checkpoint({ 'seq': pillow_instance.couch_db().info()['update_seq'] } )
         def do_index(item):
             print "Processing: %s" % item['id']
             pillow_instance.processor(item, do_set_checkpoint=False)
