@@ -103,6 +103,7 @@ class PSISQLHouseholdReport(PSISQLReport):
               'psi.reports.DemoTypeField',
               'psi.reports.AASDBV',]
     default_aggregation = 'village'
+    table_name = "psi-unicef_household_demonstrations"
 
     @property
     @memoized
@@ -124,9 +125,12 @@ class PSISQLHouseholdReport(PSISQLReport):
                 yield [self.domain] + [c[pt] for pt in self.place_types]
 
     @property
-    def columns():
+    def columns(self):
         return self.initial_columns + [
-            DatabaseColumn("Worker Types", )
+            DatabaseColumn("Number of demonstrations done", "demonstrations"),
+            DatabaseColumn("Number of 0-6 year old children", "children"),
+            DatabaseColumn("Total number of leaflets distributed", "leaflets"),
+            DatabaseColumn("Number of kits sold", "kits")
         ]
 
 
