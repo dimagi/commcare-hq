@@ -6,11 +6,18 @@ def default_date(form):
     return form.received_on
 
 # operators
-EQUAL = lambda expected, reference: expected == reference
-NOT_EQUAL = lambda expected, reference: expected != reference
-IN = lambda expected, reference_list: expected in reference_list
-IN_MULTISELECT = lambda expected, value: value in (expected or '').split(' ')
-ANY = lambda expected, reference: bool(expected)
+EQUAL = lambda input, reference: input == reference
+NOT_EQUAL = lambda input, reference: input != reference
+IN = lambda input, reference_list: input in reference_list
+IN_MULTISELECT = lambda input, reference: reference in (input or '').split(' ')
+ANY = lambda input, reference: bool(input)
+
+def IN_MULTISELECT_MULTIPLE(input, reference):
+    """
+    For 'this multiselect contains any one of these N items'
+    """
+    return any([subval in (input or '').split(' ') for subval in reference])
+
 
 class IntegerPropertyReference(object):
     """
