@@ -764,15 +764,8 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
     Returns a FileWrapper object, which only the file backend in django-soil supports
 
     """
-    view_name = 'hqcase/all_cases' if include_closed else 'hqcase/open_cases'
-    key = [domain, {}, {}]
-    case_ids = CommCareCase.view(view_name,
-        startkey=key,
-        endkey=key + [{}],
-        reduce=False,
-        include_docs=False,
-        wrapper=lambda r: r['id']
-    )
+    status = 'all' if include_closed else 'open'
+    case_ids = CommCareCase.get_all_cases(domain, status=status, wrapper=lambda r: r['id'])
 
     class stream_cases(object):
         def __init__(self, all_case_ids):
@@ -929,12 +922,12 @@ def archive_form(request, domain, instance_id):
     instance = _get_form_or_404(instance_id)
     assert instance.domain == domain
     if instance.doc_type == "XFormInstance": 
-        instance.archive()
+        instance.archive(user=request.couch_user._id)
         notif_msg = _("Form was successfully archived.")
     elif instance.doc_type == "XFormArchived":
         notif_msg = _("Form was already archived.")
     else:
-        notif_msg = _("Can't archive documents of type %(s). How did you get here??") % instance.doc_type
+        notif_msg = _("Can't archive documents of type %s. How did you get here??") % instance.doc_type
     
     params = {
         "notif": notif_msg,
@@ -956,8 +949,7 @@ def unarchive_form(request, domain, instance_id):
     instance = _get_form_or_404(instance_id)
     assert instance.domain == domain
     if instance.doc_type == "XFormArchived":
-        instance.doc_type = "XFormInstance"
-        instance.save()
+        instance.unarchive(user=request.couch_user._id)
     else:
         assert instance.doc_type == "XFormInstance"
     messages.success(request, _("Form was successfully restored."))

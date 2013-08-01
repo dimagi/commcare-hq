@@ -54,7 +54,7 @@ socketpool==0.5.2
 markdown==2.2.1
 amqp==1.0.8
 amqplib==1.0.2
-sqlagg==0.1.4
+sqlagg==0.1.5
 -e submodules/fluff-src
-ctable==0.0.3
+ctable==0.0.5
 unittest2

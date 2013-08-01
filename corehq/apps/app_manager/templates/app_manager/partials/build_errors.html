@@ -17,6 +17,10 @@
                             {% endif %}
                             {% include "app_manager/partials/form_error_message.html" %}
                         {% endif %}
+                        {% if error.type == "validation error" %}
+                            {{ error.validation_message|linebreaksbr }} in form
+                            {% include "app_manager/partials/form_error_message.html" %}
+                        {% endif %}
                         {% if error.type == "no ref detail" %}
                             Module
                             <a href="{% url view_module domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
