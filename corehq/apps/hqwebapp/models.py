@@ -49,10 +49,12 @@ class UITab(object):
 
     dispatcher = None
 
-    def __init__(self, request, domain=None, couch_user=None, project=None, org=None):
+    def __init__(self, request, current_url_name, domain=None, couch_user=None,
+                 project=None, org=None):
         if self.subtab_classes:
-            self.subtabs = [cls(request, domain=domain, couch_user=couch_user,
-                                project=project, org=org)
+            self.subtabs = [cls(request, current_url_name, domain=domain,
+                                couch_user=couch_user, project=project,
+                                org=org)
                             for cls in self.subtab_classes]
         else:
             self.subtabs = None
@@ -65,6 +67,7 @@ class UITab(object):
         # This should not be considered as part of the subclass API unless it
         # is necessary. Try to add new explicit parameters instead.
         self._request = request
+        self._current_url_name = current_url_name
 
     @property
     def dropdown_items(self):
@@ -133,7 +136,9 @@ class UITab(object):
         request_path = self._request.get_full_path()
 
         if self.urls:
-            return any(request_path.startswith(url) for url in self.urls)
+            return (any(request_path.startswith(url) for url in self.urls) or
+                    self._current_url_name in self.subpage_url_names)
+
         elif self.url:
             return request_path.startswith(self.url)
         else:
@@ -156,6 +161,28 @@ class UITab(object):
             pass
 
         return urls
+
+    @property
+    @memoized
+    def subpage_url_names(self):
+        """
+        List of all url names of subpages of sidebar items that get
+        displayed only when you're on that subpage.
+        """
+        names = []
+        if self.subtabs:
+            for st in self.subtabs:
+                names.extend(st.subpage_url_names)
+
+        try:
+            for name, section in self.sidebar_items:
+                names.extend(subpage['urlname']
+                    for item in section
+                    for subpage in item.get('subpages', []))
+        except Exception:
+            pass
+
+        return names
 
     @property
     def css_id(self):

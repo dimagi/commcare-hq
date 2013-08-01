@@ -11,6 +11,7 @@ register = template.Library()
 class MainMenuNode(template.Node):
     def render(self, context):
         request = context['request']
+        current_url_name = context['current_url_name']
         couch_user = getattr(request, 'couch_user', None)
         project = getattr(request, 'project', None)
         domain = context.get('domain')
@@ -28,8 +29,8 @@ class MainMenuNode(template.Node):
 
         for tab_class in tabs:
             t = tab_class(
-                    request, domain=domain, couch_user=couch_user,
-                    project=project, org=org)
+                    request, current_url_name, domain=domain,
+                    couch_user=couch_user, project=project, org=org)
 
             if t.real_is_viewable:
                 visible_tabs.append(t)
