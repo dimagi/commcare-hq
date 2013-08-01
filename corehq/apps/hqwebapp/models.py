@@ -165,6 +165,14 @@ class UITab(object):
 class ProjectReportsTab(UITab):
     title = ugettext_noop("Project Reports")
     view = "corehq.apps.reports.views.default"
+   
+    @property
+    def is_active(self):
+        # HACK. We need a more overarching way to avoid doing things this way
+        if 'reports/adm' in self._request.get_full_path():
+            return False
+
+        return super(ProjectReportsTab, self).is_active
 
     @property
     def is_viewable(self):
@@ -198,12 +206,14 @@ class ADMReportsTab(UITab):
     view = "corehq.apps.adm.views.default_adm_report"
     dispatcher = ADMSectionDispatcher
 
+    @property
     def is_active(self):
-        # HACK. We need a more overarching way to avoid doing things this way
-        if 'reports/adm' in self._request.get_full_path():
+        if not self.domain:
             return False
 
-        return super(ProjectReportsTab, self).is_active
+        project_reports_url = reverse(ReportsTab.view, args=[self.domain])
+        return (super(ADMReportsTab, self).is_active and self.domain and
+                self._request.get_full_path() != project_reports_url)
 
     @property
     def is_viewable(self):
