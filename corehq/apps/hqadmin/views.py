@@ -455,7 +455,8 @@ def mass_email(request):
                 text_content = render_to_string("hqadmin/email/mass_email_base.txt", params)
                 html_content = render_to_string("hqadmin/email/mass_email_base.html", params)
 
-                send_HTML_email(subject, recipient.email, html_content, text_content)
+                send_HTML_email(subject, recipient.email, html_content, text_content,
+                                email_from=settings.DEFAULT_FROM_EMAIL)
 
             from django.contrib import messages
             messages.add_message(request, messages.SUCCESS, 'Your email(s) were sent successfully.')
