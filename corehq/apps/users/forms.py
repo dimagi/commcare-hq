@@ -108,9 +108,9 @@ class UserForm(RoleForm):
         self.fields['language'].choices = [('', '')] + language_choices
 
 class WebUserForm(UserForm):
-    mailing_list_choice = forms.BooleanField(required=False,
-                                             label="",
-                                             help_text=_("Join the mailing list to receive important announcements."))
+    email_opt_out = forms.BooleanField(required=False,
+                                       label="",
+                                       help_text=_("Opt out of emails about new features and other CommCare updates."))
 
 class Meta:
         app_label = 'users'
