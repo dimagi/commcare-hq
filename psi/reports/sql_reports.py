@@ -83,7 +83,6 @@ class PSISQLEventsReport(PSISQLReport):
     @property
     def columns(self):
         return self.initial_columns + [
-<<<<<<< HEAD
             DatabaseColumn("Number of events", 'events'),
             DatabaseColumn("Number of male attendees", 'males'),
             DatabaseColumn("Number of female attendees", 'females'),
