@@ -12,7 +12,7 @@ IN = lambda input, reference_list: input in reference_list
 IN_MULTISELECT = lambda input, reference: reference in (input or '').split(' ')
 ANY = lambda input, reference: bool(input)
 
-def IN_MULTISELECT_MULTIPLE(input, reference):
+def ANY_IN_MULTISELECT(input, reference):
     """
     For 'this multiselect contains any one of these N items'
     """
