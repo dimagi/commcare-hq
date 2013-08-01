@@ -66,7 +66,6 @@ class FormattedDetailColumn(object):
     header_width = None
     template_width = None
     template_form = None
-    sort_width = None
 
     def __init__(self, app, module, detail, column):
         self.app = app
@@ -106,32 +105,40 @@ class FormattedDetailColumn(object):
 
     @property
     def sort_node(self):
+        if not (self.app.enable_multi_sort and self.detail.display == 'short'):
+            return
+
         sort_fields = [s.field for s in self.module.detail_sort_elements]
         field = self.column.field
-        if field in sort_fields and \
-           self.app.enable_multi_sort and \
-           self.detail.display == 'short':
+
+        sort = None
+
+        if self.sort_xpath_function:
+            sort = sx.Sort(
+                text=sx.Text(xpath_function=self.sort_xpath_function),
+                type='string',
+            )
+
+        if field in sort_fields:
             order = sort_fields.index(field)
             sort_element = self.module.detail_sort_elements[order]
 
-            # these have to be distinguished for the UI to be able to give
-            # user friendly choices
-            if sort_element.type == 'date' or sort_element.type == 'plain':
-                sort_type = 'string'
-            else:
-                sort_type = sort_element.type
+            if not sort:
+                # these have to be distinguished for the UI to be able to give
+                # user friendly choices
+                if sort_element.type == 'date' or sort_element.type == 'plain':
+                    sort_type = 'string'
+                else:
+                    sort_type = sort_element.type
+                sort = sx.Sort(
+                    text=sx.Text(xpath_function=self.xpath_function),
+                    type=sort_type,
+                )
 
-            sort = sx.Sort(
-                text=sx.Text(xpath_function=self.xpath_function),
-                width=self.sort_width,
-                type=sort_type,
-                order=order + 1,  # order is 1 indexed on mobile
-                direction=sort_element.direction,
-            )
+            sort.order = order + 1  # order is 1-indexed on mobile
+            sort.direction = sort_element.direction
 
-            return sort
-        else:
-            return None
+        return sort
 
     variables = None
 
@@ -177,22 +184,25 @@ class FormattedDetailColumn(object):
 
     @property
     def fields(self):
-        if self.sort_xpath_function and self.detail.display == 'short':
+        if self.app.enable_multi_sort:
+            yield sx.Field(
+                header=self.header,
+                template=self.template,
+                sort_node=self.sort_node,
+            )
+        elif self.sort_xpath_function and self.detail.display == 'short':
             yield sx.Field(
                 header=self.header,
                 template=self.hidden_template,
-                sort_node=self.sort_node,
             )
             yield sx.Field(
                 header=self.hidden_header,
                 template=self.template,
-                sort_node=self.sort_node,
             )
         else:
             yield sx.Field(
                 header=self.header,
                 template=self.template,
-                sort_node=self.sort_node,
             )
 
 class HideShortHeaderColumn(FormattedDetailColumn):
