@@ -2,13 +2,10 @@
 Fields for use in Tastypie Resources
 '''
 
-import importlib
-import copy
 import six
 
 from tastypie.fields import ApiField
 import dimagi.utils.modules
-from corehq.apps.api.resources import dict_object
 
 def get_referenced_class(class_or_str):
     # Simplified from https://github.com/toastdriven/django-tastypie/blob/master/tastypie/fields.py#L519
