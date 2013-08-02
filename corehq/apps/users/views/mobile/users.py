@@ -424,15 +424,27 @@ def add_commcare_account(request, domain, template="users/add_commcare_account.h
     return render(request, template, context)
 
 
-class UploadCommCareUsers(TemplateView):
-
+class UploadCommCareUsers(BaseUserSettingsView):
     template_name = 'users/upload_commcare_users.html'
+    name = 'upload_commcare_users'
+    page_title = ugettext_noop("Bulk Upload Mobile Workers")
 
-    def get_context_data(self, **kwargs):
-        """TemplateView automatically calls this to render the view (on a get)"""
-        context = _users_context(self.request, self.domain)
-        context["show_secret_settings"] = self.request.REQUEST.get("secret", False)
-        return context
+    @method_decorator(require_can_edit_commcare_users)
+    def dispatch(self, request, *args, **kwargs):
+        return super(UploadCommCareUsers, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def parent_pages(self):
+        return [{
+            'name': EditCommCareUserView.page_title,
+            'url': '#,'
+        }]
+
+    @property
+    def page_context(self):
+        return {
+            'show_secret_settings': self.request.REQUEST.get("secret", False),
+        }
 
     @method_decorator(get_file)
     def post(self, request):
@@ -519,11 +531,6 @@ class UploadCommCareUsers(TemplateView):
         else:
             return response
 
-
-    @method_decorator(require_can_edit_commcare_users)
-    def dispatch(self, request, domain, *args, **kwargs):
-        self.domain = domain
-        return super(UploadCommCareUsers, self).dispatch(request, *args, **kwargs)
 
 @require_can_edit_commcare_users
 def download_commcare_users(request, domain):
