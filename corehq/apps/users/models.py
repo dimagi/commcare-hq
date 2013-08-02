@@ -1383,10 +1383,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             case.doc_type += suffix
             case['-deletion_id'] = deletion_id
             case.save()
+
         for phone_number in self.get_verified_numbers(True).values():
-            phone_number.doc_type += suffix
-            phone_number['-deletion_id'] = deletion_id
-            phone_number.save()
+            self.delete_verified_number(phone_number, deletion_id)
 
         try:
             django_user = self.get_django_user()

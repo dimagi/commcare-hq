@@ -1,5 +1,7 @@
 import re
 from couchdbkit.ext.django.schema import *
+from dimagi.utils.couch.undo import DELETED_SUFFIX
+from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from dimagi.utils.modules import try_import
@@ -180,6 +182,7 @@ class CommCareMobileContactMixin(object):
         v = filter(lambda c: c.verified or include_pending, v)
         return dict((c.phone_number, c) for c in v)
 
+    @memoized
     def get_verified_number(self, phone=None):
         """
         Retrieves this contact's verified number entry by (self.doc_type, self._id).
@@ -248,15 +251,23 @@ class CommCareMobileContactMixin(object):
         v.ivr_backend_id = ivr_backend_id
         v.save(**get_safe_write_kwargs())
 
-    def delete_verified_number(self, phone_number=None):
+    def delete_verified_number(self, phone_number=None, deletion_id=None):
         """
         Deletes this contact's phone number from the verified phone number list, freeing it up
         for use by other contacts.
 
+        Phone number can be string or instance of VerifiedNumber
+
         return  void
         """
-        v = self.get_verified_number(phone_number)
-        if v is not None:
-            v.doc_type += "-Deleted"
-            v.save()
+        if isinstance(phone_number, basestring):
+            v = self.get_verified_number(phone_number)
+        else:
+            v = phone_number
 
+        if v is not None:
+            v.doc_type += DELETED_SUFFIX
+            if deletion_id:
+                v['-deletion_id'] = deletion_id
+
+            v.save()
