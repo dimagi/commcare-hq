@@ -198,13 +198,6 @@ class ADMReportsTab(UITab):
     view = "corehq.apps.adm.views.default_adm_report"
     dispatcher = ADMSectionDispatcher
 
-    def is_active(self):
-        # HACK. We need a more overarching way to avoid doing things this way
-        if 'reports/adm' in self._request.get_full_path():
-            return False
-
-        return super(ProjectReportsTab, self).is_active
-
     @property
     def is_viewable(self):
         if not self.project or self.project.commtrack_enabled:
