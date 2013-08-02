@@ -234,15 +234,6 @@ class ADMReportsTab(UITab):
     dispatcher = ADMSectionDispatcher
 
     @property
-    def is_active(self):
-        if not self.domain:
-            return False
-
-        project_reports_url = reverse(ReportsTab.view, args=[self.domain])
-        return (super(ADMReportsTab, self).is_active and self.domain and
-                self._request.get_full_path() != project_reports_url)
-
-    @property
     def is_viewable(self):
         if not self.project or self.project.commtrack_enabled:
             return False
@@ -658,7 +649,9 @@ class AdminReportsTab(UITab):
             ]),
             (_('Administrative Operations'), [
                 {'title': _('View/Update Domain Information'),
-                 'url': reverse('domain_update')}
+                 'url': reverse('domain_update')},
+                {'title': _('Mass Email Users'),
+                 'url': reverse('mass_email')}
             ])
         ]
     
