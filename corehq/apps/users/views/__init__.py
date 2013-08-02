@@ -29,7 +29,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.forms import WebUserForm, UserForm, ProjectSettingsForm, CommtrackUserForm
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser, \
     DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser
-from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required
+from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required, domain_specific_login_redirect
 from corehq.apps.orgs.models import Team
 from corehq.apps.reports.util import get_possible_reports
 from corehq.apps.sms import verify as smsverify
@@ -58,7 +58,7 @@ def require_permission_to_edit_user(view_func):
         if go_ahead:
             return login_and_domain_required(view_func)(request, domain, couch_user_id, *args, **kwargs)
         else:
-            raise Http404()
+            return domain_specific_login_redirect(request, domain)
     return _inner
 
 def _users_context(request, domain):
