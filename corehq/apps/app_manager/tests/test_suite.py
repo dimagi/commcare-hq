@@ -26,3 +26,7 @@ class SuiteTest(XmlTest, TestFileMixin):
 
     def test_normal_suite(self):
         self.assertXmlEqual(self.app.create_suite(), self.get_xml('normal-suite'))
+
+    def test_multisort_suite(self):
+        app = Application.wrap(self.get_json('multi-sort'))
+        self.assertXmlEqual(app.create_suite(), self.get_xml('multi-sort'))
