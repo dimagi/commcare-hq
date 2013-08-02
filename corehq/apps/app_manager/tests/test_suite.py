@@ -33,3 +33,7 @@ class SuiteTest(XmlTest, TestFileMixin):
 
     def test_3_tiered_select(self):
         self._test_generic_suite('tiered-select-3', 'tiered-select-3')
+
+    def test_multisort_suite(self):
+        app = Application.wrap(self.get_json('multi-sort'))
+        self.assertXmlEqual(app.create_suite(), self.get_xml('multi-sort'))

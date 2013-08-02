@@ -1597,12 +1597,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         """
         Multi (tiered) sort is supported by apps version 2.2 or higher
         """
-        try:
-            return self.get_build().minor_release() >= (2, 2)
-        except KeyError:
-            # if for some reason there is no build number it's probably
-            # old or bugged
-            return False
+        minor_release = tuple(map(int, self.build_spec.version.split('.')))
+        return minor_release >= (2, 2)
+
 
     @property
     def default_language(self):
