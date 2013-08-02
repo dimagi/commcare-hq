@@ -628,6 +628,17 @@ class AdminReportsTab(UITab):
     @property
     def sidebar_items(self):
         # todo: convert these to dispatcher-style like other reports
+
+        admin_operations = [
+            {'title': _('View/Update Domain Information'),
+             'url': reverse('domain_update')},
+        ]
+
+        if self.couch_user and self.couch_user.is_staff:
+            admin_operations.append(
+                {'title': _('Mass Email Users'),
+                 'url': reverse('mass_email')}
+            )
         return [
             (_('Administrative Reports'), [
                 {'title': _('Domain List'),
@@ -647,14 +658,9 @@ class AdminReportsTab(UITab):
                 {'title': _('Mobile User Reports'),
                  'url': reverse('mobile_user_reports')},
             ]),
-            (_('Administrative Operations'), [
-                {'title': _('View/Update Domain Information'),
-                 'url': reverse('domain_update')},
-                {'title': _('Mass Email Users'),
-                 'url': reverse('mass_email')}
-            ])
+            (_('Administrative Operations'), admin_operations)
         ]
-    
+
     @property
     def is_viewable(self):
         return self.couch_user and self.couch_user.is_superuser
