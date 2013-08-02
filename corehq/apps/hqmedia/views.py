@@ -316,11 +316,18 @@ class BaseProcessFileUploadView(BaseProcessUploadedView):
         return self.request.POST.get('path', '')
 
     def validate_file(self):
+        def file_ext(filename):
+            _, extension = os.path.splitext(filename)
+            return extension
+
         if not self.mime_type:
             raise BadMediaFileException("Did not process a mime type!")
         base_type = self.mime_type.split('/')[0]
         if base_type not in self.valid_base_types():
             raise BadMediaFileException("Not a valid %s file." % self.media_class.get_nice_name().lower())
+        ext = file_ext(self.uploaded_file.name)
+        if ext != file_ext(self.form_path):
+            raise BadMediaFileException("File %s has an incorrect file type (%s)." % (self.uploaded_file.name, ext))
 
     def process_upload(self):
         self.uploaded_file.file.seek(0)
