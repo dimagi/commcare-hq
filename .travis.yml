@@ -6,7 +6,7 @@ install:
  - "pip install -e ."
  - "pip install pytz requests simplejson mock unittest2"
  - "pip install coverage coveralls"
-script: "coverage run `which django-admin.py` test --settings settings --traceback couchforms"
+script: "coverage run `which django-admin.py` test --settings settings --traceback couchforms --verbosity 2"
 after_success:
  - coveralls
 services:
