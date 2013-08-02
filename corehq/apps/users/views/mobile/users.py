@@ -401,44 +401,66 @@ def update_user_data(request, domain, couch_user_id):
     messages.success(request, "User data updated!")
     return HttpResponseRedirect(reverse(EditCommCareUserView.name, args=[domain, couch_user_id]))
 
-@require_can_edit_commcare_users
-def add_commcare_account(request, domain, template="users/add_commcare_account.html"):
-    """
-    Create a new commcare account
-    """
-    context = _users_context(request, domain)
-    if request.method == "POST":
-        form = CommCareAccountForm(request.POST)
-        form.password_format = request.project.password_format()
-        if form.is_valid():
-            username = form.cleaned_data["username"]
-            password = form.cleaned_data["password"]
 
-            couch_user = CommCareUser.create(domain, username, password, device_id='Generated from HQ')
-
-            return HttpResponseRedirect(reverse(EditCommCareUserView.name, args=[domain, couch_user.userID]))
-    else:
-        form = CommCareAccountForm()
-    context.update(form=form)
-    context.update(only_numeric=(request.project.password_format() == 'n'))
-    return render(request, template, context)
-
-
-class UploadCommCareUsers(BaseUserSettingsView):
-    template_name = 'users/upload_commcare_users.html'
-    name = 'upload_commcare_users'
-    page_title = ugettext_noop("Bulk Upload Mobile Workers")
+class BaseManageCommCareUserView(BaseUserSettingsView):
 
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, request, *args, **kwargs):
-        return super(UploadCommCareUsers, self).dispatch(request, *args, **kwargs)
+        return super(BaseManageCommCareUserView, self).dispatch(request, *args, **kwargs)
 
     @property
     def parent_pages(self):
         return [{
-            'name': EditCommCareUserView.page_title,
+            'name': ListCommCareUsersView.page_title,
             'url': '#,'
         }]
+
+
+class CreateCommCareUserView(BaseManageCommCareUserView):
+    template_name = "users/add_commcare_account.html"
+    name = 'add_commcare_account'
+    page_title = ugettext_noop("New Mobile Worker")
+
+    @property
+    def password_format(self):
+        return self.request.project.password_format()
+
+    @property
+    @memoized
+    def new_commcare_user_form(self):
+        if self.request.method == "POST":
+            form = CommCareAccountForm(self.request.POST)
+            form.password_format = self.password_format
+            return form
+        return CommCareAccountForm()
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.new_commcare_user_form,
+            'only_numeric': self.password_format == 'n',
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.new_commcare_user_form.is_valid():
+            username = self.new_commcare_user_form.cleaned_data['username']
+            password = self.new_commcare_user_form.cleaned_data['password']
+
+            couch_user = CommCareUser.create(
+                self.domain,
+                username,
+                password,
+                device_id="Generated from HQ"
+            )
+            return HttpResponseRedirect(reverse(EditCommCareUserView.name,
+                                                args=[self.domain, couch_user.userID]))
+        return super(CreateCommCareUserView, self).get(request, *args, **kwargs)
+
+
+class UploadCommCareUsers(BaseManageCommCareUserView):
+    template_name = 'users/upload_commcare_users.html'
+    name = 'upload_commcare_users'
+    page_title = ugettext_noop("Bulk Upload Mobile Workers")
 
     @property
     def page_context(self):
