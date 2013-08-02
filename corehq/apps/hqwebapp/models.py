@@ -471,8 +471,8 @@ class MessagingTab(UITab):
         return []
 
 
-class ProjectUsersTab(UITab):
-    title = ugettext_noop("Users")
+class ManageProjectTab(UITab):
+    title = ugettext_noop("Manage")
     view = "users_default"
 
     @property
@@ -481,9 +481,9 @@ class ProjectUsersTab(UITab):
 
     @property
     def is_viewable(self):
-        return (self.couch_user.can_edit_commcare_users() or
-                self.couch_user.can_edit_web_users() or
-                self.couch_user.can_edit_data())
+        return self.domain and (self.couch_user.can_edit_commcare_users() or
+                                self.couch_user.can_edit_web_users() or
+                                self.couch_user.can_edit_data())
 
     @property
     @memoized
@@ -491,7 +491,7 @@ class ProjectUsersTab(UITab):
         cloudcare_settings_url = reverse('cloudcare_app_settings', args=[self.domain])
         manage_data_url = reverse('data_interfaces_default', args=[self.domain])
         full_path = self._request.get_full_path()
-        return (super(ProjectUsersTab, self).is_active
+        return (super(ManageProjectTab, self).is_active
                 or full_path.startswith(cloudcare_settings_url)
                 or full_path.startswith(manage_data_url))
 

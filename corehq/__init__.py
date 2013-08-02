@@ -182,7 +182,7 @@ TABS = (
     ProjectInfoTab,
     ReportsTab,
     ApplicationsTab,
-    ProjectUsersTab,
+    ManageProjectTab,
     CloudcareTab,
     MessagingTab,
     ExchangeTab,

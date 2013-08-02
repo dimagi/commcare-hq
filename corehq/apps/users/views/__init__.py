@@ -88,7 +88,7 @@ def _users_context(request, domain):
 
 
 class BaseUserSettingsView(BaseSettingsView):
-    section_name = "Users"
+    section_name = ugettext_noop("Manage")
 
     @property
     @memoized
