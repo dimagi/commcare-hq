@@ -1,6 +1,6 @@
 import datetime
 import uuid
-from dimagi.utils.couch.database import get_db
+from casexml.apps.case.models import CommCareCase
 from dimagi.utils.parsing import json_format_datetime
 from django.template.loader import render_to_string
 
@@ -51,7 +51,7 @@ def get_case_by_domain_hq_user_id(domain, user_id, include_docs=False):
     """
     Get the 'user case' for user_id. User cases are part of the call center feature.
     """
-    return get_db().view('hqcase/by_domain_hq_user_id',
+    return CommCareCase.view('hqcase/by_domain_hq_user_id',
                          key=[domain, user_id],
                          reduce=False,
                          include_docs=include_docs).one()
