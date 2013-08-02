@@ -1,20 +1,18 @@
 from django import forms
-from django.contrib.auth.forms import SetPasswordForm
 from django.core.validators import EmailValidator, email_re
 from django.core.urlresolvers import reverse
 from django.forms.widgets import PasswordInput, HiddenInput
 from django.utils.encoding import smart_str
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _, ugettext_noop
 from django.template.loader import get_template
 from django.template import Template, Context
 from hqstyle.forms.widgets import BootstrapCheckboxInput, BootstrapDisabledInput
 from dimagi.utils.timezones.fields import TimeZoneField
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
-from corehq.apps.users.models import CouchUser, WebUser, OldRoles, DomainMembership
+from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.app_manager.models import validate_lang
-import re
 
 
 def wrapped_language_validation(value):
@@ -140,7 +138,7 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
 class BaseUserInfoForm(forms.Form):
     first_name = forms.CharField(max_length=50, required=False)
     last_name = forms.CharField(max_length=50, required=False)
-    email = forms.EmailField(label=_("E-mail"), max_length=75, required=False)
+    email = forms.EmailField(label=ugettext_noop("E-mail"), max_length=75, required=False)
     language = forms.ChoiceField(choices=(), initial=None, required=False, help_text=mark_safe(_(
         "<i class=\"icon-info-sign\"></i> Becomes default language seen in CloudCare and reports (if applicable). "
         "Supported languages for reports are en, fr (partial), and hin (partial)."
@@ -155,7 +153,7 @@ class BaseUserInfoForm(forms.Form):
 class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     email_opt_out = forms.BooleanField(required=False,
                                       label="",
-                                      help_text=_("Opt out of emails about new features and other CommCare updates."))
+                                      help_text=ugettext_noop("Opt out of emails about new features and other CommCare updates."))
 
     @property
     def direct_properties(self):

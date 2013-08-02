@@ -1,6 +1,5 @@
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
-from corehq.apps.users.views.mobile import EditCommCareUserView
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport,\
     ProjectReportParametersMixin
 from corehq.apps.reports.generic import GenericTabularReport
@@ -40,6 +39,7 @@ class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabular
 
     def get_user_link(self, user):
         user_link_template = '<a href="%(link)s">%(username)s</a>'
+        from corehq.apps.users.views.mobile import EditCommCareUserView
         user_link = user_link_template % {"link": "%s%s" % (get_url_base(),
                                                             reverse(EditCommCareUserView.name, args=[self.domain, user._id])),
                                           "username": user.username_in_report}

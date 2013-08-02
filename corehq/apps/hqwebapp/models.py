@@ -7,8 +7,6 @@ from django.utils.translation import ugettext_noop
 from corehq.apps.domain.utils import get_adm_enabled_domains
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
-from corehq.apps.users.views import DefaultProjectUserSettingsView, EditWebUserView, EditMyAccountView, ListWebUsersView
-from corehq.apps.users.views.mobile import EditCommCareUserView
 
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -475,7 +473,7 @@ class MessagingTab(UITab):
 
 class ProjectUsersTab(UITab):
     title = ugettext_noop("Users")
-    view = DefaultProjectUserSettingsView.name
+    view = "users_default"
 
     @property
     def dropdown_items(self):
@@ -512,6 +510,7 @@ class ProjectUsersTab(UITab):
                 else:
                     return None
 
+            from corehq.apps.users.views.mobile import EditCommCareUserView
             mobile_users_menu = [
                 {'title': _('Mobile Workers'),
                  'url': reverse('commcare_users', args=[self.domain]),
@@ -559,6 +558,7 @@ class ProjectUsersTab(UITab):
                 else:
                     return None
 
+            from corehq.apps.users.views import (EditWebUserView, EditMyAccountView, ListWebUsersView)
             items.append((_('Project Users'), [
                 {'title': ListWebUsersView.page_title,
                  'url': reverse(ListWebUsersView.name, args=[self.domain]),
