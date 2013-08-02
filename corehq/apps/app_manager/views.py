@@ -1350,16 +1350,19 @@ def edit_app_langs(request, domain, app_id):
     rename = o['rename']
     build = o['build']
 
-    assert set(rename.keys()).issubset(app.langs)
-    assert set(rename.values()).issubset(langs)
-    # assert that there are no repeats in the values of rename
-    assert len(set(rename.values())) == len(rename.values())
-    # assert that no lang is renamed to an already existing lang
-    for old, new in rename.items():
-        if old != new:
-            assert(new not in app.langs)
-    # assert that the build langs are in the correct order
-    assert sorted(build, key=lambda lang: langs.index(lang)) == build
+    try:
+        assert set(rename.keys()).issubset(app.langs)
+        assert set(rename.values()).issubset(langs)
+        # assert that there are no repeats in the values of rename
+        assert len(set(rename.values())) == len(rename.values())
+        # assert that no lang is renamed to an already existing lang
+        for old, new in rename.items():
+            if old != new:
+                assert(new not in app.langs)
+        # assert that the build langs are in the correct order
+        assert sorted(build, key=lambda lang: langs.index(lang)) == build
+    except AssertionError:
+        return HttpResponse(status=400)
 
     # now do it
     for old, new in rename.items():
