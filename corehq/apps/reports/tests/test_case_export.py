@@ -1,15 +1,7 @@
-from StringIO import StringIO
-import json
-from django.core.urlresolvers import reverse
 from django.utils.unittest.case import TestCase
-from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.models import FormExportSchema
 from corehq.apps.reports.util import case_users_filter, case_group_filter
 from corehq.apps.users.models import CommCareUser
-from couchexport.models import Format
-from couchforms.models import XFormInstance
-from django_digest.test import Client
 
 def _mock_case(owner, user):
     return {
@@ -19,6 +11,10 @@ def _mock_case(owner, user):
 
 
 class CaseExportTest(TestCase):
+
+    def setUp(self):
+        for user in CommCareUser.all():
+            user.delete()
 
     def testUserFilters(self):
         self.assertTrue(case_users_filter(_mock_case('owner', 'user'), ['owner']))
@@ -63,4 +59,3 @@ class CaseExportTest(TestCase):
 
         # duh
         self.assertFalse(case_group_filter(_mock_case('nobody', 'nobody-else'), group))
-
