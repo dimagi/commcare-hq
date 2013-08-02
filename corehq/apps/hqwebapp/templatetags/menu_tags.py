@@ -11,6 +11,7 @@ register = template.Library()
 class MainMenuNode(template.Node):
     def render(self, context):
         request = context['request']
+        current_url_name = context['current_url_name']
         couch_user = getattr(request, 'couch_user', None)
         project = getattr(request, 'project', None)
         domain = context.get('domain')
@@ -28,8 +29,8 @@ class MainMenuNode(template.Node):
 
         for tab_class in tabs:
             t = tab_class(
-                    request, domain=domain, couch_user=couch_user,
-                    project=project, org=org)
+                    request, current_url_name, domain=domain,
+                    couch_user=couch_user, project=project, org=org)
 
             if t.real_is_viewable:
                 visible_tabs.append(t)
@@ -111,15 +112,15 @@ def format_sidebar(context):
                 else:
                     nav['is_active'] = False
 
-                if 'children' in nav:
-                    for child in nav['children']:
-                        if child['urlname'] == current_url_name:
-                            if callable(child['title']):
+                if 'subpages' in nav:
+                    for subpage in nav['subpages']:
+                        if subpage['urlname'] == current_url_name:
+                            if callable(subpage['title']):
                                 actual_context = {}
                                 for d in context.dicts:
                                     actual_context.update(d)
-                                child['title'] = child['title'](**actual_context)
-                            nav['child'] = child
+                                subpage['title'] = subpage['title'](**actual_context)
+                            nav['subpage'] = subpage
                             break
 
     return mark_safe(render_to_string("hqwebapp/partials/sidebar.html", {
