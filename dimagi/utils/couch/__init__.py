@@ -57,7 +57,7 @@ def get_cached_property(couch_cls, obj_id, prop_name, expiry=12*60*60):
     ret = cache.get(cache_str)
     if not ret:
         data = couch_cls.get_db().get(obj_id)
-        if data.get("doc_type") == couch_cls._doc_type:
+        if couch_cls._doc_type in [data.get("doc_type"), data.get("base_doc")]:
             obj = couch_cls.wrap(data)
             ret = getattr(obj, prop_name)
             cache.set(cache_str, ret, expiry)
