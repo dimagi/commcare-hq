@@ -1580,8 +1580,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         """
         Multi (tiered) sort is supported by apps version 2.2 or higher
         """
-        minor_release = tuple(map(int, self.build_spec.version.split('.')))
-        return minor_release >= (2, 2)
+        return LooseVersion(self.build_spec.version) >= '2.2'
 
 
     @property
