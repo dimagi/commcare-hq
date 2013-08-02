@@ -326,7 +326,7 @@ class BaseProcessFileUploadView(BaseProcessUploadedView):
         if base_type not in self.valid_base_types():
             raise BadMediaFileException("Not a valid %s file." % self.media_class.get_nice_name().lower())
         ext = file_ext(self.uploaded_file.name)
-        if ext != file_ext(self.form_path):
+        if ext.lower() != file_ext(self.form_path).lower():
             raise BadMediaFileException("File %s has an incorrect file type (%s)." % (self.uploaded_file.name, ext))
 
     def process_upload(self):
