@@ -1,5 +1,5 @@
 #from django.conf.urls.defaults import patterns, url
-from corehq.apps.users.views import DefaultProjectUserSettingsView, EditWebUserView, EditMyAccountView, ListWebUsersView
+from corehq.apps.users.views import DefaultProjectUserSettingsView, EditWebUserView, EditMyAccountView, ListWebUsersView, InviteWebUserView
 from corehq.apps.users.views.mobile import EditGroupsView
 from corehq.apps.users.views.mobile.users import UploadCommCareUsers, EditCommCareUserView, ListCommCareUsersView, AsyncListCommCareUsersView, CreateCommCareUserView
 from django.conf.urls.defaults import *
@@ -30,7 +30,7 @@ urlpatterns = patterns('corehq.apps.users.views',
     url(r'^web/account/(?P<couch_user_id>[\w-]+)/$', EditWebUserView.as_view(), name=EditWebUserView.name),
     url(r'^web/remove/(?P<couch_user_id>[\w-]+)/$', 'remove_web_user', name='remove_web_user'),
     url(r'^web/undo_remove/(?P<record_id>[\w-]+)/$', 'undo_remove_web_user', name='undo_remove_web_user'),
-    url(r'^web/invite/$', 'invite_web_user', name='invite_web_user'),
+    url(r'^web/invite/$', InviteWebUserView.as_view(), name=InviteWebUserView.name),
     url(r'^web/reinvite/$', 'reinvite_web_user', name='reinvite_web_user'),
     url(r'^web/$', ListWebUsersView.as_view(), name=ListWebUsersView.name),
     url(r'^join/(?P<invitation_id>[\w-]+)/$', 'accept_invitation', name='domain_accept_invitation'),

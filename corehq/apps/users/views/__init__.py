@@ -477,35 +477,59 @@ def reinvite_web_user(request, domain):
         return json_response({'response': _("Error while attempting resend"), 'status': 'error'})
 
 
-@require_can_edit_web_users
-def invite_web_user(request, domain, template="users/invite_web_user.html"):
-    role_choices = UserRole.role_choices(domain)
-    if request.method == "POST":
-        current_users = [user.username for user in WebUser.by_domain(domain)]
-        pending_invites = [di.email for di in DomainInvitation.by_domain(domain)]
-        form = AdminInvitesUserForm(request.POST,
-            excluded_emails= current_users + pending_invites,
-            role_choices=role_choices
-        )
-        if form.is_valid():
-            data = form.cleaned_data
+class BaseManageWebUserView(BaseUserSettingsView):
+
+    @method_decorator(require_can_edit_web_users)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseManageWebUserView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def parent_pages(self):
+        return [{
+            'name': ListWebUsersView.page_title,
+            'url': '#,'
+        }]
+
+
+class InviteWebUserView(BaseManageWebUserView):
+    template_name = "users/invite_web_user.html"
+    name = 'invite_web_user'
+    page_title = ugettext_noop("Invite Web User to Project")
+
+    @property
+    @memoized
+    def invite_web_user_form(self):
+        role_choices = UserRole.role_choices(self.domain)
+        if self.request.method == 'POST':
+            current_users = [user.username for user in WebUser.by_domain(self.domain)]
+            pending_invites = [di.email for di in DomainInvitation.by_domain(self.domain)]
+            return AdminInvitesUserForm(
+                self.request.POST,
+                excluded_emails=current_users + pending_invites,
+                role_choices=role_choices
+            )
+        return AdminInvitesUserForm(role_choices=role_choices)
+
+    @property
+    def page_context(self):
+        return {
+            'registration_form': self.invite_web_user_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.invite_web_user_form.is_valid():
+            data = self.invite_web_user_form.cleaned_data
             # create invitation record
             data["invited_by"] = request.couch_user.user_id
             data["invited_on"] = datetime.utcnow()
-            data["domain"] = domain
+            data["domain"] = self.domain
             invite = DomainInvitation(**data)
             invite.save()
             invite.send_activation_email()
             messages.success(request, "Invitation sent to %s" % invite.email)
-            return HttpResponseRedirect(reverse(ListWebUsersView.name, args=[domain]))
-    else:
-        form = AdminInvitesUserForm(role_choices=role_choices)
-    context = _users_context(request, domain)
-    context.update(
-        registration_form=form
-    )
-    return render(request, template, context)
-
+            return HttpResponseRedirect(reverse(ListWebUsersView.name, args=[self.domain]))
+        return self.get(request, *args, **kwargs)
+    
 
 @require_POST
 @require_permission_to_edit_user
