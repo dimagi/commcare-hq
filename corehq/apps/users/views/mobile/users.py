@@ -176,7 +176,7 @@ class EditCommCareUserView(BaseFullEditUserView):
     def parent_pages(self):
         return [{
             'name': _("Mobile Workers"),
-            'url': '#,'
+            'url': reverse(ListCommCareUsersView.name, args=[self.domain]),
         }]
 
     def post(self, request, *args, **kwargs):
@@ -412,7 +412,7 @@ class BaseManageCommCareUserView(BaseUserSettingsView):
     def parent_pages(self):
         return [{
             'name': ListCommCareUsersView.page_title,
-            'url': '#,'
+            'url': reverse(ListCommCareUsersView.name, args=[self.domain]),
         }]
 
 
@@ -454,7 +454,7 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
             )
             return HttpResponseRedirect(reverse(EditCommCareUserView.name,
                                                 args=[self.domain, couch_user.userID]))
-        return super(CreateCommCareUserView, self).get(request, *args, **kwargs)
+        return self.get(request, *args, **kwargs)
 
 
 class UploadCommCareUsers(BaseManageCommCareUserView):

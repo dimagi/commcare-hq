@@ -168,8 +168,8 @@ class BaseEditUserView(BaseUserSettingsView):
     @property
     def parent_pages(self):
         return [{
-            'name': ListWebUsersView.name,
-            'url': '#,'
+            'name': ListWebUsersView.page_title,
+            'url': reverse(ListWebUsersView.name, args=[self.domain]),
         }]
 
     @property
@@ -487,7 +487,7 @@ class BaseManageWebUserView(BaseUserSettingsView):
     def parent_pages(self):
         return [{
             'name': ListWebUsersView.page_title,
-            'url': '#,'
+            'url': reverse(ListWebUsersView.name, args=[self.domain]),
         }]
 
 
@@ -529,7 +529,7 @@ class InviteWebUserView(BaseManageWebUserView):
             messages.success(request, "Invitation sent to %s" % invite.email)
             return HttpResponseRedirect(reverse(ListWebUsersView.name, args=[self.domain]))
         return self.get(request, *args, **kwargs)
-    
+
 
 @require_POST
 @require_permission_to_edit_user
