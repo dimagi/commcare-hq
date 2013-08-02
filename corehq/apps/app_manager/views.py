@@ -1781,7 +1781,7 @@ def download_xform(req, domain, app_id, module_id, form_id):
         return HttpResponse(
             req.app.fetch_xform(module_id, form_id)
         )
-    except IndexError:
+    except (IndexError, XFormValidationError):
         raise Http404()
 
 @safe_download
