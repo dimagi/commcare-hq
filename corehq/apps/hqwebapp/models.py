@@ -147,7 +147,7 @@ class UITab(object):
     @property
     @memoized
     def urls(self):
-        urls = [self.url]
+        urls = [self.url] if self.url else []
         if self.subtabs:
             for st in self.subtabs:
                 urls.extend(st.urls)
