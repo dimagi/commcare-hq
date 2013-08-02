@@ -3,6 +3,17 @@
 {% load i18n %}
 {% block report-title %}Mass Email Users{% endblock %}
 {% block reportcontent %}
+    <div class="alert">
+        <p>
+            This is the email mailing list tool. Please exercise caution
+            when using it.
+        </p>
+        </p>
+            Leave the email all users checkbox unchecked to send a test
+            email only to yourself. This is useful for verifying that
+            your formatting is correct before sending a real message.
+        </p>
+    </div>
     <form name="form" method="post" action="">
         <fieldset>
             <legend>Email</legend>
@@ -22,6 +33,13 @@
                     Body
                 </label>
                 <textarea name="email_body" rows="10" placeholder="Enter body..."></textarea>
+            </div>
+
+            <div class="controls">
+                <label class="checkbox">
+                    <input type="checkbox" name="real_email" />
+                    Email ALL users on the mailing list.
+                </label>
             </div>
             <input type="submit" class="btn" value="Send"/>
         </fieldset>
