@@ -4,6 +4,10 @@ from corehq.apps.users.models import CommCareUser
 
 class GroupTest(TestCase):
 
+    def setUp(self):
+        for user in CommCareUser.all():
+            user.delete()
+
     def testGetUsers(self):
         domain = 'group-test'
         active_user = CommCareUser.create(domain=domain, username='activeguy', password='secret')
