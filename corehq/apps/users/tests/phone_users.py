@@ -1,5 +1,7 @@
 from django.test import TestCase
-from corehq.apps.users.models import CouchUser, WebUser
+from corehq.apps.users.models import CouchUser, WebUser, CommCareUser
+from dimagi.utils.couch import get_cached_property
+
 
 class PhoneUsersTestCase(TestCase):
 
@@ -78,3 +80,13 @@ class PhoneUsersTestCase(TestCase):
         self.assertEquals(len(self.couch_user.phone_numbers), 1)
         self.couch_user.delete_phone_number('+11231231234')
         self.assertEquals(len(self.couch_user.phone_numbers), 0)
+
+    def test_get_cached_full_name(self):
+        testuser = CommCareUser.create('test-domain', 'testuser', 'test-pass')
+        FULL_NAME = "Test User"
+        testuser.set_full_name(FULL_NAME)
+        testuser.save()
+
+        cached_full_name = get_cached_property(CouchUser, testuser.get_id, 'full_name', expiry=7*24*60*60)
+        self.assertEqual(FULL_NAME, cached_full_name)
+
