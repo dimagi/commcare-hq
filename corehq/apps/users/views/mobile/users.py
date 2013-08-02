@@ -469,7 +469,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         }
 
     @method_decorator(get_file)
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         """View's dispatch method automatically calls this"""
         redirect = request.POST.get('redirect')
 
