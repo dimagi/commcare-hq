@@ -15,6 +15,7 @@ def safe_download(f):
     Assumes that the first 2 arguments to the function after request are
     domain and app_id, or there are keyword arguments with those names
     """
+    @wraps(f)
     def _safe_download(req, *args, **kwargs):
         domain = args[0] if len(args) > 0 else kwargs["domain"]
         app_id = args[1] if len(args) > 1 else kwargs["app_id"]
