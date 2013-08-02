@@ -17,11 +17,11 @@
                 <td>{% trans "All genders and ages" %}</td>
             {% else %}
                 {% if group.gender %}
-                    <td>{{ group.gender.html }}</td>
+                    <td>{{ group.gender }}</td>
                 {% endif %}
 
-                {% if group.age_group %}
-                    <td>{{ group.age_group }}</td>
+                {% if group.age_display %}
+                    <td>{{ group.age_display }}</td>
                 {% endif %}
             {% endifequal %}
 

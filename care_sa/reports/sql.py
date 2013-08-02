@@ -107,39 +107,72 @@ class CareReport(SqlTabularReport,
     def keys(self):
         [self.domain]
 
-    @property
-    def rows(self):
-        rows = list(super(CareReport, self).rows)
-
-        result = []
-        for row in rows:
-            u = CommCareUser.get_by_user_id(row.pop(0)['html'])
-            group = {
-                'username': u.username,
-                'row_data': row,
+    def initialize_user_stuff(self):
+        return {
+            '0': {
+                'male': ['--'] * len(self.report_columns),
+                'female': ['--'] * len(self.report_columns)
+            },
+            '1': {
+                'male': ['--'] * len(self.report_columns),
+                'female': ['--'] * len(self.report_columns)
+            },
+            '2': {
+                'male': ['--'] * len(self.report_columns),
+                'female': ['--'] * len(self.report_columns)
             }
+        }
+
+    def build_data(self, rows):
+        woot = {}
+
+        for row in rows:
+            u = CommCareUser.get_by_user_id(row.pop(0)['html']).username
+            if u not in woot:
+                woot[u] = self.initialize_user_stuff()
 
             if self.show_gender:
-                gender = row.pop(0)
-                group['gender'] = gender
+                gender = row.pop(0)['html']
 
+                if gender == 'refuses_answer':
+                    gender = 'male'
             if self.show_age:
                 age_group = row.pop(0)['html']
-                if age_group == '0':
-                    group['age_group'] = '0-14 years'
-                elif age_group == '1':
-                    group['age_group'] = '15-24 years'
-                else:
-                    group['age_group'] = '25+ years'
 
-            if not self.show_gender and not self.show_age:
-                # discard the gender column from blank header hack
-                row.pop(0)
-                group['gender'] = "no_grouping"
+#            if not self.show_gender and not self.show_age:
+#                # discard the gender column from blank header hack
+#                row.pop(0)
+#                group['gender'] = "no_grouping"
 
-            result.append(group)
+            # TODO: can't assume both duh
+            woot[u][age_group][gender] = row
+        return woot
 
-        return result
+    @property
+    def rows(self):
+        things = list(super(CareReport, self).rows)
+        woot = self.build_data(things)
+
+        rows = []
+        for user in woot:
+            for age_group in range(0, 3):
+                for gender in woot[user][str(age_group)]:
+                    u = CommCareUser.get_by_username(user)
+
+                    if age_group == 0:
+                        age_display = '0-14 years'
+                    elif age_group == 1:
+                        age_display = '15-24 years'
+                    else:
+                        age_display = '25+ years'
+
+                    rows.append({
+                        'username': u.name,
+                        'age_display': age_display,
+                        'gender': gender,
+                        'row_data': woot[user][str(age_group)][gender]
+                    })
+        return rows
 
 class TestingAndCounseling(CareReport):
     slug = 'tac'
