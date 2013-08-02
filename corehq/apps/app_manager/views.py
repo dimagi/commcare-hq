@@ -14,6 +14,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab
 from corehq.apps.app_manager import commcare_settings
+from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from django.utils import html
 from django.utils.http import urlencode as django_urlencode
@@ -344,17 +345,17 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
             form_errors.append("Syntax Error: %s" % e)
         except AppError as e:
             form_errors.append("Error in application: %s" % e)
-        except XFormValidationError as e:
-            message = unicode(e)
-            form_errors.append((html.escape(message).replace('\n', '<br/>'), {'extra_tags': 'html'}))
-
+        except XFormValidationError:
+            # showing these messages is handled by validate_form_for_build ajax
+            pass
         except XFormError as e:
             form_errors.append("Error in form: %s" % e)
-        # any other kind of error should fail hard, but for now there are too many for that to be practical
+        # any other kind of error should fail hard,
+        # but for now there are too many for that to be practical
         except Exception as e:
             if settings.DEBUG:
                 raise
-            logging.exception(e)
+            notify_exception(request, 'Unexpected Build Error')
             form_errors.append("Unexpected System Error: %s" % e)
 
         try:
@@ -385,7 +386,8 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         else:
             messages.error(request, err)
     module_case_types = [
-        {'module_name': module.name.get('en'), 'case_type': module.case_type}
+        {'module_name': trans(module.name, langs),
+         'case_type': module.case_type}
         for module in form.get_app().modules if module.case_type
     ] if not is_user_registration else None
     return {
@@ -678,7 +680,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'force_edit': force_edit,
         'error':error,
         'app': app,
-        })
+    })
     response = render(req, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
@@ -922,7 +924,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
             # todo: something better than nothing when invalid
             module["case_type"] = case_type
         else:
-            resp['update'].update({'#case_type': module['case_type']})
+            return HttpResponseBadRequest("case type is improperly formatted")
     if should_edit("put_in_root"):
         module["put_in_root"] = json.loads(req.POST.get("put_in_root"))
     for attribute in ("name", "case_label", "referral_label"):

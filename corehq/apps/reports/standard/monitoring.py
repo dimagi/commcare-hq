@@ -677,7 +677,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
                 all_times.extend([dateutil.parser.parse(d['key'][-1]) for d in data])
         if self.by_submission_time:
             # completion time is assumed to be in the phone's timezone until we can send proper timezone info
-            all_times = [tz_utils.adjust_datetime_to_timezone(t,  pytz.utc.zone, self.timezone.zone) for t in all_times]
+            all_times = [tz_utils.adjust_datetime_to_timezone(t, pytz.utc.zone, self.timezone.zone) for t in all_times]
         return [(t.weekday(), t.hour) for t in all_times]
 
     @property

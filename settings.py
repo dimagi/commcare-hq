@@ -183,6 +183,7 @@ HQ_APPS = (
     'langcodes',
     'corehq.apps.adm',
     'corehq.apps.announcements',
+    'corehq.apps.callcenter',
     'corehq.apps.crud',
     'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
@@ -215,6 +216,7 @@ HQ_APPS = (
     'corehq.apps.api',
     'corehq.apps.indicators',
     'corehq.couchapps',
+    'custom.apps.wisepill',
     'fluff',
     'fluff.fluff_filter',
     'sofabed.forms',
@@ -310,7 +312,10 @@ EXCHANGE_NOTIFICATION_RECIPIENTS = []
 SERVER_EMAIL = 'commcarehq-noreply@dimagi.com' #the physical server emailing - differentiate if needed
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
+CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
+
+SERVER_ENVIRONMENT = 'localdev'
 
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
@@ -322,7 +327,7 @@ OPENROSA_VERSION = "1.0"
 FIXTURE_GENERATORS = [
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",
-    "corehq.apps.callcenter.fixturegenerators.indicators",
+    "corehq.apps.reportfixtures.fixturegenerators.indicators",
 ]
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
@@ -332,6 +337,9 @@ SMS_GATEWAY_PARAMS = "user=my_username&password=my_password&id=%(phone_number)s&
 
 # celery
 BROKER_URL = 'django://' #default django db based
+
+#this is the default celery queue - for periodic tasks on a separate queue override this to something else
+CELERY_PERIODIC_QUEUE = 'celery'
 
 SKIP_SOUTH_TESTS = True
 #AUTH_PROFILE_MODULE = 'users.HqUserProfile'
@@ -579,6 +587,7 @@ COUCHDB_APPS = [
     'auditcare',
     'builds',
     'case',
+    'callcenter',
     'cleanup',
     'cloudcare',
     'commtrack',
@@ -618,6 +627,7 @@ COUCHDB_APPS = [
     'hutch',
     'hqbilling',
     'couchlog',
+    'wisepill',
 
     # custom reports
     'benin',
@@ -650,6 +660,7 @@ EMAIL_PORT = EMAIL_SMTP_PORT
 EMAIL_HOST_USER = EMAIL_LOGIN
 EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
 EMAIL_USE_TLS = True
+SEND_BROKEN_LINK_EMAILS = True
 
 NO_HTML_EMAIL_MESSAGE = """
 This is an email from CommCare HQ. You're seeing this message because your
@@ -739,6 +750,15 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'care-bihar', 
     'hsph-dev', 
     'hsph-betterbirth-pilot-2',
+    'commtrack-public-demo',
+]
+
+#Custom fully indexed domains for FullXForm index/pillowtop --
+# only those domains that don't require custom pre-processing before indexing,
+# otherwise list in XFORM_PILLOW_HANDLERS
+# Adding a domain will not automatically index that domain's existing forms
+ES_XFORM_FULL_INDEX_DOMAINS = [
+    'commtrack-public-demo',
 ]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"

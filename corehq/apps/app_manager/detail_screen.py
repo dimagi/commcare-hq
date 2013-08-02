@@ -1,4 +1,16 @@
 from corehq.apps.app_manager import suite_xml as sx
+from corehq.apps.app_manager.xform import CaseXPath, IndicatorXpath
+
+CASE_PROPERTY_MAP = {
+    # IMPORTANT: if you edit this you probably want to also edit
+    # the corresponding map in cloudcare
+    # (corehq.apps.cloudcare.static.cloudcare.js.backbone.cases.js)
+    'external-id': 'external_id',
+    'date-opened': 'date_opened',
+    'status': '@status',
+    'name': 'case_name',
+}
+
 
 def get_column_generator(app, module, detail, column):
     return get_class_for_format(column.format)(app, module, detail, column)
@@ -17,20 +29,50 @@ class register_format_type(object):
         return klass
 
 
+def get_column_xpath_generator(app, module, detail, column):
+    return get_class_for_type(column.field_type)(app, module, detail, column)
+
+
+def get_class_for_type(slug):
+    return get_class_for_type._type_map.get(slug, BaseXpathGenerator)
+get_class_for_type._type_map = {}
+
+
+class register_type_processor(object):
+
+    def __init__(self, slug):
+        self.slug = slug
+
+    def __call__(self, klass):
+        get_class_for_type._type_map[self.slug] = klass
+        return klass
+
+
+class BaseXpathGenerator(object):
+    def __init__(self, app, module, detail, column):
+        self.app = app
+        self.module = module
+        self.detail = detail
+        self.column = column
+        self.id_strings = sx.IdStrings()
+
+    @property
+    def xpath(self):
+        return self.column.field
+
+
 class FormattedDetailColumn(object):
 
     header_width = None
     template_width = None
     template_form = None
-    sort_width = None
 
     def __init__(self, app, module, detail, column):
-        from corehq.apps.app_manager.suite_xml import IdStrings
         self.app = app
         self.module = module
         self.detail = detail
         self.column = column
-        self.id_strings = IdStrings()
+        self.id_strings = sx.IdStrings()
 
     @property
     def locale_id(self):
@@ -63,38 +105,46 @@ class FormattedDetailColumn(object):
 
     @property
     def sort_node(self):
+        if not (self.app.enable_multi_sort and self.detail.display == 'short'):
+            return
+
         sort_fields = [s.field for s in self.module.detail_sort_elements]
         field = self.column.field
-        if field in sort_fields and \
-           self.app.enable_multi_sort and \
-           self.detail.display == 'short':
+
+        sort = None
+
+        if self.sort_xpath_function:
+            sort = sx.Sort(
+                text=sx.Text(xpath_function=self.sort_xpath_function),
+                type='string',
+            )
+
+        if field in sort_fields:
             order = sort_fields.index(field)
             sort_element = self.module.detail_sort_elements[order]
 
-            # these have to be distinguished for the UI to be able to give
-            # user friendly choices
-            if sort_element.type == 'date' or sort_element.type == 'plain':
-                sort_type = 'string'
-            else:
-                sort_type = sort_element.type
+            if not sort:
+                # these have to be distinguished for the UI to be able to give
+                # user friendly choices
+                if sort_element.type == 'date' or sort_element.type == 'plain':
+                    sort_type = 'string'
+                else:
+                    sort_type = sort_element.type
+                sort = sx.Sort(
+                    text=sx.Text(xpath_function=self.xpath_function),
+                    type=sort_type,
+                )
 
-            sort = sx.Sort(
-                text=sx.Text(xpath_function=self.xpath_function),
-                width=self.sort_width,
-                type=sort_type,
-                order=order + 1,  # order is 1 indexed on mobile
-                direction=sort_element.direction,
-            )
+            sort.order = order + 1  # order is 1-indexed on mobile
+            sort.direction = sort_element.direction
 
-            return sort
-        else:
-            return None
+        return sort
 
     variables = None
 
     @property
     def xpath(self):
-        return self.column.xpath
+        return get_column_xpath_generator(self.app, self.module, self.detail, self.column).xpath
 
     XPATH_FUNCTION = u"{xpath}"
 
@@ -134,22 +184,25 @@ class FormattedDetailColumn(object):
 
     @property
     def fields(self):
-        if self.sort_xpath_function and self.detail.display == 'short':
+        if self.app.enable_multi_sort:
+            yield sx.Field(
+                header=self.header,
+                template=self.template,
+                sort_node=self.sort_node,
+            )
+        elif self.sort_xpath_function and self.detail.display == 'short':
             yield sx.Field(
                 header=self.header,
                 template=self.hidden_template,
-                sort_node=self.sort_node,
             )
             yield sx.Field(
                 header=self.hidden_header,
                 template=self.template,
-                sort_node=self.sort_node,
             )
         else:
             yield sx.Field(
                 header=self.header,
                 template=self.template,
-                sort_node=self.sort_node,
             )
 
 class HideShortHeaderColumn(FormattedDetailColumn):
@@ -241,6 +294,30 @@ class Filter(HideShortColumn):
 class Address(HideShortColumn):
     template_form = 'address'
     template_width = 0
+
+
+@register_type_processor(sx.FIELD_TYPE_PROPERTY)
+class PropertyXpathGenerator(BaseXpathGenerator):
+    @property
+    def xpath(self):
+        parts = self.column.field.split('/')
+        parts[-1] = CASE_PROPERTY_MAP.get(parts[-1], parts[-1])
+        property = parts.pop()
+        indexes = parts
+
+        case = CaseXPath('')
+        for index in indexes:
+            case = case.index_id(index).case()
+        return case.property(property)
+
+
+@register_type_processor(sx.FIELD_TYPE_INDICATOR)
+class IndicatorXpathGenerator(BaseXpathGenerator):
+    @property
+    def xpath(self):
+        indicator_set, indicator = self.column.field_property.split('/', 1)
+        instance_id = self.id_strings.indicator_instance(indicator_set)
+        return IndicatorXpath(instance_id).indicator(indicator)
 
 
 # todo: These two were never actually supported, and 'advanced' certainly never worked

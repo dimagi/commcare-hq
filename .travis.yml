@@ -9,18 +9,19 @@ branches:
 install:
  - "uname -a"
  - "lsb_release -a"
- - "sudo apt-get install moreutils"
+ - "sudo apt-get install moreutils libblas-dev liblapack-dev"
  - "bash -ex .travis/upgrade-couchdb.sh | ts"
- - "curl http://127.0.0.1:5984/"
+ - "git clone https://github.com/dimagi/commcarehq-venv.git"
+ - "cp -r commcarehq-venv/hq_env/* ~/virtualenv/"
+ - "source ~/virtualenv/bin/activate"
  - "time (bash -e .travis/quietly-run-install.sh | ts)"
- - "time (python .travis/download-requirements-in-parallel.py requirements/requirements.txt requirements/dev-requirements.txt | ts)"
- - "time (pip install Cython --use-mirrors | ts)"
- - "time (pip install -r requirements/requirements.txt -r requirements/dev-requirements.txt --use-mirrors | ts)"
+ - "time (pip install --exists-action w -r requirements/requirements.txt --use-mirrors)"
  - "time (bash -e .travis/misc-setup.sh | ts)"
  - "cp .travis/localsettings.py localsettings.py"
- - "pip install coveralls coverage unittest2 mock"
-script: "cat .travis/apps_under_test | grep -v '^#' | xargs coverage run manage.py test --noinput --failfast | ts"
+ - "pip install coverage unittest2 mock --use-mirrors"
+script: "cat .travis/apps_under_test | grep -v '^#' | xargs coverage run manage.py test --noinput --failfast"
 after_success:
+ - coverage report
  - coveralls
 services:
  - postgresql

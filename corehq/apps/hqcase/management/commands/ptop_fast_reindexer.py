@@ -13,6 +13,26 @@ MAX_TRIES = 10
 RETRY_DELAY = 60
 RETRY_TIME_DELAY_FACTOR = 15
 
+
+
+class FakeCouchDBLoader(object):
+    docs = {}
+
+    def open_doc(self, doc_id):
+        return self.docs.get(doc_id, None)
+
+    def save_doc(self):
+        raise NotImplementedError("Wtf, this is a loader class")
+
+    def fake_set_docs(self, doc_dict_by_id):
+        """
+        A non overriding method - fake set the docs in a dict so open_doc will get it like a regular couch database.
+        """
+        self.docs = doc_dict_by_id
+
+    def __call__(self):
+        return self
+
 class PtopReindexer(NoArgsCommand):
     help = "View based elastic reindexer"
     option_list = NoArgsCommand.option_list + (
@@ -105,7 +125,7 @@ class PtopReindexer(NoArgsCommand):
         # that happen to cases while we're doing our reindexing would not get skipped once we
         # finish.
 
-        current_db_seq = self.pillow.couch_db.info()['update_seq']
+        current_db_seq = self.pillow.couch_db().info()['update_seq']
         self.pillow.set_checkpoint({'seq': current_db_seq})
 
         #Write sequence file to disk
@@ -182,7 +202,7 @@ class PtopReindexer(NoArgsCommand):
             print "Starting fast tracked reindexing from view position %d" % self.start_num
             runparts = self.runfile.split('_')
             print runparts
-            if len(runparts) != 5 or not self.runfile.startswith('ptop_fast_reindex') or runparts[3] != self.doc_class.__name__:
+            if len(runparts) != 5 or not self.runfile.startswith('ptop_fast_reindex'):
                 print "\tError, runpart name must be in format ptop_fast_reindex_%s_yyyy-mm-dd-HHMM"
                 sys.exit()
 
@@ -231,12 +251,22 @@ class PtopReindexer(NoArgsCommand):
         start = self.start_num
         end = start + self.chunk_size
         total_len = len(self.full_view_data)
+
+        doc_couch_db = self.pillow.document_class.get_db()
+
         while start < total_len:
             print "load_bulk [%d:%d]" % (start, end)
             if end < total_len:
                 bulk_slice = self.full_view_data[start:end]
             else:
                 bulk_slice = self.full_view_data[start:]
+
+            self.pillow.couch_db = FakeCouchDBLoader()
+
+            doc_ids = [x['id'] for x in bulk_slice]
+            slice_docs = doc_couch_db.all_docs(keys=doc_ids, include_docs=True)
+            raw_doc_dict = dict((x['id'], x['doc']) for x in slice_docs.all())
+            self.pillow.couch_db.fake_set_docs(raw_doc_dict) # update the fake couch instance's set of bulk loaded docs
 
             retries = 0
             bulk_start = datetime.utcnow()

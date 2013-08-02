@@ -51,10 +51,12 @@ class UITab(object):
 
     dispatcher = None
 
-    def __init__(self, request, domain=None, couch_user=None, project=None, org=None):
+    def __init__(self, request, current_url_name, domain=None, couch_user=None,
+                 project=None, org=None):
         if self.subtab_classes:
-            self.subtabs = [cls(request, domain=domain, couch_user=couch_user,
-                                project=project, org=org)
+            self.subtabs = [cls(request, current_url_name, domain=domain,
+                                couch_user=couch_user, project=project,
+                                org=org)
                             for cls in self.subtab_classes]
         else:
             self.subtabs = None
@@ -67,6 +69,7 @@ class UITab(object):
         # This should not be considered as part of the subclass API unless it
         # is necessary. Try to add new explicit parameters instead.
         self._request = request
+        self._current_url_name = current_url_name
 
     @property
     def dropdown_items(self):
@@ -135,7 +138,9 @@ class UITab(object):
         request_path = self._request.get_full_path()
 
         if self.urls:
-            return any(request_path.startswith(url) for url in self.urls)
+            return (any(request_path.startswith(url) for url in self.urls) or
+                    self._current_url_name in self.subpage_url_names)
+
         elif self.url:
             return request_path.startswith(self.url)
         else:
@@ -144,7 +149,7 @@ class UITab(object):
     @property
     @memoized
     def urls(self):
-        urls = []
+        urls = [self.url] if self.url else []
         if self.subtabs:
             for st in self.subtabs:
                 urls.extend(st.urls)
@@ -160,6 +165,28 @@ class UITab(object):
         return urls
 
     @property
+    @memoized
+    def subpage_url_names(self):
+        """
+        List of all url names of subpages of sidebar items that get
+        displayed only when you're on that subpage.
+        """
+        names = []
+        if self.subtabs:
+            for st in self.subtabs:
+                names.extend(st.subpage_url_names)
+
+        try:
+            for name, section in self.sidebar_items:
+                names.extend(subpage['urlname']
+                    for item in section
+                    for subpage in item.get('subpages', []))
+        except Exception:
+            pass
+
+        return names
+
+    @property
     def css_id(self):
         return self.__class__.__name__
 
@@ -167,6 +194,14 @@ class UITab(object):
 class ProjectReportsTab(UITab):
     title = ugettext_noop("Project Reports")
     view = "corehq.apps.reports.views.default"
+   
+    @property
+    def is_active(self):
+        # HACK. We need a more overarching way to avoid doing things this way
+        if 'reports/adm' in self._request.get_full_path():
+            return False
+
+        return super(ProjectReportsTab, self).is_active
 
     @property
     def is_viewable(self):
@@ -361,6 +396,7 @@ class MessagingTab(UITab):
 
     @property
     def sidebar_items(self):
+        from corehq.apps.reports.standard.sms import MessageLogReport
         def reminder_subtitle(form=None, **context):
             return form['nickname'].value
 
@@ -369,15 +405,15 @@ class MessagingTab(UITab):
 
         items = [
             (_("Messages"), [
-                {'title': _('Message History'),
-                 'url': reverse('messaging', args=[self.domain])},
                 {'title': _('Compose SMS Message'),
-                 'url': reverse('sms_compose_message', args=[self.domain])}
+                 'url': reverse('sms_compose_message', args=[self.domain])},
+                {'title': _('Message Log'),
+                 'url': MessageLogReport.get_url(domain=self.domain)},
             ]),
             (_("Data Collection and Reminders"), [
                 {'title': _("Reminders"),
                  'url': reverse('list_reminders', args=[self.domain]),
-                 'children': [
+                 'subpages': [
                      {'title': reminder_subtitle,
                       'urlname': 'edit_complex'},
                      {'title': _("New Reminder Definition"),
@@ -389,7 +425,7 @@ class MessagingTab(UITab):
 
                 {'title': _("Keywords"),
                  'url': reverse('manage_keywords', args=[self.domain]),
-                 'children': [
+                 'subpages': [
                      {'title': keyword_subtitle,
                       'urlname': 'edit_keyword'},
                      {'title': _("New Keyword"),
@@ -413,7 +449,7 @@ class MessagingTab(UITab):
                 (_("Survey Management"), [
                     {'title': _("Samples"),
                      'url': reverse('sample_list', args=[self.domain]),
-                     'children': [
+                     'subpages': [
                          {'title': sample_title,
                           'urlname': 'edit_sample'},
                          {'title': _("New Sample"),
@@ -421,7 +457,7 @@ class MessagingTab(UITab):
                      ]},
                     {'title': _("Surveys"),
                      'url': reverse('survey_list', args=[self.domain]),
-                     'children': [
+                     'subpages': [
                          {'title': survey_title,
                           'urlname': 'edit_survey'},
                          {'title': _("New Survey"),
@@ -480,7 +516,7 @@ class ProjectUsersTab(UITab):
                 {'title': _('Mobile Workers'),
                  'url': reverse('commcare_users', args=[self.domain]),
                  'description': _("Create and manage users for CommCare and CloudCare."),
-                 'children': [
+                 'subpages': [
                      {'title': commcare_username,
                       'urlname': EditCommCareUserView.name},
                      {'title': _('New Mobile Worker'),
@@ -494,7 +530,7 @@ class ProjectUsersTab(UITab):
                 {'title': _('Groups'),
                  'url': reverse('all_groups', args=[self.domain]),
                  'description': _("Create and manage reporting and case sharing groups for Mobile Workers."),
-                 'children': [
+                 'subpages': [
                      {'title': lambda **context: (
                          "%s %s" % (_("Editing"), context['group'].name)),
                       'urlname': 'group_members'},
@@ -527,7 +563,7 @@ class ProjectUsersTab(UITab):
                 {'title': ListWebUsersView.page_title,
                  'url': reverse(ListWebUsersView.name, args=[self.domain]),
                  'description': _("Grant other CommCare HQ users access to your project and manage user roles."),
-                 'children': [
+                 'subpages': [
                      {
                          'title': _("Invite Web User"),
                          'urlname': 'invite_web_user'
@@ -615,7 +651,7 @@ class ProjectSettingsTab(UITab):
             administration.extend([
                 {'title': _('Data Forwarding'),
                  'url': reverse('domain_forwarding', args=[self.domain]),
-                 'children': [
+                 'subpages': [
                      {'title': forward_name,
                       'urlname': 'add_repeater'}
                  ]}
@@ -668,7 +704,9 @@ class AdminReportsTab(UITab):
             ]),
             (_('Administrative Operations'), [
                 {'title': _('View/Update Domain Information'),
-                 'url': reverse('domain_update')}
+                 'url': reverse('domain_update')},
+                {'title': _('Mass Email Users'),
+                 'url': reverse('mass_email')}
             ])
         ]
     
@@ -789,14 +827,6 @@ class OrgReportTab(OrgTab):
 class OrgSettingsTab(OrgTab):
     title = ugettext_noop("Settings")
     view = "corehq.apps.orgs.views.orgs_landing"
-
-    @property
-    def is_active(self):
-        # HACK. We need a more overarching way to avoid doing things this way -- copied this strat from above usage...
-        if self.org and 'o/%s/reports' % self.org.name in self._request.get_full_path():
-            return False
-
-        return super(OrgSettingsTab, self).is_active
 
     @property
     def dropdown_items(self):

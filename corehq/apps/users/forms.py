@@ -153,9 +153,9 @@ class BaseUserInfoForm(forms.Form):
 
 
 class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
-    email_opt_in = forms.BooleanField(required=False,
+    email_opt_out = forms.BooleanField(required=False,
                                       label="",
-                                      help_text=_("Join the mailing list to receive important announcements."))
+                                      help_text=_("Opt out of emails about new features and other CommCare updates."))
 
     @property
     def direct_properties(self):
