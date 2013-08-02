@@ -1,0 +1,29 @@
+{% extends "hqadmin/hqadmin_base_report.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block report-title %}Mass Email Users{% endblock %}
+{% block reportcontent %}
+    <form name="form" method="post" action="">
+        <fieldset>
+            <legend>Email</legend>
+            <div class="form-group">
+                <label for="email_subject">
+                    Subject
+                </label>
+                <input
+                    name="email_subject"
+                    type="text"
+                    placeholder="Enter subject...">
+                </input>
+            </div>
+
+            <div class="form-group">
+                <label for="email_body">
+                    Body
+                </label>
+                <textarea name="email_body" rows="10" placeholder="Enter body..."></textarea>
+            </div>
+            <input type="submit" class="btn" value="Send"/>
+        </fieldset>
+    </form>
+{% endblock %}

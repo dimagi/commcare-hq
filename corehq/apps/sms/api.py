@@ -371,15 +371,30 @@ def close_open_sessions(domain, connection_id):
         session.end(False)
         session.save()
 
-def structured_sms_handler(verified_number, text):
+def structured_sms_handler(verified_number, text, contact=None):
+    """
+    If contact is present, it is used as the contact who is submitting
+    the data. If not, verified_number is used to determine who the contact
+    is.
+    """
     
     # Circular Import
     from corehq.apps.reminders.models import SurveyKeyword, FORM_TYPE_ALL_AT_ONCE
     
+    if contact is not None:
+        domain = contact.domain
+        contact_doc_type = contact.doc_type
+        contact_id = contact._id
+    else:
+        contact = verified_number.owner
+        domain = verified_number.domain
+        contact_doc_type = verified_number.owner_doc_type
+        contact_id = verified_number.owner_id
+    
     text = text.strip()
     if text == "":
         return False
-    for survey_keyword in SurveyKeyword.get_all(verified_number.domain):
+    for survey_keyword in SurveyKeyword.get_all(domain):
         if survey_keyword.form_type == FORM_TYPE_ALL_AT_ONCE:
             if survey_keyword.delimiter is not None:
                 args = text.split(survey_keyword.delimiter)
@@ -397,20 +412,20 @@ def structured_sms_handler(verified_number, text):
                 session = None
                 
                 # Close any open sessions
-                close_open_sessions(verified_number.domain, verified_number.owner_id)
+                close_open_sessions(domain, contact_id)
                 
                 # Start the session
                 form = Form.get_form(survey_keyword.form_unique_id)
                 app = form.get_app()
                 module = form.get_module()
                 
-                if verified_number.owner_doc_type == "CommCareCase":
-                    case_id = verified_number.owner_id
+                if contact_doc_type == "CommCareCase":
+                    case_id = contact_id
                 else:
                     #TODO: Need a way to choose the case when it's a user that's playing the form
                     case_id = None
                 
-                session, responses = start_session(verified_number.domain, verified_number.owner, app, module, form, case_id=case_id, yield_responses=True)
+                session, responses = start_session(domain, contact, app, module, form, case_id=case_id, yield_responses=True)
                 assert len(responses) > 0, "There should be at least one response."
                 
                 current_question = responses[-1]
@@ -482,9 +497,9 @@ def structured_sms_handler(verified_number, text):
                                     error_occurred = True
                                     error_msg = "ERROR: " + _error_msg
                                     break
-                                responses = _get_responses(verified_number.domain, verified_number.owner_id, answer, yield_responses=True)
+                                responses = _get_responses(domain, contact_id, answer, yield_responses=True)
                             else:
-                                responses = _get_responses(verified_number.domain, verified_number.owner_id, "", yield_responses=True)
+                                responses = _get_responses(domain, contact_id, "", yield_responses=True)
                             
                             current_question = responses[-1]
                             if is_form_complete(current_question):
@@ -507,13 +522,13 @@ def structured_sms_handler(verified_number, text):
                                 error_msg = "ERROR: " + _error_msg
                                 break
                             
-                            responses = _get_responses(verified_number.domain, verified_number.owner_id, answer, yield_responses=True)
+                            responses = _get_responses(domain, contact_id, answer, yield_responses=True)
                             current_question = responses[-1]
                             form_complete = is_form_complete(current_question)
                         
                         # If the form isn't finished yet but we're out of arguments, try to leave each remaining question blank and continue
                         while not form_complete and not error_occurred:
-                            responses = _get_responses(verified_number.domain, verified_number.owner_id, "", yield_responses=True)
+                            responses = _get_responses(domain, contact_id, "", yield_responses=True)
                             current_question = responses[-1]
                             
                             if current_question.is_error:
@@ -523,11 +538,11 @@ def structured_sms_handler(verified_number, text):
                             if is_form_complete(current_question):
                                 form_complete = True
             except Exception:
-                logging.exception("Could not process structured sms for verified number %s, domain %s, keyword %s" % (verified_number._id, verified_number.domain, keyword))
+                logging.exception("Could not process structured sms for contact %s, domain %s, keyword %s" % (contact_id, domain, keyword))
                 error_occurred = True
                 error_msg = "ERROR: Internal server error"
             
-            if error_occurred:
+            if error_occurred and verified_number is not None:
                 send_sms_to_verified_number(verified_number, error_msg)
             
             if session is not None and (error_occurred or not form_complete):

@@ -17,6 +17,8 @@ from dimagi.utils.couch.database import get_db, get_safe_write_kwargs, apply_upd
 from itertools import chain
 from langcodes import langs as all_langs
 from collections import defaultdict
+from django.utils.importlib import import_module
+
 
 lang_lookup = defaultdict(str)
 
@@ -206,6 +208,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     date_created = DateTimeProperty()
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     case_sharing = BooleanProperty(default=False)
+    secure_submissions = BooleanProperty(default=False)
     organization = StringProperty()
     hr_name = StringProperty() # the human-readable name for this project within an organization
     creating_user = StringProperty() # username of the user who created this domain
@@ -829,7 +832,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         module_name = get_domain_module_map().get(domain_name, domain_name)
 
         try:
-            return __import__(module_name) if module_name else None
+            return import_module(module_name) if module_name else None
         except ImportError:
             return None
 
