@@ -51,6 +51,7 @@ from django.utils.translation import ugettext as _
 from dimagi.utils.django.email import send_HTML_email
 from django.template.loader import render_to_string
 from corehq.apps.users.models import CouchUser
+from django.http import Http404
 
 
 @require_superuser
@@ -429,8 +430,10 @@ def mobile_user_reports(request):
 
 @require_superuser
 def mass_email(request):
-    if request.method == "POST":
+    if not request.couch_user.is_staff:
+        raise Http404()
 
+    if request.method == "POST":
         form = EmailForm(request.POST)
         if form.is_valid():
             subject = form.cleaned_data['email_subject']
@@ -438,14 +441,13 @@ def mass_email(request):
             real_email = form.cleaned_data['real_email']
 
             if real_email:
-                raise Exception
-                #recipients = WebUser.view(
-                    #'users/mailing_list_emails',
-                    #reduce=False,
-                    #include_docs=True,
-                #).all()
+                recipients = WebUser.view(
+                    'users/mailing_list_emails',
+                    reduce=False,
+                    include_docs=True,
+                ).all()
             else:
-                recipients = [CouchUser.get_by_username(request.user.username)]
+                recipients = [request.couch_user]
 
             for recipient in recipients:
                 params = {
