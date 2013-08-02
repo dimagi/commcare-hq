@@ -1325,7 +1325,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
             #'MIDlet-Name': self.name,
             # e.g. 2011-Apr-11 20:45
             'CommCare-Release': "true",
-            'Build-Number': self.version,
         }
 
     def create_jadjar(self, save=False):
