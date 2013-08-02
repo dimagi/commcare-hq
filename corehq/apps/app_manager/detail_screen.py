@@ -12,12 +12,16 @@ CASE_PROPERTY_MAP = {
 }
 
 
-def get_column_generator(app, module, detail, column):
-    return get_class_for_format(column.format)(app, module, detail, column)
+def get_column_generator(app, module, detail, column, sort_element=None,
+                         order=None):
+    cls = get_class_for_format(column.format)
+    return cls(app, module, detail, column, sort_element, order)
+
 
 def get_class_for_format(slug):
     return get_class_for_format._format_map.get(slug, FormattedDetailColumn)
 get_class_for_format._format_map = {}
+
 
 class register_format_type(object):
 
@@ -30,7 +34,8 @@ class register_format_type(object):
 
 
 def get_column_xpath_generator(app, module, detail, column):
-    return get_class_for_type(column.field_type)(app, module, detail, column)
+    cls = get_class_for_type(column.field_type)
+    return cls(app, module, detail, column)
 
 
 def get_class_for_type(slug):
@@ -67,11 +72,14 @@ class FormattedDetailColumn(object):
     template_width = None
     template_form = None
 
-    def __init__(self, app, module, detail, column):
+    def __init__(self, app, module, detail, column, sort_element=None,
+                 order=None):
         self.app = app
         self.module = module
         self.detail = detail
         self.column = column
+        self.sort_element = sort_element
+        self.order = order
         self.id_strings = sx.IdStrings()
 
     @property
@@ -108,9 +116,6 @@ class FormattedDetailColumn(object):
         if not (self.app.enable_multi_sort and self.detail.display == 'short'):
             return
 
-        sort_fields = [s.field for s in self.module.detail_sort_elements]
-        field = self.column.field
-
         sort = None
 
         if self.sort_xpath_function:
@@ -119,24 +124,21 @@ class FormattedDetailColumn(object):
                 type='string',
             )
 
-        if field in sort_fields:
-            order = sort_fields.index(field)
-            sort_element = self.module.detail_sort_elements[order]
-
+        if self.sort_element:
             if not sort:
                 # these have to be distinguished for the UI to be able to give
                 # user friendly choices
-                if sort_element.type == 'date' or sort_element.type == 'plain':
+                if self.sort_element.type in ('date', 'plain'):
                     sort_type = 'string'
                 else:
-                    sort_type = sort_element.type
+                    sort_type = self.sort_element.type
                 sort = sx.Sort(
                     text=sx.Text(xpath_function=self.xpath_function),
                     type=sort_type,
                 )
 
-            sort.order = order + 1  # order is 1-indexed on mobile
-            sort.direction = sort_element.direction
+            sort.order = self.order
+            sort.direction = self.sort_element.direction
 
         return sort
 
