@@ -189,7 +189,6 @@ class CommCareMobileContactMixin(object):
         v = filter(lambda c: c.verified or include_pending, v)
         return dict((c.phone_number, c) for c in v)
 
-    @memoized
     def get_verified_number(self, phone=None):
         """
         Retrieves this contact's verified number entry by (self.doc_type, self._id).
