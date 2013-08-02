@@ -60,6 +60,13 @@ class VerifiedNumber(Document):
             return CommCareUser.get(self.owner_id)
         else:
             return None
+
+    def retire(self, deletion_id=None):
+        self.doc_type += DELETED_SUFFIX
+        if deletion_id:
+            self['-deletion_id'] = deletion_id
+
+        self.save()
     
     @classmethod
     def by_phone(cls, phone_number, include_pending=False):
@@ -251,23 +258,13 @@ class CommCareMobileContactMixin(object):
         v.ivr_backend_id = ivr_backend_id
         v.save(**get_safe_write_kwargs())
 
-    def delete_verified_number(self, phone_number=None, deletion_id=None):
+    def delete_verified_number(self, phone_number=None):
         """
         Deletes this contact's phone number from the verified phone number list, freeing it up
         for use by other contacts.
 
-        Phone number can be string or instance of VerifiedNumber
-
         return  void
         """
-        if isinstance(phone_number, basestring):
-            v = self.get_verified_number(phone_number)
-        else:
-            v = phone_number
-
+        v = self.get_verified_number(phone_number)
         if v is not None:
-            v.doc_type += DELETED_SUFFIX
-            if deletion_id:
-                v['-deletion_id'] = deletion_id
-
-            v.save()
+            v.retire()
