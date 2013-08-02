@@ -1,5 +1,6 @@
 from sqlagg.columns import *
-from corehq.apps.fixtures.models import FixtureDataItem
+from sqlagg.base import AliasColumn
+from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn, SummingSqlTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from util import get_unique_combinations
@@ -46,10 +47,10 @@ class PSISQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin):
         initial_cols = dict(state_name=DatabaseColumn("State", SimpleColumn('state')),
                             district_name=DatabaseColumn("District", SimpleColumn('district')),
                             block_name=DatabaseColumn("Block", SimpleColumn('block')),
-                            village_name=DatabaseColumn("Village", SimpleColumn('village_id'),
+                            village_name=DatabaseColumn("Village", AliasColumn('village_code'),
                                                         format_fn=self.get_village_name),
                             village_code=DatabaseColumn("Village Code", SimpleColumn('village_code')),
-                            village_class=DatabaseColumn("Village Class", SimpleColumn('village_class'),
+                            village_class=DatabaseColumn("Village Class", AliasColumn('village_code'),
                                                          format_fn=self.get_village_class))
         ret = tuple([col + '_name' for col in self.place_types[:3]])
         if len(self.place_types) > 3:
@@ -66,6 +67,9 @@ class PSISQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin):
 
     def get_village_class(self, village_id):
         return self.get_village(village_id).fields.get("village_class", "No data")
+    
+    def get_village_fdt(self, domain):
+        return FixtureDataType.by_domain_tag(domain, 'village').one()
 
 
 class PSISQLEventsReport(PSISQLReport):
@@ -83,12 +87,12 @@ class PSISQLEventsReport(PSISQLReport):
     @property
     def columns(self):
         return self.initial_columns + [
-            DatabaseColumn("Number of events", 'events'),
-            DatabaseColumn("Number of male attendees", 'males'),
-            DatabaseColumn("Number of female attendees", 'females'),
-            DatabaseColumn("Total number of attendees", 'attendees'),
-            DatabaseColumn("Total number of leaflets distributed", 'leaflets'),
-            DatabaseColumn("Total number of gifts distributed", 'gifts')
+            DatabaseColumn("Number of events", SumColumn('events')),
+            DatabaseColumn("Number of male attendees", SumColumn('males')),
+            DatabaseColumn("Number of female attendees", SumColumn('females')),
+            DatabaseColumn("Total number of attendees", SumColumn('attendees')),
+            DatabaseColumn("Total number of leaflets distributed", SumColumn('leaflets')),
+            DatabaseColumn("Total number of gifts distributed", SumColumn('gifts'))
         ]
 
 
@@ -118,19 +122,19 @@ class PSISQLHouseholdReport(PSISQLReport):
             if self.selected_dt:
                 if self.selected_dt == '_all':
                     for dt in DEMO_TYPES:
-                        yield [self.domain] + [c[pt] for pt in self.place_types] + [dt]
+                        yield [c[pt] for pt in self.place_types] + [dt]
                 else:
-                    yield [self.domain] + [c[pt] for pt in self.place_types] + [selected_demo_type]
+                    yield [c[pt] for pt in self.place_types] + [selected_demo_type]
             else:
-                yield [self.domain] + [c[pt] for pt in self.place_types]
+                yield [c[pt] for pt in self.place_types]
 
     @property
     def columns(self):
         return self.initial_columns + [
-            DatabaseColumn("Number of demonstrations done", "demonstrations"),
-            DatabaseColumn("Number of 0-6 year old children", "children"),
-            DatabaseColumn("Total number of leaflets distributed", "leaflets"),
-            DatabaseColumn("Number of kits sold", "kits")
+            DatabaseColumn("Number of demonstrations done", SumColumn("demonstrations")),
+            DatabaseColumn("Number of 0-6 year old children", SumColumn("children")),
+            DatabaseColumn("Total number of leaflets distributed", SumColumn("leaflets")),
+            DatabaseColumn("Number of kits sold", SumColumn("kits"))
         ]
 
 
@@ -150,14 +154,14 @@ class PSISQLSensitizationReport(PSISQLReport):
     @property
     def columns(self):
         return self.initial_columns + [
-            DatabaseColumn("Number of Sessions", "sessions"),
-            DatabaseColumn("Ayush Sensitized", "ayush_doctors"),
-            DatabaseColumn("MBBS Sensitized", "mbbs_doctors"),
-            DatabaseColumn("Asha Supervisors Sensitized", "asha_supervisors"),
-            DatabaseColumn("Ashas Sensitized", "ashas"),
-            DatabaseColumn("AWW Sensitized", "awws"),
-            DatabaseColumn("Others (ANM, MPW, etc.)", "other"),
-            DatabaseColumn("VHND Attendees", 'attendees')
+            DatabaseColumn("Number of Sessions", SumColumn("sessions")),
+            DatabaseColumn("Ayush Sensitized", SumColumn("ayush_doctors")),
+            DatabaseColumn("MBBS Sensitized", SumColumn("mbbs_doctors")),
+            DatabaseColumn("Asha Supervisors Sensitized", SumColumn("asha_supervisors")),
+            DatabaseColumn("Ashas Sensitized", SumColumn("ashas")),
+            DatabaseColumn("AWW Sensitized", SumColumn("awws")),
+            DatabaseColumn("Others (ANM, MPW, etc.)", SumColumn("other")),
+            DatabaseColumn("VHND Attendees", SumColumn('attendees'))
         ]
 
 class PSISQLTrainingReport(PSISQLReport):
@@ -175,25 +179,25 @@ class PSISQLTrainingReport(PSISQLReport):
     @property
     def columns(self):
         return self.initial_columns + [
-            DatabaseColumn("Private: Number of Trainings", "priv_trained"),
-            DatabaseColumn("Private: Ayush trained", "priv_ayush_trained"),
-            DatabaseColumn("Private: Allopathics trained", "priv_allo_trained"),
-            DatabaseColumn("Private: Learning changed", "priv_avg_diff"),
-            DatabaseColumn("Private: Num > 80%", "priv_gt80"),
+            DatabaseColumn("Private: Number of Trainings", SumColumn("priv_trained")),
+            DatabaseColumn("Private: Ayush trained", SumColumn("priv_ayush_trained")),
+            DatabaseColumn("Private: Allopathics trained", SumColumn("priv_allo_trained")),
+            DatabaseColumn("Private: Learning changed", SumColumn("priv_avg_diff")),
+            DatabaseColumn("Private: Num > 80%", SumColumn("priv_gt80")),
             
-            DatabaseColumn("Public: Number of Trainings", "pub_trained"),
-            DatabaseColumn("Public: Ayush trained", "pub_ayush_trained"),
-            DatabaseColumn("Public: Allopathics trained", "pub_allo_trained"),
-            DatabaseColumn("Public: Learning changed", "pub_avg_diff"),
-            DatabaseColumn("Public: Num > 80%", "pub_gt80"),
+            DatabaseColumn("Public: Number of Trainings", SumColumn("pub_trained")),
+            DatabaseColumn("Public: Ayush trained", SumColumn("pub_ayush_trained")),
+            DatabaseColumn("Public: Allopathics trained", SumColumn("pub_allo_trained")),
+            DatabaseColumn("Public: Learning changed", SumColumn("pub_avg_diff")),
+            DatabaseColumn("Public: Num > 80%", SumColumn("pub_gt80")),
             
-            DatabaseColumn("Depot: Number of Trainings", "dep_trained"),
-            DatabaseColumn("Depot: Number of Personnel Trained", "dep_pers_trained"),
-            DatabaseColumn("Depot: Learning changed", "dep_avg_diff"),
-            DatabaseColumn("Depot: Num > 80%", "dep_gt80"),
+            DatabaseColumn("Depot: Number of Trainings", SumColumn("dep_trained")),
+            DatabaseColumn("Depot: Number of Personnel Trained", SumColumn("dep_pers_trained")),
+            DatabaseColumn("Depot: Learning changed", SumColumn("dep_avg_diff")),
+            DatabaseColumn("Depot: Num > 80%", SumColumn("dep_gt80")),
             
-            DatabaseColumn("FLW: Number of Trainings", "flw_trained"),
-            DatabaseColumn("FLW: Number of Personnel Trained", "flw_pers_trained"),
-            DatabaseColumn("FLW: Learning changed", "flw_avg_diff"),
-            DatabaseColumn("FLW: Num > 80%", "flw_gt80"),
+            DatabaseColumn("FLW: Number of Trainings", SumColumn("flw_trained")),
+            DatabaseColumn("FLW: Number of Personnel Trained", SumColumn("flw_pers_trained")),
+            DatabaseColumn("FLW: Learning changed", SumColumn("flw_avg_diff")),
+            DatabaseColumn("FLW: Num > 80%", SumColumn("flw_gt80")),
         ]
