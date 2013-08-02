@@ -402,7 +402,7 @@ class SuiteGenerator(object):
             yield MediaResource(
                 id=self.id_strings.media_resource(multimedia_id, name),
                 path=path,
-                version=1,
+                version=m.version,
                 local=None,
                 remote=get_url_base() + reverse(
                     'hqmedia_download',
