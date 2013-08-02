@@ -1,4 +1,5 @@
 # coding=utf-8
+from distutils.version import LooseVersion
 import tempfile
 import os
 import logging
@@ -1315,18 +1316,19 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
                     '(You are using %s.%s)'
                 ) % ((name,) + setting_version + my_version)
 
-
     @property
     def jad_settings(self):
-        return {
+        settings = {
             'JavaRosa-Admin-Password': self.admin_password,
             'Profile': self.profile_loc,
             'MIDlet-Jar-URL': self.jar_url,
             #'MIDlet-Name': self.name,
             # e.g. 2011-Apr-11 20:45
             'CommCare-Release': "true",
-            'Build-Number': self.version,
         }
+        if LooseVersion(self.build_spec.version) < '2.1':
+            settings['Build-Number'] = self.version
+        return settings
 
     def create_jadjar(self, save=False):
         try:
