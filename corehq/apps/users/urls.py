@@ -1,5 +1,6 @@
 #from django.conf.urls.defaults import patterns, url
 from corehq.apps.users.views import DefaultProjectUserSettingsView, EditWebUserView, EditMyAccountView, ListWebUsersView
+from corehq.apps.users.views.mobile import EditGroupsView
 from corehq.apps.users.views.mobile.users import UploadCommCareUsers, EditCommCareUserView, ListCommCareUsersView, AsyncListCommCareUsersView
 from django.conf.urls.defaults import *
 from corehq.apps.domain.utils import grandfathered_domain_re
@@ -56,6 +57,6 @@ patterns("corehq.apps.users.views.mobile.users",
 ) +\
 patterns("corehq.apps.users.views.mobile.groups",
     url(r'^group_memberships/(?P<couch_user_id>[\w-]+)/$', 'group_membership', name='group_membership'),
-    url(r'^groups/$', 'all_groups', name='all_groups'),
+    url(r'^groups/$', EditGroupsView.as_view(), name=EditGroupsView.name),
     url(r'^groups/(?P<group_id>[ \w-]+)/$', 'group_members', name='group_members'),
 )
