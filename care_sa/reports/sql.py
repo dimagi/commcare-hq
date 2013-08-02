@@ -1,6 +1,6 @@
 from sqlagg.columns import *
 from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn
-from corehq.apps.reports.fields import AsyncDrillableField, GroupField
+from corehq.apps.reports.fields import AsyncDrillableField, GroupField, BooleanField
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.users.models import CommCareUser
 
@@ -10,6 +10,13 @@ class ProvinceField(AsyncDrillableField):
     slug = "province"
     hierarchy = [{"type": "province", "display": "name"}]
 
+class ShowAgeField(BooleanField):
+    label = "Show Age"
+    slug = "show_age_field"
+
+class ShowGenderField(BooleanField):
+    label = "Show Gender"
+    slug = "show_gender_field"
 
 class CBOField(GroupField):
     name = 'CBO'
@@ -24,13 +31,12 @@ class CareReport(SqlTabularReport,
     table_name = "care-ihapc-live_CareSAFluff"
     report_template_path = "care_sa/reports/grouped.html"
 
-    show_age = False
-    show_gender = False
-
     fields = [
         'corehq.apps.reports.fields.DatespanField',
         'care_sa.reports.sql.ProvinceField',
         'care_sa.reports.sql.CBOField',
+        'care_sa.reports.sql.ShowAgeField',
+        'care_sa.reports.sql.ShowGenderField',
     ]
 
     def selected_province(self):
@@ -40,6 +46,14 @@ class CareReport(SqlTabularReport,
     def selected_cbo(self):
         group = self.request.GET.get('group', '')
         return group
+
+    def show_age(self):
+        show_age_field = self.request.GET.get('show_age_field', '')
+        return show_age_field == 'on'
+
+    def show_gender(self):
+        show_gender_field = self.request.GET.get('show_gender_field', '')
+        return show_gender_field == 'on'
 
     @property
     def filters(self):
@@ -58,9 +72,9 @@ class CareReport(SqlTabularReport,
     @property
     def group_by(self):
         groups = ['user_id']
-        if self.show_age:
+        if self.show_age():
             groups.append('age_group')
-        if self.show_gender:
+        if self.show_gender():
             groups.append('gender')
 
         return groups
@@ -80,13 +94,13 @@ class CareReport(SqlTabularReport,
         user = DatabaseColumn("User", "user_id", column_type=SimpleColumn)
         columns = [user]
 
-        if not self.show_gender and not self.show_age:
+        if not self.show_gender() and not self.show_age():
             # hack: we have to give it a column type so there are no errors
             # but this isn't a column we let be auto populated anyway
             columns.append(DatabaseColumn("", "gender", column_type=SimpleColumn))
-        if self.show_gender:
+        if self.show_gender():
             columns.append(DatabaseColumn("Gender", "gender", column_type=SimpleColumn))
-        if self.show_age:
+        if self.show_age():
             columns.append(DatabaseColumn("Age", "age_group", column_type=SimpleColumn))
 
         for column_attrs in self.report_columns:
@@ -108,7 +122,7 @@ class CareReport(SqlTabularReport,
         [self.domain]
 
     def initialize_user_stuff(self):
-        if self.show_age and self.show_gender:
+        if self.show_age() and self.show_gender():
             return {
                 '0': {
                     'male': ['--'] * len(self.report_columns),
@@ -123,13 +137,13 @@ class CareReport(SqlTabularReport,
                     'female': ['--'] * len(self.report_columns)
                 }
             }
-        if self.show_age and not self.show_gender:
+        if self.show_age() and not self.show_gender():
             return {
                 '0': ['--'] * len(self.report_columns),
                 '1': ['--'] * len(self.report_columns),
                 '2': ['--'] * len(self.report_columns),
             }
-        if not self.show_age and not self.show_gender:
+        if not self.show_age() and not self.show_gender():
             return len(self.report_columns),
 
     def build_data(self, rows):
@@ -140,25 +154,25 @@ class CareReport(SqlTabularReport,
             if u not in woot:
                 woot[u] = self.initialize_user_stuff()
 
-            if self.show_gender:
+            if self.show_gender():
                 gender = row.pop(0)['html']
 
                 #TODO skip?
                 if gender == 'refuses_answer':
                     gender = 'male'
-            if self.show_age:
+            if self.show_age():
                 age_group = row.pop(0)['html']
 
-            if not self.show_gender and not self.show_age:
+            if not self.show_gender() and not self.show_age():
                 # discard the gender column from blank header hack
                 row.pop(0)
 
             # TODO: can't assume both duh
-            if self.show_age and self.show_gender:
+            if self.show_age() and self.show_gender():
                 woot[u][age_group][gender] = row
-            elif self.show_age and not self.show_gender:
+            elif self.show_age() and not self.show_gender():
                 woot[u][age_group] = row
-            elif not self.show_age and not self.show_gender:
+            elif not self.show_age() and not self.show_gender():
                 woot[u] = row
 
         return woot
@@ -170,7 +184,7 @@ class CareReport(SqlTabularReport,
 
         rows = []
         for user in woot:
-            if self.show_age and self.show_gender:
+            if self.show_age() and self.show_gender():
                 for age_group in sorted(woot[user]):
                     for gender in woot[user][age_group]:
                         u = CommCareUser.get_by_username(user)
@@ -188,7 +202,7 @@ class CareReport(SqlTabularReport,
                             'gender': gender,
                             'row_data': woot[user][age_group][gender]
                         })
-            elif self.show_age and not self.show_gender:
+            elif self.show_age() and not self.show_gender():
                 for age_group in sorted(woot[user]):
                     u = CommCareUser.get_by_username(user)
 
