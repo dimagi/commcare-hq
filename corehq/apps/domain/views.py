@@ -5,6 +5,8 @@ import dateutil
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.template.loader import render_to_string
+from django.utils.decorators import method_decorator
+from corehq import ProjectSettingsTab
 from corehq.apps import receiverwrapper
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
@@ -19,6 +21,7 @@ from corehq.apps.domain.forms import DomainGlobalSettingsForm,\
     DomainMetadataForm, SnapshotSettingsForm, SnapshotApplicationForm, DomainDeploymentForm, DomainInternalForm
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
+from corehq.apps.hqwebapp.utils import BaseSectionPageView
 from corehq.apps.orgs.models import Organization, OrgRequest, Team
 from corehq.apps.commtrack.util import all_sms_codes
 from dimagi.utils.decorators.memoized import memoized
@@ -35,7 +38,19 @@ import json
 from dimagi.utils.post import simple_post
 import cStringIO
 from PIL import Image
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_noop
+
+
+# Domain not required here - we could be selecting it for the first time. See notes domain.decorators
+# about why we need this custom login_required decorator
+@login_required_late_eval_of_LOGIN_URL
+def select(request, domain_select_template='domain/select.html'):
+
+    domains_for_user = Domain.active_for_user(request.user)
+    if not domains_for_user:
+        return redirect('registration_domain')
+
+    return render(request, domain_select_template, {})
 
 
 class DomainViewMixin(object):
@@ -58,19 +73,53 @@ class DomainViewMixin(object):
             raise Http404
 
 
-# Domain not required here - we could be selecting it for the first time. See notes domain.decorators
-# about why we need this custom login_required decorator
-@login_required_late_eval_of_LOGIN_URL
-def select(request, domain_select_template='domain/select.html'):
+class BaseDomainView(BaseSectionPageView, DomainViewMixin):
 
-    domains_for_user = Domain.active_for_user(request.user)
-    if not domains_for_user:
-        return redirect('registration_domain')
+    @property
+    def main_context(self):
+        main_context = super(BaseDomainView, self).main_context
+        main_context.update({
+            'domain': self.domain,
+        })
+        return main_context
 
-    return render(request, domain_select_template, {})
+    @method_decorator(login_and_domain_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseDomainView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def page_url(self):
+        if self.name:
+            return reverse(self.name, args=[self.domain])
 
 
-@require_can_edit_web_users
+class BaseProjectSettingsView(BaseDomainView):
+    section_name = ugettext_noop("Project Settings")
+    template_name = "settings/base_template.html"
+
+    @method_decorator(domain_admin_required)  # todo less restrictive?
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def main_context(self):
+        main_context = super(BaseProjectSettingsView, self).main_context
+        main_context.update({
+            'active_tab': ProjectSettingsTab(
+                self.request,
+                self.name,
+                domain=self.domain,
+                couch_user=self.request.couch_user,
+                project=self.request.project
+            ),
+        })
+        return main_context
+
+    @property
+    @memoized
+    def section_url(self):
+        return reverse(EditBasicProjectInfoView.name, args=[self.domain])
 def domain_forwarding(request, domain):
     form_repeaters = FormRepeater.by_domain(domain)
     case_repeaters = CaseRepeater.by_domain(domain)

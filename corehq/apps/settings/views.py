@@ -1,12 +1,7 @@
 from django.http import HttpResponseRedirect, HttpResponse, Http404
-from django.shortcuts import render
-from django.utils.decorators import method_decorator
-from django.views.generic import TemplateView
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser,
                                            login_required_late_eval_of_LOGIN_URL)
 from django.core.urlresolvers import reverse
-from corehq.apps.hqwebapp.utils import BaseSectionPageView
-from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
 
 @login_and_domain_required
@@ -40,24 +35,4 @@ def project_id_mapping(request, domain):
     })
 
 
-class BaseSettingsView(BaseSectionPageView):
-    section_name = "Settings"
-    template_name = "settings/base_template.html"
-
-    @property
-    @memoized
-    def domain(self):
-        return self.args[0] if len(self.args) > 0 else ""
-
-    @property
-    def main_context(self):
-        main_context = super(BaseSettingsView, self).main_context
-        main_context.update({
-            'domain': self.domain,
-        })
-        return main_context
-
-    @method_decorator(login_and_domain_required)
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseSettingsView, self).dispatch(request, *args, **kwargs)
 

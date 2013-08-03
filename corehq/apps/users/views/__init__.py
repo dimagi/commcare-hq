@@ -1,12 +1,11 @@
 from __future__ import absolute_import
-from functools import wraps
 import copy
 import json
 import re
 import urllib
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from corehq.apps.settings.views import BaseSettingsView
+from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
 from dimagi.utils.decorators.memoized import memoized
 import langcodes
@@ -61,7 +60,7 @@ def _users_context(request, domain):
     }
 
 
-class BaseUserSettingsView(BaseSettingsView):
+class BaseUserSettingsView(BaseDomainView):
     section_name = ugettext_noop("Manage")
 
     @property
@@ -99,12 +98,6 @@ class BaseUserSettingsView(BaseSettingsView):
     @memoized
     def section_url(self):
         return reverse(DefaultProjectUserSettingsView.name, args=[self.domain])
-
-    @property
-    @memoized
-    def page_url(self):
-        if self.name:
-            return reverse(self.name, args=[self.domain])
 
 
 class DefaultProjectUserSettingsView(BaseUserSettingsView):
