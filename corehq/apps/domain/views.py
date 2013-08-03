@@ -69,7 +69,7 @@ class DomainViewMixin(object):
     @memoized
     def domain_object(self):
         try:
-            return Domain.get_by_name(self.domain)
+            return Domain.get_by_name(self.domain, strict=True)
         except ResourceNotFound:
             raise Http404
 
@@ -139,15 +139,21 @@ class ProjectOverviewView(BaseProjectSettingsView):
         }
 
 
-class BaseEditProjectInfoView(BaseProjectSettingsView):
+class BaseAdminProjectSettingsView(BaseProjectSettingsView):
     """
-        The base class for all the edit project information views.
+        The base class for all project settings views that require administrative
+        access.
     """
 
-    @method_decorator(domain_admin_required)  # todo less restrictive?
+    @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
+
+class BaseEditProjectInfoView(BaseAdminProjectSettingsView):
+    """
+        The base class for all the edit project information views.
+    """
 
     @property
     def autocomplete_fields(self):
@@ -383,12 +389,242 @@ def autocomplete_fields(request, field):
     results = Domain.field_by_prefix(field, prefix)
     return HttpResponse(json.dumps(results))
 
-@domain_admin_required
-def snapshot_settings(request, domain):
-    domain = Domain.get_by_name(domain, strict=True)
-    snapshots = domain.snapshots()
-    return render(request, 'domain/snapshot_settings.html',
-                {"project": domain, 'domain': domain.name, 'snapshots': list(snapshots), 'published_snapshot': domain.published_snapshot()})
+
+class ExchangeSnapshotsView(BaseAdminProjectSettingsView):
+    template_name = 'domain/snapshot_settings.html'
+    name = 'domain_snapshot_settings'
+    page_title = ugettext_noop("CommCare Exchange")
+
+    @property
+    def page_context(self):
+        return {
+            'project': self.domain_object,
+            'snapshots': list(self.domain_object.snapshots()),
+            'published_snapshot': self.domain_object.published_snapshot(),
+        }
+
+
+class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
+    template_name = 'domain/create_snapshot.html'
+    name = 'domain_create_snapshot'
+    page_title = ugettext_noop("Publish New Version")
+
+    @property
+    def parent_pages(self):
+        return [{
+            'name': ExchangeSnapshotsView.page_title,
+            'url': reverse(ExchangeSnapshotsView.name, args=[self.domain]),
+        }]
+
+    @property
+    def page_context(self):
+        context = {
+            'form': self.snapshot_settings_form,
+            'app_forms': self.app_forms,
+            'can_publish_as_org': self.can_publish_as_org,
+            'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region'),
+        }
+        if self.published_snapshot:
+            context.update({
+                'published_as_org': self.published_snapshot.publisher == 'organization',
+                'author': self.published_snapshot.author,
+            })
+        elif self.request.method == 'POST':
+            context.update({
+                'published_as_org': self.request.POST.get('publisher', '') == 'organization',
+                'author': self.request.POST.get('author', '')
+            })
+        return context
+
+    @property
+    def can_publish_as_org(self):
+        return (self.domain_object.get_organization()
+                and self.request.couch_user.is_org_admin(self.domain_object.get_organization().name))
+
+    @property
+    @memoized
+    def snapshots(self):
+        return list(self.domain_object.snapshots())
+
+    @property
+    @memoized
+    def published_snapshot(self):
+        return self.snapshots[0] if self.snapshots else self.domain_object
+
+    @property
+    @memoized
+    def published_apps(self):
+        published_apps = {}
+        if self.published_snapshot:
+            for app in self.published_snapshot.full_applications():
+                base_app_id = app.copy_of if self.domain_object == self.published_snapshot else app.copied_from.copy_of
+                published_apps[base_app_id] = app
+        return published_apps
+
+    @property
+    def app_forms(self):
+        app_forms = []
+        for app in self.domain_object.applications():
+            app = app.get_latest_saved() or app
+            if self.request.method == 'POST':
+                app_forms.append((app, SnapshotApplicationForm(self.request.POST, prefix=app.id)))
+            elif self.published_snapshot and app.copy_of in self.published_apps:
+                original = self.published_apps[app.copy_of]
+                app_forms.append((app, SnapshotApplicationForm(initial={
+                    'publish': True,
+                    'name': original.name,
+                    'description': original.description,
+                    'deployment_date': original.deployment_date,
+                    'user_type': original.user_type,
+                    'attribution_notes': original.attribution_notes,
+                    'phone_model': original.phone_model,
+
+                }, prefix=app.id)))
+            else:
+                app_forms.append((app,
+                                  SnapshotApplicationForm(
+                                      initial={
+                                          'publish': (self.published_snapshot is None
+                                                      or self.published_snapshot == self.domain_object)
+                                      }, prefix=app.id)))
+        return app_forms
+
+    @property
+    @memoized
+    def snapshot_settings_form(self):
+        if self.request.method == 'POST':
+            form = SnapshotSettingsForm(self.request.POST, self.request.FILES)
+            form.dom = self.domain_object
+            return form
+
+        proj = self.published_snapshot if self.published_snapshot else self.domain_object
+        initial = {
+            'case_sharing': json.dumps(proj.case_sharing),
+            'publish_on_submit': True,
+            'share_multimedia': self.published_snapshot.multimedia_included if self.published_snapshot else True,
+        }
+        init_attribs = ['default_timezone', 'project_type', 'license']
+        if self.published_snapshot:
+            init_attribs.extend(['title', 'description', 'short_description'])
+            if self.published_snapshot.yt_id:
+                initial['video'] = 'http://www.youtube.com/watch?v=%s' % self.published_snapshot.yt_id
+        for attr in init_attribs:
+            initial[attr] = getattr(proj, attr)
+
+        return SnapshotSettingsForm(initial=initial)
+
+    @property
+    @memoized
+    def has_published_apps(self):
+        for app in self.domain_object.applications():
+            if self.request.POST.get("%s-publish" % app.id, False):
+                return True
+        messages.error(self.request, _("Cannot publish a project without applications to CommCare Exchange"))
+        return False
+
+    @property
+    def has_signed_eula(self):
+        eula_signed = self.request.couch_user.is_eula_signed()
+        if not eula_signed:
+            messages.error(self.request, _("You must agree to our eula to publish a project to Exchange"))
+        return eula_signed
+
+    @property
+    def has_valid_form(self):
+        is_valid = self.snapshot_settings_form.is_valid()
+        if not is_valid:
+            messages.error(self.request, _("There are some problems with your form. "
+                                           "Please address these issues and try again."))
+        return is_valid
+
+    def post(self, request, *args, **kwargs):
+        if self.has_published_apps and self.has_signed_eula and self.has_valid_form:
+            new_license = request.POST['license']
+            if request.POST.get('share_multimedia', False):
+                app_ids = self.snapshot_settings_form._get_apps_to_publish()
+                media = self.domain_object.all_media(from_apps=app_ids)
+                for m_file in media:
+                    if self.domain not in m_file.shared_by:
+                        m_file.shared_by.append(self.domain)
+
+                    # set the license of every multimedia file that doesn't yet have a license set
+                    if not m_file.license:
+                        m_file.update_or_add_license(self.domain, type=new_license)
+
+                    m_file.save()
+
+            old = self.domain_object.published_snapshot()
+            new_domain = self.domain_object.save_snapshot()
+            new_domain.license = new_license
+            new_domain.description = request.POST['description']
+            new_domain.short_description = request.POST['short_description']
+            new_domain.project_type = request.POST['project_type']
+            new_domain.title = request.POST['title']
+            new_domain.multimedia_included = request.POST.get('share_multimedia', '') == 'on'
+            new_domain.publisher = request.POST.get('publisher', None) or 'user'
+            if request.POST.get('video'):
+                new_domain.yt_id = self.snapshot_settings_form.cleaned_data['video']
+
+            new_domain.author = request.POST.get('author', None)
+
+            new_domain.is_approved = False
+            publish_on_submit = request.POST.get('publish_on_submit', "no") == "yes"
+
+            image = self.snapshot_settings_form.cleaned_data['image']
+            if image:
+                new_domain.image_path = image.name
+                new_domain.image_type = image.content_type
+            elif request.POST.get('old_image', False):
+                new_domain.image_path = old.image_path
+                new_domain.image_type = old.image_type
+            new_domain.save()
+
+            if publish_on_submit:
+                _publish_snapshot(request, self.domain_object, published_snapshot=new_domain)
+            else:
+                new_domain.published = False
+                new_domain.save()
+
+            if image:
+                im = Image.open(image)
+                out = cStringIO.StringIO()
+                im.thumbnail((200, 200), Image.ANTIALIAS)
+                im.save(out, new_domain.image_type.split('/')[-1])
+                new_domain.put_attachment(content=out.getvalue(), name=image.name)
+            elif request.POST.get('old_image', False):
+                new_domain.put_attachment(content=old.fetch_attachment(old.image_path), name=new_domain.image_path)
+
+            for application in new_domain.full_applications():
+                original_id = application.copied_from._id
+                if request.POST.get("%s-publish" % original_id, False):
+                    application.name = request.POST["%s-name" % original_id]
+                    application.description = request.POST["%s-description" % original_id]
+                    date_picked = request.POST["%s-deployment_date" % original_id]
+                    try:
+                        date_picked = dateutil.parser.parse(date_picked)
+                        if date_picked.year > 2009:
+                            application.deployment_date = date_picked
+                    except Exception:
+                        pass
+                    #if request.POST.get("%s-name" % original_id):
+                    application.phone_model = request.POST["%s-phone_model" % original_id]
+                    application.attribution_notes = request.POST["%s-attribution_notes" % original_id]
+                    application.user_type = request.POST["%s-user_type" % original_id]
+
+                    if not new_domain.multimedia_included:
+                        application.multimedia_map = None
+                    application.save()
+                else:
+                    application.delete()
+            if new_domain is None:
+                messages.error(request, _("Version creation failed; please try again"))
+            else:
+                messages.success(request, (_("Created a new version of your app. This version will be posted to "
+                                             "CommCare Exchange pending approval by admins.") if publish_on_submit
+                                           else _("Created a new version of your app.")))
+                return redirect(ExchangeSnapshotsView.name, self.domain)
+        return self.get(request, *args, **kwargs)
+
 
 @domain_admin_required
 def org_settings(request, domain):
@@ -473,190 +709,6 @@ def calculated_properties(request, domain):
     else:
         data = {"value": dom_calc(calc_tag, domain, extra_arg)}
     return json_response(data)
-
-@domain_admin_required
-def create_snapshot(request, domain):
-    # todo: refactor function into smaller pieces
-    domain = Domain.get_by_name(domain)
-    can_publish_as_org = domain.get_organization() and request.couch_user.is_org_admin(domain.get_organization().name)
-
-    def render_with_ctxt(snapshot=None, error_msg=None):
-        ctxt = {'error_message': error_msg} if error_msg else {}
-        ctxt.update({'domain': domain.name,
-                     'form': form,
-                     'app_forms': app_forms,
-                     'can_publish_as_org': can_publish_as_org,
-                     'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
-        if snapshot:
-            ctxt.update({'published_as_org': snapshot.publisher == 'organization', 'author': snapshot.author})
-        else:
-            ctxt.update({'published_as_org': request.POST.get('publisher', '') == 'organization',
-                         'author': request.POST.get('author', '')})
-        return render(request, 'domain/create_snapshot.html', ctxt)
-
-    if request.method == 'GET':
-        form = SnapshotSettingsForm(initial={
-                'default_timezone': domain.default_timezone,
-                'case_sharing': json.dumps(domain.case_sharing),
-                'project_type': domain.project_type,
-                'share_multimedia': True,
-                'license': domain.license,
-                'publish_on_submit': True,
-            })
-
-        snapshots = list(domain.snapshots())
-        published_snapshot = snapshots[0] if snapshots else domain
-        published_apps = {}
-        if published_snapshot is not None:
-            initial={
-                'default_timezone': published_snapshot.default_timezone,
-                'case_sharing': json.dumps(published_snapshot.case_sharing),
-                'project_type': published_snapshot.project_type,
-                'license': published_snapshot.license,
-                'title': published_snapshot.title,
-                'share_multimedia': published_snapshot.multimedia_included,
-                'description': published_snapshot.description,
-                'short_description': published_snapshot.short_description,
-                'publish_on_submit': True,
-            }
-            if published_snapshot.yt_id:
-                initial['video'] = 'http://www.youtube.com/watch?v=%s' % published_snapshot.yt_id
-            form = SnapshotSettingsForm(initial=initial)
-
-            for app in published_snapshot.full_applications():
-                base_app_id = app.copy_of if domain == published_snapshot else app.copied_from.copy_of
-                published_apps[base_app_id] = app
-
-        app_forms = []
-        for app in domain.applications():
-            app = app.get_latest_saved() or app
-            if published_snapshot and app.copy_of in published_apps:
-                original = published_apps[app.copy_of]
-                app_forms.append((app, SnapshotApplicationForm(initial={
-                    'publish': True,
-                    'name': original.name,
-                    'description': original.description,
-                    'deployment_date': original.deployment_date,
-                    'user_type': original.user_type,
-                    'attribution_notes': original.attribution_notes,
-                    'phone_model': original.phone_model,
-
-                }, prefix=app.id)))
-            else:
-                app_forms.append((app, SnapshotApplicationForm(initial={'publish': (published_snapshot is None or published_snapshot == domain)}, prefix=app.id)))
-
-        return render_with_ctxt(snapshot=published_snapshot)
-
-    elif request.method == 'POST':
-        form = SnapshotSettingsForm(request.POST, request.FILES)
-        form.dom = domain
-
-        app_forms = []
-        publishing_apps = False
-        for app in domain.applications():
-            app = app.get_latest_saved() or app
-            app_forms.append((app, SnapshotApplicationForm(request.POST, prefix=app.id)))
-            publishing_apps = publishing_apps or request.POST.get("%s-publish" % app.id, False)
-
-        if not publishing_apps:
-            messages.error(request, "Cannot publish a project without applications to CommCare Exchange")
-            return render_with_ctxt()
-
-        current_user = request.couch_user
-        if not current_user.is_eula_signed():
-            messages.error(request, 'You must agree to our eula to publish a project to Exchange')
-            return render_with_ctxt()
-
-        if not form.is_valid():
-            messages.error(request, _("There are some problems with your form. Please address these issues and try again."))
-            return render_with_ctxt()
-
-        new_license = request.POST['license']
-        if request.POST.get('share_multimedia', False):
-            app_ids = form._get_apps_to_publish()
-            media = domain.all_media(from_apps=app_ids)
-            for m_file in media:
-                if domain.name not in m_file.shared_by:
-                    m_file.shared_by.append(domain.name)
-
-                # set the license of every multimedia file that doesn't yet have a license set
-                if not m_file.license:
-                    m_file.update_or_add_license(domain.name, type=new_license)
-
-                m_file.save()
-
-        old = domain.published_snapshot()
-        new_domain = domain.save_snapshot()
-        new_domain.license = new_license
-        new_domain.description = request.POST['description']
-        new_domain.short_description = request.POST['short_description']
-        new_domain.project_type = request.POST['project_type']
-        new_domain.title = request.POST['title']
-        new_domain.multimedia_included = request.POST.get('share_multimedia', '') == 'on'
-        new_domain.publisher = request.POST.get('publisher', None) or 'user'
-        if request.POST.get('video'):
-            new_domain.yt_id = form.cleaned_data['video']
-
-        new_domain.author = request.POST.get('author', None)
-
-        new_domain.is_approved = False
-        publish_on_submit = request.POST.get('publish_on_submit', "no") == "yes"
-
-        image = form.cleaned_data['image']
-        if image:
-            new_domain.image_path = image.name
-            new_domain.image_type = image.content_type
-        elif request.POST.get('old_image', False):
-            new_domain.image_path = old.image_path
-            new_domain.image_type = old.image_type
-        new_domain.save()
-
-        if publish_on_submit:
-            _publish_snapshot(request, domain, published_snapshot=new_domain)
-        else:
-            new_domain.published = False
-            new_domain.save()
-
-        if image:
-            im = Image.open(image)
-            out = cStringIO.StringIO()
-            im.thumbnail((200, 200), Image.ANTIALIAS)
-            im.save(out, new_domain.image_type.split('/')[-1])
-            new_domain.put_attachment(content=out.getvalue(), name=image.name)
-        elif request.POST.get('old_image', False):
-            new_domain.put_attachment(content=old.fetch_attachment(old.image_path), name=new_domain.image_path)
-
-        for application in new_domain.full_applications():
-            original_id = application.copied_from._id
-            if request.POST.get("%s-publish" % original_id, False):
-                application.name = request.POST["%s-name" % original_id]
-                application.description = request.POST["%s-description" % original_id]
-                date_picked = request.POST["%s-deployment_date" % original_id]
-                try:
-                    date_picked = dateutil.parser.parse(date_picked)
-                    if date_picked.year > 2009:
-                        application.deployment_date = date_picked
-                except Exception:
-                    pass
-                #if request.POST.get("%s-name" % original_id):
-                application.phone_model = request.POST["%s-phone_model" % original_id]
-                application.attribution_notes = request.POST["%s-attribution_notes" % original_id]
-                application.user_type = request.POST["%s-user_type" % original_id]
-
-                if not new_domain.multimedia_included:
-                    application.multimedia_map = None
-                application.save()
-            else:
-                application.delete()
-
-        if new_domain is None:
-            return render_with_ctxt(error_message=_('Version creation failed; please try again'))
-
-        if publish_on_submit:
-            messages.success(request, _("Created a new version of your app. This version will be posted to CommCare Exchange pending approval by admins."))
-        else:
-            messages.success(request, _("Created a new version of your app."))
-        return redirect('domain_snapshot_settings', domain.name)
 
 def _publish_snapshot(request, domain, published_snapshot=None):
     snapshots = domain.snapshots()

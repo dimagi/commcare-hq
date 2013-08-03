@@ -6,7 +6,7 @@ from django.template import RequestContext
 from django.conf import settings
 
 from corehq.apps.domain.forms import ConfidentialPasswordResetForm
-from corehq.apps.domain.views import EditBasicProjectInfoView, EditDeploymentProjectInfoView, ProjectOverviewView, DefaultProjectSettingsView, EditMyProjectSettingsView
+from corehq.apps.domain.views import EditBasicProjectInfoView, EditDeploymentProjectInfoView, ProjectOverviewView, DefaultProjectSettingsView, EditMyProjectSettingsView, ExchangeSnapshotsView, CreateNewExchangeSnapshotView
 
 #
 # After much reading, I discovered that Django matches URLs derived from the environment
@@ -80,8 +80,8 @@ domain_settings = patterns(
     url(r'^forwarding/(?P<repeater_id>[\w-]+)/stop/$', 'drop_repeater', name='drop_repeater'),
     url(r'^snapshots/set_published/(?P<snapshot_name>[\w-]+)/$', 'set_published_snapshot', name='domain_set_published'),
     url(r'^snapshots/set_published/$', 'set_published_snapshot', name='domain_clear_published'),
-    url(r'^snapshots/$', 'snapshot_settings', name='domain_snapshot_settings'),
-    url(r'^snapshots/new/$', 'create_snapshot', name='domain_create_snapshot'),
+    url(r'^snapshots/$', ExchangeSnapshotsView.as_view(), name=ExchangeSnapshotsView.name),
+    url(r'^snapshots/new/$', CreateNewExchangeSnapshotView.as_view(), name=CreateNewExchangeSnapshotView.name),
     url(r'^multimedia/$', 'manage_multimedia', name='domain_manage_multimedia'),
     url(r'^commtrack/general/$', 'commtrack_settings', name='domain_commtrack_settings'),
     url(r'^commtrack/advanced/$', 'commtrack_settings_advanced', name='commtrack_settings_advanced'),
