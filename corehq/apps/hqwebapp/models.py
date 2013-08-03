@@ -604,11 +604,18 @@ class ProjectSettingsTab(UITab):
     @property
     def sidebar_items(self):
         items = []
+        user_is_admin = self.couch_user.is_domain_admin(self.domain)
 
-        if self.couch_user.is_domain_admin(self.domain):
+        from corehq.apps.domain.views import EditMyProjectSettingsView
+        project_info = [{
+            'title': EditMyProjectSettingsView.page_title,
+            'url': reverse(EditMyProjectSettingsView.name, args=[self.domain])
+        }]
+
+        if user_is_admin:
             from corehq.apps.domain.views import (ProjectOverviewView, EditBasicProjectInfoView,
                                                   EditDeploymentProjectInfoView)
-            project_info = [
+            project_info.extend([
                 {
                     'title': ProjectOverviewView.page_title,
                     'url': reverse(ProjectOverviewView.name, args=[self.domain])
@@ -621,7 +628,7 @@ class ProjectSettingsTab(UITab):
                     'title': EditDeploymentProjectInfoView.page_title,
                     'url': reverse(EditDeploymentProjectInfoView.name, args=[self.domain])
                 }
-            ]
+            ])
             try:
                 # so that corehq is not dependent on the billing submodule
                 from hqbilling.views import EditProjectBillingInfoView
@@ -631,8 +638,9 @@ class ProjectSettingsTab(UITab):
                 })
             except ImportError:
                 pass
-            items.append((_('Project Information'), project_info))
+        items.append((_('Project Information'), project_info))
 
+        if user_is_admin:
             administration = [
                 {
                     'title': _('CommCare Exchange'),

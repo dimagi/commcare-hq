@@ -6,7 +6,7 @@ from django.template import RequestContext
 from django.conf import settings
 
 from corehq.apps.domain.forms import ConfidentialPasswordResetForm
-from corehq.apps.domain.views import EditBasicProjectInfoView, EditDeploymentProjectInfoView, ProjectOverviewView, DefaultProjectSettingsView
+from corehq.apps.domain.views import EditBasicProjectInfoView, EditDeploymentProjectInfoView, ProjectOverviewView, DefaultProjectSettingsView, EditMyProjectSettingsView
 
 #
 # After much reading, I discovered that Django matches URLs derived from the environment
@@ -70,6 +70,7 @@ urlpatterns =\
 domain_settings = patterns(
     'corehq.apps.domain.views',
     url(r'^$', DefaultProjectSettingsView.as_view(), name=DefaultProjectSettingsView.name),
+    url(r'^my_settings/$', EditMyProjectSettingsView.as_view(), name=EditMyProjectSettingsView.name),
     url(r'^overview/$', ProjectOverviewView.as_view(), name=ProjectOverviewView.name),
     url(r'^basic/$', EditBasicProjectInfoView.as_view(), name=EditBasicProjectInfoView.name),
     url(r'^deployment/$', EditDeploymentProjectInfoView.as_view(), name=EditDeploymentProjectInfoView.name),

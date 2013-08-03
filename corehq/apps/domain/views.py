@@ -24,6 +24,7 @@ from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
 from corehq.apps.hqwebapp.utils import BaseSectionPageView
 from corehq.apps.orgs.models import Organization, OrgRequest, Team
 from corehq.apps.commtrack.util import all_sms_codes
+from corehq.apps.users.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.email import send_HTML_email
 
@@ -115,14 +116,14 @@ class BaseProjectSettingsView(BaseDomainView):
     @property
     @memoized
     def section_url(self):
-        return reverse(EditBasicProjectInfoView.name, args=[self.domain])
+        return reverse(EditMyProjectSettingsView.name, args=[self.domain])
 
 
 class DefaultProjectSettingsView(BaseDomainView):
     name = 'domain_settings_default'
 
     def get(self, request, *args, **kwargs):
-        return HttpResponseRedirect(reverse(ProjectOverviewView.name, args=[self.domain]))
+        return HttpResponseRedirect(reverse(EditMyProjectSettingsView.name, args=[self.domain]))
 
 
 class ProjectOverviewView(BaseProjectSettingsView):
@@ -267,6 +268,35 @@ class EditDeploymentProjectInfoView(BaseEditProjectInfoView):
         return self.get(request, *args, **kwargs)
 
 
+class EditMyProjectSettingsView(BaseProjectSettingsView):
+    template_name = 'domain/admin/my_project_settings.html'
+    name = 'my_project_settings'
+    page_title = ugettext_noop("My Settings")
+
+    @property
+    @memoized
+    def my_project_settings_form(self):
+        if self.request.method == 'POST':
+            return ProjectSettingsForm(self.request.POST)
+        return ProjectSettingsForm()
+
+    @property
+    def override_global_tz(self):
+        dm = self.request.couch_user.get_domain_membership(self.domain)
+        return dm.override_global_tz
+
+    @property
+    def page_context(self):
+        return {
+            'my_project_settings_form': self.my_project_settings_form,
+            'override_global_tz': self.override_global_tz,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.my_project_settings_form.is_valid():
+            self.my_project_settings_form.save(self.request.couch_user, self.domain)
+            messages.success(request, _("Your project settings have been saved!"))
+        return self.get(request, *args, **kwargs)
 
 
 @domain_admin_required

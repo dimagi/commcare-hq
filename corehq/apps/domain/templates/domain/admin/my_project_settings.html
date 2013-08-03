@@ -1,17 +1,17 @@
-{% load i18n %}
+{% extends 'settings/base_template.html' %}
 {% load hq_shared_tags %}
-{% load hqstyle_tags %}
-<form id="my-project-settings-form" name="update_project_settings" class="form-horizontal" method="post">
-    <input type="hidden" name="form_type" value="project-settings" />
-    {% bootstrap_form_errors proj_settings_form %}
-    {% bootstrap_fieldset proj_settings_form "User-Specific Project Settings" %}
-    <div class="form-actions"><button type="submit" id="update-proj-settings" data-bind="hqbSubmitReady: form_is_ready" class="btn disabled">Update My Project Settings</button></div>
-</form>
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% block js %} {{ block.super }}
 <script src="{% static 'users/ko/project_settings.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %} {{ block.super }}
 <script type="text/javascript">
     $(function() {
         ko.applyBindings(new HQTimezoneHandler({
-            override: {{ override_global_tz|lower }}
+            override: {{ override_global_tz|yesno:"true,false" }}
         }), $('#my-project-settings-form').get(0));
 
         var $globalTimezone = $('#id_global_timezone'),
@@ -47,3 +47,21 @@
         }
     });
 </script>
+{% endblock %}
+
+{% block main_column %}
+    <form id="my-project-settings-form" class="form form-horizontal" name="update_project_settings" method="post">
+        <fieldset>
+            <legend>{% trans 'My Project Settings' %}</legend>
+            {% crispy my_project_settings_form %}
+            <div class="form-actions">
+                <button type="submit"
+                        id="update-proj-settings"
+                        data-bind="hqbSubmitReady: form_is_ready"
+                        class="btn disabled">
+                    {% trans 'Update My Settings' %}
+                </button>
+            </div>
+        </fieldset>
+    </form>
+{% endblock %}
