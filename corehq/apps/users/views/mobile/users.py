@@ -27,7 +27,8 @@ from corehq.apps.groups.models import Group
 from corehq.apps.users.bulkupload import create_or_update_users_and_groups,\
     check_headers, dump_users_and_groups, GroupNameError, UserUploadError
 from corehq.apps.users.tasks import bulk_upload_async
-from corehq.apps.users.views import (_users_context, require_can_edit_commcare_users, BaseFullEditUserView, BaseUserSettingsView)
+from corehq.apps.users.decorators import require_can_edit_commcare_users
+from corehq.apps.users.views import BaseFullEditUserView, BaseUserSettingsView
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.decorators.view import get_file

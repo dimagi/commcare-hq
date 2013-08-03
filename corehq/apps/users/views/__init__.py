@@ -7,6 +7,7 @@ import urllib
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from corehq.apps.settings.views import BaseSettingsView
+from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
 from dimagi.utils.decorators.memoized import memoized
 import langcodes
 from datetime import datetime
@@ -29,7 +30,6 @@ from corehq.apps.registration.forms import AdminInvitesUserForm
 from corehq.apps.prescriptions.models import Prescription
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.utils import InvitationView
-from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.forms import (UpdateUserRoleForm, BaseUserInfoForm, UpdateMyAccountInfoForm)
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser, \
     DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser, DomainMembershipError
@@ -39,32 +39,6 @@ from corehq.apps.reports.util import get_possible_reports
 from corehq.apps.sms import verify as smsverify
 
 from django.utils.translation import ugettext as _, ugettext_noop
-
-require_can_edit_web_users = require_permission('edit_web_users')
-require_can_edit_commcare_users = require_permission('edit_commcare_users')
-
-
-def require_permission_to_edit_user(view_func):
-    @wraps(view_func)
-    def _inner(request, domain, couch_user_id, *args, **kwargs):
-        go_ahead = False
-        if hasattr(request, "couch_user"):
-            user = request.couch_user
-            if user.is_superuser or user.user_id == couch_user_id or (hasattr(user, "is_domain_admin") and user.is_domain_admin()):
-                go_ahead = True
-            else:
-                couch_user = CouchUser.get_by_user_id(couch_user_id)
-                if not couch_user:
-                    raise Http404()
-                if couch_user.is_commcare_user() and request.couch_user.can_edit_commcare_users():
-                    go_ahead = True
-                elif couch_user.is_web_user() and request.couch_user.can_edit_web_users():
-                    go_ahead = True
-        if go_ahead:
-            return login_and_domain_required(view_func)(request, domain, couch_user_id, *args, **kwargs)
-        else:
-            raise Http404()
-    return _inner
 
 
 def _users_context(request, domain):

@@ -6,7 +6,8 @@ from django.utils.translation import ugettext_noop
 
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, CommCareUser
-from corehq.apps.users.views import _users_context, require_can_edit_commcare_users, BaseUserSettingsView
+from corehq.apps.users.decorators import require_can_edit_commcare_users
+from corehq.apps.users.views import _users_context, BaseUserSettingsView
 from dimagi.utils.excel import alphanumeric_sort_key
 
 def _get_sorted_groups(domain):
