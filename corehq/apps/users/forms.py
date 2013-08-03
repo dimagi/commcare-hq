@@ -42,15 +42,19 @@ class ProjectSettingsForm(forms.Form):
     """
     Form for updating a user's project settings
     """
-    global_timezone = forms.CharField(initial="UTC",
+    global_timezone = forms.CharField(
+        initial="UTC",
         label="Project Timezone",
         widget=BootstrapDisabledInput(attrs={'class': 'input-xlarge'}))
-    override_global_tz = forms.BooleanField(initial=False,
+    override_global_tz = forms.BooleanField(
+        initial=False,
         required=False,
         label="",
-        widget=BootstrapCheckboxInput(attrs={'data-bind': 'checked: override_tz, event: {change: updateForm}'},
+        widget=BootstrapCheckboxInput(
+            attrs={'data-bind': 'checked: override_tz, event: {change: updateForm}'},
             inline_label="Override project's timezone setting"))
-    user_timezone = TimeZoneChoiceField(label="My Timezone",
+    user_timezone = TimeZoneChoiceField(
+        label="My Timezone",
         initial=global_timezone.initial,
         widget=forms.Select(attrs={'class': 'input-xlarge', 'bindparent': 'visible: override_tz',
                                    'data-bind': 'event: {change: updateForm}'}))
@@ -61,16 +65,16 @@ class ProjectSettingsForm(forms.Form):
         timezone_field.run_validators(data)
         return smart_str(data)
 
-    def save(self, web_user, domain):
+    def save(self, user, domain):
         try:
             timezone = self.cleaned_data['global_timezone']
             override = self.cleaned_data['override_global_tz']
             if override:
                 timezone = self.cleaned_data['user_timezone']
-            dm = web_user.get_domain_membership(domain)
+            dm = user.get_domain_membership(domain)
             dm.timezone = timezone
             dm.override_global_tz = override
-            web_user.save()
+            user.save()
             return True
         except Exception:
             return False
