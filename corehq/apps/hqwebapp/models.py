@@ -591,7 +591,7 @@ class ManageProjectTab(UITab):
 
 class ProjectSettingsTab(UITab):
     title = ugettext_noop("Project Settings")
-    view = "corehq.apps.settings.views.default"
+    view = 'domain_settings_default'
 
     @property
     def dropdown_items(self):
@@ -599,28 +599,51 @@ class ProjectSettingsTab(UITab):
 
     @property
     def is_viewable(self):
-        return self.domain and self.couch_user
+        return self.domain and self.couch_user and self.couch_user.is_domain_admin(self.domain)
 
     @property
     def sidebar_items(self):
         items = []
 
-        # todo separate page
-        items.append((_('My Account'), [
-            {'title': _('My Account Settings'),
-             'url': reverse('my_account', args=[self.domain])},
-            {'title': _('Change My Password'),
-             'url': reverse('change_my_password', args=[self.domain])}
-        ]))
+        if self.couch_user.is_domain_admin(self.domain):
+            from corehq.apps.domain.views import (ProjectOverviewView, EditBasicProjectInfoView,
+                                                  EditDeploymentProjectInfoView)
+            project_info = [
+                {
+                    'title': ProjectOverviewView.page_title,
+                    'url': reverse(ProjectOverviewView.name, args=[self.domain])
+                },
+                {
+                    'title': EditBasicProjectInfoView.page_title,
+                    'url': reverse(EditBasicProjectInfoView.name, args=[self.domain])
+                },
+                {
+                    'title': EditDeploymentProjectInfoView.page_title,
+                    'url': reverse(EditDeploymentProjectInfoView.name, args=[self.domain])
+                }
+            ]
+            try:
+                # so that corehq is not dependent on the billing submodule
+                from hqbilling.views import EditProjectBillingInfoView
+                project_info.append({
+                    'title': EditProjectBillingInfoView.page_title,
+                    'url': reverse(EditProjectBillingInfoView.name, args=[self.domain])
+                })
+            except ImportError:
+                pass
+            items.append((_('Project Information'), project_info))
 
-        if self.couch_user.is_domain_admin():
-            items.append((_('CloudCare Settings'), [
-                {'title': _('App Access'),
-                 'url': reverse('cloudcare_app_settings',
-                             args=[self.domain])}
-            ]))
+            administration = [
+                {
+                    'title': _('CommCare Exchange'),
+                    'url': reverse('domain_snapshot_settings', args=[self.domain])
+                },
+                {
+                    'title': _('Multimedia Sharing'),
+                    'url': reverse('domain_manage_multimedia', args=[self.domain])
+                }
+            ]
 
-        if self.couch_user.can_edit_web_users():
             def forward_name(repeater_type=None, **context):
                 if repeater_type == 'FormRepeater':
                     return _("Forward Forms")
@@ -628,25 +651,6 @@ class ProjectSettingsTab(UITab):
                     return _("Forward Form Stubs")
                 elif repeater_type == 'CaseRepeater':
                     return _("Forward Cases")
-
-            administration = [
-                {'title': _('Project Settings'),
-                 'url': reverse('domain_project_settings',
-                     args=[self.domain])},
-                {'title': _('CommCare Exchange'),
-                 'url': reverse('domain_snapshot_settings',
-                     args=[self.domain])},
-                {'title': _('Multimedia Sharing'),
-                 'url': reverse('domain_manage_multimedia',
-                     args=[self.domain])}
-            ]
-
-            if self.couch_user.is_superuser:
-                administration.append({
-                    'title': _('Internal Settings'),
-                    'url': reverse('domain_internal_settings',
-                        args=[self.domain])
-                })
 
             administration.extend([
                 {'title': _('Data Forwarding'),
@@ -658,20 +662,33 @@ class ProjectSettingsTab(UITab):
             ])
             items.append((_('Project Administration'), administration))
 
-        if self.project.commtrack_enabled:
-            items.append((_('CommTrack'), [
-                {'title': _('Project Settings'),
-                 'url': reverse('domain_commtrack_settings',
-                     args=[self.domain])},
-                {'title': _('Advanced Settings'),
-                 'url': reverse('commtrack_settings_advanced',
-                     args=[self.domain])},
-                {'title': _('Manage Products'),
-                 'url': reverse('commtrack_product_list',
-                     args=[self.domain])},
-                {'title': _('Manage Locations'),
-                 'url': reverse('manage_locations', args=[self.domain])}
-            ]))
+            if self.project.commtrack_enabled:
+                items.append((_('CommTrack'), [
+                    {
+                        'title': _('Project Settings'),
+                        'url': reverse('domain_commtrack_settings', args=[self.domain])
+                    },
+                    {
+                        'title': _('Advanced Settings'),
+                        'url': reverse('commtrack_settings_advanced', args=[self.domain])
+                    },
+                    {
+                        'title': _('Manage Products'),
+                        'url': reverse('commtrack_product_list', args=[self.domain])
+                    },
+                    {
+                        'title': _('Manage Locations'),
+                        'url': reverse('manage_locations', args=[self.domain])
+                    }
+                ]))
+
+        if self.couch_user.is_superuser:
+            internal_admin = [{
+                'title': _('Project Information'),
+                'url': reverse('domain_internal_settings',
+                    args=[self.domain])
+            }]
+            items.append((_('Internal Data (Dimagi Only)'), internal_admin))
 
         return items
 

@@ -120,6 +120,155 @@ class BaseProjectSettingsView(BaseDomainView):
     @memoized
     def section_url(self):
         return reverse(EditBasicProjectInfoView.name, args=[self.domain])
+
+
+class DefaultProjectSettingsView(BaseProjectSettingsView):
+    name = 'domain_settings_default'
+
+    def get(self, request, *args, **kwargs):
+        return HttpResponseRedirect(reverse(ProjectOverviewView.name, args=[self.domain]))
+
+
+class ProjectOverviewView(BaseProjectSettingsView):
+    template_name = 'domain/admin/overview.html'
+    name = "domain_overview"
+    page_title = ugettext_noop("Overview")
+
+    @property
+    def page_context(self):
+        return {
+            'languages': self.domain_object.readable_languages(),
+            'applications': self.domain_object.applications(),
+        }
+
+
+class BaseProjectInfoView(BaseProjectSettingsView):
+    """
+        The base class for all the edit project information views.
+    """
+
+    @property
+    def autocomplete_fields(self):
+        return []
+
+    @property
+    def main_context(self):
+        context = super(BaseProjectInfoView, self).main_context
+        context.update({
+            'autocomplete_fields': self.autocomplete_fields,
+            'commtrack_enabled': self.domain_object.commtrack_enabled, # ideally the template gets access to the domain doc through
+                # some other means. otherwise it has to be supplied to every view reachable in that sidebar (every
+                # view whose template extends users_base.html); mike says he's refactoring all of this imminently, so
+                # i will not worry about it until he is done
+            'call_center_enabled': self.domain_object.call_center_config.enabled,
+            'restrict_superusers': self.domain_object.restrict_superusers,
+        })
+        return context
+
+
+class EditBasicProjectInfoView(BaseProjectInfoView):
+    template_name = 'domain/admin/info_basic.html'
+    name = 'domain_basic_info'
+    page_title = ugettext_noop("Basic")
+
+    @property
+    def can_user_see_meta(self):
+        return self.request.couch_user.is_previewer()
+
+    @property
+    def autocomplete_fields(self):
+        return ['project_type']
+
+    @property
+    @memoized
+    def basic_info_form(self):
+        initial = {
+            'default_timezone': self.domain_object.default_timezone,
+            'case_sharing': json.dumps(self.domain_object.case_sharing)
+        }
+        if self.request.method == 'POST':
+            if self.can_user_see_meta:
+                return DomainMetadataForm(
+                    self.request.POST,
+                    user=self.request.couch_user,
+                    domain=self.domain_object.name)
+            return DomainGlobalSettingsForm(self.request.POST)
+
+        if self.can_user_see_meta:
+            for attr in ['project_type', 'customer_type', 'commconnect_enabled', 'survey_management_enabled',
+                         'sms_case_registration_enabled', 'sms_case_registration_type',
+                         'sms_case_registration_owner_id', 'sms_case_registration_user_id',
+                         'default_sms_backend_id', 'commtrack_enabled', 'restrict_superusers']:
+                initial[attr] = getattr(self.domain_object, attr)
+            initial.update({
+                'is_test': json.dumps(self.domain_object.is_test),
+                'call_center_enabled': self.domain_object.call_center_config.enabled,
+                'call_center_case_owner': self.domain_object.call_center_config.case_owner_id,
+                'call_center_case_type': self.domain_object.call_center_config.case_type,
+            })
+
+            return DomainMetadataForm(user=self.request.couch_user, domain=self.domain_object.name, initial=initial)
+        return DomainGlobalSettingsForm(initial=initial)
+
+    @property
+    def page_context(self):
+        return {
+            'basic_info_form': self.basic_info_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.basic_info_form.is_valid():
+            if self.basic_info_form.save(request, self.domain_object):
+                messages.success(request, _("Project settings saved!"))
+            else:
+                messages.error(request, _("There seems to have been an error saving your settings. Please try again!"))
+        return self.get(request, *args, **kwargs)
+
+
+class EditDeploymentProjectInfoView(BaseProjectInfoView):
+    template_name = 'domain/admin/info_deployment.html'
+    name = 'domain_deployment_info'
+    page_title = ugettext_noop("Deployment")
+
+    @property
+    def autocomplete_fields(self):
+        return ['city', 'country', 'region']
+
+    @property
+    @memoized
+    def deployment_info_form(self):
+        if self.request.method == 'POST':
+            return DomainDeploymentForm(self.request.POST)
+
+        initial = {
+            'deployment_date': self.domain_object.deployment.date.date if self.domain_object.deployment.date else "",
+            'public': 'true' if self.domain_object.deployment.public else 'false',
+        }
+        for attr in ['city', 'country', 'region', 'description']:
+            initial[attr] = getattr(self.domain_object.deployment, attr)
+        return DomainDeploymentForm(initial=initial)
+
+    @property
+    def page_context(self):
+        return {
+            'deployment_info_form': self.deployment_info_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.deployment_info_form.is_valid():
+            if self.deployment_info_form.save(self.domain_object):
+                messages.success(request,
+                                 _("The deployment information for project %s was successfully updated!")
+                                 % self.domain_object.name)
+            else:
+                messages.error(request, _("There seems to have been an error. Please try again!"))
+
+        return self.get(request, *args, **kwargs)
+
+
+
+
+@domain_admin_required
 def domain_forwarding(request, domain):
     form_repeaters = FormRepeater.by_domain(domain)
     case_repeaters = CaseRepeater.by_domain(domain)
@@ -197,104 +346,6 @@ def legacy_domain_name(request, domain, path):
     domain = normalize_domain_name(domain)
     return HttpResponseRedirect(get_domained_url(domain, path))
 
-@domain_admin_required
-def project_settings(request, domain, template="domain/admin/project_settings.html"):
-    domain = Domain.get_by_name(domain)
-    user_sees_meta = request.couch_user.is_previewer()
-
-    if request.method == "POST" and \
-       'billing_info_form' not in request.POST and \
-       'deployment_info_form' not in request.POST:
-        # deal with saving the settings data
-        if user_sees_meta:
-            form = DomainMetadataForm(request.POST, user=request.couch_user, domain=domain.name)
-        else:
-            form = DomainGlobalSettingsForm(request.POST)
-        if form.is_valid():
-            if form.save(request, domain):
-                messages.success(request, "Project settings saved!")
-            else:
-                messages.error(request, "There seems to have been an error saving your settings. Please try again!")
-    else:
-        if user_sees_meta:
-            form = DomainMetadataForm(user=request.couch_user, domain=domain.name, initial={
-                'default_timezone': domain.default_timezone,
-                'case_sharing': json.dumps(domain.case_sharing),
-                'project_type': domain.project_type,
-                'customer_type': domain.customer_type,
-                'is_test': json.dumps(domain.is_test),
-                'commconnect_enabled': domain.commconnect_enabled,
-                'survey_management_enabled': domain.survey_management_enabled,
-                'sms_case_registration_enabled': domain.sms_case_registration_enabled,
-                'sms_case_registration_type': domain.sms_case_registration_type,
-                'sms_case_registration_owner_id': domain.sms_case_registration_owner_id,
-                'sms_case_registration_user_id': domain.sms_case_registration_user_id,
-                'default_sms_backend_id': domain.default_sms_backend_id,
-                'commtrack_enabled': domain.commtrack_enabled,
-                'call_center_enabled': domain.call_center_config.enabled,
-                'call_center_case_owner': domain.call_center_config.case_owner_id,
-                'call_center_case_type': domain.call_center_config.case_type,
-                'restrict_superusers': domain.restrict_superusers,
-            })
-        else:
-            form = DomainGlobalSettingsForm(initial={
-                'default_timezone': domain.default_timezone,
-                'case_sharing': json.dumps(domain.case_sharing)
-            })
-
-    if request.method == 'POST' and 'deployment_info_form' in request.POST:
-        deployment_form = DomainDeploymentForm(request.POST)
-        if deployment_form.is_valid():
-            if deployment_form.save(domain):
-                messages.success(request, "The deployment information for project %s was successfully updated!" % domain.name)
-            else:
-                messages.error(request, "There seems to have been an error. Please try again!")
-    else:
-        deployment_form = DomainDeploymentForm(initial={
-            'city': domain.deployment.city,
-            'country': domain.deployment.country,
-            'region': domain.deployment.region,
-            'deployment_date': domain.deployment.date.date if domain.deployment.date else "",
-            'description': domain.deployment.description,
-            'public': 'true' if domain.deployment.public else 'false'
-        })
-
-    try:
-        from hqbilling.forms import DomainBillingInfoForm
-        # really trying to make corehq not dependent on hqbilling here
-        if request.method == 'POST' and 'billing_info_form' in request.POST:
-            billing_info_form = DomainBillingInfoForm(request.POST)
-            if billing_info_form.is_valid():
-                billing_info_form.save(domain)
-                messages.info(request, "The billing address for project %s was successfully updated!" % domain.name)
-        else:
-            initial = dict(phone_number=domain.billing_number, currency_code=domain.currency_code)
-            initial.update(domain.billing_address._doc)
-            billing_info_form = DomainBillingInfoForm(initial=initial)
-        billing_info_partial = 'hqbilling/domain/forms/billing_info.html'
-        billing_enabled=True
-    except ImportError:
-        billing_enabled=False
-        billing_info_form = None
-        billing_info_partial = None
-
-    return render(request, template, dict(
-        domain=domain.name,
-        form=form,
-        deployment_form=deployment_form,
-        languages=domain.readable_languages(),
-        applications=domain.applications(),
-        commtrack_enabled=domain.commtrack_enabled,  # ideally the template gets access to the domain doc through
-            # some other means. otherwise it has to be supplied to every view reachable in that sidebar (every
-            # view whose template extends users_base.html); mike says he's refactoring all of this imminently, so
-            # i will not worry about it until he is done
-        call_center_enabled=domain.call_center_config.enabled,
-        restrict_superusers=domain.restrict_superusers,
-        autocomplete_fields=('project_type', 'phone_model', 'user_type', 'city', 'country', 'region'),
-        billing_info_form=billing_info_form,
-        billing_info_partial=billing_info_partial,
-        billing_enabled=billing_enabled
-    ))
 
 def autocomplete_fields(request, field):
     prefix = request.GET.get('prefix', '')
