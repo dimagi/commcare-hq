@@ -98,10 +98,6 @@ class BaseProjectSettingsView(BaseDomainView):
     section_name = ugettext_noop("Project Settings")
     template_name = "settings/base_template.html"
 
-    @method_decorator(domain_admin_required)  # todo less restrictive?
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
-
     @property
     def main_context(self):
         main_context = super(BaseProjectSettingsView, self).main_context
@@ -122,7 +118,7 @@ class BaseProjectSettingsView(BaseDomainView):
         return reverse(EditBasicProjectInfoView.name, args=[self.domain])
 
 
-class DefaultProjectSettingsView(BaseProjectSettingsView):
+class DefaultProjectSettingsView(BaseDomainView):
     name = 'domain_settings_default'
 
     def get(self, request, *args, **kwargs):
@@ -142,10 +138,15 @@ class ProjectOverviewView(BaseProjectSettingsView):
         }
 
 
-class BaseProjectInfoView(BaseProjectSettingsView):
+class BaseEditProjectInfoView(BaseProjectSettingsView):
     """
         The base class for all the edit project information views.
     """
+
+    @method_decorator(domain_admin_required)  # todo less restrictive?
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
+
 
     @property
     def autocomplete_fields(self):
@@ -153,7 +154,7 @@ class BaseProjectInfoView(BaseProjectSettingsView):
 
     @property
     def main_context(self):
-        context = super(BaseProjectInfoView, self).main_context
+        context = super(BaseEditProjectInfoView, self).main_context
         context.update({
             'autocomplete_fields': self.autocomplete_fields,
             'commtrack_enabled': self.domain_object.commtrack_enabled, # ideally the template gets access to the domain doc through
@@ -166,7 +167,7 @@ class BaseProjectInfoView(BaseProjectSettingsView):
         return context
 
 
-class EditBasicProjectInfoView(BaseProjectInfoView):
+class EditBasicProjectInfoView(BaseEditProjectInfoView):
     template_name = 'domain/admin/info_basic.html'
     name = 'domain_basic_info'
     page_title = ugettext_noop("Basic")
@@ -225,7 +226,7 @@ class EditBasicProjectInfoView(BaseProjectInfoView):
         return self.get(request, *args, **kwargs)
 
 
-class EditDeploymentProjectInfoView(BaseProjectInfoView):
+class EditDeploymentProjectInfoView(BaseEditProjectInfoView):
     template_name = 'domain/admin/info_deployment.html'
     name = 'domain_deployment_info'
     page_title = ugettext_noop("Deployment")
