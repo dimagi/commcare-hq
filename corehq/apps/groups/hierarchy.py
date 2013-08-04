@@ -120,8 +120,8 @@ def get_user_data_from_hierarchy(domain, user_types, root_user_id=None):
                 break
             q.extend(node.get('descendants', []))
         if not root_node:
-            raise Exception("Invalid user id %r for hierarchy %r") % (
-                    root_user_id)
+            raise Exception("Invalid user id %r for hierarchy %r" % (
+                    root_user_id, user_types))
         root_nodes = [root_node]
 
     # this is a minor hack, could probably make the node structure better and
