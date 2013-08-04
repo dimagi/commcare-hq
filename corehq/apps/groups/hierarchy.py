@@ -118,10 +118,22 @@ def get_user_data_from_hierarchy(domain, user_types, root_user_id=None):
             if node['user']._id == root_user_id:
                 root_node = node
                 break
-            q.extend(node.get('descendants', []))
+            descendants = node.get('descendants', [])
+            if descendants:
+                q.extend(descendants)
+            elif node['child_users']:
+                # a leaf user is selected
+                for child in node['child_users']:
+                    if child._id == root_user_id:
+                        return {
+                            'leaf_user_ids': [root_user_id],
+                            'user_parent_map': {
+                                root_user_id: node['user']
+                            }
+                        }
         if not root_node:
-            raise Exception("Invalid user id %r for hierarchy %r") % (
-                    root_user_id)
+            raise Exception("Invalid user id %r for hierarchy %r" % (
+                    root_user_id, user_types))
         root_nodes = [root_node]
 
     # this is a minor hack, could probably make the node structure better and
