@@ -13,8 +13,7 @@ from django.shortcuts import redirect, render
 from corehq.apps.domain.calculations import CALCS, CALC_FNS, CALC_ORDER, dom_calc
 
 from corehq.apps.domain.decorators import (domain_admin_required,
-    login_required_late_eval_of_LOGIN_URL, require_superuser,
-    login_and_domain_required)
+    login_required, require_superuser, login_and_domain_required)
 from corehq.apps.domain.forms import DomainGlobalSettingsForm,\
     DomainMetadataForm, SnapshotSettingsForm, SnapshotApplicationForm, DomainDeploymentForm, DomainInternalForm
 from corehq.apps.domain.models import Domain, LICENSES
@@ -60,7 +59,7 @@ class DomainViewMixin(object):
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
-@login_required_late_eval_of_LOGIN_URL
+@login_required
 def select(request, domain_select_template='domain/select.html'):
 
     domains_for_user = Domain.active_for_user(request.user)
