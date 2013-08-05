@@ -1,11 +1,11 @@
 from datetime import date, timedelta
 from couchdbkit.exceptions import MultipleResultsFound
 from sqlagg.columns import SumColumn, SimpleColumn
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.utils import MAPPING_NAME_FORMS, MAPPING_NAME_CASES
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.reportfixtures.indicator_sets import SqlIndicatorSet
 from corehq.apps.reports.sqlreport import DatabaseColumn
+from corehq.apps.users.models import CommCareUser
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -70,16 +70,12 @@ class CallCenter(SqlIndicatorSet):
     @property
     @memoized
     def keys(self):
-        cases = CommCareCase.get_all_cases(
-            self.domain.name,
-            case_type=self.domain.call_center_config.case_type,
-            status='open')
-
-        return [[c['id']] for c in cases]
+        results = CommCareUser.by_domain(self.domain.name)
+        return [[r.get_id] for r in results]
 
     def get_user_case_id(self, user_id):
         try:
             case = get_case_by_domain_hq_user_id(self.domain.name, user_id)
-            return case['id'] if case else user_id
+            return case['id'] if case else 'user_%s' % user_id
         except MultipleResultsFound:
-            return user_id
+            return 'user_%s' % user_id
