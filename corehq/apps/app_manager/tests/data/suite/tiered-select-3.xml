@@ -46,6 +46,11 @@
             <xpath function="case_name"></xpath>
           </text>
         </template>
+        <sort direction="ascending" order="1" type="string">
+          <text>
+            <xpath function="case_name"></xpath>
+          </text>
+        </sort>
       </field>
     </detail>
     <detail id="m0_case_long">
@@ -84,6 +89,11 @@
             <xpath function="case_name"></xpath>
           </text>
         </template>
+        <sort direction="ascending" order="1" type="string">
+          <text>
+            <xpath function="case_name"></xpath>
+          </text>
+        </sort>
       </field>
     </detail>
     <detail id="m1_case_long">
@@ -122,6 +132,11 @@
             <xpath function="case_name"></xpath>
           </text>
         </template>
+        <sort direction="ascending" order="1" type="string">
+          <text>
+            <xpath function="case_name"></xpath>
+          </text>
+        </sort>
       </field>
     </detail>
     <detail id="m2_case_long">

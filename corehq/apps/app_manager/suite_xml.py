@@ -349,12 +349,28 @@ def get_detail_column_infos(detail):
     This is not intented to be a widely used format
     just a packaging of column info into a form most convenient for rendering
     """
-    from corehq.apps.app_manager.models import DetailColumn
+    from corehq.apps.app_manager.models import DetailColumn, SortElement
+
+    if detail.type != 'case_short':
+        return [(column, (None, None)) for column in detail.get_columns()]
+
     DetailColumnInfo = namedtuple('DetailColumnInfo',
                                   'column sort_element order')
+
+    if detail.sort_elements:
+        sort_elements = detail.sort_elements
+    elif detail.columns:
+        sort_elements = [SortElement(
+            field=detail.get_column(0).field,
+            type='string',
+            direction='ascending',
+        )]
+    else:
+        sort_elements = []
+
     # order is 1-indexed
     sort_elements = dict((s.field, (s, i + 1))
-                         for i, s in enumerate(detail.sort_elements))
+                         for i, s in enumerate(sort_elements))
     columns = []
     for column in detail.get_columns():
         sort_element, order = sort_elements.pop(column.field, (None, None))
@@ -457,21 +473,6 @@ class SuiteGenerator(object):
                             id=self.id_strings.detail(module, detail),
                             title=Text(locale_id=self.id_strings.detail_title_locale(module, detail))
                         )
-
-                        if detail.type == 'case_short':
-                            # need to add a default here so that it doesn't
-                            # get persisted
-                            if self.app.enable_multi_sort and \
-                               len(module.detail_sort_elements) == 0:
-                                from corehq.apps.app_manager.models import SortElement
-                                try:
-                                    se = SortElement()
-                                    se.field = detail.columns[0].field
-                                    se.type = 'string'
-                                    se.direction = 'ascending'
-                                    module.detail_sort_elements.append(se)
-                                except Exception:
-                                    pass
 
                         for column_info in detail_column_infos:
                             fields = get_column_generator(self.app, module, detail, *column_info).fields
