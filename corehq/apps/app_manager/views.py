@@ -482,12 +482,6 @@ def _clear_app_cache(request, domain):
 
 def get_apps_base_context(request, domain, app):
 
-    applications = ApplicationBase.view('app_manager/applications_brief',
-        startkey=[domain],
-        endkey=[domain, {}],
-        stale=settings.COUCH_STALE_QUERY,
-    ).all()
-
     lang, langs = get_langs(request, app)
 
     if getattr(request, 'couch_user', None):
@@ -510,7 +504,6 @@ def get_apps_base_context(request, domain, app):
         'langs': langs,
         'domain': domain,
         'edit': edit,
-        'applications': applications,
         'app': app,
         'URL_BASE': get_url_base(),
         'timezone': timezone,
@@ -611,11 +604,16 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
     base_context = get_apps_base_context(req, domain, app)
     edit = base_context['edit']
-    applications = base_context['applications']
-    if not app and applications:
-        app_id = applications[0]['id']
-        del edit
-        return back_to_main(**locals())
+    if not app:
+        all_applications = ApplicationBase.view('app_manager/applications_brief',
+            startkey=[domain],
+            endkey=[domain, {}],
+            stale=settings.COUCH_STALE_QUERY,
+        ).all()
+        if all_applications:
+            app_id = all_applications[0]['id']
+            del edit
+            return back_to_main(**locals())
     if app and app.copy_of:
         # don't fail hard.
         return HttpResponseRedirect(reverse("corehq.apps.app_manager.views.view_app", args=[domain,app.copy_of]))
@@ -643,7 +641,6 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
     context = {
         'domain': domain,
-        'applications': applications,
 
         'app': app,
         'module': module,
@@ -672,12 +669,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
     error = req.GET.get('error', '')
 
-    force_edit = False
-    if (not context['applications']) or (app and app.get_doc_type() == "Application" and not app.modules):
-        edit = True
-        force_edit = True
     context.update({
-        'force_edit': force_edit,
         'error':error,
         'app': app,
     })
