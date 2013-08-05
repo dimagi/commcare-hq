@@ -87,7 +87,7 @@ ko.bindingHandlers.sortableList = {
 function ParentSelect(init) {
     var self = this;
     var defaultModule = _(init.parentModules).findWhere({is_parent: true});
-    self.moduleId = ko.observable(init.moduleId || defaultModule.unique_id);
+    self.moduleId = ko.observable(init.moduleId || (defaultModule ? defaultModule.unique_id : null));
     self.active = ko.observable(init.active);
     self.parentModules = ko.observable(init.parentModules);
     self.lang = ko.observable(init.lang);
