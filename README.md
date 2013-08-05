@@ -102,7 +102,7 @@ that you have a 32bit version of Python installed.
   + [gevent][gevent]
   + [numpy][numpy]
   + [egenix-mx-base][mxbase]
-  + [PIL][pil]
+  + [Pillow][pillow]
   + [psycopg2][psycopg2]
   + [greenlet][greenlet]
 + Install http-parser by adding MinGW/bin to the path and running `pip install http-parser`. You may also need to alter
@@ -116,7 +116,7 @@ that you have a 32bit version of Python installed.
  [gevent]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#gevent
  [numpy]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy
  [mxbase]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#mxbase
- [pil]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#pil
+ [pillow]: https://github.com/python-imaging/Pillow
  [psycopg2]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#psycopg
  [greenlet]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#greenlet
 
@@ -163,11 +163,6 @@ the following contents:
 
 + On Mac OS X, libevent may not be installed already, which the Python `gevent` library requires. The error message
   will be a clang error that file `event.h` is not found. To fix this using Homebrew, run `brew install libevent`.
-
-+ To install PIL (Python Image Library) correctly on Ubuntu, you may need to
-  follow [these instructions](http://obroll.com/install-python-pil-python-image-library-on-ubuntu-11-10-oneiric/).
-  (If you don't do this, the only thing that won't work is uploading of JPEGs to
-  the CommCare Exchange.)
 
 + If you have an authentication error running `./manage.py syncdb` the first
   time, open `pg_hba.conf` (`/etc/postgresql/9.1/main/pg_hba.conf` on Ubuntu)
