@@ -29,7 +29,7 @@
           <locale id="m0.case_short.title"></locale>
         </text>
       </title>
-      <field sort="default">
+      <field>
         <header>
           <text>
             <locale id="m0.case_short.case_name_1.header"></locale>
@@ -48,7 +48,7 @@
           <locale id="m0.case_long.title"></locale>
         </text>
       </title>
-      <field sort="default">
+      <field>
         <header>
           <text>
             <locale id="m0.case_long.case_name_1.header"></locale>
@@ -67,7 +67,7 @@
           <locale id="m1.case_short.title"></locale>
         </text>
       </title>
-      <field sort="default">
+      <field>
         <header>
           <text>
             <locale id="m1.case_short.case_name_1.header"></locale>
@@ -86,7 +86,7 @@
           <locale id="m1.case_long.title"></locale>
         </text>
       </title>
-      <field sort="default">
+      <field>
         <header>
           <text>
             <locale id="m1.case_long.case_name_1.header"></locale>
