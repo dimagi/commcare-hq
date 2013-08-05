@@ -77,7 +77,8 @@
     </ul>
     <div class="tab-content" id="settings">
         <section class="tab-pane" id="overall-settings">
-            <form class="form-horizontal" method="post">
+            <form class="form-horizontal" method="post"
+                enctype="multipart/form-data">
                 {% bootstrap_form_errors form %}
                 {% bootstrap_fieldset form "Project Settings" %}
                 <script type="text/javascript">

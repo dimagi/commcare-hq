@@ -211,7 +211,7 @@ def no_permissions(request, redirect_to=None, template_name="no_permission.html"
 
     return render(request, template_name, {'next': next})
 
-def _login(req, domain, domain_type, template_name):
+def _login(req, domain, domain_type, template_name, domain_context=None):
     from corehq.apps.registration.views import get_domain_context
 
     if req.user.is_authenticated() and req.method != "POST":
@@ -229,7 +229,7 @@ def _login(req, domain, domain_type, template_name):
         req.POST._mutable = False
     
     req.base_template = settings.BASE_TEMPLATE
-    context = get_domain_context(domain_type)
+    context = domain_context or get_domain_context(domain_type)
     context['domain'] = domain
 
     return django_login(req, template_name=template_name,
@@ -244,10 +244,12 @@ def login(req, domain_type='commcare'):
     return _login(req, domain, domain_type, "login_and_password/login.html")
     
 def domain_login(req, domain, template_name="login_and_password/login.html"):
+    from corehq.util.context_processors import get_per_domain_context
     project = Domain.get_by_name(domain)
     if not project:
         raise Http404
-    return _login(req, domain, project.domain_type, template_name)
+    return _login(req, domain, project.domain_type, template_name,
+            domain_context=get_per_domain_context(project))
 
 def is_mobile_url(url):
     # Minor hack

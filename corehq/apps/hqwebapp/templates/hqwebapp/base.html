@@ -66,7 +66,7 @@
                 <div class="navbar">
                     <div class="navbar-inner">
                         <hgroup class="brand">
-                            <h1><a href="{% url homepage %}"><img src="{% static LOGO %}" alt="{{ SITE_NAME }} Logo" /></a></h1>
+                            <h1><a href="{% url homepage %}"><img src="{{ LOGO_URL }}" alt="{{ SITE_NAME }} Logo" /></a></h1>
                         </hgroup>
                     {% if request.user.is_authenticated %}
                         <nav id="hq-navigation-bar">
