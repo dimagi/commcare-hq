@@ -792,6 +792,13 @@ class CaseList(IndexedSchema):
         for dct in (self.label,):
             _rename_key(dct, old_lang, new_lang)
 
+
+class ParentSelect(DocumentSchema):
+    active = BooleanProperty(default=False)
+    relationship = StringProperty(default='parent')
+    module_id = StringProperty()
+
+
 class Module(IndexedSchema, NavMenuItemMediaMixin):
     """
     A group of related forms, and configuration that applies to them all.
@@ -808,6 +815,22 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
     case_list = SchemaProperty(CaseList)
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
+    parent_select = SchemaProperty(ParentSelect)
+    unique_id = StringProperty()
+
+    def get_or_create_unique_id(self):
+        """
+        It is the caller's responsibility to save the Application
+        after calling this function.
+
+        WARNING: If called on the same doc in different requests without saving,
+        this function will return a different uuid each time,
+        likely causing unexpected behavior
+
+        """
+        if not self.unique_id:
+            self.unique_id = FormBase.generate_id()
+        return self.unique_id
 
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
