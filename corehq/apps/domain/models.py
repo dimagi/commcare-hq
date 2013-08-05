@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from couchdbkit.ext.django.schema import (Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
                                           DocumentSchema, SchemaProperty, DictProperty, ListProperty,
-                                          StringListProperty)
+                                          StringListProperty, SchemaListProperty)
 from django.utils.safestring import mark_safe
 from corehq.apps.appstore.models import Review, SnapshotMixin
 from corehq.apps.domain.utils import get_domain_module_map
@@ -17,6 +17,8 @@ from dimagi.utils.couch.database import get_db, get_safe_write_kwargs, apply_upd
 from itertools import chain
 from langcodes import langs as all_langs
 from collections import defaultdict
+from django.utils.importlib import import_module
+
 
 lang_lookup = defaultdict(str)
 
@@ -180,6 +182,19 @@ class CaseDisplaySettings(DocumentSchema):
 
     # todo: case list
 
+class DynamicReportConfig(DocumentSchema):
+    """configurations of generic/template reports to be set up for this domain"""
+    report = StringProperty() # fully-qualified path to template report class
+    name = StringProperty() # report display name in sidebar
+    kwargs = DictProperty() # arbitrary settings to configure report
+
+class DynamicReportSet(DocumentSchema):
+    """a set of dynamic reports grouped under a section header in the sidebar"""
+    section_title = StringProperty()
+    reports = SchemaListProperty(DynamicReportConfig)
+
+
+
 
 class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     """Domain is the highest level collection of people/stuff
@@ -193,6 +208,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     date_created = DateTimeProperty()
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     case_sharing = BooleanProperty(default=False)
+    secure_submissions = BooleanProperty(default=False)
     organization = StringProperty()
     hr_name = StringProperty() # the human-readable name for this project within an organization
     creating_user = StringProperty() # username of the user who created this domain
@@ -247,6 +263,8 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     cached_properties = DictProperty()
 
     internal = SchemaProperty(InternalProperties)
+
+    dynamic_reports = SchemaListProperty(DynamicReportSet)
 
     # extra user specified properties
     tags = StringListProperty()
@@ -814,7 +832,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         module_name = get_domain_module_map().get(domain_name, domain_name)
 
         try:
-            return __import__(module_name) if module_name else None
+            return import_module(module_name) if module_name else None
         except ImportError:
             return None
 

@@ -6,18 +6,38 @@ def default_date(form):
     return form.received_on
 
 # operators
-EQUAL = lambda expected, reference: expected == reference
-NOT_EQUAL = lambda expected, reference: expected != reference
-IN = lambda expected, reference_list: expected in reference_list
-IN_MULTISELECT = lambda expected, value: value in (expected or '').split(' ')
-ANY = lambda expected, reference: bool(expected)
+EQUAL = lambda input, reference: input == reference
+NOT_EQUAL = lambda input, reference: input != reference
+IN = lambda input, reference_list: input in reference_list
+IN_MULTISELECT = lambda input, reference: reference in (input or '').split(' ')
+ANY = lambda input, reference: bool(input)
+
+def ANY_IN_MULTISELECT(input, reference):
+    """
+    For 'this multiselect contains any one of these N items'
+    """
+    return any([subval in (input or '').split(' ') for subval in reference])
+
 
 class IntegerPropertyReference(object):
-    def __init__(self, property_path):
+    """
+    Returns the integer value of the property_path passed in.
+
+    By default FilteredFormPropertyCalculator would use 1 for all results
+    but this will let you return the actual number to be summed.
+
+    Accepts an optional transform lambda/method that would modify the
+    resulting integer before returning it.
+    """
+    def __init__(self, property_path, transform=None):
         self.property_path = property_path
+        self.transform = transform
 
     def __call__(self, form):
-        return int(form.xpath(self.property_path) or 0)
+        value = int(form.xpath(self.property_path) or 0)
+        if value and self.transform:
+            value = self.transform(value)
+        return value
 
 class FilteredFormPropertyCalculator(fluff.Calculator):
     """
@@ -41,9 +61,10 @@ class FilteredFormPropertyCalculator(fluff.Calculator):
 
     @fluff.date_emitter
     def total(self, form):
-        if self.indicator_calculator is not None:
+        if self.indicator_calculator:
+            yield default_date(form)
+        else:
             yield [default_date(form), self.indicator_calculator(form)]
-        yield default_date(form)
 
     def __init__(self, xmlns=None, property_path=None, property_value=None,
                  operator=EQUAL, indicator_calculator=None, window=None):
@@ -73,6 +94,7 @@ class FilteredFormPropertyCalculator(fluff.Calculator):
             )
         )
 
+
 # meh this is a little redundant but convenient
 class FormANDCalculator(ANDCalculator):
     window = timedelta(days=1)
@@ -91,7 +113,7 @@ class FormORCalculator(ORCalculator):
 class FormSUMCalculator(ORCalculator):
     window = timedelta(days=1)
 
-    @fluff.custom_date_emitter(reduce_type='sum')
+    @fluff.date_emitter
     def total(self, form):
         for calc in self.calculators:
             if calc.passes_filter(form):

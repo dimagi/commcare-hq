@@ -108,13 +108,15 @@ class MessageLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabul
     
     @property
     def headers(self):
-        return DataTablesHeader(
+        header = DataTablesHeader(
             DataTablesColumn(_("Timestamp")),
             DataTablesColumn(_("User Name")),
             DataTablesColumn(_("Phone Number")),
             DataTablesColumn(_("Direction")),
             DataTablesColumn(_("Message")),
         )
+        header.custom_sort = [[0, 'desc']]
+        return header
     
     @property
     def rows(self):
