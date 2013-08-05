@@ -24,7 +24,7 @@ from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
 from corehq.apps.hqwebapp.utils import BaseSectionPageView
 from corehq.apps.orgs.models import Organization, OrgRequest, Team
 from corehq.apps.commtrack.util import all_sms_codes
-from corehq.apps.users.forms import ProjectSettingsForm
+from corehq.apps.domain.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.email import send_HTML_email
 
