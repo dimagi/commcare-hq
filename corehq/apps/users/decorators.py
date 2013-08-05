@@ -1,5 +1,5 @@
 from django.http import HttpResponseForbidden, Http404
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required, domain_specific_login_redirect
 from functools import wraps
 from corehq.apps.users.models import CouchUser
 
@@ -12,9 +12,12 @@ def require_permission(permission, data=None, login_decorator=login_and_domain_r
             permission = permission.__name__
         except AttributeError:
             pass
+
     def decorator(view_func):
         def _inner(request, domain, *args, **kwargs):
-            if hasattr(request, "couch_user") and (request.user.is_superuser or request.couch_user.has_permission(domain, permission, data=data)):
+            if not hasattr(request, "couch_user"):
+                return domain_specific_login_redirect(request, domain)
+            elif request.user.is_superuser or request.couch_user.has_permission(domain, permission, data=data):
                 return view_func(request, domain, *args, **kwargs)
             else:
                 return HttpResponseForbidden()
@@ -29,7 +32,6 @@ def require_permission(permission, data=None, login_decorator=login_and_domain_r
 
 require_can_edit_web_users = require_permission('edit_web_users')
 require_can_edit_commcare_users = require_permission('edit_commcare_users')
-
 
 def require_permission_to_edit_user(view_func):
     @wraps(view_func)
@@ -50,5 +52,5 @@ def require_permission_to_edit_user(view_func):
         if go_ahead:
             return login_and_domain_required(view_func)(request, domain, couch_user_id, *args, **kwargs)
         else:
-            raise Http404()
+            return domain_specific_login_redirect(request, domain)
     return _inner

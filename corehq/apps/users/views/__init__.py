@@ -30,9 +30,10 @@ from corehq.apps.prescriptions.models import Prescription
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.users.forms import (UpdateUserRoleForm, BaseUserInfoForm, UpdateMyAccountInfoForm)
-from corehq.apps.users.models import CouchUser, CommCareUser, WebUser, \
-    DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser, DomainMembershipError
-from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required
+from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser,
+    DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser, DomainMembershipError)
+from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required,
+                                           domain_specific_login_redirect)
 from corehq.apps.orgs.models import Team
 from corehq.apps.reports.util import get_possible_reports
 from corehq.apps.sms import verify as smsverify

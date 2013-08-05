@@ -1389,6 +1389,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             case['-deletion_id'] = deletion_id
             case.save()
 
+        for phone_number in self.get_verified_numbers(True).values():
+            phone_number.retire(deletion_id)
+
         try:
             django_user = self.get_django_user()
         except User.DoesNotExist:

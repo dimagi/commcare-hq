@@ -375,6 +375,7 @@ class HQMediaMapItem(DocumentSchema):
     multimedia_id = StringProperty()
     media_type = StringProperty()
     output_size = DictProperty()
+    version = IntegerProperty()
 
     @staticmethod
     def format_match_map(path, media_type=None, media_id=None, upload_path=""):

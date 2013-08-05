@@ -62,8 +62,24 @@
         });
         {% if not is_currently_logged_in_user %}
         $(function () {
-            if ($('#delete_user_{{ couch_user.user_id }}').get(0))
-                ko.applyBindings({signOff: ko.observable('')}, $('#delete_user_{{ couch_user.user_id }}').get(0));
+            function DeleteUserButtonModel() {
+                 var self = this;
+                 self.signOff = ko.observable('');
+                 self.formDeleteUserSent = ko.observable(false);
+                 self.disabled = function () {
+                     var understand = self.signOff().toLowerCase() === 'i understand';
+                     return self.formDeleteUserSent() || !understand;
+                 };
+                 self.submit = function () {
+                     if (!self.disabled()) {
+                         self.formDeleteUserSent(true);
+                         return true;
+                     }
+                 }
+             }
+             if ($('#delete_user_{{ couch_user.user_id }}').get(0)) {
+                 ko.applyBindings(new DeleteUserButtonModel(), $('#delete_user_{{ couch_user.user_id }}').get(0));
+             }
         });
         {% endif %}
     });
@@ -160,7 +176,11 @@
                 <small>{% trans "Permanent Action" %}</small>
             </h3>
         </div>
-        <form class="form form-horizontal" style="margin: 0; padding: 0" action="{% url delete_commcare_user domain couch_user.user_id %}" method="post">
+        <form class="form form-horizontal"
+              style="margin: 0; padding: 0"
+              action="{% url delete_commcare_user domain couch_user.user_id %}"
+              method="post"
+              data-bind="submit: submit">
             <div class="modal-body">
                 <p class="alert">
                     <i class="icon-white icon-warning-sign"></i>
@@ -198,13 +218,20 @@
                 <input data-bind="value: signOff, valueUpdate: 'textchange'" />
             </div>
             <div class="modal-footer">
-                <a href="#" data-dismiss="modal" class="btn">Cancel</a>
-                <button type="submit" class="btn btn-danger" data-bind="visible: signOff().toLowerCase() === 'i understand'">
-                    <i class="icon icon-white icon-trash"></i> {% trans "Delete Mobile Worker" %}
-                </button>
-                <button class="btn btn-danger disabled" disabled="true" data-bind="visible: signOff().toLowerCase() !== 'i understand'">
-                    <i class="icon icon-white icon-trash"></i> {% trans "Delete Mobile Worker" %}
-                </button>
+                <a href="#" data-dismiss="modal" class="btn">{% trans 'Cancel' %}</a>
+                <button type="submit" class="btn btn-danger" data-bind="
+                     css: {disabled: disabled()},
+                     attr: {disabled: disabled()}
+                 ">
+                     <i id="delete-user-icon" class="icon-trash" data-bind="
+                         css: {
+                             'icon-trash': !formDeleteUserSent(),
+                             'icon-refresh': formDeleteUserSent,
+                             'icon-spin': formDeleteUserSent
+                         }
+                     "></i>
+                     {% trans "Delete Mobile Worker" %}
+                 </button>
             </div>
         </form>
     </div>

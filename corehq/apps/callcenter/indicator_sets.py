@@ -16,7 +16,7 @@ class CallCenter(SqlIndicatorSet):
     * date (date): the date of the indicator grain
     * submission_count (integer): number of forms submitted
     """
-    name = 'call_center'
+    name = 'call-center'
 
     @property
     def table_name(self):
