@@ -35,6 +35,8 @@ CASE_STATUS_OPEN = 'open'
 CASE_STATUS_CLOSED = 'closed'
 CASE_STATUS_ALL = 'all'
 
+INDEX_ID_PARENT = 'parent'
+
 if getattr(settings, 'CASE_WRAPPER', None):
     CASE_WRAPPER = to_function(getattr(settings, 'CASE_WRAPPER'))
 else:
@@ -303,6 +305,20 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
                 self.__class__.__name__, self.name, self.type, self._id)
 
     case_id = property(__get_case_id, __set_case_id)
+
+    @property
+    @memoized
+    def parent(self):
+        """
+        Returns the parent case if one exists, else None.
+        NOTE: This property should only return the first parent in the list
+        of indices. If for some reason your use case creates more than one, 
+        please write/use a different property.
+        """
+        for index in self.indices:
+            if index.identifier == INDEX_ID_PARENT:
+                return CommCareCase.get(index.referenced_id)
+        return None
 
     @property
     def server_opened_on(self):
