@@ -101,9 +101,15 @@ class BasicPillow(object):
     changes_seen = 0
     couch_db = None
 
+    def __init__(self, couch_db=None, document_class=None):
+        if document_class:
+            self.document_class = document_class
 
-    def __init__(self, couch_db=None):
-        self.couch_db = couch_db or self.document_class.get_db()
+        if couch_db:
+            self.couch_db = couch_db
+
+        if not self.couch_db:
+            self.couch_db = self.document_class.get_db() if self.document_class else None
 
     def old_changes(self):
         """
