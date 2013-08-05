@@ -372,13 +372,14 @@ class IndicatorDocument(schema.Document):
     @classmethod
     def pillow(cls):
         doc_type = cls.document_class._doc_type
-        domains = ' '.join(cls.domains)
+        extra_args = dict(doc_type=doc_type)
+        if cls.domains:
+            domains = ' '.join(cls.domains)
+            extra_args['domains'] = domains
+
         return type(FluffPillow)(cls.__name__ + 'Pillow', (FluffPillow,), {
             'couch_filter': 'fluff_filter/domain_type',
-            'extra_args': {
-                'domains': domains,
-                'doc_type': doc_type
-            },
+            'extra_args': extra_args,
             'document_class': cls.document_class,
             'indicator_class': cls,
         })
