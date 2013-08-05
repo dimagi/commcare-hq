@@ -4,7 +4,7 @@ import uuid
 from xml.etree import ElementTree
 from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_domain_hq_user_id
 from couchdbkit.exceptions import MultipleResultsFound
-from ctable.models import SqlExtractMapping, ColumnDef
+from ctable.models import SqlExtractMapping, ColumnDef, KeyMatcher
 
 
 MAPPING_NAME_FORMS = 'cc_form_submissions'
@@ -93,14 +93,17 @@ def create_form_mapping(domain):
 def create_case_mapping(domain):
     mapping = get_or_create_mapping(domain, MAPPING_NAME_CASES)
 
-    mapping.couch_view = 'callcenter/cases_modified_by_user'
+    mapping.database = 'callcenter'
+    mapping.couch_view = 'fluff/generic'
     mapping.couch_key_prefix = [domain.name]
     mapping.columns = [
-        ColumnDef(name="date", data_type="date", value_source="key", value_index=1,
-                  date_format="%Y-%m-%dT%H:%M:%SZ"),
+        ColumnDef(name="date", data_type="date", value_source="key", value_index=5,
+                  date_format="%Y-%m-%d"),
         ColumnDef(name="user_id", data_type="string", value_source="key", value_index=2),
-        ColumnDef(name="case_type", data_type="string", value_source="key", value_index=3),
-        ColumnDef(name="case_updates", data_type="integer", value_source="value"),
+        ColumnDef(name="case_type", data_type="string", value_source="key", value_index=1,
+                  match_keys=[KeyMatcher(index=3, value='case_modifications')]),
+        ColumnDef(name="case_updates", data_type="integer", value_source="value",
+                  match_keys=[KeyMatcher(index=3, value='case_modifications')]),
     ]
     mapping.save()
 
