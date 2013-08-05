@@ -39,7 +39,9 @@
                 langs: {{ app.langs|JSON }},
                 edit: {{ edit|JSON }},
                 saveUrl: "{% url edit_module_detail_screens domain app.id module.id %}",
-                applicationVersion: {{ app.application_version|JSON }}
+                applicationVersion: {{ app.application_version|JSON }},
+                parentModules: {{ parent_modules|JSON }},
+                parentSelect: {{ module.parent_select|JSON }}
             });
 
             //todo: move this
@@ -228,6 +230,7 @@
             {% endblocktrans %}
         </div>
         <div id="detail-screen-config-body">
+            <div id="detail-screen-sort">
             {% if app.enable_multi_sort %}
                 <legend data-bind="visible: rowCount() > 0">
                     {% trans "Sort Properties" %}
@@ -310,11 +313,22 @@
                     </table>
                 </div>
             {% endif %}
-
+            </div>
             <div id="detail-screen-config">
                 <legend>
                     {% trans "Display Properties" %}
                 </legend>
+            </div>
+            <div id="detail-screen-parent" data-bind="visible: moduleOptions().length">
+                <legend>{% trans "Parent Child Selection" %}</legend>
+                <label class="checkbox">
+                    <input type="checkbox" data-bind="checked: active"/>
+                    {% trans "Select Parent First" %}
+                </label>
+                <div data-bind="visible: active">
+                {% trans "Use Case List from module" %}
+                <select data-bind="optstr: moduleOptions, value: moduleId"></select>
+                </div>
             </div>
         </div>
     </div>

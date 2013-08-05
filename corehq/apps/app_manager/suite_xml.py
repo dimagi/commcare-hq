@@ -340,6 +340,9 @@ class IdStrings(object):
 class MediaResourceError(Exception):
     pass
 
+class ParentModuleReferenceError(Exception):
+    pass
+
 
 def get_detail_column_infos(detail):
     """
@@ -502,13 +505,49 @@ class SuiteGenerator(object):
             xpath += "[start_date = '' or double(date(start_date)) <= double(now())]"
         return xpath
 
+    def get_nodeset_xpath(self, module, use_filter):
+        return "instance('casedb')/casedb/case[@case_type='{case_type}'][@status='open']{filter_xpath}".format(
+            case_type=module.case_type,
+            filter_xpath=self.get_filter_xpath(module) if use_filter else '',
+        )
+
+    def get_parent_filter(self, module, parent_id):
+        return "[index/{relationship}=instance('commcaresession')/session/data/{parent_id}]".format(
+            relationship=module.parent_select.relationship,
+            parent_id=parent_id,
+        )
+
+    def get_module_by_id(self, module_id):
+        try:
+            [parent_module] = (
+                module for module in self.app.get_modules()
+                if module.unique_id == module_id
+            )
+        except ValueError:
+            raise ParentModuleReferenceError(
+                "Module %s in app %s not found" % (module_id, self.app)
+            )
+        else:
+            return parent_module
+
+    def get_select_chain(self, module):
+        select_chain = [module]
+        current_module = module
+        while current_module.parent_select.active:
+            current_module = self.get_module_by_id(
+                current_module.parent_select.module_id
+            )
+            select_chain.append(current_module)
+        return select_chain
+
     @property
     def entries(self):
         def add_case_stuff(module, e, use_filter=False):
             def get_instances():
                 yield Instance(id='casedb', src='jr://instance/casedb')
-                if any([form.form_filter for form in module.get_forms()]) and \
-                        module.all_forms_require_a_case():
+                if (any(form.form_filter for form in module.get_forms())
+                    and module.all_forms_require_a_case()) \
+                    or module.parent_select.active:
                     yield Instance(id='commcaresession',
                                    src='jr://instance/session')
 
@@ -526,23 +565,37 @@ class SuiteGenerator(object):
 
             detail_ids = [detail.id for detail in self.details]
 
-            def get_detail_id_safe(detail_type):
+            def get_detail_id_safe(module, detail_type):
                 detail_id = self.id_strings.detail(
                     module=module,
                     detail=module.get_detail(detail_type)
                 )
                 return detail_id if detail_id in detail_ids else None
 
-            e.datum = SessionDatum(
-                id='case_id',
-                nodeset="instance('casedb')/casedb/case[@case_type='{module.case_type}'][@status='open']{filter_xpath}".format(
-                    module=module,
-                    filter_xpath=self.get_filter_xpath(module) if use_filter else '',
-                ),
-                value="./@case_id",
-                detail_select=get_detail_id_safe('case_short'),
-                detail_confirm=get_detail_id_safe('case_long'),
-            )
+            select_chain = self.get_select_chain(module)
+            # generate names ['child_id', 'parent_id', 'parent_parent_id', ...]
+            datum_ids = [('parent_' * i or 'case_') + 'id'
+                         for i in range(len(select_chain))]
+            # iterate backwards like
+            # [..., (2, 'parent_parent_id'), (1, 'parent_id'), (0, 'child_id')]
+            for i, module in reversed(list(enumerate(select_chain))):
+                try:
+                    parent_id = datum_ids[i + 1]
+                except IndexError:
+                    parent_filter = ''
+                else:
+                    parent_filter = self.get_parent_filter(module, parent_id)
+                e.datums.append(SessionDatum(
+                    id=datum_ids[i],
+                    nodeset=(self.get_nodeset_xpath(module, use_filter)
+                             + parent_filter),
+                    value="./@case_id",
+                    detail_select=get_detail_id_safe(module, 'case_short'),
+                    detail_confirm=(
+                        get_detail_id_safe(module, 'case_long')
+                        if i == 0 else None
+                    )
+                ))
 
         for module in self.modules:
             for form in module.get_forms():
