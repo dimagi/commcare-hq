@@ -572,7 +572,11 @@ var CaseConfig = (function () {
                 condition: self.open_case.condition,
                 close_condition: self.close_case.condition,
                 suggestedProperties: function () {
-                    return caseConfig.propertiesMap[this.case_type()]();
+                    if (_(caseConfig.propertiesMap).has(this.case_type())) {
+                        return caseConfig.propertiesMap[this.case_type()]();
+                    } else {
+                        return [];
+                    }
                 }
             }, caseConfig);
             _.delay(function () {
@@ -662,8 +666,9 @@ var CaseConfig = (function () {
                 case_properties: case_properties,
                 condition: self.condition,
                 suggestedProperties: function () {
-                    if (this.case_type()) {
-                        return _(caseConfig.propertiesMap[this.case_type()]()).filter(function (property) {
+                    if (this.case_type() && _(caseConfig.propertiesMap).has(this.case_type())) {
+                        var all = caseConfig.propertiesMap[this.case_type()]();
+                        return _(all).filter(function (property) {
                             return !_(property).contains('/');
                         });
                     } else {

@@ -4,13 +4,11 @@ from copy import deepcopy
 import logging
 from collections import defaultdict
 from StringIO import StringIO
-import os
 import socket
-from dimagi.utils import gitinfo
+
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST, require_GET
 from pytz import timezone
-
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, HttpResponseNotFound
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
@@ -20,9 +18,14 @@ from django.contrib import messages
 from django.conf import settings
 from restkit import Resource
 from django.core import cache
+from django.utils import html
+from django.utils.translation import ugettext as _
+from django.core import management
+
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.app_manager.util import get_settings_values
 from corehq.apps.hqadmin.models import HqDeploy
+from corehq.apps.hqadmin.forms import EmailForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index, check_xform_index
@@ -37,16 +40,19 @@ from dimagi.utils.couch.database import get_db, is_bigcouch
 from corehq.apps.domain.decorators import  require_superuser
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
-from dimagi.utils.web import json_response
+from dimagi.utils.web import json_response, get_url_base
 from couchexport.export import export_raw, export_from_tables
 from couchexport.shortcuts import export_response
 from couchexport.models import Format
 from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.decorators.view import get_file
-from django.utils import html
 from dimagi.utils.timezones import utils as tz_utils
 from django.utils.translation import ugettext as _
-from django.core import management
+from dimagi.utils.django.email import send_HTML_email
+from django.template.loader import render_to_string
+from corehq.apps.users.models import CouchUser
+from django.http import Http404
+
 
 @require_superuser
 def default(request):
@@ -423,6 +429,51 @@ def mobile_user_reports(request):
     return render(request, template, context)
 
 @require_superuser
+def mass_email(request):
+    if not request.couch_user.is_staff:
+        raise Http404()
+
+    if request.method == "POST":
+        form = EmailForm(request.POST)
+        if form.is_valid():
+            subject = form.cleaned_data['email_subject']
+            body = form.cleaned_data['email_body']
+            real_email = form.cleaned_data['real_email']
+
+            if real_email:
+                recipients = WebUser.view(
+                    'users/mailing_list_emails',
+                    reduce=False,
+                    include_docs=True,
+                ).all()
+            else:
+                recipients = [request.couch_user]
+
+            for recipient in recipients:
+                params = {
+                    'email_body': body,
+                    'user_id': recipient.get_id,
+                    'unsub_url': get_url_base() +
+                                 reverse('unsubscribe', args=[recipient.get_id])
+                }
+                text_content = render_to_string("hqadmin/email/mass_email_base.txt", params)
+                html_content = render_to_string("hqadmin/email/mass_email_base.html", params)
+
+                send_HTML_email(subject, recipient.email, html_content, text_content,
+                                email_from=settings.DEFAULT_FROM_EMAIL)
+
+            messages.success(request, 'Your email(s) were sent successfully.')
+
+    else:
+        form = EmailForm()
+
+    context = get_hqadmin_base_context(request)
+    context['hide_filters'] = True
+    context['form'] = form
+    return render(request, "hqadmin/mass_email.html", context)
+
+
+@require_superuser
 @get_file("file")
 def update_domains(request):
     if request.method == "POST":
@@ -606,7 +657,10 @@ def system_info(request):
     context['hide_filters'] = True
     context['current_system'] = socket.gethostname()
 
-    context['snapshot'] = gitinfo.get_project_snapshot(settings.FILEPATH, submodules=True, log_count=5, submodule_count=1)
+    environment = settings.SERVER_ENVIRONMENT
+    context['last_deploy'] = HqDeploy.get_latest(environment)
+
+    context['snapshot'] = context['last_deploy'].code_snapshot if context['last_deploy'] else {}
 
     #redis status
     redis_status = ""
@@ -693,8 +747,6 @@ def system_info(request):
     context['memcached_status'] = mc_status
     context['memcached_results'] = mc_results
 
-    environment = settings.SERVER_ENVIRONMENT
-    context['last_deploy'] = HqDeploy.get_latest(environment)
 
     #elasticsearch status
     #node status
