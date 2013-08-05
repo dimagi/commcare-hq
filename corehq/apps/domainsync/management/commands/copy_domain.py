@@ -1,6 +1,7 @@
 from multiprocessing import Process, Queue, Pool
 import sys
 from django.core.management.base import BaseCommand, CommandError
+from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.database import get_db, iter_docs
 from corehq.apps.domainsync.config import DocumentTransform, save
 from couchdbkit.client import Database
@@ -66,6 +67,12 @@ class Command(BaseCommand):
         if simulate:
             print "\nSimulated run, no data will be copied.\n"
 
+        self.targetdb = get_db()
+
+        domain_doc = Domain.get_by_name(domain)
+        if domain_doc is None:
+            self.copy_domain(sourcedb, domain)
+
         if options['doc_types']:
             doc_types = options['doc_types'].split(',')
             for type in doc_types:
@@ -99,7 +106,6 @@ class Command(BaseCommand):
 
         total = len(doc_ids)
         count = 0
-        targetdb = get_db()
         msg = "Found %s matching documents in domain: %s" % (total, domain)
         msg += " of type: %s" % (type) if type else ""
         msg += " since: %s" % (since) if since else ""
@@ -107,7 +113,7 @@ class Command(BaseCommand):
 
         queue = Queue(150)
         for i in range(NUM_PROCESSES):
-            Worker(queue, sourcedb, targetdb, exclude_types, total, simulate).start()
+            Worker(queue, sourcedb, self.targetdb, exclude_types, total, simulate).start()
 
         for doc in iter_docs(sourcedb, doc_ids, chunksize=100):
             count += 1
@@ -116,6 +122,22 @@ class Command(BaseCommand):
         # shutdown workers
         for i in range(NUM_PROCESSES):
             queue.put(None)
+
+    def copy_domain(self, sourcedb, domain):
+        print "Copying domain doc"
+        result = sourcedb.view(
+            "domain/domains",
+            key=domain,
+            reduce=False,
+            include_docs=True
+        ).first()
+
+        if result and 'doc' in result:
+            domain_doc = Domain.wrap(result['doc'])
+            dt = DocumentTransform(domain_doc, sourcedb)
+            save(dt, self.targetdb)
+        else:
+            print "Domain doc not found for domain %s." % domain
 
 
 class Worker(Process):
