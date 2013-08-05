@@ -1525,7 +1525,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     use_custom_suite = BooleanProperty(default=False)
     force_http = BooleanProperty(default=False)
     cloudcare_enabled = BooleanProperty(default=False)
-    include_media_resources = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
