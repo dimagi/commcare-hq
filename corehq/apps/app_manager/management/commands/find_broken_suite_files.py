@@ -4,6 +4,7 @@ from corehq.apps.app_manager import suite_xml
 
 
 def find_broken_suite_files(start, end):
+    yield 'Starting...\n'
     db = Application.get_db()
     build_ids = db.view(
         'app_manager/builds_by_date',
@@ -18,8 +19,8 @@ def find_broken_suite_files(start, end):
             suite_xml.validate_suite(suite)
         except suite_xml.SuiteValidationError as error:
             build = db.get(build_id)
-            yield '%s\t%s\t%s\n' % (build.get('domain'), build_id, error)
-    yield 'Done.'
+            yield '%s\t%s\t%s\t%s\t%s\n' % (build.get('built_on'), build.get('domain'), build_id, build.get('copy_of'), error)
+    yield 'Done.\n'
 
 
 class Command(BaseCommand):
