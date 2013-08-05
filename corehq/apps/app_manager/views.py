@@ -1720,12 +1720,23 @@ def download_profile(req, domain, app_id):
         req.app.create_profile()
     )
 
-def odk_install(req, domain, app_id):
-    return render(req, "app_manager/odk_install.html",
-            {"domain": domain, "app": get_app(domain, app_id)})
+def odk_install(req, domain, app_id, with_media=False):
+    app = get_app(domain, app_id)
+    qr_code_view = "odk_qr_code" if not with_media else "odk_media_qr_code"
+    context = {
+        "domain": domain,
+        "app": app,
+        "qr_code": reverse("corehq.apps.app_manager.views.%s" % qr_code_view, args=[domain, app_id]),
+        "profile_url": app.odk_profile_display_url if not with_media else app.odk_media_profile_display_url,
+    }
+    return render(req, "app_manager/odk_install.html", context)
 
 def odk_qr_code(req, domain, app_id):
     qr_code = get_app(domain, app_id).get_odk_qr_code()
+    return HttpResponse(qr_code, mimetype="image/png")
+
+def odk_media_qr_code(req, domain, app_id):
+    qr_code = get_app(domain, app_id).get_odk_qr_code(with_media=True)
     return HttpResponse(qr_code, mimetype="image/png")
 
 @safe_download
@@ -1736,6 +1747,13 @@ def download_odk_profile(req, domain, app_id):
     """
     return HttpResponse(
         req.app.create_profile(is_odk=True),
+        mimetype="commcare/profile"
+    )
+
+@safe_download
+def download_odk_media_profile(req, domain, app_id):
+    return HttpResponse(
+        req.app.create_profile(is_odk=True, with_media=True),
         mimetype="commcare/profile"
     )
 
