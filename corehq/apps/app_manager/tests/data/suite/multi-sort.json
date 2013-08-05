@@ -1,7 +1,7 @@
 {
     "_attachments": {
-        "a3a876c9168574584da893ae0849b4ddb515abb1.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\">\n\t<h:head>\n\t\t<h:title>New Form</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/FDFADFF8-30F0-4FC3-A012-42DE521C09DD\" uiVersion=\"1\" version=\"1\" name=\"New Form\">\n\t\t\t\t\t<name />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/name\" type=\"xsd:string\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"name-label\">\n\t\t\t\t\t\t<value>Name</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input ref=\"/data/name\">\n\t\t\t<label ref=\"jr:itext('name-label')\" />\n\t\t</input>\n\t</h:body>\n</h:html>", 
-        "b417a554308146d4cb386facd75993f234682929.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\">\n\t<h:head>\n\t\t<h:title>New Form</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/5B595DE1-331F-4D97-9269-9F626AD67C66\" uiVersion=\"1\" version=\"1\" name=\"New Form\">\n\t\t\t\t\t<favorite_food />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/favorite_food\" type=\"xsd:string\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"favorite_food-label\">\n\t\t\t\t\t\t<value>Favorite Food</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input ref=\"/data/favorite_food\">\n\t\t\t<label ref=\"jr:itext('favorite_food-label')\" />\n\t\t</input>\n\t</h:body>\n</h:html>"
+        "9da0cbbc9d4f0a32317922e9d912241db9e3685f.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\">\n\t<h:head>\n\t\t<h:title>New Form</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/5B595DE1-331F-4D97-9269-9F626AD67C66\" uiVersion=\"1\" version=\"1\" name=\"New Form\">\n\t\t\t\t\t<favorite_food />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/favorite_food\" type=\"xsd:string\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"favorite_food-label\">\n\t\t\t\t\t\t<value>Favorite Food</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input ref=\"/data/favorite_food\">\n\t\t\t<label ref=\"jr:itext('favorite_food-label')\" />\n\t\t</input>\n\t</h:body>\n</h:html>", 
+        "b295dd7f9f003fcba77ce347b4ef70f67fface8f.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\">\n\t<h:head>\n\t\t<h:title>Register</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/FDFADFF8-30F0-4FC3-A012-42DE521C09DD\" uiVersion=\"1\" version=\"1\" name=\"Register\">\n\t\t\t\t\t<name />\n\t\t\t\t\t<birthdate />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/name\" type=\"xsd:string\" />\n\t\t\t<bind nodeset=\"/data/birthdate\" type=\"xsd:date\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"name-label\">\n\t\t\t\t\t\t<value>Name</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"birthdate-label\">\n\t\t\t\t\t\t<value>Birthdate</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input ref=\"/data/name\">\n\t\t\t<label ref=\"jr:itext('name-label')\" />\n\t\t</input>\n\t\t<input ref=\"/data/birthdate\">\n\t\t\t<label ref=\"jr:itext('birthdate-label')\" />\n\t\t</input>\n\t</h:body>\n</h:html>"
     }, 
     "admin_password": null, 
     "admin_password_charset": "n", 
@@ -58,11 +58,37 @@
                         {
                             "advanced": "", 
                             "enum": {}, 
+                            "field": "birthdate", 
+                            "filter_xpath": "", 
+                            "format": "date", 
+                            "header": {
+                                "en": "Birthdate"
+                            }, 
+                            "late_flag": 30, 
+                            "model": "case", 
+                            "time_ago_interval": 365.25
+                        }, 
+                        {
+                            "advanced": "", 
+                            "enum": {}, 
                             "field": "name", 
                             "filter_xpath": "", 
                             "format": "plain", 
                             "header": {
                                 "en": "Name"
+                            }, 
+                            "late_flag": 30, 
+                            "model": "case", 
+                            "time_ago_interval": 365.25
+                        }, 
+                        {
+                            "advanced": "", 
+                            "enum": {}, 
+                            "field": "birthdate", 
+                            "filter_xpath": "", 
+                            "format": "date", 
+                            "header": {
+                                "en": "Birthdate"
                             }, 
                             "late_flag": 30, 
                             "model": "case", 
@@ -87,6 +113,12 @@
                         {
                             "direction": "descending", 
                             "doc_type": "SortElement", 
+                            "field": "birthdate", 
+                            "type": "date"
+                        }, 
+                        {
+                            "direction": "descending", 
+                            "doc_type": "SortElement", 
                             "field": "date-opened", 
                             "type": "date"
                         }, 
@@ -104,11 +136,37 @@
                         {
                             "advanced": "", 
                             "enum": {}, 
+                            "field": "birthdate", 
+                            "filter_xpath": "", 
+                            "format": "date", 
+                            "header": {
+                                "en": "Birthdate"
+                            }, 
+                            "late_flag": 30, 
+                            "model": "case", 
+                            "time_ago_interval": 365.25
+                        }, 
+                        {
+                            "advanced": "", 
+                            "enum": {}, 
                             "field": "name", 
                             "filter_xpath": "", 
                             "format": "plain", 
                             "header": {
                                 "en": "Name"
+                            }, 
+                            "late_flag": 30, 
+                            "model": "case", 
+                            "time_ago_interval": 365.25
+                        }, 
+                        {
+                            "advanced": "", 
+                            "enum": {}, 
+                            "field": "birthdate", 
+                            "filter_xpath": "", 
+                            "format": "date", 
+                            "header": {
+                                "en": "Birthdate"
                             }, 
                             "late_flag": 30, 
                             "model": "case", 
@@ -212,7 +270,9 @@
                                 "question": null, 
                                 "type": "always"
                             }, 
-                            "update": {}
+                            "update": {
+                                "birthdate": "/data/birthdate"
+                            }
                         }, 
                         "update_referral": {
                             "condition": {
@@ -234,7 +294,7 @@
                     }, 
                     "requires": "none", 
                     "show_count": false, 
-                    "unique_id": "a3a876c9168574584da893ae0849b4ddb515abb1", 
+                    "unique_id": "b295dd7f9f003fcba77ce347b4ef70f67fface8f", 
                     "version": null, 
                     "xmlns": "http://openrosa.org/formdesigner/FDFADFF8-30F0-4FC3-A012-42DE521C09DD"
                 }, 
@@ -243,11 +303,9 @@
                         "case_preload": {
                             "condition": {
                                 "answer": null, 
-                                "doc_type": "FormActionCondition", 
                                 "question": null, 
-                                "type": "never"
+                                "type": "always"
                             }, 
-                            "doc_type": "PreloadAction", 
                             "preload": {}
                         }, 
                         "close_case": {
@@ -256,8 +314,7 @@
                                 "doc_type": "FormActionCondition", 
                                 "question": null, 
                                 "type": "never"
-                            }, 
-                            "doc_type": "FormAction"
+                            }
                         }, 
                         "close_referral": {
                             "condition": {
@@ -268,7 +325,6 @@
                             }, 
                             "doc_type": "FormAction"
                         }, 
-                        "doc_type": "FormActions", 
                         "open_case": {
                             "condition": {
                                 "answer": null, 
@@ -276,7 +332,6 @@
                                 "question": null, 
                                 "type": "never"
                             }, 
-                            "doc_type": "OpenCaseAction", 
                             "external_id": null, 
                             "name_path": null
                         }, 
@@ -305,12 +360,12 @@
                         "update_case": {
                             "condition": {
                                 "answer": null, 
-                                "doc_type": "FormActionCondition", 
                                 "question": null, 
-                                "type": "never"
+                                "type": "always"
                             }, 
-                            "doc_type": "UpdateCaseAction", 
-                            "update": {}
+                            "update": {
+                                "favorite_food": "/data/favorite_food"
+                            }
                         }, 
                         "update_referral": {
                             "condition": {
@@ -330,9 +385,9 @@
                     "name": {
                         "en": "Update"
                     }, 
-                    "requires": "none", 
+                    "requires": "case", 
                     "show_count": false, 
-                    "unique_id": "b417a554308146d4cb386facd75993f234682929", 
+                    "unique_id": "9da0cbbc9d4f0a32317922e9d912241db9e3685f", 
                     "version": null, 
                     "xmlns": "http://openrosa.org/formdesigner/5B595DE1-331F-4D97-9269-9F626AD67C66"
                 }
@@ -486,7 +541,7 @@
         "password_path": "password", 
         "requires": "none", 
         "show_count": false, 
-        "unique_id": "75926d7c51d6c100272ff612e60dac234dc83742", 
+        "unique_id": "a826e764e4d7730fd015c22bcc26bf435ea57a9f", 
         "username_path": "username", 
         "version": null, 
         "xmlns": null

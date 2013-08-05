@@ -1,4 +1,5 @@
 # coding=utf-8
+from distutils.version import LooseVersion
 import tempfile
 import os
 import logging
@@ -1338,18 +1339,19 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
                     '(You are using %s.%s)'
                 ) % ((name,) + setting_version + my_version)
 
-
     @property
     def jad_settings(self):
-        return {
+        settings = {
             'JavaRosa-Admin-Password': self.admin_password,
             'Profile': self.profile_loc,
             'MIDlet-Jar-URL': self.jar_url,
             #'MIDlet-Name': self.name,
             # e.g. 2011-Apr-11 20:45
             'CommCare-Release': "true",
-            'Build-Number': self.version,
         }
+        if LooseVersion(self.build_spec.version) < '2.1':
+            settings['Build-Number'] = self.version
+        return settings
 
     def create_jadjar(self, save=False):
         try:
@@ -1449,6 +1451,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
             copy._id = copy.get_db().server.next_uuid()
 
         copy.set_form_versions(previous_version)
+        copy.set_media_versions(previous_version)
         copy.create_jadjar(save=True)
 
         try:
@@ -1488,6 +1491,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
 
     def set_form_versions(self, previous_version):
         # by default doing nothing here is fine.
+        pass
+
+    def set_media_versions(self, previous_version):
         pass
 
 #class Profile(DocumentSchema):
@@ -1597,8 +1603,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         """
         Multi (tiered) sort is supported by apps version 2.2 or higher
         """
-        minor_release = tuple(map(int, self.build_spec.version.split('.')))
-        return minor_release >= (2, 2)
+        return LooseVersion(self.build_spec.version) >= '2.2'
 
 
     @property
@@ -1640,6 +1645,17 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     my_hash = _hash(self.fetch_xform(form=form))
                     if previous_hash != my_hash:
                         form.version = self.version
+
+    def set_media_versions(self, previous_version):
+        for path, map_item in self.multimedia_map.items():
+            if previous_version:
+                pre_map_item = previous_version.multimedia_map.get(path, None)
+                if pre_map_item and pre_map_item.version and pre_map_item.multimedia_id == map_item.multimedia_id:
+                    map_item.version = pre_map_item.version
+                else:
+                    map_item.version = self.version
+            else:
+                map_item.version = self.version
 
     def _create_custom_app_strings(self, lang):
         def trans(d):

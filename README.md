@@ -1,5 +1,10 @@
-CommCare HQ [![Build Status](https://travis-ci.org/dimagi/commcare-hq.png)](https://travis-ci.org/dimagi/commcare-hq)
+CommCare HQ
 ===========
+
+https://github.com/dimagi/commcare-hq
+
+[![Build Status](https://travis-ci.org/dimagi/commcare-hq.png)](https://travis-ci.org/dimagi/commcare-hq)
+[![Test coverage](https://coveralls.io/repos/dimagi/commcare-hq/badge.png?branch=master)](https://coveralls.io/r/dimagi/commcare-hq)
 
 CommCare HQ is a server-side tool to help manage community health workers.
 It seamlessly integrates with CommCare mobile and CommCare ODK, as well as

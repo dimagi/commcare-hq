@@ -68,6 +68,14 @@
                         return $('header').outerHeight() + $('.hq-page-header-container').outerHeight();
                     }
                 },
+                allowedDataNodeReferences: [
+                    "meta/deviceID",
+                    "meta/instanceID",
+                    "meta/username",
+                    "meta/userID",
+                    "meta/timeStart",
+                    "meta/timeEnd"
+                ],
                 saveType: 'patch',
                 form: {{ form.source|JSON }},
                 langs: {{ app.langs|JSON }},

@@ -59,7 +59,7 @@ from corehq.apps.app_manager.models import Application, get_app, DetailColumn, F
     AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, EXAMPLE_DOMAIN, str_to_cls, validate_lang, SavedAppBuild, ParentSelect
 from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
-from corehq.apps.app_manager.decorators import safe_download
+from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST
 
 
 try:
@@ -268,7 +268,7 @@ def import_app(req, domain, template="app_manager/import_app.html"):
         })
 
 @require_can_edit_apps
-@require_POST
+@no_conflict_require_POST
 def import_factory_app(req, domain):
     factory_app = get_app('factory', req.POST['app_id'])
     source = factory_app.export_json(dump_json=False)
@@ -282,7 +282,7 @@ def import_factory_app(req, domain):
     return back_to_main(**locals())
 
 @require_can_edit_apps
-@require_POST
+@no_conflict_require_POST
 def import_factory_module(req, domain, app_id):
     fapp_id, fmodule_id = req.POST['app_module_id'].split('/')
     fapp = get_app('factory', fapp_id)
@@ -294,7 +294,7 @@ def import_factory_module(req, domain, app_id):
     return back_to_main(**locals())
 
 @require_can_edit_apps
-@require_POST
+@no_conflict_require_POST
 def import_factory_form(req, domain, app_id, module_id):
     fapp_id, fmodule_id, fform_id = req.POST['app_module_form_id'].split('/')
     fapp = get_app('factory', fapp_id)
@@ -562,7 +562,7 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def release_build(request, domain, app_id, saved_app_id):
     is_released = request.POST.get('is_released') == 'true'
@@ -771,7 +771,7 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
 
 
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def new_app(req, domain):
     "Adds an app to the database"
@@ -791,7 +791,7 @@ def new_app(req, domain):
 
     return back_to_main(**locals())
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def new_module(req, domain, app_id):
     "Adds a module to an app"
@@ -806,7 +806,7 @@ def new_module(req, domain, app_id):
     response.set_cookie('suppress_build_errors', 'yes')
     return response
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def new_form(req, domain, app_id, module_id):
     "Adds a form to an app (under a module)"
@@ -821,7 +821,7 @@ def new_form(req, domain, app_id, module_id):
     response.set_cookie('suppress_build_errors', 'yes')
     return response
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def delete_app(req, domain, app_id):
     "Deletes an app from the database"
@@ -836,7 +836,7 @@ def delete_app(req, domain, app_id):
     del app_id
     return back_to_main(**locals())
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def undo_delete_app(request, domain, record_id):
     try:
@@ -851,7 +851,7 @@ def undo_delete_app(request, domain, record_id):
     messages.success(request, 'Application successfully restored.')
     return back_to_main(request, domain, app_id=app_id)
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def delete_module(req, domain, app_id, module_id):
     "Deletes a module from an app"
@@ -865,7 +865,7 @@ def delete_module(req, domain, app_id, module_id):
     del module_id
     return back_to_main(**locals())
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def undo_delete_module(request, domain, record_id):
     record = DeleteModuleRecord.get(record_id)
@@ -874,7 +874,7 @@ def undo_delete_module(request, domain, record_id):
     return back_to_main(request, domain, app_id=record.app_id, module_id=record.module_id)
 
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def delete_form(req, domain, app_id, module_id, form_id):
     "Deletes a form from an app"
@@ -889,7 +889,7 @@ def delete_form(req, domain, app_id, module_id, form_id):
     del record
     return back_to_main(**locals())
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def copy_form(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
@@ -899,7 +899,7 @@ def copy_form(req, domain, app_id, module_id, form_id):
     app.save()
     return back_to_main(**locals())
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def undo_delete_form(request, domain, record_id):
     record = DeleteFormRecord.get(record_id)
@@ -907,7 +907,7 @@ def undo_delete_form(request, domain, record_id):
     messages.success(request, 'Form successfully restored.')
     return back_to_main(request, domain, app_id=record.app_id, module_id=record.module_id, form_id=record.form_id)
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def edit_module_attr(req, domain, app_id, module_id, attr):
     """
@@ -967,7 +967,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     resp['case_list-show'] = module.requires_case_details()
     return HttpResponse(json.dumps(resp))
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def edit_module_detail_screens(req, domain, app_id, module_id):
     """
@@ -1010,7 +1010,7 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     app.save(resp)
     return json_response(resp)
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def edit_module_detail(req, domain, app_id, module_id):
     """
@@ -1058,7 +1058,7 @@ def edit_module_detail(req, domain, app_id, module_id):
     else:
         return back_to_main(**locals())
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def delete_module_detail(req, domain, app_id, module_id):
     """
@@ -1097,8 +1097,7 @@ def _handle_media_edits(request, item, should_edit, resp):
                 val = None
             setattr(item, attribute, val)
 
-
-@require_POST
+@no_conflict_require_POST
 @login_or_digest
 @require_permission(Permissions.edit_apps, login_decorator=None)
 def patch_xform(request, domain, app_id, unique_form_id):
@@ -1122,7 +1121,7 @@ def patch_xform(request, domain, app_id, unique_form_id):
     app.save(response_json)
     return json_response(response_json)
 
-@require_POST
+@no_conflict_require_POST
 @login_or_digest
 @require_permission(Permissions.edit_apps, login_decorator=None)
 def edit_form_attr(req, domain, app_id, unique_form_id, attr):
@@ -1210,7 +1209,7 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
     else:
         return back_to_main(**locals())
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def rename_language(req, domain, form_unique_id):
     old_code = req.POST.get('oldCode')
@@ -1240,7 +1239,7 @@ def validate_language(request, domain, app_id):
     else:
         return HttpResponseRedirect("%s?%s" % (reverse('langcodes.views.validate', args=[]), django_urlencode({'term': term})))
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def edit_form_actions(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
@@ -1282,7 +1281,7 @@ def commcare_profile(req, domain, app_id):
     return HttpResponse(json.dumps(app.profile))
 
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def edit_commcare_settings(request, domain, app_id):
     sub_responses = (
@@ -1296,7 +1295,7 @@ def edit_commcare_settings(request, domain, app_id):
         )
     return json_response(response)
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def edit_commcare_profile(request, domain, app_id):
     try:
@@ -1319,7 +1318,7 @@ def edit_commcare_profile(request, domain, app_id):
     return json_response(response_json)
 
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def edit_app_lang(req, domain, app_id):
     """
@@ -1354,7 +1353,7 @@ def edit_app_lang(req, domain, app_id):
 
     return back_to_main(**locals())
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def edit_app_langs(request, domain, app_id):
     """
@@ -1375,16 +1374,19 @@ def edit_app_langs(request, domain, app_id):
     rename = o['rename']
     build = o['build']
 
-    assert set(rename.keys()).issubset(app.langs)
-    assert set(rename.values()).issubset(langs)
-    # assert that there are no repeats in the values of rename
-    assert len(set(rename.values())) == len(rename.values())
-    # assert that no lang is renamed to an already existing lang
-    for old, new in rename.items():
-        if old != new:
-            assert(new not in app.langs)
-    # assert that the build langs are in the correct order
-    assert sorted(build, key=lambda lang: langs.index(lang)) == build
+    try:
+        assert set(rename.keys()).issubset(app.langs)
+        assert set(rename.values()).issubset(langs)
+        # assert that there are no repeats in the values of rename
+        assert len(set(rename.values())) == len(rename.values())
+        # assert that no lang is renamed to an already existing lang
+        for old, new in rename.items():
+            if old != new:
+                assert(new not in app.langs)
+        # assert that the build langs are in the correct order
+        assert sorted(build, key=lambda lang: langs.index(lang)) == build
+    except AssertionError:
+        return HttpResponse(status=400)
 
     # now do it
     for old, new in rename.items():
@@ -1403,7 +1405,7 @@ def edit_app_langs(request, domain, app_id):
     return json_response(langs)
 
 @require_can_edit_apps
-@require_POST
+@no_conflict_require_POST
 def edit_app_translations(request, domain, app_id):
     params  = json_request(request.POST)
     lang    = params.get('lang')
@@ -1416,7 +1418,7 @@ def edit_app_translations(request, domain, app_id):
     app.save(response)
     return json_response(response)
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def delete_app_lang(req, domain, app_id):
     """
@@ -1430,7 +1432,7 @@ def delete_app_lang(req, domain, app_id):
     app.save()
     return back_to_main(**locals())
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def edit_app_attr(request, domain, app_id, attr):
     """
@@ -1531,7 +1533,7 @@ def edit_app_attr(request, domain, app_id, attr):
     return HttpResponse(json.dumps(resp))
 
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def rearrange(req, domain, app_id, key):
     """
@@ -1569,7 +1571,7 @@ def rearrange(req, domain, app_id, key):
 # Saving multiple versions of the same app
 # i.e. "making builds"
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def save_copy(req, domain, app_id):
     """
@@ -1631,7 +1633,7 @@ def validate_form_for_build(request, domain, app_id, unique_form_id):
         }),
     })
     
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def revert_to_copy(req, domain, app_id):
     """
@@ -1646,7 +1648,7 @@ def revert_to_copy(req, domain, app_id):
     messages.success(req, "Successfully reverted to version %s, now at version %s" % (copy.version, app.version))
     return back_to_main(**locals())
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def delete_copy(req, domain, app_id):
     """
@@ -1803,7 +1805,7 @@ def download_xform(req, domain, app_id, module_id, form_id):
         return HttpResponse(
             req.app.fetch_xform(module_id, form_id)
         )
-    except IndexError:
+    except (IndexError, XFormValidationError):
         raise Http404()
 
 @safe_download
@@ -2062,7 +2064,7 @@ def download_translations(request, domain, app_id):
     export_raw(headers, data, temp)
     return export_response(temp, Format.XLS_2007, "translations")
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 @get_file("file")
 def upload_translations(request, domain, app_id):

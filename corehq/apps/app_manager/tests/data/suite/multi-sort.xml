@@ -1,13 +1,13 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <suite>
   <xform>
-    <resource id="a3a876c9168574584da893ae0849b4ddb515abb1">
+    <resource id="b295dd7f9f003fcba77ce347b4ef70f67fface8f">
       <location authority="local">./modules-0/forms-0.xml</location>
       <location authority="remote">./modules-0/forms-0.xml</location>
     </resource>
   </xform>
   <xform>
-    <resource id="b417a554308146d4cb386facd75993f234682929">
+    <resource id="9da0cbbc9d4f0a32317922e9d912241db9e3685f">
       <location authority="local">./modules-0/forms-1.xml</location>
       <location authority="remote">./modules-0/forms-1.xml</location>
     </resource>
@@ -33,7 +33,24 @@
     <field>
       <header>
         <text>
-          <locale id="m0.case_short.case_name_1.header"/>
+          <locale id="m0.case_short.case_birthdate_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="if(birthdate = '', '', format_date(date(if(birthdate = '', 0, birthdate)),'short'))"/>
+        </text>
+      </template>
+      <sort type="string" order="1" direction="descending">
+        <text>
+          <xpath function="birthdate"/>
+        </text>
+      </sort>
+    </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.case_short.case_name_2.header"/>
         </text>
       </header>
       <template>
@@ -41,7 +58,7 @@
           <xpath function="case_name"/>
         </text>
       </template>
-      <sort direction="ascending" type="string" order="2">
+      <sort type="string" order="3" direction="ascending">
         <text>
           <xpath function="case_name"/>
         </text>
@@ -50,7 +67,24 @@
     <field>
       <header>
         <text>
-          <locale id="m0.case_short.case_date-opened_2.header"/>
+          <locale id="m0.case_short.case_birthdate_3.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="if(birthdate = '', '', format_date(date(if(birthdate = '', 0, birthdate)),'short'))"/>
+        </text>
+      </template>
+      <sort type="string">
+        <text>
+          <xpath function="birthdate"/>
+        </text>
+      </sort>
+    </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.case_short.case_date-opened_4.header"/>
         </text>
       </header>
       <template>
@@ -58,7 +92,7 @@
           <xpath function="if(date_opened = '', '', format_date(date(if(date_opened = '', 0, date_opened)),'short'))"/>
         </text>
       </template>
-      <sort direction="descending" type="string" order="1">
+      <sort type="string" order="2" direction="descending">
         <text>
           <xpath function="date_opened"/>
         </text>
@@ -74,7 +108,19 @@
     <field>
       <header>
         <text>
-          <locale id="m0.case_long.case_name_1.header"/>
+          <locale id="m0.case_long.case_birthdate_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="if(birthdate = '', '', format_date(date(if(birthdate = '', 0, birthdate)),'short'))"/>
+        </text>
+      </template>
+    </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.case_long.case_name_2.header"/>
         </text>
       </header>
       <template>
@@ -86,7 +132,19 @@
     <field>
       <header>
         <text>
-          <locale id="m0.case_long.case_date-opened_2.header"/>
+          <locale id="m0.case_long.case_birthdate_3.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="if(birthdate = '', '', format_date(date(if(birthdate = '', 0, birthdate)),'short'))"/>
+        </text>
+      </template>
+    </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.case_long.case_date-opened_4.header"/>
         </text>
       </header>
       <template>
@@ -111,6 +169,10 @@
         <locale id="forms.m0f1"/>
       </text>
     </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <session>
+      <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+    </session>
   </entry>
   <menu id="m0">
     <text>

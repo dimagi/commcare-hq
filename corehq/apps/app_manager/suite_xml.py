@@ -1,3 +1,4 @@
+from collections import namedtuple
 from django.core.urlresolvers import reverse
 from lxml import etree
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField
@@ -343,6 +344,33 @@ class ParentModuleReferenceError(Exception):
     pass
 
 
+def get_detail_column_infos(detail):
+    """
+    This is not intented to be a widely used format
+    just a packaging of column info into a form most convenient for rendering
+    """
+    from corehq.apps.app_manager.models import DetailColumn
+    DetailColumnInfo = namedtuple('DetailColumnInfo',
+                                  'column sort_element order')
+    # order is 1-indexed
+    sort_elements = dict((s.field, (s, i + 1))
+                         for i, s in enumerate(detail.sort_elements))
+    columns = []
+    for column in detail.get_columns():
+        sort_element, order = sort_elements.pop(column.field, (None, None))
+        columns.append(DetailColumnInfo(column, sort_element, order))
+    # sort elements is now populated with only what's not in any column
+    # add invisible columns for these
+    for field, (sort_element, order) in sort_elements.items():
+        column = DetailColumn(
+            model='case',
+            field=field,
+            format='invisible',
+        )
+        columns.append(DetailColumnInfo(column, sort_element, order))
+    return columns
+
+
 class SuiteGenerator(object):
     def __init__(self, app):
         self.app = app
@@ -405,7 +433,7 @@ class SuiteGenerator(object):
             yield MediaResource(
                 id=self.id_strings.media_resource(multimedia_id, name),
                 path=path,
-                version=1,
+                version=m.version,
                 local=None,
                 remote=get_url_base() + reverse(
                     'hqmedia_download',
@@ -416,37 +444,21 @@ class SuiteGenerator(object):
     @property
     @memoized
     def details(self):
+
         r = []
         from corehq.apps.app_manager.detail_screen import get_column_generator
         if not self.app.use_custom_suite:
             for module in self.modules:
                 for detail in module.get_details():
-                    detail_columns = detail.get_columns()
+                    detail_column_infos = get_detail_column_infos(detail)
 
-                    if detail_columns and detail.type in ('case_short', 'case_long'):
+                    if detail_column_infos and detail.type in ('case_short', 'case_long'):
                         d = Detail(
                             id=self.id_strings.detail(module, detail),
                             title=Text(locale_id=self.id_strings.detail_title_locale(module, detail))
                         )
 
                         if detail.type == 'case_short':
-                            detail_fields = [c.field for c in detail_columns]
-                            sort_fields = [e.field for e in module.detail_sort_elements]
-                            sort_only_fields = [field for field in sort_fields
-                                                if field not in detail_fields]
-
-                            from corehq.apps.app_manager.models import DetailColumn
-                            for sort_field in sort_only_fields:
-                                # set up a fake detailcolumn so we can
-                                # add this field but not actually
-                                # save it
-                                dc = DetailColumn(
-                                    model='case',
-                                    field=sort_field,
-                                    format='invisible',
-                                )
-                                detail.append_column(dc)
-
                             # need to add a default here so that it doesn't
                             # get persisted
                             if self.app.enable_multi_sort and \
@@ -461,8 +473,8 @@ class SuiteGenerator(object):
                                 except Exception:
                                     pass
 
-                        for column in detail.get_columns():
-                            fields = get_column_generator(self.app, module, detail, column).fields
+                        for column_info in detail_column_infos:
+                            fields = get_column_generator(self.app, module, detail, *column_info).fields
                             d.fields.extend(fields)
 
                         try:
