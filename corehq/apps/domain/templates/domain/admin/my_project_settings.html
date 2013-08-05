@@ -1,6 +1,6 @@
 {% extends 'settings/base_template.html' %}
 {% load hq_shared_tags %}
-{% load crispy_forms_tags %}
+{% load hqstyle_tags %}
 {% load i18n %}
 
 {% block js %} {{ block.super }}
@@ -20,7 +20,7 @@
         var $matchMessage = $('<span class="matched-message help-inline" />');
         $userTimezone.parent().append($matchMessage);
 
-        var $matchTzButton = $('<a href="#" class="btn" style="margin-left: 1em;" />').text("Reset to Default");
+        var $matchTzButton = $('<a href="#" class="btn" style="margin-left: 1em;" />').text("{% trans 'Reset to Default' %}");
         $matchTzButton.click(function () {
             $userTimezone.val($globalTimezone.val());
             $userTimezone.change();
@@ -39,10 +39,10 @@
         function compare_global_user_timezones() {
             if($globalTimezone.val() == $userTimezone.val()) {
                 $userTimezone.parent().parent().addClass('success').removeClass('warning');
-                $matchMessage.html('This matches the global setting of <strong>'+$globalTimezone.val()+'</strong>.');
+                $matchMessage.html('{% blocktrans %}This matches the global setting of <strong>'+$globalTimezone.val()+'</strong>.{% endblocktrans %}');
             } else {
                 $userTimezone.parent().parent().addClass('warning').removeClass('success');
-                $matchMessage.html('<strong>'+$userTimezone.val()+'</strong> does not match global setting of <strong>'+$globalTimezone.val()+'</strong>.');
+                $matchMessage.html('{% blocktrans %}<strong>'+$userTimezone.val()+'</strong> does not match global setting of <strong>'+$globalTimezone.val()+'</strong>.{% endblocktrans %}');
             }
         }
     });
@@ -51,17 +51,15 @@
 
 {% block main_column %}
     <form id="my-project-settings-form" class="form form-horizontal" name="update_project_settings" method="post">
-        <fieldset>
-            <legend>{% trans 'My Project Settings' %}</legend>
-            {% crispy my_project_settings_form %}
-            <div class="form-actions">
-                <button type="submit"
-                        id="update-proj-settings"
-                        data-bind="hqbSubmitReady: form_is_ready"
-                        class="btn disabled">
-                    {% trans 'Update My Settings' %}
-                </button>
-            </div>
-        </fieldset>
+        {% bootstrap_form_errors my_project_settings_form %}
+        {% bootstrap_fieldset my_project_settings_form "My Project Settings" %}
+        <div class="form-actions">
+            <button type="submit"
+                    id="update-proj-settings"
+                    data-bind="hqbSubmitReady: form_is_ready"
+                    class="btn disabled">
+                {% trans 'Update My Settings' %}
+            </button>
+        </div>
     </form>
 {% endblock %}
