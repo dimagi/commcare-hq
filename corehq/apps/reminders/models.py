@@ -16,7 +16,6 @@ from corehq.apps.sms.util import create_task, close_task, update_task
 from corehq.apps.smsforms.app import submit_unfinished_form
 from dimagi.utils.couch import LockableMixIn
 from random import randint
-from casexml.apps.case.models import ParentCaseCache
 
 METHOD_SMS = "sms"
 METHOD_SMS_CALLBACK = "callback"
@@ -96,25 +95,26 @@ def looks_like_timestamp(value):
 def property_references_parent(case_property):
     return isinstance(case_property, basestring) and case_property.startswith("parent/")
 
-def get_case_property(case, case_property, parent_case_cache=None):
+def get_case_property(case, case_property):
     """
     case                the case
     case_property       the name of the case property (can be 'parent/property' to lookup
                         on the parent, or 'property' to lookup on the case)
-    parent_case_cache   (optional, for more efficient lookups) a ParentCaseCache instance
     """
-    if case_property is None:
+    if case_property is None or case is None:
         return None
     elif case_property.startswith("parent/"):
-        if parent_case_cache is None:
-            parent_case_cache = ParentCaseCache(case)
-        return parent_case_cache.get_parent_case_property(case_property[7:])
+        parent_case = case.parent
+        if parent_case is None:
+            return None
+        else:
+            return parent_case.get_case_property(case_property[7:])
     else:
         return case.get_case_property(case_property)
 
-def case_matches_criteria(case, match_type, case_property, value_to_match, parent_case_cache=None):
+def case_matches_criteria(case, match_type, case_property, value_to_match):
     result = False
-    case_property_value = get_case_property(case, case_property, parent_case_cache=parent_case_cache)
+    case_property_value = get_case_property(case, case_property)
     if match_type == MATCH_EXACT:
         result = (case_property_value == value_to_match) and (value_to_match is not None)
     elif match_type == MATCH_ANY_VALUE:
@@ -421,13 +421,13 @@ class CaseReminderHandler(Document):
         ).all()
     
     # For use with event_interpretation = EVENT_AS_SCHEDULE
-    def get_current_reminder_event_timestamp(self, reminder, recipient, case, parent_case_cache=None):
+    def get_current_reminder_event_timestamp(self, reminder, recipient, case):
         event = self.events[reminder.current_event_sequence_num]
         additional_minute_offset = 0
         if event.fire_time_type == FIRE_TIME_DEFAULT:
             fire_time = event.fire_time
         elif event.fire_time_type == FIRE_TIME_CASE_PROPERTY:
-            fire_time = get_case_property(case, event.fire_time_aux, parent_case_cache=parent_case_cache)
+            fire_time = get_case_property(case, event.fire_time_aux)
             try:
                 fire_time = parse(fire_time).time()
             except Exception:
@@ -442,7 +442,7 @@ class CaseReminderHandler(Document):
         timestamp = datetime.combine(reminder.start_date, fire_time) + timedelta(days = day_offset) + timedelta(minutes=additional_minute_offset)
         return CaseReminderHandler.timestamp_to_utc(recipient, timestamp)
     
-    def spawn_reminder(self, case, now, recipient=None, parent_case_cache=None):
+    def spawn_reminder(self, case, now, recipient=None):
         """
         Creates a CaseReminder.
         
@@ -486,7 +486,7 @@ class CaseReminderHandler(Document):
             reminder.next_fire = now + timedelta(days=day_offset, hours=time_offset.hour, minutes=time_offset.minute, seconds=time_offset.second)
         else:
             # EVENT_AS_SCHEDULE
-            reminder.next_fire = self.get_current_reminder_event_timestamp(reminder, recipient, case, parent_case_cache=parent_case_cache)
+            reminder.next_fire = self.get_current_reminder_event_timestamp(reminder, recipient, case)
         return reminder
 
     @classmethod
@@ -548,7 +548,7 @@ class CaseReminderHandler(Document):
             reminder.current_event_sequence_num = 0
             reminder.schedule_iteration_num += 1
 
-    def set_next_fire(self, reminder, now, parent_case_cache=None):
+    def set_next_fire(self, reminder, now):
         """
         Sets reminder.next_fire to the next allowable date after now by continuously moving the 
         given CaseReminder to the next event (using move_to_next_event() above) and setting the 
@@ -563,8 +563,6 @@ class CaseReminderHandler(Document):
         return      void
         """
         case = reminder.case
-        if case is not None and parent_case_cache is None:
-            parent_case_cache = ParentCaseCache(case)
         recipient = reminder.recipient
         iteration = 0
         reminder.error_retry_count = 0
@@ -601,15 +599,15 @@ class CaseReminderHandler(Document):
                 reminder.next_fire += timedelta(days=day_offset, hours=time_offset.hour, minutes=time_offset.minute, seconds=time_offset.second)
             else:
                 # EVENT_AS_SCHEDULE
-                reminder.next_fire = self.get_current_reminder_event_timestamp(reminder, recipient, case, parent_case_cache=parent_case_cache)
+                reminder.next_fire = self.get_current_reminder_event_timestamp(reminder, recipient, case)
             
             # Set whether or not the reminder should still be active
-            reminder.active = self.get_active(reminder, reminder.next_fire, case, parent_case_cache=parent_case_cache)
+            reminder.active = self.get_active(reminder, reminder.next_fire, case)
         
         # Preserve the current next fire time since next_fire can be manipulated for error retries
         reminder.last_scheduled_fire_time = reminder.next_fire
     
-    def recalculate_schedule(self, reminder, prev_definition=None, parent_case_cache=None):
+    def recalculate_schedule(self, reminder, prev_definition=None):
         """
         Recalculates which iteration / event number a schedule-based reminder should be on.
         Only meant to be called on schedule-based reminders.
@@ -633,8 +631,8 @@ class CaseReminderHandler(Document):
         reminder.skip_remaining_timeouts = False
         reminder.last_scheduled_fire_time = None
         reminder.xforms_session_ids = []
-        reminder.next_fire = self.get_current_reminder_event_timestamp(reminder, reminder.recipient, case, parent_case_cache=parent_case_cache)
-        reminder.active = self.get_active(reminder, reminder.next_fire, case, parent_case_cache=parent_case_cache)
+        reminder.next_fire = self.get_current_reminder_event_timestamp(reminder, reminder.recipient, case)
+        reminder.active = self.get_active(reminder, reminder.next_fire, case)
         self.set_next_fire(reminder, self.get_now())
         
         if preserve_current_session_ids:
@@ -644,10 +642,10 @@ class CaseReminderHandler(Document):
                 for session_id in old_xforms_session_ids:
                     submit_unfinished_form(session_id, prev_definition.include_case_side_effects)
     
-    def get_active(self, reminder, now, case, parent_case_cache=None):
+    def get_active(self, reminder, now, case):
         schedule_not_finished = not (self.max_iteration_count != REPEAT_SCHEDULE_INDEFINITELY and reminder.schedule_iteration_num > self.max_iteration_count)
         if case is not None:
-            until_not_reached = (not self.condition_reached(case, self.until, now, parent_case_cache=parent_case_cache))
+            until_not_reached = (not self.condition_reached(case, self.until, now))
             return until_not_reached and schedule_not_finished
         else:
             return schedule_not_finished
@@ -707,7 +705,7 @@ class CaseReminderHandler(Document):
         return result
 
     @classmethod
-    def condition_reached(cls, case, case_property, now, parent_case_cache=None):
+    def condition_reached(cls, case, case_property, now):
         """
         Checks to see if the condition specified by case_property on case has been reached.
         If case[case_property] is a timestamp and it is later than now, then the condition is reached.
@@ -719,7 +717,7 @@ class CaseReminderHandler(Document):
         
         return      True if the condition is reached, False if not.
         """
-        condition = get_case_property(case, case_property, parent_case_cache=parent_case_cache)
+        condition = get_case_property(case, case_property)
         
         if isinstance(condition, datetime):
             pass
@@ -756,7 +754,6 @@ class CaseReminderHandler(Document):
         """
         now = now or self.get_now()
         reminder = self.get_reminder(case)
-        parent_case_cache = ParentCaseCache(case)
         
         try:
             if (case.user_id == case._id) or (case.user_id is None):
@@ -770,8 +767,8 @@ class CaseReminderHandler(Document):
             if reminder:
                 reminder.retire()
         else:
-            start_condition_reached = case_matches_criteria(case, self.start_match_type, self.start_property, self.start_value, parent_case_cache=parent_case_cache)
-            start_date = get_case_property(case, self.start_date, parent_case_cache=parent_case_cache)
+            start_condition_reached = case_matches_criteria(case, self.start_match_type, self.start_property, self.start_value)
+            start_date = get_case_property(case, self.start_date)
             if (not isinstance(start_date, date)) and not (isinstance(start_date, datetime)):
                 try:
                     start_date = parse(start_date)
@@ -803,7 +800,7 @@ class CaseReminderHandler(Document):
             just_spawned = False
             if reminder is None:
                 if start_condition_reached:
-                    reminder = self.spawn_reminder(case, start, parent_case_cache=parent_case_cache)
+                    reminder = self.spawn_reminder(case, start)
                     reminder.start_condition_datetime = start_condition_datetime
                     self.set_next_fire(reminder, now) # This will fast-forward to the next event that does not occur in the past
                     just_spawned = True
@@ -811,9 +808,9 @@ class CaseReminderHandler(Document):
             # Check to see if the reminder should still be active
             if reminder is not None:
                 if schedule_changed and self.event_interpretation == EVENT_AS_SCHEDULE and not just_spawned:
-                    self.recalculate_schedule(reminder, prev_definition, parent_case_cache=parent_case_cache)
+                    self.recalculate_schedule(reminder, prev_definition)
                 else:
-                    active = self.get_active(reminder, reminder.next_fire, case, parent_case_cache=parent_case_cache)
+                    active = self.get_active(reminder, reminder.next_fire, case)
                     if active and not reminder.active:
                         reminder.active = True
                         self.set_next_fire(reminder, now) # This will fast-forward to the next event that does not occur in the past
