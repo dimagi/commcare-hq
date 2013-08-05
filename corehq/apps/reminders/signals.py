@@ -4,7 +4,7 @@ from casexml.apps.case.signals import case_post_save
 from corehq.apps.reminders.models import CaseReminderHandler, CASE_CRITERIA
 
 def get_subcases(case):
-    indices = self.case.reverse_indices
+    indices = case.reverse_indices
     subcases = []
     for index in indices:
         if index.identifier == "parent":
