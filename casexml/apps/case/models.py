@@ -307,6 +307,20 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
     case_id = property(__get_case_id, __set_case_id)
 
     @property
+    @memoized
+    def parent(self):
+        """
+        Returns the parent case if one exists, else None.
+        NOTE: This property should only return the first parent in the list
+        of indices. If for some reason your use case creates more than one, 
+        please write/use a different property.
+        """
+        for index in self.indices:
+            if index.identifier == INDEX_ID_PARENT:
+                return CommCareCase.get(index.referenced_id)
+        return None
+
+    @property
     def server_opened_on(self):
         try:
             open_action = self.actions[0]
@@ -801,42 +815,6 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
     @property
     def related_type_info(self):
         return None
-
-class ParentCaseCache(object):
-    """
-    A utility class used to make the parent case lookup more efficient 
-    (only lookup the parent once, and only look it up if you have to).
-    """
-    _case = None
-    _parent_case = None
-    _already_looked_up = False
-
-    def __init__(self, case):
-        self._case = case
-
-    @property
-    def parent(self):
-        """
-        Returns the parent case if one exists, else None.
-        NOTE: This property should only return the first parent in the list
-        of indices. If for some reason your use case creates more than one, 
-        please write/use a different property.
-        """
-        if not self._already_looked_up:
-            indices = self._case.indices
-            for index in indices:
-                if index.identifier == INDEX_ID_PARENT:
-                    self._parent_case = CommCareCase.get(index.referenced_id)
-                    break
-            self._already_looked_up = True
-        return self._parent_case
-
-    def get_parent_case_property(self, property_name):
-        parent_case = self.parent
-        if parent_case is None:
-            return None
-        else:
-            return parent_case.get_case_property(property_name)
 
 
 import casexml.apps.case.signals
