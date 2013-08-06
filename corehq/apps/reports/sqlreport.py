@@ -254,12 +254,21 @@ class BaseDataFormatter(object):
                 if not row:
                     row = dict(zip(self.group_by, key_group))
 
-                yield row_key, self.format_row(row)
+                formatted_row = self.format_row(row)
+                if self.filter_row(row_key, formatted_row):
+                    yield row_key, formatted_row
         elif self.group_by:
             for key, row in self.data.items():
-                yield key, self.format_row(row)
+                formatted_row = self.format_row(row)
+                if self.filter_row(key, formatted_row):
+                    yield key, formatted_row
         else:
-            yield None, self.format_row(self.data)
+            formatted_row = self.format_row(self.data)
+            if self.filter_row(None, formatted_row):
+                yield None, formatted_row
+
+    def filter_row(self, key, row):
+        return not self.row_filter or self.row_filter(key, row)
 
     def _row_key(self, key_group):
         if len(self.group_by) == 1:
