@@ -2,7 +2,7 @@ from dimagi.utils.decorators.memoized import memoized
 from sqlagg.columns import *
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn, SqlData, DataTabulator
+from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn, SqlData, TableDataFormatter
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.users.util import user_id_to_username
 
@@ -111,7 +111,7 @@ class Section(SqlData):
     @property
     @memoized
     def rows(self):
-        raw_data = list(DataTabulator(self).tabulate())
+        raw_data = list(TableDataFormatter.from_sqldata(self).format())
         ret = transpose(self.columns, raw_data)
         return ret
 
