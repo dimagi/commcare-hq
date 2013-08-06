@@ -36,8 +36,7 @@
     "description": null, 
     "doc_type": "Application", 
     "force_http": false, 
-    "include_media_resources": false, 
-    "is_released": false, 
+    "is_released": false,
     "langs": [
         "en"
     ], 
