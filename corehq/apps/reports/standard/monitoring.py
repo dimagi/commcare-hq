@@ -763,13 +763,14 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
 
     @property
     def headers(self):
+        CASE_TYPE_MSG = "The case type filter doesn't affect this column."
         by_group = self.view_by == 'groups'
         columns = [DataTablesColumn(_("Group"))] if by_group else [DataTablesColumn(_("User"))]
         columns.append(DataTablesColumnGroup(_("Form Data"),
             DataTablesColumn(_("# Forms Submitted"), sort_type=DTSortType.NUMERIC,
-                help_text=_("Number of forms submitted in chosen date range.")),
+                help_text=_("Number of forms submitted in chosen date range. %s" % CASE_TYPE_MSG)),
             DataTablesColumn(_("Avg # Forms Submitted"), sort_type=DTSortType.NUMERIC,
-                help_text=_("Average number of forms submitted in the last three date ranges of the same length.")),
+                help_text=_("Average number of forms submitted in the last three date ranges of the same length. %s" % CASE_TYPE_MSG)),
             DataTablesColumn(_("Last Form Submission"),
                 help_text=_("Date of last form submission in time period.  Total row displays proportion of users submitting forms in date range")) \
             if not by_group else DataTablesColumn(_("# Active Users"), sort_type=DTSortType.NUMERIC,
