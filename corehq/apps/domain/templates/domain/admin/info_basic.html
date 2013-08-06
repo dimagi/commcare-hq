@@ -1,6 +1,6 @@
 {% extends "domain/admin/info_base.html" %}
 {% load hq_shared_tags %}
-{% load crispy_forms_tags %}
+{% load hqstyle_tags %}
 {% load i18n %}
 
 {% block js-inline %} {{ block.super }}
@@ -55,15 +55,13 @@
 {% endblock %}
 
 {% block main_column %}
-    <form class="form-horizontal" method="post">
-        <fieldset>
-            <legend>{% trans 'Edit Basic Information' %}</legend>
-            {% crispy basic_info_form %}
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">
-                    {% trans 'Update Basic Info' %}
-                </button>
-            </div>
-        </fieldset>
+    <form class="form-horizontal" method="post" enctype="multipart/form-data">
+        {% bootstrap_form_errors form %}
+        {% bootstrap_fieldset basic_info_form "Edit Basic Information" %}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                {% trans 'Update Basic Info' %}
+            </button>
+        </div>
     </form>
 {% endblock %}

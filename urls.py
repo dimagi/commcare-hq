@@ -23,6 +23,7 @@ from corehq.apps.adm.urls import adm_admin_interface_urls
 
 
 domain_specific = patterns('',
+    url(r'^logo.png', 'corehq.apps.domain.views.logo', name='logo'),
     (r'^apps/', include('corehq.apps.app_manager.urls')),
     (r'^api/', include('corehq.apps.api.urls')),
     # the receiver needs to accept posts at an endpoint that might
@@ -46,7 +47,6 @@ domain_specific = patterns('',
     (r'^', include(hqwebapp_domain_specific)),
     (r'^case/', include('corehq.apps.hqcase.urls')),
     (r'^submitlist/', include('corehq.apps.hqsofabed.urls')),
-    (r'^cleanup/', include('corehq.apps.cleanup.urls')),
     (r'^phonelog/', include('phonelog.urls')),
     (r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
     (r'^fixtures/', include('corehq.apps.fixtures.urls')),
@@ -75,7 +75,6 @@ urlpatterns = patterns('',
     (r'^hq/billing/', include('hqbilling.urls')),
     (r'^hq/multimedia/', include('corehq.apps.hqmedia.urls')),
     (r'^hq/admin/', include('corehq.apps.hqadmin.urls')),
-    (r'^hq/prescriptions/', include('corehq.apps.prescriptions.urls')),
     (r'^hq/reports/', include(report_urls)),
     (r'^couchlog/', include('couchlog.urls')),
     (r'^formtranslate/', include('formtranslate.urls')),

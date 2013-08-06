@@ -16,7 +16,7 @@ from dimagi.utils.couch.database import get_db
 from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
-from django.http import Http404, HttpResponseRedirect, HttpResponse, HttpResponseForbidden
+from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
@@ -26,7 +26,6 @@ from django_digest.decorators import httpdigest
 from dimagi.utils.web import json_response, get_ip
 
 from corehq.apps.registration.forms import AdminInvitesUserForm
-from corehq.apps.prescriptions.models import Prescription
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.users.forms import (UpdateUserRoleForm, BaseUserInfoForm, UpdateMyAccountInfoForm)
@@ -693,47 +692,6 @@ def change_my_password(request, domain, template="users/change_my_password.html"
 def test_httpdigest(request, domain):
     return HttpResponse("ok")
 
-
-@Prescription.require('user-domain-transfer')
-@login_and_domain_required
-def user_domain_transfer(request, domain, prescription, template="users/domain_transfer.html"):
-    target_domain = prescription.params['target_domain']
-    if not request.couch_user.is_domain_admin(target_domain):
-        return HttpResponseForbidden()
-    if request.method == "POST":
-        user_ids = request.POST.getlist('user_id')
-        app_id = request.POST['app_id']
-        errors = []
-        for user_id in user_ids:
-            user = CommCareUser.get_by_user_id(user_id, domain)
-            try:
-                user.transfer_to_domain(target_domain, app_id)
-            except Exception as e:
-                errors.append((user_id, user, e))
-            else:
-                messages.success(request, "Successfully transferred {user.username}".format(user=user))
-        if errors:
-            messages.error(request, "Failed to transfer the following users")
-            for user_id, user, e in errors:
-                if user:
-                    messages.error(request, "{user.username} ({user.user_id}): {e}".format(user=user, e=e))
-                else:
-                    messages.error(request, "CommCareUser {user_id} not found".format(user_id=user_id))
-        return HttpResponseRedirect(reverse('commcare_users', args=[target_domain]))
-    else:
-        from corehq.apps.app_manager.models import VersionedDoc
-        # apps from the *target* domain
-        apps = VersionedDoc.view('app_manager/applications_brief', startkey=[target_domain], endkey=[target_domain, {}])
-        # users from the *originating* domain
-        users = list(CommCareUser.by_domain(domain))
-        users.extend(CommCareUser.by_domain(domain, is_active=False))
-        context = _users_context(request, domain)
-        context.update({
-            'apps': apps,
-            'commcare_users': users,
-            'target_domain': target_domain
-        })
-        return render(request, template, context)
 
 @require_superuser
 def audit_logs(request, domain):

@@ -198,6 +198,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
             if self.can_user_see_meta:
                 return DomainMetadataForm(
                     self.request.POST,
+                    self.request.FILES,
                     user=self.request.couch_user,
                     domain=self.domain_object.name)
             return DomainGlobalSettingsForm(self.request.POST)
@@ -346,11 +347,17 @@ def legacy_domain_name(request, domain, path):
     domain = normalize_domain_name(domain)
     return HttpResponseRedirect(get_domained_url(domain, path))
 
-
 def autocomplete_fields(request, field):
     prefix = request.GET.get('prefix', '')
     results = Domain.field_by_prefix(field, prefix)
     return HttpResponse(json.dumps(results))
+
+def logo(request, domain):
+    logo = Domain.get_by_name(domain).get_custom_logo()
+    if logo is None:
+        raise Http404()
+
+    return HttpResponse(logo[0], mimetype=logo[1])
 
 
 class ExchangeSnapshotsView(BaseAdminProjectSettingsView):

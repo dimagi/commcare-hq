@@ -2,7 +2,7 @@ import logging
 from django.conf import settings
 
 from dimagi.utils.modules import to_function
-from corehq.apps.sms.util import clean_phone_number, create_billable_for_sms, format_message_list
+from corehq.apps.sms.util import clean_phone_number, create_billable_for_sms, format_message_list, clean_text
 from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING, ForwardingRule, FORWARD_ALL, FORWARD_BY_KEYWORD
 from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber
 from corehq.apps.domain.models import Domain
@@ -91,6 +91,10 @@ def send_message_via_backend(msg, backend=None, onerror=lambda: None):
     onerror - error handler; mostly useful for logging a custom message to the
       error log
     """
+    try:
+        msg.text = clean_text(msg.text)
+    except Exception:
+        logging.exception("Could not clean text for sms dated '%s' in domain '%s'" % (msg.date, msg.domain))
     try:
         if not backend:
             backend = msg.outbound_backend

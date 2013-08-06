@@ -30,9 +30,8 @@ def get_domain_context(domain_type='commcare'):
     Set context variables that are normally set based on the domain type
     according to what user/domain type is being registered.
     """
-    class Dummy(object): pass
 
-    dummy_domain = Dummy()
+    dummy_domain = Domain()
     dummy_domain.commtrack_enabled = (domain_type == 'commtrack')
     return get_per_domain_context(dummy_domain)
 
