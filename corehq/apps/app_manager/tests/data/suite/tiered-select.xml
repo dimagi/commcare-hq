@@ -29,7 +29,7 @@
           <locale id="m0.case_short.title"></locale>
         </text>
       </title>
-      <field sort="default">
+      <field>
         <header>
           <text>
             <locale id="m0.case_short.case_name_1.header"></locale>
@@ -40,6 +40,11 @@
             <xpath function="case_name"></xpath>
           </text>
         </template>
+        <sort direction="ascending" order="1" type="string">
+          <text>
+            <xpath function="case_name"></xpath>
+          </text>
+        </sort>
       </field>
     </detail>
     <detail id="m0_case_long">
@@ -48,7 +53,7 @@
           <locale id="m0.case_long.title"></locale>
         </text>
       </title>
-      <field sort="default">
+      <field>
         <header>
           <text>
             <locale id="m0.case_long.case_name_1.header"></locale>
@@ -67,7 +72,7 @@
           <locale id="m1.case_short.title"></locale>
         </text>
       </title>
-      <field sort="default">
+      <field>
         <header>
           <text>
             <locale id="m1.case_short.case_name_1.header"></locale>
@@ -78,6 +83,11 @@
             <xpath function="case_name"></xpath>
           </text>
         </template>
+        <sort direction="ascending" order="1" type="string">
+          <text>
+            <xpath function="case_name"></xpath>
+          </text>
+        </sort>
       </field>
     </detail>
     <detail id="m1_case_long">
@@ -86,7 +96,7 @@
           <locale id="m1.case_long.title"></locale>
         </text>
       </title>
-      <field sort="default">
+      <field>
         <header>
           <text>
             <locale id="m1.case_long.case_name_1.header"></locale>
