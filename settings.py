@@ -741,7 +741,7 @@ PILLOWTOPS = [
 
                  # fluff
                  'bihar.models.CareBiharFluffPillow',
-                 'cutom.reports.mc.models.MalariaConsortiumFluffPillow',
+                 'custom.reports.mc.models.MalariaConsortiumFluffPillow',
              ] + LOCAL_PILLOWTOPS
 
 
