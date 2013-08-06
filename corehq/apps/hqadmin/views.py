@@ -814,7 +814,10 @@ def find_broken_suite_files(request):
         end = request.GET['end']
     except KeyError:
         return HttpResponseBadRequest()
-    return HttpResponse(find_broken_suite_files(start, end), mimetype='text/plain')
+    # streaming doesn't seem to work; it stops part-way through
+    return HttpResponse(''.join(find_broken_suite_files(start, end)),
+                        mimetype='text/plain')
+
 
 @require_superuser
 @require_GET

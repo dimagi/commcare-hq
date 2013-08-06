@@ -1,3 +1,4 @@
+from couchdbkit import ResourceNotFound
 from django.core.management import BaseCommand
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager import suite_xml
@@ -14,12 +15,24 @@ def find_broken_suite_files(start, end):
         wrapper=lambda row: row['id']
     ).all()
     for build_id in build_ids:
-        suite = db.fetch_attachment(build_id, 'files/suite.xml')
+        error = None
         try:
-            suite_xml.validate_suite(suite)
-        except suite_xml.SuiteValidationError as error:
-            build = db.get(build_id)
-            yield '%s\t%s\t%s\t%s\t%s\n' % (build.get('built_on'), build.get('domain'), build_id, build.get('copy_of'), error)
+            suite = db.fetch_attachment(build_id, 'files/suite.xml')
+        except ResourceNotFound:
+            error = 'build has no attachment files/suite.xml'
+        else:
+            try:
+                suite_xml.validate_suite(suite)
+            except suite_xml.SuiteValidationError as error:
+                build = db.get(build_id)
+        if error:
+            yield '%s\t%s\t%s\t%s\t%s\n' % (
+                build.get('built_on'),
+                build.get('domain'),
+                build_id,
+                build.get('copy_of'),
+                error,
+            )
     yield 'Done.\n'
 
 
