@@ -612,11 +612,13 @@ class ProjectSettingsTab(UITab):
         if user_is_admin:
             from corehq.apps.domain.views import (ProjectOverviewView, EditBasicProjectInfoView,
                                                   EditDeploymentProjectInfoView)
-            project_info.extend([
-                {
+            if not self.project.commtrack_enabled:
+                project_info.append({
                     'title': ProjectOverviewView.page_title,
                     'url': reverse(ProjectOverviewView.name, args=[self.domain])
-                },
+                })
+
+            project_info.extend([
                 {
                     'title': EditBasicProjectInfoView.page_title,
                     'url': reverse(EditBasicProjectInfoView.name, args=[self.domain])
