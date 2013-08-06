@@ -15,6 +15,7 @@ from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from PIL import Image
 from dimagi.utils.django.cached_object import CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage, IMAGE_SIZE_ORDERING
 from django.utils.translation import ugettext_noop, ugettext as _
+from django.utils.translation import ugettext as _
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml,\
@@ -43,10 +44,8 @@ CASE_STATUS_OPEN = 'open'
 CASE_STATUS_CLOSED = 'closed'
 CASE_STATUS_ALL = 'all'
 
-if getattr(settings, 'CASE_WRAPPER', None):
-    CASE_WRAPPER = to_function(getattr(settings, 'CASE_WRAPPER'))
-else:
-    CASE_WRAPPER = None
+INDEX_ID_PARENT = 'parent'
+
 
 class CaseBase(SafeSaveDocument):
     """
@@ -283,13 +282,6 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
 
     server_modified_on = DateTimeProperty()
 
-    def __repr__(self):
-        return u"Case: {id} ({type}: {name})".format(
-            id=self._id,
-            type=self.type,
-            name=self.name,
-        ).encode('utf-8')
-
     def __unicode__(self):
         return "CommCareCase: %s (%s)" % (self.case_id, self.get_id)
 
@@ -310,11 +302,25 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
     def __set_case_id(self, id):
         self._id = id
     
+    case_id = property(__get_case_id, __set_case_id)
+
     def __repr__(self):
         return "%s(name=%r, type=%r, id=%r)" % (
                 self.__class__.__name__, self.name, self.type, self._id)
 
-    case_id = property(__get_case_id, __set_case_id)
+    @property
+    @memoized
+    def parent(self):
+        """
+        Returns the parent case if one exists, else None.
+        NOTE: This property should only return the first parent in the list
+        of indices. If for some reason your use case creates more than one, 
+        please write/use a different property.
+        """
+        for index in self.indices:
+            if index.identifier == INDEX_ID_PARENT:
+                return CommCareCase.get(index.referenced_id)
+        return None
 
     @property
     def server_opened_on(self):
@@ -393,6 +399,13 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
 
     @classmethod
     def get_wrap_class(cls, data):
+        try:
+            settings.CASE_WRAPPER
+        except AttributeError:
+            cls._case_wrapper = None
+        else:
+            CASE_WRAPPER = to_function(settings.CASE_WRAPPER, failhard=True)
+        
         if CASE_WRAPPER:
             return CASE_WRAPPER(data) or cls
         return cls

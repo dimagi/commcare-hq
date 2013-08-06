@@ -2,6 +2,7 @@ import uuid
 from django.test import TestCase
 import os
 from casexml.apps.case import settings
+from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import CaseBlock, delete_all_cases
 from casexml.apps.case.util import post_case_blocks
@@ -173,7 +174,7 @@ class CaseBugTest(TestCase):
         self.assertEqual(11, len(CommCareCase.view("case/by_user", reduce=False).all()))
 
     def testSubmitToDeletedCase(self):
-        # submitting to a deleted case should update the case but keep it as deleted
+        # submitting to a deleted case should fail and not affect the case
         case_id = 'immagetdeleted'
         deleted_doc_type = 'CommCareCase-Deleted'
         post_case_blocks([
@@ -186,10 +187,11 @@ class CaseBugTest(TestCase):
         case.doc_type = deleted_doc_type
         case.save()
         self.assertEqual(deleted_doc_type, case.doc_type)
-        post_case_blocks([
-            CaseBlock(create=False, case_id=case_id, user_id='whatever',
-                      version=V2, update={'foo': 'not_bar'}).as_xml()
-        ])
+        with self.assertRaises(IllegalCaseId):
+            post_case_blocks([
+                CaseBlock(create=False, case_id=case_id, user_id='whatever',
+                          version=V2, update={'foo': 'not_bar'}).as_xml()
+            ])
         case = CommCareCase.get(case_id)
-        self.assertEqual('not_bar', case.foo)
+        self.assertEqual('bar', case.foo)
         self.assertEqual(deleted_doc_type, case.doc_type)
