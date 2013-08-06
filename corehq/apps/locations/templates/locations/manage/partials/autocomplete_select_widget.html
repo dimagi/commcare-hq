@@ -1,5 +1,4 @@
 {% load hq_shared_tags %}
-
 <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
 <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
 <script>
@@ -15,7 +14,7 @@ $("#supply-point").select2({
         quietMillis: 500,
         data: function (term, page) {
             return {
-                name: term,
+                name: term
             };
         },
         results: function (data, page) {
@@ -24,17 +23,15 @@ $("#supply-point").select2({
     },
     initSelection: function(element, callback) {
         var id = $(element).val();
+
         if (id !== "") {
-            $.ajax("{{ query_url }}", {
-                data: {
-                    id: id
-                },
-                dataType: "json"
+            $.get("{{ query_url }}", {
+                id: id
             }).done(function(data) { callback(data); });
         }
     },
     formatResult: function(e) { return e.name; },
-    formatSelection: function(e) { return e.name; },
+    formatSelection: function(e) { return e.name; }
 });
 
 });
@@ -42,4 +39,4 @@ $("#supply-point").select2({
 </script>
 
 <!-- FIXME should not use a global id or else you can only ever have one of these widgets on the page -->
-<input type="hidden" id="supply-point" name="{{ name }}" value="{{ value }}" style="width: 30em;"></input>
+<input type="hidden" id="supply-point" name="{{ name }}" value="{{ value }}" style="width: 30em;" />

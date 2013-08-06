@@ -92,9 +92,29 @@ def looks_like_timestamp(value):
     except Exception:
         return False
 
+def property_references_parent(case_property):
+    return isinstance(case_property, basestring) and case_property.startswith("parent/")
+
+def get_case_property(case, case_property):
+    """
+    case                the case
+    case_property       the name of the case property (can be 'parent/property' to lookup
+                        on the parent, or 'property' to lookup on the case)
+    """
+    if case_property is None or case is None:
+        return None
+    elif property_references_parent(case_property):
+        parent_case = case.parent
+        if parent_case is None:
+            return None
+        else:
+            return parent_case.get_case_property(case_property[7:])
+    else:
+        return case.get_case_property(case_property)
+
 def case_matches_criteria(case, match_type, case_property, value_to_match):
     result = False
-    case_property_value = case.get_case_property(case_property)
+    case_property_value = get_case_property(case, case_property)
     if match_type == MATCH_EXACT:
         result = (case_property_value == value_to_match) and (value_to_match is not None)
     elif match_type == MATCH_ANY_VALUE:
@@ -357,7 +377,22 @@ class CaseReminderHandler(Document):
     
     # stop condition
     until = StringProperty()
-    
+
+    @property
+    def uses_parent_case_property(self):
+        events_use_parent_case_property = False
+        for event in self.events:
+            if event.fire_time_type == FIRE_TIME_CASE_PROPERTY and property_references_parent(event.fire_time_aux):
+                events_use_parent_case_property = True
+                break
+        return (
+            events_use_parent_case_property or
+            property_references_parent(self.recipient_case_match_property) or
+            property_references_parent(self.start_property) or
+            property_references_parent(self.start_date) or
+            property_references_parent(self.until)
+        )
+
     @classmethod
     def get_now(cls):
         try:
@@ -392,7 +427,7 @@ class CaseReminderHandler(Document):
         if event.fire_time_type == FIRE_TIME_DEFAULT:
             fire_time = event.fire_time
         elif event.fire_time_type == FIRE_TIME_CASE_PROPERTY:
-            fire_time = case.get_case_property(event.fire_time_aux)
+            fire_time = get_case_property(case, event.fire_time_aux)
             try:
                 fire_time = parse(fire_time).time()
             except Exception:
@@ -682,7 +717,7 @@ class CaseReminderHandler(Document):
         
         return      True if the condition is reached, False if not.
         """
-        condition = case.get_case_property(case_property)
+        condition = get_case_property(case, case_property)
         
         if isinstance(condition, datetime):
             pass
@@ -733,7 +768,7 @@ class CaseReminderHandler(Document):
                 reminder.retire()
         else:
             start_condition_reached = case_matches_criteria(case, self.start_match_type, self.start_property, self.start_value)
-            start_date = case.get_case_property(self.start_date)
+            start_date = get_case_property(case, self.start_date)
             if (not isinstance(start_date, date)) and not (isinstance(start_date, datetime)):
                 try:
                     start_date = parse(start_date)

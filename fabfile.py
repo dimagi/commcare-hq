@@ -87,7 +87,8 @@ def format_env(current_env):
         'es_endpoint',
         'jython_home',
         'virtualenv_root',
-        'django_port'
+        'django_port',
+        'flower_port',
     ]
 
     for prop in important_props:
@@ -178,6 +179,7 @@ def india():
     }
     env.roles = ['django_monolith']
     env.es_endpoint = 'localhost'
+    env.flower_port = 5555
 
 @task
 def production():
@@ -213,6 +215,7 @@ def production():
     env.host_os_map = None # e.g. 'ubuntu' or 'redhat'.  Gets autopopulated by what_os() if you don't know what it is or don't want to specify.
     env.roles = ['deploy', ]
     env.es_endpoint = 'hqes0.internal.commcarehq.org'''
+    env.flower_port = 5555
 
     _setup_path()
 
@@ -253,6 +256,7 @@ def realstaging():
     env.settings = '%(project)s.localsettings' % env
     env.host_os_map = None # e.g. 'ubuntu' or 'redhat'.  Gets autopopulated by what_os() if you don't know what it is or don't want to specify.
     env.roles = ['deploy', ]
+    env.flower_port = 5555
 
     _setup_path()
     
@@ -288,6 +292,7 @@ def preview():
     env.settings = '%(project)s.localsettings' % env
     env.host_os_map = None # e.g. 'ubuntu' or 'redhat'.  Gets autopopulated by what_os() if you don't know what it is or don't want to specify.
     env.roles = ['deploy', ]
+    env.flower_port = 5556
 
     _setup_path()
 
@@ -634,6 +639,14 @@ def services_stop():
     require('environment', provided_by=('staging', 'preview', 'demo', 'production'))
     _supervisor_command('stop all')
 ###########################################################
+
+@task
+def restart_services():
+    if not console.confirm('Are you sure you want to restart the services on {env.environment}?'.format(env=env), default=False):
+        utils.abort('Task aborted.')
+
+    require('root', provided_by=('staging', 'preview', 'production', 'india'))
+    execute(services_restart)
 
 @roles('django_app', 'django_celery', 'django_monolith')#, 'formsplayer')
 def services_restart():

@@ -18,7 +18,6 @@ import logging
 
 from casexml.apps.case.models import CommCareCaseAction
 from corehq.apps.api.es import CaseES
-from corehq.apps.hqsofabed.models import HQFormData
 from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
@@ -35,8 +34,7 @@ from dimagi.utils.couch.pagination import CouchFilter
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
-import rawes
+from corehq.apps.reports.graph_models import PieChart
 from corehq import elastic
 
 class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -136,7 +134,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
                 form_data_link(form["_id"]),
                 (username or _('No data for username')) + (" %s" % name if name else ""),
                 datetime.strptime(form["form"]["meta"]["timeEnd"], '%Y-%m-%dT%H:%M:%SZ').strftime("%Y-%m-%d %H:%M:%S"),
-                form["form"].get('@name') or _('No data for form name'),
+                xmlns_to_name(self.domain, form.get("xmlns"), app_id=form.get("app_id")),
             ]
 
 class CaseListFilter(CouchFilter):

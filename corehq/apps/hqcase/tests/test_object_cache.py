@@ -42,7 +42,7 @@ class CaseObjectCacheTest(BaseCaseMultimediaTest):
         """
         Verify that URL for case attachment api uses the right view and returns at least the original attachments correclty.
         """
-        attachments = ['dimagi_logo', 'commcare_logo']
+        attachments = ['dimagi_logo_file', 'commcare_logo_file']
 
         self._doCreateCaseWithMultimedia(attachments=attachments)
         case = CommCareCase.get(TEST_CASE_ID)

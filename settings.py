@@ -151,6 +151,7 @@ DEFAULT_APPS = (
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
 
+
 HQ_APPS = (
     'django_digest',
     'rosetta',
@@ -160,7 +161,6 @@ HQ_APPS = (
     'hqscripts',
     'casexml.apps.case',
     'casexml.apps.phone',
-    'corehq.apps.cleanup',
     'corehq.apps.cloudcare',
     'corehq.apps.appstore',
     'corehq.apps.domain',
@@ -193,7 +193,7 @@ HQ_APPS = (
     'corehq.apps.fixtures',
     'corehq.apps.importer',
     'corehq.apps.reminders',
-    'corehq.apps.prescriptions',
+    'corehq.apps.reportfixtures',
     'corehq.apps.translations',
     'corehq.apps.users',
     'corehq.apps.settings',
@@ -216,6 +216,7 @@ HQ_APPS = (
     'corehq.apps.api',
     'corehq.apps.indicators',
     'corehq.couchapps',
+    'custom.apps.wisepill',
     'fluff',
     'fluff.fluff_filter',
     'sofabed.forms',
@@ -242,7 +243,6 @@ HQ_APPS = (
     'pact',
     'psi',
 )
-
 TEST_APPS = ()
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
@@ -587,7 +587,6 @@ COUCHDB_APPS = [
     'builds',
     'case',
     'callcenter',
-    'cleanup',
     'cloudcare',
     'commtrack',
     'couch',
@@ -613,7 +612,7 @@ COUCHDB_APPS = [
     'phone',
     'receiverwrapper',
     'reminders',
-    'prescriptions',
+    'reportfixtures',
     'reports',
     'sms',
     'smsforms',
@@ -626,6 +625,7 @@ COUCHDB_APPS = [
     'hutch',
     'hqbilling',
     'couchlog',
+    'wisepill',
 
     # custom reports
     'benin',
@@ -658,6 +658,7 @@ EMAIL_PORT = EMAIL_SMTP_PORT
 EMAIL_HOST_USER = EMAIL_LOGIN
 EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
 EMAIL_USE_TLS = True
+SEND_BROKEN_LINK_EMAILS = True
 
 NO_HTML_EMAIL_MESSAGE = """
 This is an email from CommCare HQ. You're seeing this message because your

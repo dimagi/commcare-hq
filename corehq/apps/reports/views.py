@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, date
 import json
 import tempfile
+import re
 from django.conf import settings
 from django.core.cache import cache
 from django.core.servers.basehttp import FileWrapper
@@ -922,12 +923,12 @@ def archive_form(request, domain, instance_id):
     instance = _get_form_or_404(instance_id)
     assert instance.domain == domain
     if instance.doc_type == "XFormInstance": 
-        instance.archive()
+        instance.archive(user=request.couch_user._id)
         notif_msg = _("Form was successfully archived.")
     elif instance.doc_type == "XFormArchived":
         notif_msg = _("Form was already archived.")
     else:
-        notif_msg = _("Can't archive documents of type %(s). How did you get here??") % instance.doc_type
+        notif_msg = _("Can't archive documents of type %s. How did you get here??") % instance.doc_type
     
     params = {
         "notif": notif_msg,
@@ -941,6 +942,20 @@ def archive_form(request, domain, instance_id):
     redirect = request.META.get('HTTP_REFERER')
     if not redirect:
         redirect = inspect.SubmitHistory.get_url(domain)
+
+    # check if referring URL was a case detail view, then make sure
+    # the case still exists before redirecting.
+    template = reverse('case_details', args=[domain, 'fake_case_id'])
+    template = template.replace('fake_case_id', '([^/]*)')
+    case_id = re.findall(template, redirect)
+    if case_id:
+        try:
+            case = CommCareCase.get(case_id[0])
+            if case._doc['doc_type'] == 'CommCareCase-Deleted':
+                raise ResourceNotFound
+        except ResourceNotFound:
+            redirect = reverse('project_report_dispatcher', args=[domain, 'case_list'])
+
     return HttpResponseRedirect(redirect)
 
 @require_form_view_permission
@@ -949,8 +964,7 @@ def unarchive_form(request, domain, instance_id):
     instance = _get_form_or_404(instance_id)
     assert instance.domain == domain
     if instance.doc_type == "XFormArchived":
-        instance.doc_type = "XFormInstance"
-        instance.save()
+        instance.unarchive(user=request.couch_user._id)
     else:
         assert instance.doc_type == "XFormInstance"
     messages.success(request, _("Form was successfully restored."))

@@ -26,6 +26,12 @@ def _redirect_for_login_or_domain(request, redirect_field_name, login_url):
     nextURL = '%s?%s=%s' % (login_url, redirect_field_name, path)
     return HttpResponseRedirect(nextURL)
 
+def domain_specific_login_redirect(request, domain):
+    project = Domain.get_by_name(domain)
+    login_url = reverse('login', kwargs={'domain_type': project.domain_type})
+    return _redirect_for_login_or_domain(request, 'next', login_url)
+
+
 ########################################################################################################
 #
 # Decorator that checks to see if user is logged in and a domain is set.

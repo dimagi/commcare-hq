@@ -112,7 +112,7 @@ class Group(UndoableDocument):
 
     @memoized
     def get_static_users(self, is_active=True):
-        return self.get_users()
+        return self.get_users(is_active)
 
 
     @classmethod
