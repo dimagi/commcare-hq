@@ -626,6 +626,46 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
         return self.get(request, *args, **kwargs)
 
 
+class ManageProjectMediaView(BaseAdminProjectSettingsView):
+    name = 'domain_manage_multimedia'
+    page_title = ugettext_noop("Multimedia Sharing")
+    template_name = "domain/admin/media_manager.html"
+
+    @property
+    def project_media_data(self):
+        return [{
+            'license': m.license.type if m.license else 'public',
+            'shared': self.domain in m.shared_by,
+            'url': m.url(),
+            'm_id': m._id,
+            'tags': m.tags.get(self.domain, []),
+            'type': m.doc_type,
+        } for m in self.request.project.all_media()]
+
+    @property
+    def page_context(self):
+        return {
+            'media': self.project_media_data,
+            'licenses': LICENSES.items(),
+        }
+
+    def post(self, request, *args, **kwargs):
+        for m_file in request.project.all_media():
+            if '%s_tags' % m_file._id in request.POST:
+                m_file.tags[self.domain] = request.POST.get('%s_tags' % m_file._id, '').split(' ')
+
+            if self.domain not in m_file.shared_by and request.POST.get('%s_shared' % m_file._id, False):
+                m_file.shared_by.append(self.domain)
+            elif self.domain in m_file.shared_by and not request.POST.get('%s_shared' % m_file._id, False):
+                m_file.shared_by.remove(self.domain)
+
+            if '%s_license' % m_file._id in request.POST:
+                m_file.update_or_add_license(self.domain, type=request.POST.get('%s_license' % m_file._id, 'public'))
+            m_file.save()
+        messages.success(request, _("Multimedia updated successfully!"))
+        return self.get(request, *args, **kwargs)
+
+
 @domain_admin_required
 def org_settings(request, domain):
     domain = Domain.get_by_name(domain)
@@ -761,35 +801,6 @@ def set_published_snapshot(request, domain, snapshot_name=''):
             _publish_snapshot(request, domain)
     return redirect('domain_snapshot_settings', domain.name)
 
-@domain_admin_required
-def manage_multimedia(request, domain):
-    media = request.project.all_media()
-    if request.method == "POST":
-        for m_file in media:
-            if '%s_tags' % m_file._id in request.POST:
-                m_file.tags[domain] = request.POST.get('%s_tags' % m_file._id, '').split(' ')
-
-            if domain not in m_file.shared_by and request.POST.get('%s_shared' % m_file._id, False):
-                m_file.shared_by.append(domain)
-            elif domain in m_file.shared_by and not request.POST.get('%s_shared' % m_file._id, False):
-                m_file.shared_by.remove(domain)
-
-            if '%s_license' % m_file._id in request.POST:
-                m_file.update_or_add_license(domain, type=request.POST.get('%s_license' % m_file._id, 'public'))
-            m_file.save()
-        messages.success(request, "Multimedia updated successfully!")
-
-    return render(request, 'domain/admin/media_manager.html', {'domain': domain,
-        'media': [{
-            'license': m.license.type if m.license else 'public',
-            'shared': domain in m.shared_by,
-            'url': m.url(),
-            'm_id': m._id,
-            'tags': m.tags.get(domain, []),
-            'type': m.doc_type
-                   } for m in media],
-        'licenses': LICENSES.items()
-    })
 
 @domain_admin_required
 def commtrack_settings(request, domain):
