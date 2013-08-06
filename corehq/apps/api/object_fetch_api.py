@@ -93,7 +93,3 @@ class CaseAttachmentAPI(View):
         response = HttpResponse(wrapper, mimetype=mime_type)
         return response
 
-    @method_decorator(login_or_digest_ex(allow_cc_users=True))
-    def head(self, *args, **kwargs):
-        pass
-
