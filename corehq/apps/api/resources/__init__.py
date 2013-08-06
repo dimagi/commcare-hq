@@ -1,3 +1,4 @@
+from tastypie.bundle import Bundle
 from tastypie.resources import Resource
 from tastypie.exceptions import InvalidSortError
 
@@ -27,6 +28,18 @@ class JsonResource(Resource):
             format = 'application/json'
 
         return format
+
+    def resource_uri_kwargs(self, bundle_or_obj=None):
+        kwargs = super(JsonResource, self).resource_uri_kwargs(bundle_or_obj)
+        try:
+            if isinstance(bundle_or_obj, Bundle):
+                kwargs['domain'] = bundle_or_obj.request.domain
+            else:
+                kwargs['domain'] = bundle_or_obj.domain
+        except AttributeError:
+            pass
+
+        return kwargs
 
 class SimpleSortableResourceMixin(object):
     '''
