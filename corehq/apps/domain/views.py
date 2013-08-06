@@ -680,8 +680,8 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
     @property
     def parent_pages(self):
         return [{
-            'name': ExchangeSnapshotsView.page_title,
-            'url': reverse(ExchangeSnapshotsView.name, args=[self.domain]),
+            'name': DomainForwardingOptionsView.page_title,
+            'url': reverse(DomainForwardingOptionsView.name, args=[self.domain]),
         }]
 
     @property
