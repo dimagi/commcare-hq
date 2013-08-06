@@ -1,12 +1,7 @@
 from StringIO import StringIO
-import logging
 import os
 import tempfile
 import uuid
-from django.core.urlresolvers import reverse
-from django.http import HttpResponse
-import json
-import zipfile
 from corehq.apps.app_manager.models import Application
 from corehq.apps.hqsofabed.models import HQFormData
 from corehq.apps.reports.display import xmlns_to_name

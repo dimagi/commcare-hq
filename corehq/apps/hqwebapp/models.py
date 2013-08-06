@@ -514,8 +514,6 @@ class ProjectSettingsTab(UITab):
                       'urlname': 'add_commcare_account'},
                      {'title': _('Bulk Upload'),
                       'urlname': 'upload_commcare_users'},
-                     {'title': _('Transfer Mobile Workers'),
-                      'urlname': 'user_domain_transfer'},
                  ]},
 
                 {'title': _('Groups'),
