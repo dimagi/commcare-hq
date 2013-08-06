@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.sites.models import Site
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
+from django.utils.safestring import mark_safe
 from corehq import ProjectSettingsTab
 from corehq.apps import receiverwrapper
 from django.core.urlresolvers import reverse
@@ -750,52 +751,81 @@ def org_settings(request, domain):
         "all_orgs": all_orgs,
     })
 
-@login_and_domain_required
-@require_superuser
-def internal_settings(request, domain, template='domain/internal_settings.html'):
-    domain = Domain.get_by_name(domain)
 
-    if request.method == 'POST':
-        internal_form = DomainInternalForm(request.POST)
-        if internal_form.is_valid():
-            internal_form.save(domain)
-            messages.success(request, "The internal information for project %s was successfully updated!" % domain.name)
-        else:
-            messages.error(request, "There seems to have been an error. Please try again!")
-    else:
-        internal_form = DomainInternalForm(initial={
-            "sf_contract_id": domain.internal.sf_contract_id,
-            "sf_account_id": domain.internal.sf_account_id,
-            "commcare_edition": domain.internal.commcare_edition,
-            "services": domain.internal.services,
-            "initiative": domain.internal.initiative,
-            "project_state": domain.internal.project_state,
-            "self_started": 'true' if domain.internal.self_started else 'false',
-            "area": domain.internal.area,
-            "sub_area": domain.internal.sub_area,
-            "using_adm": 'true' if domain.internal.using_adm else 'false',
-            "using_call_center": 'true' if domain.internal.using_call_center else 'false',
-            "custom_eula": 'true' if domain.internal.custom_eula else 'false',
-            "can_use_data": 'true' if domain.internal.can_use_data else 'false',
-            "organization_name": domain.internal.organization_name,
-            "notes": domain.internal.notes,
-            "platform": domain.internal.platform,
+class BaseInternalDomainSettingsView(BaseProjectSettingsView):
+
+    @method_decorator(login_and_domain_required)
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseInternalDomainSettingsView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def main_context(self):
+        context = super(BaseInternalDomainSettingsView, self).main_context
+        context.update({
+            'project': self.domain_object,
         })
+        return context
 
-    ctxt = {
-        "project": domain,
-        "domain": domain.name,
-        "form": internal_form,
-        'active': 'settings',
-        "areas": dict([(a["name"], a["sub_areas"]) for a in settings.INTERNAL_DATA["area"]])
-    }
-    return render(request, template, ctxt)
+    @property
+    def page_name(self):
+        return mark_safe("%s <small>Internal</small>" % self.page_title)
 
-@login_and_domain_required
-@require_superuser
-def internal_calculations(request, domain, template="domain/internal_calculations.html"):
-    domain = Domain.get_by_name(domain)
-    return render(request, template, {"project": domain, "domain": domain.name, "calcs": CALCS, "order": CALC_ORDER, 'active': 'calcs'})
+
+
+class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
+    name = 'domain_internal_settings'
+    page_title = ugettext_noop("Project Information")
+    template_name = 'domain/internal_settings.html'
+
+    @property
+    @memoized
+    def internal_settings_form(self):
+        if self.request.method == 'POST':
+            return DomainInternalForm(self.request.POST)
+        initial = {}
+        internal_attrs = [
+            'sf_contract_id', 'sf_account_id', 'commcare_edition', 'services', 'initiative',
+            'project_state', 'area', 'sub_area', 'organization_name', 'notes', 'platform',
+            'self_started', 'using_adm', 'using_call_center', 'custom_eula', 'can_use_data',
+        ]
+        for attr in internal_attrs:
+            val = getattr(self.domain_object.internal, attr)
+            if isinstance(val, bool):
+                val = 'true' if val else 'false'
+            initial[attr] = val
+        return DomainInternalForm(initial=initial)
+
+    @property
+    def page_context(self):
+        return {
+            'project': self.domain_object,
+            'form': self.internal_settings_form,
+            'areas': dict([(a["name"], a["sub_areas"]) for a in settings.INTERNAL_DATA["area"]]),
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.internal_settings_form.is_valid():
+            self.internal_settings_form.save(self.domain_object)
+            messages.success(request, _("The internal information for project %s was successfully updated!")
+                                      % self.domain)
+        else:
+            messages.error(request, _("There seems to have been an error. Please try again!"))
+        return self.get(request, *args, **kwargs)
+
+
+class EditInternalCalculationsView(BaseInternalDomainSettingsView):
+    name = 'domain_internal_calculations'
+    page_title = ugettext_noop("Calculated Properties")
+    template_name = 'domain/internal_calculations.html'
+
+    @property
+    def page_context(self):
+        return {
+            'calcs': CALCS,
+            'order': CALC_ORDER,
+        }
+
 
 @login_and_domain_required
 @require_superuser

@@ -6,7 +6,7 @@ from django.template import RequestContext
 from django.conf import settings
 
 from corehq.apps.domain.forms import ConfidentialPasswordResetForm
-from corehq.apps.domain.views import EditBasicProjectInfoView, EditDeploymentProjectInfoView, ProjectOverviewView, DefaultProjectSettingsView, EditMyProjectSettingsView, ExchangeSnapshotsView, CreateNewExchangeSnapshotView, ManageProjectMediaView, DomainForwardingOptionsView, AddRepeaterView
+from corehq.apps.domain.views import EditBasicProjectInfoView, EditDeploymentProjectInfoView, ProjectOverviewView, DefaultProjectSettingsView, EditMyProjectSettingsView, ExchangeSnapshotsView, CreateNewExchangeSnapshotView, ManageProjectMediaView, DomainForwardingOptionsView, AddRepeaterView, EditInternalDomainInfoView, EditInternalCalculationsView
 
 #
 # After much reading, I discovered that Django matches URLs derived from the environment
@@ -87,8 +87,8 @@ domain_settings = patterns(
     url(r'^commtrack/advanced/$', 'commtrack_settings_advanced', name='commtrack_settings_advanced'),
     url(r'^organization/$', 'org_settings', name='domain_org_settings'),
     url(r'^organization/request/$', 'org_request', name='domain_org_request'),
-    url(r'^internal/$', 'internal_settings', name='domain_internal_settings'),
-    url(r'^internal/calculations/$', 'internal_calculations', name='domain_internal_calculations'),
+    url(r'^internal/info/$', EditInternalDomainInfoView.as_view(), name=EditInternalDomainInfoView.name),
+    url(r'^internal/calculations/$', EditInternalCalculationsView.as_view(), name=EditInternalCalculationsView.name),
     url(r'^internal/calculated_properties/$', 'calculated_properties', name='calculated_properties'),
 )
 

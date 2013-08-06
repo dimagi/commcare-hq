@@ -688,10 +688,14 @@ class ProjectSettingsTab(UITab):
                 ]))
 
         if self.couch_user.is_superuser:
+            from corehq.apps.domain.views import EditInternalDomainInfoView, EditInternalCalculationsView
             internal_admin = [{
-                'title': _('Project Information'),
-                'url': reverse('domain_internal_settings',
-                    args=[self.domain])
+                'title': EditInternalDomainInfoView.page_title,
+                'url': reverse(EditInternalDomainInfoView.name, args=[self.domain])
+            },
+            {
+                'title': EditInternalCalculationsView.page_title,
+                'url': reverse(EditInternalCalculationsView.name, args=[self.domain])
             }]
             items.append((_('Internal Data (Dimagi Only)'), internal_admin))
 
