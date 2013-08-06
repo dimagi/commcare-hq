@@ -8,6 +8,8 @@ from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.decorators.memoized import memoized
 
+NO_CASE_TAG = 'NO CASE'
+
 
 class CallCenter(SqlIndicatorSet):
     """
@@ -76,6 +78,14 @@ class CallCenter(SqlIndicatorSet):
     def get_user_case_id(self, user_id):
         try:
             case = get_case_by_domain_hq_user_id(self.domain.name, user_id)
-            return case['id'] if case else 'user_%s' % user_id
+            if case:
+                return case['id']
+            else:
+                # No case for this user so return a tag instead to enable removing this
+                # row from the results
+                return NO_CASE_TAG
         except MultipleResultsFound:
-            return 'user_%s' % user_id
+            return NO_CASE_TAG
+
+    def include_row(self, key, row):
+        return not row['user_id'] == NO_CASE_TAG
