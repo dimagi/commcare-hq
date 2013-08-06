@@ -6,7 +6,7 @@ from django.template import RequestContext
 from django.conf import settings
 
 from corehq.apps.domain.forms import ConfidentialPasswordResetForm
-from corehq.apps.domain.views import EditBasicProjectInfoView, EditDeploymentProjectInfoView, ProjectOverviewView, DefaultProjectSettingsView, EditMyProjectSettingsView, ExchangeSnapshotsView, CreateNewExchangeSnapshotView, ManageProjectMediaView, DomainForwardingOptionsView, AddRepeaterView, EditInternalDomainInfoView, EditInternalCalculationsView
+from corehq.apps.domain.views import EditBasicProjectInfoView, EditDeploymentProjectInfoView, ProjectOverviewView, DefaultProjectSettingsView, EditMyProjectSettingsView, ExchangeSnapshotsView, CreateNewExchangeSnapshotView, ManageProjectMediaView, DomainForwardingOptionsView, AddRepeaterView, EditInternalDomainInfoView, EditInternalCalculationsView, BasicCommTrackSettingsView, AdvancedCommTrackSettingsView
 
 #
 # After much reading, I discovered that Django matches URLs derived from the environment
@@ -83,8 +83,8 @@ domain_settings = patterns(
     url(r'^snapshots/$', ExchangeSnapshotsView.as_view(), name=ExchangeSnapshotsView.name),
     url(r'^snapshots/new/$', CreateNewExchangeSnapshotView.as_view(), name=CreateNewExchangeSnapshotView.name),
     url(r'^multimedia/$', ManageProjectMediaView.as_view(), name=ManageProjectMediaView.name),
-    url(r'^commtrack/general/$', 'commtrack_settings', name='domain_commtrack_settings'),
-    url(r'^commtrack/advanced/$', 'commtrack_settings_advanced', name='commtrack_settings_advanced'),
+    url(r'^commtrack/general/$', BasicCommTrackSettingsView.as_view(), name=BasicCommTrackSettingsView.name),
+    url(r'^commtrack/advanced/$', AdvancedCommTrackSettingsView.as_view(), name=AdvancedCommTrackSettingsView.name),
     url(r'^organization/$', 'org_settings', name='domain_org_settings'),
     url(r'^organization/request/$', 'org_request', name='domain_org_request'),
     url(r'^internal/info/$', EditInternalDomainInfoView.as_view(), name=EditInternalDomainInfoView.name),

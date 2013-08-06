@@ -892,17 +892,64 @@ def set_published_snapshot(request, domain, snapshot_name=''):
     return redirect('domain_snapshot_settings', domain.name)
 
 
-@domain_admin_required
-def commtrack_settings(request, domain):
-    domain = Domain.get_by_name(domain)
-    settings = domain.commtrack_settings
+class BaseCommTrackAdminView(BaseAdminProjectSettingsView):
 
-    if request.POST:
+    @property
+    @memoized
+    def commtrack_settings(self):
+        return self.domain_object.commtrack_settings
+
+
+class BasicCommTrackSettingsView(BaseCommTrackAdminView):
+    name = 'domain_commtrack_settings'
+    page_title = ugettext_noop("Basic CommTrack Settings")
+    template_name = 'domain/admin/commtrack_settings.html'
+
+    @property
+    def page_context(self):
+        return {
+            'other_sms_codes': dict(self.get_other_sms_codes()),
+            'settings': self.settings_context,
+        }
+
+    @property
+    def settings_context(self):
+        return {
+            'keyword': self.commtrack_settings.multiaction_keyword,
+            'actions': [self._get_action_info(a) for a in self.commtrack_settings.actions],
+            'loc_types': [self._get_loctype_info(l) for l in self.commtrack_settings.location_types],
+            'requisition_config': {
+                'enabled': self.commtrack_settings.requisition_config.enabled,
+                'actions': [self._get_action_info(a) for a in self.commtrack_settings.requisition_config.actions],
+            }
+        }
+
+    def _get_loctype_info(self, loctype):
+        return {
+            'name': loctype.name,
+            'allowed_parents': [p or None for p in loctype.allowed_parents],
+            'administrative': loctype.administrative,
+        }
+
+    def _get_action_info(self, action):
+        return {
+            'type': action.action_type,
+            'keyword': action.keyword,
+            'name': action.action_name,
+            'caption': action.caption,
+        }
+
+    def get_other_sms_codes(self):
+        for k, v in all_sms_codes(self.domain).iteritems():
+            if v[0] == 'product':
+                yield (k, (v[0], v[1].name))
+
+    def post(self, request, *args, **kwargs):
         from corehq.apps.commtrack.models import CommtrackActionConfig, LocationType
 
         payload = json.loads(request.POST.get('json'))
 
-        settings.multiaction_keyword = payload['keyword']
+        self.commtrack_settings.multiaction_keyword = payload['keyword']
 
         def make_action_name(caption, actions):
             existing = filter(None, [a.get('name') for a in actions])
@@ -932,92 +979,61 @@ def commtrack_settings(request, domain):
 
         #TODO add server-side input validation here (currently validated on client)
 
-        settings.actions = [mk_action(a) for a in payload['actions']]
-        settings.location_types = [mk_loctype(l) for l in payload['loc_types']]
-        settings.requisition_config.enabled = payload['requisition_config']['enabled']
-        settings.requisition_config.actions =  [mk_action(a) for a in payload['requisition_config']['actions']]
-        settings.save()
+        self.commtrack_settings.actions = [mk_action(a) for a in payload['actions']]
+        self.commtrack_settings.location_types = [mk_loctype(l) for l in payload['loc_types']]
+        self.commtrack_settings.requisition_config.enabled = payload['requisition_config']['enabled']
+        self.commtrack_settings.requisition_config.actions =  [mk_action(a) for a in payload['requisition_config']['actions']]
+        self.commtrack_settings.save()
 
-    def settings_to_json(config):
-        return {
-            'keyword': config.multiaction_keyword,
-            'actions': [action_to_json(a) for a in config.actions],
-            'loc_types': [loctype_to_json(l) for l in config.location_types],
-            'requisition_config': {
-                'enabled': config.requisition_config.enabled,
-                'actions': [action_to_json(a) for a in config.requisition_config.actions],
-            }
+        return self.get(request, *args, **kwargs)
 
-        }
-    def action_to_json(action):
+
+class AdvancedCommTrackSettingsView(BaseCommTrackAdminView):
+    name = 'commtrack_settings_advanced'
+    page_title = ugettext_noop("Advanced CommTrack Settings")
+    template_name = 'domain/admin/commtrack_settings_advanced.html'
+
+    @property
+    def page_context(self):
         return {
-            'type': action.action_type,
-            'keyword': action.keyword,
-            'name': action.action_name,
-            'caption': action.caption,
-        }
-    def loctype_to_json(loctype):
-        return {
-            'name': loctype.name,
-            'allowed_parents': [p or None for p in loctype.allowed_parents],
-            'administrative': loctype.administrative,
+            'form': self.commtrack_settings_form
         }
 
-    def other_sms_codes():
-        for k, v in all_sms_codes(domain.name).iteritems():
-            if v[0] == 'product':
-                yield (k, (v[0], v[1].name))
+    @property
+    @memoized
+    def commtrack_settings_form(self):
+        from corehq.apps.commtrack.forms import AdvancedSettingsForm
+        initial = self.commtrack_settings.to_json()
+        initial.update(dict(('consumption_' + k, v) for k, v in
+            self.commtrack_settings.consumption_config.to_json().items()))
+        initial.update(dict(('stock_' + k, v) for k, v in
+            self.commtrack_settings.stock_levels_config.to_json().items()))
 
-    return render(request, 'domain/admin/commtrack_settings.html', dict(
-            domain=domain.name,
-            settings=settings_to_json(settings),
-            other_sms_codes=dict(other_sms_codes()),
-        ))
+        if self.request.method == 'POST':
+            return AdvancedSettingsForm(self.request.POST, initial=initial)
+        return AdvancedSettingsForm(initial=initial)
 
-@domain_admin_required
-def commtrack_settings_advanced(request, domain):
-    from corehq.apps.commtrack.forms import AdvancedSettingsForm
+    def post(self, request, *args, **kwargs):
+        if self.commtrack_settings_form.is_valid():
+            data = self.commtrack_settings_form.cleaned_data
+            self.commtrack_settings.use_auto_consumption = bool(data.get('use_auto_consumption'))
 
-    domain = Domain.get_by_name(domain)
-    ct_settings = domain.commtrack_settings
-
-    # make new CommtrackConfig to get default values
-    initial = ct_settings.to_json()
-    initial.update(dict(('consumption_' + k, v) for k, v in
-        ct_settings.consumption_config.to_json().items()))
-    initial.update(dict(('stock_' + k, v) for k, v in
-        ct_settings.stock_levels_config.to_json().items()))
-
-    if request.method == 'POST':
-        form = AdvancedSettingsForm(request.POST, initial=initial)
-        if form.is_valid():
-            data = form.cleaned_data
-            ct_settings.use_auto_consumption = bool(data.get('use_auto_consumption'))
-
-            fields = ('emergency_level', 'understock_threshold',
-                    'overstock_threshold')
+            fields = ('emergency_level', 'understock_threshold', 'overstock_threshold')
             for field in fields:
                 if data.get('stock_' + field):
-                    setattr(ct_settings.stock_levels_config, field,
+                    setattr(self.commtrack_settings.stock_levels_config, field,
                             data['stock_' + field])
 
             consumption_fields = ('min_periods', 'min_window', 'window')
             for field in consumption_fields:
                 if data.get('consumption_' + field):
-                    setattr(ct_settings.consumption_config, field,
+                    setattr(self.commtrack_settings.consumption_config, field,
                             data['consumption_' + field])
 
-            ct_settings.save()
+            self.commtrack_settings.save()
             messages.success(request, _("Settings updated!"))
-            return HttpResponseRedirect(
-                    reverse('commtrack_settings_advanced', args=[domain]))
-    else:
-        form = AdvancedSettingsForm(initial=initial)
-
-    return render(request, 'domain/admin/commtrack_settings_advanced.html', {
-        'domain': domain.name,
-        'form': form
-    })
+            return HttpResponseRedirect(self.page_url)
+        return self.get(request, *args, **kwargs)
 
 
 @require_POST

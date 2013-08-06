@@ -583,6 +583,19 @@ class ManageProjectTab(UITab):
                 "domain": self.domain,
             }))
 
+
+        if self.couch_user.is_domain_admin() and self.project.commtrack_enabled:
+            items.append((_('CommTrack'), [
+                {
+                    'title': _('Manage Products'),
+                    'url': reverse('commtrack_product_list', args=[self.domain])
+                },
+                {
+                    'title': _('Manage Locations'),
+                    'url': reverse('manage_locations', args=[self.domain])
+                }
+            ]))
+
         return items
 
 
@@ -611,7 +624,9 @@ class ProjectSettingsTab(UITab):
 
         if user_is_admin:
             from corehq.apps.domain.views import (ProjectOverviewView, EditBasicProjectInfoView,
-                                                  EditDeploymentProjectInfoView)
+                                                  EditDeploymentProjectInfoView, BasicCommTrackSettingsView,
+                                                  AdvancedCommTrackSettingsView)
+
             if not self.project.commtrack_enabled:
                 project_info.append({
                     'title': ProjectOverviewView.page_title,
@@ -628,6 +643,7 @@ class ProjectSettingsTab(UITab):
                     'url': reverse(EditDeploymentProjectInfoView.name, args=[self.domain])
                 }
             ])
+
             try:
                 # so that corehq is not dependent on the billing submodule
                 from hqbilling.views import EditProjectBillingInfoView
@@ -640,6 +656,21 @@ class ProjectSettingsTab(UITab):
         items.append((_('Project Information'), project_info))
 
         if user_is_admin:
+
+
+            if self.project.commtrack_enabled:
+                commtrack_settings = [
+                    {
+                        'title': BasicCommTrackSettingsView.page_title,
+                        'url': reverse(BasicCommTrackSettingsView.name, args=[self.domain])
+                    },
+                    {
+                        'title': AdvancedCommTrackSettingsView.page_title,
+                        'url': reverse(AdvancedCommTrackSettingsView.name, args=[self.domain])
+                    },
+                ]
+                items.append((_('CommTrack'), commtrack_settings))
+
             administration = [
                 {
                     'title': _('CommCare Exchange'),
@@ -669,25 +700,6 @@ class ProjectSettingsTab(UITab):
             ])
             items.append((_('Project Administration'), administration))
 
-            if self.project.commtrack_enabled:
-                items.append((_('CommTrack'), [
-                    {
-                        'title': _('Project Settings'),
-                        'url': reverse('domain_commtrack_settings', args=[self.domain])
-                    },
-                    {
-                        'title': _('Advanced Settings'),
-                        'url': reverse('commtrack_settings_advanced', args=[self.domain])
-                    },
-                    {
-                        'title': _('Manage Products'),
-                        'url': reverse('commtrack_product_list', args=[self.domain])
-                    },
-                    {
-                        'title': _('Manage Locations'),
-                        'url': reverse('manage_locations', args=[self.domain])
-                    }
-                ]))
 
         if self.couch_user.is_superuser:
             from corehq.apps.domain.views import EditInternalDomainInfoView, EditInternalCalculationsView

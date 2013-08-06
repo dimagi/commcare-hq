@@ -1,7 +1,10 @@
 from django.http import HttpResponseRedirect, HttpResponse, Http404
+from django.utils.translation import ugettext_noop
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser,
                                            login_required_late_eval_of_LOGIN_URL)
 from django.core.urlresolvers import reverse
+from corehq.apps.domain.views import BaseDomainView
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
 
 @login_and_domain_required
@@ -35,4 +38,11 @@ def project_id_mapping(request, domain):
     })
 
 
+class BaseManageView(BaseDomainView):
+    section_name = ugettext_noop("Manage")
 
+    @property
+    @memoized
+    def section_url(self):
+        from corehq.apps.users.views import DefaultProjectUserSettingsView
+        return reverse(DefaultProjectUserSettingsView.name, args=[self.domain])
