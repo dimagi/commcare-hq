@@ -382,6 +382,8 @@ def get_detail_column_infos(detail):
             model='case',
             field=field,
             format='invisible',
+            # ._i is exposed as .id, which is used in generating locale_ids
+            _i=len(columns),
         )
         columns.append(DetailColumnInfo(column, sort_element, order))
     return columns
