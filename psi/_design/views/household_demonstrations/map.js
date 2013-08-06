@@ -27,9 +27,9 @@ function (doc) {
         //    [opened_on], data);
         //emit_array([doc.domain, form.activity_state, form.activity_district, form.activity_block],
         //    [opened_on], data);
-        //emit_array([doc.domain, form.activity_state, form.activity_district, form.activity_block, village,
-        //        form.demo_type], [opened_on], data);
-        emit_array([doc.domain, form.activity_state, form.activity_district, form.activity_block, village],
-            [opened_on], data);
+        emit_array([doc.domain, form.activity_state, form.activity_district, form.activity_block, village,
+                form.demo_type], [opened_on], data);
+        //emit_array([doc.domain, form.activity_state, form.activity_district, form.activity_block, village],
+        //    [opened_on], data);
     }
 }
