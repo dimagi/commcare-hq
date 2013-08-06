@@ -5,11 +5,11 @@ from django.utils.decorators import method_decorator
 from django.views.generic import View
 from dimagi.utils.django.cached_object import IMAGE_SIZE_ORDERING, OBJECT_ORIGINAL
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
+from corehq.apps.domain.decorators import login_or_digest_ex
 
 
 class CaseAttachmentAPI(View):
-    @method_decorator(login_or_digest)
+    @method_decorator(login_or_digest_ex(allow_cc_users=True))
     def get(self, *args, **kwargs):
         """
         https://bitbucket.org/commcare/commcare/wiki/CaseAttachmentAPI
@@ -92,8 +92,4 @@ class CaseAttachmentAPI(View):
             mime_type = "plain/text"
         response = HttpResponse(wrapper, mimetype=mime_type)
         return response
-
-    @method_decorator(login_or_digest)
-    def head(self, *args, **kwargs):
-        pass
 
