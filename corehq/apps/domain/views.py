@@ -305,29 +305,13 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
         return self.get(request, *args, **kwargs)
 
 
-@domain_admin_required
-def domain_forwarding(request, domain):
-    form_repeaters = FormRepeater.by_domain(domain)
-    case_repeaters = CaseRepeater.by_domain(domain)
-    app_structure_repeaters = AppStructureRepeater.by_domain(domain)
-    short_form_repeaters = ShortFormRepeater.by_domain(domain)
-    return render(request, "domain/admin/domain_forwarding.html", {
-        "domain": domain,
-        "repeaters": (
-            ("FormRepeater", form_repeaters),
-            ("CaseRepeater", case_repeaters),
-            ("ShortFormRepeater", short_form_repeaters),
-            ("AppStructureRepeater", app_structure_repeaters)
-        ),
-    })
-
 @require_POST
 @require_can_edit_web_users
 def drop_repeater(request, domain, repeater_id):
     rep = FormRepeater.get(repeater_id)
     rep.retire()
     messages.success(request, "Form forwarding stopped!")
-    return HttpResponseRedirect(reverse("corehq.apps.domain.views.domain_forwarding", args=[domain]))
+    return HttpResponseRedirect(reverse(DomainForwardingOptionsView.name, args=[domain]))
 
 @require_POST
 @require_can_edit_web_users
@@ -357,27 +341,6 @@ def test_repeater(request, domain):
     else:
         return HttpResponse(json.dumps({"success": False, "response": "Please enter a valid url."}))
 
-
-@require_can_edit_web_users
-def add_repeater(request, domain, repeater_type):
-    if request.method == "POST":
-        form = FormRepeaterForm(request.POST)
-        try:
-            cls = receiverwrapper.models.repeater_types[repeater_type]
-        except KeyError:
-            raise Http404()
-        if form.is_valid():
-            repeater = cls(domain=domain, url=form.cleaned_data["url"])
-            repeater.save()
-            messages.success(request, "Forwarding setup to %s" % repeater.url)
-            return HttpResponseRedirect(reverse("corehq.apps.domain.views.domain_forwarding", args=[domain]))
-    else:
-        form = FormRepeaterForm()
-    return render(request, "domain/admin/add_form_repeater.html", {
-        "domain": domain,
-        "form": form,
-        "repeater_type": repeater_type,
-    })
 
 def legacy_domain_name(request, domain, path):
     domain = normalize_domain_name(domain)
@@ -629,7 +592,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
 class ManageProjectMediaView(BaseAdminProjectSettingsView):
     name = 'domain_manage_multimedia'
     page_title = ugettext_noop("Multimedia Sharing")
-    template_name = "domain/admin/media_manager.html"
+    template_name = 'domain/admin/media_manager.html'
 
     @property
     def project_media_data(self):
@@ -663,6 +626,96 @@ class ManageProjectMediaView(BaseAdminProjectSettingsView):
                 m_file.update_or_add_license(self.domain, type=request.POST.get('%s_license' % m_file._id, 'public'))
             m_file.save()
         messages.success(request, _("Multimedia updated successfully!"))
+        return self.get(request, *args, **kwargs)
+
+
+class RepeaterMixin(object):
+
+    @property
+    def friendly_repeater_names(self):
+        return {
+            'FormRepeater': _("Forms"),
+            'CaseRepeater': _("Cases"),
+            'ShortFormRepeater': _("Form Stubs"),
+            'AppStructureRepeater': _("App Schema Changes"),
+        }
+
+
+class DomainForwardingOptionsView(BaseAdminProjectSettingsView, RepeaterMixin):
+    name = 'domain_forwarding'
+    page_title = ugettext_noop("Data Forwarding")
+    template_name = 'domain/admin/domain_forwarding.html'
+
+    @property
+    def repeaters(self):
+        available_repeaters = [
+            FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater,
+        ]
+        return [(r.__name__, r.by_domain(self.domain), self.friendly_repeater_names[r.__name__])
+                for r in available_repeaters]
+
+    @property
+    def page_context(self):
+        return {
+            'repeaters': self.repeaters,
+        }
+
+
+class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
+    name = 'add_repeater'
+    page_title = ugettext_noop("Forward Data")
+    template_name = 'domain/admin/add_form_repeater.html'
+
+    @property
+    def page_url(self):
+        return reverse(self.name, args=[self.domain, self.repeater_type])
+
+    @property
+    def parent_pages(self):
+        return [{
+            'name': ExchangeSnapshotsView.page_title,
+            'url': reverse(ExchangeSnapshotsView.name, args=[self.domain]),
+        }]
+
+    @property
+    def repeater_type(self):
+        return self.kwargs['repeater_type']
+
+    @property
+    def page_name(self):
+        return "Forward %s" % self.friendly_repeater_names.get(self.repeater_type, "Data")
+
+    @property
+    @memoized
+    def repeater_class(self):
+        try:
+            return receiverwrapper.models.repeater_types[self.repeater_type]
+        except KeyError:
+            raise Http404
+
+    @property
+    @memoized
+    def add_repeater_form(self):
+        if self.request.method == 'POST':
+            return FormRepeaterForm(self.request.POST)
+        return FormRepeaterForm()
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.add_repeater_form,
+            'repeater_type': self.repeater_type,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.add_repeater_form.is_valid():
+            repeater = self.repeater_class(
+                domain=self.domain,
+                url=self.add_repeater_form.cleaned_data['url']
+            )
+            repeater.save()
+            messages.success(request, _("Forwarding set up to %s" % repeater.url))
+            return HttpResponseRedirect(reverse(DomainForwardingOptionsView.name, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 
 

@@ -6,7 +6,7 @@ from django.template import RequestContext
 from django.conf import settings
 
 from corehq.apps.domain.forms import ConfidentialPasswordResetForm
-from corehq.apps.domain.views import EditBasicProjectInfoView, EditDeploymentProjectInfoView, ProjectOverviewView, DefaultProjectSettingsView, EditMyProjectSettingsView, ExchangeSnapshotsView, CreateNewExchangeSnapshotView, ManageProjectMediaView
+from corehq.apps.domain.views import EditBasicProjectInfoView, EditDeploymentProjectInfoView, ProjectOverviewView, DefaultProjectSettingsView, EditMyProjectSettingsView, ExchangeSnapshotsView, CreateNewExchangeSnapshotView, ManageProjectMediaView, DomainForwardingOptionsView, AddRepeaterView
 
 #
 # After much reading, I discovered that Django matches URLs derived from the environment
@@ -74,8 +74,8 @@ domain_settings = patterns(
     url(r'^overview/$', ProjectOverviewView.as_view(), name=ProjectOverviewView.name),
     url(r'^basic/$', EditBasicProjectInfoView.as_view(), name=EditBasicProjectInfoView.name),
     url(r'^deployment/$', EditDeploymentProjectInfoView.as_view(), name=EditDeploymentProjectInfoView.name),
-    url(r'^forwarding/$', 'domain_forwarding', name='domain_forwarding'),
-    url(r'^forwarding/new/(?P<repeater_type>\w+)/$', 'add_repeater', name='add_repeater'),
+    url(r'^forwarding/$', DomainForwardingOptionsView.as_view(), name=DomainForwardingOptionsView.name),
+    url(r'^forwarding/new/(?P<repeater_type>\w+)/$', AddRepeaterView.as_view(), name=AddRepeaterView.name),
     url(r'^forwarding/test/$', 'test_repeater', name='test_repeater'),
     url(r'^forwarding/(?P<repeater_id>[\w-]+)/stop/$', 'drop_repeater', name='drop_repeater'),
     url(r'^snapshots/set_published/(?P<snapshot_name>[\w-]+)/$', 'set_published_snapshot', name='domain_set_published'),
