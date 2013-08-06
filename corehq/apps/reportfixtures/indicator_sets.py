@@ -34,7 +34,9 @@ class SqlIndicatorSet(SqlData):
                 if not row:
                     row = dict(zip(self.group_by, key_group))
 
-                ret[row_key] = dict([(c.view.name, self._or_no_value(c.get_value(row))) for c in self.columns])
+                formatted_row = dict([(c.view.name, self._or_no_value(c.get_value(row))) for c in self.columns])
+                if self.include_row(formatted_row):
+                    ret[row_key] = formatted_row
         elif self.group_by:
             for k, v in data.items():
                 ret[k] = dict([(c.view.name, self._or_no_value(c.get_value(v))) for c in self.columns])
@@ -51,3 +53,9 @@ class SqlIndicatorSet(SqlData):
 
     def _or_no_value(self, value):
         return value if value is not None else self.no_value
+
+    def include_row(self, formatted_row):
+        """
+        Final opportunity to remove the row from the results.
+        """
+        return True
