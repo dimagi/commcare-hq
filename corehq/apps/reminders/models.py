@@ -103,7 +103,7 @@ def get_case_property(case, case_property):
     """
     if case_property is None or case is None:
         return None
-    elif case_property.startswith("parent/"):
+    elif property_references_parent(case_property):
         parent_case = case.parent
         if parent_case is None:
             return None
