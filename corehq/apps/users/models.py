@@ -654,7 +654,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 #        ('site_edited',     'Manually added or edited from the HQ website.'),
     status = StringProperty()
     language = StringProperty()
-    email_opt_in = BooleanProperty()
+    email_opt_out = BooleanProperty(default=False)
     announcements_seen = ListProperty()
 
     _user = None
@@ -1383,6 +1383,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             case.doc_type += suffix
             case['-deletion_id'] = deletion_id
             case.save()
+
+        for phone_number in self.get_verified_numbers(True).values():
+            phone_number.retire(deletion_id)
 
         try:
             django_user = self.get_django_user()

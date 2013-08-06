@@ -17,6 +17,8 @@ from dimagi.utils.couch.database import get_db, get_safe_write_kwargs, apply_upd
 from itertools import chain
 from langcodes import langs as all_langs
 from collections import defaultdict
+from django.utils.importlib import import_module
+
 
 lang_lookup = defaultdict(str)
 
@@ -192,6 +194,7 @@ class DynamicReportSet(DocumentSchema):
     reports = SchemaListProperty(DynamicReportConfig)
 
 
+LOGO_ATTACHMENT = 'logo.png'
 
 
 class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
@@ -272,6 +275,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
     # to be eliminated from projects and related documents when they are copied for the exchange
     _dirty_fields = ('admin_password', 'admin_password_charset', 'city', 'country', 'region', 'customer_type')
+
 
     @property
     def domain_type(self):
@@ -830,7 +834,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         module_name = get_domain_module_map().get(domain_name, domain_name)
 
         try:
-            return __import__(module_name) if module_name else None
+            return import_module(module_name) if module_name else None
         except ImportError:
             return None
 
@@ -842,6 +846,20 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             return CommtrackConfig.for_domain(self.name)
         else:
             return None
+
+    @property
+    def has_custom_logo(self):
+        return (self['_attachments'] and
+                LOGO_ATTACHMENT in self['_attachments'])
+
+    def get_custom_logo(self):
+        if not self.has_custom_logo:
+            return None
+
+        return (
+            self.fetch_attachment(LOGO_ATTACHMENT),
+            self['_attachments'][LOGO_ATTACHMENT]['content_type']
+        )
 
     def get_case_display(self, case):
         """Get the properties display definition for a given case"""

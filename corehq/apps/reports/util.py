@@ -247,35 +247,29 @@ def datespan_export_filter(doc, datespan):
     return False
 
 def case_users_filter(doc, users):
-    try:
-        return doc['user_id'] in users
-    except KeyError:
+    for id in (doc.get('owner_id'), doc.get('user_id')):
+        if id and id in users:
+            return True
+    else:
         return False
 
 def case_group_filter(doc, group):
     if group:
         user_ids = set(group.get_static_user_ids())
-        try:
-            return doc['user_id'] in user_ids
-        except KeyError:
-            return False
+        return doc.get('owner_id') == group._id or case_users_filter(doc, user_ids)
     else:
-        return True
+        return False
 
 def users_filter(doc, users):
     try:
-        user_id = doc['form']['meta']['userID']
+        return doc['form']['meta']['userID'] in users
     except KeyError:
-        user_id = None
-    return user_id in users
+        return False
 
 def group_filter(doc, group):
     if group:
         user_ids = set(group.get_static_user_ids())
-        try:
-            return doc['form']['meta']['userID'] in user_ids
-        except KeyError:
-            return False
+        return users_filter(doc, user_ids)
     else:
         return True
 

@@ -1,6 +1,8 @@
 from django.conf import settings
-from django.core.urlresolvers import resolve
+from django.core.urlresolvers import resolve, reverse
 from django.http import Http404
+
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 
 RAVEN = bool(getattr(settings, 'SENTRY_DSN', None))
 
@@ -17,20 +19,23 @@ def base_template(request):
 def get_per_domain_context(project):
     if project and project.commtrack_enabled:
         domain_type = 'commtrack'
-        logo = 'hqstyle/img/commtrack-logo.png'
+        logo_url = static('hqstyle/img/commtrack-logo.png')
         site_name = "CommTrack"
         public_site = "http://www.commtrack.org"
         can_be_your = "mobile logistics solution"
     else:
         domain_type = 'commcare'
-        logo = 'hqstyle/img/commcare-logo.png'
+        logo_url = static('hqstyle/img/commcare-logo.png')
         site_name = "CommCare HQ"
         public_site = "http://www.commcarehq.org"
         can_be_your = "mobile health solution"
 
+    if project and project.has_custom_logo:
+        logo_url = reverse('logo', args=[project.name])
+
     return {
         'DOMAIN_TYPE': domain_type,
-        'LOGO': logo,
+        'LOGO_URL': logo_url,
         'SITE_NAME': site_name,
         'CAN_BE_YOUR': can_be_your,
         'PUBLIC_SITE': public_site,
