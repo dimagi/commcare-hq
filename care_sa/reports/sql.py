@@ -3,6 +3,7 @@ from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn
 from corehq.apps.reports.fields import AsyncDrillableField, GroupField, BooleanField
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.reports.datatables import DataTablesColumnGroup
 
 
 class ProvinceField(AsyncDrillableField):
@@ -107,13 +108,23 @@ class CareReport(SqlTabularReport,
             text, name = column_attrs[:2]
             name = '%s_total' % name
             if len(column_attrs) == 2:
-                column = DatabaseColumn(text, name)
+                group = DataTablesColumnGroup(text)
+                column = DatabaseColumn(text, name, header_group=group)
+                if self.show_gender():
+                    column = DatabaseColumn('%s (male)' % text, name, header_group=group)
+                    column2 = DatabaseColumn('%s (female)' % text, name, header_group=group, alias='%s_b' % name)
             else:
                 # if there are more than 2 values, the third is the column
                 # class override
                 column = DatabaseColumn(text, name, column_attrs[2])
+                if self.show_gender():
+                    column = DatabaseColumn('%s (male)' % text, name, column_attrs[2])
+                    column2 = DatabaseColumn('%s (female)' % text, name, header_group=group, alias='%s_b' % name)
 
             columns.append(column)
+            # hacky but double the column if we are sorting by gender
+            if self.show_gender():
+                columns.append(column2)
 
         return columns
 
@@ -143,6 +154,11 @@ class CareReport(SqlTabularReport,
                 '1': ['--'] * len(self.report_columns),
                 '2': ['--'] * len(self.report_columns),
             }
+        if not self.show_age() and self.show_gender():
+            return {
+                'male': ['--'] * len(self.report_columns),
+                'female': ['--'] * len(self.report_columns)
+            }
         if not self.show_age() and not self.show_gender():
             return len(self.report_columns),
 
@@ -150,7 +166,13 @@ class CareReport(SqlTabularReport,
         woot = {}
 
         for row in rows:
-            u = CommCareUser.get_by_user_id(row.pop(0)['html']).username
+            try:
+                u = CommCareUser.get_by_user_id(row.pop(0)['html']).username
+            except AttributeError:
+                # TODO: figure out how often this happens and do something
+                # better
+                continue
+
             if u not in woot:
                 woot[u] = self.initialize_user_stuff()
 
@@ -167,43 +189,77 @@ class CareReport(SqlTabularReport,
                 # discard the gender column from blank header hack
                 row.pop(0)
 
-            # TODO: can't assume both duh
+            # discard duplicates that exist if showing gender
+            if self.show_gender():
+                row = row[::2]
+
+            # strip the dicts that come back for values
+            row = [item['html'] if isinstance(item, dict) else item for item in row]
+
             if self.show_age() and self.show_gender():
                 woot[u][age_group][gender] = row
             elif self.show_age() and not self.show_gender():
                 woot[u][age_group] = row
+            elif not self.show_age() and self.show_gender():
+                woot[u][gender] = row
             elif not self.show_age() and not self.show_gender():
                 woot[u] = row
 
         return woot
 
+    def add_row_to_total(self, total, row):
+        # initialize it if it hasn't been used yet
+        if len(total) == 0:
+            total = [0] * len(row)
+
+        return [a if isinstance(b, str) else a + b for (a, b) in zip(total, row)]
+
     @property
     def rows(self):
-        things = list(super(CareReport, self).rows)
-        woot = self.build_data(things)
+        stock_rows = list(super(CareReport, self).rows)
+        rows = self.build_data(stock_rows)
 
-        rows = []
-        for user in woot:
+        rows_for_table = []
+        for user in rows:
+            u = CommCareUser.get_by_username(user)
+            total_row = []
             if self.show_age() and self.show_gender():
-                for age_group in sorted(woot[user]):
-                    for gender in woot[user][age_group]:
-                        u = CommCareUser.get_by_username(user)
+                for age_group in sorted(rows[user]):
 
-                        if age_group == '0':
-                            age_display = '0-14 years'
-                        elif age_group == '1':
-                            age_display = '15-24 years'
-                        else:
-                            age_display = '25+ years'
+                    if age_group == '0':
+                        age_display = '0-14 years'
+                    elif age_group == '1':
+                        age_display = '15-24 years'
+                    else:
+                        age_display = '25+ years'
 
-                        rows.append({
-                            'username': u.name,
-                            'age_display': age_display,
-                            'gender': gender,
-                            'row_data': woot[user][age_group][gender]
-                        })
+                    row_data = [val for pair in zip(rows[user][age_group]['male'],
+                                                    rows[user][age_group]['female'])
+                                for val in pair]
+
+                    rows_for_table.append({
+                        'username': u.name if age_group == '0' else '',
+                        'gender': True,
+                        'age_display': age_display,
+                        'row_data': row_data
+                    })
+
+                    total_row = self.add_row_to_total(total_row, row_data)
+            elif not self.show_age() and self.show_gender():
+                row_data = [val for pair in zip(rows[user]['male'],
+                                                rows[user]['female'])
+                            for val in pair]
+
+                rows_for_table.append({
+                    'username': u.name,
+                    'gender': True,
+                    'row_data': row_data
+                })
+
+                total_row = self.add_row_to_total([], row_data)
             elif self.show_age() and not self.show_gender():
-                for age_group in sorted(woot[user]):
+                total_row = []
+                for age_group in sorted(rows[user]):
                     u = CommCareUser.get_by_username(user)
 
                     if age_group == '0':
@@ -213,20 +269,30 @@ class CareReport(SqlTabularReport,
                     else:
                         age_display = '25+ years'
 
-                    rows.append({
-                        'username': u.name,
+                    row_data = rows[user][age_group]
+                    rows_for_table.append({
+                        'username': u.name if age_group == '0' else '',
                         'age_display': age_display,
-                        'row_data': woot[user][age_group]
+                        'row_data': row_data
                     })
+
+                    total_row = self.add_row_to_total(total_row, row_data)
             else:
                 u = CommCareUser.get_by_username(user)
-                rows.append({
+                rows_for_table.append({
                     'username': u.name,
                     'gender':  'no_grouping',  # magic
-                    'row_data': woot[user]
+                    'row_data': rows[user]
                 })
 
-        return rows
+            rows_for_table.append({
+                'username': 'TOTAL_ROW',
+                'gender': self.show_gender(),   # have to put data here to
+                'age_display': self.show_age(), # reflect grouping status
+                'row_data': total_row,
+            })
+
+        return rows_for_table
 
 class TestingAndCounseling(CareReport):
     slug = 'tac'
