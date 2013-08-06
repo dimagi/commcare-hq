@@ -23,6 +23,7 @@ from corehq.apps.adm.urls import adm_admin_interface_urls
 
 
 domain_specific = patterns('',
+    url(r'^logo.png', 'corehq.apps.domain.views.logo', name='logo'),
     (r'^apps/', include('corehq.apps.app_manager.urls')),
     (r'^api/', include('corehq.apps.api.urls')),
     # the receiver needs to accept posts at an endpoint that might
@@ -46,7 +47,6 @@ domain_specific = patterns('',
     (r'^', include(hqwebapp_domain_specific)),
     (r'^case/', include('corehq.apps.hqcase.urls')),
     (r'^submitlist/', include('corehq.apps.hqsofabed.urls')),
-    (r'^cleanup/', include('corehq.apps.cleanup.urls')),
     (r'^phonelog/', include('phonelog.urls')),
     (r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
     (r'^fixtures/', include('corehq.apps.fixtures.urls')),
@@ -55,7 +55,8 @@ domain_specific = patterns('',
 )
 
 urlpatterns = patterns('',
-    # Uncomment the next line to enable the admin:
+    (r'^favicon\.ico$', 'django.views.generic.simple.redirect_to',
+       {'url': '%shqwebapp/img/favicon2.png' % settings.STATIC_URL}),
     (r'^auditcare/', include('auditcare.urls')),
     (r'^admin/', include(admin.site.urls)),
     (r'^register/', include('corehq.apps.registration.urls')),
@@ -74,7 +75,6 @@ urlpatterns = patterns('',
     (r'^hq/billing/', include('hqbilling.urls')),
     (r'^hq/multimedia/', include('corehq.apps.hqmedia.urls')),
     (r'^hq/admin/', include('corehq.apps.hqadmin.urls')),
-    (r'^hq/prescriptions/', include('corehq.apps.prescriptions.urls')),
     (r'^hq/reports/', include(report_urls)),
     (r'^couchlog/', include('couchlog.urls')),
     (r'^formtranslate/', include('formtranslate.urls')),
@@ -100,6 +100,8 @@ urlpatterns = patterns('',
     url(r'^exchange/cda_basic/$', 'django.views.generic.simple.direct_to_template', {'template': 'cda.html'}, name='cda_basic'),
     url(r'^exchange/cda/$', 'corehq.apps.hqwebapp.views.cda', name='cda'),
     url(r'^sms_in/$', 'corehq.apps.sms.views.sms_in', name='sms_in'),
+    url(r'^unsubscribe/(?P<user_id>[\w-]+)/', 'corehq.apps.hqwebapp.views.unsubscribe', name='unsubscribe'),
+    (r'^wisepill/', include('custom.apps.wisepill.urls')),
 ) + patterns('', *LOCAL_APP_URLS)
 
 # django rosetta support if configured

@@ -12,12 +12,16 @@ CASE_PROPERTY_MAP = {
 }
 
 
-def get_column_generator(app, module, detail, column):
-    return get_class_for_format(column.format)(app, module, detail, column)
+def get_column_generator(app, module, detail, column, sort_element=None,
+                         order=None):
+    cls = get_class_for_format(column.format)
+    return cls(app, module, detail, column, sort_element, order)
+
 
 def get_class_for_format(slug):
     return get_class_for_format._format_map.get(slug, FormattedDetailColumn)
 get_class_for_format._format_map = {}
+
 
 class register_format_type(object):
 
@@ -30,7 +34,8 @@ class register_format_type(object):
 
 
 def get_column_xpath_generator(app, module, detail, column):
-    return get_class_for_type(column.field_type)(app, module, detail, column)
+    cls = get_class_for_type(column.field_type)
+    return cls(app, module, detail, column)
 
 
 def get_class_for_type(slug):
@@ -66,13 +71,15 @@ class FormattedDetailColumn(object):
     header_width = None
     template_width = None
     template_form = None
-    sort_width = None
 
-    def __init__(self, app, module, detail, column):
+    def __init__(self, app, module, detail, column, sort_element=None,
+                 order=None):
         self.app = app
         self.module = module
         self.detail = detail
         self.column = column
+        self.sort_element = sort_element
+        self.order = order
         self.id_strings = sx.IdStrings()
 
     @property
@@ -106,32 +113,34 @@ class FormattedDetailColumn(object):
 
     @property
     def sort_node(self):
-        sort_fields = [s.field for s in self.module.detail_sort_elements]
-        field = self.column.field
-        if field in sort_fields and \
-           self.app.enable_multi_sort and \
-           self.detail.display == 'short':
-            order = sort_fields.index(field)
-            sort_element = self.module.detail_sort_elements[order]
+        if not (self.app.enable_multi_sort and self.detail.display == 'short'):
+            return
 
-            # these have to be distinguished for the UI to be able to give
-            # user friendly choices
-            if sort_element.type == 'date' or sort_element.type == 'plain':
-                sort_type = 'string'
-            else:
-                sort_type = sort_element.type
+        sort = None
 
+        if self.sort_xpath_function:
             sort = sx.Sort(
-                text=sx.Text(xpath_function=self.xpath_function),
-                width=self.sort_width,
-                type=sort_type,
-                order=order + 1,  # order is 1 indexed on mobile
-                direction=sort_element.direction,
+                text=sx.Text(xpath_function=self.sort_xpath_function),
+                type='string',
             )
 
-            return sort
-        else:
-            return None
+        if self.sort_element:
+            if not sort:
+                # these have to be distinguished for the UI to be able to give
+                # user friendly choices
+                if self.sort_element.type in ('date', 'plain'):
+                    sort_type = 'string'
+                else:
+                    sort_type = self.sort_element.type
+                sort = sx.Sort(
+                    text=sx.Text(xpath_function=self.xpath_function),
+                    type=sort_type,
+                )
+
+            sort.order = self.order
+            sort.direction = self.sort_element.direction
+
+        return sort
 
     variables = None
 
@@ -177,22 +186,25 @@ class FormattedDetailColumn(object):
 
     @property
     def fields(self):
-        if self.sort_xpath_function and self.detail.display == 'short':
+        if self.app.enable_multi_sort:
+            yield sx.Field(
+                header=self.header,
+                template=self.template,
+                sort_node=self.sort_node,
+            )
+        elif self.sort_xpath_function and self.detail.display == 'short':
             yield sx.Field(
                 header=self.header,
                 template=self.hidden_template,
-                sort_node=self.sort_node,
             )
             yield sx.Field(
                 header=self.hidden_header,
                 template=self.template,
-                sort_node=self.sort_node,
             )
         else:
             yield sx.Field(
                 header=self.header,
                 template=self.template,
-                sort_node=self.sort_node,
             )
 
 class HideShortHeaderColumn(FormattedDetailColumn):
