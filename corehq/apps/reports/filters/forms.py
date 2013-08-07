@@ -237,12 +237,12 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 # these 'filler modules' are eventually ignored when rendering the drilldown map.
                 app_forms[app_id]['modules'].extend([default_module(module_id - m) for m in range(0, new_modules)])
 
-            app_forms[app_id]['modules'][module_id]['module'] = app_info['module']
-
-            app_forms[app_id]['modules'][module_id]['forms'].append({
-                'form': app_info['form'],
-                'xmlns': app_info['xmlns'],
-            })
+            if not app_info.get('is_user_registration'):
+                app_forms[app_id]['modules'][module_id]['module'] = app_info['module']
+                app_forms[app_id]['modules'][module_id]['forms'].append({
+                    'form': app_info['form'],
+                    'xmlns': app_info['xmlns'],
+                })
         return app_forms
 
     @property
@@ -484,7 +484,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     def get_filtered_data(self, filter_results):
         """
-            Returns the raw form data based on the current filter selection.
+        Returns the raw form data based on the current filter selection.
         """
         if not filter_results:
             data = []

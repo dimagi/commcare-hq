@@ -29,7 +29,7 @@ from corehq.apps.reports.generic import GenericTabularReport, ProjectInspectionR
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
-from dimagi.utils.couch import get_cached_property
+from dimagi.utils.couch import get_cached_property, IncompatibleDocument
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.pagination import CouchFilter
 from dimagi.utils.decorators.memoized import memoized
@@ -129,14 +129,14 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
             try:
                 name = ('"%s"' % get_cached_property(CouchUser, uid, 'full_name', expiry=7*24*60*60)) \
                     if username not in ['demo_user', 'admin'] else ""
-            except ResourceNotFound:
+            except (ResourceNotFound, IncompatibleDocument):
                 name = "<b>[unregistered]</b>"
 
             yield [
                 form_data_link(form["_id"]),
                 (username or _('No data for username')) + (" %s" % name if name else ""),
                 datetime.strptime(form["form"]["meta"]["timeEnd"], '%Y-%m-%dT%H:%M:%SZ').strftime("%Y-%m-%d %H:%M:%S"),
-                form["form"].get('@name') or _('No data for form name'),
+                xmlns_to_name(self.domain, form.get("xmlns"), app_id=form.get("app_id")),
             ]
 
 class CaseListFilter(CouchFilter):
@@ -551,6 +551,8 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
     actual case/form info to be useful. coming up with a better way to configure this
     is a work in progress. for now this report is effectively de-activated, with no
     way to reach it from production HQ.
+
+    see the reports app readme for a configuration example
     """
 
     name = ugettext_noop('Generic Pie Chart (sandbox)')
@@ -574,8 +576,8 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
 
     def _es_query(self):
         es_config_case = {
-            'index': 'report_cases',
-            'type': 'report_case',
+            'index': 'full_cases',
+            'type': 'full_case',
             'field_to_path': lambda f: '%s.#value' % f,
             'fields': {
                 'date': 'server_modified_on',
@@ -583,8 +585,8 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
             }
         }
         es_config_form = {
-            'index': 'report_xforms',
-            'type': 'report_xform',
+            'index': 'full_xforms',
+            'type': 'full_xform',
             'field_to_path': lambda f: 'form.%s.#value' % f,
             'fields': {
                 'date': 'received_on',
@@ -667,20 +669,8 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
     def charts(self):
         if 'location_id' in self.request.GET: # hack: only get data if we're loading an actual report
             return [PieChart(None, **self._chart_data())]
+        return []
 
-class PieChartReportCaseExample(GenericPieChartReportTemplate):
-    name = ugettext_noop('Pie Chart (Case)')
-    slug = 'case_pie'
-    mode = 'case'
-    submission_type = 'supply-point-product'
-    field = 'product'
-
-class PieChartReportFormExample(GenericPieChartReportTemplate):
-    name = ugettext_noop('Pie Chart (Form)')
-    slug = 'form_pie'
-    mode = 'form'
-    submission_type = 'http://openrosa.org/commtrack/stock_report'
-    field = 'location'
 
 
 class MapReport(ProjectReport, ProjectReportParametersMixin):

@@ -115,9 +115,9 @@ class DemoReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
 
     @property
     def columns(self):
-        user = DatabaseColumn("Username1", "user", column_type=SimpleColumn, format_fn=self.username)
-        i_a = DatabaseColumn("Indicator A", "indicator_a")
-        i_b = DatabaseColumn("Indicator B", "indicator_b")
+        user = DatabaseColumn("Username1", SimpleColumn("user"), format_fn=self.username)
+        i_a = DatabaseColumn("Indicator A", SumColumn("indicator_a"))
+        i_b = DatabaseColumn("Indicator B", SumColumn("indicator_b"))
 
         agg_c_d = AggregateColumn("C/D", self.calc_percentage,
                                   SumColumn("indicator_c"),
@@ -167,4 +167,44 @@ CUSTOM_REPORTS = (
         reports.AnotherCustomReport,
     )),
 )
+```
+
+
+## Adding dynamic reports
+
+Domains support dynamic reports. Currently the only verison of this is the pie charts
+that show breakdowns of forms/cases by a particular property. See the `add_pie_chart_report`
+management command to use this for pie charts without writing any code.
+
+Note that pie charts require a full case/xform ES index
+
+```
+from corehq.apps.domain.models import *
+domain = Domain.get_by_name('commtrack-public-demo')
+domain.dynamic_reports = [
+  DynamicReportSet(
+    section_title='Analytics',
+    reports=[
+      DynamicReportConfig(
+        report='corehq.apps.reports.standard.inspect.GenericPieChartReportTemplate',
+        name='Report 1',
+        kwargs={
+          'mode': 'case',
+          'submission_type': 'supply-point-product',
+          'field': 'product',
+        }
+      ),
+      DynamicReportConfig(
+        report='corehq.apps.reports.standard.inspect.GenericPieChartReportTemplate',
+        name='Report 2',
+        kwargs={
+          'mode': 'form',
+          'submission_type': 'http://openrosa.org/commtrack/stock_report',
+          'field': 'location',
+        }
+      ),
+    ]
+  ),
+]
+domain.save()
 ```

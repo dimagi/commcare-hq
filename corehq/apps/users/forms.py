@@ -108,9 +108,9 @@ class UserForm(RoleForm):
         self.fields['language'].choices = [('', '')] + language_choices
 
 class WebUserForm(UserForm):
-    email_opt_in = forms.BooleanField(required=False,
-                                      label="",
-                                      help_text=_("Join the mailing list to receive important announcements."))
+    email_opt_out = forms.BooleanField(required=False,
+                                       label="",
+                                       help_text=_("Opt out of emails about new features and other CommCare updates."))
 
 class Meta:
         app_label = 'users'
@@ -172,7 +172,7 @@ class SupplyPointSelectWidget(forms.Widget):
     def render(self, name, value, attrs=None):
         return get_template('locations/manage/partials/autocomplete_select_widget.html').render(Context({
                     'name': name,
-                    'value': value,
+                    'value': value or '',
                     'query_url': reverse('corehq.apps.commtrack.views.api_query_supply_point', args=[self.domain]),
                 }))
 

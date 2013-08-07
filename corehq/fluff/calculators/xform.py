@@ -6,11 +6,18 @@ def default_date(form):
     return form.received_on
 
 # operators
-EQUAL = lambda expected, reference: expected == reference
-NOT_EQUAL = lambda expected, reference: expected != reference
-IN = lambda expected, reference_list: expected in reference_list
-IN_MULTISELECT = lambda expected, value: value in (expected or '').split(' ')
-ANY = lambda expected, reference: bool(expected)
+EQUAL = lambda input, reference: input == reference
+NOT_EQUAL = lambda input, reference: input != reference
+IN = lambda input, reference_list: input in reference_list
+IN_MULTISELECT = lambda input, reference: reference in (input or '').split(' ')
+ANY = lambda input, reference: bool(input)
+
+def ANY_IN_MULTISELECT(input, reference):
+    """
+    For 'this multiselect contains any one of these N items'
+    """
+    return any([subval in (input or '').split(' ') for subval in reference])
+
 
 class IntegerPropertyReference(object):
     """
@@ -54,9 +61,10 @@ class FilteredFormPropertyCalculator(fluff.Calculator):
 
     @fluff.custom_date_emitter(reduce_type="sum")
     def total(self, form):
-        if self.indicator_calculator is not None:
+        if self.indicator_calculator:
+            yield default_date(form)
+        else:
             yield [default_date(form), self.indicator_calculator(form)]
-        yield default_date(form)
 
     def __init__(self, xmlns=None, property_path=None, property_value=None,
                  operator=EQUAL, indicator_calculator=None, window=None):
@@ -105,7 +113,7 @@ class FormORCalculator(ORCalculator):
 class FormSUMCalculator(ORCalculator):
     window = timedelta(days=1)
 
-    @fluff.custom_date_emitter(reduce_type='sum')
+    @fluff.date_emitter
     def total(self, form):
         for calc in self.calculators:
             if calc.passes_filter(form):
