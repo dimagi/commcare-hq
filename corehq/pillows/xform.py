@@ -81,6 +81,8 @@ class XFormPillow(AliasedElasticPillow):
                     doc_ret['form']['meta']['timeEnd'] = None
                 if doc_ret['form']['meta'].get('timeStart', None) == "":
                     doc_ret['form']['meta']['timeStart'] = None
+                if '#text' in doc_ret['form']['meta'].get('appVersion', {}):
+                    doc_ret['form']['meta']['appVersion'] = doc_reg['form']['meta']['appVersion']['#text'] # Simplify this since it is a raw text node
 
             #see:  extract_case_blocks(doc_dict)
             case_blocks = extract_case_blocks(doc_ret)
