@@ -84,21 +84,39 @@
 
                                 {% if request.couch_user and request.couch_user.is_web_user %}
                                 <div class="btn-group">
-                                    <a class="btn btn-project dropdown-toggle" data-toggle="dropdown" href="#">
-                                        <i class="icon-hq-flower"></i>
-                                        {% if domain %}
+                                    {% if domain %}
+                                        {% if request.couch_user and request.couch_user.is_domain_admin %}
+                                        <a class="btn btn-project" href="{% url domain_settings_default domain %}">
+                                            <i class="icon-cog"></i>
+                                            {% if request.project.is_snapshot %}
+                                                {% blocktrans with request.project.copied_from.display_name as snap_name %}
+                                                    Snapshot of {{ snap_name }}
+                                                {% endblocktrans %}
+                                            {% else %}
+                                                {{ request.project.display_name }}
+                                            {% endif %}
+                                        </a>
+                                        {% else %}
+                                        <a class="btn btn-project"
+                                            id="project-button-no-admin"
+                                            data-title="{% trans 'Not Project Administrator' %}"
+                                            data-placement="bottom"
+                                            data-html="true"
+                                            data-content="{% with request.couch_user.role_label.strip as role %}{% if role %}{% blocktrans %}Your role is <strong>{{ role }}</strong>, so you may not access this project's settings.{% endblocktrans %}{% endif %}{% endwith %}">
                                             {% ifequal domain 'public' %}
                                                 CommCare HQ Demo Project
                                             {% else %}
                                                 {% if request.project.is_snapshot %}
-                                                    Snapshot of {{ request.project.copied_from.display_name }}
+                                                    {% blocktrans %}Snapshot of {{ request.project.copied_from.display_name }}{% endblocktrans %}
                                                 {% else %}
                                                     {{ request.project.display_name }}
                                                 {% endif %}
                                             {% endifequal %}
-                                        {% else %}
-                                            No Project Selected
+                                        </a>
                                         {% endif %}
+                                    {% endif %}
+                                    <a class="btn btn-project dropdown-toggle" href="#" data-toggle="dropdown">
+                                        <i class="icon-hq-flower"></i> {% if not domain %}Select Project{% endif %}
                                         <span class="caret"></span>
                                     </a>
                                     {% if domain %}
@@ -111,24 +129,34 @@
 
                                 <div class="btn-group">
                                     <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
-                                        <i class="icon-user"></i>
-                                        {% if request.couch_user.full_name %}
-                                            {{ request.couch_user.full_name }}
+                                        {% if user.first_name %}
+                                            {{ user.first_name }}
                                         {% else %}
                                             {{ user.username }}
                                         {% endif %}
-                                        {% with request.couch_user.role_label as role %}
-                                            {% if role %}
-                                                ({{ role }})
-                                            {% endif %}
-                                        {% endwith %}
                                         <span class="caret"></span>
                                     </a>
                                     <ul class="dropdown-menu nav-list dropdown-blue right-align">
-                                        <li class="nav-header">Signed in as:</li>
-                                        <li>{{ user.username }}</li>
+                                        <li class="nav-header">
+                                            {% if user.first_name %}
+                                                {{ user.first_name }} {{ user.last_name }}
+                                            {% else %}
+                                                {{ user.username }}
+                                            {% endif %}
+                                            <div class="user-role">
+                                            {% with request.couch_user.role_label.strip as role %}
+                                                {% if role %}
+                                                    {{ role }}
+                                                {% endif %}
+                                            {% endwith %}
+                                            </div>
+                                        </li>
+                                        <li><a href="#"><i class="icon-user"></i> My Account Settings</a></li>
+                                        {% if domain %}
+                                            <li><a href="{% url domain_settings_default domain %}"><i class="icon-cog"></i> Project Settings</a></li>
+                                        {% endif %}
                                         <li class="divider"></li>
-                                        <li><a href="{% url logout %}">Sign Out</a></li>
+                                        <li><a href="{% url logout %}"><i class="icon-signout"></i> Sign Out</a></li>
                                     </ul>
                                 </div>
                             </div>
