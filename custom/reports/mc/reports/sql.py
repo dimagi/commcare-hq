@@ -175,7 +175,7 @@ class MCSectionedDataProvider(DataProvider):
     @property
     @memoized
     def _raw_rows(self):
-        return list(TableDataFormatter(self.sqldata, no_value='--').format())
+        return list(TableDataFormatter.from_sqldata(self.sqldata, no_value='--').format())
 
     def rows(self):
         # a bit of a hack. rows aren't really rows, but the template knows
@@ -195,10 +195,8 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         super(MCBase, self).__init__(request, base_context, domain, **kwargs)
         assert self.SECTIONS is not None
-        data_provider = McSqlData(self.SECTIONS , domain, self.datespan)
-        self.header_provider = MCSectionedDataProvider(data_provider)
-        self.row_provider = self.header_provider
-
+        sqldata = McSqlData(self.SECTIONS, domain, self.datespan)
+        self.data_provider = MCSectionedDataProvider(sqldata)
 
 class HeathFacilityMonthly(MCBase):
     slug = 'hf_monthly'
