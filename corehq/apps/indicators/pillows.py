@@ -1,10 +1,10 @@
 import logging
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.indicators.utils import get_indicator_domains, get_namespaces
 from corehq.apps.indicators.models import CaseIndicatorDefinition, FormIndicatorDefinition, CaseDataInFormIndicatorDefinition
 from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.listener import BasicPillow
-from settings import INDICATOR_CONFIG
 
 class IndicatorPillowBase(BasicPillow):
     indicator_document_type = None
@@ -13,7 +13,7 @@ class IndicatorPillowBase(BasicPillow):
     @property
     @memoized
     def indicator_domains(self):
-        return INDICATOR_CONFIG.keys()
+        return get_indicator_domains()
 
     def change_transform(self, doc_dict):
         if self.doc_is_valid(doc_dict):
@@ -53,7 +53,7 @@ class IndicatorPillowBase(BasicPillow):
             and domain in self.indicator_domains
             and doc_dict.get('doc_type') == self.indicator_document_type.__name__
             and _processing_check(doc_dict)):
-            namespaces = INDICATOR_CONFIG[domain]
+            namespaces = get_namespaces(domain)
             for namespace in namespaces:
                 if not self.only_use_fresh_docs:
                     marker = doc_dict.get('computed_', {}).get(self.get_marker_slug(namespace))
@@ -101,7 +101,7 @@ class CaseIndicatorPillow(IndicatorPillowBase):
 
         if case_type and domain:
             # relevant namespaces
-            namespaces = INDICATOR_CONFIG[domain]
+            namespaces = get_namespaces(domain)
 
             for namespace in namespaces:
                 # need all the relevant Case Indicator Defs
@@ -149,7 +149,7 @@ class FormIndicatorPillow(IndicatorPillowBase):
         xmlns = doc_dict.get('xmlns')
         domain = doc_dict.get('domain')
         if xmlns and domain:
-            namespaces = INDICATOR_CONFIG[domain]
+            namespaces = get_namespaces(domain)
             for namespace in namespaces:
                 indicators.extend(FormIndicatorDefinition.get_all(namespace, domain, xmlns=xmlns))
         return indicators
