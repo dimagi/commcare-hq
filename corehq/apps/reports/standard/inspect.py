@@ -552,7 +552,7 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
     is a work in progress. for now this report is effectively de-activated, with no
     way to reach it from production HQ.
 
-    see below for configuration example
+    see the reports app readme for a configuration example
     """
 
     name = ugettext_noop('Generic Pie Chart (sandbox)')
@@ -576,8 +576,8 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
 
     def _es_query(self):
         es_config_case = {
-            'index': 'report_cases',
-            'type': 'report_case',
+            'index': 'full_cases',
+            'type': 'full_case',
             'field_to_path': lambda f: '%s.#value' % f,
             'fields': {
                 'date': 'server_modified_on',
@@ -585,8 +585,8 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
             }
         }
         es_config_form = {
-            'index': 'report_xforms',
-            'type': 'report_xform',
+            'index': 'full_xforms',
+            'type': 'full_xform',
             'field_to_path': lambda f: 'form.%s.#value' % f,
             'fields': {
                 'date': 'received_on',
@@ -669,39 +669,8 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
     def charts(self):
         if 'location_id' in self.request.GET: # hack: only get data if we're loading an actual report
             return [PieChart(None, **self._chart_data())]
+        return []
 
-"""
-to configure the above report and activate for a domain:
-
-from corehq.apps.domain.models import *
-domain = Domain.get_by_name('commtrack-public-demo')
-domain.dynamic_reports = [
-  DynamicReportSet(
-    section_title='Analytics',
-    reports=[
-      DynamicReportConfig(
-        report='corehq.apps.reports.standard.inspect.GenericPieChartReportTemplate',
-        name='Report 1',
-        kwargs={
-          'mode': 'case',
-          'submission_type': 'supply-point-product',
-          'field': 'product',
-        }
-      ),
-      DynamicReportConfig(
-        report='corehq.apps.reports.standard.inspect.GenericPieChartReportTemplate',
-        name='Report 2',
-        kwargs={
-          'mode': 'form',
-          'submission_type': 'http://openrosa.org/commtrack/stock_report',
-          'field': 'location',
-        }
-      ),
-    ]
-  ),
-]
-domain.save()
-"""
 
 
 class MapReport(ProjectReport, ProjectReportParametersMixin):

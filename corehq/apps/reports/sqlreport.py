@@ -129,6 +129,7 @@ class AggregateColumn(Column):
             kwargs['sort_type'] = DTSortType.NUMERIC
             format_fn = format_fn or format_data
 
+        self.header = header
         self.header_group = kwargs.pop('header_group', None)
         self.data_tables_column = DataTablesColumn(header, **kwargs)
         if self.header_group:
@@ -224,33 +225,51 @@ class SqlTabularReport(SqlData, GenericTabularReport):
 
     @property
     def rows(self):
-        return DataTabulator(self, no_value=self.no_value).tabulate()
+        return TableDataFormatter.from_sqldata(self, no_value=self.no_value).format()
 
 
-class DataTabulator(object):
+class BaseDataFormatter(object):
 
-    def __init__(self, sqldata, no_value='--'):
-        self.sqldata = sqldata
-        self.columns = sqldata.columns
-        self.keys = sqldata.keys
-        self.group_by = sqldata.group_by
+    @classmethod
+    def from_sqldata(cls, sqldata, no_value='--', row_filter=None):
+        return cls(sqldata.data, sqldata.columns,
+                   keys=sqldata.keys, group_by=sqldata.group_by,
+                   no_value=no_value, row_filter=row_filter)
+
+    def __init__(self, data, columns, keys=None, group_by=None, no_value='--', row_filter=None):
+        self.data = data
+        self.columns = columns
+        self.keys = keys
+        self.group_by = group_by
         self.no_value = no_value
+        self.row_filter = row_filter
 
-    def tabulate(self):
-        data = self.sqldata.data
-
+    def format(self):
+        """
+        Return tuple of row key and formatted row
+        """
         if self.keys is not None and self.group_by:
             for key_group in self.keys:
                 row_key = self._row_key(key_group)
-                row = data.get(row_key, None)
+                row = self.data.get(row_key, None)
                 if not row:
                     row = dict(zip(self.group_by, key_group))
-                yield [self._or_no_value(c.get_value(row)) for c in self.columns]
+
+                formatted_row = self.format_row(row)
+                if self.filter_row(row_key, formatted_row):
+                    yield row_key, formatted_row
         elif self.group_by:
-            for k, v in data.items():
-                yield [self._or_no_value(c.get_value(data.get(k))) for c in self.columns]
+            for key, row in self.data.items():
+                formatted_row = self.format_row(row)
+                if self.filter_row(key, formatted_row):
+                    yield key, formatted_row
         else:
-            yield [self._or_no_value(c.get_value(data)) for c in self.columns]
+            formatted_row = self.format_row(self.data)
+            if self.filter_row(None, formatted_row):
+                yield None, formatted_row
+
+    def filter_row(self, key, row):
+        return not self.row_filter or self.row_filter(key, row)
 
     def _row_key(self, key_group):
         if len(self.group_by) == 1:
@@ -260,6 +279,36 @@ class DataTabulator(object):
 
     def _or_no_value(self, value):
         return value if value is not None else self.no_value
+
+    def format_row(self, row):
+        """
+        Override to implement specific row formatting
+        """
+        raise NotImplementedError()
+
+
+class TableDataFormatter(BaseDataFormatter):
+    def format_row(self, row):
+        return [self._or_no_value(c.get_value(row)) for c in self.columns]
+
+    def format(self):
+        for key, row in super(TableDataFormatter, self).format():
+            yield row
+
+
+class DictDataFormatter(BaseDataFormatter):
+    def format_row(self, row):
+        return dict([(c.view.name, self._or_no_value(c.get_value(row))) for c in self.columns])
+
+    def format(self):
+        ret = dict()
+        for key, row in super(DictDataFormatter, self).format():
+            if key is None:
+                return row
+            else:
+                ret[key] = row
+
+        return ret
 
 
 class SummingSqlTabularReport(SqlTabularReport):

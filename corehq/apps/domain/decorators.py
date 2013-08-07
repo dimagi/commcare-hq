@@ -26,84 +26,46 @@ def _redirect_for_login_or_domain(request, redirect_field_name, login_url):
     nextURL = '%s?%s=%s' % (login_url, redirect_field_name, path)
     return HttpResponseRedirect(nextURL)
 
+
 def domain_specific_login_redirect(request, domain):
     project = Domain.get_by_name(domain)
     login_url = reverse('login', kwargs={'domain_type': project.domain_type})
     return _redirect_for_login_or_domain(request, 'next', login_url)
 
 
-########################################################################################################
-#
-# Decorator that checks to see if user is logged in and a domain is set.
-#
-# Unfortunately, there's no good way to combine this with the login_required decorator,
-# because what we want to do is to test for domains just after authentication, but
-# right before final page rendering. The provided login code doesn't provide the right hooks
-# to do that, so we have to roll our own combo decorator.
-#
-# Also, because we are using default arguments, we need to have a three-layer
-# decorator. Python treats decorators that take arguments differently than those that
-# don't; essentially, login_and_domain_required_ex is a factory function that produces 
-# a decorator (the function _outer). The parameters passed in to login_and_domain_required_ex
-# just serve as a closure that's referred to in the _inner function that finally wraps 
-# view_func.
-#
-# This means that we always have to put parentheses after login_and_domain_required_ex,
-# even if we intend to use only the default arguments. It looks a bit funny to do so,
-# but it won't work otherwise. 
-
-# As syntactic sugar, just below I define a more-conventional looking version that doesn't 
-# require parentheses, but also can't take any changes to the default params. That's not 
-# a big problem - most of the time the default values are fine.
-
-# Can't put reverse() in any code that executes upon file import, which means it can't go
-# in default parms of functions that are called at import (such as the call to login_and_domain_required()
-# below. This is because the files are imported during initialization of the urlconfs, and
-# the call to reverse happens before initialization is finished, so it fails. Need to delay
-# the call to reverse until post-initialization, which means until during the first actual call
-# into _inner().
-
-def login_and_domain_required_ex(redirect_field_name=REDIRECT_FIELD_NAME):
-    def _outer(view_func):
-        @wraps(view_func)
-        def _inner(req, domain, *args, **kwargs):
-            user = req.user
-            domain_name, domain = load_domain(req, domain)
-            if domain:
-                if user.is_authenticated() and user.is_active:
-                    if not domain.is_active:
-                        return HttpResponseRedirect(reverse("domain_select"))
-                    if hasattr(req, "couch_user"):
-                        couch_user = req.couch_user # set by user middleware
-                    else:
-                        # some views might not have this set
-                        couch_user = CouchUser.from_django_user(user)
-                    if couch_user.is_member_of(domain) or domain.is_public:
-                        return view_func(req, domain_name, *args, **kwargs)
-                    elif user.is_superuser and not domain.restrict_superusers:
-                        # superusers can circumvent domain permissions.
-                        return view_func(req, domain_name, *args, **kwargs)
-                    elif domain.is_snapshot:
-                        # snapshots are publicly viewable
-                        return require_previewer(view_func)(req, domain_name, *args, **kwargs)
-                    else:
-                        raise Http404
+def login_and_domain_required(view_func):
+    @wraps(view_func)
+    def _inner(req, domain, *args, **kwargs):
+        user = req.user
+        domain_name, domain = load_domain(req, domain)
+        if domain:
+            if user.is_authenticated() and user.is_active:
+                if not domain.is_active:
+                    return HttpResponseRedirect(reverse("domain_select"))
+                if hasattr(req, "couch_user"):
+                    couch_user = req.couch_user # set by user middleware
                 else:
-                    login_url = reverse('login', kwargs={
-                        'domain_type': domain.domain_type
-                    })
-                    return _redirect_for_login_or_domain(req, redirect_field_name, login_url)
+                    # some views might not have this set
+                    couch_user = CouchUser.from_django_user(user)
+                if couch_user.is_member_of(domain) or domain.is_public:
+                    return view_func(req, domain_name, *args, **kwargs)
+                elif user.is_superuser and not domain.restrict_superusers:
+                    # superusers can circumvent domain permissions.
+                    return view_func(req, domain_name, *args, **kwargs)
+                elif domain.is_snapshot:
+                    # snapshots are publicly viewable
+                    return require_previewer(view_func)(req, domain_name, *args, **kwargs)
+                else:
+                    raise Http404
             else:
-                raise Http404
-        return _inner
-    return _outer
+                login_url = reverse('login', kwargs={
+                    'domain_type': domain.domain_type
+                })
+                return _redirect_for_login_or_domain(req, REDIRECT_FIELD_NAME, login_url)
+        else:
+            raise Http404
+    return _inner
 
-#
-# This works without parentheses:
-# @login_and_domain_required
-#
-
-login_and_domain_required = login_and_domain_required_ex()
 
 def login_or_digest_ex(allow_cc_users=False):
     def _outer(fn):
@@ -157,34 +119,19 @@ def cls_to_view(additional_decorator=None):
         return __outer__
     return decorator
 
+def login_required(view_func):
+    @wraps(view_func)
+    def _inner(request, *args, **kwargs):
+        login_url = reverse('login')
+        user = request.user
+        if not (user.is_authenticated() and user.is_active):
+            return _redirect_for_login_or_domain(request,
+                    REDIRECT_FIELD_NAME, login_url)
+        
+        # User's login and domain have been validated - it's safe to call the view function
+        return view_func(request, *args, **kwargs)
+    return _inner
 
-########################################################################################################
-#
-# Auth's login_required decorator is broken - it tries to get LOGIN_URL too early, which messes up
-# URLConf parsing (same problem described above). So, we need to define a delayed-eval login_required
-# call, too. We'll give it a distinguished name, so people are less confused.
-
-def login_required_ex(redirect_field_name=REDIRECT_FIELD_NAME):
-    def _outer(view_func):
-        @wraps(view_func)
-        def _inner(request, *args, **kwargs):
-            login_url = reverse('login')
-            user = request.user
-            if not (user.is_authenticated() and user.is_active):
-                return _redirect_for_login_or_domain(request,
-                        redirect_field_name, login_url)
-            
-            # User's login and domain have been validated - it's safe to call the view function
-            return view_func(request, *args, **kwargs)
-        return _inner
-    return _outer
-
-#
-# This works without parentheses:
-# @login_required
-#
-
-login_required_late_eval_of_LOGIN_URL = login_required_ex()
 
 ########################################################################################################
 #

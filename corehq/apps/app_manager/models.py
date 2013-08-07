@@ -792,6 +792,13 @@ class CaseList(IndexedSchema):
         for dct in (self.label,):
             _rename_key(dct, old_lang, new_lang)
 
+
+class ParentSelect(DocumentSchema):
+    active = BooleanProperty(default=False)
+    relationship = StringProperty(default='parent')
+    module_id = StringProperty()
+
+
 class Module(IndexedSchema, NavMenuItemMediaMixin):
     """
     A group of related forms, and configuration that applies to them all.
@@ -808,6 +815,22 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
     case_list = SchemaProperty(CaseList)
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
+    parent_select = SchemaProperty(ParentSelect)
+    unique_id = StringProperty()
+
+    def get_or_create_unique_id(self):
+        """
+        It is the caller's responsibility to save the Application
+        after calling this function.
+
+        WARNING: If called on the same doc in different requests without saving,
+        this function will return a different uuid each time,
+        likely causing unexpected behavior
+
+        """
+        if not self.unique_id:
+            self.unique_id = FormBase.generate_id()
+        return self.unique_id
 
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
@@ -1512,7 +1535,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     use_custom_suite = BooleanProperty(default=False)
     force_http = BooleanProperty(default=False)
     cloudcare_enabled = BooleanProperty(default=False)
-    include_media_resources = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -1711,7 +1733,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         })
         return s
 
-    def create_profile(self, is_odk=False, template='app_manager/profile.xml'):
+    def create_profile(self, is_odk=False, with_media=False, template='app_manager/profile.xml'):
         app_profile = defaultdict(dict)
         app_profile.update(self.profile)
         # the following code is to let HQ override CommCare defaults
@@ -1737,7 +1759,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'key_server_url': self.key_server_url,
             'post_test_url': self.post_url,
             'ota_restore_url': self.ota_restore_url,
-            'cc_user_domain': cc_user_domain(self.domain)
+            'cc_user_domain': cc_user_domain(self.domain),
+            'include_media_suite': with_media,
         }).decode('utf-8')
 
     @property
@@ -1776,10 +1799,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         files = {
             'profile.xml': self.create_profile(is_odk=False),
             'profile.ccpr': self.create_profile(is_odk=True),
+            'media_profile.xml': self.create_profile(is_odk=False, with_media=True),
+            'media_profile.ccpr': self.create_profile(is_odk=True, with_media=True),
             'suite.xml': self.create_suite(),
+            'media_suite.xml': self.create_media_suite(),
         }
-        if self.include_media_resources:
-            files['media_suite.xml'] = self.create_media_suite()
 
         for lang in ['default'] + self.build_langs:
             files["%s/app_strings.txt" % lang] = self.create_app_strings(lang)

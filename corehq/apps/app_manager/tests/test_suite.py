@@ -21,12 +21,22 @@ class XmlTest(TestCase):
 class SuiteTest(XmlTest, TestFileMixin):
     file_path = ('data', 'suite')
 
-    def setUp(self):
-        self.app = Application.wrap(self.get_json('app'))
+    def _test_generic_suite(self, app_tag, suite_tag=None):
+        suite_tag = suite_tag or app_tag
+        app = Application.wrap(self.get_json(app_tag))
+        self.assertXmlEqual(self.get_xml(suite_tag), app.create_suite())
 
     def test_normal_suite(self):
-        self.assertXmlEqual(self.app.create_suite(), self.get_xml('normal-suite'))
+        self._test_generic_suite('app', 'normal-suite')
+
+    def test_tiered_select(self):
+        self._test_generic_suite('tiered-select', 'tiered-select')
+
+    def test_3_tiered_select(self):
+        self._test_generic_suite('tiered-select-3', 'tiered-select-3')
 
     def test_multisort_suite(self):
-        app = Application.wrap(self.get_json('multi-sort'))
-        self.assertXmlEqual(app.create_suite(), self.get_xml('multi-sort'))
+        self._test_generic_suite('multi-sort', 'multi-sort')
+
+    def test_callcenter_suite(self):
+        self._test_generic_suite('call-center')

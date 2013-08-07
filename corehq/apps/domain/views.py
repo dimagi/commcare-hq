@@ -13,8 +13,7 @@ from django.shortcuts import redirect, render
 from corehq.apps.domain.calculations import CALCS, CALC_FNS, CALC_ORDER, dom_calc
 
 from corehq.apps.domain.decorators import (domain_admin_required,
-    login_required_late_eval_of_LOGIN_URL, require_superuser,
-    login_and_domain_required)
+    login_required, require_superuser, login_and_domain_required)
 from corehq.apps.domain.forms import DomainGlobalSettingsForm,\
     DomainMetadataForm, SnapshotSettingsForm, SnapshotApplicationForm, DomainDeploymentForm, DomainInternalForm
 from corehq.apps.domain.models import Domain, LICENSES
@@ -60,7 +59,7 @@ class DomainViewMixin(object):
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
-@login_required_late_eval_of_LOGIN_URL
+@login_required
 def select(request, domain_select_template='domain/select.html'):
 
     domains_for_user = Domain.active_for_user(request.user)
@@ -148,6 +147,15 @@ def legacy_domain_name(request, domain, path):
     domain = normalize_domain_name(domain)
     return HttpResponseRedirect(get_domained_url(domain, path))
 
+
+def logo(request, domain):
+    logo = Domain.get_by_name(domain).get_custom_logo()
+    if logo is None:
+        raise Http404()
+
+    return HttpResponse(logo[0], mimetype=logo[1])
+
+
 @domain_admin_required
 def project_settings(request, domain, template="domain/admin/project_settings.html"):
     domain = Domain.get_by_name(domain)
@@ -158,12 +166,15 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
        'deployment_info_form' not in request.POST:
         # deal with saving the settings data
         if user_sees_meta:
-            form = DomainMetadataForm(request.POST, user=request.couch_user, domain=domain.name)
+            form = DomainMetadataForm(request.POST, request.FILES,
+                    user=request.couch_user, domain=domain.name)
         else:
             form = DomainGlobalSettingsForm(request.POST)
         if form.is_valid():
             if form.save(request, domain):
                 messages.success(request, "Project settings saved!")
+                return HttpResponseRedirect(
+                        reverse(project_settings, args=[domain]))
             else:
                 messages.error(request, "There seems to have been an error saving your settings. Please try again!")
     else:
