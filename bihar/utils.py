@@ -57,7 +57,6 @@ def get_all_calculations(owner_ids):
 
     config = IndicatorConfig(INDICATOR_SETS)
     for indicator_set in config.indicator_sets:
-        print indicator_set.name
         for indicator in indicator_set.get_indicators():
             slug = indicator.slug
             yield (indicator.name,) + get_calculation(owner_ids, slug)
