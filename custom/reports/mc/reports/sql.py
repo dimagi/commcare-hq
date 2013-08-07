@@ -26,7 +26,7 @@ HF_MONTHLY_REPORT = [
         'columns': [
             "rdt_positive_children",
             "rdt_positive_adults",
-            "rdt_others",
+            # "rdt_others",
             "rdt_total",
         ]
     },
@@ -83,6 +83,9 @@ HF_MONTHLY_REPORT = [
         ]
     },
 ]
+
+# todo: need to add additional columns for district report
+DISTRICT_MONTHLY_REPORT = HF_MONTHLY_REPORT
 
 def transpose(columns, data):
     return [[column.data_tables_column.html] + [r[i] for r in data] \
@@ -202,4 +205,9 @@ class HeathFacilityMonthly(MCBase):
     slug = 'hf_monthly'
     name = ugettext_noop("Health Facility Monthly Report")
     SECTIONS = HF_MONTHLY_REPORT
+
+class DistrictMonthly(MCBase):
+    slug = 'district_monthly'
+    name = ugettext_noop("District Monthly Report")
+    SECTIONS = DISTRICT_MONTHLY_REPORT
 
