@@ -150,7 +150,7 @@ class MalariaConsortiumFluff(fluff.IndicatorDocument):
         xmlns=CHILD_REGISTRATION_XMLNS,
         property_path='form/self_report/treatment_given',
         property_value=set(['4', '5', '7', '8', '9', '10', '11']),
-        operator=xcalculators.IN_MULTISELECT_MULTIPLE,
+        operator=xcalculators.ANY_IN_MULTISELECT,
     )
     internal_diagnosed_and_treated_malaria_child = xcalculators.FormANDCalculator(
         [diagnosed_malaria_child, internal_treated_malaria_child]
@@ -159,7 +159,7 @@ class MalariaConsortiumFluff(fluff.IndicatorDocument):
         xmlns=ADULT_REGISTRATION_XMLNS,
         property_path='form/self_report/treatment_given',
         property_value=set(['4', '5', '7', '8', '9', '10', '11']),
-        operator=xcalculators.IN_MULTISELECT_MULTIPLE,
+        operator=xcalculators.ANY_IN_MULTISELECT,
     )
     internal_diagnosed_and_treated_malaria_adult = xcalculators.FormANDCalculator(
         [diagnosed_malaria_adult, internal_treated_malaria_adult]
@@ -180,7 +180,7 @@ class MalariaConsortiumFluff(fluff.IndicatorDocument):
         xmlns=ADULT_REGISTRATION_XMLNS,
         property_path='form/self_report/treatment_given',
         property_value=set(['3', '6']),
-        operator=xcalculators.IN_MULTISELECT_MULTIPLE,
+        operator=xcalculators.ANY_IN_MULTISELECT,
     )
     internal_diagnosed_and_treated_diarrhea_adult = xcalculators.FormANDCalculator(
          [internal_diagnosed_diarrhea_adult, internal_treated_diarrhea_adult]
@@ -192,7 +192,7 @@ class MalariaConsortiumFluff(fluff.IndicatorDocument):
         xmlns=CHILD_REGISTRATION_XMLNS,
         property_path='form/self_report/treatment_given',
         property_value=set(['1', '2']),
-        operator=xcalculators.IN_MULTISELECT_MULTIPLE,
+        operator=xcalculators.ANY_IN_MULTISELECT,
     )
     internal_diagnosed_and_treated_ari_child = xcalculators.FormANDCalculator(
          [internal_diagnosed_ari_child, internal_treated_ari_child]
@@ -201,7 +201,7 @@ class MalariaConsortiumFluff(fluff.IndicatorDocument):
         xmlns=ADULT_REGISTRATION_XMLNS,
         property_path='form/self_report/treatment_given',
         property_value=set(['1', '2']),
-        operator=xcalculators.IN_MULTISELECT_MULTIPLE,
+        operator=xcalculators.ANY_IN_MULTISELECT,
     )
     internal_diagnosed_and_treated_ari_adult = xcalculators.FormANDCalculator(
          [internal_diagnosed_ari_adult, internal_treated_ari_adult]
@@ -295,13 +295,13 @@ class MalariaConsortiumFluff(fluff.IndicatorDocument):
         xmlns=NEWBORN_REGISTRATION_XMLNS,
         property_path='form/self_report/referral_given_reason',
         property_value=set(['2', '4', '0']),
-        operator=xcalculators.IN_MULTISELECT_MULTIPLE,
+        operator=xcalculators.ANY_IN_MULTISELECT,
     )
     internal_transfer_missing_malaria_meds_child = xcalculators.FilteredFormPropertyCalculator(
         xmlns=CHILD_REGISTRATION_XMLNS,
         property_path='form/self_report/referral_given_reason',
         property_value=set(['6', '0']),
-        operator=xcalculators.IN_MULTISELECT_MULTIPLE,
+        operator=xcalculators.ANY_IN_MULTISELECT,
     )
     internal_transfer_missing_malaria_meds_adult = xcalculators.FilteredFormPropertyCalculator(
         xmlns=ADULT_REGISTRATION_XMLNS,
@@ -318,13 +318,13 @@ class MalariaConsortiumFluff(fluff.IndicatorDocument):
         xmlns=CHILD_REGISTRATION_XMLNS,
         property_path='form/self_report/referral_given_reason',
         property_value=set(['0', '6']),
-        operator=xcalculators.IN_MULTISELECT_MULTIPLE,
+        operator=xcalculators.ANY_IN_MULTISELECT,
     )
     internal_transfer_other_newborn = xcalculators.FilteredFormPropertyCalculator(
         xmlns=NEWBORN_REGISTRATION_XMLNS,
         property_path='form/self_report/referral_given_reason',
         property_value=set(['0', '2', '4']),
-        operator=xcalculators.IN_MULTISELECT_MULTIPLE,
+        operator=xcalculators.ANY_IN_MULTISELECT,
     )
     internal_transfer_other_adult = xcalculators.FilteredFormPropertyCalculator(
         xmlns=ADULT_REGISTRATION_XMLNS,
