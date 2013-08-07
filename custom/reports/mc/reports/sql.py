@@ -92,7 +92,7 @@ DISTRICT_WEEKLY_REPORT = [
         'section': ugettext_noop('Home Visits'),
         'columns': [
             'home_visits_newborn_reg',
-            'home_visits_children',
+            'home_visits_child_reg',
             'home_visits_pregnant',
             'home_visits_non_pregnant',
             'home_visits_followup',
@@ -123,6 +123,31 @@ DISTRICT_WEEKLY_REPORT = [
             'cases_rdt_not_done',
             'cases_danger_signs_not_referred',
             'cases_no_malaria_meds',
+        ]
+    },
+
+]
+
+HF_WEEKLY_REPORT = [
+    {
+        'section': ugettext_noop('Home Visits'),
+        'columns': [
+            'home_visits_newborn',
+            'home_visits_children',
+            'home_visits_adult',
+            'home_visits_total',
+        ]
+    },
+    {
+        'section': ugettext_noop('Transferred Cases'),
+        'columns': [
+            'cases_transferred',
+            'home_visits_followup',
+            'patients_given_pneumonia_meds_num', 'patients_given_pneumonia_meds_denom',
+            'patients_given_diarrhoea_meds_num', 'patients_given_diarrhoea_meds_denom',
+            'patients_given_malaria_meds_num', 'patients_given_malaria_meds_denom',
+            'patients_correctly_referred_num', 'patients_correctly_referred_denom',
+            'cases_rdt_not_done',
         ]
     },
 
@@ -256,3 +281,8 @@ class DistrictWeekly(MCBase):
     slug = 'district_weekly'
     name = ugettext_noop("District Weekly Report")
     SECTIONS = DISTRICT_WEEKLY_REPORT
+
+class HealthFacilityWeekly(MCBase):
+    slug = 'hf_weekly'
+    name = ugettext_noop("Health Facility Weekly Report")
+    SECTIONS = HF_WEEKLY_REPORT
