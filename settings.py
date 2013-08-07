@@ -235,7 +235,6 @@ HQ_APPS = (
     'a5288',
     'benin',
     'bihar',
-    'care_sa',
     'dca',
     'hsph',
     'mvp',
@@ -244,6 +243,8 @@ HQ_APPS = (
     'pathindia',
     'pact',
     'psi',
+
+    'custom.reports.care_sa',
 )
 
 TEST_APPS = ()
@@ -740,7 +741,7 @@ PILLOWTOPS = [
 
     # fluff
     'bihar.models.CareBiharFluffPillow',
-    'care_sa.models.CareSAFluffPillow',
+    'custom.reports.care_sa.models.CareSAFluffPillow',
 ] + LOCAL_PILLOWTOPS
 
 #Custom workflow for indexing xform data beyond the standard properties
@@ -774,7 +775,7 @@ DOMAIN_MODULE_MAP = {
     'a5288-test': 'a5288',
     'a5288-study': 'a5288',
     'care-bihar': 'bihar',
-    'care-ihapc-live': 'care_sa',
+    'care-ihapc-live': 'custom.reports.care_sa',
     'dca-malawi': 'dca',
     'eagles-fahu': 'dca',
     'hsph-dev': 'hsph',
