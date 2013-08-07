@@ -1,7 +1,7 @@
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.utils.translation import ugettext_noop
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser,
-                                           login_required_late_eval_of_LOGIN_URL)
+                                           login_required)
 from django.core.urlresolvers import reverse
 from corehq.apps.domain.views import BaseDomainView
 from dimagi.utils.decorators.memoized import memoized
@@ -19,7 +19,7 @@ def redirect_users(request, domain, old_url=""):
 def redirect_domain_settings(request, domain, old_url=""):
     return HttpResponseRedirect(reverse("domain_forwarding", args=[domain]))
 
-@login_required_late_eval_of_LOGIN_URL
+@login_required
 def account_settings(request):
     # tabling this until HQ Announcements is flushed out.
     raise Http404

@@ -1,5 +1,5 @@
 from collections import defaultdict
-from django.http import HttpResponse, HttpResponseRedirect, Http404
+from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseNotFound
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -296,11 +296,13 @@ def api_query_supply_point(request, domain):
         return {'id': loc._id, 'name': loc.name}
 
     if id:
-        loc = Location.get(id)
-        if loc:
-            payload = loc_to_payload(loc)
-        else:
-            payload = None
+        try:
+            loc = Location.get(id)
+            return HttpResponse(json.dumps(loc_to_payload(loc)), 'text/json')
+
+        except ResourceNotFound:
+            return HttpResponseNotFound(json.dumps({'message': 'no location with is %s found' % id}, 'text/json'))
+
     else:
         LIMIT = 100
         loc_types = [loc_type.name for loc_type in Domain.get_by_name(domain).commtrack_settings.location_types if not loc_type.administrative]
@@ -319,7 +321,4 @@ def api_query_supply_point(request, domain):
             )
 
         locs = sorted(itertools.chain(*(get_locs(loc_type) for loc_type in loc_types)), key=lambda e: e.name)[:LIMIT]
-        payload = map(loc_to_payload, locs)
-
-    return HttpResponse(json.dumps(payload), 'text/json')
-
+        return HttpResponse(json.dumps(map(loc_to_payload, locs)), 'text/json')
