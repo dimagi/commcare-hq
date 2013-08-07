@@ -4,12 +4,11 @@ import uuid
 from xml.etree import ElementTree
 from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_domain_hq_user_id
 from couchdbkit.exceptions import MultipleResultsFound
-from ctable.models import SqlExtractMapping, ColumnDef, KeyMatcher
+from ctable.models import SqlExtractMapping, ColumnDef
 
 
 MAPPING_NAME_FORMS = 'cc_form_submissions'
 MAPPING_NAME_CASES = 'cc_case_updates'
-MAPPING_NAME_CASE_OWNERSHIP = 'cc_case_ownership'
 
 
 def sync_user_cases(commcare_user):
@@ -71,7 +70,6 @@ def bootstrap_callcenter(domain):
 
     create_form_mapping(domain)
     create_case_mapping(domain)
-    create_case_ownership_mapping(domain)
 
 
 def create_form_mapping(domain):
@@ -107,22 +105,7 @@ def create_case_mapping(domain):
     mapping.save()
 
 
-def create_case_ownership_mapping(domain):
-    mapping = get_or_create_mapping(domain, MAPPING_NAME_CASE_OWNERSHIP, date_range=-1)
-
-    mapping.couch_view = 'callcenter/cases_by_user'
-    mapping.couch_key_prefix = [domain.name]
-    mapping.columns = [
-        ColumnDef(name="user_id", data_type="string", value_source="key", value_index=2),
-        ColumnDef(name="open_cases", data_type="integer", value_source="value",
-                  match_keys=[KeyMatcher(index=1, value='open')]),
-        ColumnDef(name="closed_cases", data_type="integer", value_source="value",
-                  match_keys=[KeyMatcher(index=1, value='closed')]),
-    ]
-    mapping.save()
-
-
-def get_or_create_mapping(domain, mapping_name, date_range=2):
+def get_or_create_mapping(domain, mapping_name):
     mapping = SqlExtractMapping.by_name(domain.name, mapping_name)
     if not mapping:
         mapping = SqlExtractMapping()
@@ -131,6 +114,6 @@ def get_or_create_mapping(domain, mapping_name, date_range=2):
     mapping.domains = [domain.name]
     mapping.name = mapping_name
     mapping.active = True
-    mapping.couch_date_range = date_range
+    mapping.couch_date_range = 2
 
     return mapping
