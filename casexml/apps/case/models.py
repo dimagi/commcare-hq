@@ -9,6 +9,7 @@ import itertools
 from django.core.cache import cache
 from django.conf import settings
 from django.core.urlresolvers import reverse
+from django.utils import http
 from django.utils.translation import ugettext as _
 from couchdbkit.ext.django.schema import *
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
@@ -481,7 +482,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
                                  "domain": self.domain,
                                  "case_id": self._id,
                                  "attachment_id": attachment_key,
-                                 "attachment_src": self.case_attachments[attachment_key]['attachment_src']}
+                                 "attachment_src": http.urlquote(self.case_attachments[attachment_key]['attachment_src'])}
                              )
             )
         else:
