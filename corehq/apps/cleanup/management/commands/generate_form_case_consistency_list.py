@@ -6,8 +6,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
 from corehq.elastic import get_es
 from couchforms.models import XFormInstance
-from casexml.apps.case.xform import extract_case_blocks
-from casexml.apps.case.xml.parser import case_update_from_block
+from casexml.apps.case.xform import get_case_ids_from_form
 
 # NOTE: these are referenced by other management commands so don't change
 # the names without fixing the references
@@ -104,9 +103,7 @@ class Command(BaseCommand):
             return [row['_source']['_id'] for row in es_results['hits']['hits']] \
                     if es_results['hits']['hits'] else []
 
-        case_blocks = extract_case_blocks(submission)
-        case_updates = [case_update_from_block(case_block) for case_block in case_blocks]
-        case_ids_in_form = set(cu.id for cu in case_updates)
+        case_ids_in_form = get_case_ids_from_form(submission)
 
         case_ids_in_db = set({
             "couch": _case_ids_in_couch,

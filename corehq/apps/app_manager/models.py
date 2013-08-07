@@ -1,4 +1,5 @@
 # coding=utf-8
+from distutils.version import LooseVersion
 import tempfile
 import os
 import logging
@@ -791,6 +792,13 @@ class CaseList(IndexedSchema):
         for dct in (self.label,):
             _rename_key(dct, old_lang, new_lang)
 
+
+class ParentSelect(DocumentSchema):
+    active = BooleanProperty(default=False)
+    relationship = StringProperty(default='parent')
+    module_id = StringProperty()
+
+
 class Module(IndexedSchema, NavMenuItemMediaMixin):
     """
     A group of related forms, and configuration that applies to them all.
@@ -807,6 +815,22 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
     case_list = SchemaProperty(CaseList)
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
+    parent_select = SchemaProperty(ParentSelect)
+    unique_id = StringProperty()
+
+    def get_or_create_unique_id(self):
+        """
+        It is the caller's responsibility to save the Application
+        after calling this function.
+
+        WARNING: If called on the same doc in different requests without saving,
+        this function will return a different uuid each time,
+        likely causing unexpected behavior
+
+        """
+        if not self.unique_id:
+            self.unique_id = FormBase.generate_id()
+        return self.unique_id
 
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
@@ -1060,6 +1084,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     built_on = DateTimeProperty(required=False)
     build_comment = StringProperty()
     comment_from = StringProperty()
+    build_broken = BooleanProperty(default=False)
 
     # watch out for a past bug:
     # when reverting to a build that happens to be released
@@ -1315,18 +1340,19 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
                     '(You are using %s.%s)'
                 ) % ((name,) + setting_version + my_version)
 
-
     @property
     def jad_settings(self):
-        return {
+        settings = {
             'JavaRosa-Admin-Password': self.admin_password,
             'Profile': self.profile_loc,
             'MIDlet-Jar-URL': self.jar_url,
             #'MIDlet-Name': self.name,
             # e.g. 2011-Apr-11 20:45
             'CommCare-Release': "true",
-            'Build-Number': self.version,
         }
+        if LooseVersion(self.build_spec.version) < '2.1':
+            settings['Build-Number'] = self.version
+        return settings
 
     def create_jadjar(self, save=False):
         try:
@@ -1426,6 +1452,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
             copy._id = copy.get_db().server.next_uuid()
 
         copy.set_form_versions(previous_version)
+        copy.set_media_versions(previous_version)
         copy.create_jadjar(save=True)
 
         try:
@@ -1467,6 +1494,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         # by default doing nothing here is fine.
         pass
 
+    def set_media_versions(self, previous_version):
+        pass
+
 #class Profile(DocumentSchema):
 #    features = DictProperty()
 #    properties = DictProperty()
@@ -1506,7 +1536,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     use_custom_suite = BooleanProperty(default=False)
     force_http = BooleanProperty(default=False)
     cloudcare_enabled = BooleanProperty(default=False)
-    include_media_resources = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -1574,12 +1603,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         """
         Multi (tiered) sort is supported by apps version 2.2 or higher
         """
-        try:
-            return self.get_build().minor_release() >= (2, 2)
-        except KeyError:
-            # if for some reason there is no build number it's probably
-            # old or bugged
-            return False
+        return LooseVersion(self.build_spec.version) >= '2.2'
+
 
     @property
     def default_language(self):
@@ -1620,6 +1645,17 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     my_hash = _hash(self.fetch_xform(form=form))
                     if previous_hash != my_hash:
                         form.version = self.version
+
+    def set_media_versions(self, previous_version):
+        for path, map_item in self.multimedia_map.items():
+            if previous_version:
+                pre_map_item = previous_version.multimedia_map.get(path, None)
+                if pre_map_item and pre_map_item.version and pre_map_item.multimedia_id == map_item.multimedia_id:
+                    map_item.version = pre_map_item.version
+                else:
+                    map_item.version = self.version
+            else:
+                map_item.version = self.version
 
     def _create_custom_app_strings(self, lang):
         def trans(d):
@@ -1698,7 +1734,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         })
         return s
 
-    def create_profile(self, is_odk=False, template='app_manager/profile.xml'):
+    def create_profile(self, is_odk=False, with_media=False, template='app_manager/profile.xml'):
         app_profile = defaultdict(dict)
         app_profile.update(self.profile)
         # the following code is to let HQ override CommCare defaults
@@ -1724,7 +1760,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'key_server_url': self.key_server_url,
             'post_test_url': self.post_url,
             'ota_restore_url': self.ota_restore_url,
-            'cc_user_domain': cc_user_domain(self.domain)
+            'cc_user_domain': cc_user_domain(self.domain),
+            'include_media_suite': with_media,
         }).decode('utf-8')
 
     @property
@@ -1763,10 +1800,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         files = {
             'profile.xml': self.create_profile(is_odk=False),
             'profile.ccpr': self.create_profile(is_odk=True),
+            'media_profile.xml': self.create_profile(is_odk=False, with_media=True),
+            'media_profile.ccpr': self.create_profile(is_odk=True, with_media=True),
             'suite.xml': self.create_suite(),
+            'media_suite.xml': self.create_media_suite(),
         }
-        if self.include_media_resources:
-            files['media_suite.xml'] = self.create_media_suite()
 
         for lang in ['default'] + self.build_langs:
             files["%s/app_strings.txt" % lang] = self.create_app_strings(lang)

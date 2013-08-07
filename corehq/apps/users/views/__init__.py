@@ -29,7 +29,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.forms import WebUserForm, UserForm, ProjectSettingsForm, CommtrackUserForm
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser, \
     DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser
-from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required
+from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required, domain_specific_login_redirect
 from corehq.apps.orgs.models import Team
 from corehq.apps.reports.util import get_possible_reports
 from corehq.apps.sms import verify as smsverify
@@ -58,7 +58,7 @@ def require_permission_to_edit_user(view_func):
         if go_ahead:
             return login_and_domain_required(view_func)(request, domain, couch_user_id, *args, **kwargs)
         else:
-            raise Http404()
+            return domain_specific_login_redirect(request, domain)
     return _inner
 
 def _users_context(request, domain):
@@ -601,7 +601,7 @@ def _handle_user_form(request, domain, couch_user=None):
                 couch_user.last_name = form.cleaned_data['last_name']
                 couch_user.email = form.cleaned_data['email']
                 if not couch_user.is_commcare_user():
-                    couch_user.email_opt_in = form.cleaned_data['email_opt_in']
+                    couch_user.email_opt_out = form.cleaned_data['email_opt_out']
                 couch_user.language = form.cleaned_data['language']
             if can_change_admin_status:
                 role = form.cleaned_data['role']
@@ -624,7 +624,7 @@ def _handle_user_form(request, domain, couch_user=None):
             form.initial['first_name'] = couch_user.first_name
             form.initial['last_name'] = couch_user.last_name
             form.initial['email'] = couch_user.email
-            form.initial['email_opt_in'] = couch_user.email_opt_in
+            form.initial['email_opt_out'] = couch_user.email_opt_out
             form.initial['language'] = couch_user.language
             if can_change_admin_status:
                 if couch_user.is_commcare_user():

@@ -81,8 +81,9 @@ def gen_fixture(user, indicator_set):
 
         group_name = group[0]
         group_columns = [c for c in indicator_set.columns if c.view.name == group_name]
-        for group_id, group_data in data.items():
+        for group_data in data.values():
             elem_name = group_columns[0].header if group_columns else group_name
+            group_id = group_data[group_name]
             xGroup = ElementTree.SubElement(xIndicators, elem_name, attrib={'id': group_id})
             for c in indicator_set.columns:
                 key = c.view.name

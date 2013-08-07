@@ -9,9 +9,13 @@ from corehq.apps.reports.filters.forms import FormsByApplicationFilter
 from corehq.elastic import get_es
 from django.views.generic import View
 from dimagi.utils.logging import notify_exception
+from corehq.apps.reports.exceptions import BadRequestError
 
 
 DEFAULT_SIZE = 10
+
+class ESUserError(BadRequestError):
+    pass
 
 class ESView(View):
     """
@@ -89,7 +93,7 @@ class ESView(View):
 
         Returns the raw query json back, or None if there's an error
         """
-        
+
         logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(es_query)))
         if 'fields' in es_query or 'script_fields' in es_query:
             #nasty hack to add domain field to query that does specific fields.
@@ -102,6 +106,19 @@ class ESView(View):
         es_results = es_base.get('_search', data=es_query)
 
         if 'error' in es_results:
+            if es_query['query']['filtered']['query'].get('query_string'):
+                # the error may have been caused by a bad query string
+                # re-run with no query string to check
+                querystring = es_query['query']['filtered']['query']['query_string']['query']
+                new_query = es_query
+                new_query['query']['filtered']['query'] = {"match_all": {}}
+                new_results = self.run_query(new_query, es_type)
+                if new_results: 
+                    # the request succeeded without that query string
+                    # an error with a blank query will return None
+                    raise ESUserError("Error with elasticsearch query: %s" %
+                        querystring)
+
             msg = "Error in elasticsearch query [%s]: %s\nquery: %s" % (self.index, es_results['error'], es_query)
             notify_exception(None, message=msg)
             return None
