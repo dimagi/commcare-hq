@@ -746,6 +746,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
     fields = [
         'corehq.apps.reports.fields.MultiSelectGroupField',
         'corehq.apps.reports.fields.UserOrGroupField',
+        'corehq.apps.reports.fields.CaseTypeField',
         'corehq.apps.reports.fields.DatespanField',
     ]
     fix_left_col = True
@@ -762,13 +763,14 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
 
     @property
     def headers(self):
+        CASE_TYPE_MSG = "The case type filter doesn't affect this column."
         by_group = self.view_by == 'groups'
         columns = [DataTablesColumn(_("Group"))] if by_group else [DataTablesColumn(_("User"))]
         columns.append(DataTablesColumnGroup(_("Form Data"),
             DataTablesColumn(_("# Forms Submitted"), sort_type=DTSortType.NUMERIC,
-                help_text=_("Number of forms submitted in chosen date range.")),
+                help_text=_("Number of forms submitted in chosen date range. %s" % CASE_TYPE_MSG)),
             DataTablesColumn(_("Avg # Forms Submitted"), sort_type=DTSortType.NUMERIC,
-                help_text=_("Average number of forms submitted in the last three date ranges of the same length.")),
+                help_text=_("Average number of forms submitted in the last three date ranges of the same length. %s" % CASE_TYPE_MSG)),
             DataTablesColumn(_("Last Form Submission"),
                 help_text=_("Date of last form submission in time period.  Total row displays proportion of users submitting forms in date range")) \
             if not by_group else DataTablesColumn(_("# Active Users"), sort_type=DTSortType.NUMERIC,
@@ -847,8 +849,10 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                                 "to": datespan.enddate_param,
                                 "include_upper": True}}}
                     ]}}}
-        facets = [user_field]
+        if self.case_type:
+            q["query"]["bool"]["must"].append({"match": {"type.exact": self.case_type}})
 
+        facets = [user_field]
         return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
 
     def es_modified_cases(self, datespan=None, dict_only=False):
@@ -866,6 +870,9 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                                         "to": datespan.enddate_param,
                                         "include_upper": True}}}}},
                     ]}}}
+        if self.case_type:
+            q["query"]["bool"]["must"].append({"match": {"type.exact": self.case_type}})
+
         facets = ['user_id']
         return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
 
@@ -890,6 +897,9 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                                         "to": datespan.enddate_param,
                                         "include_upper": True}}}}},
                     ]}}}
+        if self.case_type:
+            q["query"]["bool"]["must"].append({"match": {"type.exact": self.case_type}})
+
         facets = ['owner_id']
         return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
 
@@ -901,6 +911,10 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                         {"match": {"domain.exact": self.domain}},
                         {"range": {"opened_on": {"lte": datespan.enddate_param}}}],
                     "must_not": {"range": {"closed_on": {"lt": datespan.startdate_param}}}}}}
+
+        if self.case_type:
+            q["query"]["bool"]["must"].append({"match": {"type.exact": self.case_type}})
+
         facets = ['owner_id']
         return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
 
