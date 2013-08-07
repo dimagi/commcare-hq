@@ -25,6 +25,7 @@ simple_type_mapper = {
     StringListProperty: dict(type="string"),
     DateTimeProperty: type_full_date(),
     DateProperty: type_full_date(),
+    DictProperty: {"type": "object", "dynamic": False},
     #TimeProperty: type_full_date,
 }
 
@@ -33,12 +34,6 @@ complex_type_mapper = {
     SchemaDictProperty: prop_subtype,
     SchemaProperty: prop_subtype,
 }
-
-conservative_types = {
-    DictProperty: {"type": "object", "dynamic": False}
-}
-
-
 
 
 def type_exact_match_string(prop_name, dual=True):
@@ -109,6 +104,7 @@ user_special_types = {
 
 app_special_types = {
     "name": type_exact_match_string("name", dual=True),
+    "profile": {"type": "object", "dynamic": True},
 }
 
 def set_properties(schema_class, dynamic=False, custom_types=default_special_types, nested_types=default_nested_types, init_dict=None):

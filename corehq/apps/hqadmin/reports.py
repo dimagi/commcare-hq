@@ -1,4 +1,5 @@
 from datetime import datetime
+from corehq.apps.app_manager.models import Application
 from corehq.apps.appstore.views import fill_mapping_with_facets
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
@@ -6,6 +7,7 @@ from corehq.apps.reports.generic import ElasticTabularReport, GenericTabularRepo
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
+from corehq.apps.app_manager.commcare_settings import SETTINGS as CC_SETTINGS
 
 
 class AdminReport(GenericTabularReport):
@@ -163,6 +165,11 @@ class AdminUserReport(AdminFacetedReport):
                 u.get('is_superuser'),
             ]
 
+def create_mapping_from_list(l, name="", expand_outer=False, expand_inner=False, name_change_fn=None):
+    name_change_fn = name_change_fn or (lambda x: x)
+    facets = [{"facet": item, "name": name_change_fn(item), "expanded": expand_inner } for item in l]
+    return (name, expand_outer, facets)
+
 class AdminAppReport(AdminFacetedReport):
     slug = "app_list"
     name = ugettext_noop('Application List')
@@ -171,9 +178,18 @@ class AdminAppReport(AdminFacetedReport):
     default_sort = {'name.exact': 'asc'}
     es_url = APP_INDEX + '/app/_search'
 
-    es_facet_list = []
+    profile_list = ["profile.%s.%s" % (c['type'], c['id']) for c in CC_SETTINGS]
 
-    es_facet_mapping = []
+    @property
+    def es_facet_list(self):
+        return Application.properties().keys() + self.profile_list
+
+    @property
+    def es_facet_mapping(self):
+        def remove_profile(name):
+            return name[len("profile."):]
+        profile_mapping = create_mapping_from_list(self.profile_list, "Profile", True, True, remove_profile)
+        return [profile_mapping, create_mapping_from_list(Application.properties().keys(), "Other")]
 
     @property
     def headers(self):
