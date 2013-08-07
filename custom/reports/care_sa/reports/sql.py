@@ -309,7 +309,7 @@ class TestingAndCounseling(CareReport):
         #TODO NO DATA ['Individuals HIV infected provided with CD4 count test results from previous months',
         # 'new_hiv_in_care_program'],  # 1k
         ['People tested as individuals', 'individual_tests'],  # 1l
-        ['People tested as couples', 'couple_tests', SumColumn],  # 1m
+        #['People tested as couples', 'couple_tests', SumColumn],  # 1m
     ]
 
 
