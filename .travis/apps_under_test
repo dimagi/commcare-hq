@@ -5,6 +5,7 @@ api
 app_manager
 appstore
 builds
+cleanup
 cloudcare
 commtrack
 crud
@@ -25,6 +26,7 @@ locations
 migration
 mobile_auth
 orgs
+prescriptions
 receiverwrapper
 registration
 reminders
