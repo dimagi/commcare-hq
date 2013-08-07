@@ -89,7 +89,7 @@ class Command(BaseCommand):
         print "\nCompiling CSS from LESS Files in HQStyle"
         for less_file in self.less_files:
             self.compile_file(self.lessc,
-                os.path.join(self.hqstyle_src, "_less/%s.less" % less_file),
+                os.path.join(self.hqstyle_src, "less/%s.less" % less_file),
                 os.path.join(self.destination, "css/%s.css" % less_file))
 
     def copy_bootstrap_images(self):

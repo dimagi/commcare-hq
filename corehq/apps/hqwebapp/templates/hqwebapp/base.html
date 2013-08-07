@@ -8,7 +8,7 @@
 
         <link rel="shortcut icon" href="{% static 'hqwebapp/img/favicon2.png' %}" />
 
-        {% less 'hqstyle/_less/core/hqstyle-core.less' 'screen' %}
+        {% less 'hqstyle/less/core/hqstyle-core.less' 'screen' %}
 
         {# this should eventually be moved to the end of the page #}
         <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
@@ -18,7 +18,7 @@
 
         {% block oldstyle_imports %}
             <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
-            {% less 'hqstyle/_less/legacy/core.less' %}
+            {% less 'hqstyle/less/legacy/core.less' %}
             {% include "imports/hq-oldstyle-js.html" %}
         {% endblock %}
 
