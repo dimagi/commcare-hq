@@ -84,6 +84,75 @@ HF_MONTHLY_REPORT = [
     },
 ]
 
+# todo: need to add additional columns for district report
+DISTRICT_MONTHLY_REPORT = HF_MONTHLY_REPORT
+
+DISTRICT_WEEKLY_REPORT = [
+    {
+        'section': ugettext_noop('Home Visits'),
+        'columns': [
+            'home_visits_newborn_reg',
+            'home_visits_child_reg',
+            'home_visits_pregnant',
+            'home_visits_non_pregnant',
+            'home_visits_followup',
+            'home_visits_total',
+        ]
+    },
+    {
+        'section': ugettext_noop('Deaths in the Community'),
+        'columns': [
+            "deaths_children",
+        ]
+    },
+    # {
+    #     'section': ugettext_noop('Stock Balance'),
+    #     'columns': [
+    #         "heath_ed_talks",
+    #         "heath_ed_participants",
+    #     ]
+    # },
+    {
+        'section': ugettext_noop('Validation of Diagnosis and Treatment'),
+        'columns': [
+            # todo: display num/denom groupings
+            'patients_given_pneumonia_meds_num', 'patients_given_pneumonia_meds_denom',
+            'patients_given_diarrhoea_meds_num', 'patients_given_diarrhoea_meds_denom',
+            'patients_given_malaria_meds_num', 'patients_given_malaria_meds_denom',
+            'patients_correctly_referred_num', 'patients_correctly_referred_denom',
+            'cases_rdt_not_done',
+            'cases_danger_signs_not_referred',
+            'cases_no_malaria_meds',
+        ]
+    },
+
+]
+
+HF_WEEKLY_REPORT = [
+    {
+        'section': ugettext_noop('Home Visits'),
+        'columns': [
+            'home_visits_newborn',
+            'home_visits_children',
+            'home_visits_adult',
+            'home_visits_total',
+        ]
+    },
+    {
+        'section': ugettext_noop('Transferred Cases'),
+        'columns': [
+            'cases_transferred',
+            'home_visits_followup',
+            'patients_given_pneumonia_meds_num', 'patients_given_pneumonia_meds_denom',
+            'patients_given_diarrhoea_meds_num', 'patients_given_diarrhoea_meds_denom',
+            'patients_given_malaria_meds_num', 'patients_given_malaria_meds_denom',
+            'patients_correctly_referred_num', 'patients_correctly_referred_denom',
+            'cases_rdt_not_done',
+        ]
+    },
+
+]
+
 def transpose(columns, data):
     return [[column.data_tables_column.html] + [r[i] for r in data] \
             for i, column in enumerate(columns)]
@@ -195,13 +264,25 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         super(MCBase, self).__init__(request, base_context, domain, **kwargs)
         assert self.SECTIONS is not None
-        data_provider = McSqlData(self.SECTIONS , domain, self.datespan)
-        self.header_provider = MCSectionedDataProvider(data_provider)
-        self.row_provider = self.header_provider
-
+        sqldata = McSqlData(self.SECTIONS, domain, self.datespan)
+        self.data_provider = MCSectionedDataProvider(sqldata)
 
 class HeathFacilityMonthly(MCBase):
     slug = 'hf_monthly'
     name = ugettext_noop("Health Facility Monthly Report")
     SECTIONS = HF_MONTHLY_REPORT
 
+class DistrictMonthly(MCBase):
+    slug = 'district_monthly'
+    name = ugettext_noop("District Monthly Report")
+    SECTIONS = DISTRICT_MONTHLY_REPORT
+
+class DistrictWeekly(MCBase):
+    slug = 'district_weekly'
+    name = ugettext_noop("District Weekly Report")
+    SECTIONS = DISTRICT_WEEKLY_REPORT
+
+class HealthFacilityWeekly(MCBase):
+    slug = 'hf_weekly'
+    name = ugettext_noop("Health Facility Weekly Report")
+    SECTIONS = HF_WEEKLY_REPORT
