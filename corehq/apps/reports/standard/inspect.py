@@ -577,6 +577,7 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
     def _es_query(self):
         es_config_case = {
             'index': 'full_cases',
+            'type': 'full_case',
             'field_to_path': lambda f: '%s.#value' % f,
             'fields': {
                 'date': 'server_modified_on',
@@ -585,6 +586,7 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
         }
         es_config_form = {
             'index': 'full_xforms',
+            'type': 'full_xform',
             'field_to_path': lambda f: 'form.%s.#value' % f,
             'fields': {
                 'date': 'received_on',
