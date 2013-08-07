@@ -576,8 +576,7 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
 
     def _es_query(self):
         es_config_case = {
-            'index': 'report_cases',
-            'type': 'report_case',
+            'index': 'full_cases',
             'field_to_path': lambda f: '%s.#value' % f,
             'fields': {
                 'date': 'server_modified_on',
@@ -585,8 +584,7 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
             }
         }
         es_config_form = {
-            'index': 'report_xforms',
-            'type': 'report_xform',
+            'index': 'full_xforms',
             'field_to_path': lambda f: 'form.%s.#value' % f,
             'fields': {
                 'date': 'received_on',
@@ -669,6 +667,7 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
     def charts(self):
         if 'location_id' in self.request.GET: # hack: only get data if we're loading an actual report
             return [PieChart(None, **self._chart_data())]
+        return []
 
 
 
