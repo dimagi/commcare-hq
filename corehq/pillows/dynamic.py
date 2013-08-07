@@ -103,6 +103,10 @@ domain_special_types = {
     }
 }
 
+app_special_types = {
+    "name": type_exact_match_string("name", dual=True),
+}
+
 def set_properties(schema_class, custom_types=default_special_types, nested_types=default_nested_types, init_dict=None):
     """
     Helper function to walk a schema_class's properties recursively and create a typed out mapping
