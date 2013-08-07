@@ -50,7 +50,6 @@ class Command(BaseCommand):
             else:
                 report = _make_report()
                 report_section.reports.append(report)
-            report_section.save()
         else:
             report_section = DynamicReportSet(
                 section_title=section_title,
