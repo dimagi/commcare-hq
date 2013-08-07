@@ -9,7 +9,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 import sys
 
-from corehq.apps.domain.decorators import login_required_late_eval_of_LOGIN_URL
+from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.orgs.views import orgs_landing
 from corehq.apps.registration.models import RegistrationRequest
@@ -74,7 +74,7 @@ def register_user(request, domain_type=None):
 
 
 @transaction.commit_on_success
-@login_required_late_eval_of_LOGIN_URL
+@login_required
 def register_org(request, template="registration/org_request.html"):
     referer_url = request.GET.get('referer', '')
     if request.method == "POST":
@@ -108,7 +108,7 @@ def register_org(request, template="registration/org_request.html"):
 
 
 @transaction.commit_on_success
-@login_required_late_eval_of_LOGIN_URL
+@login_required
 def register_domain(request, domain_type=None):
     domain_type = domain_type or 'commcare'
     assert domain_type in DOMAIN_TYPES
@@ -178,7 +178,7 @@ def register_domain(request, domain_type=None):
     return render(request, 'registration/domain_request.html', context)
 
 @transaction.commit_on_success
-@login_required_late_eval_of_LOGIN_URL
+@login_required
 def resend_confirmation(request):
     try:
         dom_req = RegistrationRequest.get_request_for_username(request.user.username)
