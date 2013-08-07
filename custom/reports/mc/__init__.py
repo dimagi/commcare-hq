@@ -5,5 +5,6 @@ CUSTOM_REPORTS = (
         sql.DistrictMonthly,
         sql.HeathFacilityMonthly,
         sql.DistrictWeekly,
+        sql.HealthFacilityWeekly,
     )),
 )
