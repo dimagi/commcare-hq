@@ -26,7 +26,7 @@ HF_MONTHLY_REPORT = [
         'columns': [
             "rdt_positive_children",
             "rdt_positive_adults",
-            # "rdt_others",
+            "rdt_others",
             "rdt_total",
         ]
     },
@@ -86,6 +86,47 @@ HF_MONTHLY_REPORT = [
 
 # todo: need to add additional columns for district report
 DISTRICT_MONTHLY_REPORT = HF_MONTHLY_REPORT
+
+DISTRICT_WEEKLY_REPORT = [
+    {
+        'section': ugettext_noop('Home Visits'),
+        'columns': [
+            'home_visits_newborn_reg',
+            'home_visits_children',
+            'home_visits_pregnant',
+            'home_visits_non_pregnant',
+            'home_visits_followup',
+            'home_visits_total',
+        ]
+    },
+    {
+        'section': ugettext_noop('Deaths in the Community'),
+        'columns': [
+            "deaths_children",
+        ]
+    },
+    # {
+    #     'section': ugettext_noop('Stock Balance'),
+    #     'columns': [
+    #         "heath_ed_talks",
+    #         "heath_ed_participants",
+    #     ]
+    # },
+    {
+        'section': ugettext_noop('Validation of Diagnosis and Treatment'),
+        'columns': [
+            # todo: display num/denom groupings
+            'patients_given_pneumonia_meds_num', 'patients_given_pneumonia_meds_denom',
+            'patients_given_diarrhoea_meds_num', 'patients_given_diarrhoea_meds_denom',
+            'patients_given_malaria_meds_num', 'patients_given_malaria_meds_denom',
+            'patients_correctly_referred_num', 'patients_correctly_referred_denom',
+            'cases_rdt_not_done',
+            'cases_danger_signs_not_referred',
+            'cases_no_malaria_meds',
+        ]
+    },
+
+]
 
 def transpose(columns, data):
     return [[column.data_tables_column.html] + [r[i] for r in data] \
@@ -211,3 +252,7 @@ class DistrictMonthly(MCBase):
     name = ugettext_noop("District Monthly Report")
     SECTIONS = DISTRICT_MONTHLY_REPORT
 
+class DistrictWeekly(MCBase):
+    slug = 'district_weekly'
+    name = ugettext_noop("District Weekly Report")
+    SECTIONS = DISTRICT_WEEKLY_REPORT
