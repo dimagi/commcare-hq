@@ -8,7 +8,7 @@
 
         <link rel="shortcut icon" href="{% static 'hqwebapp/img/favicon2.png' %}" />
 
-        <link rel="stylesheet" media="screen" href="{% static 'hqstyle/css/core/hqstyle-core.css' %}"/>
+        {% less 'hqstyle/_less/core/hqstyle-core.less' 'screen' %}
 
         {# this should eventually be moved to the end of the page #}
         <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
@@ -18,7 +18,7 @@
 
         {% block oldstyle_imports %}
             <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
-            <link rel="stylesheet" href="{% static 'hqstyle/css/legacy/core.css' %}"/>
+            {% less 'hqstyle/_less/legacy/core.less' %}
             {% include "imports/hq-oldstyle-js.html" %}
         {% endblock %}
 
@@ -55,6 +55,13 @@
                 p.src = '//rum-static.pingdom.net/prum.min.js';
                 s.parentNode.insertBefore(p, s);
             })();
+        </script>
+        {% endif %}
+
+        {% if debug %}
+        <script src="{% static 'hqwebapp/js/lib/less-1.3.3.js' %}"></script>
+        <script>
+            less.watch()
         </script>
         {% endif %}
     </head>

@@ -18,7 +18,7 @@
 {% endblock %}
 
 {% block head %}{{ block.super }}
-    <link rel="stylesheet" href="{% static 'hqstyle/css/legacy/app_manager.css' %}"/>
+    {% less 'hqstyle/_less/legacy/app_manager.less' %}
     {% include "imports/jqmodal.html" %}
 {% endblock %}
 

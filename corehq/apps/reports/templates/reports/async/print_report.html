@@ -22,7 +22,7 @@
 {% endblock %}
 
 {% block reportcontent %}
-    <link rel="stylesheet" href="{% static 'hqstyle/css/core/hqstyle-core.css' %}"/>
+    {% less 'hqstyle/_less/core/hqstyle-core.less' %}
 {{ block.super }}
 {% endblock %}
 
