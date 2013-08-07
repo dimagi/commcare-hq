@@ -23,7 +23,7 @@ COUCH_HTTPS = False # recommended production value is True if enabling https
 COUCH_SERVER_ROOT = '127.0.0.1:5984' #6984 for https couch
 COUCH_USERNAME = ''
 COUCH_PASSWORD = ''
-COUCH_DATABASE_NAME = 'couchform'
+COUCH_DATABASE_NAME = 'couchforms'
 
 COUCHDB_DATABASES = [
     ('couchforms', 'http://127.0.0.1:5984/couchforms'),

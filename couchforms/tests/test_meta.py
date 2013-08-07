@@ -20,4 +20,5 @@ class TestMeta(TestCase):
         self.assertEqual(date(2010,07,23), xform.metadata.timeEnd.date())
         self.assertEqual("admin", xform.metadata.username)
         self.assertEqual("f7f0c79e-8b79-11df-b7de-005056c00008", xform.metadata.userID)
+        self.assertEqual("v1.2.3 (biz bazzle)", xform.metadata.appVersion)
         

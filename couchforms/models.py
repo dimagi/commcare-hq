@@ -55,6 +55,9 @@ class Metadata(DocumentSchema):
             <deviceID />
             <deprecatedID /> 
             <username />
+
+            <!-- CommCare extension -->
+            <appVersion />
         </Meta>
     
     See spec: https://bitbucket.org/javarosa/javarosa/wiki/OpenRosaMetaDataSchema
@@ -68,6 +71,7 @@ class Metadata(DocumentSchema):
     deviceID = StringProperty()
     deprecatedID = StringProperty()
     username = StringProperty()
+    appVersion = StringProperty()
 
 class XFormOperation(DocumentSchema):
     """
