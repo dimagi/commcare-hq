@@ -13,13 +13,7 @@
         {% if group.username == 'TOTAL_ROW' %}
             <tr style="background-color: #3a87ad">
                 {% if group.row_data %}
-                    <td>Total:</td>
-                {% endif %}
-                {% if group.gender %}
-                    <td></td>
-                {% endif %}
-                {% if group.age_display %}
-                    <td></td>
+                    <td colspan="{{ group.total_width }}">Total:</td>
                 {% endif %}
 
                 {% if group.row_data %}

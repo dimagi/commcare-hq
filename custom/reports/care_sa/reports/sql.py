@@ -3,7 +3,6 @@ from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn
 from corehq.apps.reports.fields import AsyncDrillableField, GroupField, BooleanField
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.reports.datatables import DataTablesColumnGroup
 
 
 class ProvinceField(AsyncDrillableField):
@@ -34,10 +33,10 @@ class CareReport(SqlTabularReport,
 
     fields = [
         'corehq.apps.reports.fields.DatespanField',
-        'care_sa.reports.sql.ProvinceField',
-        'care_sa.reports.sql.CBOField',
-        'care_sa.reports.sql.ShowAgeField',
-        'care_sa.reports.sql.ShowGenderField',
+        'custom.reports.care_sa.reports.sql.ProvinceField',
+        'custom.reports.care_sa.reports.sql.CBOField',
+        'custom.reports.care_sa.reports.sql.ShowAgeField',
+        'custom.reports.care_sa.reports.sql.ShowGenderField',
     ]
 
     def selected_province(self):
@@ -92,34 +91,33 @@ class CareReport(SqlTabularReport,
 
     @property
     def columns(self):
-        user = DatabaseColumn("User", "user_id", column_type=SimpleColumn)
+        user = DatabaseColumn("User", SimpleColumn('user_id'), sortable=False)
         columns = [user]
 
         if not self.show_gender() and not self.show_age():
             # hack: we have to give it a column type so there are no errors
             # but this isn't a column we let be auto populated anyway
-            columns.append(DatabaseColumn("", "gender", column_type=SimpleColumn))
+            columns.append(DatabaseColumn("", SimpleColumn('gender'), sortable=False))
         if self.show_gender():
-            columns.append(DatabaseColumn("Gender", "gender", column_type=SimpleColumn))
+            columns.append(DatabaseColumn("Gender", SimpleColumn('gender'), sortable=False))
         if self.show_age():
-            columns.append(DatabaseColumn("Age", "age_group", column_type=SimpleColumn))
+            columns.append(DatabaseColumn("Age", SimpleColumn('age_group'), sortable=False))
 
         for column_attrs in self.report_columns:
             text, name = column_attrs[:2]
             name = '%s_total' % name
-            if len(column_attrs) == 2:
-                group = DataTablesColumnGroup(text)
-                column = DatabaseColumn(text, name, header_group=group)
+            if len(column_attrs) == 2 or column_attrs[2] != 'SumColumn':
+                column = DatabaseColumn(text, SimpleColumn(name), sortable=False)
                 if self.show_gender():
-                    column = DatabaseColumn('%s (male)' % text, name, header_group=group)
-                    column2 = DatabaseColumn('%s (female)' % text, name, header_group=group, alias='%s_b' % name)
+                    column = DatabaseColumn('%s (male)' % text, SimpleColumn(name), sortable=False)
+                    column2 = DatabaseColumn('%s (female)' % text, SimpleColumn(name, alias='%s_b' % name), sortable=False)
             else:
                 # if there are more than 2 values, the third is the column
                 # class override
-                column = DatabaseColumn(text, name, column_attrs[2])
+                column = DatabaseColumn(text, SumColumn(name), sortable=False)
                 if self.show_gender():
-                    column = DatabaseColumn('%s (male)' % text, name, column_attrs[2])
-                    column2 = DatabaseColumn('%s (female)' % text, name, header_group=group, alias='%s_b' % name)
+                    column = DatabaseColumn('%s (male)' % text, SumColumn(name), sortable=False)
+                    column2 = DatabaseColumn('%s (female)' % text, SumColumn(name, alias='%s_b' % name), sortable=False)
 
             columns.append(column)
             # hacky but double the column if we are sorting by gender
@@ -163,27 +161,32 @@ class CareReport(SqlTabularReport,
             return len(self.report_columns),
 
     def build_data(self, rows):
-        woot = {}
+        built_data = {}
 
         for row in rows:
             try:
-                u = CommCareUser.get_by_user_id(row.pop(0)['html']).username
+                user = CommCareUser.get_by_user_id(row.pop(0))
+                u = user.username
+
+                # TODO: we might not want to skip blank names
+                if not user.name.strip():
+                    continue
             except AttributeError:
                 # TODO: figure out how often this happens and do something
                 # better
                 continue
 
-            if u not in woot:
-                woot[u] = self.initialize_user_stuff()
+            if u not in built_data:
+                built_data[u] = self.initialize_user_stuff()
 
             if self.show_gender():
-                gender = row.pop(0)['html']
+                gender = row.pop(0)
 
                 #TODO skip?
                 if gender == 'refuses_answer':
                     gender = 'male'
             if self.show_age():
-                age_group = row.pop(0)['html']
+                age_group = row.pop(0)
 
             if not self.show_gender() and not self.show_age():
                 # discard the gender column from blank header hack
@@ -193,19 +196,16 @@ class CareReport(SqlTabularReport,
             if self.show_gender():
                 row = row[::2]
 
-            # strip the dicts that come back for values
-            row = [item['html'] if isinstance(item, dict) else item for item in row]
-
             if self.show_age() and self.show_gender():
-                woot[u][age_group][gender] = row
+                built_data[u][age_group][gender] = row
             elif self.show_age() and not self.show_gender():
-                woot[u][age_group] = row
+                built_data[u][age_group] = row
             elif not self.show_age() and self.show_gender():
-                woot[u][gender] = row
+                built_data[u][gender] = row
             elif not self.show_age() and not self.show_gender():
-                woot[u] = row
+                built_data[u] = row
 
-        return woot
+        return built_data
 
     def add_row_to_total(self, total, row):
         # initialize it if it hasn't been used yet
@@ -225,7 +225,6 @@ class CareReport(SqlTabularReport,
             total_row = []
             if self.show_age() and self.show_gender():
                 for age_group in sorted(rows[user]):
-
                     if age_group == '0':
                         age_display = '0-14 years'
                     elif age_group == '1':
@@ -258,7 +257,6 @@ class CareReport(SqlTabularReport,
 
                 total_row = self.add_row_to_total([], row_data)
             elif self.show_age() and not self.show_gender():
-                total_row = []
                 for age_group in sorted(rows[user]):
                     u = CommCareUser.get_by_username(user)
 
@@ -287,8 +285,7 @@ class CareReport(SqlTabularReport,
 
             rows_for_table.append({
                 'username': 'TOTAL_ROW',
-                'gender': self.show_gender(),   # have to put data here to
-                'age_display': self.show_age(), # reflect grouping status
+                'total_width': 1 + int(self.show_gender()) + int(self.show_age()),
                 'row_data': total_row,
             })
 
