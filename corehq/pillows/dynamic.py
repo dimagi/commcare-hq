@@ -104,7 +104,7 @@ domain_special_types = {
 }
 
 user_special_types = {
-    "username": type_exact_match_string("name", dual=True),
+    "username": type_exact_match_string("username", dual=True),
 }
 
 def set_properties(schema_class, custom_types=default_special_types, nested_types=default_nested_types, init_dict=None):
