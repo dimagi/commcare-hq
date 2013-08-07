@@ -23,7 +23,13 @@ class base_emitter(object):
     def __call__(self, fn):
         def wrapped_f(*args):
             for v in fn(*args):
-                if not isinstance(v, list):
+                if isinstance(v, dict):
+                    if 'value' not in v:
+                        v['value'] = 1
+                    assert v.get('group_by') is not None
+                    if not isinstance(v['group_by'], list):
+                        v['group_by'] = [v['group_by']]
+                elif not isinstance(v, list):
                     v = [v, 1]
 
                 self.validate(v)
@@ -41,17 +47,31 @@ class custom_date_emitter(base_emitter):
     fluff_emitter = 'date'
 
     def validate(self, value):
-        assert value[0] is not None
-        assert isinstance(value[0], (datetime.date, datetime.datetime))
-        if isinstance(value[0], datetime.datetime):
-            value[0] = value[0].date()
+        def validate_date(dateval):
+            assert dateval is not None
+            assert isinstance(dateval, (datetime.date, datetime.datetime))
+
+        if isinstance(value, dict):
+            validate_date(value.get('date'))
+            if isinstance(value['date'], datetime.datetime):
+                value['date'] = value['date'].date()
+        else:
+            validate_date(value[0])
+            if isinstance(value[0], datetime.datetime):
+                value[0] = value[0].date()
 
 
 class custom_null_emitter(base_emitter):
     fluff_emitter = 'null'
 
     def validate(self, value):
-        assert value[0] is None
+        if isinstance(value, dict):
+            if 'date' not in value:
+                value['date'] = None
+            else:
+                assert value['date'] is None
+        else:
+            assert value[0] is None
 
 date_emitter = custom_date_emitter()
 null_emitter = custom_null_emitter()

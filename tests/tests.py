@@ -127,6 +127,8 @@ class Test(TestCase):
             pillow.processor({'changes': [], 'id': '123', 'seq': 1})
             indicator = self.fakedb.mock_docs.get("%s-123" % classname, None)
             self.assertIsNotNone(indicator)
+            self.assertEqual(8, len(indicator))
+            self.assertEqual(8, len(indicator['value_week']))
             self.assertIn("value_week", indicator)
             self.assertIn("date", indicator["value_week"])
             self.assertIn("null", indicator["value_week"])
@@ -140,16 +142,24 @@ class Test(TestCase):
             self.assertEqual(["2012-09-24", 3], indicator["value_week"]["date_value"][1])
             self.assertEqual([None, 2], indicator["value_week"]["null_value"][0])
 
+            self.assertEqual(dict(date='2013-01-01', group_by=['abc', 'xyz'], value=3), indicator["value_week"]["group_list"][0])
+            self.assertEqual(dict(date='2013-01-01', group_by=['abc'], value=2), indicator["value_week"]["group_val"][0])
+            self.assertEqual(dict(date='2013-01-01', group_by=['abc'], value=1), indicator["value_week"]["group_no_val"][0])
+
 
     def test_calculator_calculate(self):
         calc = ValueCalculator(WEEK)
         values = calc.calculate(MockDoc.wrap(dict(actions=[dict(date="2012-09-23", x=2),
                                                            dict(date="2012-09-24", x=3)])))
-        self.assertEquals(len(values.keys()), 4)
+        self.assertEquals(len(values.keys()), 8)
         self.assertEquals(values['null_value'], [[None, 2]])
         self.assertEquals(values['date_value'], [[date(2012, 9, 23), 2], [date(2012, 9, 24), 3]])
         self.assertEquals(values['date'], [[date(2012, 9, 23), 1], [date(2012, 9, 24), 1]])
         self.assertEquals(values['null'], [[None, 1]])
+        self.assertEquals(values['group_list'], [dict(date=date(2013, 1, 1), group_by=['abc', 'xyz'], value=3)])
+        self.assertEquals(values['group_val'], [dict(date=date(2013, 1, 1), group_by=['abc'], value=2)])
+        self.assertEquals(values['group_no_val'], [dict(date=date(2013, 1, 1), group_by=['abc'], value=1)])
+        self.assertEquals(values['group_null'], [dict(date=None, group_by=['abc'], value=1)])
 
     def test_calculator_get_result(self):
         key = ['a', 'b']
@@ -304,6 +314,22 @@ class ValueCalculator(fluff.Calculator):
     @fluff.null_emitter
     def null(self, case):
         yield None
+
+    @fluff.date_emitter
+    def group_list(self, case):
+        yield dict(date=date(2013, 1, 1), value=3, group_by=['abc', 'xyz'])
+
+    @fluff.date_emitter
+    def group_val(self, case):
+        yield dict(date=date(2013, 1, 1), value=2, group_by='abc')
+
+    @fluff.date_emitter
+    def group_no_val(self, case):
+        yield dict(date=date(2013, 1, 1), group_by='abc')
+
+    @fluff.null_emitter
+    def group_null(self, case):
+        yield dict(group_by='abc')
 
 
 class MockIndicators(fluff.IndicatorDocument):
