@@ -1,0 +1,97 @@
+/*!
+ * CommCare HQ Style
+ * Built on Twitter Bootstrap (thanks @mdo and @fat)
+ *
+ * Copyright 2012 Dimagi, Inc
+ */
+
+// CSS Reset
+@import "../../../hq-bootstrap/less/reset.less";
+@import "reset.less";
+
+// Core variables and mixins
+@import "../../../hq-bootstrap/less/variables.less"; // Modify this for custom colors, font-sizes, etc
+@import "variables.less";
+@import "../../../hq-bootstrap/less/mixins.less";
+@import "mixins.less";
+
+// Grid system and page structure
+@import "../../../hq-bootstrap/less/scaffolding.less";
+@import "../../../hq-bootstrap/less/grid.less";
+@import "../../../hq-bootstrap/less/layouts.less";
+@import "layouts.less";
+
+// Base CSS
+@import "../../../hq-bootstrap/less/type.less";
+@import "type.less";
+@import "../../../hq-bootstrap/less/code.less";
+@import "code.less";
+@import "../../../hq-bootstrap/less/forms.less";
+@import "forms.less";
+@import "../../../hq-bootstrap/less/tables.less";
+@import "tables.less";
+@import "graphs.less";
+
+// Components: common
+
+// Sprites and Font Awesome
+@import "../../../font_awesome/less/font-awesome.less";
+@import "icons.less";
+
+@import "../../../hq-bootstrap/less/dropdowns.less";
+@import "dropdowns.less";
+@import "../../../hq-bootstrap/less/wells.less";
+@import "../../../hq-bootstrap/less/component-animations.less";
+@import "../../../hq-bootstrap/less/close.less";
+
+// Components: Buttons & Alerts
+@import "../../../hq-bootstrap/less/buttons.less";
+@import "buttons.less";
+@import "../../../hq-bootstrap/less/button-groups.less";
+@import "button-groups.less";
+@import "../../../hq-bootstrap/less/alerts.less"; // Note: alerts share common CSS with buttons and thus have styles in buttons.less
+@import "alerts.less"; // Note: alerts share common CSS with buttons and thus have styles in buttons.less
+
+// Components: Nav
+@import "../../../hq-bootstrap/less/navs.less";
+@import "navs.less";
+@import "../../../hq-bootstrap/less/navbar.less";
+@import "navbar.less";
+@import "../../../hq-bootstrap/less/breadcrumbs.less";
+@import "breadcrumbs.less";
+@import "../../../hq-bootstrap/less/pagination.less";
+@import "pagination.less";
+@import "../../../hq-bootstrap/less/pager.less";
+
+// Components: Footer
+@import "footerbar.less";
+
+// Components: Popovers
+@import "../../../hq-bootstrap/less/modals.less";
+@import "modals.less";
+@import "../../../hq-bootstrap/less/tooltip.less";
+@import "../../../hq-bootstrap/less/popovers.less";
+@import "popovers.less";
+
+// Components: Misc
+@import "../../../hq-bootstrap/less/thumbnails.less";
+@import "../../../hq-bootstrap/less/media.less";
+@import "../../../hq-bootstrap/less/labels-badges.less";
+@import "../../../hq-bootstrap/less/progress-bars.less";
+@import "../../../hq-bootstrap/less/accordion.less";
+@import "accordion.less";
+@import "../../../hq-bootstrap/less/carousel.less";
+@import "../../../hq-bootstrap/less/hero-unit.less";
+@import "datepicker.less";
+@import "downloader.less"; // todo should this be progress bar styling now?
+@import "loading.less"; // todo progress bar styling now?
+
+@import "multimedia.less";  // Multimedia-specific styling
+@import "formdesigner.less"; // HQ formdesigner overrides
+
+// Components: Plugins
+@import "combobox.less";
+
+// Utility classes
+@import "../../../hq-bootstrap/less/utilities.less"; // Has to be last to override when necessary
+
