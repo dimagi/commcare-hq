@@ -4,6 +4,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from corehq.apps.reports.generic import ElasticTabularReport, GenericTabularReport
 from django.utils.translation import ugettext as _, ugettext_noop
+from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 
 
@@ -21,6 +22,7 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
     es_facet_list = []
     es_facet_mapping = []
     section_name = ugettext_noop("ADMINREPORT")
+    es_url = ''
 
     @property
     def template_context(self):
@@ -55,7 +57,29 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
         return ret
 
     def es_query(self, params=None):
-        raise NotImplementedError
+        from corehq.apps.appstore.views import es_query
+        if params is None:
+            params = {}
+        terms = ['search']
+        q = {"query": {"match_all":{}}}
+
+        search_query = params.get('search', "")
+        if search_query:
+            q['query'] = {
+                "bool": {
+                    "must": {
+                        "match" : {
+                            "_all" : {
+                                "query" : search_query,
+                                "operator" : "or", }}}}}
+
+        q["facets"] = {}
+
+        q["sort"] = self.get_sorting_block()
+        start_at=self.pagination.start
+        size=self.pagination.count
+
+        return es_query(params, self.es_facet_list, terms, q, self.es_url, start_at, size)
 
     @property
     def es_results(self):
@@ -83,6 +107,8 @@ class AdminUserReport(AdminFacetedReport):
     name = ugettext_noop('User List')
     facet_title = ugettext_noop("User Facets")
     search_for = ugettext_noop("users...")
+    default_sort = {'username.exact': 'asc'}
+    es_url = USER_INDEX + '/user/_search'
 
     es_facet_list = [
         "is_active",
@@ -114,32 +140,6 @@ class AdminUserReport(AdminFacetedReport):
         )
         return headers
 
-    def es_query(self, params=None):
-        from corehq.apps.appstore.views import es_query
-        if params is None:
-            params = {}
-        terms = ['search']
-        q = {"query": {"match_all":{}}}
-
-        search_query = params.get('search', "")
-        if search_query:
-            q['query'] = {
-                "bool": {
-                    "must": {
-                        "match" : {
-                            "_all" : {
-                                "query" : search_query,
-                                "operator" : "or", }}}}}
-
-        q["facets"] = {}
-
-        sort = self.get_sorting_block()
-        q["sort"] = sort if sort else [{"username.exact" : {"order": "asc"}},]
-        start_at=self.pagination.start
-        size=self.pagination.count
-
-        return es_query(params, self.es_facet_list, terms, q, USER_INDEX + '/user/_search', start_at, size)
-
     @property
     def rows(self):
         users = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
@@ -163,3 +163,34 @@ class AdminUserReport(AdminFacetedReport):
                 u.get('is_superuser'),
             ]
 
+class AdminAppReport(AdminFacetedReport):
+    slug = "app_list"
+    name = ugettext_noop('Application List')
+    facet_title = ugettext_noop("App Facets")
+    search_for = ugettext_noop("apps...")
+    default_sort = {'name.exact': 'asc'}
+    es_url = APP_INDEX + '/app/_search'
+
+    es_facet_list = []
+
+    es_facet_mapping = []
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(
+            DataTablesColumn(_("Name"), prop_name="name.exact"),
+            DataTablesColumn(_("Project Space"), prop_name="domain"),
+            DataTablesColumn(_("Build Comment"), prop_name="build_comment"),
+        )
+        return headers
+
+    @property
+    def rows(self):
+        apps = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
+
+        for app in apps:
+            yield [
+                app.get('name'),
+                app.get('domain'),
+                app.get('build_comment'),
+            ]
