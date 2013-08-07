@@ -1,0 +1,55 @@
+{% extends "reports/async/tabular.html" %}
+{% load i18n %}
+{% block tabular-body %}
+    {% if report_table.pagination.is_on %}
+    <tr>
+        <td colspan="{{ report_table.headers.header|length }}" class="dataTables_empty">
+          {% trans "Fetching additional data, please wait..." %}
+        </td>
+    </tr>
+    {% endif %}
+
+    {% for group in report_table.rows %}
+        {% if group.username == 'TOTAL_ROW' %}
+            <tr style="background-color: #3a87ad">
+                {% if group.row_data %}
+                    <td>Total:</td>
+                {% endif %}
+                {% if group.gender %}
+                    <td></td>
+                {% endif %}
+                {% if group.age_display %}
+                    <td></td>
+                {% endif %}
+
+                {% if group.row_data %}
+                    {% for col in group.row_data %}
+                        {% include 'reports/async/partials/tabular_cell.html' %}
+                    {% endfor %}
+                {% else %}
+                    <td colspan="{{ report_table.headers.header|length }}"></td>
+                {% endif %}
+            </tr>
+        {% else %}
+            <tr>
+                <td>{{ group.username }}</td>
+
+                {% ifequal group.gender 'no_grouping' %}
+                    <td>{% trans "All genders and ages" %}</td>
+                {% else %}
+                    {% if group.gender %}
+                        <td></td>
+                    {% endif %}
+
+                    {% if group.age_display %}
+                        <td>{{ group.age_display }}</td>
+                    {% endif %}
+                {% endifequal %}
+
+                {% for col in group.row_data %}
+                    {% include 'reports/async/partials/tabular_cell.html' %}
+                {% endfor %}
+            </tr>
+        {% endif %}
+    {% endfor %}
+{% endblock %}
