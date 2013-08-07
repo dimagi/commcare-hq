@@ -1,5 +1,6 @@
 from django.conf.urls.defaults import *
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
+from .views import FlagBrokenBuilds
 
 urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^$', 'default', name="default_admin_report"),
@@ -23,6 +24,7 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^management_commands/$', 'management_commands', name="management_commands"),
     url(r'^run_command/$', 'run_command', name="run_management_command"),
     url(r'^phone/restore/$', 'admin_restore', name="admin_restore"),
+    url(r'^flag_broken_builds/$', FlagBrokenBuilds.as_view(), name="flag_broken_builds"),
     AdminReportDispatcher.url_pattern(),
 )
 
