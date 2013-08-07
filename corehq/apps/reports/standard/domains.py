@@ -236,6 +236,10 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
     slug = "domains"
     es_facet_list = DOMAIN_FACETS
     es_facet_mapping = FACET_MAPPING
+    name = ugettext_noop('Project Space List')
+    facet_title = ugettext_noop("Project Facets")
+    search_for = ugettext_noop("projects...")
+
 
     def es_query(self, params=None):
         return es_domain_query(params, self.es_facet_list, sort=self.get_sorting_block(),
