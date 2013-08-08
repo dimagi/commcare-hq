@@ -921,8 +921,9 @@ class VersionedDoc(LazyAttachmentDoc):
     version = IntegerProperty()
     short_url = StringProperty()
     short_odk_url = StringProperty()
+    short_odk_media_url = StringProperty()
 
-    _meta_fields = ['_id', '_rev', 'domain', 'copy_of', 'version', 'short_url', 'short_odk_url']
+    _meta_fields = ['_id', '_rev', 'domain', 'copy_of', 'version', 'short_url', 'short_odk_url', 'short_odk_media_url']
 
     @property
     def id(self):
@@ -949,7 +950,7 @@ class VersionedDoc(LazyAttachmentDoc):
         else:
             copy = deepcopy(self.to_json())
             bad_keys = ('_id', '_rev', '_attachments',
-                        'short_url', 'short_odk_url', 'recipients')
+                        'short_url', 'short_odk_url', 'short_odk_media_url', 'recipients')
 
             for bad_key in bad_keys:
                 if bad_key in copy:
@@ -1084,6 +1085,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     built_on = DateTimeProperty(required=False)
     build_comment = StringProperty()
     comment_from = StringProperty()
+    build_broken = BooleanProperty(default=False)
 
     # watch out for a past bug:
     # when reverting to a build that happens to be released
@@ -1104,6 +1106,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     langs = StringListProperty()
     # only the languages that go in the build
     build_langs = StringListProperty()
+    secure_submissions = BooleanProperty(default=False)
 
     # exchange properties
     cached_properties = DictProperty()
@@ -1270,7 +1273,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
 
     @absolute_url_property
     def post_url(self):
-        return reverse('receiver_post_with_app_id', args=[self.domain, self.copy_of or self.get_id])
+        if self.secure_submissions:
+            url_name = 'receiver_secure_post'
+        else:
+            url_name = 'receiver_post_with_app_id'
+        return reverse(url_name, args=[self.domain, self.copy_of or self.get_id])
 
     @absolute_url_property
     def key_server_url(self):
@@ -1406,11 +1413,19 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     def odk_profile_url(self):
         return reverse('corehq.apps.app_manager.views.download_odk_profile', args=[self.domain, self._id])
 
+    @absolute_url_property
+    def odk_media_profile_url(self):
+        return reverse('corehq.apps.app_manager.views.download_odk_media_profile', args=[self.domain, self._id])
+
     @property
     def odk_profile_display_url(self):
         return self.short_odk_url or self.odk_profile_url
 
-    def get_odk_qr_code(self):
+    @property
+    def odk_media_profile_display_url(self):
+        return self.short_odk_media_url or self.odk_media_profile_url
+
+    def get_odk_qr_code(self, with_media=False):
         """Returns a QR code, as a PNG to install on CC-ODK"""
         try:
             return self.lazy_fetch_attachment("qrcode.png")
@@ -1421,7 +1436,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
                 raise Exception(MISSING_DEPENDECY)
             HEIGHT = WIDTH = 250
             code = QRChart(HEIGHT, WIDTH)
-            code.add_data(self.odk_profile_url)
+            code.add_data(self.odk_profile_url if not with_media else self.odk_media_profile_url)
 
             # "Level H" error correction with a 0 pixel margin
             code.set_ec('H', 0)
@@ -1465,6 +1480,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
             copy.short_odk_url = bitly.shorten(
                 get_url_base() + reverse('corehq.apps.app_manager.views.download_odk_profile', args=[copy.domain, copy._id])
             )
+            copy.short_odk_media_url = bitly.shorten(
+                get_url_base() + reverse('corehq.apps.app_manager.views.download_odk_media_profile', args=[copy.domain, copy._id])
+            )
         except AssertionError:
             raise
         except:        # URLError, BitlyError
@@ -1472,6 +1490,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
             logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
             copy.short_url = None
             copy.short_odk_url = None
+            copy.short_odk_media_url = None
 
         copy.build_comment = comment
         copy.comment_from = user_id

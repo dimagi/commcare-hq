@@ -235,6 +235,7 @@ HQ_APPS = (
     'a5288',
     'benin',
     'bihar',
+    'cvsu',
     'dca',
     'hsph',
     'mvp',
@@ -243,6 +244,9 @@ HQ_APPS = (
     'pathindia',
     'pact',
     'psi',
+
+    'custom.reports.mc',
+    'custom.reports.care_sa',
 )
 
 TEST_APPS = ()
@@ -455,9 +459,8 @@ MESSAGE_LOG_OPTIONS = {
 IVR_OUTBOUND_RETRIES = 3
 IVR_OUTBOUND_RETRY_INTERVAL = 10
 
-
 # List of Fluff pillow classes that ctable should process diffs for
-FLUFF_PILLOW_TYPES_TO_SQL = {}
+FLUFF_PILLOW_TYPES_TO_SQL = {'CareSAFluff': 'SQL'}
 
 try:
     #try to see if there's an environmental variable set for local_settings
@@ -634,6 +637,7 @@ COUCHDB_APPS = [
     # custom reports
     'benin',
     'dca',
+    'cvsu',
     'hsph',
     'mvp',
     'pathfinder',
@@ -649,6 +653,10 @@ COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label
 COUCHDB_DATABASES += [
     ('bihar', COUCH_DATABASE + '__fluff-bihar'),
     ('fluff', COUCH_DATABASE + '__fluff-bihar'),
+    ('mc', COUCH_DATABASE + '__fluff-mc'),
+    ('fluff', COUCH_DATABASE + '__fluff-mc'),
+    ('care_sa', COUCH_DATABASE + '__fluff-care_sa'),
+    ('fluff', COUCH_DATABASE + '__fluff-care_sa'),
 ]
 
 INSTALLED_APPS += LOCAL_APPS
@@ -734,10 +742,13 @@ PILLOWTOPS = [
                  'corehq.pillows.fullxform.FullXFormPillow',
                  'corehq.pillows.domain.DomainPillow',
                  'corehq.pillows.user.UserPillow',
+                 'corehq.pillows.application.AppPillow',
                  'corehq.pillows.commtrack.ConsumptionRatePillow',
 
                  # fluff
                  'bihar.models.CareBiharFluffPillow',
+                 'custom.reports.mc.models.MalariaConsortiumFluffPillow',
+                 'custom.reports.care_sa.models.CareSAFluffPillow',
              ] + LOCAL_PILLOWTOPS
 
 
@@ -747,10 +758,10 @@ XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
 #Custom fully indexed domains for FullCase index/pillowtop
 # Adding a domain will not automatically index that domain's existing cases
 ES_CASE_FULL_INDEX_DOMAINS = [
-    'pact', 
-    'hsph', 
-    'care-bihar', 
-    'hsph-dev', 
+    'pact',
+    'hsph',
+    'care-bihar',
+    'hsph-dev',
     'hsph-betterbirth-pilot-2',
     'commtrack-public-demo',
 ]
@@ -772,10 +783,12 @@ DOMAIN_MODULE_MAP = {
     'a5288-test': 'a5288',
     'a5288-study': 'a5288',
     'care-bihar': 'bihar',
+    'care-ihapc-live': 'custom.reports.care_sa',
     'dca-malawi': 'dca',
     'eagles-fahu': 'dca',
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
+    'mc-inscale': 'custom.reports.mc',
     'mvp-potou': 'mvp',
     'mvp-sauri': 'mvp',
     'mvp-bonsaaso': 'mvp',

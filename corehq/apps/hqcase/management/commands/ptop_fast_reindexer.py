@@ -16,6 +16,14 @@ RETRY_TIME_DELAY_FACTOR = 15
 
 
 class FakeCouchDBLoader(object):
+    """
+    For the bulk fast reindexing - replace the traditional one couch GET per update
+    and just do a bulk get of a cluster of ids. Rather than altering the pillow pipeline,
+    just preload all docs of relevance into a dictionary and override the single couch.get_doc call.
+
+    This needs to be patched after the initial bootstrap of the pillow which still needs to do
+    couchy stuff.
+    """
     docs = {}
 
     def open_doc(self, doc_id):
@@ -29,9 +37,6 @@ class FakeCouchDBLoader(object):
         A non overriding method - fake set the docs in a dict so open_doc will get it like a regular couch database.
         """
         self.docs = doc_dict_by_id
-
-    def __call__(self):
-        return self
 
 class PtopReindexer(NoArgsCommand):
     help = "View based elastic reindexer"
@@ -261,6 +266,7 @@ class PtopReindexer(NoArgsCommand):
             else:
                 bulk_slice = self.full_view_data[start:]
 
+            #all couchy operations completed, faking out db now.
             self.pillow.couch_db = FakeCouchDBLoader()
 
             doc_ids = [x['id'] for x in bulk_slice]

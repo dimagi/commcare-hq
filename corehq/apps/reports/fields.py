@@ -118,6 +118,16 @@ class YearField(ReportField):
         self.context['years'] = range(year, datetime.datetime.utcnow().year + 1)
         self.context['year'] = int(self.request.GET.get('year', datetime.datetime.utcnow().year))
 
+class BooleanField(ReportField):
+    slug = "checkbox"
+    label = "hello"
+    template = "reports/partials/checkbox.html"
+
+    def update_context(self):
+        self.context['label'] = self.label
+        self.context[self.slug] = self.request.GET.get(self.slug, False)
+        self.context['checked'] = self.request.GET.get(self.slug, False)
+
 class GroupFieldMixin():
     slug = "group"
     name = ugettext_noop("Group")
