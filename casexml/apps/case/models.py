@@ -490,17 +490,17 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
 
 
     @classmethod
-    def cache_object_if_needed(cls, size_key, cobject, case_id, attachment_key):
+    def cache_and_get_object(cls, cobject, case_id, attachment_key, size_key=OBJECT_ORIGINAL):
         """
-        asdf
+        Retrieve cached_object or image and cache sizes if necessary
         """
         if not cobject.is_cached():
             resp = cls.get_db().fetch_attachment(case_id, attachment_key, stream=True)
             stream = StringIO(resp.read())
             headers = resp.resp.headers
             cobject.cache_put(stream, headers)
-        meta, stream = cobject.get_size(size_key)
 
+        meta, stream = cobject.get(size_key=size_key)
         return meta, stream
 
 
@@ -535,7 +535,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
         }
 
         cached_image = CachedImage(attachment_cache_key)
-        meta, stream = cls.cache_object_if_needed(size_key, cached_image, case_id, attachment_key)
+        meta, stream = cls.cache_and_get_object(cached_image, case_id, attachment_key, size_key=size_key)
 
         #now that we got it cached, let's check for size constraints
 
@@ -589,7 +589,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
         }
 
         cobject = CachedObject(attachment_cache_key)
-        meta, stream = cls.cache_object_if_needed(size_key, cobject, case_id, attachment_key)
+        meta, stream = cls.cache_and_get_object(cobject, case_id, attachment_key, size_key=size_key)
 
         return meta, stream
 
