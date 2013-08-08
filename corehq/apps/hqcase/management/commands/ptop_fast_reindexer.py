@@ -130,7 +130,7 @@ class PtopReindexer(NoArgsCommand):
         # that happen to cases while we're doing our reindexing would not get skipped once we
         # finish.
 
-        current_db_seq = self.pillow.couch_db().info()['update_seq']
+        current_db_seq = self.pillow.couch_db.info()['update_seq']
         self.pillow.set_checkpoint({'seq': current_db_seq})
 
         #Write sequence file to disk
