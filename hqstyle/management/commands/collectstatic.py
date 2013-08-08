@@ -10,12 +10,12 @@ or django-pipeline.
 """
 import os
 import re
-from django.core.management.base import BaseCommand
+from django.contrib.staticfiles.management.commands import collectstatic
 from django.conf import settings
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import less
 
-class Command(BaseCommand):
+class Command(collectstatic.Command):
     help = "Compiles all the files necessary for the UI of CommCare HQ from HQ Bootstrap. Make sure lessc and uglifyjs are installed"
 
     # NOTE: Order matters for the bootstrap js files.
@@ -50,7 +50,8 @@ class Command(BaseCommand):
             'bootstrap-%s.js') % f for f in js_plugins
     ]
 
-    def handle(self, *args, **options):
+    def handle_noargs(self, **options):
+        super(Command, self).handle_noargs(**options)
         self.compile_core_js()
         self.compile_css()
 
