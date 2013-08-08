@@ -3,6 +3,7 @@
   settings:
     - hq.name  # Name
     - hq.application_version # App Version (disabled)
+    - hq.secure_submissions
     # Application
 #    - hq.is_j2me
 #    - hq.is_odk
