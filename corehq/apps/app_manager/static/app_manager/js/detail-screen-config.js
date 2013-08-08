@@ -13,6 +13,18 @@ var SortRow = function (field, type, direction) {
         window.sortRowSaveButton.fire('change');
     });
 
+    self.labelTextItems = ko.computed(function () {
+        var splitField = self.field().split('/');
+
+        splitField.pop(); // throw away last item (which is field text)
+        return splitField
+    });
+
+    self.fieldText = ko.computed(function () {
+        var splitField = self.field().split('/');
+        return splitField.pop();
+    });
+
     self.ascendText = ko.computed(function () {
         var type = self.type();
         if (type === 'plain') {
@@ -345,9 +357,7 @@ var DetailScreenConfig = (function () {
             }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.DELETE_COLUMN);
 
             this.$sortLink = $('<a href="#">Sort by this</a>').click(function (e) {
-                var $row = $(this).closest('tr');
-                var $field = $row.find('.detail-screen-field code').text();
-                that.screen.config.sortRows.addSortRow($field, '', '');
+                that.screen.config.sortRows.addSortRow(that.field.ui.text(), '', '');
                 e.preventDefault();
                 e.stopImmediatePropagation();
             });
