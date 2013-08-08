@@ -68,7 +68,7 @@ class CachedObjectTests(TestCase):
         for size in IMAGE_SIZE_ORDERING:
             self.assertTrue(cimage.can_size(size))
 
-            cmeta, cstream = cimage.get_size(size)
+            cmeta, cstream = cimage.get(size_key=size)
             self.assertEqual(cmeta['size_key'], size)
             cstream.seek(0, os.SEEK_END)
             stream_size = cstream.tell()
@@ -95,7 +95,7 @@ class CachedObjectTests(TestCase):
         for size_key in smaller:
             self.assertTrue(cimage.can_size(size_key))
 
-            cmeta, cstream = cimage.get_size(size_key)
+            cmeta, cstream = cimage.get(size_key=size_key)
             self.assertEqual(cmeta['size_key'], size_key)
             cstream.seek(0, os.SEEK_END)
             stream_size = cstream.tell()
@@ -103,7 +103,7 @@ class CachedObjectTests(TestCase):
 
         for size_key in bigger:
             self.assertFalse(cimage.can_size(size_key), msg="size key: %s shouldn't be sized" % size_key)
-            cmeta, cstream = cimage.get_size(size_key)
+            cmeta, cstream = cimage.get(size_key=size_key)
             cstream.seek(0, os.SEEK_END)
             stream_size = cstream.tell()
             self.assertEqual(stream_size, orig_size)
