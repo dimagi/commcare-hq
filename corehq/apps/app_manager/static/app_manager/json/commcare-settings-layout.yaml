@@ -4,8 +4,6 @@
     - hq.name  # Name
     - hq.application_version # App Version (disabled)
     # Application
-#    - hq.is_j2me
-#    - hq.is_odk
     - hq.case_sharing  # Case Sharing
     - hq.cloudcare_enabled  # CloudCare
     - hq.use_custom_suite
