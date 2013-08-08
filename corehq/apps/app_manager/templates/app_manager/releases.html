@@ -110,6 +110,22 @@
 {% endblock %}
 {% block form-view %}
     <div id="releases-table">
+        <div class="alert alert-error" data-bind="visible: brokenBuilds">
+            <p>
+                <span class="icon icon-exclamation-sign"></span>
+                {% blocktrans %}
+                    One or more of your versions is broken, please make sure it is
+                    not marked as released. Make a new version if needed, and update
+                    any live deployments as soon as possible. 
+                {% endblocktrans %}
+            </p>
+            <p><small>
+                {% blocktrans %}
+                    All new builds should work, so if problems persist, please
+                    report the issue.
+                {% endblocktrans %}
+            </small></p>
+        </div>
         <button class="btn btn-primary" data-bind="
             click: makeNewBuild,
             attr: {disabled: !makeNewBuildEnabled() ? 'disabled' : undefined},
@@ -154,7 +170,8 @@
                 <tr class="build" data-bind="css: {
                     'build-released': is_released(),
                     'build-unreleased': !is_released(),
-                    'build-latest-release': id() === $root.latestReleaseId()
+                    'build-latest-release': id() === $root.latestReleaseId(),
+                    'error': build_broken
                 }">
                     <td>
                         {% if edit %}
@@ -183,7 +200,14 @@
                     </td>
                     <td class="nowrap">
                         <div class="btn-group">
-                            <a class="btn btn-primary" data-bind="openModal: 'deploy-build-modal-template'">Deploy</a>
+                            <a class="btn" data-bind="
+                                openModal: 'deploy-build-modal-template',
+                                css: {'btn-primary': !build_broken(), 'btn-danger': build_broken}
+                            ">
+                                <span class="icon icon-exclamation-sign" data-bind="
+                                visible: build_broken"></span>
+                                Deploy
+                            </a>
                         </div>
                     </td>
                     {% if edit %}

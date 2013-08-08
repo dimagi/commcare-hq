@@ -54,6 +54,12 @@ function ReleasesMain(o) {
     self.deployAnyway = {};
     self.appVersion = ko.observable(self.options.appVersion);
     self.lastAppVersion = ko.observable();
+    self.brokenBuilds = ko.computed(function () {
+        var apps = self.savedApps();
+        return _.some(apps, function (app) {
+            return app.build_broken();
+        });
+    });
     self.savedApps.subscribe(function () {
         var lastApp = self.savedApps()[0];
         self.lastAppVersion(lastApp ? lastApp.version() : -1);
