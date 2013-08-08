@@ -1,18 +1,23 @@
-import StringIO
-from optparse import make_option
-import shutil
+"""
+Bundle and minify bootstrap JS and compile Less into CSS.
+
+collectstatic must be run before, and make_hqstyle should only touch files in
+STATIC_ROOT -- it should NOT create or modify source files.
+
+If you find yourself wanting to add more complexity here, it's probably a sign
+that we should adopt a serious asset management system like django-compressor
+or django-pipeline.
+"""
 import os
+import re
 from django.core.management.base import BaseCommand
+from django.conf import settings
+
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import less
 
 class Command(BaseCommand):
     help = "Compiles all the files necessary for the UI of CommCare HQ from HQ Bootstrap. Make sure lessc and uglifyjs are installed"
 
-    less_files = [
-        "core/hqstyle-core",
-        "legacy/app_manager",
-        "legacy/core",
-        "mobile/c2/hqstyle-mobile-c2",
-    ]
     # NOTE: Order matters for the bootstrap js files.
     js_bootstrap = [
         "transition",
@@ -37,86 +42,66 @@ class Command(BaseCommand):
         "popout",
     ]
 
-    hq_bootstrap_src = "submodules/hqstyle-src/hq-bootstrap"
-    font_awesome_src = "submodules/hqstyle-src/font_awesome"
-    hqstyle_src = "submodules/hqstyle-src/hqstyle"
-    destination = "%s/static/hqstyle" % hqstyle_src
-
-    lessc = "lessc"
-    uglifyjs = "uglifyjs"
+    js_files = [
+        os.path.join(settings.STATIC_ROOT, 'hq-bootstrap', 'js',
+            'bootstrap-%s.js') % f for f in js_bootstrap
+    ] + [
+        os.path.join(settings.STATIC_ROOT, 'hqstyle', 'js', '_plugins',
+            'bootstrap-%s.js') % f for f in js_plugins
+    ]
 
     def handle(self, *args, **options):
-        print "\nBUILDING HQ BOOTSTRAP\n"
-        # some options to handle running commands directly from opt in the case of aliasing problems
-        if "direct-lessc" in args and "node" in args:
-            self.lessc = "node /opt/lessc/bin/lessc"
-            print "NOTICE: Using lessc as '%s'" % self.lessc
-        elif "direct-lessc" in args:
-            self.lessc = "nodejs /opt/lessc/bin/lessc"
-            print "NOTICE: Using lessc as '%s'" % self.lessc
-
-        if "direct-uglifyjs" in args:
-            self.uglifyjs = "/opt/UglifyJS/bin/uglifyjs"
-            print "NOTICE: Using uglifyjs as '%s'" % self.uglifyjs
-
         self.compile_core_js()
         self.compile_css()
-        self.copy_bootstrap_images()
-        self.copy_font_awesome()
 
     def compile_core_js(self):
-        print "\nCompiling HQStyle Core Javascript"
-        core_dest = "%s/js/core" % self.destination
-        all_js = open(os.path.join(core_dest, "bootstrap.js"), "w+")
-        print "-- HQ Bootstrap ----"
-        self.concat_files(all_js, self.js_bootstrap, self.hq_bootstrap_src, "js/bootstrap-%s.js")
-        print "-- HQ Style ----"
-        self.concat_files(all_js, self.js_plugins, self.hqstyle_src, "_plugins/bootstrap-%s.js")
-        all_js.close()
+        # This still requires you to recompile to see any changes in plugin
+        # files.  Should switch to django-compressor or something similar to
+        # avoid that.
+        print "Compiling HQ Bootstrap JS..."
 
-        self.compile_file(self.uglifyjs,
-            os.path.join(core_dest, "bootstrap.js"),
-            os.path.join(core_dest, "bootstrap.min.js"))
+        core_dest = os.path.join(settings.STATIC_ROOT, 'hqstyle', 'js', 'core')
 
-    def concat_files(self, all_files, file_names, source_dir, file_pattern):
-        for f in file_names:
-            print f
-            filestring = open(os.path.join(source_dir, file_pattern % f), "r").read()
-            all_files.write(filestring)
-            all_files.write("\n")
+        if not os.path.exists(core_dest):
+            os.makedirs(core_dest)
+
+        self.compile_file("uglifyjs", " ".join(self.js_files),
+                os.path.join(settings.STATIC_ROOT, 'hqstyle', 'js', 'core',
+                    'bootstrap-plugins.min.js'))
 
     def compile_css(self):
-        print "\nCompiling CSS from LESS Files in HQStyle"
-        for less_file in self.less_files:
-            self.compile_file(self.lessc,
-                os.path.join(self.hqstyle_src, "less/%s.less" % less_file),
-                os.path.join(self.destination, "css/%s.css" % less_file))
+        print "\nCompiling CSS from less template-tag references..."
 
-    def copy_bootstrap_images(self):
-        print "\nCopying Images from HQ Bootstrap"
-        source_folder = "%s/img" % self.hq_bootstrap_src
-        dest_folder = "%s/img" % self.destination
-        self.copy_all_files(source_folder, dest_folder)
+        # Can switch to django-compressor or something similar in the future if
+        # we need more robustness here.  Tried to use re.X but it didn't work.
+        pattern = re.compile(
+            "{%%\s*%s\s+(?:'|\")(?P<file>[^'\"]+)(?:'|\")" %
+            less.__name__)
+        less_references = set()
 
-    def copy_font_awesome(self):
-        print "\nCopying fonts for Font Awesome"
-        source_folder = "%s/font" % self.font_awesome_src
-        dest_folder = "%s/css/font" % self.destination
-        self.copy_all_files(source_folder, dest_folder)
+        for root, dirs, files in os.walk('.'):
+            if 'templates' not in root:
+                continue
+           
+            for file in files:
+                with open(os.path.join(root, file)) as f:
+                    for matchobj in re.finditer(pattern, f.read()):
+                        less_references.add(matchobj.group('file'))
+        
+        for less_file in less_references:
+            css_file = less_file.replace("/less/", "/css/")
+            css_file = re.sub("\.less$", ".css", css_file)
 
-    def copy_all_files(self, folder_src, folder_dest):
-        for the_file in os.listdir(folder_src):
-            file_src = os.path.join(folder_src, the_file)
-            file_dest = os.path.join(folder_dest, the_file)
-            try:
-                if os.path.isfile(file_src):
-                    shutil.copy(file_src, file_dest)
-                    print "copied %s" % the_file
-            except OSError:
-                print "Could not handle copying file from %s to %s." % (file_src, file_dest)
+            css_file_dir = os.path.join(
+                settings.STATIC_ROOT, os.path.dirname(css_file))
+            if not os.path.exists(css_file_dir):
+                os.makedirs(css_file_dir)
+            
+            self.compile_file("lessc",
+                os.path.join(settings.STATIC_ROOT, less_file),
+                os.path.join(settings.STATIC_ROOT, css_file))
 
     def compile_file(self, command, source, dest):
-        print "Running Command:"
         compile_command = "%(command)s %(source)s > %(dest)s" %\
                           {"command": command,
                            "source": source,

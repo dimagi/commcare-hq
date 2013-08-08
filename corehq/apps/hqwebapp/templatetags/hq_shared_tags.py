@@ -74,7 +74,9 @@ def static(url):
 def less(path, media=None):
 
     if not settings.DEBUG:
-        path = path.replace('/_less/', '/css/')
+        path = path.replace('/less/', '/css/')
+        if path.endswith('.less'):
+            path = path[:-3] + "css"
 
     data = {
         'media': media if media is not None else '',
