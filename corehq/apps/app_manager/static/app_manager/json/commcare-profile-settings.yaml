@@ -227,6 +227,6 @@
   values: ["Yes", "No"]
   value_names: ["Images", "Buttons"]
   default: "No"
-  contingent_default": [{"condition": "{features.sense}='true'", "value": "Yes"}]
+  contingent_default: [{"condition": "{features.sense}='true'", "value": "Yes"}]
   values_txt: "This value will set whether the login screen uses customizable icons for login and demo mode options or uses the standard buttons with labels."
   since: "2.8"
