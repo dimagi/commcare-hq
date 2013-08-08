@@ -35,6 +35,7 @@
     - hq.admin_password  # Admin Password
     - hq.show_user_registration  # Allow User Registration from Phone
     - properties.cc-send-procedure  # Send Data
+    - properties.cc-review-days  # Days for Review
     - properties.password_format  # Password Format
 
 - title: 'Java Phone User Interface Settings'
@@ -67,4 +68,3 @@
     - properties.restore-tolerance  # OTA Restore Tolerance (disabled)
     - features.users  # No Users Mode (disabled)
     - properties.loose_media  # Loose Media Mode (disabled)
-    - properties.cc-review-days  # Days for Review (disabled)
