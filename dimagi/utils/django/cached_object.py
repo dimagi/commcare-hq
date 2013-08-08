@@ -226,7 +226,7 @@ class CachedObject(object):
             return {}
 
     #retrieval methods
-    def get(self):
+    def get(self, **kwargs):
         return self._do_get_size(OBJECT_ORIGINAL)
 
     def _do_get_size(self, size_key):
@@ -265,8 +265,9 @@ class CachedImage(CachedObject):
     """
     Image specific operations added to Cached Object. Specifically resolution resizing
     """
-    def cache_image(self, image_stream, metadata):
+    def cache_put(self, image_stream, metadata):
         """
+        override cache_put to handle and set image streams
         Create a cached image
         For a given original sized image - cache it initially to speed up small size generation
         """
@@ -277,6 +278,20 @@ class CachedImage(CachedObject):
 
         rcache.set(self.stream_key(OBJECT_ORIGINAL), image_stream.read())
         rcache.set(self.meta_key(OBJECT_ORIGINAL), simplejson.dumps(image_meta.to_json()))
+
+    def get(self, size_key=OBJECT_ORIGINAL, **kwargs):
+        """
+        override get to allow for differing sizes
+        Return the stream of the cache_key and size_key you want
+        """
+        if not self.has_size(size_key):
+            can_size = self.can_size(size_key)
+            if can_size:
+                self.make_size(size_key)
+            else:
+                #if size is not possible, this will mean it's too large, return the original
+                size_key = OBJECT_ORIGINAL
+        return super(CachedImage, self)._do_get_size(size_key)
 
     def fetch_image(self, key):
         stream = self.rcache.get(self.stream_key(key))
@@ -297,19 +312,6 @@ class CachedImage(CachedObject):
                 else:
                     continue
             return None
-
-    def get_size(self, size_key):
-        """
-        Return the stream of the cache_key and size_key you want
-        """
-        if not self.has_size(size_key):
-            can_size = self.can_size(size_key)
-            if can_size:
-                self.make_size(size_key)
-            else:
-                #if size is not possible, this will mean it's too large, return the original
-                size_key = OBJECT_ORIGINAL
-        return super(CachedImage, self)._do_get_size(size_key)
 
 
     def can_size(self, target_size_key, source_size_key=OBJECT_ORIGINAL):
