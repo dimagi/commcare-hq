@@ -7003,7 +7003,7 @@ msgstr ""
 #: custom/reports/mc/reports/definitions.py:112
 #: custom/reports/mc/reports/definitions.py:151
 msgid "patients_given_pneumonia_meds"
-msgstr ""
+msgstr "Porcentagem de pacientes observados que foram prescritos medicamentos correctos para a pneumonia"
 
 #: custom/reports/mc/reports/definitions.py:116
 #: custom/reports/mc/reports/definitions.py:155
