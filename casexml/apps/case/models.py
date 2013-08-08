@@ -488,6 +488,22 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
         else:
             return None
 
+
+    @classmethod
+    def cache_object_if_needed(cls, size_key, cobject, case_id, attachment_key):
+        """
+        asdf
+        """
+        if not cobject.is_cached():
+            resp = cls.get_db().fetch_attachment(case_id, attachment_key, stream=True)
+            stream = StringIO(resp.read())
+            headers = resp.resp.headers
+            cobject.cache_put(stream, headers)
+        meta, stream = cobject.get_size(size_key)
+
+        return meta, stream
+
+
     @classmethod
     def fetch_case_image(cls, case_id, attachment_key, attachment_filename, filesize_limit=0, width_limit=0, height_limit=0, fixed_size=None):
         """
@@ -495,25 +511,21 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
         attachment_key is the case property of the attachment
         attachment filename is the filename of the original submission - full extension and all.
         """
-        do_constrain = False
-
         if fixed_size is not None:
             size_key = fixed_size
         else:
             size_key = OBJECT_ORIGINAL
 
         constraint_dict = {}
-        if filesize_limit or width_limit or height_limit:
-            do_constrain=True
-            if filesize_limit:
-                constraint_dict['content_length'] = filesize_limit
+        if filesize_limit:
+            constraint_dict['content_length'] = filesize_limit
 
-            if height_limit:
-                constraint_dict['height'] = filesize_limit
+        if height_limit:
+            constraint_dict['height'] = height_limit
 
-            if width_limit:
-                constraint_dict['width'] = width_limit
-            #do_constrain = False
+        if width_limit:
+            constraint_dict['width'] = width_limit
+        do_constrain = bool(constraint_dict)
 
         #if size key is None, then one of the limit criteria are set
         attachment_cache_key = "%(case_id)s_%(attachment)s_%(filename)s" % {
@@ -523,14 +535,9 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
         }
 
         cached_image = CachedImage(attachment_cache_key)
-        if not cached_image.is_cached():
-            resp = cls.get_db().fetch_attachment(case_id, attachment_key, stream=True)
-            stream = StringIO(resp.read())
-            headers = resp.resp.headers
-            cached_image.cache_image(stream, headers)
+        meta, stream = cls.cache_object_if_needed(size_key, cached_image, case_id, attachment_key)
 
         #now that we got it cached, let's check for size constraints
-        meta, stream = cached_image.get_size(size_key)
 
         if do_constrain:
             #check this size first
@@ -565,7 +572,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
 
 
     @classmethod
-    def fetch_case_attachment(cls, case_id, attachment_key, filesize_limit=0, fixed_size=None, **kwargs):
+    def fetch_case_attachment(cls, case_id, attachment_key, fixed_size=None, **kwargs):
         """
         Return (metadata, stream) information of best matching image attachment.
         TODO: This should be the primary case_attachment retrieval method, the image one is a silly separation of similar functionality
@@ -582,12 +589,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
         }
 
         cobject = CachedObject(attachment_cache_key)
-        if not cobject.is_cached():
-            resp = cls.get_db().fetch_attachment(case_id, attachment_key, stream=True)
-            stream = StringIO(resp.read())
-            headers = resp.resp.headers
-            cobject.cache_put(stream, headers)
-        meta, stream = cobject.get()
+        meta, stream = cls.cache_object_if_needed(size_key, cobject, case_id, attachment_key)
 
         return meta, stream
 
