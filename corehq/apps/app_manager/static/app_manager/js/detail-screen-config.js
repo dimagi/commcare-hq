@@ -357,17 +357,7 @@ var DetailScreenConfig = (function () {
             }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.DELETE_COLUMN);
 
             this.$sortLink = $('<a href="#">Sort by this</a>').click(function (e) {
-                var $row = $(this).closest('tr');
-                var labelString = '';
-                var $labels = $row.find('.detail-screen-field .label');
-                _.each($labels, function (label) {
-                    labelString += label.innerText + '/';
-                });
-                var field = $row.find('.detail-screen-field code').text();
-
-                field = labelString + field;
-
-                that.screen.config.sortRows.addSortRow(field, '', '');
+                that.screen.config.sortRows.addSortRow(that.field.ui.text(), '', '');
                 e.preventDefault();
                 e.stopImmediatePropagation();
             });
