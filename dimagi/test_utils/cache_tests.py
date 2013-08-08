@@ -63,7 +63,7 @@ class CachedObjectTests(TestCase):
 
         cimage = CachedImage("test_huge")
         metadata = {'content_type': 'image/png'}
-        cimage.cache_image(buffer, metadata)
+        cimage.cache_put(buffer, metadata)
 
         for size in IMAGE_SIZE_ORDERING:
             self.assertTrue(cimage.can_size(size))
@@ -87,7 +87,7 @@ class CachedObjectTests(TestCase):
 
         cimage = CachedImage("test_small")
         metadata = {'content_type': 'image/png'}
-        cimage.cache_image(buffer, metadata)
+        cimage.cache_put(buffer, metadata)
 
         smaller = IMAGE_SIZE_ORDERING[0:7]
         bigger = IMAGE_SIZE_ORDERING[7:-1] # skip the original

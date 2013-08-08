@@ -265,8 +265,9 @@ class CachedImage(CachedObject):
     """
     Image specific operations added to Cached Object. Specifically resolution resizing
     """
-    def cache_image(self, image_stream, metadata):
+    def cache_put(self, image_stream, metadata):
         """
+        override cache_put to handle and set image streams
         Create a cached image
         For a given original sized image - cache it initially to speed up small size generation
         """
