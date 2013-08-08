@@ -25,6 +25,7 @@ simple_type_mapper = {
     StringListProperty: dict(type="string"),
     DateTimeProperty: type_full_date(),
     DateProperty: type_full_date(),
+    DictProperty: {"type": "object", "dynamic": False},
     #TimeProperty: type_full_date,
 }
 
@@ -33,12 +34,6 @@ complex_type_mapper = {
     SchemaDictProperty: prop_subtype,
     SchemaProperty: prop_subtype,
 }
-
-conservative_types = {
-    DictProperty: {"type": "object", "dynamic": False}
-}
-
-
 
 
 def type_exact_match_string(prop_name, dual=True):
@@ -104,10 +99,15 @@ domain_special_types = {
 }
 
 user_special_types = {
-    "username": type_exact_match_string("name", dual=True),
+    "username": type_exact_match_string("username", dual=True),
 }
 
-def set_properties(schema_class, custom_types=default_special_types, nested_types=default_nested_types, init_dict=None):
+app_special_types = {
+    "name": type_exact_match_string("name", dual=True),
+    "profile": {"type": "object", "dynamic": True},
+}
+
+def set_properties(schema_class, dynamic=False, custom_types=default_special_types, nested_types=default_nested_types, init_dict=None):
     """
     Helper function to walk a schema_class's properties recursively and create a typed out mapping
     that can index well (specifically dict types and date time properties)
@@ -121,7 +121,7 @@ def set_properties(schema_class, custom_types=default_special_types, nested_type
         elif complex_type_mapper.has_key(prop_type.__class__):
             func = complex_type_mapper[prop_type.__class__]
             sub_types = custom_types.get("__sub_types", {}).get(prop_name)
-            props_dict[prop_name] = func(prop_type._schema, nested=prop_name in nested_types, dynamic=False, sub_types=sub_types)
+            props_dict[prop_name] = func(prop_type._schema, nested=prop_name in nested_types, dynamic=dynamic, sub_types=sub_types)
 
     if not props_dict.get('doc_type'):
         props_dict["doc_type"] = {"type": "string", "index": "not_analyzed"}

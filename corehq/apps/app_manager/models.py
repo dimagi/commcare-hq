@@ -1085,6 +1085,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     built_on = DateTimeProperty(required=False)
     build_comment = StringProperty()
     comment_from = StringProperty()
+    build_broken = BooleanProperty(default=False)
 
     # watch out for a past bug:
     # when reverting to a build that happens to be released
