@@ -13,22 +13,16 @@ var SortRow = function (field, type, direction) {
         window.sortRowSaveButton.fire('change');
     });
 
-    self.labelText = ko.computed(function () {
+    self.labelTextItems = ko.computed(function () {
         var splitField = self.field().split('/');
-        if (splitField.length === 2) {
-            return splitField[0];
-        } else {
-            return null;
-        }
+
+        splitField.pop(); // throw away last item (which is field text)
+        return splitField
     });
 
     self.fieldText = ko.computed(function () {
         var splitField = self.field().split('/');
-        if (splitField.length === 3) {
-            return splitField[1];
-        } else {
-            return splitField[0];
-        }
+        return splitField.pop();
     });
 
     self.ascendText = ko.computed(function () {
@@ -364,12 +358,14 @@ var DetailScreenConfig = (function () {
 
             this.$sortLink = $('<a href="#">Sort by this</a>').click(function (e) {
                 var $row = $(this).closest('tr');
-                var label = $row.find('.detail-screen-field .label').text();
+                var labelString = '';
+                var $labels = $row.find('.detail-screen-field .label');
+                _.each($labels, function (label) {
+                    labelString += label.innerText + '/';
+                });
                 var field = $row.find('.detail-screen-field code').text();
 
-                if (label) {
-                    field = label + '/' + field;
-                }
+                field = labelString + field;
 
                 that.screen.config.sortRows.addSortRow(field, '', '');
                 e.preventDefault();

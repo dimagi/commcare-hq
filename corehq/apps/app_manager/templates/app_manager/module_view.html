@@ -270,11 +270,13 @@
                                 </td>
 
                                 <td>
-                                    <span class="label label-info"
-                                          data-bind="text: labelText, visible: labelText()">
+                                    <!-- ko foreach: labelTextItems -->
+                                        <span class="label label-info"
+                                              data-bind="text: $data">
+                                        </span>
+                                        <span style="color: #DDD;">/</span>
+                                    <!-- /ko -->
                                     </span>
-                                    <span style="color: #DDD;"
-                                          data-bind="visible: labelText">/</span>
                                     <code data-bind="text: fieldText">
                                     </code>
                                 </td>
