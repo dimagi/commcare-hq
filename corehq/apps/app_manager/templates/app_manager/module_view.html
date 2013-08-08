@@ -44,7 +44,6 @@
                 parentSelect: {{ module.parent_select|JSON }}
             });
 
-            //todo: move this
             var parsedSortRows = JSON.parse({{ sortElements|JSON }});
             for (var i = 0; i < parsedSortRows.length; i++) {
                 detailScreenConfig.sortRows.addSortRow(
@@ -271,7 +270,12 @@
                                 </td>
 
                                 <td>
-                                    <code data-bind="text: field">
+                                    <span class="label label-info"
+                                          data-bind="text: labelText, visible: labelText()">
+                                    </span>
+                                    <span style="color: #DDD;"
+                                          data-bind="visible: labelText">/</span>
+                                    <code data-bind="text: fieldText">
                                     </code>
                                 </td>
 
