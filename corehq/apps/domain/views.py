@@ -110,6 +110,7 @@ class BaseProjectSettingsView(BaseDomainView):
                 couch_user=self.request.couch_user,
                 project=self.request.project
             ),
+            'is_project_settings': True,
         })
         return main_context
 
