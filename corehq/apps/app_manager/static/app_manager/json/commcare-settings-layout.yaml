@@ -3,7 +3,6 @@
   settings:
     - hq.name  # Name
     - hq.application_version # App Version (disabled)
-    - hq.secure_submissions
     # Application
 #    - hq.is_j2me
 #    - hq.is_odk
@@ -50,10 +49,11 @@
     - properties.ViewStyle  # Form Entry Style
     - properties.cc-user-mode  # User Login Mode
 
-- title: 'Advanced (Logging)'
+- title: 'Advanced'
   id: app-settings-advanced
   collapse: true
   settings:
+    - hq.secure_submissions
     - properties.logenabled  # Logging Enabled
     - properties.log_prop_weekly  # Weekly Log Sending Frequency
     - properties.log_prop_daily  # Daily Log Sending Frequency
