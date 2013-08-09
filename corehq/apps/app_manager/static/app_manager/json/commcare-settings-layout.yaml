@@ -48,6 +48,7 @@
     - hq.text_input  # Text Input
     - properties.ViewStyle  # Form Entry Style
     - properties.cc-user-mode  # User Login Mode
+    - properties.cc-login-images # Login Buttons
 
 - title: 'Advanced (Logging)'
   id: app-settings-advanced
