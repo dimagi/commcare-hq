@@ -17,7 +17,7 @@ from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, fo
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.couch.database import get_db
-from dimagi.utils.dates import DateSpan
+from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.timezones import utils as tz_utils
@@ -981,6 +981,9 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 5: "closed_by: %s AND closed_on: [%s TO %s]" % (owner_id, start_date, end_date), # cases closed
                 7: "opened_on: [* TO %s] AND NOT closed_on: [* TO %s]" % (end_date, start_date_sub1), # total cases
             }
+            if today_or_tomorrow(self.datespan.enddate):
+                search_strings[6] = "opened_on: [* TO %s] AND NOT closed_on: [* TO %s] AND modified_on [%s TO %s]" % \
+                                    (end_date, start_date_sub1, start_date, end_date), # inactive cases
 
             def create_case_url(index):
                 """
@@ -1052,7 +1055,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                     last_form_by_user.get(user["user_id"]) or NO_FORMS_TEXT,
                     int(creations_by_user.get(user["user_id"],0)),
                     int(closures_by_user.get(user["user_id"], 0)),
-                    numcell(active_cases),
+                    numcell(active_cases) if not today_or_tomorrow(self.datespan.enddate) else active_cases,
                     total_cases,
                     numcell((float(active_cases)/total_cases) * 100 if active_cases else 'nan', convert='float'),
                 ]))
