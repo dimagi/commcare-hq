@@ -767,15 +767,18 @@ def set_celery_supervisorconf():
     _rebuild_supervisor_conf_file('supervisor_couchdb_lucene.conf') #to be deprecated
 
     #in reality this also should be another machine if the number of listeners gets too high
-    _rebuild_supervisor_conf_file('supervisor_pillowtop.conf')
+    if env.environment not in ['preview']:
+        #preview environment should not run pillowtop and index stuff, just rely on what's on staging
+        _rebuild_supervisor_conf_file('supervisor_pillowtop.conf')
 
 
 
 
 @roles('django_celery', 'django_monolith')
 def set_sofabed_supervisorconf():
-    _rebuild_supervisor_conf_file('supervisor_sofabed.conf')
-    _rebuild_supervisor_conf_file('supervisor_sync_domains.conf')
+    if env.environment not in ['preview']:
+        _rebuild_supervisor_conf_file('supervisor_sofabed.conf')
+        _rebuild_supervisor_conf_file('supervisor_sync_domains.conf')
 
 @roles('django_app', 'django_monolith')
 def set_djangoapp_supervisorconf():
