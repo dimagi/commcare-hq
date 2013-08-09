@@ -840,7 +840,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
 
         DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
         def convert_date(date):
-            return datetime.datetime.strptime(date, DATE_FORMAT) if date else None
+            return datetime.datetime.strptime(date, DATE_FORMAT).date() if date else None
 
         return dict([(u["user_id"], convert_date(es_q(u["user_id"]))) for u in self.users_to_iterate])
 
@@ -1015,7 +1015,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
             )
 
         rows = []
-        NO_FORMS_TEXT = _('No forms submitted in time period')
+        NO_FORMS_TEXT = _('None')
         if self.view_by == 'groups':
             for group, users in self.users_by_group.iteritems():
                 group_name, group_id = tuple(group.split('|'))
