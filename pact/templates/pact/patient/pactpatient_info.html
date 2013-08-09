@@ -23,14 +23,14 @@
                         <th>DOB</th>
                         <td>{{ patient_doc.dob|date:"m/d/Y" }} ({{ patient_doc.dob|timesince }})</td>
                         <th>Gender</th>
-                        <td>{{ patient_doc.gender_display}}</td>_display
+                        <td>{{ patient_doc.gender_display}}</td>
                         <th>SSN</th>
                         <td>{{ patient_doc.ssn }}</td>
                     </tr>
 
                     <tr>
                         <th class="span3">Race</th>
-                        <td>{{ patient_doc.race_display}}</td>_display
+                        <td>{{ patient_doc.race_display}}</td>
                         <th class="span3">Latino</th>
                         <td>{% if  patient_doc.is_latino %}
                             Yes
@@ -45,7 +45,7 @@
                         <th>Primary HP</th>
                         <td><span class="label label-info">{{ patient_doc.hp }}</span></td>
                         <th>HP Status</th>
-                        <td><span class="label label-info">{{ patient_doc.hp_status_display }}</span></td>_display
+                        <td><span class="label label-info">{{ patient_doc.hp_status_display }}</span></td>
                         <th>DOT Status</th>
                         <td>
                             {% if patient_doc.is_dot %}
