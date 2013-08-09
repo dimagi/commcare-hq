@@ -20,7 +20,6 @@
   collapse: true
   settings:
     - features.sense  # CommCare Sense
-    - properties.cc-login-images # Login Icons Enabled
     - properties.cc-autoup-freq  # Auto Update Frequency
     - properties.unsent-number-limit  # Unsent Form Limit
     - properties.server-tether  # Sync Mode
@@ -34,6 +33,7 @@
   settings:
     - hq.build_spec  # CommCare Version
     - hq.platform  # J2ME Platform
+    - properties.cc-login-images # Login Icons Enabled
     - hq.admin_password  # Admin Password
     - hq.show_user_registration  # Allow User Registration from Phone
     - properties.cc-send-procedure  # Send Data
