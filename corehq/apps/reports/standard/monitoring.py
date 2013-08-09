@@ -796,6 +796,17 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
         ))
         return DataTablesHeader(*columns)
 
+    @property
+    def users_to_iterate(self):
+        if '_all' in self.group_ids:
+            from corehq.apps.groups.models import Group
+            ret = [util._report_user_dict(u) for u in util.user_list(self.domain)]
+            for r in ret:
+                r["group_ids"] = Group.by_user(r["user_id"], False)
+            return ret
+        else:
+            return self.combined_users
+
     def es_form_submissions(self, datespan=None, dict_only=False):
         datespan = datespan or self.datespan
         q = {"query": {
@@ -835,7 +846,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
         def convert_date(date):
             return datetime.datetime.strptime(date, DATE_FORMAT) if date else None
 
-        return dict([(u["user_id"], convert_date(es_q(u["user_id"]))) for u in self.combined_users])
+        return dict([(u["user_id"], convert_date(es_q(u["user_id"]))) for u in self.users_to_iterate])
 
     def es_case_queries(self, date_field, user_field='user_id', datespan=None, dict_only=False):
         datespan = datespan or self.datespan
@@ -1062,16 +1073,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 ])
 
         else:
-
-            def all_users():
-                from corehq.apps.groups.models import Group
-                ret = [util._report_user_dict(u) for u in util.user_list(self.domain)]
-                for r in ret:
-                    r["group_ids"] = Group.by_user(r["user_id"], False)
-                return ret
-
-            users_to_iterate = self.combined_users if '_all' not in self.group_ids else all_users()
-            for user in users_to_iterate:
+            for user in self.users_to_iterate:
                 inactive_cases = int(inactives_by_owner.get(user["user_id"], 0)) + \
                     sum([int(inactives_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
                 total_cases = int(totals_by_owner.get(user["user_id"], 0)) + \

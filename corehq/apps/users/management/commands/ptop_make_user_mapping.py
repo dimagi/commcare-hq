@@ -1,4 +1,5 @@
 from datetime import datetime
+import pprint
 from django.core.management.base import NoArgsCommand
 import sys
 import os
@@ -38,7 +39,7 @@ class Command(MappingOutputCommand):
             delattr(userpillow, '_calc_meta')
         output = []
         output.append('USER_INDEX="%s_%s"' % (userpillow.es_index_prefix, userpillow.calc_meta()))
-        output.append('USER_MAPPING=%s' % m)
+        output.append('USER_MAPPING=%s' % pprint.pformat(m))
         newcalc_index = "%s_%s" % (userpillow.es_index_prefix, userpillow.calc_meta())
         print "Writing new user index and mapping: %s" % output[0]
         with open(filepath, 'w') as outfile:
