@@ -21,7 +21,7 @@ from corehq.apps.domain.forms import DomainGlobalSettingsForm,\
     DomainMetadataForm, SnapshotSettingsForm, SnapshotApplicationForm, DomainDeploymentForm, DomainInternalForm
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
-from corehq.apps.hqwebapp.utils import BaseSectionPageView
+from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.orgs.models import Organization, OrgRequest, Team
 from corehq.apps.commtrack.util import all_sms_codes
 from corehq.apps.domain.forms import ProjectSettingsForm
