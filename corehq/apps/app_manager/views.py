@@ -412,6 +412,8 @@ def get_app_view_context(request, app):
     build_config = CommCareBuildConfig.fetch()
     version = app.application_version
     options = build_config.get_menu(version)
+    if not request.user.is_superuser:
+        options = [option for option in options if not option.superuser_only]
     options_labels = [option.get_label() for option in options]
     options_builds = [option.build.to_string() for option in options]
 

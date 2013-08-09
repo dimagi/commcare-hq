@@ -88,7 +88,7 @@ $(function() {
     <script type="text/html" id="location-template">
 
       <!-- header bar -->
-      <div class="loc_header" data-bind="if: name() != '_root', bind_element: null">
+      <div class="loc_header" data-bind="if: name() != '_root'">
         <a class="loc_edit btn btn-primary" data-bind="attr: { href: loc_edit_url(uuid()) }">Edit</a>
         <span data-bind="click: toggle, style: { cursor: (can_have_children() ? 'pointer' : 'default') }"> <!-- want to make entire row clickable, but overrides click on 'edit' button -->
           <span data-bind="if: can_have_children"><a class="label"><i data-bind="css: { 'icon-plus': !expanded(), 'icon-minus': expanded() }"></i></a></span>
