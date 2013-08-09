@@ -33,7 +33,6 @@
   settings:
     - hq.build_spec  # CommCare Version
     - hq.platform  # J2ME Platform
-    - properties.cc-login-images # Login Icons Enabled
     - hq.admin_password  # Admin Password
     - hq.show_user_registration  # Allow User Registration from Phone
     - properties.cc-send-procedure  # Send Data
@@ -51,6 +50,7 @@
     - hq.text_input  # Text Input
     - properties.ViewStyle  # Form Entry Style
     - properties.cc-user-mode  # User Login Mode
+    - properties.cc-login-images # Login Buttons
 
 - title: 'Advanced (Logging)'
   id: app-settings-advanced
