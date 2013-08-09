@@ -3,6 +3,7 @@ from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn
 from corehq.apps.reports.fields import AsyncDrillableField, GroupField, BooleanField
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 
 
 class ProvinceField(AsyncDrillableField):
@@ -90,6 +91,20 @@ class CareReport(SqlTabularReport,
         )
 
     @property
+    def headers(self):
+        header_columns = []
+        for idx, column in enumerate(self.columns):
+            if idx >= (len(self.columns) - len(self.report_columns)) and self.show_gender():
+                group = DataTablesColumnGroup(column.header)
+                group.add_column(DataTablesColumn("male"))
+                group.add_column(DataTablesColumn("female"))
+                header_columns.append(group)
+            else:
+                header_columns.append(DataTablesColumn(column.header))
+
+        return DataTablesHeader(*header_columns)
+
+    @property
     def columns(self):
         user = DatabaseColumn("User", SimpleColumn('user_id'), sortable=False)
         columns = [user]
@@ -108,21 +123,12 @@ class CareReport(SqlTabularReport,
             name = '%s_total' % name
             if len(column_attrs) == 2 or column_attrs[2] != 'SumColumn':
                 column = DatabaseColumn(text, SimpleColumn(name), sortable=False)
-                if self.show_gender():
-                    column = DatabaseColumn('%s (male)' % text, SimpleColumn(name), sortable=False)
-                    column2 = DatabaseColumn('%s (female)' % text, SimpleColumn(name, alias='%s_b' % name), sortable=False)
             else:
                 # if there are more than 2 values, the third is the column
                 # class override
                 column = DatabaseColumn(text, SumColumn(name), sortable=False)
-                if self.show_gender():
-                    column = DatabaseColumn('%s (male)' % text, SumColumn(name), sortable=False)
-                    column2 = DatabaseColumn('%s (female)' % text, SumColumn(name, alias='%s_b' % name), sortable=False)
 
             columns.append(column)
-            # hacky but double the column if we are sorting by gender
-            if self.show_gender():
-                columns.append(column2)
 
         return columns
 
@@ -191,10 +197,6 @@ class CareReport(SqlTabularReport,
             if not self.show_gender() and not self.show_age():
                 # discard the gender column from blank header hack
                 row.pop(0)
-
-            # discard duplicates that exist if showing gender
-            if self.show_gender():
-                row = row[::2]
 
             if self.show_age() and self.show_gender():
                 built_data[u][age_group][gender] = row
