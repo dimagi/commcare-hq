@@ -221,7 +221,7 @@
   values_txt: "When this many days have passed without the user syncing CommCare will trigger a warning"
   since: "2.4"
 
-- name: "Login Labels"
+- name: "Login Buttons"
   description: "Choose to label the login buttons with Icons or Text"
   id: "cc-login-images"
   values: ["Yes", "No"]
