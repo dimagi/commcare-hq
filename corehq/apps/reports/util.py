@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.contrib import messages
 import logging
 from corehq.apps.announcements.models import ReportAnnouncement
@@ -16,6 +16,7 @@ from django.http import Http404
 import pytz
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
+from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import json_request
 from django.conf import settings
@@ -386,3 +387,26 @@ def stream_qs(qs, batch_size=1000):
     for _, _, _, qs in batch_qs(qs, batch_size):
         for item in qs:
             yield item
+
+def datespan_from_beginning(domain, default_days, timezone):
+    now = datetime.utcnow()
+    def extract_date(x):
+        try:
+            def clip_timezone(datestring):
+                return datestring[:len('yyyy-mm-ddThh:mm:ss')]
+            return string_to_datetime(clip_timezone(x['key'][2]))
+        except Exception:
+            logging.error("Tried to get a date from this, but it didn't work: %r" % x)
+            return None
+    key = make_form_couch_key(domain)
+    startdate = get_db().view('reports_forms/all_forms',
+        startkey=key,
+        endkey=key+[{}],
+        limit=1,
+        descending=False,
+        reduce=False,
+        wrapper=extract_date,
+    ).one() #or now - timedelta(days=default_days - 1)
+    datespan = DateSpan(startdate, now, timezone=timezone)
+    datespan.is_default = True
+    return datespan

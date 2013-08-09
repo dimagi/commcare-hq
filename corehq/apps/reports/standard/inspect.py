@@ -27,6 +27,7 @@ from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.fields import SelectOpenCloseField, SelectMobileWorkerField, StrongFilterUsersField
 from corehq.apps.reports.generic import GenericTabularReport, ProjectInspectionReportParamsMixin, ElasticProjectInspectionReport
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
+from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.couch import get_cached_property, IncompatibleDocument
@@ -69,6 +70,10 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
             DataTablesColumn(_("Submit Time"), prop_name="form.meta.timeEnd"),
             DataTablesColumn(_("Form"), prop_name="form.@name"))
         return headers
+
+    @property
+    def default_datespan(self):
+        return datespan_from_beginning(self.domain, self.datespan_default_days, self.timezone)
 
     @property
     def es_results(self):
