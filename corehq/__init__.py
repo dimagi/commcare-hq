@@ -1,4 +1,4 @@
-from corehq.apps.hqadmin.reports import AdminUserReport
+from corehq.apps.hqadmin.reports import AdminUserReport, AdminAppReport
 from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
 import corehq.apps.receiverwrapper.reports as receiverwrapper
@@ -175,6 +175,7 @@ ADMIN_REPORTS = (
     (_('Domain Stats'), (
         AdminDomainStatsReport,
         AdminUserReport,
+        AdminAppReport,
     )),
 )
 
