@@ -3,6 +3,7 @@ from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
 from corehq.apps.appstore.views import fill_mapping_with_facets
+from corehq.apps.hqadmin.reports import AdminFacetedReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.dispatcher import BasicReportDispatcher, AdminReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport, ElasticTabularReport
@@ -25,9 +26,6 @@ class DomainStatsReport(GenericTabularReport):
 
     def get_domains(self):
         return getattr(self, 'domains', [])
-
-    def is_custom_param(self, param):
-        raise NotImplementedError
 
     def get_name_or_link(self, d, internal_settings=False):
         if not getattr(self, 'show_name', None):
@@ -86,14 +84,6 @@ class DomainStatsReport(GenericTabularReport):
                     dom.get("cp_n_web_users", _("Not yet calculated"))
                 ]
 
-    @property
-    def shared_pagination_GET_params(self):
-        ret = super(DomainStatsReport, self).shared_pagination_GET_params
-        for param in self.request.GET.iterlists():
-            if self.is_custom_param(param[0]):
-                for val in param[1]:
-                    ret.append(dict(name=param[0], value=val))
-        return ret
 
 class OrgDomainStatsReport(DomainStatsReport):
     override_permissions_check = True
@@ -242,48 +232,18 @@ def es_domain_query(params=None, facets=None, terms=None, domains=None, return_q
     return es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search', start_at, size, dict_only=return_q_dict)
 
 ES_PREFIX = "es_"
-class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
-    default_sort = None
+class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
     slug = "domains"
-    dispatcher = AdminReportDispatcher
-    base_template = "hqadmin/stats_report.html"
-    asynchronous = False
-    ajax_pagination = True
-    exportable = True
+    es_facet_list = DOMAIN_FACETS
+    es_facet_mapping = FACET_MAPPING
+    name = ugettext_noop('Project Space List')
+    facet_title = ugettext_noop("Project Facets")
+    search_for = ugettext_noop("projects...")
 
-    @property
-    def template_context(self):
-        ctxt = super(AdminDomainStatsReport, self).template_context
 
-        self.es_query()
-
-        ctxt.update({
-            'layout_flush_content': True,
-            'facet_map': self.es_facet_mapping,
-            'query_str': self.request.META['QUERY_STRING'],
-            'facet_prefix': ES_PREFIX,
-            'grouped_facets': True,
-        })
-        return ctxt
-
-    @property
-    def total_records(self):
-        return int(self.es_results['hits']['total'])
-
-    def es_query(self):
-        from corehq.apps.appstore.views import parse_args_for_es, generate_sortables_from_facets
-        if not self.es_queried:
-            self.es_params, _ = parse_args_for_es(self.request, prefix=ES_PREFIX)
-            self.es_facets = DOMAIN_FACETS
-            results = es_domain_query(self.es_params, self.es_facets, sort=self.get_sorting_block(),
-                start_at=self.pagination.start, size=self.pagination.count)
-            self.es_facet_mapping = fill_mapping_with_facets(FACET_MAPPING, results, self.es_params)
-            self.es_queried = True
-            self.es_response = results
-        return self.es_response
-
-    def is_custom_param(self, param):
-        return param.startswith(ES_PREFIX)
+    def es_query(self, params=None):
+        return es_domain_query(params, self.es_facet_list, sort=self.get_sorting_block(),
+                                  start_at=self.pagination.start, size=self.pagination.count)
 
     @property
     def headers(self):
@@ -314,12 +274,6 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
             DataTablesColumn(_("Using Call Center?"), prop_name="internal.using_call_center"),
         )
         return headers
-
-    @property
-    def export_table(self):
-        self.pagination.count = 1000000 # terrible hack to get the export to return all rows
-        self.show_name = True
-        return super(AdminDomainStatsReport, self).export_table
 
 
     @property
