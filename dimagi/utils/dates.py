@@ -108,6 +108,10 @@ def utcnow_sans_milliseconds():
     
 DEFAULT_DATE_FORMAT = "%Y-%m-%d"
 
+def today_or_tomorrow(date, inclusive=True):
+    today = datetime.datetime.combine(datetime.datetime.today(), datetime.time())
+    day_after_tomorrow = today + datetime.timedelta(days=2)
+    return today <= date + datetime.timedelta(days=1 if inclusive else 0) < day_after_tomorrow
 
 class DateSpan(object):
     """
@@ -291,10 +295,8 @@ class DateSpan(object):
         if self.startdate.day == 1 and (self.enddate + datetime.timedelta(days=1)).day == 1:
             return "%s %s" % (month_name[self.startdate.month], self.startdate.year)
 
-        # if the end date is today or tomorrow, use "last N days syntax"  
-        today = datetime.datetime.combine(datetime.datetime.today(), datetime.time())
-        day_after_tomorrow = today + datetime.timedelta(days=2)
-        if today <= self.enddate + datetime.timedelta(days=(1 if self.inclusive else 0)) < day_after_tomorrow:
+        # if the end date is today or tomorrow, use "last N days syntax"
+        if today_or_tomorrow(self.enddate, self.inclusive):
             return "last %s days" % ((self.enddate - self.startdate).days + (1 if self.inclusive else 0))
         
         return "%s to %s" % (self.startdate.strftime(self.format), 
