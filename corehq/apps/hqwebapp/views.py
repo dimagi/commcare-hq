@@ -408,15 +408,10 @@ def unsubscribe(request, user_id):
     return HttpResponseRedirect(reverse('commcare_user_account', args=[domain, user_id]))
 
 
-class BaseSectionPageView(TemplateView):
+class BasePageView(TemplateView):
     name = None  # name of the view used in urls
-    page_title = None
-    section_name = ""
-    template_name = "hqwebapp/base_section.html"
-
-    @property
-    def section_url(self):
-        raise NotImplementedError
+    page_title = None  # what shows up in the <title>
+    template_name = 'hqwebapp/base_page.html'
 
     @property
     def page_name(self):
@@ -444,20 +439,16 @@ class BaseSectionPageView(TemplateView):
     @property
     def main_context(self):
         """
-            The shared context for all the pages across this section.
+            The shared context for rendering this page.
         """
         return {
-            'section': {
-                'name': self.section_name,
-                'url': self.section_url,
-                },
             'current_page': {
                 'name': self.page_name,
                 'title': self.page_title,
                 'url': self.page_url,
                 'parents': self.parent_pages,
-                },
-            }
+            },
+        }
 
     @property
     def page_context(self):
@@ -467,7 +458,7 @@ class BaseSectionPageView(TemplateView):
         raise NotImplementedError("This should return a dict.")
 
     def get_context_data(self, **kwargs):
-        context = super(BaseSectionPageView, self).get_context_data(**kwargs)
+        context = super(BasePageView, self).get_context_data(**kwargs)
         context.update(self.main_context)
         context.update(self.page_context)
         return context
@@ -477,3 +468,23 @@ class BaseSectionPageView(TemplateView):
             Returns a response with a template rendered with the given context.
         """
         return render(self.request, self.template_name, context)
+
+
+class BaseSectionPageView(BasePageView):
+    section_name = ""
+    template_name = "hqwebapp/base_section.html"
+
+    @property
+    def section_url(self):
+        raise NotImplementedError
+
+    @property
+    def main_context(self):
+        context = super(BaseSectionPageView, self).main_context
+        context.update({
+            'section': {
+                'name': self.section_name,
+                'url': self.section_url,
+            }
+        })
+        return context

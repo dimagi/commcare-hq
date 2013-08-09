@@ -1,0 +1,24 @@
+{% extends 'hqwebapp/centered.html' %}
+{% load hq_shared_tags %}
+
+{% block title %}{{ section.name }}{% if current_page.title %}: {{ current_page.title }}{% endif %}{% endblock %}
+
+{% block centered-content %}
+    {% if current_page.parents %}
+    <ul class="breadcrumb">
+        {% for parent in current_page.parents %}
+            <li><a href="{{ parent.url }}">{{ parent.name }}</a> <span class="divider">&gt;</span></li>
+        {% endfor %}
+        {% if current_page.name %}
+        <li class="active">
+            <a href="{{ current_page.url }}">{{ current_page.name }}</a>
+        </li>
+        {% endif %}
+    </ul>
+    {% endif %}
+    <div class="page-header">
+        <h1>{{ current_page.name }}</h1>
+    </div>
+    {% block page_content %}
+    {% endblock %}
+{% endblock %}
