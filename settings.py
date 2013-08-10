@@ -73,6 +73,8 @@ STATICFILES_FINDERS = (
 
 STATICFILES_DIRS = (
     ('formdesigner', os.path.join(FILEPATH, 'submodules', 'formdesigner')),
+    ('hq-bootstrap', os.path.join(FILEPATH, 'submodules', 'hq-bootstrap')),
+    ('font_awesome', os.path.join(FILEPATH, 'submodules', 'font_awesome')),
 )
 
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")

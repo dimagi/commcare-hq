@@ -5,7 +5,7 @@
 
 {% block js %}
     <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
-    <script src="/static/hqstyle/js/core/bootstrap.min.js"></script>
+    {% load 'hqwebapp/partials/bootstrap-js.html' %}
     {{ block.super }}
 {% endblock %}
 
@@ -22,7 +22,7 @@
 {% endblock %}
 
 {% block reportcontent %}
-    <link rel="stylesheet" href="{% static 'hqstyle/css/core/hqstyle-core.css' %}"/>
+    {% less 'hqstyle/less/core/hqstyle-core.less' %}
 {{ block.super }}
 {% endblock %}
 

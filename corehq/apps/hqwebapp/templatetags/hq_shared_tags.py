@@ -59,14 +59,34 @@ try:
     from resource_versions import resource_versions
 except (ImportError, SyntaxError):
     resource_versions = {}
+
 @register.simple_tag
 def static(url):
     resource_url = url
     version = resource_versions.get(resource_url)
     url = settings.STATIC_URL + url
+
     if version:
         url += "?version=%s" % version
     return url
+
+@register.simple_tag
+def less(path, media=None):
+
+    if not settings.DEBUG:
+        path = path.replace('/less/', '/css/')
+        if path.endswith('.less'):
+            path = path[:-4] + "css"
+
+    data = {
+        'media': media if media is not None else '',
+        'href': static(path),
+        'rel': 'stylesheet/less' if settings.DEBUG else 'stylesheet'
+    }
+
+    fmt = "<link rel='%(rel)s' type='text/css' href='%(href)s' %(media)s/>"
+    return mark_safe(fmt % data)
+
 
 @register.simple_tag
 def get_report_analytics_tag(request):

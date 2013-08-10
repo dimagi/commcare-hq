@@ -4,7 +4,7 @@
 <html>
 <head>
     <title>{% block title %}CommCareHQ Mobile{% endblock %}</title>
-    <link rel="stylesheet" media="screen" href="{% static 'hqstyle/css/mobile/c2/hqstyle-mobile-c2.css' %}"/>
+    {% less 'hqstyle/less/mobile/c2/hqstyle-mobile-c2.css' 'screen' %}
     <link rel="shortcut icon" href="{% static 'hqwebapp/img/favicon2.png' %}" />
 {% block head %}{% endblock %}
 </head>

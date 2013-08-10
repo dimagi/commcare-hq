@@ -106,3 +106,9 @@
 [submodule "submodules/care-benin-reports"]
 	path = submodules/care-benin-reports
 	url = git://github.com/dimagi/care-benin-reports.git
+[submodule "submodules/font_awesome"]
+	path = submodules/font_awesome
+	url = git@github.com:dimagi/Font-Awesome.git
+[submodule "newbootstrap"]
+	path = submodules/hq-bootstrap
+	url = git@github.com:dimagi/hq-bootstrap.git
