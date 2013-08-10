@@ -5,7 +5,7 @@
 
 {% block js %}
     <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
-    <script src="{% static 'static/hqstyle/js/core/bootstrap-plugins.min.js' %}"></script>
+    {% load 'hqwebapp/partials/bootstrap-js.html' %}
     {{ block.super }}
 {% endblock %}
 

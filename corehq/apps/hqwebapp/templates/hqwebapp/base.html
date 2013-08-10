@@ -291,27 +291,8 @@
         {% endblock %}
         </div>
         <!--Begin javascript -->
-        {% if debug %}
-        <script src="{% static 'hq-bootstrap/js/bootstrap-transition.js' %}"></script>
-        <script src="{% static 'hq-bootstrap/js/bootstrap-alert.js' %}"></script>
-        <script src="{% static 'hq-bootstrap/js/bootstrap-button.js' %}"></script>
-        <script src="{% static 'hq-bootstrap/js/bootstrap-carousel.js' %}"></script>
-        <script src="{% static 'hq-bootstrap/js/bootstrap-collapse.js' %}"></script>
-        <script src="{% static 'hq-bootstrap/js/bootstrap-dropdown.js' %}"></script>
-        <script src="{% static 'hq-bootstrap/js/bootstrap-modal.js' %}"></script>
-        <script src="{% static 'hq-bootstrap/js/bootstrap-tooltip.js' %}"></script>
-        <script src="{% static 'hq-bootstrap/js/bootstrap-popover.js' %}"></script>
-        <script src="{% static 'hq-bootstrap/js/bootstrap-scrollspy.js' %}"></script>
-        <script src="{% static 'hq-bootstrap/js/bootstrap-tab.js' %}"></script>
-        <script src="{% static 'hq-bootstrap/js/bootstrap-typeahead.js' %}"></script>
-        <script src="{% static 'hq-bootstrap/js/bootstrap-affix.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/lib/bootstrap/bootstrap-combobox.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/lib/bootstrap/bootstrap-multi-typeahead.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/lib/bootstrap/bootstrap-hoverdropdown.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/lib/bootstrap/bootstrap-popout.js' %}"></script>
-        {% else %}
-        <script src="{% static 'hqstyle/js/core/bootstrap-plugins.min.js' %}"></script>
-        {% endif %}
+
+        {% include 'hqwebapp/partials/bootstrap-js.html' %}
 
         <script src="{% static 'hqstyle/js/jquery/plugins/jquery.form.js' %}"></script>
 
