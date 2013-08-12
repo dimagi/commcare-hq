@@ -14,6 +14,22 @@
 {% block js-inline %} {{ block.super }}
 <script>
     $(function () {
+        var activeTabCookie = 'active_tab',
+                last_active_tab = $.cookie(activeTabCookie);
+        if(last_active_tab) {
+            $(last_active_tab).addClass('active');
+            $('#user-settings-tabs a[href="'+last_active_tab+'"]').parent().addClass('active');
+        } else {
+            var first_tab = $('#user-settings-tabs a[data-toggle="tab"]').first();
+            first_tab.parent().addClass('active');
+            $(first_tab.attr('href')).addClass('active');
+        }
+        $('#user-settings-tabs a[data-toggle="tab"]').on('shown', function (e) {
+            $.cookie(activeTabCookie, $(this).attr('href'),
+                    {path: '{{ request.path }}',
+                    expires: 1});
+        });
+
         var customDataEditor;
 
         function handleChange() {
@@ -87,7 +103,7 @@
 {% endblock %}
 
 {% block main_column %}
-    <ul class="nav nav-tabs" id="project-settings-tabs">
+    <ul class="nav nav-tabs" id="user-settings-tabs">
         <li><a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a></li>
         <li><a href="#user-data" data-toggle="tab">{% trans "Custom Registration Data" %}</a></li>
         {% if commtrack %}
