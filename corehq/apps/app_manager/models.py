@@ -6,6 +6,7 @@ import logging
 import hashlib
 import random
 import json
+from corehq.apps.app_manager.commcare_settings import check_condition
 import langcodes
 import types
 import re
@@ -2055,6 +2056,18 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def get_by_xmlns(cls, domain, xmlns):
         r = get_db().view('exports_forms/by_xmlns', key=[domain, {}, xmlns], group=True).one()
         return cls.get(r['value']['app']['id']) if r and 'app' in r['value'] else None
+
+    def get_profile_setting(self, s_type, s_id):
+        setting = self.profile.get(s_type, {}).get(s_id)
+        if setting is not None:
+            return setting
+        yaml_setting = commcare_settings.SETTINGS_LOOKUP[s_type][s_id]
+        for contingent in yaml_setting.get("contingent_default", []):
+            if check_condition(self, contingent["condition"]):
+                setting = contingent["value"]
+        if setting is not None:
+            return setting
+        return yaml_setting.get("default")
 
 
 class RemoteApp(ApplicationBase):
