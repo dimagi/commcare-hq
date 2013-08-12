@@ -13,19 +13,21 @@ from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadReque
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
 from django.views.decorators.cache import cache_page
+from django.views.generic import FormView
 from django.template.defaultfilters import yesno
 from django.contrib import messages
 from django.conf import settings
 from restkit import Resource
 from django.core import cache
 from django.utils import html
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.core import management
 
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.app_manager.util import get_settings_values
 from corehq.apps.hqadmin.models import HqDeploy
-from corehq.apps.hqadmin.forms import EmailForm
+from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index, check_xform_index
@@ -857,3 +859,23 @@ def run_command(request):
     output_buf.close()
 
     return json_response({"success": True, "output": output})
+
+
+class FlagBrokenBuilds(FormView):
+    template_name = "hqadmin/flag_broken_builds.html"
+    form_class = BrokenBuildsForm
+
+    @method_decorator(require_superuser)
+    def dispatch(self, *args, **kwargs):
+        return super(FlagBrokenBuilds, self).dispatch(*args, **kwargs)
+
+    def form_valid(self, form):
+        db = ApplicationBase.get_db()
+        build_jsons = db.all_docs(keys=form.build_ids, include_docs=True)
+        docs = []
+        for doc in [build_json['doc'] for build_json in build_jsons.all()]:
+            if doc.get('doc_type') in ['Application', 'RemoteApp']:
+                doc['build_broken'] = True
+                docs.append(doc)
+        db.bulk_save(docs)
+        return HttpResponse("posted!")

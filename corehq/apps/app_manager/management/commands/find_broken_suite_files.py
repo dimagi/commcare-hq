@@ -24,8 +24,9 @@ def find_broken_suite_files(start, end):
             try:
                 suite_xml.validate_suite(suite)
             except suite_xml.SuiteValidationError as error:
-                build = db.get(build_id)
+                pass
         if error:
+            build = db.get(build_id)
             yield '%s\t%s\t%s\t%s\t%s\n' % (
                 build.get('built_on'),
                 build.get('domain'),

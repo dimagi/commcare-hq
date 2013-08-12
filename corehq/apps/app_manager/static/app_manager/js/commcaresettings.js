@@ -201,6 +201,21 @@ function CommcareSettings(options) {
         });
     });
 
+    // set value to computed default whenever a contingent variable changes
+    _(self.settings).each(function (setting) {
+        var i, condition, _case;
+        for (i = 0; i < setting.contingent_default.length; i += 1) {
+            _case = setting.contingent_default[i];
+            condition = self.parseCondition(_case.condition);
+            var j
+            for (j = 0; j < condition.settings.length; j += 1) {
+                condition.settings[j].value.subscribe(function() {
+                    setting.value(setting.computeDefault());
+                });
+            }
+        }
+    });
+
     self.serialize = ko.computed(function () {
         var blob = {};
         _(self.settings).each(function (setting) {

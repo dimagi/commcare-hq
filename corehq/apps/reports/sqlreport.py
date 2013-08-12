@@ -129,6 +129,7 @@ class AggregateColumn(Column):
             kwargs['sort_type'] = DTSortType.NUMERIC
             format_fn = format_fn or format_data
 
+        self.header = header
         self.header_group = kwargs.pop('header_group', None)
         self.data_tables_column = DataTablesColumn(header, **kwargs)
         if self.header_group:

@@ -1084,6 +1084,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     built_on = DateTimeProperty(required=False)
     build_comment = StringProperty()
     comment_from = StringProperty()
+    build_broken = BooleanProperty(default=False)
 
     # watch out for a past bug:
     # when reverting to a build that happens to be released
@@ -1734,16 +1735,26 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return s
 
     def create_profile(self, is_odk=False, with_media=False, template='app_manager/profile.xml'):
+        self__profile = self.profile
         app_profile = defaultdict(dict)
-        app_profile.update(self.profile)
-        # the following code is to let HQ override CommCare defaults
-        # impetus: Weekly Logging should be Short (HQ override) instead of Never (CommCare default)
-        # setting.default is assumed to also be the CommCare default unless there's a setting.commcare_default
+
         for setting in commcare_settings.SETTINGS:
-            type = setting['type']
-            if type in ('properties', 'features') and setting['id'] not in app_profile[type]:
+            setting_type = setting['type']
+            setting_id = setting['id']
+
+            if setting_type not in ('properties', 'features'):
+                setting_value = None
+            elif setting_id not in self__profile.get(setting_type, {}):
                 if 'commcare_default' in setting and setting['commcare_default'] != setting['default']:
-                    app_profile[type][setting['id']] = setting['default']
+                    setting_value = setting['default']
+                else:
+                    setting_value = None
+            else:
+                setting_value = self__profile[setting_type][setting_id]
+            if setting_value:
+                app_profile[setting_type][setting_id] = setting_value
+            # assert that it gets explicitly set once per loop
+            del setting_value
 
         if self.case_sharing:
             app_profile['properties']['server-tether'] = 'sync'

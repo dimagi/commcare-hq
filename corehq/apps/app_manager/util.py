@@ -150,7 +150,7 @@ def get_settings_values(app):
         for attr in app.properties() if not hasattr(app[attr], 'pop')
     ])
     if getattr(app, 'use_custom_suite', False):
-        hq_settings.update({'custom_suite': app.custom_suite})
+        hq_settings.update({'custom_suite': getattr(app, 'custom_suite', None)})
 
     hq_settings['build_spec'] = app.build_spec.to_string()
     # the admin_password hash shouldn't be sent to the client
