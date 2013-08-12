@@ -79,13 +79,13 @@
                 {% else %}
                     {{ user.username }}
                 {% endif %}
-                <div class="user-role">
+            </li>
+            <li class="nav-header nav-header-role">
                 {% with request.couch_user.role_label.strip as role %}
                     {% if role %}
                         {{ role }}
                     {% endif %}
                 {% endwith %}
-                </div>
             </li>
             <li><a href="{% url my_account_settings %}"><i class="icon-user"></i> {% trans 'My Account Settings' %}</a></li>
             {% if domain %}
