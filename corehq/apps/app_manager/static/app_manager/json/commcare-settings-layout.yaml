@@ -20,7 +20,6 @@
   collapse: true
   settings:
     - features.sense  # CommCare Sense
-    - properties.cc-login-images # Login Icons Enabled
     - properties.cc-autoup-freq  # Auto Update Frequency
     - properties.unsent-number-limit  # Unsent Form Limit
     - properties.server-tether  # Sync Mode
@@ -50,6 +49,7 @@
     - hq.text_input  # Text Input
     - properties.ViewStyle  # Form Entry Style
     - properties.cc-user-mode  # User Login Mode
+    - properties.cc-login-images # Login Buttons
 
 - title: 'Advanced (Logging)'
   id: app-settings-advanced
