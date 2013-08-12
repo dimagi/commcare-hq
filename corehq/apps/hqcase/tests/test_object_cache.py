@@ -10,7 +10,8 @@ from corehq.apps.domain.models import Domain
 
 from corehq.apps.users.models import WebUser
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests import TEST_CASE_ID, BaseCaseMultimediaTest, TEST_DOMAIN, MEDIA_FILES
+from casexml.apps.case.tests import TEST_CASE_ID, BaseCaseMultimediaTest, MEDIA_FILES, TEST_DOMAIN
+from couchforms.models import XFormInstance
 
 
 TEST_USER = 'case_attachment@hqtesting.com'
@@ -27,6 +28,10 @@ class CaseObjectCacheTest(BaseCaseMultimediaTest):
         self.user = WebUser.create(TEST_DOMAIN, TEST_USER, TEST_PASSWORD)
         self.user.set_role(self.domain.name, 'admin')
         self.user.save()
+        for item in CommCareCase.view("case/by_user", include_docs=True, reduce=False).all():
+            item.delete()
+        for item in XFormInstance.view("couchforms/by_xmlns", include_docs=True, reduce=False).all():
+            item.delete()
         time.sleep(1)
 
     def tearDown(self):
@@ -79,11 +84,4 @@ class CaseObjectCacheTest(BaseCaseMultimediaTest):
             self.assertNotEqual(orig_filename, os.path.split(url[-1]))
             self.assertEqual(http.urlquote(orig_filename), os.path.split(url)[-1])
             #verify that the url filename is escaped
-
-
-
-
-        pass
-
-
 
