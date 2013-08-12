@@ -33,10 +33,7 @@ def lookup_age_group_from_form_id(form_id):
     case = CommCareCase.get_by_xform_id(form_id).first()
 
     #TODO property handle invalid age data
-    try:
-        age = int(case.patient_age)
-    except Exception:
-        age = 0
+    age = int(case.patient_age)
 
     if age < 15:
         return 0
@@ -47,7 +44,10 @@ def lookup_age_group_from_form_id(form_id):
 
 def lookup_gender_from_form_id(form_id):
     case = CommCareCase.get_by_xform_id(form_id).first()
-    return case.gender
+    if case.gender in ['male', 'female']:
+        return case.gender
+    else:
+        raise Exception
 
 
 get_user_id = lambda form: form.metadata.userID
@@ -201,11 +201,17 @@ class CareSAFluff(fluff.IndicatorDocument):
     )
 
     #1m
-    # TODO ENABLE
-    #couple_tests = xcalculators.FilteredFormPropertyCalculator(
-        #xmlns=HCT_XMLNS,
-        #indicator_calculator=xcalculators.IntegerPropertyReference('form/couple_number'),
-    #)
+    couple_tests = xcalculators.FilteredFormPropertyCalculator(
+        xmlns=HCT_XMLNS,
+        indicator_calculator=xcalculators.IntegerPropertyReference('form/couple_number'),
+    )
+
+    #1n (currently expected to duplicate 1b
+    hiv_community = xcalculators.FilteredFormPropertyCalculator(
+        xmlns=HCT_XMLNS,
+        property_path='form/hiv_tested',
+        property_value='yes',
+    )
 
     #2a
     deceased = xcalculators.FilteredFormPropertyCalculator(
@@ -215,13 +221,14 @@ class CareSAFluff(fluff.IndicatorDocument):
     )
 
     #2b TODO
+    #hbc visit date >= today - 90
     #lost_to_followup = xcalculators.FilteredFormPropertyCalculator(
         #xmlns=HBC_XMLNS,
         #property_path='form/visit_date',
         #property_value='90',
     #)
 
-    #2c TODO
+    #2c TODO not in form
 
     #2d
     tb_treatment_completed = xcalculators.FilteredFormPropertyCalculator(
@@ -230,11 +237,23 @@ class CareSAFluff(fluff.IndicatorDocument):
         property_value='completed_treatment',
     )
 
-    #2e TODO
+    #2e
+    #HBC>>visit_intervention = clinical_support and any other response
+    received_cbc = xcalculators.FilteredFormPropertyCalculator(
+        xmlns=HBC_XMLNS,
+        property_path='form/visit_intervention', # TODO verify this
+        operator=xcalculators.ANY,
+    )
 
-    #2f TODO
+    #2f
+    existing_cbc = xcalculators.FormANDCalculator(
+        [received_cbc, internal_existing_patient]
+    )
 
-    #2g TODO
+    #2g
+    new_hiv_cbc = xcalculators.FormANDCalculator(
+        [received_cbc, internal_new_patient]
+    )
 
     #2h
     internal_on_ipt = xcalculators.FilteredFormPropertyCalculator(
@@ -291,6 +310,8 @@ class CareSAFluff(fluff.IndicatorDocument):
         indicator_calculator=xcalculators.IntegerPropertyReference('form/number_family', lambda x: x-1),
     )
 
+    #2j NOT IN FORM
+
     #3a
     hiv_pos_enrolled = xcalculators.FilteredFormPropertyCalculator(
         xmlns=IACT_XMLNS,
@@ -310,6 +331,7 @@ class CareSAFluff(fluff.IndicatorDocument):
         xmlns=IACT_XMLNS,
         property_path='form/session_no',
         property_value='session_5',
+        operator=xcalculators.IN,
     )
 
     #3d TODO CASE
@@ -338,8 +360,16 @@ class CareSAFluff(fluff.IndicatorDocument):
     iact_participant_arv = xcalculators.FormANDCalculator(
         [internal_iact_not_complete, internal_on_arv]
     )
-    #3j...n TODO
 
+    #3j...m TODO
+
+    #3n
+    iact_support_groups = xcalculators.FilteredFormPropertyCalculator(
+        xmlns=IACT_XMLNS,
+        property_path='form/last_session',
+        property_value=set(['session_1', 'session_2', 'session_3', 'session_4', 'session_5', 'session_6']),
+        operator=xcalculators.IN,
+    )
 
     class Meta:
         app_label = 'care_sa'

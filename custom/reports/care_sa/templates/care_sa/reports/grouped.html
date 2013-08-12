@@ -14,14 +14,16 @@
             <tr style="background-color: #3a87ad">
                 {% if group.row_data %}
                     <td colspan="{{ group.total_width }}">Total:</td>
-                {% endif %}
-
-                {% if group.row_data %}
                     {% for col in group.row_data %}
                         {% include 'reports/async/partials/tabular_cell.html' %}
                     {% endfor %}
                 {% else %}
-                    <td colspan="{{ report_table.headers.header|length }}"></td>
+                    {% if group.gender %}
+                        <td colspan="{{ report_table.headers.header|length }}"></td>
+                        <td colspan="{{ report_table.headers.header|length }}"></td>
+                    {% else %}
+                        <td colspan="{{ report_table.headers.header|length }}"></td>
+                    {% endif %}
                 {% endif %}
             </tr>
         {% else %}
@@ -31,10 +33,6 @@
                 {% ifequal group.gender 'no_grouping' %}
                     <td>{% trans "All genders and ages" %}</td>
                 {% else %}
-                    {% if group.gender %}
-                        <td></td>
-                    {% endif %}
-
                     {% if group.age_display %}
                         <td>{{ group.age_display }}</td>
                     {% endif %}
