@@ -17,19 +17,9 @@ function (doc) {
 
         var opened_on = form.meta.timeEnd;
 
-        var village = "" + (isNaN(form.activity_village) ? form.activity_village : parseInt(form.activity_village, 10))
+        var village = "" + (isNaN(form.activity_village) ? form.activity_village : parseInt(form.activity_village, 10));
 
-        emit_array([doc.domain, form.activity_state, form.demo_type], [opened_on], data);
-        emit_array([doc.domain, form.activity_state], [opened_on], data);
-        emit_array([doc.domain, form.activity_state, form.activity_district, form.demo_type], [opened_on], data);
-        emit_array([doc.domain, form.activity_state, form.activity_district], [opened_on], data);
-        emit_array([doc.domain, form.activity_state, form.activity_district, form.activity_block, form.demo_type],
-            [opened_on], data);
-        emit_array([doc.domain, form.activity_state, form.activity_district, form.activity_block],
-            [opened_on], data);
         emit_array([doc.domain, form.activity_state, form.activity_district, form.activity_block, village,
                 form.demo_type], [opened_on], data);
-        emit_array([doc.domain, form.activity_state, form.activity_district, form.activity_block, village],
-            [opened_on], data);
     }
 }
