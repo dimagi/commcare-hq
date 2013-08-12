@@ -68,4 +68,3 @@
     - properties.restore-tolerance  # OTA Restore Tolerance (disabled)
     - features.users  # No Users Mode (disabled)
     - properties.loose_media  # Loose Media Mode (disabled)
-    - properties.cc-review-days  # Days for Review (disabled)
