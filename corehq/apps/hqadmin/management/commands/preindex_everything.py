@@ -5,6 +5,7 @@ from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.core.mail import mail_admins
 from django.conf import settings
+from dimagi.utils import gitinfo
 import gevent
 
 POOL_SIZE = getattr(settings, 'PREINDEX_POOL_SIZE', 8)
@@ -31,9 +32,23 @@ class Command(BaseCommand):
 
         email = options['mail']
 
+        root_dir = settings.FILEPATH
+        git_snapshot = gitinfo.get_project_snapshot(root_dir, submodules=False, log_count=1)
+        head = git_snapshot['commits'][0]
+
+        commit_info = "\nCommit Info:\nOn Branch %s, SHA: %s" % (git_snapshot['current_branch'], head['sha'])
+
+        pre_message = list()
+        pre_message.append("Heads up, %s has started preindexing")
+        pre_message.append(commit_info)
+
+        if email:
+            mail_admins(" HQAdmin preindex_everything started", '\n'.join(pre_message))
+
         def couch_preindex():
-            call_command('sync_prepare_couchdb_multi', num_pool, username, '--no-mail')
+            call_command('sync_prepare_couchdb_multi', num_pool, username, **{'no_mail': True})
             print "Couch preindex done"
+
 
         def pillow_preindex():
             call_command('ptop_preindex')
@@ -43,14 +58,17 @@ class Command(BaseCommand):
 
         gevent.joinall(jobs)
 
-        message = "Preindex results:\n"
-        message += "\tInitiated by: %s\n" % username
+        message = list()
+        message.append("Preindex results:")
+        message.append("\tInitiated by: %s" % username)
 
         delta = datetime.utcnow() - start
-        message += "Total time: %d seconds" % delta.seconds
-        message += "\n\nYou may now deploy"
+
+        message.append("Total time: %d seconds" % delta.seconds)
+        message.append("\nYou may now deploy")
+        message.append(commit_info)
 
         if email:
-            mail_admins(" HQAdmin preindex_everything complete" % settings.EMAIL_SUBJECT_PREFIX, message)
+            mail_admins(" HQAdmin preindex_everything complete", '\n'.join(message))
         else:
             print message
