@@ -82,7 +82,7 @@ class PSISQLEventsReport(PSISQLReport):
     slug = "event_demonstations_sql"
     section_name = "event demonstrations"
     default_aggregation = 'district'
-    table_name = 'psi-unicef_events'
+    table_name = 'psi-unicef_psi_events'
 
     @property
     def columns(self):
@@ -107,7 +107,7 @@ class PSISQLHouseholdReport(PSISQLReport):
               'psi.reports.DemoTypeField',
               'psi.reports.AASDBV',]
     default_aggregation = 'village'
-    table_name = "psi-unicef_household_demonstrations"
+    table_name = "psi-unicef_psi_household_demonstrations"
 
     @property
     @memoized
@@ -149,7 +149,7 @@ class PSISQLSensitizationReport(PSISQLReport):
               'psi.reports.AASDB',]
     default_aggregation = 'block'
 
-    table_name = 'psi-unicef_sensitization'
+    table_name = 'psi-unicef_psi_sensitization'
 
     @property
     def columns(self):
@@ -174,7 +174,7 @@ class PSISQLTrainingReport(PSISQLReport):
               'psi.reports.StateDistrictField',
               'psi.reports.AASD',]
     default_aggregation = 'district'
-    table_name = "psi-unicef_training"
+    table_name = "psi-unicef_psi_training"
 
     @property
     def columns(self):
