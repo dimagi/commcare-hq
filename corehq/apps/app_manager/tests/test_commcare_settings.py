@@ -17,9 +17,12 @@ class CommCareSettingsTest(TestCase):
         str1 = "{features.sense}='true'"
         cond1 = parse_condition_string(str1)
         self.assertEqual(cond1, {"type": "features", "id": "sense", "equals": "true"})
-        str2 = "{properties.server-tether}='sync'"
+        str2 = "{features.sense}=true"
         cond2 = parse_condition_string(str2)
-        self.assertEqual(cond2, {"type": "properties", "id": "server-tether", "equals": "sync"})
+        self.assertEqual(cond2, {"type": "features", "id": "sense", "equals": True})
+        str3 = "{properties.server-tether}='sync'"
+        cond3 = parse_condition_string(str3)
+        self.assertEqual(cond3, {"type": "properties", "id": "server-tether", "equals": "sync"})
 
     def test_check_condition(self):
         sense_condition = "{features.sense}='true'"
