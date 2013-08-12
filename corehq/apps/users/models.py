@@ -725,6 +725,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def full_name(self):
         return ("%s %s" % (self.first_name or '', self.last_name or '')).strip()
 
+    @property
+    def human_friendly_name(self):
+        return self.full_name if self.full_name else self.username
+
     formatted_name = full_name
     name = full_name
 
@@ -800,8 +804,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                             'CommCareCase': 'case',
                             'CommConnectCase': 'case',
                         }[duplicate.owner_doc_type]
+                        from corehq.apps.users.views.mobile import EditCommCareUserView
                         url_ref, doc_id_param = {
-                            'user': ('user_account', 'couch_user_id'),
+                            'user': (EditCommCareUserView.name, 'couch_user_id'),
                             'case': ('case_details', 'case_id'),
                         }[doc_type]
                         dup_url = reverse(url_ref, kwargs={'domain': duplicate.domain, doc_id_param: duplicate.owner_id})

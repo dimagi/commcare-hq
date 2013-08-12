@@ -94,7 +94,7 @@ from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface
 from corehq.apps.importer.base import ImportCases
 
 DATA_INTERFACES = (
-    (_('Case Management'), (
+    (_('Manage Application User Data'), (
         CaseReassignmentInterface,
         ImportCases
     )),
@@ -184,13 +184,12 @@ from corehq.apps.hqwebapp.models import *
 TABS = (
     ProjectInfoTab,
     ReportsTab,
-    ManageDataTab,
     ApplicationsTab,
+    ManageProjectTab,
     CloudcareTab,
     MessagingTab,
-    ProjectSettingsTab,
-    OrgReportTab,
-    OrgSettingsTab,
-    AdminTab,
     ExchangeTab,
+    OrgReportTab,
+    OrgSettingsTab, # separate menu?
+    AdminTab,
 )

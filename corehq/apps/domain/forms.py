@@ -22,6 +22,7 @@ from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
+from hqstyle.forms.widgets import BootstrapCheckboxInput, BootstrapDisabledInput
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
@@ -32,6 +33,49 @@ def tf_choices(true_txt, false_txt):
 class SnapshotSettingsMixin(forms.Form):
     project_type = CharField(label=ugettext_noop("Project Category"), required=False,
         help_text=ugettext_noop("e.g. MCH, HIV, etc."))
+
+
+class ProjectSettingsForm(forms.Form):
+    """
+    Form for updating a user's project settings
+    """
+    global_timezone = forms.CharField(
+        initial="UTC",
+        label="Project Timezone",
+        widget=BootstrapDisabledInput(attrs={'class': 'input-xlarge'}))
+    override_global_tz = forms.BooleanField(
+        initial=False,
+        required=False,
+        label="",
+        widget=BootstrapCheckboxInput(
+            attrs={'data-bind': 'checked: override_tz, event: {change: updateForm}'},
+            inline_label="Override project's timezone setting"))
+    user_timezone = TimeZoneChoiceField(
+        label="My Timezone",
+        initial=global_timezone.initial,
+        widget=forms.Select(attrs={'class': 'input-xlarge', 'bindparent': 'visible: override_tz',
+                                   'data-bind': 'event: {change: updateForm}'}))
+
+    def clean_user_timezone(self):
+        data = self.cleaned_data['user_timezone']
+        timezone_field = TimeZoneField()
+        timezone_field.run_validators(data)
+        return smart_str(data)
+
+    def save(self, user, domain):
+        try:
+            timezone = self.cleaned_data['global_timezone']
+            override = self.cleaned_data['override_global_tz']
+            if override:
+                timezone = self.cleaned_data['user_timezone']
+            dm = user.get_domain_membership(domain)
+            dm.timezone = timezone
+            dm.override_global_tz = override
+            user.save()
+            return True
+        except Exception:
+            return False
+
 
 class SnapshotApplicationForm(forms.Form):
     publish = BooleanField(label=ugettext_noop("Publish?"), required=False)

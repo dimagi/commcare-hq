@@ -471,32 +471,39 @@ class MessagingTab(UITab):
         return []
 
 
-class ProjectSettingsTab(UITab):
-    view = "corehq.apps.settings.views.default"
+class ManageProjectTab(UITab):
+    title = ugettext_noop("Manage")
+    view = "users_default"
 
     @property
     def dropdown_items(self):
         return []
 
     @property
-    def title(self):
-        if not (self.couch_user.can_edit_commcare_users() or
-                self.couch_user.can_edit_web_users()):
-            return _("Settings")
-        return _("Settings & Users")
+    def is_viewable(self):
+        return self.domain and (self.couch_user.can_edit_commcare_users() or
+                                self.couch_user.can_edit_web_users() or
+                                self.couch_user.can_edit_data())
 
     @property
-    def is_viewable(self):
-        return self.domain and self.couch_user
+    @memoized
+    def is_active(self):
+        if not self.domain:
+            return False
+        cloudcare_settings_url = reverse('cloudcare_app_settings', args=[self.domain])
+        manage_data_url = reverse('data_interfaces_default', args=[self.domain])
+        full_path = self._request.get_full_path()
+        return (super(ManageProjectTab, self).is_active
+                or full_path.startswith(cloudcare_settings_url)
+                or full_path.startswith(manage_data_url))
 
     @property
     def sidebar_items(self):
         items = []
- 
+
         if self.couch_user.can_edit_commcare_users():
             def commcare_username(request=None, couch_user=None, **context):
-                if (couch_user.user_id != request.couch_user.user_id and
-                    couch_user.is_commcare_user()):
+                if (couch_user.user_id != request.couch_user.user_id or couch_user.is_commcare_user()):
                     username = couch_user.username_in_report
                     if couch_user.is_deleted():
                         username += " (%s)" % _("Deleted")
@@ -504,12 +511,14 @@ class ProjectSettingsTab(UITab):
                 else:
                     return None
 
-            items.append((_('Mobile Users'), [
+            from corehq.apps.users.views.mobile import EditCommCareUserView
+            mobile_users_menu = [
                 {'title': _('Mobile Workers'),
                  'url': reverse('commcare_users', args=[self.domain]),
+                 'description': _("Create and manage users for CommCare and CloudCare."),
                  'subpages': [
                      {'title': commcare_username,
-                      'urlname': 'commcare_user_account'},
+                      'urlname': EditCommCareUserView.name},
                      {'title': _('New Mobile Worker'),
                       'urlname': 'add_commcare_account'},
                      {'title': _('Bulk Upload'),
@@ -517,9 +526,9 @@ class ProjectSettingsTab(UITab):
                      {'title': _('Transfer Mobile Workers'),
                       'urlname': 'user_domain_transfer'},
                  ]},
-
                 {'title': _('Groups'),
                  'url': reverse('all_groups', args=[self.domain]),
+                 'description': _("Create and manage reporting and case sharing groups for Mobile Workers."),
                  'subpages': [
                      {'title': lambda **context: (
                          "%s %s" % (_("Editing"), context['group'].name)),
@@ -527,45 +536,154 @@ class ProjectSettingsTab(UITab):
                      {'title': _('Membership Info'),
                       'urlname': 'group_membership'}
                  ]}
-            ]))
+            ]
+
+            if self.couch_user.is_domain_admin():
+                mobile_users_menu.append({
+                    'title': _('CloudCare Permissions'),
+                    'url': reverse('cloudcare_app_settings',
+                                    args=[self.domain])
+                })
+
+            items.append((_('Application Users'), mobile_users_menu))
 
         if self.couch_user.can_edit_web_users():
             def web_username(request=None, couch_user=None, **context):
-                if (couch_user.user_id != request.couch_user.user_id and
+                if (couch_user.user_id != request.couch_user.user_id or
                     not couch_user.is_commcare_user()):
-                    username = couch_user.html_username()
+                    username = couch_user.human_friendly_name
                     if couch_user.is_deleted():
                         username += " (%s)" % _("Deleted")
                     return mark_safe(username)
                 else:
                     return None
 
-            items.append((_('CommCare HQ Users'), [
-                {'title': _('Web Users'),
-                 'url': reverse('web_users', args=[self.domain]),
+            from corehq.apps.users.views import (EditWebUserView, EditMyAccountDomainView, ListWebUsersView)
+            items.append((_('Project Users'), [
+                {'title': ListWebUsersView.page_title,
+                 'url': reverse(ListWebUsersView.name, args=[self.domain]),
+                 'description': _("Grant other CommCare HQ users access to your project and manage user roles."),
                  'subpages': [
-                     {'title': _("Invite Web User"),
-                      'urlname': 'invite_web_user'},
-                     {'title': web_username,
-                      'urlname': 'user_account'}
+                     {
+                         'title': _("Invite Web User"),
+                         'urlname': 'invite_web_user'
+                     },
+                     {
+                         'title': web_username,
+                         'urlname': EditWebUserView.name
+                     },
+                     {
+                         'title': _('My Information'),
+                         'urlname': EditMyAccountDomainView.name
+                     }
                  ]}
             ]))
 
-        items.append((_('My Account'), [
-            {'title': _('My Account Settings'),
-             'url': reverse('my_account', args=[self.domain])},
-            {'title': _('Change My Password'),
-             'url': reverse('change_my_password', args=[self.domain])}
-        ]))
+        if self.couch_user.can_edit_data():
+            from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
+            items.extend(DataInterfaceDispatcher.navigation_sections({
+                "request": self._request,
+                "domain": self.domain,
+            }))
 
-        if self.couch_user.is_domain_admin():
-            items.append((_('CloudCare Settings'), [
-                {'title': _('App Access'),
-                 'url': reverse('cloudcare_app_settings',
-                             args=[self.domain])}
+
+        if self.couch_user.is_domain_admin() and self.project.commtrack_enabled:
+            items.append((_('CommTrack'), [
+                {
+                    'title': _('Manage Products'),
+                    'url': reverse('commtrack_product_list', args=[self.domain])
+                },
+                {
+                    'title': _('Manage Locations'),
+                    'url': reverse('manage_locations', args=[self.domain])
+                }
             ]))
 
-        if self.couch_user.can_edit_web_users():
+        return items
+
+
+class ProjectSettingsTab(UITab):
+    title = ugettext_noop("Project Settings")
+    view = 'domain_settings_default'
+
+    @property
+    def dropdown_items(self):
+        return []
+
+    @property
+    def is_viewable(self):
+        return self.domain and self.couch_user and self.couch_user.is_domain_admin(self.domain)
+
+    @property
+    def sidebar_items(self):
+        items = []
+        user_is_admin = self.couch_user.is_domain_admin(self.domain)
+
+        from corehq.apps.domain.views import EditMyProjectSettingsView
+        project_info = [{
+            'title': EditMyProjectSettingsView.page_title,
+            'url': reverse(EditMyProjectSettingsView.name, args=[self.domain])
+        }]
+
+        if user_is_admin:
+            from corehq.apps.domain.views import (ProjectOverviewView, EditBasicProjectInfoView,
+                                                  EditDeploymentProjectInfoView)
+
+            if not self.project.commtrack_enabled:
+                project_info.append({
+                    'title': ProjectOverviewView.page_title,
+                    'url': reverse(ProjectOverviewView.name, args=[self.domain])
+                })
+
+            project_info.extend([
+                {
+                    'title': EditBasicProjectInfoView.page_title,
+                    'url': reverse(EditBasicProjectInfoView.name, args=[self.domain])
+                },
+                {
+                    'title': EditDeploymentProjectInfoView.page_title,
+                    'url': reverse(EditDeploymentProjectInfoView.name, args=[self.domain])
+                }
+            ])
+
+            try:
+                # so that corehq is not dependent on the billing submodule
+                from hqbilling.views import EditProjectBillingInfoView
+                project_info.append({
+                    'title': EditProjectBillingInfoView.page_title,
+                    'url': reverse(EditProjectBillingInfoView.name, args=[self.domain])
+                })
+            except ImportError:
+                pass
+        items.append((_('Project Information'), project_info))
+
+        if user_is_admin:
+            from corehq.apps.domain.views import BasicCommTrackSettingsView, AdvancedCommTrackSettingsView
+
+            if self.project.commtrack_enabled:
+                commtrack_settings = [
+                    {
+                        'title': BasicCommTrackSettingsView.page_title,
+                        'url': reverse(BasicCommTrackSettingsView.name, args=[self.domain])
+                    },
+                    {
+                        'title': AdvancedCommTrackSettingsView.page_title,
+                        'url': reverse(AdvancedCommTrackSettingsView.name, args=[self.domain])
+                    },
+                ]
+                items.append((_('CommTrack'), commtrack_settings))
+
+            administration = [
+                {
+                    'title': _('CommCare Exchange'),
+                    'url': reverse('domain_snapshot_settings', args=[self.domain])
+                },
+                {
+                    'title': _('Multimedia Sharing'),
+                    'url': reverse('domain_manage_multimedia', args=[self.domain])
+                }
+            ]
+
             def forward_name(repeater_type=None, **context):
                 if repeater_type == 'FormRepeater':
                     return _("Forward Forms")
@@ -573,25 +691,6 @@ class ProjectSettingsTab(UITab):
                     return _("Forward Form Stubs")
                 elif repeater_type == 'CaseRepeater':
                     return _("Forward Cases")
-
-            administration = [
-                {'title': _('Project Settings'),
-                 'url': reverse('domain_project_settings',
-                     args=[self.domain])},
-                {'title': _('CommCare Exchange'),
-                 'url': reverse('domain_snapshot_settings',
-                     args=[self.domain])},
-                {'title': _('Multimedia Sharing'),
-                 'url': reverse('domain_manage_multimedia',
-                     args=[self.domain])}
-            ]
-
-            if self.couch_user.is_superuser:
-                administration.append({
-                    'title': _('Internal Settings'),
-                    'url': reverse('domain_internal_settings',
-                        args=[self.domain])
-                })
 
             administration.extend([
                 {'title': _('Data Forwarding'),
@@ -603,21 +702,53 @@ class ProjectSettingsTab(UITab):
             ])
             items.append((_('Project Administration'), administration))
 
-        if self.project.commtrack_enabled:
-            items.append((_('CommTrack'), [
-                {'title': _('Project Settings'),
-                 'url': reverse('domain_commtrack_settings',
-                     args=[self.domain])},
-                {'title': _('Advanced Settings'),
-                 'url': reverse('commtrack_settings_advanced',
-                     args=[self.domain])},
-                {'title': _('Manage Products'),
-                 'url': reverse('commtrack_product_list',
-                     args=[self.domain])},
-                {'title': _('Manage Locations'),
-                 'url': reverse('manage_locations', args=[self.domain])}
-            ]))
 
+        if self.couch_user.is_superuser:
+            from corehq.apps.domain.views import EditInternalDomainInfoView, EditInternalCalculationsView
+            internal_admin = [{
+                'title': EditInternalDomainInfoView.page_title,
+                'url': reverse(EditInternalDomainInfoView.name, args=[self.domain])
+            },
+            {
+                'title': EditInternalCalculationsView.page_title,
+                'url': reverse(EditInternalCalculationsView.name, args=[self.domain])
+            }]
+            items.append((_('Internal Data (Dimagi Only)'), internal_admin))
+
+        return items
+
+
+class MySettingsTab(UITab):
+    title = ugettext_noop("My Settings")
+    view = 'default_my_settings'
+
+    @property
+    def dropdown_items(self):
+        return []
+
+    @property
+    def is_viewable(self):
+        return self.couch_user is not None
+
+    @property
+    def sidebar_items(self):
+        from corehq.apps.settings.views import MyAccountSettingsView, MyProjectsList, ChangeMyPasswordView
+        items = [
+            (_("Manage My Settings"), (
+                {
+                    'title': MyAccountSettingsView.page_title,
+                    'url': reverse(MyAccountSettingsView.name),
+                },
+                {
+                    'title': MyProjectsList.page_title,
+                    'url': reverse(MyProjectsList.name),
+                },
+                {
+                    'title': ChangeMyPasswordView.page_title,
+                    'url': reverse(ChangeMyPasswordView.name),
+                },
+            ))
+        ]
         return items
 
 

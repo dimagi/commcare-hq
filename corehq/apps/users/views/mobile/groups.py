@@ -1,10 +1,13 @@
 from couchdbkit.exceptions import ResourceNotFound
 from django.http import Http404
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext_noop
 
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, CommCareUser
-from corehq.apps.users.views import _users_context, require_can_edit_commcare_users
+from corehq.apps.users.decorators import require_can_edit_commcare_users
+from corehq.apps.users.views import _users_context, BaseUserSettingsView
 from dimagi.utils.excel import alphanumeric_sort_key
 
 def _get_sorted_groups(domain):
@@ -13,15 +16,26 @@ def _get_sorted_groups(domain):
         key=lambda group: alphanumeric_sort_key(group.name)
     )
 
-@require_can_edit_commcare_users
-def all_groups(request, domain, template="groups/all_groups.html"):
-    context = _users_context(request, domain)
-    all_groups = _get_sorted_groups(domain)
-    context.update({
-        'domain': domain,
-        'all_groups': all_groups
-    })
-    return render(request, template, context)
+
+class EditGroupsView(BaseUserSettingsView):
+    template_name = "groups/all_groups.html"
+    name = 'all_groups'
+    page_title = ugettext_noop("Groups")
+
+    @method_decorator(require_can_edit_commcare_users)
+    def dispatch(self, request, *args, **kwargs):
+        return super(EditGroupsView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def all_groups(self):
+        return _get_sorted_groups(self.domain)
+
+    @property
+    def page_context(self):
+        return {
+            'all_groups': self.all_groups,
+        }
+
 
 @require_can_edit_commcare_users
 def group_members(request, domain, group_id, template="groups/group_members.html"):

@@ -1,4 +1,4 @@
-{% extends "users/users_base.html" %}
+{% extends "users/base_template.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
@@ -28,16 +28,7 @@
     </script>
 {% endblock %}
 
-{% block subsection-title %}
-    <li>
-        <a href="{% url commcare_users domain %}">{% commcare_user %}s</a> <span class="divider">&gt;</span>
-    </li>
-    <li class="active">
-        <a href="#">New {% commcare_user %}</a>
-    </li>
-{% endblock %}
-
-{% block user-view %}
+{% block main_column %}
     <form class="form form-horizontal" method="post" id="add_commcare_account_form">
         {% bootstrap_form_errors form %}
         <input id="id_domain" name="domain" type="hidden" value="{{ domain }}" />
