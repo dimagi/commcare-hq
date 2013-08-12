@@ -1,5 +1,5 @@
 #from django.conf.urls.defaults import patterns, url
-from corehq.apps.users.views import DefaultProjectUserSettingsView, EditWebUserView, EditMyAccountView, ListWebUsersView, InviteWebUserView
+from corehq.apps.users.views import DefaultProjectUserSettingsView, EditWebUserView, EditMyAccountDomainView, ListWebUsersView, InviteWebUserView
 from corehq.apps.users.views.mobile import EditGroupsView
 from corehq.apps.users.views.mobile.users import UploadCommCareUsers, EditCommCareUserView, ListCommCareUsersView, AsyncListCommCareUsersView, CreateCommCareUserView
 from django.conf.urls.defaults import *
@@ -7,9 +7,7 @@ from corehq.apps.domain.utils import grandfathered_domain_re
 
 urlpatterns = patterns('corehq.apps.users.views',
     url(r'^$', DefaultProjectUserSettingsView.as_view(), name=DefaultProjectUserSettingsView.name),
-    #url(r'my_domains/$', 'my_domains', name='my_domains'),
-    url(r'^my_account/$', EditMyAccountView.as_view(), name=EditMyAccountView.name),
-    url(r'^change_my_password/$', 'change_my_password', name="change_my_password"),
+    url(r'^my_account/$', EditMyAccountDomainView.as_view(), name=EditMyAccountDomainView.name),
     url(r'^change_password/(?P<login_id>[\w-]+)/$', 'change_password', name="change_password"),
     url(r'^domain_accounts/(?P<couch_user_id>[\w-]+)/$', 'domain_accounts', name='domain_accounts'),
     url(r'^delete_phone_number/(?P<couch_user_id>[\w-]+)/$',
@@ -24,9 +22,6 @@ urlpatterns = patterns('corehq.apps.users.views',
     url(r'^add_domain_membership/(?P<couch_user_id>[\w-]+)/(?P<domain_name>%s)/$' % grandfathered_domain_re,
         'add_domain_membership',
         name='add_domain_membership'),
-    url(r'^delete_domain_membership/(?P<couch_user_id>[\w-]+)/(?P<domain_name>%s)/$' % grandfathered_domain_re,
-        'delete_domain_membership',
-        name='delete_domain_membership'),
     url(r'^web/account/(?P<couch_user_id>[\w-]+)/$', EditWebUserView.as_view(), name=EditWebUserView.name),
     url(r'^web/remove/(?P<couch_user_id>[\w-]+)/$', 'remove_web_user', name='remove_web_user'),
     url(r'^web/undo_remove/(?P<record_id>[\w-]+)/$', 'undo_remove_web_user', name='undo_remove_web_user'),

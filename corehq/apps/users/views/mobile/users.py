@@ -130,12 +130,11 @@ class EditCommCareUserView(BaseFullEditUserView):
 
     @property
     def page_context(self):
-        context = super(EditCommCareUserView, self).page_context
-        context.update({
+        context = {
             'custom_user_data': self.custom_user_data,
             'reset_password_form': self.reset_password_form,
             'is_currently_logged_in_user': self.is_currently_logged_in_user
-        })
+        }
         if self.request.project.commtrack_enabled:
             context.update({
                 'commtrack': {

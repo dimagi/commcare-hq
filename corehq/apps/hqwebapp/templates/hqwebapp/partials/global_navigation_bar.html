@@ -64,7 +64,7 @@
     {% endif %}
 
     <div class="btn-group">
-        <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
+        <a class="btn btn-primary dropdown-toggle{% if is_my_account_settings %} btn-account-active{% endif %}" data-toggle="dropdown" href="#">
             {% if user.first_name %}
                 {{ user.first_name }}
             {% else %}
@@ -87,7 +87,7 @@
                 {% endwith %}
                 </div>
             </li>
-            <li><a href="#"><i class="icon-user"></i> {% trans 'My Account Settings' %}</a></li>
+            <li><a href="{% url my_account_settings %}"><i class="icon-user"></i> {% trans 'My Account Settings' %}</a></li>
             {% if domain %}
                 <li><a href="{% url domain_settings_default domain %}"><i class="icon-cog"></i> {% trans 'Project Settings' %}</a></li>
             {% endif %}

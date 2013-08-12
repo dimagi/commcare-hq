@@ -1,11 +1,8 @@
 from __future__ import absolute_import
-import copy
 import json
 import re
 import urllib
 from django.utils.decorators import method_decorator
-from django.utils.safestring import mark_safe
-from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.settings.views import BaseManageView
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
 from dimagi.utils.decorators.memoized import memoized
@@ -14,8 +11,7 @@ from datetime import datetime
 from couchdbkit.exceptions import ResourceNotFound
 
 from dimagi.utils.couch.database import get_db
-from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
-from django.contrib.auth.models import User
+from django.contrib.auth.forms import SetPasswordForm
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponse, HttpResponseForbidden
 from django.shortcuts import render
@@ -32,9 +28,9 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.users.forms import (UpdateUserRoleForm, BaseUserInfoForm, UpdateMyAccountInfoForm)
 from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser,
-    DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser, DomainMembershipError)
-from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required,
-                                           domain_specific_login_redirect)
+                                      DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser,
+                                      DomainMembershipError)
+from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
 from corehq.apps.orgs.models import Team
 from corehq.apps.reports.util import get_possible_reports
 from corehq.apps.sms import verify as smsverify
@@ -169,12 +165,14 @@ class BaseEditUserView(BaseUserSettingsView):
         return form
 
     @property
-    def page_context(self):
-        return {
+    def main_context(self):
+        context = super(BaseEditUserView, self).main_context
+        context.update({
             'couch_user': self.editable_user,
             'form_user_update': self.form_user_update,
             'phonenumbers': self.editable_user.phone_numbers_extended(self.request.couch_user),
-        }
+        })
+        return context
 
     def post(self, request, *args, **kwargs):
         if self.request.POST['form_type'] == "update-user":
@@ -203,11 +201,9 @@ class EditWebUserView(BaseEditUserView):
 
     @property
     def page_context(self):
-        context = super(EditWebUserView, self).page_context
-        context.update({
+        return {
             'form_uneditable': BaseUserInfoForm(),
-        })
-        return context
+        }
 
     @method_decorator(require_can_edit_web_users)
     def dispatch(self, request, *args, **kwargs):
@@ -215,7 +211,7 @@ class EditWebUserView(BaseEditUserView):
 
     def get(self, request, *args, **kwargs):
         if self.editable_user_id == self.couch_user._id:
-            return HttpResponseRedirect(reverse(EditMyAccountView.name, args=[self.domain]))
+            return HttpResponseRedirect(reverse(EditMyAccountDomainView.name, args=[self.domain]))
         return super(EditWebUserView, self).get(request, *args, **kwargs)
 
 
@@ -223,8 +219,8 @@ class BaseFullEditUserView(BaseEditUserView):
     edit_user_form_title = ""
 
     @property
-    def page_context(self):
-        context = super(BaseFullEditUserView, self).page_context
+    def main_context(self):
+        context = super(BaseFullEditUserView, self).main_context
         context.update({
             'edit_user_form_title': self.edit_user_form_title,
         })
@@ -234,7 +230,9 @@ class BaseFullEditUserView(BaseEditUserView):
     @memoized
     def language_choices(self):
         language_choices = []
-        results = get_db().view('languages/list', startkey=[self.domain], endkey=[self.domain, {}], group='true').all()
+        results = []
+        if self.domain:
+            results = get_db().view('languages/list', startkey=[self.domain], endkey=[self.domain, {}], group='true').all()
         if results:
             for result in results:
                 lang_code = result['key'][1]
@@ -267,11 +265,9 @@ class BaseFullEditUserView(BaseEditUserView):
         return super(BaseFullEditUserView, self).post(request, *args, **kwargs)
 
 
-class EditMyAccountView(BaseFullEditUserView):
-    # todo handle "My Settings for this Project"
-    # todo handle "My Projects"
+class EditMyAccountDomainView(BaseFullEditUserView):
     template_name = "users/edit_full_user.html"
-    name = "my_account"
+    name = "domain_my_account"
     page_title = ugettext_noop("Edit My Information")
     edit_user_form_title = ugettext_noop("My Information")
     user_update_form_class = UpdateMyAccountInfoForm
@@ -291,20 +287,14 @@ class EditMyAccountView(BaseFullEditUserView):
             return reverse(self.name, args=[self.domain])
 
     @property
-    def all_domains(self):
-        # todo hook this in properly in the overall my account view
-        all_domains = self.couch_user.get_domains()
-        admin_domains = []
-        for d in all_domains:
-            if self.couch_user.is_domain_admin(d):
-                admin_domains.append(d)
-        return all_domains
+    def page_context(self):
+        return {}
 
     def get(self, request, *args, **kwargs):
         if self.couch_user.is_commcare_user():
             from corehq.apps.users.views.mobile import EditCommCareUserView
             return HttpResponseRedirect(reverse(EditCommCareUserView.name, args=[self.domain, self.editable_user_id]))
-        return super(EditMyAccountView, self).get(request, *args, **kwargs)
+        return super(EditMyAccountDomainView, self).get(request, *args, **kwargs)
 
 
 class ListWebUsersView(BaseUserSettingsView):
@@ -510,7 +500,7 @@ def make_phone_number_default(request, domain, couch_user_id):
         from corehq.apps.users.views.mobile import EditCommCareUserView
         redirect = reverse(EditCommCareUserView.name, args=[domain, couch_user_id])
     else:
-        redirect = reverse(EditMyAccountView.name, args=[domain])
+        redirect = reverse(EditMyAccountDomainView.name, args=[domain])
     return HttpResponseRedirect(redirect)
 
 @require_POST
@@ -529,7 +519,7 @@ def delete_phone_number(request, domain, couch_user_id):
         from corehq.apps.users.views.mobile import EditCommCareUserView
         redirect = reverse(EditCommCareUserView.name, args=[domain, couch_user_id])
     else:
-        redirect = reverse(EditMyAccountView.name, args=[domain])
+        redirect = reverse(EditMyAccountDomainView.name, args=[domain])
     return HttpResponseRedirect(redirect)
 
 @require_permission_to_edit_user
@@ -553,7 +543,7 @@ def verify_phone_number(request, domain, couch_user_id):
         from corehq.apps.users.views.mobile import EditCommCareUserView
         redirect = reverse(EditCommCareUserView.name, args=[domain, couch_user_id])
     else:
-        redirect = reverse(EditMyAccountView.name, args=[domain])
+        redirect = reverse(EditMyAccountDomainView.name, args=[domain])
     return HttpResponseRedirect(redirect)
 
 
@@ -603,43 +593,6 @@ def add_domain_membership(request, domain, couch_user_id, domain_name):
         user.save()
     return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id)))
 
-@require_POST
-def delete_domain_membership(request, domain, couch_user_id, domain_name):
-    removing_self = request.couch_user.get_id == couch_user_id
-    user = WebUser.get_by_user_id(couch_user_id, domain_name)
-
-    # don't let a user remove another user's domain membership if they're not the admin of the domain or a superuser
-    if not removing_self and not (request.couch_user.is_domain_admin(domain_name) or request.couch_user.is_superuser):
-        messages.error(request, _("You don't have the permission to remove this user's membership"))
-
-    elif user.is_domain_admin(domain_name): # don't let a domain admin be removed from the domain
-        if removing_self:
-            error_msg = ugettext_noop("Unable remove membership because you are the admin of %s" % domain_name)
-        else:
-            error_msg = ugettext_noop("Unable remove membership because %(user)s is the admin of %(domain)s" % {
-                'user': user.username,
-                'domain': domain_name
-            })
-        messages.error(request, error_msg)
-        
-    else:
-        user.delete_domain_membership(domain_name)
-        user.save()
-
-        if removing_self:
-            success_msg = ugettext_noop("You are no longer a part of the %s project space" % domain_name)
-        else:
-            success_msg = ugettext_noop("%(user)s is no longer a part of the %(domain)s project space" % {
-                'user': user.username,
-                'domain': domain_name
-            })
-        messages.success(request, success_msg)
-
-        if removing_self and not user.is_member_of(domain):
-            return HttpResponseRedirect(reverse("homepage"))
-
-    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id)))
-
 @login_and_domain_required
 def change_password(request, domain, login_id, template="users/partial/reset_password.html"):
     # copied from auth's password_change
@@ -664,24 +617,6 @@ def change_password(request, domain, login_id, template="users/partial/reset_pas
     json_dump['formHTML'] = render_to_string(template, context)
     return HttpResponse(json.dumps(json_dump))
 
-
-# this view can only change the current user's password
-@login_and_domain_required
-def change_my_password(request, domain, template="users/change_my_password.html"):
-    # copied from auth's password_change
-    if request.method == "POST":
-        form = PasswordChangeForm(user=request.user, data=request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Your password was successfully changed!")
-            return HttpResponseRedirect(reverse('user_account', args=[domain, request.couch_user._id]))
-    else:
-        form = PasswordChangeForm(user=request.user)
-    context = _users_context(request, domain)
-    context.update({
-        'form': form,
-    })
-    return render(request, template, context)
 
 @httpdigest
 @login_and_domain_required

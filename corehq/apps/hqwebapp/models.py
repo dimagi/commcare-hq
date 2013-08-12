@@ -488,6 +488,8 @@ class ManageProjectTab(UITab):
     @property
     @memoized
     def is_active(self):
+        if not self.domain:
+            return False
         cloudcare_settings_url = reverse('cloudcare_app_settings', args=[self.domain])
         manage_data_url = reverse('data_interfaces_default', args=[self.domain])
         full_path = self._request.get_full_path()
@@ -501,8 +503,7 @@ class ManageProjectTab(UITab):
 
         if self.couch_user.can_edit_commcare_users():
             def commcare_username(request=None, couch_user=None, **context):
-                if (couch_user.user_id != request.couch_user.user_id and
-                    couch_user.is_commcare_user()):
+                if (couch_user.user_id != request.couch_user.user_id or couch_user.is_commcare_user()):
                     username = couch_user.username_in_report
                     if couch_user.is_deleted():
                         username += " (%s)" % _("Deleted")
@@ -548,7 +549,7 @@ class ManageProjectTab(UITab):
 
         if self.couch_user.can_edit_web_users():
             def web_username(request=None, couch_user=None, **context):
-                if (couch_user.user_id != request.couch_user.user_id and
+                if (couch_user.user_id != request.couch_user.user_id or
                     not couch_user.is_commcare_user()):
                     username = couch_user.human_friendly_name
                     if couch_user.is_deleted():
@@ -557,7 +558,7 @@ class ManageProjectTab(UITab):
                 else:
                     return None
 
-            from corehq.apps.users.views import (EditWebUserView, EditMyAccountView, ListWebUsersView)
+            from corehq.apps.users.views import (EditWebUserView, EditMyAccountDomainView, ListWebUsersView)
             items.append((_('Project Users'), [
                 {'title': ListWebUsersView.page_title,
                  'url': reverse(ListWebUsersView.name, args=[self.domain]),
@@ -573,7 +574,7 @@ class ManageProjectTab(UITab):
                      },
                      {
                          'title': _('My Information'),
-                         'urlname': EditMyAccountView.name
+                         'urlname': EditMyAccountDomainView.name
                      }
                  ]}
             ]))
@@ -626,8 +627,7 @@ class ProjectSettingsTab(UITab):
 
         if user_is_admin:
             from corehq.apps.domain.views import (ProjectOverviewView, EditBasicProjectInfoView,
-                                                  EditDeploymentProjectInfoView, BasicCommTrackSettingsView,
-                                                  AdvancedCommTrackSettingsView)
+                                                  EditDeploymentProjectInfoView)
 
             if not self.project.commtrack_enabled:
                 project_info.append({
@@ -658,7 +658,7 @@ class ProjectSettingsTab(UITab):
         items.append((_('Project Information'), project_info))
 
         if user_is_admin:
-
+            from corehq.apps.domain.views import BasicCommTrackSettingsView, AdvancedCommTrackSettingsView
 
             if self.project.commtrack_enabled:
                 commtrack_settings = [
@@ -715,6 +715,40 @@ class ProjectSettingsTab(UITab):
             }]
             items.append((_('Internal Data (Dimagi Only)'), internal_admin))
 
+        return items
+
+
+class MySettingsTab(UITab):
+    title = ugettext_noop("My Settings")
+    view = 'default_my_settings'
+
+    @property
+    def dropdown_items(self):
+        return []
+
+    @property
+    def is_viewable(self):
+        return self.couch_user is not None
+
+    @property
+    def sidebar_items(self):
+        from corehq.apps.settings.views import MyAccountSettingsView, MyProjectsList, ChangeMyPasswordView
+        items = [
+            (_("Manage My Settings"), (
+                {
+                    'title': MyAccountSettingsView.page_title,
+                    'url': reverse(MyAccountSettingsView.name),
+                },
+                {
+                    'title': MyProjectsList.page_title,
+                    'url': reverse(MyProjectsList.name),
+                },
+                {
+                    'title': ChangeMyPasswordView.page_title,
+                    'url': reverse(ChangeMyPasswordView.name),
+                },
+            ))
+        ]
         return items
 
 
