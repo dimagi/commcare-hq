@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -
-from pprint import pprint
-
 from devserver.modules import DevServerModule
-from dimagi.utils.couch.debugdb import debugdatabase, OPEN_DOC_OUTPUT_HEADERS, VIEW_OUTPUT_HEADERS
 from django.conf import settings
 import couchdbkit
+from dimagi.utils.couch.debugdb import debugdatabase, OPEN_DOC_OUTPUT_HEADERS, VIEW_OUTPUT_HEADERS
 
 
 SHOW_VERBOSE = getattr(settings, 'COUCHDB_DEVSERVER_VERBOSE', False)

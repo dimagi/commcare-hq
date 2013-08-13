@@ -1,16 +1,13 @@
+# -*- coding: utf-8 -
 __author__ = 'dmyung'
 from datetime import datetime
-from dimagi.utils.couch.debugdb import tidy_stacktrace, SQL_WARNING_THRESHOLD, process_key, ms_from_timedelta
 from couchdbkit import Database
+from dimagi.utils.couch.debugdb import tidy_stacktrace, SQL_WARNING_THRESHOLD, process_key, ms_from_timedelta
+
 #taken from the django debug toolbar sql panel
 import traceback
-
-from django.views.debug import linebreak_iter
 import couchdbkit
 from couchdbkit import resource, ResourceNotFound
-
-
-# -*- coding: utf-8 -
 from couchdbkit.client import ViewResults
 
 
@@ -30,7 +27,6 @@ class DebugDatabase(Database):
          a dict.
         """
         start = datetime.now()
-        newparams = params.copy()
 
         ############################
         #Start Database.open_doc
@@ -196,7 +192,6 @@ class DebugViewResults57(ViewResults):
                 setattr(self, key, self._result_cache[key])
 
     def _debug_fetch_if_needed(self):
-        #todo: hacky way of making sure unicode is not in the keys
         newparams = self.params.copy()
         if newparams.has_key('key'):
             newparams['key'] = process_key(newparams['key'])
@@ -251,39 +246,3 @@ else:
     DebugViewResults = DebugViewResults64
 
 couchdbkit.client.ViewResults = DebugViewResults
-
-
-def get_template_info(source, context_lines=3):
-    line = 0
-    upto = 0
-    source_lines = []
-    before = during = after = ""
-
-    origin, (start, end) = source
-    template_source = origin.reload()
-
-    for num, next in enumerate(linebreak_iter(template_source)):
-        if start >= upto and end <= next:
-            line = num
-            before = template_source[upto:start]
-            during = template_source[start:end]
-            after = template_source[end:next]
-        source_lines.append((num, template_source[upto:next]))
-        upto = next
-
-    top = max(1, line - context_lines)
-    bottom = min(len(source_lines), line + 1 + context_lines)
-
-    context = []
-    for num, content in source_lines[top:bottom]:
-        context.append({
-            'num': num,
-            'content': content,
-            'highlight': (num == line),
-        })
-
-    return {
-        'name': origin.name,
-        'context': context,
-    }
-
