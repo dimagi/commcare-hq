@@ -239,6 +239,7 @@ HQ_APPS = (
     'hsph',
     'mvp',
     'mvp_apps',
+    'custom.opm.reports',
     'pathfinder',
     'pathindia',
     'pact',
@@ -649,6 +650,8 @@ COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label
 COUCHDB_DATABASES += [
     ('bihar', COUCH_DATABASE + '__fluff-bihar'),
     ('fluff', COUCH_DATABASE + '__fluff-bihar'),
+    ('opm', COUCH_DATABASE + '__fluff-opm'),
+    ('fluff', COUCH_DATABASE + '__fluff-opm'),
 ]
 
 INSTALLED_APPS += LOCAL_APPS
@@ -739,6 +742,7 @@ PILLOWTOPS = [
 
                  # fluff
                  'bihar.models.CareBiharFluffPillow',
+                 'custom.opm.reports.models.OPMFluffPillow',
              ] + LOCAL_PILLOWTOPS
 
 
@@ -783,6 +787,7 @@ DOMAIN_MODULE_MAP = {
     'mvp-ruhiira': 'mvp',
     'mvp-mwandama': 'mvp',
     'mvp-sada': 'mvp',
+    'opm': 'custom.opm.reports',
     'psi-unicef': 'psi',
 }
 
