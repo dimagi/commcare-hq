@@ -250,7 +250,7 @@ class DataFormatter(object):
                 if not row:
                     row = dict(zip(group_by, key_group))
 
-                formatted_row = self._format.format_row(row_key, row)
+                formatted_row = self._format.format_row(row)
                 if self.filter_row(row_key, formatted_row):
                     yield row_key, formatted_row
         elif group_by:
