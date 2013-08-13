@@ -446,6 +446,13 @@ def clone_repo():
 
 @task
 def remove_submodule_source(path):
+    """
+    Remove submodule source folder.
+    :param path: the name of the submodule source folder
+
+    Example usage:
+    > fab realstaging remove_submodule_source:ctable-src
+    """
     if not console.confirm('Are you sure you want to delete submodules/{path} on {env.environment}?'.format(path=path, env=env), default=False):
         utils.abort('Action aborted.')
 
