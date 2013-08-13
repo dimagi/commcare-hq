@@ -82,6 +82,10 @@ class XFormPillow(AliasedElasticPillow):
                 if doc_ret['form']['meta'].get('timeStart', None) == "":
                     doc_ret['form']['meta']['timeStart'] = None
 
+                # Some docs have their @xmlns and #text here
+                if isinstance(doc_ret['form']['meta'].get('appVersion'), dict):
+                    doc_ret['form']['meta']['appVersion'] = doc_ret['form']['meta']['appVersion'].get('#text')
+
             #see:  extract_case_blocks(doc_dict)
             case_blocks = extract_case_blocks(doc_ret)
             for case_dict in case_blocks:
