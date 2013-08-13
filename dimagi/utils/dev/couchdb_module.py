@@ -8,9 +8,10 @@ from dimagi.utils.couch.debugdb import debugdatabase, OPEN_DOC_OUTPUT_HEADERS, V
 SHOW_VERBOSE = getattr(settings, 'COUCHDB_DEVSERVER_VERBOSE', False)
 
 class CouchDBDevModule(DevServerModule):
+    """
+    A couchdb console output module for the django devserver https://github.com/dcramer/django-devserver
+    """
     logger_name = 'couchdbkit'
-
-
     couchdbkit.client.Database = debugdatabase.DebugDatabase
     couchdbkit.client.ViewResults = debugdatabase.DebugViewResults
 
