@@ -751,7 +751,6 @@ PILLOWTOPS = [
                  'custom.reports.care_sa.models.CareSAFluffPillow',
              ] + LOCAL_PILLOWTOPS
 
-
 #Custom workflow for indexing xform data beyond the standard properties
 XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
 
