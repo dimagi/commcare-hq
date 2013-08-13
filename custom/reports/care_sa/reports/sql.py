@@ -103,11 +103,11 @@ class CareReport(SqlTabularReport,
                 # gender is a column for us to get data from but
                 # we display this differently
                 if column.header != 'Gender':
-                    header_columns.append(DataTablesColumn(column.header))
+                    header_columns.append(DataTablesColumn(column.header, sortable=False))
 
         # insert a blank header to display the "all genders/ages" message
         if not self.show_gender() and not self.show_age():
-            header_columns.insert(1, DataTablesColumn(''))
+            header_columns.insert(1, DataTablesColumn('', sortable=False))
 
         return DataTablesHeader(*header_columns)
 
