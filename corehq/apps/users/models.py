@@ -16,6 +16,7 @@ from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
 from couchdbkit.ext.django.schema import *
 from couchdbkit.resource import ResourceNotFound
+import simplejson
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from dimagi.utils.logging import notify_exception
 
@@ -36,6 +37,7 @@ from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.django.database import get_unique_value
+from django.core import cache
 
 from casexml.apps.case.xml import V2
 import uuid
@@ -44,6 +46,8 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from couchdbkit.exceptions import ResourceConflict, MultipleResultsFound, NoResultFound
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
+
+mcache = cache.get_cache('default')
 
 def _add_to_list(list, obj, default):
     if obj in list:
@@ -946,12 +950,21 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     @classmethod
     def get_by_username(cls, username):
         def get(stale, raise_if_none):
-            result = cls.get_db().view('users/by_username',
-                key=username,
-                include_docs=True,
-                stale=stale
-            )
-            return result.one(except_all=raise_if_none)
+            cache_key = "get_by_username__%s" % username
+            cached = mcache.get(cache_key, None)
+            if cached:
+                res = simplejson.loads(cached)
+                result = cls.wrap(res)
+            else:
+                view_res = cls.get_db().view('users/by_username',
+                    key=username,
+                    include_docs=True,
+                    stale=stale
+                )
+                result = view_res.one(except_all=raise_if_none)
+            if not cached:
+                mcache.set(cache_key, simplejson.dumps(result))
+            return result
         try:
             result = get(stale=settings.COUCH_STALE_QUERY, raise_if_none=True)
             if result['doc'] is None or result['doc']['username'] != username:
