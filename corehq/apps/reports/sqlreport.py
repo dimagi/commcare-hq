@@ -225,84 +225,88 @@ class SqlTabularReport(SqlData, GenericTabularReport):
 
     @property
     def rows(self):
-        return TableDataFormatter.from_sqldata(self, no_value=self.no_value).format()
+        formatter = DataFormatter(TableDataFormat(self.columns, no_value=self.no_value))
+        return formatter.format(self.data, keys=self.keys, group_by=self.group_by)
 
 
-class BaseDataFormatter(object):
+class DataFormatter(object):
 
-    @classmethod
-    def from_sqldata(cls, sqldata, no_value='--', row_filter=None):
-        return cls(sqldata.data, sqldata.columns,
-                   keys=sqldata.keys, group_by=sqldata.group_by,
-                   no_value=no_value, row_filter=row_filter)
-
-    def __init__(self, data, columns, keys=None, group_by=None, no_value='--', row_filter=None):
-        self.data = data
-        self.columns = columns
-        self.keys = keys
-        self.group_by = group_by
-        self.no_value = no_value
+    def __init__(self, format, row_filter=None):
         self.row_filter = row_filter
+        self._format = format
 
-    def format(self):
+    def format(self, data, keys=None, group_by=None):
+        row_generator = self.format_rows(data, keys=keys, group_by=group_by)
+        return self._format.format_output(row_generator)
+
+    def format_rows(self, data, keys=None, group_by=None):
         """
         Return tuple of row key and formatted row
         """
-        if self.keys is not None and self.group_by:
-            for key_group in self.keys:
-                row_key = self._row_key(key_group)
-                row = self.data.get(row_key, None)
+        if keys is not None and group_by:
+            for key_group in keys:
+                row_key = self._row_key(group_by, key_group)
+                row = data.get(row_key, None)
                 if not row:
-                    row = dict(zip(self.group_by, key_group))
+                    row = dict(zip(group_by, key_group))
 
-                formatted_row = self.format_row(row)
+                formatted_row = self._format.format_row(row_key, row)
                 if self.filter_row(row_key, formatted_row):
                     yield row_key, formatted_row
-        elif self.group_by:
-            for key, row in self.data.items():
-                formatted_row = self.format_row(row)
+        elif group_by:
+            for key, row in data.items():
+                formatted_row = self._format.format_row(row)
                 if self.filter_row(key, formatted_row):
                     yield key, formatted_row
         else:
-            formatted_row = self.format_row(self.data)
+            formatted_row = self._format.format_row(data)
             if self.filter_row(None, formatted_row):
                 yield None, formatted_row
 
     def filter_row(self, key, row):
         return not self.row_filter or self.row_filter(key, row)
 
-    def _row_key(self, key_group):
-        if len(self.group_by) == 1:
+    def _row_key(self, group_by, key_group):
+        if len(group_by) == 1:
             return key_group[0]
-        elif len(self.group_by) > 1:
+        elif len(group_by) > 1:
             return tuple(key_group)
+
+
+class BaseDataFormat(object):
+    def __init__(self, columns, no_value='--'):
+        self.columns = columns
+        self.no_value = no_value
+
+    def format_row(self, row):
+        raise NotImplementedError()
+
+    def format_output(self, row_generator):
+        raise NotImplementedError()
 
     def _or_no_value(self, value):
         return value if value is not None else self.no_value
 
-    def format_row(self, row):
-        """
-        Override to implement specific row formatting
-        """
-        raise NotImplementedError()
 
-
-class TableDataFormatter(BaseDataFormatter):
+class TableDataFormat(BaseDataFormat):
     def format_row(self, row):
         return [self._or_no_value(c.get_value(row)) for c in self.columns]
 
-    def format(self):
-        for key, row in super(TableDataFormatter, self).format():
+    def format_output(self, row_generator):
+        for key, row in row_generator:
             yield row
 
 
-class DictDataFormatter(BaseDataFormatter):
+class DictDataFormat(BaseDataFormat):
+    """
+    Formats the report data as a dictionary
+    """
     def format_row(self, row):
         return dict([(c.view.name, self._or_no_value(c.get_value(row))) for c in self.columns])
 
-    def format(self):
+    def format_output(self, row_generator):
         ret = dict()
-        for key, row in super(DictDataFormatter, self).format():
+        for key, row in row_generator:
             if key is None:
                 return row
             else:
