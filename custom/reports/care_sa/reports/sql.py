@@ -137,6 +137,62 @@ class CareReport(SqlTabularReport,
     def keys(self):
         [self.domain]
 
+    @property
+    def export_table(self):
+        try:
+            import xlwt
+        except ImportError:
+            raise Exception("It doesn't look like this machine is configured for "
+                            "excel export. To export to excel you have to run the "
+                            "command:  easy_install xlutils")
+
+        headers = self.headers
+        import pdb; pdb.set_trace()
+        rows = self.rows
+        formatted_rows = []
+        for row in rows:
+            if not self.show_age() and not self.show_gender():
+                if 'total_width' not in row:
+                    formatted_rows.append(
+                        [row['username']] +
+                        ['All genders and ages'] +
+                        row['row_data']
+                    )
+            elif not self.show_age() and self.show_gender():
+                if 'total_width' not in row:
+                    formatted_rows.append(
+                        [row['username']] +
+                        row['row_data']
+                    )
+            else:
+                # both groups with age get built the same
+                if 'total_width' not in row:
+                    formatted_rows.append(
+                        [row['username']] +
+                        [row['age_display']] +
+                        row['row_data']
+                    )
+                else:
+                    formatted_rows.append(
+                        ['Total:', ''] +
+                        row['row_data']
+                    )
+
+
+        def _unformat_row(row):
+            return [col.get("sort_key", col) if isinstance(col, dict) else col for col in row]
+
+        table = headers.as_table
+        rows = [_unformat_row(row) for row in formatted_rows]
+        table.extend(rows)
+        if self.total_row:
+            table.append(_unformat_row(self.total_row))
+        if self.statistics_rows:
+            table.extend([_unformat_row(row) for row in self.statistics_rows])
+
+        return [[self.export_sheet_name, table]]
+
+
     def initialize_user_stuff(self):
         if self.show_age() and self.show_gender():
             return {
