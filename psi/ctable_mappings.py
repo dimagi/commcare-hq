@@ -91,4 +91,6 @@ class TrainingMapping(CtableMappingFixture):
         ]
         for c in types:
             columns.append(ColumnDef(name=c, data_type="integer", value_source="value", value_attribute='sum',
-                                     match_keys=[KeyMatcher(index=3, value=c)]))            
+                                     match_keys=[KeyMatcher(index=3, value=c)]))    
+
+        return columns        
