@@ -90,16 +90,7 @@ XFORM_MAPPING = {
                         "deviceID": {"type": "string", "index": "not_analyzed"},
                         "instanceID": {"type": "string", "index": "not_analyzed"},
                         "username": {"type": "string", "index": "not_analyzed"},
-                        "appVersion": {
-                            'dynamic': False,
-                            'properties': {
-                                '@xmlns':
-                                    {"type": "string", "index": "not_analyzed"},
-                                '#text':
-                                    {"type": "string", "index": "not_analyzed"},
-
-                            }
-                        },
+                        "appVersion": {"type": "string", "index": "not_analyzed"},
                         "CommCareVersion": {"type": "string", "index": "not_analyzed"},
                     }
                 },
