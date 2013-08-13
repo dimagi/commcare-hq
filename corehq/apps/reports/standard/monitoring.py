@@ -982,7 +982,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 7: "opened_on: [* TO %s] AND NOT closed_on: [* TO %s]" % (end_date, start_date_sub1), # total cases
             }
             if today_or_tomorrow(self.datespan.enddate):
-                search_strings[6] = "opened_on: [* TO %s] AND NOT closed_on: [* TO %s] AND modified_on [%s TO %s]" % \
+                search_strings[6] = "opened_on: [* TO %s] AND NOT closed_on: [* TO %s] AND modified_on: [%s TO %s]" % \
                                     (end_date, start_date_sub1, start_date, end_date), # inactive cases
 
             def create_case_url(index):
