@@ -25,7 +25,7 @@ def _fraction(num, denom):
         return NO_VALUE
     return '{pct} ({num}/{denom})'.format(
         pct=_fmt_pct(pct),
-        num=num,
+        num=num or 0,
         denom=denom,
     )
 
