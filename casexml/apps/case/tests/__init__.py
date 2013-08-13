@@ -1,6 +1,7 @@
 from dimagi.utils.logging import log_exception
 try:
-    from .test_attachments import *
+    from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
+    from .test_multimedia import *
     from .test_bugs import *
     from .test_dbcache import *
     from .test_exclusion import *

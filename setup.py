@@ -14,7 +14,7 @@ setup(
         'couchforms==1.0.1',
         'couchexport',
         'decorator',
-        'dimagi-utils>=1.0.4',
+        'dimagi-utils>=1.0.6',
         'django',
         'django-digest',    
         'lxml',
@@ -25,6 +25,7 @@ setup(
         'python-digest',
         'pytz',
         'simplejson',
+        'PIL',
         'unittest2', # Actually a missing dimagi-utils dep?
     ],
     tests_require = [

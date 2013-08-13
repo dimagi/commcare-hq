@@ -2,6 +2,7 @@
 This isn't really a parser, but it's the code that generates case-like
 objects from things from xforms.
 """
+import os
 
 from casexml.apps.case import const
 from casexml.apps.case.xml import DEFAULT_VERSION, V1, V2, NS_REVERSE_LOOKUP_MAP
@@ -40,7 +41,7 @@ class CaseActionBase(object):
     
     def __init__(self, block, type=None, name=None, external_id=None,
                  user_id=None, owner_id=None, opened_on=None, 
-                 dynamic_properties=None, indices=None):
+                 dynamic_properties=None, indices=None, attachments=None):
         self.raw_block = block
         self.type = type
         self.name = name
@@ -50,6 +51,7 @@ class CaseActionBase(object):
         self.opened_on = opened_on
         self.dynamic_properties = dynamic_properties or {}
         self.indices = indices or []
+        self.attachments = attachments or {}
     
     def get_known_properties(self):
         prop_list = ["type", "name", "external_id", "user_id",
@@ -114,6 +116,55 @@ class CaseCloseAction(CaseActionBase):
     # Right now this doesn't do anything other than the default
     pass
 
+class CaseAttachment(object):
+    """
+    A class that wraps an attachment to a case
+    """
+    def __init__(self, identifier, attachment_src, attachment_from, attachment_name):
+        """
+        identifier: the tag name
+        attachment_src: URL of attachment
+        attachment_from: source [local, remote, inline]
+        attachment_name: required if inline for inline blob of attachment - likely identical to identifier
+        """
+        self.identifier = identifier
+        self.attachment_src = attachment_src
+        self.attachment_from = attachment_from
+        self.attachment_name = attachment_name
+
+
+class CaseAttachmentAction(CaseActionBase):
+    # Right now this doesn't do anything other than the default
+
+    def __init__(self, block, attachments):
+        super(CaseAttachmentAction, self).__init__(block, attachments=attachments)
+
+    @classmethod
+    def from_v1(cls, block):
+        # indices are not supported in v1
+        return cls(block, [])
+
+    @classmethod
+    def from_v2(cls, block):
+        attachments = {}
+        for id, data in block.items():
+            if isinstance(data, basestring):
+                attachment_from = None
+                attachment_src = None
+                attachment_name = None
+            else:
+                attachment_from = data.get('@from', None)
+                attachment_src = data.get('@src', None)
+                if attachment_from == 'local':
+                    #if it's a local resource just get the last element - the filename
+                    attachment_src = os.path.split(attachment_src)[-1]
+                attachment_name = data.get('@name', None)
+
+            if attachment_from == attachment_src == attachment_name == None:
+                #all null, this is a deletion
+                pass
+            attachments[id] = CaseAttachment(id, attachment_src, attachment_from, attachment_name)
+        return cls(block, attachments)
 
 class CaseIndex(object):
     """
@@ -169,7 +220,8 @@ class CaseUpdate(object):
         self.close_block = block.get(const.CASE_ACTION_CLOSE, {})
         self._closes_case = const.CASE_ACTION_CLOSE in block
         self.index_block = block.get(const.CASE_ACTION_INDEX, {})
-        
+        self.attachment_block = block.get(const.CASE_ACTION_ATTACHMENT, {})
+
         # referrals? really?
         self.referral_block = block.get(const.REFERRAL_TAG, {})
         
@@ -183,7 +235,10 @@ class CaseUpdate(object):
             self.actions.append(CLOSE_ACTION_FUNCTION_MAP[self.version](self.close_block))
         if self.has_indices():
             self.actions.append(INDEX_ACTION_FUNCTION_MAP[self.version](self.index_block))
+        if self.has_attachments():
+            self.actions.append(ATTACHMENT_ACTION_FUNCTION_MAP[self.version](self.attachment_block))
 
+    
     def creates_case(self):
         # creates have to have actual data in them so this is fine
         return bool(self.create_block)    
@@ -201,7 +256,11 @@ class CaseUpdate(object):
     
     def has_referrals(self):
         return bool(self.referral_block)
-    
+
+    def has_attachments(self):
+        return bool(self.attachment_block)
+
+
     def __str__(self):
         return "%s: %s" % (self.version, self.id)
 
@@ -223,7 +282,10 @@ class CaseUpdate(object):
     
     def get_index_action(self):
         return self._filtered_action(lambda a: isinstance(a, CaseIndexAction))
-    
+
+    def get_attachment_action(self):
+        return self._filtered_action(lambda a: isinstance(a, CaseAttachmentAction))
+
     @classmethod
     def from_v1(cls, case_block):
         """
@@ -290,5 +352,10 @@ CLOSE_ACTION_FUNCTION_MAP = {
 }
 INDEX_ACTION_FUNCTION_MAP = {
     V1: CaseIndexAction.from_v1,
-    V2: CaseIndexAction.from_v2,
+    V2: CaseIndexAction.from_v2
+}
+
+ATTACHMENT_ACTION_FUNCTION_MAP = {
+    V1: CaseAttachmentAction.from_v1,
+    V2: CaseAttachmentAction.from_v2
 }
