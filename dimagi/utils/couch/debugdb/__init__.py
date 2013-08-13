@@ -77,7 +77,7 @@ VIEW_OUTPUT_HEADERS = [
     'rows',
     'total_rows',
     'result_cached',
-    'params',
+    # 'params',
 ]
 
 OPEN_DOC_OUTPUT_HEADERS = [
@@ -85,5 +85,5 @@ OPEN_DOC_OUTPUT_HEADERS = [
     'duration',
     'doc_type',
     'response',
-    'params',
+    # 'params',
 ]
