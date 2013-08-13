@@ -22,3 +22,19 @@ class TestMeta(TestCase):
         self.assertEqual("f7f0c79e-8b79-11df-b7de-005056c00008", xform.metadata.userID)
         self.assertEqual("v1.2.3 (biz bazzle)", xform.metadata.appVersion)
         
+    def testDecimalAppVersion(self):
+        '''
+        Tests that an appVersion that looks like a decimal:
+        (a) is not converted to a Decimal by couchdbkit
+        (b) does not crash anything
+        '''
+        
+        file_path = os.path.join(os.path.dirname(__file__), "data", "decimalmeta.xml")
+        xml_data = open(file_path, "rb").read()
+        doc_id, errors = post_authenticated_data(xml_data, 
+                                                 settings.XFORMS_POST_URL, 
+                                                 settings.COUCH_USERNAME,
+                                                 settings.COUCH_PASSWORD)
+        xform = XFormInstance.get(doc_id)
+        self.assertEqual(xform.metadata.appVersion, '2.0') 
+
