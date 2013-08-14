@@ -147,7 +147,6 @@ class CareReport(SqlTabularReport,
                             "command:  easy_install xlutils")
 
         headers = self.headers
-        import pdb; pdb.set_trace()
         rows = self.rows
         formatted_rows = []
         for row in rows:
