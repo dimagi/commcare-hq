@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 from couchdbkit.exceptions import MultipleResultsFound
-from sqlagg.columns import SumColumn, SimpleColumn, SumWhen
+from sqlagg.columns import SumColumn, SimpleColumn, SumWhen, CountUniqueColumn
 from corehq.apps.callcenter.utils import MAPPING_NAME_FORMS, MAPPING_NAME_CASES
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.reportfixtures.indicator_sets import SqlIndicatorSet
@@ -78,6 +78,7 @@ class CallCenter(SqlIndicatorSet):
     @property
     def columns(self):
         case_table_name = '%s_%s' % (self.domain.name, MAPPING_NAME_CASES)
+        case_ownership_table_name = '%s_%s' % (self.domain.name, MAPPING_NAME_CASE_OWNERSHIP)
         case_type_filters = ["case_type != '%s'" % self.domain.call_center_config.case_type]
 
         columns = [
@@ -98,21 +99,21 @@ class CallCenter(SqlIndicatorSet):
                                      alias='formsSubmittedMonth0'),
                            sortable=False),
             DatabaseColumn('casesUpdatedMonth0',
-                           SumColumn('case_updates',
+                           CountUniqueColumn('case_id',
                                      table_name=case_table_name,
                                      filters=filters_month0 + case_type_filters,
                                      alias='casesUpdatedMonth0'),
                            sortable=False),
             DatabaseColumn('casesUpdatedMonth1',
-                           SumColumn('case_updates',
+                           CountUniqueColumn('case_id',
                                      table_name=case_table_name,
                                      filters=filters_month1 + case_type_filters,
                                      alias='casesUpdatedMonth1'),
                            sortable=False),
             DatabaseColumn('totalCases',
-                           SumColumn('case_updates',
-                                     table_name=case_table_name,
-                                     filters=filters_ever + case_type_filters,
+                           SumColumn('open_cases',
+                                     table_name=case_ownership_table_name,
+                                     filters=case_type_filters,
                                      alias='totalCases'),
                            sortable=False)
         ]

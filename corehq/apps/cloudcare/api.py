@@ -36,10 +36,11 @@ class CaseAPIResult(object):
     The result of a case API query. Useful for abstracting out the difference
     between an id-only representation and a full_blown one.
     """
-    def __init__(self, id=None, couch_doc=None, id_only=False):
+    def __init__(self, id=None, couch_doc=None, id_only=False, lite=True):
         self._id = id
         self._couch_doc = couch_doc
         self.id_only = id_only
+        self.lite = lite
 
     def __getitem__(self, key):
         if key == 'case_id':
@@ -61,7 +62,7 @@ class CaseAPIResult(object):
 
     @property
     def case_json(self):
-        return self.couch_doc.get_json()
+        return self.couch_doc.get_json(lite=self.lite)
 
     def to_json(self):
         return self.id if self.id_only else self.case_json

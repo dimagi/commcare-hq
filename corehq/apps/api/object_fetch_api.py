@@ -25,14 +25,8 @@ class CaseAttachmentAPI(View):
         max_width = int(self.request.GET.get('max_image_width', 0))
         max_height = int(self.request.GET.get('max_image_height', 0))
 
-        if size:
-            size_key = size
-        else:
-            size_key = None
-
         case_id = kwargs.get('case_id', None)
-        case_exists = CommCareCase.get_db().doc_exist(case_id)
-        if not case_exists:
+        if not case_id or not CommCareCase.get_db().doc_exist(case_id):
             raise Http404
 
         attachment_key = kwargs.get('attachment_id', None)
@@ -58,12 +52,13 @@ class CaseAttachmentAPI(View):
                     if meta is not None:
                         r.write('Resolution: %d x %d<br>' % (meta['width'], meta['height']))
                         r.write('Filesize: %d<br>' % ( meta['content_length']))
-                        r.write('%(attach_url)s?img&size=%(size_key)s&max_size=%(max_filesize)s&max_image_width=%(max_width)s&max_image_height=%(max_height)s">' %
+                        r.write('<img src="%(attach_url)s?img&size=%(size_key)s&max_size=%(max_filesize)s&max_image_width=%(max_width)s&max_image_height=%(max_height)s">' %
                                 {
                                     "attach_url": reverse("api_case_attachment", kwargs={
                                         "domain": self.request.domain,
                                         "case_id": case_id,
-                                        "attachment_id": attachment_key
+                                        "attachment_id": attachment_key,
+                                        "attachment_src": attachment_src
                                     }),
                                     "domain": case_doc.domain, "case_id": case_id,
                                     "attachment_key": attachment_key,
