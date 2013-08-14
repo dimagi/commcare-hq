@@ -2,7 +2,7 @@ from dimagi.utils.decorators.memoized import memoized
 from sqlagg.columns import *
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, TableDataFormatter, AggregateColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn, DataFormatter, TableDataFormat
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.users.util import user_id_to_username
 from .definitions import *
@@ -25,7 +25,7 @@ def _fraction(num, denom):
         return NO_VALUE
     return '{pct} ({num}/{denom})'.format(
         pct=_fmt_pct(pct),
-        num=num,
+        num=num or 0,
         denom=denom,
     )
 
@@ -66,7 +66,8 @@ class Section(SqlData):
     @property
     @memoized
     def rows(self):
-        raw_data = list(TableDataFormatter.from_sqldata(self, no_value=NO_VALUE).format())
+        formatter = DataFormatter(TableDataFormat(self.columns, no_value=NO_VALUE))
+        raw_data = list(formatter.format(self.data, keys=self.keys, group_by=self.group_by))
         ret = transpose(self.columns, raw_data)
         return ret
 
@@ -126,7 +127,8 @@ class MCSectionedDataProvider(DataProvider):
     @property
     @memoized
     def _raw_rows(self):
-        return list(TableDataFormatter.from_sqldata(self.sqldata, no_value=NO_VALUE).format())
+        formatter = DataFormatter(TableDataFormat(self.sqldata.columns, no_value=NO_VALUE))
+        return list(formatter.format(self.sqldata.data, keys=self.sqldata.keys, group_by=self.sqldata.group_by))
 
     def rows(self):
         # a bit of a hack. rows aren't really rows, but the template knows
