@@ -6,14 +6,11 @@ from django.conf import settings
 
 class Command(LabelCommand):
     help = "Reset checkpoints for pillowtop"
+    args = '<pillow_class>'
+    label = 'Pillow class'
 
     option_list = LabelCommand.option_list + \
                   (
-                     make_option('--pillow_class',
-                                  action='store',
-                                  dest='pillow_class',
-                                  default=None,
-                                  help="Single Pillow class to reset checkpoint"),
                      make_option('--noinput',
                                   action='store_true',
                                   dest='interactive',
@@ -21,20 +18,20 @@ class Command(LabelCommand):
                                   help="Suppress confirmation messages - dangerous mode!"),
                   )
 
-    def handle(self, **options):
+    def handle(self, *labels, **options):
         """
         More targeted pillow checkpoint reset system - must specify the pillow class_name to reset the checkpoint
         """
         all_pillows = import_pillows()
 
-        pillow_class_name = options.get('pillow_class', None)
         pillow_class_names = [x.__class__.__name__ for x in all_pillows]
 
-        if not pillow_class_name:
+        if not labels:
             print ""
             print "\nNo pillow class defined, options are: %s\n" % ('\n\t'.join(pillow_class_names))
             sys.exit()
 
+        pillow_class_name = labels[0]
         if pillow_class_name not in pillow_class_names:
             print ""
             print "\n\tPillow class [%s] not in configuration, what are you trying to do?\n" % pillow_class_name
