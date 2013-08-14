@@ -56,5 +56,7 @@ amqp==1.0.8
 amqplib==1.0.2
 sqlagg==0.1.5
 -e submodules/fluff-src
+django-redis==3.2
+redis==2.7.5
 ctable==0.0.6
 unittest2

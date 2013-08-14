@@ -95,14 +95,16 @@ def create_form_mapping(domain):
 def create_case_mapping(domain):
     mapping = get_or_create_mapping(domain, MAPPING_NAME_CASES)
 
-    mapping.couch_view = 'callcenter/cases_modified_by_user'
+    mapping.couch_view = 'callcenter/case_actions_by_user'
     mapping.couch_key_prefix = [domain.name]
     mapping.columns = [
         ColumnDef(name="date", data_type="date", value_source="key", value_index=1,
                   date_format="%Y-%m-%dT%H:%M:%SZ"),
         ColumnDef(name="user_id", data_type="string", value_source="key", value_index=2),
         ColumnDef(name="case_type", data_type="string", value_source="key", value_index=3),
-        ColumnDef(name="case_updates", data_type="integer", value_source="value"),
+        ColumnDef(name="action_type", data_type="string", value_source="key", value_index=4),
+        ColumnDef(name="case_id", data_type="string", value_source="key", value_index=5),
+        ColumnDef(name="action_count", data_type="integer", value_source="value"),
     ]
     mapping.save()
 
