@@ -78,6 +78,7 @@ class PtopReindexer(NoArgsCommand):
 
     doc_class = None
     view_name = None
+    couch_key = None
     pillow_class = None
     file_prefix = "ptop_fast_reindex_"
 
@@ -117,7 +118,10 @@ class PtopReindexer(NoArgsCommand):
         """
         def full_view_iter():
             start_seq = 0
-            view_chunk = self.db.view(self.view_name, reduce=False, limit=self.chunk_size * self.chunk_size, skip=start_seq)
+            view_kwargs = {}
+            if self.couch_key is not None:
+                view_kwargs["key"] = self.couch_key
+            view_chunk = self.db.view(self.view_name, reduce=False, limit=self.chunk_size * self.chunk_size, skip=start_seq, **view_kwargs)
             while len(view_chunk) > 0:
                 for item in view_chunk:
                     yield item
