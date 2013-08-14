@@ -23,5 +23,6 @@ setup(
         'simplejson',
         'unittest2',
         "celery",
+        "django-devserver"
     ],
 )
