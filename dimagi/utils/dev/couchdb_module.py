@@ -35,13 +35,15 @@ class CouchDBDevModule(DevServerModule):
 
         if SHOW_VERBOSE:
             self.logger.debug("GET raw output")
-            for r in gets:
+            for ix, r in enumerate(gets[self.get_offset:], start=1):
                 outstring = ", ".join(['%s: %s' % (h, r[h]) for h in OPEN_DOC_OUTPUT_HEADERS])
-                self.logger.info("Couch GET %s" % outstring)
+                self.logger.info("Couch GET %d" % ix)
+                self.logger.info(outstring)
                 output_stacktrace(r)
-            for v in views:
+            for ix, v in enumerate(views[self.view_offset:], start=1):
                 outstring = ", ".join(['%s: %s' % (h, v[h]) for h in VIEW_OUTPUT_HEADERS])
-                self.logger.info("Couch VIEW %s" % outstring)
+                self.logger.info("Couch VIEW %d" % ix)
+                self.logger.info(outstring)
                 output_stacktrace(v)
 
 
