@@ -345,9 +345,8 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
     def has_indices(self):
         return self.indices or self.reverse_indices
         
-    def get_json(self):
-        
-        return {
+    def get_json(self, lite=False):
+        ret = {
             # referrals and actions excluded here
             "domain": self.domain,
             "case_id": self.case_id,
@@ -375,8 +374,12 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
             }.items()),
             #reorganized
             "indices": self.get_index_map(),
-            "reverse_indices": self.get_index_map(True),
         }
+        if not lite:
+            ret.update({
+                "reverse_indices": self.get_index_map(True),
+            })
+        return ret
 
     @memoized
     def get_index_map(self, reversed=False):
