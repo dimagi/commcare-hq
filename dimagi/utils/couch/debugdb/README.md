@@ -4,7 +4,14 @@ Install django-devserver
 
 add `devserver` to your APPS or LOCAL_APPS
 
-In DEVSERVER_MODULES = (), add `'dimagi.utils.dev.couchdb_module.CouchDBDevModule'` to it.
+To your settings make sure `DEVSERVER_MODULES` has the devmodule added:
 
-If you want the full gory details of your couch use/abuse, add a `COUCHDB_DEVSERVER_VERBOSE=True` variable to your settings as well.
-If you want the stacktrace of your offending couch use/abuse, add a `COUCHDB_DEVSERVER_STACKTRACE=True` variable to your settings as well.
+`DEVSERVER_MODULES = ('dimagi.utils.dev.couchdb_module.CouchDBDevModule',)`
+
+
+If you want the full gory details of your couch use/abuse there are additional settings to add to your localsettings.py
+
+`COUCHDB_DEVSERVER_VERBOSE=True # shows verbose output of views and gets`
+
+`COUCHDB_DEVSERVER_STACKTRACE=True # shows last line of the stacktrace that calls the code in question`
+
