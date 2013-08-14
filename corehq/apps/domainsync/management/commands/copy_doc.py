@@ -5,13 +5,13 @@ from corehq.apps.domainsync.config import DocumentTransform, save
 
 
 class Command(LabelCommand):
-    help = "Copy an app"
+    help = "Copy any couch doc"
     args = '<sourcedb> <doc_id> (<domain>)'
     label = ""
 
     def handle(self, *args, **options):
         if len(args) < 2 or len(args) > 3:
-            raise CommandError('Usage is copy_app %s' % self.args)
+            raise CommandError('Usage is copy_doc %s' % self.args)
 
         sourcedb = Database(args[0])
         app_id = args[1]
