@@ -854,7 +854,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                                          endkey=key + [{}],
                                          stale=None if strict else settings.COUCH_STALE_QUERY,
                                          **extra_args)
-        return [cls.wrap(x['doc']) for x in res['rows']]
+        if extra_args.get('include_docs', False):
+            return [cls.wrap(x['doc']) for x in res['rows']]
+        else:
+            return res
 
         # return cls.view("users/by_domain",
         #     reduce=reduce,
