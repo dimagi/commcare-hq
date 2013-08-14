@@ -17,6 +17,7 @@ from django.template.loader import render_to_string
 from couchdbkit.ext.django.schema import *
 from couchdbkit.resource import ResourceNotFound
 import simplejson
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from dimagi.utils.logging import notify_exception
 
@@ -846,13 +847,22 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                     skip=skip
                 )
 
-        return cls.view("users/by_domain",
-            reduce=reduce,
-            startkey=key,
-            endkey=key + [{}],
-            stale=None if strict else settings.COUCH_STALE_QUERY,
-            **extra_args
-        ).all()
+        db = cls.get_db()
+        res = cache_core.cached_view(db, "users/by_domain",
+                                         reduce=reduce,
+                                         startkey=key,
+                                         endkey=key + [{}],
+                                         stale=None if strict else settings.COUCH_STALE_QUERY,
+                                         **extra_args)
+        return [cls.wrap(x['doc']) for x in res['rows']]
+
+        # return cls.view("users/by_domain",
+        #     reduce=reduce,
+        #     startkey=key,
+        #     endkey=key + [{}],
+        #     stale=None if strict else settings.COUCH_STALE_QUERY,
+        #     **extra_args
+        # ).all()
 
     @classmethod
     def total_by_domain(cls, domain, is_active=True):
@@ -996,7 +1006,12 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
         """
         try:
-            couch_user = cls.wrap_correctly(cls.get_db().get(userID))
+
+            db = cls.get_db()
+            res = cache_core.cached_open_doc(db, userID)
+            couch_user = cls.wrap_correctly(res)
+
+            # couch_user = cls.wrap_correctly(cls.get_db().get(userID))
         except ResourceNotFound:
             return None
         if couch_user.doc_type != cls.__name__ and cls.__name__ != "CouchUser":

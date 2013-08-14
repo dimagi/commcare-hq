@@ -6,6 +6,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.adm.admin.crud import *
 from corehq.apps.crud.models import AdminCRUDDocumentMixin
 from corehq.apps.groups.models import Group
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
@@ -745,20 +746,38 @@ class ADMReport(BaseADMDocument):
     def get_active_slugs(cls, domain, section):
         all_slugs = list()
         key = ["defaults domain slug", domain, section]
-        domain_defaults = get_db().view(cls.defaults_couch_view(),
-            group=True,
-            group_level=4,
-            startkey=key,
-            endkey=key+[{}]
-        ).all()
+
+        db = get_db()
+        domain_defaults = cache_core.cached_view(db, cls.default.couch_view(),
+                                     group=True,
+                                     group_level=4,
+                                     startkey=key,
+                                     endkey=key+[{}]
+        )
+
+        # domain_defaults = get_db().view(cls.defaults_couch_view(),
+        #     group=True,
+        #     group_level=4,
+        #     startkey=key,
+        #     endkey=key+[{}]
+        # ).all()
+
         all_slugs.extend([item.get('key', [])[-1] for item in domain_defaults])
         key = ["defaults global slug", section]
-        global_defaults = get_db().view(cls.defaults_couch_view(),
-            group=True,
-            group_level=3,
-            startkey=key,
-            endkey=key+[{}]
-        ).all()
+
+        global_defaults = cache_core.cached_view(db, cls.default.couch_view(),
+                                                     group=True,
+                                                     group_level=3,
+                                                     startkey=key,
+                                                     endkey=key+[{}]
+        )
+
+        # global_defaults = get_db().view(cls.defaults_couch_view(),
+        #     group=True,
+        #     group_level=3,
+        #     startkey=key,
+        #     endkey=key+[{}]
+        # ).all()
         all_slugs.extend([item.get('key', [])[-1] for item in global_defaults])
         return list(set(all_slugs))
 
