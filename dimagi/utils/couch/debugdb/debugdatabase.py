@@ -40,11 +40,11 @@ class DebugDatabase(Database):
             wrapper = schema.wrap
 
         docid = resource.escape_docid(docid)
-        errored=False
+        error = None
         try:
             doc = self.res.get(docid, **params).json_body
         except ResourceNotFound, ex:
-            errored=True
+            error = ex
             doc = {}
         #############################
 
@@ -68,7 +68,7 @@ class DebugDatabase(Database):
                 'stop_time': stop,
                 'is_slow': (duration > SQL_WARNING_THRESHOLD),
                 'total_rows': 1,
-                'response': 200 if not errored else 404,
+                'response': 200 if error is None else 404,
                 'doc_type': doc.get('doc_type', '[unknown]'),
                 'doc_id': docid,
             }
@@ -80,13 +80,13 @@ class DebugDatabase(Database):
 
         ##################################
         #Resume original Database.open_doc
+        if error is not None:
+            raise error
+
         if wrapper is not None:
             if not callable(wrapper):
                 raise TypeError("wrapper isn't a callable")
             return wrapper(doc)
-
-        if errored:
-            raise ResourceNotFound
 
         return doc
     get = debug_open_doc
