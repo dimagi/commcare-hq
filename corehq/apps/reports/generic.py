@@ -398,7 +398,7 @@ class GenericReportView(CacheableRequestMixIn):
             Intention: Don't override.
         """
         report_configs = ReportConfig.by_domain_and_owner(self.domain,
-            self.request.couch_user._id, report_slug=self.slug).all()
+            self.request.couch_user._id, report_slug=self.slug)
         current_config_id = self.request.GET.get('config_id', '')
         default_config = ReportConfig.default()
 

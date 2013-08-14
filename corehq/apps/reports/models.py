@@ -12,6 +12,7 @@ from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
 from couchexport.models import SavedExportSchema, GroupExportConfiguration
 from couchexport.util import SerializableFunction
 import couchforms
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
@@ -171,9 +172,21 @@ class ReportConfig(Document):
         else:
             key = ["name", domain, owner_id]
 
-        return cls.view('reportconfig/configs_by_domain',
-            reduce=False, include_docs=True, startkey=key, endkey=key + [{}],
-            **kwargs)
+        db = cls.get_db()
+        res = cache_core.cached_view(db, "reportconfig/configs_by_domain", reduce=False,
+                                     include_docs=True, startkey=key, endkey=key + [{}], **kwargs)
+
+
+        if len(res['rows']) > 0:
+            result = cls.wrap([x['doc'] for x in res['rows']])
+        else:
+            result=[]
+
+        return result
+
+        # return cls.view('reportconfig/configs_by_domain',
+        #     reduce=False, include_docs=True, startkey=key, endkey=key + [{}],
+        #     **kwargs)
    
     @classmethod
     def default(self):
@@ -399,9 +412,18 @@ class ReportNotification(Document):
 
         key = [domain, owner_id]
 
-        return cls.view("reportconfig/user_notifications",
-            reduce=False, include_docs=True, startkey=key, endkey=key + [{}],
-            **kwargs)
+        db = cls.get_db()
+        res = cache_core.cached_view(db, "reportconfig/user_notifications", reduce=False,
+                                     include_docs=True, startkey=key, endkey=key + [{}], **kwargs)
+
+        if len(res['rows']) > 0:
+            result = cls.wrap([x['doc'] for x in res['rows']])
+        else:
+            result = []
+        return result
+        # return cls.view("reportconfig/user_notifications",
+        #     reduce=False, include_docs=True, startkey=key, endkey=key + [{}],
+        #     **kwargs)
 
     @property
     def all_recipient_emails(self):

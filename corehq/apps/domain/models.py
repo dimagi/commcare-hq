@@ -8,9 +8,9 @@ from couchdbkit.ext.django.schema import (Document, StringProperty, BooleanPrope
                                           DocumentSchema, SchemaProperty, DictProperty, ListProperty,
                                           StringListProperty, SchemaListProperty)
 from django.utils.safestring import mark_safe
-import simplejson
 from corehq.apps.appstore.models import Review, SnapshotMixin
 from corehq.apps.domain.utils import get_domain_module_map
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.logging import notify_exception
@@ -19,7 +19,6 @@ from itertools import chain
 from langcodes import langs as all_langs
 from collections import defaultdict
 from django.utils.importlib import import_module
-from django.core import cache
 
 
 lang_lookup = defaultdict(str)
@@ -27,8 +26,6 @@ lang_lookup = defaultdict(str)
 DATA_DICT = settings.INTERNAL_DATA
 AREA_CHOICES = [a["name"] for a in DATA_DICT["area"]]
 SUB_AREA_CHOICES = reduce(list.__add__, [a["sub_areas"] for a in DATA_DICT["area"]], [])
-
-mcache = cache.get_cache('default')
 
 for lang in all_langs:
     lang_lookup[lang['three']] = lang['names'][0] # arbitrarily using the first name if there are multiple
@@ -484,24 +481,20 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
                     return None
         extra_args = {'stale': settings.COUCH_STALE_QUERY} if not strict else {}
 
-        cached_name = mcache.get(name, None)
-        if cached_name:
-            res = simplejson.loads(cached_name)
-            result = cls.wrap(res)
-        else:
-            result = cls.view("domain/domains",
-                key=name,
-                reduce=False,
-                include_docs=True,
-                **extra_args
-            ).first()
+        db = cls.get_db()
+        res = cache_core.cached_view(db, "domain/domains", key=name, reduce=False, include_docs=True, **extra_args)
+        result = cls.wrap(res['rows'][0]['doc'])
+
+        # result = cls.view("domain/domains",
+        #     key=name,
+        #     reduce=False,
+        #     include_docs=True,
+        #     **extra_args
+        # ).first()
 
         if result is None and not strict:
             # on the off chance this is a brand new domain, try with strict
             return cls.get_by_name(name, strict=True)
-
-        if not cached_name:
-            mcache.set(name, simplejson.dumps(result.to_json()))
 
         return result
 

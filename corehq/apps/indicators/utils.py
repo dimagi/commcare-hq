@@ -1,10 +1,12 @@
 from couchdbkit import ResourceNotFound
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_db
 
 
 def get_indicator_config():
     try:
-        return get_db().get('INDICATOR_CONFIGURATION').get('namespaces', {})
+        return cache_core.cached_open_doc(get_db(), 'INDICATOR_CONFIGURATION').get('namespaces', {})
+        # return get_db().get('INDICATOR_CONFIGURATION').get('namespaces', {})
     except ResourceNotFound:
         pass
     return {}
