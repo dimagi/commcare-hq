@@ -6,7 +6,6 @@ from django.conf import settings
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from dimagi.utils.modules import try_import
 from corehq.apps.domain.models import Domain
-from corehq.apps.sms.util import clean_phone_number
 
 phone_number_re = re.compile("^\d+$")
 
@@ -43,6 +42,7 @@ class VerifiedNumber(Document):
 
     @property
     def backend(self):
+        from corehq.apps.sms.util import clean_phone_number
         if self.backend_id is not None and isinstance(self.backend_id, basestring) and self.backend_id.strip() != "":
             return MobileBackend.load_by_name(self.domain, self.backend_id)
         else:

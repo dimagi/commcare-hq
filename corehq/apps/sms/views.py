@@ -318,7 +318,9 @@ def delete_forwarding_rule(request, domain, forwarding_rule_id):
     return HttpResponseRedirect(reverse("list_forwarding_rules", args=[domain]))
 
 def _add_backend(request, backend_class_name, is_global, domain=None, backend_id=None):
-    assert request.couch_user.is_superuser or is_global or backend_class_name == "TelerivetBackend" # TODO: Remove this once domain-specific billing is sorted out
+    # We can remove this restriction once we implement throttling of http backends, and billing for domain-specific backends
+    if not (request.couch_user.is_superuser or is_global or backend_class_name == "TelerivetBackend"):
+        raise Http404
     backend_classes = get_available_backends()
     backend_class = backend_classes[backend_class_name]
     

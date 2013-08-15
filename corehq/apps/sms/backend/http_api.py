@@ -1,3 +1,4 @@
+import re
 from urllib import urlencode
 from urllib2 import urlopen
 from corehq.apps.sms.mixin import SMSBackend
@@ -8,6 +9,16 @@ from django.core.exceptions import ValidationError
 from couchdbkit.ext.django.schema import *
 from dimagi.utils.django.fields import TrimmedCharField
 from corehq.apps.sms.util import clean_phone_number, strip_plus
+from django.utils.translation import ugettext as _, ugettext_noop
+
+BANNED_URL_REGEX = (
+    r".*://.*commcarehq.org.*",
+    r".*://10.*",
+    r".*://172.16.*",
+    r".*://192.168.*",
+    r".*://127.0.0.1.*",
+    r".*://.*localhost.*",
+)
 
 class HttpBackendForm(BackendForm):
     url = TrimmedCharField()
@@ -22,6 +33,13 @@ class HttpBackendForm(BackendForm):
             additional_params_dict = kwargs["initial"]["additional_params"]
             kwargs["initial"]["additional_params"] = [{"name" : key, "value" : value} for key, value in additional_params_dict.items()]
         super(HttpBackendForm, self).__init__(*args, **kwargs)
+
+    def clean_url(self):
+        value = self.cleaned_data.get("url")
+        for regex in BANNED_URL_REGEX:
+            if re.match(regex, value):
+                raise ValidationError(_("Invalid URL."))
+        return value
 
     def clean_additional_params(self):
         value = self.cleaned_data.get("additional_params")
