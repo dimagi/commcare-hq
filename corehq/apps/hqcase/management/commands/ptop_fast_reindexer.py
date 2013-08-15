@@ -132,7 +132,7 @@ class PtopReindexer(NoArgsCommand):
                 reduce=False,
                 limit=self.chunk_size * self.chunk_size,
                 skip=start_seq,
-                **view_kwargs,
+                **view_kwargs
             )
 
             while len(view_chunk) > 0:
