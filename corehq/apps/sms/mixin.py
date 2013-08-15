@@ -18,6 +18,9 @@ class InvalidFormatException(PhoneNumberException):
 class PhoneNumberInUseException(PhoneNumberException):
     pass
 
+class BadSMSConfigException(Exception):
+    pass
+
 class VerifiedNumber(Document):
     """
     There should only be one VerifiedNumber entry per (owner_doc_type, owner_id), and
@@ -27,7 +30,7 @@ class VerifiedNumber(Document):
     owner_doc_type  = StringProperty()
     owner_id        = StringProperty()
     phone_number    = StringProperty()
-    backend_id      = StringProperty() # points to a MobileBackend
+    backend_id      = StringProperty() # the name of a MobileBackend (can be domain-level or system-level)
     ivr_backend_id  = StringProperty() # points to a MobileBackend
     verified        = BooleanProperty()
     
@@ -39,11 +42,12 @@ class VerifiedNumber(Document):
 
     @property
     def backend(self):
-        if self.backend_id is None or self.backend_id == "":
-            return MobileBackend.auto_load("+%s" % self.phone_number, self.domain)
+        from corehq.apps.sms.util import clean_phone_number
+        if self.backend_id is not None and isinstance(self.backend_id, basestring) and self.backend_id.strip() != "":
+            return MobileBackend.load_by_name(self.domain, self.backend_id)
         else:
-            return MobileBackend.load(self.backend_id)
-    
+            return MobileBackend.auto_load(clean_phone_number(self.phone_number), self.domain)
+
     @property
     def ivr_backend(self):
         return MobileBackend.get(self.ivr_backend_id)
@@ -82,14 +86,35 @@ def strip_plus(phone_number):
 def add_plus(phone_number):
     return ('+' + phone_number) if not phone_number.startswith('+') else phone_number
 
+def get_global_prefix_backend_mapping():
+    result = {}
+    for entry in BackendMapping.view("sms/backend_map", startkey=["*"], endkey=["*", {}], include_docs=True).all():
+        if entry.prefix == "*":
+            result[""] = entry.backend_id
+        else:
+            result[entry.prefix] = entry.backend_id
+    return result
+
 class MobileBackend(Document):
     """
     Defines an instance of a backend api to be used for either sending sms, or sending outbound calls.
     """
-    domain = ListProperty(StringProperty)   # A list of domains for which this backend is applicable
+    class Meta:
+        app_label = "sms"
+
+    base_doc = "MobileBackend"
+    domain = StringProperty()               # This is the domain that the backend belongs to, or None for global backends
+    name = StringProperty()                 # The name to use when setting this backend for a contact
+    authorized_domains = ListProperty(StringProperty)  # A list of additional domains that are allowed to use this backend
+    is_global = BooleanProperty(default=True)  # If True, this backend can be used for any domain
     description = StringProperty()          # (optional) A description of this backend
+    # TODO: Once the ivr backends get refactored, can remove these two properties:
     outbound_module = StringProperty()      # The fully-qualified name of the outbound module to be used (sms backends: must implement send(); ivr backends: must implement initiate_outbound_call() )
     outbound_params = DictProperty()        # The parameters which will be the keyword arguments sent to the outbound module's send() method
+    reply_to_phone_number = StringProperty() # The phone number which you can text to / call to reply to this backend
+
+    def domain_is_authorized(self, domain):
+        return self.is_global or domain == self.domain or domain in self.authorized_domains
 
     @classmethod
     def auto_load(cls, phone_number, domain=None):
@@ -106,48 +131,78 @@ class MobileBackend(Document):
                 return cls.load(domain_obj.default_sms_backend_id)
         
         # Use the appropriate system-wide default backend
-        global_backends = getattr(settings, 'SMS_BACKENDS', {})
+        global_backends = get_global_prefix_backend_mapping()
         backend_mapping = sorted(global_backends.iteritems(),
                                  key=lambda (prefix, backend): len(prefix),
                                  reverse=True)
-        for prefix, backend in backend_mapping:
+        for prefix, backend_id in backend_mapping:
             if phone_number.startswith('+' + prefix):
-                return cls.load(backend)
-        raise RuntimeError('no suitable backend found for phone number %s' % phone_number)
+                return cls.load(backend_id)
+        raise BadSMSConfigException('no suitable backend found for phone number %s' % phone_number)
 
     @classmethod
     def load(cls, backend_id):
         """load a mobile backend
-        for 'old-style' backends, create a virtual backend record
-        wrapping the backend module
+            backend_id  - the Couch document _id of the backend to load
         """
-        # new-style backend
-        try:
-            return cls.get(backend_id)
-        except:
-            pass
+        # Circular import
+        from corehq.apps.sms.util import get_available_backends
+        backend_classes = get_available_backends()
+        backend = cls.get(backend_id)
+        if backend.doc_type not in backend_classes:
+            raise Exception("Unexpected backend doc_type found '%s' for backend '%s'" % (backend.doc_type, backend._id))
+        else:
+            return backend_classes[backend.doc_type].wrap(backend.to_json())
 
-        # old-style backend
+    @classmethod
+    def load_by_name(cls, domain, name):
+        """
+        Attempts to load the backend with the given name.
+        If no matching backend is found, a RuntimeError is raised.
+        """
+        # First look for backends with that name that are owned by domain
+        name = name.strip().upper()
+        backend = cls.view("sms/backend_by_owner_domain", key=[domain, name], include_docs=True).one()
+        if backend is None:
+            # Look for a backend with that name that this domain was granted access to
+            backend = cls.view("sms/backend_by_domain", key=[domain, name], include_docs=True).first()
+            if backend is None:
+                # Look for a global backend with that name
+                backend = cls.view("sms/global_backends", key=[name], include_docs=True).one()
+        if backend is not None:
+            return cls.load(backend._id)
+        else:
+            raise BadSMSConfigException("Could not find backend '%s' from domain '%s'" % (name, domain))
 
-        # hard-coded old-style backends with new-style IDs
-        # once the backend migration is complete, these backends
-        # should exist in couch
-        transitional = {
-            'MOBILE_BACKEND_MACH': 'corehq.apps.sms.mach_api',
-            'MOBILE_BACKEND_UNICEL': 'corehq.apps.unicel.api',
-            'MOBILE_BACKEND_TEST': 'corehq.apps.sms.test_backend',
-            # tropo?
-        }
-        try:
-            module = transitional[backend_id]
-        except KeyError:
-            module = backend_id
+    @classmethod
+    def get_api_id(cls):
+        """
+        This method should return the backend's api id.
+        TODO: We can probably remove this method if everything is switched to check what subclass of MobileBackend is being used.
+        """
+        raise NotImplementedError("Please define get_api_id()")
 
-        return cls(
-            _id=backend_id,
-            outbound_module=module,
-            description='virtual backend for %s' % backend_id,
-        )
+    @classmethod
+    def get_generic_name(cls):
+        """
+        This method should return a descriptive name for this backend (such as "Unicel" or "Tropo"), for use in identifying it to an end user.
+        """
+        raise NotImplementedError("Please define get_generic_name()")
+
+    @classmethod
+    def get_template(cls):
+        """
+        This method should return the path to the Django template which will be used to capture values for this backend's specific properties.
+        This template should extend sms/add_backend.html
+        """
+        return "sms/add_backend.html"
+
+    @classmethod
+    def get_form_class(cls):
+        """
+        This method should return a subclass of corehq.apps.sms.forms.BackendForm
+        """
+        raise NotImplementedError("Please define get_form_class()")
 
     @property
     def backend_module(self):
@@ -156,9 +211,25 @@ class MobileBackend(Document):
             raise RuntimeError('could not find outbound module %s' % self.outbound_module)
         return module
 
+    def retire(self):
+        self.base_doc += "-Deleted"
+        self.save()
+
     def get_cleaned_outbound_params(self):
         # for passing to functions, ensure the keys are all strings
         return dict((str(k), v) for k, v in self.outbound_params.items())
+
+class SMSBackend(MobileBackend):
+    backend_type = "SMS"
+
+    def send(msg, *args, **kwargs):
+        raise NotImplementedError("send() method not implemented")
+
+class BackendMapping(Document):
+    domain = StringProperty()
+    is_global = BooleanProperty()
+    prefix = StringProperty()
+    backend_id = StringProperty() # Couch Document id of a MobileBackend
 
 class CommCareMobileContactMixin(object):
     """
