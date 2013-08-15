@@ -1,6 +1,5 @@
 from datetime import datetime
 from corehq.apps.hqcase.management.commands.ptop_fast_reindexer import PtopReindexer
-from custom.reports.mc.models import MalariaConsortiumFluffPillow
 from fluff import FluffPillow
 
 CHUNK_SIZE = 500
