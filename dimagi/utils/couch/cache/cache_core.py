@@ -6,6 +6,8 @@ import simplejson
 MOCK_REDIS_CACHE = None
 COUCH_CACHE_TIMEOUT = 1800
 
+DEBUG_TRACE = False
+
 
 def rcache():
     return MOCK_REDIS_CACHE or cache.get_cache('redis')
