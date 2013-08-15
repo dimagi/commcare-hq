@@ -330,6 +330,8 @@ def add_keyword(request, domain, keyword_id=None):
 @reminders_permission
 def delete_keyword(request, domain, keyword_id):
     s = SurveyKeyword.get(keyword_id)
+    if s.domain != domain or s.doc_type != "SurveyKeyword":
+        raise Http404
     s.retire()
     return HttpResponseRedirect(reverse("manage_keywords", args=[domain]))
 
