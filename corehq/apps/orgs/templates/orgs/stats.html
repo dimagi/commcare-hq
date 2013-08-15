@@ -83,6 +83,13 @@
                 loadChartData(update_active_chart, startdate, enddate);
                 var new_url = "?startdate=" + startdate + "&enddate=" + enddate + window.location.hash;
                 History.pushState(null, "Reloaded Chart", new_url);
+
+                // keep the urls for the other data visualizations consistent with this datespan
+                $(".viz-url").each(function() {
+                    var new_href = $(this).attr('href').split("?")[0] + new_url;
+                    $(this).attr('href', new_href);
+                });
+
                 return false;
             });
             $('.reload-graph-form').submit();
