@@ -69,14 +69,16 @@ def purge_view(view_key):
     if cached_view:
         results = simplejson.loads(cached_view)
 
-        if isinstance(results, dict):
-            #it's an include_docs view
-            doc_ids = [x['id'] for x in results['row_stubs']]
-        elif isinstance(results, list):
-            #it's just a regular view
-            doc_ids = [x['id'] for x in results]
+        def gen_doc_ids(results):
+            if isinstance(results, dict):
+                for x in results['row_stubs']:
+                    yield x['id']
+            elif isinstance(results, list):
+                for x in results:
+                    if 'id' in x:
+                        yield x['id']
 
-        for doc_id in doc_ids:
+        for doc_id in gen_doc_ids(results):
             reverse_doc_key = key_reverse_doc(doc_id, cached_view)
             rcache().delete(reverse_doc_key)
 
