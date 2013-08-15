@@ -1,6 +1,7 @@
 from datetime import datetime
 from django.contrib import messages
 import logging
+import math
 from corehq.apps.announcements.models import ReportAnnouncement
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.display import xmlns_to_name
@@ -386,3 +387,17 @@ def stream_qs(qs, batch_size=1000):
     for _, _, _, qs in batch_qs(qs, batch_size):
         for item in qs:
             yield item
+
+
+def numcell(text, value=None, convert='int'):
+    if value is None:
+        try:
+            value = int(text) if convert == 'int' else float(text)
+            if math.isnan(value):
+                text = '---'
+            elif not convert == 'int': # assume this is a percentage column
+                text = '%.f%%' % value
+        except ValueError:
+            value = text
+    return format_datatables_data(text=text, sort_key=value)
+

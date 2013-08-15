@@ -970,18 +970,6 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
             end_date = end_date.strftime(self.datespan.format)
             return start_date, end_date
 
-        def numcell(text, value=None, convert='int'):
-            if value is None:
-                try:
-                    value = int(text) if convert == 'int' else float(text)
-                    if math.isnan(value):
-                        text = '---'
-                    elif not convert == 'int': # assume this is a percentage column
-                        text = '%.f%%' % value
-                except ValueError:
-                    value = text
-            return util.format_datatables_data(text=text, sort_key=value)
-
         def submit_history_link(owner_id, val, param='select_mw'):
             """
                 takes a row, and converts certain cells in the row to links that link to the submit history report
