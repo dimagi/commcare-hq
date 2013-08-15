@@ -188,7 +188,7 @@ class AppManagerTest(TestCase):
         list(self.app.get_forms())
 
     def test_jad_settings(self):
-        self.app.build_spec = BuildSpec(**self.build1)
+        self.app.build_spec = BuildSpec(version='2.2.0', build_number=1)
         self.assertIn('Build-Number', self.app.jad_settings)
-        self.app.build_spec = BuildSpec(**self.build2)
+        self.app.build_spec = BuildSpec(version='2.8.0', build_number=1)
         self.assertNotIn('Build-Number', self.app.jad_settings)
