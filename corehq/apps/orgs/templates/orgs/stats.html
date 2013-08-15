@@ -129,19 +129,34 @@
 
     <div id="charts" class="tab-content">
         <div class="tab-pane active" id="bar-chart">
-            <div style="height: 320px; min-height: 320px;" class="loading">{% trans "Loading..." %}</div>
+            <div style="height: 320px; min-height: 320px;" class="loading">
+                <div class="hq-loading">
+                    <h4>{% trans "Loading Bar Chart" %}</h4>
+                    <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                </div>
+            </div>
             <div class='nvd3-chart hide'>
                 <svg style='height:320px'> </svg>
             </div>
         </div>
         <div class="tab-pane" id="cumulative-chart">
-            <div style="height: 320px; min-height: 320px;" class="loading">{% trans "Loading..." %}</div>
+            <div style="height: 320px; min-height: 320px;" class="loading">
+                <div class="hq-loading">
+                    <h4>{% trans "Loading Cumulative Chart" %}</h4>
+                    <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                </div>
+            </div>
             <div class='nvd3-chart hide'>
                 <svg style='height:320px'> </svg>
             </div>
         </div>
         <div class="tab-pane" id="stacked-cumulative-chart">
-            <div style="height: 320px; min-height: 320px;" class="loading">{% trans "Loading..." %}</div>
+            <div style="height: 320px; min-height: 320px;" class="loading">
+                <div class="hq-loading">
+                    <h4>{% trans "Loading Stacked Cumulative Chart" %}</h4>
+                    <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                </div>
+            </div>
             <div class='nvd3-chart hide'>
                 <svg style='height:320px'> </svg>
             </div>
