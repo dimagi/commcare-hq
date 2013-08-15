@@ -115,7 +115,7 @@ class PtopReindexer(NoArgsCommand):
         view_dump_filename = "%s%s_%s_data.json" % (self.file_prefix, self.doc_class.__name__,  self.get_seq_prefix())
         return view_dump_filename
 
-    def full_view_iter(self):
+    def full_couch_view_iter(self):
         start_seq = 0
         view_kwargs = {}
         if self.couch_key is not None:
@@ -157,13 +157,10 @@ class PtopReindexer(NoArgsCommand):
         #load entire view to disk
         print "Getting full view list: %s" % datetime.utcnow().isoformat()
         with open(self.get_dump_filename(), 'w') as fout:
-            #full_view_data = full_view_iter()
-            fout.write("[")
-            fout.write(','.join(simplejson.dumps(row) for row in self.full_view_iter()))
-            fout.write("]")
+            fout.write('\n'.join(simplejson.dumps(row) for row in self.full_couch_view_iter()))
         print "View and sequence written to disk: %s" % datetime.utcnow().isoformat()
 
-    def load_from_disk(self):
+    def load_seq_from_disk(self):
         """
         Main load of view data from disk.
         """
@@ -171,9 +168,11 @@ class PtopReindexer(NoArgsCommand):
         with open(self.get_seq_filename(), 'r') as fin:
             current_db_seq = fin.read()
             self.pillow.set_checkpoint({'seq': current_db_seq})
+
+    def view_data_file_iter(self):
         with open(self.get_dump_filename(), 'r') as fin:
-            self.full_view_data = simplejson.loads(fin.read())
-        print "Finish loading from disk: %s" % datetime.utcnow().isoformat()
+            for line in fin:
+                yield simplejson.loads(line)
 
     def _bootstrap(self, options):
         self.resume = options['resume']
@@ -233,7 +232,7 @@ class PtopReindexer(NoArgsCommand):
                 sys.exit()
 
             self.set_seq_prefix(runparts[-1])
-        self.load_from_disk()
+        seq = self.load_seq_from_disk()
 
         #configure index to indexing mode
         self.pillow.set_index_reindex_settings()
@@ -268,50 +267,56 @@ class PtopReindexer(NoArgsCommand):
 
 
     def load_traditional(self):
-        total_length = len(self.full_view_data)
         for ix, item in enumerate(self.full_view_data):
-            print "\tProcessing item %s (%d/%d)" % (item['id'], ix, total_length)
+            print "\tProcessing item %s (%d)" % (item['id'], ix)
             self.process_row(item, ix)
 
     def load_bulk(self):
         #chunk
         #if failure, try again
+        curr_counter = 0
         start = self.start_num
         end = start + self.chunk_size
-        total_len = len(self.full_view_data)
 
-        doc_couch_db = self.pillow.document_class.get_db()
+        #all couchy operations completed, faking out db now.
 
-        while start < total_len:
-            print "load_bulk [%d:%d]" % (start, end)
-            if end < total_len:
-                bulk_slice = self.full_view_data[start:end]
+        json_iter = self.view_data_file_iter()
+
+        bulk_slice = []
+        self.pillow.couch_db = FakeCouchDBLoader()
+
+        for curr_counter, json_doc in enumerate(json_iter):
+            if curr_counter < start:
+                continue
+            if len(bulk_slice) == self.chunk_size:
+                self.send_bulk(bulk_slice, start, end)
+                bulk_slice = []
+                start += self.chunk_size
+                end += self.chunk_size
             else:
-                bulk_slice = self.full_view_data[start:]
+                bulk_slice.append(json_doc)
+                continue
 
-            #all couchy operations completed, faking out db now.
-            self.pillow.couch_db = FakeCouchDBLoader()
+    def send_bulk(self, slice, start, end):
+        doc_couch_db = self.pillow.document_class.get_db()
+        doc_ids = [x['id'] for x in slice]
+        slice_docs = doc_couch_db.all_docs(keys=doc_ids, include_docs=True)
+        raw_doc_dict = dict((x['id'], x['doc']) for x in slice_docs.all())
+        self.pillow.couch_db.fake_set_docs(raw_doc_dict) # update the fake couch instance's set of bulk loaded docs
 
-            doc_ids = [x['id'] for x in bulk_slice]
-            slice_docs = doc_couch_db.all_docs(keys=doc_ids, include_docs=True)
-            raw_doc_dict = dict((x['id'], x['doc']) for x in slice_docs.all())
-            self.pillow.couch_db.fake_set_docs(raw_doc_dict) # update the fake couch instance's set of bulk loaded docs
-
-            retries = 0
-            bulk_start = datetime.utcnow()
-            while retries < MAX_TRIES:
-                try:
-                    self.pillow.process_bulk(bulk_slice)
-                    break
-                except Exception, ex:
-                    retries += 1
-                    retry_time = (datetime.utcnow() - bulk_start).seconds + retries * RETRY_TIME_DELAY_FACTOR
-                    print "\t%s: Exception sending slice %d:%d, %s, retrying in %s seconds" % (datetime.now().isoformat(), start, end, ex, retry_time)
-                    time.sleep(retry_time)
-                    print "\t%s: Retrying again %d:%d..." % (datetime.now().isoformat(), start, end)
-                    bulk_start = datetime.utcnow() #reset timestamp when looping again
-            start += self.chunk_size
-            end += self.chunk_size
+        retries = 0
+        bulk_start = datetime.utcnow()
+        while retries < MAX_TRIES:
+            try:
+                self.pillow.process_bulk(slice)
+                break
+            except Exception, ex:
+                retries += 1
+                retry_time = (datetime.utcnow() - bulk_start).seconds + retries * RETRY_TIME_DELAY_FACTOR
+                print "\t%s: Exception sending slice %d:%d, %s, retrying in %s seconds" % (datetime.now().isoformat(), start, end, ex, retry_time)
+                time.sleep(retry_time)
+                print "\t%s: Retrying again %d:%d..." % (datetime.now().isoformat(), start, end)
+                bulk_start = datetime.utcnow() #reset timestamp when looping again
 
 
 
