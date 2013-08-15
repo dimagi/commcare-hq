@@ -18,7 +18,9 @@ def get_footprint(initial_case_list, strip_history=False):
     if not initial_case_list:
         return {}
 
-    case_db = CaseDbCache(domain=list(initial_case_list)[0].domain, strip_history=strip_history)
+    case_db = CaseDbCache(domain=list(initial_case_list)[0].domain,
+                          strip_history=strip_history,
+                          deleted_ok=True)
 
     def children(case_db, case):
         return [case_db.get(index.referenced_id) for index in case.indices]
@@ -34,6 +36,7 @@ def get_footprint(initial_case_list, strip_history=False):
             relevant_cases[case.case_id] = case
             queue.extend(children(case_db, case))
     return relevant_cases
+
 
 class CaseSyncUpdate(object):
     """
