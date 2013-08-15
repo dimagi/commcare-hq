@@ -36,11 +36,11 @@ def lookup_age_group_from_form_id(form_id):
     age = int(case.patient_age)
 
     if age < 15:
-        return 0
+        return '0'
     elif age < 25:
-        return 1
+        return '1'
     else:
-        return 2
+        return '2'
 
 def lookup_gender_from_form_id(form_id):
     case = CommCareCase.get_by_xform_id(form_id).first()
