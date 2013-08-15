@@ -8,4 +8,4 @@ require_can_edit_data = require_permission(Permissions.edit_data)
 @require_can_edit_data
 def default(request, domain):
     from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
-    return HttpResponseRedirect(reverse(DataInterfaceDispatcher.name(), args=[domain, 'reassign_cases']))
+    return HttpResponseRedirect(reverse(DataInterfaceDispatcher.name(), args=[domain, 'excel_export_data']))

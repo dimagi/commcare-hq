@@ -15,7 +15,6 @@ from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
     CustomProjectReportDispatcher)
 from corehq.apps.adm.dispatcher import (ADMAdminInterfaceDispatcher,
     ADMSectionDispatcher)
-from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from hqbilling.dispatcher import BillingInterfaceDispatcher
 from corehq.apps.announcements.dispatcher import (
     HQAnnouncementAdminInterfaceDispatcher)
@@ -272,24 +271,72 @@ class ProjectInfoTab(UITab):
         return self.project and self.project.is_snapshot
 
 
-class ManageDataTab(UITab):
-    title = ugettext_noop("Manage Data")
+class ProjectDataTab(UITab):
+    title = ugettext_noop("Data")
     view = "corehq.apps.data_interfaces.views.default"
-    dispatcher = DataInterfaceDispatcher
+
+    @property
+    def can_edit_commcare_data(self):
+        return self.couch_user.can_edit_data() and not self.project.commtrack_enabled
+
+    @property
+    def can_edit_commtrack_data(self):
+        return self.couch_user.is_domain_admin() and self.project.commtrack_enabled
+
+    @property
+    def can_export_data(self):
+        # viewable_reports = self.couch_user.get_viewable_reports()
+
+        return (self.project and not self.project.is_snapshot
+                and (self.couch_user.can_view_reports()
+                or self.couch_user.get_viewable_reports()))
 
     @property
     def is_viewable(self):
-        if self.project.commtrack_enabled:
-            return False
-
-        return self.domain and self.couch_user.can_edit_data()
+        return (self.domain and
+                self.can_edit_commcare_data or self.can_edit_commtrack_data or self.can_export_data)
 
     @property
     @memoized
     def is_active(self):
-        # hack because subpages of excel importer are at a different url
-        return ('importer/excel' in self._request.get_full_path() or
-                super(ManageDataTab, self).is_active)
+        if not self.domain:
+            return False
+        manage_data_url = reverse('data_interfaces_default', args=[self.domain])
+        full_path = self._request.get_full_path()
+        return ('importer/excel' in full_path  # hack because subpages of excel importer are at a different url
+                or super(ProjectDataTab, self).is_active
+                or full_path.startswith(manage_data_url))
+
+    @property
+    def sidebar_items(self):
+        items = []
+
+        context = {
+            'request': self._request,
+            'domain': self.domain,
+        }
+
+        if self.can_export_data:
+            from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
+            items.extend(DataInterfaceDispatcher.navigation_sections(context))
+
+        if self.can_edit_commcare_data:
+            from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
+            items.extend(EditDataInterfaceDispatcher.navigation_sections(context))
+
+        if self.can_edit_commtrack_data:
+            items.append((_('CommTrack'), [
+                {
+                    'title': _('Manage Products'),
+                    'url': reverse('commtrack_product_list', args=[self.domain])
+                },
+                {
+                    'title': _('Manage Locations'),
+                    'url': reverse('manage_locations', args=[self.domain])
+                }
+            ]))
+
+        return items
 
 
 class ApplicationsTab(UITab):
@@ -471,8 +518,8 @@ class MessagingTab(UITab):
         return []
 
 
-class ManageProjectTab(UITab):
-    title = ugettext_noop("Manage")
+class ProjectUsersTab(UITab):
+    title = ugettext_noop("Users")
     view = "users_default"
 
     @property
@@ -482,8 +529,7 @@ class ManageProjectTab(UITab):
     @property
     def is_viewable(self):
         return self.domain and (self.couch_user.can_edit_commcare_users() or
-                                self.couch_user.can_edit_web_users() or
-                                self.couch_user.can_edit_data())
+                                self.couch_user.can_edit_web_users())
 
     @property
     @memoized
@@ -491,11 +537,9 @@ class ManageProjectTab(UITab):
         if not self.domain:
             return False
         cloudcare_settings_url = reverse('cloudcare_app_settings', args=[self.domain])
-        manage_data_url = reverse('data_interfaces_default', args=[self.domain])
         full_path = self._request.get_full_path()
-        return (super(ManageProjectTab, self).is_active
-                or full_path.startswith(cloudcare_settings_url)
-                or full_path.startswith(manage_data_url))
+        return (super(ProjectUsersTab, self).is_active
+                or full_path.startswith(cloudcare_settings_url))
 
     @property
     def sidebar_items(self):
@@ -577,26 +621,6 @@ class ManageProjectTab(UITab):
                          'urlname': EditMyAccountDomainView.name
                      }
                  ]}
-            ]))
-
-        if self.couch_user.can_edit_data():
-            from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
-            items.extend(DataInterfaceDispatcher.navigation_sections({
-                "request": self._request,
-                "domain": self.domain,
-            }))
-
-
-        if self.couch_user.is_domain_admin() and self.project.commtrack_enabled:
-            items.append((_('CommTrack'), [
-                {
-                    'title': _('Manage Products'),
-                    'url': reverse('commtrack_product_list', args=[self.domain])
-                },
-                {
-                    'title': _('Manage Locations'),
-                    'url': reverse('manage_locations', args=[self.domain])
-                }
             ]))
 
         return items

@@ -2,10 +2,11 @@ from collections import defaultdict
 import json
 import logging
 import datetime
+from corehq.apps.data_interfaces.interfaces import DataInterface
 from dimagi.utils.dates import DateSpan
 from django.conf import settings
 from django.http import Http404
-from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport, DatespanMixin
+from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.models import FormExportSchema,\
     HQGroupExportConfiguration
 from corehq.apps.reports.util import make_form_couch_key
@@ -14,7 +15,8 @@ from dimagi.utils.couch.database import get_db
 from corehq.apps.app_manager.models import get_app
 from dimagi.utils.parsing import string_to_datetime
 
-class ExportReport(ProjectReport, ProjectReportParametersMixin):
+
+class ExportReport(DataInterface, ProjectReportParametersMixin):
     """
         Base class for export reports.
     """
@@ -81,8 +83,9 @@ class FormExportReportBase(ExportReport, DatespanMixin):
         params['enddate'] = self.datespan.enddate_display
         return params
 
+
 class ExcelExportReport(FormExportReportBase):
-    name = "Export Submissions to Excel"
+    name = "Export Forms"
     slug = "excel_export_data"
     report_template_path = "reports/reportdata/excel_export_data.html"
     icon = "icon-list-alt"
@@ -210,7 +213,7 @@ class ExcelExportReport(FormExportReportBase):
 
 
 class CaseExportReport(ExportReport):
-    name = "Export Cases, Referrals, & Users"
+    name = "Export Cases"
     slug = "case_export"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField']
