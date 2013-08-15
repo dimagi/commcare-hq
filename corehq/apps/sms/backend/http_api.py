@@ -7,6 +7,7 @@ from django.forms.fields import *
 from django.core.exceptions import ValidationError
 from couchdbkit.ext.django.schema import *
 from dimagi.utils.django.fields import TrimmedCharField
+from corehq.apps.sms.util import clean_phone_number, strip_plus
 
 class HttpBackendForm(BackendForm):
     url = TrimmedCharField()
@@ -36,12 +37,12 @@ class HttpBackendForm(BackendForm):
         return result
 
 class HttpBackend(SMSBackend):
-    url                 = StringProperty() # the url to send to
-    message_param       = StringProperty() # the parameter which the gateway expects to represent the sms message
-    number_param        = StringProperty() # the parameter which the gateway expects to represent the phone number to send to
-    include_plus        = BooleanProperty(default=False) # True to include the plus sign in front of the number, False not to (optional, defaults to False)
-    method              = StringProperty(choices=["GET","POST"], default="GET") # "GET" or "POST" (optional, defaults to "GET")
-    additional_params   = DictProperty() # a dictionary of additional parameters that will be sent in the request (optional)
+    url = StringProperty() # the url to send to
+    message_param = StringProperty() # the parameter which the gateway expects to represent the sms message
+    number_param = StringProperty() # the parameter which the gateway expects to represent the phone number to send to
+    include_plus = BooleanProperty(default=False) # True to include the plus sign in front of the number, False not to (optional, defaults to False)
+    method = StringProperty(choices=["GET","POST"], default="GET") # "GET" or "POST" (optional, defaults to "GET")
+    additional_params = DictProperty() # a dictionary of additional parameters that will be sent in the request (optional)
 
     @classmethod
     def get_api_id(cls):
@@ -64,22 +65,20 @@ class HttpBackend(SMSBackend):
             params = self.additional_params.copy()
         else:
             params = {}
-        #
+        
         phone_number = msg.phone_number
         if self.include_plus:
-            if phone_number[0] != "+":
-                phone_number = "+%s" % phone_number
+            phone_number = clean_phone_number(phone_number)
         else:
-            if phone_number[0] == "+":
-                phone_number = phone_number[1:]
-        #
+            phone_number = strip_plus(phone_number)
+        
         try:
             text = msg.text.encode("iso-8859-1")
         except UnicodeEncodeError:
             text = msg.text.encode("utf-8")
         params[self.message_param] = text
         params[self.number_param] = phone_number
-        #
+        
         url_params = urlencode(params)
         if self.method == "GET":
             response = urlopen("%s?%s" % (self.url, url_params)).read()
