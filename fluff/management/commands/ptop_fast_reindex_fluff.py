@@ -42,13 +42,9 @@ class FluffPtopReindexer(PtopReindexer):
         start = datetime.utcnow()
 
         print "Starting fast tracked reindexing"
-        self.load_from_view()
-        self.load_from_disk()
-        if self.bulk:
-            print "Preparing Bulk Payload"
-            self.load_bulk()
-        else:
-            print "Loading traditional method"
-            self.load_traditional()
+        for i, row in enumerate(self.full_view_iter()):
+            print "\tProcessing item %s (%d)" % (row['id'], i)
+            self.process_row(row, i)
+
         end = datetime.utcnow()
         print "done in %s seconds" % (end - start).seconds
