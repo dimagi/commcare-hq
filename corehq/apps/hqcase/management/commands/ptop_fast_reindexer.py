@@ -115,31 +115,31 @@ class PtopReindexer(NoArgsCommand):
         view_dump_filename = "%s%s_%s_data.json" % (self.file_prefix, self.doc_class.__name__,  self.get_seq_prefix())
         return view_dump_filename
 
+    def full_view_iter(self):
+        start_seq = 0
+        view_kwargs = {}
+        if self.couch_key is not None:
+            view_kwargs["key"] = self.couch_key
+
+        view_kwargs.update(self.get_extra_view_kwargs())
+        view_chunk = self.db.view(
+            self.view_name,
+            reduce=False,
+            limit=self.chunk_size * self.chunk_size,
+            skip=start_seq,
+            **view_kwargs
+        )
+
+        while len(view_chunk) > 0:
+            for item in view_chunk:
+                yield item
+            start_seq += self.chunk_size * self.chunk_size
+            view_chunk = self.db.view(self.view_name, reduce=False, limit=CHUNK_SIZE * self.chunk_size, skip=start_seq)
+
     def load_from_view(self):
         """
         Loads entire view, saves to file, set pillowtop checkpoint
         """
-        def full_view_iter():
-            start_seq = 0
-
-            view_kwargs = {}
-            if self.couch_key is not None:
-                view_kwargs["key"] = self.couch_key
-            view_kwargs.update(self.get_extra_view_kwargs())
-
-            view_chunk = self.db.view(
-                self.view_name,
-                reduce=False,
-                limit=self.chunk_size * self.chunk_size,
-                skip=start_seq,
-                **view_kwargs
-            )
-
-            while len(view_chunk) > 0:
-                for item in view_chunk:
-                    yield item
-                start_seq += self.chunk_size * self.chunk_size
-                view_chunk = self.db.view(self.view_name, reduce=False, limit=CHUNK_SIZE * self.chunk_size, skip=start_seq)
 
         # Set pillowtop checkpoint for doc_class
         # though this might cause some superfluous reindexes of docs,
@@ -159,7 +159,7 @@ class PtopReindexer(NoArgsCommand):
         with open(self.get_dump_filename(), 'w') as fout:
             #full_view_data = full_view_iter()
             fout.write("[")
-            fout.write(','.join(simplejson.dumps(row) for row in full_view_iter()))
+            fout.write(','.join(simplejson.dumps(row) for row in self.full_view_iter()))
             fout.write("]")
         print "View and sequence written to disk: %s" % datetime.utcnow().isoformat()
 
@@ -250,26 +250,28 @@ class PtopReindexer(NoArgsCommand):
         self.pillow.set_index_normal_settings()
         print "done in %s seconds" % (end - start).seconds
 
-    def load_traditional(self):
-        total_length = len(self.full_view_data)
-        for ix, item in enumerate(self.full_view_data):
-            if ix < self.start_num:
-                print "\tskipping... %d < %d" % (ix, self.start_num)
-                continue
-            load_start = datetime.utcnow()
+    def process_row(self, row, count):
+        if count > self.start_num:
             retries = 0
             while retries < MAX_TRIES:
                 try:
-                    if not self.custom_filter(item):
+                    if not self.custom_filter(row):
                         break
-                    print "\tProcessing item %s (%d/%d)" % (item['id'], ix, total_length)
-                    self.pillow.processor(item, do_set_checkpoint=False)
+                    self.pillow.processor(row, do_set_checkpoint=False)
                     break
                 except Exception, ex:
                     retries += 1
-                    print "\tException sending single item %s, %s, retrying..." % (item['id'], ex)
-                    load_end = datetime.utcnow()
+                    print "\tException sending single item %s, %s, retrying..." % (row['id'], ex)
                     time.sleep(RETRY_DELAY + retries * RETRY_TIME_DELAY_FACTOR)
+        else:
+            print "\tskipping... %d < %d" % (count, self.start_num)
+
+
+    def load_traditional(self):
+        total_length = len(self.full_view_data)
+        for ix, item in enumerate(self.full_view_data):
+            print "\tProcessing item %s (%d/%d)" % (item['id'], ix, total_length)
+            self.process_row(item, ix)
 
     def load_bulk(self):
         #chunk
