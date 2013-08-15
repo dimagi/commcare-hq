@@ -1351,7 +1351,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
             # e.g. 2011-Apr-11 20:45
             'CommCare-Release': "true",
         }
-        if LooseVersion(self.build_spec.version) < '2.1':
+        if LooseVersion(self.build_spec.version) < '2.8':
             settings['Build-Number'] = self.version
         return settings
 
