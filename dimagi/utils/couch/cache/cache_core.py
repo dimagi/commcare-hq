@@ -2,7 +2,13 @@ from django.utils import http
 from django.core import cache
 import simplejson
 
-rcache = cache.get_cache('redis')
+
+MOCK_REDIS_CACHE = None
+COUCH_CACHE_TIMEOUT = 1800
+
+
+def rcache():
+    return MOCK_REDIS_CACHE or cache.get_cache('redis')
 
 #cached_view which has a list of doc_ids
 #any time any of these doc_ids are altered, it'll invalidate the entire view for that index.
@@ -18,13 +24,76 @@ CACHED_DOC_PREFIX = '#cached_doc_'
 #value is a list of the cached_view keys
 CACHED_VIEW_DOC_REVERSE = '#reverse_cached_doc_'
 
+def key_doc_id(doc_id):
+    ret = "%s%s" % (CACHED_DOC_PREFIX, doc_id)
+    return ret
+
+def key_reverse_doc(doc_id, suffix):
+    ret =  "%s%s_%s" % (CACHED_VIEW_DOC_REVERSE, doc_id, suffix)
+    return ret
+
+def key_view_full(view_name, params):
+    cache_view_key = "%(prefix)s_%(view_name)s_%(params_str)s" % {
+        "prefix": CACHED_VIEW_PREFIX,
+        "view_name": view_name,
+        "params_str": http.urlquote('|'.join(["%s:%s" % (k, v) for k, v in params.items()]))
+    }
+    return cache_view_key
+
+
+def key_view_partial(view_name_suffix):
+    """
+    does not necessarily have to be the full name - if you're hand building it for something
+    """
+    cache_view_key = "%(prefix)s_%(view_name)s" % {
+        "prefix": CACHED_VIEW_PREFIX,
+        "view_name": view_name_suffix,
+    }
+    return cache_view_key
+
+
+def purge_by_doc_id(doc_id):
+    #first by just individual doc
+    print "purging single doc: %s" % doc_id
+    rcache().delete(key_doc_id(doc_id))
+    #then all the reverse indices by that doc_id
+    rcache().delete_pattern(key_reverse_doc(doc_id, '*'))
+
+
+def purge_view(view_key):
+    """
+    view_name you want to put in your key, does not necessarily have to be the right one...wildcard it yo
+    """
+    print "purging view: %s" % view_key
+    cached_view = rcache().get(view_key, None)
+    if cached_view:
+        results = simplejson.loads(cached_view)
+
+        if isinstance(results, dict):
+            #it's an include_docs view
+            doc_ids = [x['id'] for x in results['row_stubs']]
+        elif isinstance(results, list):
+            #it's just a regular view
+            doc_ids = [x['id'] for x in results]
+
+        for doc_id in doc_ids:
+            reverse_doc_key = key_reverse_doc(doc_id, cached_view)
+            rcache().delete(reverse_doc_key)
+
+    #then purge this key
+    rcache().delete(view_key)
+
+
+
 def cached_open_doc(db, doc_id, **params):
     cached_doc = get_cached_doc_only(doc_id)
     if not cached_doc:
+        print "cached_open_doc miss: %s" % doc_id
         doc = db.open_doc(doc_id, **params)
         do_cache_doc(doc)
         return doc
     else:
+        print "cached_open_doc hit: %s" % doc_id
         return cached_doc
 
 
@@ -32,7 +101,7 @@ def get_cached_doc_only(doc_id):
     """
     Main cache retrieval method for open_doc - for use by views in retrieving their docs.
     """
-    doc = rcache.get('%s%s' % (CACHED_DOC_PREFIX, doc_id), None)
+    doc = rcache().get(key_doc_id(doc_id), None)
     if doc is not None:
         return simplejson.loads(doc)
     else:
@@ -41,7 +110,7 @@ def get_cached_doc_only(doc_id):
 
 
 def do_cache_doc(doc):
-    rcache.set("%s%s" % (CACHED_DOC_PREFIX, doc['_id']), simplejson.dumps(doc))
+    rcache().set(key_doc_id(doc['_id']), simplejson.dumps(doc), timeout=COUCH_CACHE_TIMEOUT)
 
 
 def cache_view_doc(doc_or_docid, view_key):
@@ -49,8 +118,8 @@ def cache_view_doc(doc_or_docid, view_key):
     cache by doc_id a reverse lookup of views that it is mutually dependent on
     """
     id = doc_or_docid['_id'] if isinstance(doc_or_docid, dict) else doc_or_docid
-    key = "%s%s_%s" % (CACHED_VIEW_DOC_REVERSE, id, view_key)
-    rcache.set(key, 1)
+    key = key_reverse_doc(id, view_key)
+    rcache().set(key, 1, timeout=COUCH_CACHE_TIMEOUT)
 
     if isinstance(doc_or_docid, dict):
         do_cache_doc(doc_or_docid)
@@ -61,16 +130,13 @@ def cached_view(db, view_name, **params):
     """
     cache_docs = params.get('include_docs', False)
 
-    cache_view_key = "%(prefix)s_%(view_name)s_%(params_str)s" % {
-        "prefix": CACHED_VIEW_PREFIX,
-        "view_name": view_name,
-        "params_str": http.urlquote('|'.join(["%s:%s" % (k, v) for k, v in params.items()]))
-    }
+    cache_view_key = key_view_full(view_name, params)
+    print "VIEW KEY: %s" % cache_view_key
     if cache_docs:
         #include_docs=true results look like:
         #{"total_rows": <int>, "offset": <int>, "rows": [...]}
         #test to see if view already cached
-        cached_view = rcache.get(cache_view_key, None)
+        cached_view = rcache().get(cache_view_key, None)
         if cached_view:
             intermediate_results = simplejson.loads(cached_view)
             final_results = {}
@@ -109,21 +175,20 @@ def cached_view(db, view_name, **params):
                 "offset": view_results['offset'],
                 "row_stubs": row_stubs
             }
-            rcache.set(cache_view_key, simplejson.dumps(cached_results))
+            rcache().set(cache_view_key, simplejson.dumps(cached_results), timeout=COUCH_CACHE_TIMEOUT)
             return view_results
 
 
     else:
-        cached_view = rcache.get(cache_view_key, None)
+        cached_view = rcache().get(cache_view_key, None)
         if cached_view:
-            print "\tview cache hit: %s" % cache_view_key
             results = simplejson.loads(cached_view)
             return results
         else:
             view_results = db.view(view_name, **params).all()
-            rcache.set(cache_view_key, simplejson.dumps(view_results))
-            print "\tview cache miss: %s" % cache_view_key
+            rcache().set(cache_view_key, simplejson.dumps(view_results), timeout=COUCH_CACHE_TIMEOUT)
             for row in view_results:
-                doc_id = row['id']
-                cache_view_doc(doc_id, cache_view_key)
+                doc_id = row.get('id', None)
+                if doc_id:
+                    cache_view_doc(doc_id, cache_view_key)
             return view_results
