@@ -87,7 +87,7 @@ class BackendMapForm(Form):
             try:
                 prefix = int(prefix)
                 assert prefix > 0
-            except ValueError, AssertionError:
+            except (ValueError, AssertionError):
                 raise ValidationError(_("Please enter a positive number for the prefix."))
             prefix = str(prefix)
             if prefix in cleaned_value:
