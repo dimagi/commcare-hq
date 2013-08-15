@@ -1,6 +1,6 @@
 import logging
 from sqlagg.base import TableNotFoundException, ColumnNotFoundException
-from corehq.apps.reports.sqlreport import SqlData, DictDataFormatter
+from corehq.apps.reports.sqlreport import SqlData, DictDataFormat, DataFormatter
 
 logger = logging.getLogger(__name__)
 
@@ -26,9 +26,9 @@ class SqlIndicatorSet(SqlData):
             logger.exception(e)
             return {}
 
-        return DictDataFormatter(data, self.columns, keys=self.keys,
-                                 group_by=self.group_by, no_value=self.no_value,
-                                 row_filter=self.include_row).format()
+        format = DictDataFormat(self.columns, no_value=self.no_value)
+        formatter = DataFormatter(format, row_filter=self.include_row)
+        return formatter.format(data, keys=self.keys, group_by=self.group_by)
 
     def include_row(self, key, row):
         """

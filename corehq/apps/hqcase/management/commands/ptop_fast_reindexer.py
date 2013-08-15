@@ -78,6 +78,7 @@ class PtopReindexer(NoArgsCommand):
 
     doc_class = None
     view_name = None
+    couch_key = None
     pillow_class = None
     file_prefix = "ptop_fast_reindex_"
 
@@ -90,6 +91,9 @@ class PtopReindexer(NoArgsCommand):
         Return true if to index, false if to SKIP
         """
         return True
+
+    def get_extra_view_kwargs(self):
+        return {}
 
     def get_seq_prefix(self):
         if hasattr(self, '_seq_prefix'):
@@ -117,7 +121,20 @@ class PtopReindexer(NoArgsCommand):
         """
         def full_view_iter():
             start_seq = 0
-            view_chunk = self.db.view(self.view_name, reduce=False, limit=self.chunk_size * self.chunk_size, skip=start_seq)
+
+            view_kwargs = {}
+            if self.couch_key is not None:
+                view_kwargs["key"] = self.couch_key
+            view_kwargs.update(self.get_extra_view_kwargs())
+
+            view_chunk = self.db.view(
+                self.view_name,
+                reduce=False,
+                limit=self.chunk_size * self.chunk_size,
+                skip=start_seq,
+                **view_kwargs
+            )
+
             while len(view_chunk) > 0:
                 for item in view_chunk:
                     yield item
@@ -158,6 +175,16 @@ class PtopReindexer(NoArgsCommand):
             self.full_view_data = simplejson.loads(fin.read())
         print "Finish loading from disk: %s" % datetime.utcnow().isoformat()
 
+    def _bootstrap(self, options):
+        self.resume = options['resume']
+        self.bulk = options['bulk']
+        self.pillow = self.pillow_class()
+        self.db = self.doc_class.get_db()
+        self.runfile = options['runfile']
+        self.chunk_size = options.get('chunk_size', CHUNK_SIZE)
+        self.start_num = options.get('seq', 0)
+
+
     def handle(self, *args, **options):
         if not options['noinput']:
             confirm = raw_input("""
@@ -181,14 +208,8 @@ class PtopReindexer(NoArgsCommand):
             if confirm_alias != "yes":
                 return
 
+        self._bootstrap(options)
         start = datetime.utcnow()
-        self.resume = options['resume']
-        self.bulk = options['bulk']
-        self.pillow = self.pillow_class()
-        self.db = self.doc_class.get_db()
-        self.runfile = options['runfile']
-        self.chunk_size = options.get('chunk_size', CHUNK_SIZE)
-        self.start_num = options.get('seq', 0)
 
         print "using chunk size %s" % self.chunk_size
 
