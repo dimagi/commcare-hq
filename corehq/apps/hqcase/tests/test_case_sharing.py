@@ -3,6 +3,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import CaseBlock, check_user_has_case
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V1, V2
+from corehq.apps.domain.shortcuts import create_domain
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
@@ -15,14 +16,15 @@ class CaseSharingTest(TestCase):
         
         """
 
-        domain = "test-domain"
+        self.domain = "test-domain"
+        create_domain(self.domain)
         password = "****"
 
         def create_user(username):
-            return CommCareUser.create(domain, format_username(username, domain), password)
+            return CommCareUser.create(self.domain, format_username(username, self.domain), password)
 
         def create_group(name, *users):
-            group = Group(users=[user.user_id for user in users], name=name, domain=domain)
+            group = Group(users=[user.user_id for user in users], name=name, domain=self.domain)
             group.save()
             return group
 
@@ -45,7 +47,7 @@ class CaseSharingTest(TestCase):
                 owner_id=owner.get_id,
                 version=version
             )
-            post_case_blocks([case_block])
+            post_case_blocks([case_block], {'domain': self.domain})
             CommCareCase.get(case_id)
 
             check_has_block(case_block, should_have, should_not_have, version=version)
@@ -57,7 +59,7 @@ class CaseSharingTest(TestCase):
                 owner_id=owner.get_id if owner else None,
                 version=version
             )
-            post_case_blocks([case_block])
+            post_case_blocks([case_block], {'domain': self.domain})
 
             check_has_block(case_block, should_have, should_not_have, line_by_line=False, version=version)
 

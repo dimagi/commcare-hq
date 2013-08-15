@@ -1,14 +1,20 @@
 from StringIO import StringIO
+from datetime import date
 import logging
+import os
+import tempfile
 import uuid
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 import json
 import zipfile
 from corehq.apps.app_manager.models import Application
+from corehq.apps.hqsofabed.models import HQFormData
+from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.models import FormExportSchema
+from corehq.apps.reports.util import stream_qs
 import couchexport
-from couchexport.export import get_headers, get_writer, format_tables, create_intermediate_tables
+from couchexport.export import get_headers, get_writer, format_tables, create_intermediate_tables, export_raw
 from couchexport.models import FakeSavedExportSchema, Format, SavedExportSchema
 
 # couchexport is a mess. Sorry. Sorry. This is gross, too.
@@ -18,7 +24,9 @@ class BulkExport(object):
 
     @property
     def filename(self):
-        return "bulk_export.%s" % Format.from_format(self.format).extension
+        return "bulk_export.%(ext)s" % {
+            'ext': Format.from_format(self.format).extension,
+        }
 
     @property
     def separator(self):
@@ -81,7 +89,10 @@ class CustomBulkExport(BulkExport):
 
     @property
     def filename(self):
-        return "%s_custom_bulk_export.%s" % (self.domain, Format.from_format(self.format).extension)
+        return "%(domain)s_custom_bulk_export_%(date)s" % {
+            'domain': self.domain,
+            'date': date.today().isoformat(),
+        }
 
     def generate_export_objects(self, export_tags):
         self.export_objects = []
@@ -195,3 +206,31 @@ class CustomBulkExportHelper(BulkExportHelper):
         bulk_export.create(export_tags, export_filter, safe_only=self.safe_only)
         bulk_export.domain = self.domain
         self.bulk_files = [bulk_export]
+
+
+def save_metadata_export_to_tempfile(domain, format):
+    """
+    Saves the domain's form metadata to a file. Returns the filename.
+    """
+    headers = ("domain", "instanceID", "received_on", "type",
+               "timeStart", "timeEnd", "deviceID", "username",
+               "userID", "xmlns", "version")
+
+    def _form_data_to_row(formdata):
+        def _key_to_val(formdata, key):
+            if key == "type":
+                return xmlns_to_name(domain, formdata.xmlns, app_id=None)
+            else:
+                return getattr(formdata, key)
+        return [_key_to_val(formdata, key) for key in headers]
+
+    fd, path = tempfile.mkstemp()
+
+    data = (_form_data_to_row(f) for f in stream_qs(
+        HQFormData.objects.filter(domain=domain).order_by('received_on')
+    ))
+
+    with os.fdopen(fd, 'w') as temp:
+        export_raw((("forms", headers),), (("forms", data),), temp)
+
+    return path

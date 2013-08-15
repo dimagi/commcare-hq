@@ -31,7 +31,7 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
     # since the API user is a superuser, force touchforms to query only
     # the contact's cases by specifying it as an additional filterp
     if contact.doc_type == "CommCareCase":
-        session_data["additional_filters"] = { "case_id": contact.get_id }
+        session_data["additional_filters"] = { "case_id": contact.get_id, "footprint" : "True" }
     else:
         session_data["additional_filters"] = { "user_id": contact.get_id }
     
@@ -45,15 +45,19 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
     now = datetime.utcnow()
     # just use the contact id as the connection id. may need to revisit this
     connection_id = contact.get_id
-    session_id, responses = tfsms.start_session(config)
+    session_start_info = tfsms.start_session(config)
     session = XFormsSession(connection_id=connection_id,
-                            session_id = session_id,
+                            session_id = session_start_info.session_id,
                             start_time=now, modified_time=now, 
                             form_xmlns=form.xmlns,
                             completed=False, domain=domain,
                             app_id=app.get_id, user_id=contact.get_id,
                             session_type=session_type)
     session.save()
+    responses = session_start_info.first_responses
+    # Prevent future resource conflicts by getting the session again from the db
+    # since the session could have been updated separately in the first_responses call
+    session = XFormsSession.get(session._id)
     if yield_responses:
         return (session, responses)
     else:

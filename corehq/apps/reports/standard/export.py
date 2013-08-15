@@ -1,6 +1,8 @@
 from collections import defaultdict
 import json
 import logging
+import datetime
+from dimagi.utils.dates import DateSpan
 from django.conf import settings
 from django.http import Http404
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport, DatespanMixin
@@ -50,7 +52,8 @@ class FormExportReportBase(ExportReport, DatespanMixin):
 
     @property
     def default_datespan(self):
-        datespan = super(FormExportReportBase, self).default_datespan
+        now = datetime.datetime.utcnow()
+
         def extract_date(x):
             try:
                 def clip_timezone(datestring):
@@ -66,10 +69,10 @@ class FormExportReportBase(ExportReport, DatespanMixin):
             limit=1,
             descending=False,
             reduce=False,
-            wrapper=extract_date
-        ).one()
-        if startdate:
-            datespan.startdate = startdate
+            wrapper=extract_date,
+        ).one() or now - datetime.timedelta(days=self.datespan_default_days - 1)
+        datespan = DateSpan(startdate, now, timezone=self.timezone)
+        datespan.is_default = True
         return datespan
 
     def get_filter_params(self):

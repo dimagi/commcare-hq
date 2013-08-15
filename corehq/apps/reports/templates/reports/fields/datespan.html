@@ -6,7 +6,10 @@
     <label for="filter_enddate" class="sub-label">{% trans "To" %}</label>
     <input type="text" id="filter_enddate" name="enddate" class="date-picker input-small" value="{{ datespan.enddate|date:"Y-m-d" }}">
     <span class="helptext help-inline" style="margin-left: 1.5em;">
-        {% if timezone %}{% trans "This report's timezone is in" %} {{ timezone }}. {% endif %}{% trans "Showing" %} {{ datespan }}.
+        {% if timezone %}
+        {% blocktrans %}This report's timezone is {{ timezone }}.{% endblocktrans %}
+        {% endif %}
+        {% blocktrans %}Showing {{ datespan }}.{% endblocktrans %}
     </span>
 </div>
 

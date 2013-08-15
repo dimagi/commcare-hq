@@ -27,6 +27,10 @@ class DomainPillow(AliasedElasticPillow):
                         "tokenizer": "whitespace",
                         "filter": ["lowercase"]
                     },
+                    "comma": {
+                        "type": "pattern",
+                        "pattern": "\s*,\s*"
+                    },
                 }
             }
         }

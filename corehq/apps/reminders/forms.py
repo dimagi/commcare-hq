@@ -13,7 +13,8 @@ MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE, EVENT_AS_SCHEDULE, EVENT_AS_OFFSET,\
 SurveySample, CaseReminderHandler, FIRE_TIME_DEFAULT, FIRE_TIME_CASE_PROPERTY,\
 METHOD_SMS, METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY,\
 CASE_CRITERIA, QUESTION_RETRY_CHOICES, FORM_TYPE_ONE_BY_ONE,\
-FORM_TYPE_ALL_AT_ONCE, SurveyKeyword, RECIPIENT_PARENT_CASE, RECIPIENT_SUBCASE
+FORM_TYPE_ALL_AT_ONCE, SurveyKeyword, RECIPIENT_PARENT_CASE, RECIPIENT_SUBCASE,\
+FIRE_TIME_RANDOM
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
@@ -141,7 +142,7 @@ class EventWidget(Widget):
         event_dict = DotExpandedDict(reminder_events_raw)
         events = []
         if len(event_dict) > 0:
-            for key in sorted(event_dict["reminder_events"].iterkeys()):
+            for key in sorted(event_dict["reminder_events"].iterkeys(), key=lambda a : int(a)):
                 events.append(event_dict["reminder_events"][key])
         
         return events
@@ -236,6 +237,7 @@ class ComplexCaseReminderForm(Form):
                     "day"       : e.day_num,
                     "time"      : e.fire_time_aux if e.fire_time_type == FIRE_TIME_CASE_PROPERTY else "%02d:%02d" % (e.fire_time.hour, e.fire_time.minute),
                     "time_type" : e.fire_time_type,
+                    "time_window_length" : e.time_window_length,
                 }
                 
                 if e.fire_time_type != FIRE_TIME_DEFAULT:
@@ -393,10 +395,14 @@ class ComplexCaseReminderForm(Form):
         start_condition_type = self.cleaned_data.get("start_condition_type")
         enable_advanced_time_choices = self.cleaned_data.get("enable_advanced_time_choices")
         events = []
+        has_fire_time_case_property = False
+        max_day = 0
         for e in value:
             try:
                 day = int(e["day"])
                 assert day >= 0
+                if day > max_day:
+                    max_day = day
             except (ValueError, AssertionError):
                 raise ValidationError("Day must be specified and must be a non-negative number.")
             
@@ -406,6 +412,7 @@ class ComplexCaseReminderForm(Form):
                 fire_time_type = FIRE_TIME_DEFAULT
             
             if fire_time_type == FIRE_TIME_CASE_PROPERTY:
+                has_fire_time_case_property = True
                 time = None
                 fire_time_aux = e["time"].strip()
                 if len(fire_time_aux) == 0:
@@ -417,6 +424,15 @@ class ComplexCaseReminderForm(Form):
                 except Exception:
                     raise ValidationError("Please enter a valid time from 00:00 to 23:59.")
                 fire_time_aux = None
+            
+            if fire_time_type == FIRE_TIME_RANDOM:
+                try:
+                    time_window_length = int(e["time_window_length"])
+                    assert time_window_length > 0 and time_window_length < 1440
+                except (ValueError, AssertionError):
+                    raise ValidationError(_("Window length must be greater than 0 and less than 1440"))
+            else:
+                time_window_length = None
             
             message = {}
             if method in [METHOD_SMS, METHOD_SMS_CALLBACK]:
@@ -458,10 +474,18 @@ class ComplexCaseReminderForm(Form):
                 form_unique_id = form_unique_id,
                 fire_time_type = fire_time_type,
                 fire_time_aux = fire_time_aux,
+                time_window_length = time_window_length,
             ))
+        
+        min_schedule_length = max_day + 1
+        if event_interpretation == EVENT_AS_SCHEDULE and self.cleaned_data.get("schedule_length") < min_schedule_length:
+            raise ValidationError(_("Schedule length must be at least %(min_schedule_length)s according to the current event schedule.") % {"min_schedule_length" : min_schedule_length})
         
         if len(events) == 0:
             raise ValidationError("You must have at least one reminder event.")
+        else:
+            if event_interpretation == EVENT_AS_SCHEDULE and not has_fire_time_case_property:
+                events.sort(key=lambda e : ((1440 * e.day_num) + (60 * e.fire_time.hour) + e.fire_time.minute))
         
         return events
     
@@ -791,6 +815,7 @@ class KeywordForm(Form):
     
     def clean_named_args(self):
         if self.cleaned_data.get("form_type") == FORM_TYPE_ALL_AT_ONCE and self.cleaned_data.get("use_named_args", False):
+            use_named_args_separator = self.cleaned_data.get("use_named_args_separator", False)
             value = self.cleaned_data.get("named_args")
             data_dict = {}
             for d in value:
@@ -799,8 +824,10 @@ class KeywordForm(Form):
                 if name == "" or xpath == "":
                     raise ValidationError(_("Name and xpath are both required fields."))
                 for k, v in data_dict.items():
-                    if k.startswith(name) or name.startswith(k):
+                    if not use_named_args_separator and (k.startswith(name) or name.startswith(k)):
                         raise ValidationError(_("Cannot have two names overlap: ") + "(%s, %s)" % (k, name))
+                    if use_named_args_separator and k == name:
+                        raise ValidationError(_("Cannot use the same name twice: ") + name)
                     if v == xpath:
                         raise ValidationError(_("Cannot reference the same xpath twice: ") + xpath)
                 data_dict[name] = xpath

@@ -1,5 +1,6 @@
 from django.conf.urls.defaults import *
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
+from .views import FlagBrokenBuilds
 
 urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^$', 'default', name="default_admin_report"),
@@ -15,11 +16,15 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^emails/$', 'emails', name='global_email_list'),
     url(r'^submissions_errors/$', 'submissions_errors', name='global_submissions_errors'),
     url(r'^domains/update/$', 'update_domains', name="domain_update"),
+    url(r'^mass_email/$', 'mass_email', name="mass_email"),
     url(r'^domains/download/$', 'domain_list_download', name="domain_list_download"),
     url(r'^noneulized_users/$', 'noneulized_users', name="noneulized_users"),
     url(r'^commcare_settings/$', 'all_commcare_settings', name="all_commcare_settings"),
+    url(r'^broken_suite_files/$', 'find_broken_suite_files', name="find_broken_suite_files"),
     url(r'^management_commands/$', 'management_commands', name="management_commands"),
     url(r'^run_command/$', 'run_command', name="run_management_command"),
+    url(r'^phone/restore/$', 'admin_restore', name="admin_restore"),
+    url(r'^flag_broken_builds/$', FlagBrokenBuilds.as_view(), name="flag_broken_builds"),
     AdminReportDispatcher.url_pattern(),
 )
 

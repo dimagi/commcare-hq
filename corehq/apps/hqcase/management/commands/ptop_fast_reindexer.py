@@ -13,6 +13,31 @@ MAX_TRIES = 10
 RETRY_DELAY = 60
 RETRY_TIME_DELAY_FACTOR = 15
 
+
+
+class FakeCouchDBLoader(object):
+    """
+    For the bulk fast reindexing - replace the traditional one couch GET per update
+    and just do a bulk get of a cluster of ids. Rather than altering the pillow pipeline,
+    just preload all docs of relevance into a dictionary and override the single couch.get_doc call.
+
+    This needs to be patched after the initial bootstrap of the pillow which still needs to do
+    couchy stuff.
+    """
+    docs = {}
+
+    def open_doc(self, doc_id):
+        return self.docs.get(doc_id, None)
+
+    def save_doc(self):
+        raise NotImplementedError("Wtf, this is a loader class")
+
+    def fake_set_docs(self, doc_dict_by_id):
+        """
+        A non overriding method - fake set the docs in a dict so open_doc will get it like a regular couch database.
+        """
+        self.docs = doc_dict_by_id
+
 class PtopReindexer(NoArgsCommand):
     help = "View based elastic reindexer"
     option_list = NoArgsCommand.option_list + (
@@ -53,6 +78,7 @@ class PtopReindexer(NoArgsCommand):
 
     doc_class = None
     view_name = None
+    couch_key = None
     pillow_class = None
     file_prefix = "ptop_fast_reindex_"
 
@@ -65,6 +91,9 @@ class PtopReindexer(NoArgsCommand):
         Return true if to index, false if to SKIP
         """
         return True
+
+    def get_extra_view_kwargs(self):
+        return {}
 
     def get_seq_prefix(self):
         if hasattr(self, '_seq_prefix'):
@@ -92,7 +121,20 @@ class PtopReindexer(NoArgsCommand):
         """
         def full_view_iter():
             start_seq = 0
-            view_chunk = self.db.view(self.view_name, reduce=False, limit=self.chunk_size * self.chunk_size, skip=start_seq)
+
+            view_kwargs = {}
+            if self.couch_key is not None:
+                view_kwargs["key"] = self.couch_key
+            view_kwargs.update(self.get_extra_view_kwargs())
+
+            view_chunk = self.db.view(
+                self.view_name,
+                reduce=False,
+                limit=self.chunk_size * self.chunk_size,
+                skip=start_seq,
+                **view_kwargs
+            )
+
             while len(view_chunk) > 0:
                 for item in view_chunk:
                     yield item
@@ -133,6 +175,16 @@ class PtopReindexer(NoArgsCommand):
             self.full_view_data = simplejson.loads(fin.read())
         print "Finish loading from disk: %s" % datetime.utcnow().isoformat()
 
+    def _bootstrap(self, options):
+        self.resume = options['resume']
+        self.bulk = options['bulk']
+        self.pillow = self.pillow_class()
+        self.db = self.doc_class.get_db()
+        self.runfile = options['runfile']
+        self.chunk_size = options.get('chunk_size', CHUNK_SIZE)
+        self.start_num = options.get('seq', 0)
+
+
     def handle(self, *args, **options):
         if not options['noinput']:
             confirm = raw_input("""
@@ -156,14 +208,8 @@ class PtopReindexer(NoArgsCommand):
             if confirm_alias != "yes":
                 return
 
+        self._bootstrap(options)
         start = datetime.utcnow()
-        self.resume = options['resume']
-        self.bulk = options['bulk']
-        self.pillow = self.pillow_class()
-        self.db = self.doc_class.get_db()
-        self.runfile = options['runfile']
-        self.chunk_size = options.get('chunk_size', CHUNK_SIZE)
-        self.start_num = options.get('seq', 0)
 
         print "using chunk size %s" % self.chunk_size
 
@@ -182,7 +228,7 @@ class PtopReindexer(NoArgsCommand):
             print "Starting fast tracked reindexing from view position %d" % self.start_num
             runparts = self.runfile.split('_')
             print runparts
-            if len(runparts) != 5 or not self.runfile.startswith('ptop_fast_reindex') or runparts[3] != self.doc_class.__name__:
+            if len(runparts) != 5 or not self.runfile.startswith('ptop_fast_reindex'):
                 print "\tError, runpart name must be in format ptop_fast_reindex_%s_yyyy-mm-dd-HHMM"
                 sys.exit()
 
@@ -231,12 +277,23 @@ class PtopReindexer(NoArgsCommand):
         start = self.start_num
         end = start + self.chunk_size
         total_len = len(self.full_view_data)
+
+        doc_couch_db = self.pillow.document_class.get_db()
+
         while start < total_len:
             print "load_bulk [%d:%d]" % (start, end)
             if end < total_len:
                 bulk_slice = self.full_view_data[start:end]
             else:
                 bulk_slice = self.full_view_data[start:]
+
+            #all couchy operations completed, faking out db now.
+            self.pillow.couch_db = FakeCouchDBLoader()
+
+            doc_ids = [x['id'] for x in bulk_slice]
+            slice_docs = doc_couch_db.all_docs(keys=doc_ids, include_docs=True)
+            raw_doc_dict = dict((x['id'], x['doc']) for x in slice_docs.all())
+            self.pillow.couch_db.fake_set_docs(raw_doc_dict) # update the fake couch instance's set of bulk loaded docs
 
             retries = 0
             bulk_start = datetime.utcnow()

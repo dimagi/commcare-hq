@@ -89,7 +89,7 @@
             var self = this;
 
             self.getCeleryTasks = function () {
-                $.getJSON("{% url system_ajax %}?api=celerymon_poll", function (allData) {
+                $.getJSON("{% url system_ajax %}?api=flower_poll", function (allData) {
                             var mappedTasks = $.map(allData, function (item) {
                                 return new CeleryTaskModel(item)
                             });
@@ -128,7 +128,7 @@
                     <th>Current Worker</th>
                     <th>Memcached Status</th>
                     <th>Redis Status</th>
-                    <th>RabbitMQ Status</th>
+                    <th>Celery Status</th>
                     <th>Elasticsearch Status</th>
                 </tr>
             </thead>
@@ -146,7 +146,9 @@
                     {{ redis_results }}
                 </td>
                 <td>
-                    {{ rabbitmq_status }}
+                    {{ rabbitmq_status }} {% if rabbitmq_url %}(<a href="{{ rabbitmq_url }}">Admin</a>){% endif %}
+                    <hr>
+                    {{ worker_status }}<br>
                 </td>
                 <td>
                     <dl class="dl-horizontal">
@@ -177,15 +179,6 @@
                             <span class="label label-important">Bad</span>
                             {% endif %}
                             {{ xforms_message }}
-                        </dd>
-
-                    <dt>Exchange</dt>
-                        <dd>{% if cc_exchange_status %}
-                            <span class="label label-success">OK</span>
-                            {% else %}
-                            <span class="label label-important">Bad</span>
-                            {% endif %}
-                            {{ cc_exchange_message }}
                         </dd>
                     </dl>
                 </td>
@@ -231,7 +224,7 @@
     </div>
 
     <div class="row-fluid" id="celeryblock">
-        <h3>Celery Monitor</h3>
+        <h3>Celery Monitor <small><a href="{{ celery_flower_url }}">Flower</a> (must be vpn'd in)</small></h3>
         <table class="table table-striped">
             <thead>
             <tr>
@@ -264,61 +257,6 @@
     </div>
 
     <div class="row-fluid">
-    <h3>Couch _log</h3>
-    <small>Last 2000 bytes</small>
-    <pre>{{ couch_log }}</pre>
-    </div>
-
-    <div class="row-fluid">
-        <h3>Current Build</h3>
-        <h4>Temporarily offline</h4>
-
-        <div class="well">
-            <h5>Active Branch</h5>
-            {{ current_ref.repo.active_branch.name }}
-        </div>
-        <div>
-            <h4>Last Commits</h4>
-            <table class="table table-striped">
-                <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Author</th>
-                    <th>Message</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for commit in current_ref.last_commits %}
-                    {% if forloop.first %}
-                        <tr class="success">
-                            {% else %}
-                        <tr>
-                    {% endif %}
-
-                <td>{{ commit.date|date:"m/d/Y H:i T" }}<br>
-                    <small>
-                        <a href="{{ commit.commit_url }}">View</a> | <a
-                            href="{{ commit.compare_url }}">Compare</a>
-                    </small>
-                </td>
-                <td> {{ commit.author }}</td>
-                <td>
-                    <pre>{{ commit.message }}</pre>
-                </td>
-                </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-
-            <h4>Submodules</h4>
-            {% for sub in current_ref.submodules %}
-                <h5>{{ sub.name }}
-                    <small><a href="{{ sub.commit_url }}">Commit</a> | <a href=
-                                                                                  "{{ sub.compare_url }}">Compare</a>
-                    </small>
-                </h5>
-                <pre>{{ sub.info }}</pre>
-            {% endfor %}
-        </div>
+    {% include "hqadmin/partials/project_snapshot.html" %}
     </div>
 {% endblock %}

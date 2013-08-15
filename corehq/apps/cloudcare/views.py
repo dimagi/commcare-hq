@@ -1,4 +1,5 @@
 from couchdbkit import ResourceConflict
+from dimagi.utils.couch.database import iter_docs
 from django.views.decorators.cache import cache_page
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.app_manager.suite_xml import SuiteGenerator
@@ -174,7 +175,8 @@ def get_cases(request, domain):
 
     ids_only = string_to_boolean(request.REQUEST.get("ids_only", "false"))
     case_id = request.REQUEST.get("case_id", "")
-    if case_id:
+    footprint = string_to_boolean(request.REQUEST.get("footprint", "false"))
+    if case_id and not footprint:
         # short circuit everything else and just return the case
         # NOTE: this allows any user in the domain to access any case given
         # they know its ID, which is slightly different from the previous
@@ -185,7 +187,6 @@ def get_cases(request, domain):
         assert case.domain == domain
         cases = [CaseAPIResult(id=case_id, couch_doc=case, id_only=ids_only)]
     else:
-        footprint = string_to_boolean(request.REQUEST.get("footprint", "false"))
         filters = get_filters_from_request(request)
         status = api_closed_to_status(request.REQUEST.get('closed', 'false'))
         case_type = filters.get('properties/case_type', None)
@@ -233,12 +234,12 @@ def filter_cases(request, domain, app_id, module_id):
             user_id=request.couch_user._id, ids_only=True
         )]
 
-    cases = [CommCareCase.get(id) for id in case_ids]
+    cases = [CommCareCase.wrap(doc) for doc in iter_docs(CommCareCase.get_db(), case_ids)]
     # refilter these because we might have accidentally included footprint cases
     # in the results from touchforms. this is a little hacky but the easiest
     # (quick) workaround. should be revisted when we optimize the case list.
     cases = filter(lambda c: c.type == case_type, cases)
-    cases = [c.get_json() for c in cases if c]
+    cases = [c.get_json(lite=True) for c in cases if c]
     parents = []
     if delegation:
         for case in cases:

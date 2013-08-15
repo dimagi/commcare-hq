@@ -1,16 +1,20 @@
 from django.core.urlresolvers import reverse
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect, HttpResponseBadRequest
 from django.views.generic.base import View
+from django.utils.translation import ugettext
 from corehq.apps.domain.decorators import login_and_domain_required, cls_to_view
 from dimagi.utils.decorators.datespan import datespan_in_request
 
 from corehq.apps.domain.models import Domain
+from corehq.apps.reports.exceptions import BadRequestError
 
 datespan_default = datespan_in_request(
     from_param="startdate",
     to_param="enddate",
     default_days=7,
 )
+
+_ = lambda message: ugettext(message) if message is not None else None
 
 class ReportDispatcher(View):
     """
@@ -61,12 +65,18 @@ class ReportDispatcher(View):
         attr_name = self.map_name
         import corehq
         domain_module = Domain.get_module_by_name(domain)
-        corehq_reports = tuple(getattr(corehq, attr_name, ()))
-        custom_reports = getattr(domain_module, attr_name, ())
+        if domain:
+            project = Domain.get_by_name(domain)
+        else:
+            project = None
 
-        if isinstance(custom_reports, dict):
-            custom_reports = custom_reports[domain]
-        custom_reports = tuple(custom_reports)
+        def process(reports):
+            if project and callable(reports):
+                reports = reports(project)
+            return tuple(reports)
+
+        corehq_reports = process(getattr(corehq, attr_name, ()))
+        custom_reports = process(getattr(domain_module, attr_name, ()))
 
         return corehq_reports + custom_reports
 
@@ -114,7 +124,10 @@ class ReportDispatcher(View):
         if cls and self.permissions_check(class_name, request, domain=domain):
             report = cls(request, domain=domain, **report_kwargs)
             report.rendered_as = render_as
-            return getattr(report, '%s_response' % render_as)
+            try:
+                return getattr(report, '%s_response' % render_as)
+            except BadRequestError, e:
+                return HttpResponseBadRequest(e)
         else:
             raise Http404()
 
@@ -135,7 +148,7 @@ class ReportDispatcher(View):
 
     @classmethod
     def allowed_renderings(cls):
-        return ['json', 'async', 'filters', 'export', 'mobile', 'email', 'partial', 'raw']
+        return ['json', 'async', 'filters', 'export', 'mobile', 'email', 'partial', 'print']
 
     @classmethod
     def navigation_sections(cls, context):
@@ -164,9 +177,9 @@ class ReportDispatcher(View):
                         report_contexts.append({
                             'is_active': report.slug == current_slug,
                             'url': report.get_url(domain=domain),
-                            'description': report.description,
+                            'description': _(report.description),
                             'icon': report.icon,
-                            'title': report.name,
+                            'title': _(report.name),
                         })
             if report_contexts:
                 if hasattr(section_name, '__call__'):

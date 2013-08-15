@@ -23,6 +23,7 @@ from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthent
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from dimagi.utils.logging import notify_exception
+from django.utils.translation import ugettext as _
 
 from dimagi.utils.web import get_url_base, json_response
 from django.core.urlresolvers import reverse
@@ -37,6 +38,40 @@ import os
 import re
 
 from django.utils.http import urlencode
+
+
+def pg_check():
+    """check django db"""
+    try:
+        user_count = User.objects.count()
+    except:
+        user_count = None
+    return user_count is not None
+
+
+def couch_check():
+    """check couch"""
+
+    #in reality when things go wrong with couch and postgres (as of this
+    # writing) - it's far from graceful, so this will # likely never be
+    # reached because another exception will fire first - but for
+    # completeness  sake, this check is done  here to verify our calls will
+    # work, and if other error handling allows the request to get this far.
+
+    try:
+        xforms = XFormInstance.view('couchforms/by_user', limit=1).all()
+    except:
+        xforms = None
+    return isinstance(xforms, list)
+
+
+def hb_check():
+    try:
+        hb = heartbeat.is_alive()
+    except:
+        hb = False
+    return hb
+
 
 def server_error(request, template_name='500.html'):
     """
@@ -136,41 +171,37 @@ def server_up(req):
     '''View that just returns "success", which can be hooked into server
        monitoring tools like: pingdom'''
 
-    try:
-        hb = heartbeat.is_alive()
-    except:
-        hb = False
 
-    #in reality when things go wrong with couch and postgres (as of this
-    # writing) - it's far from graceful, so this will # likely never be
-    # reached because another exception will fire first - but for
-    # completeness  sake, this check is done  here to verify our calls will
-    # work, and if other error handling allows the request to get this far.
+    checkers = {
+        "heartbeat": {
+            "always_check": False,
+            "message": "* celery heartbeat is down",
+            "check_func": hb_check
+        },
+        "postgres": {
+            "always_check": True,
+            "message": "* postgres has issues",
+            "check_func": pg_check
+        },
+        "couch": {
+            "always_check": True,
+            "message": "* couch has issues",
+            "check_func": couch_check
+        }
+    }
 
-    ## check django db
-    try:
-        user_count = User.objects.count()
-    except:
-        user_count = None
-
-    ## check couch
-    try:
-        xforms = XFormInstance.view('couchforms/by_user', limit=1).all()
-    except:
-        xforms = None
-
-    if hb and isinstance(user_count, int) and isinstance(xforms, list):
-        return HttpResponse("success")
+    failed = False
+    message = ['Problems with HQ (%s):' % os.uname()[1]]
+    for check, check_info in checkers.items():
+        if check_info['always_check'] or req.GET.get(check, None) is not None:
+            check_results = check_info['check_func']()
+            if not check_results:
+                failed = True
+                message.append(check_info['message'])
+    if failed:
+        return HttpResponse('<br>'.join(message), status=500)
     else:
-        message = ['Problems with HQ (%s):' % os.uname()[1]]
-        if not hb:
-            message.append(' * Celery and or celerybeat is down')
-        if user_count is None:
-            message.append(' * postgres has issues')
-        if xforms is None:
-            message.append(' * couch has issues')
-        return HttpResponse('\n'.join(message), status=500)
-
+        return HttpResponse("success")
 
 def no_permissions(request, redirect_to=None, template_name="no_permission.html"):
     next = redirect_to or request.GET.get('next', None)
@@ -180,7 +211,9 @@ def no_permissions(request, redirect_to=None, template_name="no_permission.html"
 
     return render(request, template_name, {'next': next})
 
-def _login(req, domain, template_name):
+def _login(req, domain, domain_type, template_name, domain_context=None):
+    from corehq.apps.registration.views import get_domain_context
+
     if req.user.is_authenticated() and req.method != "POST":
         redirect_to = req.REQUEST.get('next', '')
         if redirect_to:
@@ -196,19 +229,27 @@ def _login(req, domain, template_name):
         req.POST._mutable = False
     
     req.base_template = settings.BASE_TEMPLATE
+    context = domain_context or get_domain_context(domain_type)
+    context['domain'] = domain
+
     return django_login(req, template_name=template_name,
                         authentication_form=EmailAuthenticationForm if not domain else CloudCareAuthenticationForm,
-                        extra_context={'domain': domain})
+                        extra_context=context)
     
-def login(req, template_name="login_and_password/login.html"):
+def login(req, domain_type='commcare'):
     # this view, and the one below, is overridden because
     # we need to set the base template to use somewhere
     # somewhere that the login page can access it.
     domain = req.REQUEST.get('domain', None)
-    return _login(req, domain, template_name)
+    return _login(req, domain, domain_type, "login_and_password/login.html")
     
 def domain_login(req, domain, template_name="login_and_password/login.html"):
-    return _login(req, domain, template_name)
+    from corehq.util.context_processors import get_per_domain_context
+    project = Domain.get_by_name(domain)
+    if not project:
+        raise Http404
+    return _login(req, domain, project.domain_type, template_name,
+            domain_context=get_per_domain_context(project))
 
 def is_mobile_url(url):
     # Minor hack
@@ -307,6 +348,8 @@ def bug_report(req):
     # only fake the from email if it's an @dimagi.com account
     if re.search('@dimagi\.com$', report['username']):
         email.from_email = report['username']
+    else:
+        email.from_email = settings.CCHQ_BUG_REPORT_EMAIL
 
     email.send(fail_silently=False)
 
@@ -352,3 +395,13 @@ def apache_license(request):
 def bsd_license(request):
     return render_static(request, "bsd_license.html")
 
+def unsubscribe(request, user_id):
+    user = CouchUser.get_by_user_id(user_id)
+    domain = user.get_domains()[0]
+    from django.contrib import messages
+    messages.info(request,
+                  _('Check "Opt out of emails about new features '
+                    'and other CommCare updates." below and then '
+                    'click "Update Information" if you do '
+                    'not want to receive future emails from us.'))
+    return HttpResponseRedirect(reverse('commcare_user_account', args=[domain, user_id]))

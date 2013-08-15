@@ -2,6 +2,8 @@ from datetime import datetime
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
+from corehq.apps.appstore.views import fill_mapping_with_facets
+from corehq.apps.hqadmin.reports import AdminFacetedReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.dispatcher import BasicReportDispatcher, AdminReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport, ElasticTabularReport
@@ -24,9 +26,6 @@ class DomainStatsReport(GenericTabularReport):
 
     def get_domains(self):
         return getattr(self, 'domains', [])
-
-    def is_custom_param(self, param):
-        raise NotImplementedError
 
     def get_name_or_link(self, d, internal_settings=False):
         if not getattr(self, 'show_name', None):
@@ -85,14 +84,6 @@ class DomainStatsReport(GenericTabularReport):
                     dom.get("cp_n_web_users", _("Not yet calculated"))
                 ]
 
-    @property
-    def shared_pagination_GET_params(self):
-        ret = super(DomainStatsReport, self).shared_pagination_GET_params
-        for param in self.request.GET.iterlists():
-            if self.is_custom_param(param[0]):
-                for val in param[1]:
-                    ret.append(dict(name=param[0], value=val))
-        return ret
 
 class OrgDomainStatsReport(DomainStatsReport):
     override_permissions_check = True
@@ -119,23 +110,23 @@ DOMAIN_FACETS = [
     "case_sharing",
     "commtrack_enabled",
     "customer_type",
-    "deployment.city",
-    "deployment.country",
+    "deployment.city.exact",
+    "deployment.country.exact",
     "deployment.date",
     "deployment.public",
-    "deployment.region",
+    "deployment.region.exact",
     "hr_name",
-    "internal.area",
+    "internal.area.exact",
     "internal.can_use_data",
     "internal.commcare_edition",
     "internal.custom_eula",
-    "internal.initiative",
+    "internal.initiative.exact",
     "internal.project_state",
     "internal.self_started",
     "internal.services",
     "internal.sf_account_id",
     "internal.sf_contract_id",
-    "internal.sub_area",
+    "internal.sub_area.exact",
     "internal.using_adm",
     "internal.using_call_center",
     "internal.platform",
@@ -154,6 +145,49 @@ DOMAIN_FACETS = [
     "sub_area",
     "survey_management_enabled",
     "tags",
+]
+
+FACET_MAPPING = [
+    ("Activity", True, [
+        {"facet": "is_test", "name": "Test Project", "expanded": True },
+        {"facet": "cp_is_active", "name": "Active", "expanded": True },
+        # {"facet": "deployment.date", "name": "Deployment Date", "expanded": False },
+        {"facet": "internal.project_state", "name": "Scale", "expanded": False },
+    ]),
+    ("Location", True, [
+        {"facet": "deployment.country.exact", "name": "Country", "expanded": True },
+        {"facet": "deployment.region.exact", "name": "Region", "expanded": False },
+        {"facet": "deployment.city.exact", "name": "City", "expanded": False },
+    ]),
+    ("Type", True, [
+        {"facet": "internal.area.exact", "name": "Area", "expanded": True },
+        {"facet": "internal.sub_area.exact", "name": "Sub Area", "expanded": True },
+        {"facet": "phone_model", "name": "Phone Model", "expanded": False },
+    ]),
+    ("Self Starters", False, [
+        {"facet": "internal.self_started", "name": "Self Started", "expanded": True },
+        {"facet": "cp_has_app", "name": "Has App", "expanded": False },
+    ]),
+    ("Advanced Features", False, [
+        # {"facet": "", "name": "Reminders", "expanded": True },
+        {"facet": "case_sharing", "name": "Case Sharing", "expanded": False },
+        {"facet": "internal.using_adm", "name": "ADM", "expanded": False },
+        {"facet": "internal.using_call_center", "name": "Call Center", "expanded": False },
+        {"facet": "commtrack_enabled", "name": "CommTrack", "expanded": False },
+        {"facet": "survey_management_enabled", "name": "Survey Management", "expanded": False },
+    ]),
+    ("Plans", False, [
+        {"facet": "project_type", "name": "Project Type", "expanded": False },
+        {"facet": "customer_type", "name": "Customer Type", "expanded": False },
+        {"facet": "internal.initiative.exact", "name": "Initiative", "expanded": False },
+        {"facet": "internal.commcare_edition", "name": "CommCare Pricing Edition", "expanded": False },
+        {"facet": "internal.services", "name": "Services", "expanded": False },
+        {"facet": "is_sms_billable", "name": "SMS Billable", "expanded": False },
+    ]),
+    ("Eula", False, [
+        {"facet": "internal.can_use_data", "name": "Public Data", "expanded": True },
+        {"facet": "custom_eula", "name": "Custom Eula", "expanded": False },
+    ]),
 ]
 
 def es_domain_query(params=None, facets=None, terms=None, domains=None, return_q_dict=False, start_at=None, size=None, sort=None):
@@ -198,46 +232,18 @@ def es_domain_query(params=None, facets=None, terms=None, domains=None, return_q
     return es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search', start_at, size, dict_only=return_q_dict)
 
 ES_PREFIX = "es_"
-class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
-    default_sort = None
+class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
     slug = "domains"
-    dispatcher = AdminReportDispatcher
-    base_template = "hqadmin/stats_report.html"
-    asynchronous = False
-    ajax_pagination = True
-    exportable = True
+    es_facet_list = DOMAIN_FACETS
+    es_facet_mapping = FACET_MAPPING
+    name = ugettext_noop('Project Space List')
+    facet_title = ugettext_noop("Project Facets")
+    search_for = ugettext_noop("projects...")
 
-    @property
-    def template_context(self):
-        ctxt = super(AdminDomainStatsReport, self).template_context
 
-        self.es_query()
-
-        ctxt.update({
-            'layout_flush_content': True,
-            'sortables': sorted(self.es_sortables),
-            'query_str': self.request.META['QUERY_STRING'],
-        })
-        return ctxt
-
-    @property
-    def total_records(self):
-        return int(self.es_results['hits']['total'])
-
-    def es_query(self):
-        from corehq.apps.appstore.views import parse_args_for_es, generate_sortables_from_facets
-        if not self.es_queried:
-            self.es_params, _ = parse_args_for_es(self.request, prefix=ES_PREFIX)
-            self.es_facets = DOMAIN_FACETS
-            results = es_domain_query(self.es_params, self.es_facets, sort=self.get_sorting_block(),
-                start_at=self.pagination.start, size=self.pagination.count)
-            self.es_sortables = generate_sortables_from_facets(results, self.es_params, prefix=ES_PREFIX)
-            self.es_queried = True
-            self.es_response = results
-        return self.es_response
-
-    def is_custom_param(self, param):
-        return param.startswith(ES_PREFIX)
+    def es_query(self, params=None):
+        return es_domain_query(params, self.es_facet_list, sort=self.get_sorting_block(),
+                                  start_at=self.pagination.start, size=self.pagination.count)
 
     @property
     def headers(self):
@@ -245,7 +251,7 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
             DataTablesColumn("Project", prop_name="name.exact"),
             DataTablesColumn(_("Organization"), prop_name="internal.organization_name"),
             DataTablesColumn(_("Deployment Date"), prop_name="deployment.date"),
-            DataTablesColumn(_("Deployment Country"), prop_name="deployment.country"),
+            DataTablesColumn(_("Deployment Country"), prop_name="deployment.country.exact"),
             DataTablesColumn(_("# Active Mobile Workers"), sort_type=DTSortType.NUMERIC,
                 prop_name="cp_n_active_cc_users",
                 help_text=_("The number of mobile workers who have submitted a form in the last 30 days")),
@@ -268,12 +274,6 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
             DataTablesColumn(_("Using Call Center?"), prop_name="internal.using_call_center"),
         )
         return headers
-
-    @property
-    def export_table(self):
-        self.pagination.count = 1000000 # terrible hack to get the export to return all rows
-        self.show_name = True
-        return super(AdminDomainStatsReport, self).export_table
 
 
     @property

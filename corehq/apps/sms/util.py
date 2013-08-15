@@ -157,3 +157,30 @@ def create_billable_for_sms(msg, backend_api, delay=True, **kwargs):
     except Exception as e:
         logging.error("%s backend contacted, but errors in creating billable for incoming message. Error: %s" %
                       (backend_api, e))
+
+CLEAN_TEXT_REPLACEMENTS = (
+    # Common emoticon replacements
+    (":o", ": o"),
+    (":O", ": O"),
+    (":x", ": x"),
+    (":X", ": X"),
+    (":D", ": D"),
+    (":p", ": p"),
+    (":P", ": P"),
+    # Special punctuation ascii conversion
+    (u"\u2013", "-"), # Dash
+    (u"\u201c", '"'), # Open double quote
+    (u"\u201d", '"'), # Close double quote
+    (u"\u2018", "'"), # Open single quote
+    (u"\u2019", "'"), # Close single quote
+    (u"\u2026", "..."), # Ellipsis
+)
+
+def clean_text(text):
+    """
+    Performs the replacements in CLEAN_TEXT_REPLACEMENTS on text.
+    """
+    for a, b in CLEAN_TEXT_REPLACEMENTS:
+        text = text.replace(a, b)
+    return text
+

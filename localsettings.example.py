@@ -41,6 +41,7 @@ SERVER_EMAIL = 'commcarehq-noreply@dimagi.com' #the physical server emailing - d
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
+SERVER_ENVIRONMENT = 'changeme' #identify the target type of this running environment
 
 ####### Log/debug setup ########
 
@@ -53,6 +54,8 @@ LOG_FILE = "/tmp/commcare-hq.log"
 
 SEND_BROKEN_LINK_EMAILS = True
 CELERY_SEND_TASK_ERROR_EMAILS = True
+CELERY_PERIODIC_QUEUE = 'celery' # change this to something else if you want a different queue for periodic tasks
+CELERY_FLOWER_URL = 'http://127.0.0.1:5555'
 
 ####### Bitly ########
 
@@ -164,6 +167,11 @@ LOGSTASH_AUDITCARE_PORT = 10999
 LOGSTASH_HOST = 'localhost'
 
 LOCAL_PILLOWTOPS = []
+
+####### API throttling #####
+
+API_THROTTLE_REQUESTS=20  # number of requests allowed per timeframe
+API_THROTTLE_TIMEFRAME=10 # seconds
 
 ####### django-coverage config ########
 

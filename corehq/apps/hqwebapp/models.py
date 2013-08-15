@@ -49,10 +49,12 @@ class UITab(object):
 
     dispatcher = None
 
-    def __init__(self, request, domain=None, couch_user=None, project=None, org=None):
+    def __init__(self, request, current_url_name, domain=None, couch_user=None,
+                 project=None, org=None):
         if self.subtab_classes:
-            self.subtabs = [cls(request, domain=domain, couch_user=couch_user,
-                                project=project, org=org)
+            self.subtabs = [cls(request, current_url_name, domain=domain,
+                                couch_user=couch_user, project=project,
+                                org=org)
                             for cls in self.subtab_classes]
         else:
             self.subtabs = None
@@ -65,6 +67,7 @@ class UITab(object):
         # This should not be considered as part of the subclass API unless it
         # is necessary. Try to add new explicit parameters instead.
         self._request = request
+        self._current_url_name = current_url_name
 
     @property
     def dropdown_items(self):
@@ -74,6 +77,7 @@ class UITab(object):
         return []
 
     @property
+    @memoized
     def sidebar_items(self):
         if self.dispatcher:
             context = {
@@ -104,7 +108,7 @@ class UITab(object):
         else:
             try:
                 return self.is_viewable
-            except AttributeError as e:
+            except AttributeError:
                 return False
     
     @property
@@ -129,10 +133,56 @@ class UITab(object):
         if self.subtabs and any(st.is_active for st in self.subtabs):
             return True
 
-        if self.url:
-            return self._request.get_full_path().startswith(self.url)
+        request_path = self._request.get_full_path()
+
+        if self.urls:
+            return (any(request_path.startswith(url) for url in self.urls) or
+                    self._current_url_name in self.subpage_url_names)
+
+        elif self.url:
+            return request_path.startswith(self.url)
         else:
             return False
+
+    @property
+    @memoized
+    def urls(self):
+        urls = [self.url] if self.url else []
+        if self.subtabs:
+            for st in self.subtabs:
+                urls.extend(st.urls)
+
+        try:
+            for name, section in self.sidebar_items:
+                urls.extend(item['url'] for item in section)
+        except Exception:
+            # tried to get urls for another tab on a page that doesn't provide
+            # the necessary couch_user, domain, project, etc. value
+            pass
+
+        return urls
+
+    @property
+    @memoized
+    def subpage_url_names(self):
+        """
+        List of all url names of subpages of sidebar items that get
+        displayed only when you're on that subpage.
+        """
+        names = []
+        if self.subtabs:
+            for st in self.subtabs:
+                names.extend(st.subpage_url_names)
+
+        try:
+            for name, section in self.sidebar_items:
+                names.extend(subpage['urlname']
+                    for item in section
+                    for subpage in item.get('subpages', []))
+        except Exception:
+            pass
+
+        return names
 
     @property
     def css_id(self):
@@ -142,13 +192,7 @@ class UITab(object):
 class ProjectReportsTab(UITab):
     title = ugettext_noop("Project Reports")
     view = "corehq.apps.reports.views.default"
-
-    @property
-    def is_viewable(self):
-        return (self.domain and self.project and not self.project.is_snapshot and
-                (self.couch_user.can_view_reports() or
-                 self.couch_user.get_viewable_reports()))
-
+   
     @property
     def is_active(self):
         # HACK. We need a more overarching way to avoid doing things this way
@@ -156,6 +200,12 @@ class ProjectReportsTab(UITab):
             return False
 
         return super(ProjectReportsTab, self).is_active
+
+    @property
+    def is_viewable(self):
+        return (self.domain and self.project and not self.project.is_snapshot and
+                (self.couch_user.can_view_reports() or
+                 self.couch_user.get_viewable_reports()))
 
     @property
     def sidebar_items(self):
@@ -195,14 +245,6 @@ class ADMReportsTab(UITab):
                   (self.couch_user.can_view_reports() or
                    self.couch_user.get_viewable_reports()))
 
-    @property
-    def is_active(self):
-        if not self.domain:
-            return False
-
-        project_reports_url = reverse(ReportsTab.view, args=[self.domain])
-        return (super(ADMReportsTab, self).is_active and self.domain and
-                self._request.get_full_path() != project_reports_url)
 
 class IndicatorAdminTab(UITab):
     title = ugettext_noop("Administer Indicators")
@@ -245,15 +287,20 @@ class ManageDataTab(UITab):
     @property
     @memoized
     def is_active(self):
-        # hack because subpages of excel importer don't follow the url <->
-        # navigation isomorphism
+        # hack because subpages of excel importer are at a different url
         return ('importer/excel' in self._request.get_full_path() or
                 super(ManageDataTab, self).is_active)
 
 
 class ApplicationsTab(UITab):
-    title = ugettext_noop("Applications")
     view = "corehq.apps.app_manager.views.default"
+
+    @property
+    def title(self):
+        if self.project.commconnect_enabled:
+            return _("Surveys")
+        else:
+            return _("Applications")
 
     @classmethod
     def make_app_title(cls, app_name, doc_type):
@@ -331,39 +378,97 @@ class CloudcareTab(UITab):
 
     @property
     def is_viewable(self):
-        return self.domain and self.couch_user.can_edit_data()
+        return (self.domain and self.couch_user.can_edit_data() and not
+                self.project.commconnect_enabled)
 
 
-class MessagesTab(UITab):
-    title = ugettext_noop("Messages")
+class MessagingTab(UITab):
+    title = ugettext_noop("Messaging")
     view = "corehq.apps.sms.views.default"
 
     @property
     def is_viewable(self):
-        return (self.domain and self.project and not self.project.is_snapshot and
-                not self.couch_user.is_commcare_user())
+        return (self.project and not
+                (self.project.is_snapshot or
+                 self.couch_user.is_commcare_user()))
 
     @property
     def sidebar_items(self):
-        return [(_("Messaging"), [
-            {'title': _('Message History'),
-             'url': reverse('messaging', args=[self.domain])},
-            {'title': _('Compose SMS Message'),
-             'url': reverse('sms_compose_message', args=[self.domain])}
-        ])]
+        from corehq.apps.reports.standard.sms import MessageLogReport
+        def reminder_subtitle(form=None, **context):
+            return form['nickname'].value
 
+        def keyword_subtitle(keyword=None, **context):
+            return keyword.keyword
 
-class RemindersTab(UITab):
-    title = ugettext_noop("Reminders")
-    view = "corehq.apps.reminders.views.default"
+        items = [
+            (_("Messages"), [
+                {'title': _('Compose SMS Message'),
+                 'url': reverse('sms_compose_message', args=[self.domain])},
+                {'title': _('Message Log'),
+                 'url': MessageLogReport.get_url(domain=self.domain)},
+            ]),
+            (_("Data Collection and Reminders"), [
+                {'title': _("Reminders"),
+                 'url': reverse('list_reminders', args=[self.domain]),
+                 'subpages': [
+                     {'title': reminder_subtitle,
+                      'urlname': 'edit_complex'},
+                     {'title': _("New Reminder Definition"),
+                      'urlname': 'add_complex_reminder_schedule'},
+                 ]},
+
+                {'title': _("Reminder Calendar"),
+                 'url': reverse('scheduled_reminders', args=[self.domain])},
+
+                {'title': _("Keywords"),
+                 'url': reverse('manage_keywords', args=[self.domain]),
+                 'subpages': [
+                     {'title': keyword_subtitle,
+                      'urlname': 'edit_keyword'},
+                     {'title': _("New Keyword"),
+                      'urlname': 'add_keyword'},
+                 ]},
+                #{'title': _("User Registration"),
+                 #'url': ...},
+                {'title': _("Reminders in Error"),
+                 'url': reverse('reminders_in_error', args=[self.domain])},
+            ])
+        ]
+
+        if self.project.survey_management_enabled:
+            def sample_title(form=None, **context):
+                return form['name'].value
+
+            def survey_title(form=None, **context):
+                return form['name'].value
+
+            items.append(
+                (_("Survey Management"), [
+                    {'title': _("Samples"),
+                     'url': reverse('sample_list', args=[self.domain]),
+                     'subpages': [
+                         {'title': sample_title,
+                          'urlname': 'edit_sample'},
+                         {'title': _("New Sample"),
+                          'urlname': 'add_sample'},
+                     ]},
+                    {'title': _("Surveys"),
+                     'url': reverse('survey_list', args=[self.domain]),
+                     'subpages': [
+                         {'title': survey_title,
+                          'urlname': 'edit_survey'},
+                         {'title': _("New Survey"),
+                          'urlname': 'add_survey'},
+                     ]},
+                ])
+            )
+
+        return items
 
     @property
     def dropdown_items(self):
         return []
-
-    @property
-    def is_viewable(self):
-        return self.project.commtrack_enabled
 
 
 class ProjectSettingsTab(UITab):
@@ -402,7 +507,7 @@ class ProjectSettingsTab(UITab):
             items.append((_('Mobile Users'), [
                 {'title': _('Mobile Workers'),
                  'url': reverse('commcare_users', args=[self.domain]),
-                 'children': [
+                 'subpages': [
                      {'title': commcare_username,
                       'urlname': 'commcare_user_account'},
                      {'title': _('New Mobile Worker'),
@@ -415,7 +520,7 @@ class ProjectSettingsTab(UITab):
 
                 {'title': _('Groups'),
                  'url': reverse('all_groups', args=[self.domain]),
-                 'children': [
+                 'subpages': [
                      {'title': lambda **context: (
                          "%s %s" % (_("Editing"), context['group'].name)),
                       'urlname': 'group_members'},
@@ -438,7 +543,7 @@ class ProjectSettingsTab(UITab):
             items.append((_('CommCare HQ Users'), [
                 {'title': _('Web Users'),
                  'url': reverse('web_users', args=[self.domain]),
-                 'children': [
+                 'subpages': [
                      {'title': _("Invite Web User"),
                       'urlname': 'invite_web_user'},
                      {'title': web_username,
@@ -491,7 +596,7 @@ class ProjectSettingsTab(UITab):
             administration.extend([
                 {'title': _('Data Forwarding'),
                  'url': reverse('domain_forwarding', args=[self.domain]),
-                 'children': [
+                 'subpages': [
                      {'title': forward_name,
                       'urlname': 'add_repeater'}
                  ]}
@@ -523,10 +628,25 @@ class AdminReportsTab(UITab):
     @property
     def sidebar_items(self):
         # todo: convert these to dispatcher-style like other reports
+
+        admin_operations = [
+            {'title': _('View/Update Domain Information'),
+             'url': reverse('domain_update')},
+        ]
+
+        if self.couch_user and self.couch_user.is_staff:
+            admin_operations.append(
+                {'title': _('Mass Email Users'),
+                 'url': reverse('mass_email')}
+            )
         return [
             (_('Administrative Reports'), [
-                {'title': _('Domain List'),
+                {'title': _('Project Space List'),
                 'url': reverse('admin_report_dispatcher', args=('domains',))},
+                {'title': _('User List'),
+                'url': reverse('admin_report_dispatcher', args=('user_list',))},
+                {'title': _('Application List'),
+                'url': reverse('admin_report_dispatcher', args=('app_list',))},
                 {'title': _('Domain Activity Report'),
                  'url': reverse('domain_activity_report')},
                 {'title': _('Message Logs Across All Domains'),
@@ -542,12 +662,9 @@ class AdminReportsTab(UITab):
                 {'title': _('Mobile User Reports'),
                  'url': reverse('mobile_user_reports')},
             ]),
-            (_('Administrative Operations'), [
-                {'title': _('View/Update Domain Information'),
-                 'url': reverse('domain_update')}
-            ])
+            (_('Administrative Operations'), admin_operations)
         ]
-    
+
     @property
     def is_viewable(self):
         return self.couch_user and self.couch_user.is_superuser
@@ -667,27 +784,9 @@ class OrgSettingsTab(OrgTab):
     view = "corehq.apps.orgs.views.orgs_landing"
 
     @property
-    def is_active(self):
-        # HACK. We need a more overarching way to avoid doing things this way -- copied this strat from above usage...
-        if self.org and 'o/%s/reports' % self.org.name in self._request.get_full_path():
-            return False
-
-        return super(OrgSettingsTab, self).is_active
-
-    @property
     def dropdown_items(self):
         return [
             format_submenu_context(_("Projects"), url=reverse("orgs_landing", args=(self.org.name,))),
             format_submenu_context(_("Teams"), url=reverse("orgs_teams", args=(self.org.name,))),
             format_submenu_context(_("Members"), url=reverse("orgs_stats", args=(self.org.name,))),
         ]
-
-
-class ManageSurveysTab(UITab):
-    title = ugettext_noop("Manage Surveys")
-    view = "corehq.apps.reminders.views.sample_list"
-
-    @property
-    def is_viewable(self):
-        return (self.domain and self.couch_user.can_edit_data() and
-                self.project.survey_management_enabled)

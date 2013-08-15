@@ -28,10 +28,22 @@
             downloadUrl: '{% url export_default_data domain %}'
 
         } );
+
         $('#full-form-export').one().each(function () {
             ko.applyBindings(exportManager, this);
         });
 
+        var metadataExportManager = new ExportManager( {
+            domain: '{{ domain }}',
+            exportFilters: '',
+            bulkDownloadUrl: 'n',
+            downloadUrl: '{% url corehq.apps.reports.views.export_all_form_metadata_async domain %}'
+
+        } );
+
+        $('#all-forms-metadata').one().each(function () {
+            ko.applyBindings(metadataExportManager, this);
+        });
 
         $(function () {
             // postGo is copied from main.js since that's now not being included, ever since the redesign
@@ -317,8 +329,13 @@
         <p>
             {% trans "Export basic data for all forms in this domain. Note that this export does not support the filters above." %}
         </p>
-        <a class="btn btn-primary" href='{% url corehq.apps.reports.views.export_all_form_metadata domain %}'>
-            <i class="icon-download-alt icon-white"></i> Download
+        <a data-toggle="modal" href="#export-download-status"
+               data-modulename=""
+               data-formname="{% trans "all form metadata" %}"
+               data-xmlns=""
+               data-appid=""
+               data-bind="click: requestDownload"
+               class="btn btn-primary dl-export" ><i class="icon-download-alt icon-white"></i> {% trans "Download" %}</a>
         </a>
     </div>
 </section>

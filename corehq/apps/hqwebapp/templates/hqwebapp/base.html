@@ -2,8 +2,8 @@
 <html lang="en">
     <head>
         <meta charset="utf-8"/>
-        <title>{% block title %}{% endblock %} - CommCare HQ</title>
-        <meta name="application-name" content="CommCare HQ">
+        <title>{% block title %}{% endblock %} - {{ SITE_NAME }}</title>
+        <meta name="application-name" content="{{ SITE_NAME }}">
         <meta http-equiv="content-language" content="en">
 
         <link rel="shortcut icon" href="{% static 'hqwebapp/img/favicon2.png' %}" />
@@ -66,7 +66,7 @@
                 <div class="navbar">
                     <div class="navbar-inner">
                         <hgroup class="brand">
-                            <h1><a href="{% url homepage %}"><img src="{% static LOGO %}" alt="{{ SITE_NAME }} Logo" /></a></h1>
+                            <h1><a href="{% url homepage %}"><img src="{{ LOGO_URL }}" alt="{{ SITE_NAME }} Logo" /></a></h1>
                         </hgroup>
                     {% if request.user.is_authenticated %}
                         <nav id="hq-navigation-bar">
@@ -191,29 +191,32 @@
         </div>
 
         <footer>
-            <a href="http://www.dimagi.com/" class="footer-left"><img src="{% static 'hqstyle/img/powered-by-dimagi.png' %}" class="powered" alt="Powered by Dimagi, Inc." /></a>
-
-            {% if user.is_authenticated %}
-            <div class="footer-right">
-                <a data-toggle="modal" data-target="#reportIssueModal" href="#reportIssueModal" class="btn btn-footer-highlight btn-large"><i class="icon-comment icon-white"></i> Report an Issue</a>
+            <div class="row-fluid">
+                <div class="span12">
+                    <div class="pull-left" style="margin-right: 20px;">
+                        <a href="http://www.commcarehq.org/"><img src="{% static 'hqwebapp/img/commcare-flower-footer.png' %}" class="powered-by"  alt="CommCare" /></a>
+                        <a href="http://www.dimagi.com/"><img src="{% static 'hqwebapp/img/dimagi-footer.png' %}" class="powered-by"  alt="Powered by Dimagi, Inc." /></a>
+                    </div>
+                    {% if user.is_authenticated %}
+                    <div class="btn-toolbar pull-right">
+                        <a data-toggle="modal" data-target="#reportIssueModal" href="#reportIssueModal" class="btn btn-footer-highlight"><i class="icon-comment"></i> {% trans 'Report an Issue' %}</a>
+                        <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}" target="_blank" class="btn btn-footer"><i class="icon-info-sign"></i> {% trans 'CommCare Help Site' %}</a>
+                        <a href="{% trans 'http://groups.google.com/group/commcare-users/subscribe' %}" target="_blank" class="btn btn-footer"><i class="icon-envelope"></i> {% trans 'commcare-users mailing list' %}</a>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <p style="padding-top: 7px;">
+                            <a href="http://www.commcarehq.org/">CommCare HQ</a> {% trans 'is copyright' %} &copy; {% now "Y" %} <a href="http://www.dimagi.com/">Dimagi, Inc.</a>
+                            {% if user.is_authenticated %}
+                                &nbsp;|&nbsp;
+                                <a href="{% trans 'http://www.commcarehq.org/home' %}">{% trans 'Learn more about CommCare HQ' %}</a>.
+                            {% endif %}
+                            <br />
+                            <a href="{% url eula %}">{% trans "Read CommCare HQ's End User License Agreement" %}</a>
+                        </p>
+                    </div>
+                </div>
             </div>
-            {% endif %}
-
-            <div class="footer-text footer-left">
-                Copyright &copy; {% now "Y" %} <a href="http://www.dimagi.com/">Dimagi, Inc.</a>
-                {% if user.is_authenticated %}
-                    &nbsp;|&nbsp;
-                    <a href="http://www.commcarehq.org/home">Learn more about CommCare HQ</a>.
-                {% endif %}
-                <br />
-                <a href="{% url eula %}">CommCare HQ's End User License Agreement</a>
-            </div>
-
-            {% if user.is_authenticated %}
-            <div class="footer-right">
-                {% blocktrans %}Need help? Try the <a href="https://wiki.commcarehq.org/display/commcarepublic/Home" target="_blank" class="btn btn-footer"><i class="icon-info-sign icon-white"></i> CommCare Help Site</a> and join the <a href="http://groups.google.com/group/commcare-users/subscribe" target="_blank" class="btn btn-footer"><i class="icon-envelope icon-white"></i> commcare-users</a> mailing list.{% endblocktrans %}
-            </div>
-            {% endif %}
         </footer>
         <div id="hq-modal-home">
             {% if user.is_authenticated %}
@@ -291,6 +294,8 @@
         <script src="{% static 'hqwebapp/js-custom/hqhandler.form.bugReport.js' %}"></script>
         <script src="{% static 'hqwebapp/js-custom/hq.helpers.js' %}"></script>
         <script src="{% static 'hqwebapp/js/lib/jquery.cookie.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/lib/jquery.timeago.js' %}"></script>
+
         {% if RAVEN %}
             <script src="{% static 'hqwebapp/js/lib/raven.min.js' %}"></script>
         {% endif %}
@@ -298,8 +303,16 @@
 
         {% if RAVEN %}
             <script>Raven.config('{% sentry_public_dsn "http" %}').install()</script>
-        {% endif %}
+            {% endif %}
+
         {% block js-inline %}
+        <script>
+            $(function () {
+                $.timeago.settings.allowFuture = true;
+                $(".timeago").timeago();
+            });
+        </script>
+
             {% if request.couch_user and not request.couch_user.is_eula_signed %}
                 {% url eula_basic as eula_url %}
                 {% include 'hqstyle/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}

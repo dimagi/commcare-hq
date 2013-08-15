@@ -1,8 +1,6 @@
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
 
-XFORM_INDEX="xforms_1595b2ca525ba48c3e8bcb8cd2a426f4"
-
-
+XFORM_INDEX="xforms_173a2feff06a9065ee69fd232ae090ef"
 
 
 XFORM_MAPPING = {
@@ -11,7 +9,7 @@ XFORM_MAPPING = {
     'ignore_malformed': True,
     'dynamic': False,
     "_meta": {
-        "created": '2013-03-06', #record keeping on the index.
+        "created": '2013-05-11', #record keeping on the index.
     },
     "properties": {
         'doc_type': {'type': 'string'},
@@ -51,6 +49,7 @@ XFORM_MAPPING = {
         'form': {
             'dynamic': False,
             'properties': {
+                '@name': {"type": "string", "index": "not_analyzed"},
                 "#type": {"type": "string", "index": "not_analyzed"},
                 'case': {
                     'dynamic': False,
@@ -63,6 +62,8 @@ XFORM_MAPPING = {
                             "type": "date",
                             "format": DATE_FORMATS_STRING
                         },
+                        #note, the case_id method here assumes single case properties within a form
+                        #in order to support multi case properties, a dynamic template needs to be added along with fundamentally altering case queries
 
                         "@case_id": {"type": "string", "index": "not_analyzed"},
                         "@user_id": {"type": "string", "index": "not_analyzed"},
@@ -88,7 +89,9 @@ XFORM_MAPPING = {
                         "userID": {"type": "string", "index": "not_analyzed"},
                         "deviceID": {"type": "string", "index": "not_analyzed"},
                         "instanceID": {"type": "string", "index": "not_analyzed"},
-                        "username": {"type": "string", "index": "not_analyzed"}
+                        "username": {"type": "string", "index": "not_analyzed"},
+                        "appVersion": {"type": "string", "index": "not_analyzed"},
+                        "CommCareVersion": {"type": "string", "index": "not_analyzed"},
                     }
                 },
             },

@@ -23,6 +23,14 @@ except IndexError:
 ADMINS = ()
 MANAGERS = ADMINS
 
+# Ensure that extraneous Tastypie formats are not actually used
+# Curiously enough, browsers prefer html, then xml, lastly (or not at all) json
+# so removing html from the this variable annoyingly makes it render as XML
+# in the browser, when we want JSON. So I've added this commented
+# to document intent, but it should only really be activated
+# when we have logic in place to treat direct browser access specially.
+#TASTYPIE_DEFAULT_FORMATS=['json', 'xml', 'yaml']
+
 # default to the system's timezone settings
 TIME_ZONE = "UTC"
 
@@ -34,7 +42,7 @@ LANGUAGE_CODE = 'en-us'
 LANGUAGES = (
     ('en', 'English'),
     ('fr', 'French'),
-    # ('hin', 'Hindi'),
+    ('hin', 'Hindi'),
 )
 
 SITE_ID = 1
@@ -167,12 +175,15 @@ HQ_APPS = (
     'couchforms',
     'couchexport',
     'couchlog',
+    'ctable',
+    'ctable_view',
     'dimagi.utils',
     'formtranslate',
     'receiver',
     'langcodes',
     'corehq.apps.adm',
     'corehq.apps.announcements',
+    'corehq.apps.callcenter',
     'corehq.apps.crud',
     'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
@@ -183,6 +194,7 @@ HQ_APPS = (
     'corehq.apps.importer',
     'corehq.apps.reminders',
     'corehq.apps.prescriptions',
+    'corehq.apps.reportfixtures',
     'corehq.apps.translations',
     'corehq.apps.users',
     'corehq.apps.settings',
@@ -205,6 +217,7 @@ HQ_APPS = (
     'corehq.apps.api',
     'corehq.apps.indicators',
     'corehq.couchapps',
+    'custom.apps.wisepill',
     'fluff',
     'fluff.fluff_filter',
     'sofabed.forms',
@@ -251,6 +264,11 @@ REPORT_CACHE = 'default' # or e.g. 'redis'
 
 DOMAIN_MAX_REGISTRATION_REQUESTS_PER_DAY = 99
 DOMAIN_SELECT_URL = "/domain/select/"
+
+# This is not used by anything in CommCare HQ, leaving it here in case anything
+# in Django unexpectedly breaks without it.  When you need the login url, you
+# should use reverse('login', kwargs={'domain_type': domain_type}) in order to
+# maintain CommCare HQ/CommTrack distinction.
 LOGIN_URL = "/accounts/login/"
 # If a user tries to access domain admin pages but isn't a domain
 # administrator, here's where he/she is redirected
@@ -295,7 +313,10 @@ EXCHANGE_NOTIFICATION_RECIPIENTS = []
 SERVER_EMAIL = 'commcarehq-noreply@dimagi.com' #the physical server emailing - differentiate if needed
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
+CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
+
+SERVER_ENVIRONMENT = 'localdev'
 
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
@@ -307,6 +328,7 @@ OPENROSA_VERSION = "1.0"
 FIXTURE_GENERATORS = [
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",
+    "corehq.apps.reportfixtures.fixturegenerators.indicators",
 ]
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
@@ -316,6 +338,9 @@ SMS_GATEWAY_PARAMS = "user=my_username&password=my_password&id=%(phone_number)s&
 
 # celery
 BROKER_URL = 'django://' #default django db based
+
+#this is the default celery queue - for periodic tasks on a separate queue override this to something else
+CELERY_PERIODIC_QUEUE = 'celery'
 
 SKIP_SOUTH_TESTS = True
 #AUTH_PROFILE_MODULE = 'users.HqUserProfile'
@@ -329,6 +354,9 @@ XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 COUCHLOG_BLUEPRINT_HOME = "%s%s" % (STATIC_URL, "hqwebapp/stylesheets/blueprint/")
 COUCHLOG_DATATABLES_LOC = "%s%s" % (
     STATIC_URL, "hqwebapp/js/lib/datatables-1.9/js/jquery.dataTables.min.js")
+
+COUCHLOG_JQMODAL_LOC = "%s%s" % (STATIC_URL, "hqwebapp/js/lib/jqModal.js")
+COUCHLOG_JQMODAL_CSS_LOC = "%s%s" % (STATIC_URL, "hqwebapp/stylesheets/jqModal.css")
 
 # These allow HQ to override what shows up in couchlog (add a domain column)
 COUCHLOG_TABLE_CONFIG = {"id_column": 0,
@@ -397,6 +425,7 @@ TOUCHFORMS_API_PASSWORD = "changeme"
 
 # import local settings if we find them
 LOCAL_APPS = ()
+LOCAL_COUCHDB_APPS = ()
 LOCAL_MIDDLEWARE_CLASSES = ()
 LOCAL_PILLOWTOPS = []
 
@@ -415,6 +444,31 @@ COUCH_HTTPS = False
 
 # this should be overridden in localsettings
 INTERNAL_DATA = defaultdict(list)
+
+COUCH_STALE_QUERY='update_after'  # 'ok' for cloudant
+
+
+MESSAGE_LOG_OPTIONS = {
+    "abbreviated_phone_number_domains": ["mustmgh", "mgh-cgh-uganda"],
+}
+
+IVR_OUTBOUND_RETRIES = 3
+IVR_OUTBOUND_RETRY_INTERVAL = 10
+
+
+# List of Fluff pillow classes that ctable should process diffs for
+FLUFF_PILLOW_TYPES_TO_SQL = {}
+
+try:
+    #try to see if there's an environmental variable set for local_settings
+    if os.environ.get('CUSTOMSETTINGS', None) == "demo":
+        # this sucks, but is a workaround for supporting different settings
+        # in the same environment
+        from settings_demo import *
+    else:
+        from localsettings import *
+except ImportError:
+    pass
 
 LOGGING = {
     'version': 1,
@@ -490,27 +544,6 @@ LOGGING = {
     }
 }
 
-COUCH_STALE_QUERY='update_after'  # 'ok' for cloudant
-
-
-MESSAGE_LOG_OPTIONS = {
-    "abbreviated_phone_number_domains": ["mustmgh", "mgh-cgh-uganda"],
-}
-
-IVR_OUTBOUND_RETRIES = 3
-IVR_OUTBOUND_RETRY_INTERVAL = 10
-
-try:
-    #try to see if there's an environmental variable set for local_settings
-    if os.environ.get('CUSTOMSETTINGS', None) == "demo":
-        # this sucks, but is a workaround for supporting different settings
-        # in the same environment
-        from settings_demo import *
-    else:
-        from localsettings import *
-except ImportError:
-    pass
-
 if DEBUG:
     try:
         import luna
@@ -555,6 +588,7 @@ COUCHDB_APPS = [
     'auditcare',
     'builds',
     'case',
+    'callcenter',
     'cleanup',
     'cloudcare',
     'commtrack',
@@ -563,6 +597,7 @@ COUCHDB_APPS = [
     'couchdbkit_aggregate',
     'couchforms',
     'couchexport',
+    'ctable',
     'hqadmin',
     'domain',
     'facilities',
@@ -580,6 +615,7 @@ COUCHDB_APPS = [
     'phone',
     'receiverwrapper',
     'reminders',
+    'reportfixtures',
     'prescriptions',
     'reports',
     'sms',
@@ -593,6 +629,7 @@ COUCHDB_APPS = [
     'hutch',
     'hqbilling',
     'couchlog',
+    'wisepill',
 
     # custom reports
     'benin',
@@ -604,6 +641,8 @@ COUCHDB_APPS = [
     'pact',
     'psi',
 ]
+
+COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
 COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label in COUCHDB_APPS]
 
@@ -623,6 +662,7 @@ EMAIL_PORT = EMAIL_SMTP_PORT
 EMAIL_HOST_USER = EMAIL_LOGIN
 EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
 EMAIL_USE_TLS = True
+SEND_BROKEN_LINK_EMAILS = True
 
 NO_HTML_EMAIL_MESSAGE = """
 This is an email from CommCare HQ. You're seeing this message because your
@@ -694,12 +734,13 @@ PILLOWTOPS = [
                  'corehq.pillows.fullxform.FullXFormPillow',
                  'corehq.pillows.domain.DomainPillow',
                  'corehq.pillows.user.UserPillow',
-                 'corehq.pillows.exchange.ExchangePillow',
+                 'corehq.pillows.application.AppPillow',
                  'corehq.pillows.commtrack.ConsumptionRatePillow',
 
                  # fluff
                  'bihar.models.CareBiharFluffPillow',
              ] + LOCAL_PILLOWTOPS
+
 
 #Custom workflow for indexing xform data beyond the standard properties
 XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
@@ -712,6 +753,15 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'care-bihar', 
     'hsph-dev', 
     'hsph-betterbirth-pilot-2',
+    'commtrack-public-demo',
+]
+
+#Custom fully indexed domains for FullXForm index/pillowtop --
+# only those domains that don't require custom pre-processing before indexing,
+# otherwise list in XFORM_PILLOW_HANDLERS
+# Adding a domain will not automatically index that domain's existing forms
+ES_XFORM_FULL_INDEX_DOMAINS = [
+    'commtrack-public-demo',
 ]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
@@ -735,3 +785,5 @@ DOMAIN_MODULE_MAP = {
     'mvp-sada': 'mvp',
     'psi-unicef': 'psi',
 }
+
+CASEXML_FORCE_DOMAIN_CHECK = True

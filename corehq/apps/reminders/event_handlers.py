@@ -13,14 +13,16 @@ from corehq.apps.app_manager.models import Form
 from corehq.apps.ivr.api import initiate_outbound_call
 from datetime import timedelta
 from dimagi.utils.parsing import json_format_datetime
+from django.utils.translation import ugettext as _, ugettext_noop
 
 DEFAULT_OUTBOUND_RETRY_INTERVAL = 5
 DEFAULT_OUTBOUND_RETRIES = 2
 
-ERROR_RENDERING_MESSAGE = "Error rendering templated message for language '%s'. Please check message syntax."
-ERROR_NO_VERIFIED_NUMBER = "Recipient has no phone number."
-ERROR_NO_OTHER_NUMBERS = "Recipient has no phone number."
-ERROR_FORM = "Can't load form. Please check configuration."
+ERROR_RENDERING_MESSAGE = ugettext_noop("Error rendering templated message for language '%s'. Please check message syntax.")
+ERROR_NO_VERIFIED_NUMBER = ugettext_noop("Recipient has no phone number.")
+ERROR_NO_OTHER_NUMBERS = ugettext_noop("Recipient has no phone number.")
+ERROR_FORM = ugettext_noop("Can't load form. Please check configuration.")
+ERROR_NO_RECIPIENTS = ugettext_noop("No recipient(s).")
 
 """
 This module defines the methods that will be called from CaseReminderHandler.fire()
@@ -50,7 +52,7 @@ to not move the reminder forward to the next event.
 
 def fire_sms_event(reminder, handler, recipients, verified_numbers):
     current_event = reminder.current_event
-    if reminder.method in [METHOD_SMS, METHOD_SMS_CALLBACK]:
+    if handler.method in [METHOD_SMS, METHOD_SMS_CALLBACK]:
         for recipient in recipients:
             try:
                 lang = recipient.get_language_code()
@@ -103,7 +105,7 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers):
         # For multiple recipients, always move to the next event
         return True
     
-    elif reminder.method in [METHOD_TEST, METHOD_SMS_CALLBACK_TEST]:
+    elif handler.method in [METHOD_TEST, METHOD_SMS_CALLBACK_TEST]:
         # Used for automated tests
         return True
 

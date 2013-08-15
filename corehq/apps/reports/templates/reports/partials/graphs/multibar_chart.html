@@ -2,7 +2,7 @@
 <script type="text/javascript">
     nv.addGraph(function() {
         var chart_config = {{ chart.config_dict|JSON }};
-        var chart_data = {{ chart.data|JSON }}
+        var chart_data = {{ chart.data|JSON }};
         var chart_id = '#{{ chart_id }}';
 
         $(chart_id).show();
@@ -26,6 +26,9 @@
         chart.tooltips(chart_config.tooltips);
         chart.stacked(chart_config.stacked);
         chart.margin(chart_config.margin);
+        chart.staggerLabels(chart_config.staggerLabels);
+        chart.multibar.groupSpacing(chart_config.groupSpacing);
+        chart.multibar.forceY(chart_config.forceY);
 
         d3.select(chart_id + ' svg')
                 .datum(chart_data)

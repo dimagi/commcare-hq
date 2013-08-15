@@ -6,10 +6,13 @@ import sqlagg
 from corehq.apps.reports.basic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, \
     DataTablesColumn, DTSortType
-from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 from corehq.apps.reports.util import format_datatables_data
+
+
+class SqlReportException(Exception):
+    pass
 
 
 def format_data(value):
@@ -44,7 +47,7 @@ class Column(object):
 
 
 class DatabaseColumn(Column):
-    def __init__(self, header, name, column_type=sqlagg.SumColumn, format_fn=None, *args, **kwargs):
+    def __init__(self, header, agg_column, format_fn=None, *args, **kwargs):
         """
         Args:
             :param header:
@@ -53,53 +56,35 @@ class DatabaseColumn(Column):
                 The name of the column. This must match up to a column name in the report database.
             :param args:
                 Additional positional arguments will be passed on when creating the DataTablesColumn
+            :param agg_column:
+                Instance of sqlagg column class. See sqlagg.columns.BaseColumn
         Kwargs:
-            :param column_type=SumColumn:
-                The type of the column. Must be an instance of sqlagg.columns.BaseColumn.
             :param header_group=None:
                 An instance of corehq.apps.reports.datatables.DataTablesColumnGroup to which this column header will
                 be added.
+            :param sortable:
+                Indicates if the column should be sortable. If true and no format_fn is provided then
+                the default datatables format function is used. Defaults to True.
+            :param sort_type:
+                See corehq.apps.reports.datatables.DTSortType
             :param format_fn=None:
                 Function to apply to value before display. Useful for formatting and sorting.
                 See corehq.apps.reports.util.format_datatables_data
-            :param alias=None:
-                The alias to use for the column (optional). Should only contain a-z, A-Z, 0-9 and '_' characters.
-                This is useful if you want to select data from the same table column more than once in a single report.
-                e.g
-                    Column("Count", "col_a", column_type=CountColumn, alias="count_col_a")
-                    Column("Sum", "col_a", column_type=SumColumn, alias="sum_col_a")
-            :param table_name=None:
-                This will override the table name supplied to the QueryContext. See QueryContext.
-            :param group_by=None:
-                This will override the group_by values supplied to the QueryContext. See QueryContext.
-            :param filters=None:
-                This will override the filters supplied to the QueryContext. See QueryContext.
             :param kwargs:
                 Additional keyword arguments will be passed on when creating the DataTablesColumn
 
         """
-        column_args = (
-            # args specific to BaseColumn constructor
-            'table_name', 'group_by', 'filters', 'alias'
-        )
-        column_kwargs = {}
-
-        for arg in column_args:
-            try:
-                column_kwargs[arg] = kwargs.pop(arg)
-            except KeyError:
-                pass
-
         if 'sortable' not in kwargs:
             kwargs['sortable'] = True
 
-        if kwargs['sortable'] and 'sort_type' not in kwargs and column_type is not SimpleColumn:
+        if kwargs['sortable'] and 'sort_type' not in kwargs and not isinstance(agg_column, SimpleColumn):
             kwargs['sort_type'] = DTSortType.NUMERIC
             format_fn = format_fn or format_data
 
-        self.view = column_type(name, **column_kwargs)
+        self.view = agg_column
 
         self.header_group = kwargs.pop('header_group', None)
+        self.header = header
 
         self.data_tables_column = DataTablesColumn(header, *args, **kwargs)
         if self.header_group:
@@ -128,6 +113,11 @@ class AggregateColumn(Column):
             :param format_fn=None:
                 Function to apply to value before display. Useful for formatting and sorting.
                 See corehq.apps.reports.util.format_datatables_data
+            :param sortable:
+                Indicates if the column should be sortable. If true and no format_fn is provided then
+                the default datatables format function is used. Defaults to True.
+            :param sort_type:
+                See corehq.apps.reports.datatables.DTSortType
         """
         self.aggregate_fn = aggregate_fn
         format_fn = kwargs.pop('format_fn', None)
@@ -139,6 +129,7 @@ class AggregateColumn(Column):
             kwargs['sort_type'] = DTSortType.NUMERIC
             format_fn = format_fn or format_data
 
+        self.header = header
         self.header_group = kwargs.pop('header_group', None)
         self.data_tables_column = DataTablesColumn(header, **kwargs)
         if self.header_group:
@@ -152,9 +143,7 @@ class AggregateColumn(Column):
         return self.view.get_value(row) if row else None
 
 
-class SqlTabularReport(GenericTabularReport):
-    exportable = True
-    no_value = '--'
+class SqlData(object):
     table_name = None
 
     @property
@@ -186,16 +175,44 @@ class SqlTabularReport(GenericTabularReport):
         raise NotImplementedError()
 
     @property
+    @memoized
     def keys(self):
         """
         The list of report keys (e.g. users) or None to just display all the data returned from the query. Each value
-        in this list should be a list of the same dimension as the 'group_by' list.
+        in this list should be a list of the same dimension as the 'group_by' list. If group_by is None then keys
+        must also be None.
 
         e.g.
             group_by = ['region', 'sub_region']
             keys = [['region1', 'sub1'], ['region1', 'sub2'] ... ]
         """
         return None
+
+    @property
+    def query_context(self):
+        return sqlagg.QueryContext(self.table_name, self.filters, self.group_by)
+
+    @property
+    def data(self):
+        if self.keys is not None and not self.group_by:
+            raise SqlReportException('Keys supplied without group_by.')
+
+        qc = self.query_context
+        for c in self.columns:
+            qc.append_column(c.view)
+        engine = sqlalchemy.create_engine(settings.SQL_REPORTING_DATABASE_URL)
+        conn = engine.connect()
+        try:
+            data = qc.resolve(conn, self.filter_values)
+        finally:
+            conn.close()
+
+        return data
+
+
+class SqlTabularReport(SqlData, GenericTabularReport):
+    no_value = '--'
+    exportable = True
 
     @property
     def fields(self):
@@ -207,56 +224,112 @@ class SqlTabularReport(GenericTabularReport):
         return DataTablesHeader(*[c.data_tables_column for c in self.columns])
 
     @property
-    @memoized
-    def query_context(self):
-        return sqlagg.QueryContext(self.table_name, self.filters, self.group_by)
-
-    @property
     def rows(self):
-        qc = self.query_context
-        for c in self.columns:
-            qc.append_column(c.view)
-        engine = sqlalchemy.create_engine(settings.SQL_REPORTING_DATABASE_URL)
-        conn = engine.connect()
-        try:
-            data = qc.resolve(conn, self.filter_values)
-        finally:
-            conn.close()
+        formatter = DataFormatter(TableDataFormat(self.columns, no_value=self.no_value))
+        return formatter.format(self.data, keys=self.keys, group_by=self.group_by)
 
-        if self.keys:
-            for key_group in self.keys:
-                row_key = self._row_key(key_group)
-                row = data.get(row_key, None) if row_key else data
+
+class DataFormatter(object):
+
+    def __init__(self, format, row_filter=None):
+        self.row_filter = row_filter
+        self._format = format
+
+    def format(self, data, keys=None, group_by=None):
+        row_generator = self.format_rows(data, keys=keys, group_by=group_by)
+        return self._format.format_output(row_generator)
+
+    def format_rows(self, data, keys=None, group_by=None):
+        """
+        Return tuple of row key and formatted row
+        """
+        if keys is not None and group_by:
+            for key_group in keys:
+                row_key = self._row_key(group_by, key_group)
+                row = data.get(row_key, None)
                 if not row:
-                    row = dict(zip(self.group_by, key_group))
-                yield [self._or_no_value(c.get_value(row)) for c in self.columns]
-        else:
-            if self.group_by:
-                for k, v in data.items():
-                    yield [self._or_no_value(c.get_value(data.get(k))) for c in self.columns]
-            else:
-                yield [self._or_no_value(c.get_value(data)) for c in self.columns]
+                    row = dict(zip(group_by, key_group))
 
-    def _row_key(self, key_group):
-        if len(self.group_by) == 1:
+                formatted_row = self._format.format_row(row)
+                if self.filter_row(row_key, formatted_row):
+                    yield row_key, formatted_row
+        elif group_by:
+            for key, row in data.items():
+                formatted_row = self._format.format_row(row)
+                if self.filter_row(key, formatted_row):
+                    yield key, formatted_row
+        else:
+            formatted_row = self._format.format_row(data)
+            if self.filter_row(None, formatted_row):
+                yield None, formatted_row
+
+    def filter_row(self, key, row):
+        return not self.row_filter or self.row_filter(key, row)
+
+    def _row_key(self, group_by, key_group):
+        if len(group_by) == 1:
             return key_group[0]
-        elif len(self.group_by) > 1:
+        elif len(group_by) > 1:
             return tuple(key_group)
+
+
+class BaseDataFormat(object):
+    def __init__(self, columns, no_value='--'):
+        self.columns = columns
+        self.no_value = no_value
+
+    def format_row(self, row):
+        raise NotImplementedError()
+
+    def format_output(self, row_generator):
+        raise NotImplementedError()
 
     def _or_no_value(self, value):
         return value if value is not None else self.no_value
+
+
+class TableDataFormat(BaseDataFormat):
+    def format_row(self, row):
+        return [self._or_no_value(c.get_value(row)) for c in self.columns]
+
+    def format_output(self, row_generator):
+        for key, row in row_generator:
+            yield row
+
+
+class DictDataFormat(BaseDataFormat):
+    """
+    Formats the report data as a dictionary
+    """
+    def format_row(self, row):
+        return dict([(c.view.name, self._or_no_value(c.get_value(row))) for c in self.columns])
+
+    def format_output(self, row_generator):
+        ret = dict()
+        for key, row in row_generator:
+            if key is None:
+                return row
+            else:
+                ret[key] = row
+
+        return ret
 
 
 class SummingSqlTabularReport(SqlTabularReport):
     @property
     def rows(self):
         ret = list(super(SummingSqlTabularReport, self).rows)
-        if len(ret) > 0:
-            num_cols = len(ret[0])
-            total_row = []
-            for i in range(num_cols):
-                colrows = [cr[i] for cr in ret if isinstance(cr[i], dict)]
-                colnums = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), (int, long))]
-                total_row.append(reduce(lambda x, y: x + y, colnums, 0))
-            self.total_row = total_row
+        self.total_row = calculate_total_row(ret)
         return ret
+
+
+def calculate_total_row(rows):
+    total_row = []
+    if len(rows) > 0:
+        num_cols = len(rows[0])
+        for i in range(num_cols):
+            colrows = [cr[i] for cr in rows if isinstance(cr[i], dict)]
+            colnums = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), (int, long))]
+            total_row.append(reduce(lambda x, y: x + y, colnums, 0))
+
+    return total_row
