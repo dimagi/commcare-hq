@@ -39,7 +39,7 @@ class Command(BaseCommand):
         commit_info = "\nCommit Info:\nOn Branch %s, SHA: %s" % (git_snapshot['current_branch'], head['sha'])
 
         pre_message = list()
-        pre_message.append("Heads up, %s has started preindexing")
+        pre_message.append("Heads up, %s has started preindexing" % username)
         pre_message.append(commit_info)
 
         if email:
