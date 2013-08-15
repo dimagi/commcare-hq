@@ -42,7 +42,7 @@ class FluffPtopReindexer(PtopReindexer):
         start = datetime.utcnow()
 
         print "Starting fast tracked reindexing"
-        for i, row in enumerate(self.full_view_iter()):
+        for i, row in enumerate(self.full_couch_view_iter()):
             print "\tProcessing item %s (%d)" % (row['id'], i)
             self.process_row(row, i)
 
