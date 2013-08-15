@@ -1,4 +1,5 @@
 from couchdbkit import ResourceConflict
+from dimagi.utils.couch.database import iter_docs
 from django.views.decorators.cache import cache_page
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.app_manager.suite_xml import SuiteGenerator
@@ -233,12 +234,12 @@ def filter_cases(request, domain, app_id, module_id):
             user_id=request.couch_user._id, ids_only=True
         )]
 
-    cases = [CommCareCase.get(id) for id in case_ids]
+    cases = [CommCareCase.wrap(doc) for doc in iter_docs(CommCareCase.get_db(), case_ids)]
     # refilter these because we might have accidentally included footprint cases
     # in the results from touchforms. this is a little hacky but the easiest
     # (quick) workaround. should be revisted when we optimize the case list.
     cases = filter(lambda c: c.type == case_type, cases)
-    cases = [c.get_json() for c in cases if c]
+    cases = [c.get_json(lite=True) for c in cases if c]
     parents = []
     if delegation:
         for case in cases:

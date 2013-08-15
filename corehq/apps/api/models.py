@@ -6,6 +6,7 @@ from django.http import HttpResponse
 from django.conf import settings
 
 PERMISSION_POST_SMS = "POST_SMS"
+PERMISSION_POST_WISEPILL = "POST_WISEPILL"
 
 class ApiUser(Document):
     password = StringProperty()

@@ -167,3 +167,29 @@ def get_available_backends():
         result[klass.__name__] = klass
     return result
 
+CLEAN_TEXT_REPLACEMENTS = (
+    # Common emoticon replacements
+    (":o", ": o"),
+    (":O", ": O"),
+    (":x", ": x"),
+    (":X", ": X"),
+    (":D", ": D"),
+    (":p", ": p"),
+    (":P", ": P"),
+    # Special punctuation ascii conversion
+    (u"\u2013", "-"), # Dash
+    (u"\u201c", '"'), # Open double quote
+    (u"\u201d", '"'), # Close double quote
+    (u"\u2018", "'"), # Open single quote
+    (u"\u2019", "'"), # Close single quote
+    (u"\u2026", "..."), # Ellipsis
+)
+
+def clean_text(text):
+    """
+    Performs the replacements in CLEAN_TEXT_REPLACEMENTS on text.
+    """
+    for a, b in CLEAN_TEXT_REPLACEMENTS:
+        text = text.replace(a, b)
+    return text
+

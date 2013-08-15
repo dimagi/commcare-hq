@@ -10,5 +10,5 @@ class Command(PtopReindexer):
     help = "Fast reindex of domain elastic index by using the domain view and reindexing domains"
 
     doc_class = Domain
-    view_name = 'domain/not_snapshots'
+    view_name = 'domain/domains'
     pillow_class = DomainPillow

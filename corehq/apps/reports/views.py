@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, date
 import json
 import tempfile
+import re
 from django.conf import settings
 from django.core.cache import cache
 from django.core.servers.basehttp import FileWrapper
@@ -346,7 +347,6 @@ def edit_custom_export(req, domain, export_id):
 
 @login_or_digest
 @require_form_export_permission
-@login_and_domain_required
 @require_GET
 def hq_download_saved_export(req, domain, export_id):
     export = SavedBasicExport.get(export_id)
@@ -357,7 +357,6 @@ def hq_download_saved_export(req, domain, export_id):
 
 @login_or_digest
 @require_form_export_permission
-@login_and_domain_required
 @require_GET
 def export_all_form_metadata(req, domain):
     """
@@ -370,7 +369,6 @@ def export_all_form_metadata(req, domain):
 
 @login_or_digest
 @require_form_export_permission
-@login_and_domain_required
 @require_GET
 def export_all_form_metadata_async(req, domain):
     format = req.GET.get("format", Format.XLS_2007)
@@ -722,8 +720,8 @@ def case_details(request, domain, case_id):
     except ResourceNotFound:
         case = None
     
-    if case == None or case.doc_type != "CommCareCase" or case.domain != domain:
-        messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake plase report an issue.")
+    if case is None or case.doc_type != "CommCareCase" or case.domain != domain:
+        messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake please report an issue.")
         return HttpResponseRedirect(inspect.CaseListReport.get_url(domain=domain))
 
     try:
@@ -756,8 +754,10 @@ def case_details(request, domain, case_id):
         "timezone": timezone,
         "case_display_options": {
             "display": request.project.get_case_display(case),
-            "timezone": timezone
-        }
+            "timezone": timezone,
+            "get_case_url": lambda case_id: reverse(
+                case_details, args=[domain, case_id])
+        },
     })
 
 def generate_case_export_payload(domain, include_closed, format, group, user_filter, process=None):
@@ -765,15 +765,8 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
     Returns a FileWrapper object, which only the file backend in django-soil supports
 
     """
-    view_name = 'hqcase/all_cases' if include_closed else 'hqcase/open_cases'
-    key = [domain, {}, {}]
-    case_ids = CommCareCase.view(view_name,
-        startkey=key,
-        endkey=key + [{}],
-        reduce=False,
-        include_docs=False,
-        wrapper=lambda r: r['id']
-    )
+    status = 'all' if include_closed else 'open'
+    case_ids = CommCareCase.get_all_cases(domain, status=status, wrapper=lambda r: r['id'])
 
     class stream_cases(object):
         def __init__(self, all_case_ids):
@@ -808,7 +801,6 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
 
 @login_or_digest
 @require_case_export_permission
-@login_and_domain_required
 @require_GET
 def download_cases(request, domain):
     include_closed = json.loads(request.GET.get('include_closed', 'false'))
@@ -913,8 +905,8 @@ def download_form(request, domain, instance_id):
     assert(domain == instance.domain)
     return couchforms_views.download_form(request, instance_id)
 
+@login_or_digest
 @require_form_view_permission
-@login_and_domain_required
 @require_GET
 def download_attachment(request, domain, instance_id):
     attachment = request.GET.get('attachment', False)
@@ -931,12 +923,12 @@ def archive_form(request, domain, instance_id):
     instance = _get_form_or_404(instance_id)
     assert instance.domain == domain
     if instance.doc_type == "XFormInstance": 
-        instance.archive()
+        instance.archive(user=request.couch_user._id)
         notif_msg = _("Form was successfully archived.")
     elif instance.doc_type == "XFormArchived":
         notif_msg = _("Form was already archived.")
     else:
-        notif_msg = _("Can't archive documents of type %(s). How did you get here??") % instance.doc_type
+        notif_msg = _("Can't archive documents of type %s. How did you get here??") % instance.doc_type
     
     params = {
         "notif": notif_msg,
@@ -950,6 +942,20 @@ def archive_form(request, domain, instance_id):
     redirect = request.META.get('HTTP_REFERER')
     if not redirect:
         redirect = inspect.SubmitHistory.get_url(domain)
+
+    # check if referring URL was a case detail view, then make sure
+    # the case still exists before redirecting.
+    template = reverse('case_details', args=[domain, 'fake_case_id'])
+    template = template.replace('fake_case_id', '([^/]*)')
+    case_id = re.findall(template, redirect)
+    if case_id:
+        try:
+            case = CommCareCase.get(case_id[0])
+            if case._doc['doc_type'] == 'CommCareCase-Deleted':
+                raise ResourceNotFound
+        except ResourceNotFound:
+            redirect = reverse('project_report_dispatcher', args=[domain, 'case_list'])
+
     return HttpResponseRedirect(redirect)
 
 @require_form_view_permission
@@ -958,8 +964,7 @@ def unarchive_form(request, domain, instance_id):
     instance = _get_form_or_404(instance_id)
     assert instance.domain == domain
     if instance.doc_type == "XFormArchived":
-        instance.doc_type = "XFormInstance"
-        instance.save()
+        instance.unarchive(user=request.couch_user._id)
     else:
         assert instance.doc_type == "XFormInstance"
     messages.success(request, _("Form was successfully restored."))

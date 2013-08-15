@@ -16,9 +16,15 @@
     {% include "hqwebapp/ko/value-or-none-ui.html" %}
     {% include "app_manager/partials/nav_menu_media_js.html" with item=module image_default="jr://file/commcare/image/module_name.png" audio_default="jr://file/commcare/audio/module_name.mp3" %}
     <script>
+        {% if app.enable_multi_sort %}
+            window.enableNewSort = true;
+        {% else %}
+            window.enableNewSort = false;
+        {% endif %}
+
         $(function () {
             var $home = $("#detail-screen-config");
-            DetailScreenConfig.init($home, {
+            var detailScreenConfig = DetailScreenConfig.init($home, {
                 state: {
                     case_short: {{ module.details.0|JSON }},
                     case_long: {{ module.details.1|JSON }},
@@ -33,8 +39,19 @@
                 langs: {{ app.langs|JSON }},
                 edit: {{ edit|JSON }},
                 saveUrl: "{% url edit_module_detail_screens domain app.id module.id %}",
-                applicationVersion: {{ app.application_version|JSON }}
+                applicationVersion: {{ app.application_version|JSON }},
+                parentModules: {{ parent_modules|JSON }},
+                parentSelect: {{ module.parent_select|JSON }}
             });
+
+            var parsedSortRows = JSON.parse({{ sortElements|JSON }});
+            for (var i = 0; i < parsedSortRows.length; i++) {
+                detailScreenConfig.sortRows.addSortRow(
+                    parsedSortRows[i].field,
+                    parsedSortRows[i].type,
+                    parsedSortRows[i].direction
+                );
+            }
         });
         $(function () {
             $('#case_type').on('textchange', function () {
@@ -42,6 +59,13 @@
                 var valueNoSpaces = value.replace(/ /g, '_');
                 if (value !== valueNoSpaces) {
                     $(this).val(valueNoSpaces);
+                }
+                if (!valueNoSpaces.match(/^[\w-]+$/g)) {
+                    $(this).closest('.control-group').addClass('error')
+                    $('#case_type_error').css('display', 'inline');
+                } else {
+                    $(this).closest('.control-group').removeClass('error')
+                    $('#case_type_error').css('display', 'none');
                 }
             });
         });
@@ -135,7 +159,10 @@
                     </label>
                     <div class="controls">
                         {% if edit %}
-                            <input class="code" type="text" id="case_type" name="case_type" value="{{ module.case_type }}"/>
+                            <input class="code" type="text" id="case_type" name="case_type" value="{{ module.case_type }}" />
+                            <span class="help-inline" id="case_type_error" style="display: none;">
+                                {% trans "Case types can only include the characters a-z, 0-9, and _" %}
+                            </span>
                         {% else %}
                             <code>{{ module.case_type }}</code>
                         {% endif %}
@@ -201,7 +228,115 @@
                 </ol>
             {% endblocktrans %}
         </div>
-        <div id="detail-screen-config"></div>
+        <div id="detail-screen-config-body">
+            <div id="detail-screen-sort">
+            {% if app.enable_multi_sort %}
+                <legend data-bind="visible: rowCount() > 0">
+                    {% trans "Sort Properties" %}
+                    <span style="font-size: 13px">
+                        <span class="hq-help-template"
+                              data-title="{% trans "Sort Properties" %}"
+                              data-content=
+                                  "{% blocktrans %}
+                                      Properties in this list determine how
+                                      cases are ordered in your case list. This
+                                      is useful if for example you want higher
+                                      priority cases to appear closer to the
+                                      top of the list. The case list will sort
+                                      by the first property, then the second,
+                                      etc.
+                                  {% endblocktrans %}" ></span>
+                    </span>
+                </legend>
+                <div id="sorting-list" class="ui-sortable">
+                    <table data-bind="visible: rowCount() > 0"
+                           class="table table-condensed">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>{% trans "Property" %}</th>
+                                <th>{% trans "Direction" %}</th>
+                                <th>{% trans "Format" %}</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody data-bind="foreach: sortRows, sortableList: sortRows">
+                            <tr>
+                                <td>
+                                    <i class="grip
+                                            icon-resize-vertical
+                                            icon-blue"
+                                       style="cursor: move"></i>
+                                </td>
+
+                                <td>
+                                    <!-- ko foreach: labelTextItems -->
+                                        <span class="label label-info"
+                                              data-bind="text: $data">
+                                        </span>
+                                        <span style="color: #DDD;">/</span>
+                                    <!-- /ko -->
+                                    </span>
+                                    <code data-bind="text: fieldText">
+                                    </code>
+                                </td>
+
+                                <td>
+                                    <select data-bind="value: direction">
+                                        <option value="ascending"
+                                                data-bind="text: ascendText">
+                                        </option>
+                                        <option value="descending"
+                                                data-bind="text: descendText">
+                                        </option>
+                                    </select>
+                                </td>
+
+                                <td>
+                                    <select data-bind="value: type">
+                                        <option value="plain">
+                                            {% trans "Plain" %}
+                                        </option>
+                                        <option value="date">
+                                            {% trans "Date" %}
+                                        </option>
+                                        <option value="int">
+                                            {% trans "Integer" %}
+                                        </option>
+                                        <option value="double">
+                                            {% trans "Decimal" %}
+                                        </option>
+                                    </select>
+                                </td>
+
+                                <td>
+                                    <a data-bind="click: $root.removeSortRow">
+                                        <i class="icon-remove icon-blue"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+            </div>
+            <div id="detail-screen-config">
+                <legend>
+                    {% trans "Display Properties" %}
+                </legend>
+            </div>
+            <div id="detail-screen-parent" data-bind="visible: moduleOptions().length">
+                <legend>{% trans "Parent Child Selection" %}</legend>
+                <label class="checkbox">
+                    <input type="checkbox" data-bind="checked: active"/>
+                    {% trans "Select Parent First" %}
+                </label>
+                <div data-bind="visible: active">
+                {% trans "Use Case List from module" %}
+                <select data-bind="optstr: moduleOptions, value: moduleId"></select>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 </div>

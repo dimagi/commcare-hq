@@ -30,6 +30,7 @@ class MultiBarChart(Chart):
         stacked: True to make default view stacked, False for grouped
         staggerLabels: True to stagger the X-Axis labels.
         groupSpacing: Used to adjust amount of space between X-Axis groups. Value between 0 and 1.
+        forceY: Used to force values into the Y scale domain. Useful to ensure max / min scales. Must be list of numbers
         translateLabelsX: Pixels to move X-Axis labels in X direction
         translateLabelsY: Pixels to move X-Axis labels in Y direction
 
@@ -56,6 +57,7 @@ class MultiBarChart(Chart):
         self.translateLabelsY = 0
         self.staggerLabels = False
         self.groupSpacing = 0.3
+        self.forceY = [0, 1]
 
     def add_dataset(self, key, values, color=None):
         """
@@ -84,6 +86,7 @@ class MultiBarChart(Chart):
                     translateLabelsX=self.translateLabelsX,
                     translateLabelsY=self.translateLabelsY,
                     staggerLabels=self.staggerLabels,
+                    forceY=self.forceY,
                     groupSpacing=self.groupSpacing)
 
 

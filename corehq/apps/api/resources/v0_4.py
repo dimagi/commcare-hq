@@ -8,12 +8,12 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import xform as casexml_xform
 
 from corehq.apps.app_manager import util as app_manager_util
-from corehq.apps.app_manager.models import ApplicationBase, Application, RemoteApp, Form
+from corehq.apps.app_manager.models import ApplicationBase, Application, RemoteApp, Form, get_app
 from corehq.apps.receiverwrapper.models import Repeater, repeater_types
 from corehq.apps.groups.models import Group
 from corehq.apps.cloudcare.api import ElasticCaseQuery
 
-from corehq.apps.api.resources import v0_1, v0_3, JsonResource, DomainSpecificResourceMixin, dict_object
+from corehq.apps.api.resources import v0_1, v0_3, JsonResource, DomainSpecificResourceMixin, dict_object, SimpleSortableResourceMixin
 from corehq.apps.api.es import XFormES, CaseES, ESQuerySet, es_search
 from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField
 from corehq.apps.api.serializers import CommCareCaseSerializer
@@ -25,7 +25,7 @@ from corehq.apps.api.serializers import CommCareCaseSerializer
 MOCK_XFORM_ES = None
 MOCK_CASE_ES = None
 
-class XFormInstanceResource(v0_3.XFormInstanceResource, DomainSpecificResourceMixin):
+class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResource, DomainSpecificResourceMixin):
 
     # Some fields that were present when just fetching individual docs are
     # not present for e.g. devicelogs and must be allowed blank
@@ -48,11 +48,13 @@ class XFormInstanceResource(v0_3.XFormInstanceResource, DomainSpecificResourceMi
         es_query = es_search(bundle.request, domain)
         es_query['filter']['and'].append({'term': {'doc_type': 'xforminstance'}})
 
+        # Note that XFormES is used only as an ES client, for `run_query` against the proper index
         return ESQuerySet(payload = es_query,
                           model = XFormInstance, 
-                          es_client=self.xform_es(domain)) # Not that XFormES is used only as an ES client, for `run_query` against the proper index
+                          es_client=self.xform_es(domain)).order_by('-received_on')
 
     class Meta(v0_3.XFormInstanceResource.Meta):
+        ordering = ['received_on']
         list_allowed_methods = ['get']
 
 class RepeaterResource(JsonResource, DomainSpecificResourceMixin):
@@ -213,7 +215,16 @@ class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
             return []
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        return Application.by_domain(domain)
+        # There should be few enough apps per domain that doing an explicit refresh for each is OK.
+        # This is the easiest way to filter remote apps
+        # Later we could serialize them to their URL or whatevs but it is not that useful yet
+
+        application_bases = ApplicationBase.by_domain(domain)
+
+        # This wraps in the appropriate class so that is_remote_app() returns the correct answer 
+        applications = [get_app(domain, application_base.id) for application_base in application_bases]
+        
+        return [app for app in applications if not app.is_remote_app()]
 
     def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(Application, kwargs['domain'], kwargs['pk'])

@@ -1,3 +1,4 @@
+import logging
 import simplejson
 import six
 import copy
@@ -8,9 +9,13 @@ from corehq.apps.reports.filters.forms import FormsByApplicationFilter
 from corehq.elastic import get_es
 from django.views.generic import View
 from dimagi.utils.logging import notify_exception
+from corehq.apps.reports.exceptions import BadRequestError
 
 
 DEFAULT_SIZE = 10
+
+class ESUserError(BadRequestError):
+    pass
 
 class ESView(View):
     """
@@ -88,8 +93,8 @@ class ESView(View):
 
         Returns the raw query json back, or None if there's an error
         """
-        
-        #todo: backend audit logging of all these types of queries
+
+        logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(es_query)))
         if 'fields' in es_query or 'script_fields' in es_query:
             #nasty hack to add domain field to query that does specific fields.
             #do nothing if there's no field query because we get everything
@@ -101,19 +106,37 @@ class ESView(View):
         es_results = es_base.get('_search', data=es_query)
 
         if 'error' in es_results:
+            if es_query['query']['filtered']['query'].get('query_string'):
+                # the error may have been caused by a bad query string
+                # re-run with no query string to check
+                querystring = es_query['query']['filtered']['query']['query_string']['query']
+                new_query = es_query
+                new_query['query']['filtered']['query'] = {"match_all": {}}
+                new_results = self.run_query(new_query, es_type)
+                if new_results: 
+                    # the request succeeded without that query string
+                    # an error with a blank query will return None
+                    raise ESUserError("Error with elasticsearch query: %s" %
+                        querystring)
+
             msg = "Error in elasticsearch query [%s]: %s\nquery: %s" % (self.index, es_results['error'], es_query)
             notify_exception(None, message=msg)
             return None
 
+        hits = []
         for res in es_results['hits']['hits']:
-            res_domain = None
             if '_source' in res:
-                #check source
                 res_domain = res['_source'].get('domain', None)
             elif 'fields' in res:
                 res_domain = res['fields'].get('domain', None)
-                #check fields
-            assert res_domain == self.domain, "Security check failed, search result domain did not match requester domain: %s != %s" % (res_domain, self.domain)
+
+            # security check
+            if res_domain == self.domain:
+                hits.append(res)
+            else:
+                logging.info("Requester domain %s does not match result domain %s" % (
+                    self.domain, res_domain))
+        es_results['hits']['hits'] = hits
         return es_results
 
     def base_query(self, terms={}, fields=[], start=0, size=DEFAULT_SIZE):
@@ -343,6 +366,25 @@ class ESQuerySet(object):
         # Just asks ES for the count by limiting results to zero, leveraging slice implementation
         return self[0:0].results['hits']['total']
 
+    def order_by(self, *fields):
+        
+        new_payload = copy.deepcopy(self.payload)
+
+        new_payload['sort'] = []
+
+        for field in fields:
+            if not field:
+                continue
+            
+            direction = 'asc'
+            if field[0] == '-':
+                direction = 'desc'
+                field = field[1:]
+
+            new_payload['sort'].append({field: direction})
+
+        return self.with_fields(payload=new_payload)
+
     def __len__(self):
         # Note that this differs from `count` in that it actually performs the query and measures
         # only those objects returned
@@ -383,7 +425,7 @@ class ESQuerySet(object):
         else:
             raise TypeError('Unsupported type: %s', type(idx))
 
-RESERVED_QUERY_PARAMS=set(['limit', 'offset', 'q', '_search'])
+RESERVED_QUERY_PARAMS=set(['limit', 'offset', 'order_by', 'q', '_search'])
 
 # Note that dates are already in a string format when they arrive as query params
 query_param_transforms = {

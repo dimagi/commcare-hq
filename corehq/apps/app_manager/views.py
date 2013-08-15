@@ -14,6 +14,8 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab
 from corehq.apps.app_manager import commcare_settings
+from corehq.apps.app_manager.templatetags.xforms_extras import trans
+from corehq.apps.sms.views import get_sms_autocomplete_context
 from django.utils import html
 from django.utils.http import urlencode as django_urlencode
 from couchdbkit.exceptions import ResourceConflict
@@ -28,7 +30,7 @@ from django.conf import settings
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
-from corehq.apps.app_manager.util import is_valid_case_type, get_case_properties, get_all_case_properties, add_odk_profile_after_build
+from corehq.apps.app_manager.util import is_valid_case_type, get_case_properties, get_all_case_properties, add_odk_profile_after_build, ParentCasePropertyBuilder
 from corehq.apps.app_manager.util import save_xform, get_settings_values
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
@@ -54,10 +56,10 @@ from dimagi.utils.web import json_response, json_request
 from corehq.apps.reports import util as report_utils
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
-    AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, EXAMPLE_DOMAIN, str_to_cls, validate_lang, SavedAppBuild
-from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util
+    AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, EXAMPLE_DOMAIN, str_to_cls, validate_lang, SavedAppBuild, ParentSelect
+from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
-from corehq.apps.app_manager.decorators import safe_download
+from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST
 
 
 try:
@@ -177,7 +179,10 @@ def _get_xform_source(request, app, form, filename="form.xml"):
 @login_and_domain_required
 def get_xform_source(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
-    form = app.get_module(module_id).get_form(form_id)
+    try:
+        form = app.get_module(module_id).get_form(form_id)
+    except IndexError:
+        raise Http404()
     return _get_xform_source(req, app, form)
 
 @login_and_domain_required
@@ -263,7 +268,7 @@ def import_app(req, domain, template="app_manager/import_app.html"):
         })
 
 @require_can_edit_apps
-@require_POST
+@no_conflict_require_POST
 def import_factory_app(req, domain):
     factory_app = get_app('factory', req.POST['app_id'])
     source = factory_app.export_json(dump_json=False)
@@ -277,7 +282,7 @@ def import_factory_app(req, domain):
     return back_to_main(**locals())
 
 @require_can_edit_apps
-@require_POST
+@no_conflict_require_POST
 def import_factory_module(req, domain, app_id):
     fapp_id, fmodule_id = req.POST['app_module_id'].split('/')
     fapp = get_app('factory', fapp_id)
@@ -289,7 +294,7 @@ def import_factory_module(req, domain, app_id):
     return back_to_main(**locals())
 
 @require_can_edit_apps
-@require_POST
+@no_conflict_require_POST
 def import_factory_form(req, domain, app_id, module_id):
     fapp_id, fmodule_id, fform_id = req.POST['app_module_form_id'].split('/')
     fapp = get_app('factory', fapp_id)
@@ -340,30 +345,17 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
             form_errors.append("Syntax Error: %s" % e)
         except AppError as e:
             form_errors.append("Error in application: %s" % e)
-        except XFormValidationError as e:
-
-            # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'
-            #
-            # ... and if possible split the third line that looks like e.g. "org.javarosa.xform.parse.XFormParseException: Select question has no choices"
-            # and just return the undecorated string
-            #
-            # ... unless the first line says
-            message_lines = unicode(e).split('\n')[2:]
-            if len(message_lines) > 0 and ':' in message_lines[0] and 'XPath Dependency Cycle' not in unicode(e):
-                message = ' '.join(message_lines[0].split(':')[1:])
-            else:
-                message = '\n'.join(message_lines)
-                
-            message = "Validation Error: " + message
-            form_errors.append((html.escape(message).replace('\n', '<br/>'), {'extra_tags': 'html'}))
-
+        except XFormValidationError:
+            # showing these messages is handled by validate_form_for_build ajax
+            pass
         except XFormError as e:
             form_errors.append("Error in form: %s" % e)
-        # any other kind of error should fail hard, but for now there are too many for that to be practical
+        # any other kind of error should fail hard,
+        # but for now there are too many for that to be practical
         except Exception as e:
             if settings.DEBUG:
                 raise
-            logging.exception(e)
+            notify_exception(request, 'Unexpected Build Error')
             form_errors.append("Unexpected System Error: %s" % e)
 
         try:
@@ -394,7 +386,8 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         else:
             messages.error(request, err)
     module_case_types = [
-        {'module_name': module.name.get('en'), 'case_type': module.case_type}
+        {'module_name': trans(module.name, langs),
+         'case_type': module.case_type}
         for module in form.get_app().modules if module.case_type
     ] if not is_user_registration else None
     return {
@@ -416,16 +409,14 @@ def get_app_view_context(request, app):
         'settings_values': get_settings_values(app),
     }
 
-    commcare_build_options = {}
     build_config = CommCareBuildConfig.fetch()
-    for version in [app.application_version]:
-        options = build_config.get_menu(version)
-        options_labels = list()
-        options_builds = list()
-        for option in options:
-            options_labels.append(option.get_label())
-            options_builds.append(option.build.to_string())
-            commcare_build_options[version] = {"options" : options, "labels" : options_labels, "builds" : options_builds}
+    version = app.application_version
+    options = build_config.get_menu(version)
+    if not request.user.is_superuser:
+        options = [option for option in options if not option.superuser_only]
+    options_labels = [option.get_label() for option in options]
+    options_builds = [option.build.to_string() for option in options]
+
 
     (build_spec_setting,) = filter(
         lambda x: x['type'] == 'hq' and x['id'] == 'build_spec',
@@ -436,21 +427,11 @@ def get_app_view_context(request, app):
     build_spec_setting['value_names'] = options_labels
     build_spec_setting['default'] = build_config.get_default(app.application_version).to_string()
 
-    app_build_spec_string = app.build_spec.to_string()
-    app_build_spec_label = app.build_spec.get_label()
-
-    context.update({
-        "commcare_build_options" : commcare_build_options,
-        "app_build_spec_string" : app_build_spec_string,  # todo: remove
-        "app_build_spec_label" : app_build_spec_label,  # todo: remove
-        "app_version" : app.application_version,  # todo: remove
-    })
-
     if app.get_doc_type() == 'Application':
         try:
             # todo remove get_media_references
             multimedia = app.get_media_references()
-        except ProcessTimedOut as e:
+        except ProcessTimedOut:
             notify_exception(request)
             messages.warning(request, (
                 "We were unable to check if your forms had errors. "
@@ -465,6 +446,7 @@ def get_app_view_context(request, app):
             'multimedia': multimedia,
         })
     return context
+
 
 def get_langs(request, app):
     lang = request.GET.get('lang',
@@ -502,12 +484,6 @@ def _clear_app_cache(request, domain):
 
 def get_apps_base_context(request, domain, app):
 
-    applications = ApplicationBase.view('app_manager/applications_brief',
-        startkey=[domain],
-        endkey=[domain, {}],
-        stale=settings.COUCH_STALE_QUERY,
-    ).all()
-
     lang, langs = get_langs(request, app)
 
     if getattr(request, 'couch_user', None):
@@ -530,7 +506,6 @@ def get_apps_base_context(request, domain, app):
         'langs': langs,
         'domain': domain,
         'edit': edit,
-        'applications': applications,
         'app': app,
         'URL_BASE': get_url_base(),
         'timezone': timezone,
@@ -560,6 +535,7 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     app = get_app(domain, app_id)
     latest_release = get_app(domain, app_id, latest=True)
     context = get_apps_base_context(request, domain, app)
+    context['sms_contacts'] = get_sms_autocomplete_context(request, domain)['sms_contacts']
 
     saved_apps = []
 
@@ -581,7 +557,7 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def release_build(request, domain, app_id, saved_app_id):
     is_released = request.POST.get('is_released') == 'true'
@@ -630,11 +606,16 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
     base_context = get_apps_base_context(req, domain, app)
     edit = base_context['edit']
-    applications = base_context['applications']
-    if not app and applications:
-        app_id = applications[0]['id']
-        del edit
-        return back_to_main(**locals())
+    if not app:
+        all_applications = ApplicationBase.view('app_manager/applications_brief',
+            startkey=[domain],
+            endkey=[domain, {}],
+            stale=settings.COUCH_STALE_QUERY,
+        ).all()
+        if all_applications:
+            app_id = all_applications[0]['id']
+            del edit
+            return back_to_main(**locals())
     if app and app.copy_of:
         # don't fail hard.
         return HttpResponseRedirect(reverse("corehq.apps.app_manager.views.view_app", args=[domain,app.copy_of]))
@@ -648,30 +629,52 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         del app['use_commcare_sense']
         app.save()
 
-    case_properties = None
+    context = {}
     if module:
         if not form:
             case_type = module.case_type
-            case_properties = get_case_properties(
+            builder = ParentCasePropertyBuilder(
                 app,
-                [case_type],
                 defaults=('name', 'date-opened', 'status')
-            )[case_type]
-        else:
-            case_properties = get_all_case_properties(app)
+            )
 
-    context = {
+            def get_parent_modules_and_save():
+                """
+                This closure is so we don't override the `module` variable
+
+                """
+                parent_types = builder.get_parent_types(case_type)
+                modules = app.modules
+                # make sure all modules have unique ids
+                if any(not module.unique_id for module in modules):
+                    for module in modules:
+                        module.get_or_create_unique_id()
+                    app.save()
+                parent_module_ids = [module.unique_id for module in modules
+                                     if module.case_type in parent_types]
+                return [{
+                    'unique_id': module.unique_id,
+                    'name': module.name,
+                    'is_parent': module.unique_id in parent_module_ids,
+                } for module in app.modules if module.case_type != case_type]
+            context.update({
+                'parent_modules': get_parent_modules_and_save(),
+                'case_properties': sorted(builder.get_properties(case_type)),
+            })
+        else:
+            context.update({
+                'case_properties': get_all_case_properties(app),
+            })
+
+    context.update({
         'domain': domain,
-        'applications': applications,
 
         'app': app,
         'module': module,
         'form': form,
 
-        'case_properties': case_properties,
-
         'show_secret_settings': req.GET.get('secret', False)
-    }
+    })
     context.update(base_context)
     if app and not module and hasattr(app, 'translations'):
         context.update({"translations": app.translations.get(context['lang'], {})})
@@ -680,6 +683,9 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         template = "app_manager/form_view.html"
         context.update(get_form_view_context(req, form, context['langs'], is_user_registration))
     elif module:
+        sort_elements = [prop.values() for prop in
+                         module.get_detail('case_short').sort_elements]
+        context.update({"sortElements": json.dumps(sort_elements)})
         template = "app_manager/module_view.html"
     else:
         template = "app_manager/app_view.html"
@@ -688,15 +694,10 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
     error = req.GET.get('error', '')
 
-    force_edit = False
-    if (not context['applications']) or (app and app.get_doc_type() == "Application" and not app.modules):
-        edit = True
-        force_edit = True
     context.update({
-        'force_edit': force_edit,
         'error':error,
         'app': app,
-        })
+    })
     response = render(req, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
@@ -764,7 +765,7 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
 
 
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def new_app(req, domain):
     "Adds an app to the database"
@@ -784,7 +785,7 @@ def new_app(req, domain):
 
     return back_to_main(**locals())
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def new_module(req, domain, app_id):
     "Adds a module to an app"
@@ -799,7 +800,7 @@ def new_module(req, domain, app_id):
     response.set_cookie('suppress_build_errors', 'yes')
     return response
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def new_form(req, domain, app_id, module_id):
     "Adds a form to an app (under a module)"
@@ -814,7 +815,7 @@ def new_form(req, domain, app_id, module_id):
     response.set_cookie('suppress_build_errors', 'yes')
     return response
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def delete_app(req, domain, app_id):
     "Deletes an app from the database"
@@ -829,7 +830,7 @@ def delete_app(req, domain, app_id):
     del app_id
     return back_to_main(**locals())
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def undo_delete_app(request, domain, record_id):
     try:
@@ -844,7 +845,7 @@ def undo_delete_app(request, domain, record_id):
     messages.success(request, 'Application successfully restored.')
     return back_to_main(request, domain, app_id=app_id)
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def delete_module(req, domain, app_id, module_id):
     "Deletes a module from an app"
@@ -858,7 +859,7 @@ def delete_module(req, domain, app_id, module_id):
     del module_id
     return back_to_main(**locals())
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def undo_delete_module(request, domain, record_id):
     record = DeleteModuleRecord.get(record_id)
@@ -867,7 +868,7 @@ def undo_delete_module(request, domain, record_id):
     return back_to_main(request, domain, app_id=record.app_id, module_id=record.module_id)
 
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def delete_form(req, domain, app_id, module_id, form_id):
     "Deletes a form from an app"
@@ -882,7 +883,7 @@ def delete_form(req, domain, app_id, module_id, form_id):
     del record
     return back_to_main(**locals())
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def copy_form(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
@@ -892,7 +893,7 @@ def copy_form(req, domain, app_id, module_id, form_id):
     app.save()
     return back_to_main(**locals())
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def undo_delete_form(request, domain, record_id):
     record = DeleteFormRecord.get(record_id)
@@ -900,7 +901,7 @@ def undo_delete_form(request, domain, record_id):
     messages.success(request, 'Form successfully restored.')
     return back_to_main(request, domain, app_id=record.app_id, module_id=record.module_id, form_id=record.form_id)
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def edit_module_attr(req, domain, app_id, module_id, attr):
     """
@@ -940,7 +941,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
             # todo: something better than nothing when invalid
             module["case_type"] = case_type
         else:
-            resp['update'].update({'#case_type': module['case_type']})
+            return HttpResponseBadRequest("case type is improperly formatted")
     if should_edit("put_in_root"):
         module["put_in_root"] = json.loads(req.POST.get("put_in_root"))
     for attribute in ("name", "case_label", "referral_label"):
@@ -960,33 +961,50 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     resp['case_list-show'] = module.requires_case_details()
     return HttpResponse(json.dumps(resp))
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def edit_module_detail_screens(req, domain, app_id, module_id):
     """
     Called to over write entire detail screens at a time
 
     """
-
     params = json_request(req.POST)
     screens = params.get('screens')
+    parent_select = params.get('parent_select')
 
     if not screens:
         return HttpResponseBadRequest("Requires JSON encoded param 'screens'")
-    for detail_type in screens:
-        if detail_type not in DETAIL_TYPES:
-            return HttpResponseBadRequest("All detail types must be in %r" % DETAIL_TYPES)
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
+    detail = module.get_detail('case_short')
+
+    detail.sort_elements = []
+    if 'sort_elements' in screens:
+        for sort_element in json.load(StringIO(screens['sort_elements'])):
+            item = SortElement()
+            item.field = sort_element['field']
+            item.type = sort_element['type']
+            item.direction = sort_element['direction']
+            detail.sort_elements.append(item)
+
+        del screens['sort_elements']
 
     for detail_type in screens:
-        module.get_detail(detail_type).columns = [DetailColumn.wrap(c) for c in screens[detail_type]]
+        if detail_type not in DETAIL_TYPES:
+            return HttpResponseBadRequest("All detail types must be in %r"
+                                          % DETAIL_TYPES)
+
+    for detail_type in screens:
+        module.get_detail(detail_type).columns = \
+            [DetailColumn.wrap(c) for c in screens[detail_type]]
+
+    module.parent_select = ParentSelect.wrap(parent_select)
     resp = {}
     app.save(resp)
     return json_response(resp)
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def edit_module_detail(req, domain, app_id, module_id):
     """
@@ -1034,7 +1052,7 @@ def edit_module_detail(req, domain, app_id, module_id):
     else:
         return back_to_main(**locals())
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def delete_module_detail(req, domain, app_id, module_id):
     """
@@ -1073,8 +1091,7 @@ def _handle_media_edits(request, item, should_edit, resp):
                 val = None
             setattr(item, attribute, val)
 
-
-@require_POST
+@no_conflict_require_POST
 @login_or_digest
 @require_permission(Permissions.edit_apps, login_decorator=None)
 def patch_xform(request, domain, app_id, unique_form_id):
@@ -1098,7 +1115,7 @@ def patch_xform(request, domain, app_id, unique_form_id):
     app.save(response_json)
     return json_response(response_json)
 
-@require_POST
+@no_conflict_require_POST
 @login_or_digest
 @require_permission(Permissions.edit_apps, login_decorator=None)
 def edit_form_attr(req, domain, app_id, unique_form_id, attr):
@@ -1186,7 +1203,7 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
     else:
         return back_to_main(**locals())
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def rename_language(req, domain, form_unique_id):
     old_code = req.POST.get('oldCode')
@@ -1216,7 +1233,7 @@ def validate_language(request, domain, app_id):
     else:
         return HttpResponseRedirect("%s?%s" % (reverse('langcodes.views.validate', args=[]), django_urlencode({'term': term})))
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def edit_form_actions(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
@@ -1258,7 +1275,7 @@ def commcare_profile(req, domain, app_id):
     return HttpResponse(json.dumps(app.profile))
 
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def edit_commcare_settings(request, domain, app_id):
     sub_responses = (
@@ -1272,7 +1289,7 @@ def edit_commcare_settings(request, domain, app_id):
         )
     return json_response(response)
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def edit_commcare_profile(request, domain, app_id):
     try:
@@ -1295,7 +1312,7 @@ def edit_commcare_profile(request, domain, app_id):
     return json_response(response_json)
 
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def edit_app_lang(req, domain, app_id):
     """
@@ -1330,7 +1347,7 @@ def edit_app_lang(req, domain, app_id):
 
     return back_to_main(**locals())
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def edit_app_langs(request, domain, app_id):
     """
@@ -1351,16 +1368,19 @@ def edit_app_langs(request, domain, app_id):
     rename = o['rename']
     build = o['build']
 
-    assert set(rename.keys()).issubset(app.langs)
-    assert set(rename.values()).issubset(langs)
-    # assert that there are no repeats in the values of rename
-    assert len(set(rename.values())) == len(rename.values())
-    # assert that no lang is renamed to an already existing lang
-    for old, new in rename.items():
-        if old != new:
-            assert(new not in app.langs)
-    # assert that the build langs are in the correct order
-    assert sorted(build, key=lambda lang: langs.index(lang)) == build
+    try:
+        assert set(rename.keys()).issubset(app.langs)
+        assert set(rename.values()).issubset(langs)
+        # assert that there are no repeats in the values of rename
+        assert len(set(rename.values())) == len(rename.values())
+        # assert that no lang is renamed to an already existing lang
+        for old, new in rename.items():
+            if old != new:
+                assert(new not in app.langs)
+        # assert that the build langs are in the correct order
+        assert sorted(build, key=lambda lang: langs.index(lang)) == build
+    except AssertionError:
+        return HttpResponse(status=400)
 
     # now do it
     for old, new in rename.items():
@@ -1379,7 +1399,7 @@ def edit_app_langs(request, domain, app_id):
     return json_response(langs)
 
 @require_can_edit_apps
-@require_POST
+@no_conflict_require_POST
 def edit_app_translations(request, domain, app_id):
     params  = json_request(request.POST)
     lang    = params.get('lang')
@@ -1392,7 +1412,7 @@ def edit_app_translations(request, domain, app_id):
     app.save(response)
     return json_response(response)
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def delete_app_lang(req, domain, app_id):
     """
@@ -1406,7 +1426,7 @@ def delete_app_lang(req, domain, app_id):
     app.save()
     return back_to_main(**locals())
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def edit_app_attr(request, domain, app_id, attr):
     """
@@ -1507,7 +1527,7 @@ def edit_app_attr(request, domain, app_id, attr):
     return HttpResponse(json.dumps(resp))
 
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def rearrange(req, domain, app_id, key):
     """
@@ -1545,7 +1565,7 @@ def rearrange(req, domain, app_id, key):
 # Saving multiple versions of the same app
 # i.e. "making builds"
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def save_copy(req, domain, app_id):
     """
@@ -1607,7 +1627,7 @@ def validate_form_for_build(request, domain, app_id, unique_form_id):
         }),
     })
     
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def revert_to_copy(req, domain, app_id):
     """
@@ -1622,7 +1642,7 @@ def revert_to_copy(req, domain, app_id):
     messages.success(req, "Successfully reverted to version %s, now at version %s" % (copy.version, app.version))
     return back_to_main(**locals())
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 def delete_copy(req, domain, app_id):
     """
@@ -1779,7 +1799,7 @@ def download_xform(req, domain, app_id, module_id, form_id):
         return HttpResponse(
             req.app.fetch_xform(module_id, form_id)
         )
-    except IndexError:
+    except (IndexError, XFormValidationError):
         raise Http404()
 
 @safe_download
@@ -1974,7 +1994,9 @@ def app_summary_from_exchange(request, domain, app_id):
         return HttpResponseForbidden()
 
 def summary(request, domain, app_id, should_edit=True):
-    app = Application.get(app_id)
+    app = get_app(domain, app_id)
+    if app.doc_type == 'RemoteApp':
+        raise Http404()
     context = get_apps_base_context(request, domain, app)
     langs = context['langs']
 
@@ -2036,7 +2058,7 @@ def download_translations(request, domain, app_id):
     export_raw(headers, data, temp)
     return export_response(temp, Format.XLS_2007, "translations")
 
-@require_POST
+@no_conflict_require_POST
 @require_can_edit_apps
 @get_file("file")
 def upload_translations(request, domain, app_id):

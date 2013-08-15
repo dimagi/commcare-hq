@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from couchdbkit.ext.django.schema import (Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
                                           DocumentSchema, SchemaProperty, DictProperty, ListProperty,
-                                          StringListProperty)
+                                          StringListProperty, SchemaListProperty)
 from django.utils.safestring import mark_safe
 from corehq.apps.appstore.models import Review, SnapshotMixin
 from corehq.apps.domain.utils import get_domain_module_map
@@ -17,6 +17,8 @@ from dimagi.utils.couch.database import get_db, get_safe_write_kwargs, apply_upd
 from itertools import chain
 from langcodes import langs as all_langs
 from collections import defaultdict
+from django.utils.importlib import import_module
+
 
 lang_lookup = defaultdict(str)
 
@@ -146,6 +148,7 @@ class LicenseAgreement(DocumentSchema):
     date = DateTimeProperty()
     user_id = StringProperty()
     user_ip = StringProperty()
+    version = StringProperty()
 
 class InternalProperties(DocumentSchema, UpdatableSchema):
     """
@@ -179,6 +182,20 @@ class CaseDisplaySettings(DocumentSchema):
 
     # todo: case list
 
+class DynamicReportConfig(DocumentSchema):
+    """configurations of generic/template reports to be set up for this domain"""
+    report = StringProperty() # fully-qualified path to template report class
+    name = StringProperty() # report display name in sidebar
+    kwargs = DictProperty() # arbitrary settings to configure report
+
+class DynamicReportSet(DocumentSchema):
+    """a set of dynamic reports grouped under a section header in the sidebar"""
+    section_title = StringProperty()
+    reports = SchemaListProperty(DynamicReportConfig)
+
+
+LOGO_ATTACHMENT = 'logo.png'
+
 
 class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     """Domain is the highest level collection of people/stuff
@@ -192,9 +209,9 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     date_created = DateTimeProperty()
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     case_sharing = BooleanProperty(default=False)
+    secure_submissions = BooleanProperty(default=False)
     organization = StringProperty()
     hr_name = StringProperty() # the human-readable name for this project within an organization
-    eula = SchemaProperty(LicenseAgreement)
     creating_user = StringProperty() # username of the user who created this domain
 
     # domain metadata
@@ -211,6 +228,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     case_display = SchemaProperty(CaseDisplaySettings)
 
     # CommConnect settings
+    commconnect_enabled = BooleanProperty(default=False)
     survey_management_enabled = BooleanProperty(default=False)
     sms_case_registration_enabled = BooleanProperty(default=False) # Whether or not a case can register via sms
     sms_case_registration_type = StringProperty() # Case type to apply to cases registered via sms
@@ -247,6 +265,8 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
     internal = SchemaProperty(InternalProperties)
 
+    dynamic_reports = SchemaListProperty(DynamicReportSet)
+
     # extra user specified properties
     tags = StringListProperty()
     area = StringProperty(choices=AREA_CHOICES)
@@ -255,6 +275,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
     # to be eliminated from projects and related documents when they are copied for the exchange
     _dirty_fields = ('admin_password', 'admin_password_charset', 'city', 'country', 'region', 'customer_type')
+
 
     @property
     def domain_type(self):
@@ -284,15 +305,6 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             if data.get("license", None) == "public":
                 data["license"] = "cc"
                 should_save = True
-
-        # if not 'creating_user' in data:
-        #     should_save = True
-        #     from corehq.apps.users.models import CouchUser
-        #     admins = CouchUser.view("users/admins_by_domain", key=data["name"], reduce=False, include_docs=True).all()
-        #     if len(admins) == 1:
-        #         data["creating_user"] = admins[0].username
-        #     else:
-        #         data["creating_user"] = None
 
         if 'slug' in data and data["slug"]:
             data["hr_name"] = data["slug"]
@@ -532,6 +544,21 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
     def case_sharing_included(self):
         return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)
+
+    def save(self, **params):
+        super(Domain, self).save(**params)
+
+        from corehq.apps.domain.signals import commcare_domain_post_save
+        results = commcare_domain_post_save.send_robust(sender='domain',
+                                                     domain=self)
+        for result in results:
+            # Second argument is None if there was no error
+            if result[1]:
+                notify_exception(
+                    None,
+                    message="Error occured during domain post_save %s: %s" %
+                            (self.name, str(result[1]))
+                )
 
     def save_copy(self, new_domain_name=None, user=None):
         from corehq.apps.app_manager.models import get_app
@@ -807,7 +834,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         module_name = get_domain_module_map().get(domain_name, domain_name)
 
         try:
-            return __import__(module_name) if module_name else None
+            return import_module(module_name) if module_name else None
         except ImportError:
             return None
 
@@ -819,6 +846,20 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             return CommtrackConfig.for_domain(self.name)
         else:
             return None
+
+    @property
+    def has_custom_logo(self):
+        return (self['_attachments'] and
+                LOGO_ATTACHMENT in self['_attachments'])
+
+    def get_custom_logo(self):
+        if not self.has_custom_logo:
+            return None
+
+        return (
+            self.fetch_attachment(LOGO_ATTACHMENT),
+            self['_attachments'][LOGO_ATTACHMENT]['content_type']
+        )
 
     def get_case_display(self, case):
         """Get the properties display definition for a given case"""

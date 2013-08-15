@@ -183,6 +183,7 @@ HQ_APPS = (
     'langcodes',
     'corehq.apps.adm',
     'corehq.apps.announcements',
+    'corehq.apps.callcenter',
     'corehq.apps.crud',
     'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
@@ -193,6 +194,7 @@ HQ_APPS = (
     'corehq.apps.importer',
     'corehq.apps.reminders',
     'corehq.apps.prescriptions',
+    'corehq.apps.reportfixtures',
     'corehq.apps.translations',
     'corehq.apps.users',
     'corehq.apps.settings',
@@ -217,6 +219,7 @@ HQ_APPS = (
     'corehq.apps.api',
     'corehq.apps.indicators',
     'corehq.couchapps',
+    'custom.apps.wisepill',
     'fluff',
     'fluff.fluff_filter',
     'sofabed.forms',
@@ -312,7 +315,10 @@ EXCHANGE_NOTIFICATION_RECIPIENTS = []
 SERVER_EMAIL = 'commcarehq-noreply@dimagi.com' #the physical server emailing - differentiate if needed
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
+CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
+
+SERVER_ENVIRONMENT = 'localdev'
 
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
@@ -324,7 +330,7 @@ OPENROSA_VERSION = "1.0"
 FIXTURE_GENERATORS = [
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",
-    "corehq.apps.callcenter.fixturegenerators.indicators",
+    "corehq.apps.reportfixtures.fixturegenerators.indicators",
 ]
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
@@ -334,6 +340,9 @@ SMS_GATEWAY_PARAMS = "user=my_username&password=my_password&id=%(phone_number)s&
 
 # celery
 BROKER_URL = 'django://' #default django db based
+
+#this is the default celery queue - for periodic tasks on a separate queue override this to something else
+CELERY_PERIODIC_QUEUE = 'celery'
 
 SKIP_SOUTH_TESTS = True
 #AUTH_PROFILE_MODULE = 'users.HqUserProfile'
@@ -447,6 +456,10 @@ MESSAGE_LOG_OPTIONS = {
 
 IVR_OUTBOUND_RETRIES = 3
 IVR_OUTBOUND_RETRY_INTERVAL = 10
+
+
+# List of Fluff pillow classes that ctable should process diffs for
+FLUFF_PILLOW_TYPES_TO_SQL = {}
 
 try:
     #try to see if there's an environmental variable set for local_settings
@@ -577,6 +590,7 @@ COUCHDB_APPS = [
     'auditcare',
     'builds',
     'case',
+    'callcenter',
     'cleanup',
     'cloudcare',
     'commtrack',
@@ -603,6 +617,7 @@ COUCHDB_APPS = [
     'phone',
     'receiverwrapper',
     'reminders',
+    'reportfixtures',
     'prescriptions',
     'reports',
     'sms',
@@ -617,6 +632,7 @@ COUCHDB_APPS = [
     'hutch',
     'hqbilling',
     'couchlog',
+    'wisepill',
 
     # custom reports
     'benin',
@@ -649,6 +665,7 @@ EMAIL_PORT = EMAIL_SMTP_PORT
 EMAIL_HOST_USER = EMAIL_LOGIN
 EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
 EMAIL_USE_TLS = True
+SEND_BROKEN_LINK_EMAILS = True
 
 NO_HTML_EMAIL_MESSAGE = """
 This is an email from CommCare HQ. You're seeing this message because your
@@ -718,15 +735,13 @@ PILLOWTOPS = [
                  'corehq.pillows.fullxform.FullXFormPillow',
                  'corehq.pillows.domain.DomainPillow',
                  'corehq.pillows.user.UserPillow',
-                 'corehq.pillows.exchange.ExchangePillow',
+                 'corehq.pillows.application.AppPillow',
                  'corehq.pillows.commtrack.ConsumptionRatePillow',
 
                  # fluff
                  'bihar.models.CareBiharFluffPillow',
              ] + LOCAL_PILLOWTOPS
 
-# List of Fluff pillow classes that ctable should process diffs for
-FLUFF_PILLOW_TYPES_TO_SQL = {}
 
 #Custom workflow for indexing xform data beyond the standard properties
 XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
@@ -739,6 +754,15 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'care-bihar', 
     'hsph-dev', 
     'hsph-betterbirth-pilot-2',
+    'commtrack-public-demo',
+]
+
+#Custom fully indexed domains for FullXForm index/pillowtop --
+# only those domains that don't require custom pre-processing before indexing,
+# otherwise list in XFORM_PILLOW_HANDLERS
+# Adding a domain will not automatically index that domain's existing forms
+ES_XFORM_FULL_INDEX_DOMAINS = [
+    'commtrack-public-demo',
 ]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"

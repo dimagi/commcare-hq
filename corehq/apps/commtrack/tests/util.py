@@ -3,7 +3,7 @@ from corehq.apps.commtrack import const
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import Location
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.commtrack.util import bootstrap_default
+from corehq.apps.commtrack.util import bootstrap_commtrack_settings_if_necessary
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms.backend import test
 from django.utils.unittest.case import TestCase
@@ -70,7 +70,7 @@ def bootstrap_domain(domain_name=TEST_DOMAIN, requisitions_enabled=False):
     domain_obj = create_domain(domain_name)
     domain_obj.commtrack_enabled = True
     domain_obj.save(**get_safe_write_kwargs())
-    bootstrap_default(domain_obj, requisitions_enabled)
+    bootstrap_commtrack_settings_if_necessary(domain_obj, requisitions_enabled)
 
     return domain_obj
 

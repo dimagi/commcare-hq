@@ -23,6 +23,7 @@ from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthent
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from dimagi.utils.logging import notify_exception
+from django.utils.translation import ugettext as _
 
 from dimagi.utils.web import get_url_base, json_response
 from django.core.urlresolvers import reverse
@@ -210,7 +211,7 @@ def no_permissions(request, redirect_to=None, template_name="no_permission.html"
 
     return render(request, template_name, {'next': next})
 
-def _login(req, domain, domain_type, template_name):
+def _login(req, domain, domain_type, template_name, domain_context=None):
     from corehq.apps.registration.views import get_domain_context
 
     if req.user.is_authenticated() and req.method != "POST":
@@ -228,7 +229,7 @@ def _login(req, domain, domain_type, template_name):
         req.POST._mutable = False
     
     req.base_template = settings.BASE_TEMPLATE
-    context = get_domain_context(domain_type)
+    context = domain_context or get_domain_context(domain_type)
     context['domain'] = domain
 
     return django_login(req, template_name=template_name,
@@ -243,8 +244,12 @@ def login(req, domain_type='commcare'):
     return _login(req, domain, domain_type, "login_and_password/login.html")
     
 def domain_login(req, domain, template_name="login_and_password/login.html"):
+    from corehq.util.context_processors import get_per_domain_context
     project = Domain.get_by_name(domain)
-    return _login(req, domain, project.domain_type, template_name)
+    if not project:
+        raise Http404
+    return _login(req, domain, project.domain_type, template_name,
+            domain_context=get_per_domain_context(project))
 
 def is_mobile_url(url):
     # Minor hack
@@ -343,6 +348,8 @@ def bug_report(req):
     # only fake the from email if it's an @dimagi.com account
     if re.search('@dimagi\.com$', report['username']):
         email.from_email = report['username']
+    else:
+        email.from_email = settings.CCHQ_BUG_REPORT_EMAIL
 
     email.send(fail_silently=False)
 
@@ -388,3 +395,13 @@ def apache_license(request):
 def bsd_license(request):
     return render_static(request, "bsd_license.html")
 
+def unsubscribe(request, user_id):
+    user = CouchUser.get_by_user_id(user_id)
+    domain = user.get_domains()[0]
+    from django.contrib import messages
+    messages.info(request,
+                  _('Check "Opt out of emails about new features '
+                    'and other CommCare updates." below and then '
+                    'click "Update Information" if you do '
+                    'not want to receive future emails from us.'))
+    return HttpResponseRedirect(reverse('commcare_user_account', args=[domain, user_id]))

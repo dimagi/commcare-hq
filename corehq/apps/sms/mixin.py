@@ -1,5 +1,7 @@
 import re
 from couchdbkit.ext.django.schema import *
+from dimagi.utils.couch.undo import DELETED_SUFFIX
+from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from dimagi.utils.modules import try_import
@@ -61,6 +63,13 @@ class VerifiedNumber(Document):
             return CommCareUser.get(self.owner_id)
         else:
             return None
+
+    def retire(self, deletion_id=None):
+        self.doc_type += DELETED_SUFFIX
+        if deletion_id:
+            self['-deletion_id'] = deletion_id
+
+        self.save()
     
     @classmethod
     def by_phone(cls, phone_number, include_pending=False):
@@ -327,6 +336,4 @@ class CommCareMobileContactMixin(object):
         """
         v = self.get_verified_number(phone_number)
         if v is not None:
-            v.doc_type += "-Deleted"
-            v.save()
-
+            v.retire()

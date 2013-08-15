@@ -1,4 +1,6 @@
 from corehq.apps.app_manager.models import get_app, ApplicationBase, Form
+from couchdbkit.resource import ResourceNotFound
+from django.utils.translation import ugettext as _
 
 def get_form_list(domain):
     form_list = []
@@ -29,7 +31,10 @@ def get_sample_list(domain):
     return sample_list
 
 def get_form_name(form_unique_id):
-    form = Form.get_form(form_unique_id)
+    try:
+        form = Form.get_form(form_unique_id)
+    except ResourceNotFound:
+        return _("[unknown]")
     app = form.get_app()
     module = form.get_module()
     lang = app.langs[0]

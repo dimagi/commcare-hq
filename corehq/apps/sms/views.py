@@ -26,7 +26,7 @@ from django.utils.translation import ugettext as _, ugettext_noop
 
 @login_and_domain_required
 def default(request, domain):
-    return HttpResponseRedirect(reverse(messaging, args=[domain]))
+    return HttpResponseRedirect(reverse(compose_message, args=[domain]))
 
 @login_and_domain_required
 def messaging(request, domain, template="sms/default.html"):

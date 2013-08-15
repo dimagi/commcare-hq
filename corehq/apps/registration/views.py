@@ -7,8 +7,9 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
+import sys
 
-from corehq.apps.domain.decorators import login_required_late_eval_of_LOGIN_URL
+from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.orgs.views import orgs_landing
 from corehq.apps.registration.models import RegistrationRequest
@@ -29,9 +30,8 @@ def get_domain_context(domain_type='commcare'):
     Set context variables that are normally set based on the domain type
     according to what user/domain type is being registered.
     """
-    class Dummy(object): pass
 
-    dummy_domain = Dummy()
+    dummy_domain = Domain()
     dummy_domain.commtrack_enabled = (domain_type == 'commtrack')
     return get_per_domain_context(dummy_domain)
 
@@ -74,7 +74,7 @@ def register_user(request, domain_type=None):
 
 
 @transaction.commit_on_success
-@login_required_late_eval_of_LOGIN_URL
+@login_required
 def register_org(request, template="registration/org_request.html"):
     referer_url = request.GET.get('referer', '')
     if request.method == "POST":
@@ -108,7 +108,7 @@ def register_org(request, template="registration/org_request.html"):
 
 
 @transaction.commit_on_success
-@login_required_late_eval_of_LOGIN_URL
+@login_required
 def register_domain(request, domain_type=None):
     domain_type = domain_type or 'commcare'
     assert domain_type in DOMAIN_TYPES
@@ -155,9 +155,9 @@ def register_domain(request, domain_type=None):
                         context)
             else:
                 messages.success(request, _(
-                    '<strong>The project %s was successfully created!</strong> '
-                    'An email has been sent to %s for your records.') % (
-                        requested_domain, request.user.username),
+                    '<strong>The project {project} was successfully created!</strong> '
+                    'An email has been sent to {user} for your records.').format(
+                    project=requested_domain, user=request.user.username),
                     extra_tags="html")
 
                 if nextpage:
@@ -178,7 +178,7 @@ def register_domain(request, domain_type=None):
     return render(request, 'registration/domain_request.html', context)
 
 @transaction.commit_on_success
-@login_required_late_eval_of_LOGIN_URL
+@login_required
 def resend_confirmation(request):
     try:
         dom_req = RegistrationRequest.get_request_for_username(request.user.username)
@@ -289,7 +289,6 @@ def eula_agreement(request):
         current_user = CouchUser.from_django_user(request.user)
         current_user.eula.signed = True
         current_user.eula.date = datetime.utcnow()
-        current_user.eula.type = 'End User License Agreement'
         current_user.eula.user_ip = get_ip(request)
         current_user.save()
 

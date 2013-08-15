@@ -11,6 +11,7 @@ function ReleasesMain(o) {
     var self = this;
     self.options = o;
     self.users_cannot_share = self.options.users_cannot_share;
+    self.recipients = self.options.recipient_contacts;
     self.savedApps = ko.observableArray();
     self.doneFetching = ko.observable(false);
     self.buildState = ko.observable('');
@@ -20,6 +21,12 @@ function ReleasesMain(o) {
     self.deployAnyway = {};
     self.appVersion = ko.observable(self.options.appVersion);
     self.lastAppVersion = ko.observable();
+    self.brokenBuilds = ko.computed(function () {
+        var apps = self.savedApps();
+        return _.some(apps, function (app) {
+            return app.build_broken();
+        });
+    });
     self.savedApps.subscribe(function () {
         var lastApp = self.savedApps()[0];
         self.lastAppVersion(lastApp ? lastApp.version() : -1);

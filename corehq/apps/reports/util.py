@@ -99,12 +99,13 @@ def get_group_params(domain, group='', users=None, user_id_only=False, **kwargs)
 
 
 def get_all_users_by_domain(domain=None, group=None, user_ids=None,
-                            user_filter=None, simplified=False, CommCareUser=None):
+                            user_filter=None, simplified=False, CommCareUser=None, include_inactive=False):
     """
         WHEN THERE ARE A LOT OF USERS, THIS IS AN EXPENSIVE OPERATION.
         Returns a list of CommCare Users based on domain, group, and user 
         filter (demo_user, admin, registered, unknown)
     """
+    user_ids = user_ids if user_ids and user_ids[0] else None
     if not CommCareUser:
         from corehq.apps.users.models import CommCareUser
 
@@ -126,6 +127,8 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         users = []
         submitted_user_ids = get_all_userids_submitted(domain)
         registered_user_ids = dict([(user.user_id, user) for user in CommCareUser.by_domain(domain)])
+        if include_inactive:
+            registered_user_ids.update(dict([(u.user_id, u) for u in CommCareUser.by_domain(domain, is_active=False)]))
         for user_id in submitted_user_ids:
             if user_id in registered_user_ids and user_filter[HQUserType.REGISTERED].show:
                 user = registered_user_ids[user_id]
@@ -244,35 +247,29 @@ def datespan_export_filter(doc, datespan):
     return False
 
 def case_users_filter(doc, users):
-    try:
-        return doc['user_id'] in users
-    except KeyError:
+    for id in (doc.get('owner_id'), doc.get('user_id')):
+        if id and id in users:
+            return True
+    else:
         return False
 
 def case_group_filter(doc, group):
     if group:
         user_ids = set(group.get_static_user_ids())
-        try:
-            return doc['user_id'] in user_ids
-        except KeyError:
-            return False
+        return doc.get('owner_id') == group._id or case_users_filter(doc, user_ids)
     else:
-        return True
+        return False
 
 def users_filter(doc, users):
     try:
-        user_id = doc['form']['meta']['userID']
+        return doc['form']['meta']['userID'] in users
     except KeyError:
-        user_id = None
-    return user_id in users
+        return False
 
 def group_filter(doc, group):
     if group:
         user_ids = set(group.get_static_user_ids())
-        try:
-            return doc['form']['meta']['userID'] in user_ids
-        except KeyError:
-            return False
+        return users_filter(doc, user_ids)
     else:
         return True
 
@@ -292,7 +289,7 @@ def create_export_filter(request, domain, export_type='form'):
         else:
             filter = SerializableFunction(case_group_filter, group=group)
     else:
-        filter = SerializableFunction(instances) & SerializableFunction(app_export_filter, app_id=app_id)
+        filter = SerializableFunction(app_export_filter, app_id=app_id)
         filter &= SerializableFunction(datespan_export_filter, datespan=request.datespan)
         if user_filters and use_user_filters:
             users_matching_filter = map(lambda x: x.get('user_id'), get_all_users_by_domain(domain,

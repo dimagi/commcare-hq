@@ -1,7 +1,7 @@
 import copy
 from datetime import datetime
 import json
-from urllib import urlencode
+from urllib import urlencode, unquote
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponse
@@ -16,12 +16,37 @@ from corehq.elastic import get_es
 from corehq.apps.domain.models import Domain
 from django.contrib import messages
 from django.utils.translation import ugettext as _
+from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 from dimagi.utils.couch.database import apply_update
 
-SNAPSHOT_FACETS = ['project_type', 'license', 'author']
+SNAPSHOT_FACETS = ['project_type', 'license', 'author.exact']
 DEPLOYMENT_FACETS = ['deployment.region']
-SNAPSHOT_MAPPING = {'category':'project_type', 'license': 'license', 'author': 'author'}
-DEPLOYMENT_MAPPING = {'region': 'deployment.region'}
+SNAPSHOT_MAPPING = [
+    ("", True, [
+        {"facet": "project_type", "name": "Category", "expanded": True },
+        {
+            "facet": "license",
+            "name": "License",
+            "expanded": True,
+            "mapping": {
+                'cc': 'CC BY',
+                'cc-sa': 'CC BY-SA',
+                'cc-nd': 'CC BY-ND',
+                'cc-nc': 'CC BY-NC',
+                'cc-nc-sa': 'CC BY-NC-SA',
+                'cc-nc-nd': 'CC BY-NC-ND',
+            }
+        },
+        {"facet": "author.exact", "name": "Author", "expanded": True },
+    ]),
+]
+DEPLOYMENT_MAPPING = [
+    ("", True, [
+        {"facet": "deployment.region", "name": "Region", "expanded": True },
+    ]),
+]
+
+
 
 
 def rewrite_url(request, path):
@@ -83,10 +108,6 @@ def project_info(request, domain, template="appstore/project_info.html"):
     images = set()
     audio = set()
 
-    # get facets
-    results = es_snapshot_query({}, SNAPSHOT_FACETS)
-    facets_sortables = generate_sortables_from_facets(results, {}, inverse_dict(SNAPSHOT_MAPPING))
-
     pb_id = dom.cda.user_id
     published_by = CouchUser.get_by_user_id(pb_id) if pb_id else {"full_name": "*Publisher's name*"}
 
@@ -101,7 +122,6 @@ def project_info(request, domain, template="appstore/project_info.html"):
         "num_ratings": num_ratings,
         "images": images,
         "audio": audio,
-        "sortables": facets_sortables,
         "url_base": reverse('appstore'),
         'display_import': True if getattr(request, "couch_user", "") and request.couch_user.get_domains() else False
     })
@@ -111,61 +131,32 @@ def parse_args_for_es(request, prefix=None):
     Parses a request's query string for url parameters. It specifically parses the facet url parameter so that each term
     is counted as a separate facet. e.g. 'facets=region author category' -> facets = ['region', 'author', 'category']
     """
-    params = {}
-    facets = []
+    params, facets = {}, []
     for attr in request.GET.iterlists():
-        if attr[0] == 'facets':
-            facets = attr[1][0].split()
+        param, vals = attr[0], attr[1]
+        if param == 'facets':
+            facets = vals[0].split()
             continue
-
         if prefix:
-            if attr[0].startswith(prefix):
-                params[attr[0][len(prefix):]] = attr[1]
+            if param.startswith(prefix):
+                params[param[len(prefix):]] = [unquote(a) for a in vals]
         else:
-            params[attr[0]] = attr[1]
+            params[param] = [unquote(a) for a in vals]
 
     return params, facets
 
-def generate_sortables_from_facets(results, params=None, mapping=None, prefix=''):
+def generate_sortables_from_facets(results, params=None):
     """
     Sortable is a list of tuples containing the field name (e.g. Category) and a list of dictionaries for each facet
     under that field (e.g. HIV and MCH are under Category). Each facet's dict contains the query string, display name,
     count and active-status for each facet.
     """
-    mapping = mapping or {}
-    params = dict([(mapping.get(p, p), params[p]) for p in params])
-    def generate_query_string(attr, val):
-        if prefix:
-            attr = prefix + attr
-            updated_params = {}
-            for k, v in params.iteritems():
-                updated_params[prefix + k] = v[:] if isinstance(v, list) else v
-        else:
-            updated_params = copy.deepcopy(params)
-
-        updated_params[attr] = updated_params.get(attr, [])
-        if val in updated_params.get(attr, []):
-            updated_params[attr].remove(val)
-        else:
-            updated_params[attr].append(val)
-
-        return "?%s" % urlencode(updated_params, True)
 
     def generate_facet_dict(f_name, ft):
         if isinstance(ft['term'], unicode): #hack to get around unicode encoding issues. However it breaks this specific facet
             ft['term'] = ft['term'].encode('ascii','replace')
 
-        ccs = {
-            'cc': 'CC BY',
-            'cc-sa': 'CC BY-SA',
-            'cc-nd': 'CC BY-ND',
-            'cc-nc': 'CC BY-NC',
-            'cc-nc-sa': 'CC BY-NC-SA',
-            'cc-nc-nd': 'CC BY-NC-ND',
-            }
-        license = (f_name == 'license')
-        return {'url': generate_query_string(f_name, ft["term"]),
-                'name': ft["term"] if not license else ccs.get(ft["term"]),
+        return {'name': ft["term"],
                 'count': ft["count"],
                 'active': str(ft["term"]) in params.get(f_name, "")}
 
@@ -173,10 +164,19 @@ def generate_sortables_from_facets(results, params=None, mapping=None, prefix=''
     res_facets = results.get("facets", [])
     for facet in res_facets:
         if res_facets[facet].has_key("terms"):
-            disp_facet = mapping.get(facet, facet) # the user-facing name for this facet
-            sortable.append((disp_facet, [generate_facet_dict(disp_facet, ft) for ft in res_facets[facet]["terms"]]))
+            sortable.append((facet, [generate_facet_dict(facet, ft) for ft in res_facets[facet]["terms"] if ft["term"]]))
 
     return sortable
+
+def fill_mapping_with_facets(facet_mapping, results, params=None):
+    sortables = dict(generate_sortables_from_facets(results, params))
+    for _, _, facets in facet_mapping:
+        for facet_dict in facets:
+            facet_dict["choices"] = sortables.get(facet_dict["facet"], [])
+            if facet_dict.get('mapping'):
+                for choice in facet_dict["choices"]:
+                    choice["display"] = facet_dict.get('mapping').get(choice["name"], choice["name"])
+    return facet_mapping
 
 def appstore(request, template="appstore/appstore_base.html"):
     page_length = 10
@@ -184,7 +184,6 @@ def appstore(request, template="appstore/appstore_base.html"):
     if include_unapproved and not request.user.is_superuser:
         raise Http404()
     params, _ = parse_args_for_es(request)
-    params = dict([(SNAPSHOT_MAPPING.get(p, p), params[p]) for p in params])
     page = params.pop('page', 1)
     page = int(page[0] if isinstance(page, list) else page)
     results = es_snapshot_query(params, SNAPSHOT_FACETS)
@@ -198,14 +197,22 @@ def appstore(request, template="appstore/appstore_base.html"):
     else:
         d_results = Domain.hit_sort(d_results)
 
+    persistent_params = {}
+    if sort_by:
+        persistent_params["sort_by"] = sort_by
+    if include_unapproved:
+        persistent_params["is_approved"] = "false"
+    persistent_params = urlencode(persistent_params) # json.dumps(persistent_params)
+
     average_ratings = list()
     for result in d_results:
         average_ratings.append([result.name, Review.get_average_rating_by_app(result.copied_from._id)])
 
     more_pages = False if len(d_results) <= page*page_length else True
 
-    facets_sortables = generate_sortables_from_facets(results, params, inverse_dict(SNAPSHOT_MAPPING))
-    vals = dict(apps=d_results[(page-1)*page_length:page*page_length],
+    facet_map = fill_mapping_with_facets(SNAPSHOT_MAPPING, results, params)
+    vals = dict(
+        apps=d_results[(page-1)*page_length:page*page_length],
         page=page,
         prev_page=(page-1),
         next_page=(page+1),
@@ -213,18 +220,24 @@ def appstore(request, template="appstore/appstore_base.html"):
         sort_by=sort_by,
         average_ratings=average_ratings,
         include_unapproved=include_unapproved,
-        sortables=facets_sortables,
+        facet_map=facet_map,
+        facets=results.get("facets", []),
         query_str=request.META['QUERY_STRING'],
-        search_query = params.get('search', [""])[0])
+        search_query=params.get('search', [""])[0],
+        persistent_params=persistent_params,
+    )
     return render(request, template, vals)
 
 def appstore_api(request):
     params, facets = parse_args_for_es(request)
-    params = dict([(SNAPSHOT_MAPPING.get(p, p), params[p]) for p in params])
     results = es_snapshot_query(params, facets)
     return HttpResponse(json.dumps(results), mimetype="application/json")
 
 def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at=None, size=None, dict_only=False):
+    """
+        Any filters you include in your query should an and filter
+        todo: intelligently deal with preexisting filters
+    """
     if terms is None:
         terms = []
     if q is None:
@@ -243,7 +256,7 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
             return 1
         elif param == 'F' or param is False:
             return 0
-        return param.lower()
+        return param
 
     for attr in params:
         if attr not in terms:
@@ -270,7 +283,7 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
     if dict_only:
         return q
 
-    es_url = es_url or "cc_exchange/domain/_search"
+    es_url = es_url or DOMAIN_INDEX + '/hqdomain/_search'
 
     es = get_es()
     ret_data = es.get(es_url, data=q)
@@ -403,12 +416,14 @@ def deployment_info(request, domain, template="appstore/deployment_info.html"):
 
     # get facets
     results = es_deployments_query({}, DEPLOYMENT_FACETS)
-    facets_sortables = generate_sortables_from_facets(results, {}, inverse_dict(DEPLOYMENT_MAPPING))
+    facet_map = fill_mapping_with_facets(DEPLOYMENT_MAPPING, results, {})
 
-    return render(request, template, {'domain': dom,
-                                                  'search_url': reverse('deployments'),
-                                                  'url_base': reverse('deployments'),
-                                                  'sortables': facets_sortables})
+    return render(request, template, {
+        'domain': dom,
+        'search_url': reverse('deployments'),
+        'url_base': reverse('deployments'),
+        'facet_map': facet_map,
+    })
 
 @login_required
 def deployments(request, template="appstore/deployments.html"):

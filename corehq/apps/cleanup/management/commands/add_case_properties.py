@@ -1,15 +1,19 @@
-from dimagi.utils.couch.database import get_db
+from optparse import make_option
+from couchdbkit import ResourceNotFound
+from dimagi.utils.couch.database import get_db, iter_docs
 from django.core.management import BaseCommand
 from corehq.apps.domain.models import Domain
-from dimagi.utils.chunked import chunked
-
 
 def add_to_case(case):
     forms = {}
     def get_xform(xid):
         xform = forms.get(xid)
         if not xform:
-            xform = get_db().get(xid)
+            try:
+                xform = get_db().get(xid)
+            except ResourceNotFound:
+                print "Resource not found for xform: %s" % xid
+                return None
             forms[xid] = xform
         return xform
 
@@ -17,8 +21,11 @@ def add_to_case(case):
 
     def get_user_id(form_id):
         if form_id:
-            user_id = get_xform(form_id).get('form', {}).get("meta", {}).get("userID") or \
-                get_xform(form_id).get('form', {}).get("case", {}).get("@user_id")
+            form = get_xform(form_id)
+            if not form:
+                return None
+            user_id = form.get('form', {}).get("meta", {}).get("userID") or \
+                form.get('form', {}).get("case", {}).get("@user_id")
             if not user_id:
                 print "Could not find a user_id for form %s" % form_id
             return user_id
@@ -53,8 +60,18 @@ class Command(BaseCommand):
         It also adds user_id to each case action in order to fix a bug.
     """
 
+    option_list = BaseCommand.option_list + (
+        make_option('-s', '--startat',
+            help="Begin migration at this domain. (Will ignore if domain isn't found)"),
+        )
+
     def handle(self, *args, **options):
         domain_names = args or [d["key"] for d in Domain.get_all(include_docs=False)]
+
+        start_at = options.get("startat")
+        if start_at and start_at in domain_names:
+            domain_names = domain_names[domain_names.index(start_at):]
+
         for d in domain_names:
             print "Migrating cases in project space: %s" % d
             key = ["all", d]
@@ -62,11 +79,15 @@ class Command(BaseCommand):
                 startkey=key,
                 endkey=key + [{}],
                 reduce=False,
-                include_docs=True,
-            )
-            for cases in chunked([r['doc'] for r in results], 100):
-                cases_to_save = []
-                for case in cases:
-                    if add_to_case(case):
-                        cases_to_save.append(case)
-                get_db().bulk_save(cases_to_save)
+                include_docs=False,
+            ).all()
+
+            cases_to_save = []
+            for raw_case in iter_docs(get_db(), [r['id'] for r in results]):
+                if add_to_case(raw_case):
+                    cases_to_save.append(raw_case)
+
+                if len(cases_to_save) > 100:
+                    get_db().bulk_save(cases_to_save)
+                    cases_to_save = []
+            get_db().bulk_save(cases_to_save)

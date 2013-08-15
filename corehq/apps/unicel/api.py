@@ -21,8 +21,8 @@ class InboundParams(object):
     TIMESTAMP = "stime"
     UDHI = "udhi"
     DCS = "dcs"
-    
-class OutboundParams(object):    
+
+class OutboundParams(object):
     """
     A constant-defining class for outbound sms params
     """
@@ -35,8 +35,6 @@ class OutboundParams(object):
 # constant additional parameters when sending a unicode message
 UNICODE_PARAMS = [("udhi", 0),
                   ("dcs", 8)]
-
-DATE_FORMAT = "%m/%d/%y %I:%M:%S %p"
 
 class UnicelBackend(SMSBackend):
     username = StringProperty()
@@ -87,9 +85,23 @@ class UnicelBackend(SMSBackend):
 
         return data
 
+DATE_FORMAT = "%m/%d/%y %I:%M:%S %p"
+DATE_FORMAT2 = "%Y-%m-%d %H:%M:%S"
+DATE_FORMAT3 = "%Y-%m-%d%%20%H:%M:%S"
+
+def convert_timestamp(timestamp):
+    for format in [DATE_FORMAT, DATE_FORMAT2, DATE_FORMAT3]:
+        try:
+            actual_timestamp = datetime.strptime(timestamp, format)
+        except ValueError:
+            pass
+        else:
+            return pytz.timezone('Asia/Kolkata').localize(actual_timestamp).astimezone(pytz.utc)
+    raise ValueError('could not parse unicel inbound timestamp [%s]' % timestamp)
+
 def create_from_request(request, delay=True):
     """
-    From an inbound request (representing an incoming message), 
+    From an inbound request (representing an incoming message),
     create a message (log) object with the right fields populated.
     """
     sender = request.REQUEST[InboundParams.SENDER]
@@ -101,14 +113,13 @@ def create_from_request(request, delay=True):
         sender = '91' + sender
 
     # parse date or default to current utc time
-    actual_timestamp = None
     if timestamp:
         try:
-            actual_timestamp = datetime.strptime(timestamp, DATE_FORMAT)
-            actual_timestamp = pytz.timezone('Asia/Kolkata').localize(actual_timestamp).astimezone(pytz.utc)
-        except Exception, e:
+            actual_timestamp = convert_timestamp(timestamp)
+        except ValueError:
             logging.warning('could not parse unicel inbound timestamp [%s]' % timestamp)
-    
+            actual_timestamp = None
+
     # not sure yet if this check is valid
     is_unicode = request.REQUEST.get(InboundParams.UDHI, "") == "1"
     if is_unicode:
