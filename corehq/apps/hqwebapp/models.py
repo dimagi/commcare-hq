@@ -409,7 +409,7 @@ class MessagingTab(UITab):
                  'url': MessageLogReport.get_url(domain=self.domain)},
                 {'title': _('SMS Connectivity'),
                  'url': reverse('list_domain_backends', args=[self.domain]),
-                 'children': [
+                 'subpages': [
                      {'title': _('Add Connection'),
                       'urlname': 'add_domain_backend'},
                      {'title': _('Edit Connection'),
@@ -708,7 +708,7 @@ class SMSAdminTab(UITab):
             (_('SMS Connectivity'), [
                 {'title': _('SMS Connections'),
                  'url': reverse('list_backends'),
-                 'children': [
+                 'subpages': [
                      {'title': _('Add Connection'),
                       'urlname': 'add_backend'},
                      {'title': _('Edit Connection'),
