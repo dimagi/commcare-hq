@@ -5,6 +5,10 @@ from pillowtop.listener import BasicPillow
 
 
 class CacheInvalidatePillow(BasicPillow):
+    """
+    Pillow that listens to non xform/case _changes and invalidates the cache whether it's a
+    a single doc being cached, to a view.
+    """
     couch_filter = "hqadmin/not_case_form"  # string for filter if needed
 
     def __init__(self, *args, **kwargs):
@@ -17,14 +21,7 @@ class CacheInvalidatePillow(BasicPillow):
 
     def change_trigger(self, changes_dict):
         """
-        Step one of pillowtop process
-        For a given _changes indicator, the changes dict (the id, _rev) is sent here.
-
-        Note, a couch _changes line is: {'changes': [], 'id': 'guid',  'seq': <int>}
-        a 'deleted': True might be there too
-
-        whereas a doc_dict is _id
-        Should return a doc_dict
+        Where all the magic happens.
         """
 
         doc_id = changes_dict['id']
@@ -46,7 +43,6 @@ class CacheInvalidatePillow(BasicPillow):
         elif doc_type in ['CommCareUser', 'WebUser', 'CouchUser']:
             self.invalidate_users()
         elif doc_type in ['Group', 'UserRole']:
-            #here is where the hacky magic happens
             self.invalidate_groups()
         else:
             print "not relevant!"
@@ -54,6 +50,15 @@ class CacheInvalidatePillow(BasicPillow):
 
 
     def invalidate_views(self, views):
+        """
+        Nuclear option for cache invalidation
+        Given a certain document class of highly interdependent views, just invalidate ALL views when
+        that a doc_type is dependent on. This is because we cannot effectively handle the case where
+        a NEW doc is added that would change a view.
+
+        To update this list of views to update based upon doc_type, examine all view map functions
+        that have a doc.doc_type to verify which doc_type it is beholden to.
+        """
         rcache = cache_core.rcache()
         for view in views:
             print "invalidating view: %s" % view
@@ -93,12 +98,12 @@ class CacheInvalidatePillow(BasicPillow):
 
     def invalidate_groups(self):
         group_views = [
-            "groups/_design/views/by_user",
-            "groups/_design/views/by_hierarchy_type",
-            "groups/_design/views/by_user_type",
-            "groups/_design/views/by_name",
-            "groups/_design/views/all_groups",
-            "groups/_design/views/by_domain",
+            "groups/by_user",
+            "groups/by_hierarchy_type",
+            "groups/by_user_type",
+            "groups/by_name",
+            "groups/all_groups",
+            "groups/by_domain",
             "users/by_group",
         ]
 
