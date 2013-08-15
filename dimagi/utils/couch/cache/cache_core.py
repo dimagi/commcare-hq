@@ -10,11 +10,6 @@ COUCH_CACHE_TIMEOUT = 1800
 def rcache():
     return MOCK_REDIS_CACHE or cache.get_cache('redis')
 
-#cached_view which has a list of doc_ids
-#any time any of these doc_ids are altered, it'll invalidate the entire view for that index.
-#however note, this does not account for the case where new docs meet the view criteria, so be careful with this usage
-#alternatively, do a limit=0 and see if total_rows AND offset change to invalidate, but that incurs a cost that might be as bad as the original request
-
 CACHED_VIEW_PREFIX = '#cached_view_'
 
 #the actual payload of the cached_doc
@@ -62,7 +57,7 @@ def purge_by_doc_id(doc_id):
 
 def purge_view(view_key):
     """
-    view_name you want to put in your key, does not necessarily have to be the right one...wildcard it yo
+    View_name you want to put in your key, does not necessarily have to be the right one...wildcard it yo
     """
     print "purging view: %s" % view_key
     cached_view = rcache().get(view_key, None)
@@ -117,7 +112,7 @@ def do_cache_doc(doc):
 
 def cache_view_doc(doc_or_docid, view_key):
     """
-    cache by doc_id a reverse lookup of views that it is mutually dependent on
+    Cache by doc_id a reverse lookup of views that it is mutually dependent on
     """
     id = doc_or_docid['_id'] if isinstance(doc_or_docid, dict) else doc_or_docid
     key = key_reverse_doc(id, view_key)
@@ -128,13 +123,20 @@ def cache_view_doc(doc_or_docid, view_key):
 
 def cached_view(db, view_name, **params):
     """
-    cannot be wrapped, you must wrap it on your own
+    Call a view and cache the results, return cached if it's a cache hit.
+
+    db: couch database to do query on
+    view_name, params: couch view call parameters
+
+    Note, a view call with include_docs=True will not be wrapped, you must wrap it on your own.
     """
     cache_docs = params.get('include_docs', False)
 
     cache_view_key = key_view_full(view_name, params)
     print "VIEW KEY: %s" % cache_view_key
     if cache_docs:
+        #cache hit, return the cached results
+
         #include_docs=true results look like:
         #{"total_rows": <int>, "offset": <int>, "rows": [...]}
         #test to see if view already cached
@@ -159,6 +161,7 @@ def cached_view(db, view_name, **params):
             final_results['rows'] = rows
             return final_results
         else:
+            #cache miss, get view, cache it and all docs
             view_obj = db.view(view_name, **params)
             view_obj._fetch_if_needed()
             view_results = view_obj._result_cache
@@ -180,7 +183,6 @@ def cached_view(db, view_name, **params):
             rcache().set(cache_view_key, simplejson.dumps(cached_results), timeout=COUCH_CACHE_TIMEOUT)
             return view_results
 
-
     else:
         cached_view = rcache().get(cache_view_key, None)
         if cached_view:
@@ -192,5 +194,7 @@ def cached_view(db, view_name, **params):
             for row in view_results:
                 doc_id = row.get('id', None)
                 if doc_id:
+                    #a non reduce view will have doc_ids on each row, we want to reverse index these
+                    #to know when to invalidate
                     cache_view_doc(doc_id, cache_view_key)
             return view_results
