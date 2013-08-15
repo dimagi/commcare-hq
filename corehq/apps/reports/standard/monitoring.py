@@ -982,7 +982,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 "enddate": end_date,
             }
 
-            return numcell('<a href="%s?%s" target="_blank">%s</a>' % (fs_url, urlencode(url_args, True), val), val)
+            return util.numcell('<a href="%s?%s" target="_blank">%s</a>' % (fs_url, urlencode(url_args, True), val), val)
 
         def add_case_list_links(owner_id, row):
             """
@@ -1009,7 +1009,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 url_params = {"individual": owner_id} if index not in (4, 5) else {}
                 url_params.update(url_args)
                 url_params.update({"search_query": search_strings[index]})
-                return numcell('<a href="%s?%s" target="_blank">%s</a>' % (cl_url, urlencode(url_params, True), row[index]), row[index])
+                return util.numcell('<a href="%s?%s" target="_blank">%s</a>' % (cl_url, urlencode(url_params, True), row[index]), row[index])
 
             for i in search_strings:
                 row[i] = create_case_url(i)
@@ -1049,15 +1049,15 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                     group_cell(group_id, group_name),
                     submit_history_link(group_id,
                             sum([int(submissions_by_user.get(user["user_id"], 0)) for user in users]), param="group"),
-                    numcell(sum([int(avg_submissions_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
+                    util.numcell(sum([int(avg_submissions_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
                     "%s / %s" % (int(active_users_by_group.get(group, 0)), len(self.users_by_group.get(group, []))),
-                    numcell(sum([int(creations_by_user.get(user["user_id"], 0)) for user in users])),
-                    numcell(sum([int(closures_by_user.get(user["user_id"], 0)) for user in users])),
-                    numcell(sum([int(modifications_by_user.get(user["user_id"], 0)) for user in users])),
-                    numcell(sum([int(avg_modifications_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
-                    numcell(inactive_cases),
-                    numcell(total_cases),
-                    numcell((float(inactive_cases)/total_cases) * 100 if inactive_cases else 'nan', convert='float'),
+                    util.numcell(sum([int(creations_by_user.get(user["user_id"], 0)) for user in users])),
+                    util.numcell(sum([int(closures_by_user.get(user["user_id"], 0)) for user in users])),
+                    util.numcell(sum([int(modifications_by_user.get(user["user_id"], 0)) for user in users])),
+                    util.numcell(sum([int(avg_modifications_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
+                    util.numcell(inactive_cases),
+                    util.numcell(total_cases),
+                    util.numcell((float(inactive_cases)/total_cases) * 100 if inactive_cases else 'nan', convert='float'),
                 ])
 
         else:
@@ -1070,15 +1070,15 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 rows.append(add_case_list_links(user['user_id'], [
                     user["username_in_report"],
                     submit_history_link(user['user_id'], submissions_by_user.get(user["user_id"], 0)),
-                    numcell(int(avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
+                    util.numcell(int(avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
                     last_form_by_user.get(user["user_id"]) or NO_FORMS_TEXT,
                     int(creations_by_user.get(user["user_id"],0)),
                     int(closures_by_user.get(user["user_id"], 0)),
-                    numcell(int(modifications_by_user.get(user["user_id"], 0))),
-                    numcell(int(avg_modifications_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
-                    numcell(inactive_cases),
+                    util.numcell(int(modifications_by_user.get(user["user_id"], 0))),
+                    util.numcell(int(avg_modifications_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
+                    util.numcell(inactive_cases),
                     total_cases,
-                    numcell((float(inactive_cases)/total_cases) * 100 if inactive_cases else 'nan', convert='float'),
+                    util.numcell((float(inactive_cases)/total_cases) * 100 if inactive_cases else 'nan', convert='float'),
                 ]))
 
         self.total_row = [_("Total")]
