@@ -49,10 +49,6 @@ class CaseIndicatorPillow(IndicatorPillowBase):
             case_doc = CommCareCase.get(doc_dict['_id'])
             case_doc.update_indicators_in_bulk(case_indicators, logger=pillow_logging)
 
-        pillow_logging.info("[INDICATOR %(domain)s] Now Processing related XForm Indicators for Case %(case_id)s..." % {
-            'domain': domain,
-            'case_id': doc_dict['_id']
-        })
         xform_ids = doc_dict.get('xform_ids', [])
         for namespace in namespaces:
             for xform_id in xform_ids:
@@ -71,8 +67,6 @@ class CaseIndicatorPillow(IndicatorPillowBase):
                                              'xform_id': xform_id,
                                              'case_id': doc_dict['_id'],
                                          })
-
-        pillow_logging.info("[INDICATOR %s] Processing complete." % domain)
 
 
 class FormIndicatorPillow(IndicatorPillowBase):
