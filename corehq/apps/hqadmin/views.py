@@ -652,7 +652,7 @@ def system_info(request):
 
     context['couch_update'] = request.GET.get('couch_update', 5000)
     context['celery_update'] = request.GET.get('celery_update', 10000)
-    context['celery_flower_url'] = settings.CELERY_FLOWER_URL
+    context['celery_flower_url'] = getattr(settings, 'CELERY_FLOWER_URL', None)
 
     context['rabbitmq_url'] = get_rabbitmq_management_url()
 
