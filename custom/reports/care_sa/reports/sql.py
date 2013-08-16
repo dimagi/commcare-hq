@@ -124,10 +124,7 @@ class CareReport(SqlTabularReport,
         for column_attrs in self.report_columns:
             text, name = column_attrs[:2]
             name = '%s_total' % name
-            if len(column_attrs) == 2:
-                column = DatabaseColumn(text, SimpleColumn(name), sortable=False)
-            elif column_attrs[2] == 'SumColumn':
-                column = DatabaseColumn(text, SumColumn(name), sortable=False)
+            column = DatabaseColumn(text, SumColumn(name), sortable=False)
 
             columns.append(column)
 
