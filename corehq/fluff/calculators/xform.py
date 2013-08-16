@@ -1,6 +1,8 @@
 from datetime import timedelta
 from corehq.fluff.calculators.logic import ANDCalculator, ORCalculator
 import fluff
+from fluff.filters import Filter
+
 
 def default_date(form):
     return form.received_on
@@ -17,7 +19,6 @@ def ANY_IN_MULTISELECT(input, reference):
     For 'this multiselect contains any one of these N items'
     """
     return any([subval in (input or '').split(' ') for subval in reference])
-
 
 class IntegerPropertyReference(object):
     """
@@ -41,6 +42,8 @@ class IntegerPropertyReference(object):
 
 class FilteredFormPropertyCalculator(fluff.Calculator):
     """
+    WARNING: This class is deprecated. Use SimpleCalculator in combination with FormPropertyFilter
+
     Enables filtering forms by xmlns and (optionally) property == value.
     Let's you easily define indicators such as:
      - all adult registration forms
@@ -94,9 +97,49 @@ class FilteredFormPropertyCalculator(fluff.Calculator):
             )
         )
 
+class FormPropertyFilter(Filter):
+    """
+    Enables filtering forms by xmlns and (optionally) property == value.
+    Let's you easily define indicators such as:
+     - all adult registration forms
+     - all child registration forms with foo.bar == baz
+     - all newborn followups with bippity != bop
+
+    These can also be chained using logic operators for fun and profit.
+    """
+
+    xmlns = None
+    property_path = None
+    property_value = None
+
+    def __init__(self, xmlns=None, property_path=None, property_value=None, operator=EQUAL):
+        def _conditional_setattr(key, value):
+            if value:
+                setattr(self, key, value)
+
+        _conditional_setattr('xmlns', xmlns)
+        assert self.xmlns is not None
+
+        _conditional_setattr('property_path', property_path)
+        _conditional_setattr('property_value', property_value)
+        if self.property_path is not None and operator != ANY:
+            assert self.property_value is not None
+
+        self.operator = operator
+
+    def filter(self, form):
+        return (
+            form.xmlns == self.xmlns and (
+                self.property_path is None or
+                self.operator(form.xpath(self.property_path), self.property_value)
+            )
+        )
 
 # meh this is a little redundant but convenient
 class FormANDCalculator(ANDCalculator):
+    """
+    WARNING: This class is deprecated. Use SimpleCalculator in combination with ANDFilter
+    """
     window = timedelta(days=1)
 
     @fluff.date_emitter
@@ -104,6 +147,9 @@ class FormANDCalculator(ANDCalculator):
         yield default_date(form)
 
 class FormORCalculator(ORCalculator):
+    """
+    WARNING: This class is deprecated. Use SimpleCalculator in combination with ORFilter
+    """
     window = timedelta(days=1)
 
     @fluff.date_emitter
