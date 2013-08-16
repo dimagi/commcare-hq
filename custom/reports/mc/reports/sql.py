@@ -1,9 +1,11 @@
 from dimagi.utils.decorators.memoized import memoized
 from sqlagg.columns import *
 from django.utils.translation import ugettext as _, ugettext_noop
+from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn, DataFormatter, TableDataFormat
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_id_to_username
 from .definitions import *
 from .composed import DataProvider, ComposedTabularReport
@@ -76,10 +78,21 @@ class McSqlData(SqlData):
 
     table_name = "mc-inscale_MalariaConsortiumFluff"
 
-    def __init__(self, sections, domain, datespan):
+    def __init__(self, sections, domain, datespan, fixture_type, fixture_item):
         self.domain = domain
         self.datespan = datespan
+        self.fixture_type = fixture_type
+        self.fixture_item = fixture_item
         self._sections = sections
+
+    @memoized
+    def _get_users_matching_location(self, fixture_item, fixture_type):
+        # todo: optimize
+        return filter(
+            lambda u: u.user_data.get(fixture_type.tag, None) == fixture_item.fields.get('name'),
+            CommCareUser.by_domain(fixture_item.domain)
+        )
+
 
     @property
     def group_by(self):
@@ -87,7 +100,10 @@ class McSqlData(SqlData):
 
     @property
     def filters(self):
-        return ["domain = :domain", "date between :startdate and :enddate"]
+        base_filters = ["domain = :domain", "date between :startdate and :enddate"]
+        if self.fixture_item is not None:
+            base_filters.append('"user_id" in :userids')
+        return base_filters
 
     @property
     @memoized
@@ -97,9 +113,14 @@ class McSqlData(SqlData):
 
     @property
     def filter_values(self):
-        return dict(domain=self.domain,
-                    startdate=self.datespan.startdate_param_utc,
-                    enddate=self.datespan.enddate_param_utc)
+        base_filter_values = {
+            'domain': self.domain,
+            'startdate': self.datespan.startdate_param_utc,
+            'enddate': self.datespan.enddate_param_utc,
+        }
+        if self.fixture_item is not None:
+            base_filter_values['userids'] = tuple(u._id for u in self._get_users_matching_location(self.fixture_item, self.fixture_type))
+        return base_filter_values
 
     @property
     def columns(self):
@@ -142,13 +163,22 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
     exportable = True
     emailable = True
     report_template_path = "mc/reports/sectioned_tabular.html"
-    fields = ['corehq.apps.reports.fields.DatespanField']
+    fields = [
+        'corehq.apps.reports.fields.DatespanField',
+        'custom.reports.mc.reports.fields.DistrictField',
+    ]
     SECTIONS = None  # override
 
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         super(MCBase, self).__init__(request, base_context, domain, **kwargs)
         assert self.SECTIONS is not None
-        sqldata = McSqlData(self.SECTIONS, domain, self.datespan)
+        fixture = self.request_params.get('fixture_id', None)
+        fixture_item = None
+        if fixture:
+            type_string, id = fixture.split(":")
+            fixture_type = FixtureDataType.by_domain_tag(domain, type_string).one()
+            fixture_item = FixtureDataItem.get(id)
+        sqldata = McSqlData(self.SECTIONS, domain, self.datespan, fixture_type, fixture_item)
         self.data_provider = MCSectionedDataProvider(sqldata)
 
 class HeathFacilityMonthly(MCBase):
