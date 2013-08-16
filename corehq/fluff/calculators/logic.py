@@ -2,6 +2,8 @@ import fluff
 
 class ANDCalculator(fluff.Calculator):
     """
+    WARNING: This class is deprecated. Use ANDFilter
+
     Lets you construct AND operations on filters.
     """
     # TODO: should we have these actually aggregate the data of the underlying
@@ -16,6 +18,8 @@ class ANDCalculator(fluff.Calculator):
 
 class ORCalculator(fluff.Calculator):
     """
+    WARNING: This class is deprecated. Use ORFilter
+
     Lets you construct OR operations on filters.
     """
     def __init__(self, calculators):
@@ -24,4 +28,3 @@ class ORCalculator(fluff.Calculator):
 
     def filter(self, item):
         return any(calc.filter(item) for calc in self.calculators)
-
