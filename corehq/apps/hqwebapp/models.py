@@ -276,20 +276,19 @@ class ProjectDataTab(UITab):
     view = "corehq.apps.data_interfaces.views.default"
 
     @property
+    @memoized
     def can_edit_commcare_data(self):
         return self.couch_user.can_edit_data() and not self.project.commtrack_enabled
 
     @property
+    @memoized
     def can_edit_commtrack_data(self):
         return self.couch_user.is_domain_admin() and self.project.commtrack_enabled
 
     @property
+    @memoized
     def can_export_data(self):
-        # viewable_reports = self.couch_user.get_viewable_reports()
-
-        return (self.project and not self.project.is_snapshot
-                and (self.couch_user.can_view_reports()
-                or self.couch_user.get_viewable_reports()))
+        return self.project and not self.project.is_snapshot and self.couch_user.can_export_data()
 
     @property
     def is_viewable(self):

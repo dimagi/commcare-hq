@@ -1074,7 +1074,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def is_deleted(self):
         return self.base_doc.endswith(DELETED_SUFFIX)
 
-    def get_viewable_reports(self, domain=None, name=True):
+    def get_viewable_reports(self, domain=None, name=True, slug=False):
         try:
             domain = domain or self.current_domain
         except AttributeError:
@@ -1089,12 +1089,25 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             else:
                 models = self.get_domain_membership(domain).viewable_reports()
 
+            if slug:
+                return [to_function(m).slug for m in models]
             if name:
                 return [to_function(m).name for m in models]
-            else:
-                return models
+            return models
         except AttributeError:
             return []
+
+    def get_exportable_reports(self, domain=None):
+        viewable_reports = self.get_viewable_reports(domain=domain, slug=True)
+        from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
+        export_reports = set(DataInterfaceDispatcher().get_reports_dict(domain).keys())
+        return list(export_reports.intersection(viewable_reports))
+
+    def can_export_data(self, domain=None):
+        can_see_exports = self.can_view_reports()
+        if not can_see_exports:
+            can_see_exports = bool(self.get_exportable_reports(domain))
+        return can_see_exports
 
     def is_current_web_user(self, request):
         return self.user_id == request.couch_user.user_id

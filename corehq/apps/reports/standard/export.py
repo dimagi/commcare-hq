@@ -2,6 +2,7 @@ from collections import defaultdict
 import json
 import logging
 import datetime
+from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.data_interfaces.interfaces import DataInterface
 from dimagi.utils.dates import DateSpan
 from django.conf import settings
@@ -21,6 +22,7 @@ class ExportReport(DataInterface, ProjectReportParametersMixin):
         Base class for export reports.
     """
     flush_layout = True
+    dispatcher = DataInterfaceDispatcher
 
     @property
     def custom_bulk_export_format(self):
