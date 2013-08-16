@@ -29,8 +29,10 @@ class base_emitter(object):
                     assert v.get('group_by') is not None
                     if not isinstance(v['group_by'], list):
                         v['group_by'] = [v['group_by']]
-                elif not isinstance(v, list):
-                    v = [v, 1]
+                elif isinstance(v, list):
+                    v = dict(date=v[0], value=v[1], group_by=None)
+                else:
+                    v = dict(date=v, value=1, group_by=None)
 
                 self.validate(v)
                 yield v
@@ -51,14 +53,9 @@ class custom_date_emitter(base_emitter):
             assert dateval is not None
             assert isinstance(dateval, (datetime.date, datetime.datetime))
 
-        if isinstance(value, dict):
-            validate_date(value.get('date'))
-            if isinstance(value['date'], datetime.datetime):
-                value['date'] = value['date'].date()
-        else:
-            validate_date(value[0])
-            if isinstance(value[0], datetime.datetime):
-                value[0] = value[0].date()
+        validate_date(value.get('date'))
+        if isinstance(value['date'], datetime.datetime):
+            value['date'] = value['date'].date()
 
 
 class custom_null_emitter(base_emitter):
@@ -70,8 +67,6 @@ class custom_null_emitter(base_emitter):
                 value['date'] = None
             else:
                 assert value['date'] is None
-        else:
-            assert value[0] is None
 
 date_emitter = custom_date_emitter()
 null_emitter = custom_null_emitter()
@@ -361,18 +356,41 @@ class IndicatorDocument(schema.Document):
             emitter_type = emitter._fluff_emitter
             reduce_type = emitter._reduce_type
 
+            class NormalizedEmittedValue(object):
+                """Normalize the values to the dictionary form to allow comparison"""
+                def __init__(self, value):
+                    if isinstance(value, dict):
+                        self.value = value
+                    elif isinstance(value, list):
+                        self.value = dict(date=value[0], value=value[1], group_by=None)
+                    else:
+                        print value
+
+                def __key(self):
+                    gb = self.value['group_by']
+                    return self.value['date'], self.value['value'], tuple(gb) if gb else None
+
+                def __eq__(x, y):
+                    return x.__key() == y.__key()
+
+                def __hash__(self):
+                    return hash(self.__key())
+
+                def __repr__(self):
+                    return str(self.value)
+
             if other_doc:
-                self_values = set([tuple(v) for v in self[calc_name][emitter_name]])
-                other_values = set([tuple(v) for v in other_doc[calc_name][emitter_name]])
-                values_diff = [list(v) for v in list(self_values - other_values)]
+                self_values = set([NormalizedEmittedValue(v) for v in self[calc_name][emitter_name]])
+                other_values = set([NormalizedEmittedValue(v) for v in other_doc[calc_name][emitter_name]])
+                values_diff = [v for v in list(self_values - other_values)]
             else:
-                values_diff = self[calc_name][emitter_name]
+                values_diff = [NormalizedEmittedValue(v) for v in self[calc_name][emitter_name]]
 
             indicators.append(dict(calculator=calc_name,
                                    emitter=emitter_name,
                                    emitter_type=emitter_type,
                                    reduce_type=reduce_type,
-                                   values=values_diff))
+                                   values=[v.value for v in values_diff]))
         return indicators
 
     def _shallow_dict_diff(self, left, right):

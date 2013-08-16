@@ -134,13 +134,13 @@ class Test(TestCase):
             self.assertIn("null", indicator["value_week"])
             self.assertIn("date_value", indicator["value_week"])
             self.assertIn("null_value", indicator["value_week"])
-            self.assertEqual(["2012-09-23", 1], indicator["value_week"]["date"][0])
-            self.assertEqual(["2012-09-24", 1], indicator["value_week"]["date"][1])
-            self.assertEqual([None, 1], indicator["value_week"]["null"][0])
+            self.assertEqual({'date': "2012-09-23", 'value': 1, 'group_by': None}, indicator["value_week"]["date"][0])
+            self.assertEqual({'date': "2012-09-24", 'value': 1, 'group_by': None}, indicator["value_week"]["date"][1])
+            self.assertEqual({'date': None, 'value': 1, 'group_by': None}, indicator["value_week"]["null"][0])
 
-            self.assertEqual(["2012-09-23", 2], indicator["value_week"]["date_value"][0])
-            self.assertEqual(["2012-09-24", 3], indicator["value_week"]["date_value"][1])
-            self.assertEqual([None, 2], indicator["value_week"]["null_value"][0])
+            self.assertEqual({'date': "2012-09-23", 'value': 2, 'group_by': None}, indicator["value_week"]["date_value"][0])
+            self.assertEqual({'date': "2012-09-24", 'value': 3, 'group_by': None}, indicator["value_week"]["date_value"][1])
+            self.assertEqual({'date': None, 'value': 2, 'group_by': None}, indicator["value_week"]["null_value"][0])
 
             self.assertEqual(dict(date='2013-01-01', group_by=['abc', 'xyz'], value=3), indicator["value_week"]["group_list"][0])
             self.assertEqual(dict(date='2013-01-01', group_by=['abc'], value=2), indicator["value_week"]["group_val"][0])
@@ -152,10 +152,14 @@ class Test(TestCase):
         values = calc.calculate(MockDoc.wrap(dict(actions=[dict(date="2012-09-23", x=2),
                                                            dict(date="2012-09-24", x=3)])))
         self.assertEquals(len(values.keys()), 8)
-        self.assertEquals(values['null_value'], [[None, 2]])
-        self.assertEquals(values['date_value'], [[date(2012, 9, 23), 2], [date(2012, 9, 24), 3]])
-        self.assertEquals(values['date'], [[date(2012, 9, 23), 1], [date(2012, 9, 24), 1]])
-        self.assertEquals(values['null'], [[None, 1]])
+        self.assertEquals(values['null_value'], [dict(date=None, value=2, group_by=None)])
+        self.assertEquals(values['date_value'], [
+            dict(date=date(2012, 9, 23), value=2, group_by=None),
+            dict(date=date(2012, 9, 24), value=3, group_by=None)])
+        self.assertEquals(values['date'], [
+            dict(date=date(2012, 9, 23), value=1, group_by=None),
+            dict(date=date(2012, 9, 24), value=1, group_by=None)])
+        self.assertEquals(values['null'], [dict(date=None, value=1, group_by=None)])
         self.assertEquals(values['group_list'], [dict(date=date(2013, 1, 1), group_by=['abc', 'xyz'], value=3)])
         self.assertEquals(values['group_val'], [dict(date=date(2013, 1, 1), group_by=['abc'], value=2)])
         self.assertEquals(values['group_no_val'], [dict(date=date(2013, 1, 1), group_by=['abc'], value=1)])
@@ -220,12 +224,12 @@ class Test(TestCase):
                                      emitter='date',
                                      emitter_type='date',
                                      reduce_type='count',
-                                     values=[[date(2012, 2, 23), 1]]),
+                                     values=[dict(date=date(2012, 2, 23), value=1, group_by=None)]),
                                 dict(calculator='value_week',
                                      emitter='null_value',
                                      emitter_type='null',
                                      reduce_type='max',
-                                     values=[[None, 3]])
+                                     values=[dict(date=None, value=3, group_by=None)])
                             ])
             self.assertEqual(expected, diff)
 
@@ -272,22 +276,68 @@ class Test(TestCase):
                                      emitter='date_value',
                                      emitter_type='date',
                                      reduce_type='sum',
-                                     values=[[date(2012, 2, 23), 4]]),
+                                     values=[dict(date=date(2012, 2, 23), value=4, group_by=None)]),
                                 dict(calculator='value_week',
                                      emitter='date',
                                      emitter_type='date',
                                      reduce_type='count',
-                                     values=[[date(2012, 2, 24), 1]]),
+                                     values=[dict(date=date(2012, 2, 24), value=1, group_by=None)]),
                                 dict(calculator='value_week',
                                      emitter='null',
                                      emitter_type='null',
                                      reduce_type='sum',
-                                     values=[[None, 1]]),
+                                     values=[dict(date=None, value=1, group_by=None)]),
                                 dict(calculator='value_week',
                                      emitter='null_value',
                                      emitter_type='null',
                                      reduce_type='max',
-                                     values=[[None, 2]])
+                                     values=[dict(date=None, value=2, group_by=None)])
+                            ])
+            self.assertEqual(expected, diff)
+
+    def test_indicator_diff_dict(self):
+        for cls in [MockIndicators, MockIndicatorsWithGetters]:
+            current = cls(domain="mock",
+                                     owner_id="123",
+                                     value_week=dict(
+                                         date=[dict(date=date(2012, 2, 23), value=1, group_by=None)],
+                                         date_value=[[date(2012, 02, 24), 1]],
+                                         group_list=[],
+                                         null_value=[dict(date=None, value=1, group_by='abc')],
+                                     ))
+            new = cls(domain="mock",
+                      owner_id="123",
+                      value_week=dict(
+                          date=[[date(2012, 02, 24), 1]],
+                          date_value=[dict(date=date(2012, 2, 20), value=2, group_by=None)],
+                          group_list=[dict(date=date(2013, 1, 1), value=3, group_by=['abc', '123'])],
+                          null_value=[dict(date=None, value=1, group_by='abc')],
+                      ))
+
+            diff = new.diff(current)
+            self.assertIsNotNone(diff)
+            self.maxDiff = None
+            expected = dict(domains=['test'],
+                            database=cls.Meta.app_label,
+                            doc_type=cls.__name__,
+                            group_values=['mock', '123'],
+                            group_names=['domain', 'owner_id'],
+                            indicator_changes=[
+                                dict(calculator='value_week',
+                                     emitter='date_value',
+                                     emitter_type='date',
+                                     reduce_type='sum',
+                                     values=[dict(date=date(2012, 2, 20), value=2, group_by=None)]),
+                                dict(calculator='value_week',
+                                     emitter='date',
+                                     emitter_type='date',
+                                     reduce_type='count',
+                                     values=[dict(date=date(2012, 2, 24), value=1, group_by=None)]),
+                                dict(calculator='value_week',
+                                     emitter='group_list',
+                                     emitter_type='date',
+                                     reduce_type='sum',
+                                     values=[dict(date=date(2013, 1, 1), value=3, group_by=['abc', '123'])]),
                             ])
             self.assertEqual(expected, diff)
 
