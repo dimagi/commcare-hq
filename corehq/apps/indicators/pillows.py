@@ -1,158 +1,95 @@
 import logging
+from couchdbkit import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.indicators.utils import get_indicator_domains, get_namespaces
 from corehq.apps.indicators.models import CaseIndicatorDefinition, FormIndicatorDefinition, CaseDataInFormIndicatorDefinition
 from couchforms.models import XFormInstance
-from dimagi.utils.decorators.memoized import memoized
 from pillowtop.listener import BasicPillow
 
+pillow_logging = logging.getLogger("pillowtop")
+
+
 class IndicatorPillowBase(BasicPillow):
-    indicator_document_type = None
     only_use_fresh_docs = True
+    couch_filter = 'fluff_filter/domain_type'
 
     @property
-    @memoized
-    def indicator_domains(self):
-        return get_indicator_domains()
+    def extra_args(self):
+        return {
+            'domains': ' '.join(get_indicator_domains()),
+            'doc_type': self.document_class._doc_type,
+        }
 
     def change_transform(self, doc_dict):
-        if self.doc_is_valid(doc_dict):
-            indicators = self.get_indicators_by_doc(doc_dict)
-            if indicators:
-                doc = self.get_document(doc_dict)
-                self.update_indicators_in_doc_instance(doc, indicators)
-                return doc._doc
-        return doc_dict
-
-    def is_document_update(self, marker, doc_dict):
-        return True
-
-    def change_transport(self, doc_dict):
-        return doc_dict
-
-    def get_indicators_by_doc(self, doc_dict):
-        raise NotImplementedError
-
-    def get_document(self, doc_dict):
-        raise NotImplementedError
-
-    def doc_is_valid(self, doc_dict):
-        if self.indicator_document_type is None:
-            raise NotImplementedError("you must specify an indicator document type")
-
-        computed_dict = doc_dict.get('computed_')
         domain = doc_dict.get('domain')
+        if not domain:
+            return
 
-        def _processing_check(doc_dict):
-            # forms are the only doc types that use this pattern.
-            if doc_dict.get('doc_type') == 'XFormInstance':
-                return doc_dict.get('initial_processing_complete')
-            return True
+        namespaces = get_namespaces(domain)
+        if namespaces and 'computed_' in doc_dict:
+            self.process_indicators(doc_dict, domain, namespaces)
 
-        if (computed_dict is not None
-            and domain in self.indicator_domains
-            and doc_dict.get('doc_type') == self.indicator_document_type.__name__
-            and _processing_check(doc_dict)):
-            namespaces = get_namespaces(domain)
-            for namespace in namespaces:
-                if not self.only_use_fresh_docs:
-                    marker = doc_dict.get('computed_', {}).get(self.get_marker_slug(namespace))
-                    return self.is_document_update(marker, doc_dict)
-                elif namespace not in computed_dict:
-                    return True
-        return False
-
-    @classmethod
-    def update_indicators_in_doc_instance(cls, doc_instance, indicators):
-        for indicator in indicators:
-            if not cls.only_use_fresh_docs:
-                doc_instance.computed_[cls.get_marker_slug(indicator.namespace)] = cls.get_change_marker(doc_instance)
-            updated_status = doc_instance.update_indicator(indicator)
-            if updated_status:
-                logging.info("Set %(doc_type)s indicator %(indicator_slug)s in namespace %(namespace)s: %(doc_id)s" % {
-                    'doc_type': doc_instance.doc_type,
-                    'indicator_slug': indicator.slug,
-                    'namespace': indicator.namespace,
-                    'doc_id': doc_instance._id,
-                    })
-
-    @classmethod
-    def get_change_marker(cls, doc_dict):
-        return []
-
-    @classmethod
-    def get_marker_slug(cls, namespace):
-        return "%s__marker__" % namespace
+    def process_indicators(self, doc_dict, domain, namespaces):
+        raise NotImplementedError("You need to implement process_indicators")
 
 
 class CaseIndicatorPillow(IndicatorPillowBase):
     document_class = CommCareCase
-    indicator_document_type = CommCareCase
-    only_use_fresh_docs = False
-    # todo: should maybe use this filter here? it takes so long to update, though...
-    # couch_filter = "indicators/indicatorless_casedocs"
 
-    def get_indicators_by_doc(self, doc_dict):
-        indicators = []
-
+    def process_indicators(self, doc_dict, domain, namespaces):
         case_type = doc_dict.get('type')
-        domain = doc_dict.get('domain')
-        form_ids = doc_dict.get('xform_ids') or []
+        if not case_type:
+            return
 
-        if case_type and domain:
-            # relevant namespaces
-            namespaces = get_namespaces(domain)
+        case_indicators = []
+        for namespace in namespaces:
+            case_indicators.extend(CaseIndicatorDefinition.get_all(namespace, domain, case_type=case_type))
 
-            for namespace in namespaces:
-                # need all the relevant Case Indicator Defs
-                indicators.extend(CaseIndicatorDefinition.get_all(namespace, domain, case_type=case_type))
+        if case_indicators:
+            case_doc = CommCareCase.get(doc_dict['_id'])
+            case_doc.update_indicators_in_bulk(case_indicators, logger=pillow_logging)
 
-                # we also need to update forms that are related to this case and might use data which
-                # may have just been updated
-                for form_id in form_ids:
-                    try:
-                        xform = XFormInstance.get(form_id)
-                        if xform.xmlns and isinstance(xform, XFormInstance):
-                            case_related_indicators = CaseDataInFormIndicatorDefinition.get_all(namespace, domain,
-                                xmlns=xform.xmlns)
-                            logging.info("Grabbed Related XForm %s and now processing %d indicators." %
-                                         (form_id, len(case_related_indicators)))
-                            FormIndicatorPillow.update_indicators_in_doc_instance(xform, case_related_indicators)
-                            logging.info("Done processing indicators.")
-                    except Exception as e:
-                        logging.error("Error grabbing related xform for CommCareCase %s: %s" % (doc_dict['_id'], e))
-
-        return indicators
-
-    def get_document(self, doc_dict):
-        return CommCareCase.get(doc_dict['_id'])
-
-    @classmethod
-    def get_change_marker(cls, doc_instance):
-        if isinstance(doc_instance, CommCareCase):
-            return len(doc_instance.xform_ids) if doc_instance.xform_ids else 0
-        return super(CaseIndicatorPillow, cls).get_change_marker(doc_instance)
-
-    def is_document_update(self, marker, doc_dict):
-        xform_ids = doc_dict.get('xform_ids') or []
-        return len(xform_ids) > marker
+        xform_ids = doc_dict.get('xform_ids', [])
+        for namespace in namespaces:
+            for xform_id in xform_ids:
+                try:
+                    xform_doc = XFormInstance.get(xform_id)
+                    if not xform_doc.xmlns:
+                        continue
+                    related_xform_indicators = CaseDataInFormIndicatorDefinition.get_all(namespace, domain,
+                                                                                         xmlns=xform_doc.xmlns)
+                    xform_doc.update_indicators_in_bulk(related_xform_indicators, logger=pillow_logging)
+                except ResourceNotFound:
+                    pillow_logging.error("[INDICATOR %(namespace)s %(domain)s] Tried to form indicator %(xform_id)s "
+                                         "from case %(case_id)s and failed." % {
+                                             'namespace': namespace,
+                                             'domain': domain,
+                                             'xform_id': xform_id,
+                                             'case_id': doc_dict['_id'],
+                                         })
 
 
 class FormIndicatorPillow(IndicatorPillowBase):
     document_class = XFormInstance
-    indicator_document_type = XFormInstance
-    # todo: should maybe use this filter here? it takes so long to update, though...
-    # couch_filter = "indicators/indicatorless_xforms"
 
-    def get_indicators_by_doc(self, doc_dict):
-        indicators = []
+    def process_indicators(self, doc_dict, domain, namespaces):
+        if not doc_dict.get('inital_processing_complete', False):
+            # Make sure we don't update the indicators before the XFormPillows and CasePillows.
+            return
+
         xmlns = doc_dict.get('xmlns')
-        domain = doc_dict.get('domain')
-        if xmlns and domain:
-            namespaces = get_namespaces(domain)
-            for namespace in namespaces:
-                indicators.extend(FormIndicatorDefinition.get_all(namespace, domain, xmlns=xmlns))
-        return indicators
+        if not xmlns:
+            pillow_logging.warning('[INDICATOR %(domain)s] Could not find XMLS while '
+                                   'processing indicator for %(xform_id)s' % {
+                                       'domain': domain,
+                                       'xform_id': doc_dict['_id'],
+                                   })
+            return
 
-    def get_document(self, doc_dict):
-        return XFormInstance.get(doc_dict['_id'])
+        indicators = []
+        for namespace in namespaces:
+            indicators.extend(FormIndicatorDefinition.get_all(namespace, domain, xmlns=xmlns))
+
+        if indicators:
+            xform_doc = XFormInstance.get(doc_dict['_id'])
+            xform_doc.update_indicators_in_bulk(indicators, logger=pillow_logging)
