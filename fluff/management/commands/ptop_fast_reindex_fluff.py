@@ -1,5 +1,8 @@
 from datetime import datetime
+from optparse import make_option
+from django.core.management import CommandError
 from corehq.apps.hqcase.management.commands.ptop_fast_reindexer import PtopReindexer
+from dimagi.utils.modules import to_function
 from fluff import FluffPillow
 
 CHUNK_SIZE = 500
@@ -48,3 +51,16 @@ class FluffPtopReindexer(PtopReindexer):
 
         end = datetime.utcnow()
         print "done in %s seconds" % (end - start).seconds
+
+
+class Command(FluffPtopReindexer):
+    args = '<domain> <pollow_class>'
+
+    def handle(self, *args, **options):
+        if len(args) != 2:
+            raise CommandError('Usage is ptop_fast_reindex_fluff %s' % self.args)
+
+        self.domain = args[0]
+        self.pillow_class = to_function(args[1])
+
+        super(Command, self).handle(*args, **options)
