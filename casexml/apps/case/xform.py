@@ -21,21 +21,19 @@ class CaseDbCache(object):
     so we can get the latest updates even if they haven't been saved
     to the database. Also provides some type checking safety.
     """
-    def __init__(self, domain=None, strip_history=False):
+    def __init__(self, domain=None, strip_history=False, deleted_ok=False):
         self.cache = {}
         self.domain = domain
         self.strip_history = strip_history
+        self.deleted_ok = deleted_ok
 
     def validate_doc(self, doc):
-        # some forms recycle case ids as other ids (like xform ids)
-        # disallow that hard.
         if self.domain and doc.domain != self.domain:
             raise IllegalCaseId("Bad case id")
-
-        if doc.doc_type == 'CommCareCase-Deleted':
-            raise IllegalCaseId("Case [%s] is deleted " % doc.get_id)
-
-        if doc.doc_type != 'CommCareCase':
+        elif doc.doc_type == 'CommCareCase-Deleted':
+            if not self.deleted_ok:
+                raise IllegalCaseId("Case [%s] is deleted " % doc.get_id)
+        elif doc.doc_type != 'CommCareCase':
             raise IllegalCaseId(
                 "Bad case doc type! "
                 "This usually means you are using a bad value for case_id."

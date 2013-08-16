@@ -4,6 +4,7 @@ Logic about chws phones and cases go here.
 from collections import defaultdict
 from datetime import datetime
 import itertools
+import logging
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import const
 from casexml.apps.case.xform import CaseDbCache
@@ -18,12 +19,16 @@ def get_footprint(initial_case_list, strip_history=False):
     if not initial_case_list:
         return {}
 
-    case_db = CaseDbCache(domain=list(initial_case_list)[0].domain, strip_history=strip_history)
+    case_db = CaseDbCache(domain=list(initial_case_list)[0].domain,
+                          strip_history=strip_history,
+                          deleted_ok=True)
 
     def children(case_db, case):
         return [case_db.get(index.referenced_id) for index in case.indices]
 
     relevant_cases = {}
+    relevant_deleted_case_ids = []
+
     queue = list(case for case in initial_case_list)
     directly_referenced_indices = itertools.chain(*[[index.referenced_id for index in case.indices]
                                                     for case in initial_case_list])
@@ -32,8 +37,16 @@ def get_footprint(initial_case_list, strip_history=False):
         case = queue.pop()
         if case.case_id not in relevant_cases:
             relevant_cases[case.case_id] = case
+            if case.doc_type == 'CommCareCase-Deleted':
+                relevant_deleted_case_ids.append(case.case_id)
             queue.extend(children(case_db, case))
+
+    if relevant_deleted_case_ids:
+        logging.error('deleted cases included in footprint (restore): %s' % (
+            ', '.join(relevant_deleted_case_ids)
+        ))
     return relevant_cases
+
 
 class CaseSyncUpdate(object):
     """
