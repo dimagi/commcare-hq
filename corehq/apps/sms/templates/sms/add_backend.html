@@ -1,0 +1,125 @@
+{% extends 'hqwebapp/two_column.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load timezone_tags %}
+
+{% block title %}
+    {% if backend_id %}
+        {% trans "Edit SMS Backend" %}
+    {% else %}
+        {% trans "Add SMS Backend" %}
+    {% endif %}
+{% endblock %}
+
+{% block head %}
+{{ block.super }}
+<style>
+    .form-block {
+        border: 1px solid #EAEAFF;
+        background-color: #FAFAFF;
+        padding: 20px;
+    }
+    .errorlist li {
+        color: #A22;
+        list-style-type: none;
+    }
+</style>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+<script>
+    function domain_sharing_changed() {
+        if($("#id_give_other_domains_access").is(":checked")) {
+            $("#id_for_authorized_domains_input").show();
+        } else {
+            $("#id_for_authorized_domains_input").hide();
+        }
+    }
+    
+    $(function(){
+        $("#id_give_other_domains_access").click(function() {
+            domain_sharing_changed();
+        });
+        domain_sharing_changed();
+    });
+</script>
+{% endblock %}
+
+{% block page-title %}
+    {% if is_global %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url default_sms_admin_interface %}"><strong>{% trans "SMS Connectivity" %}</strong></a> <span class="divider">&gt;</span>
+        </li>
+        <li>
+            <a href="{% url list_backends %}">{% trans "SMS Connections" %}</a> <span class="divider">&gt;</span>
+        </li>
+        <li class="active">
+            <div id="report-title">
+            {% if backend_id %}
+                <a href="{% url edit_backend backend_class_name backend_id %}">{% trans "Edit SMS Connection" %}</a>
+            {% else %}
+                <a href="{% url add_backend backend_class_name %}">{% trans "Add SMS Connection" %}</a>
+            {% endif %}
+            </div>
+        </li>
+    </ul>
+    {% else %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url messaging domain %}"><strong>{% trans "Messaging" %}</strong></a> <span class="divider">&gt;</span>
+        </li>
+        <li>
+            <a href="{% url list_domain_backends domain %}">{% trans "SMS Connectivity" %}</a> <span class="divider">&gt;</span>
+        </li>
+        <li class="active">
+            <div id="report-title">
+            {% if backend_id %}
+                <a href="{% url edit_domain_backend domain backend_class_name backend_id %}">{% trans "Edit SMS Connection" %}</a>
+            {% else %}
+                <a href="{% url add_domain_backend domain backend_class_name %}">{% trans "Add SMS Connection" %}</a>
+            {% endif %}
+            </div>
+        </li>
+    </ul>
+    {% endif %}
+{% endblock %}
+
+{% block main_column %}
+    <div class="page-header"><h3>{{ backend_generic_name }} {% trans "Connection" %}</h3></div>
+    <form action="" method="post">
+        <h4>{% trans "General Settings" %}</h4>
+        <div class="form-block">
+            <table>
+                <tbody>
+                    <tr>
+                        <td><label for="id_name">{% trans "Name" %}</label></td>
+                        <td>{{ form.name }}</td>
+                        <td>{{ form.name.errors }}</td>
+                    </tr>
+                    <tr>
+                        <td><label for="id_reply_to_phone_number">{% trans "Reply To Phone Number" %}</label></td>
+                        <td>{{ form.reply_to_phone_number }}</td>
+                        <td>{{ form.reply_to_phone_number.errors }}</td>
+                    </tr>
+                    {% if not is_global %}
+                    <tr>
+                        <td><label for="id_give_other_domains_access">{% trans "Give other domains access" %}</label></td>
+                        <td>{{ form.give_other_domains_access }}</td>
+                        <td></td>
+                    </tr>
+                    <tr id="id_for_authorized_domains_input">
+                        <td><label for="id_authorized_domains">{% trans "List domains here:" %}</label></td>
+                        <td>{{ form.authorized_domains }}</td>
+                        <td>{{ form.authorized_domains.errors }}</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        {% block backend_specific %}{% endblock %}
+        <div style="padding-top: 20px;">
+            <input type="submit" class="btn btn-primary" value="Save" />
+        </div>
+    </form>
+{% endblock %}

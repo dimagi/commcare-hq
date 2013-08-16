@@ -21,6 +21,9 @@ from dateutil.parser import parse
 REGISTRATION_KEYWORDS = ["JOIN"]
 REGISTRATION_MOBILE_WORKER_KEYWORDS = ["WORKER"]
 
+class BackendAuthorizationException(Exception):
+    pass
+
 def send_sms(domain, id, phone_number, text):
     """
     Sends an outbound SMS. Returns false if it fails.
@@ -29,7 +32,6 @@ def send_sms(domain, id, phone_number, text):
         return False
     if isinstance(phone_number, int) or isinstance(phone_number, long):
         phone_number = str(phone_number)
-    logging.debug('Sending message: %s' % text)
     phone_number = clean_phone_number(phone_number)
 
     msg = SMSLog(
@@ -70,6 +72,7 @@ def send_sms_to_verified_number(verified_number, text):
     return send_message_via_backend(msg, verified_number.backend, onerror=onerror)
 
 def send_sms_with_backend(domain, phone_number, text, backend_id):
+    phone_number = clean_phone_number(phone_number)
     msg = SMSLog(
         domain=domain,
         phone_number=phone_number,
@@ -81,6 +84,20 @@ def send_sms_with_backend(domain, phone_number, text, backend_id):
     def onerror():
         logging.exception("Exception while sending SMS to %s with backend %s" % (phone_number, backend_id))
     return send_message_via_backend(msg, MobileBackend.load(backend_id), onerror=onerror)
+
+def send_sms_with_backend_name(domain, phone_number, text, backend_name):
+    phone_number = clean_phone_number(phone_number)
+    msg = SMSLog(
+        domain=domain,
+        phone_number=phone_number,
+        direction=OUTGOING,
+        date=datetime.utcnow(),
+        text=text
+    )
+
+    def onerror():
+        logging.exception("Exception while sending SMS to %s with backend name %s from domain %s" % (phone_number, backend_name, domain))
+    return send_message_via_backend(msg, MobileBackend.load_by_name(domain, backend_name), onerror=onerror)
 
 def send_message_via_backend(msg, backend=None, onerror=lambda: None):
     """send sms using a specific backend
@@ -102,10 +119,14 @@ def send_message_via_backend(msg, backend=None, onerror=lambda: None):
             # verification, thus the backend is None. it's best to only call
             # send_sms_to_verified_number on truly verified contacts, though
 
-        backend.backend_module.send(msg, **backend.get_cleaned_outbound_params())
+        if backend.domain_is_authorized(msg.domain):
+            backend.send(msg)
+        else:
+            raise BackendAuthorizationException("Domain '%s' is not authorized to use backend '%s'" % (msg.domain, backend._id))
 
         try:
-            msg.backend_api = backend.backend_module.API_ID
+            msg.backend_api = backend.__class__.get_api_id()
+            msg.backend_id = backend._id
         except Exception:
             pass
         msg.save()
