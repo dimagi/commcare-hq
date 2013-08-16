@@ -116,7 +116,7 @@ class Calculator(object):
     _fluff_emitters = None
     _fluff_filters = None
 
-    def __init__(self, window=None):
+    def __init__(self, window=None, filter=None):
         if window is not None:
             self.window = window
         if not isinstance(self.window, datetime.timedelta):
@@ -125,9 +125,10 @@ class Calculator(object):
                 # fail here and not whenever that's run into below
                 raise NotImplementedError(
                     'window must be timedelta, not %s' % type(self.window))
+        self._filter = filter
 
     def filter(self, item):
-        return True
+        return self._filter is None or self._filter.filter(item)
 
     def passes_filter(self, item):
         """
@@ -257,6 +258,7 @@ class IndicatorDocument(schema.Document):
     base_doc = 'IndicatorDocument'
 
     document_class = None
+    document_filter = None
     group_by = ()
 
     @property
@@ -415,11 +417,13 @@ class IndicatorDocument(schema.Document):
             domains = ' '.join(cls.domains)
             extra_args['domains'] = domains
 
+        document_filter = cls.document_filter
         return type(FluffPillow)(cls.__name__ + 'Pillow', (FluffPillow,), {
             'couch_filter': 'fluff_filter/domain_type',
             'extra_args': extra_args,
             'document_class': cls.document_class,
             'indicator_class': cls,
+            'document_filter': document_filter,
         })
 
     @classmethod
@@ -445,11 +449,16 @@ class IndicatorDocument(schema.Document):
 
 
 class FluffPillow(BasicPillow):
+    document_filter = None
     indicator_class = IndicatorDocument
 
     def change_transform(self, doc_dict):
         doc = self.document_class.wrap(doc_dict)
         doc = ReadOnlyObject(doc)
+
+        if self.document_filter and not self.document_filter.filter(doc):
+            return None
+
         indicator_id = '%s-%s' % (self.indicator_class.__name__, doc.get_id)
 
         try:
