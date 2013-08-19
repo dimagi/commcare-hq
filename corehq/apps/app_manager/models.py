@@ -1661,10 +1661,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def _create_custom_app_strings(self, lang):
         def trans(d):
             return clean_trans(d, langs)
+
         id_strings = IdStrings()
         langs = [lang] + self.langs
         yield id_strings.homescreen_title(), self.name
         yield id_strings.app_display_name(), self.name
+
         for module in self.get_modules():
             for detail in module.get_details():
                 if detail.type.startswith('case'):
@@ -1672,11 +1674,18 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 else:
                     label = trans(module.referral_label)
                 yield id_strings.detail_title_locale(module, detail), label
+
                 for column in detail.get_columns():
                     yield id_strings.detail_column_header_locale(module, detail, column), trans(column.header)
                     if column.format == 'enum':
                         for key, val in column.enum.items():
                             yield id_strings.detail_column_enum_variable(module, detail, column, key), trans(val)
+
+                if hasattr(detail, '_sort_only_columns'):
+                    for c in detail._sort_only_columns:
+                        field_text = {'en': str(c.field)}
+                        yield id_strings.detail_column_header_locale(module, detail, c), trans(field_text)
+
             yield id_strings.module_locale(module), trans(module.name)
             if module.case_list.show:
                 yield id_strings.case_list_locale(module), trans(module.case_list.label) or "Case List"
