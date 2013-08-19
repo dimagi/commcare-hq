@@ -2,12 +2,13 @@ from datetime import datetime, date, timedelta
 import logging
 from corehq.apps.sms.util import clean_phone_number, clean_outgoing_sms_text, create_billable_for_sms
 from corehq.apps.sms.api import incoming
+from corehq.apps.sms.mixin import SMSBackend
 from django.conf import settings
 from urllib2 import urlopen
 from urllib import urlencode
 import pytz
-
-API_ID = "UNICEL"
+from couchdbkit.ext.django.schema import *
+from corehq.apps.unicel.forms import UnicelBackendForm
 
 OUTBOUND_URLBASE = "http://www.unicel.in/SendSMS/sendmsg.php"
 
@@ -35,18 +36,54 @@ class OutboundParams(object):
 UNICODE_PARAMS = [("udhi", 0),
                   ("dcs", 8)]
 
-def _check_environ():
-    if not hasattr(settings, "UNICEL_CONFIG") \
-    or not settings.UNICEL_CONFIG.get("username", "") \
-    or not settings.UNICEL_CONFIG.get("password", "") \
-    or not settings.UNICEL_CONFIG.get("sender", ""):
-        raise Exception("Bad Unicel configuration. You must set a "
-                        "username and password in a settings variable "
-                        "called UNICEL_CONFIG to use this backend")
+class UnicelBackend(SMSBackend):
+    username = StringProperty()
+    password = StringProperty()
+    sender = StringProperty()
 
-def _config():
-    _check_environ()
-    return settings.UNICEL_CONFIG
+    @classmethod
+    def get_api_id(cls):
+        return "UNICEL"
+
+    @classmethod
+    def get_generic_name(cls):
+        return "Unicel"
+
+    @classmethod
+    def get_template(cls):
+        return "unicel/backend.html"
+
+    @classmethod
+    def get_form_class(cls):
+        return UnicelBackendForm
+
+    def send(self, message, delay=True, *args, **kwargs):
+        """
+        Send an outbound message using the Unicel API
+        """
+        
+        phone_number = clean_phone_number(message.phone_number).replace("+", "")
+        params = [(OutboundParams.DESTINATION, phone_number),
+                  (OutboundParams.USERNAME, self.username),
+                  (OutboundParams.PASSWORD, self.password),
+                  (OutboundParams.SENDER, self.sender)]
+        try:
+            text = str(message.text)
+            # it's ascii
+            params.append((OutboundParams.MESSAGE, text))
+        except UnicodeEncodeError:
+            params.extend(UNICODE_PARAMS)
+            encoded = message.text.encode("utf_16_be").encode("hex").upper()
+            params.append((OutboundParams.MESSAGE, encoded))
+
+        try:
+            data = urlopen('%s?%s' % (OUTBOUND_URLBASE, urlencode(params))).read()
+        except Exception:
+            data = None
+
+        create_billable_for_sms(message, UnicelBackend.get_api_id(), delay=delay, response=data)
+
+        return data
 
 DATE_FORMAT = "%m/%d/%y %I:%M:%S %p"
 DATE_FORMAT2 = "%Y-%m-%d %H:%M:%S"
@@ -88,43 +125,7 @@ def create_from_request(request, delay=True):
     if is_unicode:
         message = message.decode("hex").decode("utf_16_be")
 
-    log = incoming(sender, message, API_ID, timestamp=actual_timestamp, delay=delay)
+    log = incoming(sender, message, UnicelBackend.get_api_id(), timestamp=actual_timestamp, delay=delay)
 
     return log
-
-def receive_phone_number():
-    return _config().get('receive_phone')
-
-def send(message, delay=True):
-    """
-    Send an outbound message using the Unicel API
-    """
-    config = _config()
-
-    phone_number = clean_phone_number(message.phone_number).replace("+", "")
-    # these are shared regardless of API
-    params = [(OutboundParams.DESTINATION, phone_number),
-              (OutboundParams.USERNAME, config["username"]),
-              (OutboundParams.PASSWORD, config["password"]),
-              (OutboundParams.SENDER, config["sender"])]
-    try:
-        text = str(message.text)
-        # it's ascii
-        params.append((OutboundParams.MESSAGE, text))
-    except UnicodeEncodeError:
-        params.extend(UNICODE_PARAMS)
-        encoded = message.text.encode("utf_16_be").encode("hex").upper()
-        params.append((OutboundParams.MESSAGE, encoded))
-
-    try:
-        data = urlopen('%s?%s' % (OUTBOUND_URLBASE, urlencode(params))).read()
-    except Exception:
-        data = None
-    message.save()
-
-    create_billable_for_sms(message, API_ID, delay=delay, response=data)
-
-    return data
-
-
 
