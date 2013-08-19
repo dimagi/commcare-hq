@@ -173,11 +173,14 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
         super(MCBase, self).__init__(request, base_context, domain, **kwargs)
         assert self.SECTIONS is not None
         fixture = self.request_params.get('fixture_id', None)
-        fixture_item = None
         if fixture:
             type_string, id = fixture.split(":")
             fixture_type = FixtureDataType.by_domain_tag(domain, type_string).one()
             fixture_item = FixtureDataItem.get(id)
+        else:
+            fixture_item = None
+            fixture_type = None
+
         sqldata = McSqlData(self.SECTIONS, domain, self.datespan, fixture_type, fixture_item)
         self.data_provider = MCSectionedDataProvider(sqldata)
 
