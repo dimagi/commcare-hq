@@ -29,8 +29,9 @@ function (doc) {
                             for (i = 0; i < doc[calcName][emitterName].length; i++) {
                                 var value = doc[calcName][emitterName][i];
                                 if (typeOf(value) === 'object') {
-                                    var custom_key = value['group_by']
-                                    emit(custom_key.concat([calcName, emitterName, value['date']]), value['value']);
+                                    var custom_key = value['group_by'];
+                                    key = custom_key === null ? key : custom_key;
+                                    emit(key.concat([calcName, emitterName, value['date']]), value['value']);
                                 } else {
                                     emit(key.concat([calcName, emitterName, value[0]]), value[1]);
                                 }
