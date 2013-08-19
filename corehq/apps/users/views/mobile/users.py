@@ -175,7 +175,7 @@ class EditCommCareUserView(BaseFullEditUserView):
     @property
     def parent_pages(self):
         return [{
-            'name': _("Mobile Workers"),
+            'title': _("Mobile Workers"),
             'url': reverse(ListCommCareUsersView.name, args=[self.domain]),
         }]
 
@@ -411,7 +411,7 @@ class BaseManageCommCareUserView(BaseUserSettingsView):
     @property
     def parent_pages(self):
         return [{
-            'name': ListCommCareUsersView.page_title,
+            'title': ListCommCareUsersView.page_title,
             'url': reverse(ListCommCareUsersView.name, args=[self.domain]),
         }]
 

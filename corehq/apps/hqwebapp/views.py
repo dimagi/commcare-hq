@@ -430,7 +430,7 @@ class BasePageView(TemplateView):
         """
             Specify parent pages as a list of
             [{
-                'name': <name>,
+                'title': <name>,
                 'url: <url>,
             }]
         """
@@ -443,7 +443,7 @@ class BasePageView(TemplateView):
         """
         return {
             'current_page': {
-                'name': self.page_name,
+                'page_name': self.page_name,
                 'title': self.page_title,
                 'url': self.page_url,
                 'parents': self.parent_pages,
@@ -483,7 +483,7 @@ class BaseSectionPageView(BasePageView):
         context = super(BaseSectionPageView, self).main_context
         context.update({
             'section': {
-                'name': self.section_name,
+                'page_name': self.section_name,
                 'url': self.section_url,
             }
         })

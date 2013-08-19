@@ -134,7 +134,7 @@ class BaseEditUserView(BaseUserSettingsView):
     @property
     def parent_pages(self):
         return [{
-            'name': ListWebUsersView.page_title,
+            'title': ListWebUsersView.page_title,
             'url': reverse(ListWebUsersView.name, args=[self.domain]),
         }]
 
@@ -446,7 +446,7 @@ class BaseManageWebUserView(BaseUserSettingsView):
     @property
     def parent_pages(self):
         return [{
-            'name': ListWebUsersView.page_title,
+            'title': ListWebUsersView.page_title,
             'url': reverse(ListWebUsersView.name, args=[self.domain]),
         }]
 

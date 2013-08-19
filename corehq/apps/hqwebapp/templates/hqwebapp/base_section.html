@@ -6,17 +6,17 @@
 {% block page-title %}
     <ul class="breadcrumb">
         <li>
-            <a href="{{ section.url }}"><strong>{{ section.name }}</strong></a> <span class="divider">&gt;</span>
+            <a href="{{ section.url }}"><strong>{{ section.page_name }}</strong></a> <span class="divider">&gt;</span>
         </li>
         {% block subsection-title %}
             {% if current_page.parents %}
                 {% for parent in current_page.parents %}
-                    <li><a href="{{ parent.url }}">{{ parent.name }}</a> <span class="divider">&gt;</span></li>
+                    <li><a href="{{ parent.url }}">{{ parent.title }}</a> <span class="divider">&gt;</span></li>
                 {% endfor %}
             {% endif %}
-            {% if current_page.name %}
+            {% if current_page.page_name %}
             <li class="active">
-                <a href="{{ current_page.url }}">{{ current_page.name }}</a>
+                <a href="{{ current_page.url }}">{{ current_page.page_name }}</a>
             </li>
             {% endif %}
         {% endblock %}

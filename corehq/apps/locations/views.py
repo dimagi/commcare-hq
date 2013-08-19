@@ -55,7 +55,7 @@ class NewLocationView(BaseLocationView):
     @property
     def parent_pages(self):
         return [{
-            'name': LocationsListView.page_title,
+            'title': LocationsListView.page_title,
             'url': reverse(LocationsListView.name, args=[self.domain]),
         }]
 
