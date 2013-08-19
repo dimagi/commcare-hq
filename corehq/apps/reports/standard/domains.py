@@ -8,6 +8,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from corehq.apps.reports.dispatcher import BasicReportDispatcher, AdminReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport, ElasticTabularReport
 from django.utils.translation import ugettext as _
+from corehq.apps.reports.util import numcell
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 
 def format_date(dstr, default):
@@ -74,14 +75,14 @@ class DomainStatsReport(GenericTabularReport):
             if dom.has_key('name'): # for some reason when using the statistical facet, ES adds an empty dict to hits
                 yield [
                     self.get_name_or_link(dom),
-                    dom.get("cp_n_active_cc_users", _("Not yet calculated")),
-                    dom.get("cp_n_cc_users", _("Not yet calculated")),
-                    dom.get("cp_n_active_cases", _("Not yet calculated")),
-                    dom.get("cp_n_cases", _("Not yet calculated")),
-                    dom.get("cp_n_forms", _("Not yet calculated")),
+                    numcell(dom.get("cp_n_active_cc_users", _("Not yet calculated"))),
+                    numcell(dom.get("cp_n_cc_users", _("Not yet calculated"))),
+                    numcell(dom.get("cp_n_active_cases", _("Not yet calculated"))),
+                    numcell(dom.get("cp_n_cases", _("Not yet calculated"))),
+                    numcell(dom.get("cp_n_forms", _("Not yet calculated"))),
                     format_date(dom.get("cp_first_form"), _("No forms")),
                     format_date(dom.get("cp_last_form"), _("No forms")),
-                    dom.get("cp_n_web_users", _("Not yet calculated"))
+                    numcell(dom.get("cp_n_web_users", _("Not yet calculated")))
                 ]
 
 
