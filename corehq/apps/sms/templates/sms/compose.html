@@ -36,25 +36,25 @@
 {% endblock %}
 
 {% block page-subtitle %}
-    <a href="{% url sms_compose_message domain %}">Compose SMS Message</a>
+    <a href="{% url sms_compose_message domain %}">{% trans "Compose SMS Message" %}</a>
 {% endblock %}
 
 {% block main_column %}
     {% include "hqwebapp/partials/time-notice.html" %}
     <form class="form form-horizontal" action="{% url corehq.apps.sms.views.send_to_recipients domain %}" method="post">
         <fieldset>
-            <legend>Send SMS Message</legend>
+            <legend>{% trans "Send SMS Message" %}</legend>
             <div class="control-group">
-                <label class="control-label" for="sms-recipients">Recipients:</label>
+                <label class="control-label" for="sms-recipients">{% trans "Recipients:" %}</label>
                 <div class="controls">
                     <div class="row-fluid">
                         <textarea id="sms-recipients" name="recipients" class="sms-typeahead span12"></textarea>
                     </div>
-                    <p class="alert alert-info help-block">Type a username, group name or 'send to all'</p>
+                    <p class="alert alert-info help-block">{% trans "Type a username, group name or 'send to all'" %}</p>
                 </div>
             </div>
             <div class="control-group">
-                <label class="control-label" for="sms-message">Message:</label>
+                <label class="control-label" for="sms-message">{% trans "Message:" %}</label>
                 <div class="controls">
                     <div class="row-fluid">
                         <textarea id="sms-message" name="message" class="span12"></textarea>
@@ -64,7 +64,7 @@
             </div>
         </fieldset>
         <div class="form-actions">
-            <button type="submit" name="send_sms_button" class="btn btn-primary">Send Message</button>
+            <button type="submit" name="send_sms_button" class="btn btn-primary">{% trans "Send Message" %}</button>
         </div>
     </form>
 {% endblock %}
