@@ -1,15 +1,15 @@
+import warnings
 import fluff
 
 class ANDCalculator(fluff.Calculator):
     """
-    WARNING: This class is deprecated. Use ANDFilter
-
     Lets you construct AND operations on filters.
     """
     # TODO: should we have these actually aggregate the data of the underlying
     # calculators? probably, but currently deemed out of scope
 
     def __init__(self, calculators):
+        warnings.warn("ANDCalculator is deprecated. Use ANDFilter", DeprecationWarning)
         self.calculators = calculators
         assert len(self.calculators) > 1
 
@@ -18,11 +18,10 @@ class ANDCalculator(fluff.Calculator):
 
 class ORCalculator(fluff.Calculator):
     """
-    WARNING: This class is deprecated. Use ORFilter
-
     Lets you construct OR operations on filters.
     """
     def __init__(self, calculators):
+        warnings.warn("ORCalculator is deprecated. Use ORFilter", DeprecationWarning)
         self.calculators = calculators
         assert len(self.calculators) > 1
 
