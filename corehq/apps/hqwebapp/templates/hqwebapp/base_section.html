@@ -1,7 +1,7 @@
 {% extends 'hqwebapp/two_column.html' %}
 {% load hq_shared_tags %}
 
-{% block title %}{{ section.name }}{% if current_page.title %}: {{ current_page.title }}{% endif %}{% endblock %}
+{% block title %}{{ section.page_name }}{% if current_page.title %}: {{ current_page.title }}{% endif %}{% endblock %}
 
 {% block page-title %}
     <ul class="breadcrumb">
