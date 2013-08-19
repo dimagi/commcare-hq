@@ -124,7 +124,10 @@ class CareReport(SqlTabularReport,
         for column_attrs in self.report_columns:
             text, name = column_attrs[:2]
             name = '%s_total' % name
-            column = DatabaseColumn(text, SumColumn(name), sortable=False)
+            if len(column_attrs) == 2:
+                column = DatabaseColumn(text, CountColumn(name), sortable=False)
+            elif column_attrs[2] == 'SumColumn':
+                column = DatabaseColumn(text, SumColumn(name), sortable=False)
 
             columns.append(column)
 
@@ -228,9 +231,9 @@ class CareReport(SqlTabularReport,
 
     def add_row_to_row(self, base_row, row_to_add):
         for i in range(len(base_row)):
-            if isinstance(row_to_add[i], int):
+            if isinstance(row_to_add[i], int) or isinstance(row_to_add[i], long):
                 if isinstance(base_row[i], int):
-                    base_row[i] = base_row[i] + row_to_add[i]
+                    base_row[i] = base_row[i] + int(row_to_add[i])
                 else:
                     base_row[i] = row_to_add[i]
 
