@@ -2582,7 +2582,7 @@ RegExp.escape = function(s) {
                         break
                     case 'left':
                         // broken
-                        tp = {top:pos.top - actualHeight, left: pos.left - actualWidth}
+                        tp = {top: pos.top + pos.height / 2 - actualHeight / 2, left: pos.left - actualWidth}
                         break
                     case 'right':
                         // broken
