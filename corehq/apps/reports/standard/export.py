@@ -37,6 +37,7 @@ class ExportReport(DataInterface, ProjectReportParametersMixin):
             get_filter_params=self.get_filter_params(),
         )
 
+
 class FormExportReportBase(ExportReport, DatespanMixin):
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
@@ -84,6 +85,20 @@ class FormExportReportBase(ExportReport, DatespanMixin):
         params['startdate'] = self.datespan.startdate_display
         params['enddate'] = self.datespan.enddate_display
         return params
+
+    @classmethod
+    def get_subpages(self):
+        from corehq.apps.export.views import CreateCustomFormExportView, EditCustomFormExportView
+        return [
+            {
+                'title': CreateCustomFormExportView.page_title,
+                'urlname': CreateCustomFormExportView.name,
+            },
+            {
+                'title': EditCustomFormExportView.page_title,
+                'urlname': EditCustomFormExportView.name,
+            },
+        ]
 
 
 class ExcelExportReport(FormExportReportBase):
@@ -248,6 +263,20 @@ class CaseExportReport(ExportReport):
         )
         return context
 
+    @classmethod
+    def get_subpages(self):
+        from corehq.apps.export.views import CreateCustomCaseExportView, EditCustomCaseExportView
+        return [
+            {
+                'title': CreateCustomCaseExportView.page_title,
+                'urlname': CreateCustomCaseExportView.name,
+            },
+            {
+                'title': EditCustomCaseExportView.page_title,
+                'urlname': EditCustomCaseExportView.name,
+            },
+        ]
+
 
 class DeidExportReport(FormExportReportBase):
     slug = 'deid_export'
@@ -280,3 +309,7 @@ class DeidExportReport(FormExportReportBase):
         params = super(DeidExportReport, self).get_filter_params()
         params['deid'] = 'true'
         return params
+
+    @classmethod
+    def get_subpages(self):
+        return []

@@ -180,6 +180,7 @@ class ReportDispatcher(View):
                             'description': _(report.description),
                             'icon': report.icon,
                             'title': _(report.name),
+                            'subpages': report.get_subpages(),
                         })
             if report_contexts:
                 if hasattr(section_name, '__call__'):

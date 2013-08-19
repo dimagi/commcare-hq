@@ -174,3 +174,11 @@ class ChangeMyPasswordView(BaseMyAccountView):
             self.password_change_form.save()
             messages.success(request, _("Your password was successfully changed!"))
         return self.get(request, *args, **kwargs)
+
+
+class BaseProjectDataView(BaseDomainView):
+    section_name = ugettext_noop("Data")
+
+    @property
+    def section_url(self):
+        return reverse('data_interfaces_default', args=[self.domain])

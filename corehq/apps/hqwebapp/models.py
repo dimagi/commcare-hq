@@ -330,14 +330,6 @@ class ProjectDataTab(UITab):
             'domain': self.domain,
         }
 
-        if self.can_export_data:
-            from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
-            items.extend(DataInterfaceDispatcher.navigation_sections(context))
-
-        if self.can_edit_commcare_data:
-            from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
-            items.extend(EditDataInterfaceDispatcher.navigation_sections(context))
-
         if self.can_edit_commtrack_data:
             items.append((_('CommTrack'), [
                 {
@@ -349,6 +341,14 @@ class ProjectDataTab(UITab):
                     'url': reverse('manage_locations', args=[self.domain])
                 }
             ]))
+
+        if self.can_export_data:
+            from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
+            items.extend(DataInterfaceDispatcher.navigation_sections(context))
+
+        if self.can_edit_commcare_data:
+            from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
+            items.extend(EditDataInterfaceDispatcher.navigation_sections(context))
 
         return items
 

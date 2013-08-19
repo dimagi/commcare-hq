@@ -636,6 +636,14 @@ class GenericReportView(CacheableRequestMixIn):
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return True
 
+    @classmethod
+    def get_subpages(cls):
+        """
+            List of subpages to show in sidebar navigation.
+        """
+        return []
+
+
 class GenericTabularReport(GenericReportView):
     """
         Override the following properties:

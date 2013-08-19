@@ -9,8 +9,8 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.management.commands import bootstrap_psi
 from corehq.apps.commtrack.models import Product
 from corehq.apps.commtrack.forms import ProductForm
-from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.models import Location
+from corehq.apps.settings.views import BaseProjectDataView
 from dimagi.utils.decorators.memoized import memoized
 from soil.util import expose_download
 import uuid
@@ -25,16 +25,11 @@ from dimagi.utils.couch.database import iter_docs
 import itertools
 
 
-class BaseCommTrackManageView(BaseDomainView):
-    section_name = ugettext_noop("Data")
+class BaseCommTrackManageView(BaseProjectDataView):
 
     @method_decorator(domain_admin_required)  # TODO: will probably want less restrictive permission?
     def dispatch(self, request, *args, **kwargs):
         return super(BaseCommTrackManageView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def section_url(self):
-        return reverse('data_interfaces_default', args=[self.domain])
 
 
 class ProductListView(BaseCommTrackManageView):
@@ -108,7 +103,7 @@ class NewProductView(BaseCommTrackManageView):
     @property
     def parent_pages(self):
         return [{
-            'name': ProductListView.page_title,
+            'title': ProductListView.page_title,
             'url': reverse(ProductListView.name, args=[self.domain]),
         }]
 
