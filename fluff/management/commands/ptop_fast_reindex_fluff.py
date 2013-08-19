@@ -54,7 +54,7 @@ class FluffPtopReindexer(PtopReindexer):
 
 
 class Command(FluffPtopReindexer):
-    args = '<domain> <pollow_class>'
+    args = '<domain> <pillow_class>'
 
     def handle(self, *args, **options):
         if len(args) != 2:
