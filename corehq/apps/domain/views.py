@@ -124,20 +124,9 @@ class DefaultProjectSettingsView(BaseDomainView):
     name = 'domain_settings_default'
 
     def get(self, request, *args, **kwargs):
+        if request.couch_user.is_domain_admin(self.domain):
+            return HttpResponseRedirect(reverse(EditBasicProjectInfoView.name, args=[self.domain]))
         return HttpResponseRedirect(reverse(EditMyProjectSettingsView.name, args=[self.domain]))
-
-
-class ProjectOverviewView(BaseProjectSettingsView):
-    template_name = 'domain/admin/overview.html'
-    name = "domain_overview"
-    page_title = ugettext_noop("Overview")
-
-    @property
-    def page_context(self):
-        return {
-            'languages': self.domain_object.readable_languages(),
-            'applications': self.domain_object.applications(),
-        }
 
 
 class BaseAdminProjectSettingsView(BaseProjectSettingsView):
@@ -279,7 +268,7 @@ class EditDeploymentProjectInfoView(BaseEditProjectInfoView):
 class EditMyProjectSettingsView(BaseProjectSettingsView):
     template_name = 'domain/admin/my_project_settings.html'
     name = 'my_project_settings'
-    page_title = ugettext_noop("My Settings")
+    page_title = ugettext_noop("My Timezone")
 
     @property
     @memoized

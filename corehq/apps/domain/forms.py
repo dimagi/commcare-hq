@@ -49,7 +49,7 @@ class ProjectSettingsForm(forms.Form):
         label="",
         widget=BootstrapCheckboxInput(
             attrs={'data-bind': 'checked: override_tz, event: {change: updateForm}'},
-            inline_label="Override project's timezone setting"))
+            inline_label=ugettext_noop("Override project's timezone setting just for me.")))
     user_timezone = TimeZoneChoiceField(
         label="My Timezone",
         initial=global_timezone.initial,

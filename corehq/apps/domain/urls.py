@@ -6,7 +6,12 @@ from django.template import RequestContext
 from django.conf import settings
 
 from corehq.apps.domain.forms import ConfidentialPasswordResetForm
-from corehq.apps.domain.views import EditBasicProjectInfoView, EditDeploymentProjectInfoView, ProjectOverviewView, DefaultProjectSettingsView, EditMyProjectSettingsView, ExchangeSnapshotsView, CreateNewExchangeSnapshotView, ManageProjectMediaView, DomainForwardingOptionsView, AddRepeaterView, EditInternalDomainInfoView, EditInternalCalculationsView, BasicCommTrackSettingsView, AdvancedCommTrackSettingsView
+from corehq.apps.domain.views import (EditBasicProjectInfoView, EditDeploymentProjectInfoView,
+                                      DefaultProjectSettingsView, EditMyProjectSettingsView,
+                                      ExchangeSnapshotsView, CreateNewExchangeSnapshotView,
+                                      ManageProjectMediaView, DomainForwardingOptionsView,
+                                      AddRepeaterView, EditInternalDomainInfoView, EditInternalCalculationsView,
+                                      BasicCommTrackSettingsView, AdvancedCommTrackSettingsView)
 
 #
 # After much reading, I discovered that Django matches URLs derived from the environment
@@ -71,7 +76,6 @@ domain_settings = patterns(
     'corehq.apps.domain.views',
     url(r'^$', DefaultProjectSettingsView.as_view(), name=DefaultProjectSettingsView.name),
     url(r'^my_settings/$', EditMyProjectSettingsView.as_view(), name=EditMyProjectSettingsView.name),
-    url(r'^overview/$', ProjectOverviewView.as_view(), name=ProjectOverviewView.name),
     url(r'^basic/$', EditBasicProjectInfoView.as_view(), name=EditBasicProjectInfoView.name),
     url(r'^deployment/$', EditDeploymentProjectInfoView.as_view(), name=EditDeploymentProjectInfoView.name),
     url(r'^forwarding/$', DomainForwardingOptionsView.as_view(), name=DomainForwardingOptionsView.name),

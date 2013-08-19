@@ -330,17 +330,7 @@ class ProjectDataTab(UITab):
             'domain': self.domain,
         }
 
-        if self.can_edit_commtrack_data:
-            items.append((_('CommTrack'), [
-                {
-                    'title': _('Manage Products'),
-                    'url': reverse('commtrack_product_list', args=[self.domain])
-                },
-                {
-                    'title': _('Manage Locations'),
-                    'url': reverse('manage_locations', args=[self.domain])
-                }
-            ]))
+
 
         if self.can_export_data:
             from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
@@ -665,21 +655,10 @@ class ProjectSettingsTab(UITab):
         items = []
         user_is_admin = self.couch_user.is_domain_admin(self.domain)
 
-        from corehq.apps.domain.views import EditMyProjectSettingsView
-        project_info = [{
-            'title': EditMyProjectSettingsView.page_title,
-            'url': reverse(EditMyProjectSettingsView.name, args=[self.domain])
-        }]
+        project_info = []
 
         if user_is_admin:
-            from corehq.apps.domain.views import (ProjectOverviewView, EditBasicProjectInfoView,
-                                                  EditDeploymentProjectInfoView)
-
-            if not self.project.commtrack_enabled:
-                project_info.append({
-                    'title': ProjectOverviewView.page_title,
-                    'url': reverse(ProjectOverviewView.name, args=[self.domain])
-                })
+            from corehq.apps.domain.views import EditBasicProjectInfoView, EditDeploymentProjectInfoView
 
             project_info.extend([
                 {
@@ -701,6 +680,13 @@ class ProjectSettingsTab(UITab):
                 })
             except ImportError:
                 pass
+
+        from corehq.apps.domain.views import EditMyProjectSettingsView
+        project_info.append({
+            'title': EditMyProjectSettingsView.page_title,
+            'url': reverse(EditMyProjectSettingsView.name, args=[self.domain])
+        })
+
         items.append((_('Project Information'), project_info))
 
         if user_is_admin:
