@@ -110,6 +110,9 @@ class McSqlData(SqlData):
     def sections(self):
         return [Section(self, section) for section in self._sections]
 
+    @memoized
+    def all_rows(self):
+        return [value for s in self.sections for value in s.rows]
 
     @property
     def filter_values(self):
@@ -151,10 +154,22 @@ class MCSectionedDataProvider(DataProvider):
         formatter = DataFormatter(TableDataFormat(self.sqldata.columns, no_value=NO_VALUE))
         return list(formatter.format(self.sqldata.data, keys=self.sqldata.keys, group_by=self.sqldata.group_by))
 
+    @memoized
     def rows(self):
         # a bit of a hack. rows aren't really rows, but the template knows
         # how to deal with them
+        return self.sqldata.all_rows()
+
+    @property
+    @memoized
+    def sections(self):
         return self.sqldata.sections
+
+
+def section_context(report):
+    # will intentionally break if used with something that doesn't have
+    # a summary_values attribute
+    return {"sections": report.sections}
 
 
 class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
@@ -168,6 +183,7 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
         'custom.reports.mc.reports.fields.DistrictField',
     ]
     SECTIONS = None  # override
+    extra_context_providers = [section_context]
 
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         super(MCBase, self).__init__(request, base_context, domain, **kwargs)
@@ -183,6 +199,10 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
 
         sqldata = McSqlData(self.SECTIONS, domain, self.datespan, fixture_type, fixture_item)
         self.data_provider = MCSectionedDataProvider(sqldata)
+
+    @property
+    def sections(self):
+        return self.data_provider.sections
 
 class HeathFacilityMonthly(MCBase):
     slug = 'hf_monthly'
