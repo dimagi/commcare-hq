@@ -301,10 +301,25 @@ class ProjectDataTab(UITab):
         if not self.domain:
             return False
         manage_data_url = reverse('data_interfaces_default', args=[self.domain])
+
         full_path = self._request.get_full_path()
-        return ('importer/excel' in full_path  # hack because subpages of excel importer are at a different url
-                or super(ProjectDataTab, self).is_active
-                or full_path.startswith(manage_data_url))
+        is_active = ('importer/excel' in full_path  # hack because subpages of excel importer are at a different url
+                     or super(ProjectDataTab, self).is_active
+                     or full_path.startswith(manage_data_url))
+
+        if self.can_edit_commtrack_data:
+            from corehq.apps.commtrack.views import ProductListView
+            commtrack_products_url = reverse(ProductListView.name, args=[self.domain])
+
+            from corehq.apps.locations.views import LocationsListView
+            commtrack_locations_url = reverse(LocationsListView.name, args=[self.domain])
+
+            is_active = is_active or (
+                full_path.startswith(commtrack_products_url)
+                or full_path.startswith(commtrack_locations_url)
+            )
+
+        return is_active
 
     @property
     def sidebar_items(self):

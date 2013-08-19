@@ -11,7 +11,6 @@ from corehq.apps.commtrack.models import Product
 from corehq.apps.commtrack.forms import ProductForm
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.models import Location
-from corehq.apps.settings.views import BaseManageView
 from dimagi.utils.decorators.memoized import memoized
 from soil.util import expose_download
 import uuid
@@ -26,12 +25,16 @@ from dimagi.utils.couch.database import iter_docs
 import itertools
 
 
-class BaseCommTrackManageView(BaseManageView):
-    section_name = ugettext_noop("Manage")
+class BaseCommTrackManageView(BaseDomainView):
+    section_name = ugettext_noop("Data")
 
     @method_decorator(domain_admin_required)  # TODO: will probably want less restrictive permission?
     def dispatch(self, request, *args, **kwargs):
         return super(BaseCommTrackManageView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def section_url(self):
+        return reverse('data_interfaces_default', args=[self.domain])
 
 
 class ProductListView(BaseCommTrackManageView):

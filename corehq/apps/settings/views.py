@@ -41,16 +41,6 @@ def project_id_mapping(request, domain):
     })
 
 
-class BaseManageView(BaseDomainView):
-    section_name = ugettext_noop("Manage")
-
-    @property
-    @memoized
-    def section_url(self):
-        from corehq.apps.users.views import DefaultProjectUserSettingsView
-        return reverse(DefaultProjectUserSettingsView.name, args=[self.domain])
-
-
 class BaseMyAccountView(BaseSectionPageView):
     section_name = ugettext_noop("My Account")
 
