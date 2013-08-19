@@ -18,14 +18,18 @@
             <caption><h3>Menu Options</h3></caption>
             <thead>
                 <tr>
+                    <th></th>
                     <th>Version</th>
                     <th>Label</th>
                     <th>Superuser Only</th>
                     <th>Delete</th>
                 </tr>
             </thead>
-            <tbody data-bind="foreach: versions">
+            <tbody data-bind="sortable: versions">
                 <tr>
+                    <td class="sortable-handle">
+                        <i class="icon-resize-vertical"></i>
+                    </td>
                     <td>
                         <select data-bind="
                             options: $root.available_versions,
@@ -44,7 +48,7 @@
                     </td>
                 </tr>
             </tbody>
-            <tr><td></td><td></td><td></td><td>
+            <tr><td></td><td></td><td></td><td></td><td>
                 <button data-bind="click: addVersion">Add a Version</button>
             </td></tr>
         </table>
@@ -66,8 +70,10 @@
 
     <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
     <script src="{% static 'hqstyle/js/core/bootstrap.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'hqwebapp/js/lib/knockout-2.1.0.debug.js' %}"></script>
     <script type="text/javascript" src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
+    <script type="text/javascript" src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
     <script>
         var doc = {{ doc|JSON }};
         var pretty_doc = JSON.stringify(doc, undefined, 2)
