@@ -29,6 +29,7 @@ class MessageLog(Document, UnicodeMixIn):
     date                        = DateTimeProperty()
     domain                      = StringProperty()
     backend_api                 = StringProperty() # This must be set to <backend module>.API_ID in order to process billing correctly
+    backend_id                  = StringProperty()
     billed                      = BooleanProperty(default=False)
     billing_errors              = ListProperty()
 
@@ -332,5 +333,4 @@ def case_changed_receiver(sender, case, **kwargs):
 
 
 case_post_save.connect(case_changed_receiver, CommCareCase)
-
 

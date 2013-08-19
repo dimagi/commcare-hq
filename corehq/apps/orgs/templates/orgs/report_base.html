@@ -26,9 +26,9 @@
             {% trans 'Reports' %}
         </li>
         <li {% ifequal report_type 'base' %}class="active"{% endifequal %}><a href="{% url orgs_report org.name %}">{% trans "Projects Table" %}</a></li>
-        <li {% ifequal report_type 'stats_forms' %}class="active"{% endifequal %}><a href="{% url orgs_stats org.name "forms" %}">{% trans "Visualize Forms" %}</a></li>
-        <li {% ifequal report_type 'stats_cases' %}class="active"{% endifequal %}><a href="{% url orgs_stats org.name "cases" %}">{% trans "Visualize Cases" %}</a></li>
-        <li {% ifequal report_type 'stats_users' %}class="active"{% endifequal %}><a href="{% url orgs_stats org.name "users" %}">{% trans "Visualize Users" %}</a></li>
+        <li {% ifequal report_type 'stats_forms' %}class="active"{% endifequal %}><a class="viz-url" href="{% url orgs_stats org.name "forms" %}">{% trans "Visualize Forms" %}</a></li>
+        <li {% ifequal report_type 'stats_cases' %}class="active"{% endifequal %}><a class="viz-url" href="{% url orgs_stats org.name "cases" %}">{% trans "Visualize Cases" %}</a></li>
+        <li {% ifequal report_type 'stats_users' %}class="active"{% endifequal %}><a class="viz-url" href="{% url orgs_stats org.name "users" %}">{% trans "Visualize Users" %}</a></li>
     </ul>
 {% endblock %}
 

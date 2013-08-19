@@ -445,11 +445,40 @@ def clone_repo():
 
 
 @task
+def remove_submodule_source(path):
+    """
+    Remove submodule source folder.
+    :param path: the name of the submodule source folder
+
+    Example usage:
+    > fab realstaging remove_submodule_source:ctable-src
+    """
+    if not console.confirm('Are you sure you want to delete submodules/{path} on {env.environment}?'.format(path=path, env=env), default=False):
+        utils.abort('Action aborted.')
+
+    require('root', provided_by=('staging', 'preview', 'production', 'india'))
+
+    execute(_remove_submodule_source_main, path)
+    execute(_remove_submodule_source_preindex, path)
+
+@roles('django_app','django_celery', 'staticfiles', 'django_monolith')
+@parallel
+def _remove_submodule_source_main(path):
+    with cd(env.code_root):
+        sudo('rm -rf submodules/%s' % path, user=env.sudo_user)
+
+@roles('pg', 'django_monolith')
+@parallel
+def _remove_submodule_source_preindex(path):
+    with cd(env.code_root_preindex):
+        sudo('rm -rf submodules/%s' % path, user=env.sudo_user)
+
+@task
 @roles('pg', 'django_monolith')
 def preindex_views():
     if not env.should_migrate:
         utils.abort('Skipping preindex_views for "%s" because should_migrate = False' % env.environment)
-        
+
     with cd(env.code_root_preindex):
         #update the codebase of the preindex dir...
         update_code(preindex=True)
@@ -767,15 +796,18 @@ def set_celery_supervisorconf():
     _rebuild_supervisor_conf_file('supervisor_couchdb_lucene.conf') #to be deprecated
 
     #in reality this also should be another machine if the number of listeners gets too high
-    _rebuild_supervisor_conf_file('supervisor_pillowtop.conf')
+    if env.environment not in ['preview']:
+        #preview environment should not run pillowtop and index stuff, just rely on what's on staging
+        _rebuild_supervisor_conf_file('supervisor_pillowtop.conf')
 
 
 
 
 @roles('django_celery', 'django_monolith')
 def set_sofabed_supervisorconf():
-    _rebuild_supervisor_conf_file('supervisor_sofabed.conf')
-    _rebuild_supervisor_conf_file('supervisor_sync_domains.conf')
+    if env.environment not in ['preview']:
+        _rebuild_supervisor_conf_file('supervisor_sofabed.conf')
+        _rebuild_supervisor_conf_file('supervisor_sync_domains.conf')
 
 @roles('django_app', 'django_monolith')
 def set_djangoapp_supervisorconf():

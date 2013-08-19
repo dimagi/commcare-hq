@@ -16,15 +16,6 @@
   default: "0"
   values_txt: "Any positive integer. Represents period of purging in days."
 
-- disabled: true
-  name: "Days for Review"
-  description: "How long the phone will retain completed forms for review."
-  id: "cc-review-days"
-  values: ["1", "7",  "31", "92", "365"]
-  value_names: ["Just One Day", "One Week", "One Month", "Three Months", "One Year"]
-  default: "7"
-  values_txt: "Any positive integer. Represents period of purging in days."
-
 - name: "Logging Enabled"
   description: "Whether logging of incidents should be activated on the client."
   id: "logenabled"
@@ -221,3 +212,12 @@
   values_txt: "When this many days have passed without the user syncing CommCare will trigger a warning"
   since: "2.4"
 
+- name: "Login Buttons"
+  description: "Choose to label the login buttons with Icons or Text"
+  id: "cc-login-images"
+  values: ["Yes", "No"]
+  value_names: ["Icons", "Text"]
+  default: "No"
+  contingent_default: [{"condition": "{features.sense}='true'", "value": "Yes"}]
+  values_txt: "This value will set whether the login screen uses customizable icons for login and demo mode options or uses the standard buttons with labels."
+  since: "2.8"
