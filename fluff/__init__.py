@@ -365,8 +365,9 @@ class IndicatorDocument(schema.Document):
                         self.value = value
                     elif isinstance(value, list):
                         self.value = dict(date=value[0], value=value[1], group_by=None)
-                    else:
-                        print value
+
+                    if not isinstance(self.value['date'], datetime.date):
+                        self.value['date'] = datetime.datetime.strptime(self.value['date'], '%Y-%m-%d').date()
 
                 def __key(self):
                     gb = self.value['group_by']
