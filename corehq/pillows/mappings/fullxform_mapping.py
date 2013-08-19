@@ -1,6 +1,6 @@
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
 
-FULL_XFORM_INDEX="full_xforms_1595b2ca525ba48c3e8bcb8cd2a426f4"
+FULL_XFORM_INDEX="full_xforms_b3577b244de808e77ac5aa30117268e2"
 
 
 
@@ -45,7 +45,7 @@ FULL_XFORM_MAPPING = {
         'partial_submission': {"type": "boolean"},
         "#export_tag": {"type": "string", "index": "not_analyzed"},
         '_attachments': {
-            'dynamic': True,
+            'dynamic': False,
             'type': 'object'
         },
         'form': {

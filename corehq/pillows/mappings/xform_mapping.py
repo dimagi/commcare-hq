@@ -1,6 +1,6 @@
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
 
-XFORM_INDEX="xforms_173a2feff06a9065ee69fd232ae090ef"
+XFORM_INDEX="xforms_9ec79af5c2225e08012ecc5b2a992a4f"
 
 
 XFORM_MAPPING = {
@@ -9,7 +9,7 @@ XFORM_MAPPING = {
     'ignore_malformed': True,
     'dynamic': False,
     "_meta": {
-        "created": '2013-05-11', #record keeping on the index.
+        "created": '2013-08-13', #record keeping on the index.
     },
     "properties": {
         'doc_type': {'type': 'string'},
@@ -43,7 +43,7 @@ XFORM_MAPPING = {
         'partial_submission': {"type": "boolean"},
         "#export_tag": {"type": "string", "index": "not_analyzed"},
         '_attachments': {
-            'dynamic': True,
+            'dynamic': False,
             'type': 'object'
         },
         'form': {

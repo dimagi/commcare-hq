@@ -26,6 +26,7 @@ from django.core import management
 
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.app_manager.util import get_settings_values
+from corehq.apps.hqadmin.history import get_recent_changes
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
@@ -49,10 +50,8 @@ from couchexport.models import Format
 from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.timezones import utils as tz_utils
-from django.utils.translation import ugettext as _
 from dimagi.utils.django.email import send_HTML_email
 from django.template.loader import render_to_string
-from corehq.apps.users.models import CouchUser
 from django.http import Http404
 
 
@@ -649,10 +648,14 @@ def system_info(request):
         return size
 
     context = get_hqadmin_base_context(request)
-
     context['couch_update'] = request.GET.get('couch_update', 5000)
     context['celery_update'] = request.GET.get('celery_update', 10000)
-    context['celery_flower_url'] = settings.CELERY_FLOWER_URL
+    context['celery_flower_url'] = getattr(settings, 'CELERY_FLOWER_URL', None)
+
+    # recent changes
+    recent_changes = int(request.GET.get('changes', 50))
+    context['recent_changes'] = get_recent_changes(get_db(), recent_changes)
+
 
     context['rabbitmq_url'] = get_rabbitmq_management_url()
 

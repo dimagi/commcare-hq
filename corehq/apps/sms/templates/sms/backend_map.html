@@ -1,0 +1,100 @@
+{% extends 'hqwebapp/two_column.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block title %}{% trans "SMS Country-Connection Map" %}{% endblock %}
+
+{% block head %}
+{{ block.super }}
+<style>
+    .form-block {
+        border: 1px solid #EAEAFF;
+        background-color: #FAFAFF;
+        padding: 20px;
+    }
+    .errorlist li {
+        color: #A22;
+        list-style-type: none;
+    }
+</style>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+<script>
+    var mapping_entry_counter = 0;
+    
+    function add_mapping(prefix, backend_id) {
+        $("#id_table_body").append('<tr> \
+                <td><input type="text" class="input-mini" name="backend_map.'+mapping_entry_counter+'.prefix" value="'+prefix+'" /></td> \
+                <td> \
+                    <select style="width: auto;" id="id_backend_select_'+mapping_entry_counter+'" name="backend_map.'+mapping_entry_counter+'.backend_id"> \
+                        {% for backend in backends %}<option value="{{ backend.get_id }}">{{ backend.name }}</option>{% endfor %} \
+                    </select> \
+                </td> \
+                <td><span id="id_remove_record_'+mapping_entry_counter+'" class="btn btn-danger"><i class="icon icon-white icon-remove"></i> {% trans "Remove" %}</span></td> \
+            </tr>');
+        if(backend_id !== "") {
+            $("#id_backend_select_"+mapping_entry_counter).val(backend_id);
+        }
+        $("#id_remove_record_"+mapping_entry_counter).click(function(){
+            $(this).parent().parent().remove();
+        });
+        mapping_entry_counter++;
+    }
+    
+    $(function(){
+        {% for entry in form.backend_map.value %}
+        add_mapping("{{ entry.prefix }}", "{{ entry.backend_id }}");
+        {% endfor %}
+        
+        $("#id_add_mapping").click(function() {
+            add_mapping("", "");
+        });
+    });
+</script>
+{% endblock %}
+
+{% block page-title %}
+<ul class="breadcrumb">
+    <li>
+        <a href="{% url default_sms_admin_interface %}"><strong>{% trans "SMS Connectivity" %}</strong></a> <span class="divider">&gt;</span>
+    </li>
+    <li class="active">
+        <div id="report-title">
+            <a href="{% url global_backend_map %}">{% trans "SMS Country-Connection Map" %}</a>
+        </div>
+    </li>
+</ul>
+{% endblock %}
+
+{% block main_column %}
+<form action="" method="post">
+    <h4>{% trans "SMS Country-Connection Map" %}</h4>
+    <div class="form-block">
+        {{ form.backend_map.errors }}
+        <table style="width: auto;" class="table table-striped table-bordered datatable">
+            <thead>
+                <tr>
+                    <th>{% trans "Phone Prefix" %}</th>
+                    <th>{% trans "SMS Connection" %}</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="id_table_body"></tbody>
+        </table>
+        <div>
+            <span id="id_add_mapping" class="btn btn-success"><i class="icon icon-white icon-plus"></i> {% trans "Add Mapping" %}</span>
+        </div>
+    </div>
+    <h4>{% trans "Catch-all" %}</h4>
+    <div class="form-block">
+        <select style="width: auto;" name="catchall_backend_id">
+            <option value="" {% if not form.catchall_backend_id.value %}selected="selected"{% endif %}>{% trans "(none)" %}</option>
+            {% for backend in backends %}<option value="{{ backend.get_id }}" {% if backend.get_id == form.catchall_backend_id.value %}selected="selected"{% endif %}>{{ backend.name }}</option>{% endfor %}
+        </select>
+    </div>
+    <div style="padding-top: 20px;">
+        <input type="submit" class="btn btn-primary" value="{% trans "Save" %}" />
+    </div>
+</form>
+{% endblock %}

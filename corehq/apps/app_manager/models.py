@@ -1351,7 +1351,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
             # e.g. 2011-Apr-11 20:45
             'CommCare-Release': "true",
         }
-        if LooseVersion(self.build_spec.version) < '2.1':
+        if LooseVersion(self.build_spec.version) < '2.8':
             settings['Build-Number'] = self.version
         return settings
 
@@ -1648,13 +1648,13 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                         form.version = self.version
 
     def set_media_versions(self, previous_version):
-        for path, map_item in self.multimedia_map.items():
-            if previous_version:
-                pre_map_item = previous_version.multimedia_map.get(path, None)
-                if pre_map_item and pre_map_item.version and pre_map_item.multimedia_id == map_item.multimedia_id:
-                    map_item.version = pre_map_item.version
-                else:
-                    map_item.version = self.version
+        # access to .multimedia_map is slow
+        prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
+
+        for path, map_item in self.multimedia_map.iteritems():
+            pre_map_item = prev_multimedia_map.get(path, None)
+            if pre_map_item and pre_map_item.version and pre_map_item.multimedia_id == map_item.multimedia_id:
+                map_item.version = pre_map_item.version
             else:
                 map_item.version = self.version
 
