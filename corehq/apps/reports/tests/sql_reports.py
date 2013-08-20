@@ -65,9 +65,9 @@ class UserTestReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
 
     @property
     def columns(self):
-        user = DatabaseColumn("Username", "user", column_type=SimpleColumn, format_fn=self.username)
-        i_a = DatabaseColumn("Indicator A", "indicator_a")
-        i_b = DatabaseColumn("Indicator B", "indicator_b")
+        user = DatabaseColumn("Username", SimpleColumn("user"), format_fn=self.username)
+        i_a = DatabaseColumn("Indicator A", SumColumn("indicator_a"))
+        i_b = DatabaseColumn("Indicator B", SumColumn("indicator_b"))
 
         agg_c_d = AggregateColumn("C/D", combine_indicator,
                                   SumColumn("indicator_c"),
@@ -120,10 +120,10 @@ class RegionTestReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
 
     @property
     def columns(self):
-        region = DatabaseColumn("Region", "region", column_type=SimpleColumn, format_fn=self.region_name)
-        sub_region = DatabaseColumn("Sub Region", "sub_region", column_type=SimpleColumn, format_fn=self.sub_region_name)
-        i_a = DatabaseColumn("Indicator A", "indicator_a")
-        i_b = DatabaseColumn("Indicator B", "indicator_b")
+        region = DatabaseColumn("Region", SimpleColumn("region"), format_fn=self.region_name)
+        sub_region = DatabaseColumn("Sub Region", SimpleColumn("sub_region"), format_fn=self.sub_region_name)
+        i_a = DatabaseColumn("Indicator A", SumColumn("indicator_a"))
+        i_b = DatabaseColumn("Indicator B", SumColumn("indicator_b"))
 
         aggregate_cols = [
             i_a,

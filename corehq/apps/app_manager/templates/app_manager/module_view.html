@@ -39,10 +39,11 @@
                 langs: {{ app.langs|JSON }},
                 edit: {{ edit|JSON }},
                 saveUrl: "{% url edit_module_detail_screens domain app.id module.id %}",
-                applicationVersion: {{ app.application_version|JSON }}
+                applicationVersion: {{ app.application_version|JSON }},
+                parentModules: {{ parent_modules|JSON }},
+                parentSelect: {{ module.parent_select|JSON }}
             });
 
-            //todo: move this
             var parsedSortRows = JSON.parse({{ sortElements|JSON }});
             for (var i = 0; i < parsedSortRows.length; i++) {
                 detailScreenConfig.sortRows.addSortRow(
@@ -58,6 +59,13 @@
                 var valueNoSpaces = value.replace(/ /g, '_');
                 if (value !== valueNoSpaces) {
                     $(this).val(valueNoSpaces);
+                }
+                if (!valueNoSpaces.match(/^[\w-]+$/g)) {
+                    $(this).closest('.control-group').addClass('error')
+                    $('#case_type_error').css('display', 'inline');
+                } else {
+                    $(this).closest('.control-group').removeClass('error')
+                    $('#case_type_error').css('display', 'none');
                 }
             });
         });
@@ -151,7 +159,10 @@
                     </label>
                     <div class="controls">
                         {% if edit %}
-                            <input class="code" type="text" id="case_type" name="case_type" value="{{ module.case_type }}"/>
+                            <input class="code" type="text" id="case_type" name="case_type" value="{{ module.case_type }}" />
+                            <span class="help-inline" id="case_type_error" style="display: none;">
+                                {% trans "Case types can only include the characters a-z, 0-9, and _" %}
+                            </span>
                         {% else %}
                             <code>{{ module.case_type }}</code>
                         {% endif %}
@@ -218,8 +229,9 @@
             {% endblocktrans %}
         </div>
         <div id="detail-screen-config-body">
+            <div id="detail-screen-sort">
             {% if app.enable_multi_sort %}
-                <legend>
+                <legend data-bind="visible: rowCount() > 0">
                     {% trans "Sort Properties" %}
                     <span style="font-size: 13px">
                         <span class="hq-help-template"
@@ -244,7 +256,7 @@
                                 <th></th>
                                 <th>{% trans "Property" %}</th>
                                 <th>{% trans "Direction" %}</th>
-                                <th>{% trans "Type" %}</th>
+                                <th>{% trans "Format" %}</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -258,25 +270,35 @@
                                 </td>
 
                                 <td>
-                                    <code data-bind="text: field">
+                                    <!-- ko foreach: labelTextItems -->
+                                        <span class="label label-info"
+                                              data-bind="text: $data">
+                                        </span>
+                                        <span style="color: #DDD;">/</span>
+                                    <!-- /ko -->
+                                    </span>
+                                    <code data-bind="text: fieldText">
                                     </code>
                                 </td>
 
                                 <td>
                                     <select data-bind="value: direction">
-                                        <option value="ascending">
-                                            {% trans "Ascending" %}
+                                        <option value="ascending"
+                                                data-bind="text: ascendText">
                                         </option>
-                                        <option value="descending">
-                                            {% trans "Descending" %}
+                                        <option value="descending"
+                                                data-bind="text: descendText">
                                         </option>
                                     </select>
                                 </td>
 
                                 <td>
                                     <select data-bind="value: type">
-                                        <option value="string">
+                                        <option value="plain">
                                             {% trans "Plain" %}
+                                        </option>
+                                        <option value="date">
+                                            {% trans "Date" %}
                                         </option>
                                         <option value="int">
                                             {% trans "Integer" %}
@@ -297,11 +319,22 @@
                     </table>
                 </div>
             {% endif %}
-
+            </div>
             <div id="detail-screen-config">
                 <legend>
                     {% trans "Display Properties" %}
                 </legend>
+            </div>
+            <div id="detail-screen-parent" data-bind="visible: moduleOptions().length">
+                <legend>{% trans "Parent Child Selection" %}</legend>
+                <label class="checkbox">
+                    <input type="checkbox" data-bind="checked: active"/>
+                    {% trans "Select Parent First" %}
+                </label>
+                <div data-bind="visible: active">
+                {% trans "Use Case List from module" %}
+                <select data-bind="optstr: moduleOptions, value: moduleId"></select>
+                </div>
             </div>
         </div>
     </div>

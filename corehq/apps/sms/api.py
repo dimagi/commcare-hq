@@ -2,7 +2,7 @@ import logging
 from django.conf import settings
 
 from dimagi.utils.modules import to_function
-from corehq.apps.sms.util import clean_phone_number, create_billable_for_sms, format_message_list
+from corehq.apps.sms.util import clean_phone_number, create_billable_for_sms, format_message_list, clean_text
 from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING, ForwardingRule, FORWARD_ALL, FORWARD_BY_KEYWORD
 from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber
 from corehq.apps.domain.models import Domain
@@ -21,6 +21,9 @@ from dateutil.parser import parse
 REGISTRATION_KEYWORDS = ["JOIN"]
 REGISTRATION_MOBILE_WORKER_KEYWORDS = ["WORKER"]
 
+class BackendAuthorizationException(Exception):
+    pass
+
 def send_sms(domain, id, phone_number, text):
     """
     Sends an outbound SMS. Returns false if it fails.
@@ -29,7 +32,6 @@ def send_sms(domain, id, phone_number, text):
         return False
     if isinstance(phone_number, int) or isinstance(phone_number, long):
         phone_number = str(phone_number)
-    logging.debug('Sending message: %s' % text)
     phone_number = clean_phone_number(phone_number)
 
     msg = SMSLog(
@@ -70,6 +72,7 @@ def send_sms_to_verified_number(verified_number, text):
     return send_message_via_backend(msg, verified_number.backend, onerror=onerror)
 
 def send_sms_with_backend(domain, phone_number, text, backend_id):
+    phone_number = clean_phone_number(phone_number)
     msg = SMSLog(
         domain=domain,
         phone_number=phone_number,
@@ -82,6 +85,20 @@ def send_sms_with_backend(domain, phone_number, text, backend_id):
         logging.exception("Exception while sending SMS to %s with backend %s" % (phone_number, backend_id))
     return send_message_via_backend(msg, MobileBackend.load(backend_id), onerror=onerror)
 
+def send_sms_with_backend_name(domain, phone_number, text, backend_name):
+    phone_number = clean_phone_number(phone_number)
+    msg = SMSLog(
+        domain=domain,
+        phone_number=phone_number,
+        direction=OUTGOING,
+        date=datetime.utcnow(),
+        text=text
+    )
+
+    def onerror():
+        logging.exception("Exception while sending SMS to %s with backend name %s from domain %s" % (phone_number, backend_name, domain))
+    return send_message_via_backend(msg, MobileBackend.load_by_name(domain, backend_name), onerror=onerror)
+
 def send_message_via_backend(msg, backend=None, onerror=lambda: None):
     """send sms using a specific backend
 
@@ -92,16 +109,24 @@ def send_message_via_backend(msg, backend=None, onerror=lambda: None):
       error log
     """
     try:
+        msg.text = clean_text(msg.text)
+    except Exception:
+        logging.exception("Could not clean text for sms dated '%s' in domain '%s'" % (msg.date, msg.domain))
+    try:
         if not backend:
             backend = msg.outbound_backend
             # note: this will handle "verified" contacts that are still pending
             # verification, thus the backend is None. it's best to only call
             # send_sms_to_verified_number on truly verified contacts, though
 
-        backend.backend_module.send(msg, **backend.get_cleaned_outbound_params())
+        if backend.domain_is_authorized(msg.domain):
+            backend.send(msg)
+        else:
+            raise BackendAuthorizationException("Domain '%s' is not authorized to use backend '%s'" % (msg.domain, backend._id))
 
         try:
-            msg.backend_api = backend.backend_module.API_ID
+            msg.backend_api = backend.__class__.get_api_id()
+            msg.backend_id = backend._id
         except Exception:
             pass
         msg.save()
@@ -371,15 +396,30 @@ def close_open_sessions(domain, connection_id):
         session.end(False)
         session.save()
 
-def structured_sms_handler(verified_number, text):
+def structured_sms_handler(verified_number, text, contact=None):
+    """
+    If contact is present, it is used as the contact who is submitting
+    the data. If not, verified_number is used to determine who the contact
+    is.
+    """
     
     # Circular Import
     from corehq.apps.reminders.models import SurveyKeyword, FORM_TYPE_ALL_AT_ONCE
     
+    if contact is not None:
+        domain = contact.domain
+        contact_doc_type = contact.doc_type
+        contact_id = contact._id
+    else:
+        contact = verified_number.owner
+        domain = verified_number.domain
+        contact_doc_type = verified_number.owner_doc_type
+        contact_id = verified_number.owner_id
+    
     text = text.strip()
     if text == "":
         return False
-    for survey_keyword in SurveyKeyword.get_all(verified_number.domain):
+    for survey_keyword in SurveyKeyword.get_all(domain):
         if survey_keyword.form_type == FORM_TYPE_ALL_AT_ONCE:
             if survey_keyword.delimiter is not None:
                 args = text.split(survey_keyword.delimiter)
@@ -397,20 +437,20 @@ def structured_sms_handler(verified_number, text):
                 session = None
                 
                 # Close any open sessions
-                close_open_sessions(verified_number.domain, verified_number.owner_id)
+                close_open_sessions(domain, contact_id)
                 
                 # Start the session
                 form = Form.get_form(survey_keyword.form_unique_id)
                 app = form.get_app()
                 module = form.get_module()
                 
-                if verified_number.owner_doc_type == "CommCareCase":
-                    case_id = verified_number.owner_id
+                if contact_doc_type == "CommCareCase":
+                    case_id = contact_id
                 else:
                     #TODO: Need a way to choose the case when it's a user that's playing the form
                     case_id = None
                 
-                session, responses = start_session(verified_number.domain, verified_number.owner, app, module, form, case_id=case_id, yield_responses=True)
+                session, responses = start_session(domain, contact, app, module, form, case_id=case_id, yield_responses=True)
                 assert len(responses) > 0, "There should be at least one response."
                 
                 current_question = responses[-1]
@@ -482,9 +522,9 @@ def structured_sms_handler(verified_number, text):
                                     error_occurred = True
                                     error_msg = "ERROR: " + _error_msg
                                     break
-                                responses = _get_responses(verified_number.domain, verified_number.owner_id, answer, yield_responses=True)
+                                responses = _get_responses(domain, contact_id, answer, yield_responses=True)
                             else:
-                                responses = _get_responses(verified_number.domain, verified_number.owner_id, "", yield_responses=True)
+                                responses = _get_responses(domain, contact_id, "", yield_responses=True)
                             
                             current_question = responses[-1]
                             if is_form_complete(current_question):
@@ -507,13 +547,13 @@ def structured_sms_handler(verified_number, text):
                                 error_msg = "ERROR: " + _error_msg
                                 break
                             
-                            responses = _get_responses(verified_number.domain, verified_number.owner_id, answer, yield_responses=True)
+                            responses = _get_responses(domain, contact_id, answer, yield_responses=True)
                             current_question = responses[-1]
                             form_complete = is_form_complete(current_question)
                         
                         # If the form isn't finished yet but we're out of arguments, try to leave each remaining question blank and continue
                         while not form_complete and not error_occurred:
-                            responses = _get_responses(verified_number.domain, verified_number.owner_id, "", yield_responses=True)
+                            responses = _get_responses(domain, contact_id, "", yield_responses=True)
                             current_question = responses[-1]
                             
                             if current_question.is_error:
@@ -523,11 +563,11 @@ def structured_sms_handler(verified_number, text):
                             if is_form_complete(current_question):
                                 form_complete = True
             except Exception:
-                logging.exception("Could not process structured sms for verified number %s, domain %s, keyword %s" % (verified_number._id, verified_number.domain, keyword))
+                logging.exception("Could not process structured sms for contact %s, domain %s, keyword %s" % (contact_id, domain, keyword))
                 error_occurred = True
                 error_msg = "ERROR: Internal server error"
             
-            if error_occurred:
+            if error_occurred and verified_number is not None:
                 send_sms_to_verified_number(verified_number, error_msg)
             
             if session is not None and (error_occurred or not form_complete):

@@ -7,10 +7,3 @@ class ImportCases(DataInterface):
     report_template_path = "importer/import_cases.html"
     gide_filters = True
     asynchronous = False
-
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        if domain == 'khayelitsha':
-            return True
-
-        return user.is_superuser or user.is_previewer()

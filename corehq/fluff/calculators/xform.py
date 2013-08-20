@@ -1,21 +1,45 @@
 from datetime import timedelta
+import warnings
 from corehq.fluff.calculators.logic import ANDCalculator, ORCalculator
 import fluff
+from fluff.filters import Filter
+
 
 def default_date(form):
     return form.received_on
 
 # operators
-EQUAL = lambda expected, reference: expected == reference
-NOT_EQUAL = lambda expected, reference: expected != reference
-IN = lambda expected, reference_list: expected in reference_list
+EQUAL = lambda input, reference: input == reference
+NOT_EQUAL = lambda input, reference: input != reference
+IN = lambda input, reference_list: input in reference_list
+IN_MULTISELECT = lambda input, reference: reference in (input or '').split(' ')
+ANY = lambda input, reference: bool(input)
+
+def ANY_IN_MULTISELECT(input, reference):
+    """
+    For 'this multiselect contains any one of these N items'
+    """
+    return any([subval in (input or '').split(' ') for subval in reference])
 
 class IntegerPropertyReference(object):
-    def __init__(self, property_path):
+    """
+    Returns the integer value of the property_path passed in.
+
+    By default FilteredFormPropertyCalculator would use 1 for all results
+    but this will let you return the actual number to be summed.
+
+    Accepts an optional transform lambda/method that would modify the
+    resulting integer before returning it.
+    """
+    def __init__(self, property_path, transform=None):
         self.property_path = property_path
+        self.transform = transform
 
     def __call__(self, form):
-        return int(form.xpath(self.property_path) or 0)
+        value = int(form.xpath(self.property_path) or 0)
+        if value and self.transform:
+            value = self.transform(value)
+        return value
 
 class FilteredFormPropertyCalculator(fluff.Calculator):
     """
@@ -39,12 +63,16 @@ class FilteredFormPropertyCalculator(fluff.Calculator):
 
     @fluff.date_emitter
     def total(self, form):
-        if self.indicator_calculator is not None:
+        if not self.indicator_calculator:
+            yield default_date(form)
+        else:
             yield [default_date(form), self.indicator_calculator(form)]
-        yield default_date(form)
 
     def __init__(self, xmlns=None, property_path=None, property_value=None,
                  operator=EQUAL, indicator_calculator=None, window=None):
+        warnings.warn("FilteredFormPropertyCalculator is deprecated. "
+                      "Use SimpleCalculator in combination with FormPropertyFilter", DeprecationWarning)
+
         def _conditional_setattr(key, value):
             if value:
                 setattr(self, key, value)
@@ -54,7 +82,7 @@ class FilteredFormPropertyCalculator(fluff.Calculator):
 
         _conditional_setattr('property_path', property_path)
         _conditional_setattr('property_value', property_value)
-        if self.property_path is not None:
+        if self.property_path is not None and operator != ANY:
             assert self.property_value is not None
 
         self.operator = operator
@@ -71,9 +99,52 @@ class FilteredFormPropertyCalculator(fluff.Calculator):
             )
         )
 
+class FormPropertyFilter(Filter):
+    """
+    Enables filtering forms by xmlns and (optionally) property == value.
+    Let's you easily define indicators such as:
+     - all adult registration forms
+     - all child registration forms with foo.bar == baz
+     - all newborn followups with bippity != bop
+
+    These can also be chained using logic operators for fun and profit.
+    """
+
+    xmlns = None
+    property_path = None
+    property_value = None
+
+    def __init__(self, xmlns=None, property_path=None, property_value=None, operator=EQUAL):
+        def _conditional_setattr(key, value):
+            if value:
+                setattr(self, key, value)
+
+        _conditional_setattr('xmlns', xmlns)
+        assert self.xmlns is not None
+
+        _conditional_setattr('property_path', property_path)
+        _conditional_setattr('property_value', property_value)
+        if self.property_path is not None and operator != ANY:
+            assert self.property_value is not None
+
+        self.operator = operator
+
+    def filter(self, form):
+        return (
+            form.xmlns == self.xmlns and (
+                self.property_path is None or
+                self.operator(form.xpath(self.property_path), self.property_value)
+            )
+        )
+
 # meh this is a little redundant but convenient
 class FormANDCalculator(ANDCalculator):
     window = timedelta(days=1)
+
+    def __init__(self, calculators):
+        warnings.warn("FormANDCalculator is deprecated. "
+                      "Use SimpleCalculator in combination with ANDFilter", DeprecationWarning)
+        super(FormANDCalculator, self).__init__(calculators)
 
     @fluff.date_emitter
     def total(self, form):
@@ -82,6 +153,21 @@ class FormANDCalculator(ANDCalculator):
 class FormORCalculator(ORCalculator):
     window = timedelta(days=1)
 
+    def __init__(self, calculators):
+        warnings.warn("FormORCalculator is deprecated. "
+                      "Use SimpleCalculator in combination with ORFilter", DeprecationWarning)
+        super(FormORCalculator, self).__init__(calculators)
+
     @fluff.date_emitter
     def total(self, form):
         yield default_date(form)
+
+class FormSUMCalculator(ORCalculator):
+    window = timedelta(days=1)
+
+    @fluff.date_emitter
+    def total(self, form):
+        for calc in self.calculators:
+            if calc.passes_filter(form):
+                for total in calc.total(form):
+                    yield total

@@ -15,14 +15,47 @@ def parse_xml(string):
     except ET.ParseError, e:
         raise XFormError("Error parsing XML" + (": %s" % e if e.message else ""))
 
+
 class XFormError(Exception):
     pass
+
 
 class CaseError(XFormError):
     pass
 
+
 class XFormValidationError(XFormError):
-    pass
+    def __init__(self, fatal_error, version="1.0", validation_problems=None):
+        self.fatal_error = fatal_error
+        self.version = version
+        self.validation_problems = validation_problems
+
+    def __str__(self):
+        fatal_error_text = self.format_v1(self.fatal_error)
+        ret = "Validation Error%s" % (': %s' % fatal_error_text if fatal_error_text else '')
+        problems = filter(lambda problem: problem['message'] != self.fatal_error, self.validation_problems)
+        if problems:
+            ret += "\n\nMore information:"
+            for problem in problems:
+                ret += "\n{type}: {msg}".format(type=problem['type'].title(), msg=problem['message'])
+        return ret
+
+    def format_v1(self, msg):
+        if self.version != '1.0':
+            return msg
+        # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'
+        #
+        # ... and if possible split the third line that looks like e.g. "org.javarosa.xform.parse.XFormParseException: Select question has no choices"
+        # and just return the undecorated string
+        #
+        # ... unless the first line says
+        message_lines = unicode(msg).split('\n')[2:]
+        if len(message_lines) > 0 and ':' in message_lines[0] and 'XPath Dependency Cycle' not in unicode(msg):
+            message = ' '.join(message_lines[0].split(':')[1:])
+        else:
+            message = '\n'.join(message_lines)
+
+        return message
 
 namespaces = dict(
     jr = "{http://openrosa.org/javarosa}",
@@ -64,6 +97,11 @@ class CaseXPath(XPath):
         return self.slash(property)
 
 SESSION_CASE_ID = CaseIDXPath(u"instance('commcaresession')/session/data/case_id")
+
+class IndicatorXpath(XPath):
+
+    def indicator(self, indicator_name):
+        return XPath(u"instance('%s')/indicators/case[@id = current()/@case_id]" % self).slash(indicator_name)
 
 
 class WrappedNode(object):
@@ -141,9 +179,9 @@ class XForm(WrappedNode):
             self.namespaces.update(x="{%s}" % xmlns)
 
     def validate(self, version='1.0'):
-        r = formtranslate.api.validate(ET.tostring(self.xml), version=version)
-        if not r['success']:
-            raise XFormValidationError(r["errstring"])
+        validation_results = formtranslate.api.validate(ET.tostring(self.xml) if self.xml else '', version=version)
+        if not validation_results.success:
+            raise XFormValidationError(validation_results.fatal_error, version, validation_results.problems)
         return self
 
     @property
@@ -321,8 +359,10 @@ class XForm(WrappedNode):
 
         questions = []
         excluded_paths = set()
+        repeat_contexts = set([''])
 
         def build_questions(group, path_context="", repeat_context="", exclude=False):
+            repeat_contexts.add(repeat_context)
             for prompt in group.findall('*'):
                 if prompt.tag_xmlns == namespaces['f'][1:-1] and prompt.tag_name != "label":
                     path = self.resolve_path(get_path(prompt), path_context)
@@ -355,7 +395,7 @@ class XForm(WrappedNode):
                                 question.update({'options': options})
                             questions.append(question)
         build_questions(self.find('{h}body'))
-
+        repeat_contexts = sorted(repeat_contexts, reverse=True)
 
         def build_non_question_paths(parent, path_context=""):
             for child in parent.findall('*'):
@@ -364,10 +404,15 @@ class XForm(WrappedNode):
             if not parent.findall('*'):
                 path = path_context
                 if path not in excluded_paths:
+                    matching_repeat_context = (
+                        repeat_context for repeat_context in repeat_contexts
+                        if repeat_context in path
+                    ).next()
                     questions.append({
                         "label": path,
                         "tag": "hidden",
-                        "value": path
+                        "value": path,
+                        "repeat": matching_repeat_context,
                     })
         build_non_question_paths(self.data_node)
         return questions

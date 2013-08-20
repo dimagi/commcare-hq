@@ -145,11 +145,11 @@ fi
 # from http://onabai.wordpress.com/2012/05/10/installing-couchdb-1-2-in-ubuntu-12-04/
 if [ ! -f /etc/init.d/couchdb ]; then
     if [ ! -f apache-couchdb-1.2.1.tar.gz ]; then
-        wget http://apache.mirrors.pair.com/couchdb/1.2.1/apache-couchdb-1.2.1.tar.gz
+        wget http://mirrors.ibiblio.org/apache/couchdb/source/1.3.1/apache-couchdb-1.3.1.tar.gz
     fi
 
-    tar xzf apache-couchdb-1.2.1.tar.gz
-    cd apache-couchdb-1.2.1
+    tar xzf apache-couchdb-1.3.1.tar.gz
+    cd apache-couchdb-1.3.1
     if [ "$PM" = "apt-ubuntu" ]; then
         ./configure
     elif  [ "$PM" = "yum-rhel" ]; then
@@ -162,7 +162,7 @@ if [ ! -f /etc/init.d/couchdb ]; then
     fi
     make 
     sudo make install
-    cd .. && rm -r apache-couchdb-1.2.1
+    cd .. && rm -r apache-couchdb-1.3.1
 
     if [ "$PM" = "apt-ubuntu" ]; then
         sudo adduser --disabled-login --disabled-password --no-create-home couchdb

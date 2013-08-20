@@ -1,6 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.contrib import messages
 import logging
+import math
 from corehq.apps.announcements.models import ReportAnnouncement
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.display import xmlns_to_name
@@ -16,6 +17,7 @@ from django.http import Http404
 import pytz
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
+from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import json_request
 from django.conf import settings
@@ -89,7 +91,7 @@ def get_group_params(domain, group='', users=None, user_id_only=False, **kwargs)
 
 
 def get_all_users_by_domain(domain=None, group=None, user_ids=None,
-                            user_filter=None, simplified=False, CommCareUser=None):
+                            user_filter=None, simplified=False, CommCareUser=None, include_inactive=False):
     """
         WHEN THERE ARE A LOT OF USERS, THIS IS AN EXPENSIVE OPERATION.
         Returns a list of CommCare Users based on domain, group, and user 
@@ -117,6 +119,8 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         users = []
         submitted_user_ids = get_all_userids_submitted(domain)
         registered_user_ids = dict([(user.user_id, user) for user in CommCareUser.by_domain(domain)])
+        if include_inactive:
+            registered_user_ids.update(dict([(u.user_id, u) for u in CommCareUser.by_domain(domain, is_active=False)]))
         for user_id in submitted_user_ids:
             if user_id in registered_user_ids and user_filter[HQUserType.REGISTERED].show:
                 user = registered_user_ids[user_id]
@@ -235,35 +239,29 @@ def datespan_export_filter(doc, datespan):
     return False
 
 def case_users_filter(doc, users):
-    try:
-        return doc['user_id'] in users
-    except KeyError:
+    for id in (doc.get('owner_id'), doc.get('user_id')):
+        if id and id in users:
+            return True
+    else:
         return False
 
 def case_group_filter(doc, group):
     if group:
         user_ids = set(group.get_static_user_ids())
-        try:
-            return doc['user_id'] in user_ids
-        except KeyError:
-            return False
+        return doc.get('owner_id') == group._id or case_users_filter(doc, user_ids)
     else:
-        return True
+        return False
 
 def users_filter(doc, users):
     try:
-        user_id = doc['form']['meta']['userID']
+        return doc['form']['meta']['userID'] in users
     except KeyError:
-        user_id = None
-    return user_id in users
+        return False
 
 def group_filter(doc, group):
     if group:
         user_ids = set(group.get_static_user_ids())
-        try:
-            return doc['form']['meta']['userID'] in user_ids
-        except KeyError:
-            return False
+        return users_filter(doc, user_ids)
     else:
         return True
 
@@ -382,3 +380,38 @@ def stream_qs(qs, batch_size=1000):
     for _, _, _, qs in batch_qs(qs, batch_size):
         for item in qs:
             yield item
+
+def numcell(text, value=None, convert='int'):
+    if value is None:
+        try:
+            value = int(text) if convert == 'int' else float(text)
+            if math.isnan(value):
+                text = '---'
+            elif not convert == 'int': # assume this is a percentage column
+                text = '%.f%%' % value
+        except ValueError:
+            value = text
+    return format_datatables_data(text=text, sort_key=value)
+
+def datespan_from_beginning(domain, default_days, timezone):
+    now = datetime.utcnow()
+    def extract_date(x):
+        try:
+            def clip_timezone(datestring):
+                return datestring[:len('yyyy-mm-ddThh:mm:ss')]
+            return string_to_datetime(clip_timezone(x['key'][2]))
+        except Exception:
+            logging.error("Tried to get a date from this, but it didn't work: %r" % x)
+            return None
+    key = make_form_couch_key(domain)
+    startdate = get_db().view('reports_forms/all_forms',
+        startkey=key,
+        endkey=key+[{}],
+        limit=1,
+        descending=False,
+        reduce=False,
+        wrapper=extract_date,
+    ).one() #or now - timedelta(days=default_days - 1)
+    datespan = DateSpan(startdate, now, timezone=timezone)
+    datespan.is_default = True
+    return datespan

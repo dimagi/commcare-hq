@@ -4,22 +4,31 @@ from copy import deepcopy
 import logging
 from collections import defaultdict
 from StringIO import StringIO
-import os
+import socket
+
+from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST, require_GET
 from pytz import timezone
-
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, HttpResponseNotFound
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
 from django.views.decorators.cache import cache_page
+from django.views.generic import FormView
 from django.template.defaultfilters import yesno
 from django.contrib import messages
 from django.conf import settings
 from restkit import Resource
 from django.core import cache
+from django.utils import html
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _
+from django.core import management
+
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.app_manager.util import get_settings_values
+from corehq.apps.hqadmin.history import get_recent_changes
 from corehq.apps.hqadmin.models import HqDeploy
+from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index, check_xform_index
@@ -34,16 +43,17 @@ from dimagi.utils.couch.database import get_db, is_bigcouch
 from corehq.apps.domain.decorators import  require_superuser
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
-from dimagi.utils.web import json_response
+from dimagi.utils.web import json_response, get_url_base
 from couchexport.export import export_raw, export_from_tables
 from couchexport.shortcuts import export_response
 from couchexport.models import Format
 from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.decorators.view import get_file
-from django.utils import html
 from dimagi.utils.timezones import utils as tz_utils
-from django.utils.translation import ugettext as _
-from django.core import management
+from dimagi.utils.django.email import send_HTML_email
+from django.template.loader import render_to_string
+from django.http import Http404
+
 
 @require_superuser
 def default(request):
@@ -55,6 +65,14 @@ datespan_default = datespan_in_request(
     default_days=30,
 )
 
+
+def get_rabbitmq_management_url():
+    if settings.BROKER_URL.startswith('amqp'):
+        amqp_parts = settings.BROKER_URL.replace('amqp://','').split('/')
+        mq_management_url = amqp_parts[0].replace('5672', '15672')
+        return "http://%s" % mq_management_url.split('@')[-1]
+    else:
+        return None
 
 def get_hqadmin_base_context(request):
     return {
@@ -412,6 +430,51 @@ def mobile_user_reports(request):
     return render(request, template, context)
 
 @require_superuser
+def mass_email(request):
+    if not request.couch_user.is_staff:
+        raise Http404()
+
+    if request.method == "POST":
+        form = EmailForm(request.POST)
+        if form.is_valid():
+            subject = form.cleaned_data['email_subject']
+            body = form.cleaned_data['email_body']
+            real_email = form.cleaned_data['real_email']
+
+            if real_email:
+                recipients = WebUser.view(
+                    'users/mailing_list_emails',
+                    reduce=False,
+                    include_docs=True,
+                ).all()
+            else:
+                recipients = [request.couch_user]
+
+            for recipient in recipients:
+                params = {
+                    'email_body': body,
+                    'user_id': recipient.get_id,
+                    'unsub_url': get_url_base() +
+                                 reverse('unsubscribe', args=[recipient.get_id])
+                }
+                text_content = render_to_string("hqadmin/email/mass_email_base.txt", params)
+                html_content = render_to_string("hqadmin/email/mass_email_base.html", params)
+
+                send_HTML_email(subject, recipient.email, html_content, text_content,
+                                email_from=settings.DEFAULT_FROM_EMAIL)
+
+            messages.success(request, 'Your email(s) were sent successfully.')
+
+    else:
+        form = EmailForm()
+
+    context = get_hqadmin_base_context(request)
+    context['hide_filters'] = True
+    context['form'] = form
+    return render(request, "hqadmin/mass_email.html", context)
+
+
+@require_superuser
 @get_file("file")
 def update_domains(request):
     if request.method == "POST":
@@ -523,8 +586,8 @@ def system_ajax(request):
     Utility ajax functions for polling couch and celerymon
     """
     type = request.GET.get('api', None)
-    task_limit = getattr(settings, 'CELERYMON_TASK_LIMIT', 5)
-    celerymon_url = getattr(settings, 'CELERYMON_URL', '')
+    task_limit = getattr(settings, 'CELERYMON_TASK_LIMIT', 12)
+    celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
     db = XFormInstance.get_db()
     ret = {}
     if type == "_active_tasks":
@@ -544,42 +607,26 @@ def system_ajax(request):
     elif type == "_logs":
         pass
 
-    if celerymon_url != '':
-        cresource = Resource(celerymon_url, timeout=3)
-        if type == "celerymon_poll":
-            #inefficient way to just get everything in one fell swoop
-            #first, get all task types:
+    if celery_monitoring:
+        cresource = Resource(celery_monitoring, timeout=3)
+        if type == "flower_poll":
             ret = []
             try:
-                t = cresource.get("api/task/name/").body_string()
-                task_names = json.loads(t)
+                t = cresource.get("api/tasks", params_dict={'limit': task_limit}).body_string()
+                all_tasks = json.loads(t)
             except Exception, ex:
-                task_names = []
+                all_tasks = []
                 t = {}
-                logging.error("Error with getting celerymon: %s" % ex)
+                logging.error("Error with getting from celery_flower: %s" % ex)
 
-            for tname in task_names:
-                taskinfo_raw = json.loads(cresource.get('api/task/name/%s' % (tname), params_dict={'limit': task_limit}).body_string())
-                for traw in taskinfo_raw:
-                    # it's an array of arrays - looping through [<id>, {task_info_dict}]
-                    tinfo = traw[1]
-                    tinfo['name'] = '.'.join(tinfo['name'].split('.')[-2:])
-                    ret.append(tinfo)
+            for task_id, traw in all_tasks.items():
+                # it's an array of arrays - looping through [<id>, {task_info_dict}]
+                traw['name'] = '.'.join(traw['name'].split('.')[-2:])
+                ret.append(traw)
             ret = sorted(ret, key=lambda x: x['succeeded'], reverse=True)
             return HttpResponse(json.dumps(ret), mimetype = 'application/json')
+    return HttpResponse('{}', mimetype='application/json')
 
-#        if type=="celerymon_tasks_types":
-#            #call CELERYMON_URL/api/task/name/ to get seen task types
-#            t = cresource.get("api/task/name/")
-#            return HttpResponse(t.body_string(), mimetype = 'application/json')
-#        elif type == "celerymon_tasks_by_type":
-#            #call CELERYMON_URL/api/task/name/ to get seen task types
-#            task_name = request.GET.get('task_name', '')
-#            if task_name != '':
-#                t = cresource.get("/api/task/name/%s/?limit=%d" % (task_name, task_limit))
-#                return HttpResponse(t.body_string(), mimetype = 'application/json')
-
-    return HttpResponse('{}', mimetype = 'application/json')
 
 @require_superuser
 def system_info(request):
@@ -601,28 +648,24 @@ def system_info(request):
         return size
 
     context = get_hqadmin_base_context(request)
-
     context['couch_update'] = request.GET.get('couch_update', 5000)
     context['celery_update'] = request.GET.get('celery_update', 10000)
+    context['celery_flower_url'] = getattr(settings, 'CELERY_FLOWER_URL', None)
+
+    # recent changes
+    recent_changes = int(request.GET.get('changes', 50))
+    context['recent_changes'] = get_recent_changes(get_db(), recent_changes)
+
+
+    context['rabbitmq_url'] = get_rabbitmq_management_url()
 
     context['hide_filters'] = True
-    if hasattr(os, 'uname'):
-        context['current_system'] = os.uname()[1]
+    context['current_system'] = socket.gethostname()
 
-    #from dimagi.utils import gitinfo
-    #context['current_ref'] = gitinfo.get_project_info()
-    #removing until the async library is updated
-    context['current_ref'] = {}
-    if settings.COUCH_USERNAME == '' and settings.COUCH_PASSWORD == '':
-        couchlog_resource = Resource("http://%s/" % (settings.COUCH_SERVER_ROOT))
-    else:
-        couchlog_resource = Resource("http://%s:%s@%s/" % (settings.COUCH_USERNAME, settings.COUCH_PASSWORD, settings.COUCH_SERVER_ROOT))
-    try:
-        #todo, fix on bigcouch/cloudant
-        context['couch_log'] = "Will be back online shortly" if is_bigcouch() \
-            else couchlog_resource.get('_log', params_dict={'bytes': 2000 }).body_string()
-    except Exception, ex:
-        context['couch_log'] = "unable to open couch log: %s" % ex
+    environment = settings.SERVER_ENVIRONMENT
+    context['last_deploy'] = HqDeploy.get_latest(environment)
+
+    context['snapshot'] = context['last_deploy'].code_snapshot if context['last_deploy'] else {}
 
     #redis status
     redis_status = ""
@@ -649,7 +692,7 @@ def system_info(request):
     mq_status = "Unknown"
     if settings.BROKER_URL.startswith('amqp'):
         amqp_parts = settings.BROKER_URL.replace('amqp://','').split('/')
-        mq_management_url = amqp_parts[0].replace('5672', '55672')
+        mq_management_url = amqp_parts[0].replace('5672', '15672')
         vhost = amqp_parts[1]
         try:
             mq = Resource('http://%s' % mq_management_url, timeout=2)
@@ -657,12 +700,35 @@ def system_info(request):
             mq_status = "Offline"
             for d in vhost_dict:
                 if d['name'] == vhost:
-                    mq_status='OK'
+                    mq_status='RabbitMQ OK'
         except Exception, ex:
-            mq_status = "Error connecting: %s" % ex
+            mq_status = "RabbitMQ Error: %s" % ex
     else:
-        mq_status = "Not configured"
+        mq_status = "RabbitMQ Not configured"
     context['rabbitmq_status'] = mq_status
+
+    #celery task monitoring status
+    celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
+    worker_status = ""
+    if celery_monitoring:
+        cresource = Resource(celery_monitoring, timeout=3)
+        t = cresource.get("api/workers").body_string()
+        all_workers = json.loads(t)
+        worker_ok = '<span class="label label-success">OK</span>'
+        worker_bad = '<span class="label label-important">Down</span>'
+
+        tasks_ok = 'label-success'
+        tasks_full = 'label-warning'
+
+
+        worker_info = []
+        for hostname, w in all_workers.items():
+            status_html = mark_safe(worker_ok if w['status'] else worker_bad)
+            tasks_class = tasks_full if w['running_tasks'] == w['concurrency'] else tasks_ok
+            tasks_html = mark_safe('<span class="label %s">%d / %d</span> :: %d' % (tasks_class, w['running_tasks'], w['concurrency'], w['completed_tasks']))
+            worker_info.append(' '.join([hostname, status_html, tasks_html]))
+        worker_status = '<br>'.join(worker_info)
+    context['worker_status'] = mark_safe(worker_status)
 
 
     #memcached_status
@@ -686,7 +752,6 @@ def system_info(request):
     context['memcached_status'] = mc_status
     context['memcached_results'] = mc_results
 
-    context['last_deploy'] = HqDeploy.get_latest()
 
     #elasticsearch status
     #node status
@@ -746,6 +811,19 @@ def all_commcare_settings(request):
                      if app_filter(s)]
     return json_response(settings_list)
 
+
+def find_broken_suite_files(request):
+    from corehq.apps.app_manager.management.commands.find_broken_suite_files import find_broken_suite_files
+    try:
+        start = request.GET['start']
+        end = request.GET['end']
+    except KeyError:
+        return HttpResponseBadRequest()
+    # streaming doesn't seem to work; it stops part-way through
+    return HttpResponse(''.join(find_broken_suite_files(start, end)),
+                        mimetype='text/plain')
+
+
 @require_superuser
 @require_GET
 def admin_restore(request):
@@ -784,3 +862,23 @@ def run_command(request):
     output_buf.close()
 
     return json_response({"success": True, "output": output})
+
+
+class FlagBrokenBuilds(FormView):
+    template_name = "hqadmin/flag_broken_builds.html"
+    form_class = BrokenBuildsForm
+
+    @method_decorator(require_superuser)
+    def dispatch(self, *args, **kwargs):
+        return super(FlagBrokenBuilds, self).dispatch(*args, **kwargs)
+
+    def form_valid(self, form):
+        db = ApplicationBase.get_db()
+        build_jsons = db.all_docs(keys=form.build_ids, include_docs=True)
+        docs = []
+        for doc in [build_json['doc'] for build_json in build_jsons.all()]:
+            if doc.get('doc_type') in ['Application', 'RemoteApp']:
+                doc['build_broken'] = True
+                docs.append(doc)
+        db.bulk_save(docs)
+        return HttpResponse("posted!")

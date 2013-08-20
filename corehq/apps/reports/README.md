@@ -115,9 +115,9 @@ class DemoReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
 
     @property
     def columns(self):
-        user = DatabaseColumn("Username1", "user", column_type=SimpleColumn, format_fn=self.username)
-        i_a = DatabaseColumn("Indicator A", "indicator_a")
-        i_b = DatabaseColumn("Indicator B", "indicator_b")
+        user = DatabaseColumn("Username1", SimpleColumn("user"), format_fn=self.username)
+        i_a = DatabaseColumn("Indicator A", SumColumn("indicator_a"))
+        i_b = DatabaseColumn("Indicator B", SumColumn("indicator_b"))
 
         agg_c_d = AggregateColumn("C/D", self.calc_percentage,
                                   SumColumn("indicator_c"),
@@ -146,4 +146,68 @@ class DemoReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
 
     def format_percent(self, value):
         return format_datatables_data("%d%%" % value, value)
+```
+
+## Hooking up reports to CommCare HQ
+
+Custom reports can be configured in code or in the database. To configure custom reports in code
+follow the following instructions.
+
+First, you must add the app to `HQ_APPS` in `settings.py`.  It must have an `__init__.py` and a
+`models.py` for django to recognize it as an app.
+
+Next, add a mapping for your domain(s) to the custom reports module root to the `DOMAIN_MODULE_MAP`
+variable in `settings.py`.
+
+Finally, add a mapping to your custom reports to `__init__.py` in your custom reports submodule: 
+
+```
+from myproject import reports
+
+CUSTOM_REPORTS = (
+    ('Custom Reports', (
+        reports.MyCustomReport,
+        reports.AnotherCustomReport,
+    )),
+)
+```
+
+
+## Adding dynamic reports
+
+Domains support dynamic reports. Currently the only verison of this is the pie charts
+that show breakdowns of forms/cases by a particular property. See the `add_pie_chart_report`
+management command to use this for pie charts without writing any code.
+
+Note that pie charts require a full case/xform ES index
+
+```
+from corehq.apps.domain.models import *
+domain = Domain.get_by_name('commtrack-public-demo')
+domain.dynamic_reports = [
+  DynamicReportSet(
+    section_title='Analytics',
+    reports=[
+      DynamicReportConfig(
+        report='corehq.apps.reports.standard.inspect.GenericPieChartReportTemplate',
+        name='Report 1',
+        kwargs={
+          'mode': 'case',
+          'submission_type': 'supply-point-product',
+          'field': 'product',
+        }
+      ),
+      DynamicReportConfig(
+        report='corehq.apps.reports.standard.inspect.GenericPieChartReportTemplate',
+        name='Report 2',
+        kwargs={
+          'mode': 'form',
+          'submission_type': 'http://openrosa.org/commtrack/stock_report',
+          'field': 'location',
+        }
+      ),
+    ]
+  ),
+]
+domain.save()
 ```

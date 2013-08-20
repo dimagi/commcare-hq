@@ -48,13 +48,17 @@ class CallCenter(SqlIndicatorSet):
 
     @property
     def columns(self):
-        cols = [DatabaseColumn("case", 'case', SimpleColumn, sortable=False)] if self.group_by else []
+        cols = [DatabaseColumn("case", SimpleColumn('case'), format_fn=self.map_case, sortable=False)] if self.group_by else []
         return cols + [
-            DatabaseColumn('casesUpdatedInLastWeek', 'cases_updated', SumColumn, sortable=False),
-            DatabaseColumn('casesUpdatedInWeekPrior', 'cases_updated', SumColumn,
-                           filters=['date >= :2weekago', 'date < :weekago'],
-                           alias='casesUpdatedInWeekPrior', sortable=False),
+            DatabaseColumn('casesUpdatedInLastWeek', SumColumn('cases_updated'), sortable=False),
+            DatabaseColumn('casesUpdatedInWeekPrior', SumColumn('cases_updated',
+                                                                filters=['date >= :2weekago', 'date < :weekago'],
+                                                                alias='casesUpdatedInWeekPrior'),
+                           sortable=False),
         ]
+
+    def map_case(self, value):
+        return value[::-1]
 
 
 class IndicatorFixtureTest(TestCase):
@@ -73,7 +77,7 @@ class IndicatorFixtureTest(TestCase):
         check_xml_line_by_line(self, """
         <fixture id="indicators:call_center" user_id="{userid}">
             <indicators>
-                <case id="123">
+                <case id="321">
                     <casesUpdatedInLastWeek>3</casesUpdatedInLastWeek>
                     <casesUpdatedInWeekPrior>4</casesUpdatedInWeekPrior>
                 </case>
@@ -97,11 +101,11 @@ class IndicatorFixtureTest(TestCase):
         check_xml_line_by_line(self, """
         <fixture id="indicators:call_center" user_id="{userid}">
             <indicators>
-                <case id="123">
+                <case id="321">
                     <casesUpdatedInLastWeek>3</casesUpdatedInLastWeek>
                     <casesUpdatedInWeekPrior>4</casesUpdatedInWeekPrior>
                 </case>
-                <case id="456">
+                <case id="654">
                     <casesUpdatedInLastWeek>0</casesUpdatedInLastWeek>
                     <casesUpdatedInWeekPrior>0</casesUpdatedInWeekPrior>
                 </case>

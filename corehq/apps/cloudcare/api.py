@@ -1,6 +1,6 @@
 import json
 from corehq.apps.users.models import CouchUser
-from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.models import CommCareCase, CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN
 from corehq.apps.locations.models import Location
 from corehq.apps.app_manager.models import ApplicationBase, Application
 from dimagi.utils.couch.safe_index import safe_index
@@ -12,9 +12,6 @@ import urllib
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.chunked import chunked
 
-CASE_STATUS_OPEN = 'open'
-CASE_STATUS_CLOSED = 'closed'
-CASE_STATUS_ALL = 'all'
 
 def api_closed_to_status(closed_string):
     # legacy api support
@@ -39,10 +36,11 @@ class CaseAPIResult(object):
     The result of a case API query. Useful for abstracting out the difference
     between an id-only representation and a full_blown one.
     """
-    def __init__(self, id=None, couch_doc=None, id_only=False):
+    def __init__(self, id=None, couch_doc=None, id_only=False, lite=True):
         self._id = id
         self._couch_doc = couch_doc
         self.id_only = id_only
+        self.lite = lite
 
     def __getitem__(self, key):
         if key == 'case_id':
@@ -64,7 +62,7 @@ class CaseAPIResult(object):
 
     @property
     def case_json(self):
-        return self.couch_doc.get_json()
+        return self.couch_doc.get_json(lite=self.lite)
 
     def to_json(self):
         return self.id if self.id_only else self.case_json
@@ -73,7 +71,7 @@ class CaseAPIHelper(object):
     """
     Simple config object for querying the APIs
     """
-    def __init__(self, status='open', case_type=None, ids_only=False,
+    def __init__(self, status=CASE_STATUS_OPEN, case_type=None, ids_only=False,
                  footprint=False, strip_history=False, filters=None):
         if status not in [CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN]:
             raise ValueError("invalid case status %s" % status)
@@ -129,15 +127,7 @@ class CaseAPIHelper(object):
             return base_results
 
     def get_all(self, domain):
-        key = [domain, self.case_type or {}, {}]
-        view_name = 'hqcase/open_cases' if self.status==CASE_STATUS_OPEN else 'hqcase/all_cases'
-        view_results = CommCareCase.get_db().view(
-            view_name,
-            startkey=key,
-            endkey=key + [{}],
-            include_docs=False,
-            reduce=False,
-        )
+        view_results = CommCareCase.get_all_cases(domain, case_type=self.case_type, status=self.status)
         ids = [res["id"] for res in view_results]
         return self._case_results(ids)
 

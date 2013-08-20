@@ -17,7 +17,7 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
    
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return not project.commtrack_enabled
+        return not (project.commtrack_enabled or project.commconnect_enabled)
 
 class ApplicationStatusReport(DeploymentsReport):
     name = ugettext_noop("Application Status")

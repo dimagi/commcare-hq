@@ -1,12 +1,25 @@
 # coding=utf-8
+from distutils.version import LooseVersion
+import tempfile
+import os
+import logging
+import hashlib
+import random
+import json
+from corehq.apps.app_manager.commcare_settings import check_condition
+import langcodes
+import types
+import re
 from collections import defaultdict
 from datetime import datetime
 from functools import wraps
-import types
+from copy import deepcopy
+from urllib2 import urlopen
+from urlparse import urljoin
+
 from django.core.cache import cache
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
-import re
 from django.utils.translation import ugettext as _, ugettext
 from corehq.apps.app_manager.const import APP_V1, APP_V2
 from couchdbkit.exceptions import BadValueError
@@ -15,13 +28,22 @@ from django.conf import settings
 from django.contrib.auth.models import get_hexdigest
 from django.core.urlresolvers import reverse
 from django.http import Http404
+from django.template.loader import render_to_string
+
 from restkit.errors import ResourceError
+from couchdbkit.resource import ResourceNotFound
+from couchdbkit.exceptions import BadValueError
+from couchdbkit.ext.django.schema import *
+
+from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
+from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
+from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.web import get_url_base, parse_int
+from dimagi.utils.couch.database import get_db
 import commcare_translations
-from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings, build_error_utils
-from corehq.apps.app_manager.suite_xml import IdStrings
-from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
-from corehq.apps.app_manager.util import split_path, save_xform
-from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, XFormError, XFormValidationError, WrappedNode, CaseXPath
+
+from corehq.util import bitly
+from corehq.apps.receiverwrapper.models import Repeater, register_repeater_type
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
@@ -29,29 +51,15 @@ from corehq.apps.reports.templatetags.timezone_tags import utc_to_timezone
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import cc_user_domain
-from corehq.util import bitly
-import current_builds
-from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
-from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
-from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.web import get_url_base, parse_int
-from copy import deepcopy
 from corehq.apps.domain.models import cached_property
-from django.template.loader import render_to_string
-from urllib2 import urlopen
-from urlparse import urljoin
-import langcodes
 
-
-import random
-from dimagi.utils.couch.database import get_db
-import json
-from couchdbkit.resource import ResourceNotFound
-import tempfile
-import os
-
-import logging
-import hashlib
+from corehq.apps.app_manager import current_builds
+from corehq.apps.app_manager.const import APP_V1, APP_V2
+from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings, build_error_utils
+from corehq.apps.app_manager.suite_xml import IdStrings
+from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
+from corehq.apps.app_manager.util import split_path, save_xform
+from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, XFormError, XFormValidationError, WrappedNode, CaseXPath
 
 MISSING_DEPENDECY = \
 """Aw shucks, someone forgot to install the google chart library
@@ -61,15 +69,7 @@ easy_install pygooglechart.  Until you do that this won't work.
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
-CASE_PROPERTY_MAP = {
-    # IMPORTANT: if you edit this you probably want to also edit
-    # the corresponding map in cloudcare 
-    # (corehq.apps.cloudcare.static.cloudcare.js.backbone.cases.js)
-    'external-id': 'external_id',
-    'date-opened': 'date_opened',
-    'status': '@status',
-    'name': 'case_name',
-}
+FIELD_SEPARATOR = ':'
 
 ATTACHMENT_REGEX = r'[^/]*\.xml'
 
@@ -343,11 +343,20 @@ class FormBase(DocumentSchema):
             try:
                 XForm(self.source).validate(version=self.get_app().application_version)
             except XFormValidationError as e:
-                vc = self.validation_cache = unicode(e)
+                validation_dict = {
+                    "fatal_error": e.fatal_error,
+                    "validation_problems": e.validation_problems,
+                    "version": e.version,
+                }
+                vc = self.validation_cache = json.dumps(validation_dict)
             else:
                 vc = self.validation_cache = ""
         if vc:
-            raise XFormValidationError(vc)
+            try:
+                raise XFormValidationError(**json.loads(vc))
+            except ValueError:
+                self.validation_cache = None
+                return self.validate_form()
         return self
 
     def validate_for_build(self):
@@ -382,6 +391,13 @@ class FormBase(DocumentSchema):
             logging.error("Failed: _parse_xml(string=%r)" % self.source)
             raise
         else:
+            try:
+                self.validate_form()
+            except XFormValidationError as e:
+                error = {'type': 'validation error', 'validation_message': unicode(e)}
+                error.update(meta)
+                errors.append(error)
+
             for error in self.check_actions():
                 error.update(meta)
                 errors.append(error)
@@ -660,6 +676,20 @@ class DetailColumn(IndexedSchema):
         for dct in (self.header, self.enum):
             _rename_key(dct, old_lang, new_lang)
 
+    @property
+    def field_type(self):
+        if FIELD_SEPARATOR in self.field:
+            return self.field.split(FIELD_SEPARATOR, 1)[0]
+        else:
+            return 'property'  # equivalent to property:parent/case_property
+
+    @property
+    def field_property(self):
+        if FIELD_SEPARATOR in self.field:
+            return self.field.split(FIELD_SEPARATOR, 1)[1]
+        else:
+            return self.field
+
     class TimeAgoInterval(object):
         map = {
             'day': 1.0,
@@ -673,22 +703,6 @@ class DetailColumn(IndexedSchema):
                 return cls.map['year']
             elif format == 'months-ago':
                 return cls.map['month']
-
-    @property
-    def xpath(self):
-        """
-        Convert special names like date-opened to their casedb xpath equivalent (e.g. @date_opened).
-        Only ever called by 2.0 apps.
-        """
-        parts = self.field.split('/')
-        parts[-1] = CASE_PROPERTY_MAP.get(parts[-1], parts[-1])
-        property = parts.pop()
-        indexes = parts
-
-        case = CaseXPath('')
-        for index in indexes:
-            case = case.index_id(index).case()
-        return case.property(property)
 
     @classmethod
     def wrap(cls, data):
@@ -761,7 +775,6 @@ class Detail(IndexedSchema):
     def display(self):
         return "short" if self.type.endswith('short') else 'long'
 
-
     def filter_xpath(self):
 
         filters = []
@@ -771,6 +784,7 @@ class Detail(IndexedSchema):
         xpath = ' and '.join(filters)
         return partial_escape(xpath)
 
+
 class CaseList(IndexedSchema):
     label = DictProperty()
     show = BooleanProperty(default=False)
@@ -778,6 +792,13 @@ class CaseList(IndexedSchema):
     def rename_lang(self, old_lang, new_lang):
         for dct in (self.label,):
             _rename_key(dct, old_lang, new_lang)
+
+
+class ParentSelect(DocumentSchema):
+    active = BooleanProperty(default=False)
+    relationship = StringProperty(default='parent')
+    module_id = StringProperty()
+
 
 class Module(IndexedSchema, NavMenuItemMediaMixin):
     """
@@ -795,6 +816,22 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
     case_list = SchemaProperty(CaseList)
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
+    parent_select = SchemaProperty(ParentSelect)
+    unique_id = StringProperty()
+
+    def get_or_create_unique_id(self):
+        """
+        It is the caller's responsibility to save the Application
+        after calling this function.
+
+        WARNING: If called on the same doc in different requests without saving,
+        this function will return a different uuid each time,
+        likely causing unexpected behavior
+
+        """
+        if not self.unique_id:
+            self.unique_id = FormBase.generate_id()
+        return self.unique_id
 
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
@@ -847,12 +884,14 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
         for val in ("referral", "case", "none"):
             if val in r:
                 return val
+
     def detail_types(self):
         return {
             "referral": ["case_short", "case_long", "ref_short", "ref_long"],
             "case": ["case_short", "case_long"],
             "none": []
         }[self.requires()]
+
     def requires_case_details(self):
         ret = False
         if self.case_list.show:
@@ -1046,6 +1085,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     built_on = DateTimeProperty(required=False)
     build_comment = StringProperty()
     comment_from = StringProperty()
+    build_broken = BooleanProperty(default=False)
 
     # watch out for a past bug:
     # when reverting to a build that happens to be released
@@ -1295,24 +1335,25 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
                 i = setting['values'].index(value)
                 assert i != -1
                 name = _(setting['value_names'][i])
-                raise AppError(_(
+                raise AppError(
                     '%s Text Input is not supported '
                     'in CommCare versions before %s.%s. '
                     '(You are using %s.%s)'
-                ) % ((name,) + setting_version + my_version))
-
+                ) % ((name,) + setting_version + my_version)
 
     @property
     def jad_settings(self):
-        return {
+        settings = {
             'JavaRosa-Admin-Password': self.admin_password,
             'Profile': self.profile_loc,
             'MIDlet-Jar-URL': self.jar_url,
             #'MIDlet-Name': self.name,
             # e.g. 2011-Apr-11 20:45
             'CommCare-Release': "true",
-            'Build-Number': self.version,
         }
+        if LooseVersion(self.build_spec.version) < '2.8':
+            settings['Build-Number'] = self.version
+        return settings
 
     def create_jadjar(self, save=False):
         try:
@@ -1359,6 +1400,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         except Exception as e:
             if settings.DEBUG:
                 raise
+            logging.exception('Unexpected error building app')
             errors.append({'type': 'error', 'message': 'unexpected error: %s' % e})
         return errors
 
@@ -1411,6 +1453,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
             copy._id = copy.get_db().server.next_uuid()
 
         copy.set_form_versions(previous_version)
+        copy.set_media_versions(previous_version)
         copy.create_jadjar(save=True)
 
         try:
@@ -1452,6 +1495,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         # by default doing nothing here is fine.
         pass
 
+    def set_media_versions(self, previous_version):
+        pass
+
 #class Profile(DocumentSchema):
 #    features = DictProperty()
 #    properties = DictProperty()
@@ -1487,11 +1533,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     show_user_registration = BooleanProperty(default=False, required=True)
     modules = SchemaListProperty(Module)
     name = StringProperty()
-    profile = DictProperty() #SchemaProperty(Profile)
+    profile = DictProperty()  # SchemaProperty(Profile)
     use_custom_suite = BooleanProperty(default=False)
     force_http = BooleanProperty(default=False)
     cloudcare_enabled = BooleanProperty(default=False)
-    include_media_resources = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -1507,6 +1552,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if not data.get('build_langs'):
             data['build_langs'] = data['langs']
         return super(Application, cls).wrap(data)
+
+    def save(self, *args, **kwargs):
+        super(Application, self).save(*args, **kwargs)
+        from corehq.apps.app_manager import signals # Import loop if this is imported at the top; TODO: revamp so signal_connections <- models <- signals
+        signals.app_post_save.send(Application, application=self)
 
     def make_reversion_to_copy(self, copy):
         app = super(Application, self).make_reversion_to_copy(copy)
@@ -1554,12 +1604,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         """
         Multi (tiered) sort is supported by apps version 2.2 or higher
         """
-        try:
-            return self.get_build().minor_release() >= (2, 2)
-        except KeyError:
-            # if for some reason there is no build number it's probably
-            # old or bugged
-            return False
+        return LooseVersion(self.build_spec.version) >= '2.2'
+
 
     @property
     def default_language(self):
@@ -1600,6 +1646,17 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     my_hash = _hash(self.fetch_xform(form=form))
                     if previous_hash != my_hash:
                         form.version = self.version
+
+    def set_media_versions(self, previous_version):
+        # access to .multimedia_map is slow
+        prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
+
+        for path, map_item in self.multimedia_map.iteritems():
+            pre_map_item = prev_multimedia_map.get(path, None)
+            if pre_map_item and pre_map_item.version and pre_map_item.multimedia_id == map_item.multimedia_id:
+                map_item.version = pre_map_item.version
+            else:
+                map_item.version = self.version
 
     def _create_custom_app_strings(self, lang):
         def trans(d):
@@ -1678,17 +1735,27 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         })
         return s
 
-    def create_profile(self, is_odk=False, template='app_manager/profile.xml'):
+    def create_profile(self, is_odk=False, with_media=False, template='app_manager/profile.xml'):
+        self__profile = self.profile
         app_profile = defaultdict(dict)
-        app_profile.update(self.profile)
-        # the following code is to let HQ override CommCare defaults
-        # impetus: Weekly Logging should be Short (HQ override) instead of Never (CommCare default)
-        # setting.default is assumed to also be the CommCare default unless there's a setting.commcare_default
+
         for setting in commcare_settings.SETTINGS:
-            type = setting['type']
-            if type in ('properties', 'features') and setting['id'] not in app_profile[type]:
+            setting_type = setting['type']
+            setting_id = setting['id']
+
+            if setting_type not in ('properties', 'features'):
+                setting_value = None
+            elif setting_id not in self__profile.get(setting_type, {}):
                 if 'commcare_default' in setting and setting['commcare_default'] != setting['default']:
-                    app_profile[type][setting['id']] = setting['default']
+                    setting_value = setting['default']
+                else:
+                    setting_value = None
+            else:
+                setting_value = self__profile[setting_type][setting_id]
+            if setting_value:
+                app_profile[setting_type][setting_id] = setting_value
+            # assert that it gets explicitly set once per loop
+            del setting_value
 
         if self.case_sharing:
             app_profile['properties']['server-tether'] = 'sync'
@@ -1704,7 +1771,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'key_server_url': self.key_server_url,
             'post_test_url': self.post_url,
             'ota_restore_url': self.ota_restore_url,
-            'cc_user_domain': cc_user_domain(self.domain)
+            'cc_user_domain': cc_user_domain(self.domain),
+            'include_media_suite': with_media,
         }).decode('utf-8')
 
     @property
@@ -1743,10 +1811,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         files = {
             'profile.xml': self.create_profile(is_odk=False),
             'profile.ccpr': self.create_profile(is_odk=True),
+            'media_profile.xml': self.create_profile(is_odk=False, with_media=True),
+            'media_profile.ccpr': self.create_profile(is_odk=True, with_media=True),
             'suite.xml': self.create_suite(),
+            'media_suite.xml': self.create_media_suite(),
         }
-        if self.include_media_resources:
-            files['media_suite.xml'] = self.create_media_suite()
 
         for lang in ['default'] + self.build_langs:
             files["%s/app_strings.txt" % lang] = self.create_app_strings(lang)
@@ -1980,7 +2049,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     )
                 )
 
-
         for form in self.get_forms():
             errors.extend(form.validate_for_build())
 
@@ -1998,6 +2066,18 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def get_by_xmlns(cls, domain, xmlns):
         r = get_db().view('exports_forms/by_xmlns', key=[domain, {}, xmlns], group=True).one()
         return cls.get(r['value']['app']['id']) if r and 'app' in r['value'] else None
+
+    def get_profile_setting(self, s_type, s_id):
+        setting = self.profile.get(s_type, {}).get(s_id)
+        if setting is not None:
+            return setting
+        yaml_setting = commcare_settings.SETTINGS_LOOKUP[s_type][s_id]
+        for contingent in yaml_setting.get("contingent_default", []):
+            if check_condition(self, contingent["condition"]):
+                setting = contingent["value"]
+        if setting is not None:
+            return setting
+        return yaml_setting.get("default")
 
 
 class RemoteApp(ApplicationBase):
@@ -2106,17 +2186,23 @@ class RemoteApp(ApplicationBase):
         }
         tree = _parse_xml(files['profile.xml'])
 
-        def add_file_from_path(path):
+        def add_file_from_path(path, strict=False):
             try:
                 loc = tree.find(path).text
             except (TypeError, AttributeError):
-                return
+                if strict:
+                    raise AppError("problem with file path reference!")
+                else:
+                    return
             loc, file = self.fetch_file(loc)
             files[loc] = file
             return loc, file
 
         add_file_from_path('features/users/logo')
-        _, suite = add_file_from_path(self.SUITE_XPATH)
+        try:
+            _, suite = add_file_from_path(self.SUITE_XPATH, strict=True)
+        except AppError:
+            raise AppError(ugettext('Problem loading suite file from profile file. Is your profile file correct?'))
 
         suite_xml = _parse_xml(suite)
 
@@ -2320,3 +2406,8 @@ Module.get_case_list_locale_id = lambda self: "case_lists.m{module.id}".format(m
 Module.get_referral_list_command_id = lambda self: "m{module.id}-referral-list".format(module=self)
 Module.get_referral_list_locale_id = lambda self: "referral_lists.m{module.id}".format(module=self)
 import corehq.apps.app_manager.signals
+
+@register_repeater_type
+class AppStructureRepeater(Repeater):
+    def get_payload(self, repeat_record):
+        return repeat_record.payload_id # This is the id of the application, currently all we forward

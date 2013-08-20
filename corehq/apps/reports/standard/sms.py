@@ -9,7 +9,6 @@ from dimagi.utils.web import get_url_base
 from django.core.urlresolvers import reverse
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.sms.models import INCOMING, OUTGOING, SMSLog
-from datetime import timedelta
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
@@ -109,13 +108,15 @@ class MessageLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabul
     
     @property
     def headers(self):
-        return DataTablesHeader(
+        header = DataTablesHeader(
             DataTablesColumn(_("Timestamp")),
             DataTablesColumn(_("User Name")),
             DataTablesColumn(_("Phone Number")),
             DataTablesColumn(_("Direction")),
             DataTablesColumn(_("Message")),
         )
+        header.custom_sort = [[0, 'desc']]
+        return header
     
     @property
     def rows(self):

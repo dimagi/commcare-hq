@@ -2,13 +2,13 @@ from datetime import timedelta, datetime, time
 import json
 import pytz
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, Http404, HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render
 
 from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm, SurveySampleForm, EditContactForm, RemindersInErrorForm, KeywordForm
 from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, CaseReminder, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET, EVENT_AS_SCHEDULE, SurveyKeyword, Survey, SurveySample, SURVEY_METHOD_LIST, SurveyWave, ON_DATETIME, RECIPIENT_SURVEY_SAMPLE, QUESTION_RETRY_CHOICES
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import CouchUser, CommCareUser, Permissions
+from corehq.apps.users.models import CommCareUser, Permissions
 from .models import UI_SIMPLE_FIXED, UI_COMPLEX
 from .util import get_form_list, get_sample_list, get_recipient_name
 from corehq.apps.sms.mixin import VerifiedNumber
@@ -17,7 +17,6 @@ from corehq.apps.domain.models import DomainCounter
 from casexml.apps.case.models import CommCareCase
 from dateutil.parser import parse
 from corehq.apps.sms.util import close_task
-from corehq.apps.groups.models import Group
 from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.reports import util as report_utils
 from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count
@@ -136,6 +135,23 @@ def scheduled_reminders(request, domain, template="reminders/partial/scheduled_r
         'now': now,
     })
 
+def get_events_scheduling_info(events):
+    """
+    Return a list of events as dictionaries, only with information pertinent to scheduling changes.
+    """
+    result = []
+    for e in events:
+        result.append({
+            "day_num" : e.day_num,
+            "fire_time" : e.fire_time,
+            "fire_time_aux" : e.fire_time_aux,
+            "fire_time_type" : e.fire_time_type,
+            "time_window_length" : e.time_window_length,
+            "callback_timeout_intervals" : e.callback_timeout_intervals,
+            "form_unique_id" : e.form_unique_id,
+        })
+    return result
+
 @reminders_permission
 def add_complex_reminder_schedule(request, domain, handler_id=None):
     if handler_id:
@@ -167,12 +183,15 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
             h.start_property = form.cleaned_data["start_property"]
             h.start_value = form.cleaned_data["start_value"]
             h.start_date = form.cleaned_data["start_date"]
+            old_start_offset = h.start_offset
             h.start_offset = form.cleaned_data["start_offset"]
             h.start_match_type = form.cleaned_data["start_match_type"]
+            old_schedule_length = h.schedule_length
             h.schedule_length = form.cleaned_data["schedule_length"]
             h.event_interpretation = form.cleaned_data["event_interpretation"]
             h.max_iteration_count = form.cleaned_data["max_iteration_count"]
             h.until = form.cleaned_data["until"]
+            old_events = h.events
             h.events = form.cleaned_data["events"]
             h.submit_partial_forms = form.cleaned_data["submit_partial_forms"]
             h.include_case_side_effects = form.cleaned_data["include_case_side_effects"]
@@ -189,7 +208,16 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
             else:
                 h.start_datetime = None
             h.sample_id = form.cleaned_data["sample_id"]
-            h.save()
+            
+            if get_events_scheduling_info(old_events) != get_events_scheduling_info(h.events) or old_start_offset != h.start_offset or old_schedule_length != h.schedule_length:
+                save_kwargs = {
+                    "schedule_changed" : True,
+                    "prev_definition" : CaseReminderHandler.get(handler_id) if handler_id is not None else None,
+                }
+            else:
+                save_kwargs = {}
+            
+            h.save(**save_kwargs)
             return HttpResponseRedirect(reverse('list_reminders', args=[domain]))
     else:
         if h is not None:
@@ -302,6 +330,8 @@ def add_keyword(request, domain, keyword_id=None):
 @reminders_permission
 def delete_keyword(request, domain, keyword_id):
     s = SurveyKeyword.get(keyword_id)
+    if s.domain != domain or s.doc_type != "SurveyKeyword":
+        raise Http404
     s.retire()
     return HttpResponseRedirect(reverse("manage_keywords", args=[domain]))
 

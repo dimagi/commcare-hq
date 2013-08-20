@@ -19,7 +19,7 @@ from corehq.apps.users.util import user_id_to_username
 def open_cases_json(request, domain):
     delete_ids = json.loads(request.GET.get('delete_ids', 'false'))
 
-    cases = CommCareCase.view('hqcase/open_cases', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True)
+    cases = CommCareCase.get_all_cases(domain, status='open', include_docs=True)
 
     user_id_to_type_to_cases = defaultdict(lambda:defaultdict(list))
     for case in cases:

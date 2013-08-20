@@ -1,26 +1,35 @@
-from corehq.apps.sms.mixin import MobileBackend
+from corehq.apps.sms.mixin import SMSBackend
 from dimagi.utils.couch.database import get_safe_write_kwargs
+from couchdbkit.ext.django.schema import *
 
+# TODO: What uses this? There already is a test backend
 
-def bootstrap(id=None, to_console=''):
+class TestBackend(SMSBackend):
+    to_console = BooleanProperty(default=False)
+
+    @classmethod
+    def get_api_id(cls):
+        return "TEST"
+
+    def send(self, msg, *args, **kwargs):
+        """
+        The test backend does very little.
+        """
+        if self.to_console:
+            print msg
+
+def bootstrap(id=None, to_console=True):
     """
     Create an instance of the test backend in the database
     """
-    backend = MobileBackend(
-        domain=[],
+    backend = TestBackend(
         description='test backend',
-        outbound_module='corehq.apps.sms.backend.test',
-        outbound_params={'to_console': True}
+        is_global=True,
+        to_console=to_console,
     )
     if id:
         backend._id = id
+        backend.name = id.strip().upper()
     backend.save(**get_safe_write_kwargs())
     return backend
 
-def send(msg, *args, **kwargs):
-    """
-    The test backend does very little.
-    """
-    to_console = kwargs.get('to_console')
-    if to_console:
-        print msg

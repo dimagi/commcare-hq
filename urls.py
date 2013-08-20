@@ -20,9 +20,11 @@ from corehq.apps.hqwebapp.urls import domain_specific as hqwebapp_domain_specifi
 from corehq.apps.settings.urls import domain_specific as settings_domain_specific
 from corehq.apps.settings.urls import users_redirect, domain_redirect
 from corehq.apps.adm.urls import adm_admin_interface_urls
+from corehq.apps.sms.urls import sms_admin_interface_urls
 
 
 domain_specific = patterns('',
+    url(r'^logo.png', 'corehq.apps.domain.views.logo', name='logo'),
     (r'^apps/', include('corehq.apps.app_manager.urls')),
     (r'^api/', include('corehq.apps.api.urls')),
     # the receiver needs to accept posts at an endpoint that might
@@ -55,7 +57,8 @@ domain_specific = patterns('',
 )
 
 urlpatterns = patterns('',
-    # Uncomment the next line to enable the admin:
+    (r'^favicon\.ico$', 'django.views.generic.simple.redirect_to',
+       {'url': '%shqwebapp/img/favicon2.png' % settings.STATIC_URL}),
     (r'^auditcare/', include('auditcare.urls')),
     (r'^admin/', include(admin.site.urls)),
     (r'^register/', include('corehq.apps.registration.urls')),
@@ -71,6 +74,7 @@ urlpatterns = patterns('',
     (r'', include('corehq.apps.domain.urls')),
     (r'^adm/', include(adm_admin_interface_urls)),
     (r'^announcements/', include('corehq.apps.announcements.urls')),
+    (r'^hq/sms/', include(sms_admin_interface_urls)),
     (r'^hq/billing/', include('hqbilling.urls')),
     (r'^hq/multimedia/', include('corehq.apps.hqmedia.urls')),
     (r'^hq/admin/', include('corehq.apps.hqadmin.urls')),
@@ -80,6 +84,7 @@ urlpatterns = patterns('',
     (r'^formtranslate/', include('formtranslate.urls')),
     (r'^unicel/', include('corehq.apps.unicel.urls')),
     (r'^tropo/', include('corehq.apps.tropo.urls')),
+    (r'^telerivet/', include('corehq.apps.telerivet.urls')),
     (r'^kookoo/', include('corehq.apps.kookoo.urls')),
     (r'^yo/', include('corehq.apps.yo.urls')),
     (r'^sislog/', include('corehq.apps.sislog.urls')),
@@ -100,6 +105,8 @@ urlpatterns = patterns('',
     url(r'^exchange/cda_basic/$', 'django.views.generic.simple.direct_to_template', {'template': 'cda.html'}, name='cda_basic'),
     url(r'^exchange/cda/$', 'corehq.apps.hqwebapp.views.cda', name='cda'),
     url(r'^sms_in/$', 'corehq.apps.sms.views.sms_in', name='sms_in'),
+    url(r'^unsubscribe/(?P<user_id>[\w-]+)/', 'corehq.apps.hqwebapp.views.unsubscribe', name='unsubscribe'),
+    (r'^wisepill/', include('custom.apps.wisepill.urls')),
 ) + patterns('', *LOCAL_APP_URLS)
 
 # django rosetta support if configured

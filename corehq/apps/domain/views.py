@@ -13,8 +13,7 @@ from django.shortcuts import redirect, render
 from corehq.apps.domain.calculations import CALCS, CALC_FNS, CALC_ORDER, dom_calc
 
 from corehq.apps.domain.decorators import (domain_admin_required,
-    login_required_late_eval_of_LOGIN_URL, require_superuser,
-    login_and_domain_required)
+    login_required, require_superuser, login_and_domain_required)
 from corehq.apps.domain.forms import DomainGlobalSettingsForm,\
     DomainMetadataForm, SnapshotSettingsForm, SnapshotApplicationForm, DomainDeploymentForm, DomainInternalForm
 from corehq.apps.domain.models import Domain, LICENSES
@@ -28,6 +27,7 @@ from dimagi.utils.web import get_ip, json_response
 from corehq.apps.users.views import require_can_edit_web_users
 from corehq.apps.receiverwrapper.forms import FormRepeaterForm
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater
+from corehq.apps.app_manager.models import AppStructureRepeater
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 import json
@@ -59,7 +59,7 @@ class DomainViewMixin(object):
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
-@login_required_late_eval_of_LOGIN_URL
+@login_required
 def select(request, domain_select_template='domain/select.html'):
 
     domains_for_user = Domain.active_for_user(request.user)
@@ -73,13 +73,15 @@ def select(request, domain_select_template='domain/select.html'):
 def domain_forwarding(request, domain):
     form_repeaters = FormRepeater.by_domain(domain)
     case_repeaters = CaseRepeater.by_domain(domain)
+    app_structure_repeaters = AppStructureRepeater.by_domain(domain)
     short_form_repeaters = ShortFormRepeater.by_domain(domain)
     return render(request, "domain/admin/domain_forwarding.html", {
         "domain": domain,
         "repeaters": (
             ("FormRepeater", form_repeaters),
             ("CaseRepeater", case_repeaters),
-            ("ShortFormRepeater", short_form_repeaters)
+            ("ShortFormRepeater", short_form_repeaters),
+            ("AppStructureRepeater", app_structure_repeaters)
         ),
     })
 
@@ -145,6 +147,15 @@ def legacy_domain_name(request, domain, path):
     domain = normalize_domain_name(domain)
     return HttpResponseRedirect(get_domained_url(domain, path))
 
+
+def logo(request, domain):
+    logo = Domain.get_by_name(domain).get_custom_logo()
+    if logo is None:
+        raise Http404()
+
+    return HttpResponse(logo[0], mimetype=logo[1])
+
+
 @domain_admin_required
 def project_settings(request, domain, template="domain/admin/project_settings.html"):
     domain = Domain.get_by_name(domain)
@@ -155,12 +166,15 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
        'deployment_info_form' not in request.POST:
         # deal with saving the settings data
         if user_sees_meta:
-            form = DomainMetadataForm(request.POST, user=request.couch_user, domain=domain.name)
+            form = DomainMetadataForm(request.POST, request.FILES,
+                    user=request.couch_user, domain=domain.name)
         else:
             form = DomainGlobalSettingsForm(request.POST)
         if form.is_valid():
             if form.save(request, domain):
                 messages.success(request, "Project settings saved!")
+                return HttpResponseRedirect(
+                        reverse(project_settings, args=[domain]))
             else:
                 messages.error(request, "There seems to have been an error saving your settings. Please try again!")
     else:
@@ -171,6 +185,7 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
                 'project_type': domain.project_type,
                 'customer_type': domain.customer_type,
                 'is_test': json.dumps(domain.is_test),
+                'commconnect_enabled': domain.commconnect_enabled,
                 'survey_management_enabled': domain.survey_management_enabled,
                 'sms_case_registration_enabled': domain.sms_case_registration_enabled,
                 'sms_case_registration_type': domain.sms_case_registration_type,

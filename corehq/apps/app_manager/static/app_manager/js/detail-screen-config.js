@@ -1,15 +1,54 @@
 /*globals $, _, uiElement, eventize, lcsMerge, COMMCAREHQ */
 
 var SortRow = function (field, type, direction) {
-    this.field = ko.observable(field);
-    this.type = ko.observable(type);
-    this.direction = ko.observable(direction);
+    var self = this;
+    self.field = ko.observable(field);
+    self.type = ko.observable(type);
+    self.direction = ko.observable(direction);
 
-    this.type.subscribe(function () {
+    self.type.subscribe(function () {
         window.sortRowSaveButton.fire('change');
     });
-    this.direction.subscribe(function () {
+    self.direction.subscribe(function () {
         window.sortRowSaveButton.fire('change');
+    });
+
+    self.labelTextItems = ko.computed(function () {
+        var splitField = self.field().split('/');
+
+        splitField.pop(); // throw away last item (which is field text)
+        return splitField
+    });
+
+    self.fieldText = ko.computed(function () {
+        var splitField = self.field().split('/');
+        return splitField.pop();
+    });
+
+    self.ascendText = ko.computed(function () {
+        var type = self.type();
+        if (type === 'plain') {
+            return 'Increasing (a, b, c)';
+        } else if (type === 'date') {
+            return 'Increasing (May 1st, May 2nd)';
+        } else if (type === 'int') {
+            return 'Increasing (1, 2, 3)';
+        } else if (type === 'double') {
+            return 'Increasing (1.1, 1.2, 1.3)';
+        }
+    });
+
+    self.descendText = ko.computed(function () {
+        var type = self.type();
+        if (type === 'plain') {
+            return 'Decreasing (c, b, a)';
+        } else if (type === 'date') {
+            return 'Decreasing (May 2nd, May 1st)'
+        } else if (type === 'int') {
+            return 'Decreasing (3, 2, 1)';
+        } else if (type === 'double') {
+            return 'Decreasing (1.3, 1.2, 1.1)';
+        }
     });
 };
 
@@ -56,6 +95,32 @@ ko.bindingHandlers.sortableList = {
         });
     }
 };
+
+function ParentSelect(init) {
+    var self = this;
+    var defaultModule = _(init.parentModules).findWhere({is_parent: true});
+    self.moduleId = ko.observable(init.moduleId || (defaultModule ? defaultModule.unique_id : null));
+    self.active = ko.observable(init.active);
+    self.parentModules = ko.observable(init.parentModules);
+    self.lang = ko.observable(init.lang);
+    self.langs = ko.observable(init.langs);
+    function getTranslation(name, langs) {
+        var firstLang = _(langs).find(function (lang) {
+            return name[lang];
+        });
+        return name[firstLang];
+    }
+    self.moduleOptions = ko.computed(function () {
+        return _(self.parentModules()).map(function (module) {
+            var STAR = '\u2605', SPACE = '\u3000';
+            var marker = (module.is_parent ? STAR : SPACE);
+            return {
+                value: module.unique_id,
+                label: marker + ' ' + getTranslation(module.name, [self.lang()].concat(self.langs()))
+            };
+        });
+    });
+}
 
 var DetailScreenConfig = (function () {
     "use strict";
@@ -123,8 +188,8 @@ var DetailScreenConfig = (function () {
         }
         return orig;
     }
-
-    var field_val_re = /^[a-zA-Z][\w_-]*(\/[a-zA-Z][\w_-]*)*$/;
+    var word = '[a-zA-Z][\\w_-]*';
+    var field_val_re = RegExp('^('+word+':)?'+word+'(\\/'+word+')*$');
     var field_format_warning = $('<span/>').addClass('help-inline')
         .text("Must begin with a letter and contain only letters, numbers, '-', and '_'");
 
@@ -292,9 +357,7 @@ var DetailScreenConfig = (function () {
             }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.DELETE_COLUMN);
 
             this.$sortLink = $('<a href="#">Sort by this</a>').click(function (e) {
-                var $row = $(this).closest('tr');
-                var $field = $row.find('.detail-screen-field code').text();
-                that.screen.config.sortRows.addSortRow($field, '', '');
+                that.screen.config.sortRows.addSortRow(that.field.ui.text(), '', '');
                 e.preventDefault();
                 e.stopImmediatePropagation();
             });
@@ -528,10 +591,18 @@ var DetailScreenConfig = (function () {
         };
         Screen.prototype = {
             save: function () {
+                var parentSelect = this.config.parentSelect;
                 this.saveButton.ajax({
                     url: this.saveUrl,
                     type: "POST",
-                    data: {screens: JSON.stringify(this.serialize())},
+                    data: {
+                        screens: JSON.stringify(this.serialize()),
+                        parent_select: JSON.stringify({
+                            module_id: parentSelect.moduleId(),
+                            relationship: 'parent',
+                            active: parentSelect.active()
+                        })
+                    },
                     dataType: 'json',
                     success: function (data) {
                         COMMCAREHQ.app_manager.updateDOM(data.update);
@@ -733,6 +804,13 @@ var DetailScreenConfig = (function () {
             this.sortRows = new SortRows();
             this.lang = spec.lang;
             this.langs = spec.langs || [];
+            this.parentSelect = new ParentSelect({
+                active: spec.parentSelect.active,
+                moduleId: spec.parentSelect.module_id,
+                parentModules: spec.parentModules,
+                lang: this.lang,
+                langs: this.langs
+            });
             this.edit = spec.edit;
             this.saveUrl = spec.saveUrl;
 
@@ -760,7 +838,13 @@ var DetailScreenConfig = (function () {
         };
         DetailScreenConfig.init = function ($home, spec) {
             var ds = new DetailScreenConfig($home, spec);
-            ko.applyBindings(ds.sortRows, $('#detail-screen-config-body').get(0));
+            var $sortRowsHome = $('#detail-screen-sort');
+            var $parentSelectHome = $('#detail-screen-parent');
+            ko.applyBindings(ds.sortRows, $sortRowsHome.get(0));
+            ko.applyBindings(ds.parentSelect, $parentSelectHome.get(0));
+            $parentSelectHome.on('change', '*', function () {
+                ds.screens[0].fire('change');
+            });
             return ds;
         };
         return DetailScreenConfig;

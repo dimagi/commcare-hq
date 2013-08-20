@@ -7,10 +7,12 @@ import datetime
 from dimagi.utils.couch.database import get_db
 from corehq.apps.users.models import CouchUser
 from django.template.loader import render_to_string
+from django.conf import settings
 from corehq.apps.hqcase.utils import submit_case_blocks
 
 from xml.etree.ElementTree import XML, tostring
 from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.modules import to_function
 
 def strip_plus(phone_number):
     if isinstance(phone_number, basestring) and phone_number[0] == "+":
@@ -157,3 +159,37 @@ def create_billable_for_sms(msg, backend_api, delay=True, **kwargs):
     except Exception as e:
         logging.error("%s backend contacted, but errors in creating billable for incoming message. Error: %s" %
                       (backend_api, e))
+
+def get_available_backends():
+    result = {}
+    for backend_class in settings.SMS_LOADED_BACKENDS:
+        klass = to_function(backend_class)
+        result[klass.__name__] = klass
+    return result
+
+CLEAN_TEXT_REPLACEMENTS = (
+    # Common emoticon replacements
+    (":o", ": o"),
+    (":O", ": O"),
+    (":x", ": x"),
+    (":X", ": X"),
+    (":D", ": D"),
+    (":p", ": p"),
+    (":P", ": P"),
+    # Special punctuation ascii conversion
+    (u"\u2013", "-"), # Dash
+    (u"\u201c", '"'), # Open double quote
+    (u"\u201d", '"'), # Close double quote
+    (u"\u2018", "'"), # Open single quote
+    (u"\u2019", "'"), # Close single quote
+    (u"\u2026", "..."), # Ellipsis
+)
+
+def clean_text(text):
+    """
+    Performs the replacements in CLEAN_TEXT_REPLACEMENTS on text.
+    """
+    for a, b in CLEAN_TEXT_REPLACEMENTS:
+        text = text.replace(a, b)
+    return text
+

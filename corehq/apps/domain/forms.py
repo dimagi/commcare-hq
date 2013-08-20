@@ -1,14 +1,19 @@
 from urlparse import urlparse, parse_qs
 import dateutil
 import re
-from django import forms
+import io
+from PIL import Image
+import uuid
 
-from django.forms.fields import ChoiceField, CharField, BooleanField
+from django import forms
+from django.forms.fields import (ChoiceField, CharField, BooleanField,
+    ImageField)
 from django.forms.widgets import  Select
 from django.utils.encoding import smart_str
 from django.contrib.auth.forms import PasswordResetForm
 
-from corehq.apps.domain.models import LICENSES, DATA_DICT, AREA_CHOICES, SUB_AREA_CHOICES
+from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
+    AREA_CHOICES, SUB_AREA_CHOICES)
 
 from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.apps.groups.models import Group
@@ -18,6 +23,8 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 
+# used to resize uploaded custom logos, aspect ratio is preserved
+LOGO_SIZE = (211, 32)
 
 def tf_choices(true_txt, false_txt):
     return (('false', false_txt), ('true', true_txt))
@@ -208,9 +215,19 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         label=_("Test Project"),
         choices=tf_choices('Test', _('Real'))
     )
+    commconnect_enabled = BooleanField(
+        label=_("CommConnect Enabled"),
+        required=False,
+        help_text=_("CommConnect is a CommCareHQ module for SMS messages, "
+                    "reminders and data collection.")
+    )
     survey_management_enabled = BooleanField(
         label=_("Survey Management Enabled"),
-        required=False
+        required=False,
+        help_text=_("Survey Management is a CommCareHQ module for SMS and "
+                    "Call Center based surveys for large samples.  It is "
+                    "under active development. Do not enable for your domain "
+                    "unless you're piloting it.")
     )
     sms_case_registration_enabled = BooleanField(
         label=_("Enable Case Registration Via SMS"),
@@ -270,6 +287,18 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         help_text=_("If access to a domain is restricted only users added " +
                     "to the domain and staff members will have access.")
     )
+    logo = ImageField(
+        label=_("Custom Logo"),
+        required=False,
+        help_text=_("Upload a custom image to display instead of the "
+                    "CommCare HQ logo.  It will be automatically resized to "
+                    "a height of 32 pixels.")
+    )
+    delete_logo = BooleanField(
+        label=_("Delete Logo"),
+        required=False,
+        help_text=_("Delete your custom logo and use the standard one.")
+    )
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
@@ -326,12 +355,30 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
 
     def save(self, request, domain):
         res = DomainGlobalSettingsForm.save(self, request, domain)
+
         if not res:
             return False
         try:
+            logo = self.cleaned_data['logo']
+            if logo:
+
+                input_image = Image.open(io.BytesIO(logo.read()))
+                input_image.load()
+                input_image.thumbnail(LOGO_SIZE)
+                # had issues trying to use a BytesIO instead
+                tmpfilename = "/tmp/%s_%s" % (uuid.uuid4(), logo.name)
+                input_image.save(tmpfilename, 'PNG')
+               
+                with open(tmpfilename) as tmpfile:
+                    domain.put_attachment(tmpfile, name=LOGO_ATTACHMENT)
+            elif self.cleaned_data['delete_logo']:
+                domain.delete_attachment(LOGO_ATTACHMENT)
+
             domain.project_type = self.cleaned_data['project_type']
             domain.customer_type = self.cleaned_data['customer_type']
             domain.is_test = self.cleaned_data['is_test'] == 'true'
+            domain.commconnect_enabled = self.cleaned_data.get(
+                    'commconnect_enabled', False)
             domain.survey_management_enabled = self.cleaned_data.get('survey_management_enabled', False)
             domain.sms_case_registration_enabled = self.cleaned_data.get('sms_case_registration_enabled', False)
             domain.sms_case_registration_type = self.cleaned_data.get('sms_case_registration_type')
