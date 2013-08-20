@@ -127,7 +127,7 @@ class Test(TestCase):
             pillow.processor({'changes': [], 'id': '123', 'seq': 1})
             indicator = self.fakedb.mock_docs.get("%s-123" % classname, None)
             self.assertIsNotNone(indicator)
-            self.assertEqual(8, len(indicator))
+            self.assertEqual(9, len(indicator))
             self.assertEqual(8, len(indicator['value_week']))
             self.assertIn("value_week", indicator)
             self.assertIn("date", indicator["value_week"])
@@ -219,6 +219,7 @@ class Test(TestCase):
                             doc_type=classname,
                             group_values=['mock', '123'],
                             group_names=['domain', 'owner_id'],
+                            group_type_map={'domain': 'integer', 'owner_id': 'string'},
                             indicator_changes=[
                                 dict(calculator='value_week',
                                      emitter='date',
@@ -271,6 +272,7 @@ class Test(TestCase):
                             doc_type=cls.__name__,
                             group_values=['mock', '123'],
                             group_names=['domain', 'owner_id'],
+                            group_type_map={'domain': 'integer', 'owner_id': 'string'},
                             indicator_changes=[
                                 dict(calculator='value_week',
                                      emitter='date_value',
@@ -322,6 +324,7 @@ class Test(TestCase):
                             doc_type=cls.__name__,
                             group_values=['mock', '123'],
                             group_names=['domain', 'owner_id'],
+                            group_type_map={'domain': 'integer', 'owner_id': 'string'},
                             indicator_changes=[
                                 dict(calculator='value_week',
                                      emitter='date_value',
@@ -386,6 +389,7 @@ class MockIndicators(fluff.IndicatorDocument):
 
     document_class = MockDoc
     group_by = ('domain', 'owner_id')
+    group_by_type_map = {'domain': fluff.TYPE_INTEGER}
     domains = ('test',)
 
     value_week = ValueCalculator(window=WEEK)
@@ -401,6 +405,7 @@ class MockIndicatorsWithGetters(fluff.IndicatorDocument):
         fluff.AttributeGetter('domain'),
         fluff.AttributeGetter('owner_id', getter_function=lambda item: item['owner_id'])
     )
+    group_by_type_map = {'domain': fluff.TYPE_INTEGER}
     domains = ('test',)
 
     value_week = ValueCalculator(window=WEEK)
