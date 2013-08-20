@@ -31,9 +31,7 @@ def get_domain_from_url(path):
 def get_domain_module_map():
     hardcoded = getattr(settings, 'DOMAIN_MODULE_MAP', {})
     try:
-        #cache_core GET
         dynamic = cache_core.cached_open_doc(get_db(), 'DOMAIN_MODULE_CONFIG').get('module_map', {})
-        # dynamic = get_db().get('DOMAIN_MODULE_CONFIG').get('module_map', {})
     except ResourceNotFound:
         dynamic = {}
 

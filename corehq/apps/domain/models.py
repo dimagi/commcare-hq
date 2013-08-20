@@ -329,12 +329,13 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             couch_user = CouchUser.from_django_user(user)
         if couch_user:
             domain_names = couch_user.get_domains()
-            return Domain.view("domain/by_status",
-                keys=[[is_active, d] for d in domain_names],
-                reduce=False,
-                include_docs=True,
-                stale=settings.COUCH_STALE_QUERY,
-            ).all()
+            return cache_core.cached_view(Domain.get_db(), "domain/by_status",
+                                          keys=[[is_active, d] for d in domain_names],
+                                          reduce=False,
+                                          include_docs=True,
+                                          stale=settings.COUCH_STALE_QUERY,
+                                          wrapper=Domain.wrap
+            )
         else:
             return []
 
@@ -497,11 +498,13 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
     @classmethod
     def get_by_organization(cls, organization):
-        result = cls.view("domain/by_organization",
-            startkey=[organization],
-            endkey=[organization, {}],
-            reduce=False,
-            include_docs=True)
+        result = cache_core.cached_view(cls.get_db(), "domain/by_organization",
+                               startkey=[organization],
+                               endkey=[organization, {}],
+                               reduce=False,
+                               include_docs=True,
+                               wrapper=cls.wrap
+        )
         return result
 
     @classmethod

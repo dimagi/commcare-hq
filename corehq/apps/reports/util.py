@@ -10,6 +10,7 @@ from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import user_id_to_username
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
+from couchforms.models import XFormInstance
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
@@ -177,12 +178,20 @@ def get_all_owner_ids_submitted(domain):
 
 def get_username_from_forms(domain, user_id):
     key = make_form_couch_key(domain, user_id=user_id)
-    user_info = get_db().view(
-        'reports_forms/all_forms',
-        startkey=key,
-        limit=1,
-        reduce=False
-    ).one()
+
+    user_info_res = cache_core.cached_view(XFormInstance.get_db(),
+                                       'reports_forms/all_forms',
+                                       startkey=key,
+                                       limit=1,
+                                       reduce=False,
+                                       cache_expire=300
+                                       )
+
+    try:
+        user_info = list(user_info_res)[0]
+    except IndexError:
+        user_info = None
+
     username = HQUserType.human_readable[HQUserType.ADMIN]
     try:
         possible_username = user_info['value']['username']

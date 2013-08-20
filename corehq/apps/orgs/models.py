@@ -23,10 +23,10 @@ class Organization(Document):
     @classmethod
     def get_by_name(cls, name, strict=False):
         extra_args = {'stale': settings.COUCH_STALE_QUERY} if not strict else {}
-        results = cache_core.cached_view(cls.get_db(), "orgs/by_name", key=name, reduce=False, include_docs=True, **extra_args)
+        results = cache_core.cached_view(cls.get_db(), "orgs/by_name", key=name, reduce=False, include_docs=True, wrapper=cls.wrap, **extra_args)
 
         if len(results) > 0:
-            return results[0]
+            return list(results)[0]
         else:
             return None
 
@@ -69,11 +69,13 @@ class Team(UndoableDocument, MultiMembershipMixin):
 
     @classmethod
     def get_by_org(cls, org_name):
-        return cls.view("orgs/team_by_org_and_name",
-            startkey = [org_name],
-            endkey=[org_name,{}],
-            reduce=False,
-            include_docs=True).all()
+        return cache_core.cached_view(cls.get_db(), "orgs/team_by_org_and_name",
+                                      startkey = [org_name],
+                                      endkey=[org_name,{}],
+                                      reduce=False,
+                                      include_docs=True,
+                                      wrapper=cls.wrap
+                                      )
 
     @classmethod
     def get_by_domain(cls, domain):
@@ -131,4 +133,20 @@ class OrgRequest(Document):
             reduce=False,
             include_docs=True,
         )
-        return results.all() if not user_id else results.one()
+
+        cache_core.cached_view(cls.get_db(), "orgs/org_requests",
+                               startkey=key,
+                               endkey=key + [{}],
+                               reduce=False,
+                               include_docs=True,
+                               wrapper=cls.wrap
+                               )
+
+        if not user_id:
+            return results
+        else:
+            try:
+                result = list(results)[0]
+                return result
+            except IndexError:
+                return None

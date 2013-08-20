@@ -1,5 +1,6 @@
 import re
 from couchdbkit.ext.django.schema import *
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
@@ -252,10 +253,15 @@ class CommCareMobileContactMixin(object):
         raise NotImplementedError("Subclasses of CommCareMobileContactMixin must implement method get_language_code().")
 
     def get_verified_numbers(self, include_pending=False):
-        v = VerifiedNumber.view("sms/verified_number_by_doc_type_id",
-            startkey=[self.doc_type, self._id],
-            endkey=[self.doc_type, self._id],
-            include_docs=True
+
+        v = cache_core.cached_view(VerifiedNumber.get_db(),
+                                   "sms/verified_number_by_doc_type_id",
+                                   startkey=[self.doc_type, self._id],
+                                   endkey=[self.doc_type, self._id],
+                                   include_docs=True,
+                                   wrapper=VerifiedNumber.wrap,
+                                   cache_expire=300
+
         )
         v = filter(lambda c: c.verified or include_pending, v)
         return dict((c.phone_number, c) for c in v)

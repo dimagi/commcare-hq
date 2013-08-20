@@ -205,6 +205,7 @@ class CaseExportReport(ExportReport):
     def get_saved_exports(self):
         startkey = json.dumps([self.domain, ""])[:-3]
         endkey = "%s{" % startkey
+
         exports = SavedExportSchema.view("couchexport/saved_export_schemas",
             startkey=startkey, endkey=endkey,
             include_docs=True).all()

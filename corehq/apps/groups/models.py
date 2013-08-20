@@ -142,7 +142,11 @@ class Group(UndoableDocument):
             user_id = user_or_user_id.user_id
         except AttributeError:
             user_id = user_or_user_id
-        results = cls.view('groups/by_user', key=user_id, include_docs=wrap)
+        extra_params = {'wrapper': cls.wrap } if wrap else {}
+        results = cache_core.cached_view(cls.get_db(),
+                                        'groups/by_user',
+                                        key=user_id,
+                                        include_docs=wrap, **extra_params)
         if wrap:
             return results
         if include_names:

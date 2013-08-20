@@ -953,20 +953,22 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     @classmethod
     def get_by_username(cls, username):
         def get(stale, raise_if_none):
-            cache_key = "get_by_username__%s" % username
-            cached = mcache.get(cache_key, None)
-            if cached:
-                res = simplejson.loads(cached)
-                result = cls.wrap(res)
-            else:
-                view_res = cls.get_db().view('users/by_username',
-                    key=username,
-                    include_docs=True,
-                    stale=stale
-                )
-                result = view_res.one(except_all=raise_if_none)
-            if not cached:
-                mcache.set(cache_key, simplejson.dumps(result))
+
+
+            view_res = cache_core.cached_view(cls.get_db(), 'users/by_username',
+                                              key=username,
+                                              include_docs=True,
+                                              stale=stale,
+                                              )
+            length = len(view_res)
+            if length > 1:
+                raise MultipleResultsFound("%s users found with username %s" % (length, username))
+            try:
+                result = list(view_res)[0]
+            except IndexError:
+                result = None
+            if raise_if_none:
+                raise NoResultFound
             return result
         try:
             result = get(stale=settings.COUCH_STALE_QUERY, raise_if_none=True)
@@ -1600,11 +1602,12 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
     @classmethod
     def by_organization(cls, org, team_id=None):
         key = [org] if team_id is None else [org, team_id]
-        users = cls.view("users/by_org_and_team",
-            startkey=key,
-            endkey=key + [{}],
-            include_docs=True,
-        ).all()
+        users = cache_core.cached_view(cls.get_db(), "users/by_org_and_team",
+                                       startkey=key,
+                                       endkey=key + [{}],
+                                       include_docs=True,
+                                       wrapper=cls.wrap
+                                       )
         # return a list of users with the duplicates removed
         return dict([(u.get_id, u) for u in users]).values()
 
