@@ -482,15 +482,12 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         extra_args = {'stale': settings.COUCH_STALE_QUERY} if not strict else {}
 
         db = cls.get_db()
-        res = cache_core.cached_view(db, "domain/domains", key=name, reduce=False, include_docs=True, **extra_args)
-        result = cls.wrap(res['rows'][0]['doc'])
+        res = cache_core.cached_view(db, "domain/domains", key=name, reduce=False, include_docs=True, wrapper=cls.wrap, **extra_args)
 
-        # result = cls.view("domain/domains",
-        #     key=name,
-        #     reduce=False,
-        #     include_docs=True,
-        #     **extra_args
-        # ).first()
+        if len(res) > 0:
+            result = res[0]
+        else:
+            result = None
 
         if result is None and not strict:
             # on the off chance this is a brand new domain, try with strict

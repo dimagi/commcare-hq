@@ -120,16 +120,9 @@ class Group(UndoableDocument):
     def by_domain(cls, domain):
 
         db = cls.get_db()
-        res = cache_core.cached_view(db, "groups/by_domain", key=domain, include_docs=True, stale=settings.COUCH_STALE_QUERY)
-        result = [cls.wrap(x['doc']) for x in res['rows']]
-        return result
+        res = cache_core.cached_view(db, "groups/by_domain", key=domain, include_docs=True, wrapper=cls.wrap, stale=settings.COUCH_STALE_QUERY)
+        return res
 
-
-        # return cls.view('groups/by_domain',
-        #     key=domain,
-        #     include_docs=True,
-        #     stale=settings.COUCH_STALE_QUERY,
-        # ).all()
 
     @classmethod
     def by_name(cls, domain, name, one=True):
@@ -175,17 +168,10 @@ class Group(UndoableDocument):
                                          startkey=key,
                                          endkey=key + [{}],
                                          include_docs=True,
+                                         wrapper=cls.wrap,
                                          stale=settings.COUCH_STALE_QUERY,
                                          )
-        result = [cls.wrap(x['doc']) for x in res['rows']]
-        return result
-
-        # return cls.view('groups/by_name',
-        #     startkey=key,
-        #     endkey=key + [{}],
-        #     include_docs=True,
-        #     stale=settings.COUCH_STALE_QUERY,
-        # ).all()
+        return res
 
     def create_delete_record(self, *args, **kwargs):
         return DeleteGroupRecord(*args, **kwargs)

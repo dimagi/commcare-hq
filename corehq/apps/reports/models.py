@@ -173,21 +173,10 @@ class ReportConfig(Document):
             key = ["name", domain, owner_id]
 
         db = cls.get_db()
-        res = cache_core.cached_view(db, "reportconfig/configs_by_domain", reduce=False,
-                                     include_docs=True, startkey=key, endkey=key + [{}], **kwargs)
-
-
-        if len(res['rows']) > 0:
-            result = cls.wrap([x['doc'] for x in res['rows']])
-        else:
-            result=[]
-
+        result = cache_core.cached_view(db, "reportconfig/configs_by_domain", reduce=False,
+                                     include_docs=True, startkey=key, endkey=key + [{}], wrapper=cls.wrap, **kwargs)
         return result
 
-        # return cls.view('reportconfig/configs_by_domain',
-        #     reduce=False, include_docs=True, startkey=key, endkey=key + [{}],
-        #     **kwargs)
-   
     @classmethod
     def default(self):
         return {
@@ -413,17 +402,9 @@ class ReportNotification(Document):
         key = [domain, owner_id]
 
         db = cls.get_db()
-        res = cache_core.cached_view(db, "reportconfig/user_notifications", reduce=False,
-                                     include_docs=True, startkey=key, endkey=key + [{}], **kwargs)
-
-        if len(res['rows']) > 0:
-            result = cls.wrap([x['doc'] for x in res['rows']])
-        else:
-            result = []
+        result = cache_core.cached_view(db, "reportconfig/user_notifications", reduce=False,
+                                     include_docs=True, startkey=key, endkey=key + [{}], wrapper=cls.wrap, **kwargs)
         return result
-        # return cls.view("reportconfig/user_notifications",
-        #     reduce=False, include_docs=True, startkey=key, endkey=key + [{}],
-        #     **kwargs)
 
     @property
     def all_recipient_emails(self):

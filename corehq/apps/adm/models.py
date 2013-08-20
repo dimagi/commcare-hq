@@ -755,13 +755,6 @@ class ADMReport(BaseADMDocument):
                                      endkey=key+[{}]
         )
 
-        # domain_defaults = get_db().view(cls.defaults_couch_view(),
-        #     group=True,
-        #     group_level=4,
-        #     startkey=key,
-        #     endkey=key+[{}]
-        # ).all()
-
         all_slugs.extend([item.get('key', [])[-1] for item in domain_defaults])
         key = ["defaults global slug", section]
 
@@ -771,13 +764,6 @@ class ADMReport(BaseADMDocument):
                                                      startkey=key,
                                                      endkey=key+[{}]
         )
-
-        # global_defaults = get_db().view(cls.defaults_couch_view(),
-        #     group=True,
-        #     group_level=3,
-        #     startkey=key,
-        #     endkey=key+[{}]
-        # ).all()
         all_slugs.extend([item.get('key', [])[-1] for item in global_defaults])
         return list(set(all_slugs))
 

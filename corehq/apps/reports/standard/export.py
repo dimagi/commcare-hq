@@ -240,13 +240,6 @@ class DeidExportReport(FormExportReportBase):
                                      include_docs=False,
                                      stale=settings.COUCH_STALE_QUERY,)
         return len(res) > 0
-        # return SavedExportSchema.view("couchexport/saved_export_schemas",
-        #     startkey=startkey,
-        #     limit=1,
-        #     include_docs=False,
-        #     stale=settings.COUCH_STALE_QUERY,
-        # ).count() > 0
-
 
     def get_saved_exports(self):
         return filter(lambda export: export.is_safe, super(DeidExportReport, self).get_saved_exports())

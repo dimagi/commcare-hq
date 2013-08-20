@@ -853,19 +853,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                                          startkey=key,
                                          endkey=key + [{}],
                                          stale=None if strict else settings.COUCH_STALE_QUERY,
+                                         wrapper=cls.wrap,
                                          **extra_args)
-        if extra_args.get('include_docs', False):
-            return [cls.wrap(x['doc']) for x in res['rows']]
-        else:
-            return res
-
-        # return cls.view("users/by_domain",
-        #     reduce=reduce,
-        #     startkey=key,
-        #     endkey=key + [{}],
-        #     stale=None if strict else settings.COUCH_STALE_QUERY,
-        #     **extra_args
-        # ).all()
+        return res
 
     @classmethod
     def total_by_domain(cls, domain, is_active=True):

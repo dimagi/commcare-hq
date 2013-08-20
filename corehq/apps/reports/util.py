@@ -357,12 +357,6 @@ def set_report_announcements_for_user(request, couch_user):
                                  startkey=key + [now.strftime("%Y-%m-%dT%H:00")], endkey=key + [{}],
                                  stale=settings.COUCH_STALE_QUERY, )
 
-    # data = ReportAnnouncement.get_db().view('announcements/all_announcements',
-    #     reduce=False,
-    #     startkey=key + [now.isoformat()],
-    #     endkey=key + [{}],
-    #     stale=settings.COUCH_STALE_QUERY,
-    # ).all()
     announce_ids = [a['id'] for a in data if a['id'] not in couch_user.announcements_seen]
     for announcement_id in announce_ids:
         try:

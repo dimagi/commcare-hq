@@ -748,10 +748,9 @@ create a couch doc as such:
             #config = get_db().view('reports/maps_config', key=[domain], include_docs=True).one()
 
             db = cls.get_db()
-            res = cache_core.cached_view(db, "reports/maps_config", key=[domain], include_docs=True)
-
-            if len(res['rows']) > 1:
-                config = cls.wrap(res['rows'][0]['doc'])
+            res = cache_core.cached_view(db, "reports/maps_config", key=[domain], wrapper=cls.wrap, include_docs=True)
+            if len(res) > 1:
+                config = res[0]
             else:
                 config = None
 
