@@ -4,6 +4,9 @@ from corehq.apps.reports.fields import AsyncDrillableField, GroupField, BooleanF
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
+from corehq.apps.fixtures.models import FixtureDataItem
+from corehq.apps.groups.models import Group
+from couchdbkit.exceptions import ResourceNotFound
 
 
 class ProvinceField(AsyncDrillableField):
@@ -72,11 +75,18 @@ class CareReport(SqlTabularReport,
 
     @property
     def group_by(self):
-        groups = ['user_id']
-        #if self.show_age():
-        groups.append('age_group')
-        #if self.show_gender():
-        groups.append('gender')
+        groups = []
+        if not self.selected_province():
+            groups.append('province')
+        elif not self.selected_cbo():
+            groups.append('cbo')
+        else:
+            groups.append('user_id')
+
+        if self.show_age():
+            groups.append('age_group')
+        if self.show_gender():
+            groups.append('gender')
 
         return groups
 
@@ -113,8 +123,16 @@ class CareReport(SqlTabularReport,
 
     @property
     def columns(self):
-        user = DatabaseColumn("User", SimpleColumn('user_id'), sortable=False)
-        columns = [user]
+        columns = []
+        if not self.selected_province():
+            province = DatabaseColumn("Province", SimpleColumn('province'), sortable=False)
+            columns.append(province)
+        elif not self.selected_cbo():
+            cbo = DatabaseColumn("CBO", SimpleColumn('cbo'), sortable=False)
+            columns.append(cbo)
+        else:
+            user = DatabaseColumn("User", SimpleColumn('user_id'), sortable=False)
+            columns.append(user)
 
         if self.show_gender():
             columns.append(DatabaseColumn("Gender", SimpleColumn('gender'), sortable=False))
@@ -244,12 +262,15 @@ class CareReport(SqlTabularReport,
 
         for row in rows:
             try:
-                user = CommCareUser.get_by_user_id(row.pop(0))
-                u = user.username
+                if not self.selected_province() or not self.selected_cbo():
+                    u = row.pop(0)
+                else:
+                    user = CommCareUser.get_by_user_id(row.pop(0))
+                    u = user.username
 
-                # TODO: we might not want to skip blank names
-                if not user.name.strip():
-                    continue
+                    # TODO: we might not want to skip blank names
+                    if not user.name.strip():
+                        continue
             except AttributeError:
                 # TODO: figure out how often this happens and do something
                 # better
@@ -296,7 +317,16 @@ class CareReport(SqlTabularReport,
 
         rows_for_table = []
         for user in rows:
-            u = CommCareUser.get_by_username(user)
+            if not self.selected_province():
+                u = FixtureDataItem.get(user).fields['name']
+            elif not self.selected_cbo():
+                try:
+                    u = Group.get(user).name
+                except ResourceNotFound:
+                    continue
+            else:
+                u = CommCareUser.get_by_username(user).name
+
             total_row = []
             if self.show_age() and self.show_gender():
                 for age_group in sorted(rows[user]):
@@ -310,7 +340,7 @@ class CareReport(SqlTabularReport,
                                 for val in pair]
 
                     rows_for_table.append({
-                        'username': u.name if age_group == '0' else '',
+                        'username': u if age_group == '0' else '',
                         'gender': True,
                         'age_display': age_display,
                         'row_data': row_data
@@ -323,7 +353,7 @@ class CareReport(SqlTabularReport,
                             for val in pair]
 
                 rows_for_table.append({
-                    'username': u.name,
+                    'username': u,
                     'gender': True,
                     'row_data': row_data
                 })
@@ -337,7 +367,7 @@ class CareReport(SqlTabularReport,
 
                     row_data = rows[user][age_group]
                     rows_for_table.append({
-                        'username': u.name if age_group == '0' else '',
+                        'username': u if age_group == '0' else '',
                         'age_display': age_display,
                         'row_data': row_data
                     })
@@ -345,7 +375,7 @@ class CareReport(SqlTabularReport,
                     total_row = self.add_row_to_total(total_row, row_data)
             else:
                 rows_for_table.append({
-                    'username': u.name,
+                    'username': u,
                     'gender':  'no_grouping',  # magic
                     'row_data': rows[user]
                 })
