@@ -4,7 +4,7 @@ import simplejson
 
 
 MOCK_REDIS_CACHE = None
-COUCH_CACHE_TIMEOUT = 1800
+COUCH_CACHE_TIMEOUT = 43200
 
 DEBUG_TRACE = False
 
@@ -108,14 +108,14 @@ def purge_view(view_key):
 
 
 
-def cached_open_doc(db, doc_id, **params):
+def cached_open_doc(db, doc_id, cache_expire=COUCH_CACHE_TIMEOUT, **params):
     """
     Main wrapping function to open up a doc. Replace db.open_doc(doc_id)
     """
     cached_doc = _get_cached_doc_only(doc_id)
     if not cached_doc:
         doc = db.open_doc(doc_id, **params)
-        do_cache_doc(doc)
+        do_cache_doc(doc, cache_expire=cache_expire)
         return doc
     else:
         return cached_doc
@@ -133,22 +133,22 @@ def _get_cached_doc_only(doc_id):
         return None
 
 
-def do_cache_doc(doc):
-    rcache().set(key_doc_id(doc['_id']), simplejson.dumps(doc), timeout=COUCH_CACHE_TIMEOUT)
+def do_cache_doc(doc, cache_expire=COUCH_CACHE_TIMEOUT):
+    rcache().set(key_doc_id(doc['_id']), simplejson.dumps(doc), timeout=cache_expire)
 
 
-def cache_view_doc(doc_or_docid, view_key):
+def cache_view_doc(doc_or_docid, view_key, cache_expire=COUCH_CACHE_TIMEOUT):
     """
     Cache by doc_id a reverse lookup of views that it is mutually dependent on
     """
     id = doc_or_docid['_id'] if isinstance(doc_or_docid, dict) else doc_or_docid
     key = key_reverse_doc(id, view_key)
-    rcache().set(key, 1, timeout=COUCH_CACHE_TIMEOUT)
+    rcache().set(key, 1, timeout=cache_expire)
 
     if isinstance(doc_or_docid, dict):
         do_cache_doc(doc_or_docid)
 
-def cached_view(db, view_name, wrapper=None, **params):
+def cached_view(db, view_name, wrapper=None, cache_expire=COUCH_CACHE_TIMEOUT, **params):
     """
     Call a view and cache the results, return cached if it's a cache hit.
 
@@ -187,7 +187,8 @@ def cached_view(db, view_name, wrapper=None, **params):
                 if wrapper:
                     final_results = [wrapper(x['doc']) for x in rows]
                 else:
-                    final_results['rows'] = rows
+                    #final_results['rows'] = rows
+                    final_results = rows
             return final_results
         else:
             #cache miss, get view, cache it and all docs
@@ -202,7 +203,7 @@ def cached_view(db, view_name, wrapper=None, **params):
                     "value": None,
                     "key": row["key"],
                 }
-                cache_view_doc(row["doc"], cache_view_key)
+                cache_view_doc(row["doc"], cache_view_key, cache_expire=cache_expire)
                 row_stubs.append(stub)
 
             cached_results = {
@@ -215,7 +216,7 @@ def cached_view(db, view_name, wrapper=None, **params):
                 retval = [wrapper(x['doc']) for x in view_results['rows']]
             else:
                 retval = view_results['rows']
-            rcache().set(cache_view_key, simplejson.dumps(cached_results), timeout=COUCH_CACHE_TIMEOUT)
+            rcache().set(cache_view_key, simplejson.dumps(cached_results), timeout=cache_expire)
             return retval
 
     else:
@@ -227,7 +228,7 @@ def cached_view(db, view_name, wrapper=None, **params):
             return results
         else:
             view_results = db.view(view_name, **params).all()
-            rcache().set(cache_view_key, simplejson.dumps(view_results), timeout=COUCH_CACHE_TIMEOUT)
+            rcache().set(cache_view_key, simplejson.dumps(view_results), timeout=cache_expire)
             for row in view_results:
                 doc_id = row.get('id', None)
                 if doc_id:
