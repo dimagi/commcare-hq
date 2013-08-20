@@ -21,13 +21,22 @@ CACHED_DOC_PREFIX = '#cached_doc_'
 #value is a list of the cached_view keys
 CACHED_VIEW_DOC_REVERSE = '#reverse_cached_doc_'
 
+
 def key_doc_id(doc_id):
+    """
+    Redis cache key for a full couch document by doc_id
+    """
     ret = "%s%s" % (CACHED_DOC_PREFIX, doc_id)
     return ret
 
+
 def key_reverse_doc(doc_id, suffix):
-    ret =  "%s%s_%s" % (CACHED_VIEW_DOC_REVERSE, doc_id, suffix)
+    """
+    a doc_id to tell you if a cached doc is in a view
+    """
+    ret = "%s%s_%s" % (CACHED_VIEW_DOC_REVERSE, doc_id, suffix)
     return ret
+
 
 def key_view_full(view_name, params):
     cache_view_key = "%(prefix)s_%(view_name)s_%(params_str)s" % {
@@ -38,30 +47,20 @@ def key_view_full(view_name, params):
     return cache_view_key
 
 
-def key_view_partial(view_name_suffix):
-    """
-    does not necessarily have to be the full name - if you're hand building it for something
-    """
-    cache_view_key = "%(prefix)s_%(view_name)s" % {
-        "prefix": CACHED_VIEW_PREFIX,
-        "view_name": view_name_suffix,
-    }
-    return cache_view_key
-
-
 def purge_by_doc_id(doc_id):
     #first by just individual doc
-    print "purging single doc: %s" % doc_id
     rcache().delete(key_doc_id(doc_id))
     #then all the reverse indices by that doc_id
     rcache().delete_pattern(key_reverse_doc(doc_id, '*'))
+    #todo:
+    #walk all views that are seen by that doc_id and blow away too?
+    #if the pillow was not running this would def. be the case.
 
 
 def purge_view(view_key):
     """
-    View_name you want to put in your key, does not necessarily have to be the right one...wildcard it yo
+    view_name: you want to put in your key, does not necessarily have to be the right one...wildcard it yo
     """
-    print "purging view: %s" % view_key
     cached_view = rcache().get(view_key, None)
     if cached_view:
         results = simplejson.loads(cached_view)
@@ -85,20 +84,21 @@ def purge_view(view_key):
 
 
 def cached_open_doc(db, doc_id, **params):
-    cached_doc = get_cached_doc_only(doc_id)
+    """
+    Main wrapping function to open up a doc. Replace db.open_doc(doc_id)
+    """
+    cached_doc = _get_cached_doc_only(doc_id)
     if not cached_doc:
-        print "cached_open_doc miss: %s" % doc_id
         doc = db.open_doc(doc_id, **params)
         do_cache_doc(doc)
         return doc
     else:
-        print "cached_open_doc hit: %s" % doc_id
         return cached_doc
 
 
-def get_cached_doc_only(doc_id):
+def _get_cached_doc_only(doc_id):
     """
-    Main cache retrieval method for open_doc - for use by views in retrieving their docs.
+    helper cache retrieval method for open_doc - for use by views in retrieving their docs.
     """
     doc = rcache().get(key_doc_id(doc_id), None)
     if doc is not None:
@@ -123,7 +123,7 @@ def cache_view_doc(doc_or_docid, view_key):
     if isinstance(doc_or_docid, dict):
         do_cache_doc(doc_or_docid)
 
-def cached_view(db, view_name, **params):
+def cached_view(db, view_name, wrapper=None, **params):
     """
     Call a view and cache the results, return cached if it's a cache hit.
 
@@ -131,36 +131,38 @@ def cached_view(db, view_name, **params):
     view_name, params: couch view call parameters
 
     Note, a view call with include_docs=True will not be wrapped, you must wrap it on your own.
+
+
     """
-    cache_docs = params.get('include_docs', False)
+    include_docs = params.get('include_docs', False)
 
     cache_view_key = key_view_full(view_name, params)
-    print "VIEW KEY: %s" % cache_view_key
-    if cache_docs:
-        #cache hit, return the cached results
-
-        #include_docs=true results look like:
-        #{"total_rows": <int>, "offset": <int>, "rows": [...]}
-        #test to see if view already cached
+    if include_docs:
+        #include_docs=True results in couchdbkit remove the 'rows' result and returns just the actual rows in an array
         cached_view = rcache().get(cache_view_key, None)
         if cached_view:
-            intermediate_results = simplejson.loads(cached_view)
+            results = simplejson.loads(cached_view)
             final_results = {}
-            row_stubs = intermediate_results['row_stubs']
 
-            final_results['total_rows'] = intermediate_results['total_rows']
-            final_results['offset'] = intermediate_results['offset']
+            if include_docs:
+                row_stubs = results['row_stubs']
 
-            rows = []
-            for stub in row_stubs:
-                row = {
-                    "id": stub['id'],
-                    "value": None,
-                    "key": stub["key"],
-                    "doc": get_cached_doc_only(stub["id"])
-                }
-                rows.append(row)
-            final_results['rows'] = rows
+                final_results['total_rows'] = results['total_rows']
+                final_results['offset'] = results['offset']
+
+                rows = []
+                for stub in row_stubs:
+                    row = {
+                        "id": stub['id'],
+                        "value": None,
+                        "key": stub["key"],
+                        "doc": _get_cached_doc_only(stub["id"])
+                    }
+                    rows.append(row)
+                if wrapper:
+                    final_results = [wrapper(x['doc']) for x in rows]
+                else:
+                    final_results['rows'] = rows
             return final_results
         else:
             #cache miss, get view, cache it and all docs
@@ -168,6 +170,7 @@ def cached_view(db, view_name, **params):
             view_obj._fetch_if_needed()
             view_results = view_obj._result_cache
             row_stubs = []
+
             for row in view_results["rows"]:
                 stub = {
                     "id": row['id'],
@@ -182,10 +185,17 @@ def cached_view(db, view_name, **params):
                 "offset": view_results['offset'],
                 "row_stubs": row_stubs
             }
+
+            if wrapper:
+                retval = [wrapper(x['doc']) for x in view_results['rows']]
+            else:
+                retval = view_results['rows']
             rcache().set(cache_view_key, simplejson.dumps(cached_results), timeout=COUCH_CACHE_TIMEOUT)
-            return view_results
+            return retval
 
     else:
+        ###########################
+        # include_docs=False just returns the entire view verbatim
         cached_view = rcache().get(cache_view_key, None)
         if cached_view:
             results = simplejson.loads(cached_view)
