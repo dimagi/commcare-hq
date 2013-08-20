@@ -21,6 +21,7 @@ from django.utils.translation import ugettext as _
 from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
 from django.core.urlresolvers import reverse
 import uuid
+from dimagi.utils.logging import notify_logger
 
 """
     Note: Fields is being phased out in favor of filters.
@@ -33,6 +34,7 @@ class ReportField(CacheableRequestMixIn):
     template = ""
 
     def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None):
+        notify_logger.warn("ReportField is deprecated. Use ReportFilter instead.")
         self.context = Context()
         self.request = request
         self.domain = domain
