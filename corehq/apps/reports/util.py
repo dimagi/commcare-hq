@@ -350,7 +350,6 @@ def friendly_timedelta(td):
 def set_report_announcements_for_user(request, couch_user):
     key = ["type", ReportAnnouncement.__name__]
     now = datetime.utcnow()
-    #cache_core change
 
     db = ReportAnnouncement.get_db()
     data = cache_core.cached_view(db, "announcements/all_announcements", reduce=False,
@@ -414,14 +413,19 @@ def datespan_from_beginning(domain, default_days, timezone):
             logging.error("Tried to get a date from this, but it didn't work: %r" % x)
             return None
     key = make_form_couch_key(domain)
-    startdate = get_db().view('reports_forms/all_forms',
-        startkey=key,
-        endkey=key+[{}],
-        limit=1,
-        descending=False,
-        reduce=False,
-        wrapper=extract_date,
-    ).one() #or now - timedelta(days=default_days - 1)
+
+    res = cache_core.cached_view(get_db(), "reports_forms/all_forms",
+                                 startkey=key,
+                                 endkey=key + [{}],
+                                 limit=1,
+                                 descending=False,
+                                 reduce=False,
+    ) #or now - timedelta(days=default_days - 1)
+    if len(res) == 1:
+        startdate = extract_date(res[0])
+    else:
+        startdate = None
+
     datespan = DateSpan(startdate, now, timezone=timezone)
     datespan.is_default = True
     return datespan
