@@ -1,8 +1,13 @@
-import simplejson
+import logging
+from datetime import datetime
+
 from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.cache import cache_core
-from pillowtop.listener import BasicPillow
+from pillowtop.listener import BasicPillow, ms_from_timedelta
 
+
+pillow_logging = logging.getLogger("pillowtop")
+pillow_logging.setLevel(logging.INFO)
 
 class CacheInvalidatePillow(BasicPillow):
     """
@@ -25,19 +30,22 @@ class CacheInvalidatePillow(BasicPillow):
         """
 
         doc_id = changes_dict['id']
-        print "change_trigger: %s" % doc_id
-        rcache = cache_core.rcache()
 
-        #purge cache regardless
-        cache_core.purge_by_doc_id(doc_id)
-
-        if changes_dict.get('deleted', False):
-            #we're done
+        if doc_id.startswith('pillowtop_corehq.pillows'):
             return None
 
-        doc = self.couch_db.open_doc(changes_dict['id'])
+        #purge cache regardless
+        existed, last_version = cache_core.purge_by_doc_id(doc_id)
+
+        if changes_dict.get('deleted', False):
+            #if deleted, see if we have the last doc
+            doc = last_version if existed else {}
+        else:
+            doc = self.couch_db.open_doc(changes_dict['id'])
+
         doc_type = doc.get('doc_type', None)
-        print "got doc_type: %s" % doc_type
+        pillow_logging.info("CacheInvalidate: received change event for doc_id: %s, doc_type: %s" % (doc_id, doc_type))
+
         if doc_type in ['Domain']:
             self.invalidate_domain_views()
         elif doc_type in ['CommCareUser', 'WebUser', 'CouchUser']:
@@ -45,11 +53,10 @@ class CacheInvalidatePillow(BasicPillow):
         elif doc_type in ['Group', 'UserRole']:
             self.invalidate_groups()
         else:
-            print "not relevant!"
             return None
 
 
-    def invalidate_views(self, views):
+    def invalidate_views(self, views, name=None):
         """
         Nuclear option for cache invalidation
         Given a certain document class of highly interdependent views, just invalidate ALL views when
@@ -60,14 +67,20 @@ class CacheInvalidatePillow(BasicPillow):
         that have a doc.doc_type to verify which doc_type it is beholden to.
         """
         rcache = cache_core.rcache()
+        start = datetime.utcnow()
+
+        total_keys = 0
         for view in views:
-            print "invalidating view: %s" % view
             search = cache_core.key_view_partial("%s*" % view)
             live_keys = rcache.keys(search)
+            total_keys += len(live_keys)
             for cache_view_key in live_keys:
                 #open each view, purge all the reverse doc_ids
                 cache_core.purge_view(cache_view_key)
 
+        stop = datetime.utcnow()
+        duration = ms_from_timedelta(stop - start)
+        pillow_logging.info("CacheInvalidate: invalidate_views(%s) completed %d keys in %s ms" % (name, total_keys, duration))
 
     def invalidate_domain_views(self):
         """
@@ -81,7 +94,7 @@ class CacheInvalidatePillow(BasicPillow):
             "domain/by_status",
             "domain/by_organization",
         ]
-        self.invalidate_views(domain_views)
+        self.invalidate_views(domain_views, name="domains")
 
     def invalidate_users(self):
         user_views = [
@@ -94,7 +107,7 @@ class CacheInvalidatePillow(BasicPillow):
             "users/by_org_and_team",
             "users/web_users_by_domain",
         ]
-        self.invalidate_views(user_views)
+        self.invalidate_views(user_views, name="users")
 
     def invalidate_groups(self):
         group_views = [
@@ -107,7 +120,7 @@ class CacheInvalidatePillow(BasicPillow):
             "users/by_group",
         ]
 
-        self.invalidate_views(group_views)
+        self.invalidate_views(group_views, name="groups")
 
     def change_transform(self, doc_dict):
         """
