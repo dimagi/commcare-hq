@@ -1,6 +1,7 @@
 import datetime
 from django.template.context import Context
 from django.template.loader import render_to_string
+import logging
 import pytz
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain, LICENSES
@@ -33,6 +34,7 @@ class ReportField(CacheableRequestMixIn):
     template = ""
 
     def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None):
+        logging.warn("%s: ReportField is deprecated. Use ReportFilter instead." % self.__class__.__name__)
         self.context = Context()
         self.request = request
         self.domain = domain
