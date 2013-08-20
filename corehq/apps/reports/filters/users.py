@@ -1,9 +1,12 @@
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
+from corehq.apps.groups.models import Group
+from corehq.apps.reports import util
 
-from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter
+from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseReportFilter, BaseSingleOptionFilter, BaseSingleOptionTypeaheadFilter
 from corehq.apps.groups.hierarchy import (get_hierarchy,
         get_user_data_from_hierarchy)
+from corehq.apps.reports.models import HQUserType
 
 
 class LinkedUserFilter(BaseDrilldownOptionFilter):
@@ -105,3 +108,101 @@ class LinkedUserFilter(BaseDrilldownOptionFilter):
 
         return get_user_data_from_hierarchy(domain, cls.user_types,
                 root_user_id=selected_user_id)
+
+
+class UserTypeFilter(BaseReportFilter):
+    # note, this is a butchered refactor of the original FilterUsersField.
+    # don't use this as a guideline for anything.
+    slug = "ufilter"
+    label = ugettext_noop("User Type")
+    template = "reports/filters/filter_users.html"
+
+    @property
+    def filter_context(self):
+        toggle, show_filter = self.get_user_filter(self.request)
+        return {
+            'show_user_filter': show_filter,
+            'toggle_users': toggle,
+        }
+
+    @classmethod
+    def get_user_filter(cls, request):
+        ufilter = group = individual = None
+        try:
+            if request.GET.get('ufilter', ''):
+                ufilter = request.GET.getlist('ufilter')
+            group = request.GET.get('group', '')
+            individual = request.GET.get('individual', '')
+        except KeyError:
+            pass
+        show_filter = True
+        toggle = HQUserType.use_defaults()
+        if ufilter and not (group or individual):
+            toggle = HQUserType.use_filter(ufilter)
+        elif group or individual:
+            show_filter = False
+        return toggle, show_filter
+
+
+class SelectMobileWorkerFilter(BaseSingleOptionTypeaheadFilter):
+    slug = 'individual'
+    label = ugettext_noop("Select Mobile Worker")
+    default_text = ugettext_noop("All Mobile Workers")
+
+    @property
+    def filter_context(self):
+        user_filter, _ = UserTypeFilter.get_user_filter(self.request)
+        context = super(SelectMobileWorkerFilter, self).filter_context
+        context['select'].update({
+            'default_text': self.get_default_text(user_filter),
+        })
+        return context
+
+    @property
+    def options(self):
+        users = util.user_list(self.domain)
+        return [(user.user_id,
+                 "%s%s" % (user.username_in_report, "" if user.is_active else " (Inactive)"))
+                for user in users]
+
+    @classmethod
+    def get_default_text(cls, user_filter):
+        default = cls.default_text
+        if user_filter[HQUserType.ADMIN].show or \
+           user_filter[HQUserType.DEMO_USER].show or user_filter[HQUserType.UNKNOWN].show:
+            default = _('%s & Others') % _(default)
+        return default
+
+
+class SelectCaseOwnerFilter(SelectMobileWorkerFilter):
+    label = ugettext_noop("Select Case Owner")
+    default_text = ugettext_noop("All Case Owners")
+
+    @property
+    def options(self):
+        options = [(group._id, "%s (Group)" % group.name) for group in Group.get_case_sharing_groups(self.domain)]
+        user_options = super(SelectCaseOwnerFilter, self).options
+        options.extend(user_options)
+        return options
+
+
+class BaseGroupedMobileWorkerFilter(BaseSingleOptionFilter):
+    """
+        This is a little field for use when a client really wants to filter by
+        individuals from a specific group.  Since by default we still want to
+        show all the data, no filtering is done unless the special group filter
+        is selected.
+    """
+    group_names = []
+
+    @property
+    def options(self):
+        options = []
+        for group_name in self.group_names:
+            group = Group.by_name(self.domain, group_name)
+            if group:
+                users = group.get_users(is_active=True, only_commcare=True)
+                options.extend([(u.user_id, u.username_in_report) for u in users])
+        return options
+
+
