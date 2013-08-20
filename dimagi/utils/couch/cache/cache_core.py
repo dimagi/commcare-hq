@@ -47,11 +47,36 @@ def key_view_full(view_name, params):
     return cache_view_key
 
 
+def key_view_partial(view_name_suffix):
+    """
+    Given a partial view_key (just basically prefixing by view_name, don't care about params)
+    Used for invalidating ALL views of a given view_name, or hand building a view cache key
+    """
+    cache_view_key = "%(prefix)s_%(view_name)s" % {
+        "prefix": CACHED_VIEW_PREFIX,
+        "view_name": view_name_suffix,
+    }
+    return cache_view_key
+
+
 def purge_by_doc_id(doc_id):
+    """
+    For a given doc_id, delete it and all reverses.
+
+    return: tuple of (true|false existed or not, last_version)
+    """
     #first by just individual doc
-    rcache().delete(key_doc_id(doc_id))
-    #then all the reverse indices by that doc_id
-    rcache().delete_pattern(key_reverse_doc(doc_id, '*'))
+    doc_key = key_doc_id(doc_id)
+    exists = rcache().get(doc_key, None)
+
+    if exists:
+        rcache().delete(key_doc_id(doc_id))
+        #then all the reverse indices by that doc_id
+        rcache().delete_pattern(key_reverse_doc(doc_id, '*'))
+        return True, exists
+    else:
+        return False, None
+
     #todo:
     #walk all views that are seen by that doc_id and blow away too?
     #if the pillow was not running this would def. be the case.
