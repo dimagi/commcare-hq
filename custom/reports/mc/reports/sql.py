@@ -122,7 +122,11 @@ class McSqlData(SqlData):
             'enddate': self.datespan.enddate_param_utc,
         }
         if self.fixture_item is not None:
-            base_filter_values['userids'] = tuple(u._id for u in self._get_users_matching_location(self.fixture_item, self.fixture_type))
+            user_ids = tuple(u._id for u in self._get_users_matching_location(self.fixture_item, self.fixture_type))
+            if user_ids:
+                base_filter_values['userids'] = user_ids
+            else:
+                base_filter_values['userids'] = ('__EMPTY__',)
         return base_filter_values
 
     @property
@@ -180,7 +184,6 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
     report_template_path = "mc/reports/sectioned_tabular.html"
     fields = [
         'corehq.apps.reports.fields.DatespanField',
-        'custom.reports.mc.reports.fields.DistrictField',
     ]
     SECTIONS = None  # override
     extra_context_providers = [section_context]
@@ -191,7 +194,8 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
         fixture = self.request_params.get('fixture_id', None)
         if fixture:
             type_string, id = fixture.split(":")
-            fixture_type = FixtureDataType.by_domain_tag(domain, type_string).one()
+            results = FixtureDataType.by_domain_tag(domain, type_string)
+            fixture_type = results.one()
             fixture_item = FixtureDataItem.get(id)
         else:
             fixture_item = None
@@ -206,20 +210,36 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
 
 class HeathFacilityMonthly(MCBase):
     slug = 'hf_monthly'
+    fields = [
+        'corehq.apps.reports.fields.DatespanField',
+        'custom.reports.mc.reports.fields.HealthFacilityField',
+    ]
     name = ugettext_noop("Health Facility Monthly Report")
     SECTIONS = HF_MONTHLY_REPORT
 
 class DistrictMonthly(MCBase):
+    fields = [
+        'corehq.apps.reports.fields.DatespanField',
+        'custom.reports.mc.reports.fields.DistrictField',
+    ]
     slug = 'district_monthly'
     name = ugettext_noop("District Monthly Report")
     SECTIONS = DISTRICT_MONTHLY_REPORT
 
 class DistrictWeekly(MCBase):
+    fields = [
+        'corehq.apps.reports.fields.DatespanField',
+        'custom.reports.mc.reports.fields.DistrictField',
+    ]
     slug = 'district_weekly'
     name = ugettext_noop("District Weekly Report")
     SECTIONS = DISTRICT_WEEKLY_REPORT
 
 class HealthFacilityWeekly(MCBase):
+    fields = [
+        'corehq.apps.reports.fields.DatespanField',
+        'custom.reports.mc.reports.fields.HealthFacilityField',
+    ]
     slug = 'hf_weekly'
     name = ugettext_noop("Health Facility Weekly Report")
     SECTIONS = HF_WEEKLY_REPORT
