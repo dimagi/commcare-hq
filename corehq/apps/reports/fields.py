@@ -504,6 +504,24 @@ class AsyncDrillableField(BaseReportFilter):
                          {"type": "district", "parent_ref": "state_id", "references": "id", "display": "name"},
                          {"type": "block", "parent_ref": "district_id", "references": "id", "display": "name"},
                          {"type": "village", "parent_ref": "block_id", "references": "id", "display": "name"}]
+
+
+    type
+        - FixtureDataType
+    parent_ref
+        - Field-name as in child's schema, that refers to id of it's parent
+    references
+        - Field-name as in parent's schema, that is a reference
+    display
+        - Field-name, of which the value should be displayed
+
+
+    Examples:
+
+    State(id, name), Ditrict(id, state_id, name), Block(id, state_id, district_id, name)
+        - In this case reference is 'id' in State and parent_ref is "state_id" as in District
+    State(state_id, name), District(district_id, state_id, name), Block(block_id, state_id, district_id, name)
+        - In this case reference is 'state_id' in State which is same as parent_ref as in District
     """
     template = "reports/fields/drillable_async.html"
     hierarchy = [] # a list of fixture data type names that representing different levels of the hierarchy. Starting with the root
