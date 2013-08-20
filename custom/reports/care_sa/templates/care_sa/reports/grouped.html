@@ -1,5 +1,16 @@
 {% extends "reports/async/tabular.html" %}
 {% load i18n %}
+
+{% block js-inline %}
+    <script language="javascript">
+        $(function () {
+            $('#group_province select').change(function () {
+                $('#group_group').toggle(this.selectedIndex !== 0);
+            }).change();
+        });
+    </script>
+{% endblock %}
+
 {% block tabular-body %}
     {% if report_table.pagination.is_on %}
     <tr>
