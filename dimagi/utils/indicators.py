@@ -1,6 +1,7 @@
 from couchdbkit.ext.django.schema import DocumentSchema, DictProperty, DateTimeProperty, BooleanProperty
 import datetime
 
+
 class ComputedDocumentMixin(DocumentSchema):
     """
         Use this mixin for things like CommCareCase or XFormInstance documents that take advantage
@@ -22,12 +23,38 @@ class ComputedDocumentMixin(DocumentSchema):
     # a flag for the indicator pillows so that there aren't any Document Update Conflicts
     initial_processing_complete = BooleanProperty(default=False)
 
-    def update_indicator(self, indicator_def, save_on_update=True):
+    def update_indicator(self, indicator_def, save_on_update=True, logger=None):
         existing_indicators = self.computed_.get(indicator_def.namespace, {})
         updated_indicators, is_update = indicator_def.update_computed_namespace(existing_indicators, self)
         if is_update:
             self.computed_[indicator_def.namespace] = updated_indicators
             self.computed_modified_on_ = datetime.datetime.utcnow()
+            if logger:
+                logger.debug("[INDICATOR %(namespace)s %(domain)s] Updating %(indicator_type)s:%(indicator_slug)s "
+                            "in %(document_type)s [%(document_id)s]." % {
+                                'namespace': indicator_def.namespace,
+                                'domain': indicator_def.domain,
+                                'indicator_type': indicator_def.__class__.__name__,
+                                'indicator_slug': indicator_def.slug,
+                                'document_type': self.__class__.__name__,
+                                'document_id': self._id,
+                            })
             if save_on_update:
                 self.save()
+                if logger:
+                    logger.debug("Saved %s." % self._id)
         return is_update
+
+    def update_indicators_in_bulk(self, indicators, save_on_update=True, logger=None):
+        is_update = False
+        for indicator in indicators:
+            if self.update_indicator(indicator, save_on_update=False, logger=logger):
+                is_update = True
+
+        if is_update and save_on_update:
+            self.save()
+            if logger:
+                logger.debug("Saved %s." % self._id)
+
+        return is_update
+
