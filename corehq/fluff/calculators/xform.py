@@ -1,4 +1,5 @@
 from datetime import timedelta
+import warnings
 from corehq.fluff.calculators.logic import ANDCalculator, ORCalculator
 import fluff
 from fluff.filters import Filter
@@ -42,8 +43,6 @@ class IntegerPropertyReference(object):
 
 class FilteredFormPropertyCalculator(fluff.Calculator):
     """
-    WARNING: This class is deprecated. Use SimpleCalculator in combination with FormPropertyFilter
-
     Enables filtering forms by xmlns and (optionally) property == value.
     Let's you easily define indicators such as:
      - all adult registration forms
@@ -71,6 +70,9 @@ class FilteredFormPropertyCalculator(fluff.Calculator):
 
     def __init__(self, xmlns=None, property_path=None, property_value=None,
                  operator=EQUAL, indicator_calculator=None, window=None):
+        warnings.warn("FilteredFormPropertyCalculator is deprecated. "
+                      "Use SimpleCalculator in combination with FormPropertyFilter", DeprecationWarning)
+
         def _conditional_setattr(key, value):
             if value:
                 setattr(self, key, value)
@@ -137,20 +139,24 @@ class FormPropertyFilter(Filter):
 
 # meh this is a little redundant but convenient
 class FormANDCalculator(ANDCalculator):
-    """
-    WARNING: This class is deprecated. Use SimpleCalculator in combination with ANDFilter
-    """
     window = timedelta(days=1)
+
+    def __init__(self, calculators):
+        warnings.warn("FormANDCalculator is deprecated. "
+                      "Use SimpleCalculator in combination with ANDFilter", DeprecationWarning)
+        super(FormANDCalculator, self).__init__(calculators)
 
     @fluff.date_emitter
     def total(self, form):
         yield default_date(form)
 
 class FormORCalculator(ORCalculator):
-    """
-    WARNING: This class is deprecated. Use SimpleCalculator in combination with ORFilter
-    """
     window = timedelta(days=1)
+
+    def __init__(self, calculators):
+        warnings.warn("FormORCalculator is deprecated. "
+                      "Use SimpleCalculator in combination with ORFilter", DeprecationWarning)
+        super(FormORCalculator, self).__init__(calculators)
 
     @fluff.date_emitter
     def total(self, form):

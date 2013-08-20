@@ -83,6 +83,13 @@
                 loadChartData(update_active_chart, startdate, enddate);
                 var new_url = "?startdate=" + startdate + "&enddate=" + enddate + window.location.hash;
                 History.pushState(null, "Reloaded Chart", new_url);
+
+                // keep the urls for the other data visualizations consistent with this datespan
+                $(".viz-url").each(function() {
+                    var new_href = $(this).attr('href').split("?")[0] + new_url;
+                    $(this).attr('href', new_href);
+                });
+
                 return false;
             });
             $('.reload-graph-form').submit();
@@ -115,26 +122,41 @@
                 <input type="text" id="{{ chart_name }}-startdate" name="startdate" value="{{ startdate }}" class="date-picker input-small">
                 <label for="{{ chart_name }}-enddate" class="sub-label">{% trans 'To' %}</label>
                 <input type="text" id="{{ chart_name }}-enddate" name="enddate" value="{{ enddate }}" class="date-picker input-small">
-                <button type="submit" class="btn btn-info">{% trans "Reload Data" %}</button>
+                <button type="submit" class="btn btn-info">{% trans "Apply" %}</button>
             </span>
         </form>
     </ul>
 
     <div id="charts" class="tab-content">
         <div class="tab-pane active" id="bar-chart">
-            <div style="height: 320px; min-height: 320px;" class="loading">{% trans "Loading..." %}</div>
+            <div style="height: 320px; min-height: 320px;" class="loading">
+                <div class="hq-loading">
+                    <h4>{% trans "Loading Bar Chart" %}</h4>
+                    <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                </div>
+            </div>
             <div class='nvd3-chart hide'>
                 <svg style='height:320px'> </svg>
             </div>
         </div>
         <div class="tab-pane" id="cumulative-chart">
-            <div style="height: 320px; min-height: 320px;" class="loading">{% trans "Loading..." %}</div>
+            <div style="height: 320px; min-height: 320px;" class="loading">
+                <div class="hq-loading">
+                    <h4>{% trans "Loading Cumulative Chart" %}</h4>
+                    <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                </div>
+            </div>
             <div class='nvd3-chart hide'>
                 <svg style='height:320px'> </svg>
             </div>
         </div>
         <div class="tab-pane" id="stacked-cumulative-chart">
-            <div style="height: 320px; min-height: 320px;" class="loading">{% trans "Loading..." %}</div>
+            <div style="height: 320px; min-height: 320px;" class="loading">
+                <div class="hq-loading">
+                    <h4>{% trans "Loading Stacked Cumulative Chart" %}</h4>
+                    <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                </div>
+            </div>
             <div class='nvd3-chart hide'>
                 <svg style='height:320px'> </svg>
             </div>

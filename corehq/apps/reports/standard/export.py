@@ -8,7 +8,7 @@ from django.http import Http404
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport, DatespanMixin
 from corehq.apps.reports.models import FormExportSchema,\
     HQGroupExportConfiguration
-from corehq.apps.reports.util import make_form_couch_key
+from corehq.apps.reports.util import make_form_couch_key, datespan_from_beginning
 from couchexport.models import SavedExportSchema, Format
 from dimagi.utils.couch.database import get_db
 from corehq.apps.app_manager.models import get_app
@@ -52,28 +52,7 @@ class FormExportReportBase(ExportReport, DatespanMixin):
 
     @property
     def default_datespan(self):
-        now = datetime.datetime.utcnow()
-
-        def extract_date(x):
-            try:
-                def clip_timezone(datestring):
-                    return datestring[:len('yyyy-mm-ddThh:mm:ss')]
-                return string_to_datetime(clip_timezone(x['key'][2]))
-            except Exception:
-                logging.error("Tried to get a date from this, but it didn't work: %r" % x)
-                return None
-        key = make_form_couch_key(self.domain)
-        startdate = get_db().view('reports_forms/all_forms',
-            startkey=key,
-            endkey=key+[{}],
-            limit=1,
-            descending=False,
-            reduce=False,
-            wrapper=extract_date,
-        ).one() or now - datetime.timedelta(days=self.datespan_default_days - 1)
-        datespan = DateSpan(startdate, now, timezone=self.timezone)
-        datespan.is_default = True
-        return datespan
+        return datespan_from_beginning(self.domain, self.datespan_default_days, self.timezone)
 
     def get_filter_params(self):
         params = self.request.GET.copy()
