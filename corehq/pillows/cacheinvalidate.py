@@ -52,6 +52,8 @@ class CacheInvalidatePillow(BasicPillow):
             self.invalidate_users()
         elif doc_type in ['Group', 'UserRole']:
             self.invalidate_groups()
+        elif doc_type in ['Organization', 'Team','OrgRequest', 'DeleteTeamRecord', 'OrgInvitation']:
+            self.invalidate_orgs()
         else:
             return None
 
@@ -121,6 +123,15 @@ class CacheInvalidatePillow(BasicPillow):
         ]
 
         self.invalidate_views(group_views, name="groups")
+
+    def invalidate_orgs(self):
+        org_views = [
+            'orgs/by_name',
+            'orgs/org_requests',
+            'orgs/team_by_domain',
+            'orgs/team_by_org_and_name',
+        ]
+        self.invalidate_views(org_views, name="orgs")
 
     def change_transform(self, doc_dict):
         """
