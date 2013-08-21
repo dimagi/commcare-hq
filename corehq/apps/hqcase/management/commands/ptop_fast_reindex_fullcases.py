@@ -24,7 +24,6 @@ class Command(PtopReindexer):
 
         dynamic_domains = getattr(settings, 'ES_CASE_FULL_INDEX_DOMAINS', [])
 
-
         def full_view_iter():
             for domain in dynamic_domains:
                 print "View iter for domain: %s" % domain
