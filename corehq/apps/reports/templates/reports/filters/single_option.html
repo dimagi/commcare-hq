@@ -9,7 +9,6 @@
 {% block filter_js %}
 <script type="text/javascript">
     $(function () {
-        ko.applyBindings({select_params: {{ select.options|JSON }}, current_selection: ko.observable('{{ select.selected|default:'' }}')}, $('#{{ css_id }}').parent().get(0));
+        ko.applyBindings({select_params: {{ select.options|JSON }}, current_selection: ko.observable('{{ select.selected|safe|default:'' }}')}, $('#{{ css_id }}').parent().get(0));
     });
-</script>
-{% endblock %}
+</script>{% endblock %}
