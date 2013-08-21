@@ -61,3 +61,4 @@ redis==2.7.5
 -e submodules/ctable-src
 unittest2
 pycurl==7.19.0
+fakecouch==0.0.4
