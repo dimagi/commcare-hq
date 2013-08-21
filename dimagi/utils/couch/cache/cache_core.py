@@ -129,7 +129,6 @@ def _get_cached_doc_only(doc_id):
     if doc is not None:
         return simplejson.loads(doc)
     else:
-        #uh oh, how do i retrieve this doc now?
         return None
 
 
@@ -181,7 +180,10 @@ def cached_view(db, view_name, wrapper=None, cache_expire=COUCH_CACHE_TIMEOUT, *
                         "id": stub['id'],
                         "value": None,
                         "key": stub["key"],
-                        "doc": _get_cached_doc_only(stub["id"])
+                        #this feels hacky, but for some reason other views are squashing the master cached doc.
+                        #a more true invalidation scheme should have this more readily address this, but for now
+                        #do a db call here and cache it. Should be a _cached_doc_only call here
+                        "doc": cached_open_doc(db, stub['id'])
                     }
                     rows.append(row)
                 if wrapper:
