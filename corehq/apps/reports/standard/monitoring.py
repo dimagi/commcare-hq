@@ -27,14 +27,6 @@ from django.utils.translation import ugettext_noop
 from corehq.apps.appstore.views import es_query
 
 
-def cache_report():
-    """do nothing until the real cache_report is fixed"""
-    def _fn(fn):
-        return fn
-    return _fn
-
-monitoring_report_cacher = cache_report()
-
 class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     exportable = True
 
@@ -48,12 +40,10 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
         return self.table_cell(user.get('raw_username'), user_link)
 
     @property
-    @monitoring_report_cacher
     def report_context(self):
         return super(WorkerMonitoringReportTableBase, self).report_context
 
     @property
-    @monitoring_report_cacher
     def export_table(self):
         return super(WorkerMonitoringReportTableBase, self).export_table
 
@@ -118,6 +108,7 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
     display_data = ['percent']
     emailable = True
     description = ugettext_noop("Followup rates on active cases.")
+    is_cacheable = True
 
     @property
     def special_notice(self):
@@ -306,6 +297,8 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase, MultiFormDrilldow
     ]
     fix_left_col = True
     emailable = True
+    is_cacheable = True
+
 
     description = _("Number of submissions by form.")
 
@@ -370,6 +363,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
 
     fix_left_col = True
     emailable = True
+    is_cacheable = True
 
     # todo: get mike to handle deleted reports gracefully
 
@@ -440,6 +434,7 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
               'corehq.apps.reports.fields.DatespanField']
 
     description = ugettext_noop("Statistics on time spent on a particular form.")
+    is_cacheable = True
 
     @property
     @memoized
@@ -526,6 +521,7 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
 class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, MultiFormDrilldownMixin, DatespanMixin):
     name = ugettext_noop("Form Completion vs. Submission Trends")
     slug = "completion_vs_submission"
+    is_cacheable = True
 
     description = ugettext_noop("Time lag between when forms were completed and when forms were successfully "
                                 "sent to CommCare HQ.")
@@ -649,6 +645,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     MultiFormDrilldownMixin, CompletionOrSubmissionTimeMixin, DatespanMixin):
     name = ugettext_noop("Worker Activity Times")
     slug = "worker_activity_times"
+    is_cacheable = True
 
     description = ugettext_noop("Graphical representation of when forms are submitted.")
 
@@ -681,7 +678,6 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
         return [(t.weekday(), t.hour) for t in all_times]
 
     @property
-    @monitoring_report_cacher
     def report_context(self):
         chart_data = defaultdict(int)
         for time in self.activity_times:
@@ -742,6 +738,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
     section_name = ugettext_noop("Project Reports")
     num_avg_intervals = 3 # how many duration intervals we go back to calculate averages
     need_group_ids = True
+    is_cacheable = True
 
     fields = [
         'corehq.apps.reports.fields.MultiSelectGroupField',
