@@ -44,7 +44,6 @@ class GenericReportView(CacheableRequestMixIn):
         report_context
             - returns a dict to be inserted into self.context
             - this is where the main processing of the report data should happen
-            - can be cached using @cache_report decorator in memcached where you please
 
         Note: In general you should not be inserting things into self.context directly, unless absolutely
             necessary. Please use the structure in the above properties for updating self.context
@@ -560,7 +559,7 @@ class GenericReportView(CacheableRequestMixIn):
         )
 
     @property
-    @request_cache("filters")
+    @request_cache("filters", expiry=60 * 10)
     def filters_response(self):
         """
             Intention: Not to be overridden in general.
