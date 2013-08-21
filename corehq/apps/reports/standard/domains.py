@@ -314,13 +314,6 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             # use [:19] so that only only the 'YYYY-MM-DDTHH:MM:SS' part of the string is parsed
             return datetime.strptime(dstr[:19], '%Y-%m-%dT%H:%M:%S').strftime('%Y/%m/%d %H:%M:%S') if dstr else default
 
-        def get_name_or_link(d):
-            if not getattr(self, 'show_name', None):
-                return mark_safe('<a href="%s">%s</a>' % \
-                       (reverse("domain_homepage", args=[d['name']]), d.get('hr_name') or d['name']))
-            else:
-                return d['name']
-
         for dom in domains:
             if dom.has_key('name'): # for some reason when using the statistical facet, ES adds an empty dict to hits
                 yield [
