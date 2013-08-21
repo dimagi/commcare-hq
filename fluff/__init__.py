@@ -11,6 +11,10 @@ import fluff.sync_couchdb
 
 
 REDUCE_TYPES = set(['sum', 'count', 'min', 'max', 'sumsqr'])
+TYPE_INTEGER = 'integer'
+TYPE_STRING = 'string'
+TYPE_DATE = 'date'
+ALL_TYPES = [TYPE_INTEGER, TYPE_STRING, TYPE_DATE]
 
 
 class base_emitter(object):
@@ -261,6 +265,10 @@ class IndicatorDocument(schema.Document):
     document_filter = None
     group_by = ()
 
+    # Mapping of group_by field to type. Used to communicate expected type in fluff diffs.
+    # See ALL_TYPES
+    group_by_type_map = None
+
     @property
     def wrapped_group_by(self):
         def _wrap_if_necessary(string_or_attribute_getter):
@@ -352,14 +360,22 @@ class IndicatorDocument(schema.Document):
         if not diff_keys:
             return None
 
+        group_by_type_map = self.group_by_type_map or {}
+        for gb in self.wrapped_group_by:
+            attrib = gb.attribute
+            if attrib not in group_by_type_map:
+                group_by_type_map[attrib] = TYPE_STRING
+            else:
+                assert group_by_type_map[attrib] in ALL_TYPES
+
         diff = dict(domains=list(self.domains),
                     database=self.Meta.app_label,
                     doc_type=self._doc_type,
                     group_names=self.get_group_names(),
                     group_values=self.get_group_values(),
+                    group_type_map=group_by_type_map,
                     indicator_changes=[],
-                    all_indicators=[],
-                    )
+                    all_indicators=[])
         indicator_changes = diff["indicator_changes"]
         all_indicators = diff["all_indicators"]
 
