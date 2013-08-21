@@ -7,7 +7,7 @@ from corehq.apps.sms.mixin import SMSBackend
 from couchdbkit.ext.django.schema import *
 from corehq.apps.mach.forms import MachBackendForm
 
-MACH_URL = "http://gw1.promessaging.com/sms.php"
+MACH_URL = "http://smsgw.a2p.mme.syniverse.com/sms.php"
 
 class MachBackend(SMSBackend):
     account_id = StringProperty()
