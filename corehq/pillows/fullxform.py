@@ -26,8 +26,15 @@ class XFormPillowHandler(object):
     def handle_transform(self, doc_dict, **kwargs):
         return doc_dict
 
-
+#DEPRECATED
 class FullXFormPillow(XFormPillow):
+    """
+    an extension to XFormPillow that provides for indexing of arbitrary data fields
+    within the xform
+
+    NOTE: deprecated and superseded by ReportXFormPillow!
+    """
+
     es_index_prefix = "full_xforms"
     es_alias = "full_xforms"
     es_type = "fullxform"
