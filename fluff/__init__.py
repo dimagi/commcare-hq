@@ -319,16 +319,30 @@ class IndicatorDocument(schema.Document):
                     emitter: 'all_visits',
                     emitter_type: 'date',
                     reduce_type: 'count',
-                    values: [['2012-09-23', 1], ['2012-09-24', 1]]
-                    },
+                    values: [
+                        {'date': '2012-09-23', 'value': 1, 'group_by': None},
+                        {'date': '2012-09-24', 'value': 1, 'group_by': None}
+                    ]},
                     {
                     calculator: 'visit_week',
                     emitter: 'visit_hour',
                     emitter_type: 'date',
                     reduce_type: 'sum',
-                    values: [['2012-09-23', 8], ['2012-09-24', 11]]
+                    values: [
+                        {'date': '2012-09-23', 'value': 8, 'group_by': None},
+                        {'date': '2012-09-24', 'value': 11, 'group_by': None}
+                    ]},
+                ],
+                all_indicators: [
+                    {
+                    calculator: 'visit_week',
+                    emitter: 'visit_hour',
+                    emitter_type: 'date',
+                    reduce_type: 'sum'
                     },
+                    ....
                 ]
+
             }
         """
         diff_keys = {}
@@ -360,21 +374,38 @@ class IndicatorDocument(schema.Document):
                     group_names=self.get_group_names(),
                     group_values=self.get_group_values(),
                     group_type_map=group_by_type_map,
-                    indicator_changes=[])
-        indicators = diff["indicator_changes"]
+                    indicator_changes=[],
+                    all_indicators=[])
+        indicator_changes = diff["indicator_changes"]
+        all_indicators = diff["all_indicators"]
 
         for calc_name, emitter_names in diff_keys.items():
-            indicators.extend(self._indicator_diff(calc_name, emitter_names, other_doc))
+            indicator_changes.extend(self._indicator_diff(calc_name, emitter_names, other_doc))
+
+        for calc_name in self._calculators.keys():
+            for emitter_name in self[calc_name].keys():
+                all_indicators.append(self._indicator_meta(calc_name, emitter_name))
 
         return diff
+
+    def _indicator_meta(self, calc_name, emitter_name, values=None):
+        emitter = getattr(self._calculators[calc_name], emitter_name)
+        emitter_type = emitter._fluff_emitter
+        reduce_type = emitter._reduce_type
+        meta = dict(calculator=calc_name,
+           emitter=emitter_name,
+           emitter_type=emitter_type,
+           reduce_type=reduce_type
+        )
+
+        if values is not None:
+            meta['values'] = values
+
+        return meta
 
     def _indicator_diff(self, calc_name, emitter_names, other_doc):
         indicators = []
         for emitter_name in emitter_names:
-            emitter = getattr(self._calculators[calc_name], emitter_name)
-            emitter_type = emitter._fluff_emitter
-            reduce_type = emitter._reduce_type
-
             class NormalizedEmittedValue(object):
                 """Normalize the values to the dictionary form to allow comparison"""
                 def __init__(self, value):
@@ -406,11 +437,8 @@ class IndicatorDocument(schema.Document):
             else:
                 values_diff = [NormalizedEmittedValue(v) for v in self[calc_name][emitter_name]]
 
-            indicators.append(dict(calculator=calc_name,
-                                   emitter=emitter_name,
-                                   emitter_type=emitter_type,
-                                   reduce_type=reduce_type,
-                                   values=[v.value for v in values_diff]))
+            values = [v.value for v in values_diff]
+            indicators.append(self._indicator_meta(calc_name, emitter_name, values=values))
         return indicators
 
     def _shallow_dict_diff(self, left, right):

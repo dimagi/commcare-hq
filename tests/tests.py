@@ -214,6 +214,7 @@ class Test(TestCase):
                 )
             )
             diff = doc.diff(None)
+            self.maxDiff = None
             expected = dict(domains=['test'],
                             database=cls.Meta.app_label,
                             doc_type=classname,
@@ -231,7 +232,8 @@ class Test(TestCase):
                                      emitter_type='null',
                                      reduce_type='max',
                                      values=[dict(date=None, value=3, group_by=None)])
-                            ])
+                            ],
+                            all_indicators=self.all_indicators())
             self.assertEqual(expected, diff)
 
     def test_indicator_diff_same(self):
@@ -247,6 +249,26 @@ class Test(TestCase):
             another = doc.clone()
             diff = doc.diff(another)
             self.assertIsNone(diff)
+
+    def all_indicators(self):
+        return [
+            dict(calculator='value_week',
+                 emitter='date_value',
+                 emitter_type='date',
+                 reduce_type='sum'),
+            dict(calculator='value_week',
+                 emitter='date',
+                 emitter_type='date',
+                 reduce_type='count'),
+            dict(calculator='value_week',
+                 emitter='null',
+                 emitter_type='null',
+                 reduce_type='sum'),
+            dict(calculator='value_week',
+                 emitter='null_value',
+                 emitter_type='null',
+                 reduce_type='max'),
+        ]
 
     def test_indicator_diff(self):
         for cls in [MockIndicators, MockIndicatorsWithGetters]:
@@ -294,7 +316,8 @@ class Test(TestCase):
                                      emitter_type='null',
                                      reduce_type='max',
                                      values=[dict(date=None, value=2, group_by=None)])
-                            ])
+                            ],
+                            all_indicators=self.all_indicators())
             self.assertEqual(expected, diff)
 
     def test_indicator_diff_dict(self):
@@ -341,6 +364,24 @@ class Test(TestCase):
                                      emitter_type='date',
                                      reduce_type='sum',
                                      values=[dict(date=date(2013, 1, 1), value=3, group_by=['abc', '123'])]),
+                            ],
+                            all_indicators=[
+                                dict(calculator='value_week',
+                                     emitter='date_value',
+                                     emitter_type='date',
+                                     reduce_type='sum'),
+                                dict(calculator='value_week',
+                                     emitter='date',
+                                     emitter_type='date',
+                                     reduce_type='count'),
+                                dict(calculator='value_week',
+                                     emitter='group_list',
+                                     emitter_type='date',
+                                     reduce_type='sum'),
+                                dict(calculator='value_week',
+                                     emitter='null_value',
+                                     emitter_type='null',
+                                     reduce_type='max'),
                             ])
             self.assertEqual(expected, diff)
 
