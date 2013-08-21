@@ -7,7 +7,7 @@ import pytz
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
-from corehq.apps.reports.fields import FilterUsersField
+from corehq.apps.reports.filters.users import UserTypeFilter
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.users.models import CommCareUser
@@ -61,7 +61,7 @@ class ProjectReportParametersMixin(object):
 
     default_case_type = None
     filter_group_name = None
-    filter_users_field_class = FilterUsersField
+    filter_users_field_class = UserTypeFilter
     include_inactive = False
 
     # set this to set the report's user ids from within the report
@@ -88,7 +88,7 @@ class ProjectReportParametersMixin(object):
     @property
     @memoized
     def user_filter(self):
-        return self.filter_users_field_class.get_user_filter(self.request)[0]
+        return UserTypeFilter.get_user_filter(self.request)[0]
 
     @property
     @memoized
@@ -264,8 +264,8 @@ class ProjectReportParametersMixin(object):
 
     @property
     def case_status(self):
-        from corehq.apps.reports.fields import SelectOpenCloseField
-        return self.request_params.get(SelectOpenCloseField.slug, '')
+        from corehq.apps.reports.filters.select import SelectOpenCloseFilter
+        return self.request_params.get(SelectOpenCloseFilter.slug, '')
 
 class CouchCachedReportMixin(object):
     """
@@ -289,7 +289,7 @@ class DatespanMixin(object):
     """
         Use this where you'd like to include the datespan field.
     """
-    datespan_field = 'corehq.apps.reports.fields.DatespanField'
+    datespan_field = 'corehq.apps.reports.filters.dates.DatespanFilter'
     datespan_default_days = 7
     inclusive = True
 

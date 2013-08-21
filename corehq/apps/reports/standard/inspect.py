@@ -18,13 +18,15 @@ import logging
 
 from casexml.apps.case.models import CommCareCaseAction
 from corehq.apps.api.es import CaseES
-from corehq.apps.hqsofabed.models import HQFormData
 from corehq.apps.reports.filters.search import SearchFilter
-from corehq.apps.reports.models import HQUserType
-from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
+from corehq.apps.reports.filters.select import SelectOpenCloseFilter
+from corehq.apps.reports.filters.users import SelectMobileWorkerFilter
+from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.display import xmlns_to_name
-from corehq.apps.reports.fields import SelectOpenCloseField, SelectMobileWorkerField, StrongFilterUsersField
+from corehq.apps.reports.models import HQUserType
+from corehq.apps.reports.standard import DatespanMixin
+from corehq.apps.reports.fields import StrongFilterUsersField
 from corehq.apps.reports.generic import GenericTabularReport, ProjectInspectionReportParamsMixin, ElasticProjectInspectionReport
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from corehq.apps.reports.util import datespan_from_beginning
@@ -36,9 +38,9 @@ from dimagi.utils.couch.pagination import CouchFilter
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
-import rawes
+from corehq.apps.reports.graph_models import PieChart
 from corehq import elastic
+
 
 class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     """
@@ -47,8 +49,8 @@ class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabular
     exportable = False
     asynchronous = False
     ajax_pagination = True
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.SelectMobileWorkerField']
+    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
+              'corehq.apps.reports.filters.users.SelectMobileWorkerFilter']
 
 
 class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReportParametersMixin, MultiFormDrilldownMixin, DatespanMixin):
@@ -346,10 +348,10 @@ class CaseSearchFilter(SearchFilter):
 
 class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin):
     fields = [
-        'corehq.apps.reports.fields.FilterUsersField',
-        'corehq.apps.reports.fields.SelectCaseOwnerField',
-        'corehq.apps.reports.fields.CaseTypeField',
-        'corehq.apps.reports.fields.SelectOpenCloseField',
+        'corehq.apps.reports.filters.users.UserTypeFilter',
+        'corehq.apps.reports.filters.users.SelectCaseOwnerFilter',
+        'corehq.apps.reports.filters.select.CaseTypeFilter',
+        'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
         'corehq.apps.reports.standard.inspect.CaseSearchFilter',
     ]
 
@@ -481,8 +483,8 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     def shared_pagination_GET_params(self):
         shared_params = super(CaseListMixin, self).shared_pagination_GET_params
         shared_params.append(dict(
-            name=SelectOpenCloseField.slug,
-            value=self.request.GET.get(SelectOpenCloseField.slug, '')
+            name=SelectOpenCloseFilter.slug,
+            value=self.request.GET.get(SelectOpenCloseFilter.slug, '')
         ))
         return shared_params
 
@@ -501,7 +503,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
         if not self.individual:
             self.name = _("%(report_name)s for %(worker_type)s") % {
                 "report_name": _(self.name),
-                "worker_type": _(SelectMobileWorkerField.get_default_text(self.user_filter))
+                "worker_type": _(SelectMobileWorkerFilter.get_default_text(self.user_filter))
             }
         return self.name
 

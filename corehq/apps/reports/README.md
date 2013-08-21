@@ -90,7 +90,7 @@ See SqlTabularReport for more detailed docs.
 class DemoReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
     name = "SQL Demo"
     slug = "sql_demo"
-    field_classes = (DatespanField,)
+    field_classes = (DatespanFilter,)
     datespan_default_days = 30
     group_by = ["user"]
     table_name = "user_report_data"

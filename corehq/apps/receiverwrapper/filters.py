@@ -1,5 +1,5 @@
+from corehq.apps.reports.filters.base import BaseReportFilter
 from corehq.apps.reports.models import HQToggle
-from corehq.apps.reports.fields import ReportField
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
@@ -53,12 +53,19 @@ class SubmissionErrorType(object):
     def use_filter(cls, filter):
         return [SubmitToggle(i, unicode(i) in filter, name, cls.doc_types[i]) for i, name in enumerate(cls.human_readable)]
 
-class SubmissionTypeField(ReportField):
-    slug = "submitfilter"
-    template = "reports/fields/submit_error_types.html"
 
-    def update_context(self):
-        self.context['submission_types'] = self.get_filter_toggle(self.request)
+class SubmissionTypeFilter(BaseReportFilter):
+    # don't use this as an example / best practice
+    # todo: cleanup
+    slug = "submitfilter"
+    label = ugettext_noop("Submission Type")
+    template = "reports/filters/submit_error_types.html"
+
+    @property
+    def filter_context(self):
+        return {
+            'submission_types': self.get_filter_toggle(self.request)
+        }
 
     @classmethod
     def get_filter_toggle(cls, request):
@@ -73,4 +80,3 @@ class SubmissionTypeField(ReportField):
             return SubmissionErrorType.use_filter(filter)
         else:
             return SubmissionErrorType.use_error_defaults()
-        

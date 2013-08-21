@@ -4,8 +4,8 @@ from corehq.apps.reports.standard.deployments import DeploymentsReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from dimagi.utils.timezones import utils as tz_utils
 from couchforms.models import XFormError
-from corehq.apps.receiverwrapper.fields import SubmissionErrorType, \
-    SubmissionTypeField
+from corehq.apps.receiverwrapper.filters import SubmissionErrorType, \
+    SubmissionTypeFilter
 from dimagi.utils.couch.pagination import FilteredPaginator, CouchFilter
 from corehq.apps.reports.display import xmlns_to_name
 from django.utils.translation import ugettext_noop
@@ -49,7 +49,7 @@ class SubmissionErrorReport(DeploymentsReport):
     ajax_pagination = True
     asynchronous = False
 
-    fields = ['corehq.apps.receiverwrapper.fields.SubmissionTypeField',
+    fields = ['corehq.apps.receiverwrapper.filters.SubmissionTypeFilter',
               ]
 
     @property
@@ -67,7 +67,7 @@ class SubmissionErrorReport(DeploymentsReport):
     @property
     def submitfilter(self):
         if self._submitfilter is None:
-            self._submitfilter = SubmissionTypeField.get_filter_toggle(self.request)
+            self._submitfilter = SubmissionTypeFilter.get_filter_toggle(self.request)
         return self._submitfilter
 
     _paginator_results = None
@@ -82,7 +82,7 @@ class SubmissionErrorReport(DeploymentsReport):
     def shared_pagination_GET_params(self):
         shared_params = super(SubmissionErrorReport, self).shared_pagination_GET_params
         shared_params.append(dict(
-            name=SubmissionTypeField.slug,
+            name=SubmissionTypeFilter.slug,
             value=[f.type for f in self.submitfilter if f.show]
         ))
         return shared_params

@@ -34,9 +34,9 @@ class ExportReport(ProjectReport, ProjectReportParametersMixin):
         )
 
 class FormExportReportBase(ExportReport, DatespanMixin):
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.GroupField',
-              'corehq.apps.reports.fields.DatespanField']
+    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
+              'corehq.apps.reports.filters.select.GroupFilter',
+              'corehq.apps.reports.filters.dates.DatespanFilter']
 
     def get_saved_exports(self):
         # add saved exports. because of the way in which the key is stored
@@ -191,8 +191,8 @@ class ExcelExportReport(FormExportReportBase):
 class CaseExportReport(ExportReport):
     name = "Export Cases, Referrals, & Users"
     slug = "case_export"
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.GroupField']
+    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
+              'corehq.apps.reports.filters.select.GroupFilter']
     report_template_path = "reports/reportdata/case_export_data.html"
     icon = "icon-share"
 
