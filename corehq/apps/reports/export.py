@@ -208,7 +208,7 @@ class CustomBulkExportHelper(BulkExportHelper):
         self.bulk_files = [bulk_export]
 
 
-def save_metadata_export_to_tempfile(domain, format):
+def save_metadata_export_to_tempfile(domain):
     """
     Saves the domain's form metadata to a file. Returns the filename.
     """
