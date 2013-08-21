@@ -1,40 +1,21 @@
 from couchforms.models import XFormInstance
 import fluff
 from corehq.fluff.calculators import xform as xcalculators
+from fluff.filters import ANDFilter, NOTFilter, Filter
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.groups.models import Group
+from dimagi.utils.decorators.memoized import memoized
+from couchdbkit.exceptions import ResourceNotFound
 
-def lookup_province_id_from_form_id(form_id):
-    case = CommCareCase.get_by_xform_id(form_id).first()
-    fixture_type = FixtureDataType.by_domain_tag('care-ihapc-live',
-                                                 'province').first()
+def lookup_province_id_from_form_id(form):
+    return form.province_id
 
-    fixture_item = FixtureDataItem.by_field_value(
-        'care-ihapc-live',
-        fixture_type,
-        'id',
-        case.province
-    ).first()
+def lookup_cbo_id_from_form_id(form):
+    return form.group.get_id
 
-    return fixture_item.get_id
-
-def lookup_cbo_id_from_form_id(form_id):
-    case = CommCareCase.get_by_xform_id(form_id).first()
-    group = Group.by_user(case.user_id).one()
-
-    # if the id doesn't belong to a user, maybe its a group?
-    if not group:
-        group = Group.get(case.user_id)
-
-    return group.get_id
-
-def lookup_age_group_from_form_id(form_id):
-    case = CommCareCase.get_by_xform_id(form_id).first()
-
-    #TODO property handle invalid age data
-    age = int(case.patient_age)
-
+def lookup_age_group_from_form_id(form):
+    age = form.age
     if age < 15:
         return '0'
     elif age < 25:
@@ -42,28 +23,101 @@ def lookup_age_group_from_form_id(form_id):
     else:
         return '2'
 
-def lookup_gender_from_form_id(form_id):
-    case = CommCareCase.get_by_xform_id(form_id).first()
-    if case.gender in ['male', 'female']:
-        return case.gender
-    else:
-        raise Exception
-
+def lookup_gender_from_form_id(form):
+    return form.gender
 
 get_user_id = lambda form: form.metadata.userID
-get_province = lambda form: lookup_province_id_from_form_id(form.get_id)
-get_cbo = lambda form: lookup_cbo_id_from_form_id(form.get_id)
-get_age_group = lambda form: lookup_age_group_from_form_id(form.get_id)
-get_gender = lambda form: lookup_gender_from_form_id(form.get_id)
+get_province = lambda form: lookup_province_id_from_form_id(form)
+get_cbo = lambda form: lookup_cbo_id_from_form_id(form)
+get_age_group = lambda form: lookup_age_group_from_form_id(form)
+get_gender = lambda form: lookup_gender_from_form_id(form)
 
 HCT_XMLNS = 'http://openrosa.org/formdesigner/BA7D3B3F-151C-4709-A020-CF79B7F2E876'
 HBC_XMLNS = "http://openrosa.org/formdesigner/19A3BDCB-5EE6-4D1B-B64B-79361D7D9885"
 PMM_XMLNS = "http://openrosa.org/formdesigner/d234f78e65e30eb72527c1118cf0de15e1181ddc"
 IACT_XMLNS = "http://openrosa.org/formdesigner/BE27B9F4-A260-4110-B187-28D572B46DB0"
 
+class CareSAForm(XFormInstance):
+    @property
+    @memoized
+    def gender(self):
+        return self.care_case.gender.lower()
+
+    @property
+    @memoized
+    def age(self):
+        case = self.care_case
+
+        try:
+            if hasattr(case, 'patient_age'):
+                age = int(case.patient_age)
+            else:
+                age = int(case.patients_age)
+        except (AttributeError, ValueError):
+            # catch fun things like no age being found or age not being
+            # a number
+            age = -1
+
+        return age
+
+    @property
+    @memoized
+    def group(self):
+        case = self.care_case
+
+        group = Group.by_user(case.user_id).one()
+
+        # if the id doesn't belong to a user, maybe its a group?
+        if not group:
+            try:
+                group = Group.get(case.user_id)
+            except ResourceNotFound:
+                group = None
+
+        return group
+
+    @property
+    @memoized
+    def province_id(self):
+        case = self.care_case
+
+        fixture_type = FixtureDataType.by_domain_tag('care-ihapc-live',
+                                                     'province').first()
+
+        fixture_item = FixtureDataItem.by_field_value(
+            'care-ihapc-live',
+            fixture_type,
+            'id',
+            case.province
+        ).first()
+
+        return fixture_item.get_id
+
+    @property
+    @memoized
+    def care_case(self):
+        return CommCareCase.get_by_xform_id(self._id).first()
+
+class CustomFilter(Filter):
+    def __init__(self, filter):
+        self._filter = filter
+
+    def filter(self, item):
+        return self._filter(item)
 
 class CareSAFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
+    wrapper = CareSAForm
+
+    document_filter = ANDFilter([
+        NOTFilter(xcalculators.FormPropertyFilter(xmlns='http://openrosa.org/user-registration')),
+        NOTFilter(xcalculators.FormPropertyFilter(xmlns='http://openrosa.org/user/registration')),
+        NOTFilter(xcalculators.FormPropertyFilter(xmlns='http://code.javarosa.org/devicereport')),
+        CustomFilter(lambda f: f.age > 0),
+        CustomFilter(lambda f: f.gender in ['male', 'female']),
+        CustomFilter(lambda f: f.group),
+    ])
+
 
     domains = ('care-ihapc-live',)
     group_by = (

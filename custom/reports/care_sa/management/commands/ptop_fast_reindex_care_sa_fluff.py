@@ -1,5 +1,6 @@
 from custom.reports.care_sa.models import CareSAFluffPillow
 from fluff.management.commands.ptop_fast_reindex_fluff import FluffPtopReindexer
+from couchforms.models import XFormInstance
 
 CHUNK_SIZE = 500
 POOL_SIZE = 15
