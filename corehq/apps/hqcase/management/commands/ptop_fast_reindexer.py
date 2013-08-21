@@ -291,6 +291,8 @@ class PtopReindexer(NoArgsCommand):
             if len(bulk_slice) == self.chunk_size:
                 self.send_bulk(bulk_slice, start, end)
                 bulk_slice = []
+
+                #i'm doing something stupid here with these chunk indices and slice builders
                 start += self.chunk_size
                 end += self.chunk_size
             else:
