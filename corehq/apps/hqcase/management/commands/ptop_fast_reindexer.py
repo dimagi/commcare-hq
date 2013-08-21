@@ -134,7 +134,12 @@ class PtopReindexer(NoArgsCommand):
             for item in view_chunk:
                 yield item
             start_seq += self.chunk_size * self.chunk_size
-            view_chunk = self.db.view(self.view_name, reduce=False, limit=CHUNK_SIZE * self.chunk_size, skip=start_seq)
+            view_chunk = self.db.view(self.view_name,
+                reduce=False,
+                limit=self.chunk_size * self.chunk_size,
+                skip=start_seq,
+                **view_kwargs
+            )
 
     def load_from_view(self):
         """
