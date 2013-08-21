@@ -31,6 +31,7 @@ from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.couch import get_cached_property, IncompatibleDocument
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.pagination import CouchFilter
 from dimagi.utils.decorators.memoized import memoized
@@ -743,7 +744,14 @@ create a couch doc as such:
     @memoized
     def get_config(cls, domain):
         try:
-            config = get_db().view('reports/maps_config', key=[domain], include_docs=True).one()
+            #cache_core change
+            #config = get_db().view('reports/maps_config', key=[domain], include_docs=True).one()
+            res = cache_core.cached_view(get_db(), "reports/maps_config", key=[domain], include_docs=True)
+            if len(res) > 1:
+                config = res[0]
+            else:
+                config = None
+
             if config:
                 config = config['doc']['config']
         except Exception:

@@ -286,6 +286,8 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
         else:
             end = json_format_datetime(modified_before)
 
+
+        #TODO This is a nasty view for the case activity report.
         return get_db().view('case/by_date_modified',
             startkey=key + [start],
             endkey=key + [end],

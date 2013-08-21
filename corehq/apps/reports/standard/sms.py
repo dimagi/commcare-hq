@@ -5,6 +5,7 @@ from corehq.apps.reports.standard import DatespanMixin, ProjectReport,\
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader,\
     DTSortType
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.web import get_url_base
 from django.core.urlresolvers import reverse
 from dimagi.utils.parsing import json_format_datetime
@@ -82,12 +83,14 @@ def _sms_count(user, startdate, enddate, message_type='SMSLog'):
     end_timestamp = json_format_datetime(enddate)
     ret = {}
     for direction in [INCOMING, OUTGOING]:
-        results = SMSLog.get_db().view("sms/by_recipient",
+        results = cache_core.cached_view(SMSLog.get_db(),
+             "sms/by_recipient",
             startkey=[user.doc_type, user._id, message_type, direction, start_timestamp],
             endkey=[user.doc_type, user._id, message_type, direction, end_timestamp],
-            reduce=True).all()
+            reduce=True,
+            cache_expire=300
+        )
         ret[direction] = results[0]['value'] if results else 0
-
     return ret
 
 """

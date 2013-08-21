@@ -10,6 +10,8 @@ from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import user_id_to_username
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
+from couchforms.models import XFormInstance
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.modules import to_function
@@ -176,12 +178,20 @@ def get_all_owner_ids_submitted(domain):
 
 def get_username_from_forms(domain, user_id):
     key = make_form_couch_key(domain, user_id=user_id)
-    user_info = get_db().view(
-        'reports_forms/all_forms',
-        startkey=key,
-        limit=1,
-        reduce=False
-    ).one()
+
+    user_info_res = cache_core.cached_view(XFormInstance.get_db(),
+                                       'reports_forms/all_forms',
+                                       startkey=key,
+                                       limit=1,
+                                       reduce=False,
+                                       cache_expire=300
+                                       )
+
+    try:
+        user_info = list(user_info_res)[0]
+    except IndexError:
+        user_info = None
+
     username = HQUserType.human_readable[HQUserType.ADMIN]
     try:
         possible_username = user_info['value']['username']
@@ -349,12 +359,12 @@ def friendly_timedelta(td):
 def set_report_announcements_for_user(request, couch_user):
     key = ["type", ReportAnnouncement.__name__]
     now = datetime.utcnow()
-    data = ReportAnnouncement.get_db().view('announcements/all_announcements',
-        reduce=False,
-        startkey=key + [now.isoformat()],
-        endkey=key + [{}],
-        stale=settings.COUCH_STALE_QUERY,
-    ).all()
+
+    db = ReportAnnouncement.get_db()
+    data = cache_core.cached_view(db, "announcements/all_announcements", reduce=False,
+                                 startkey=key + [now.strftime("%Y-%m-%dT%H:00")], endkey=key + [{}],
+                                 stale=settings.COUCH_STALE_QUERY, )
+
     announce_ids = [a['id'] for a in data if a['id'] not in couch_user.announcements_seen]
     for announcement_id in announce_ids:
         try:
@@ -412,14 +422,19 @@ def datespan_from_beginning(domain, default_days, timezone):
             logging.error("Tried to get a date from this, but it didn't work: %r" % x)
             return None
     key = make_form_couch_key(domain)
-    startdate = get_db().view('reports_forms/all_forms',
-        startkey=key,
-        endkey=key+[{}],
-        limit=1,
-        descending=False,
-        reduce=False,
-        wrapper=extract_date,
-    ).one() #or now - timedelta(days=default_days - 1)
+
+    res = cache_core.cached_view(get_db(), "reports_forms/all_forms",
+                                 startkey=key,
+                                 endkey=key + [{}],
+                                 limit=1,
+                                 descending=False,
+                                 reduce=False,
+    ) #or now - timedelta(days=default_days - 1)
+    if len(res) == 1:
+        startdate = extract_date(res[0])
+    else:
+        startdate = None
+
     datespan = DateSpan(startdate, now, timezone=timezone)
     datespan.is_default = True
     return datespan

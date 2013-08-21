@@ -2,6 +2,7 @@ from collections import defaultdict
 import json
 import logging
 import datetime
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.dates import DateSpan
 from django.conf import settings
 from django.http import Http404
@@ -43,9 +44,8 @@ class FormExportReportBase(ExportReport, DatespanMixin):
         # (serialized json) this is a little bit hacky, but works.
         startkey = json.dumps([self.domain, ""])[:-3]
         endkey = "%s{" % startkey
-        exports = FormExportSchema.view("couchexport/saved_export_schemas",
-            startkey=startkey, endkey=endkey,
-            include_docs=True)
+        exports = cache_core.cached_view(FormExportSchema.get_db(), "couchexport/saved_export_schemas",
+            startkey=startkey, endkey=endkey, include_docs=True, wrapper=FormExportSchema.wrap)
 
         exports = filter(lambda x: x.type == "form", exports)
         return exports
@@ -72,7 +72,9 @@ class ExcelExportReport(FormExportReportBase):
         # However, we want to separate out by (app_id, xmlns) pair not just xmlns so we use [domain] to [domain, {}]
         forms = []
         unknown_forms = []
-        for f in get_db().view('exports_forms/by_xmlns', startkey=[self.domain], endkey=[self.domain, {}], group=True):
+
+        exports_context = cache_core.cached_view(get_db(), 'exports_forms/by_xmlns', startkey=[self.domain], endkey=[self.domain, {}], group=True)
+        for f in exports_context:
             form = f['value']
             if form.get('app_deleted') and not form.get('submissions'):
                 continue
@@ -91,11 +93,12 @@ class ExcelExportReport(FormExportReportBase):
             forms.append(form)
 
         if unknown_forms:
-            apps = get_db().view('exports_forms/by_xmlns',
-                startkey=['^Application', self.domain],
-                endkey=['^Application', self.domain, {}],
-                reduce=False,
-            )
+            apps = cache_core.cached_view(get_db(),
+                                          'exports_forms/by_xmlns',
+                                          startkey=['^Application', self.domain],
+                                          endkey=['^Application', self.domain, {}], reduce=False)
+
+
             possibilities = defaultdict(list)
             for app in apps:
                 # index by xmlns
@@ -202,6 +205,7 @@ class CaseExportReport(ExportReport):
     def get_saved_exports(self):
         startkey = json.dumps([self.domain, ""])[:-3]
         endkey = "%s{" % startkey
+
         exports = SavedExportSchema.view("couchexport/saved_export_schemas",
             startkey=startkey, endkey=endkey,
             include_docs=True).all()
@@ -231,13 +235,14 @@ class DeidExportReport(FormExportReportBase):
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         startkey = json.dumps([domain, ""])[:-3]
-        return SavedExportSchema.view("couchexport/saved_export_schemas",
-            startkey=startkey,
-            limit=1,
-            include_docs=False,
-            stale=settings.COUCH_STALE_QUERY,
-        ).count() > 0
 
+        db = SavedExportSchema.get_db()
+        res = cache_core.cached_view(db, "couchexport/saved_export_schemas",
+                                     startkey=startkey,
+                                     limit=1,
+                                     include_docs=False,
+                                     stale=settings.COUCH_STALE_QUERY,)
+        return len(res) > 0
 
     def get_saved_exports(self):
         return filter(lambda export: export.is_safe, super(DeidExportReport, self).get_saved_exports())

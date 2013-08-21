@@ -740,6 +740,9 @@ PILLOWTOPS = [
 
                  # fluff
                  'bihar.models.CareBiharFluffPillow',
+
+                 #caching
+                 'corehq.pillows.cacheinvalidate.CacheInvalidatePillow'
              ] + LOCAL_PILLOWTOPS
 
 

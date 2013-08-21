@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from couchdbkit.ext.django.schema import *
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.users.models import CouchUser, CommCareUser
 from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord
@@ -117,11 +118,11 @@ class Group(UndoableDocument):
 
     @classmethod
     def by_domain(cls, domain):
-        return cls.view('groups/by_domain',
-            key=domain,
-            include_docs=True,
-            stale=settings.COUCH_STALE_QUERY,
-        ).all()
+
+        db = cls.get_db()
+        res = cache_core.cached_view(db, "groups/by_domain", key=domain, include_docs=True, wrapper=cls.wrap, stale=settings.COUCH_STALE_QUERY)
+        return res
+
 
     @classmethod
     def by_name(cls, domain, name, one=True):
@@ -141,7 +142,11 @@ class Group(UndoableDocument):
             user_id = user_or_user_id.user_id
         except AttributeError:
             user_id = user_or_user_id
-        results = cls.view('groups/by_user', key=user_id, include_docs=wrap)
+        extra_params = {'wrapper': cls.wrap } if wrap else {}
+        results = cache_core.cached_view(cls.get_db(),
+                                        'groups/by_user',
+                                        key=user_id,
+                                        include_docs=wrap, **extra_params)
         if wrap:
             return results
         if include_names:
@@ -161,12 +166,16 @@ class Group(UndoableDocument):
     @classmethod
     def get_reporting_groups(cls, domain):
         key = ['^Reporting', domain]
-        return cls.view('groups/by_name',
-            startkey=key,
-            endkey=key + [{}],
-            include_docs=True,
-            stale=settings.COUCH_STALE_QUERY,
-        ).all()
+
+        db = cls.get_db()
+        res = cache_core.cached_view(db, "groups/by_name",
+                                         startkey=key,
+                                         endkey=key + [{}],
+                                         include_docs=True,
+                                         wrapper=cls.wrap,
+                                         stale=settings.COUCH_STALE_QUERY,
+                                         )
+        return res
 
     def create_delete_record(self, *args, **kwargs):
         return DeleteGroupRecord(*args, **kwargs)

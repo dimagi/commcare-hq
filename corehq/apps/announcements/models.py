@@ -2,6 +2,7 @@ from couchdbkit.ext.django.schema import Document, StringProperty, DateTimePrope
 from django.template.loader import render_to_string
 from corehq.apps.announcements.crud import HQAnnouncementCRUDManager
 from corehq.apps.crud.models import AdminCRUDDocumentMixin
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.decorators.memoized import memoized
 
 class HQAnnouncement(Document, AdminCRUDDocumentMixin):
@@ -61,12 +62,21 @@ class Notification(Document):
     @classmethod
     # @memoized todo: figure out how to reset cache of class methods
     def get_notification(cls, username):
-        notification = cls.view("announcements/notifications",
+
+
+        notifications = cache_core.cached_view(cls.get_db(),
+            "announcements/notifications",
             reduce=False,
             startkey=[cls._doc_type, username],
             endkey=[cls._doc_type, username, {}],
             include_docs=True,
-        ).one()
+            wrapper=cls.wrap
+            )
+
+        try:
+            notification = notifications[0]
+        except IndexError:
+            notification = None
 
         if not notification:
             notification = cls(user=username)

@@ -16,6 +16,8 @@ from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
 from couchdbkit.ext.django.schema import *
 from couchdbkit.resource import ResourceNotFound
+import simplejson
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from dimagi.utils.logging import notify_exception
 
@@ -36,6 +38,7 @@ from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.django.database import get_unique_value
+from django.core import cache
 
 from casexml.apps.case.xml import V2
 import uuid
@@ -44,6 +47,8 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from couchdbkit.exceptions import ResourceConflict, MultipleResultsFound, NoResultFound
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
+
+mcache = cache.get_cache('default')
 
 def _add_to_list(list, obj, default):
     if obj in list:
@@ -842,13 +847,15 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                     skip=skip
                 )
 
-        return cls.view("users/by_domain",
-            reduce=reduce,
-            startkey=key,
-            endkey=key + [{}],
-            stale=None if strict else settings.COUCH_STALE_QUERY,
-            **extra_args
-        ).all()
+        db = cls.get_db()
+        res = cache_core.cached_view(db, "users/by_domain",
+                                         reduce=reduce,
+                                         startkey=key,
+                                         endkey=key + [{}],
+                                         stale=None if strict else settings.COUCH_STALE_QUERY,
+                                         wrapper=cls.wrap,
+                                         **extra_args)
+        return res
 
     @classmethod
     def total_by_domain(cls, domain, is_active=True):
@@ -946,12 +953,23 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     @classmethod
     def get_by_username(cls, username):
         def get(stale, raise_if_none):
-            result = cls.get_db().view('users/by_username',
-                key=username,
-                include_docs=True,
-                stale=stale
-            )
-            return result.one(except_all=raise_if_none)
+
+
+            view_res = cache_core.cached_view(cls.get_db(), 'users/by_username',
+                                              key=username,
+                                              include_docs=True,
+                                              stale=stale,
+                                              )
+            length = len(view_res)
+            if length > 1:
+                raise MultipleResultsFound("%s users found with username %s" % (length, username))
+            try:
+                result = list(view_res)[0]
+            except IndexError:
+                result = None
+            if raise_if_none:
+                raise NoResultFound
+            return result
         try:
             result = get(stale=settings.COUCH_STALE_QUERY, raise_if_none=True)
             if result['doc'] is None or result['doc']['username'] != username:
@@ -983,7 +1001,12 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
         """
         try:
-            couch_user = cls.wrap_correctly(cls.get_db().get(userID))
+
+            db = cls.get_db()
+            res = cache_core.cached_open_doc(db, userID)
+            couch_user = cls.wrap_correctly(res)
+
+            # couch_user = cls.wrap_correctly(cls.get_db().get(userID))
         except ResourceNotFound:
             return None
         if couch_user.doc_type != cls.__name__ and cls.__name__ != "CouchUser":
@@ -1579,11 +1602,12 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
     @classmethod
     def by_organization(cls, org, team_id=None):
         key = [org] if team_id is None else [org, team_id]
-        users = cls.view("users/by_org_and_team",
-            startkey=key,
-            endkey=key + [{}],
-            include_docs=True,
-        ).all()
+        users = cache_core.cached_view(cls.get_db(), "users/by_org_and_team",
+                                       startkey=key,
+                                       endkey=key + [{}],
+                                       include_docs=True,
+                                       wrapper=cls.wrap
+                                       )
         # return a list of users with the duplicates removed
         return dict([(u.get_id, u) for u in users]).values()
 

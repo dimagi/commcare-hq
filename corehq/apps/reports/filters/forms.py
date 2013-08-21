@@ -3,6 +3,7 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 import re
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 
@@ -176,12 +177,14 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             for this domain know about.
         """
         key = ["submission xmlns app", self.domain]
-        data = get_db().view('reports_forms/all_forms',
-            startkey=key,
-            endkey=key+[{}],
-            group=True,
-            group_level=4,
-        ).all()
+        data = cache_core.cached_view(get_db(),
+                                      'reports_forms/all_forms',
+                                      startkey=key,
+                                      endkey=key + [{}],
+                                      group=True,
+                                      group_level=4,
+                                      cache_expire=300
+        )
         all_submitted = set(self.get_xmlns_app_keys(data))
         from_apps = set(self.application_forms)
         return list(all_submitted.union(from_apps))
@@ -281,11 +284,14 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         other_forms = list(all_forms.difference(std_app_forms))
 
         key = ["", self.domain]
-        remote_app_data = get_db().view('reports_apps/remote',
+
+        remote_app_data = cache_core.cached_view(get_db(),
+                           'reports_apps/remote',
             reduce=False,
             startkey=key,
             endkey=key+[{}],
-        ).all()
+            cache_expire=300
+            )
         remote_apps = dict([(d['id'], d['value']) for d in remote_app_data])
 
         for form in other_forms:
@@ -476,12 +482,20 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         if app_id is not None:
             key[0] = "xmlns app"
             key.append(app_id)
-        data = get_db().view('reports_forms/name_by_xmlns',
-            reduce=False,
-            startkey=key,
-            endkey=key+[{}],
-            limit=1,
-        ).first()
+
+        results = cache_core.cached_view(get_db(),
+                                         'reports_forms/name_by_xmlns',
+                                         reduce=False,
+                                         startkey=key,
+                                         endkey=key + [{}],
+                                         limit=1,
+                                         cache_expire=300)
+
+        try:
+            data = list(results)[0]
+        except IndexError:
+            data = None
+
         if data:
             return data['value']
         return None if none_if_not_found else "Name Unknown"
@@ -626,11 +640,11 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         if endkey is None:
             endkey = startkey
         kwargs = dict(group=group) if group else dict(reduce=reduce)
-        return get_db().view('reports_forms/by_app_info',
-            startkey=startkey,
-            endkey=endkey+[{}],
-            **kwargs
-        ).all()
+        return cache_core.cached_view(get_db(), 'reports_forms/by_app_info',
+                                      startkey=startkey,
+                                      endkey=endkey + [{}],
+                                      **kwargs
+        )
 
     @classmethod
     def get_xmlns_app_keys(cls, data):

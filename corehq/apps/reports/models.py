@@ -12,6 +12,7 @@ from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
 from couchexport.models import SavedExportSchema, GroupExportConfiguration
 from couchexport.util import SerializableFunction
 import couchforms
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
@@ -171,10 +172,11 @@ class ReportConfig(Document):
         else:
             key = ["name", domain, owner_id]
 
-        return cls.view('reportconfig/configs_by_domain',
-            reduce=False, include_docs=True, startkey=key, endkey=key + [{}],
-            **kwargs)
-   
+        db = cls.get_db()
+        result = cache_core.cached_view(db, "reportconfig/configs_by_domain", reduce=False,
+                                     include_docs=True, startkey=key, endkey=key + [{}], wrapper=cls.wrap, **kwargs)
+        return result
+
     @classmethod
     def default(self):
         return {
@@ -399,9 +401,10 @@ class ReportNotification(Document):
 
         key = [domain, owner_id]
 
-        return cls.view("reportconfig/user_notifications",
-            reduce=False, include_docs=True, startkey=key, endkey=key + [{}],
-            **kwargs)
+        db = cls.get_db()
+        result = cache_core.cached_view(db, "reportconfig/user_notifications", reduce=False,
+                                     include_docs=True, startkey=key, endkey=key + [{}], wrapper=cls.wrap, **kwargs)
+        return result
 
     @property
     def all_recipient_emails(self):
@@ -589,8 +592,7 @@ class HQGroupExportConfiguration(GroupExportConfiguration):
     
     @classmethod
     def by_domain(cls, domain):
-        return cls.view("groupexport/by_domain", key=domain, 
-                        reduce=False, include_docs=True).all()
+        return cache_core.cached_view(cls.get_db(), "groupexport/by_domain", key=domain, reduce=False, include_docs=True, wrapper=cls.wrap)
 
     @classmethod
     def get_for_domain(cls, domain):
