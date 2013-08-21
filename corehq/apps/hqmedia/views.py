@@ -321,6 +321,9 @@ class BaseProcessFileUploadView(BaseProcessUploadedView):
             _, extension = os.path.splitext(filename)
             return extension
         def possible_extensions(filename):
+            possible_type = guess_type(filename)[0]
+            if not possible_type:
+                return []
             return guess_all_extensions(guess_type(filename)[0])
 
         if not self.mime_type:
