@@ -5,7 +5,7 @@ from corehq.pillows.fullcase import FullCasePillow
 from datetime import datetime
 from django.conf import settings
 
-CHUNK_SIZE = 10
+CHUNK_SIZE = 500
 POOL_SIZE = 15
 
 
