@@ -44,6 +44,7 @@ class CacheInvalidatePillow(BasicPillow):
             doc = self.couch_db.open_doc(changes_dict['id'])
 
         doc_type = doc.get('doc_type', None)
+        base_doc = doc.get('base_doc', None)
         pillow_logging.info("CacheInvalidate: received change event for doc_id: %s, doc_type: %s" % (doc_id, doc_type))
 
         if doc_type in ['Domain']:
@@ -52,8 +53,10 @@ class CacheInvalidatePillow(BasicPillow):
             self.invalidate_users()
         elif doc_type in ['Group', 'UserRole']:
             self.invalidate_groups()
-        elif doc_type in ['Organization', 'Team','OrgRequest', 'DeleteTeamRecord', 'OrgInvitation']:
+        elif doc_type in ['Organization', 'Team', 'OrgRequest', 'DeleteTeamRecord', 'OrgInvitation']:
             self.invalidate_orgs()
+        elif base_doc in ['Notification', 'ReportAnnouncement', 'HQAnnouncement']:
+            self.invalidate_announcements()
         else:
             return None
 
@@ -123,6 +126,13 @@ class CacheInvalidatePillow(BasicPillow):
         ]
 
         self.invalidate_views(group_views, name="groups")
+
+    def invalidate_announcements(self):
+        org_views = [
+            'announcements/all_announcements',
+            'announcements/notifications',
+        ]
+        self.invalidate_views(org_views, name="orgs")
 
     def invalidate_orgs(self):
         org_views = [
