@@ -1,0 +1,17 @@
+{% extends "reports/async/tabular.html" %}
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load i18n %}
+{% block pretable %}
+    {% if not report.needs_filters %}
+        <div class="media">
+          <a class="pull-right" href="#">
+            <img class="media-object pull-right" src="{% static "cvsu/logo.png" %}" width="64" >
+          </a>
+          <div class="media-body" style="height: 64px">
+            <h4 class="media-heading">{{ title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
+          </div>
+        </div>
+    {% endif %}
+    {{ block.super }}
+{% endblock %}

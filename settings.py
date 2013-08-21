@@ -245,6 +245,8 @@ HQ_APPS = (
     'pathindia',
     'pact',
     'psi',
+
+    'custom.reports.cvsu',
 )
 
 TEST_APPS = ()
@@ -459,7 +461,9 @@ IVR_OUTBOUND_RETRY_INTERVAL = 10
 
 
 # List of Fluff pillow classes that ctable should process diffs for
-FLUFF_PILLOW_TYPES_TO_SQL = {}
+FLUFF_PILLOW_TYPES_TO_SQL = {
+    'UnicefMalawiFluff': 'SQL'
+}
 
 try:
     #try to see if there's an environmental variable set for local_settings
@@ -651,7 +655,7 @@ COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label
 
 COUCHDB_DATABASES += [
     ('bihar', COUCH_DATABASE + '__fluff-bihar'),
-    ('fluff', COUCH_DATABASE + '__fluff-bihar'),
+    ('cvsu', COUCH_DATABASE + '__fluff-cvsu'),
 ]
 
 INSTALLED_APPS += LOCAL_APPS
@@ -740,6 +744,7 @@ PILLOWTOPS = [
 
                  # fluff
                  'bihar.models.CareBiharFluffPillow',
+                 'custom.reports.cvsu.models.UnicefMalawiFluffPillow',
              ] + LOCAL_PILLOWTOPS
 
 
@@ -774,6 +779,7 @@ DOMAIN_MODULE_MAP = {
     'a5288-test': 'a5288',
     'a5288-study': 'a5288',
     'care-bihar': 'bihar',
+    'cvsulive': 'custom.reports.cvsu',
     'dca-malawi': 'dca',
     'eagles-fahu': 'dca',
     'hsph-dev': 'hsph',
