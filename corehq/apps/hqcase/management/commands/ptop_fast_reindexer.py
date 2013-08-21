@@ -296,6 +296,7 @@ class PtopReindexer(NoArgsCommand):
             else:
                 bulk_slice.append(json_doc)
                 continue
+        self.send_bulk(bulk_slice, start, end)
 
     def send_bulk(self, slice, start, end):
         doc_couch_db = self.pillow.document_class.get_db()
