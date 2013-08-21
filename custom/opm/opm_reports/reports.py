@@ -7,8 +7,8 @@ from dimagi.utils.couch.database import get_db
 from casexml.apps.case.models import CommCareCase
 
 from .models import OPMFluff
-from .case import CaseReport
-from .worker import WorkerReport
+from .beneficiary import Beneficiary
+from .incentive import Worker
 
 # ask Biyeun about filter widgets
 
@@ -97,8 +97,8 @@ class BeneficiaryPaymentReport(BaseReport):
         # return rows
         rows = []
         for case in self.cases:
-            case_report = CaseReport(case)
-            rows.append([getattr(case_report, col[1]) for col in self.columns])
+            beneficiary = Beneficiary(case)
+            rows.append([getattr(beneficiary, col[1]) for col in self.columns])
         return rows
 
 
@@ -110,7 +110,7 @@ class IncentivePaymentReport(BaseReport):
     @property
     def rows(self):
         rows = []
-        for worker in CommCareUser.by_domain(domain):
-            worker_report = WorkerReport(worker)
-            rows.append([getattr(worker_report, col[1]) for col in self.columns])
+        for user in CommCareUser.by_domain(domain):
+            worker = Worker(user)
+            rows.append([getattr(worker, col[1]) for col in self.columns])
         return rows

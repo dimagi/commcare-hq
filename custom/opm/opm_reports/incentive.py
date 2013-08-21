@@ -3,7 +3,7 @@
 
 # iterate over forms directly (not cases > forms) to avoid duplicates!
 
-class WorkerReport(object):
+class Worker(object):
     def __init__(self, worker):
         # change to worker.name
         self.name = worker.username_in_report

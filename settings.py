@@ -239,7 +239,7 @@ HQ_APPS = (
     'hsph',
     'mvp',
     'mvp_apps',
-    'custom.opm.reports',
+    'custom.opm.opm_reports',
     'pathfinder',
     'pathindia',
     'pact',
@@ -742,7 +742,7 @@ PILLOWTOPS = [
 
                  # fluff
                  'bihar.models.CareBiharFluffPillow',
-                 'custom.opm.reports.models.OPMFluffPillow',
+                 'custom.opm.opm_reports.models.OPMFluffPillow',
              ] + LOCAL_PILLOWTOPS
 
 
@@ -787,7 +787,7 @@ DOMAIN_MODULE_MAP = {
     'mvp-ruhiira': 'mvp',
     'mvp-mwandama': 'mvp',
     'mvp-sada': 'mvp',
-    'opm': 'custom.opm.reports',
+    'opm': 'custom.opm.opm_reports',
     'psi-unicef': 'psi',
 }
 

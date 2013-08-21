@@ -7,7 +7,7 @@ from corehq.apps.fixtures.models import FixtureDataItem
 # store results with Fluff and auto-update
 # clarify: 1 row per bank account?
 
-class CaseReport(object):
+class Beneficiary(object):
     def __init__(self, case, form_range=None):
         """
         form_range should be a (start, stop) tuple of datetime objects
