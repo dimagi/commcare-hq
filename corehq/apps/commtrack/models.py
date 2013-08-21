@@ -621,8 +621,8 @@ class SupplyPointProductCase(CommCareCase):
             }
         ]
 
-    def get_json(self):
-        data = super(SupplyPointProductCase, self).get_json()
+    def get_json(self, lite=True):
+        data = super(SupplyPointProductCase, self).get_json(lite=lite)
         data['properties'].update({
             'product': self.product,
             'current_stock': self.current_stock_level,
