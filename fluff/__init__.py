@@ -262,6 +262,7 @@ class IndicatorDocument(schema.Document):
     base_doc = 'IndicatorDocument'
 
     document_class = None
+    wrapper = None
     document_filter = None
     group_by = ()
 
@@ -457,6 +458,7 @@ class IndicatorDocument(schema.Document):
 
     @classmethod
     def pillow(cls):
+        wrapper = cls.wrapper or cls.document_class
         doc_type = cls.document_class._doc_type
         extra_args = dict(doc_type=doc_type)
         if cls.domains:
@@ -468,6 +470,7 @@ class IndicatorDocument(schema.Document):
             'couch_filter': 'fluff_filter/domain_type',
             'extra_args': extra_args,
             'document_class': cls.document_class,
+            'wrapper': wrapper,
             'indicator_class': cls,
             'document_filter': document_filter,
         })
@@ -496,10 +499,11 @@ class IndicatorDocument(schema.Document):
 
 class FluffPillow(BasicPillow):
     document_filter = None
+    wrapper = None
     indicator_class = IndicatorDocument
 
     def change_transform(self, doc_dict):
-        doc = self.document_class.wrap(doc_dict)
+        doc = self.wrapper.wrap(doc_dict)
         doc = ReadOnlyObject(doc)
 
         if self.document_filter and not self.document_filter.filter(doc):
