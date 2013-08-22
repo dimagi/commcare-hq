@@ -42,7 +42,7 @@ LANGUAGE_CODE = 'en-us'
 LANGUAGES = (
     ('en', 'English'),
     ('fr', 'French'),
-    # ('hin', 'Hindi'),
+    ('hin', 'Hindi'),
 )
 
 SITE_ID = 1
@@ -208,6 +208,8 @@ HQ_APPS = (
     'corehq.apps.kookoo',
     'corehq.apps.sislog',
     'corehq.apps.yo',
+    'corehq.apps.telerivet',
+    'corehq.apps.mach',
     'corehq.apps.registration',
     'corehq.apps.unicel',
     'corehq.apps.reports',
@@ -556,6 +558,9 @@ if DEBUG:
             'luna',
         )
 
+    import warnings
+    warnings.simplefilter('default')
+
 if not DEBUG:
     TEMPLATE_LOADERS = [
         ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
@@ -621,6 +626,7 @@ COUCHDB_APPS = [
     'reports',
     'sms',
     'smsforms',
+    'telerivet',
     'translations',
     'users',
     'utils',  # dimagi-utils
@@ -698,17 +704,15 @@ SMS_HANDLERS = [
     'corehq.apps.sms.api.fallback_handler',
 ]
 
-# mapping of phone number prefix (including country code) to a registered
-# outbound sms backend to use for that set of numbers. the backend can be:
-# * the ID of a MobileBackend couch doc ("new-style" backends), or
-# * the python path of a backend module ("old-style" backends)
-# NOTE: Going forward, do not add backends here, add them in localsettings
-if "SMS_BACKENDS" not in globals():
-    SMS_BACKENDS = {}
-
-SMS_BACKENDS[''] = 'MOBILE_BACKEND_MACH' # default backend
-SMS_BACKENDS['91'] = 'MOBILE_BACKEND_UNICEL' # india
-SMS_BACKENDS['999'] = 'MOBILE_BACKEND_TEST' # +999 is an unused country code
+SMS_LOADED_BACKENDS = [
+    "corehq.apps.unicel.api.UnicelBackend",
+    "corehq.apps.mach.api.MachBackend",
+    "corehq.apps.tropo.api.TropoBackend",
+    "corehq.apps.sms.backend.http_api.HttpBackend",
+    "corehq.apps.telerivet.models.TelerivetBackend",
+    "corehq.apps.sms.test_backend.TestSMSBackend",
+    "corehq.apps.sms.backend.test.TestBackend",
+]
 
 SELENIUM_APP_SETTING_DEFAULTS = {
     'cloudcare': {

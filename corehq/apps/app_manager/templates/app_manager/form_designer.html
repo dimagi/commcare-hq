@@ -14,11 +14,18 @@
     <script src="{% static 'formdesigner/js/lib/jquery-ui-timepicker-addon.js' %}"></script>
     <script src="{% static 'formdesigner/js/lib/sha1.js' %}"></script>
     <script src="{% static 'formdesigner/js/lib/diff_match_patch.js' %}"></script>
+
     <script src="{% static 'formdesigner/js/lib/xpath/lib/biginteger.js' %}"></script>
     <script src="{% static 'formdesigner/js/lib/xpath/lib/schemeNumber.js' %}"></script>
     <script src="{% static 'formdesigner/js/lib/xpath/models.js' %}"></script>
     <script src="{% static 'formdesigner/js/lib/xpath/xpath.js' %}"></script>
+
     <script src="{% static 'formdesigner/js/lib/XMLWriter-1.0.0.js' %}"></script>
+
+    <script src="{% static 'formdesigner/js/lib/codemirror/codemirror.js' %}"></script>
+    <script src="{% static 'formdesigner/js/lib/codemirror/xml.js' %}"></script>
+
+    <script src="{% static 'formdesigner/js/window.js' %}"></script>
     <script src="{% static 'formdesigner/js/ui.js' %}"></script>
     <script src="{% static 'formdesigner/js/util.js' %}"></script>
     <script src="{% static 'formdesigner/js/model.js' %}"></script>
@@ -35,6 +42,7 @@
         $(function () {
 
             $("#edit").hide();
+            $('footer').addClass('fixed-footer');
 
             formdesigner.launch({
                 rootElement: $("#formdesigner"),
@@ -52,7 +60,7 @@
                     uploadControllerClass: HQMediaFileUploadController
                 },
                 windowConfig: {
-                    bottomOffset: 50,
+                    bottomOffset: $('footer').outerHeight(),
                     leftOffset: function () {
                         return $('.sidebar').outerWidth() + 2;
                     },
@@ -86,18 +94,15 @@
     {{ block.super }}
 
     <link href="{% static 'formdesigner/css/chosen.css' %}" rel="stylesheet" />
+    <link href="{% static 'formdesigner/js/lib/codemirror/codemirror.css' %}" rel="stylesheet" />
     <link rel="stylesheet" href="{% static 'formdesigner/css/jquery.fancybox-1.3.4.css' %}" media="screen" />
-    <link href="{% static 'formdesigner/css/main.css' %}" rel="stylesheet" media="screen, projection" />
 
-    <style type="text/css">
-        body > footer {
-            position: relative;
-        }
-        body > footer > .row-fluid {
-          width: 98%;
-          position: absolute;
-        }
-    </style>
+    <!-- Core Vellum Styles -->
+    <link href="{% static 'formdesigner/style/structure.css' %}" rel="stylesheet" media="screen, projection" />
+    <link href="{% static 'formdesigner/style/editor-column.css' %}" rel="stylesheet" media="screen, projection" />
+    <link href="{% static 'formdesigner/style/tree-content.css' %}" rel="stylesheet" media="screen, projection" />
+    <link href="{% static 'formdesigner/style/question-props.css' %}" rel="stylesheet" media="screen, projection" />
+    <link href="{% static 'formdesigner/style/xpath-editor.css' %}" rel="stylesheet" media="screen, projection" />
 
 {% endblock %}
 
@@ -109,5 +114,5 @@
 
 {% block breadcrumbs %}
     {{ block.super }}
-    <li><span class="divider">&gt;</span> <i class="icon-file-alt"></i> {{ form.name|trans:app.langs }}</li>
+    <li><span class="divider">&gt;</span> <i class="icon-pencil"></i> {{ form.name|trans:app.langs }}</li>
 {% endblock %}

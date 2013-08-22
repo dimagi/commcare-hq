@@ -1,4 +1,5 @@
 from StringIO import StringIO
+from datetime import date
 import logging
 import os
 import tempfile
@@ -23,7 +24,9 @@ class BulkExport(object):
 
     @property
     def filename(self):
-        return "bulk_export.%s" % Format.from_format(self.format).extension
+        return "bulk_export.%(ext)s" % {
+            'ext': Format.from_format(self.format).extension,
+        }
 
     @property
     def separator(self):
@@ -86,7 +89,10 @@ class CustomBulkExport(BulkExport):
 
     @property
     def filename(self):
-        return "%s_custom_bulk_export.%s" % (self.domain, Format.from_format(self.format).extension)
+        return "%(domain)s_custom_bulk_export_%(date)s" % {
+            'domain': self.domain,
+            'date': date.today().isoformat(),
+        }
 
     def generate_export_objects(self, export_tags):
         self.export_objects = []
@@ -202,17 +208,20 @@ class CustomBulkExportHelper(BulkExportHelper):
         self.bulk_files = [bulk_export]
 
 
-def save_metadata_export_to_tempfile(domain, format):
+def save_metadata_export_to_tempfile(domain):
     """
     Saves the domain's form metadata to a file. Returns the filename.
     """
     headers = ("domain", "instanceID", "received_on", "type",
                "timeStart", "timeEnd", "deviceID", "username",
                "userID", "xmlns", "version")
+
     def _form_data_to_row(formdata):
         def _key_to_val(formdata, key):
-            if key == "type":  return xmlns_to_name(domain, formdata.xmlns, app_id=None)
-            else:              return getattr(formdata, key)
+            if key == "type":
+                return xmlns_to_name(domain, formdata.xmlns, app_id=None)
+            else:
+                return getattr(formdata, key)
         return [_key_to_val(formdata, key) for key in headers]
 
     fd, path = tempfile.mkstemp()

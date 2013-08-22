@@ -1,6 +1,7 @@
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponseBadRequest
 from django.views.generic.base import View
+from django.utils.translation import ugettext
 from corehq.apps.domain.decorators import login_and_domain_required, cls_to_view
 from dimagi.utils.decorators.datespan import datespan_in_request
 
@@ -12,6 +13,8 @@ datespan_default = datespan_in_request(
     to_param="enddate",
     default_days=7,
 )
+
+_ = lambda message: ugettext(message) if message is not None else None
 
 class ReportDispatcher(View):
     """
@@ -174,9 +177,9 @@ class ReportDispatcher(View):
                         report_contexts.append({
                             'is_active': report.slug == current_slug,
                             'url': report.get_url(domain=domain),
-                            'description': report.description,
+                            'description': _(report.description),
                             'icon': report.icon,
-                            'title': report.name,
+                            'title': _(report.name),
                         })
             if report_contexts:
                 if hasattr(section_name, '__call__'):
