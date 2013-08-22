@@ -3,6 +3,7 @@ from casexml.apps.case.xform import extract_case_blocks
 from corehq.pillows.base import convert_properties
 from .mappings.report_xform_mapping import REPORT_XFORM_INDEX, REPORT_XFORM_MAPPING
 from .xform import XFormPillow
+from django.conf import settings
 
 
 class ReportXFormPillow(XFormPillow):
@@ -16,10 +17,6 @@ class ReportXFormPillow(XFormPillow):
     es_alias = "report_xforms"
     es_type = "report_xform"
     es_index = REPORT_XFORM_INDEX
-
-    #for simplicity, the handlers are managed on the domain level
-    # is this obsolete?? -droos 8/21/13
-    handler_domain_map = {}
 
     #type level mapping
     default_mapping = REPORT_XFORM_MAPPING
@@ -47,7 +44,6 @@ class ReportXFormPillow(XFormPillow):
             if doc_ret['form']['meta'].get('timeStart', None) == "":
                 doc_ret['form']['meta']['timeStart'] = None
 
-        #see:  extract_case_blocks(doc_dict)
         case_blocks = extract_case_blocks(doc_ret)
         for case_dict in case_blocks:
             for date_modified_key in ['date_modified', '@date_modified']:

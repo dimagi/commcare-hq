@@ -1,10 +1,6 @@
-from datetime import datetime
-import simplejson
 from corehq.apps.hqcase.management.commands.ptop_fast_reindexer import PtopReindexer
 from corehq.pillows.fullxform import FullXFormPillow
 from couchforms.models import XFormInstance
-from dimagi.utils.modules import to_function
-from django.conf import settings
 
 
 CHUNK_SIZE = 500

@@ -52,8 +52,6 @@ everything_is_dict_template = {
 }
 
 
->>>>>>> piechartfix2
-
 #dynamic template fragment to auto-multi-field all fields, used for report indices where everything is made into a dict
 everything_is_dict_template = {
     "everything_else": {
