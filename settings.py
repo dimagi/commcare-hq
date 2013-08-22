@@ -737,7 +737,8 @@ PILLOWTOPS = [
                  'corehq.pillows.user.UserPillow',
                  'corehq.pillows.application.AppPillow',
                  'corehq.pillows.commtrack.ConsumptionRatePillow',
-
+                 'corehq.pillows.reportxform.ReportXFormPillow',
+                 'corehq.pillows.reportcase.ReportCasePillow',
                  # fluff
                  'bihar.models.CareBiharFluffPillow',
              ] + LOCAL_PILLOWTOPS

@@ -42,14 +42,11 @@ everything_is_dict_template = {
         "match": "*",
         "match_mapping_type": "string",
         "mapping": {
-            "type": "multi_field",
-            "fields": {
-                "{name}": {"type": "string", "index": "analyzed"},
-                "exact": {"type": "string", "index": "not_analyzed"}
-            }
+            "{name}": {"type": "string", "index": "not_analyzed"},
         }
     }
 }
+
 
 def type_exact_match_string(prop_name, dual=True):
     """
@@ -155,10 +152,3 @@ DEFAULT_MAPPING_WRAPPER = {
         "_meta": {"created": None},
         "properties": {}
     }
-
-def case_mapping_generator():
-    #todo: need to ensure that domain is always mapped
-    m = DEFAULT_MAPPING_WRAPPER
-    doc_class=CommCareCase
-    m['properties'] = set_properties(doc_class, custom_types=case_special_types)
-    return m
