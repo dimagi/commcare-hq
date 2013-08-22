@@ -289,7 +289,7 @@ class DatespanMixin(object):
     """
         Use this where you'd like to include the datespan field.
     """
-    datespan_field = 'corehq.apps.reports.fields.DatespanField'
+    datespan_field = 'corehq.apps.reports.filters.dates.DatespanFilter'
     datespan_default_days = 7
     inclusive = True
 
