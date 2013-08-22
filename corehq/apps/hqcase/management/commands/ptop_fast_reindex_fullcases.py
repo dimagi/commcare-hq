@@ -1,12 +1,8 @@
-import simplejson
+from django.conf import settings
+
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.management.commands.ptop_fast_reindexer import PtopReindexer
 from corehq.pillows.fullcase import FullCasePillow
-from datetime import datetime
-from django.conf import settings
-
-CHUNK_SIZE = 500
-POOL_SIZE = 15
 
 
 class Command(PtopReindexer):
