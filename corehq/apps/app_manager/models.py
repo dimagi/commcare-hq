@@ -1675,16 +1675,33 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     label = trans(module.referral_label)
                 yield id_strings.detail_title_locale(module, detail), label
 
-                for column in detail.get_columns():
+                sort_elements = dict((s.field, (s, i + 1))
+                                     for i, s in enumerate(detail.sort_elements))
+
+                columns = list(detail.get_columns())
+                for column in columns:
                     yield id_strings.detail_column_header_locale(module, detail, column), trans(column.header)
+
+                    sort_elements.pop(column.header.values()[0], None)
+
                     if column.format == 'enum':
                         for key, val in column.enum.items():
                             yield id_strings.detail_column_enum_variable(module, detail, column, key), trans(val)
 
-                if hasattr(detail, '_sort_only_columns'):
-                    for c in detail._sort_only_columns:
-                        field_text = {'en': str(c.field)}
-                        yield id_strings.detail_column_header_locale(module, detail, c), trans(field_text)
+                # everything left is a sort only option
+                for sort_element in sort_elements:
+                    # create a fake column for it
+                    column = DetailColumn(
+                        model='case',
+                        field=sort_element,
+                        format='invisible',
+                        # ._i is exposed as .id, which is used in generating locale_ids
+                        _i=len(columns)
+                    )
+
+                    # now mimic the normal translation
+                    field_text = {'en': str(column.field)}
+                    yield id_strings.detail_column_header_locale(module, detail, column), trans(field_text)
 
             yield id_strings.module_locale(module), trans(module.name)
             if module.case_list.show:

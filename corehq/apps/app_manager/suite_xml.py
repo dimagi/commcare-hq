@@ -377,9 +377,7 @@ def get_detail_column_infos(detail):
         columns.append(DetailColumnInfo(column, sort_element, order))
 
     # sort elements is now populated with only what's not in any column
-    # add invisible columns for these and store them on the detail
-    # object so that they are on hand for app strings
-    detail._sort_only_columns = []
+    # add invisible columns for these
     for field, (sort_element, order) in sort_elements.items():
         column = DetailColumn(
             model='case',
@@ -388,7 +386,6 @@ def get_detail_column_infos(detail):
             # ._i is exposed as .id, which is used in generating locale_ids
             _i=len(columns),
         )
-        detail._sort_only_columns.append(column)
         columns.append(DetailColumnInfo(column, sort_element, order))
     return columns
 
