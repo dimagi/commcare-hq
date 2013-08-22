@@ -3,6 +3,7 @@ from corehq.pillows.fullxform import FullXFormPillow
 from couchforms.models import XFormInstance
 
 
+#TO BE DEPRECATED
 class Command(PtopReindexer):
     help = "Fast reindex of case elastic index by using the case view and reindexing cases"
 
@@ -47,6 +48,7 @@ class Command(PtopReindexer):
 
         Return true if to index, false if to SKIP
         """
+
         if 'doc' in view_row:
             return view_row['doc']['xmlns'] != 'http://code.javarosa.org/devicereport'
         else:

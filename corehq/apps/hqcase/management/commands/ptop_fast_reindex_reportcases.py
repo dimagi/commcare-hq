@@ -14,10 +14,10 @@ class Command(PtopReindexer):
     file_prefix = "ptop_fast_reindex_Report"
 
     def full_couch_view_iter(self):
-        start_seq = 0
         view_kwargs = {}
         dynamic_domains = getattr(settings, 'ES_CASE_FULL_INDEX_DOMAINS', [])
         for domain in dynamic_domains:
+            start_seq = 0
             view_kwargs["startkey"] = [domain]
             view_kwargs['endkey'] = [domain, {}]
 

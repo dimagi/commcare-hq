@@ -23,21 +23,6 @@ class ReportXFormPillow(XFormPillow):
     #type level mapping
     default_mapping = REPORT_XFORM_MAPPING
 
-
-    @staticmethod
-    def load_domains():
-        #Pillow Handlers are custom processing classes that can add new mapping definitions
-        # beyond the default/core mapping types found in self.default_mapping
-        #it also provides for more custom transform prior to transmission
-        handler_mapping = dict()
-
-        # get predefined domains to map full into report xforms
-        report_domains = getattr(settings, 'ES_XFORM_FULL_INDEX_DOMAINS', [])
-        handler_mapping.update((domain, XFormPillowHandler()) for domain in report_domains)
-
-        return handler_mapping
-
-
     def change_transform(self, doc_dict):
         domain = self.get_domain(doc_dict)
 
