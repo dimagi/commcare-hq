@@ -15,7 +15,7 @@ class Command(PtopReindexer):
 
     def full_couch_view_iter(self):
         view_kwargs = {}
-        dynamic_domains = getattr(settings, 'ES_XFORM_FULL_INDEX_DOMAINS', []):
+        dynamic_domains = getattr(settings, 'ES_XFORM_FULL_INDEX_DOMAINS', [])
         for domain in dynamic_domains:
             start_seq = 0
             view_kwargs["startkey"] = [domain]
