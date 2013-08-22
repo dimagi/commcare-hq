@@ -164,8 +164,8 @@ class ChildProtectionReport(MultiReportPage):
     title = 'CVSU CHILD PROTECTION AND GENDER BASED VIOLENCE LOCATION REPORT'
     name = "Location report"
     slug = "child_protection_location"
-    fields = (DatespanMixin.datespan_field, "custom.reports.cvsu.filters.GroupFilter",
-              "custom.reports.cvsu.filters.AgeFilter", "custom.reports.cvsu.filters.GenderFilter")
+    fields = (DatespanMixin.datespan_field, "custom.apps.cvsu.filters.GroupFilter",
+              "custom.apps.cvsu.filters.AgeFilter", "custom.apps.cvsu.filters.GenderFilter")
 
     @property
     def group_id(self):
@@ -210,8 +210,8 @@ class ChildProtectionReportTrend(ChildProtectionReport):
     title = 'CVSU CHILD PROTECTION AND GENDER BASED VIOLENCE TREND REPORT'
     name = "Trend report"
     slug = "child_protection_trend"
-    fields = (DatespanMixin.datespan_field, "custom.reports.cvsu.filters.GroupUserFilter",
-              "custom.reports.cvsu.filters.AgeFilter", "custom.reports.cvsu.filters.GenderFilter")
+    fields = (DatespanMixin.datespan_field, "custom.apps.cvsu.filters.GroupUserFilter",
+              "custom.apps.cvsu.filters.AgeFilter", "custom.apps.cvsu.filters.GenderFilter")
 
     @property
     def group_id(self):
@@ -231,7 +231,7 @@ class CVSUPerformanceReport(MultiReportPage):
     title = 'CVSU PERFORMANCE EVALUATION LOCATION REPORT'
     name = "Location report"
     slug = "cvsu_performance_location"
-    fields = (DatespanMixin.datespan_field, "custom.reports.cvsu.filters.GroupFilter")
+    fields = (DatespanMixin.datespan_field, "custom.apps.cvsu.filters.GroupFilter")
 
     @property
     def group_id(self):
@@ -262,7 +262,7 @@ class CVSUPerformanceReportTrend(CVSUPerformanceReport):
     title = 'CVSU PERFORMANCE EVALUATION TREND REPORT'
     name = "Trend report"
     slug = "cvsu_performance_trend"
-    fields = (DatespanMixin.datespan_field, "custom.reports.cvsu.filters.GroupUserFilter")
+    fields = (DatespanMixin.datespan_field, "custom.apps.cvsu.filters.GroupUserFilter")
 
     @property
     def group_id(self):

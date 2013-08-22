@@ -246,7 +246,7 @@ HQ_APPS = (
     'pact',
     'psi',
 
-    'custom.reports.cvsu',
+    'custom.apps.cvsu',
 )
 
 TEST_APPS = ()
@@ -744,7 +744,7 @@ PILLOWTOPS = [
 
                  # fluff
                  'bihar.models.CareBiharFluffPillow',
-                 'custom.reports.cvsu.models.UnicefMalawiFluffPillow',
+                 'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
              ] + LOCAL_PILLOWTOPS
 
 
@@ -779,7 +779,7 @@ DOMAIN_MODULE_MAP = {
     'a5288-test': 'a5288',
     'a5288-study': 'a5288',
     'care-bihar': 'bihar',
-    'cvsulive': 'custom.reports.cvsu',
+    'cvsulive': 'custom.apps.cvsu',
     'dca-malawi': 'dca',
     'eagles-fahu': 'dca',
     'hsph-dev': 'hsph',
