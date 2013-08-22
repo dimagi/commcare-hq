@@ -5,7 +5,7 @@ import fluff
 from corehq.fluff.calculators import xform as xcalculators
 from . import calculations
 
-class OPMFluff(fluff.IndicatorDocument):
+class OpmCaseFluff(fluff.IndicatorDocument):
     document_class = CommCareCase
 
     domains = ('opm',)
@@ -16,4 +16,4 @@ class OPMFluff(fluff.IndicatorDocument):
     # bank_name = MetaData(lambda case: case.forms[])
 
 # OPMFluff.get_result('all_pregnancies', [domain, user_id])
-OPMFluffPillow = OPMFluff.pillow()
+OPMFluffPillow = OpmCaseFluff.pillow()

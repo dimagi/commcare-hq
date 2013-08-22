@@ -4,7 +4,6 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from corehq.apps.users.models import CommCareUser, CommCareCase
 from dimagi.utils.couch.database import get_db
 
-from .models import OPMFluff
 from .beneficiary import Beneficiary
 from .incentive import Worker
 
