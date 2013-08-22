@@ -1,14 +1,6 @@
-from datetime import datetime
-import simplejson
 from corehq.apps.hqcase.management.commands.ptop_fast_reindexer import PtopReindexer
 from corehq.pillows.fullxform import FullXFormPillow
 from couchforms.models import XFormInstance
-from dimagi.utils.modules import to_function
-from django.conf import settings
-
-
-CHUNK_SIZE = 500
-POOL_SIZE = 15
 
 
 class Command(PtopReindexer):
@@ -21,10 +13,10 @@ class Command(PtopReindexer):
 
 
     def full_couch_view_iter(self):
-        start_seq = 0
         view_kwargs = {}
         dynamic_domains = FullXFormPillow.load_domains().keys()
         for domain in dynamic_domains:
+            start_seq = 0
             view_kwargs["startkey"] = [domain]
             view_kwargs['endkey'] = [domain, {}]
 
@@ -55,4 +47,8 @@ class Command(PtopReindexer):
 
         Return true if to index, false if to SKIP
         """
-        return view_row['key'] != 'http://code.javarosa.org/devicereport'
+        if 'doc' in view_row:
+            return view_row['doc']['xmlns'] != 'http://code.javarosa.org/devicereport'
+        else:
+            return view_row['key'] != 'http://code.javarosa.org/devicereport'
+

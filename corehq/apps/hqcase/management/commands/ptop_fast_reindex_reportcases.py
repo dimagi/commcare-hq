@@ -2,7 +2,7 @@ from django.conf import settings
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.management.commands.ptop_fast_reindexer import PtopReindexer
-from corehq.pillows.fullcase import FullCasePillow
+from corehq.pillows.reportcase import ReportCasePillow
 
 
 class Command(PtopReindexer):
@@ -10,8 +10,8 @@ class Command(PtopReindexer):
 
     doc_class = CommCareCase
     view_name = 'hqcase/types_by_domain'
-    pillow_class = FullCasePillow
-    file_prefix = "ptop_fast_reindex_Full"
+    pillow_class = ReportCasePillow
+    file_prefix = "ptop_fast_reindex_Report"
 
     def full_couch_view_iter(self):
         start_seq = 0
@@ -40,4 +40,3 @@ class Command(PtopReindexer):
                     skip=start_seq,
                     **view_kwargs
                 )
-
