@@ -1,6 +1,15 @@
+TODO:
+Cron job to finalize reports at the end of each month.  (when, exactly?)
+ask Biyeun about filter widgets
+
+
+### Running tests and getting fixtures
+I had been getting forms from USERS of a domain, but I should have done it from each case!
+
+
 ### Extracting data from the db:
 
-from corehq.apps.users.models import CommCareUser, ComMCareCase
+from corehq.apps.users.models import CommCareUser, CommCareCase
 from dimagi.utils.couch.database import get_db
 
 domain_id = db.view('domain/domains', key="opm", reduce=False).one()['id']
@@ -38,5 +47,3 @@ python test_data.py write db_name [fixtures.json]
 
 # load test_fixtures to empty database:
 python test_data.py read [db_name] [fixtures.json]
-
-

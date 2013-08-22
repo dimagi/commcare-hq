@@ -4,7 +4,24 @@
 # iterate over forms directly (not cases > forms) to avoid duplicates!
 
 class Worker(object):
+    method_map = [
+        ('name', "List of AWWs"),
+        ('awc_name', "AWC Name"),
+        ('bank_name', "AWW Bank Name"),
+        ('account_number', "AWW Bank Account Number"),
+        ('block', "Block Name"),
+        ('women_registered', "No. of women registered under BCSP"),
+        ('children_registered', "No. of children registered under BCSP"),
+        ('service_forms_count', "Submission of Service Availability form"),
+        ('growth_monitoring_count', "No. of Growth monitoring Sections Filled for eligible children"),
+        ('service_forms_cash', "Payment for Service Availability Form (in Rs.)"),
+        ('growth_monitoring_cash', "Payment for Growth Monitoring Forms (in Rs.)"),
+        ('month_total', "Total Payment Made for the month (in Rs.)"),
+        ('last_month_total', "Amount of AWW incentive paid last month"),
+    ]
+
     def __init__(self, worker):
+        self.worker = worker
         # change to worker.name
         self.name = worker.username_in_report
 
@@ -20,6 +37,7 @@ class Worker(object):
     @property
     def women_registered(self):
         # total open cases
+        # open at END of month
         return sum([1 for case in self.cases if not case.closed])
     
     @property

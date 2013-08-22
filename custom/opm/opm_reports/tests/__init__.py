@@ -1,50 +1,61 @@
 from datetime import datetime
-import os
+import os, json
 
 from django.http import HttpRequest
 from django.test import TestCase
+
 from bihar.reports.due_list import VaccinationSummary, get_due_list_by_task_name, get_due_list_records
 from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import CommCareUser, CommCareCase
+from dimagi.utils.couch.database import get_db
+
+from ..beneficiary import Beneficiary
+from ..reports import BeneficiaryPaymentReport, IncentivePaymentReport
 
 DIR_PATH = os.path.abspath(os.path.dirname(__file__))
 test_data_location = os.path.join(DIR_PATH, 'opm_test.json')
 
-class TestBeneficiary(TestCase):
-    
+fixtures_loaded = False
+
+
+class OPMTestBase(object):
+
+    def load_fixtures(self):
+        self.db = get_db()
+        with open(test_data_location) as f:
+            docs = json.loads(f.read())
+        for doc in docs:
+            self.db.save_doc(doc)
+
     def setUp(self):
-        print "case is being set up!"
+        global fixtures_loaded
+        if not fixtures_loaded:
+            fixtures_loaded = True
+            self.load_fixtures()
+        self.postSetUp()
 
-    def test_something(self):
-        print "testing something"
-        self.assertEquals(1, 1)
+    def postSetUp(self):
+        return
 
-    def test_other_thing(self):
-        print "testing other_thing"
-        self.assertEquals(1, 1)
+    def test_all_results(self):
+        for row in self.get_rows(): 
+            row_object = self.report.model(row)
+            for method, result in row['test_results']:
+                self.assertEquals(
+                    str(getattr(row_object, method)),
+                    str(result)
+                )
 
-        
-# class TestDueList(TestCase):
-#     """
-#     Tests the Due List function superficially 
-#     """
+
+class TestBeneficiary(OPMTestBase, TestCase):
+    report = BeneficiaryPaymentReport
     
-#     def test_due_list_by_task_name(self):
-#         '''
-#         Basic sanity check that the function does not crash and decomposes
-#         the facet properly
-#         '''
-#         es = FakeES()
-#         due_list = list(get_due_list_by_task_name(datetime.utcnow(), case_es=es))
-#         self.assertEquals(due_list, [('foo', 10)])
+    def get_rows(self):
+        return CommCareCase.get_all_cases('opm', include_docs=True)
 
 
-#     def test_get_due_list_records(self):
-#         '''
-#         Basic sanity check that the function does not crash and decomposes
-#         the records properly
-#         '''
-#         es = FakeES()
-#         es.add_doc('foozle', {'foo': 'bar'})
-#         es.add_doc('boozle', {'fizzle': 'bizzle'})
-#         due_list_records = list(get_due_list_records(datetime.utcnow(), case_es=es))
-#         self.assertEquals(due_list_records, [{'foo': 'bar'}, {'fizzle': 'bizzle'}])
+class TestIncentive(OPMTestBase, TestCase):
+    report = IncentivePaymentReport
+
+    def get_rows(self):
+        return CommCareUser.by_domain('opm')

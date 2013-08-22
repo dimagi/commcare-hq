@@ -1,16 +1,13 @@
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
-from corehq.apps.users.models import CommCareUser
-
+from corehq.apps.users.models import CommCareUser, CommCareCase
 from dimagi.utils.couch.database import get_db
-from casexml.apps.case.models import CommCareCase
 
 from .models import OPMFluff
 from .beneficiary import Beneficiary
 from .incentive import Worker
 
-# ask Biyeun about filter widgets
 
 beneficiary_payment = [
     ("List of Beneficiaries", 'name'),
@@ -45,10 +42,17 @@ incentive_payment = [
 
 domain = "opm"
 
+
 class BaseReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
+    """
+    Report parent class.  Children must provide a get_rows() method that
+    returns a list of the raw data that forms the basis of each row.
+    The "model" attribute is an object that can accept raw_data for a row
+    and perform the neccessary calculations.
+    """
     name = None
     slug = None
-    columns = None
+    model = None
 
     @property
     def filters(self):
@@ -66,51 +70,36 @@ class BaseReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
     @property
     def headers(self):
         return DataTablesHeader(*[
-            DataTablesColumn(col[0]) for col in self.columns
+            DataTablesColumn(header) for method, header in self.model.method_map
         ])
+
+    @property
+    def rows(self):
+        rows = []
+        for row in self.row_iterable:
+            rows.append([getattr(row, method) for 
+                method, header in self.model.method_map])
+        return rows
+
+    @property
+    def row_iterable(self):
+        return [self.model(row) for row in self.get_rows()]
 
 
 class BeneficiaryPaymentReport(BaseReport):
     name = "Beneficiary Payment Report"
     slug = 'beneficiary_payment_report'
-    # fields = (DatespanMixin.datespan_field)
-    columns = beneficiary_payment
+    model = Beneficiary
 
-    @property
-    def cases(self):
-        # filter cases, probably...
-        return CommCareCase.view(
-            'hqcase/by_owner',
-            include_docs=True,
-            reduce=False
-        ).all()
-
-    @property
-    def rows(self):
-        # cases = filtered_cases()
-        # rows = []
-        # for case in cases:
-        #     rows.append([
-        #         case.name,
-        #         OPMFluff.get_result('all_pregnancies', [self.domain, self.user_id])['total']
-        #     ])
-        # return rows
-        rows = []
-        for case in self.cases:
-            beneficiary = Beneficiary(case)
-            rows.append([getattr(beneficiary, col[1]) for col in self.columns])
-        return rows
+    def get_rows(self):
+        return CommCareCase.get_all_cases(domain, include_docs=True)
 
 
 class IncentivePaymentReport(BaseReport):
     name = "Incentive Payment Report"
     slug = 'incentive_payment_report'
-    columns = incentive_payment
-
-    @property
-    def rows(self):
-        rows = []
-        for user in CommCareUser.by_domain(domain):
-            worker = Worker(user)
-            rows.append([getattr(worker, col[1]) for col in self.columns])
-        return rows
+    model = Worker
+    raw_rows = CommCareUser.by_domain(domain)
+    
+    def get_rows(self):
+        return CommCareUser.by_domain(domain)

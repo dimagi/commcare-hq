@@ -6,3 +6,11 @@ class AllPregnancies(fluff.Calculator):
     def total(self, case):
         if case.type == 'pregnancy':
             yield None
+
+
+# class FormSubmissions(fluff.Caclulator):
+
+#     @fluff.date_emitter
+#     def total(self, form):
+#         if form.xmlns == 'blah':
+#             yield form.received_on

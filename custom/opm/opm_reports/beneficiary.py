@@ -7,7 +7,27 @@ from corehq.apps.fixtures.models import FixtureDataItem
 # store results with Fluff and auto-update
 # clarify: 1 row per bank account?
 
+
+# Use form.xmlns as the identifier
+
+
 class Beneficiary(object):
+    # maps method name to header
+    method_map = [
+        ('name', "List of Beneficiaries"),
+        ('awc_name', "AWC Name"),
+        ('bank_name', "Bank Name"),
+        ('account_number', "Bank Account Number"),
+        ('block', "Block Name"),
+        ('village', "Village Name"),
+        ('bp1_cash', "Birth Preparedness Form 1"),
+        ('bp2_cash', "Birth Preparedness Form 2"),
+        ('delivery_cash', "Delivery Form"),
+        ('child_cash', "Child Followup Form"),
+        ('spacing_cash', "Birth Spacing Bonus"),
+        ('total', "Amount to be paid to beneficiary"),
+    ]
+
     def __init__(self, case, form_range=None):
         """
         form_range should be a (start, stop) tuple of datetime objects
@@ -29,6 +49,7 @@ class Beneficiary(object):
         self.forms_in_range = [form for form in self.forms if
             (self.start < form.received_on.date() < self.stop)]
 
+    @property
     def bank_name(self):
         # to be converted to case property?
         for form in self.forms:
@@ -36,14 +57,17 @@ class Beneficiary(object):
                 return form.form.get('bank_name', "")
         return ""
 
+    @property
     def awc_name(self):
         # from fixture for a given case
         return "Anganwadi Center"
 
+    @property
     def block(self):
         # from fixture
         return "Block Name"
 
+    @property
     def village(self):
         # from fixture
         return "Village Name"
@@ -92,7 +116,7 @@ class Beneficiary(object):
         # clarify: possibly 2 payments?  (2 yrs since birth and 3?)
         # calculate across cases by bank account number!
         # get "Registration Form" > 'bank_account_number'
-        # mother = collection of all cases with matching bank account number
+        # mother = # collection of all cases with matching bank account number
 
         # cash_fixture = 75
         # payment1, payment 2 = 0, 0
@@ -112,6 +136,7 @@ class Beneficiary(object):
         #         dod = form.form.get('dod')
         # return "Birth Spacing Bonus"
 
+    @property
     def total(self):
         return (
             self.bp1_cash +
