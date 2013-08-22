@@ -248,6 +248,26 @@ HQ_APPS = (
 )
 
 TEST_APPS = ()
+APPS_TO_EXCLUDE_FROM_TESTS = (
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.sites',
+    'django.contrib.staticfiles',
+    'south',
+    'djcelery',
+    'djtables',
+    'djkombu',
+    'couchdbkit.ext.django',
+    'crispy_forms',
+    'django.contrib.markup',
+    'gunicorn',
+    'raven.contrib.django.raven_compat',
+
+    # submodules with tests that run on travis
+    'ctable',
+)
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
