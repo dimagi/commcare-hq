@@ -13,10 +13,10 @@ class Command(PtopReindexer):
 
 
     def full_couch_view_iter(self):
-        start_seq = 0
         view_kwargs = {}
         dynamic_domains = self.pillow_class.load_domains().keys()
         for domain in dynamic_domains:
+            start_seq = 0
             view_kwargs["startkey"] = [domain]
             view_kwargs['endkey'] = [domain, {}]
 
@@ -46,7 +46,10 @@ class Command(PtopReindexer):
 
         Return true if to index, false if to SKIP
         """
-        return view_row['key'] != 'http://code.javarosa.org/devicereport'
+        if 'doc' in view_row:
+            return view_row['doc']['xmlns'] != 'http://code.javarosa.org/devicereport'
+        else:
+            return view_row['key'] != 'http://code.javarosa.org/devicereport'
 
 
 

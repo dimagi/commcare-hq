@@ -1,7 +1,9 @@
 import copy
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.pillows.base import convert_properties
-from .mappings.report_xform_mapping import REPORT_XFORM_INDEX, REPORT_XFORM_MAPPING
+from corehq.pillows.fullxform import XFormPillowHandler
+from dimagi.utils.modules import to_function
+from .mappings.reportxform_mapping import REPORT_XFORM_INDEX, REPORT_XFORM_MAPPING
 from .xform import XFormPillow
 from django.conf import settings
 
@@ -20,6 +22,21 @@ class ReportXFormPillow(XFormPillow):
 
     #type level mapping
     default_mapping = REPORT_XFORM_MAPPING
+
+
+    @staticmethod
+    def load_domains():
+        #Pillow Handlers are custom processing classes that can add new mapping definitions
+        # beyond the default/core mapping types found in self.default_mapping
+        #it also provides for more custom transform prior to transmission
+        handler_mapping = dict()
+
+        # get predefined domains to map full into report xforms
+        report_domains = getattr(settings, 'ES_XFORM_FULL_INDEX_DOMAINS', [])
+        handler_mapping.update((domain, XFormPillowHandler()) for domain in report_domains)
+
+        return handler_mapping
+
 
     def change_transform(self, doc_dict):
         domain = self.get_domain(doc_dict)

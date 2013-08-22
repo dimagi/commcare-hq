@@ -42,30 +42,11 @@ everything_is_dict_template = {
         "match": "*",
         "match_mapping_type": "string",
         "mapping": {
-            "type": "multi_field",
-            "fields": {
-                "{name}": {"type": "string", "index": "analyzed"},
-                "exact": {"type": "string", "index": "not_analyzed"}
-            }
+            "{name}": {"type": "string", "index": "not_analyzed"},
         }
     }
 }
 
-
-#dynamic template fragment to auto-multi-field all fields, used for report indices where everything is made into a dict
-everything_is_dict_template = {
-    "everything_else": {
-        "match": "*",
-        "match_mapping_type": "string",
-        "mapping": {
-            "type": "multi_field",
-            "fields": {
-                "{name}": {"type": "string", "index": "analyzed"},
-                "exact": {"type": "string", "index": "not_analyzed"}
-            }
-        }
-    }
-}
 
 def type_exact_match_string(prop_name, dual=True):
     """

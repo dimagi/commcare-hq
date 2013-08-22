@@ -1,6 +1,7 @@
 import copy
 from corehq.pillows.case import CasePillow
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_MAPPING, REPORT_CASE_INDEX
+from django.conf import settings
 from .base import convert_properties
 
 

@@ -1,6 +1,6 @@
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
 
-REPORT_XFORM_INDEX="report_xforms_ca6495afcd03fc7350e6922b27473fd7"
+REPORT_XFORM_INDEX="report_xforms_407d6db90efd062d401038e645b5dcb5"
 
 REPORT_XFORM_MAPPING = {
     "date_detection": False,
@@ -42,7 +42,7 @@ REPORT_XFORM_MAPPING = {
         'partial_submission': {"type": "boolean"},
         "#export_tag": {"type": "string", "index": "not_analyzed"},
         '_attachments': {
-            'dynamic': True,
+            'dynamic': False,
             'type': 'object'
         },
         'form': {
@@ -64,7 +64,9 @@ REPORT_XFORM_MAPPING = {
                         "userID": {"type": "string", "index": "not_analyzed"},
                         "deviceID": {"type": "string", "index": "not_analyzed"},
                         "instanceID": {"type": "string", "index": "not_analyzed"},
-                        "username": {"type": "string", "index": "not_analyzed"}
+                        "username": {"type": "string", "index": "not_analyzed"},
+                        "appVersion": {"type": "string", "index": "not_analyzed"},
+                        "CommCareVersion": {"type": "string", "index": "not_analyzed"},
                     }
                 },
             },
@@ -104,11 +106,7 @@ REPORT_XFORM_MAPPING = {
                 "match": "*",
                 "match_mapping_type": "string",
                 "mapping": {
-                    "type": "multi_field",
-                    "fields": {
-                        "{name}": {"type": "string", "index": "analyzed"},
-                        "exact": {"type": "string", "index": "not_analyzed"}
-                    }
+                    "{name}": {"type": "string", "index": "not_analyzed"},
                 }
             }
         }
