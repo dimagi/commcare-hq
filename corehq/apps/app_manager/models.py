@@ -58,7 +58,7 @@ from corehq.apps.app_manager.const import APP_V1, APP_V2
 from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings, build_error_utils
 from corehq.apps.app_manager.suite_xml import IdStrings
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
-from corehq.apps.app_manager.util import split_path, save_xform
+from corehq.apps.app_manager.util import split_path, save_xform, create_temp_sort_column
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, XFormError, XFormValidationError, WrappedNode, CaseXPath
 
 MISSING_DEPENDECY = \
@@ -1691,13 +1691,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 # everything left is a sort only option
                 for sort_element in sort_elements:
                     # create a fake column for it
-                    column = DetailColumn(
-                        model='case',
-                        field=sort_element,
-                        format='invisible',
-                        # ._i is exposed as .id, which is used in generating locale_ids
-                        _i=len(columns)
-                    )
+                    column = create_temp_sort_column(sort_element, len(columns))
 
                     # now mimic the normal translation
                     field_text = {'en': str(column.field)}
