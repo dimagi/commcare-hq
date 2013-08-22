@@ -3,10 +3,6 @@ from corehq.pillows.fullxform import FullXFormPillow
 from couchforms.models import XFormInstance
 
 
-CHUNK_SIZE = 500
-POOL_SIZE = 15
-
-
 class Command(PtopReindexer):
     help = "Fast reindex of case elastic index by using the case view and reindexing cases"
 
