@@ -51,6 +51,24 @@ everything_is_dict_template = {
     }
 }
 
+
+>>>>>>> piechartfix2
+
+#dynamic template fragment to auto-multi-field all fields, used for report indices where everything is made into a dict
+everything_is_dict_template = {
+    "everything_else": {
+        "match": "*",
+        "match_mapping_type": "string",
+        "mapping": {
+            "type": "multi_field",
+            "fields": {
+                "{name}": {"type": "string", "index": "analyzed"},
+                "exact": {"type": "string", "index": "not_analyzed"}
+            }
+        }
+    }
+}
+
 def type_exact_match_string(prop_name, dual=True):
     """
     Mapping for fields that may want prefixes (based upon the default tokenizer which splits by -'s)
@@ -155,10 +173,3 @@ DEFAULT_MAPPING_WRAPPER = {
         "_meta": {"created": None},
         "properties": {}
     }
-
-def case_mapping_generator():
-    #todo: need to ensure that domain is always mapped
-    m = DEFAULT_MAPPING_WRAPPER
-    doc_class=CommCareCase
-    m['properties'] = set_properties(doc_class, custom_types=case_special_types)
-    return m

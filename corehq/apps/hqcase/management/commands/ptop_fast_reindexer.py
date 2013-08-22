@@ -108,11 +108,11 @@ class PtopReindexer(NoArgsCommand):
 
     def get_seq_filename(self):
         #print "Run file prefix: ptop_fast_reindex_%s_%s" % (self.doc_class.__name__, datestring)
-        seq_filename = "%s%s_%s_seq.txt" % (self.file_prefix, self.doc_class.__name__, self.get_seq_prefix())
+        seq_filename = "%s%s_%s_seq.txt" % (self.file_prefix, self.pillow_class.__name__, self.get_seq_prefix())
         return seq_filename
 
     def get_dump_filename(self):
-        view_dump_filename = "%s%s_%s_data.json" % (self.file_prefix, self.doc_class.__name__,  self.get_seq_prefix())
+        view_dump_filename = "%s%s_%s_data.json" % (self.file_prefix, self.pillow_class.__name__,  self.get_seq_prefix())
         return view_dump_filename
 
     def full_couch_view_iter(self):
@@ -198,7 +198,7 @@ class PtopReindexer(NoArgsCommand):
         ALL index data in the case index and will take a while to reload.
         Are you sure you want to do this. Also you MUST have run_ptop disabled for this to run.
 
-        Type 'yes' to continue, or 'no' to cancel: """ % self.doc_class.__name__)
+        Type 'yes' to continue, or 'no' to cancel: """ % self.pillow_class.__name__)
 
             if confirm != 'yes':
                 print "\tReset cancelled."
@@ -227,7 +227,7 @@ class PtopReindexer(NoArgsCommand):
             self.load_from_view()
         else:
             if self.runfile is None:
-                print "\tNeed a previous runfile prefix to access older snapshot of view. eg. ptop_fast_reindex_%s_yyyy-mm-dd-HHMM" % self.doc_class.__name__
+                print "\tNeed a previous runfile prefix to access older snapshot of view. eg. ptop_fast_reindex_%s_yyyy-mm-dd-HHMM" % self.pillow_class.__name__
                 sys.exit()
             print "Starting fast tracked reindexing from view position %d" % self.start_num
             runparts = self.runfile.split('_')

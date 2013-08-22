@@ -1,6 +1,9 @@
 from django.utils.unittest.case import TestCase
+import simplejson
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.pillows.case import CasePillow
+from corehq.pillows.reportcase import ReportCasePillow
+from corehq.pillows.reportxform import ReportXFormPillow
 from corehq.pillows.xform import XFormPillow
 
 XFORM_MULTI_CASES = {
@@ -167,6 +170,7 @@ XFORM_SINGLE_CASE = {
         "HTTP_ACCEPT_LANGUAGE": "en-US,en;q=0.8"
     }
 }
+
 
 CASE_WITH_OWNER_ID = {
    "_id": "case_with_owner_id",
@@ -339,4 +343,43 @@ class testPillowTopProcessing(TestCase):
 
         self.assertEqual(changed_with_owner_id.get("owner_id"), "testuser")
         self.assertEqual(changed_with_no_owner_id.get("owner_id"), "testuser")
+
+    def testReportXFormTransform(self):
+        form = XFORM_SINGLE_CASE
+        report_pillow = ReportXFormPillow(online=False)
+        processed_form = report_pillow.change_transform(form)
+        mapping = report_pillow.default_mapping
+
+        #root level
+        for k, v in processed_form['form'].items():
+            if k in mapping['properties']['form']['properties']:
+                if isinstance(v, dict):
+                    self.assertFalse('#value' in v, msg="Error, processed dict contains a #value dict for key [%s] when it shouldn't" % k)
+                else:
+                    #it's not a dict, so that means it's ok
+                    self.assertEqual(form[k], v)
+                    pass
+            else:
+                self.assertTrue(isinstance(v, dict))
+                if isinstance(form['form'][k], dict):
+                    #if the original is a dict, then, make sure the keys are the same
+                    self.assertFalse('#value' in v)
+                    self.assertEqual(sorted(form['form'][k].keys()), sorted(v.keys()))
+                else:
+                    self.assertTrue('#value' in v)
+                    self.assertEqual(form['form'][k], v['#value'])
+
+
+
+
+
+        print simplejson.dumps(processed_form, indent=4)
+
+    def testReportCaseTransform(self):
+        case = EXAMPLE_CASE
+        report_pillow = ReportCasePillow(online=False)
+        processed_case = report_pillow.change_transform(case)
+        mapping = report_pillow.default_mapping
+        #still WIP, exploration halted on this avenue
+        print simplejson.dumps(processed_case, indent=4)
 
