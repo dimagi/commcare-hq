@@ -527,6 +527,7 @@ class GenericReportView(CacheableRequestMixIn):
         return self.async_response
 
     @property
+    @request_cache("async")
     def async_response(self):
         """
             Intention: Not to be overridden in general.
