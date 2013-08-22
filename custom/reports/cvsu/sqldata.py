@@ -257,7 +257,7 @@ class ChildProtectionData(AgeGenderFilteredReport):
     title = 'Number and Type of Incidents of Abuse Reported at CVSU'
     chart_x_label = 'CVSU Location'
     chart_y_label = 'Number of incidents'
-    table_name = 'cvsulive_UnicefMalawiFormFluff'
+    table_name = 'cvsulive_UnicefMalawiFluff'
 
     @property
     def columns(self):
@@ -278,7 +278,7 @@ class ChildrenInHouseholdData(AgeGenderFilteredReport):
     title = 'Number of Children in Survivor Household'
     chart_x_label = 'CVSU Location'
     chart_y_label = 'Number of children'
-    table_name = 'cvsulive_UnicefMalawiFormFluff'
+    table_name = 'cvsulive_UnicefMalawiFluff'
     has_total_column = False
 
     @property
@@ -294,7 +294,7 @@ class CVSUActivityData(BaseSqlData):
     title = 'Activities Performed'
     chart_x_label = 'CVSU Location'
     chart_y_label = 'Number of reports'
-    table_name = 'cvsulive_UnicefMalawiFormFluff'
+    table_name = 'cvsulive_UnicefMalawiFluff'
 
     @property
     def columns(self):
@@ -316,7 +316,7 @@ class CVSUServicesData(BaseSqlData):
     title = 'Services Provided'
     chart_x_label = 'CVSU Location'
     chart_y_label = 'Number of incidents'
-    table_name = 'cvsulive_UnicefMalawiFormFluff'
+    table_name = 'cvsulive_UnicefMalawiFluff'
 
     @property
     def columns(self):
@@ -337,7 +337,7 @@ class CVSUIncidentResolutionData(BaseSqlData):
     title = 'Incident Resolution'
     chart_x_label = 'CVSU Location'
     chart_y_label = 'Number of incidents'
-    table_name = 'cvsulive_UnicefMalawiFormFluff'
+    table_name = 'cvsulive_UnicefMalawiFluff'
 
     @property
     def columns(self):
