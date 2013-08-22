@@ -518,7 +518,6 @@ class GenericReportView(CacheableRequestMixIn):
         return render(self.request, self.mobile_template_base, self.context)
     
     @property
-    @request_cache("email")
     def email_response(self):
         """
         This renders a json object containing a pointer to the static html 

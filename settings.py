@@ -558,6 +558,9 @@ if DEBUG:
             'luna',
         )
 
+    import warnings
+    warnings.simplefilter('default')
+
 if not DEBUG:
     TEMPLATE_LOADERS = [
         ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
