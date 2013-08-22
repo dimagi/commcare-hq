@@ -47,7 +47,7 @@ class FullXFormPillow(XFormPillow):
     @staticmethod
     def load_domains():
         #Pillow Handlers are custom processing classes that can add new mapping definitions
-        # beyond the default/core mapping types found in self.default_xform_mapping
+        # beyond the default/core mapping types found in self.default_mapping
         #it also provides for more custom transform prior to transmission
         def custom_domains():
             for full_str in getattr(settings, 'XFORM_PILLOW_HANDLERS', []):
@@ -86,7 +86,7 @@ class FullXFormPillow(XFormPillow):
         """
         Define mapping uniquely to the domain_type document.
         """
-        mapping = self.default_xform_mapping
+        mapping = self.default_mapping
         if doc_dict.get('domain', None) is not None:
             if doc_dict['domain'] in self.handler_domain_map:
                 if self.handler_domain_map[doc_dict['domain']].has_custom_mapping(doc_dict):

@@ -36,6 +36,21 @@ complex_type_mapper = {
 }
 
 
+#dynamic template fragment to auto-multi-field all fields, used for report indices where everything is made into a dict
+everything_is_dict_template = {
+    "everything_else": {
+        "match": "*",
+        "match_mapping_type": "string",
+        "mapping": {
+            "type": "multi_field",
+            "fields": {
+                "{name}": {"type": "string", "index": "analyzed"},
+                "exact": {"type": "string", "index": "not_analyzed"}
+            }
+        }
+    }
+}
+
 def type_exact_match_string(prop_name, dual=True):
     """
     Mapping for fields that may want prefixes (based upon the default tokenizer which splits by -'s)
@@ -72,7 +87,7 @@ case_special_types = {
     #to extend, use this and add special date formats here...
 }
 
-case_nested_types = ['actions']
+case_nested_types = ['actions',]
 
 domain_special_types = {
     "name": type_exact_match_string("name", dual=True),
