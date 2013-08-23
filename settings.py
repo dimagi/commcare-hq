@@ -732,18 +732,19 @@ INDICATOR_CONFIG = {
 CASE_WRAPPER = 'corehq.apps.hqcase.utils.get_case_wrapper'
 
 PILLOWTOPS = [
-    #'corehq.pillows.case.CasePillow',
-    #'corehq.pillows.fullcase.FullCasePillow',
-    #'corehq.pillows.xform.XFormPillow',
-    #'corehq.pillows.fullxform.FullXFormPillow',
-    #'corehq.pillows.domain.DomainPillow',
-    #'corehq.pillows.user.UserPillow',
-    #'corehq.pillows.commtrack.ConsumptionRatePillow',
+                 'corehq.pillows.case.CasePillow',
+                 'corehq.pillows.fullcase.FullCasePillow',
+                 'corehq.pillows.xform.XFormPillow',
+                 'corehq.pillows.fullxform.FullXFormPillow',
+                 'corehq.pillows.domain.DomainPillow',
+                 'corehq.pillows.user.UserPillow',
+                 'corehq.pillows.application.AppPillow',
+                 'corehq.pillows.commtrack.ConsumptionRatePillow',
 
-    # fluff
-    'bihar.models.CareBiharFluffPillow',
-    'custom.reports.care_sa.models.CareSAFluffPillow',
-] + LOCAL_PILLOWTOPS
+                 # fluff
+                 'bihar.models.CareBiharFluffPillow',
+                 'custom.reports.care_sa.models.CareSAFluffPillow',
+             ] + LOCAL_PILLOWTOPS
 
 #Custom workflow for indexing xform data beyond the standard properties
 XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
