@@ -54,7 +54,7 @@ socketpool==0.5.2
 markdown==2.2.1
 amqp==1.0.8
 amqplib==1.0.2
-sqlagg==0.1.6
+sqlagg==0.2.0
 -e submodules/fluff-src
 django-redis==3.2
 redis==2.7.5
