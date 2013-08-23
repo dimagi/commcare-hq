@@ -607,7 +607,6 @@ COUCHDB_APPS = [
     'domain',
     'facilities',
     'fluff_filter',
-    'forms',
     'fixtures',
     'groups',
     'hqcase',
