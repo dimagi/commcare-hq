@@ -11,7 +11,7 @@
 <script type="text/javascript">
     $(function() {
         ko.applyBindings(new HQTimezoneHandler({
-            override: {{ override_global_tz|yesno:"true,false" }}
+            override: {{ override_global_tz|BOOL }}
         }), $('#my-project-settings-form').get(0));
 
         var $globalTimezone = $('#id_global_timezone'),
