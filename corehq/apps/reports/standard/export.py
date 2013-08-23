@@ -2,6 +2,7 @@ from collections import defaultdict
 import json
 import logging
 import datetime
+from django.utils.translation import ugettext_noop
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.data_interfaces.interfaces import DataInterface
 from dimagi.utils.dates import DateSpan
@@ -81,7 +82,7 @@ class FormExportReportBase(ExportReport, DatespanMixin):
 
 
 class ExcelExportReport(FormExportReportBase):
-    name = "Export Forms"
+    name = ugettext_noop("Export Forms")
     slug = "excel_export_data"
     report_template_path = "reports/reportdata/excel_export_data.html"
     icon = "icon-list-alt"
@@ -209,7 +210,7 @@ class ExcelExportReport(FormExportReportBase):
 
 
 class CaseExportReport(ExportReport):
-    name = "Export Cases"
+    name = ugettext_noop("Export Cases")
     slug = "case_export"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField']
