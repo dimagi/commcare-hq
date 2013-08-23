@@ -224,7 +224,6 @@ HQ_APPS = (
     'fluff.fluff_filter',
     'sofabed.forms',
     'soil',
-    'corehq.apps.hqsofabed',
     'touchforms.formplayer',
     'hqbilling',
     'phonelog',
@@ -378,9 +377,6 @@ COUCHLOG_DATABASE_NAME = "commcarehq-couchlog"
 
 # couchlog/case search
 LUCENE_ENABLED = False
-
-# sofabed
-FORMDATA_MODEL = 'hqsofabed.HQFormData'
 
 
 

@@ -384,7 +384,7 @@ msgid ""
 "To use display conditions in a module, (1) the module <strong>Menu</strong> "
 "setting must be set to <em>Display module and then forms</em> and (2) all "
 "the forms in the module must require a case, which means registration forms "
-"must go in a seperate module."
+"must go in a separate module."
 msgstr ""
 "Pour utiliser les conditions d'affichage dans une module, (1) le paramètre "
 "pour le module <strong>Menu</strong> devrait être réglé à <em>Put forms in a "
@@ -394,7 +394,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_view.html:402
 msgid ""
-"Similar to how you write display logic inside the form designer, except that "
+"Similar to how you write display logic inside the form builder, except that "
 "you must enter <code>./</code> before a case property. <strong>For example</"
 "strong>: <code>./edd > today()</code> means \"show this form if the selected "
 "case has an EDD later than today\".<br/><a href=\"https://confluence.dimagi."
@@ -413,7 +413,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/form_view.html:416
 msgid ""
 "Case management is disabled because you have errors in your form.  Edit your "
-"form in the Form Designer and fix all errors to proceed."
+"form in the Form Builder and fix all errors to proceed."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_view.html:421
@@ -576,7 +576,7 @@ msgstr ""
 "et $week formulaires depuis lundi."
 
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html:79
-msgid "Edit in form designer"
+msgid "Edit in form builder"
 msgstr "Éditer dans l'éditeur de formulaire"
 
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html:130

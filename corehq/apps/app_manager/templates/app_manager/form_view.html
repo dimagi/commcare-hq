@@ -398,8 +398,8 @@
                                     <span data-slug="add">{% trans "Add Display Condition" %}</span>
                                     <span data-slug="whyNotAdd">{% trans "Why can't I add a display condition?" %}</span>
                                     <span data-slug="notAllowedButExists">{% trans "Error! Display condition will be ignored." %}</span>
-                                    <span data-slug="notAllowed">{% trans 'To use display conditions in a module, (1) the module <strong>Menu</strong> setting must be set to <em>Display module and then forms</em> and (2) all the forms in the module must require a case, which means registration forms must go in a seperate module.' %}</span>
-                                    <span data-slug="helpText">{% trans 'Similar to how you write display logic inside the form designer, except that you must enter <code>./</code> before a case property. <strong>For example</strong>: <code>./edd > today()</code> means "show this form if the selected case has an EDD later than today".<br/><a href="https://confluence.dimagi.com/display/commcarepublic/Common+Logic+and+Calculations#CommonLogicandCalculations-DisplayLogicforForms">Click here for more help</a>' %}</span>
+                                    <span data-slug="notAllowed">{% trans 'To use display conditions in a module, (1) the module <strong>Menu</strong> setting must be set to <em>Display module and then forms</em> and (2) all the forms in the module must require a case, which means registration forms must go in a separate module.' %}</span>
+                                    <span data-slug="helpText">{% trans 'Similar to how you write display logic inside the form builder, except that you must enter <code>./</code> before a case property. <strong>For example</strong>: <code>./edd > today()</code> means "show this form if the selected case has an EDD later than today".<br/><a href="https://confluence.dimagi.com/display/commcarepublic/Common+Logic+and+Calculations#CommonLogicandCalculations-DisplayLogicforForms">Click here for more help</a>' %}</span>
                                 </div>
                             {% else %}
                                 <code>{{ form.form_filter|default:'' }}</code>
@@ -413,7 +413,7 @@
         <div class="tab-pane" id="case-configuration">
         {% if form_errors %}
             <p class="alert alert-warning">
-                {% trans "Case management is disabled because you have errors in your form.  Edit your form in the Form Designer and fix all errors to proceed." %}
+                {% trans "Case management is disabled because you have errors in your form.  Edit your form in the Form Builder and fix all errors to proceed." %}
             </p>
         {% else %}{% if form.source %}
             {% if app.application_version == '1.0' %}

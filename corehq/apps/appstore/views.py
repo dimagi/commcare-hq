@@ -290,6 +290,18 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
 
     return ret_data
 
+def stream_es_query(chunksize=100, **kwargs):
+    size = kwargs.pop("size", None)
+    kwargs.pop("start_at", None)
+    kwargs["size"] = chunksize
+    for i in range(0, size or 9999999, chunksize):
+        kwargs["start_at"] = i
+        res = es_query(**kwargs)
+        if not res["hits"]["hits"]:
+            return
+        for hit in res["hits"]["hits"]:
+            yield hit
+
 def es_snapshot_query(params, facets=None, terms=None, sort_by="snapshot_time"):
     if terms is None:
         terms = ['is_approved', 'sort_by', 'search']
