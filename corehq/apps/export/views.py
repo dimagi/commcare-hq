@@ -168,7 +168,7 @@ class EditCustomCaseExportView(BaseEditCustomExportView):
 
 class DeleteCustomExportView(BaseModifyCustomExportView):
     name = 'delete_custom_export'
-    http_method_names = ['post']  # for only allowing POSTs
+    http_method_names = ['post']
     is_async = False
 
     def post(self, request, *args, **kwargs):
