@@ -637,7 +637,7 @@ class GenericReportView(CacheableRequestMixIn):
     @classmethod
     def get_subpages(cls):
         """
-            List of subpages to show in sidebar navigation.
+        List of subpages to show in sidebar navigation.
         """
         return []
 
