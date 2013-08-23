@@ -1,6 +1,7 @@
 import datetime
 from django.template.context import Context
 from django.template.loader import render_to_string
+import logging
 import pytz
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain, LICENSES
@@ -33,6 +34,7 @@ class ReportField(CacheableRequestMixIn):
     template = ""
 
     def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None):
+        logging.warn("%s: ReportField is deprecated. Use ReportFilter instead." % self.__class__.__name__)
         self.context = Context()
         self.request = request
         self.domain = domain
@@ -514,6 +516,24 @@ class AsyncDrillableField(BaseReportFilter):
                          {"type": "district", "parent_ref": "state_id", "references": "id", "display": "name"},
                          {"type": "block", "parent_ref": "district_id", "references": "id", "display": "name"},
                          {"type": "village", "parent_ref": "block_id", "references": "id", "display": "name"}]
+
+
+    type
+        - FixtureDataType
+    parent_ref
+        - Field-name as in child's schema, that refers to id of it's parent
+    references
+        - Field-name as in parent's schema, that is a reference
+    display
+        - Field-name, of which the value should be displayed
+
+
+    Examples:
+
+    State(id, name), Ditrict(id, state_id, name), Block(id, state_id, district_id, name)
+        - In this case reference is 'id' in State and parent_ref is "state_id" as in District
+    State(state_id, name), District(district_id, state_id, name), Block(block_id, state_id, district_id, name)
+        - In this case reference is 'state_id' in State which is same as parent_ref as in District
     """
     template = "reports/fields/drillable_async.html"
     hierarchy = [] # a list of fixture data type names that representing different levels of the hierarchy. Starting with the root

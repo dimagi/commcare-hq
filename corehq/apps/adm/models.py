@@ -252,6 +252,8 @@ class CouchViewADMColumn(BaseADMColumn):
         # owner ids
         index = self.couch_key.index("<user_id>")
         user_id = key[index]
+        if user_id is None:
+            return [key]
         def _repl(k, index, id):
             ret = copy(k)
             ret[index] = id
@@ -301,7 +303,7 @@ class ReducedADMColumn(CouchViewADMColumn, NumericalADMColumnMixin, IgnoreDatesp
     _admin_crud_class = ReducedColumnAdminCRUDManager
 
     def aggregate(self, values):
-        return reduce(lambda x, y: x+ y, values) if self.returns_numerical \
+        return reduce(lambda x, y: x + y, values) if self.returns_numerical \
             else ', '.join(values)
 
     def get_couch_view_data(self, key, datespan=None):

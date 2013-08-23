@@ -1,11 +1,19 @@
+import json
 from couchdbkit import ResourceNotFound
 from django.http import HttpResponseBadRequest, HttpResponse, Http404
 from django.views.decorators.http import require_GET
+from django.views.generic import TemplateView
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
+from dimagi.utils.web import json_response, json_request
+from dimagi.utils.couch.database import get_db
 
 from corehq.apps.api.models import require_api_user
-from corehq.apps.builds.models import CommCareBuild
 from corehq.apps.domain.decorators import require_superuser
+
+from .models import CommCareBuild
+from .utils import get_all_versions
+
 
 @require_api_user
 def post(request):
@@ -43,3 +51,36 @@ def get(request, version, build_number, path):
 def get_all(request):
     builds = sorted(CommCareBuild.all_builds(), key=lambda build: build.time)
     return render(request, 'builds/all.html', {'builds': builds})
+
+
+class EditMenuView(TemplateView):
+    template_name = "builds/edit_menu.html"
+    doc_id = "config--commcare-builds"
+
+    @method_decorator(require_superuser)
+    def dispatch(self, *args, **kwargs):
+        self.doc = self.get_doc()
+        return super(EditMenuView, self).dispatch(*args, **kwargs)
+
+    def get_doc(self):
+        db = get_db()
+        return db.get(self.doc_id)
+
+    def save_doc(self):
+        db = get_db()
+        return db.save_doc(self.doc)
+
+    def get_context_data(self, **kwargs):
+        context = {
+            'doc': self.doc,
+            'all_versions': get_all_versions(
+                [v['build']['version'] for v in self.doc['menu']])
+        }
+        context.update(kwargs)
+        return context
+
+    def post(self, request, *args, **kwargs):
+        request_json = json_request(request.POST)
+        self.doc = request_json.get('doc')
+        self.save_doc()
+        return self.get(request, success=True, *args, **kwargs)

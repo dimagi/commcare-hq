@@ -363,7 +363,7 @@ def export_all_form_metadata(req, domain):
     Export metadata for _all_ forms in a domain.
     """
     format = req.GET.get("format", Format.XLS_2007)
-    tmp_path = save_metadata_export_to_tempfile(domain, format)
+    tmp_path = save_metadata_export_to_tempfile(domain)
 
     return export_response(open(tmp_path), format, "%s_forms" % domain)
 

@@ -114,6 +114,7 @@ class CommCareBuild(Document):
             descending=True,
             limit=1,
             include_docs=True,
+            reduce=False,
         ).one()
 
         if not self:
@@ -126,7 +127,7 @@ class CommCareBuild(Document):
 
     @classmethod
     def all_builds(cls):
-        return cls.view('builds/all', include_docs=True)
+        return cls.view('builds/all', include_docs=True, reduce=False)
 
 class BuildSpec(DocumentSchema):
     version = StringProperty()

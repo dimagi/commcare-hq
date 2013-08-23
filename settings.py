@@ -224,7 +224,6 @@ HQ_APPS = (
     'fluff.fluff_filter',
     'sofabed.forms',
     'soil',
-    'corehq.apps.hqsofabed',
     'touchforms.formplayer',
     'hqbilling',
     'phonelog',
@@ -247,6 +246,7 @@ HQ_APPS = (
     'psi',
 
     'custom.reports.care_sa',
+    'custom.reports.mc',
 )
 
 TEST_APPS = ()
@@ -378,9 +378,6 @@ COUCHLOG_DATABASE_NAME = "commcarehq-couchlog"
 # couchlog/case search
 LUCENE_ENABLED = False
 
-# sofabed
-FORMDATA_MODEL = 'hqsofabed.HQFormData'
-
 
 
 # unicel sms config
@@ -460,7 +457,10 @@ IVR_OUTBOUND_RETRIES = 3
 IVR_OUTBOUND_RETRY_INTERVAL = 10
 
 # List of Fluff pillow classes that ctable should process diffs for
-FLUFF_PILLOW_TYPES_TO_SQL = {'CareSAFluff': 'SQL'}
+FLUFF_PILLOW_TYPES_TO_SQL = {
+    'MalariaConsortiumFluff': 'SQL',
+    'CareSAFluff': 'SQL',
+}
 
 try:
     #try to see if there's an environmental variable set for local_settings
@@ -557,6 +557,9 @@ if DEBUG:
         INSTALLED_APPS = INSTALLED_APPS + (
             'luna',
         )
+
+    import warnings
+    warnings.simplefilter('default')
 
 if not DEBUG:
     TEMPLATE_LOADERS = [
@@ -655,6 +658,8 @@ COUCHDB_DATABASES += [
     ('fluff', COUCH_DATABASE + '__fluff-bihar'),
     ('care_sa', COUCH_DATABASE + '__fluff-care_sa'),
     ('fluff', COUCH_DATABASE + '__fluff-care_sa'),
+    ('mc', COUCH_DATABASE + '__fluff-mc'),
+    ('fluff', COUCH_DATABASE + '__fluff-mc'),
 ]
 
 INSTALLED_APPS += LOCAL_APPS
@@ -744,6 +749,7 @@ PILLOWTOPS = [
                  # fluff
                  'bihar.models.CareBiharFluffPillow',
                  'custom.reports.care_sa.models.CareSAFluffPillow',
+                 'custom.reports.mc.models.MalariaConsortiumFluffPillow',
              ] + LOCAL_PILLOWTOPS
 
 #Custom workflow for indexing xform data beyond the standard properties
@@ -782,6 +788,7 @@ DOMAIN_MODULE_MAP = {
     'eagles-fahu': 'dca',
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
+    'mc-inscale': 'custom.reports.mc',
     'mvp-potou': 'mvp',
     'mvp-sauri': 'mvp',
     'mvp-bonsaaso': 'mvp',

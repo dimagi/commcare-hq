@@ -99,6 +99,7 @@ domain_special_types = {
 }
 
 user_special_types = {
+    "domain": type_exact_match_string("domain", dual=True),
     "username": type_exact_match_string("username", dual=True),
     "user_data": {"dynamic": True, "type": "object"},
 }

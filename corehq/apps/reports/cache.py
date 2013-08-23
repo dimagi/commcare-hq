@@ -38,7 +38,13 @@ class CacheableRequestMixIn(object):
         return self.get_cache().set(self.get_cache_key(tag), object, expiry)
 
     def get_from_cache(self, tag):
-        return self.get_cache().get(self.get_cache_key(tag))
+        try:
+            # make sure our request matches preconditions for caching, or don't use it
+            assert self.request.domain
+            assert self.request.get_full_path().startswith('/a/{domain}/'.format(domain=self.request.domain))
+            return self.get_cache().get(self.get_cache_key(tag))
+        except (AssertionError, AttributeError):
+            return None
 
     def get_cache_key(self, tag):
         return "{key}-{tag}".format(

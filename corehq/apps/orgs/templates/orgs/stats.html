@@ -24,9 +24,11 @@
             var $charts = $('.nvd3-chart');
 
             $loading.show();
+            var svg_width = $(".tab-pane.active").width();
             $charts.each(function(){
-                var $this = $(this);
-                $(this).hide().html('').append("<svg style='height:320px'> </svg>"); // create a new svg element to stop update issues
+                // hack: need to explicitly set the width to a pixel value because nvd3 has issues when it's set to 100%
+                var $svg_ele = $("<svg style='height:320px;'> </svg>").width(svg_width);
+                $(this).hide().html('').append($svg_ele); // create a new svg element to stop update issues
             });
 
             var data = {histogram_type: "{{ stat_slug }}"};

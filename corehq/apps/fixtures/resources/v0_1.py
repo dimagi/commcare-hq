@@ -29,7 +29,7 @@ class FixtureResource(JsonResource):
 
         if parent_id and parent_ref_name and child_type and references:
             parent_fdi = FixtureDataItem.get(parent_id)
-            fdis = list(FixtureDataItem.by_field_value(domain, child_type, parent_ref_name, parent_fdi.fields['id']))
+            fdis = list(FixtureDataItem.by_field_value(domain, child_type, parent_ref_name, parent_fdi.fields[references]))
         elif type_id or type_tag:
             type_id = type_id or FixtureDataType.by_domain_tag(domain, type_tag).one()
             fdis = list(FixtureDataItem.by_data_type(domain, type_id))
