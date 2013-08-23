@@ -1682,7 +1682,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 for column in columns:
                     yield id_strings.detail_column_header_locale(module, detail, column), trans(column.header)
 
-                    sort_elements.pop(column.header.values()[0], None)
+                    if column.header:
+                        sort_elements.pop(column.header.values()[0], None)
 
                     if column.format == 'enum':
                         for key, val in column.enum.items():
