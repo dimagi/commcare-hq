@@ -317,7 +317,7 @@ class ApplicationsTab(UITab):
             reduce=False,
             startkey=key,
             endkey=key+[{}],
-            # stale=settings.COUCH_STALE_QUERY,
+            stale=settings.COUCH_STALE_QUERY,
         ).all()
         submenu_context = []
         if not apps:
