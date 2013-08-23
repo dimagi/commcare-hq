@@ -462,7 +462,9 @@ IVR_OUTBOUND_RETRY_INTERVAL = 10
 
 
 # List of Fluff pillow classes that ctable should process diffs for
-FLUFF_PILLOW_TYPES_TO_SQL = {}
+FLUFF_PILLOW_TYPES_TO_SQL = {
+    'MalariaConsortiumFluff': 'SQL',
+}
 
 try:
     #try to see if there's an environmental variable set for local_settings
