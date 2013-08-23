@@ -109,9 +109,9 @@ class BaseCreateCustomExportView(BaseExportView):
                 self.export_helper.custom_export.app_id = app_id
             return super(BaseCreateCustomExportView, self).get(request, *args, **kwargs)
 
-        messages.warning(request, "<strong>No data found for that form "
-                                  "(%s).</strong> Submit some data before creating an export!" % \
-                                  xmlns_to_name(self.domain, export_tag[1], app_id=None), extra_tags="html")
+        messages.warning(request, _("<strong>No data found for that form "
+                                    "(%s).</strong> Submit some data before creating an export!") %
+                         xmlns_to_name(self.domain, export_tag[1], app_id=None), extra_tags="html")
         return HttpResponseRedirect(ExcelExportReport.get_url(domain=self.domain))
 
 
