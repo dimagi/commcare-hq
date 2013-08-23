@@ -423,7 +423,7 @@ class BasePageView(TemplateView):
 
     @property
     def page_url(self):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     @property
     def parent_pages(self):
