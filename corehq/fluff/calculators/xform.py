@@ -61,7 +61,7 @@ class FilteredFormPropertyCalculator(fluff.Calculator):
     indicator_calculator = None
     window = timedelta(days=1)
 
-    @fluff.custom_date_emitter(reduce_type="sum")
+    @fluff.date_emitter
     def total(self, form):
         if not self.indicator_calculator:
             yield default_date(form)
