@@ -156,7 +156,7 @@ follow the following instructions.
 First, you must add the app to `HQ_APPS` in `settings.py`.  It must have an `__init__.py` and a
 `models.py` for django to recognize it as an app.
 
-First add a mapping for your domain(s) to the custom reports module root to the `DOMAIN_MODULE_MAP`
+Next, add a mapping for your domain(s) to the custom reports module root to the `DOMAIN_MODULE_MAP`
 variable in `settings.py`.
 
 Next, add the following to your `__init__.py` in your custom reports submodule:
