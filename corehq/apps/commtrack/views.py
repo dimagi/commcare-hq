@@ -134,14 +134,17 @@ class EditProductView(NewProductView):
 
     @property
     def product_id(self):
-        return self.kwargs['prod_id']
+        try:
+            return self.kwargs['prod_id']
+        except KeyError:
+            raise Http404()
 
     @property
     @memoized
     def product(self):
         try:
             return Product.get(self.product_id)
-        except (ResourceNotFound, KeyError):
+        except ResourceNotFound:
             raise Http404()
 
     @property
