@@ -353,7 +353,7 @@ msgid ""
 "To use display conditions in a module, (1) the module <strong>Menu</strong> "
 "setting must be set to <em>Display module and then forms</em> and (2) all "
 "the forms in the module must require a case, which means registration forms "
-"must go in a seperate module."
+"must go in a separate module."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_view.html:402
