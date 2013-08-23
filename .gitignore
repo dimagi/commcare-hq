@@ -36,3 +36,6 @@ ptop*.json
 
 /.coverage
 /coverage-report
+
+# Sphinx
+docs/_build

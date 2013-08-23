@@ -62,3 +62,6 @@ redis==2.7.5
 unittest2
 pycurl==7.19.0
 fakecouch==0.0.4
+Sphinx==1.2b1
+Jinja2==2.7.1
+docutils==0.11
