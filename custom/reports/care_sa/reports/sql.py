@@ -401,12 +401,12 @@ class TestingAndCounseling(CareReport):
         ['Newly diagnosed HIV+ indv scr for TB', 'new_hiv_tb_screen'],  # 1d
         ['Individuals scr for TB [status unknown]', 'hiv_known_screened'],  # 1e
         ['Individuals ref to PHCF with signs & symptoms of TB', 'referred_tb_signs'],  # 1f
-        #retry['Newly diagnosed individuals HIV infected ref for CD4 count test in a PHCF', 'referred_for_cdf_new'],  # 1ha
-        #retry['Existing patients HIV infected ref for CD4 count test in a PHCF', 'referred_for_cdf_existing'],  # 1hb
+        ['Newly diagnosed individuals HIV infected ref for CD4 count test in a PHCF', 'referred_for_cdf_new'],  # 1ha TODO empty?
+        ['Existing patients HIV infected ref for CD4 count test in a PHCF', 'referred_for_cdf_existing'],  # 1hb TODO empty?
         ['Individuals HIV infected provided with CD4 count test results',
          'new_hiv_cd4_results'],  # 1i
-        #RETRY['Individuals HIV infected provided with CD4 count test results from previous months',
-        # 'new_hiv_in_care_program'],  # 1k
+        ['Individuals HIV infected provided with CD4 count test results from previous months',
+         'new_hiv_in_care_program'],  # 1k TODO empty?
         ['People tested as individuals', 'individual_tests'],  # 1l
         ['People tested as couples', 'couple_tests', 'SumColumn'],  # 1m
         ['People tested at the community', 'hiv_community'],
@@ -440,13 +440,13 @@ class IACT(CareReport):
         ['HIV+ client completed I-ACT', 'hiv_pos_completed'],  # 3b
         ['HIV+ clients registered for I-ACT & in the pipeline (5th session)', 'hiv_pos_pipeline'],  # 3c
         #['HIV+client registered for I-ACT after diagnosis', #TODO],  # 3d
-        #retry['I-ACT participants receiving INH/IPT prophylaxis', 'iact_participant_ipt'],  # 3f
-        #retry['I-ACT participants receiving Cotrimoxizole prophylaxis/Dapsone', 'iact_participant_ipt'],  # 3g
-        #retry['I-ACT participant on Pre-ART', 'iact_participant_art'],  # 3h
-        #retry['I-ACT participant on ARV', 'iact_participant_arv'],  # 3i
+        ['I-ACT participants receiving INH/IPT prophylaxis', 'iact_participant_ipt'],  # 3f TODO empty?
+        ['I-ACT participants receiving Cotrimoxizole prophylaxis/Dapsone', 'iact_participant_ipt'],  # 3g TODO empty?
+        ['I-ACT participant on Pre-ART', 'iact_participant_art'],  # 3h TODO empty?
+        ['I-ACT participant on ARV', 'iact_participant_arv'],  # 3i TODO empty?
         #['I-ACT registered client with CD4 count <200', ''],  # 3j
         #['I-ACT registered client with CD4 count 200 - 350', ''],  # 3k
         #['I-ACT registered client with CD4 cont higher than 350', ''],  # 3l
         #['Unknown CD4 count at registration', ''],  # 3m
-        #retry['I-ACT Support groups completed (all 6 sessions)', 'iact_support_groups'],  # 3n
+        ['I-ACT Support groups completed (all 6 sessions)', 'iact_support_groups'],  # 3n TODO empty?
     ]
