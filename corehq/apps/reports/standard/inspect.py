@@ -18,7 +18,6 @@ import logging
 
 from casexml.apps.case.models import CommCareCaseAction
 from corehq.apps.api.es import CaseES
-from corehq.apps.hqsofabed.models import HQFormData
 from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
@@ -37,7 +36,6 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
-import rawes
 from corehq import elastic
 
 class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
