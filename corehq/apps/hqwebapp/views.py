@@ -416,8 +416,8 @@ class BasePageView(TemplateView):
     @property
     def page_name(self):
         """
-            This is what is visible to the user.
-            page_title is what shows up in <title> tags.
+        This is what is visible to the user.
+        page_title is what shows up in <title> tags.
         """
         return self.page_title
 
@@ -428,18 +428,18 @@ class BasePageView(TemplateView):
     @property
     def parent_pages(self):
         """
-            Specify parent pages as a list of
-            [{
-                'title': <name>,
-                'url: <url>,
-            }]
+        Specify parent pages as a list of
+        [{
+            'title': <name>,
+            'url: <url>,
+        }]
         """
         return []
 
     @property
     def main_context(self):
         """
-            The shared context for rendering this page.
+        The shared context for rendering this page.
         """
         return {
             'current_page': {
@@ -453,7 +453,7 @@ class BasePageView(TemplateView):
     @property
     def page_context(self):
         """
-            The Context for the settings page
+        The Context for the settings page
         """
         raise NotImplementedError("This should return a dict.")
 
@@ -465,7 +465,7 @@ class BasePageView(TemplateView):
 
     def render_to_response(self, context, **response_kwargs):
         """
-            Returns a response with a template rendered with the given context.
+        Returns a response with a template rendered with the given context.
         """
         return render(self.request, self.template_name, context)
 
