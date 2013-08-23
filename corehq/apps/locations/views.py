@@ -106,7 +106,7 @@ class EditLocationView(NewLocationView):
         try:
             return Location.get(self.location_id)
         except ResourceNotFound:
-            raise Http404
+            raise Http404()
 
     @property
     def page_name(self):
@@ -125,7 +125,7 @@ def location_edit(request, domain, loc_id=None):
         try:
             location = Location.get(loc_id)
         except ResourceNotFound:
-            raise Http404
+            raise Http404()
     else:
         location = Location(domain=domain, parent=parent_id)
 

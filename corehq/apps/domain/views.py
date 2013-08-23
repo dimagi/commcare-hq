@@ -71,7 +71,7 @@ class DomainViewMixin(object):
         try:
             return Domain.get_by_name(self.domain, strict=True)
         except ResourceNotFound:
-            raise Http404
+            raise Http404()
 
 
 class BaseDomainView(BaseSectionPageView, DomainViewMixin):
@@ -688,7 +688,7 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
         try:
             return receiverwrapper.models.repeater_types[self.repeater_type]
         except KeyError:
-            raise Http404
+            raise Http404()
 
     @property
     @memoized

@@ -142,7 +142,7 @@ class EditProductView(NewProductView):
         try:
             return Product.get(self.product_id)
         except (ResourceNotFound, KeyError):
-            raise Http404
+            raise Http404()
 
     @property
     def page_name(self):

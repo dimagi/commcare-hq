@@ -118,7 +118,7 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
 
     def get(self, request, *args, **kwargs):
         if not self.redirect:
-            raise Http404
+            raise Http404()
         return HttpResponseRedirect(self.redirect)
 
 
@@ -148,7 +148,7 @@ class BaseEditUserView(BaseUserSettingsView):
         try:
             return WebUser.get(self.editable_user_id)
         except (ResourceNotFound, CouchUser.AccountTypeError):
-            raise Http404
+            raise Http404()
 
     @property
     def existing_role(self):
@@ -156,7 +156,7 @@ class BaseEditUserView(BaseUserSettingsView):
             return (self.editable_user.get_role(self.domain,
                                                 include_teams=False).get_qualified_id() or '')
         except DomainMembershipError:
-            raise Http404
+            raise Http404()
 
     @property
     @memoized
@@ -496,7 +496,7 @@ class InviteWebUserView(BaseManageWebUserView):
 def make_phone_number_default(request, domain, couch_user_id):
     user = CouchUser.get_by_user_id(couch_user_id, domain)
     if not user.is_current_web_user(request) and not user.is_commcare_user():
-        raise Http404
+        raise Http404()
 
     phone_number = request.POST['phone_number']
     if not phone_number:
@@ -515,7 +515,7 @@ def make_phone_number_default(request, domain, couch_user_id):
 def delete_phone_number(request, domain, couch_user_id):
     user = CouchUser.get_by_user_id(couch_user_id, domain)
     if not user.is_current_web_user(request) and not user.is_commcare_user():
-        raise Http404
+        raise Http404()
 
     phone_number = request.POST['phone_number']
     if not phone_number:
@@ -607,7 +607,7 @@ def change_password(request, domain, login_id, template="users/partial/reset_pas
     commcare_user = CommCareUser.get_by_user_id(login_id, domain)
     json_dump = {}
     if not commcare_user:
-        raise Http404
+        raise Http404()
     django_user = commcare_user.get_django_user()
     if request.method == "POST":
         form = SetPasswordForm(user=django_user, data=request.POST)

@@ -8,10 +8,10 @@ from django.http import HttpResponseRedirect, Http404
 @login_and_domain_required
 def default(request, domain):
     if not request.project or request.project.is_snapshot:
-        raise Http404
+        raise Http404()
     if request.project.commtrack_enabled:
         if not request.couch_user.is_domain_admin():
-            raise Http404
+            raise Http404()
         from corehq.apps.commtrack.views import ProductListView
         return HttpResponseRedirect(reverse(ProductListView.name,
                                             args=[domain]))
@@ -25,4 +25,4 @@ def default(request, domain):
     if request.couch_user.can_edit_data():
         return HttpResponseRedirect(reverse(EditDataInterfaceDispatcher.name(),
                                             args=[domain, CaseReassignmentInterface.slug]))
-    raise Http404
+    raise Http404()

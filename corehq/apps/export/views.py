@@ -143,7 +143,7 @@ class BaseModifyCustomExportView(BaseExportView):
         try:
             return CustomExportHelper.make(self.request, self.export_type, self.domain, self.export_id)
         except ResourceNotFound:
-            raise Http404
+            raise Http404()
 
 
 class BaseEditCustomExportView(BaseModifyCustomExportView):

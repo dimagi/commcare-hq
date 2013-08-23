@@ -57,7 +57,7 @@ class EditCommCareUserView(BaseFullEditUserView):
                 self.template_name = "users/deleted_account.html"
             return user
         except (ResourceNotFound, CouchUser.AccountTypeError):
-            raise Http404
+            raise Http404()
 
     @property
     def edit_user_form_title(self):
