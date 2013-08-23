@@ -26,7 +26,6 @@ def lookup_age_group_from_form_id(form):
 def lookup_gender_from_form_id(form):
     return form.gender
 
-get_user_id = lambda form: form.metadata.userID
 get_province = lambda form: lookup_province_id_from_form_id(form)
 get_cbo = lambda form: lookup_cbo_id_from_form_id(form)
 get_age_group = lambda form: lookup_age_group_from_form_id(form)
@@ -38,6 +37,11 @@ PMM_XMLNS = "http://openrosa.org/formdesigner/d234f78e65e30eb72527c1118cf0de15e1
 IACT_XMLNS = "http://openrosa.org/formdesigner/BE27B9F4-A260-4110-B187-28D572B46DB0"
 
 class CareSAForm(XFormInstance):
+
+    @property
+    def user_id(self):
+        return self.metadata.userID
+
     @property
     @memoized
     def gender(self):
@@ -122,7 +126,7 @@ class CareSAFluff(fluff.IndicatorDocument):
     domains = ('care-ihapc-live',)
     group_by = (
         'domain',
-        fluff.AttributeGetter('user_id', get_user_id),
+        'user_id',
         fluff.AttributeGetter('province', get_province),
         fluff.AttributeGetter('cbo', get_cbo),
         fluff.AttributeGetter('age_group', get_age_group),
