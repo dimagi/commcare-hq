@@ -238,6 +238,7 @@ HQ_APPS = (
     'benin',
     'bihar',
     'dca',
+    'gsid',
     'hsph',
     'mvp',
     'mvp_apps',
@@ -640,6 +641,7 @@ COUCHDB_APPS = [
     # custom reports
     'benin',
     'dca',
+    'gsid',
     'hsph',
     'mvp',
     'pathfinder',
