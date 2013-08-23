@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-08-08 11:20-0400\n"
+"POT-Creation-Date: 2013-08-08 11:52-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -5822,6 +5822,7 @@ msgid "Loading ..."
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/async/tabular.html:55
+#: custom/reports/mc/templates/mc/reports/sectioned_tabular.html:7
 #: submodules/unicef-cvsu-reports/cvsu/templates/cvsu/partials/report_table.html:23
 #: submodules/unicef-cvsu-reports/cvsu/templates/cvsu/partials/report_table.html:24
 msgid "Fetching additional data, please wait..."
@@ -6807,6 +6808,267 @@ msgstr ""
 msgid ""
 "The following groups have no name. Please name them before continuing: {}"
 msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:5
+#: custom/reports/mc/reports/definitions.py:84
+#: custom/reports/mc/reports/definitions.py:137
+msgid "Home Visits"
+msgstr "Visitas Domiciliáres"
+
+#: custom/reports/mc/reports/definitions.py:7
+#: custom/reports/mc/reports/definitions.py:88
+msgid "home_visits_pregnant"
+msgstr "Mulheres Grávidas"
+
+#: custom/reports/mc/reports/definitions.py:8
+msgid "home_visits_postpartem"
+msgstr "Mães Pós Parto"
+
+#: custom/reports/mc/reports/definitions.py:9
+#: custom/reports/mc/reports/definitions.py:139
+msgid "home_visits_newborn"
+msgstr "Recém Nacidos (0 - 1 mes)"
+
+#: custom/reports/mc/reports/definitions.py:10
+#: custom/reports/mc/reports/definitions.py:140
+msgid "home_visits_children"
+msgstr "Crianças (2 - 59 meses)"
+
+#: custom/reports/mc/reports/definitions.py:11
+msgid "home_visits_other"
+msgstr "Outros grupos alvos"
+
+#: custom/reports/mc/reports/definitions.py:12
+#: custom/reports/mc/reports/definitions.py:91
+#: custom/reports/mc/reports/definitions.py:142
+msgid "home_visits_total"
+msgstr "Total Visitas"
+
+#: custom/reports/mc/reports/definitions.py:17
+msgid "RDT"
+msgstr "Total de TDR para Malária Realizados"
+
+#: custom/reports/mc/reports/definitions.py:19
+msgid "rdt_positive_children"
+msgstr "TDR positivo < 59 meses"
+
+#: custom/reports/mc/reports/definitions.py:20
+msgid "rdt_positive_adults"
+msgstr "TDR positivo ≥ 5 anos de idade"
+
+#: custom/reports/mc/reports/definitions.py:22
+msgid "rdt_total"
+msgstr "Total Testes Realizados"
+
+#: custom/reports/mc/reports/definitions.py:27
+msgid "Diagnosed Cases"
+msgstr "Diagnóstico de Casos"
+
+#: custom/reports/mc/reports/definitions.py:29
+msgid "diagnosed_malaria_child"
+msgstr "Total Malária confimada < 59 meses"
+
+#: custom/reports/mc/reports/definitions.py:30
+msgid "diagnosed_malaria_adult"
+msgstr "Total Malária Confimada ≥ 5 anos"
+
+#: custom/reports/mc/reports/definitions.py:31
+msgid "diagnosed_diarrhea"
+msgstr "Total Diarreia"
+
+#: custom/reports/mc/reports/definitions.py:32
+msgid "diagnosed_ari"
+msgstr "Total Infecções Respiratórios Agudas"
+
+#: custom/reports/mc/reports/definitions.py:33
+msgid "diagnosed_total"
+msgstr "Total Casos Diagnosticados no mês"
+
+#: custom/reports/mc/reports/definitions.py:38
+msgid "Treated Cases"
+msgstr "Manejo de Casos"
+
+#: custom/reports/mc/reports/definitions.py:40
+msgid "treated_malaria"
+msgstr "Total casos malária tratados"
+
+#: custom/reports/mc/reports/definitions.py:41
+msgid "treated_diarrhea"
+msgstr "Casos de diarreia tratados"
+
+#: custom/reports/mc/reports/definitions.py:42
+msgid "treated_ari"
+msgstr "Casos IRA Tratados"
+
+#: custom/reports/mc/reports/definitions.py:43
+msgid "treated_total"
+msgstr "  Total Casos Tratados no mês"
+
+#: custom/reports/mc/reports/definitions.py:48
+msgid "Transfers"
+msgstr "Transferências a Unidade Sanitária"
+
+#: custom/reports/mc/reports/definitions.py:50
+msgid "transfer_malnutrition"
+msgstr "Criança com problemas de malnutrição"
+
+#: custom/reports/mc/reports/definitions.py:51
+msgid "transfer_incomplete_vaccination"
+msgstr "Criança com Vacina incompleta"
+
+#: custom/reports/mc/reports/definitions.py:52
+msgid "transfer_danger_signs"
+msgstr "Sinais de perigo"
+
+#: custom/reports/mc/reports/definitions.py:53
+msgid "transfer_prenatal_consult"
+msgstr "Mulher grávida encaminhada a consulta PN "
+
+#: custom/reports/mc/reports/definitions.py:54
+msgid "transfer_missing_malaria_meds"
+msgstr "Falta de antimaláricos "
+
+#: custom/reports/mc/reports/definitions.py:55
+msgid "transfer_other"
+msgstr "Outras causas"
+
+#: custom/reports/mc/reports/definitions.py:56
+msgid "transfer_total"
+msgstr " Total transferidos no mês"
+
+#: custom/reports/mc/reports/definitions.py:61
+msgid "Deaths"
+msgstr "Mortes na Comunidade"
+
+#: custom/reports/mc/reports/definitions.py:63
+msgid "deaths_newborn"
+msgstr "Recém Nacidos (0 - 1 mes)"
+
+#: custom/reports/mc/reports/definitions.py:64
+#: custom/reports/mc/reports/definitions.py:97
+msgid "deaths_children"
+msgstr "Crianças (2 - 59 meses)"
+
+#: custom/reports/mc/reports/definitions.py:65
+msgid "deaths_mothers"
+msgstr "Mortes maternas"
+
+#: custom/reports/mc/reports/definitions.py:66
+msgid "deaths_other"
+msgstr "Outros grupos "
+
+#: custom/reports/mc/reports/definitions.py:67
+msgid "deaths_total"
+msgstr "Total mortes na comunidade"
+
+#: custom/reports/mc/reports/definitions.py:71
+msgid "Health Education"
+msgstr "Palestras na Comunidade"
+
+#: custom/reports/mc/reports/definitions.py:73
+msgid "heath_ed_talks"
+msgstr "Número de palestras no mês"
+
+#: custom/reports/mc/reports/definitions.py:74
+msgid "heath_ed_participants"
+msgstr "Número de participantes no mês"
+
+#: custom/reports/mc/reports/definitions.py:86
+msgid "home_visits_newborn_reg"
+msgstr "Recém Nacidos (0 - 1 mes)"
+
+#: custom/reports/mc/reports/definitions.py:87
+msgid "home_visits_child_reg"
+msgstr "Crianças (2 - 59 meses)"
+
+#: custom/reports/mc/reports/definitions.py:89
+msgid "home_visits_non_pregnant"
+msgstr "Adultos"
+
+#: custom/reports/mc/reports/definitions.py:90
+#: custom/reports/mc/reports/definitions.py:149
+msgid "home_visits_followup"
+msgstr "Visitas de seguimento por casos transferidos "
+
+#: custom/reports/mc/reports/definitions.py:95
+msgid "Deaths in the Community"
+msgstr "Mortes na Comunidade"
+
+#: custom/reports/mc/reports/definitions.py:108
+msgid "Validation of Diagnosis and Treatment"
+msgstr ""
+"Porcentagem de pacientes observados que foram prescritos medicamentos "
+"correctos para a pneumonia"
+
+#: custom/reports/mc/reports/definitions.py:112
+#: custom/reports/mc/reports/definitions.py:151
+msgid "patients_given_pneumonia_meds"
+msgstr "Porcentagem de pacientes observados que foram prescritos medicamentos correctos para a pneumonia"
+
+#: custom/reports/mc/reports/definitions.py:116
+#: custom/reports/mc/reports/definitions.py:155
+msgid "patients_given_diarrhoea_meds"
+msgstr ""
+"Porcentagem de pacientes observados que foram prescritos medicamentos "
+"correctos para a diarreia"
+
+#: custom/reports/mc/reports/definitions.py:120
+#: custom/reports/mc/reports/definitions.py:159
+msgid "patients_given_malaria_meds"
+msgstr ""
+"Porcentagem de pacientes observados que foram prescritos medicamentos "
+"correctos para a febre/malária"
+
+#: custom/reports/mc/reports/definitions.py:124
+#: custom/reports/mc/reports/definitions.py:163
+msgid "patients_correctly_referred"
+msgstr "Porcentagem de pacientes que foram correctamente transferidos"
+
+#: custom/reports/mc/reports/definitions.py:127
+#: custom/reports/mc/reports/definitions.py:166
+msgid "cases_rdt_not_done"
+msgstr "Número de casos de febre em que não se efectou o TDR"
+
+#: custom/reports/mc/reports/definitions.py:128
+msgid "cases_danger_signs_not_referred"
+msgstr "Número de pacientes com sinais de perigo que não foram transferidos "
+
+#: custom/reports/mc/reports/definitions.py:129
+msgid "cases_no_malaria_meds"
+msgstr ""
+"Número total de pacientes transferidos por causa de falta de antimaláricos"
+
+#: custom/reports/mc/reports/definitions.py:141
+msgid "home_visits_adult"
+msgstr "Adultos"
+
+#: custom/reports/mc/reports/definitions.py:146
+msgid "Transferred Cases"
+msgstr "Transferências a Unidade Sanitária"
+
+#: custom/reports/mc/reports/definitions.py:148
+msgid "cases_transferred"
+msgstr "Número de casos transferidos"
+
+#: custom/reports/mc/reports/sql.py:123
+msgid "Indicator"
+msgstr ""
+
+#: custom/reports/mc/reports/sql.py:154
+msgid "Health Facility Monthly Report"
+msgstr "Relatorio Mensal aos Supervisores dos APEs"
+
+#: custom/reports/mc/reports/sql.py:159
+msgid "District Monthly Report"
+msgstr "Relatorio Mensal aos Coordinadores do Distrito e os NEDs"
+
+#: custom/reports/mc/reports/sql.py:164
+msgid "District Weekly Report"
+msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#: custom/reports/mc/reports/sql.py:169
+msgid "Health Facility Weekly Report"
+msgstr "Relatorio Semanal aos Supervisores dos APEs"
 
 #: submodules/a5288-reports/a5288/reports.py:16
 msgid "Missed Callbacks"
@@ -8193,3 +8455,6 @@ msgstr ""
 #: submodules/unicef-cvsu-reports/cvsu/filters.py:35
 msgid "Filter districts..."
 msgstr ""
+
+#~ msgid "rdt_others"
+#~ msgstr "Outros (negativos / indeterminados) "
