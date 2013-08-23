@@ -108,6 +108,10 @@ def bulk_import_async(import_id, config, domain, excel_id):
         if not case:
             id = uuid.uuid4().hex
 
+            extras = {}
+            if config.search_field == 'external_id':
+                extras['external_id'] = search_id
+
             try:
                 caseblock = CaseBlock(
                     create=True,
@@ -116,10 +120,9 @@ def bulk_import_async(import_id, config, domain, excel_id):
                     user_id=user_id,
                     owner_id=owner_id,
                     case_type=config.case_type,
-                    update=fields_to_update
+                    update=fields_to_update,
+                    **extras
                 )
-                if config.search_field == 'external_id':
-                    caseblock['external_id'] = search_id
 
                 submit_case_block(caseblock, domain, username, user_id)
                 created_count += 1
