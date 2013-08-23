@@ -76,7 +76,6 @@ def myserver():
         'couch': [],
         'pg': [],
         'rabbitmq': [],
-        'sofabed': [],
         'django_celery': [],
         'django_app': [],
         'django_public': [],

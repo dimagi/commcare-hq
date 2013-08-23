@@ -222,7 +222,6 @@ HQ_APPS = (
     'custom.apps.wisepill',
     'fluff',
     'fluff.fluff_filter',
-    'sofabed.forms',
     'soil',
     'touchforms.formplayer',
     'hqbilling',
