@@ -1,6 +1,7 @@
 TODO:
 Cron job to finalize reports at the end of each month.  (when, exactly?)
 ask Biyeun about filter widgets
+check xmlns insteand of form.name!
 
 
 ### Running tests and getting fixtures

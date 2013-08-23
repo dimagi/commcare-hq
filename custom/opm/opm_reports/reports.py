@@ -8,36 +8,36 @@ from .beneficiary import Beneficiary
 from .incentive import Worker
 
 
-beneficiary_payment = [
-    ("List of Beneficiaries", 'name'),
-    ("AWC Name", 'awc_name'),
-    ("Bank Name", 'bank_name'),
-    ("Bank Account Number", 'account_number'),
-    ("Block Name", 'block'),
-    ("Village Name", 'village'),
-    ("Birth Preparedness Form 1", 'bp1_cash'),
-    ("Birth Preparedness Form 2", 'bp2_cash'),
-    ("Delivery Form", 'delivery_cash'),
-    ("Child Followup Form", 'child_cash'),
-    ("Birth Spacing Bonus", 'spacing_cash'),
-    ("Amount to be paid to beneficiary", 'total'),
-]
+# beneficiary_payment = [
+#     ("List of Beneficiaries", 'name'),
+#     ("AWC Name", 'awc_name'),
+#     ("Bank Name", 'bank_name'),
+#     ("Bank Account Number", 'account_number'),
+#     ("Block Name", 'block'),
+#     ("Village Name", 'village'),
+#     ("Birth Preparedness Form 1", 'bp1_cash'),
+#     ("Birth Preparedness Form 2", 'bp2_cash'),
+#     ("Delivery Form", 'delivery_cash'),
+#     ("Child Followup Form", 'child_cash'),
+#     ("Birth Spacing Bonus", 'spacing_cash'),
+#     ("Amount to be paid to beneficiary", 'total'),
+# ]
 
-incentive_payment = [
-    ("List of AWWs", 'name'),
-    ("AWC Name", 'awc_name'),
-    ("AWW Bank Name", 'bank_name'),
-    ("AWW Bank Account Number", 'account_number'),
-    ("Block Name", 'block'),
-    ("No. of women registered under BCSP", 'women_registered'),
-    ("No. of children registered under BCSP", 'children_registered'),
-    ("Submission of Service Availability form", 'service_forms_count'),
-    ("No. of Growth monitoring Sections Filled for eligible children", 'growth_monitoring_count'),
-    ("Payment for Service Availability Form (in Rs.)", 'service_forms_cash'),
-    ("Payment for Growth Monitoring Forms (in Rs.)", 'growth_monitoring_cash'),
-    ("Total Payment Made for the month (in Rs.)", 'month_total'),
-    ("Amount of AWW incentive paid last month", 'last_month_total'),
-]
+# incentive_payment = [
+#     ("List of AWWs", 'name'),
+#     ("AWC Name", 'awc_name'),
+#     ("AWW Bank Name", 'bank_name'),
+#     ("AWW Bank Account Number", 'account_number'),
+#     ("Block Name", 'block'),
+#     ("No. of women registered under BCSP", 'women_registered'),
+#     ("No. of children registered under BCSP", 'children_registered'),
+#     ("Submission of Service Availability form", 'service_forms_count'),
+#     ("No. of Growth monitoring Sections Filled for eligible children", 'growth_monitoring_count'),
+#     ("Payment for Service Availability Form (in Rs.)", 'service_forms_cash'),
+#     ("Payment for Growth Monitoring Forms (in Rs.)", 'growth_monitoring_cash'),
+#     ("Total Payment Made for the month (in Rs.)", 'month_total'),
+#     ("Amount of AWW incentive paid last month", 'last_month_total'),
+# ]
 
 domain = "opm"
 
