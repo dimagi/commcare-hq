@@ -50,7 +50,7 @@ class CareSAForm(XFormInstance):
     def cbo(self):
         case = self.care_case
 
-        group = Group.by_user(case.user_id).one()
+        group = Group.by_user(case.user_id).first()
 
         # if the id doesn't belong to a user, maybe its a group?
         if not group:
