@@ -7,6 +7,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.groups.models import Group
 from couchdbkit.exceptions import ResourceNotFound
+from copy import copy
 
 
 class ProvinceField(AsyncDrillableField):
@@ -213,36 +214,39 @@ class CareReport(SqlTabularReport,
 
         return [[self.export_sheet_name, table]]
 
+    def empty_row(self):
+        return ['--'] * len(self.report_columns)
+
+    def gender_seperated_dict(self):
+        return {
+            'male': self.empty_row(),
+            'female': self.empty_row()
+        }
+
+    def age_seperated_dict(self, default):
+        """ Build a dictionary with a copy of default for each age group """
+        return dict((str(i), copy(default)) for i in range(3))
 
     def initialize_user_stuff(self):
+        """
+        Return a dictionary appropriately formatted based on the
+        set filter options
+
+        Used to seperate a given users/province/cbo's data into
+        a dictionary seperated by age group and gender as
+        needed
+        """
         if self.show_age() and self.show_gender():
-            return {
-                '0': {
-                    'male': ['--'] * len(self.report_columns),
-                    'female': ['--'] * len(self.report_columns)
-                },
-                '1': {
-                    'male': ['--'] * len(self.report_columns),
-                    'female': ['--'] * len(self.report_columns)
-                },
-                '2': {
-                    'male': ['--'] * len(self.report_columns),
-                    'female': ['--'] * len(self.report_columns)
-                }
-            }
+            return self.age_seperated_dict(self.gender_seperated_dict())
+
         if self.show_age() and not self.show_gender():
-            return {
-                '0': ['--'] * len(self.report_columns),
-                '1': ['--'] * len(self.report_columns),
-                '2': ['--'] * len(self.report_columns),
-            }
+            return self.age_seperated_dict(self.empty_row())
+
         if not self.show_age() and self.show_gender():
-            return {
-                'male': ['--'] * len(self.report_columns),
-                'female': ['--'] * len(self.report_columns)
-            }
+            return self.gender_seperated_dict()
+
         if not self.show_age() and not self.show_gender():
-            return ['--'] * len(self.report_columns)
+            return self.empty_row()
 
     def add_row_to_total(self, total, row):
         # initialize it if it hasn't been used yet
