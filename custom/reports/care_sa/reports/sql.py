@@ -351,34 +351,46 @@ class CareReport(SqlTabularReport,
         elif age_group_val == '2':
             return '25+ years'
 
+    def get_grouping_name(self, user):
+        """
+        Get the name of province/cbo/user (depending on what is selected)
+        """
+        if not self.selected_province():
+            return FixtureDataItem.get(user).fields['name']
+        elif not self.selected_cbo():
+            return Group.get(user).name
+        else:
+            return CommCareUser.get_by_username(user).name
+
+    def merge_gender_data(self, data):
+        return [val for pair in zip(data['male'], data['female'])
+                for val in pair]
+
     @property
     def rows(self):
+        """
+        Override rows method to be able to properly group data
+        """
+        # use super to get the raw rows from the report
         stock_rows = list(super(CareReport, self).rows)
+
+        # pack these rows into a dict representing the currently
+        # configured report structure
         rows = self.build_data(stock_rows)
 
         rows_for_table = []
+        # for every group of data, unpack back to individual rows
+        # and set up the information the template needs to render this
+        # stuff
         for user in rows:
-            if not self.selected_province():
-                u = FixtureDataItem.get(user).fields['name']
-            elif not self.selected_cbo():
-                try:
-                    u = Group.get(user).name
-                except ResourceNotFound:
-                    continue
-            else:
-                u = CommCareUser.get_by_username(user).name
+            u = self.get_grouping_name(user)
 
             total_row = []
             if self.show_age() and self.show_gender():
                 for age_group in sorted(rows[user]):
-                    if age_group == '3':
-                        continue
-
                     age_display = self.age_group_text(age_group)
 
-                    row_data = [val for pair in zip(rows[user][age_group]['male'],
-                                                    rows[user][age_group]['female'])
-                                for val in pair]
+                    row_data = self.merge_gender_data(rows[user][age_group])
 
                     rows_for_table.append({
                         'username': u if age_group == '0' else '',
@@ -389,9 +401,7 @@ class CareReport(SqlTabularReport,
 
                     total_row = self.add_row_to_total(total_row, row_data)
             elif not self.show_age() and self.show_gender():
-                row_data = [val for pair in zip(rows[user]['male'],
-                                                rows[user]['female'])
-                            for val in pair]
+                row_data = self.merge_gender_data(rows[user])
 
                 rows_for_table.append({
                     'username': u,
@@ -401,15 +411,11 @@ class CareReport(SqlTabularReport,
 
             elif self.show_age() and not self.show_gender():
                 for age_group in sorted(rows[user]):
-                    if age_group == '3':
-                        continue
-
-                    age_display = self.age_group_text(age_group)
-
                     row_data = rows[user][age_group]
+
                     rows_for_table.append({
                         'username': u if age_group == '0' else '',
-                        'age_display': age_display,
+                        'age_display': self.age_group_text(age_group),
                         'row_data': row_data
                     })
 
