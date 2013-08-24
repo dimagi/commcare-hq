@@ -105,18 +105,25 @@ class CareReport(SqlTabularReport,
             cbo=self.selected_cbo(),
         )
 
+    def first_indicator_column_index(self):
+        return len(self.columns) - len(self.report_columns)
+
     @property
     def headers(self):
+        """
+        Override the headers method to be able to add male/female sub
+        header columns.
+        """
         header_columns = []
         for idx, column in enumerate(self.columns):
-            if idx >= (len(self.columns) - len(self.report_columns)) and self.show_gender():
+            if idx >= self.first_indicator_column_index() and self.show_gender():
                 group = DataTablesColumnGroup(column.header)
                 group.add_column(DataTablesColumn("male", sortable=False))
                 group.add_column(DataTablesColumn("female", sortable=False))
                 header_columns.append(group)
             else:
-                # gender is a column for us to get data from but
-                # we display this differently
+                # gender is included in the columns to populate data
+                # but we don't show it on the page
                 if column.header != 'Gender':
                     header_columns.append(DataTablesColumn(column.header, sortable=False))
 
