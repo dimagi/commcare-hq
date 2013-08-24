@@ -8,36 +8,12 @@ from corehq.apps.groups.models import Group
 from dimagi.utils.decorators.memoized import memoized
 from couchdbkit.exceptions import ResourceNotFound
 
-def lookup_province_id_from_form_id(form):
-    return form.province_id
-
-def lookup_cbo_id_from_form_id(form):
-    return form.group.get_id
-
-def lookup_age_group_from_form_id(form):
-    age = form.age
-    if age < 15:
-        return '0'
-    elif age < 25:
-        return '1'
-    else:
-        return '2'
-
-def lookup_gender_from_form_id(form):
-    return form.gender
-
-get_province = lambda form: lookup_province_id_from_form_id(form)
-get_cbo = lambda form: lookup_cbo_id_from_form_id(form)
-get_age_group = lambda form: lookup_age_group_from_form_id(form)
-get_gender = lambda form: lookup_gender_from_form_id(form)
-
 HCT_XMLNS = 'http://openrosa.org/formdesigner/BA7D3B3F-151C-4709-A020-CF79B7F2E876'
 HBC_XMLNS = "http://openrosa.org/formdesigner/19A3BDCB-5EE6-4D1B-B64B-79361D7D9885"
 PMM_XMLNS = "http://openrosa.org/formdesigner/d234f78e65e30eb72527c1118cf0de15e1181ddc"
 IACT_XMLNS = "http://openrosa.org/formdesigner/BE27B9F4-A260-4110-B187-28D572B46DB0"
 
 class CareSAForm(XFormInstance):
-
     @property
     def user_id(self):
         return self.metadata.userID
@@ -49,7 +25,7 @@ class CareSAForm(XFormInstance):
 
     @property
     @memoized
-    def age(self):
+    def age_group(self):
         case = self.care_case
 
         try:
@@ -60,13 +36,18 @@ class CareSAForm(XFormInstance):
         except (AttributeError, ValueError):
             # catch fun things like no age being found or age not being
             # a number
-            age = -1
+            return -1
 
-        return age
+        if age < 15:
+            return '0'
+        elif age < 25:
+            return '1'
+        else:
+            return '2'
 
     @property
     @memoized
-    def group(self):
+    def cbo(self):
         case = self.care_case
 
         group = Group.by_user(case.user_id).one()
@@ -76,13 +57,14 @@ class CareSAForm(XFormInstance):
             try:
                 group = Group.get(case.user_id)
             except ResourceNotFound:
-                group = None
+                return None
 
-        return group
+        return group._id
+
 
     @property
     @memoized
-    def province_id(self):
+    def province(self):
         case = self.care_case
 
         fixture_type = FixtureDataType.by_domain_tag('care-ihapc-live',
@@ -95,7 +77,7 @@ class CareSAForm(XFormInstance):
             case.province
         ).first()
 
-        return fixture_item.get_id
+        return fixture_item._id
 
     @property
     @memoized
@@ -117,9 +99,9 @@ class CareSAFluff(fluff.IndicatorDocument):
         NOTFilter(xcalculators.FormPropertyFilter(xmlns='http://openrosa.org/user-registration')),
         NOTFilter(xcalculators.FormPropertyFilter(xmlns='http://openrosa.org/user/registration')),
         NOTFilter(xcalculators.FormPropertyFilter(xmlns='http://code.javarosa.org/devicereport')),
-        CustomFilter(lambda f: f.age > 0),
+        CustomFilter(lambda f: f.age_group >= 0),
         CustomFilter(lambda f: f.gender in ['male', 'female']),
-        CustomFilter(lambda f: f.group),
+        CustomFilter(lambda f: f.cbo),
     ])
 
 
@@ -127,10 +109,10 @@ class CareSAFluff(fluff.IndicatorDocument):
     group_by = (
         'domain',
         'user_id',
-        fluff.AttributeGetter('province', get_province),
-        fluff.AttributeGetter('cbo', get_cbo),
-        fluff.AttributeGetter('age_group', get_age_group),
-        fluff.AttributeGetter('gender', get_gender),
+        'province',
+        'cbo',
+        'age_group',
+        'gender',
     )
 
     # Report 1
