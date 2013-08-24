@@ -265,48 +265,68 @@ class CareReport(SqlTabularReport,
 
         return base_row
 
+    def get_data_grouping_id(self, row):
+        if not self.selected_province() or not self.selected_cbo():
+            grouping_id = row.pop(0)
+        else:
+            # if it's a user we need to get the username
+            user = CommCareUser.get_by_user_id(row.pop(0))
+            grouping_id = user.username
+
+        return grouping_id
+
+    def add_row_to_grouping_data(self, built_data, row, grouping_id, age_group, gender):
+        """
+        Take whatever was left in row and add it to the appropriate spot in
+        the data we are building for this grouping_id
+        """
+        if self.show_age() and self.show_gender():
+            built_data[grouping_id][age_group][gender] = row
+        elif self.show_age() and not self.show_gender():
+            built_data[grouping_id][age_group] = \
+                self.add_row_to_row(built_data[grouping_id][age_group], row)
+        elif not self.show_age() and self.show_gender():
+            built_data[grouping_id][gender] = \
+                self.add_row_to_row(built_data[grouping_id][gender], row)
+        elif not self.show_age() and not self.show_gender():
+            built_data[grouping_id] = \
+                self.add_row_to_row(built_data[grouping_id], row)
+
     def build_data(self, rows):
+        """
+        Take all of the individual data from the rows and collect it into
+        a dict (built_data) that is used to group the values by gender/age
+        """
         built_data = {}
 
         for row in rows:
-            try:
-                if not self.selected_province() or not self.selected_cbo():
-                    u = row.pop(0)
-                else:
-                    user = CommCareUser.get_by_user_id(row.pop(0))
-                    u = user.username
+            gender = age_group = None
 
-                    # TODO: we might not want to skip blank names
-                    if not user.name.strip():
-                        continue
+            try:
+                grouping_id = self.get_data_grouping_id(row)
             except AttributeError:
-                # TODO: figure out how often this happens and do something
-                # better
                 continue
 
-            if u not in built_data:
-                built_data[u] = self.initialize_user_stuff()
+            if grouping_id not in built_data:
+                # If we haven't seen this id yet we need to create
+                # an empty row/dict (depending on selected filters)
+                built_data[grouping_id] = self.initialize_user_stuff()
 
             if self.show_gender():
                 gender = row.pop(0)
-
-                #TODO skip?
                 if gender == 'refuses_answer':
                     continue
+
             if self.show_age():
                 age_group = row.pop(0)
 
-                if age_group == 3:
-                    continue
-
-            if self.show_age() and self.show_gender():
-                built_data[u][age_group][gender] = row
-            elif self.show_age() and not self.show_gender():
-                built_data[u][age_group] = self.add_row_to_row(built_data[u][age_group], row)
-            elif not self.show_age() and self.show_gender():
-                built_data[u][gender] = self.add_row_to_row(built_data[u][gender], row)
-            elif not self.show_age() and not self.show_gender():
-                built_data[u] = self.add_row_to_row(built_data[u], row)
+            self.add_row_to_grouping_data(
+                built_data,
+                row,
+                grouping_id,
+                age_group,
+                gender
+            )
 
         return built_data
 
