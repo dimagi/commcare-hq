@@ -135,21 +135,27 @@ class CareReport(SqlTabularReport,
 
     @property
     def columns(self):
-        columns = []
         if not self.selected_province():
-            province = DatabaseColumn("Province", SimpleColumn('province'), sortable=False)
-            columns.append(province)
+            columns = [DatabaseColumn("Province",
+                                      SimpleColumn('province'),
+                                      sortable=False)]
         elif not self.selected_cbo():
-            cbo = DatabaseColumn("CBO", SimpleColumn('cbo'), sortable=False)
-            columns.append(cbo)
+            columns = [DatabaseColumn("CBO",
+                                      SimpleColumn('cbo'),
+                                      sortable=False)]
         else:
-            user = DatabaseColumn("User", SimpleColumn('user_id'), sortable=False)
-            columns.append(user)
+            columns = [DatabaseColumn("User",
+                                      SimpleColumn('user_id'),
+                                      sortable=False)]
 
         if self.show_gender():
-            columns.append(DatabaseColumn("Gender", SimpleColumn('gender'), sortable=False))
+            columns.append(DatabaseColumn("Gender",
+                                          SimpleColumn('gender'),
+                                          sortable=False))
         if self.show_age():
-            columns.append(DatabaseColumn("Age", SimpleColumn('age_group'), sortable=False))
+            columns.append(DatabaseColumn("Age",
+                                          SimpleColumn('age_group'),
+                                          sortable=False))
 
         for column_attrs in self.report_columns:
             text, name = column_attrs[:2]
