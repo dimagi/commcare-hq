@@ -79,7 +79,7 @@ class FormErrorReport(DeploymentsReport, DatespanMixin):
                 startkey=key + [self.datespan.startdate_param_utc],
                 endkey=key + [self.datespan.enddate_param_utc, {}],
                 reduce=True,
-                stale='update_after'
+                stale=settings.COUCH_STALE_QUERY,
             ).all()
             form_count = data[0]['value'] if data else 0
             username_formatted = '<a href="%(url)s?%(query_string)s%(error_slug)s=True&%(username_slug)s=%(raw_username)s">%(username)s</a>' % {
@@ -177,7 +177,7 @@ class DeviceLogDetailsReport(PhonelogReport):
                                        endkey=[self.domain, {}],
                                        group=True,
                                        reduce=True,
-                                       stale='update_after'):
+                                       stale=settings.COUCH_STALE_QUERY):
                 # Begin dependency on particulars of view output
                 username = datum['key'][2]
                 device_id = datum['key'][1]
@@ -249,7 +249,7 @@ class DeviceLogDetailsReport(PhonelogReport):
                 limit=self.limit,
                 reduce=False,
                 descending=True,
-                stale='update_after',
+                stale=settings.COUCH_STALE_QUERY,
             ).all()
             rows.extend(self._create_rows(data, self.goto_key))
         else:
@@ -289,7 +289,7 @@ class DeviceLogDetailsReport(PhonelogReport):
                     startkey=key+[self.datespan.startdate_param_utc],
                     endkey=key+[self.datespan.enddate_param_utc, {}],
                     reduce=False,
-                    stale='update_after',
+                    stale=settings.COUCH_STALE_QUERY,
                 ).all()
                 rows.extend(self._create_rows(data))
         return rows
