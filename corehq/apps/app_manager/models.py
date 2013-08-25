@@ -1159,7 +1159,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
                         startkey=[domain],
                         endkey=[domain, {}],
                         include_docs=True,
-                        stale=settings.COUCH_STALE_QUERY).all()
+                        #stale=settings.COUCH_STALE_QUERY,
+        ).all()
 
     def rename_lang(self, old_lang, new_lang):
         validate_lang(new_lang)
