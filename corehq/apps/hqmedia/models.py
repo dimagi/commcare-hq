@@ -222,7 +222,11 @@ class CommCareMultimedia(SafeSaveDocument):
 
     @classmethod
     def search(cls, query, limit=10):
-        results = get_db().search(cls.Config.search_view, q=query, limit=limit, stale='ok')
+        results = get_db().search(cls.Config.search_view,
+            q=query,
+            limit=limit,
+            #stale='ok',
+        )
         return map(cls.get, [r['id'] for r in results])
 
     @classmethod
