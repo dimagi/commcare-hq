@@ -1,6 +1,7 @@
 import json
 import logging
 from collections import defaultdict
+from django.conf import settings
 from django.utils import html
 from corehq.apps.reports.standard import DatespanMixin
 from corehq.apps.reports.standard.deployments import DeploymentsReport
@@ -58,7 +59,7 @@ class FormErrorReport(DeploymentsReport, DatespanMixin):
                     reduce=True,
                     startkey=key+[self.datespan.startdate_param_utc],
                     endkey=key+[self.datespan.enddate_param_utc],
-                    stale='update_after'
+                    stale=settings.COUCH_STALE_QUERY,
                 ).first()
             warning_count = 0
             error_count = 0
