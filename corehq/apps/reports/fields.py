@@ -616,7 +616,8 @@ class DeviceLogTagField(ReportField):
         self.context['default_on'] = show_all
         data = get_db().view('phonelog/device_log_tags',
                              group=True,
-                             stale=settings.COUCH_STALE_QUERY)
+                             #stale=settings.COUCH_STALE_QUERY,
+        )
         tags = [dict(name=item['key'],
                     show=bool(show_all or item['key'] in selected_tags))
                     for item in data]
@@ -638,7 +639,7 @@ class DeviceLogFilterField(ReportField):
             startkey = [self.domain],
             endkey = [self.domain, {}],
             group=True,
-            stale=settings.COUCH_STALE_QUERY,
+            #stale=settings.COUCH_STALE_QUERY,
         )
         filters = [dict(name=item['key'][-1],
                     show=bool(show_all or item['key'][-1] in selected))

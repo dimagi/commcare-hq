@@ -610,7 +610,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         all_applications = ApplicationBase.view('app_manager/applications_brief',
             startkey=[domain],
             endkey=[domain, {}],
-            stale=settings.COUCH_STALE_QUERY,
+            #stale=settings.COUCH_STALE_QUERY,
         ).all()
         if all_applications:
             app_id = all_applications[0]['id']
