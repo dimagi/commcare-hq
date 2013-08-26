@@ -657,7 +657,6 @@ COUCHDB_DATABASES += [
     ('bihar', COUCH_DATABASE + '__fluff-bihar'),
     ('fluff', COUCH_DATABASE + '__fluff-bihar'),
     ('care_sa', COUCH_DATABASE + '__fluff-care_sa'),
-    ('fluff', COUCH_DATABASE + '__fluff-care_sa'),
     ('mc', COUCH_DATABASE + '__fluff-mc'),
     ('fluff', COUCH_DATABASE + '__fluff-mc'),
 ]
