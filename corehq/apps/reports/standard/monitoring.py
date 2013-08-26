@@ -868,7 +868,6 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 "bool": {
                     "must": [
                         {"match": {"domain.exact": self.domain}},
-                        {"range": {"opened_on": {"lt": datespan.startdate_param}}},
                         {"nested": {
                             "path": "actions",
                             "query": {
@@ -876,8 +875,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                                     "actions.date": {
                                         "from": datespan.startdate_param,
                                         "to": datespan.enddate_param,
-                                        "include_upper": True}}}}}],
-                    "must_not": [{"range": {"closed_on": {"lt": datespan.startdate_param}}}]}}}
+                                        "include_upper": True}}}}}]}}}
         if self.case_type:
             q["query"]["bool"]["must"].append({"match": {"type.exact": self.case_type}})
 
@@ -967,8 +965,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 7: "opened_on: [* TO %s] AND NOT closed_on: [* TO %s]" % (end_date, start_date_sub1), # total cases
             }
             if today_or_tomorrow(self.datespan.enddate):
-                search_strings[6] = "opened_on: [* TO %s] AND NOT closed_on: [* TO %s] AND modified_on: [%s TO %s]" % \
-                                    (end_date, start_date_sub1, start_date, end_date), # inactive cases
+                search_strings[6] = "modified_on: [%s TO %s]" % (start_date, end_date), # active cases
 
             def create_case_url(index):
                 """
