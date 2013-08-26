@@ -250,6 +250,36 @@ HQ_APPS = (
 
 TEST_APPS = ()
 
+# also excludes any app starting with 'django.'
+APPS_TO_EXCLUDE_FROM_TESTS = (
+    'south',
+    'djcelery',
+    'djtables',
+    'djkombu',
+    'couchdbkit.ext.django',
+    'crispy_forms',
+    'gunicorn',
+    'raven.contrib.django.raven_compat',
+    'langcodes',
+    'corehq.apps.settings',
+    'corehq.apps.ota',
+    'corehq.apps.ivr',
+    'corehq.apps.tropo',
+    'corehq.apps.kookoo',
+    'corehq.apps.sislog',
+    'corehq.apps.yo',
+    'corehq.apps.mach',
+    'corehq.apps.data_interfaces',
+    'soil',
+    'pillowtop',
+    'a5288',
+    'luna',
+
+    # submodules with tests that run on travis
+    'ctable',
+    'ctable_view',
+)
+
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
 
