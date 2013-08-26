@@ -211,6 +211,8 @@ class FormActions(DocumentSchema):
 
 class FormSource(object):
     def __get__(self, form, form_cls):
+        if not form:
+            return self
         unique_id = form.get_unique_id()
         app = form.get_app()
         filename = "%s.xml" % unique_id
