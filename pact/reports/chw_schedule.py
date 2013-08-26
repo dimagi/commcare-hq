@@ -2,13 +2,13 @@ from datetime import datetime, timedelta
 import time
 from dateutil.parser import parser
 from django.core.cache import cache
-from django.http import HttpResponse
 import simplejson
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.api.es import FullXFormES
 from pact.enums import PACT_DOMAIN
 from pact.lib.quicksect import IntervalNode
 from pact.utils import get_patient_display_cache
+import logging
 
 cached_schedules = {}
 
@@ -85,7 +85,8 @@ class CHWPatientSchedule(object):
             startdate = datetime.strptime(single_sched['active_date'], "%Y-%m-%dT%H:%M:%SZ")
             case_id = single_sched['case_id']
             if single_sched.has_key('error'):
-                print "Error, no pactid: %s" % single_sched['error']
+                #this is a non-showstopping issue due to quirks with older submissions
+                logging.error("Error, no pactid: %s" % single_sched['error'])
 
             daytree.insert(get_seconds(startdate), get_seconds(enddate), other=case_id)
             day_intervaltree[day_of_week] = daytree
@@ -172,10 +173,7 @@ def get_schedule_tally(username, total_interval, override_date=None):
             search_results = dots_submissions_by_case(case_id, visit_date, username=username)
             submissions = search_results['hits']['hits']
             if len(submissions) > 0:
-                #print submissions[0]['fields']
                 #calculate if pillbox checked
-
-
                 pillbox_check_str = submissions[0]['fields']['pillbox_check']
                 if len(pillbox_check_str) > 0:
                     pillbox_check_data = simplejson.loads(pillbox_check_str)
@@ -201,11 +199,11 @@ def get_schedule_tally(username, total_interval, override_date=None):
     return ret, patient_case_ids, total_scheduled, total_visited
 
 
-def chw_calendar_submit_report(request, username):
+def chw_calendar_submit_report(request, username, interval=7):
     """Calendar view of submissions by CHW, overlaid with their scheduled visits, and whether they made them or not."""
     return_context = {}
     return_context['username'] = username
-    total_interval = 7
+    total_interval = interval
     if 'interval' in request.GET:
         try:
             total_interval = int(request.GET['interval'])
@@ -224,7 +222,6 @@ def chw_calendar_submit_report(request, username):
         start_date_str = request.GET.get('startdate', datetime.utcnow().strftime('%Y-%m-%d'))
         start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
         total_interval = (end_date - start_date).days
-
 
     ret, patients, total_scheduled, total_visited = get_schedule_tally(username,
                                                                        total_interval,
