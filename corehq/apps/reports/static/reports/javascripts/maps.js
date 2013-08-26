@@ -3,6 +3,7 @@
 
 function mapsInit(context) {
     var map = initMap($('#map'), [30., 0.], 2, 'Map');
+    loadData(map, context.data);
     return map;
 }
 
@@ -28,7 +29,11 @@ function initMap($div, default_pos, default_zoom, default_layer) {
     return map;
 }
 
-
+function loadData(map, data) {
+    var points = L.geoJson(data);
+    points.addTo(map);
+    map.fitBounds(points.getBounds());
+}
 
 
 

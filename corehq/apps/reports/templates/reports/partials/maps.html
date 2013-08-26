@@ -18,6 +18,7 @@ $(document).ready(function() {
     setMapHeight();
     $(window).resize(setMapHeight);
 
+    L.Icon.Default.imagePath = '{{STATIC_URL}}reports/css/leaflet/images';
     var map = mapsInit(CONTEXT);
 });
 
