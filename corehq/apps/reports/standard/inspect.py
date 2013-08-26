@@ -15,6 +15,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 import simplejson
 import logging
+import re
 
 from casexml.apps.case.models import CommCareCaseAction
 from corehq.apps.api.es import CaseES
@@ -684,17 +685,68 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
 
     data_source -- config about backend data source
     display_config -- configure the front-end display of data
+
+    data_source: {
+      'adapter': type of data source ('test', 'report', etc.),
+      'geo_column': column in returned data identifying the geo point (defaults to "geo"),
+      <custom parameters by adapter>
+    }
     """
 
     report_partial_path = "reports/partials/maps.html"
     flush_layout = True
     asynchronous = False  # TODO: we want to support async load
 
+    def _get_data(self):
+        adapter = self.data_source['adapter']
+        geo_col = self.data_source.get('geo_column', 'geo')
+
+        try:
+            data = getattr(self, '_get_data_%s' % adapter)() # TODO pass along report filters
+        except AttributeError:
+            raise RuntimeError('unknown adapter [%s]' % adapter)
+        return self._to_geojson(data, geo_col)
+
+    def _to_geojson(self, data, geo_col):
+        def _parse_geopoint(raw):
+            latlon = [float(k) for k in re.split(' *,? *', raw)[:2]]
+            return [latlon[1], latlon[0]] # geojson is lon, lat
+
+        def points():
+            for row in data:
+                geo = row[geo_col]
+                yield {
+                    'type': 'Point',
+                    'coordinates': _parse_geopoint(geo),
+                    'properties': dict((k, v) for k, v in row.iteritems() if k != geo_col),
+                }
+        return {
+            'type': 'FeatureCollection',
+            'features': list(points()),
+        }
+
+    def _get_data_test(self):
+        raw = [
+            ['Boston',      '42.36 -71.06', 'ma', 636.5],
+            ['Worcester',   '42.26 -71.80', 'ma', 182.7],
+            ['Providence',  '41.82 -71.41', 'ri', 178.4],
+            ['Hartford',    '41.76 -72.68', 'ct', 124.9],
+            ['Springfield', '42.10 -72.59', 'ma', 153.6],
+        ]
+        cols = ['city', 'latlon', 'state', 'population']
+
+        for row in raw:
+            yield dict(zip(cols, row))
+
     @property
     def report_context(self):
+        context = {
+            'data': self._get_data(),
+            'config': self.display_config,
+        }
+
         return dict(
-            maps_api_key=settings.GMAPS_API_KEY,
-            config={},
+            context=context,
         )
 
     @classmethod

@@ -23,6 +23,8 @@ function initMap($div, default_pos, default_zoom, default_layer) {
     L.control.layers(layers).addTo(map);
     map.addLayer(layers[default_layer]);
 
+    L.control.scale().addTo(map);
+
     return map;
 }
 
@@ -42,7 +44,7 @@ function initMap($div, default_pos, default_zoom, default_layer) {
 
 
 
-
+//// OLD STUFF
 
 // create a (hidden) canvas
 function make_canvas(w, h) {
