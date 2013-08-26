@@ -12,7 +12,7 @@ function initMap($div, default_pos, default_zoom, default_layer) {
 
     var mapboxLayer = function(tag) {
 	return L.tileLayer('http://api.tiles.mapbox.com/v3/' + tag + '/{z}/{x}/{y}.png', {
-	    attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://cloudmade.com">CloudMade</a>',
+	    attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery &copy; <a href="http://mapbox.com">MapBox</a>',
 	});
     };
 
@@ -30,7 +30,24 @@ function initMap($div, default_pos, default_zoom, default_layer) {
 }
 
 function loadData(map, data) {
-    var points = L.geoJson(data);
+    var points = L.geoJson(data, {
+	pointToLayer: function (feature, latlng) {
+            return L.circleMarker(latlng, {
+		radius: 8,
+		fillColor: "#ff7800",
+		color: "#000",
+		weight: 1,
+		opacity: 1,
+		fillOpacity: 0.8
+	    });
+	},
+	onEachFeature: function(feature, layer) {
+	    var pop = feature.properties.population;
+	    var header_size = 8 * Math.max(Math.log(pop) / Math.log(10), 1.);
+	    var content = '<div style="font-weight: bold; font-size: ' + header_size + 'px;">' + feature.properties.city + '</div>';
+            layer.bindPopup(content);
+	}
+    });
     points.addTo(map);
     map.fitBounds(points.getBounds());
 }
