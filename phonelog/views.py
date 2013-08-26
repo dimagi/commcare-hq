@@ -1,4 +1,5 @@
 from datetime import datetime, date, timedelta
+from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import render
 
@@ -15,12 +16,14 @@ def device_list(db, domain):
                            group=True,
                            startkey=[domain],
                            endkey=[domain, {}],
-                           stale='update_after')
+                           stale=settings.COUCH_STALE_QUERY,
+    )
     device_users = db.view('phonelog/device_log_users',
                            group=True,
                            startkey=[domain],
                            endkey=[domain, {}],
-                           stale='update_after')
+                           stale=settings.COUCH_STALE_QUERY,
+    )
 
     dev_users = {}
     for row in device_users:
@@ -94,7 +97,8 @@ def device_log(request, domain, device, template='phonelog/devicelogs.html', con
     logdata = db.view('phonelog/device_logs',
                       limit=limit, skip=skip, 
                       descending=True, endkey=[device], startkey=[device, {}],
-                      stale='update_after')
+                      stale=settings.COUCH_STALE_QUERY,
+    )
     logdata = list(logdata)
     logdata.reverse()
 
@@ -122,7 +126,8 @@ def device_log(request, domain, device, template='phonelog/devicelogs.html', con
 
     dup_index = db.view('phonelog/device_log_uniq', group=True,
                         keys=[[device, pure_log_entry(row)] for row in logdata],
-                        stale='update_after')
+                        stale=settings.COUCH_STALE_QUERY,
+    )
     dup_index = dict((frozendict(row['key'][1]), row['value']) for row in dup_index)
 
     def get_short_version(version):
@@ -241,7 +246,8 @@ def device_log_raw(request, domain, device, template='phonelog/devicelogs_raw.ht
     
     logs = get_db().view("phonelog/device_log_first_last",
                          key=[domain, device], reduce=False,
-                         stale='update_after')
+                         stale=settings.COUCH_STALE_QUERY,
+    )
     def fmt_log(log):
         return {"received_on": parse_isodate(log["value"]),
                 "id": log["id"]}
