@@ -170,6 +170,8 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     notes = StringProperty()
     organization_name = StringProperty()
     platform = StringListProperty()
+    project_manager = StringProperty()
+    phone_model = StringProperty()
 
 
 class CaseDisplaySettings(DocumentSchema):
