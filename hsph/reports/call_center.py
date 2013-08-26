@@ -14,6 +14,8 @@ from corehq.apps.reports.datatables import (DataTablesHeader, DataTablesColumn,
     NumericColumn)
 from corehq.apps.reports import util
 
+import hsph.const as const
+
 def datestring_minus_days(datestring, days):
     date = datetime.datetime.strptime(datestring[:10], '%Y-%m-%d')
     return (date - datetime.timedelta(days=days)).isoformat()
@@ -46,7 +48,7 @@ class CATIPerformanceReport(GenericTabularReport, CustomProjectReport,
         'hsph.fields.NameOfCATIField',
     ]
 
-    filter_group_name = "Role - CATI"
+    filter_group_name = const.CATI_GROUP_NAME
 
     @property
     def headers(self):
@@ -153,7 +155,7 @@ class CATITeamLeaderReport(GenericTabularReport, CustomProjectReport,
         #'hsph.fields.NameOfCATITLField',
     ]
 
-    filter_group_name = "Role - CATI TL"
+    filter_group_name = const.CATI_TL_GROUP_NAME
 
     @property
     def headers(self):
