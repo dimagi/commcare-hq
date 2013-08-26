@@ -40,7 +40,7 @@ def _to_column(coldef):
         return AggregateColumn(
             _(coldef['slug']),
             _fraction,
-            *(_slug_to_raw_column(s) for s in coldef['columns'])
+            [_slug_to_raw_column(s) for s in coldef['columns']]
         )
     return DatabaseColumn(_(coldef), _slug_to_raw_column(coldef))
 
