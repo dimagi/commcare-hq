@@ -1,4 +1,4 @@
-{% extends 'users/edit_full_user.html' %}
+{% extends 'users/base_template.html' %}
 {# This is for editing information for a CommCareUser #}
 
 {% load crispy_forms_tags %}
@@ -7,11 +7,14 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
+    <script src="{% static 'users/js/key_filters.js' %}"></script>
+
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
     <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
+{% include 'users/partial/basic_info_js_inline.html' %}
 <script>
     $(function () {
         var activeTabCookie = 'active_tab',
@@ -116,7 +119,7 @@
     </ul>
     <div class="tab-content" id="settings">
         <div class="tab-pane" id="basic-info">
-            {{ block.super }}
+            {% include 'users/partial/basic_info_form.html' %}
         </div>
         <div class="tab-pane" id="user-data">
 
@@ -184,6 +187,7 @@
 {% endblock %}
 
 {% block modals %} {{ block.super }}
+    {% include 'users/partial/basic_info_modals.html' %}
     {% if not is_currently_logged_in_user %}
     <div id="delete_user_{{ couch_user.user_id }}" class="modal hide fade">
         <div class="modal-header">
