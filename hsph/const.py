@@ -3,4 +3,3 @@ CATI_TL_GROUP_NAME = "Role - CATI TL"
 
 FADA_GROUP_NAME = "Role - FADA"
 FIDA_GROUP_NAME = "Role - FIDA"
-

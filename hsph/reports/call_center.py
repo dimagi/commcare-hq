@@ -126,8 +126,7 @@ class CATIPerformanceReport(GenericTabularReport, CustomProjectReport,
 
             row['workingDays'] = len(set(db.view('hsph/cati_performance',
                 startkey=["submissionDay", self.domain, user_id, startdate],
-                endkey=["submissionDay", self.domain, user_id,
-                    datestring_minus_days(enddate, days)],
+                endkey=["submissionDay", self.domain, user_id, enddate],
                 reduce=False,
                 wrapper=lambda r: r['value']['submissionDay']
             ).all()))
