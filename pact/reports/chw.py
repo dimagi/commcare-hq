@@ -84,10 +84,12 @@ class PactCHWProfileReport(PactDrilldownReportMixin, PactElasticTabularReportMix
     def report_context(self):
         user_doc = self.get_user()
         self.view_mode = self.request.GET.get('view', 'info')
+        self.interval = self.request.GET.get('interval', 7)
+
         ret = {
             'user_doc': user_doc,
             'view_mode': self.view_mode,
-            'chw_root_url': PactCHWProfileReport.get_url(*[self.request.domain]) + "?chw_id=%s" % self.request.GET['chw_id'],
+            'chw_root_url': PactCHWProfileReport.get_url(*[self.request.domain]) + "?chw_id=%s" % self.request.GET['chw_id']
         }
 
         if self.view_mode == 'info':
@@ -101,7 +103,7 @@ class PactCHWProfileReport(PactDrilldownReportMixin, PactElasticTabularReportMix
             return tabular_context
         elif self.view_mode == 'schedule':
             scheduled_context = chw_schedule.chw_calendar_submit_report(self.request,
-                                                                        user_doc.raw_username)
+                                                                        user_doc.raw_username, interval=self.interval)
             ret.update(scheduled_context)
             self.report_template_path = "pact/chw/pact_chw_profile_schedule.html"
         else:
