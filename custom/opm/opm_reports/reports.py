@@ -1,47 +1,15 @@
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
+from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.users.models import CommCareUser, CommCareCase
 from dimagi.utils.couch.database import get_db
 
 from .beneficiary import Beneficiary
 from .incentive import Worker
+from .constants import DOMAIN
 
-
-# beneficiary_payment = [
-#     ("List of Beneficiaries", 'name'),
-#     ("AWC Name", 'awc_name'),
-#     ("Bank Name", 'bank_name'),
-#     ("Bank Account Number", 'account_number'),
-#     ("Block Name", 'block'),
-#     ("Village Name", 'village'),
-#     ("Birth Preparedness Form 1", 'bp1_cash'),
-#     ("Birth Preparedness Form 2", 'bp2_cash'),
-#     ("Delivery Form", 'delivery_cash'),
-#     ("Child Followup Form", 'child_cash'),
-#     ("Birth Spacing Bonus", 'spacing_cash'),
-#     ("Amount to be paid to beneficiary", 'total'),
-# ]
-
-# incentive_payment = [
-#     ("List of AWWs", 'name'),
-#     ("AWC Name", 'awc_name'),
-#     ("AWW Bank Name", 'bank_name'),
-#     ("AWW Bank Account Number", 'account_number'),
-#     ("Block Name", 'block'),
-#     ("No. of women registered under BCSP", 'women_registered'),
-#     ("No. of children registered under BCSP", 'children_registered'),
-#     ("Submission of Service Availability form", 'service_forms_count'),
-#     ("No. of Growth monitoring Sections Filled for eligible children", 'growth_monitoring_count'),
-#     ("Payment for Service Availability Form (in Rs.)", 'service_forms_cash'),
-#     ("Payment for Growth Monitoring Forms (in Rs.)", 'growth_monitoring_cash'),
-#     ("Total Payment Made for the month (in Rs.)", 'month_total'),
-#     ("Amount of AWW incentive paid last month", 'last_month_total'),
-# ]
-
-domain = "opm"
-
-
+# logic here that pulls stuff from fluff
 class BaseReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
     """
     Report parent class.  Children must provide a get_rows() method that
@@ -52,6 +20,7 @@ class BaseReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
     name = None
     slug = None
     model = None
+    fields = None
 
     @property
     def filters(self):
@@ -74,6 +43,8 @@ class BaseReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
 
     @property
     def rows(self):
+        # print ([self.datespan.startdate_param_utc],
+        #     [self.datespan.enddate_param_utc])
         rows = []
         for row in self.row_iterable:
             rows.append([getattr(row, method) for 
@@ -89,16 +60,17 @@ class BeneficiaryPaymentReport(BaseReport):
     name = "Beneficiary Payment Report"
     slug = 'beneficiary_payment_report'
     model = Beneficiary
+    fields = [MonthFilter, YearFilter]
 
     def get_rows(self):
-        return CommCareCase.get_all_cases(domain, include_docs=True)
+        return CommCareCase.get_all_cases(DOMAIN, include_docs=True)
 
 
 class IncentivePaymentReport(BaseReport):
     name = "Incentive Payment Report"
     slug = 'incentive_payment_report'
     model = Worker
-    raw_rows = CommCareUser.by_domain(domain)
+    fields = [MonthFilter, YearFilter]
     
     def get_rows(self):
-        return CommCareUser.by_domain(domain)
+        return CommCareUser.by_domain(DOMAIN)
