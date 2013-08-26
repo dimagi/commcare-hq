@@ -2,13 +2,12 @@ from datetime import datetime, date, timedelta
 
 from corehq.apps.fixtures.models import FixtureDataItem
 
+from .constants import *
+
 # potential improvements:
 # only iterate over forms once?
 # store results with Fluff and auto-update
 # clarify: 1 row per bank account?
-
-
-# Use form.xmlns as the identifier
 
 
 class Beneficiary(object):
@@ -53,7 +52,7 @@ class Beneficiary(object):
     def bank_name(self):
         # to be converted to case property?
         for form in self.forms:
-            if form.name == "Pregnancy Registration":
+            if form.xmlns == PREG_REG_XMLNS:
                 return form.form.get('bank_name', "")
         return ""
 
@@ -74,7 +73,7 @@ class Beneficiary(object):
 
     def bp_cash(self, windows, cash_fixture):
         for form in self.forms_in_range:
-            if form.name == "Birth Preparedness Form":
+            if form.xmlns == BIRTH_PREP_XMLNS:
                 for window in windows:
                     if form.form.get(window) == '1':
                         return cash_fixture
@@ -94,7 +93,7 @@ class Beneficiary(object):
     def delivery_cash(self):
         cash_fixture = 400
         for form in self.forms_in_range:
-            if form.name == "Delivery Form":
+            if form.xmlns == DELIVERY_XMLNS:
                 if form.form.get('mother_preg_outcome') in ['2', '3']:
                     return cash_fixture
         return 0
@@ -103,7 +102,7 @@ class Beneficiary(object):
     def child_cash(self):
         cash_fixture = 300
         for form in self.forms_in_range:
-            if form.name == "Child Followup":
+            if form.xmlns == CHILD_FOLLOWUP_XMLNS:
                 # awaiting proper data node
                 # maybe 'child1_received_pnc' ?
                 if form.form.get('child1_attendance_vhnd') == '1':
@@ -132,7 +131,7 @@ class Beneficiary(object):
         # return payment1 + payment2 # max 1 cash_fixture each
 
         # for form in self.forms:
-        #     if form.name == "Delivery Form":
+        #     if form.xmlns == DELIVERY_XMLNS:
         #         dod = form.form.get('dod')
         # return "Birth Spacing Bonus"
 

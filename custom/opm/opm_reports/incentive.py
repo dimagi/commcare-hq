@@ -1,7 +1,7 @@
 # clarify: "No. of women registered under BCSP" refers only to OPEN cases?
 # Number of Service Availability Forms Filled Out in Time Period --> VHND Services
 
-# iterate over forms directly (not cases > forms) to avoid duplicates!
+from .constants import *
 
 class Worker(object):
     method_map = [
@@ -44,7 +44,7 @@ class Worker(object):
     def children_registered(self):
         total = 0
         for form in self.forms:
-            if form.name == "Delivery Form":
+            if form.xmlns == DELIVERY_XMLNS:
                 kids = form.form.get('live_birth_amount')
                 if kids:
                     total += int(kids)
@@ -52,13 +52,13 @@ class Worker(object):
 
     @property
     def service_forms_count(self):
-        return sum([1 for form in self.forms if form.name == "VHND Services"])
+        return sum([1 for form in self.forms if form.xmlns == VHND_XMLNS])
     
     @property
     def growth_monitoring_count(self):
         total = 0
         for form in self.forms:
-            if form.name == "Child Followup":
+            if form.xmlns == CHILD_FOLLOWUP_XMLNS:
                 for child_num in ['1', '2', '3']:
                     try:
                         total += int(form.form.get('child_%s' % child_num

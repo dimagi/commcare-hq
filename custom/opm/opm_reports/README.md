@@ -1,8 +1,8 @@
 TODO:
 Cron job to finalize reports at the end of each month.  (when, exactly?)
-ask Biyeun about filter widgets
-check xmlns insteand of form.name!
-
+Show only data from the current report period?
+Will there be data that rewrites out of date stuff?
+figure out fixtures
 
 ### Running tests and getting fixtures
 I had been getting forms from USERS of a domain, but I should have done it from each case!

@@ -746,7 +746,8 @@ PILLOWTOPS = [
 
                  # fluff
                  'bihar.models.CareBiharFluffPillow',
-                 'custom.opm.opm_reports.models.OPMFluffPillow',
+                 'custom.opm.opm_reports.models.OpmCasePillow',
+                 'custom.opm.opm_reports.models.OpmUserPillow',
              ] + LOCAL_PILLOWTOPS
 
 
