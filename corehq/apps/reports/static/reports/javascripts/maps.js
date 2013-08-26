@@ -3,7 +3,11 @@
 
 function mapsInit(context) {
     var map = initMap($('#map'), [30., 0.], 2, 'Map');
-    loadData(map, context.data);
+    initData(context.data, context.config);
+
+    loadData(map, context.data, makeDisplayContext('a'));
+    setTimeout(function(){loadData(map, context.data, makeDisplayContext('b'));}, 5000);
+    setTimeout(function(){loadData(map, context.data, makeDisplayContext('c'));}, 10000);
     return map;
 }
 
@@ -29,35 +33,67 @@ function initMap($div, default_pos, default_zoom, default_layer) {
     return map;
 }
 
-function loadData(map, data) {
-    var points = L.geoJson(data, {
-	pointToLayer: function (feature, latlng) {
-            return L.circleMarker(latlng, {
-		radius: 8,
-		fillColor: "#ff7800",
-		color: "#000",
-		weight: 1,
-		opacity: 1,
-		fillOpacity: 0.8
-	    });
-	},
-	onEachFeature: function(feature, layer) {
-	    var pop = feature.properties.population;
-	    var header_size = 8 * Math.max(Math.log(pop) / Math.log(10), 1.);
-	    var content = '<div style="font-weight: bold; font-size: ' + header_size + 'px;">' + feature.properties.city + '</div>';
-            layer.bindPopup(content);
-	}
+function initData(data, config) {
+    $.each(data.features, function(i, e) {
+	// pre-cache popup detail
+	e.popupContent = formatDetailPopup(e, config);
     });
+}
+
+function loadData(map, data, display_context) {
+    if (map.activeOverlay) {
+	map.removeLayer(map.activeOverlay);
+	map.activeOverlay = null;
+    }
+
+    var points = L.geoJson(data, display_context);
     points.addTo(map);
+    map.activeOverlay = points;
     map.fitBounds(points.getBounds());
 }
 
+function makeDisplayContext(x) {
+    return {
+	pointToLayer: function (feature, latlng) {
+	    var pop = feature.properties.population;
+	    var rad = 2 * Math.sqrt(pop); //4 * Math.max(Math.log(pop) / Math.log(10), 1.);
+            return L.circleMarker(latlng, {
+		radius: rad,
+		fillColor: {a: "#ff7800", b: '#479bca', c: '#0038dd'}[x],
+		color: "#000",
+		weight: 1,
+		opacity: 1,
+		fillOpacity: {a: .4, b: .6, c: .8}[x]
+	    });
+	},
+	onEachFeature: function(feature, layer) {
+            layer.bindPopup(feature.popupContent);
+	}
+    }
+}
 
+function formatDetailPopup(feature, config) {
+    var TEMPLATE = [
+	'<h3>{{ name }}</h3>',
+	'<hr>',
+	'<table>',
+	'{{#each detail}}<tr><td>{{ label }}</td><td style="font-weight: bold; text-align: right; padding-left: 20px;">{{ value }}</td></tr>{{/each}}',
+	'</table>',
+    ].join('\n');
 
+    var context = {props: feature.properties};
+    if (config.name_column) {
+	context.name = feature.properties[config.name_column];
+    }
+    context.detail = [];
+    $.each(config.detail_columns, function(i, e) {
+	context.detail.push({label: e, value: feature.properties[e]});
+    });
 
-
-
-
+    var template = Handlebars.compile(TEMPLATE);
+    var content = template(context);
+    return content;
+}
 
 
 
