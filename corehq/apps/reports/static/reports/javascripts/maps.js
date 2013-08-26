@@ -4,10 +4,11 @@
 function mapsInit(context) {
     var map = initMap($('#map'), [30., 0.], 2, 'Map');
     initData(context.data, context.config);
-
-    loadData(map, context.data, makeDisplayContext('a'));
-    setTimeout(function(){loadData(map, context.data, makeDisplayContext('b'));}, 5000);
-    setTimeout(function(){loadData(map, context.data, makeDisplayContext('c'));}, 10000);
+    var render = function(metric) {
+	loadData(map, context.data, makeDisplayContext(metric));
+    };
+    initMetrics(render);
+    render(null);
     return map;
 }
 
@@ -40,6 +41,20 @@ function initData(data, config) {
     });
 }
 
+function initMetrics(render) {
+    $.each(['a', 'b', 'c'], function(i, e) {
+	var $x = $('<div></div>');
+	$x.addClass('choice');
+	$x.text(e);
+	$x.click(function() {
+	    $('#sidebar div').removeClass('selected');
+	    $x.addClass('selected');
+	    render(e);
+	});
+	$('#sidebar').append($x);
+    });
+}
+
 function loadData(map, data, display_context) {
     if (map.activeOverlay) {
 	map.removeLayer(map.activeOverlay);
@@ -55,6 +70,10 @@ function loadData(map, data, display_context) {
 function makeDisplayContext(x) {
     return {
 	pointToLayer: function (feature, latlng) {
+	    if (x == null) {
+		return L.marker(latlng);
+	    }
+
 	    var pop = feature.properties.population;
 	    var rad = 2 * Math.sqrt(pop); //4 * Math.max(Math.log(pop) / Math.log(10), 1.);
             return L.circleMarker(latlng, {
@@ -87,7 +106,7 @@ function formatDetailPopup(feature, config) {
     }
     context.detail = [];
     $.each(config.detail_columns, function(i, e) {
-	context.detail.push({label: e, value: feature.properties[e]});
+	context.detail.push({label: config.column_titles[e] || e, value: feature.properties[e]});
     });
 
     var template = Handlebars.compile(TEMPLATE);
