@@ -1,5 +1,7 @@
 from couchdbkit.ext.django.testrunner import CouchDbKitTestSuiteRunner
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
+from django.db.models.loading import get_app
 import settingshelper
 
 class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
@@ -34,3 +36,19 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
             print "set %s settting to %s" % (setting, value)
 
         return super(HqTestSuiteRunner, self).setup_databases(**kwargs)
+
+    def run_tests(self, test_labels, extra_tests=None, **kwargs):
+        if not test_labels:
+            test_labels = [self._strip(app) for app in settings.INSTALLED_APPS
+                           if not app in settings.APPS_TO_EXCLUDE_FROM_TESTS
+                           and not app.startswith('django.')]
+
+        for l in test_labels:
+            try:
+                get_app(l)
+            except ImproperlyConfigured:
+                print l
+        return super(HqTestSuiteRunner, self).run_tests(test_labels, extra_tests, **kwargs)
+
+    def _strip(self, app_name):
+        return app_name.split('.')[-1]
