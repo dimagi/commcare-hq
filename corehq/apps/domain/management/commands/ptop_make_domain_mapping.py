@@ -1,4 +1,5 @@
 from datetime import datetime
+import pprint
 from django.core.management.base import NoArgsCommand
 import sys
 import os
@@ -54,7 +55,7 @@ class Command(MappingOutputCommand):
             delattr(domainpillow, '_calc_meta')
         output = []
         output.append('DOMAIN_INDEX="%s_%s"' % (domainpillow.es_index_prefix, domainpillow.calc_meta()))
-        output.append('DOMAIN_MAPPING=%s' % m)
+        output.append('DOMAIN_MAPPING=%s' % pprint.pformat(m))
         newcalc_index = "%s_%s" % (domainpillow.es_index_prefix, domainpillow.calc_meta())
         print "Writing new domain index and mapping: %s" % output[0]
         with open(filepath, 'w') as outfile:

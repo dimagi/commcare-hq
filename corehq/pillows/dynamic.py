@@ -91,6 +91,7 @@ domain_special_types = {
             "area": type_exact_match_string("area", dual=True),
             "sub_area": type_exact_match_string("sub_area", dual=True),
             "initiative": type_exact_match_string("initiative", dual=True),
+            "phone_model": type_exact_match_string("phone_model", dual=True),
         },
         "cda": {
             "type": {"type": "string", "index": "not_analyzed"},
