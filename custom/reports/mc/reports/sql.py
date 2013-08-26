@@ -171,8 +171,6 @@ class MCSectionedDataProvider(DataProvider):
 
 
 def section_context(report):
-    # will intentionally break if used with something that doesn't have
-    # a summary_values attribute
     return {"sections": report.sections}
 
 
