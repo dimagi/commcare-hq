@@ -679,90 +679,26 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
 
 
 
-class MapReport(ProjectReport, ProjectReportParametersMixin):
+class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
+    """instances must set:
+
+    data_source -- config about backend data source
+    display_config -- configure the front-end display of data
     """
-HOW TO CONFIGURE THIS REPORT
 
-create a couch doc as such:
-
-{
-  "doc_type": "MapsReportConfig",
-  "domain": <domain>,
-  "config": {
-    "case_types": [
-      // for each case type
-
-      {
-        "case_type": <commcare case type>,
-        "display_name": <display name of case type>,
-
-        // either of the following two fields
-        "geo_field": <case property for a geopoint question>,
-        "geo_linked_to": <geo-enabled case type that this case links to>,
-
-        "fields": [
-          // for each reportable field
-
-          "field": <case property>, // or one of the following magic values:
-                 // "_count" -- report on the number of cases of this type
-          "display_name": <display name for field>,
-          "type": <datatype for field>, // can be "numeric", "enum", or "num_discrete" (enum with numeric values)
-
-          // if type is "numeric" or "num_discrete"
-          // these control the rendering of numeric data points (all are optional)
-          "scale": <N>, // if absent, scale is calculated dynamically based on the max value in the field
-          "color": <css color>,
-
-          // if type is "enum" or "num_discrete" (optional, but recommended)
-          "values": [
-            // for each multiple-choice value
-
-            {
-              "value": <data value>,
-              "label": <display name>, //optional
-              "color": <css color>, //optional
-            },
-          ]
-        ]
-      },
-    ]
-  }
-}
-"""
-
-    name = ugettext_noop("Maps Sandbox")
-    slug = "maps"
     # todo: support some of these filters -- right now this report
-    hide_filters = True
-    # is more of a playground, so all the filtering is done in its
-    # own ajax sidebar
+    #hide_filters = True
     report_partial_path = "reports/partials/maps.html"
     asynchronous = False
     flush_layout = True
-
-    @classmethod
-    @memoized
-    def get_config(cls, domain):
-        try:
-            config = get_db().view('reports/maps_config', key=[domain], include_docs=True).one()
-            if config:
-                config = config['doc']['config']
-        except Exception:
-            config = None
-        return config
-
-    @property
-    def config(self):
-        return self.get_config(self.domain)
 
     @property
     def report_context(self):
         return dict(
             maps_api_key=settings.GMAPS_API_KEY,
-            case_api_url=reverse('cloudcare_get_cases', kwargs={'domain': self.domain}),
-            config=json.dumps(self.config)
         )
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return cls.get_config(domain)
+        return True
+
