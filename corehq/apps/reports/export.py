@@ -9,10 +9,10 @@ from django.http import HttpResponse
 import json
 import zipfile
 from corehq.apps.app_manager.models import Application
-from corehq.apps.hqsofabed.models import HQFormData
+from corehq.apps.appstore.views import stream_es_query
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.models import FormExportSchema
-from corehq.apps.reports.util import stream_qs
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 import couchexport
 from couchexport.export import get_headers, get_writer, format_tables, create_intermediate_tables, export_raw
 from couchexport.models import FakeSavedExportSchema, Format, SavedExportSchema
@@ -207,7 +207,6 @@ class CustomBulkExportHelper(BulkExportHelper):
         bulk_export.domain = self.domain
         self.bulk_files = [bulk_export]
 
-
 def save_metadata_export_to_tempfile(domain):
     """
     Saves the domain's form metadata to a file. Returns the filename.
@@ -219,16 +218,23 @@ def save_metadata_export_to_tempfile(domain):
     def _form_data_to_row(formdata):
         def _key_to_val(formdata, key):
             if key == "type":
-                return xmlns_to_name(domain, formdata.xmlns, app_id=None)
-            else:
-                return getattr(formdata, key)
+                return xmlns_to_name(domain, formdata.get("xmlns"), app_id=None)
+            if key == "version":
+                return formdata["form"].get("@version")
+            if key in ["domain", "received_on", "xmlns"]:
+                return formdata.get(key)
+            return formdata["form"].get("meta", {}).get(key)
         return [_key_to_val(formdata, key) for key in headers]
 
     fd, path = tempfile.mkstemp()
 
-    data = (_form_data_to_row(f) for f in stream_qs(
-        HQFormData.objects.filter(domain=domain).order_by('received_on')
-    ))
+    q = {
+        "query": {"match_all": {}},
+        "sort": [{"received_on" : {"order": "desc"}}],
+    }
+
+    results = stream_es_query(params={"domain.exact": domain}, q=q, es_url=XFORM_INDEX + '/xform/_search', size=999999)
+    data = (_form_data_to_row(res["_source"]) for res in results)
 
     with os.fdopen(fd, 'w') as temp:
         export_raw((("forms", headers),), (("forms", data),), temp)

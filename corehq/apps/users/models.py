@@ -851,7 +851,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             reduce=reduce,
             startkey=key,
             endkey=key + [{}],
-            stale=None if strict else settings.COUCH_STALE_QUERY,
+            #stale=None if strict else settings.COUCH_STALE_QUERY,
             **extra_args
         ).all()
 
@@ -954,7 +954,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             result = cls.get_db().view('users/by_username',
                 key=username,
                 include_docs=True,
-                stale=stale
+                #stale=stale,
             )
             return result.one(except_all=raise_if_none)
         try:

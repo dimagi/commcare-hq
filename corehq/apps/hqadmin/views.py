@@ -350,7 +350,7 @@ def submissions_errors(request, template="hqadmin/submissions_errors_report.html
             reduce=True,
             startkey=key+[datespan.startdate_param_utc],
             endkey=key+[datespan.enddate_param_utc],
-            stale=settings.COUCH_STALE_QUERY,
+            #stale=settings.COUCH_STALE_QUERY,
         ).first()
         num_errors = 0
         num_warnings = 0
@@ -396,7 +396,7 @@ def mobile_user_reports(request):
             reduce=False,
             startkey=[domain.name, "tag", "user-report"],
             endkey=[domain.name, "tag", "user-report", {}],
-            stale=settings.COUCH_STALE_QUERY,
+            #stale=settings.COUCH_STALE_QUERY,
         ).all()
         for report in data:
             val = report.get('value')

@@ -188,7 +188,6 @@ HQ_APPS = (
     'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
     'corehq.apps.app_manager',
-    'corehq.apps.orgs',
     'corehq.apps.facilities',
     'corehq.apps.fixtures',
     'corehq.apps.importer',
@@ -223,9 +222,7 @@ HQ_APPS = (
     'custom.apps.wisepill',
     'fluff',
     'fluff.fluff_filter',
-    'sofabed.forms',
     'soil',
-    'corehq.apps.hqsofabed',
     'touchforms.formplayer',
     'hqbilling',
     'phonelog',
@@ -246,9 +243,47 @@ HQ_APPS = (
     'pathindia',
     'pact',
     'psi',
+
+    'custom.reports.care_sa',
+    'custom.reports.mc',
 )
 
 TEST_APPS = ()
+
+# also excludes any app starting with 'django.'
+APPS_TO_EXCLUDE_FROM_TESTS = (
+    'a5288',
+    'couchdbkit.ext.django',
+    'corehq.apps.data_interfaces',
+    'corehq.apps.ivr',
+    'corehq.apps.kookoo',
+    'corehq.apps.mach',
+    'corehq.apps.ota',
+    'corehq.apps.settings',
+    'corehq.apps.sislog',
+    'corehq.apps.telerivet',
+    'corehq.apps.tropo',
+    'corehq.apps.yo',
+    'crispy_forms',
+    'djcelery',
+    'djtables',
+    'djkombu',
+    'gunicorn',
+    'langcodes',
+    'luna',
+    'raven.contrib.django.raven_compat',
+    'rosetta',
+    'soil',
+    'south',
+
+    # submodules with tests that run on travis
+    'ctable',
+    'ctable_view',
+    'dimagi.utils',
+    'fluff',
+    'fluff_filter',
+    'pillowtop',
+)
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
@@ -377,9 +412,6 @@ COUCHLOG_DATABASE_NAME = "commcarehq-couchlog"
 # couchlog/case search
 LUCENE_ENABLED = False
 
-# sofabed
-FORMDATA_MODEL = 'hqsofabed.HQFormData'
-
 
 
 # unicel sms config
@@ -458,9 +490,11 @@ MESSAGE_LOG_OPTIONS = {
 IVR_OUTBOUND_RETRIES = 3
 IVR_OUTBOUND_RETRY_INTERVAL = 10
 
-
 # List of Fluff pillow classes that ctable should process diffs for
-FLUFF_PILLOW_TYPES_TO_SQL = {}
+FLUFF_PILLOW_TYPES_TO_SQL = {
+    'MalariaConsortiumFluff': 'SQL',
+    'CareSAFluff': 'SQL',
+}
 
 try:
     #try to see if there's an environmental variable set for local_settings
@@ -608,7 +642,6 @@ COUCHDB_APPS = [
     'domain',
     'facilities',
     'fluff_filter',
-    'forms',
     'fixtures',
     'groups',
     'hqcase',
@@ -656,6 +689,9 @@ COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label
 COUCHDB_DATABASES += [
     ('bihar', COUCH_DATABASE + '__fluff-bihar'),
     ('fluff', COUCH_DATABASE + '__fluff-bihar'),
+    ('care_sa', COUCH_DATABASE + '__fluff-care_sa'),
+    ('mc', COUCH_DATABASE + '__fluff-mc'),
+    ('fluff', COUCH_DATABASE + '__fluff-mc'),
 ]
 
 INSTALLED_APPS += LOCAL_APPS
@@ -744,8 +780,9 @@ PILLOWTOPS = [
 
                  # fluff
                  'bihar.models.CareBiharFluffPillow',
+                 'custom.reports.care_sa.models.CareSAFluffPillow',
+                 'custom.reports.mc.models.MalariaConsortiumFluffPillow',
              ] + LOCAL_PILLOWTOPS
-
 
 #Custom workflow for indexing xform data beyond the standard properties
 XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
@@ -753,10 +790,10 @@ XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
 #Custom fully indexed domains for FullCase index/pillowtop
 # Adding a domain will not automatically index that domain's existing cases
 ES_CASE_FULL_INDEX_DOMAINS = [
-    'pact', 
-    'hsph', 
-    'care-bihar', 
-    'hsph-dev', 
+    'pact',
+    'hsph',
+    'care-bihar',
+    'hsph-dev',
     'hsph-betterbirth-pilot-2',
     'commtrack-public-demo',
 ]
@@ -778,10 +815,12 @@ DOMAIN_MODULE_MAP = {
     'a5288-test': 'a5288',
     'a5288-study': 'a5288',
     'care-bihar': 'bihar',
+    'care-ihapc-live': 'custom.reports.care_sa',
     'dca-malawi': 'dca',
     'eagles-fahu': 'dca',
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
+    'mc-inscale': 'custom.reports.mc',
     'mvp-potou': 'mvp',
     'mvp-sauri': 'mvp',
     'mvp-bonsaaso': 'mvp',

@@ -120,7 +120,7 @@ class Group(UndoableDocument):
         return cls.view('groups/by_domain',
             key=domain,
             include_docs=True,
-            stale=settings.COUCH_STALE_QUERY,
+            #stale=settings.COUCH_STALE_QUERY,
         ).all()
 
     @classmethod
@@ -128,7 +128,7 @@ class Group(UndoableDocument):
         result = cls.view('groups/by_name',
             key=[domain, name],
             include_docs=True,
-            stale=settings.COUCH_STALE_QUERY,
+            #stale=settings.COUCH_STALE_QUERY,
         )
         if one:
             return result.one()
@@ -165,7 +165,7 @@ class Group(UndoableDocument):
             startkey=key,
             endkey=key + [{}],
             include_docs=True,
-            stale=settings.COUCH_STALE_QUERY,
+            #stale=settings.COUCH_STALE_QUERY,
         ).all()
 
     def create_delete_record(self, *args, **kwargs):
