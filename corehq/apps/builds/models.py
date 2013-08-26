@@ -183,7 +183,8 @@ class BuildMenuItem(DocumentSchema):
         return self.label or self.build.get_label()
     
 class CommCareBuildConfig(Document):
-    ID = "config--commcare-builds"
+    _ID = 'config--commcare-builds'
+
     preview = SchemaProperty(BuildSpec)
     defaults = SchemaListProperty(BuildSpec)
     application_versions = StringListProperty()
@@ -192,14 +193,14 @@ class CommCareBuildConfig(Document):
     @classmethod
     def bootstrap(cls):
         config = cls.wrap(commcare_build_config)
-        config._id = config.ID
+        config._id = config._ID
         config.save()
         return config
 
     @classmethod
     def fetch(cls):
         try:
-            return cls.get(cls.ID.default)
+            return cls.get(cls._ID)
         except ResourceNotFound:
             return cls.bootstrap()
 
