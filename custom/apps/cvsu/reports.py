@@ -12,20 +12,120 @@ from .sqldata import (ChildProtectionData, ChildrenInHouseholdData,
 
 
 class MultiReportPage(CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
+    """
+    Report class that supports having multiple 'reports' shown at a time.
+
+    i.e. multiple sections of _graph and report table_
+
+    Each section is represented by a 'data provider' class.
+    """
     title = ''
     report_template_path = "cvsu/multi_report.html"
-    exportable = True
-    no_value = {'sort_key': 0, 'html': u'\u2014'}
-    default_rows = 100
-    datespan_default_days = 30
-    printable = True
     flush_layout = True
-    filter_group_name = 'All CVSUs'
 
     @property
     @memoized
     def rendered_report_title(self):
         return self.title
+
+    @property
+    @memoized
+    def data_providers(self):
+        return []
+
+    @property
+    def report_context(self):
+        context = {
+            'reports': [self.get_report_context(dp) for dp in self.data_providers],
+            'title': self.title
+        }
+
+        return context
+
+    def get_report_context(self, data_provider):
+        headers = DataTablesHeader(*[c.data_tables_column for c in data_provider.columns])
+
+        if self.needs_filters:
+            rows = []
+            charts = []
+            total_row = []
+        else:
+            formatter = DataFormatter(TableDataFormat(data_provider.columns, no_value=self.no_value))
+            rows = list(formatter.format(data_provider.data, keys=data_provider.keys, group_by=data_provider.group_by))
+            charts = list(self.get_chart(
+                rows,
+                data_provider.columns,
+                x_label=data_provider.chart_x_label,
+                y_label=data_provider.chart_y_label,
+                has_total_column=data_provider.has_total_column
+            ))
+
+            total_row = list(calculate_total_row(rows))
+            if total_row:
+                total_row[0] = 'Total'
+
+        context = dict(
+            report_table=dict(
+                title=data_provider.title,
+                headers=headers,
+                rows=rows,
+                total_row=total_row,
+                default_rows=self.default_rows,
+                datatables=True
+            ),
+            charts=charts,
+            chart_span=12
+        )
+
+        return context
+
+    @property
+    def export_table(self):
+        reports = [r['report_table'] for r in self.report_context['reports']]
+        return [self._export_table(r['title'], r['headers'], r['rows'], total_row=r['total_row']) for r in reports]
+
+    def _export_table(self, export_sheet_name, headers, formatted_rows, total_row=None):
+        def _unformat_row(row):
+            return [col.get("sort_key", col) if isinstance(col, dict) else col for col in row]
+
+        table = headers.as_table
+        rows = [_unformat_row(row) for row in formatted_rows]
+        table.extend(rows)
+        if total_row:
+            table.append(_unformat_row(total_row))
+
+        return [export_sheet_name, table]
+
+    def get_chart(self, rows, columns, x_label, y_label, has_total_column=False):
+        """
+        Get a MultiBarChart model for the given set of rows and columns.
+        :param rows: 2D list of report data. Assumes index 0 of each row is the row label
+        :param columns: list of DatabaseColumn objects
+        """
+        end = len(columns)
+        if has_total_column:
+            end -= 1
+        categories = [c.data_tables_column.html for c in columns[1:end]]
+        chart = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, ' ,d'))
+        chart.rotateLabels = -45
+        chart.marginBottom = 120
+        self._chart_data(chart, categories, rows)
+        return [chart]
+
+    def _chart_data(self, chart, series, data, start_index=1, x_fn=None, y_fn=None):
+        xfn = x_fn or (lambda x: x['html'])
+        yfn = y_fn or (lambda y: y['sort_key'])
+        for i, s in enumerate(series):
+            chart.add_dataset(s, [{'x': xfn(d[0]), 'y': yfn(d[start_index + i])} for d in data])
+
+
+class CVSUReport(MultiReportPage):
+    no_value = {'sort_key': 0, 'html': u'\u2014'}
+    default_rows = 100
+    datespan_default_days = 30
+    printable = True
+    exportable = True
+    filter_group_name = 'All CVSUs'
 
     @property
     def location(self):
@@ -75,92 +175,13 @@ class MultiReportPage(CustomProjectReport, ProjectReportParametersMixin, Datespa
         return GroupUserFilter.get_value(self.request, self.domain).get('cvsu')
 
     @property
-    @memoized
-    def data_providers(self):
-        return []
-
-    @property
     def report_context(self):
-        context = {}
-
-        reports_contexts = [self.get_report_context(dp) for dp in self.data_providers]
-
-        context['reports'] = reports_contexts
-        context['title'] = self.title
+        context = super(CVSUReport, self).report_context
         context.update(self.subtitle)
-
         return context
 
-    def get_report_context(self, data_provider):
-        headers = DataTablesHeader(*[c.data_tables_column for c in data_provider.columns])
 
-        if self.needs_filters:
-            rows = []
-            charts = []
-            total_row = []
-        else:
-            formatter = DataFormatter(TableDataFormat(data_provider.columns, no_value=self.no_value))
-            rows = list(formatter.format(data_provider.data, keys=data_provider.keys, group_by=data_provider.group_by))
-            charts = list(self.get_chart(rows, data_provider.columns,
-                      x_label=data_provider.chart_x_label,
-                      y_label=data_provider.chart_y_label,
-                      has_total_column=data_provider.has_total_column))
-
-            total_row = list(calculate_total_row(rows))
-            if total_row:
-                total_row[0] = 'Total'
-
-        context = dict(
-            report_table=dict(
-                title=data_provider.title,
-                headers=headers,
-                rows=rows,
-                total_row=total_row,
-                default_rows=self.default_rows,
-                datatables=True
-            ),
-            charts=charts,
-            chart_span=12
-        )
-
-        return context
-
-    @property
-    def export_table(self):
-        reports = [r['report_table'] for r in self.report_context['reports']]
-        return [self._export_table(r['title'], r['headers'], r['rows'], total_row=r['total_row']) for r in reports]
-
-    def _export_table(self, export_sheet_name, headers, formatted_rows, total_row=None):
-        def _unformat_row(row):
-            return [col.get("sort_key", col) if isinstance(col, dict) else col for col in row]
-
-        table = headers.as_table
-        rows = [_unformat_row(row) for row in formatted_rows]
-        table.extend(rows)
-        if total_row:
-            table.append(_unformat_row(total_row))
-
-        return [export_sheet_name, table]
-
-    def get_chart(self, rows, columns, x_label, y_label, has_total_column=False):
-        end = len(columns)
-        if has_total_column:
-            end -= 1
-        categories = [c.data_tables_column.html for c in columns[1:end]]
-        b = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, ' ,d'))
-        b.rotateLabels = -45
-        b.marginBottom = 120
-        self._chart_data(b, categories, 1, rows)
-        return [b]
-
-    def _chart_data(self, chart, series, start_index, data, x_fn=None, y_fn=None):
-        xfn = x_fn or (lambda x: x['html'])
-        yfn = y_fn or (lambda y: y['sort_key'])
-        for i, s in enumerate(series):
-            chart.add_dataset(s, [{'x': xfn(d[0]), 'y': yfn(d[start_index + i])} for d in data])
-
-
-class ChildProtectionReport(MultiReportPage):
+class ChildProtectionReport(CVSUReport):
     title = 'CVSU CHILD PROTECTION AND GENDER BASED VIOLENCE LOCATION REPORT'
     name = "Location report"
     slug = "child_protection_location"
@@ -227,7 +248,7 @@ class ChildProtectionReportTrend(ChildProtectionReport):
         ]
 
 
-class CVSUPerformanceReport(MultiReportPage):
+class CVSUPerformanceReport(CVSUReport):
     title = 'CVSU PERFORMANCE EVALUATION LOCATION REPORT'
     name = "Location report"
     slug = "cvsu_performance_location"
