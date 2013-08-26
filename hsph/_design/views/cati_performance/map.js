@@ -1,23 +1,13 @@
 function(doc) {
     //!code util/hsph.js
     
-    if (!(
-        isCATIFollowUpForm(doc) ||
-        isNewHSPHBirthCase(doc)
-    )) {
-        return;
-    }
-
-    var data = {},
-        userID, date;
-
     if (isCATIFollowUpForm(doc)) {
-        var form = doc.form,
+        var data = {},
+            form = doc.form,
             followUpTime = get_form_filled_seconds(doc),
-            submissionDay = get_submission_day(doc);
-        
-        userID = form.meta.userID;
-        date = form.date_admission;
+            submissionDay = get_submission_day(doc),
+            userID = form.meta.userID,
+            date = form.date_admission;
         
         data.waitlisted = (form.last_status === 'cati_waitlist') ? 1 : 0;
         data.transferredToTeamLeader = (form.last_status === 'cati_tl') ? 1 : 0;
@@ -32,11 +22,14 @@ function(doc) {
                 submissionDay: submissionDay
             });
         }
+
+        emit(["followUpForm", doc.domain, userID, date], data);
+        return;
     }
 
     if (isNewHSPHBirthCase(doc)) {
-        userID = doc.user_id;
-        date = doc.date_admission;
+        var data = {},
+            date = doc.date_admission;
 
         function datePlusDays(string, daysToAdd) {
             var newDate = new Date(string);
@@ -75,18 +68,16 @@ function(doc) {
 
         data.followedUp = (doc.last_status === 'followed_up') ? 1 : 0;
 
-        emit(["noFollowUpAfter6Days", doc.domain, userID, date], {
+        emit(["noFollowUpAfter6Days", doc.domain, doc.owner_id, date], {
             noFollowUpAfter6Days: (doc.date_admission &&
             (!firstFollowUpTime || admissionDatePlus13 < firstFollowUpTime)) ? 1 : 0
         });
         
-        emit(["timedOut", doc.domain, userID, date], {
+        emit(["timedOut", doc.domain, doc.owner_id, date], {
             timedOut: (doc.date_admission && 
             (!(doc.closed_on) || admissionDatePlus21 < lastFollowUpTime)) ? 1 : 0
         });
-    }
-
-    if (Object.getOwnPropertyNames(data).length) {
-        emit(["all", doc.domain, userID, date], data);
+        
+        emit(["all", doc.domain, doc.owner_id, date], data);
     }
 }

@@ -13,6 +13,7 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import (DataTablesHeader, DataTablesColumn,
     NumericColumn)
 from corehq.apps.reports import util
+from corehq.apps.groups.models import Group
 
 import hsph.const as const
 
@@ -35,6 +36,34 @@ def date_minus_13_days(couchkey):
 
 def date_minus_21_days(couchkey):
     return couchkey + [datestring_minus_days(couchkey[0], 21)]
+
+
+class CATIFinder(object):
+    def __init__(self, domain):
+        self.domain = domain
+        self.cati_group = Group.by_name(domain, const.CATI_GROUP_NAME)
+        self.cati_users = self.cati_group.get_users()
+        self.cati_user_ids = [cati_user._id for cati_user in self.cati_users]
+
+    def get_group_ids(self, cati_id):
+        """
+        Get the group IDs for the three-person groups with a CATI, Field data
+        collector, and supervisor, of which this CATI is a member.
+        """
+        if cati_id not in self.cati_user_ids:
+            raise Exception("User %s is not a CATI" % cati_id)
+        return Group.by_user(cati_id, wrap=False, include_names=False)
+
+    def get_cati_users_data(self):
+        ret = []
+
+        for cati_user in self.cati_group.get_users():
+            ret.append({
+                'user': cati_user,
+                'group_ids': self.get_group_ids(cati_user._id),
+            })
+
+        return ret
 
 
 class CATIPerformanceReport(GenericTabularReport, CustomProjectReport,
@@ -78,25 +107,19 @@ class CATIPerformanceReport(GenericTabularReport, CustomProjectReport,
             ('avgTimePerFollowUp', None),
         ])
 
-        rows = []
         db = get_db()
 
         startdate = self.datespan.startdate_param_utc[:10]
         enddate = self.datespan.enddate_param_utc[:10]
-        
-        for user in self.users:
-            user_id = user.get('user_id')
-
+       
+        def get_form_data(user_id):
             row = db.view('hsph/cati_performance',
-                startkey=["all", self.domain, user_id, startdate],
-                endkey=["all", self.domain, user_id, enddate],
+                startkey=["followUpForm", self.domain, user_id, startdate],
+                endkey=["followUpForm", self.domain, user_id, enddate],
                 reduce=True,
                 wrapper=lambda r: r['value']
             ).first() or {}
 
-            row['catiName'] = self.table_cell(
-                    user.get('raw_username'), user.get('username_in_report'))
-          
             if row.get('followUpTime'):
                 def format(seconds):
                     return time.strftime('%M:%S', time.gmtime(seconds))
@@ -104,6 +127,22 @@ class CATIPerformanceReport(GenericTabularReport, CustomProjectReport,
                 row['avgTimePerFollowUp'] = format(
                         row['followUpTime'] // row['followUpForms'])
                 row['followUpTime'] = format(row['followUpTime'])
+            
+            row['workingDays'] = len(set(db.view('hsph/cati_performance',
+                startkey=["submissionDay", self.domain, user_id, startdate],
+                endkey=["submissionDay", self.domain, user_id, enddate],
+                reduce=False,
+                wrapper=lambda r: r['value']['submissionDay']
+            ).all()))
+            return row
+
+        def get_case_data(group_id):
+            row = db.view('hsph/cati_performance',
+                startkey=["all", self.domain, group_id, startdate],
+                endkey=["all", self.domain, group_id, enddate],
+                reduce=True,
+                wrapper=lambda r: r['value']
+            ).first() or {}
 
             # These queries can fail if startdate is less than N days before
             # enddate.  We just catch and supply a default value.
@@ -115,21 +154,33 @@ class CATIPerformanceReport(GenericTabularReport, CustomProjectReport,
                 key, default, days = key
                 try:
                     row[key] = db.view('hsph/cati_performance',
-                        startkey=[key, self.domain, user_id, startdate],
-                        endkey=[key, self.domain, user_id,
+                        startkey=[key, self.domain, group_id, startdate],
+                        endkey=[key, self.domain, group_id,
                             datestring_minus_days(enddate, days)],
                         reduce=True,
                         wrapper=lambda r: r['value'][key]
                     ).first()
                 except restkit.errors.RequestFailed:
                     row[key] = default
+            return row
 
-            row['workingDays'] = len(set(db.view('hsph/cati_performance',
-                startkey=["submissionDay", self.domain, user_id, startdate],
-                endkey=["submissionDay", self.domain, user_id, enddate],
-                reduce=False,
-                wrapper=lambda r: r['value']['submissionDay']
-            ).all()))
+        def sum_dicts(*args):
+            res = {}
+            for d in args:
+                for k, v in d.items():
+                    res[k] = res.get(k, 0) + (v or 0)
+            return res
+
+        rows = []
+        cati_finder = CATIFinder(self.domain)
+
+        for data in cati_finder.get_cati_users_data():
+            user = data['user']
+            row = get_form_data(user._id)
+            row.update(sum_dicts(
+                *[get_case_data(id) for id in data['group_ids']]))
+            row['catiName'] = self.table_cell(
+                user.raw_username, user.username_in_report)
 
             list_row = []
             for k, v in keys.items():
