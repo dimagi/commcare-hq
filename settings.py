@@ -226,7 +226,6 @@ HQ_APPS = (
     'hqbilling',
     'phonelog',
     'hutch',
-    'loadtest',
     'pillowtop',
     'hqstyle',
 
