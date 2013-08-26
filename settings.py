@@ -244,8 +244,8 @@ HQ_APPS = (
     'pact',
     'psi',
 
+    'custom.reports.care_sa',
     'custom.reports.mc',
-
 )
 
 TEST_APPS = ()
@@ -485,10 +485,10 @@ MESSAGE_LOG_OPTIONS = {
 IVR_OUTBOUND_RETRIES = 3
 IVR_OUTBOUND_RETRY_INTERVAL = 10
 
-
 # List of Fluff pillow classes that ctable should process diffs for
 FLUFF_PILLOW_TYPES_TO_SQL = {
     'MalariaConsortiumFluff': 'SQL',
+    'CareSAFluff': 'SQL',
 }
 
 try:
@@ -684,6 +684,7 @@ COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label
 COUCHDB_DATABASES += [
     ('bihar', COUCH_DATABASE + '__fluff-bihar'),
     ('fluff', COUCH_DATABASE + '__fluff-bihar'),
+    ('care_sa', COUCH_DATABASE + '__fluff-care_sa'),
     ('mc', COUCH_DATABASE + '__fluff-mc'),
     ('fluff', COUCH_DATABASE + '__fluff-mc'),
 ]
@@ -774,9 +775,9 @@ PILLOWTOPS = [
 
                  # fluff
                  'bihar.models.CareBiharFluffPillow',
+                 'custom.reports.care_sa.models.CareSAFluffPillow',
                  'custom.reports.mc.models.MalariaConsortiumFluffPillow',
              ] + LOCAL_PILLOWTOPS
-
 
 #Custom workflow for indexing xform data beyond the standard properties
 XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
@@ -784,10 +785,10 @@ XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
 #Custom fully indexed domains for FullCase index/pillowtop
 # Adding a domain will not automatically index that domain's existing cases
 ES_CASE_FULL_INDEX_DOMAINS = [
-    'pact', 
-    'hsph', 
-    'care-bihar', 
-    'hsph-dev', 
+    'pact',
+    'hsph',
+    'care-bihar',
+    'hsph-dev',
     'hsph-betterbirth-pilot-2',
     'commtrack-public-demo',
 ]
@@ -809,6 +810,7 @@ DOMAIN_MODULE_MAP = {
     'a5288-test': 'a5288',
     'a5288-study': 'a5288',
     'care-bihar': 'bihar',
+    'care-ihapc-live': 'custom.reports.care_sa',
     'dca-malawi': 'dca',
     'eagles-fahu': 'dca',
     'hsph-dev': 'hsph',
