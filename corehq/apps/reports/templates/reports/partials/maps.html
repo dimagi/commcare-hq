@@ -1,11 +1,14 @@
+{% load hq_shared_tags %}
+
 <div class="hq-graphic-report">
 
-<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key={{ maps_api_key }}&sensor=false"></script>
+<link rel="stylesheet" href="{{STATIC_URL}}reports/css/leaflet/leaflet.css" />
+
+<script src="{{STATIC_URL}}reports/javascripts/leaflet.js"></script>
 <script type="text/javascript" src="{{STATIC_URL}}reports/javascripts/maps.js"></script>
 <script type="text/javascript">
 
-CASE_API_URL = '{{ case_api_url }}';
-CONFIG = {{ config|safe }};
+CONTEXT = {{ context|JSON }};
 
 function setMapHeight() {
     $('#map').height($(window).height() - 200);
@@ -15,10 +18,7 @@ $(document).ready(function() {
     setMapHeight();
     $(window).resize(setMapHeight);
 
-    var map = maps_init(CONFIG);
-    $.get(CASE_API_URL, null, function(data) {
-      maps_refresh(map, data);
-    }, 'json');
+    var map = mapsInit(CONTEXT);
 });
 
 </script>
@@ -26,9 +26,11 @@ $(document).ready(function() {
 <style>
 
 /* fix bootstrap / gmaps conflict */
+/*
 #map img {
   max-width: none !important;
 }
+*/
 
 #sidebar {
   position: absolute;

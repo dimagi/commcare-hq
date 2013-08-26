@@ -1,229 +1,43 @@
 
-// generate a uuid of 'len' hex characters
-function uuid(len) {
-    var s = '';
-    for (var i = 0; i < len; i++) {
-        s += Math.floor(16 * Math.random()).toString(16);
+
+
+function mapsInit(context) {
+    var map = initMap($('#map'), [30., 0.], 2, 'Map');
+    return map;
+}
+
+function initMap($div, default_pos, default_zoom, default_layer) {
+    var map = L.map($div.attr('id')).setView(default_pos, default_zoom);
+
+    var mapboxLayer = function(tag) {
+	return L.tileLayer('http://api.tiles.mapbox.com/v3/' + tag + '/{z}/{x}/{y}.png', {
+	    attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://cloudmade.com">CloudMade</a>',
+	});
+    };
+
+    var layers = {
+	// TODO: these tags should probably not be hard-coded
+	'Map': mapboxLayer('dimagi.map-0cera12g'),
+	'Satellite': mapboxLayer('examples.map-qfyrx5r8'), // note: we need a pay account to use this for real
     }
-    return s;
+    L.control.layers(layers).addTo(map);
+    map.addLayer(layers[default_layer]);
+
+    return map;
 }
 
-// build a test case object from a template
-function make_test_case(type, name, properties, links) {
-    properties = properties || {};
-    links = links || {};
-
-    var c = {
-        case_id: 'case-' + uuid(8),
-        closed: false,
-        date_closed: null,
-        date_modified: '2012-04-05T19:00:49Z',
-        domain: 'test',
-        indices: {},
-        properties: {
-            case_name: name,
-            case_type: type,
-            date_opened: '2012-04-05T19:00:49Z',
-            external_id: null,
-            owner_id: 'chw-c1c85473'
-        },
-        server_date_modified: '2012-04-05T23:00:50Z',
-        server_date_opened: '2012-04-05T23:00:50Z',
-        user_id: 'chw-c1c85473',
-        version: '2.0',
-        xform_ids: []
-    }
-
-    $.each(properties, function(k, v) {
-            c.properties[k] = v;
-    });
-    $.each(links, function(k, linked_case) {
-            c.indices[k] = {case_type: linked_case.properties.case_type, case_id: linked_case.case_id};
-    });
-
-    return c;
-}
-
-// build our corpus of testing data
-function gen_test_data() {
-    test_cases = [];
-
-    var households = {
-        drew: '41.63 -72.59',
-        archibald: '42.4 -71.1',
-        mortimer: '41.17 -71.59',
-        noloc: null
-    };
-
-    var pregnancies = {
-        lucy: {mother_age: 22, gestational_age: 35, household: 'drew'},
-        dorcas: {mother_age: 27, gestational_age: 135, household: 'drew'},
-        persephone: {mother_age: 35, gestational_age: 235, household: 'mortimer'}
-    };
-
-    var children = {
-        a: {gender: 'm', happiness: 2, household: 'drew'},
-        b: {gender: 'f', happiness: 1, household: 'drew'},
-        c: {gender: 'f', happiness: 3, household: 'drew'},
-        d: {gender: 'f', happiness: 5, household: 'drew'},
-        e: {gender: 'f', happiness: 4, household: 'drew'},
-        f: {gender: 'f', happiness: 2, household: 'drew'},
-        g: {gender: 'f', happiness: 2, household: 'drew'},
-        h: {gender: 'm', happiness: 2, household: 'drew'},
-        i: {gender: 'f', happiness: 4, household: 'archibald'},
-        j: {gender: 'm', happiness: 2, household: 'archibald'},
-        k: {gender: 'm', happiness: 5, household: 'archibald'}
-    };
 
 
 
 
-    var household_cases = {};
-    $.each(households, function(k, v) {
-            var props = {
-                geo: v,
-                salary: 1e5 * Math.random(),
-                dwelling: ['hut', 'apt', 'mansion'][Math.floor(Math.random() * 3)]
-            };
 
-            var c = make_test_case('household', k, props);
-            household_cases[k] = c;
-            test_cases.push(c);
-        });
 
-    var preg_cases = {};
-    $.each(pregnancies, function(k, v) {
-            var link = {household: household_cases[v.household]};
-            delete v.household;
-            var c = make_test_case('preg', k, v, link);
-            preg_cases[k] = c;
-            test_cases.push(c);
-        });
 
-    var child_cases = {};
-    $.each(children, function(k, v) {
-            var link = {household: household_cases[v.household]};
-            delete v.household;
-            var c = make_test_case('child', k, v, link);
-            child_cases[k] = c;
-            test_cases.push(c);
-        });
 
-    return test_cases;
-}
 
-function gen_test_config() {
-    return {
-       "case_types": [
-           {
-               "case_type": "household",
-               "display_name": "Household",
-               "geo_field": "geo",
-               "fields": [
-                   {
-                       "field": "salary",
-                       "display_name": "Annual Salary",
-                       "type": "numeric"
-                   },
-                   {
-                       "field": "dwelling",
-                       "display_name": "Dwelling Type",
-                       "type": "enum",
-                       "values": [
-                           {
-                               "value": "hut"
-                           },
-                           {
-                               "value": "apt",
-                               "label": "apartment"
-                           },
-                           {
-                               "value": "mansion"
-                           }
-                       ]
-                   }
-               ]
-           },
-           {
-               "case_type": "preg",
-               "display_name": "Pregnancy",
-               "geo_linked_to": "household",
-               "fields": [
-                   {
-                       "field": "_count",
-                       "display_name": "Pregnancies per household",
-                       "scale": 3,
-                       "color": "#fff"
-                   },
-                   {
-                       "field": "mother_age",
-                       "display_name": "Mother's Age",
-                       "type": "numeric",
-                       "scale": 40
-                   },
-                   {
-                       "field": "gestational_age",
-                       "display_name": "Gestational Age (days)",
-                       "type": "numeric",
-                       "scale": 280,
-                       "color": "#ff5"
-                   }
-               ]
-           },
-           {
-               "case_type": "child",
-               "display_name": "Under 5",
-               "geo_linked_to": "household",
-               "fields": [
-                   {
-                       "field": "_count",
-                       "display_name": "# U5 children"
-                   },
-                   {
-                       "field": "gender",
-                       "display_name": "Gender",
-                       "type": "enum",
-                       "values": [
-                           {
-                               "value": "m",
-                               "label": "male",
-                               "color": "#aaf"
-                           },
-                           {
-                               "value": "f",
-                               "label": "female",
-                               "color": "#faa"
-                           }
-                       ]
-                   },
-                   {
-                       "field": "happiness",
-                       "display_name": "Developmental Index",
-                       "type": "num_discrete",
-                       "scale": 5,
-                       "values": [
-                           {
-                               "value": "1"
-                           },
-                           {
-                               "value": "2"
-                           },
-                           {
-                               "value": "3"
-                           },
-                           {
-                               "value": "4"
-                           },
-                           {
-                               "value": "5"
-                           }
-                       ]
-                   }
-               ]
-           }
-       ]
-   };
-}
+
+
+
 
 
 
@@ -273,49 +87,9 @@ function static_marker(pos, map, icon) {
     return new google.maps.Marker({position: pos, icon: icon, map: map});
 }
 
-// a custom gmaps marker where a canvas _is_ the marker itself
-CanvasMarker = function(opts) {
-    this.setValues(opts);
-
-    this.$div = $('<div />');
-    this.div_ = this.$div[0];
-};
-CanvasMarker.prototype = new google.maps.OverlayView();
-CanvasMarker.prototype.onAdd = function() {
-    this.$canvas = make_canvas(this.width, this.height);
-    this.$div.append(this.$canvas);
-
-    this.renderer = this.render_factory(canvas_context(this.$canvas[0]), this.width, this.height);
-    this.renderer.oncreate();
-
-    var pane = this.getPanes().overlayImage;
-    $(pane).append(this.$div);
-};
-CanvasMarker.prototype.onRemove = function() {
-    this.renderer.ondestroy();
-};
-CanvasMarker.prototype.draw = function() {
-    this.$div.css('display', 'block');
-    this.$div.css('position', 'absolute');
-
-    var pos = this.getProjection().fromLatLngToDivPixel(this.position);
-    this.$div.css('left', (pos.x - this.width / 2) + "px");
-    this.$div.css('top', (pos.y - this.height / 2) + "px");
-};
 
 
 // initialize the google map pane
-function init_map($div, default_pos, default_zoom, default_map_type) {
-    var map = new google.maps.Map($div[0], {
-            center: new google.maps.LatLng(default_pos[0], default_pos[1]),
-            zoom: default_zoom,
-            mapTypeId: {
-                terrain: google.maps.MapTypeId.TERRAIN
-            }[default_map_type],
-            scaleControl: true
-        });
-    return map;
-}
 
 function fit_all(map, cases) {
     var bounds = new google.maps.LatLngBounds();

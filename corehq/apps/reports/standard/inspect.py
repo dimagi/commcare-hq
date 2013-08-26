@@ -686,16 +686,15 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
     display_config -- configure the front-end display of data
     """
 
-    # todo: support some of these filters -- right now this report
-    #hide_filters = True
     report_partial_path = "reports/partials/maps.html"
-    asynchronous = False
     flush_layout = True
+    asynchronous = False  # TODO: we want to support async load
 
     @property
     def report_context(self):
         return dict(
             maps_api_key=settings.GMAPS_API_KEY,
+            config={},
         )
 
     @classmethod
