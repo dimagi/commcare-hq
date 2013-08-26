@@ -194,10 +194,19 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
             return DomainGlobalSettingsForm(self.request.POST)
 
         if self.can_user_see_meta:
-            for attr in ['project_type', 'customer_type', 'commconnect_enabled', 'survey_management_enabled',
-                         'sms_case_registration_enabled', 'sms_case_registration_type',
-                         'sms_case_registration_owner_id', 'sms_case_registration_user_id',
-                         'default_sms_backend_id', 'commtrack_enabled', 'restrict_superusers']:
+            for attr in [
+                'project_type',
+                'customer_type',
+                'commconnect_enabled',
+                'survey_management_enabled',
+                'sms_case_registration_enabled',
+                'sms_case_registration_type',
+                'sms_case_registration_owner_id',
+                'sms_case_registration_user_id',
+                'default_sms_backend_id',
+                'commtrack_enabled',
+                'restrict_superusers',
+            ]:
                 initial[attr] = getattr(self.domain_object, attr)
             initial.update({
                 'is_test': json.dumps(self.domain_object.is_test),
@@ -243,7 +252,12 @@ class EditDeploymentProjectInfoView(BaseEditProjectInfoView):
             'deployment_date': self.domain_object.deployment.date.date if self.domain_object.deployment.date else "",
             'public': 'true' if self.domain_object.deployment.public else 'false',
         }
-        for attr in ['city', 'country', 'region', 'description']:
+        for attr in [
+            'city',
+            'country',
+            'region',
+            'description',
+        ]:
             initial[attr] = getattr(self.domain_object.deployment, attr)
         return DomainDeploymentForm(initial=initial)
 
@@ -774,9 +788,22 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             return DomainInternalForm(self.request.POST)
         initial = {}
         internal_attrs = [
-            'sf_contract_id', 'sf_account_id', 'commcare_edition', 'services', 'initiative',
-            'project_state', 'area', 'sub_area', 'organization_name', 'notes', 'platform',
-            'self_started', 'using_adm', 'using_call_center', 'custom_eula', 'can_use_data',
+            'sf_contract_id',
+            'sf_account_id',
+            'commcare_edition',
+            'services',
+            'initiative',
+            'project_state',
+            'area',
+            'sub_area',
+            'organization_name',
+            'notes',
+            'platform',
+            'self_started',
+            'using_adm',
+            'using_call_center',
+            'custom_eula',
+            'can_use_data',
         ]
         for attr in internal_attrs:
             val = getattr(self.domain_object.internal, attr)
