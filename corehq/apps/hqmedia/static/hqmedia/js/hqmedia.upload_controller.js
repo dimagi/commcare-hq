@@ -120,6 +120,7 @@ function BaseHQMediaUploadController (uploader_name, marker, options) {
 
     // UI related
     self.startUploadUI = function () {
+        $(self.uploadButtonSelector).addClass('disabled').removeClass('btn-success');
         // optional: set the state of the uploader UI here when the upload starts
     };
 
@@ -360,7 +361,6 @@ function HQMediaBulkUploadController (uploader_name, marker, options) {
         $queuedItem.remove();
         $queuedItem.insertAfter($(self.processingFilesListSelector).find('.hqm-list-notice'));
         self.beginProcessing(event);
-        self.toggleUploadButton();
     };
 
     // processing flow
