@@ -759,6 +759,7 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'hsph-dev', 
     'hsph-betterbirth-pilot-2',
     'commtrack-public-demo',
+    'uth-rhd-test',
 ]
 
 #Custom fully indexed domains for FullXForm index/pillowtop --
@@ -767,6 +768,7 @@ ES_CASE_FULL_INDEX_DOMAINS = [
 # Adding a domain will not automatically index that domain's existing forms
 ES_XFORM_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
+    'uth-rhd-test',
 ]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
