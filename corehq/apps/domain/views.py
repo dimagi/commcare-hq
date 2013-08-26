@@ -324,6 +324,8 @@ def internal_settings(request, domain, template='domain/internal_settings.html')
             "organization_name": domain.internal.organization_name,
             "notes": domain.internal.notes,
             "platform": domain.internal.platform,
+            "project_manager": domain.internal.project_manager,
+            "phone_model": domain.internal.phone_model,
         })
 
     ctxt = {
