@@ -113,6 +113,7 @@ class Beneficiary(object):
     def spacing_cash(self):
         return 0
         # clarify: possibly 2 payments?  (2 yrs since birth and 3?)
+        # clearly not...
         # calculate across cases by bank account number!
         # get "Registration Form" > 'bank_account_number'
         # mother = # collection of all cases with matching bank account number

@@ -45,6 +45,7 @@ class BaseReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
     def rows(self):
         # print ([self.datespan.startdate_param_utc],
         #     [self.datespan.enddate_param_utc])
+        # startdate_utc is a datetime object
         rows = []
         for row in self.row_iterable:
             rows.append([getattr(row, method) for 

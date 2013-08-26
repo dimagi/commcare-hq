@@ -25,19 +25,16 @@ class OpmCaseFluff(fluff.IndicatorDocument):
     group_by = ['domain', 'owner_id']
 
     # all_pregnancies = calculations.AllPregnancies()
+    bp1 = calculations.BirthPreparedness()
 
-    # json = fluff.DictField(lambda case: {
-    #     'name': case.name,
-    #     'account_number': case.get_case_property('bank_account_number') or "",
-    #     'number': 5,
-    #     'array': [1,2,3], 
-    # })
-    beneficiary_data = fluff.DictField(get_item_data(Beneficiary))
+    # beneficiary_data = fluff.DictField(get_item_data(Beneficiary))
+
     name = fluff.FlatField(lambda case: case.name)
     awc_name = fluff.FlatField(lambda case: "AWC Name")
     bank_name = fluff.FlatField(lambda case: "AWW Bank Name")
     account_number = fluff.FlatField(lambda case: "AWW Bank Account Number")
     block = fluff.FlatField(lambda case: "Block Name")
+
     women_registered = "No. of women registered under BCSP"
     children_registered = "No. of children registered under BCSP"
     service_forms_count = "Submission of Service Availability form"
@@ -54,7 +51,9 @@ class OpmUserFluff(fluff.IndicatorDocument):
     domains = ('opm',)
     group_by = ['domain', 'owner_id']
 
-    incentive_data = fluff.DictField(get_item_data(Worker))
+    something = "hello!"
+
+    # incentive_data = fluff.DictField(get_item_data(Worker))
 
 
 # OPMFluff.get_result('all_pregnancies', [domain, user_id])
