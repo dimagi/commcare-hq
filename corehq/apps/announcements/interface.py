@@ -47,7 +47,7 @@ class BaseHQAnnouncementsAdminInterface(BaseCRUDAdminInterface):
             include_docs=True,
             startkey=key,
             endkey=key + [{}],
-            stale=settings.COUCH_STALE_QUERY,
+            #stale=settings.COUCH_STALE_QUERY,
         ).all()
         return data
 

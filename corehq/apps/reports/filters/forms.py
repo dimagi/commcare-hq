@@ -9,6 +9,7 @@ from dimagi.utils.decorators.memoized import memoized
 # For translations
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+import settings
 
 REMOTE_APP_WILDCARD = "http://(.+).commcarehq.org"
 MISSING_APP_ID = "_MISSING_APP_ID"
@@ -35,6 +36,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     fuzzy_slug = "@@FUZZY"
     show_global_hide_fuzzy_checkbox = True
     unknown_remote_app_id = 'unknown_remote_app'
+    display_app_type = False # whether we're displaying the application type select box in the filter
 
     @property
     def display_lang(self):
@@ -43,39 +45,6 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         """
         # todo make this functional
         return 'en'
-
-    @property
-    def final_notifications(self):
-        """
-            The notification that might pop up when you reach the last result of the drilldown.
-        """
-        notifications = {}
-        for xmlns, info in self.fuzzy_form_data.items():
-            app_map = info['apps']
-            active = []
-            deleted = []
-            for app in app_map:
-                formatted_name = self.formatted_name_from_app(app)
-                if app['is_deleted']:
-                    deleted.append(formatted_name)
-                else:
-                    active.append(formatted_name)
-
-            if not deleted and len(active) == 1:
-                continue
-
-            notifications[xmlns] = render_to_string("reports/filters/partials/fuzzy_form_message.html", {
-                'xmlns': xmlns,
-                'active': active,
-                'deleted': deleted,
-                'good_news': len(active) == 1,
-                'hide_fuzzy': {
-                    'show': not self.show_global_hide_fuzzy_checkbox,
-                    'slug': '%s_%s' % (self.slug, self.fuzzy_slug),
-                    'checked': self.hide_fuzzy_results,
-                }
-            })
-        return notifications
 
     @property
     def rendered_labels(self):
@@ -108,14 +77,22 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 'slug': self.unknown_slug,
                 'selected': self.selected_unknown_xmlns,
                 'options': self.unknown_forms_options,
-                'default_text': "Select an Unknown Form..." if self.use_only_last else "Show All Unknown Forms..."
+                'default_text': "Select an Unknown Form..." if self.use_only_last else "Show All Unknown Forms...",
             },
             'hide_fuzzy': {
                 'show': not self.show_unknown and self.show_global_hide_fuzzy_checkbox and self.fuzzy_forms,
                 'slug': '%s_%s' % (self.slug, self.fuzzy_slug),
                 'checked': self.hide_fuzzy_results,
-            }
+            },
+            'display_app_type': self.display_app_type,
+            'support_email': settings.SUPPORT_EMAIL,
         })
+
+        if self.display_app_type and not context['selected']:
+            context['selected'] = ['active']
+        context["show_advanced"] = self.request.GET.get('show_advanced') == 'on' or context["unknown"]["show"] or \
+                                   context["hide_fuzzy"]["checked"] or \
+                                   (len(context['selected']) > 0 and context['selected'][0] != 'active')
         return context
 
     @property
@@ -157,6 +134,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 map_active.append(app)
 
         if (bool(map_remote) + bool(map_deleted) + bool(map_active)) > 1:
+            self.display_app_type = True
             if map_active:
                 final_map.append(self._map_structure('active', _('Active CommCare Applications'), map_active))
             if map_remote:
@@ -259,12 +237,12 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 # these 'filler modules' are eventually ignored when rendering the drilldown map.
                 app_forms[app_id]['modules'].extend([default_module(module_id - m) for m in range(0, new_modules)])
 
-            app_forms[app_id]['modules'][module_id]['module'] = app_info['module']
-
-            app_forms[app_id]['modules'][module_id]['forms'].append({
-                'form': app_info['form'],
-                'xmlns': app_info['xmlns'],
-            })
+            if not app_info.get('is_user_registration'):
+                app_forms[app_id]['modules'][module_id]['module'] = app_info['module']
+                app_forms[app_id]['modules'][module_id]['forms'].append({
+                    'form': app_info['form'],
+                    'xmlns': app_info['xmlns'],
+                })
         return app_forms
 
     @property
@@ -506,7 +484,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     def get_filtered_data(self, filter_results):
         """
-            Returns the raw form data based on the current filter selection.
+        Returns the raw form data based on the current filter selection.
         """
         if not filter_results:
             data = []

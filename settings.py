@@ -222,9 +222,7 @@ HQ_APPS = (
     'custom.apps.wisepill',
     'fluff',
     'fluff.fluff_filter',
-    'sofabed.forms',
     'soil',
-    'corehq.apps.hqsofabed',
     'touchforms.formplayer',
     'hqbilling',
     'phonelog',
@@ -247,6 +245,7 @@ HQ_APPS = (
     'psi',
 
     'custom.apps.cvsu',
+    'custom.reports.mc',
 )
 
 TEST_APPS = ()
@@ -378,9 +377,6 @@ COUCHLOG_DATABASE_NAME = "commcarehq-couchlog"
 # couchlog/case search
 LUCENE_ENABLED = False
 
-# sofabed
-FORMDATA_MODEL = 'hqsofabed.HQFormData'
-
 
 
 # unicel sms config
@@ -462,7 +458,8 @@ IVR_OUTBOUND_RETRY_INTERVAL = 10
 
 # List of Fluff pillow classes that ctable should process diffs for
 FLUFF_PILLOW_TYPES_TO_SQL = {
-    'UnicefMalawiFluff': 'SQL'
+    'UnicefMalawiFluff': 'SQL',
+    'MalariaConsortiumFluff': 'SQL',
 }
 
 try:
@@ -561,6 +558,9 @@ if DEBUG:
             'luna',
         )
 
+    import warnings
+    warnings.simplefilter('default')
+
 if not DEBUG:
     TEMPLATE_LOADERS = [
         ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
@@ -608,7 +608,6 @@ COUCHDB_APPS = [
     'domain',
     'facilities',
     'fluff_filter',
-    'forms',
     'fixtures',
     'groups',
     'hqcase',
@@ -656,6 +655,7 @@ COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label
 COUCHDB_DATABASES += [
     ('bihar', COUCH_DATABASE + '__fluff-bihar'),
     ('cvsu', COUCH_DATABASE + '__fluff-cvsu'),
+    ('mc', COUCH_DATABASE + '__fluff-mc'),
 ]
 
 INSTALLED_APPS += LOCAL_APPS
@@ -745,6 +745,7 @@ PILLOWTOPS = [
                  # fluff
                  'bihar.models.CareBiharFluffPillow',
                  'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
+                 'custom.reports.mc.models.MalariaConsortiumFluffPillow',
              ] + LOCAL_PILLOWTOPS
 
 
@@ -784,6 +785,7 @@ DOMAIN_MODULE_MAP = {
     'eagles-fahu': 'dca',
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
+    'mc-inscale': 'custom.reports.mc',
     'mvp-potou': 'mvp',
     'mvp-sauri': 'mvp',
     'mvp-bonsaaso': 'mvp',

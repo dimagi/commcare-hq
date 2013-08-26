@@ -621,8 +621,8 @@ class SupplyPointProductCase(CommCareCase):
             }
         ]
 
-    def get_json(self):
-        data = super(SupplyPointProductCase, self).get_json()
+    def get_json(self, lite=True):
+        data = super(SupplyPointProductCase, self).get_json(lite=lite)
         data['properties'].update({
             'product': self.product,
             'current_stock': self.current_stock_level,
@@ -755,8 +755,10 @@ class RequisitionCase(CommCareCase):
 
     def to_full_dict(self):
         data = super(RequisitionCase, self).to_full_dict()
-        data['supply_point_name'] = self.get_supply_point_case()['name']
-        data['product_name'] = self.get_product_case()['name']
+        sp = self.get_supply_point_case()
+        product = self.get_product_case()
+        data['supply_point_name'] = sp['name'] if sp else ''
+        data['product_name'] = product['name'] if product else ''
         data['balance'] = self.get_default_value()
         return data
 

@@ -134,7 +134,12 @@ class PtopReindexer(NoArgsCommand):
             for item in view_chunk:
                 yield item
             start_seq += self.chunk_size * self.chunk_size
-            view_chunk = self.db.view(self.view_name, reduce=False, limit=CHUNK_SIZE * self.chunk_size, skip=start_seq)
+            view_chunk = self.db.view(self.view_name,
+                reduce=False,
+                limit=self.chunk_size * self.chunk_size,
+                skip=start_seq,
+                **view_kwargs
+            )
 
     def load_from_view(self):
         """
@@ -272,13 +277,8 @@ class PtopReindexer(NoArgsCommand):
             self.process_row(item, ix)
 
     def load_bulk(self):
-        #chunk
-        #if failure, try again
-        curr_counter = 0
         start = self.start_num
         end = start + self.chunk_size
-
-        #all couchy operations completed, faking out db now.
 
         json_iter = self.view_data_file_iter()
 
@@ -288,14 +288,15 @@ class PtopReindexer(NoArgsCommand):
         for curr_counter, json_doc in enumerate(json_iter):
             if curr_counter < start:
                 continue
-            if len(bulk_slice) == self.chunk_size:
-                self.send_bulk(bulk_slice, start, end)
-                bulk_slice = []
-                start += self.chunk_size
-                end += self.chunk_size
             else:
                 bulk_slice.append(json_doc)
-                continue
+                if len(bulk_slice) == self.chunk_size:
+                    self.send_bulk(bulk_slice, start, end)
+                    bulk_slice = []
+                    start += self.chunk_size
+                    end += self.chunk_size
+
+        self.send_bulk(bulk_slice, start, end)
 
     def send_bulk(self, slice, start, end):
         doc_couch_db = self.pillow.document_class.get_db()

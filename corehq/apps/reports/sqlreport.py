@@ -1,5 +1,6 @@
 # coding=utf-8
 from sqlagg.columns import SimpleColumn
+from sqlagg.filters import RawFilter, SqlFilter
 import sqlalchemy
 import sqlagg
 
@@ -163,7 +164,7 @@ class SqlData(object):
     @property
     def filters(self):
         """
-        Returns a list of filter statements e.g. ["date > :enddate"]
+        Returns a list of filter statements e.g. [EQ('date', 'enddate')]
         """
         raise NotImplementedError()
 
@@ -189,8 +190,23 @@ class SqlData(object):
         return None
 
     @property
+    def wrapped_filters(self):
+        def _wrap_if_necessary(string_or_filter):
+            if isinstance(string_or_filter, basestring):
+                filter = RawFilter(string_or_filter)
+            else:
+                filter = string_or_filter
+            assert isinstance(filter, SqlFilter)
+            return filter
+
+        if self.filters:
+            return [_wrap_if_necessary(f) for f in self.filters]
+        else:
+            return []
+
+    @property
     def query_context(self):
-        return sqlagg.QueryContext(self.table_name, self.filters, self.group_by)
+        return sqlagg.QueryContext(self.table_name, self.wrapped_filters, self.group_by)
 
     @property
     def data(self):
