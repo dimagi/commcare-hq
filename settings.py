@@ -653,6 +653,7 @@ COUCHDB_APPS += LOCAL_COUCHDB_APPS
 COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label in COUCHDB_APPS]
 
 COUCHDB_DATABASES += [
+    ('fluff', COUCH_DATABASE + '__fluff-bihar'),  # needed to make couchdbkit happy
     ('bihar', COUCH_DATABASE + '__fluff-bihar'),
     ('cvsu', COUCH_DATABASE + '__fluff-cvsu'),
     ('mc', COUCH_DATABASE + '__fluff-mc'),
