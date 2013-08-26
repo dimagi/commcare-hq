@@ -19,4 +19,8 @@ class Command(PtopReindexer):
 
         Return true if to index, false if to SKIP
         """
-        return view_row['key'] != 'http://code.javarosa.org/devicereport'
+        if 'doc' in view_row:
+            return view_row['doc']['xmlns'] != 'http://code.javarosa.org/devicereport'
+        else:
+            return view_row['key'] != 'http://code.javarosa.org/devicereport'
+
