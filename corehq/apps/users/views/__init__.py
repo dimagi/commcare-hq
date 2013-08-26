@@ -65,7 +65,7 @@ class BaseUserSettingsView(BaseDomainView):
     @memoized
     def section_url(self):
         from corehq.apps.users.views import DefaultProjectUserSettingsView
-        return reverse(DefaultProjectUserSettingsView.name, args=[self.domain])
+        return reverse(DefaultProjectUserSettingsView.urlname, args=[self.domain])
 
     @property
     @memoized
@@ -100,7 +100,7 @@ class BaseUserSettingsView(BaseDomainView):
 
 
 class DefaultProjectUserSettingsView(BaseUserSettingsView):
-    name = "users_default"
+    urlname = "users_default"
 
     @property
     @memoized
@@ -113,7 +113,7 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
                 if user.has_permission(self.domain, 'edit_commcare_users'):
                     redirect = reverse("commcare_users", args=[self.domain])
                 elif user.has_permission(self.domain, 'edit_web_users'):
-                    redirect = reverse(ListWebUsersView.name, args=[self.domain])
+                    redirect = reverse(ListWebUsersView.urlname, args=[self.domain])
         return redirect
 
     def get(self, request, *args, **kwargs):
@@ -128,14 +128,14 @@ class BaseEditUserView(BaseUserSettingsView):
     @property
     @memoized
     def page_url(self):
-        if self.name:
-            return reverse(self.name, args=[self.domain, self.editable_user_id])
+        if self.urlname:
+            return reverse(self.urlname, args=[self.domain, self.editable_user_id])
 
     @property
     def parent_pages(self):
         return [{
             'title': ListWebUsersView.page_title,
-            'url': reverse(ListWebUsersView.name, args=[self.domain]),
+            'url': reverse(ListWebUsersView.urlname, args=[self.domain]),
         }]
 
     @property
@@ -191,7 +191,7 @@ class BaseEditUserView(BaseUserSettingsView):
 
 class EditWebUserView(BaseEditUserView):
     template_name = "users/edit_web_user.html"
-    name = "user_account"
+    urlname = "user_account"
     page_title = ugettext_noop("Edit User Role")
     user_update_form_class = UpdateUserRoleForm
 
@@ -218,7 +218,7 @@ class EditWebUserView(BaseEditUserView):
 
     def get(self, request, *args, **kwargs):
         if self.editable_user_id == self.couch_user._id:
-            return HttpResponseRedirect(reverse(EditMyAccountDomainView.name, args=[self.domain]))
+            return HttpResponseRedirect(reverse(EditMyAccountDomainView.urlname, args=[self.domain]))
         return super(EditWebUserView, self).get(request, *args, **kwargs)
 
 
@@ -274,7 +274,7 @@ class BaseFullEditUserView(BaseEditUserView):
 
 class EditMyAccountDomainView(BaseFullEditUserView):
     template_name = "users/edit_full_user.html"
-    name = "domain_my_account"
+    urlname = "domain_my_account"
     page_title = ugettext_noop("Edit My Information")
     edit_user_form_title = ugettext_noop("My Information")
     user_update_form_class = UpdateMyAccountInfoForm
@@ -290,8 +290,8 @@ class EditMyAccountDomainView(BaseFullEditUserView):
     @property
     @memoized
     def page_url(self):
-        if self.name:
-            return reverse(self.name, args=[self.domain])
+        if self.urlname:
+            return reverse(self.urlname, args=[self.domain])
 
     @property
     def page_context(self):
@@ -300,14 +300,14 @@ class EditMyAccountDomainView(BaseFullEditUserView):
     def get(self, request, *args, **kwargs):
         if self.couch_user.is_commcare_user():
             from corehq.apps.users.views.mobile import EditCommCareUserView
-            return HttpResponseRedirect(reverse(EditCommCareUserView.name, args=[self.domain, self.editable_user_id]))
+            return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[self.domain, self.editable_user_id]))
         return super(EditMyAccountDomainView, self).get(request, *args, **kwargs)
 
 
 class ListWebUsersView(BaseUserSettingsView):
     template_name = 'users/web_users.html'
     page_title = ugettext_noop("Web Users & Roles")
-    name = 'web_users'
+    urlname = 'web_users'
 
     @method_decorator(require_can_edit_web_users)
     def dispatch(self, request, *args, **kwargs):
@@ -361,7 +361,7 @@ def remove_web_user(request, domain, couch_user_id):
             username=user.username,
             url=reverse('undo_remove_web_user', args=[domain, record.get_id])
         ), extra_tags="html")
-    return HttpResponseRedirect(reverse(ListWebUsersView.name, args=[domain]))
+    return HttpResponseRedirect(reverse(ListWebUsersView.urlname, args=[domain]))
 
 @require_can_edit_web_users
 def undo_remove_web_user(request, domain, record_id):
@@ -370,7 +370,7 @@ def undo_remove_web_user(request, domain, record_id):
     messages.success(request, 'You have successfully restored {username}.'.format(
         username=WebUser.get_by_user_id(record.user_id).username
     ))
-    return HttpResponseRedirect(reverse(ListWebUsersView.name, args=[domain]))
+    return HttpResponseRedirect(reverse(ListWebUsersView.urlname, args=[domain]))
 
 # If any permission less than domain admin were allowed here, having that permission would give you the permission
 # to change the permissions of your own role such that you could do anything, and would thus be equivalent to having
@@ -447,13 +447,13 @@ class BaseManageWebUserView(BaseUserSettingsView):
     def parent_pages(self):
         return [{
             'title': ListWebUsersView.page_title,
-            'url': reverse(ListWebUsersView.name, args=[self.domain]),
+            'url': reverse(ListWebUsersView.urlname, args=[self.domain]),
         }]
 
 
 class InviteWebUserView(BaseManageWebUserView):
     template_name = "users/invite_web_user.html"
-    name = 'invite_web_user'
+    urlname = 'invite_web_user'
     page_title = ugettext_noop("Invite Web User to Project")
 
     @property
@@ -487,7 +487,7 @@ class InviteWebUserView(BaseManageWebUserView):
             invite.save()
             invite.send_activation_email()
             messages.success(request, "Invitation sent to %s" % invite.email)
-            return HttpResponseRedirect(reverse(ListWebUsersView.name, args=[self.domain]))
+            return HttpResponseRedirect(reverse(ListWebUsersView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 
 
@@ -505,9 +505,9 @@ def make_phone_number_default(request, domain, couch_user_id):
     user.set_default_phone_number(phone_number)
     if user.is_commcare_user():
         from corehq.apps.users.views.mobile import EditCommCareUserView
-        redirect = reverse(EditCommCareUserView.name, args=[domain, couch_user_id])
+        redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
     else:
-        redirect = reverse(EditMyAccountDomainView.name, args=[domain])
+        redirect = reverse(EditMyAccountDomainView.urlname, args=[domain])
     return HttpResponseRedirect(redirect)
 
 @require_POST
@@ -524,9 +524,9 @@ def delete_phone_number(request, domain, couch_user_id):
     user.delete_phone_number(phone_number)
     if user.is_commcare_user():
         from corehq.apps.users.views.mobile import EditCommCareUserView
-        redirect = reverse(EditCommCareUserView.name, args=[domain, couch_user_id])
+        redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
     else:
-        redirect = reverse(EditMyAccountDomainView.name, args=[domain])
+        redirect = reverse(EditMyAccountDomainView.urlname, args=[domain])
     return HttpResponseRedirect(redirect)
 
 @require_permission_to_edit_user
@@ -548,9 +548,9 @@ def verify_phone_number(request, domain, couch_user_id):
 
     if user.is_commcare_user():
         from corehq.apps.users.views.mobile import EditCommCareUserView
-        redirect = reverse(EditCommCareUserView.name, args=[domain, couch_user_id])
+        redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
     else:
-        redirect = reverse(EditMyAccountDomainView.name, args=[domain])
+        redirect = reverse(EditMyAccountDomainView.urlname, args=[domain])
     return HttpResponseRedirect(redirect)
 
 

@@ -806,7 +806,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                         }[duplicate.owner_doc_type]
                         from corehq.apps.users.views.mobile import EditCommCareUserView
                         url_ref, doc_id_param = {
-                            'user': (EditCommCareUserView.name, 'couch_user_id'),
+                            'user': (EditCommCareUserView.urlname, 'couch_user_id'),
                             'case': ('case_details', 'case_id'),
                         }[doc_type]
                         dup_url = reverse(url_ref, kwargs={'domain': duplicate.domain, doc_id_param: duplicate.owner_id})

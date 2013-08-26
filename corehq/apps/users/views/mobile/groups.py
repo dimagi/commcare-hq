@@ -40,7 +40,7 @@ class BaseGroupsView(BaseUserSettingsView):
 class EditGroupsView(BaseGroupsView):
     template_name = "groups/all_groups.html"
     page_title = ugettext_noop("Groups")
-    name = 'all_groups'
+    urlname = 'all_groups'
 
     @property
     def page_context(self):
@@ -48,7 +48,7 @@ class EditGroupsView(BaseGroupsView):
 
 
 class EditGroupMembersView(BaseGroupsView):
-    name = 'group_members'
+    urlname = 'group_members'
     page_title = ugettext_noop("Edit Group")
     template_name = 'groups/group_members.html'
 
@@ -62,7 +62,7 @@ class EditGroupMembersView(BaseGroupsView):
 
     @property
     def page_url(self):
-        return reverse(self.name, args=[self.domain, self.group_id])
+        return reverse(self.urlname, args=[self.domain, self.group_id])
 
     @property
     @memoized
@@ -99,7 +99,7 @@ class EditGroupMembersView(BaseGroupsView):
 
 
 class EditGroupMembership(BaseGroupsView):
-    name = 'group_membership'
+    urlname = 'group_membership'
     page_title = ugettext_noop("Membership Info")
     template_name = 'groups/groups.html'
 
@@ -109,7 +109,7 @@ class EditGroupMembership(BaseGroupsView):
 
     @property
     def page_url(self):
-        return reverse(self.name, args=[self.domain, self.editable_user_id])
+        return reverse(self.urlname, args=[self.domain, self.editable_user_id])
 
     @property
     @memoized

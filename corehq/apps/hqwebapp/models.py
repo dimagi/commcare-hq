@@ -309,10 +309,10 @@ class ProjectDataTab(UITab):
 
         if self.can_edit_commtrack_data:
             from corehq.apps.commtrack.views import ProductListView
-            commtrack_products_url = reverse(ProductListView.name, args=[self.domain])
+            commtrack_products_url = reverse(ProductListView.urlname, args=[self.domain])
 
             from corehq.apps.locations.views import LocationsListView
-            commtrack_locations_url = reverse(LocationsListView.name, args=[self.domain])
+            commtrack_locations_url = reverse(LocationsListView.urlname, args=[self.domain])
 
             is_active = is_active or (
                 full_path.startswith(commtrack_products_url)
@@ -574,7 +574,7 @@ class ProjectUsersTab(UITab):
                  'description': _("Create and manage users for CommCare and CloudCare."),
                  'subpages': [
                      {'title': commcare_username,
-                      'urlname': EditCommCareUserView.name},
+                      'urlname': EditCommCareUserView.urlname},
                      {'title': _('New Mobile Worker'),
                       'urlname': 'add_commcare_account'},
                      {'title': _('Bulk Upload'),
@@ -617,7 +617,7 @@ class ProjectUsersTab(UITab):
             from corehq.apps.users.views import (EditWebUserView, EditMyAccountDomainView, ListWebUsersView)
             items.append((_('Project Users'), [
                 {'title': ListWebUsersView.page_title,
-                 'url': reverse(ListWebUsersView.name, args=[self.domain]),
+                 'url': reverse(ListWebUsersView.urlname, args=[self.domain]),
                  'description': _("Grant other CommCare HQ users access to your project and manage user roles."),
                  'subpages': [
                      {
@@ -626,11 +626,11 @@ class ProjectUsersTab(UITab):
                      },
                      {
                          'title': web_username,
-                         'urlname': EditWebUserView.name
+                         'urlname': EditWebUserView.urlname
                      },
                      {
                          'title': _('My Information'),
-                         'urlname': EditMyAccountDomainView.name
+                         'urlname': EditMyAccountDomainView.urlname
                      }
                  ]}
             ]))
@@ -663,11 +663,11 @@ class ProjectSettingsTab(UITab):
             project_info.extend([
                 {
                     'title': EditBasicProjectInfoView.page_title,
-                    'url': reverse(EditBasicProjectInfoView.name, args=[self.domain])
+                    'url': reverse(EditBasicProjectInfoView.urlname, args=[self.domain])
                 },
                 {
                     'title': EditDeploymentProjectInfoView.page_title,
-                    'url': reverse(EditDeploymentProjectInfoView.name, args=[self.domain])
+                    'url': reverse(EditDeploymentProjectInfoView.urlname, args=[self.domain])
                 }
             ])
 
@@ -676,7 +676,7 @@ class ProjectSettingsTab(UITab):
                 from hqbilling.views import EditProjectBillingInfoView
                 project_info.append({
                     'title': EditProjectBillingInfoView.page_title,
-                    'url': reverse(EditProjectBillingInfoView.name, args=[self.domain])
+                    'url': reverse(EditProjectBillingInfoView.urlname, args=[self.domain])
                 })
             except ImportError:
                 pass
@@ -684,7 +684,7 @@ class ProjectSettingsTab(UITab):
         from corehq.apps.domain.views import EditMyProjectSettingsView
         project_info.append({
             'title': EditMyProjectSettingsView.page_title,
-            'url': reverse(EditMyProjectSettingsView.name, args=[self.domain])
+            'url': reverse(EditMyProjectSettingsView.urlname, args=[self.domain])
         })
 
         items.append((_('Project Information'), project_info))
@@ -696,11 +696,11 @@ class ProjectSettingsTab(UITab):
                 commtrack_settings = [
                     {
                         'title': BasicCommTrackSettingsView.page_title,
-                        'url': reverse(BasicCommTrackSettingsView.name, args=[self.domain])
+                        'url': reverse(BasicCommTrackSettingsView.urlname, args=[self.domain])
                     },
                     {
                         'title': AdvancedCommTrackSettingsView.page_title,
-                        'url': reverse(AdvancedCommTrackSettingsView.name, args=[self.domain])
+                        'url': reverse(AdvancedCommTrackSettingsView.urlname, args=[self.domain])
                     },
                 ]
                 items.append((_('CommTrack'), commtrack_settings))
@@ -739,11 +739,11 @@ class ProjectSettingsTab(UITab):
             from corehq.apps.domain.views import EditInternalDomainInfoView, EditInternalCalculationsView
             internal_admin = [{
                 'title': EditInternalDomainInfoView.page_title,
-                'url': reverse(EditInternalDomainInfoView.name, args=[self.domain])
+                'url': reverse(EditInternalDomainInfoView.urlname, args=[self.domain])
             },
             {
                 'title': EditInternalCalculationsView.page_title,
-                'url': reverse(EditInternalCalculationsView.name, args=[self.domain])
+                'url': reverse(EditInternalCalculationsView.urlname, args=[self.domain])
             }]
             items.append((_('Internal Data (Dimagi Only)'), internal_admin))
 
@@ -769,15 +769,15 @@ class MySettingsTab(UITab):
             (_("Manage My Settings"), (
                 {
                     'title': MyAccountSettingsView.page_title,
-                    'url': reverse(MyAccountSettingsView.name),
+                    'url': reverse(MyAccountSettingsView.urlname),
                 },
                 {
                     'title': MyProjectsList.page_title,
-                    'url': reverse(MyProjectsList.name),
+                    'url': reverse(MyProjectsList.urlname),
                 },
                 {
                     'title': ChangeMyPasswordView.page_title,
-                    'url': reverse(ChangeMyPasswordView.name),
+                    'url': reverse(ChangeMyPasswordView.urlname),
                 },
             ))
         ]

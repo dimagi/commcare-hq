@@ -41,7 +41,7 @@ class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabular
         user_link_template = '<a href="%(link)s">%(username)s</a>'
         from corehq.apps.users.views.mobile import EditCommCareUserView
         user_link = user_link_template % {"link": "%s%s" % (get_url_base(),
-                                                            reverse(EditCommCareUserView.name,
+                                                            reverse(EditCommCareUserView.urlname,
                                                                     args=[self.domain, user._id])),
                                           "username": user.username_in_report}
         return self.table_cell(user.raw_username, user_link)

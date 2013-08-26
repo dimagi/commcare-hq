@@ -74,25 +74,25 @@ urlpatterns =\
 
 domain_settings = patterns(
     'corehq.apps.domain.views',
-    url(r'^$', DefaultProjectSettingsView.as_view(), name=DefaultProjectSettingsView.name),
-    url(r'^my_settings/$', EditMyProjectSettingsView.as_view(), name=EditMyProjectSettingsView.name),
-    url(r'^basic/$', EditBasicProjectInfoView.as_view(), name=EditBasicProjectInfoView.name),
-    url(r'^deployment/$', EditDeploymentProjectInfoView.as_view(), name=EditDeploymentProjectInfoView.name),
-    url(r'^forwarding/$', DomainForwardingOptionsView.as_view(), name=DomainForwardingOptionsView.name),
-    url(r'^forwarding/new/(?P<repeater_type>\w+)/$', AddRepeaterView.as_view(), name=AddRepeaterView.name),
+    url(r'^$', DefaultProjectSettingsView.as_view(), name=DefaultProjectSettingsView.urlname),
+    url(r'^my_settings/$', EditMyProjectSettingsView.as_view(), name=EditMyProjectSettingsView.urlname),
+    url(r'^basic/$', EditBasicProjectInfoView.as_view(), name=EditBasicProjectInfoView.urlname),
+    url(r'^deployment/$', EditDeploymentProjectInfoView.as_view(), name=EditDeploymentProjectInfoView.urlname),
+    url(r'^forwarding/$', DomainForwardingOptionsView.as_view(), name=DomainForwardingOptionsView.urlname),
+    url(r'^forwarding/new/(?P<repeater_type>\w+)/$', AddRepeaterView.as_view(), name=AddRepeaterView.urlname),
     url(r'^forwarding/test/$', 'test_repeater', name='test_repeater'),
     url(r'^forwarding/(?P<repeater_id>[\w-]+)/stop/$', 'drop_repeater', name='drop_repeater'),
     url(r'^snapshots/set_published/(?P<snapshot_name>[\w-]+)/$', 'set_published_snapshot', name='domain_set_published'),
     url(r'^snapshots/set_published/$', 'set_published_snapshot', name='domain_clear_published'),
-    url(r'^snapshots/$', ExchangeSnapshotsView.as_view(), name=ExchangeSnapshotsView.name),
-    url(r'^snapshots/new/$', CreateNewExchangeSnapshotView.as_view(), name=CreateNewExchangeSnapshotView.name),
-    url(r'^multimedia/$', ManageProjectMediaView.as_view(), name=ManageProjectMediaView.name),
-    url(r'^commtrack/general/$', BasicCommTrackSettingsView.as_view(), name=BasicCommTrackSettingsView.name),
-    url(r'^commtrack/advanced/$', AdvancedCommTrackSettingsView.as_view(), name=AdvancedCommTrackSettingsView.name),
+    url(r'^snapshots/$', ExchangeSnapshotsView.as_view(), name=ExchangeSnapshotsView.urlname),
+    url(r'^snapshots/new/$', CreateNewExchangeSnapshotView.as_view(), name=CreateNewExchangeSnapshotView.urlname),
+    url(r'^multimedia/$', ManageProjectMediaView.as_view(), name=ManageProjectMediaView.urlname),
+    url(r'^commtrack/general/$', BasicCommTrackSettingsView.as_view(), name=BasicCommTrackSettingsView.urlname),
+    url(r'^commtrack/advanced/$', AdvancedCommTrackSettingsView.as_view(), name=AdvancedCommTrackSettingsView.urlname),
     url(r'^organization/$', 'org_settings', name='domain_org_settings'),
     url(r'^organization/request/$', 'org_request', name='domain_org_request'),
-    url(r'^internal/info/$', EditInternalDomainInfoView.as_view(), name=EditInternalDomainInfoView.name),
-    url(r'^internal/calculations/$', EditInternalCalculationsView.as_view(), name=EditInternalCalculationsView.name),
+    url(r'^internal/info/$', EditInternalDomainInfoView.as_view(), name=EditInternalDomainInfoView.urlname),
+    url(r'^internal/calculations/$', EditInternalCalculationsView.as_view(), name=EditInternalCalculationsView.urlname),
     url(r'^internal/calculated_properties/$', 'calculated_properties', name='calculated_properties'),
 )
 
@@ -100,7 +100,7 @@ try:
     from hqbilling.views import EditProjectBillingInfoView
     domain_settings += patterns(
         'hqbilling.views',
-        url(r'^billing/$', EditProjectBillingInfoView.as_view(), name=EditProjectBillingInfoView.name),
+        url(r'^billing/$', EditProjectBillingInfoView.as_view(), name=EditProjectBillingInfoView.urlname),
     )
 except ImportError:
     pass

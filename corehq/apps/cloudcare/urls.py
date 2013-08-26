@@ -28,7 +28,7 @@ api_urls = patterns('corehq.apps.cloudcare.views',
 
 # used in settings urls
 settings_urls = patterns('corehq.apps.cloudcare.views',
-    url(r'^app/', EditCloudcareUserPermissionsView.as_view(), name=EditCloudcareUserPermissionsView.name),
+    url(r'^app/', EditCloudcareUserPermissionsView.as_view(), name=EditCloudcareUserPermissionsView.urlname),
 )
 
 urlpatterns = patterns('corehq.apps.cloudcare.views',

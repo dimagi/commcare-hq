@@ -91,8 +91,8 @@ class BaseDomainView(BaseSectionPageView, DomainViewMixin):
     @property
     @memoized
     def page_url(self):
-        if self.name:
-            return reverse(self.name, args=[self.domain])
+        if self.urlname:
+            return reverse(self.urlname, args=[self.domain])
 
 
 class BaseProjectSettingsView(BaseDomainView):
@@ -105,7 +105,7 @@ class BaseProjectSettingsView(BaseDomainView):
         main_context.update({
             'active_tab': ProjectSettingsTab(
                 self.request,
-                self.name,
+                self.urlname,
                 domain=self.domain,
                 couch_user=self.request.couch_user,
                 project=self.request.project
@@ -117,16 +117,16 @@ class BaseProjectSettingsView(BaseDomainView):
     @property
     @memoized
     def section_url(self):
-        return reverse(EditMyProjectSettingsView.name, args=[self.domain])
+        return reverse(EditMyProjectSettingsView.urlname, args=[self.domain])
 
 
 class DefaultProjectSettingsView(BaseDomainView):
-    name = 'domain_settings_default'
+    urlname = 'domain_settings_default'
 
     def get(self, request, *args, **kwargs):
         if request.couch_user.is_domain_admin(self.domain):
-            return HttpResponseRedirect(reverse(EditBasicProjectInfoView.name, args=[self.domain]))
-        return HttpResponseRedirect(reverse(EditMyProjectSettingsView.name, args=[self.domain]))
+            return HttpResponseRedirect(reverse(EditBasicProjectInfoView.urlname, args=[self.domain]))
+        return HttpResponseRedirect(reverse(EditMyProjectSettingsView.urlname, args=[self.domain]))
 
 
 class BaseAdminProjectSettingsView(BaseProjectSettingsView):
@@ -166,7 +166,7 @@ class BaseEditProjectInfoView(BaseAdminProjectSettingsView):
 
 class EditBasicProjectInfoView(BaseEditProjectInfoView):
     template_name = 'domain/admin/info_basic.html'
-    name = 'domain_basic_info'
+    urlname = 'domain_basic_info'
     page_title = ugettext_noop("Basic")
 
     @property
@@ -226,7 +226,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
 
 class EditDeploymentProjectInfoView(BaseEditProjectInfoView):
     template_name = 'domain/admin/info_deployment.html'
-    name = 'domain_deployment_info'
+    urlname = 'domain_deployment_info'
     page_title = ugettext_noop("Deployment")
 
     @property
@@ -267,7 +267,7 @@ class EditDeploymentProjectInfoView(BaseEditProjectInfoView):
 
 class EditMyProjectSettingsView(BaseProjectSettingsView):
     template_name = 'domain/admin/my_project_settings.html'
-    name = 'my_project_settings'
+    urlname = 'my_project_settings'
     page_title = ugettext_noop("My Timezone")
 
     @property
@@ -302,7 +302,7 @@ def drop_repeater(request, domain, repeater_id):
     rep = FormRepeater.get(repeater_id)
     rep.retire()
     messages.success(request, "Form forwarding stopped!")
-    return HttpResponseRedirect(reverse(DomainForwardingOptionsView.name, args=[domain]))
+    return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[domain]))
 
 @require_POST
 @require_can_edit_web_users
@@ -352,7 +352,7 @@ def logo(request, domain):
 
 class ExchangeSnapshotsView(BaseAdminProjectSettingsView):
     template_name = 'domain/snapshot_settings.html'
-    name = 'domain_snapshot_settings'
+    urlname = 'domain_snapshot_settings'
     page_title = ugettext_noop("CommCare Exchange")
 
     @property
@@ -366,14 +366,14 @@ class ExchangeSnapshotsView(BaseAdminProjectSettingsView):
 
 class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
     template_name = 'domain/create_snapshot.html'
-    name = 'domain_create_snapshot'
+    urlname = 'domain_create_snapshot'
     page_title = ugettext_noop("Publish New Version")
 
     @property
     def parent_pages(self):
         return [{
             'title': ExchangeSnapshotsView.page_title,
-            'url': reverse(ExchangeSnapshotsView.name, args=[self.domain]),
+            'url': reverse(ExchangeSnapshotsView.urlname, args=[self.domain]),
         }]
 
     @property
@@ -582,12 +582,12 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                 messages.success(request, (_("Created a new version of your app. This version will be posted to "
                                              "CommCare Exchange pending approval by admins.") if publish_on_submit
                                            else _("Created a new version of your app.")))
-                return redirect(ExchangeSnapshotsView.name, self.domain)
+                return redirect(ExchangeSnapshotsView.urlname, self.domain)
         return self.get(request, *args, **kwargs)
 
 
 class ManageProjectMediaView(BaseAdminProjectSettingsView):
-    name = 'domain_manage_multimedia'
+    urlname = 'domain_manage_multimedia'
     page_title = ugettext_noop("Multimedia Sharing")
     template_name = 'domain/admin/media_manager.html'
 
@@ -639,7 +639,7 @@ class RepeaterMixin(object):
 
 
 class DomainForwardingOptionsView(BaseAdminProjectSettingsView, RepeaterMixin):
-    name = 'domain_forwarding'
+    urlname = 'domain_forwarding'
     page_title = ugettext_noop("Data Forwarding")
     template_name = 'domain/admin/domain_forwarding.html'
 
@@ -659,19 +659,19 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView, RepeaterMixin):
 
 
 class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
-    name = 'add_repeater'
+    urlname = 'add_repeater'
     page_title = ugettext_noop("Forward Data")
     template_name = 'domain/admin/add_form_repeater.html'
 
     @property
     def page_url(self):
-        return reverse(self.name, args=[self.domain, self.repeater_type])
+        return reverse(self.urlname, args=[self.domain, self.repeater_type])
 
     @property
     def parent_pages(self):
         return [{
             'title': DomainForwardingOptionsView.page_title,
-            'url': reverse(DomainForwardingOptionsView.name, args=[self.domain]),
+            'url': reverse(DomainForwardingOptionsView.urlname, args=[self.domain]),
         }]
 
     @property
@@ -712,7 +712,7 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
             )
             repeater.save()
             messages.success(request, _("Forwarding set up to %s" % repeater.url))
-            return HttpResponseRedirect(reverse(DomainForwardingOptionsView.name, args=[self.domain]))
+            return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 
 
@@ -763,7 +763,7 @@ class BaseInternalDomainSettingsView(BaseProjectSettingsView):
 
 
 class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
-    name = 'domain_internal_settings'
+    urlname = 'domain_internal_settings'
     page_title = ugettext_noop("Project Information")
     template_name = 'domain/internal_settings.html'
 
@@ -804,7 +804,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
 
 
 class EditInternalCalculationsView(BaseInternalDomainSettingsView):
-    name = 'domain_internal_calculations'
+    urlname = 'domain_internal_calculations'
     page_title = ugettext_noop("Calculated Properties")
     template_name = 'domain/internal_calculations.html'
 
@@ -890,7 +890,7 @@ class BaseCommTrackAdminView(BaseAdminProjectSettingsView):
 
 
 class BasicCommTrackSettingsView(BaseCommTrackAdminView):
-    name = 'domain_commtrack_settings'
+    urlname = 'domain_commtrack_settings'
     page_title = ugettext_noop("Basic CommTrack Settings")
     template_name = 'domain/admin/commtrack_settings.html'
 
@@ -978,7 +978,7 @@ class BasicCommTrackSettingsView(BaseCommTrackAdminView):
 
 
 class AdvancedCommTrackSettingsView(BaseCommTrackAdminView):
-    name = 'commtrack_settings_advanced'
+    urlname = 'commtrack_settings_advanced'
     page_title = ugettext_noop("Advanced CommTrack Settings")
     template_name = 'domain/admin/commtrack_settings_advanced.html'
 

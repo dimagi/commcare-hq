@@ -40,7 +40,7 @@ DEFAULT_USER_LIST_LIMIT = 10
 
 class EditCommCareUserView(BaseFullEditUserView):
     template_name = "users/edit_commcare_user.html"
-    name = "edit_commcare_user"
+    urlname = "edit_commcare_user"
     user_update_form_class = UpdateCommCareUserInfoForm
     page_title = ugettext_noop("Edit Mobile Worker")
 
@@ -176,7 +176,7 @@ class EditCommCareUserView(BaseFullEditUserView):
     def parent_pages(self):
         return [{
             'title': _("Mobile Workers"),
-            'url': reverse(ListCommCareUsersView.name, args=[self.domain]),
+            'url': reverse(ListCommCareUsersView.urlname, args=[self.domain]),
         }]
 
     def post(self, request, *args, **kwargs):
@@ -189,7 +189,7 @@ class EditCommCareUserView(BaseFullEditUserView):
 
 class ListCommCareUsersView(BaseUserSettingsView):
     template_name = "users/mobile/users_list.html"
-    name = 'commcare_users'
+    urlname = 'commcare_users'
     page_title = ugettext_noop("Mobile Workers")
 
     DEFAULT_LIMIT = 10
@@ -268,7 +268,7 @@ class ListCommCareUsersView(BaseUserSettingsView):
 
 
 class AsyncListCommCareUsersView(ListCommCareUsersView):
-    name = 'user_list'
+    urlname = 'user_list'
 
     @property
     def sort_by(self):
@@ -312,7 +312,7 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
             u_data = {
                 'user_id': user.user_id,
                 'status': "" if user.is_active else _("Archived"),
-                'edit_url': reverse(EditCommCareUserView.name, args=[self.domain, user.user_id]),
+                'edit_url': reverse(EditCommCareUserView.urlname, args=[self.domain, user.user_id]),
                 'username': user.raw_username,
                 'full_name': user.full_name,
                 'joined_on': user.date_joined.strftime("%d %b %Y"),
@@ -387,7 +387,7 @@ def restore_commcare_user(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
     user.unretire()
     messages.success(request, "User %s and all their submissions have been restored" % user.username)
-    return HttpResponseRedirect(reverse(EditCommCareUserView.name, args=[domain, user_id]))
+    return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
 
 @require_can_edit_commcare_users
 @require_POST
@@ -399,7 +399,7 @@ def update_user_data(request, domain, couch_user_id):
     user.user_data = updated_data
     user.save()
     messages.success(request, "User data updated!")
-    return HttpResponseRedirect(reverse(EditCommCareUserView.name, args=[domain, couch_user_id]))
+    return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id]))
 
 
 class BaseManageCommCareUserView(BaseUserSettingsView):
@@ -412,13 +412,13 @@ class BaseManageCommCareUserView(BaseUserSettingsView):
     def parent_pages(self):
         return [{
             'title': ListCommCareUsersView.page_title,
-            'url': reverse(ListCommCareUsersView.name, args=[self.domain]),
+            'url': reverse(ListCommCareUsersView.urlname, args=[self.domain]),
         }]
 
 
 class CreateCommCareUserView(BaseManageCommCareUserView):
     template_name = "users/add_commcare_account.html"
-    name = 'add_commcare_account'
+    urlname = 'add_commcare_account'
     page_title = ugettext_noop("New Mobile Worker")
 
     @property
@@ -452,14 +452,14 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
                 password,
                 device_id="Generated from HQ"
             )
-            return HttpResponseRedirect(reverse(EditCommCareUserView.name,
+            return HttpResponseRedirect(reverse(EditCommCareUserView.urlname,
                                                 args=[self.domain, couch_user.userID]))
         return self.get(request, *args, **kwargs)
 
 
 class UploadCommCareUsers(BaseManageCommCareUserView):
     template_name = 'users/upload_commcare_users.html'
-    name = 'upload_commcare_users'
+    urlname = 'upload_commcare_users'
     page_title = ugettext_noop("Bulk Upload Mobile Workers")
 
     @property
