@@ -14,8 +14,8 @@ urlpatterns = patterns('corehq.apps.commtrack.views',
 
 # used in settings urls
 settings_urls = patterns('corehq.apps.commtrack.views',
-    url(r'^products/$', ProductListView.as_view(), name=ProductListView.name),
-    url(r'^products/list/$', FetchProductListView.as_view(), name=FetchProductListView.name),
-    url(r'^products/new/$', NewProductView.as_view(), name=NewProductView.name),
-    url(r'^products/(?P<prod_id>[\w-]+)/$', EditProductView.as_view(), name=EditProductView.name),
+    url(r'^products/$', ProductListView.as_view(), name=ProductListView.urlname),
+    url(r'^products/list/$', FetchProductListView.as_view(), name=FetchProductListView.urlname),
+    url(r'^products/new/$', NewProductView.as_view(), name=NewProductView.urlname),
+    url(r'^products/(?P<prod_id>[\w-]+)/$', EditProductView.as_view(), name=EditProductView.urlname),
 )

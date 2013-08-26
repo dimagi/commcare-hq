@@ -10,10 +10,10 @@ from corehq.apps.settings.views import MyAccountSettingsView, DefaultMySettingsV
 
 urlpatterns = patterns(
     'corehq.apps.settings.views',
-    url(r'^$', DefaultMySettingsView.as_view(), name=DefaultMySettingsView.name),
-    url(r'^settings/$', MyAccountSettingsView.as_view(), name=MyAccountSettingsView.name),
-    url(r'^projects/$', MyProjectsList.as_view(), name=MyProjectsList.name),
-    url(r'^password/$', ChangeMyPasswordView.as_view(), name=ChangeMyPasswordView.name),
+    url(r'^$', DefaultMySettingsView.as_view(), name=DefaultMySettingsView.urlname),
+    url(r'^settings/$', MyAccountSettingsView.as_view(), name=MyAccountSettingsView.urlname),
+    url(r'^projects/$', MyProjectsList.as_view(), name=MyProjectsList.urlname),
+    url(r'^password/$', ChangeMyPasswordView.as_view(), name=ChangeMyPasswordView.urlname),
 )
 
 domain_specific = patterns('',

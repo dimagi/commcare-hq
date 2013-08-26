@@ -34,7 +34,7 @@ class BaseCommTrackManageView(BaseProjectDataView):
 
 class ProductListView(BaseCommTrackManageView):
     # todo mobile workers shares this type of view too---maybe there should be a class for this?
-    name = 'commtrack_product_list'
+    urlname = 'commtrack_product_list'
     template_name = 'commtrack/manage/products.html'
     page_title = ugettext_noop("Manage Products")
 
@@ -70,7 +70,7 @@ class ProductListView(BaseCommTrackManageView):
 
 
 class FetchProductListView(ProductListView):
-    name = 'commtrack_product_fetch'
+    urlname = 'commtrack_product_fetch'
 
     @property
     def product_data(self):
@@ -91,7 +91,7 @@ class FetchProductListView(ProductListView):
 
 
 class NewProductView(BaseCommTrackManageView):
-    name = 'commtrack_product_new'
+    urlname = 'commtrack_product_new'
     page_title = ugettext_noop("New Product")
     template_name = 'commtrack/manage/product.html'
 
@@ -104,7 +104,7 @@ class NewProductView(BaseCommTrackManageView):
     def parent_pages(self):
         return [{
             'title': ProductListView.page_title,
-            'url': reverse(ProductListView.name, args=[self.domain]),
+            'url': reverse(ProductListView.urlname, args=[self.domain]),
         }]
 
     @property
@@ -129,7 +129,7 @@ class NewProductView(BaseCommTrackManageView):
 
 
 class EditProductView(NewProductView):
-    name = 'commtrack_product_edit'
+    urlname = 'commtrack_product_edit'
     page_title = ugettext_noop("Edit Product")
 
     @property
@@ -153,7 +153,7 @@ class EditProductView(NewProductView):
 
     @property
     def page_url(self):
-        return reverse(self.name, args=[self.domain, self.product_id])
+        return reverse(self.urlname, args=[self.domain, self.product_id])
 
 
 @require_superuser

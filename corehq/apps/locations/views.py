@@ -34,7 +34,7 @@ class BaseLocationView(BaseCommTrackManageView):
 
 
 class LocationsListView(BaseLocationView):
-    name = 'manage_locations'
+    urlname = 'manage_locations'
     page_title = ugettext_noop("Manage Locations")
     template_name = 'locations/manage/locations.html'
 
@@ -48,7 +48,7 @@ class LocationsListView(BaseLocationView):
 
 
 class NewLocationView(BaseLocationView):
-    name = 'create_location'
+    urlname = 'create_location'
     page_title = ugettext_noop("New Location")
     template_name = 'locations/manage/location.html'
 
@@ -56,7 +56,7 @@ class NewLocationView(BaseLocationView):
     def parent_pages(self):
         return [{
             'title': LocationsListView.page_title,
-            'url': reverse(LocationsListView.name, args=[self.domain]),
+            'url': reverse(LocationsListView.urlname, args=[self.domain]),
         }]
 
     @property
@@ -87,14 +87,14 @@ class NewLocationView(BaseLocationView):
             self.location_form.save()
             messages.success(request, _('Location saved!'))
             return HttpResponseRedirect('%s?%s' % (
-                reverse(LocationsListView.name, args=[self.domain]),
+                reverse(LocationsListView.urlname, args=[self.domain]),
                 urllib.urlencode({'selected': self.location_form.location._id})
             ))
         return self.get(request, *args, **kwargs)
 
 
 class EditLocationView(NewLocationView):
-    name = 'edit_location'
+    urlname = 'edit_location'
     page_title = ugettext_noop("Edit Location")
 
     @property
@@ -114,7 +114,7 @@ class EditLocationView(NewLocationView):
 
     @property
     def page_url(self):
-        return reverse(self.name, args=[self.domain, self.location_id])
+        return reverse(self.urlname, args=[self.domain, self.location_id])
 
 
 @domain_admin_required # TODO: will probably want less restrictive permission

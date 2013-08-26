@@ -116,13 +116,13 @@ class BaseCreateCustomExportView(BaseExportView):
 
 
 class CreateCustomFormExportView(BaseCreateCustomExportView):
-    name = 'custom_export_form'
+    urlname = 'custom_export_form'
     page_title = ugettext_noop("Create Custom Form Export")
     export_type = 'form'
 
 
 class CreateCustomCaseExportView(BaseCreateCustomExportView):
-    name = 'custom_export_case'
+    urlname = 'custom_export_case'
     page_title = ugettext_noop("Create Custom Case Export")
     export_type = 'case'
 
@@ -131,7 +131,7 @@ class BaseModifyCustomExportView(BaseExportView):
 
     @property
     def page_url(self):
-        return reverse(self.name, args=[self.domain, self.export_id])
+        return reverse(self.urlname, args=[self.domain, self.export_id])
 
     @property
     def export_id(self):
@@ -155,19 +155,19 @@ class BaseEditCustomExportView(BaseModifyCustomExportView):
 
 
 class EditCustomFormExportView(BaseEditCustomExportView):
-    name = 'edit_custom_export_form'
+    urlname = 'edit_custom_export_form'
     page_title = ugettext_noop("Edit Form Custom Export")
     export_type = 'form'
 
 
 class EditCustomCaseExportView(BaseEditCustomExportView):
-    name = 'edit_custom_export_case'
+    urlname = 'edit_custom_export_case'
     page_title = ugettext_noop("Edit Case Custom Export")
     export_type = 'case'
 
 
 class DeleteCustomExportView(BaseModifyCustomExportView):
-    name = 'delete_custom_export'
+    urlname = 'delete_custom_export'
     http_method_names = ['post']
     is_async = False
 

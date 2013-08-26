@@ -48,13 +48,13 @@ class BaseMyAccountView(BaseSectionPageView):
     def dispatch(self, request, *args, **kwargs):
         if request.couch_user.is_commcare_user():
             from corehq.apps.users.views.mobile.users import EditCommCareUserView
-            return HttpResponseRedirect(reverse(EditCommCareUserView.name,
+            return HttpResponseRedirect(reverse(EditCommCareUserView.urlname,
                                          args=[request.couch_user.domain, request.couch_user._id]))
         return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_url(self):
-        return reverse(self.name)
+        return reverse(self.urlname)
 
     @property
     def main_context(self):
@@ -62,7 +62,7 @@ class BaseMyAccountView(BaseSectionPageView):
         context.update({
             'active_tab': MySettingsTab(
                 self.request,
-                self.name,
+                self.urlname,
                 couch_user=self.request.couch_user
             ),
             'is_my_account_settings': True,
@@ -71,18 +71,18 @@ class BaseMyAccountView(BaseSectionPageView):
 
     @property
     def section_url(self):
-        return reverse(MyAccountSettingsView.name)
+        return reverse(MyAccountSettingsView.urlname)
 
 
 class DefaultMySettingsView(BaseMyAccountView):
-    name = "default_my_settings"
+    urlname = "default_my_settings"
 
     def get(self, request, *args, **kwargs):
-        return HttpResponseRedirect(reverse(MyAccountSettingsView.name))
+        return HttpResponseRedirect(reverse(MyAccountSettingsView.urlname))
 
 
 class MyAccountSettingsView(BaseMyAccountView):
-    name = 'my_account_settings'
+    urlname = 'my_account_settings'
     page_title = ugettext_noop("My Information")
     template_name = 'settings/edit_my_account.html'
 
@@ -112,7 +112,7 @@ class MyAccountSettingsView(BaseMyAccountView):
 
 
 class MyProjectsList(BaseMyAccountView):
-    name = 'my_projects'
+    urlname = 'my_projects'
     page_title = ugettext_noop("My Projects")
     template_name = 'settings/my_projects.html'
 
@@ -152,7 +152,7 @@ class MyProjectsList(BaseMyAccountView):
 
 
 class ChangeMyPasswordView(BaseMyAccountView):
-    name = 'change_my_password'
+    urlname = 'change_my_password'
     template_name = 'settings/change_my_password.html'
     page_title = ugettext_noop("Change My Password")
 

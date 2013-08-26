@@ -297,7 +297,7 @@ class HttpResponseConflict(HttpResponse):
 
 class EditCloudcareUserPermissionsView(BaseUserSettingsView):
     template_name = 'cloudcare/config.html'
-    name = 'cloudcare_app_settings'
+    urlname = 'cloudcare_app_settings'
     page_title = ugettext_noop("CloudCare Permissions")
 
     @method_decorator(domain_admin_required)

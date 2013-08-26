@@ -72,11 +72,11 @@ class FormExportReportBase(ExportReport, DatespanMixin):
         return [
             {
                 'title': CreateCustomFormExportView.page_title,
-                'urlname': CreateCustomFormExportView.name,
+                'urlname': CreateCustomFormExportView.urlname,
             },
             {
                 'title': EditCustomFormExportView.page_title,
-                'urlname': EditCustomFormExportView.name,
+                'urlname': EditCustomFormExportView.urlname,
             },
         ]
 
@@ -249,11 +249,11 @@ class CaseExportReport(ExportReport):
         return [
             {
                 'title': CreateCustomCaseExportView.page_title,
-                'urlname': CreateCustomCaseExportView.name,
+                'urlname': CreateCustomCaseExportView.urlname,
             },
             {
                 'title': EditCustomCaseExportView.page_title,
-                'urlname': EditCustomCaseExportView.name,
+                'urlname': EditCustomCaseExportView.urlname,
             },
         ]
 
