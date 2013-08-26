@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 from xml.etree import ElementTree
-from sqlagg import SumColumn
+from sqlagg import SumColumn, filters
 from sqlagg.columns import SimpleColumn
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from corehq.apps.reportfixtures.fixturegenerators import gen_fixture
@@ -52,7 +52,7 @@ class CallCenter(SqlIndicatorSet):
         return cols + [
             DatabaseColumn('casesUpdatedInLastWeek', SumColumn('cases_updated'), sortable=False),
             DatabaseColumn('casesUpdatedInWeekPrior', SumColumn('cases_updated',
-                                                                filters=['date >= :2weekago', 'date < :weekago'],
+                                                                filters=[filters.GTE('date', '2weekago'), filters.LT('date', 'weekago')],
                                                                 alias='casesUpdatedInWeekPrior'),
                            sortable=False),
         ]
