@@ -223,24 +223,27 @@ class Calculator(object):
         return results
 
 
-class StringField(schema.StringProperty):
+class FlatField(schema.StringProperty):
     """
     This constructs a field for your indicator document that can perform basic
     operations on an item.  Pass in a function that accepts an item and returns
-    a string.
+    a dict.
     Example:
 
         class MyFluff(fluff.IndicatorDocument):
             ...
-            name = fluff.StringField(lambda case: case.name)
+            name = fluff.FlatField(lambda case: case.name)
     """
 
     def __init__(self, fn, *args, **kwargs):
         self.fn = fn
-        super(StringField, self).__init__(*args, **kwargs)
+        super(FlatField, self).__init__(*args, **kwargs)
 
     def calculate(self, item):
         return self.fn(item)
+
+    # def get_result(self, doc_id):
+        # return something
 
 
 class AttributeGetter(object):
@@ -265,19 +268,19 @@ class IndicatorDocumentMeta(schema.DocumentMeta):
 
     def __new__(mcs, name, bases, attrs):
         calculators = {}
-        string_fields = {}
+        flat_fields = {}
         for attr_name, attr_value in attrs.items():
             if isinstance(attr_value, Calculator):
                 calculators[attr_name] = attr_value
                 attrs[attr_name] = schema.DictProperty()
-            if isinstance(attr_value, StringField):
-                string_fields[attr_name] = attr_value
+            if isinstance(attr_value, FlatField):
+                flat_fields[attr_name] = attr_value
         cls = super(IndicatorDocumentMeta, mcs).__new__(mcs, name, bases, attrs)
         for slug, calculator in calculators.items():
             calculator.fluff = cls
             calculator.slug = slug
         cls._calculators = calculators
-        cls._string_fields = string_fields
+        cls._flat_fields = flat_fields 
         return cls
 
 
@@ -318,7 +321,7 @@ class IndicatorDocument(schema.Document):
         return datetime.datetime.utcnow().date()
 
     def update(self, item):
-        for attr, field in self._string_fields.items():
+        for attr, field in self._flat_fields.items():
             self[attr] = field.calculate(item)
 
     def calculate(self, item):
