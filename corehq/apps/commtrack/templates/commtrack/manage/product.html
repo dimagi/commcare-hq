@@ -15,10 +15,10 @@
         {% bootstrap_fieldset form "Product Information" %}
         <div class="form-actions"><button type="submit" class="btn btn-primary">
             {% if product.get_id %}
-                {% trans 'Update' %}
+                {% trans 'Update Product' %}
             {% else %}
-                {% trans 'Create' %}
-            {% endif %} {% trans 'Product' %}</button></div>
+                {% trans 'Create Product' %}
+            {% endif %}</button></div>
     </form>
 {% endblock %}
 
