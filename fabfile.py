@@ -528,7 +528,8 @@ def record_successful_deploy():
 def hotfix_deploy():
     """ deploy code to remote host by checking out the latest via git """
     if not console.confirm('Are you sure you want to deploy {env.environment}?'.format(env=env), default=False) or \
-       not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False):
+       not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False) or \
+       not console.confirm('HEY!!!! YOU ARE ONLY DEPLOYING CODE. THIS IS NOT A NORMAL DEPLOY. COOL???', default=False):
         utils.abort('Deployment aborted.')
 
     require('root', provided_by=('staging', 'preview', 'production', 'india'))
