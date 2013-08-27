@@ -250,13 +250,14 @@ function getPropValue(props, meta) {
 
 
 function formatDetailPopup(feature, config) {
-    var TEMPLATE = [
+    var DEFAULT_TEMPLATE = [
 	'<h3>{{ name }}</h3>',
 	'<hr>',
 	'<table>',
 	'{{#each detail}}<tr><td>{{ label }}</td><td style="font-weight: bold; text-align: right; padding-left: 20px;">{{ value }}</td></tr>{{/each}}',
 	'</table>',
     ].join('\n');
+    var TEMPLATE = config.detail_template || DEFAULT_TEMPLATE;
 
     var context = {props: feature.properties};
     if (config.name_column) {

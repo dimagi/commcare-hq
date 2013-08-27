@@ -715,6 +715,12 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
               'colorstops': (to create sliding color scales) [list of colorstops: [value, csscolor]],
               'thresholds': [optional] [list of numerical threshold values to convert numeric data into enum 'buckets'],
             },
+          'icon': [optional] use an icon as the marker; overrides size/color-- an image url OR
+            {
+              'column': column containing the relevant variable,
+              'categories': as in 'color', only a url instead of a color
+              'thresholds': as in 'color'
+            },
         }
       ]
     }
