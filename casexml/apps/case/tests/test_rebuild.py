@@ -44,7 +44,7 @@ class CaseRebuildTest(TestCase):
         self.assertTrue(case.actions[1] == case.actions[1])
 
         orig = case.actions[1]
-        copy = CommCareCaseAction.wrap(orig._doc)
+        copy = CommCareCaseAction.wrap(orig._doc.copy())
         self.assertTrue(copy != case.actions[0])
         self.assertTrue(copy == orig)
 
