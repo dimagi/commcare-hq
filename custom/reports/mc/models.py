@@ -33,14 +33,14 @@ def _filtered_calc_alias(xmlns=None, property_path=None, property_value=None,
 def _or_alias(calculators):
     return SimpleCalculator(
         date_provider=xcalculators.default_date,
-        filter=ORFilter(calculators),
+        filter=ORFilter([calc._filter for calc in calculators if calc._filter]),
         window=timedelta(days=1)
     )
 
 def _and_alias(calculators):
     return SimpleCalculator(
         date_provider=xcalculators.default_date,
-        filter=ANDFilter(calculators),
+        filter=ANDFilter([calc._filter for calc in calculators if calc._filter]),
         window=timedelta(days=1)
     )
 
