@@ -1,5 +1,4 @@
 from django.core.urlresolvers import NoReverseMatch, reverse
-from django.contrib.auth.models import User
 from django.http import HttpResponseForbidden, HttpResponse
 from tastypie import fields
 from tastypie.bundle import Bundle
