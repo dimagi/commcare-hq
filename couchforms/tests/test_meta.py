@@ -21,6 +21,18 @@ class TestMeta(TestCase):
         self.assertEqual("admin", xform.metadata.username)
         self.assertEqual("f7f0c79e-8b79-11df-b7de-005056c00008", xform.metadata.userID)
         self.assertEqual("v1.2.3 (biz bazzle)", xform.metadata.appVersion)
+        self.assertEqual(xform.metadata.to_json(), {
+            'username': u'admin',
+            'doc_type': 'Metadata',
+            'instanceID': None,
+            'userID': u'f7f0c79e-8b79-11df-b7de-005056c00008',
+            'timeEnd': '2010-07-23T13:55:11Z',
+            'appVersion': u'v1.2.3 (biz bazzle)',
+            'timeStart': '2010-07-22T13:54:27Z',
+            'deprecatedID': None,
+            'deviceID': None,
+            'clinic_id': u'5020280'
+        })
         
     def testDecimalAppVersion(self):
         '''
@@ -36,5 +48,17 @@ class TestMeta(TestCase):
                                                  settings.COUCH_USERNAME,
                                                  settings.COUCH_PASSWORD)
         xform = XFormInstance.get(doc_id)
-        self.assertEqual(xform.metadata.appVersion, '2.0') 
+        self.assertEqual(xform.metadata.appVersion, '2.0')
+        self.assertEqual(xform.metadata.to_json(), {
+            'username': u'admin',
+            'doc_type': 'Metadata',
+            'instanceID': None,
+            'userID': u'f7f0c79e-8b79-11df-b7de-005056c00008',
+            'timeEnd': '2010-07-23T13:55:11Z',
+            'appVersion': u'2.0',
+            'timeStart': '2010-07-22T13:54:27Z',
+            'deprecatedID': None,
+            'deviceID': None,
+            'clinic_id': u'5020280',
+        })
 
