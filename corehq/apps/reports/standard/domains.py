@@ -162,7 +162,7 @@ FACET_MAPPING = [
     ]),
     ("Type", True, [
         {"facet": "internal.area.exact", "name": "Sector", "expanded": True },
-        {"facet": "internal.sub_area.exact", "name": "Sub Sector", "expanded": True },
+        {"facet": "internal.sub_area.exact", "name": "Sub-Sector", "expanded": True },
         {"facet": "phone_model", "name": "Phone Model", "expanded": False },
     ]),
     ("Self Starters", False, [
