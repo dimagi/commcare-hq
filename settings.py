@@ -51,10 +51,6 @@ SITE_ID = 1
 # to load the internationalization machinery.
 USE_I18N = True
 
-# Django i18n searches for translation files (django.po) within this dir
-# and then in the locale/ directories of installed apps
-LOCALE_PATHS = ()
-
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
@@ -65,6 +61,13 @@ FILEPATH = os.path.abspath(os.path.dirname(__file__))
 # media for user uploaded media.  in general this won't be used at all.
 MEDIA_ROOT = os.path.join(FILEPATH, 'mediafiles')
 STATIC_ROOT = os.path.join(FILEPATH, 'staticfiles')
+
+
+# Django i18n searches for translation files (django.po) within this dir
+# and then in the locale/ directories of installed apps
+LOCALE_PATHS = (
+    os.path.join(FILEPATH, 'locale'),
+)
 
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
@@ -227,7 +230,6 @@ HQ_APPS = (
     'hqbilling',
     'phonelog',
     'hutch',
-    'loadtest',
     'pillowtop',
     'hqstyle',
 
@@ -245,6 +247,7 @@ HQ_APPS = (
     'psi',
 
     'custom.reports.care_sa',
+    'custom.apps.cvsu',
     'custom.reports.mc',
 )
 
@@ -492,6 +495,7 @@ IVR_OUTBOUND_RETRY_INTERVAL = 10
 
 # List of Fluff pillow classes that ctable should process diffs for
 FLUFF_PILLOW_TYPES_TO_SQL = {
+    'UnicefMalawiFluff': 'SQL',
     'MalariaConsortiumFluff': 'SQL',
     'CareSAFluff': 'SQL',
 }
@@ -687,11 +691,11 @@ COUCHDB_APPS += LOCAL_COUCHDB_APPS
 COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label in COUCHDB_APPS]
 
 COUCHDB_DATABASES += [
+    ('fluff', COUCH_DATABASE + '__fluff-bihar'),  # needed to make couchdbkit happy
     ('bihar', COUCH_DATABASE + '__fluff-bihar'),
-    ('fluff', COUCH_DATABASE + '__fluff-bihar'),
     ('care_sa', COUCH_DATABASE + '__fluff-care_sa'),
+    ('cvsu', COUCH_DATABASE + '__fluff-cvsu'),
     ('mc', COUCH_DATABASE + '__fluff-mc'),
-    ('fluff', COUCH_DATABASE + '__fluff-mc'),
 ]
 
 INSTALLED_APPS += LOCAL_APPS
@@ -777,9 +781,11 @@ PILLOWTOPS = [
                  'corehq.pillows.user.UserPillow',
                  'corehq.pillows.application.AppPillow',
                  'corehq.pillows.commtrack.ConsumptionRatePillow',
-
+                 'corehq.pillows.reportxform.ReportXFormPillow',
+                 'corehq.pillows.reportcase.ReportCasePillow',
                  # fluff
                  'bihar.models.CareBiharFluffPillow',
+                 'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
                  'custom.reports.care_sa.models.CareSAFluffPillow',
                  'custom.reports.mc.models.MalariaConsortiumFluffPillow',
              ] + LOCAL_PILLOWTOPS
@@ -796,6 +802,7 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'hsph-dev',
     'hsph-betterbirth-pilot-2',
     'commtrack-public-demo',
+    'uth-rhd-test',
 ]
 
 #Custom fully indexed domains for FullXForm index/pillowtop --
@@ -804,6 +811,7 @@ ES_CASE_FULL_INDEX_DOMAINS = [
 # Adding a domain will not automatically index that domain's existing forms
 ES_XFORM_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
+    'uth-rhd-test',
 ]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
@@ -816,6 +824,7 @@ DOMAIN_MODULE_MAP = {
     'a5288-study': 'a5288',
     'care-bihar': 'bihar',
     'care-ihapc-live': 'custom.reports.care_sa',
+    'cvsulive': 'custom.apps.cvsu',
     'dca-malawi': 'dca',
     'eagles-fahu': 'dca',
     'hsph-dev': 'hsph',

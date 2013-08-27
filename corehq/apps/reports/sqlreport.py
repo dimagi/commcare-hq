@@ -101,7 +101,7 @@ class AggregateColumn(Column):
     """
     Allows combining the values from multiple columns into a single value.
     """
-    def __init__(self, header, aggregate_fn, *columns, **kwargs):
+    def __init__(self, header, aggregate_fn, columns, format_fn=None, **kwargs):
         """
         Args:
             :param header:
@@ -121,7 +121,6 @@ class AggregateColumn(Column):
                 See corehq.apps.reports.datatables.DTSortType
         """
         self.aggregate_fn = aggregate_fn
-        format_fn = kwargs.pop('format_fn', None)
 
         if 'sortable' not in kwargs:
             kwargs['sortable'] = True

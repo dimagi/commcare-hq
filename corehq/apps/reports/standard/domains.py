@@ -131,6 +131,8 @@ DOMAIN_FACETS = [
     "internal.using_adm",
     "internal.using_call_center",
     "internal.platform",
+    "internal.project_manager",
+    "internal.phone_model",
 
     "is_approved",
     "is_public",
@@ -161,9 +163,10 @@ FACET_MAPPING = [
         {"facet": "deployment.city.exact", "name": "City", "expanded": False },
     ]),
     ("Type", True, [
-        {"facet": "internal.area.exact", "name": "Area", "expanded": True },
-        {"facet": "internal.sub_area.exact", "name": "Sub Area", "expanded": True },
-        {"facet": "phone_model", "name": "Phone Model", "expanded": False },
+        {"facet": "internal.area.exact", "name": "Sector", "expanded": True },
+        {"facet": "internal.sub_area.exact", "name": "Sub-Sector", "expanded": True },
+        {"facet": "internal.phone_model.exact", "name": "Phone Model", "expanded": True },
+        {"facet": "internal.project_manager", "name": "Project Manager", "expanded": True },
     ]),
     ("Self Starters", False, [
         {"facet": "internal.self_started", "name": "Self Started", "expanded": True },

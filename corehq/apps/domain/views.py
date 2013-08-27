@@ -775,7 +775,6 @@ class BaseInternalDomainSettingsView(BaseProjectSettingsView):
         return mark_safe("%s <small>Internal</small>" % self.page_title)
 
 
-
 class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     urlname = 'domain_internal_settings'
     page_title = ugettext_noop("Project Information")
@@ -804,6 +803,8 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'using_call_center',
             'custom_eula',
             'can_use_data',
+            'project_manager',
+            'phone_model',
         ]
         for attr in internal_attrs:
             val = getattr(self.domain_object.internal, attr)

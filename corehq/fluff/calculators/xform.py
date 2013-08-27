@@ -2,7 +2,8 @@ from datetime import timedelta
 import warnings
 from corehq.fluff.calculators.logic import ANDCalculator, ORCalculator
 import fluff
-from fluff.filters import Filter
+from fluff.filters import Filter, ORFilter, ANDFilter
+from fluff.models import SimpleCalculator
 
 
 def default_date(form):
@@ -171,3 +172,53 @@ class FormSUMCalculator(ORCalculator):
             if calc.passes_filter(form):
                 for total in calc.total(form):
                     yield total
+
+
+def filtered_form_calc(xmlns=None, property_path=None, property_value=None,
+                         operator=EQUAL, date_provider=default_date,
+                         indicator_calculator=None, group_by_provider=None,
+                         window=timedelta(days=1)):
+    """
+    Shortcut function for creating a SimpleCalculator with a FormPropertyFilter
+    """
+    filter = FormPropertyFilter(xmlns=xmlns, property_path=property_path,
+                                property_value=property_value,
+                                operator=operator)
+
+    return SimpleCalculator(
+        date_provider=date_provider,
+        filter=filter,
+        indicator_calculator=indicator_calculator,
+        group_by_provider=group_by_provider,
+        window=window
+    )
+
+
+def or_calc(calculators, date_provider=default_date, indicator_calculator=None,
+            group_by_provider=None, window=timedelta(days=1)):
+    """
+    Shortcut function for creating a SimpleCalculator with a filter that combines
+    the filters of the calculators in an ORFilter
+    """
+    return SimpleCalculator(
+        date_provider=date_provider,
+        filter=ORFilter([calc._filter for calc in calculators if calc._filter]),
+        indicator_calculator=indicator_calculator,
+        group_by_provider=group_by_provider,
+        window=window
+    )
+
+
+def and_calc(calculators, date_provider=default_date, indicator_calculator=None,
+            group_by_provider=None, window=timedelta(days=1)):
+    """
+    Shortcut function for creating a SimpleCalculator with a filter that combines
+    the filters of the calculators in an ANDFilter
+    """
+    return SimpleCalculator(
+        date_provider=date_provider,
+        filter=ANDFilter([calc._filter for calc in calculators if calc._filter]),
+        indicator_calculator=indicator_calculator,
+        group_by_provider=group_by_provider,
+        window=window
+    )

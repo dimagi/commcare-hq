@@ -158,7 +158,7 @@ class CallCenter(SqlIndicatorSet):
             else_=0,
             filters=filters,
             alias='%s_count' % slug)
-        return AggregateColumn(slug, mean_seconds, dur_col, count_col, sortable=False)
+        return AggregateColumn(slug, mean_seconds, [dur_col, count_col], sortable=False)
 
     @property
     @memoized
