@@ -137,26 +137,26 @@ function circleMarker(metric, props) {
 }
 
 function iconMarker(metric, props) {
-    var url = getIcon(metric.icon, props);
-    if (url == null) {
+    var icon = getIcon(metric.icon, props);
+    if (icon == null) {
 	return null;
     }
 
     return function(latlng) {
 	var marker = L.marker(latlng, {
 	    icon: L.icon({
-		iconUrl: url,
+		iconUrl: icon.url,
 	    })
 	});
 	var img = new Image();
 	img.onload = function() {
 	    // leaflet needs explicit icon dimensions
 	    marker.setIcon(L.icon({
-		iconUrl: url,
+		iconUrl: icon.url,
 		iconSize: [this.width, this.height]
 	    }));
 	};
-	img.src = url;
+	img.src = icon.url;
 
 	return marker;
     }
@@ -215,8 +215,8 @@ function getColor(meta, props) {
     return {color: c.toHexString(), alpha: c.alpha()};
 }
 
-//WIP
 function getIcon(meta, props) {
+    //TODO support css sprites
     var icon = (function() {
 	if (typeof meta == 'string') {
 	    return meta;
@@ -231,7 +231,7 @@ function getIcon(meta, props) {
     if (icon == null) {
 	return null;
     }
-    return icon;
+    return {url: icon};
 }
 
 function getPropValue(props, meta) {
