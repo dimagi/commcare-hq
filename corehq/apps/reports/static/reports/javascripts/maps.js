@@ -254,7 +254,12 @@ function formatDetailPopup(feature, config) {
 	'<h3>{{ name }}</h3>',
 	'<hr>',
 	'<table>',
-	'{{#each detail}}<tr><td>{{ label }}</td><td style="font-weight: bold; text-align: right; padding-left: 20px;">{{ value }}</td></tr>{{/each}}',
+	'{{#each detail}}<tr>',
+	  '<td>{{ label }}</td>',
+	  '<td style="font-weight: bold; text-align: right; padding-left: 20px;">',
+	    '{{#if value}}{{ value }}{{ else }}\u2014{{/if}}',
+	  '</td>',
+	'</tr>{{/each}}',
 	'</table>',
     ].join('\n');
     var TEMPLATE = config.detail_template || DEFAULT_TEMPLATE;
