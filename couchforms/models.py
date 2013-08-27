@@ -161,7 +161,7 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin):
                                 "%s:%s" % (k, v) \
                                 for k, v in meta_block[key].items())
                 return ret
-            return Metadata(_clean(self._form[const.TAG_META]))
+            return Metadata(**_clean(self._form[const.TAG_META]))
         
         return None
 
