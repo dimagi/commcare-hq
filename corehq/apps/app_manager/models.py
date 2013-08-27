@@ -1110,6 +1110,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     langs = StringListProperty()
     # only the languages that go in the build
     build_langs = StringListProperty()
+    secure_submissions = BooleanProperty(default=False)
 
     # exchange properties
     cached_properties = DictProperty()
@@ -1277,7 +1278,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
 
     @absolute_url_property
     def post_url(self):
-        return reverse('receiver_post_with_app_id', args=[self.domain, self.copy_of or self.get_id])
+        if self.secure_submissions:
+            url_name = 'receiver_secure_post'
+        else:
+            url_name = 'receiver_post_with_app_id'
+        return reverse(url_name, args=[self.domain, self.copy_of or self.get_id])
 
     @absolute_url_property
     def key_server_url(self):
