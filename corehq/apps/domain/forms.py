@@ -436,8 +436,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     project_state = ChoiceField(label=ugettext_noop("Project State"), required=False,
                                 choices=tuple_of_copies(["POC", "transition", "at-scale"]))
     self_started = ChoiceField(label=ugettext_noop("Self Started?"), choices=tf_choices('Yes', 'No'), required=False)
-    area = ChoiceField(label=ugettext_noop("Area"), required=False, choices=tuple_of_copies(AREA_CHOICES))
-    sub_area = ChoiceField(label=ugettext_noop("Sub-Area"), required=False, choices=tuple_of_copies(SUB_AREA_CHOICES))
+    area = ChoiceField(label=ugettext_noop("Sector"), required=False, choices=tuple_of_copies(AREA_CHOICES))
+    sub_area = ChoiceField(label=ugettext_noop("Sub-Sector"), required=False, choices=tuple_of_copies(SUB_AREA_CHOICES))
     using_adm = ChoiceField(label=ugettext_noop("Using ADM?"), choices=tf_choices('Yes', 'No'), required=False)
     using_call_center = ChoiceField(label=ugettext_noop("Using Call Center?"), choices=tf_choices('Yes', 'No'), required=False)
     custom_eula = ChoiceField(label=ugettext_noop("Custom Eula?"), choices=tf_choices('Yes', 'No'), required=False)

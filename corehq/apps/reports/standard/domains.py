@@ -163,8 +163,8 @@ FACET_MAPPING = [
         {"facet": "deployment.city.exact", "name": "City", "expanded": False },
     ]),
     ("Type", True, [
-        {"facet": "internal.area.exact", "name": "Area", "expanded": True },
-        {"facet": "internal.sub_area.exact", "name": "Sub Area", "expanded": True },
+        {"facet": "internal.area.exact", "name": "Sector", "expanded": True },
+        {"facet": "internal.sub_area.exact", "name": "Sub-Sector", "expanded": True },
         {"facet": "internal.phone_model.exact", "name": "Phone Model", "expanded": True },
         {"facet": "internal.project_manager", "name": "Project Manager", "expanded": True },
     ]),
