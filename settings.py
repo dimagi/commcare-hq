@@ -259,6 +259,7 @@ HQ_APPS = (
     'custom.trialconnect',
     'custom.apps.crs_reports',
     'custom.hope',
+    'custom.openlmis',
 )
 
 TEST_APPS = ()
