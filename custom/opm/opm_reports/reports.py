@@ -3,7 +3,10 @@ from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.users.models import CommCareUser, CommCareCase
+from corehq.apps.fixtures.models import FixtureDataItem
 from dimagi.utils.couch.database import get_db
+
+from couchdbkit.exceptions import ResourceNotFound
 
 from .beneficiary import Beneficiary
 from .incentive import Worker
@@ -54,7 +57,14 @@ class BaseReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
 
     @property
     def row_iterable(self):
-        return [self.model(row) for row in self.get_rows()]
+        rows = []
+        for row in self.get_rows():
+            try:
+                rows.append(self.model(row))
+            except ResourceNotFound:
+                pass
+        return rows
+        # return [self.model(row) for row in self.get_rows()]
 
 
 class BeneficiaryPaymentReport(BaseReport):
@@ -64,7 +74,7 @@ class BeneficiaryPaymentReport(BaseReport):
     fields = [MonthFilter, YearFilter]
 
     def get_rows(self):
-        return CommCareCase.get_all_cases(DOMAIN, include_docs=True)
+        return CommCareCase.get_all_cases(DOMAIN)#, include_docs=True)
 
 
 class IncentivePaymentReport(BaseReport):

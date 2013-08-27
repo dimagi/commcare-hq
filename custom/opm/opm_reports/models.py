@@ -4,59 +4,84 @@ from corehq.apps.users.models import CommCareUser, CommCareCase
 import fluff
 from corehq.fluff.calculators import xform as xcalculators
 from . import calculations
-from .beneficiary import Beneficiary
-from .incentive import Worker
 
 
-# put this in a get_dict_from(item) method in the parent class of Beneficiary and Worker
-def get_item_data(model):
-    def get_data(item):
-        instance = model(item)
-        return dict([
-            (method, getattr(instance, method)) for method, _ in instance.method_map
-        ])
-    return get_data
+def case_property(property):
+    """
+    returns a flat field with a callable looking for `property` on the case
+    """
+    return fluff.FlatField(lambda case: case.get_case_property(property))
 
 
+def user_data(property):
+    """
+    returns a flat field with a callable looking for `property` on the user
+    """
+    return fluff.FlatField(lambda user: user.user_data.get(property))
+
+
+# OpmCaseFluff and OpmUserFluff are unusual in that they store only
+# flat information about a specific case or user - no aggregation will
+# be performed
 class OpmCaseFluff(fluff.IndicatorDocument):
     document_class = CommCareCase
-
     domains = ('opm',)
-    group_by = ['domain', 'owner_id']
-
-    # all_pregnancies = calculations.AllPregnancies()
-
-    bp1 = calculations.BirthPreparedness()
-
-    # beneficiary_data = fluff.DictField(get_item_data(Beneficiary))
 
     name = fluff.FlatField(lambda case: case.name)
-    awc_name = fluff.FlatField(lambda case: "AWC Name")
-    bank_name = fluff.FlatField(lambda case: "AWW Bank Name")
-    account_number = fluff.FlatField(lambda case: "AWW Bank Account Number")
-    block = fluff.FlatField(lambda case: "Block Name")
-
-    women_registered = "No. of women registered under BCSP"
-    children_registered = "No. of children registered under BCSP"
-    service_forms_count = "Submission of Service Availability form"
-    growth_monitoring_count = "No. of Growth monitoring Sections Filled for eligible children"
-    service_forms_cash = "Payment for Service Availability Form (in Rs.)"
-    growth_monitoring_cash = "Payment for Growth Monitoring Forms (in Rs.)"
-    month_total = "Total Payment Made for the month (in Rs.)"
-    last_month_total = "Amount of AWW incentive paid last month"
+    awc_name = case_property("awc_name")
+    bank_name = case_property("bank_name")
+    account_number = case_property("bank_account_number")
+    block = case_property("block_name")
+    village = case_property("village_name")
 
 
 class OpmUserFluff(fluff.IndicatorDocument):
     document_class = CommCareUser
+    domains = ('opm',)
+
+    name = fluff.FlatField(lambda user: user.name)
+    awc_name = user_data('awc')
+    bank_name = user_data('bank_name')
+    account_number = user_data('account_number')
+    block = user_data('block')
+    village = user_data('village')
+
+
+# This is a more typical fluff doc, storing arbitrary info pulled from forms.
+# Some stuff only pertains to case level queries, others to user level
+class OpmFormFluff(fluff.IndicatorDocument):
+    document_class = XFormInstance
 
     domains = ('opm',)
-    group_by = ['domain', 'owner_id']
+    group_by = (
+        'domain',
+    )
 
-    something = "hello!"
+    name = fluff.FlatField(lambda form: form.name)
 
-    # incentive_data = fluff.DictField(get_item_data(Worker))
+    # per case
+    bp1_cash = calculations.BirthPreparedness(
+        ['window_1_1', 'window_1_2', 'window_1_3'])
+    bp2_cash = calculations.BirthPreparedness(
+        ['window_2_1', 'window_2_2', 'window_2_3'])
+    delivery = calculations.Delivery()
+    child_followup = "Child Followup Form"
+    child_spacing = "Birth Spacing Bonus"
+    # total = "Amount to be paid to beneficiary"
+
+    # per user
+    women_registered = "No. of women registered under BCSP"
+    children_registered = "No. of children registered under BCSP"
+    service_forms_count = "Submission of Service Availability form"
+    growth_monitoring_count = "No. of Growth monitoring Sections Filled for eligible children"
+    service_forms = "Payment for Service Availability Form (in Rs.)"
+    growth_monitoring = "Payment for Growth Monitoring Forms (in Rs.)"
+    # month_total = "Total Payment Made for the month (in Rs.)"
+    # last_month_total = "Amount of AWW incentive paid last month"
 
 
 # OPMFluff.get_result('all_pregnancies', [domain, user_id])
+
 OpmCasePillow = OpmCaseFluff.pillow()
 OpmUserPillow = OpmUserFluff.pillow()
+OpmFormPillow = OpmFormFluff.pillow()
