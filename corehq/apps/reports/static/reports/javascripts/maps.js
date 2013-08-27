@@ -143,12 +143,22 @@ function iconMarker(metric, props) {
     }
 
     return function(latlng) {
-	return L.marker(latlng, {
+	var marker = L.marker(latlng, {
 	    icon: L.icon({
 		iconUrl: url,
-		iconSize: [16, 16],
-	    }),
+	    })
 	});
+	var img = new Image();
+	img.onload = function() {
+	    // leaflet needs explicit icon dimensions
+	    marker.setIcon(L.icon({
+		iconUrl: url,
+		iconSize: [this.width, this.height]
+	    }));
+	};
+	img.src = url;
+
+	return marker;
     }
 }
 
