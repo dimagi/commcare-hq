@@ -246,6 +246,7 @@ HQ_APPS = (
     'psi',
 
     'custom.reports.care_sa',
+    'custom.apps.cvsu',
     'custom.reports.mc',
 )
 
@@ -493,6 +494,7 @@ IVR_OUTBOUND_RETRY_INTERVAL = 10
 
 # List of Fluff pillow classes that ctable should process diffs for
 FLUFF_PILLOW_TYPES_TO_SQL = {
+    'UnicefMalawiFluff': 'SQL',
     'MalariaConsortiumFluff': 'SQL',
     'CareSAFluff': 'SQL',
 }
@@ -688,11 +690,11 @@ COUCHDB_APPS += LOCAL_COUCHDB_APPS
 COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label in COUCHDB_APPS]
 
 COUCHDB_DATABASES += [
+    ('fluff', COUCH_DATABASE + '__fluff-bihar'),  # needed to make couchdbkit happy
     ('bihar', COUCH_DATABASE + '__fluff-bihar'),
-    ('fluff', COUCH_DATABASE + '__fluff-bihar'),
     ('care_sa', COUCH_DATABASE + '__fluff-care_sa'),
+    ('cvsu', COUCH_DATABASE + '__fluff-cvsu'),
     ('mc', COUCH_DATABASE + '__fluff-mc'),
-    ('fluff', COUCH_DATABASE + '__fluff-mc'),
 ]
 
 INSTALLED_APPS += LOCAL_APPS
@@ -782,6 +784,7 @@ PILLOWTOPS = [
                  'corehq.pillows.reportcase.ReportCasePillow',
                  # fluff
                  'bihar.models.CareBiharFluffPillow',
+                 'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
                  'custom.reports.care_sa.models.CareSAFluffPillow',
                  'custom.reports.mc.models.MalariaConsortiumFluffPillow',
              ] + LOCAL_PILLOWTOPS
@@ -820,6 +823,7 @@ DOMAIN_MODULE_MAP = {
     'a5288-study': 'a5288',
     'care-bihar': 'bihar',
     'care-ihapc-live': 'custom.reports.care_sa',
+    'cvsulive': 'custom.apps.cvsu',
     'dca-malawi': 'dca',
     'eagles-fahu': 'dca',
     'hsph-dev': 'hsph',
