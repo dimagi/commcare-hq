@@ -691,6 +691,33 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
       'geo_column': column in returned data identifying the geo point (defaults to "geo"),
       <custom parameters by adapter>
     }
+
+    display_config: {
+      'name_column': column data used in the header of the detail popup,
+      'column_titles': {'column name': 'display title for column},
+      'detail_columns': [list of column data to display in detail popup],
+      'metrics': [ <toggleable data display modes>
+        one or more of:
+        {
+          'title': display title,
+          'size': [optional] controls the size of the marker-- radius in pixels OR
+            {
+              'column': column containing the relevant variable,
+              'baseline': value corresponding to a marker of radius 10 pixels,
+              'min': minimum marker radius (pixels) [optional],
+              'max': maximum marker radius (pixels) [optional],
+            },
+          'color': [optional] controls the color of the marker-- a css color value OR
+            {
+              'column': column containing the relevant variable,
+              one of either 'categories' or 'colorstops'
+              'categories': {'enum value': css color},
+              'colorstops': (to create sliding color scales) [list of colorstops: [value, csscolor]],
+              'thresholds': [optional] [list of numerical threshold values to convert numeric data into enum 'buckets'],
+            },
+        }
+      ]
+    }
     """
 
     report_partial_path = "reports/partials/maps.html"
