@@ -711,7 +711,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
             {
               'column': column containing the relevant variable,
               one of either 'categories' or 'colorstops'
-              'categories': {'enum value': css color},
+              'categories': {'enum value': css color}, (special enum value '_other' can act as catch-all)
               'colorstops': (to create sliding color scales) [list of colorstops: [value, csscolor]],
               'thresholds': [optional] [list of numerical threshold values to convert numeric data into enum 'buckets'],
             },
@@ -758,7 +758,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
             ['Worcester',    '42.26 -71.80', 'ma', 182.7],
             ['Providence',   '41.82 -71.41', 'ri', 178.4],
             ['Hartford',     '41.76 -72.68', 'ct', None], #124.9],
-            ['Springfield',  '42.10 -72.59', 'ma', 153.6],
+            ['Springfield',  '42.10 -72.59',  None, 153.6],
             ['New London',   '41.35 -72.10', 'ct',  'n/a'], #27.6],
             ['New Haven',    '41.31 -72.92', 'ct', 130.7],
             ['Block Island', '41.17 -71.58', 'ri',   1.0],

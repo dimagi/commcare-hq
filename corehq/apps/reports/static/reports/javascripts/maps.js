@@ -113,11 +113,11 @@ function markerFactory(metric, props) {
     }
 }
 
-function defaultMarker(props, latlng) {
+function defaultMarker(props) {
     return L.marker;
 }
 
-function circleMarker(metric, props, latlng) {
+function circleMarker(metric, props) {
     var size = getSize(metric.size, props);
     var fill = getColor(metric.color, props);
     if (size == null || fill == null) {
@@ -136,8 +136,20 @@ function circleMarker(metric, props, latlng) {
     };
 }
 
-function iconMarker(metric, props, latlng) {
+function iconMarker(metric, props) {
+    var url = getIcon(metric.icon, props);
+    if (url == null) {
+	return null;
+    }
 
+    return function(latlng) {
+	return L.marker(latlng, {
+	    icon: L.icon({
+		iconUrl: url,
+		iconSize: [16, 16],
+	    }),
+	});
+    }
 }
 
 DEFAULT_SIZE = 10;
@@ -191,6 +203,25 @@ function getColor(meta, props) {
 
     c = $.Color(c);
     return {color: c.toHexString(), alpha: c.alpha()};
+}
+
+//WIP
+function getIcon(meta, props) {
+    var icon = (function() {
+	if (typeof meta == 'string') {
+	    return meta;
+	} else {
+	    var val = getPropValue(props, meta);
+	    if (isNull(val)) {
+		return null;
+	    }
+	    return matchCategories(val, meta.categories);
+	}
+    })();
+    if (icon == null) {
+	return null;
+    }
+    return icon;
 }
 
 function getPropValue(props, meta) {
