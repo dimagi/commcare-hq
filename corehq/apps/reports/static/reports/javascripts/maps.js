@@ -4,11 +4,7 @@
 function mapsInit(context) {
     var map = initMap($('#map'), [30., 0.], 2, 'Map');
     initData(context.data, context.config);
-    var render = function(metric) {
-	loadData(map, context.data, makeDisplayContext(metric));
-    };
-    initMetrics(render);
-    render(null);
+    initMetrics(map, context.data);
     return map;
 }
 
@@ -41,7 +37,11 @@ function initData(data, config) {
     });
 }
 
-function initMetrics(render) {
+function initMetrics(map, data) {
+    var render = function(metric) {
+	loadData(map, data, makeDisplayContext(metric));
+    };
+
     $.each(['a', 'b', 'c'], function(i, e) {
 	var $x = $('<div></div>');
 	$x.addClass('choice');
@@ -53,6 +53,10 @@ function initMetrics(render) {
 	});
 	$('#sidebar').append($x);
     });
+
+    // load markers and set initial viewport
+    render(null);
+    zoomToAll(map);
 }
 
 function loadData(map, data, display_context) {
@@ -64,7 +68,12 @@ function loadData(map, data, display_context) {
     var points = L.geoJson(data, display_context);
     points.addTo(map);
     map.activeOverlay = points;
-    map.fitBounds(points.getBounds());
+}
+
+function zoomToAll(map) {
+    if (map.activeOverlay) {
+	map.fitBounds(map.activeOverlay.getBounds());
+    }
 }
 
 function makeDisplayContext(x) {
