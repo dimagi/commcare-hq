@@ -614,6 +614,9 @@ class FormBase(DocumentSchema):
     def requires_referral(self):
         return self.requires == "referral"
 
+    def default_name(self):
+        return self.name[self.get_app().default_language]
+
 class JRResourceProperty(StringProperty):
     def validate(self, value, required=True):
         super(JRResourceProperty, self).validate(value, required)
@@ -1891,6 +1894,13 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         for obj in self.get_forms(bare):
             if matches(obj if bare else obj['form']):
                 return obj
+        raise KeyError("Form in app '%s' with unique id '%s' not found" % (self.id, unique_form_id))
+
+    def get_form_location(self, unique_form_id):
+        for m_index, module in enumerate(self.get_modules()):
+            for f_index, form in enumerate(module.get_forms()):
+                if unique_form_id == form.unique_id:
+                    return m_index, f_index
         raise KeyError("Form in app '%s' with unique id '%s' not found" % (self.id, unique_form_id))
 
     @classmethod

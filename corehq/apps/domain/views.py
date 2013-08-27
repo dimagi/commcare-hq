@@ -468,7 +468,8 @@ def create_snapshot(request, domain):
                 m_file.save()
 
         old = domain.published_snapshot()
-        new_domain = domain.save_snapshot()
+        ignore = ["CaseReminderHandler"] if not request.POST.get('share_reminders', False) else []
+        new_domain = domain.save_snapshot(ignore)
         new_domain.license = new_license
         new_domain.description = request.POST['description']
         new_domain.short_description = request.POST['short_description']
