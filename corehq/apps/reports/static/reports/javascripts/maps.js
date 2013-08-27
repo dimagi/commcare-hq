@@ -4,10 +4,12 @@
 function mapsInit(context) {
     var map = initMap($('#map'), [30., 0.], 2, 'Map');
     initData(context.data, context.config);
-    initMetrics(map, context.data);
+    initMetrics(map, context.data, context.config);
+    $('#fit').click(function() { zoomToAll(map); });
     return map;
 }
 
+// initialize leaflet map
 function initMap($div, default_pos, default_zoom, default_layer) {
     var map = L.map($div.attr('id')).setView(default_pos, default_zoom);
 
@@ -37,21 +39,21 @@ function initData(data, config) {
     });
 }
 
-function initMetrics(map, data) {
+function initMetrics(map, data, config) {
     var render = function(metric) {
 	loadData(map, data, makeDisplayContext(metric));
     };
 
-    $.each(['a', 'b', 'c'], function(i, e) {
-	var $x = $('<div></div>');
-	$x.addClass('choice');
-	$x.text(e);
-	$x.click(function() {
+    $.each(config.metrics, function(i, e) {
+	var $e = $('<div></div>');
+	$e.addClass('choice');
+	$e.text(e.title);
+	$e.click(function() {
 	    $('#sidebar div').removeClass('selected');
-	    $x.addClass('selected');
+	    $e.addClass('selected');
 	    render(e);
 	});
-	$('#sidebar').append($x);
+	$('#sidebar').append($e);
     });
 
     // load markers and set initial viewport
@@ -76,22 +78,82 @@ function zoomToAll(map) {
     }
 }
 
-function makeDisplayContext(x) {
+DEFAULT_SIZE = 10;
+DEFAULT_MIN_SIZE = 3;
+DEFAULT_COLOR = 'rgba(255, 120, 0, .7)';
+
+function makeDisplayContext(metric) {
+    var getValue = function(props, meta) {
+	var val = props[meta.column];
+	if (meta.thresholds) {
+	    // TODO error if val is not numeric
+	    val = matchThresholds(val, meta.thresholds);
+	}
+	return val;
+    }
+
+    var getSize = function(props) {
+	var meta = metric.size;
+
+	if (meta == null) {
+	    return DEFAULT_SIZE;
+	} else if (isNumeric(meta)) {
+	    return meta;
+	} else {
+	    var val = getValue(props, meta);
+	    if (!isNumeric(val)) {
+		return null;
+	    }
+
+	    var rad = DEFAULT_SIZE * Math.sqrt(val / meta.baseline);
+	    rad = Math.min(Math.max(rad, meta.min || DEFAULT_MIN_SIZE), meta.max || 9999);
+	    return rad;
+	}
+    }
+
+    var getColor = function(props) {
+	var meta = metric.color;
+
+	var c = $.Color((function() {
+	    if (meta == null) {
+		return DEFAULT_COLOR;
+	    } else if (typeof meta == 'string') {
+		return meta;
+	    } else {
+		var val = getValue(props, meta);
+		if (meta.categories) {
+		    return matchCategories(val, meta.categories); //TODO no match
+		} else {
+		    return matchSpline(val, meta.colorstops, blendColor);
+		}
+	    }
+	})());
+	return {color: c.toHexString(), alpha: c.alpha()};
+    }
+
     return {
 	pointToLayer: function (feature, latlng) {
-	    if (x == null) {
+	    if (metric == null) {
 		return L.marker(latlng);
 	    }
 
-	    var pop = feature.properties.population;
-	    var rad = 2 * Math.sqrt(pop); //4 * Math.max(Math.log(pop) / Math.log(10), 1.);
+	    var size = getSize(feature.properties);
+	    if (size == null) {
+		//error; TODO handle
+	    }
+
+	    var fill = getColor(feature.properties);
+	    if (fill == null) {
+		//error; TODO handle
+	    }
+
             return L.circleMarker(latlng, {
-		radius: rad,
-		fillColor: {a: "#ff7800", b: '#479bca', c: '#0038dd'}[x],
 		color: "#000",
 		weight: 1,
 		opacity: 1,
-		fillOpacity: {a: .4, b: .6, c: .8}[x]
+		radius: size,
+		fillColor: fill.color,
+		fillOpacity: fill.alpha
 	    });
 	},
 	onEachFeature: function(feature, layer) {
@@ -121,6 +183,107 @@ function formatDetailPopup(feature, config) {
     var template = Handlebars.compile(TEMPLATE);
     var content = template(context);
     return content;
+}
+
+
+
+
+
+function isNumeric(x) {
+    return (x != null && x != '' && !isNaN(+x));
+}
+
+// convert a numerical value into an enumerated value based on cutoff thresholds
+// 'thresholds' must be in ascending order
+// e.g., thresholds of [2, 5, 10] creates 4 buckets: <2; [2, 5); [5, 10); >=10
+// return the lower bound of the matching bucket, or '-' for the lowest bucket
+function matchThresholds(val, thresholds) {
+    var cat = '-';
+    $.each(thresholds, function(i, e) {
+	if (e <= val) {
+	    cat = e;
+	} else {
+	    return false;
+	}
+    });
+    return cat;
+}
+
+// match an enumerated value to its display value
+// 'categories' is a mapping of enum values to display values
+// 'categories' may define a mapping for '_other', which will be user for
+// all values that do not have an explicit value assigned
+function matchCategories(val, categories) {
+    if (categories.hasOwnProperty(val)) {
+	return categories[val];
+    } else {
+	return categories._other;
+    }
+}
+
+// linearly interpolate a value along a spline specified by 'stops'
+// 'stops' is a list of [x, y] coordinates that map out a line
+// returns the y-value of this line for x-value = val
+// blendfunc may be provided if the y-values are not scalar
+function matchSpline(val, stops, blendfunc) {
+    blendfunc = blendfunc || blendLinear;
+
+    stops = _.sortBy(stops, function(e) { return e[0]; });
+    var x = [];
+    var y = [];
+    $.each(stops, function(i, e) {
+	x.push(e[0]);
+	y.push(e[1]);
+    });
+
+    var bracket = matchThresholds(val, x);
+    var lo = (bracket == '-' ? -1 : x.indexOf(bracket));
+    var hi = lo + 1;
+    if (lo == -1) {
+	return y[hi];
+    } else if (hi == x.length) {
+	return y[lo];
+    } else {
+	return blendfunc(y[lo], y[hi], (val - x[lo]) / (x[hi] - x[lo]));
+    }
+}
+
+// linearly interpolate two values (a and b). k = 0.0 - 1.0
+function blendLinear(a, b, k) {
+    return a * (1 - k) + b * k;
+}
+
+// linearly blend two colors together. a and b are colors; return a color
+// 'k' distance (0.0 - 1.0) from a to b.
+function blendColor(a, b, k) {
+    var GAMMA = 2.2;
+
+    // convert to linear color space and premultiply alpha
+    var toLinear = function(c) {
+	var channels = $.Color(c).rgba();
+	for (var i = 0; i < 3; i++) {
+	    channels[i] = Math.pow((channels[i] + .5) / 256., GAMMA);
+	    channels[i] *= channels[3];
+	}
+	return channels;
+    }
+
+    // reverse toLinear()
+    var fromLinear = function(channels) {
+	for (var i = 0; i < 3; i++) {
+	    channels[i] /= channels[3];
+	    channels[i] = Math.floor(256. * Math.pow(channels[i], 1. / GAMMA));
+	}
+	return $.Color(channels);
+    }
+
+    lA = toLinear(a);
+    lB = toLinear(b);
+    lBlend = [];
+    for (var i = 0; i < 4; i++) {
+	lBlend.push(blendLinear(lA[i], lB[i], k));
+    }
+    return fromLinear(lBlend);
 }
 
 
