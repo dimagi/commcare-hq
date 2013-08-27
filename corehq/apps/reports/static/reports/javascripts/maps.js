@@ -81,14 +81,13 @@ function zoomToAll(map) {
 
 function makeDisplayContext(metric) {
     return {
+	filter: function(feature, layer) {
+	    feature.mkMarker = markerFactory(metric, feature.properties);
+	    // TODO support placeholder markers for 'null' instead of hiding entirely?
+	    return (feature.mkMarker != null);
+	},
 	pointToLayer: function (feature, latlng) {
-	    if (metric == null) {
-		return defaultMarker(feature.properties, latlng);
-	    } else if (metric.icon) {
-		return iconMarker(metric, feature.properties, latlng);
-	    } else {
-		return circleMarker(metric, feature.properties, latlng);
-	    }
+	    return feature.mkMarker(latlng);
 	},
 	onEachFeature: function(feature, layer) {
             layer.bindPopup(feature.popupContent);
@@ -96,23 +95,49 @@ function makeDisplayContext(metric) {
     }
 }
 
+function markerFactory(metric, props) {
+    if (metric == null) {
+	return defaultMarker(props);
+    }
+
+    try {
+	if (metric.icon) {
+	    return iconMarker(metric, props);
+	} else {
+	    return circleMarker(metric, props);
+	}
+    } catch (err) {
+	// marker cannot be rendered due to data error
+	// TODO log or display 'error' marker?
+	return null;
+    }
+}
+
 function defaultMarker(props, latlng) {
-    return L.marker(latlng);
+    return L.marker;
 }
 
 function circleMarker(metric, props, latlng) {
     var size = getSize(metric.size, props);
     var fill = getColor(metric.color, props);
-    // TODO null and type error
+    if (size == null || fill == null) {
+	return null;
+    }
 
-    return L.circleMarker(latlng, {
-	color: "#000",
-	weight: 1,
-	opacity: 1,
-	radius: size,
-	fillColor: fill.color,
-	fillOpacity: fill.alpha
-    });
+    return function(latlng) {
+	return L.circleMarker(latlng, {
+	    color: "#000",
+	    weight: 1,
+	    opacity: 1,
+	    radius: size,
+	    fillColor: fill.color,
+	    fillOpacity: fill.alpha
+	});
+    };
+}
+
+function iconMarker(metric, props, latlng) {
+
 }
 
 DEFAULT_SIZE = 10;
@@ -160,6 +185,10 @@ function getColor(meta, props) {
 	    }
 	}
     })();
+    if (c == null) {
+	return null;
+    }
+
     c = $.Color(c);
     return {color: c.toHexString(), alpha: c.alpha()};
 }
