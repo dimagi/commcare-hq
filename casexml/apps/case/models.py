@@ -739,7 +739,10 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
 
         for item in update_action.updated_unknown_properties:
             if item not in const.CASE_TAGS:
-                self[item] = couchable_property(update_action.updated_unknown_properties[item])
+                value = couchable_property(update_action.updated_unknown_properties[item])
+                if isinstance(self.properties().get(item), StringProperty):
+                    value = unicode(value)
+                self[item] = value
             
     def apply_attachments(self, attachment_action):
         #the actions and _attachment must be added before the first saves canhappen
