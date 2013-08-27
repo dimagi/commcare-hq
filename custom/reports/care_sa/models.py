@@ -120,14 +120,14 @@ class CareSAFluff(fluff.IndicatorDocument):
 
     #1a
     # tested
-    hiv_counseling = xcalculators.FilteredFormPropertyCalculator(
+    hiv_counseling = xcalculators.filtered_form_calc(
         xmlns=HCT_XMLNS,
         property_path='form/testing_consent',
         property_value='counseling_testing',
     )
 
     #1b
-    hiv_tested = xcalculators.FilteredFormPropertyCalculator(
+    hiv_tested = xcalculators.filtered_form_calc(
         xmlns=HCT_XMLNS,
         property_path='form/hiv_tested',
         property_value='yes',
@@ -135,39 +135,39 @@ class CareSAFluff(fluff.IndicatorDocument):
 
     #1c
     # no results
-    internal_hiv_pos_test = xcalculators.FilteredFormPropertyCalculator(
+    internal_hiv_pos_test = xcalculators.filtered_form_calc(
         xmlns=HCT_XMLNS,
         property_path='form/test_results',
         property_value='hiv_pos',
     )
-    hiv_positive = xcalculators.FormANDCalculator(
+    hiv_positive = xcalculators.and_calc(
         [hiv_tested, internal_hiv_pos_test]
     )
 
     #1d
-    new_hiv_tb_screen = xcalculators.FilteredFormPropertyCalculator(
+    new_hiv_tb_screen = xcalculators.filtered_form_calc(
         xmlns=HCT_XMLNS,
         property_path='form/test_results',
         operator=xcalculators.ANY,
     )
 
     #1e
-    internal_tb_screening = xcalculators.FilteredFormPropertyCalculator(
+    internal_tb_screening = xcalculators.filtered_form_calc(
         xmlns=HCT_XMLNS,
         property_path='form/tb_screening',
         operator=xcalculators.ANY,
     )
-    internal_tested_before = xcalculators.FilteredFormPropertyCalculator(
+    internal_tested_before = xcalculators.filtered_form_calc(
         xmlns=HCT_XMLNS,
         property_path='form/tested_b4',
         property_value='yes',
     )
-    hiv_known_screened = xcalculators.FormANDCalculator(
+    hiv_known_screened = xcalculators.and_calc(
         [internal_tb_screening, internal_tested_before]
     )
 
     #1f
-    referred_tb_signs = xcalculators.FilteredFormPropertyCalculator(
+    referred_tb_signs = xcalculators.filtered_form_calc(
         xmlns=HCT_XMLNS,
         property_path='form/refer_phcf_tb',
         property_value='yes',
@@ -176,85 +176,85 @@ class CareSAFluff(fluff.IndicatorDocument):
     #1g TODO NOT IN FORM
 
     #1h
-    internal_refer_phcf = xcalculators.FilteredFormPropertyCalculator(
+    internal_refer_phcf = xcalculators.filtered_form_calc(
         xmlns=HCT_XMLNS,
         property_path='form/refer_phcf',
         property_value='yes',
     )
     #1ha
-    internal_new_patient = xcalculators.FilteredFormPropertyCalculator(
+    internal_new_patient = xcalculators.filtered_form_calc(
         xmlns=HBC_XMLNS,
         property_path='form/newly_diagnosed',
         property_value='yes',
     )
-    referred_for_cdf_new = xcalculators.FormANDCalculator(
+    referred_for_cdf_new = xcalculators.and_calc(
         [internal_refer_phcf, internal_new_patient]
     )
     #1hb
-    internal_existing_patient = xcalculators.FilteredFormPropertyCalculator(
+    internal_existing_patient = xcalculators.filtered_form_calc(
         xmlns=HBC_XMLNS,
         property_path='form/newly_diagnosed',
         property_value='no',
     )
-    referred_for_cdf_existing = xcalculators.FormANDCalculator(
+    referred_for_cdf_existing = xcalculators.and_calc(
         [internal_refer_phcf, internal_existing_patient]
     )
 
     #1i
-    internal_new_cd4 = xcalculators.FilteredFormPropertyCalculator(
+    internal_new_cd4 = xcalculators.filtered_form_calc(
         xmlns=HBC_XMLNS,
         property_path='form/new_cd4',
         property_value='yes',
     )
-    new_hiv_cd4_results = xcalculators.FormANDCalculator(
+    new_hiv_cd4_results = xcalculators.and_calc(
         [internal_new_cd4, internal_new_patient]
     )
 
     #1k
-    internal_refer_hbc = xcalculators.FilteredFormPropertyCalculator(
+    internal_refer_hbc = xcalculators.filtered_form_calc(
         xmlns=HCT_XMLNS,
         property_path='form/refer_hbc',
         property_value='yes',
     )
-    internal_refer_iact = xcalculators.FilteredFormPropertyCalculator(
+    internal_refer_iact = xcalculators.filtered_form_calc(
         xmlns=HCT_XMLNS,
         property_path='form/refer_iact',
         property_value='yes',
     )
-    internal_care_referral = xcalculators.FormORCalculator(
+    internal_care_referral = xcalculators.or_calc(
         [internal_refer_hbc, internal_refer_iact]
     )
-    internal_test_results_yes = xcalculators.FilteredFormPropertyCalculator(
+    internal_test_results_yes = xcalculators.filtered_form_calc(
         xmlns=HCT_XMLNS,
         property_path='form/test_results',
         property_value='yes',
     )
-    new_hiv_in_care_program = xcalculators.FormANDCalculator(
+    new_hiv_in_care_program = xcalculators.and_calc(
         [internal_care_referral, internal_test_results_yes]
     )
 
     #1l
-    individual_tests = xcalculators.FilteredFormPropertyCalculator(
+    individual_tests = xcalculators.filtered_form_calc(
         xmlns=HCT_XMLNS,
         property_path='form/couple',
         property_value='single',
     )
 
     #1m
-    couple_tests = xcalculators.FilteredFormPropertyCalculator(
+    couple_tests = xcalculators.filtered_form_calc(
         xmlns=HCT_XMLNS,
         indicator_calculator=xcalculators.IntegerPropertyReference('form/couple_number'),
     )
 
     #1n (currently expected to duplicate 1b
-    hiv_community = xcalculators.FilteredFormPropertyCalculator(
+    hiv_community = xcalculators.filtered_form_calc(
         xmlns=HCT_XMLNS,
         property_path='form/hiv_tested',
         property_value='yes',
     )
 
     #2a
-    deceased = xcalculators.FilteredFormPropertyCalculator(
+    deceased = xcalculators.filtered_form_calc(
         xmlns=PMM_XMLNS,
         property_path='form/why_close',
         property_value='deceased',
@@ -262,7 +262,7 @@ class CareSAFluff(fluff.IndicatorDocument):
 
     #2b TODO
     #hbc visit date >= today - 90
-    #lost_to_followup = xcalculators.FilteredFormPropertyCalculator(
+    #lost_to_followup = xcalculators.filtered_form_calc(
         #xmlns=HBC_XMLNS,
         #property_path='form/visit_date',
         #property_value='90',
@@ -271,7 +271,7 @@ class CareSAFluff(fluff.IndicatorDocument):
     #2c TODO not in form
 
     #2d
-    tb_treatment_completed = xcalculators.FilteredFormPropertyCalculator(
+    tb_treatment_completed = xcalculators.filtered_form_calc(
         xmlns=HBC_XMLNS,
         property_path='form/tb_treatment',
         property_value='completed_treatment',
@@ -279,54 +279,54 @@ class CareSAFluff(fluff.IndicatorDocument):
 
     #2e
     #HBC>>visit_intervention = clinical_support and any other response
-    received_cbc = xcalculators.FilteredFormPropertyCalculator(
+    received_cbc = xcalculators.filtered_form_calc(
         xmlns=HBC_XMLNS,
         property_path='form/visit_intervention', # TODO verify this
         operator=xcalculators.ANY,
     )
 
     #2f
-    existing_cbc = xcalculators.FormANDCalculator(
+    existing_cbc = xcalculators.and_calc(
         [received_cbc, internal_existing_patient]
     )
 
     #2g
-    new_hiv_cbc = xcalculators.FormANDCalculator(
+    new_hiv_cbc = xcalculators.and_calc(
         [received_cbc, internal_new_patient]
     )
 
     #2h
-    internal_on_ipt = xcalculators.FilteredFormPropertyCalculator(
+    internal_on_ipt = xcalculators.filtered_form_calc(
         xmlns=HBC_XMLNS,
         property_path='form/on_ipt',
         property_value='yes',
     )
-    new_hiv_starting_ipt = xcalculators.FormANDCalculator(
+    new_hiv_starting_ipt = xcalculators.and_calc(
         [internal_new_patient, internal_on_ipt]
     )
 
     #2i
-    internal_on_bactrim = xcalculators.FilteredFormPropertyCalculator(
+    internal_on_bactrim = xcalculators.filtered_form_calc(
         xmlns=HBC_XMLNS,
         property_path='form/on_bactrim',
         property_value='yes',
     )
-    new_hiv_starting_bactrim = xcalculators.FormANDCalculator(
+    new_hiv_starting_bactrim = xcalculators.and_calc(
         [internal_new_patient, internal_on_bactrim]
     )
 
     #2k
-    internal_on_arv = xcalculators.FilteredFormPropertyCalculator(
+    internal_on_arv = xcalculators.filtered_form_calc(
         xmlns=HBC_XMLNS,
         property_path='form/on_arv',
         property_value='yes',
     )
-    internal_pre_art = xcalculators.FilteredFormPropertyCalculator(
+    internal_pre_art = xcalculators.filtered_form_calc(
         xmlns=HBC_XMLNS,
         property_path='form/pre_art',
         property_value='yes',
     )
-    internal_hiv_care = xcalculators.FormORCalculator(
+    internal_hiv_care = xcalculators.or_calc(
         [
             internal_on_bactrim,
             internal_on_ipt,
@@ -334,18 +334,18 @@ class CareSAFluff(fluff.IndicatorDocument):
             internal_on_arv
         ]
     )
-    internal_tb_re_screening = xcalculators.FilteredFormPropertyCalculator(
+    internal_tb_re_screening = xcalculators.filtered_form_calc(
         xmlns=HBC_XMLNS,
         property_path='form/tb_re_screening',
         operator=xcalculators.ANY,
     )
 
-    hiv_on_care_screened_for_tb = xcalculators.FormANDCalculator(
+    hiv_on_care_screened_for_tb = xcalculators.and_calc(
         [internal_hiv_care, internal_tb_re_screening]
     )
 
     #2l
-    family_screened = xcalculators.FilteredFormPropertyCalculator(
+    family_screened = xcalculators.filtered_form_calc(
         xmlns=HBC_XMLNS,
         indicator_calculator=xcalculators.IntegerPropertyReference('form/number_family', lambda x: x-1),
     )
@@ -353,21 +353,21 @@ class CareSAFluff(fluff.IndicatorDocument):
     #2j NOT IN FORM
 
     #3a
-    hiv_pos_enrolled = xcalculators.FilteredFormPropertyCalculator(
+    hiv_pos_enrolled = xcalculators.filtered_form_calc(
         xmlns=IACT_XMLNS,
         property_path='form/first_session',
         property_value='yes',
     )
 
     #3b
-    hiv_pos_completed = xcalculators.FilteredFormPropertyCalculator(
+    hiv_pos_completed = xcalculators.filtered_form_calc(
         xmlns=IACT_XMLNS,
         property_path='form/last_session',
         property_value='confirm',
     )
 
     #3c
-    hiv_pos_pipeline = xcalculators.FilteredFormPropertyCalculator(
+    hiv_pos_pipeline = xcalculators.filtered_form_calc(
         xmlns=IACT_XMLNS,
         property_path='form/session_no',
         property_value='session_5',
@@ -377,34 +377,34 @@ class CareSAFluff(fluff.IndicatorDocument):
     #3d TODO CASE
 
     #3f
-    internal_iact_not_complete = xcalculators.FilteredFormPropertyCalculator(
+    internal_iact_not_complete = xcalculators.filtered_form_calc(
         xmlns=IACT_XMLNS,
         property_path='form/last_session',
         property_value='not_complete',
     )
-    iact_participant_ipt = xcalculators.FormANDCalculator(
+    iact_participant_ipt = xcalculators.and_calc(
         [internal_iact_not_complete, internal_on_ipt]
     )
 
     #3g
-    iact_participant_bactrim = xcalculators.FormANDCalculator(
+    iact_participant_bactrim = xcalculators.and_calc(
         [internal_iact_not_complete, internal_on_bactrim]
     )
 
     #3h
-    iact_participant_art = xcalculators.FormANDCalculator(
+    iact_participant_art = xcalculators.and_calc(
         [internal_iact_not_complete, internal_pre_art]
     )
 
     #3i
-    iact_participant_arv = xcalculators.FormANDCalculator(
+    iact_participant_arv = xcalculators.and_calc(
         [internal_iact_not_complete, internal_on_arv]
     )
 
     #3j...m TODO
 
     #3n
-    iact_support_groups = xcalculators.FilteredFormPropertyCalculator(
+    iact_support_groups = xcalculators.filtered_form_calc(
         xmlns=IACT_XMLNS,
         property_path='form/last_session',
         property_value=set(['session_1', 'session_2', 'session_3', 'session_4', 'session_5', 'session_6']),
