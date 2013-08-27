@@ -1,10 +1,21 @@
-{% extends "users/users_base.html" %}
+{% extends "users/base_template.html" %}
+{% load i18n %}
 
-{% block user-view %}
-<h1>Deleted User</h1>
-<p>Whoa! I don't even know how you got here! But I guess since you're here...</p>
-<p>The user {{ couch_user.html_username|safe }} no longer exists. If you think this user was deleted in error then click to
-    <a href="{% url restore_commcare_user domain couch_user.user_id %}" class="post-link">restore this user</a>.
-</p>
+{% block main_column %}
+<div class="form">
+    <fieldset>
+        <legend>{% trans 'Deleted User' %}</legend>
+        <p>{% blocktrans %}Whoa! I don't even know how you got here! But I guess since you're here...{% endblocktrans %}</p>
+        <p>
+            {% blocktrans with couch_user.raw_username as username  %}The user <strong>{{ username }}</strong> no longer exists.{% endblocktrans %}
+        </p>
+        <div class="alert alert-info">
+            <p>{% blocktrans %}If you think this user was deleted in error: {% endblocktrans %}</p>
+            <p><a href="{% url restore_commcare_user domain couch_user.user_id %}"
+               class="btn btn-primary post-link">{% trans 'Restore User' %}
+            </a></p>
+        </div>
+    </fieldset>
+</div>
 {% endblock %}
 

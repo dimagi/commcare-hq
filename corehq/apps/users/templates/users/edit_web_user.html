@@ -1,0 +1,42 @@
+{% extends 'users/base_template.html' %}
+{# This is for editing WebUsers who are not the current user #}
+
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block main_column %}
+    <div class="form form-horizontal">
+        <fieldset>
+            <legend>{% blocktrans with couch_user.human_friendly_name as friendly_name %}Information for {{ friendly_name }}{% endblocktrans %}</legend>
+            <dl class="dl-horizontal hq-dl-userinfo">
+                <dt>{% trans 'Username' %}</dt>
+                <dd>{{ couch_user.html_username|safe }}</dd>
+                {% for field in form_uneditable.visible_fields %}
+                <dt>{{ field.label }}</dt>
+                <dd class="hq-dd-userinfo">{{ couch_user|getattr:field.name }}</dd>
+                {% endfor %}
+                <dt>{% trans 'Phone Numbers' %}</dt>
+                {% if phonenumbers %}
+                <dd>
+                    <ul>
+                        {% for phonenumber in phonenumbers %}
+                        <li>+{{ phonenumber.number }}</li>
+                        {% endfor %}
+                    </ul>
+                </dd>
+                {% endif %}
+            </dl>
+        </fieldset>
+    </div>
+    <form class="form form-horizontal" name="user_role" method="post">
+        <input type="hidden" name="form_type" value="update-user" />
+        <fieldset>
+            <legend>{% blocktrans with couch_user.human_friendly_name as friendly_name %}Change {{ friendly_name }}'s Role{% endblocktrans %}</legend>
+            {% crispy form_user_update %}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">{% trans 'Update Role' %}</button>
+            </div>
+        </fieldset>
+    </form>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends 'users/base_template.html' %}
+
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'users/js/key_filters.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %} {{ block.super }}
+{% include 'users/partial/basic_info_js_inline.html' %}
+{% endblock %}
+
+{% block main_column %}
+{% include 'users/partial/basic_info_form.html' %}
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+{% include 'users/partial/basic_info_modals.html' %}
+{% endblock %}

@@ -1,13 +1,10 @@
 #from django.conf.urls.defaults import patterns, url
 from django.conf.urls.defaults import *
+from corehq.apps.locations.views import LocationsListView, NewLocationView, EditLocationView
 
-#urlpatterns = patterns('corehq.apps.locations.views',
-#)
-
-# used in settings urls
 settings_urls = patterns('corehq.apps.locations.views',
-    url(r'^$', 'locations_list', name='manage_locations'),
+    url(r'^$', LocationsListView.as_view(), name=LocationsListView.urlname),
     url(r'^sync_facilities/$', 'sync_facilities', name='sync_facilities_with_locations'),
-    url(r'^new/$', 'location_edit', name='create_location'),
-    url(r'^(?P<loc_id>[\w-]+)/$', 'location_edit', name='edit_location'),
+    url(r'^new/$', NewLocationView.as_view(), name=NewLocationView.urlname),
+    url(r'^(?P<loc_id>[\w-]+)/$', EditLocationView.as_view(), name=EditLocationView.urlname),
 )

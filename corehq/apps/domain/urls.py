@@ -6,6 +6,12 @@ from django.template import RequestContext
 from django.conf import settings
 
 from corehq.apps.domain.forms import ConfidentialPasswordResetForm
+from corehq.apps.domain.views import (EditBasicProjectInfoView, EditDeploymentProjectInfoView,
+                                      DefaultProjectSettingsView, EditMyProjectSettingsView,
+                                      ExchangeSnapshotsView, CreateNewExchangeSnapshotView,
+                                      ManageProjectMediaView, DomainForwardingOptionsView,
+                                      AddRepeaterView, EditInternalDomainInfoView, EditInternalCalculationsView,
+                                      BasicCommTrackSettingsView, AdvancedCommTrackSettingsView)
 
 #
 # After much reading, I discovered that Django matches URLs derived from the environment
@@ -25,6 +31,7 @@ from corehq.apps.domain.forms import ConfidentialPasswordResetForm
 #
 # Note that the provided password reset function raises SMTP errors if there's any
 # problem with the mailserver. Catch that more elegantly with a simple wrapper.
+
 
 def exception_safe_password_reset(request, *args, **kwargs):
     try:
@@ -65,22 +72,35 @@ urlpatterns =\
     )
 
 
-domain_settings = patterns('corehq.apps.domain.views',
-                           url(r'^settings/$', 'project_settings', name="domain_project_settings"),
-                           url(r'^forwarding/$', 'domain_forwarding', name='domain_forwarding'),
-                           url(r'^forwarding/new/(?P<repeater_type>\w+)/$', 'add_repeater', name='add_repeater'),
-                           url(r'^forwarding/test/$', 'test_repeater', name='test_repeater'),
-                           url(r'^forwarding/(?P<repeater_id>[\w-]+)/stop/$', 'drop_repeater', name='drop_repeater'),
-                           url(r'^snapshots/set_published/(?P<snapshot_name>[\w-]+)/$', 'set_published_snapshot', name='domain_set_published'),
-                           url(r'^snapshots/set_published/$', 'set_published_snapshot', name='domain_clear_published'),
-                           url(r'^snapshots/$', 'snapshot_settings', name='domain_snapshot_settings'),
-                           url(r'^snapshots/new/$', 'create_snapshot', name='domain_create_snapshot'),
-                           url(r'^multimedia/$', 'manage_multimedia', name='domain_manage_multimedia'),
-                           url(r'^commtrack/general/$', 'commtrack_settings', name='domain_commtrack_settings'),
-                           url(r'^commtrack/advanced/$', 'commtrack_settings_advanced', name='commtrack_settings_advanced'),
-                           url(r'^organization/$', 'org_settings', name='domain_org_settings'),
-                           url(r'^organization/request/$', 'org_request', name='domain_org_request'),
-                           url(r'^internal/$', 'internal_settings', name='domain_internal_settings'),
-                           url(r'^internal/calculations/$', 'internal_calculations', name='domain_internal_calculations'),
-                           url(r'^internal/calculated_properties/$', 'calculated_properties', name='calculated_properties'),
-                           )
+domain_settings = patterns(
+    'corehq.apps.domain.views',
+    url(r'^$', DefaultProjectSettingsView.as_view(), name=DefaultProjectSettingsView.urlname),
+    url(r'^my_settings/$', EditMyProjectSettingsView.as_view(), name=EditMyProjectSettingsView.urlname),
+    url(r'^basic/$', EditBasicProjectInfoView.as_view(), name=EditBasicProjectInfoView.urlname),
+    url(r'^deployment/$', EditDeploymentProjectInfoView.as_view(), name=EditDeploymentProjectInfoView.urlname),
+    url(r'^forwarding/$', DomainForwardingOptionsView.as_view(), name=DomainForwardingOptionsView.urlname),
+    url(r'^forwarding/new/(?P<repeater_type>\w+)/$', AddRepeaterView.as_view(), name=AddRepeaterView.urlname),
+    url(r'^forwarding/test/$', 'test_repeater', name='test_repeater'),
+    url(r'^forwarding/(?P<repeater_id>[\w-]+)/stop/$', 'drop_repeater', name='drop_repeater'),
+    url(r'^snapshots/set_published/(?P<snapshot_name>[\w-]+)/$', 'set_published_snapshot', name='domain_set_published'),
+    url(r'^snapshots/set_published/$', 'set_published_snapshot', name='domain_clear_published'),
+    url(r'^snapshots/$', ExchangeSnapshotsView.as_view(), name=ExchangeSnapshotsView.urlname),
+    url(r'^snapshots/new/$', CreateNewExchangeSnapshotView.as_view(), name=CreateNewExchangeSnapshotView.urlname),
+    url(r'^multimedia/$', ManageProjectMediaView.as_view(), name=ManageProjectMediaView.urlname),
+    url(r'^commtrack/general/$', BasicCommTrackSettingsView.as_view(), name=BasicCommTrackSettingsView.urlname),
+    url(r'^commtrack/advanced/$', AdvancedCommTrackSettingsView.as_view(), name=AdvancedCommTrackSettingsView.urlname),
+    url(r'^organization/$', 'org_settings', name='domain_org_settings'),
+    url(r'^organization/request/$', 'org_request', name='domain_org_request'),
+    url(r'^internal/info/$', EditInternalDomainInfoView.as_view(), name=EditInternalDomainInfoView.urlname),
+    url(r'^internal/calculations/$', EditInternalCalculationsView.as_view(), name=EditInternalCalculationsView.urlname),
+    url(r'^internal/calculated_properties/$', 'calculated_properties', name='calculated_properties'),
+)
+
+try:
+    from hqbilling.views import EditProjectBillingInfoView
+    domain_settings += patterns(
+        'hqbilling.views',
+        url(r'^billing/$', EditProjectBillingInfoView.as_view(), name=EditProjectBillingInfoView.urlname),
+    )
+except ImportError:
+    pass

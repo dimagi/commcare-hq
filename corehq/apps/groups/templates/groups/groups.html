@@ -1,16 +1,7 @@
-{% extends "users/users_base.html" %}
+{% extends "users/base_template.html" %}
 {% load i18n %}
 
-{% block subsection-title %}
-    <li>
-        <a href="{% url all_groups domain %}">Groups</a> <span class="divider">&gt;</span>
-    </li>
-    <li class="active">
-        <a href="#">Membership Info</a>
-    </li>
-{% endblock %}
-
-{% block user-view %}
+{% block main_column %}
 	<h2>Group Membership Information <small>for {{ couch_user.username }} ({{ couch_user.user_id }})</small></h2>
 	<table class="table table-striped table-bordered">
         <thead>

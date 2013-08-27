@@ -1,5 +1,7 @@
 from django.http import HttpResponse, HttpResponseRedirect, Http404
+from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
+from corehq.apps.commtrack.views import BaseCommTrackManageView
 
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.locations.models import Location
@@ -13,20 +15,107 @@ from django.contrib import messages
 from couchdbkit import ResourceNotFound
 import urllib
 
-@domain_admin_required # TODO: will probably want less restrictive permission
-def locations_list(request, domain):
-    selected_id = request.GET.get('selected')
+from django.utils.translation import ugettext as _, ugettext_noop
+from dimagi.utils.decorators.memoized import memoized
 
-    context = {
-        'domain': domain,
-        'selected_id': selected_id,
-        'locations': load_locs_json(domain, selected_id),
-        'hierarchy': location_hierarchy_config(domain),
-        'api_root': reverse('api_dispatch_list', kwargs={'domain': domain,
-                                                         'resource_name': 'location', 
-                                                         'api_name': 'v0.3'})
-    }
-    return render(request, 'locations/manage/locations.html', context)
+
+class BaseLocationView(BaseCommTrackManageView):
+
+    @property
+    def main_context(self):
+        context = super(BaseLocationView, self).main_context
+        context.update({
+            'hierarchy': location_hierarchy_config(self.domain),
+            'api_root': reverse('api_dispatch_list', kwargs={'domain': self.domain,
+                                                             'resource_name': 'location',
+                                                             'api_name': 'v0.3'}),
+        })
+        return context
+
+
+class LocationsListView(BaseLocationView):
+    urlname = 'manage_locations'
+    page_title = ugettext_noop("Manage Locations")
+    template_name = 'locations/manage/locations.html'
+
+    @property
+    def page_context(self):
+        selected_id = self.request.GET.get('selected')
+        return {
+            'selected_id': selected_id,
+            'locations': load_locs_json(self.domain, selected_id),
+        }
+
+
+class NewLocationView(BaseLocationView):
+    urlname = 'create_location'
+    page_title = ugettext_noop("New Location")
+    template_name = 'locations/manage/location.html'
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': LocationsListView.page_title,
+            'url': reverse(LocationsListView.urlname, args=[self.domain]),
+        }]
+
+    @property
+    def parent_id(self):
+        return self.request.GET.get('parent')
+
+    @property
+    @memoized
+    def location(self):
+        return Location(domain=self.domain, parent=self.parent_id)
+
+    @property
+    @memoized
+    def location_form(self):
+        if self.request.method == 'POST':
+            return LocationForm(self.location, self.request.POST)
+        return LocationForm(self.location)
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.location_form,
+            'location': self.location,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.location_form.is_valid():
+            self.location_form.save()
+            messages.success(request, _('Location saved!'))
+            return HttpResponseRedirect('%s?%s' % (
+                reverse(LocationsListView.urlname, args=[self.domain]),
+                urllib.urlencode({'selected': self.location_form.location._id})
+            ))
+        return self.get(request, *args, **kwargs)
+
+
+class EditLocationView(NewLocationView):
+    urlname = 'edit_location'
+    page_title = ugettext_noop("Edit Location")
+
+    @property
+    def location_id(self):
+        return self.kwargs['loc_id']
+
+    @property
+    def location(self):
+        try:
+            return Location.get(self.location_id)
+        except ResourceNotFound:
+            raise Http404()
+
+    @property
+    def page_name(self):
+        return mark_safe(_("Edit %s <small>%s</small>") % (self.location.name, self.location.location_type))
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.location_id])
+
 
 @domain_admin_required # TODO: will probably want less restrictive permission
 def location_edit(request, domain, loc_id=None):
@@ -36,7 +125,7 @@ def location_edit(request, domain, loc_id=None):
         try:
             location = Location.get(loc_id)
         except ResourceNotFound:
-            raise Http404
+            raise Http404()
     else:
         location = Location(domain=domain, parent=parent_id)
 
@@ -55,13 +144,14 @@ def location_edit(request, domain, loc_id=None):
     context = {
         'domain': domain,
         'api_root': reverse('api_dispatch_list', kwargs={'domain': domain,
-                                                         'resource_name': 'location', 
+                                                         'resource_name': 'location',
                                                          'api_name': 'v0.3'}),
         'location': location,
         'hierarchy': location_hierarchy_config(domain),
         'form': form,
     }
     return render(request, 'locations/manage/location.html', context)
+
 
 @domain_admin_required
 @require_POST

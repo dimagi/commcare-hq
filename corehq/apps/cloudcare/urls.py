@@ -1,5 +1,6 @@
 from django.conf.urls.defaults import patterns, url, include
 from django.views.generic.simple import direct_to_template
+from corehq.apps.cloudcare.views import EditCloudcareUserPermissionsView
 
 app_urls = patterns('corehq.apps.cloudcare.views',
     url(r'^view/(?P<app_id>[\w-]+)/modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/context/$',
@@ -27,7 +28,7 @@ api_urls = patterns('corehq.apps.cloudcare.views',
 
 # used in settings urls
 settings_urls = patterns('corehq.apps.cloudcare.views',
-    url(r'^app/', 'app_settings', name='cloudcare_app_settings'),
+    url(r'^app/', EditCloudcareUserPermissionsView.as_view(), name=EditCloudcareUserPermissionsView.urlname),
 )
 
 urlpatterns = patterns('corehq.apps.cloudcare.views',
