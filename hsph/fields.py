@@ -5,6 +5,8 @@ from corehq.apps.reports.filters.base import (BaseSingleOptionFilter,
     BaseDrilldownOptionFilter)
 from corehq.apps.reports.filters.users import LinkedUserFilter
 
+import hsph.const as const
+
 
 class SiteField(ReportField):
     slug = "hsph_site"
@@ -43,7 +45,7 @@ class SiteField(ReportField):
 class NameOfFADAField(SelectFilteredMobileWorkerField):
     slug = "fada_name"
     name = "Name of FADA"
-    group_names = ["Role - FADA"]
+    group_names = [const.FADA_GROUP_NAME]
     cssId = "fada_name"
     show_only_group_option = False
     default_option = "All FADAs"
@@ -52,7 +54,7 @@ class NameOfFADAField(SelectFilteredMobileWorkerField):
 class NameOfFIDAField(SelectFilteredMobileWorkerField):
     slug = "fida_name"
     name = "Name of FIDA"
-    group_names = ["Role - FIDA"]
+    group_names = [const.FIDA_GROUP_NAME]
     cssId = "fida_name"
     show_only_group_option = False
     default_option = "All FIDAs"
@@ -61,7 +63,7 @@ class NameOfCATIField(SelectFilteredMobileWorkerField):
     slug = "cati_name"
     name = "Name of CATI"
     cssId = "cati_name"
-    group_names = ["Role - CATI"]
+    group_names = [const.CATI_GROUP_NAME]
     show_only_group_option = False
     default_option = "All CATIs"
 
@@ -69,7 +71,7 @@ class NameOfCATITLField(SelectFilteredMobileWorkerField):
     slug = "cati_tl_name"
     name = "Name of CATI TL"
     cssId = "cati_tl_name"
-    group_names = ["Role - CATI TL"]
+    group_names = [const.CATI_TL_GROUP_NAME]
     show_only_group_option = False
     default_option = "All CATI TLs"
     
