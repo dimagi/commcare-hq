@@ -211,6 +211,8 @@ class FormActions(DocumentSchema):
 
 class FormSource(object):
     def __get__(self, form, form_cls):
+        if not form:
+            return self
         unique_id = form.get_unique_id()
         app = form.get_app()
         filename = "%s.xml" % unique_id
@@ -558,21 +560,22 @@ class FormBase(DocumentSchema):
                     else:
                         actions = [action]
                     for action in actions:
+                        action_properties = action.properties()
                         if action.condition.type == 'if':
                             yield action.condition.question
-                        if hasattr(action, 'name_path') and action.name_path:
+                        if 'name_path' in action_properties and action.name_path:
                             yield action.name_path
-                        if hasattr(action, 'case_name'):
+                        if 'case_name' in action_properties:
                             yield action.case_name
-                        if hasattr(action, 'external_id') and action.external_id:
+                        if 'external_id' in action_properties and action.external_id:
                             yield action.external_id
-                        if hasattr(action, 'update'):
+                        if 'update' in action_properties:
                             for _, path in action.update.items():
                                 yield path
-                        if hasattr(action, 'case_properties'):
+                        if 'case_properties' in action_properties:
                             for _, path in action.case_properties.items():
                                 yield path
-                        if hasattr(action, 'preload'):
+                        if 'preload' in action_properties:
                             for path, _ in action.preload.items():
                                 yield path
             paths.update(generate_paths())
