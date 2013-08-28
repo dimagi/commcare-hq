@@ -35,7 +35,7 @@ $(document).ready(function() {
 }
 */
 
-#metrics {
+.control-pane {
   /* copied from style of other leaflet controls */
   background: #f8f8f9;
   box-shadow: 0 1px 7px rgba(0,0,0,0.4);
@@ -44,6 +44,9 @@ $(document).ready(function() {
   -moz-border-radius: 5px;
 
   padding: 10px;
+}
+
+#sidebar {
   max-width: 12em;
 }
 
@@ -81,7 +84,10 @@ $(document).ready(function() {
 <div style="position: relative;">
   <div id="map" style="width: 100%;"></div>
   
-  <div id="metrics" style="display: none;">
+  <div id="metrics" class="control-pane" style="display: none;">
+  </div>
+
+  <div id="legend" class="control-pane" style="display: none;">
   </div>
   
 </div>

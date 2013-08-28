@@ -37,6 +37,30 @@ MetricsControl = L.Control.extend({
 
     render: function(metric) {
 	loadData(this._map, this.options.data, makeDisplayContext(metric));
+	this.options.legend.render(metric);
+    },
+});
+
+LegendControl = L.Control.extend({
+    options: {
+        position: 'bottomright'
+    },
+
+    onAdd: function(map) {
+	this.$div = $('#legend');
+	this.div = this.$div[0];
+	return this.div;
+    },
+
+    render: function(metric) {
+	if (metric == null) {
+	    this.$div.hide();
+	    return;
+	}
+
+	this.$div.show();
+	this.$div.empty();
+	renderLegend(this.$div, metric, this.options.config);
     },
 });
 
@@ -88,7 +112,6 @@ function initMap($div, default_pos, default_zoom, default_layer) {
     map.addLayer(layers[default_layer]);
 
     new ZoomToFitControl().addTo(map);
-
     L.control.scale().addTo(map);
 
     return map;
@@ -108,7 +131,8 @@ function initMetrics(map, data, config) {
 	setMetricDefaults(e, data, config);
     });
 
-    var m = new MetricsControl({data: data}).addTo(map);
+    var l = new LegendControl({config: config}).addTo(map);
+    var m = new MetricsControl({data: data, legend: l}).addTo(map);
 
     $.each(config.metrics, function(i, e) {
 	m.addMetric(e);
@@ -168,6 +192,7 @@ function markerFactory(metric, props) {
     } catch (err) {
 	// marker cannot be rendered due to data error
 	// TODO log or display 'error' marker?
+	console.log(err);
 	return null;
     }
 }
@@ -443,6 +468,15 @@ function summarizeColumn(meta, data) {
 	nonnumeric: nonnumeric,
     };	
 }
+
+
+
+
+function renderLegend($e, metric, config) {
+    $e.text(metric.title);
+};
+
+
 
 
 
