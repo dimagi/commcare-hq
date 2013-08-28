@@ -86,13 +86,13 @@ def gen_fixture(user, indicator_set):
             group_id = group_data[group_name]
             xGroup = ElementTree.SubElement(xIndicators, elem_name, attrib={'id': group_id})
             for c in indicator_set.columns:
-                key = c.view.name
+                key = c.slug
                 if key != group_name:
                     xIndicator = ElementTree.SubElement(xGroup, c.header)
                     xIndicator.text = str(group_data.get(key, 0))
     elif data:
         for c in indicator_set.columns:
-            key = c.view.name
+            key = c.slug
             xIndicator = ElementTree.SubElement(xIndicators, c.header)
             xIndicator.text = str(data.get(key, 0))
 
