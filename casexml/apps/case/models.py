@@ -341,6 +341,11 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
             wrapper=lambda r: CommCareCaseIndex.wrap(r['value'])
         ).all()
 
+    @memoized
+    def get_subcases(self):
+        subcase_ids = [ix.referenced_id for ix in self.reverse_indices]
+        return CommCareCase.view('_all_docs', keys=subcase_ids, include_docs=True)
+
     @property
     def has_indices(self):
         return self.indices or self.reverse_indices
