@@ -165,27 +165,32 @@ def extract_case_blocks(doc):
     return list(_extract_case_blocks(doc))
 
 
-def _extract_case_blocks(doc):
-    if isinstance(doc, list):
-        for item in doc:
+def _extract_case_blocks(data):
+    """
+    helper for extract_case_blocks
+
+    data must be json representing a node in an xform submission
+
+    """
+    if isinstance(data, list):
+        for item in data:
             for case_block in _extract_case_blocks(item):
                 yield case_block
-    elif isinstance(doc, dict):
-        if is_device_report(doc):
-            return
-        for key, value in doc.items():
+    elif isinstance(data, dict) and not is_device_report(data):
+        for key, value in data.items():
             if const.CASE_TAG == key:
                 # it's a case block! Stop recursion and add to this value
                 if isinstance(value, list):
                     case_blocks = value
                 else:
                     case_blocks = [value]
-                for block in case_blocks:
-                    if has_case_id(block):
-                        yield block
+
+                for case_block in case_blocks:
+                    if has_case_id(case_block):
+                        yield case_block
             else:
-                for block in _extract_case_blocks(value):
-                    yield block
+                for case_block in _extract_case_blocks(value):
+                    yield case_block
     else:
         return
 
