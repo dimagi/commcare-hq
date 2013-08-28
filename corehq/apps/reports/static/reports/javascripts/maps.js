@@ -122,17 +122,11 @@ function initMap($div, default_pos, default_zoom, default_layer) {
 
 // perform any pre-processing of the raw data
 function initData(data, config) {
-    $.each(data.features, function(i, e) {
-	// pre-cache popup detail
-	e.popupContent = formatDetailPopup(e, config);
-    });
-
-    // TBD i'm on the fence on whether letting enum captions be specified in
-    // a corresponding column is even a good idea at all
+    // generate enum -> caption mappings for columns that specify the caption in a
+    // corresponding column
+    // (i'm on the fence on whether this is even useful or a good idea
     $.each(config.enum_captions, function(k, v) {
 	if (typeof v == 'string') {
-	    // enum col has corresponding captions in another col
-	    // generate the mapping now so we don't have to look up the other column later
 	    var mapping = {};
 	    $.each(data.features, function(i, e) {
 		var enumval = e.properties[k];
@@ -143,6 +137,11 @@ function initData(data, config) {
 	    });
 	    config.enum_captions[k] = mapping;
 	};
+    });
+
+    // pre-cache popup detail
+    $.each(data.features, function(i, e) {
+	e.popupContent = formatDetailPopup(e, config);
     });
 }
 
@@ -380,7 +379,9 @@ function formatDetailPopup(feature, config) {
     }
     context.detail = [];
     $.each(config.detail_columns, function(i, e) {
-	context.detail.push({label: config.column_titles[e] || e, value: feature.properties[e]});
+	var colTitle = config.column_titles[e] || e;
+	var value = getEnumCaption(e, feature.properties[e], config);
+	context.detail.push({label: colTitle, value: value});
     });
 
     var template = Handlebars.compile(TEMPLATE);
@@ -516,8 +517,7 @@ function getEnumValues(meta) {
 	    if (e == '_other') {
 		return OTHER_LABEL;
 	    } else {
-		var captions = CONFIG.enum_captions[meta.column]; // eww global var ref
-		return (captions ? captions[e] : e);
+		return getEnumCaption(meta.column, e, CONFIG); // eww global var ref
 	    }
 	}
 	// unfortunately, by letting enum captions be specified via another column, there
@@ -527,6 +527,11 @@ function getEnumValues(meta) {
 	enums = _.filter(enums, toLabel);
     }
     return $.map(enums, function(e, i) { return {label: toLabel(e, i), value: e}; });
+}
+
+function getEnumCaption(column, value, config) {
+    var captions = config.enum_captions[column];
+    return (captions ? captions[value] : value);
 }
 
 
