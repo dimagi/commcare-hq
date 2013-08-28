@@ -2,9 +2,9 @@
 Work on cases based on XForms. In our world XForms are special couch documents.
 """
 import logging
-from couchdbkit import DocumentSchema
 
 from couchdbkit.resource import ResourceNotFound
+from couchdbkit.schema.properties_proxy import LazySchemaList
 from dimagi.utils.chunked import chunked
 from casexml.apps.case.exceptions import IllegalCaseId, NoDomainProvided
 from casexml.apps.case import settings
@@ -144,14 +144,22 @@ def _get_or_update_model(case_block, xform, case_db):
 
 
 def is_excluded(doc):
-    """exclude device reports"""
+    # exclude anything matching a certain set of conditions from case processing.
+
+    # exclued schemalistproperites (which are expected to be native metadata on
+    # the form not to be seearched, and also there's a bug in couchdbkit that causes
+    # the 'in' operator to raise an AttributeErrorn
+    if isinstance(doc, LazySchemaList):
+        return True
+
+    # also exclude device reports.
     device_report_xmlns = "http://code.javarosa.org/devicereport"
-    return (
-        hasattr(doc, "xmlns") and doc.xmlns == device_report_xmlns
-    ) or (
-        isinstance(doc, (dict, DocumentSchema)) and
-        "@xmlns" in doc and doc["@xmlns"] == device_report_xmlns
-    )
+    try:
+        return (hasattr(doc, "xmlns") and doc.xmlns == device_report_xmlns) or \
+               ("@xmlns" in doc and doc["@xmlns"] == device_report_xmlns)
+    except (TypeError):
+        # wasn't iterable, don't exclude
+        return False
 
 
 def extract_case_blocks(doc):
