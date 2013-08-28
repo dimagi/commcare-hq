@@ -144,13 +144,13 @@ def _get_or_update_model(case_block, xform, case_db):
         return case
 
 
-def is_excluded(doc):
+def is_device_report(doc):
     """exclude device reports"""
     device_report_xmlns = "http://code.javarosa.org/devicereport"
     return (
         hasattr(doc, "xmlns") and doc.xmlns == device_report_xmlns
     ) or (
-        isinstance(doc, (dict, DocumentSchema)) and
+        isinstance(doc, dict) and
         "@xmlns" in doc and doc["@xmlns"] == device_report_xmlns
     )
 
@@ -162,7 +162,7 @@ def extract_case_blocks(doc):
     """
     if isinstance(doc, XFormInstance):
         return extract_case_blocks(doc.form)
-    if doc is None or is_excluded(doc):
+    if doc is None or is_device_report(doc):
         return []
     
     block_list = []
