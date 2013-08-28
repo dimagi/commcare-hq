@@ -48,6 +48,12 @@
     - properties.cc-user-mode  # User Login Mode
     - properties.cc-login-images # Login Buttons
 
+- title: 'Android Settings'
+  id: app-settings-android
+  collapse: true
+  settings:
+    - properties.cc-days-form-retain # Days to Retain for Review
+
 - title: 'Advanced (Logging)'
   id: app-settings-advanced
   collapse: true
