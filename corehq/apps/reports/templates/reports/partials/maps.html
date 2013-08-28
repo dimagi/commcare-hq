@@ -35,17 +35,16 @@ $(document).ready(function() {
 }
 */
 
-#sidebar {
-  position: absolute;
-  bottom: 30px;
-  right: 12px;
+#metrics {
+  /* copied from style of other leaflet controls */
+  background: #f8f8f9;
+  box-shadow: 0 1px 7px rgba(0,0,0,0.4);
+  border-radius: 5px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+
   padding: 10px;
   max-width: 12em;
-  background: rgba(255, 255, 255, .7);
-  border: 5px #aaa solid;
-  border-radius: 20px;
-  -moz-border-radius: 20px;
-  -webkit-border-radius: 20px;
 }
 
 .choice {
@@ -77,9 +76,7 @@ $(document).ready(function() {
 <div style="position: relative;">
   <div id="map" style="width: 100%;"></div>
   
-  <div id="sidebar">
-    <div id="fit">reset viewport</div>
-    <hr>
+  <div id="metrics" style="display: none;">
   </div>
   
 </div>

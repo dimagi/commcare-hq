@@ -1,4 +1,42 @@
 
+MetricsControl = L.Control.extend({
+    options: {
+        position: 'bottomleft'
+    },
+
+    onAdd: function (map) {
+	this.$div = $('#metrics');
+	this.div = this.$div[0];
+        L.DomEvent.disableClickPropagation(this.div);
+	this.$div.show();
+	return this.div;
+    },
+
+    // TODO support an explicit 'show just markers again' option
+
+    addMetric: function(metric) {
+	var $e = $('<div></div>');
+	$e.addClass('choice');
+	$e.text(metric.title);
+	var m = this;
+	$e.click(function() {
+	    m.select($e);
+	    m.render(metric);
+	});
+	this.$div.append($e);
+    },
+
+    select: function($e) {
+	this.$div.find('div').removeClass('selected');
+	if ($e) {
+	    $e.addClass('selected');
+	}
+    },
+
+    render: function(metric) {
+	loadData(this._map, this.options.data, makeDisplayContext(metric));
+    },
+});
 
 
 function mapsInit(context) {
@@ -41,24 +79,14 @@ function initData(data, config) {
 }
 
 function initMetrics(map, data, config) {
-    var render = function(metric) {
-	loadData(map, data, makeDisplayContext(metric));
-    };
+    var m = new MetricsControl({data: data}).addTo(map);
 
     $.each(config.metrics, function(i, e) {
-	var $e = $('<div></div>');
-	$e.addClass('choice');
-	$e.text(e.title);
-	$e.click(function() {
-	    $('#sidebar div').removeClass('selected');
-	    $e.addClass('selected');
-	    render(e);
-	});
-	$('#sidebar').append($e);
+	m.addMetric(e);
     });
 
     // load markers and set initial viewport
-    render(null);
+    m.render(null);
     zoomToAll(map);
 }
 
