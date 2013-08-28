@@ -4,6 +4,7 @@ from sqlagg.columns import SimpleColumn
 from sqlagg.filters import RawFilter, SqlFilter
 import sqlalchemy
 import sqlagg
+from corehq.apps.reports.api import ReportDataSource
 
 from corehq.apps.reports.basic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, \
@@ -153,7 +154,7 @@ class AggregateColumn(Column):
         return self.view.get_value(row) if row else None
 
 
-class SqlData(object):
+class SqlData(ReportDataSource):
     table_name = None
 
     @property
@@ -182,7 +183,10 @@ class SqlData(object):
         """
         Return a dict mapping the filter keys to actual values e.g. {"enddate": date(2013,01,01)}
         """
-        raise NotImplementedError()
+        if self.config:
+            return self.config
+        elif self.filters:
+            raise SqlReportException("No filter values specified")
 
     @property
     @memoized
@@ -217,14 +221,29 @@ class SqlData(object):
     def query_context(self):
         return sqlagg.QueryContext(self.table_name, self.wrapped_filters, self.group_by)
 
-    @property
-    def data(self):
+    def get_data(self, slugs=None):
+        data = self._get_data(slugs=slugs)
+        columns = [c for c in self.columns if not slugs or c.slug in slugs]
+        formatter = DataFormatter(DictDataFormat(columns, no_value=None))
+        formatted_data = formatter.format(data, keys=self.keys, group_by=self.group_by)
+
+        if self.group_by:
+            return formatted_data.values()
+        else:
+            return [formatted_data]
+
+    def slugs(self):
+        return [c.slug for c in self.columns]
+
+    def _get_data(self, slugs=None):
         if self.keys is not None and not self.group_by:
             raise SqlReportException('Keys supplied without group_by.')
 
         qc = self.query_context
         for c in self.columns:
-            qc.append_column(c.view)
+            if not slugs or c.slug in slugs:
+                qc.append_column(c.view)
+
         engine = sqlalchemy.create_engine(settings.SQL_REPORTING_DATABASE_URL)
         conn = engine.connect()
         try:
@@ -234,8 +253,12 @@ class SqlData(object):
 
         return data
 
+    @property
+    def data(self):
+        return self._get_data()
 
-class SqlTabularReport(SqlData, GenericTabularReport):
+
+class SqlTabularReport(GenericTabularReport, SqlData):
     no_value = '--'
     exportable = True
 
