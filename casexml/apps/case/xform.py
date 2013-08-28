@@ -147,12 +147,11 @@ def _get_or_update_model(case_block, xform, case_db):
 def is_device_report(doc):
     """exclude device reports"""
     device_report_xmlns = "http://code.javarosa.org/devicereport"
-    return (
-        hasattr(doc, "xmlns") and doc.xmlns == device_report_xmlns
-    ) or (
-        isinstance(doc, dict) and
-        "@xmlns" in doc and doc["@xmlns"] == device_report_xmlns
-    )
+    return "@xmlns" in doc and doc["@xmlns"] == device_report_xmlns
+
+
+def has_case_id(case_block):
+    return const.CASE_TAG_ID in case_block or const.CASE_ATTR_ID in case_block
 
 
 def extract_case_blocks(doc):
@@ -160,41 +159,36 @@ def extract_case_blocks(doc):
     Extract all case blocks from a document, returning an array of dictionaries
     with the data in each case. 
     """
+
     if isinstance(doc, XFormInstance):
-        return extract_case_blocks(doc.form)
-    if doc is None or is_device_report(doc):
-        return []
-    
-    block_list = []
+        doc = doc.form
+    return list(_extract_case_blocks(doc))
+
+
+def _extract_case_blocks(doc):
     if isinstance(doc, list):
         for item in doc:
-            block_list.extend(extract_case_blocks(item))
-    else:
-        try:
-            items = doc.items()
-        except AttributeError:
-            # if not dict-like
-            return []
-        else:
-            for key, value in items:
-                if const.CASE_TAG == key:
-                    # we explicitly don't support nested cases yet, so no need
-                    # to check further
-                    # BUT, it could be a list
-                    if isinstance(value, list):
-                        for item in value:
-                            block_list.append(item)
-                    else:
-                        block_list.append(value)
+            for case_block in _extract_case_blocks(item):
+                yield case_block
+    elif isinstance(doc, dict):
+        if is_device_report(doc):
+            return
+        for key, value in doc.items():
+            if const.CASE_TAG == key:
+                # it's a case block! Stop recursion and add to this value
+                if isinstance(value, list):
+                    case_blocks = value
                 else:
-                    # recursive call
-                    block_list.extend(extract_case_blocks(value))
-    
-    # filter out anything without a case id property
-    def _has_case_id(case_block):
-        return (const.CASE_TAG_ID in case_block or
-                const.CASE_ATTR_ID in case_block)
-    return [block for block in block_list if _has_case_id(block)]
+                    case_blocks = [value]
+                for block in case_blocks:
+                    if has_case_id(block):
+                        yield block
+            else:
+                for block in _extract_case_blocks(value):
+                    yield block
+    else:
+        return
+
 
 def get_case_ids_from_form(xform):
     case_updates = [case_update_from_block(cb) for cb in extract_case_blocks(xform)]
