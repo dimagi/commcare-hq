@@ -87,6 +87,9 @@ ZoomToFitControl = L.Control.extend({
 
 // main entry point
 function mapsInit(context) {
+    // FIXME global var hack to make this easily accessible from other places
+    CONFIG = context.config;
+
     var map = initMap($('#map'), [30., 0.], 2, 'Map');
     initData(context.data, context.config);
     initMetrics(map, context.data, context.config);
@@ -122,6 +125,24 @@ function initData(data, config) {
     $.each(data.features, function(i, e) {
 	// pre-cache popup detail
 	e.popupContent = formatDetailPopup(e, config);
+    });
+
+    // TBD i'm on the fence on whether letting enum captions be specified in
+    // a corresponding column is even a good idea at all
+    $.each(config.enum_captions, function(k, v) {
+	if (typeof v == 'string') {
+	    // enum col has corresponding captions in another col
+	    // generate the mapping now so we don't have to look up the other column later
+	    var mapping = {};
+	    $.each(data.features, function(i, e) {
+		var enumval = e.properties[k];
+		var caption = e.properties[v];
+		if (!isNull(enumval) && !mapping.hasOwnProperty(enumval) && !isNull(caption)) {
+		    mapping[enumval] = caption;
+		}
+	    });
+	    config.enum_captions[k] = mapping;
+	};
     });
 }
 
@@ -492,9 +513,18 @@ function getEnumValues(meta) {
 	    enums.push('_other');
 	}
 	var toLabel = function(e) {
-	    // TODO fetch display captions for enum values from somewhere
-	    return (e == '_other' ? OTHER_LABEL : e);
+	    if (e == '_other') {
+		return OTHER_LABEL;
+	    } else {
+		var captions = CONFIG.enum_captions[meta.column]; // eww global var ref
+		return (captions ? captions[e] : e);
+	    }
 	}
+	// unfortunately, by letting enum captions be specified via another column, there
+	// is no guarantee that all possible enum values will be represented in the report
+	// data. so here we filter out the options for which we cannot determine a caption.
+	// we will never filter out a value that actually appears in the data, though
+	enums = _.filter(enums, toLabel);
     }
     return $.map(enums, function(e, i) { return {label: toLabel(e, i), value: e}; });
 }

@@ -696,6 +696,10 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
       'name_column': column data used in the header of the detail popup,
       'column_titles': {'column name': 'display title for column},
       'detail_columns': [list of column data to display in detail popup],
+      'enum_captions': {
+        'col with enum values': 'other col containing corresponding captions' OR
+                                {'enum value': 'enum caption'}
+      },
       'metrics': [ <toggleable data display modes>
         one or more of:
         {
@@ -760,18 +764,18 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
 
     def _get_data_test(self):
         raw = [
-            ['Boston',       '42.36 -71.06', 'ma', 636.5],
-            ['Worcester',    '42.26 -71.80', 'ma', 182.7],
-            ['Providence',   '41.82 -71.41', 'ri', 178.4],
-            ['Hartford',     '41.76 -72.68', 'ct', None], #124.9],
-            ['Springfield',  '42.10 -72.59',  None, 153.6],
-            ['New London',   '41.35 -72.10', 'ct',  27.6],
-            ['New Haven',    '41.31 -72.92', 'ct', 130.7],
-            ['Block Island', '41.17 -71.58', 'ri',   1.0],
-            ['Provincetown', '42.06 -70.18', 'ma',   2.9],
-            ['Newburgh',     '41.52 -74.02', 'ny',  28.8],
+            ['Boston',       '42.36 -71.06', 'ma', 636.5, 'Mass'],
+            ['Worcester',    '42.26 -71.80', 'ma', 182.7, 'Mass'],
+            ['Providence',   '41.82 -71.41', 'ri', 178.4, 'Rhode'],
+            ['Hartford',     '41.76 -72.68', 'ct', None, 'Conn'], #124.9],
+            ['Springfield',  '42.10 -72.59',  None, 153.6, None],
+            ['New London',   '41.35 -72.10', 'ct',  27.6, 'Conn'],
+            ['New Haven',    '41.31 -72.92', 'ct', 130.7, 'Conn'],
+            ['Block Island', '41.17 -71.58', 'ri',   1.0, 'Rhode'],
+            ['Provincetown', '42.06 -70.18', 'ma',   2.9, 'Mass'],
+            ['Newburgh',     '41.52 -74.02', 'ny',  28.8, 'New York'],
         ]
-        cols = ['city', 'latlon', 'state', 'population']
+        cols = ['city', 'latlon', 'state', 'population', 'state_name']
 
         for row in raw:
             yield dict(zip(cols, row))
