@@ -16,6 +16,23 @@ class DomainPillow(HQPillow):
     es_type = "hqdomain"
     es_index = DOMAIN_INDEX
     default_mapping = DOMAIN_MAPPING
+    es_meta = {
+        "settings": {
+            "analysis": {
+                "analyzer": {
+                    "default": {
+                        "type": "custom",
+                        "tokenizer": "whitespace",
+                        "filter": ["lowercase"]
+                    },
+                    "comma": {
+                        "type": "pattern",
+                        "pattern": "\s*,\s*"
+                    },
+                }
+            }
+        }
+    }
 
     @memoized
     def calc_meta(self):
