@@ -469,14 +469,103 @@ function summarizeColumn(meta, data) {
     };	
 }
 
+OTHER_LABEL = 'Other'; // FIXME i18n
+function getEnumValues(meta) {
+    if (meta.thresholds) {
+	var enums = meta.thresholds.slice(0);
+	enums.splice(0, 0, '-');
+	var toLabel = function(e, i) {
+	    if (i == 0) {
+		return '<' + enums[1];
+	    } else if (i == enums.length - 1) {
+		return '>' + e;
+	    } else {
+		return e + '-' + enums[i + 1];
+	    }
+	};
+    } else {
+	var enums = _.keys(meta.categories);
+	enums.sort();
+	// move 'other' to end
+	if (enums.indexOf('_other') != -1) {
+	    enums.splice(enums.indexOf('_other'), 1);
+	    enums.push('_other');
+	}
+	var toLabel = function(e) {
+	    // TODO fetch display captions for enum values from somewhere
+	    return (e == '_other' ? OTHER_LABEL : e);
+	}
+    }
+    return $.map(enums, function(e, i) { return {label: toLabel(e, i), value: e}; });
+}
+
 
 
 
 function renderLegend($e, metric, config) {
-    $e.text(metric.title);
+    $.each(['size', 'color', 'icon'], function(i, e) {
+	var meta = metric[e];
+	if (typeof meta == 'object') {
+	    var col = meta.column;
+	    var $h = $('<h4>');
+	    $h.text(config.column_titles[col] || col);
+	    $e.append($h);
+
+	    $div = $('<div>');
+	    ({	
+		size: sizeLegend,
+		color: colorLegend,
+		icon: iconLegend,
+	    })[e]($div, meta);
+	    $e.append($div);
+	}
+    });
 };
 
+function sizeLegend($e, meta) {
+    //numeric
+    $e.text('size');
+}
 
+function colorLegend($e, meta) {
+    if (meta.colorstops) {
+	colorScaleLegend($e, meta);
+    } else {
+	enumLegend($e, 'color', meta);
+    }
+}
+
+function iconLegend($e, meta) {
+    enumLegend($e, 'icon', meta);
+}
+
+function enumLegend($e, mode, meta) {
+    var $t = $('<table>');
+    $e.append($t);
+
+    var enums = getEnumValues(meta);
+    $.each(enums, function(i, e) {
+	var $r = $('<tr>');
+	$t.append($r);
+
+	var $lab = $('<td>');
+	var $val = $('<td>');
+	$r.append($val);
+	$r.append($lab);
+	$lab.css('padding-left', '0.8em');
+
+	$lab.text(e.label);
+	var value = matchCategories(e.value, meta.categories);
+	if (mode == 'color') {
+	    $val.css('background-color', value);
+	    $val.css('width', '1.2em');
+	} else {
+	    var $icon = $('<img>');
+	    $icon.attr('src', value);
+	    $val.append($icon);
+	}
+    });
+}
 
 
 
@@ -631,47 +720,4 @@ function render_marker(draw, w, h, anchor) {
     );
 }
 
-
-
-
-
-function render_legend(style, context) {
-    $('#legend-inner').empty();
-    var has_legend = (style != null ? style.legend(context, $('#legend-inner')) : false);
-    $('#legend')[has_legend ? 'show' : 'hide']();
-}
-
-function enum_legend(context, config, $div) {
-    var _data = {};
-    $.each(context.vals, function(i, e) {
-            _data[e] = null;
-        });
-    var $t = $('<table />');
-    for_each_choice(config, _data, function(k, v) {
-            var name = (lookup_by(config.values || [], 'value', k) || {}).label || k;
-            var color = color_for(config, k);
-
-            var $r = $('<tr>');
-            var $color = $('<td>');
-            $color.css('background', color);
-            $color.addClass('enumlegendcolor');
-            $r.append($color);
-            var $label = $('<td>');
-            $label.addClass('enumlegendlabel');
-            $label.text(name);
-            $r.append($label);
-            $t.append($r);
-        });
-    $div.append($t);
-}
-
-function randcolor(min, max) {
-    min = min || 0.;
-    max = max || 1.;
-
-    var k = function() {
-        return Math.round(255 * Math.pow((max - min) * Math.random() + min, 1/2.2));
-    };
-    return 'rgb(' + k() + ',' + k() + ',' + k() + ')';
-};
 
