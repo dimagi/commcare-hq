@@ -1,11 +1,16 @@
+{% load hq_shared_tags %}
+
 <div class="hq-graphic-report">
 
-<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key={{ maps_api_key }}&sensor=false"></script>
+<link rel="stylesheet" href="{{STATIC_URL}}reports/css/leaflet/leaflet.css" />
+
+<script src="{{STATIC_URL}}reports/javascripts/leaflet.js"></script>
+<script src="{{STATIC_URL}}reports/javascripts/handlebars.js"></script>
+<script src="{{STATIC_URL}}reports/javascripts/jquery.color.js"></script>
 <script type="text/javascript" src="{{STATIC_URL}}reports/javascripts/maps.js"></script>
 <script type="text/javascript">
 
-CASE_API_URL = '{{ case_api_url }}';
-CONFIG = {{ config|safe }};
+CONTEXT = {{ context|JSON }};
 
 function setMapHeight() {
     $('#map').height($(window).height() - 200);
@@ -15,10 +20,8 @@ $(document).ready(function() {
     setMapHeight();
     $(window).resize(setMapHeight);
 
-    var map = maps_init(CONFIG);
-    $.get(CASE_API_URL, null, function(data) {
-      maps_refresh(map, data);
-    }, 'json');
+    L.Icon.Default.imagePath = '{{STATIC_URL}}reports/css/leaflet/images';
+    var map = mapsInit(CONTEXT);
 });
 
 </script>
@@ -26,21 +29,30 @@ $(document).ready(function() {
 <style>
 
 /* fix bootstrap / gmaps conflict */
+/*
 #map img {
   max-width: none !important;
 }
+*/
+
+.control-pane {
+  /* copied from style of other leaflet controls */
+  background: #f8f8f9;
+  box-shadow: 0 1px 7px rgba(0,0,0,0.4);
+  border-radius: 5px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+
+  padding: 10px;
+}
 
 #sidebar {
-  position: absolute;
-  bottom: 30px;
-  right: 12px;
-  padding: 10px;
   max-width: 12em;
-  background: rgba(255, 255, 255, .7);
-  border: 5px #aaa solid;
-  border-radius: 20px;
-  -moz-border-radius: 20px;
-  -webkit-border-radius: 20px;
+}
+
+.zoomtofit {
+  background-image: url({{STATIC_URL}}reports/css/leaflet/images/zoomfit.png);
+  cursor: pointer;
 }
 
 .choice {
@@ -59,48 +71,15 @@ $(document).ready(function() {
   color: #888;
 }
 
-.enumlegendcolor {
-  width: 1.4em;
-}
-
-.enumlegendlabel {
-  padding-left: 0.5em;
-}
-
 </style>
 
 <div style="position: relative;">
   <div id="map" style="width: 100%;"></div>
   
-  <div id="sidebar" style="display: none;">
-    <div id="legend" style="display: none; margin-bottom: 30px;">
-      <h3>Legend</h3>
-      <div id="legend-inner"></div>
-    </div>
+  <div id="metrics" class="control-pane" style="display: none;">
+  </div>
 
-    <div id="style" style="display: none; margin-bottom: 30px;">
-      <h3>Style</h3>
-	<span type="intens">intensity</span> &middot;
-	<span type="blob">size</span> &middot;
-        <span type="gauge">gauge</span> &middot;
-	<span type="dot">dot</span> &middot;
-	<span type="pie">pie<sub>A</sub></span> &middot;
-	<span type="varpie">pie<sub>B</sub></span> &middot;
-	<span type="explodepie">pie<sub>C</sub></span>
-    </div>
-
-    <div id="agg" style="display: none; margin-bottom: 30px;">
-      <h3>Metric</h3>
-      <span type="count">count</span> &middot;
-      <span type="val">value</span> &middot;
-      <span type="sum">sum</span> &middot;
-      <span type="min">min</span> &middot;
-      <span type="max">max</span> &middot;
-      <span type="avg">average</span> &middot;
-      <span type="tally">tally</span>
-    </div>
-
-    <div id="panel"></div>
+  <div id="legend" class="control-pane" style="display: none;">
   </div>
   
 </div>
