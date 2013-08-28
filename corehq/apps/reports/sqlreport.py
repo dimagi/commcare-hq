@@ -1,4 +1,5 @@
 # coding=utf-8
+from django.template.defaultfilters import slugify
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import RawFilter, SqlFilter
 import sqlalchemy
@@ -48,7 +49,7 @@ class Column(object):
 
 
 class DatabaseColumn(Column):
-    def __init__(self, header, agg_column, format_fn=None, *args, **kwargs):
+    def __init__(self, header, agg_column, format_fn=None, slug=None, *args, **kwargs):
         """
         Args:
             :param header:
@@ -71,10 +72,15 @@ class DatabaseColumn(Column):
             :param format_fn=None:
                 Function to apply to value before display. Useful for formatting and sorting.
                 See corehq.apps.reports.util.format_datatables_data
+            :param slug=None:
+                Unique ID for the column. If not supplied assumed to be 'agg_column.name'.
+                This is used by the Report API.
             :param kwargs:
                 Additional keyword arguments will be passed on when creating the DataTablesColumn
 
         """
+        self.slug = slug or agg_column.name
+
         if 'sortable' not in kwargs:
             kwargs['sortable'] = True
 
@@ -101,7 +107,7 @@ class AggregateColumn(Column):
     """
     Allows combining the values from multiple columns into a single value.
     """
-    def __init__(self, header, aggregate_fn, columns, format_fn=None, **kwargs):
+    def __init__(self, header, aggregate_fn, columns, format_fn=None, slug=None, **kwargs):
         """
         Args:
             :param header:
@@ -114,6 +120,9 @@ class AggregateColumn(Column):
             :param format_fn=None:
                 Function to apply to value before display. Useful for formatting and sorting.
                 See corehq.apps.reports.util.format_datatables_data
+            :param slug=None:
+                Unique ID for the column. If not supplied assumed to be slugify(header).
+                This is used by the Report API.
             :param sortable:
                 Indicates if the column should be sortable. If true and no format_fn is provided then
                 the default datatables format function is used. Defaults to True.
@@ -121,6 +130,7 @@ class AggregateColumn(Column):
                 See corehq.apps.reports.datatables.DTSortType
         """
         self.aggregate_fn = aggregate_fn
+        self.slug = slug or slugify(header)
 
         if 'sortable' not in kwargs:
             kwargs['sortable'] = True
@@ -317,7 +327,7 @@ class DictDataFormat(BaseDataFormat):
     Formats the report data as a dictionary
     """
     def format_row(self, row):
-        return dict([(c.view.name, self._or_no_value(c.get_value(row))) for c in self.columns])
+        return dict([(c.slug, self._or_no_value(c.get_value(row))) for c in self.columns])
 
     def format_output(self, row_generator):
         ret = dict()
