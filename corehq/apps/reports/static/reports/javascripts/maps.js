@@ -1,4 +1,6 @@
 
+// a map control map that lists the various display metrics for this report
+// and allows you to select and display them
 MetricsControl = L.Control.extend({
     options: {
         position: 'bottomleft'
@@ -38,6 +40,7 @@ MetricsControl = L.Control.extend({
     },
 });
 
+// a control button that will fit the map viewport to the currently displayed data
 ZoomToFitControl = L.Control.extend({
     options: {
 	position: 'topright'
@@ -58,6 +61,7 @@ ZoomToFitControl = L.Control.extend({
 });
 
 
+// main entry point
 function mapsInit(context) {
     var map = initMap($('#map'), [30., 0.], 2, 'Map');
     initData(context.data, context.config);
@@ -90,6 +94,7 @@ function initMap($div, default_pos, default_zoom, default_layer) {
     return map;
 }
 
+// perform any pre-processing of the raw data
 function initData(data, config) {
     $.each(data.features, function(i, e) {
 	// pre-cache popup detail
@@ -97,7 +102,12 @@ function initData(data, config) {
     });
 }
 
+// set up the configured display metrics
 function initMetrics(map, data, config) {
+    $.each(config.metrics, function(i, e) {
+	setMetricDefaults(e, data, config);
+    });
+
     var m = new MetricsControl({data: data}).addTo(map);
 
     $.each(config.metrics, function(i, e) {
@@ -109,6 +119,7 @@ function initMetrics(map, data, config) {
     zoomToAll(map);
 }
 
+// render a display metric to the map
 function loadData(map, data, display_context) {
     if (map.activeOverlay) {
 	map.removeLayer(map.activeOverlay);
@@ -126,6 +137,7 @@ function zoomToAll(map) {
     }
 }
 
+// generate the proper geojson styling for the given display metric
 function makeDisplayContext(metric) {
     return {
 	filter: function(feature, layer) {
@@ -221,7 +233,7 @@ function getSize(meta, props) {
 	if (isNull(val)) {
 	    return null;
 	} else if (!isNumeric(val)) {
-	    throw new TypeError('numeric value required');
+	    throw new TypeError('numeric value required [' + val + ']');
 	}
 
 	// scale value with area of marker
@@ -231,7 +243,7 @@ function getSize(meta, props) {
     }
 }
 
-DEFAULT_COLOR = 'rgba(255, 120, 0, .7)';
+DEFAULT_COLOR = 'rgba(255, 120, 0, .8)';
 function getColor(meta, props) {
     var c = (function() {
 	if (meta == null) {
@@ -248,7 +260,7 @@ function getColor(meta, props) {
 		return matchCategories(val, meta.categories);
 	    } else {
 		if (!isNumeric(val)) {
-		    throw new TypeError('numeric value required');
+		    throw new TypeError('numeric value required [' + val + ']');
 		}
 		return matchSpline(val, meta.colorstops, blendColor);
 	    }
@@ -262,6 +274,7 @@ function getColor(meta, props) {
     return {color: c.toHexString(), alpha: c.alpha()};
 }
 
+DEFAULT_ICON_URL = 'http://mrgris.com/dimagispace/media/jonvik_dance.gif';
 function getIcon(meta, props) {
     //TODO support css sprites
     var icon = (function() {
@@ -283,9 +296,13 @@ function getIcon(meta, props) {
 
 function getPropValue(props, meta) {
     var val = props[meta.column];
+    if (isNull(val)) {
+	return null;
+    }
+
     if (meta.thresholds) {
 	if (!isNumeric(val)) {
-	    throw new TypeError('numeric value required');
+	    throw new TypeError('numeric value required [' + val + ']');
 	}
 	val = matchThresholds(val, meta.thresholds);
     }
@@ -325,7 +342,107 @@ function formatDetailPopup(feature, config) {
     return content;
 }
 
+// attempt to set sensible defaults for any missing parameters in the metric definitions
+function setMetricDefaults(metric, data, config) {
+    if (!metric.title) {
+	var varcols = [];
+	$.each(['size', 'color', 'icon'], function(i, e) {
+	    if (typeof metric[e] == 'object' && metric[e].column) {
+		var col = metric[e].column;
+		if (varcols.indexOf(col) == -1) {
+		    varcols.push(col);
+		}
+	    }
+	});
+	metric.title = $.map(varcols, function(e) { return config.column_titles[e] || e; }).join(' / ');
+    }
 
+    if (typeof metric.size == 'object') {
+	if (!metric.size.baseline) {
+	    var stats = summarizeColumn(metric.size, data);
+	    metric.size.baseline = stats.mean;
+	}
+    }
+
+    if (typeof metric.color == 'object') {
+	if (!metric.color.categories && !metric.color.colorstops) {
+	    var stats = summarizeColumn(metric.color, data);
+	    var numeric_data = (!metric.color.thresholds && !stats.nonnumeric);
+	    if (numeric_data) {
+		metric.color.colorstops = (stats.min < 0 ?
+					   [
+					       [stats.min, 'rgba(0, 0, 255, .8)'],
+					       [stats.max, 'rgba(255, 0, 0, .8)'],
+					   ] :
+					   [
+					       [0, 'rgba(20, 20, 20, .8)'],
+					       [stats.max, DEFAULT_COLOR],
+					   ]);
+	    } else {
+		if (metric.color.thresholds) {
+		    var enums = metric.color.thresholds.slice(0);
+		    enums.splice(0, 0, '-');
+		} else {
+		    var enums = stats.distinct;
+		}
+
+		var cat = {};
+		$.each(enums, function(i, e) {
+		    var hue = i * 360. / enums.length;
+		    cat[e] = 'hsla(' + hue + ', 100%, 50%, .8)';
+		});
+		metric.color.categories = cat;
+	    }
+	}
+    }
+
+    if (typeof metric.icon == 'object') {
+	if (!metric.icon.categories) {
+	    metric.icon.categories = {_other: DEFAULT_ICON_URL};
+	}
+    }
+}
+
+// compute statistics on a given column of data for the purpose of determining
+// sensible styling defaults
+function summarizeColumn(meta, data) {
+    var _uniq = {};
+    var sum = 0;
+    var count = 0;
+    var min = null;
+    var max = null;
+    var nonnumeric = false;
+
+    $.each(data.features, function(i, e) {
+	var val = getPropValue(e.properties, meta);
+	if (isNull(val)) {
+	    return;
+	}
+
+	count++;
+	_uniq[val] = true;
+	if (isNumeric(val)) {
+	    sum += val;
+	    min = (min == null ? val : Math.min(min, val));
+	    max = (max == null ? val : Math.max(max, val));
+	} else {
+	    nonnumeric = true;
+	}
+    });
+    var uniq = [];
+    $.each(_uniq, function(k, v) {
+	uniq.push(k);
+    });
+    uniq.sort();
+
+    return {
+	distinct: uniq,
+	mean: (count > 0 ? sum / count : null),
+	min: min,
+	max: max,
+	nonnumeric: nonnumeric,
+    };	
+}
 
 
 
