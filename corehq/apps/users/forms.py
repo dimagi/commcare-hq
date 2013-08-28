@@ -2,11 +2,12 @@ from django import forms
 from django.core.validators import EmailValidator, email_re
 from django.core.urlresolvers import reverse
 from django.forms.widgets import PasswordInput, HiddenInput
-from django.utils.encoding import smart_str
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.template.loader import get_template
-from django.template import Template, Context
+from django.template import Context
+from corehq.apps.commtrack.helpers import set_commtrack_location
+from corehq.apps.locations.models import Location
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.app_manager.models import validate_lang
@@ -214,5 +215,7 @@ class CommtrackUserForm(forms.Form):
         self.fields['supply_point'].widget = SupplyPointSelectWidget(domain=domain)
 
     def save(self, user):
-        user.commtrack_location = self.cleaned_data['supply_point']
-        user.save()
+        location_id = self.cleaned_data['supply_point']
+        if location_id:
+            loc = Location.get(location_id)
+            set_commtrack_location(user, loc)

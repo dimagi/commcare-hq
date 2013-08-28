@@ -6,7 +6,7 @@ from casexml.apps.case.xml import V2
 import uuid
 from corehq.apps.hqcase.utils import submit_case_blocks
 from xml.etree import ElementTree
-from corehq.apps.users.cases import get_owner_id
+from corehq.apps.users.cases import get_owner_id, get_wrapped_owner, reconcile_ownership
 
 """
 helper code to populate the various commtrack models, for ease of
@@ -126,4 +126,9 @@ def make_psi_config(domain):
     c.save()
     return c
 
-    
+
+def set_commtrack_location(user, location):
+    user.commtrack_location = location._id
+    supply_point_case = SupplyPointCase.get_by_location(location)
+    reconcile_ownership(supply_point_case, user)
+    user.save()
