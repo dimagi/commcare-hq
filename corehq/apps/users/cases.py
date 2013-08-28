@@ -67,7 +67,7 @@ def reconcile_ownership(case, user, recursive=True, existing_groups=None):
     criteria in scenario 2 before creating a new group (this is mainly used by the
     recursive calls)
     """
-    existing_groups = [] if existing_groups is None else existing_groups
+    existing_groups = {} if existing_groups is None else existing_groups
 
     def _get_matching_group(groups, user_ids):
         """
@@ -87,7 +87,7 @@ def reconcile_ownership(case, user, recursive=True, existing_groups=None):
         assign_case(case, user._id, user.username, user._id)
     elif isinstance(owner, CommCareUser):
         needed_owners = [owner._id, user._id]
-        matched = _get_matching_group(existing_groups, needed_owners)
+        matched = _get_matching_group(existing_groups.values(), needed_owners)
         if matched:
             assign_case(case, matched._id, user.username, user._id)
         else:
@@ -102,14 +102,14 @@ def reconcile_ownership(case, user, recursive=True, existing_groups=None):
                 }
             )
             new_group.save()
-            existing_groups.append(new_group)
+            existing_groups[new_group._id] = new_group
             assign_case(case, new_group._id, user.username, user._id)
     else:
         assert isinstance(owner, Group)
         if user._id not in owner.users:
             owner.users.append(user._id)
             owner.save()
-        existing_groups.append(owner)
+        existing_groups[owner._id] = owner
 
     if recursive:
         for subcase in case.get_subcases():
