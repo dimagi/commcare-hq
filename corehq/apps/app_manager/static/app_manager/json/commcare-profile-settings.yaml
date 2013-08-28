@@ -19,10 +19,10 @@
 - name: "Days for Review"
   description: "How long the phone will retain completed forms for review."
   id: "cc-days-form-retain"
-  values: ["1", "7",  "31", "92", "365"]
-  value_names: ["Just One Day", "One Week", "One Month", "Three Months", "One Year"]
+  values: ["1", "7",  "31", "92", "365", "-1"]
+  value_names: ["Just One Day", "One Week", "One Month", "Three Months", "One Year", "Forms are Never Removed"]
   requires: "{features.sense}='false'"
-  default: "7"
+  default: "-1"
   values_txt: "Any positive integer. Represents period of purging in days." 
   since: "2.8"
 
