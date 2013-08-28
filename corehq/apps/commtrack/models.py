@@ -388,6 +388,13 @@ class SupplyPointCase(CommCareCase):
         return data
 
     @classmethod
+    def get_by_location(cls, location):
+        return cls.view('commtrack/supply_point_by_loc',
+            key=[location.domain, location._id],
+            include_docs=True
+        ).one()
+
+    @classmethod
     def get_display_config(cls):
         return [
             {
