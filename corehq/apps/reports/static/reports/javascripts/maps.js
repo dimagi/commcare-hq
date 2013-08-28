@@ -522,9 +522,15 @@ function renderLegend($e, metric, config) {
     });
 };
 
+// this is pretty hacky
 function sizeLegend($e, meta) {
-    //numeric
-    $e.text('size');
+    var BASELINE_DIAMETER = 2 * DEFAULT_SIZE;
+    $e.html('<table><tr><td><div id="circ" style="border: 1.5px solid black; background-color: #ddd; border-radius: 50%; -webkit-border-radius: 50%; -moz-border-radius: 50%;"></div></td><td id="val"></td></tr></table>');
+    $e.find('#circ').css('width', BASELINE_DIAMETER + 'px');
+    $e.find('#circ').css('height', BASELINE_DIAMETER + 'px');
+    $e.find('#val').css('padding-left', '0.6em');
+    // TODO pin baseline to a nearby round number
+    $e.find('#val').text(meta.baseline);
 }
 
 function colorLegend($e, meta) {
@@ -537,6 +543,38 @@ function colorLegend($e, meta) {
 
 function iconLegend($e, meta) {
     enumLegend($e, 'icon', meta);
+}
+
+function colorScaleLegend($e, meta) {
+    var min = meta.colorstops[0][0];
+    var max = meta.colorstops.slice(-1)[0][0];
+    var SCALEBAR_HEIGHT = 150; //px
+    var SCALEBAR_WIDTH = 20; // TODO seems like we want to tie this to em-height instead
+    var $canvas = $('<canvas>');
+    $canvas.attr('width', SCALEBAR_WIDTH); 
+    $canvas.attr('height', SCALEBAR_HEIGHT);
+    var ctx = $canvas[0].getContext('2d');
+    for (var i = 0; i < SCALEBAR_HEIGHT; i++) {
+	var k = i / (SCALEBAR_HEIGHT - 1);
+	var x = min * (1 - k) + max * k;
+	var y = $.Color(matchSpline(x, meta.colorstops, blendColor)).toRgbaString();
+	ctx.fillStyle = y;
+	ctx.fillRect(0, SCALEBAR_HEIGHT - 1 - i, SCALEBAR_WIDTH, 1);
+    }
+
+    var $t = $('<table><tr><td rowspan="2" id="bar"></td><td class="lab" id="labmax"></td></tr><tr><td class="lab" id="labmin"></td></tr></table>');
+
+    var $bar = $t.find('#bar');
+    var $labmin = $t.find('#labmin');
+    var $labmax = $t.find('#labmax');
+    $bar.append($canvas);
+    $labmin.text(min);
+    $labmax.text(max);
+    $t.find('.lab').css('padding-left', '0.4em');
+    $labmin.css('vertical-align', 'bottom');
+    $labmax.css('vertical-align', 'top');
+
+    $e.append($t);
 }
 
 function enumLegend($e, mode, meta) {
