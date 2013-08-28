@@ -537,12 +537,19 @@ function colorLegend($e, meta) {
     if (meta.colorstops) {
 	colorScaleLegend($e, meta);
     } else {
-	enumLegend($e, 'color', meta);
+	enumLegend($e, meta, function($cell, value) {
+	    $cell.css('background-color', value);
+	    $cell.css('width', '1.2em');
+	});
     }
 }
 
 function iconLegend($e, meta) {
-    enumLegend($e, 'icon', meta);
+    enumLegend($e, meta, function($cell, value) {
+	var $icon = $('<img>');
+	$icon.attr('src', value);
+	$cell.append($icon);
+    });
 }
 
 function colorScaleLegend($e, meta) {
@@ -577,7 +584,7 @@ function colorScaleLegend($e, meta) {
     $e.append($t);
 }
 
-function enumLegend($e, mode, meta) {
+function enumLegend($e, meta, renderValue) {
     var $t = $('<table>');
     $e.append($t);
 
@@ -594,14 +601,7 @@ function enumLegend($e, mode, meta) {
 
 	$lab.text(e.label);
 	var value = matchCategories(e.value, meta.categories);
-	if (mode == 'color') {
-	    $val.css('background-color', value);
-	    $val.css('width', '1.2em');
-	} else {
-	    var $icon = $('<img>');
-	    $icon.attr('src', value);
-	    $val.append($icon);
-	}
+	renderValue($val, value);
     });
 }
 
