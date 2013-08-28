@@ -75,10 +75,7 @@ def reconcile_ownership(case, user, recursive=True, existing_groups=None):
         all of the user_ids, or None if no match is found.
         """
         for group in groups:
-            print needed_owners
-            print group.users
             if all(user in group.users for user in user_ids):
-                print 'match!'
                 return group
         return None
 
@@ -94,8 +91,6 @@ def reconcile_ownership(case, user, recursive=True, existing_groups=None):
         if matched:
             assign_case(case, matched._id, user.username, user._id)
         else:
-            import pdb
-            pdb.set_trace()
             new_group = Group(
                 domain=case.domain,
                 name="{case} Owners (system)".format(case=case.name or case.type),
