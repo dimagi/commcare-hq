@@ -44,9 +44,6 @@ class TimeStampProperty(DateTimeProperty):
         return value
 
     def to_json(self, value):
-        if self.auto_now:
-            value = self.now()
-
         if value is None:
             return value
         return value.isoformat() + 'Z'
