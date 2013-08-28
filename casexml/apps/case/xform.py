@@ -5,6 +5,7 @@ import logging
 from couchdbkit import DocumentSchema
 
 from couchdbkit.resource import ResourceNotFound
+from couchforms.models import XFormInstance
 from dimagi.utils.chunked import chunked
 from casexml.apps.case.exceptions import IllegalCaseId, NoDomainProvided
 from casexml.apps.case import settings
@@ -159,6 +160,8 @@ def extract_case_blocks(doc):
     Extract all case blocks from a document, returning an array of dictionaries
     with the data in each case. 
     """
+    if isinstance(doc, XFormInstance):
+        return extract_case_blocks(doc.form)
     if doc is None or is_excluded(doc):
         return []
     
