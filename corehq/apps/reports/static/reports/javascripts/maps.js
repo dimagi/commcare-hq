@@ -4,7 +4,7 @@ MetricsControl = L.Control.extend({
         position: 'bottomleft'
     },
 
-    onAdd: function (map) {
+    onAdd: function(map) {
 	this.$div = $('#metrics');
 	this.div = this.$div[0];
         L.DomEvent.disableClickPropagation(this.div);
@@ -38,13 +38,30 @@ MetricsControl = L.Control.extend({
     },
 });
 
+ZoomToFitControl = L.Control.extend({
+    options: {
+	position: 'topright'
+    },
+
+    onAdd: function(map) {
+	this.$div = $('<div></div>');
+	this.$div.addClass('leaflet-control-layers');
+	var $inner = $('<div></div>');
+	$inner.addClass('leaflet-control-layers-toggle');
+	$inner.addClass('zoomtofit');
+	this.$div.append($inner);
+	$inner.click(function() {
+	    zoomToAll(map);
+	});
+	return this.$div[0];
+    }
+});
+
 
 function mapsInit(context) {
     var map = initMap($('#map'), [30., 0.], 2, 'Map');
     initData(context.data, context.config);
     initMetrics(map, context.data, context.config);
-    // TODO this link should be a button next to the 'layers' control
-    $('#fit').click(function() { zoomToAll(map); });
     return map;
 }
 
@@ -65,6 +82,8 @@ function initMap($div, default_pos, default_zoom, default_layer) {
     }
     L.control.layers(layers).addTo(map);
     map.addLayer(layers[default_layer]);
+
+    new ZoomToFitControl().addTo(map);
 
     L.control.scale().addTo(map);
 
