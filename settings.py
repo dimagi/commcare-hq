@@ -788,6 +788,9 @@ PILLOWTOPS = [
                  'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
                  'custom.reports.care_sa.models.CareSAFluffPillow',
                  'custom.reports.mc.models.MalariaConsortiumFluffPillow',
+                 # MVP
+                 'corehq.apps.indicators.pillows.FormIndicatorPillow',
+                 'corehq.apps.indicators.pillows.CaseIndicatorPillow',
              ] + LOCAL_PILLOWTOPS
 
 #Custom workflow for indexing xform data beyond the standard properties
