@@ -2,11 +2,10 @@ from __future__ import absolute_import
 from xml.etree import ElementTree
 from couchdbkit import ResourceNotFound
 from dimagi.utils.parsing import json_format_datetime
-from casexml.apps.case.tests import CaseBlock
 from casexml.apps.case.xml import V2
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
-
+from corehq.apps.hqcase.utils import submit_case_blocks
 
 def user_db():
     return CouchUser.get_db()
@@ -116,7 +115,7 @@ def reconcile_ownership(case, user, recursive=True, existing_groups=None):
             reconcile_ownership(subcase, user, recursive, existing_groups)
 
 def assign_case(case, new_owner_id, username='system', user_id=''):
-    from corehq.apps.hqcase.utils import submit_case_blocks
+    from casexml.apps.case.tests import CaseBlock
     case_block = CaseBlock(
         create=False,
         case_id=case._id,
