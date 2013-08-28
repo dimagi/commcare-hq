@@ -144,8 +144,9 @@ class Permissions(DocumentSchema):
 
     def __or__(self, other):
         permissions = Permissions()
-        for name in permissions.properties():
-            permissions._setattr(name, self._getattr(name) | other._getattr(name))
+        for name, value in permissions.properties().items():
+            if isinstance(value, (BooleanProperty, ListProperty)):
+                permissions._setattr(name, self._getattr(name) | other._getattr(name))
         return permissions
 
     def __eq__(self, other):

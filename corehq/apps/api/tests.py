@@ -1,5 +1,4 @@
 import simplejson
-import time
 from datetime import datetime
 
 import dateutil.parser
