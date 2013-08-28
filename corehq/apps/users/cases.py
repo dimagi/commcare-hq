@@ -83,12 +83,12 @@ def reconcile_ownership(case, user, recursive=True, existing_groups=None):
         pass
     elif owner is None:
         # assign to user
-        assign_case(case, user._id, user.username, user._id)
+        assign_case(case, user._id, user)
     elif isinstance(owner, CommCareUser):
         needed_owners = [owner._id, user._id]
         matched = _get_matching_group(existing_groups.values(), needed_owners)
         if matched:
-            assign_case(case, matched._id, user.username, user._id)
+            assign_case(case, matched._id, user)
         else:
             new_group = Group(
                 domain=case.domain,
@@ -102,7 +102,7 @@ def reconcile_ownership(case, user, recursive=True, existing_groups=None):
             )
             new_group.save()
             existing_groups[new_group._id] = new_group
-            assign_case(case, new_group._id, user.username, user._id)
+            assign_case(case, new_group._id, user)
     else:
         assert isinstance(owner, Group)
         if user._id not in owner.users:
@@ -114,7 +114,7 @@ def reconcile_ownership(case, user, recursive=True, existing_groups=None):
         for subcase in case.get_subcases():
             reconcile_ownership(subcase, user, recursive, existing_groups)
 
-def assign_case(case, new_owner_id, username='system', user_id=''):
+def assign_case(case, new_owner_id, acting_user):
     from casexml.apps.case.tests import CaseBlock
     case_block = CaseBlock(
         create=False,
@@ -123,5 +123,6 @@ def assign_case(case, new_owner_id, username='system', user_id=''):
         version=V2,
     )
     case_xml = ElementTree.tostring(case_block.as_xml(format_datetime=json_format_datetime))
-    submit_case_blocks(case_xml, case.domain, username=username, user_id=user_id)
+    submit_case_blocks(case_xml, case.domain, username=acting_user.username,
+                       user_id=acting_user._id)
 
