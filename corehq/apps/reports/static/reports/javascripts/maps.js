@@ -122,23 +122,6 @@ function initMap($div, default_pos, default_zoom, default_layer) {
 
 // perform any pre-processing of the raw data
 function initData(data, config) {
-    // generate enum -> caption mappings for columns that specify the caption in a
-    // corresponding column
-    // (i'm on the fence on whether this is even useful or a good idea)
-    $.each(config.enum_captions, function(k, v) {
-	if (typeof v == 'string') {
-	    var mapping = {};
-	    $.each(data.features, function(i, e) {
-		var enumval = e.properties[k];
-		var caption = e.properties[v];
-		if (!isNull(enumval) && !mapping.hasOwnProperty(enumval) && !isNull(caption)) {
-		    mapping[enumval] = caption;
-		}
-	    });
-	    config.enum_captions[k] = mapping;
-	};
-    });
-
     // pre-cache popup detail
     $.each(data.features, function(i, e) {
 	e.popupContent = formatDetailPopup(e, config);
@@ -452,9 +435,17 @@ function setMetricDefaults(metric, data, config) {
     }
 }
 
+function summarizeColumn(meta, data) {
+    // cache the computed results
+    if (!meta._stats) {
+	meta._stats = _summarizeColumn(meta, data);
+    }
+    return meta._stats;
+}
+
 // compute statistics on a given column of data for the purpose of determining
 // sensible styling defaults
-function summarizeColumn(meta, data) {
+function _summarizeColumn(meta, data) {
     var _uniq = {};
     var sum = 0;
     var count = 0;
@@ -516,16 +507,9 @@ function getEnumValues(meta) {
 	}
 	var toLabel = function(e) {
 	    var caption = getEnumCaption(meta.column, e, CONFIG); // eww global var ref
-	    var fallback = (e == '_other' ? OTHER_LABEL : null);
+	    var fallback = (e == '_other' ? OTHER_LABEL : e);
 	    return caption || fallback;
 	}
-
-	// unfortunately, by letting enum captions be specified via another column, there
-	// is no guarantee that all possible enum values will be represented in the report
-	// data. so here we filter out the options for which we cannot determine a caption.
-	// we will never filter out a value that actually appears in the data, though
-	enums = _.filter(enums, toLabel);
-	
 	enums = _.sortBy(enums, toLabel);
 	if (has_other) {
 	    enums.push('_other');

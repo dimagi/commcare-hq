@@ -697,8 +697,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
       'column_titles': {'column name': 'display title for column},
       'detail_columns': [list of column data to display in detail popup],
       'enum_captions': {
-        'col with enum values': 'other col containing corresponding captions' OR
-                                {'enum value': 'enum caption'}
+        'col with enum values': {'enum value': 'enum caption'}
       },
       'metrics': [ <toggleable data display modes>
         one or more of:
