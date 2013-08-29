@@ -3,12 +3,17 @@ from sqlagg.base import AliasColumn
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn, SummingSqlTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
+from psi.reports import DEMO_TYPES
 from util import get_unique_combinations
 from dimagi.utils.decorators.memoized import memoized
 
 
 class PSISQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin):
-    fields = ['corehq.apps.reports.fields.DatespanField','psi.reports.AsyncPlaceField',]
+    fields = ['corehq.apps.reports.fields.DatespanField','psi.reports.AsyncPlaceField']
+
+    @property
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return user and user.is_previewer()
 
     @property
     def group_by(self):
@@ -76,7 +81,7 @@ class PSISQLEventsReport(PSISQLReport):
     fields = ['corehq.apps.reports.fields.DatespanField',
               'psi.reports.StateDistrictField',
               'psi.reports.AASD',]
-    name = "Event Demonstration Report"
+    name = "Event Demonstration Report (SQL)"
     exportable = True
     emailable = True
     slug = "event_demonstations_sql"
@@ -97,7 +102,7 @@ class PSISQLEventsReport(PSISQLReport):
 
 
 class PSISQLHouseholdReport(PSISQLReport):
-    name = "Household Demonstrations Report"
+    name = "Household Demonstrations Report (SQL)"
     exportable = True
     emailable = True
     slug = "household_demonstrations_sql"
@@ -139,7 +144,7 @@ class PSISQLHouseholdReport(PSISQLReport):
 
 
 class PSISQLSensitizationReport(PSISQLReport):
-    name = "Sensitization Sessions Report"
+    name = "Sensitization Sessions Report (SQL)"
     exportable = True
     emailable = True
     slug = "sensitization_sessions_sql"
@@ -165,7 +170,7 @@ class PSISQLSensitizationReport(PSISQLReport):
         ]
 
 class PSISQLTrainingReport(PSISQLReport):
-    name = "Training Sessions Report"
+    name = "Training Sessions Report (SQL)"
     exportable = True
     emailable = True
     slug = "training_sessions_sql"
