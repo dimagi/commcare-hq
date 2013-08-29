@@ -80,7 +80,7 @@ function formatDataForLineGraph(data, init_val) {
     return ret
 }
 
-function loadCharts(xname, data, initial_values, starting_time, ending_time) {
+function loadCharts(chart_name, xname, data, initial_values, starting_time, ending_time) {
     for (var key in data) {
         if (data.hasOwnProperty(key)) {
             if (data[key].length > 0) {
@@ -98,9 +98,9 @@ function loadCharts(xname, data, initial_values, starting_time, ending_time) {
         return formatDataForLineGraph(domain_datum, initial_values[domain_datum.key]);
     });
 
-    var bar_chart = addHistogram("#bar-chart svg", xname, domain_data);
-    var cum_chart = addLineGraph("#cumulative-chart svg", xname, cum_domain_data);
-    var stacked_cum_chart = addStackedAreaGraph("#stacked-cumulative-chart svg", xname, cum_domain_data);
+    var bar_chart = addHistogram("#" + chart_name + "-bar-chart svg", xname, domain_data);
+    var cum_chart = addLineGraph("#" + chart_name + "-cumulative-chart svg", xname, cum_domain_data);
+    var stacked_cum_chart = addStackedAreaGraph("#" + chart_name + "-stacked-cumulative-chart svg", xname, cum_domain_data);
 
     // move the yaxis label to the left a lil
     var yaxislabel = d3.selectAll('.nv-y.nv-axis .nv-axislabel');
