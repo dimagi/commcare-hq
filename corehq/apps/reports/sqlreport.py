@@ -230,11 +230,6 @@ class SqlTabularReport(SqlData, GenericTabularReport):
     exportable = True
 
     @property
-    def fields(self):
-        return [cls.__module__ + '.' + cls.__name__
-                for cls in self.field_classes]
-
-    @property
     def headers(self):
         return DataTablesHeader(*[c.data_tables_column for c in self.columns])
 
