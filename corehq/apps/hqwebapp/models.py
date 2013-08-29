@@ -330,7 +330,40 @@ class ProjectDataTab(UITab):
             'domain': self.domain,
         }
 
-
+        if self.can_edit_commtrack_data:
+            from corehq.apps.commtrack.views import ProductListView, NewProductView, EditProductView
+            from corehq.apps.locations.views import LocationsListView, NewLocationView, EditLocationView
+            commtrack_data_views = [
+                {
+                    'title': ProductListView.page_title,
+                    'url': reverse(ProductListView.urlname, args=[self.domain]),
+                    'subpages': [
+                        {
+                            'title': NewProductView.page_title,
+                            'urlname': NewProductView.urlname,
+                        },
+                        {
+                            'title': EditProductView.page_title,
+                            'urlname': EditProductView.urlname,
+                        },
+                    ]
+                },
+                {
+                    'title': LocationsListView.page_title,
+                    'url': reverse(LocationsListView.urlname, args=[self.domain]),
+                    'subpages': [
+                        {
+                            'title': NewLocationView.page_title,
+                            'urlname': NewLocationView.urlname,
+                        },
+                        {
+                            'title': EditLocationView.page_title,
+                            'urlname': EditLocationView.urlname,
+                        },
+                    ]
+                },
+            ]
+            items.append([_("Manage CommTrack"), commtrack_data_views])
 
         if self.can_export_data:
             from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
