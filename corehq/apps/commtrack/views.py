@@ -125,6 +125,7 @@ class NewProductView(BaseCommTrackManageView):
         if self.new_product_form.is_valid():
             self.new_product_form.save()
             messages.success(request, _("Product saved!"))
+            return HttpResponseRedirect(reverse(ProductListView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 
 
