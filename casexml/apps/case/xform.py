@@ -2,9 +2,10 @@
 Work on cases based on XForms. In our world XForms are special couch documents.
 """
 import logging
+from couchdbkit import DocumentSchema
 
 from couchdbkit.resource import ResourceNotFound
-from couchdbkit.schema.properties_proxy import LazySchemaList
+from couchforms.models import XFormInstance
 from dimagi.utils.chunked import chunked
 from casexml.apps.case.exceptions import IllegalCaseId, NoDomainProvided
 from casexml.apps.case import settings
@@ -143,23 +144,14 @@ def _get_or_update_model(case_block, xform, case_db):
         return case
 
 
-def is_excluded(doc):
-    # exclude anything matching a certain set of conditions from case processing.
-
-    # exclued schemalistproperites (which are expected to be native metadata on
-    # the form not to be seearched, and also there's a bug in couchdbkit that causes
-    # the 'in' operator to raise an AttributeErrorn
-    if isinstance(doc, LazySchemaList):
-        return True
-
-    # also exclude device reports.
+def is_device_report(doc):
+    """exclude device reports"""
     device_report_xmlns = "http://code.javarosa.org/devicereport"
-    try:
-        return (hasattr(doc, "xmlns") and doc.xmlns == device_report_xmlns) or \
-               ("@xmlns" in doc and doc["@xmlns"] == device_report_xmlns)
-    except (TypeError):
-        # wasn't iterable, don't exclude
-        return False
+    return "@xmlns" in doc and doc["@xmlns"] == device_report_xmlns
+
+
+def has_case_id(case_block):
+    return const.CASE_TAG_ID in case_block or const.CASE_ATTR_ID in case_block
 
 
 def extract_case_blocks(doc):
@@ -167,39 +159,41 @@ def extract_case_blocks(doc):
     Extract all case blocks from a document, returning an array of dictionaries
     with the data in each case. 
     """
-    if doc is None or is_excluded(doc):
-        return []
-    
-    block_list = []
-    if isinstance(doc, list):
-        for item in doc:
-            block_list.extend(extract_case_blocks(item))
-    else:
-        try:
-            items = doc.items()
-        except AttributeError:
-            # if not dict-like
-            return []
-        else:
-            for key, value in items:
-                if const.CASE_TAG == key:
-                    # we explicitly don't support nested cases yet, so no need
-                    # to check further
-                    # BUT, it could be a list
-                    if isinstance(value, list):
-                        for item in value:
-                            block_list.append(item)
-                    else:
-                        block_list.append(value)
+
+    if isinstance(doc, XFormInstance):
+        doc = doc.form
+    return list(_extract_case_blocks(doc))
+
+
+def _extract_case_blocks(data):
+    """
+    helper for extract_case_blocks
+
+    data must be json representing a node in an xform submission
+
+    """
+    if isinstance(data, list):
+        for item in data:
+            for case_block in _extract_case_blocks(item):
+                yield case_block
+    elif isinstance(data, dict) and not is_device_report(data):
+        for key, value in data.items():
+            if const.CASE_TAG == key:
+                # it's a case block! Stop recursion and add to this value
+                if isinstance(value, list):
+                    case_blocks = value
                 else:
-                    # recursive call
-                    block_list.extend(extract_case_blocks(value))
-    
-    # filter out anything without a case id property
-    def _has_case_id(case_block):
-        return (const.CASE_TAG_ID in case_block or
-                const.CASE_ATTR_ID in case_block)
-    return [block for block in block_list if _has_case_id(block)]
+                    case_blocks = [value]
+
+                for case_block in case_blocks:
+                    if has_case_id(case_block):
+                        yield case_block
+            else:
+                for case_block in _extract_case_blocks(value):
+                    yield case_block
+    else:
+        return
+
 
 def get_case_ids_from_form(xform):
     case_updates = [case_update_from_block(cb) for cb in extract_case_blocks(xform)]
