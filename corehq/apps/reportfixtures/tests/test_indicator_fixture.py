@@ -1,7 +1,9 @@
 from datetime import date, timedelta
 from xml.etree import ElementTree
 from sqlagg import SumColumn, filters
+from sqlagg.base import AliasColumn
 from sqlagg.columns import SimpleColumn
+from corehq.apps.reports.sqlreport import AggregateColumn
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from corehq.apps.reportfixtures.fixturegenerators import gen_fixture
 from corehq.apps.reportfixtures.indicator_sets import SqlIndicatorSet
@@ -9,6 +11,13 @@ from corehq.apps.reportfixtures.tests.sql_fixture import load_data
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase
+
+
+def _percentage(num, denom):
+    if num is not None and denom is not None:
+        return num / denom
+
+    return 0
 
 
 class CallCenter(SqlIndicatorSet):
@@ -55,6 +64,9 @@ class CallCenter(SqlIndicatorSet):
                                                                 filters=[filters.GTE('date', '2weekago'), filters.LT('date', 'weekago')],
                                                                 alias='casesUpdatedInWeekPrior'),
                            sortable=False),
+            AggregateColumn('averageDurationPerCase', _percentage,
+                            [SumColumn('duration'), AliasColumn('cases_updated')],
+                            sortable=False)
         ]
 
     def map_case(self, value):
@@ -80,6 +92,7 @@ class IndicatorFixtureTest(TestCase):
                 <case id="321">
                     <casesUpdatedInLastWeek>3</casesUpdatedInLastWeek>
                     <casesUpdatedInWeekPrior>4</casesUpdatedInWeekPrior>
+                    <averageDurationPerCase>7</averageDurationPerCase>
                 </case>
             </indicators>
         </fixture>
@@ -92,6 +105,7 @@ class IndicatorFixtureTest(TestCase):
             <indicators>
                 <casesUpdatedInLastWeek>3</casesUpdatedInLastWeek>
                 <casesUpdatedInWeekPrior>4</casesUpdatedInWeekPrior>
+                <averageDurationPerCase>7</averageDurationPerCase>
             </indicators>
         </fixture>
         """.format(userid=self.user.user_id), ElementTree.tostring(fixture))
@@ -104,10 +118,12 @@ class IndicatorFixtureTest(TestCase):
                 <case id="321">
                     <casesUpdatedInLastWeek>3</casesUpdatedInLastWeek>
                     <casesUpdatedInWeekPrior>4</casesUpdatedInWeekPrior>
+                    <averageDurationPerCase>7</averageDurationPerCase>
                 </case>
                 <case id="654">
                     <casesUpdatedInLastWeek>0</casesUpdatedInLastWeek>
                     <casesUpdatedInWeekPrior>0</casesUpdatedInWeekPrior>
+                    <averageDurationPerCase>0</averageDurationPerCase>
                 </case>
             </indicators>
         </fixture>

@@ -43,7 +43,7 @@ def test_report(report, keys=None, filters=None, group_by=None):
 class UserTestReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
     name = "SQL Demo"
     slug = "sql_demo"
-    field_classes = (DatespanField,)
+    fields = [DatespanMixin.datespan_field]
     table_name = "user_report_data"
 
     @property
@@ -88,7 +88,7 @@ class UserTestReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
 class RegionTestReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
     name = "SQL Demo"
     slug = "sql_demo"
-    field_classes = (DatespanField,)
+    fields = [DatespanMixin.datespan_field]
     table_name = "region_report_data"
 
     @property
