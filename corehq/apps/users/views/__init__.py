@@ -4,6 +4,7 @@ import re
 import urllib
 from django.utils.decorators import method_decorator
 from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
 from dimagi.utils.decorators.memoized import memoized
 import langcodes
@@ -542,11 +543,14 @@ def verify_phone_number(request, domain, couch_user_id):
     phone_number = urllib.unquote(request.GET['phone_number'])
     user = CouchUser.get_by_user_id(couch_user_id, domain)
 
-    # send verification message
-    smsverify.send_verification(domain, user, phone_number)
+    try:
+        # send verification message
+        smsverify.send_verification(domain, user, phone_number)
 
-    # create pending verified entry if doesn't exist already
-    user.save_verified_number(domain, phone_number, False, None)
+        # create pending verified entry if doesn't exist already
+        user.save_verified_number(domain, phone_number, False, None)
+    except BadSMSConfigException:
+        messages.error(request, "Could not verify phone number. It seems there is no usable SMS backend.")
 
     if user.is_commcare_user():
         from corehq.apps.users.views.mobile import EditCommCareUserView
