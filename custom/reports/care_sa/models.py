@@ -406,7 +406,7 @@ class CareSAFluff(fluff.IndicatorDocument):
     #3n
     iact_support_groups = xcalculators.filtered_form_calc(
         xmlns=IACT_XMLNS,
-        property_path='form/last_session',
+        property_path='form/session_no',
         property_value=set(['session_1', 'session_2', 'session_3', 'session_4', 'session_5', 'session_6']),
         operator=xcalculators.IN,
     )
