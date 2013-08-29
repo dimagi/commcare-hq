@@ -34,22 +34,37 @@ class CacheableRequestMixIn(object):
         # elsewhere
         return _generate_cache_header_key(self.CACHE_PREFIX, self.request)
 
+    def _is_valid(self):
+        # checks if this meets the preconditions for being allowed in the cache
+        try:
+            assert self.request.domain
+            assert self.request.couch_user._id
+            assert self.request.get_full_path().startswith('/a/{domain}/'.format(domain=self.request.domain))
+            return True
+        except (AssertionError, AttributeError):
+            return False
+
     def set_in_cache(self, tag, object, expiry=DEFAULT_EXPIRY):
-        return self.get_cache().set(self.get_cache_key(tag), object, expiry)
+        if self._is_valid():
+            self.get_cache().set(self.get_cache_key(tag), object, expiry)
+        else:
+            pass
 
     def get_from_cache(self, tag):
-        try:
-            # make sure our request matches preconditions for caching, or don't use it
-            assert self.request.domain
-            assert self.request.get_full_path().startswith('/a/{domain}/'.format(domain=self.request.domain))
+        if self._is_valid():
             return self.get_cache().get(self.get_cache_key(tag))
-        except (AssertionError, AttributeError):
+        else:
             return None
 
     def get_cache_key(self, tag):
-        return "{key}-{tag}".format(
+        assert self._is_valid()
+        domain = self.request.domain
+        user = self.request.couch_user._id
+        return "{key}-{domain}-{user}-{tag}".format(
             key=self.cache_key, 
-            tag=tag
+            domain=domain,
+            user=user,
+            tag=tag,
         )
 
 class request_cache(object):
