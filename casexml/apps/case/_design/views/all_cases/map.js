@@ -3,7 +3,7 @@ function(doc) {
         var owner_id = doc.owner_id || doc.user_id;
         var sort_by = doc.type + doc.name;
 
-        if (sort_by && typeof(sort_by) == "string") {
+        if (sort_by && typeof(sort_by) === "string") {
             sort_by = sort_by.toLowerCase();
 
             emit(["all", doc.domain, sort_by], 1);
