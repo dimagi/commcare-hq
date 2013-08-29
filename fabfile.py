@@ -166,7 +166,6 @@ def india():
         'couch': [],
         'pg': [],
         'rabbitmq': [],
-        'sofabed': [],
         'django_celery': [],
         'django_app': [],
         'django_pillowtop': [],
@@ -195,7 +194,6 @@ def production():
         'couch': ['hqdb0.internal.commcarehq.org'],
         'pg': ['hqdb0.internal.commcarehq.org'],
         'rabbitmq': ['hqdb0.internal.commcarehq.org'],
-        'sofabed': ['hqdb0.internal.commcarehq.org'], #todo, right now group it with celery
         'django_celery': ['hqdb0.internal.commcarehq.org'],
         'django_app': ['hqdjango0.internal.commcarehq.org', 'hqdjango1.internal.commcarehq.org', 'hqdjango2.internal.commcarehq.org'],
         'django_pillowtop': ['hqdb0.internal.commcarehq.org'],
@@ -238,7 +236,6 @@ def realstaging():
         'couch': ['hqdb0-staging.internal.commcarehq.org'],
         'pg': ['hqdb0-staging.internal.commcarehq.org'],
         'rabbitmq': ['hqdb0-staging.internal.commcarehq.org'],
-        'sofabed': ['hqdb0-staging.internal.commcarehq.org'], #todo, right now group it with celery
         'django_celery': ['hqdb0-staging.internal.commcarehq.org'],
         'django_app': ['hqdjango0-staging.internal.commcarehq.org','hqdjango1-staging.internal.commcarehq.org'],
         'django_pillowtop': ['hqdb0-staging.internal.commcarehq.org'],
@@ -274,7 +271,6 @@ def preview():
         'couch': [],
         'pg': [],
         'rabbitmq': ['hqdb0-preview.internal.commcarehq.org'],
-        'sofabed': [], #todo, right now group it with celery
         'django_celery': ['hqdb0-preview.internal.commcarehq.org'],
         'django_app': ['hqdjango0-preview.internal.commcarehq.org','hqdjango1-preview.internal.commcarehq.org'],
         'django_pillowtop': ['hqdb0-preview.internal.commcarehq.org'],
@@ -523,6 +519,28 @@ def record_successful_deploy():
               'user': env.user,
               'environment': env.environment},
         user=env.sudo_user)
+
+@task
+def hotfix_deploy():
+    """ deploy code to remote host by checking out the latest via git """
+    if not console.confirm('Are you sure you want to deploy {env.environment}?'.format(env=env), default=False) or \
+       not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False) or \
+       not console.confirm('HEY!!!! YOU ARE ONLY DEPLOYING CODE. THIS IS NOT A NORMAL DEPLOY. COOL???', default=False):
+        utils.abort('Deployment aborted.')
+
+    require('root', provided_by=('staging', 'preview', 'production', 'india'))
+    run('echo ping!') #hack/workaround for delayed console response
+
+    try:
+        execute(update_code)
+    except Exception:
+        execute(mail_admins, "Deploy failed", "You had better check the logs.")
+        raise
+    else:
+        execute(record_successful_deploy)
+    finally:
+        # hopefully bring the server back to life if anything goes wrong
+        execute(services_restart)
 
 @task
 def deploy():
@@ -803,12 +821,6 @@ def set_celery_supervisorconf():
 
 
 
-@roles('django_celery', 'django_monolith')
-def set_sofabed_supervisorconf():
-    if env.environment not in ['preview']:
-        _rebuild_supervisor_conf_file('supervisor_sofabed.conf')
-        _rebuild_supervisor_conf_file('supervisor_sync_domains.conf')
-
 @roles('django_app', 'django_monolith')
 def set_djangoapp_supervisorconf():
     _rebuild_supervisor_conf_file('supervisor_django.conf')
@@ -826,7 +838,6 @@ def set_supervisor_config():
     """Upload and link Supervisor configuration from the template."""
     require('environment', provided_by=('staging', 'preview', 'demo', 'production', 'india'))
     execute(set_celery_supervisorconf)
-    execute(set_sofabed_supervisorconf)
     execute(set_djangoapp_supervisorconf)
     execute(set_formsplayer_supervisorconf)
 

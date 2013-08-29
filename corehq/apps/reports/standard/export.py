@@ -235,7 +235,7 @@ class DeidExportReport(FormExportReportBase):
             startkey=startkey,
             limit=1,
             include_docs=False,
-            stale=settings.COUCH_STALE_QUERY,
+            #stale=settings.COUCH_STALE_QUERY,
         ).count() > 0
 
 

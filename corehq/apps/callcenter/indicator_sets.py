@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 from couchdbkit.exceptions import MultipleResultsFound
 from sqlagg.columns import SumColumn, SimpleColumn, SumWhen, CountUniqueColumn
+from sqlagg import filters
 from corehq.apps.callcenter.utils import MAPPING_NAME_FORMS, MAPPING_NAME_CASES, MAPPING_NAME_CASE_OWNERSHIP
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.reportfixtures.indicator_sets import SqlIndicatorSet
@@ -24,11 +25,11 @@ PER_DOMAIN_FORM_INDICATORS = {
     ]
 }
 
-filters_week0 = ['date >= :weekago', 'date < :today']
-filters_week1 = ['date >= :2weekago', 'date < :weekago']
-filters_month0 = ['date >= :30daysago', 'date < :today']
-filters_month1 = ['date >= :60daysago', 'date < :30daysago']
-filters_ever = ['date < :today']
+filters_week0 = [filters.GTE('date', 'weekago'), filters.LT('date', 'today')]
+filters_week1 = [filters.GTE('date', '2weekago'), filters.LT('date', 'weekago')]
+filters_month0 = [filters.GTE('date', '30daysago'), filters.LT('date', 'today')]
+filters_month1 = [filters.GTE('date', '60daysago'), filters.LT('date', '30daysago')]
+filters_ever = [filters.LT('date', 'today')]
 
 custom_form_ranges = {
     'Week0': None,
@@ -79,7 +80,7 @@ class CallCenter(SqlIndicatorSet):
     def columns(self):
         case_table_name = '%s_%s' % (self.domain.name, MAPPING_NAME_CASES)
         case_ownership_table_name = '%s_%s' % (self.domain.name, MAPPING_NAME_CASE_OWNERSHIP)
-        case_type_filters = ["case_type != '%s'" % self.domain.call_center_config.case_type]
+        case_type_filters = [filters.NOTEQ('case_type', self.domain.call_center_config.case_type)]
 
         columns = [
             DatabaseColumn("case", SimpleColumn('user_id'),
@@ -157,7 +158,7 @@ class CallCenter(SqlIndicatorSet):
             else_=0,
             filters=filters,
             alias='%s_count' % slug)
-        return AggregateColumn(slug, mean_seconds, dur_col, count_col, sortable=False)
+        return AggregateColumn(slug, mean_seconds, [dur_col, count_col], sortable=False)
 
     @property
     @memoized

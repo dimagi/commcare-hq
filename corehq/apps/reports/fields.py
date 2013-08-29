@@ -120,6 +120,16 @@ class YearField(ReportField):
         self.context['years'] = range(year, datetime.datetime.utcnow().year + 1)
         self.context['year'] = int(self.request.GET.get('year', datetime.datetime.utcnow().year))
 
+class BooleanField(ReportField):
+    slug = "checkbox"
+    label = "hello"
+    template = "reports/partials/checkbox.html"
+
+    def update_context(self):
+        self.context['label'] = self.label
+        self.context[self.slug] = self.request.GET.get(self.slug, False)
+        self.context['checked'] = self.request.GET.get(self.slug, False)
+
 class GroupFieldMixin():
     slug = "group"
     name = ugettext_noop("Group")
@@ -616,7 +626,8 @@ class DeviceLogTagField(ReportField):
         self.context['default_on'] = show_all
         data = get_db().view('phonelog/device_log_tags',
                              group=True,
-                             stale=settings.COUCH_STALE_QUERY)
+                             #stale=settings.COUCH_STALE_QUERY,
+        )
         tags = [dict(name=item['key'],
                     show=bool(show_all or item['key'] in selected_tags))
                     for item in data]
@@ -638,7 +649,7 @@ class DeviceLogFilterField(ReportField):
             startkey = [self.domain],
             endkey = [self.domain, {}],
             group=True,
-            stale=settings.COUCH_STALE_QUERY,
+            #stale=settings.COUCH_STALE_QUERY,
         )
         filters = [dict(name=item['key'][-1],
                     show=bool(show_all or item['key'][-1] in selected))

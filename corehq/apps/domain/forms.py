@@ -436,8 +436,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     project_state = ChoiceField(label=ugettext_noop("Project State"), required=False,
                                 choices=tuple_of_copies(["POC", "transition", "at-scale"]))
     self_started = ChoiceField(label=ugettext_noop("Self Started?"), choices=tf_choices('Yes', 'No'), required=False)
-    area = ChoiceField(label=ugettext_noop("Area"), required=False, choices=tuple_of_copies(AREA_CHOICES))
-    sub_area = ChoiceField(label=ugettext_noop("Sub-Area"), required=False, choices=tuple_of_copies(SUB_AREA_CHOICES))
+    area = ChoiceField(label=ugettext_noop("Sector"), required=False, choices=tuple_of_copies(AREA_CHOICES))
+    sub_area = ChoiceField(label=ugettext_noop("Sub-Sector"), required=False, choices=tuple_of_copies(SUB_AREA_CHOICES))
     using_adm = ChoiceField(label=ugettext_noop("Using ADM?"), choices=tf_choices('Yes', 'No'), required=False)
     using_call_center = ChoiceField(label=ugettext_noop("Using Call Center?"), choices=tf_choices('Yes', 'No'), required=False)
     custom_eula = ChoiceField(label=ugettext_noop("Custom Eula?"), choices=tf_choices('Yes', 'No'), required=False)
@@ -446,6 +446,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     notes = CharField(label=ugettext_noop("Notes"), required=False, widget=forms.Textarea)
     platform = forms.MultipleChoiceField(label=ugettext_noop("Platform"), widget=forms.CheckboxSelectMultiple(),
                                          choices=tuple_of_copies(["java", "android", "cloudcare"], blank=False), required=False)
+    phone_model = CharField(label=ugettext_noop("Phone Model"), required=False)
+    project_manager = CharField(label=ugettext_noop("Project Manager's Email/Username"), required=False)
 
     def save(self, domain):
         domain.update_internal(sf_contract_id=self.cleaned_data['sf_contract_id'],
@@ -464,6 +466,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             organization_name=self.cleaned_data['organization_name'],
             notes=self.cleaned_data['notes'],
             platform=self.cleaned_data['platform'],
+            project_manager=self.cleaned_data['project_manager'],
+            phone_model=self.cleaned_data['phone_model'],
         )
 
 

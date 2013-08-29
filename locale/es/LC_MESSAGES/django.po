@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-08-08 11:20-0400\n"
+"POT-Creation-Date: 2013-08-08 11:53-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -354,12 +354,12 @@ msgid ""
 "To use display conditions in a module, (1) the module <strong>Menu</strong> "
 "setting must be set to <em>Display module and then forms</em> and (2) all "
 "the forms in the module must require a case, which means registration forms "
-"must go in a seperate module."
+"must go in a separate module."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_view.html:402
 msgid ""
-"Similar to how you write display logic inside the form designer, except that "
+"Similar to how you write display logic inside the form builder, except that "
 "you must enter <code>./</code> before a case property. <strong>For example</"
 "strong>: <code>./edd > today()</code> means \"show this form if the selected "
 "case has an EDD later than today\".<br/><a href=\"https://confluence.dimagi."
@@ -371,7 +371,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/form_view.html:416
 msgid ""
 "Case management is disabled because you have errors in your form.  Edit your "
-"form in the Form Designer and fix all errors to proceed."
+"form in the Form Builder and fix all errors to proceed."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_view.html:421
@@ -516,7 +516,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html:79
-msgid "Edit in form designer"
+msgid "Edit in form builder"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html:130
@@ -5823,6 +5823,7 @@ msgid "Loading ..."
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/async/tabular.html:55
+#: custom/reports/mc/templates/mc/reports/sectioned_tabular.html:7
 #: submodules/unicef-cvsu-reports/cvsu/templates/cvsu/partials/report_table.html:23
 #: submodules/unicef-cvsu-reports/cvsu/templates/cvsu/partials/report_table.html:24
 msgid "Fetching additional data, please wait..."
@@ -6807,6 +6808,260 @@ msgstr ""
 #: corehq/apps/users/views/mobile/users.py:334
 msgid ""
 "The following groups have no name. Please name them before continuing: {}"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:5
+#: custom/reports/mc/reports/definitions.py:84
+#: custom/reports/mc/reports/definitions.py:137
+msgid "Home Visits"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:7
+#: custom/reports/mc/reports/definitions.py:88
+msgid "home_visits_pregnant"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:8
+msgid "home_visits_postpartem"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:9
+#: custom/reports/mc/reports/definitions.py:139
+msgid "home_visits_newborn"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:10
+#: custom/reports/mc/reports/definitions.py:140
+msgid "home_visits_children"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:11
+msgid "home_visits_other"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:12
+#: custom/reports/mc/reports/definitions.py:91
+#: custom/reports/mc/reports/definitions.py:142
+msgid "home_visits_total"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:17
+msgid "RDT"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:19
+msgid "rdt_positive_children"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:20
+msgid "rdt_positive_adults"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:22
+msgid "rdt_total"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:27
+msgid "Diagnosed Cases"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:29
+msgid "diagnosed_malaria_child"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:30
+msgid "diagnosed_malaria_adult"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:31
+msgid "diagnosed_diarrhea"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:32
+msgid "diagnosed_ari"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:33
+msgid "diagnosed_total"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:38
+msgid "Treated Cases"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:40
+msgid "treated_malaria"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:41
+msgid "treated_diarrhea"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:42
+msgid "treated_ari"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:43
+msgid "treated_total"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:48
+msgid "Transfers"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:50
+msgid "transfer_malnutrition"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:51
+msgid "transfer_incomplete_vaccination"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:52
+msgid "transfer_danger_signs"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:53
+msgid "transfer_prenatal_consult"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:54
+msgid "transfer_missing_malaria_meds"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:55
+msgid "transfer_other"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:56
+msgid "transfer_total"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:61
+msgid "Deaths"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:63
+msgid "deaths_newborn"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:64
+#: custom/reports/mc/reports/definitions.py:97
+msgid "deaths_children"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:65
+msgid "deaths_mothers"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:66
+msgid "deaths_other"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:67
+msgid "deaths_total"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:71
+msgid "Health Education"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:73
+msgid "heath_ed_talks"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:74
+msgid "heath_ed_participants"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:86
+msgid "home_visits_newborn_reg"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:87
+msgid "home_visits_child_reg"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:89
+msgid "home_visits_non_pregnant"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:90
+#: custom/reports/mc/reports/definitions.py:149
+msgid "home_visits_followup"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:95
+msgid "Deaths in the Community"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:108
+msgid "Validation of Diagnosis and Treatment"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:112
+#: custom/reports/mc/reports/definitions.py:151
+msgid "patients_given_pneumonia_meds"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:116
+#: custom/reports/mc/reports/definitions.py:155
+msgid "patients_given_diarrhoea_meds"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:120
+#: custom/reports/mc/reports/definitions.py:159
+msgid "patients_given_malaria_meds"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:124
+#: custom/reports/mc/reports/definitions.py:163
+msgid "patients_correctly_referred"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:127
+#: custom/reports/mc/reports/definitions.py:166
+msgid "cases_rdt_not_done"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:128
+msgid "cases_danger_signs_not_referred"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:129
+msgid "cases_no_malaria_meds"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:141
+msgid "home_visits_adult"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:146
+msgid "Transferred Cases"
+msgstr ""
+
+#: custom/reports/mc/reports/definitions.py:148
+msgid "cases_transferred"
+msgstr ""
+
+#: custom/reports/mc/reports/sql.py:123
+msgid "Indicator"
+msgstr ""
+
+#: custom/reports/mc/reports/sql.py:154
+msgid "Health Facility Monthly Report"
+msgstr ""
+
+#: custom/reports/mc/reports/sql.py:159
+msgid "District Monthly Report"
+msgstr ""
+
+#: custom/reports/mc/reports/sql.py:164
+msgid "District Weekly Report"
+msgstr ""
+
+#: custom/reports/mc/reports/sql.py:169
+msgid "Health Facility Weekly Report"
 msgstr ""
 
 #: submodules/a5288-reports/a5288/reports.py:16

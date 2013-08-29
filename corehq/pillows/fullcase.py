@@ -7,9 +7,12 @@ from corehq.pillows.mappings.fullcase_mapping import FULL_CASE_MAPPING, FULL_CAS
 UNKNOWN_DOMAIN = "__nodomain__"
 UNKNOWN_TYPE = "__notype__"
 
+#DEPRECATED
 class FullCasePillow(CasePillow):
     """
-    Simple/Common Case properties Indexer
+    an extension to CasePillow that provides for indexing of custom case properties
+
+    NOTE: deprecated and superseded by ReportCasePillow!
     """
     es_index_prefix = "full_cases"
     es_alias = "full_cases"

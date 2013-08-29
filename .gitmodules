@@ -31,9 +31,6 @@
 [submodule "submodules/casexml-src"]
 	path = submodules/casexml-src
 	url = git://github.com/dimagi/casexml.git
-[submodule "submodules/sofabed-src"]
-	path = submodules/sofabed-src
-	url = git://github.com/dimagi/sofabed.git
 [submodule "submodules/touchforms-src"]
 	path = submodules/touchforms-src
 	url = git://github.com/dimagi/touchforms.git
@@ -61,9 +58,6 @@
 [submodule "submodules/dca-reports"]
 	path = submodules/dca-reports
 	url = git://github.com/dimagi/dca-reports.git
-[submodule "submodules/cchq-load-testing"]
-	path = submodules/cchq-load-testing
-	url = git://github.com/dimagi/cchq-load-testing.git
 [submodule "submodules/hsph-reports"]
 	path = submodules/hsph-reports
 	url = git://github.com/dimagi/hsph-reports.git
