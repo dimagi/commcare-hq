@@ -3,6 +3,7 @@ import logging
 from collections import defaultdict
 from django.conf import settings
 from django.utils import html
+from corehq.apps.reports.datatables.DTSortType import DATE
 from corehq.apps.reports.standard import DatespanMixin
 from corehq.apps.reports.standard.deployments import DeploymentsReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DTSortDirection
@@ -116,7 +117,8 @@ class DeviceLogDetailsReport(PhonelogReport):
 
     @property
     def headers(self):
-        return DataTablesHeader(DataTablesColumn("Date", span=1, sort_direction=[DTSortDirection.DSC,DTSortDirection.ASC]),
+        return DataTablesHeader(DataTablesColumn("Date", span=1, sort_type=DATE,
+                                                 sort_direction=[DTSortDirection.DSC,DTSortDirection.ASC]),
                                 DataTablesColumn("Log Type", span=1),
                                 DataTablesColumn("Logged in Username", span=2),
                                 DataTablesColumn("Device Users", span=2),
