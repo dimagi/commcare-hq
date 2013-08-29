@@ -263,11 +263,6 @@ class SqlTabularReport(GenericTabularReport, SqlData):
     exportable = True
 
     @property
-    def fields(self):
-        return [cls.__module__ + '.' + cls.__name__
-                for cls in self.field_classes]
-
-    @property
     def headers(self):
         datatables_columns = []
         groups = set()
