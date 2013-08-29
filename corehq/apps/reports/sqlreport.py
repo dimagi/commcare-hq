@@ -269,7 +269,16 @@ class SqlTabularReport(GenericTabularReport, SqlData):
 
     @property
     def headers(self):
-        return DataTablesHeader(*[c.data_tables_column for c in self.columns])
+        datatables_columns = []
+        groups = []
+        for column in self.columns:
+            if column.header_group and column.header_group not in groups:
+                datatables_columns.append(column.header_group)
+                groups.append(column.header_group)
+            elif not column.header_group:
+                datatables_columns.append(column.data_tables_column)
+
+        return DataTablesHeader(*datatables_columns)
 
     @property
     def rows(self):
