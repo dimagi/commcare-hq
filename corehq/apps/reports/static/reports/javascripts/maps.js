@@ -509,24 +509,27 @@ function getEnumValues(meta) {
 	};
     } else {
 	var enums = _.keys(meta.categories);
-	enums.sort();
 	// move 'other' to end
-	if (enums.indexOf('_other') != -1) {
+	var has_other = (enums.indexOf('_other') != -1);
+	if (has_other) {
 	    enums.splice(enums.indexOf('_other'), 1);
-	    enums.push('_other');
 	}
 	var toLabel = function(e) {
-	    if (e == '_other') {
-		return OTHER_LABEL;
-	    } else {
-		return getEnumCaption(meta.column, e, CONFIG); // eww global var ref
-	    }
+	    var caption = getEnumCaption(meta.column, e, CONFIG); // eww global var ref
+	    var fallback = (e == '_other' ? OTHER_LABEL : null);
+	    return caption || fallback;
 	}
+
 	// unfortunately, by letting enum captions be specified via another column, there
 	// is no guarantee that all possible enum values will be represented in the report
 	// data. so here we filter out the options for which we cannot determine a caption.
 	// we will never filter out a value that actually appears in the data, though
 	enums = _.filter(enums, toLabel);
+	
+	enums = _.sortBy(enums, toLabel);
+	if (has_other) {
+	    enums.push('_other');
+	}
     }
     return $.map(enums, function(e, i) { return {label: toLabel(e, i), value: e}; });
 }
