@@ -484,7 +484,6 @@ function _summarizeColumn(meta, data) {
     };	
 }
 
-OTHER_LABEL = 'Other'; // FIXME i18n
 function getEnumValues(meta) {
     if (meta.thresholds) {
 	var enums = meta.thresholds.slice(0);
@@ -505,11 +504,7 @@ function getEnumValues(meta) {
 	if (has_other) {
 	    enums.splice(enums.indexOf('_other'), 1);
 	}
-	var toLabel = function(e) {
-	    var caption = getEnumCaption(meta.column, e, CONFIG); // eww global var ref
-	    var fallback = (e == '_other' ? OTHER_LABEL : e);
-	    return caption || fallback;
-	}
+	var toLabel = function(e) { return getEnumCaption(meta.column, e, CONFIG); }; // eww global var ref
 	enums = _.sortBy(enums, toLabel);
 	if (has_other) {
 	    enums.push('_other');
@@ -518,9 +513,11 @@ function getEnumValues(meta) {
     return $.map(enums, function(e, i) { return {label: toLabel(e, i), value: e}; });
 }
 
+OTHER_LABEL = 'Other'; // FIXME i18n
 function getEnumCaption(column, value, config) {
-    var captions = config.enum_captions[column];
-    return (captions ? captions[value] : value);
+    var captions = config.enum_captions[column] || {};
+    var fallback = (value == '_other' ? OTHER_LABEL : value);
+    return captions[value] || fallback;
 }
 
 
