@@ -1,1 +1,2 @@
 git+git://github.com/dannyroberts/couchdbkit.git@jsonobject-0.5.7.3#egg=couchdbkit
+jsonobject>=0.2.1
