@@ -386,6 +386,7 @@ def post_user_role(request, domain):
     if role.get_id:
         old_role = UserRole.get(role.get_id)
         assert(old_role.doc_type == UserRole.__name__)
+        assert(old_role.domain == domain)
     role.save()
     return json_response(role)
 

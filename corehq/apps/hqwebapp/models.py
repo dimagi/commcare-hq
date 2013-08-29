@@ -462,8 +462,9 @@ class CloudcareTab(UITab):
 
     @property
     def is_viewable(self):
-        return (self.domain and self.couch_user.can_edit_data() and not
-                self.project.commconnect_enabled)
+        return (self.domain
+                and (self.couch_user.can_edit_data() or self.couch_user.is_commcare_user())
+                and not self.project.commconnect_enabled)
 
 
 class MessagingTab(UITab):

@@ -80,7 +80,7 @@ class CallCenter(SqlIndicatorSet):
     def columns(self):
         case_table_name = '%s_%s' % (self.domain.name, MAPPING_NAME_CASES)
         case_ownership_table_name = '%s_%s' % (self.domain.name, MAPPING_NAME_CASE_OWNERSHIP)
-        case_type_filters = ["case_type != '%s'" % self.domain.call_center_config.case_type]
+        case_type_filters = [filters.NOTEQ('case_type', self.domain.call_center_config.case_type)]
 
         columns = [
             DatabaseColumn("case", SimpleColumn('user_id'),
