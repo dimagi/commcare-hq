@@ -260,13 +260,16 @@ class CareSAFluff(fluff.IndicatorDocument):
         property_value='deceased',
     )
 
-    #2b TODO
-    #hbc visit date >= today - 90
-    #lost_to_followup = xcalculators.filtered_form_calc(
-        #xmlns=HBC_XMLNS,
-        #property_path='form/visit_date',
-        #property_value='90',
-    #)
+    #2b
+    class VisitDateCalculator(fluff.Calculator):
+        from datetime import timedelta
+        window = timedelta(days=1)
+
+        @fluff.date_emitter
+        def total(self, form):
+            yield form.form['visit_date']
+
+    lost_to_followup = VisitDateCalculator(filter=xcalculators.FormPropertyFilter(xmlns=HBC_XMLNS))
 
     #2c TODO not in form
 

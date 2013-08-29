@@ -1,4 +1,5 @@
 from sqlagg.columns import *
+import sqlagg
 from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn
 from corehq.apps.reports.fields import AsyncDrillableField, GroupField, BooleanField
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
@@ -6,7 +7,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.groups.models import Group
-from couchdbkit.exceptions import ResourceNotFound
+from datetime import date, timedelta
 from copy import copy
 
 
@@ -67,14 +68,14 @@ class CareReport(SqlTabularReport,
     @property
     def filters(self):
         filters = [
-            "domain = :domain",
-            "date between :startdate and :enddate",
+            sqlagg.filters.EQ('domain', 'domain'),
+            sqlagg.filters.BETWEEN('date', 'startdate', 'enddate'),
         ]
 
         if self.selected_province():
-            filters.append("province = :province")
+            filters.append(sqlagg.filters.EQ('province', 'province'))
         if self.selected_cbo():
-            filters.append("cbo = :cbo")
+            filters.append(sqlagg.filters.EQ('cbo', 'cbo'))
 
         return filters
 
@@ -97,13 +98,16 @@ class CareReport(SqlTabularReport,
 
     @property
     def filter_values(self):
-        return dict(
+        filter_values = dict(
             domain=self.domain,
             startdate=self.datespan.startdate_param_utc,
             enddate=self.datespan.enddate_param_utc,
             province=self.selected_province(),
             cbo=self.selected_cbo(),
         )
+        filter_values['90daysago'] = date.today() - timedelta(days=90)
+
+        return filter_values
 
     def first_indicator_column_index(self):
         return len(self.columns) - len(self.report_columns)
@@ -164,6 +168,14 @@ class CareReport(SqlTabularReport,
                 column = DatabaseColumn(text, CountColumn(name), sortable=False)
             elif column_attrs[2] == 'SumColumn':
                 column = DatabaseColumn(text, SumColumn(name), sortable=False)
+            elif column_attrs[2] == 'TempDateFlag':
+                date_column_filters = \
+                    self.filters + \
+                    [sqlagg.filters.GT('date', '90daysago')]
+
+                column = DatabaseColumn(text,
+                                        SumColumn(name, filters=date_column_filters),
+                                        sortable=False)
 
             columns.append(column)
 
@@ -466,7 +478,7 @@ class CareAndTBHIV(CareReport):
 
     report_columns = [
         ['Number of deceased patients', 'deceased'],  # 2a
-        #['Number of patients lost to follow-up', TODO],  # 2b
+        ['Number of patients lost to follow-up', 'lost_to_followup', 'TempDateFlag'],  # 2b
         ['Patients completed TB treatment', 'tb_treatment_completed'],  # 2d
         ['All visits for CBC', 'received_cbc'],  # 2e
         ['Existing HIV+ individuals who received CBC', 'existing_cbc'],  # 2f
