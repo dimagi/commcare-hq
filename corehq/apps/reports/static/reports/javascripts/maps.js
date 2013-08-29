@@ -124,7 +124,7 @@ function initMap($div, default_pos, default_zoom, default_layer) {
 function initData(data, config) {
     // generate enum -> caption mappings for columns that specify the caption in a
     // corresponding column
-    // (i'm on the fence on whether this is even useful or a good idea
+    // (i'm on the fence on whether this is even useful or a good idea)
     $.each(config.enum_captions, function(k, v) {
 	if (typeof v == 'string') {
 	    var mapping = {};
@@ -281,11 +281,13 @@ function getSize(meta, props) {
 	    throw new TypeError('numeric value required [' + val + ']');
 	}
 
-	// scale value with area of marker
-	var rad = DEFAULT_SIZE * Math.sqrt(val / meta.baseline);
-	rad = Math.min(Math.max(rad, meta.min || DEFAULT_MIN_SIZE), meta.max || 9999);
-	return rad;
+	return Math.min(Math.max(markerSize(val, meta.baseline), meta.min || DEFAULT_MIN_SIZE), meta.max || 9999);
     }
+}
+
+// scale value with area of marker
+function markerSize(val, baseline) {
+    return DEFAULT_SIZE * Math.sqrt(val / baseline);
 }
 
 DEFAULT_COLOR = 'rgba(255, 120, 0, .8)';
@@ -559,13 +561,24 @@ function renderLegend($e, metric, config) {
 
 // this is pretty hacky
 function sizeLegend($e, meta) {
-    var BASELINE_DIAMETER = 2 * DEFAULT_SIZE;
-    $e.html('<table><tr><td><div id="circ" style="border: 1.5px solid black; background-color: #ddd; border-radius: 50%; -webkit-border-radius: 50%; -moz-border-radius: 50%;"></div></td><td id="val"></td></tr></table>');
-    $e.find('#circ').css('width', BASELINE_DIAMETER + 'px');
-    $e.find('#circ').css('height', BASELINE_DIAMETER + 'px');
-    $e.find('#val').css('padding-left', '0.6em');
-    // TODO pin baseline to a nearby round number
-    $e.find('#val').text(meta.baseline);
+    var legendBaseline = niceRoundNumber(meta.baseline);
+
+    var $t = $('<table>');
+    var entry = function(val) {
+	var diameter = 2 * markerSize(val, meta.baseline);
+	$r = $('<tr><td align="center" style="padding: 5px;"><div id="circ" style="border: 1.5px solid black; background-color: #ddd; border-radius: 50%; -webkit-border-radius: 50%; -moz-border-radius: 50%;"></div></td><td id="val" style="text-align: right;"></td></tr>');
+	$r.find('#circ').css('width', diameter + 'px');
+	$r.find('#circ').css('height', diameter + 'px');
+	$r.find('#val').css('padding-left', '0.6em');
+	$r.find('#val').text(val);
+	$t.append($r);
+    };
+
+    entry(10. * legendBaseline);
+    entry(legendBaseline);
+    entry(0.1 * legendBaseline);
+
+    $e.append($t);
 }
 
 function colorLegend($e, meta) {
@@ -656,11 +669,11 @@ function isNull(x) {
 // 'thresholds' must be in ascending order
 // e.g., thresholds of [2, 5, 10] creates 4 buckets: <2; [2, 5); [5, 10); >=10
 // return the lower bound of the matching bucket, or '-' for the lowest bucket
-function matchThresholds(val, thresholds) {
-    var cat = '-';
+function matchThresholds(val, thresholds, returnIndex) {
+    var cat = (returnIndex ? -1 : '-');
     $.each(thresholds, function(i, e) {
 	if (e <= val) {
-	    cat = e;
+	    cat = (returnIndex ? i : e);
 	} else {
 	    return false;
 	}
@@ -746,9 +759,50 @@ function blendColor(a, b, k) {
     return fromLinear(lBlend);
 }
 
+function niceRoundNumber(x, stops, orderOfMagnitude) {
+    var orderOfMagnitude = orderOfMagnitude || 10;
+    var stops = stops || [1, 2, 5];
+    // numbers will snap to .1, .2, .5, 1, 2, 5, 10, 20, 50, 100, 200, etc.
 
+    var xLog = Math.log(x) / Math.log(orderOfMagnitude);
+    var exponent = Math.floor(xLog);
+    var xNorm = Math.pow(orderOfMagnitude, xLog - exponent);
 
+    var getStop = function(i) {
+	return (i == stops.length ? orderOfMagnitude * stops[0] : stops[i]);
+    }
+    var cutoffs = $.map(stops, function(e, i) {
+	var multiplier = getStop(i + 1);
+	var cutoff = Math.sqrt(e * multiplier);
+	if (cutoff >= orderOfMagnitude) {
+	    multiplier /= orderOfMagnitude;
+	    cutoff /= orderOfMagnitude;
+	}
+	return {cutoff: cutoff, mult: multiplier};
+    });
+    cutoffs = _.sortBy(cutoffs, function(co) { return co.cutoff; });
 
+    var bucket = matchThresholds(xNorm, $.map(cutoffs, function(co) { return co.cutoff; }), true);
+    var multiplier = (bucket == -1 ? cutoffs.slice(-1)[0].mult / orderOfMagnitude : cutoffs[bucket].mult);
+    return Math.pow(orderOfMagnitude, exponent) * multiplier;
+}
+
+function testNiceRoundNumber() {
+    var test = function(args) {
+	var result = niceRoundNumber.apply(this, args);
+	console.log(args, result);
+    };
+    var testStops = function(stops, vals) {
+	for (var OoM = -2; OoM < 3; OoM++) {
+	    $.each(vals, function(i, e) { test([Math.pow(10., OoM) * e, stops]); });
+	}
+    }
+
+    testStops([1.5, 3, 6], [1, 1.5, 2.1, 2.2, 3, 4.2, 4.3, 6, 9.4, 9.5]); 
+    testStops([3, 8], [1, 1.5, 1.6, 3, 4.8, 4.9, 8]);
+    testStops([5], [1, 1.5, 1.6, 5]);
+    testStops([1], [1, 3.1, 3.2]);
+}
 
 
 
