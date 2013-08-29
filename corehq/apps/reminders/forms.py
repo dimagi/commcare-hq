@@ -14,7 +14,7 @@ SurveySample, CaseReminderHandler, FIRE_TIME_DEFAULT, FIRE_TIME_CASE_PROPERTY,\
 METHOD_SMS, METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY,\
 CASE_CRITERIA, QUESTION_RETRY_CHOICES, FORM_TYPE_ONE_BY_ONE,\
 FORM_TYPE_ALL_AT_ONCE, SurveyKeyword, RECIPIENT_PARENT_CASE, RECIPIENT_SUBCASE,\
-FIRE_TIME_RANDOM
+FIRE_TIME_RANDOM, SEND_NOW, SEND_LATER
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
@@ -22,10 +22,25 @@ from dimagi.utils.excel import WorkbookJSONReader
 from openpyxl.shared.exc import InvalidFileException
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.models import Form as CCHQForm
+from dimagi.utils.django.fields import TrimmedCharField
 
 YES_OR_NO = (
     ("Y","Yes"),
     ("N","No"),
+)
+
+NOW_OR_LATER = (
+    (SEND_NOW, _("Now")),
+    (SEND_LATER ,_("Later")),
+)
+
+CONTENT_CHOICES = (
+    (METHOD_SMS, _("SMS")),
+    (METHOD_SMS_SURVEY, _("SMS Form Interaction")),
+)
+
+ONE_TIME_RECIPIENT_CHOICES = (
+    (RECIPIENT_SURVEY_SAMPLE, _("Case Group")),
 )
 
 METHOD_CHOICES = (
@@ -568,7 +583,31 @@ class ComplexCaseReminderForm(Form):
         
         return cleaned_data
 
+class OneTimeReminderForm(Form):
+    send_type = ChoiceField(choices=NOW_OR_LATER)
+    date = CharField(required=False)
+    time = CharField(required=False)
+    recipient_type = ChoiceField(choices=ONE_TIME_RECIPIENT_CHOICES)
+    case_group_id = CharField()
+    content_type = ChoiceField(choices=CONTENT_CHOICES)
+    message = TrimmedCharField(required=False)
+    form_unique_id = CharField()
 
+    def clean_date(self):
+        if self.cleaned_data.get("send_type") == SEND_NOW:
+            return None
+        else:
+            value = self.cleaned_data.get("date")
+            validate_date(value)
+            return parse(value).date()
+
+    def clean_time(self):
+        if self.cleaned_data.get("send_type") == SEND_NOW:
+            return None
+        else:
+            value = self.cleaned_data.get("time")
+            validate_time(value)
+            return parse(value).time()
 
 class RecordListWidget(Widget):
     

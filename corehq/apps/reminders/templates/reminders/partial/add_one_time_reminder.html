@@ -1,0 +1,106 @@
+{% extends "reminders/reminders_base.html" %}
+{% load hq_shared_tags %}
+
+{% block head %}{{ block.super }}
+
+<script language="javascript" type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+<link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}">
+
+<style type="text/css">
+    #main_table {
+        width: auto;
+        margin-left: 0px;
+    }
+</style>
+
+<script type="text/javascript">
+    function send_type_changed() {
+        var value = $("#id_send_type").val();
+        if(value == "NOW") {
+            $(".for_later").hide();
+        } else {
+            $(".for_later").show();
+        }
+    }
+    
+    function content_type_changed() {
+        var value = $("#id_content_type").val();
+        if(value == "sms") {
+            $(".for_sms").show();
+            $(".for_sms_form").hide();
+        } else {
+            $(".for_sms").hide();
+            $(".for_sms_form").show();
+        }
+    }
+    
+    $(function() {
+        $("input[name$='date']").datepicker({dateFormat : "yy-mm-dd"});
+        $("#id_send_type").change(send_type_changed);
+        $("#id_content_type").change(content_type_changed);
+        send_type_changed();
+        content_type_changed();
+    });
+</script>
+
+{% endblock %}
+
+{% block main_column %}
+<form id="one_time_reminder_form" action="" method="post">
+    <table id="main_table">
+        <tbody>
+            <tr>
+                <td>Send</td>
+                <td>{{ form.content_type }}</td>
+                <td></td>
+            </tr>
+            <tr class="for_sms">
+                <td>Message</td>
+                <td>{{ form.message }}</td>
+                <td>{{ form.message.errors }}</td>
+            </tr>
+            <tr class="for_sms_form">
+                <td>Form</td>
+                <td>
+                    <select name="form_unique_id">
+                        {% for f in form_list %}
+                        <option value="{{ f.code }}" {% if form.form_unique_id.value == f.code %}selected="selected"{% endif %}>{{ f.name }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>To</td>
+                <td>{{ form.recipient_type }}</td>
+                <td>
+                    <div class="for_case_group">
+                        <select name="case_group_id">
+                            {% for sample in sample_list %}
+                            <option value="{{ sample.code }}" {% if form.case_group_id.value == sample.code %}selected="selected"{% endif %}>{{ sample.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>Timing</td>
+                <td>{{ form.send_type }}</td>
+                <td></td>
+            </tr>
+            <tr class="for_later">
+                <td>Date</td>
+                <td>{{ form.date }}</td>
+                <td>{{ form.date.errors }}</td>
+            </tr>
+            <tr class="for_later">
+                <td>Time</td>
+                <td>{{ form.time }}</td>
+                <td>{{ form.time.errors }}</td>
+            </tr>
+        </tbody>
+    </table>
+    <input type="submit" class="btn btn-primary" value="Save" />
+</form>
+
+{% endblock %}

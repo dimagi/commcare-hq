@@ -23,9 +23,14 @@
     <table id="reminder_list_table" class="table table-striped datatable table-bordered">
         <thead>
             <tr>
+                {% if reminder_type == "DEFAULT" %}
                 <th>Name</th>
                 <th>Trigger Type</th>
                 <th>Case Type</th>
+                {% endif %}
+                {% if reminder_type == "ONE_TIME" %}
+                <th>Scheduled Date / Time</th>
+                {% endif %}
                 <th></th>
                 <th></th>
             </tr>
@@ -33,10 +38,15 @@
         <tbody>
             {% for handler in reminder_handlers %}
                 <tr>
+                    {% if reminder_type == "DEFAULT" %}
                     <td>{{ handler.nickname }}</td>
                     <td>{% if handler.start_condition_type == "CASE_CRITERIA" %}Case Criteria{% else %}{% if handler.start_condition_type == "ON_DATETIME" %}Specific Date/Time{% else %}{{ handler.start_condition_type }}{% endif %}{% endif %}</td>
                     <td>{{ handler.case_type|default:"n/a" }}</td>
-                    <td><a href="{% url edit_complex domain handler.get_id %}"><span class="btn btn-primary">Edit</span></a></td>
+                    {% endif %}
+                    {% if reminder_type == "ONE_TIME" %}
+                    <td>{{ handler.start_datetime }}</td>
+                    {% endif %}
+                    <td><a href="{%if reminder_type == 'ONE_TIME' %}{% url edit_one_time_reminder domain handler.get_id %}{% else %}{% url edit_complex domain handler.get_id %}{% endif %}"><span class="btn btn-primary">Edit</span></a></td>
                     <td>
                         <a class="btn btn-danger" data-toggle="modal" href="#delete_{{ handler.get_id }}"><i class="icon icon-white icon-remove"></i> Delete</a>
                         <div id="delete_{{ handler.get_id }}" class="modal hide fade">
@@ -60,5 +70,5 @@
         </tbody>
     </table>
     <br />
-    <a href="{% url add_complex_reminder_schedule domain %}"><span class="btn btn-success"><i class="icon icon-white icon-plus"></i> New Reminder Definition</span></a>
+    <a href="{%if reminder_type == 'ONE_TIME' %}{% url add_one_time_reminder domain %}{% else %}{% url add_complex_reminder_schedule domain %}{% endif %}"><span class="btn btn-success"><i class="icon icon-white icon-plus"></i> New Reminder Definition</span></a>
 {% endblock %}

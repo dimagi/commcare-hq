@@ -78,6 +78,13 @@ FORM_TYPE_ONE_BY_ONE = "ONE_BY_ONE" # Answer each question one at a time
 FORM_TYPE_ALL_AT_ONCE = "ALL_AT_ONCE" # Complete the entire form with just one sms using the delimiter to separate answers
 FORM_TYPE_CHOICES = [FORM_TYPE_ONE_BY_ONE, FORM_TYPE_ALL_AT_ONCE]
 
+REMINDER_TYPE_ONE_TIME = "ONE_TIME"
+REMINDER_TYPE_DEFAULT = "DEFAULT"
+REMINDER_TYPE_CHOICES = [REMINDER_TYPE_DEFAULT, REMINDER_TYPE_ONE_TIME]
+
+SEND_NOW = "NOW"
+SEND_LATER = "LATER"
+
 # This time is used when the case property used to specify the reminder time isn't a valid time
 # TODO: Decide whether to keep this or retire the reminder
 DEFAULT_REMINDER_TIME = time(12, 0)
@@ -332,6 +339,7 @@ class CaseReminderHandler(Document):
     recipient = StringProperty(choices=RECIPIENT_CHOICES, default=RECIPIENT_USER)
     ui_frequency = StringProperty(choices=UI_FREQUENCY_CHOICES, default=UI_FREQUENCY_ADVANCED) # This will be used to simplify the scheduling process in the ui
     sample_id = StringProperty()
+    reminder_type = StringProperty(choices=REMINDER_TYPE_CHOICES, default=REMINDER_TYPE_DEFAULT)
     
     # Only used when recipient is RECIPIENT_SUBCASE.
     # All subcases matching the given criteria will be the recipients.
