@@ -401,12 +401,35 @@ class CareSAFluff(fluff.IndicatorDocument):
         [internal_iact_not_complete, internal_on_arv]
     )
 
-    #3j...m TODO
+    #3j
+
+    cd4lt200 = xcalculators.filtered_form_calc(
+        xmlns=IACT_XMLNS,
+        property_path='form/cd4_res',
+        property_value=(0, 200),
+        operator=xcalculators.IN_RANGE,
+    )
+
+    cd4lt350 = xcalculators.filtered_form_calc(
+        xmlns=IACT_XMLNS,
+        property_path='form/cd4_res',
+        property_value=(200, 350),
+        operator=xcalculators.IN_RANGE,
+    )
+
+    cd4gt350 = xcalculators.filtered_form_calc(
+        xmlns=IACT_XMLNS,
+        property_path='form/cd4_res',
+        property_value=(350, float('inf')),
+        operator=xcalculators.IN_RANGE,
+    )
+
+    #3m TODO
 
     #3n
     iact_support_groups = xcalculators.filtered_form_calc(
         xmlns=IACT_XMLNS,
-        property_path='form/last_session',
+        property_path='form/session_no',
         property_value=set(['session_1', 'session_2', 'session_3', 'session_4', 'session_5', 'session_6']),
         operator=xcalculators.IN,
     )

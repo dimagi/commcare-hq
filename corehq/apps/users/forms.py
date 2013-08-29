@@ -10,6 +10,8 @@ from django.template import Template, Context
 from hqstyle.forms.widgets import BootstrapCheckboxInput, BootstrapDisabledInput
 from dimagi.utils.timezones.fields import TimeZoneField
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
+from corehq.apps.commtrack.helpers import set_commtrack_location
+from corehq.apps.locations.models import Location
 from corehq.apps.users.models import CouchUser, WebUser, OldRoles, DomainMembership
 from corehq.apps.users.util import format_username
 from corehq.apps.app_manager.models import validate_lang
@@ -188,5 +190,7 @@ class CommtrackUserForm(forms.Form):
         self.fields['supply_point'].widget = SupplyPointSelectWidget(domain=domain)
 
     def save(self, user):
-        user.commtrack_location = self.cleaned_data['supply_point']
-        user.save()
+        location_id = self.cleaned_data['supply_point']
+        if location_id:
+            loc = Location.get(location_id)
+            set_commtrack_location(user, loc)
