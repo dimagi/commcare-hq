@@ -288,7 +288,7 @@ def dump_users_and_groups(response, domain):
             'username': user.raw_username,
             'language': user.language,
         })
-        user_data_keys.update(user.user_data.keys())
+        user_data_keys.update(user.user_data.keys() if user.user_data else {})
         user_groups_length = max(user_groups_length, len(group_names))
 
     sorted_groups = sorted(group_memoizer.groups, key=lambda group: alphanumeric_sort_key(group.name))
@@ -300,7 +300,7 @@ def dump_users_and_groups(response, domain):
             'reporting': group.reporting,
             'data': group.metadata,
         })
-        group_data_keys.update(group.metadata.keys())
+        group_data_keys.update(group.metadata.keys() if group.metadata else {})
 
     # include blank password column for adding new users
     user_headers = ['username', 'password', 'name', 'phone-number', 'language']
