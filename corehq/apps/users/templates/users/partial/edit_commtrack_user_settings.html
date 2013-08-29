@@ -18,6 +18,7 @@
 <form class="form form-horizontal"
       method="post"
       action="{% url update_user_data domain couch_user.user_id %}">
+    <input name="user-data" id="commtrack-user-data-input" type="hidden" />
     <fieldset>
         <legend>{% trans "CommTrack User Roles" %}</legend>
         <div class="control-group">
