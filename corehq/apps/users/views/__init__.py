@@ -186,7 +186,8 @@ class BaseEditUserView(BaseUserSettingsView):
             if self.form_user_update.is_valid():
                 if self.form_user_update.update_user(existing_user=self.editable_user, domain=self.domain):
                     messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.username)
-        return super(BaseEditUserView, self).get(request, *args, **kwargs)
+                    return HttpResponseRedirect(reverse(ListWebUsersView.urlname, args=[self.domain]))
+        return self.get(request, *args, **kwargs)
 
 
 class EditWebUserView(BaseEditUserView):
