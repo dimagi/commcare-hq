@@ -71,7 +71,7 @@ class PathfinderProviderReport(CustomProjectReport):
     flush_layout = True
 
     @property
-    def report_contect(self):
+    def report_context(self):
         name = self.request.GET.get("user", None)
         month = self.request.GET.get("month", None)
         year = self.request.GET.get("year", None)
