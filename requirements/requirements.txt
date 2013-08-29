@@ -2,7 +2,7 @@
 Cython==0.17.4
 
 restkit==4.2.0
-couchdbkit==0.5.7
+couchdbkit==0.6.4
 celery==3.0.15
 decorator==3.3.2
 django==1.3.7
