@@ -774,6 +774,24 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
             ['Provincetown', '42.06 -70.18', 'ma',   2.9, 'Mass'],
             ['Newburgh',     '41.52 -74.02', 'ny',  28.8, 'New York'],
         ]
+
+        def bulk_up(load, radius):
+            import random, math
+            GEO_FIELD = 1
+            for r in raw:
+                yield r
+                pos = [float(k) for k in r[GEO_FIELD].split()]
+                for i in range(load):
+                    dist = radius * random.random()
+                    bearing = math.radians(360. * random.random())
+                    dx = dist * math.cos(bearing) / math.cos(math.radians(pos[0]))
+                    dy = dist * math.sin(bearing)
+                    newpos = [pos[0] + dy, pos[1] + dx]
+                    newr = list(r)
+                    newr[GEO_FIELD] = ' '.join(map(str, newpos))
+                    yield newr
+        raw = list(bulk_up(0, 2.))
+
         cols = ['city', 'latlon', 'state', 'population', 'state_name']
 
         for row in raw:
