@@ -491,9 +491,9 @@ class IACT(CareReport):
         ['I-ACT participants receiving Cotrimoxizole prophylaxis/Dapsone', 'iact_participant_ipt'],  # 3g TODO empty?
         ['I-ACT participant on Pre-ART', 'iact_participant_art'],  # 3h TODO empty?
         ['I-ACT participant on ARV', 'iact_participant_arv'],  # 3i TODO empty?
-        #['I-ACT registered client with CD4 count <200', ''],  # 3j
-        #['I-ACT registered client with CD4 count 200 - 350', ''],  # 3k
-        #['I-ACT registered client with CD4 cont higher than 350', ''],  # 3l
+        ['I-ACT registered client with CD4 count <200', 'cd4lt200'],  # 3j
+        ['I-ACT registered client with CD4 count 200 - 350', 'cd4lt350'],  # 3k
+        ['I-ACT registered client with CD4 cont higher than 350', 'cd4gt350'],  # 3l
         #['Unknown CD4 count at registration', ''],  # 3m
         ['I-ACT Support groups completed (all 6 sessions)', 'iact_support_groups'],  # 3n TODO empty?
     ]
