@@ -130,6 +130,10 @@ function initData(data, config) {
 
 // set up the configured display metrics
 function initMetrics(map, data, config) {
+    if (!config.metrics) {
+	autoConfiguration(config, data);
+    }
+
     $.each(config.metrics, function(i, e) {
 	setMetricDefaults(e, data, config);
     });
@@ -363,10 +367,11 @@ function formatDetailPopup(feature, config) {
 	context.name = feature.properties[config.name_column];
     }
     context.detail = [];
-    $.each(config.detail_columns, function(i, e) {
-	var colTitle = config.column_titles[e] || e;
-	var value = getEnumCaption(e, feature.properties[e], config);
-	context.detail.push({label: colTitle, value: value});
+    $.each(config.detail_columns || [], function(i, e) {
+	context.detail.push({
+	    label: getColumnTitle(e, config),
+	    value: getEnumCaption(e, feature.properties[e], config),
+	});
     });
 
     var template = Handlebars.compile(TEMPLATE);
@@ -386,7 +391,7 @@ function setMetricDefaults(metric, data, config) {
 		}
 	    }
 	});
-	metric.title = $.map(varcols, function(e) { return config.column_titles[e] || e; }).join(' / ');
+	metric.title = $.map(varcols, function(e) { return getColumnTitle(e, config); }).join(' / ');
     }
 
     if (typeof metric.size == 'object') {
@@ -433,6 +438,27 @@ function setMetricDefaults(metric, data, config) {
 	    metric.icon.categories = {_other: DEFAULT_ICON_URL};
 	}
     }
+}
+
+function autoConfiguration(config, data) {
+    var ignoreCols = [config.name_column];
+    var _cols = {};
+    $.each(data.features, function(i, e) {
+	$.each(e.properties, function(k, v) {
+	    if (ignoreCols.indexOf(k) == -1) {
+		_cols[k] = true;
+	    }
+	});
+    });
+    var cols = _.sortBy(_.keys(_cols), function(e) { return getColumnTitle(e, config); });
+
+    config.metrics = $.map(cols, function(e) {
+	var meta = {column: e};
+	var stats = summarizeColumn(meta, data);
+	var metric = {}
+	metric[stats.nonnumeric ? 'color' : 'size'] = meta;
+	return metric;
+    });
 }
 
 function summarizeColumn(meta, data) {
@@ -486,8 +512,6 @@ function _summarizeColumn(meta, data) {
 
 function getEnumValues(meta) {
     if (meta.thresholds) {
-	var enums = meta.thresholds.slice(0);
-	enums.splice(0, 0, '-');
 	var toLabel = function(e, i) {
 	    if (i == 0) {
 		return '<' + enums[1];
@@ -497,14 +521,20 @@ function getEnumValues(meta) {
 		return e + '-' + enums[i + 1];
 	    }
 	};
+
+	var enums = meta.thresholds.slice(0);
+	enums.splice(0, 0, '-');
     } else {
+	var toLabel = function(e) {
+	    return getEnumCaption(meta.column, e, CONFIG); // eww global var ref
+	};
+
 	var enums = _.keys(meta.categories);
-	// move 'other' to end
 	var has_other = (enums.indexOf('_other') != -1);
 	if (has_other) {
+	    // move 'other' to end
 	    enums.splice(enums.indexOf('_other'), 1);
 	}
-	var toLabel = function(e) { return getEnumCaption(meta.column, e, CONFIG); }; // eww global var ref
 	enums = _.sortBy(enums, toLabel);
 	if (has_other) {
 	    enums.push('_other');
@@ -515,9 +545,13 @@ function getEnumValues(meta) {
 
 OTHER_LABEL = 'Other'; // FIXME i18n
 function getEnumCaption(column, value, config) {
-    var captions = config.enum_captions[column] || {};
+    var captions = (config.enum_captions || {})[column] || {};
     var fallback = (value == '_other' ? OTHER_LABEL : value);
     return captions[value] || fallback;
+}
+
+function getColumnTitle(col, config) {
+    return (config.column_titles || {})[col] || col;
 }
 
 
@@ -529,7 +563,7 @@ function renderLegend($e, metric, config) {
 	if (typeof meta == 'object') {
 	    var col = meta.column;
 	    var $h = $('<h4>');
-	    $h.text(config.column_titles[col] || col);
+	    $h.text(getColumnTitle(col, config));
 	    $e.append($h);
 
 	    $div = $('<div>');

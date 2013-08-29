@@ -699,7 +699,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
       'enum_captions': {
         'col with enum values': {'enum value': 'enum caption'}
       },
-      'metrics': [ <toggleable data display modes>
+      'metrics': [ <toggleable data display modes> (may be omitted during report prototyping)
         one or more of:
         {
           'title': display title,
