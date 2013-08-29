@@ -363,7 +363,7 @@ class ProjectDataTab(UITab):
                     ]
                 },
             ]
-            items.append([_("Manage CommTrack"), commtrack_data_views])
+            items.append([_("CommTrack Data"), commtrack_data_views])
 
         if self.can_export_data:
             from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
