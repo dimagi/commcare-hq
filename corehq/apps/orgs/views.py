@@ -579,17 +579,14 @@ def stats(request, org, stat_slug, template='orgs/stats.html'):
 @org_member_required
 @datespan_in_request(from_param="startdate", to_param="enddate")
 def stats_data(request, org):
-    params, _ = parse_args_for_es(request)
     domains = [{"name": d.name, "hr_name": d.hr_name} for d in Domain.get_by_organization(org).all()]
     histo_type = request.GET.get('histogram_type')
+    stats_data = get_stats_data(domains, histo_type, request.datespan)
+    return json_response(stats_data)
 
-    enddate = request.GET.get('enddate')
-    enddate = datetime.strptime(enddate, "%Y-%m-%d") if enddate else date.today()
-    startdate = request.GET.get('startdate')
-    startdate = datetime.strptime(startdate, "%Y-%m-%d") if startdate else enddate - timedelta(days=30)
-
+def get_stats_data(domains, histo_type, datespan):
     histo_data = dict([(d['hr_name'],
-                        es_histogram(histo_type, [d["name"]], request.datespan.startdate_display, request.datespan.enddate_display))
+                        es_histogram(histo_type, [d["name"]], datespan.startdate_display, datespan.enddate_display))
                         for d in domains])
 
     def _total_forms_until_date(dom, date):
@@ -628,12 +625,12 @@ def stats_data(request, org):
         "users": _total_users_until_date,
     }[histo_type]
 
-    return json_response({
+    return {
         'histo_data': histo_data,
-        'initial_values': dict([(dom["name"], init_val_fn(dom["name"], startdate)) for dom in domains]),
-        'startdate': request.datespan.startdate_key_utc,
-        'enddate': request.datespan.enddate_key_utc,
-    })
+        'initial_values': dict([(dom["name"], init_val_fn(dom["name"], datespan.startdate)) for dom in domains]),
+        'startdate': datespan.startdate_key_utc,
+        'enddate': datespan.enddate_key_utc,
+    }
 
 def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None):
     date_field = {  "forms": "received_on",
