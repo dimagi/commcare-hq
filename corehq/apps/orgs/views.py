@@ -584,13 +584,13 @@ def stats_data(request, org):
     stats_data = get_stats_data(domains, histo_type, request.datespan)
     return json_response(stats_data)
 
-def get_stats_data(domains, histo_type, datespan):
+def get_stats_data(domains, histo_type, datespan, interval="day"):
     histo_data = dict([(d['hr_name'],
                         es_histogram(histo_type, [d["name"]], datespan.startdate_display, datespan.enddate_display))
                         for d in domains])
 
-    def _total_forms_until_date(dom, date):
-        key = ["submission", dom]
+    def _total_forms_until_date(date, dom=None):
+        key = ["submission", dom] if dom is not None else ["submission", dom]
         r = get_db().view('reports_forms/all_forms',
             startkey=key+[""],
             endkey=key+[json_format_datetime(date)],
@@ -598,15 +598,16 @@ def get_stats_data(domains, histo_type, datespan):
         ).one()
         return r['value'] if r else 0
 
-    def _total_cases_until_date(dom, date):
-        key = ["", dom]
+    def _total_cases_until_date(date, dom=None):
+        key = ["", dom] if dom is not None else [""]
         r = get_db().view('reports/case_activity',
             startkey=key + [""],
             endkey=key + [json_format_datetime(date), '{}']).one()
         return r['value'] if r else 0
 
-    def _total_users_until_date(dom, date):
+    def _total_users_until_date(date, dom=None):
         from corehq.apps.appstore.views import es_query
+        query = {"term": {"domain": dom}} if dom is not None else {"match_all": {}}
         q = {
             "query": {"term": {"domain": dom}},
             "filter": {
@@ -627,12 +628,12 @@ def get_stats_data(domains, histo_type, datespan):
 
     return {
         'histo_data': histo_data,
-        'initial_values': dict([(dom["name"], init_val_fn(dom["name"], datespan.startdate)) for dom in domains]),
+        'initial_values': dict([(dom["name"], init_val_fn(datespan.startdate, dom["name"])) for dom in domains]),
         'startdate': datespan.startdate_key_utc,
         'enddate': datespan.enddate_key_utc,
     }
 
-def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None):
+def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None, interval="day"):
     date_field = {  "forms": "received_on",
                     "cases": "opened_on",
                     "users": "created_on", }[histo_type]
@@ -650,7 +651,7 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff
             "histo": {
                 "date_histogram": {
                     "field": date_field,
-                    "interval": "day"
+                    "interval": interval
                 },
                 "facet_filter": {
                     "and": [{

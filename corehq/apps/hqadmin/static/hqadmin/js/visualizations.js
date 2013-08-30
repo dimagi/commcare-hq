@@ -1,9 +1,13 @@
 var HQVisualizations = function (options) {
-    self = this;
+    var self = this;
     self.chart_name = options.chart_name;
     self.xaxis_label = options.xaxis_label;
     self.histogram_type = options.histogram_type;
     self.ajax_url = options.ajax_url;
+    self.data = options.data || {};
+    self.should_update_url = options.should_update_url === undefined ? true : options.should_update_url;
+    self.interval = options.interval || "day";
+
     self.charts = { "bar-chart": null, "cumulative-chart": null, "stacked-cumulative-chart": null };
     self.charts_id = '#' + self.chart_name + '-charts';
     self.chart_tabs_id = '#' + self.chart_name + '-chart-tabs';
@@ -28,14 +32,17 @@ var HQVisualizations = function (options) {
                 var startdate = $this.find('[name="startdate"]').val();
                 var enddate = $this.find('[name="enddate"]').val();
                 self.loadChartData(update_active_chart, startdate, enddate);
-                var new_url = "?startdate=" + startdate + "&enddate=" + enddate + window.location.hash;
-                History.pushState(null, "Reloaded Chart", new_url);
 
-                // keep the urls for the other data visualizations consistent with this datespan
-                $(".viz-url").each(function() {
-                    var new_href = $(this).attr('href').split("?")[0] + new_url;
-                    $(this).attr('href', new_href);
-                });
+                if (self.should_update_url) {
+                    var new_url = "?startdate=" + startdate + "&enddate=" + enddate + window.location.hash;
+                    History.pushState(null, "Reloaded Chart", new_url);
+
+                    // keep the urls for the other data visualizations consistent with this datespan
+                    $(".viz-url").each(function() {
+                        var new_href = $(this).attr('href').split("?")[0] + new_url;
+                        $(this).attr('href', new_href);
+                    });
+                }
 
                 return false;
             });
@@ -64,20 +71,20 @@ var HQVisualizations = function (options) {
             $(this).hide().html('').append($svg_ele); // create a new svg element to stop update issues
         });
 
-        var data = {histogram_type: self.histogram_type};
+        self.data["histogram_type"] = self.histogram_type;
         if (enddate) {
-            data["enddate"] = enddate;
+            self.data["enddate"] = enddate;
         }
         if (startdate) {
-            data["startdate"] = startdate;
+            self.data["startdate"] = startdate;
         }
 
-        $.getJSON(self.ajax_url, data,
+        $.getJSON(self.ajax_url, self.data,
             function(d) {
                 var startdate = new Date(Date.UTC(d.startdate[0], d.startdate[1]-1, d.startdate[2]));
                 var enddate = new Date(Date.UTC(d.enddate[0], d.enddate[1]-1, d.enddate[2]));
                 charts = loadCharts(self.chart_name, self.xaxis_label, d.histo_data, d.initial_values,
-                        startdate.getTime(), enddate.getTime());
+                        startdate.getTime(), enddate.getTime(), self.interval);
                 $loading.hide();
                 $charts.show();
 

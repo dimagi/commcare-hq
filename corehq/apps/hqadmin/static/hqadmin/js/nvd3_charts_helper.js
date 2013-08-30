@@ -1,6 +1,12 @@
 // Contains helper functions for rendering nvd3 multibar charts with data pulled from an elastic search histogram filter
 
-var DAY_VALUE = 86400000;
+var INTERVAL_VALUES = {
+    "day": 86400000,
+    "week": 86400000 * 7,
+    "month": 86400000 * 30,
+    "year": 86400000 * 365
+};
+
 function isInt(n) {
     return typeof n === 'number' && parseFloat(n) == parseInt(n, 10) && !isNaN(n);
 }
@@ -11,7 +17,7 @@ function intervalize(vals, start, end, interval) {
         ret.push({x: t, y: 0});
     }
     for (var i = 0; i < vals.length; i++){
-        var index = Math.floor((vals[i].x - start) / interval)
+        var index = Math.floor((vals[i].x - start) / interval);
         if (index >= 0) {
             ret[index].y += vals[i].y;
         }
@@ -60,11 +66,11 @@ function trim_data(data) {
     })
 }
 
-function format_data(data, start, end) {
+function format_data(data, start, end, interval_val) {
     var ret = [];
     _.each(data, function (vals, name) {
         vals = _.map(vals, function(o) { return swap_prop_names(o, {time: "x", count: "y"})});
-        vals = intervalize(vals, start, end, DAY_VALUE);
+        vals = intervalize(vals, start, end, interval_val);
         ret.push({key: name, values: vals});
     });
     return trim_data(ret);
@@ -80,7 +86,7 @@ function formatDataForLineGraph(data, init_val) {
     return ret
 }
 
-function loadCharts(chart_name, xname, data, initial_values, starting_time, ending_time) {
+function loadCharts(chart_name, xname, data, initial_values, starting_time, ending_time, interval) {
     for (var key in data) {
         if (data.hasOwnProperty(key)) {
             if (data[key].length > 0) {
@@ -93,7 +99,7 @@ function loadCharts(chart_name, xname, data, initial_values, starting_time, endi
             }
         }
     }
-    var domain_data = format_data(data, starting_time, ending_time);
+    var domain_data = format_data(data, starting_time, ending_time, INTERVAL_VALUES[interval]);
     var cum_domain_data = _.map(domain_data, function (domain_datum) {
         return formatDataForLineGraph(domain_datum, initial_values[domain_datum.key]);
     });
