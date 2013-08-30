@@ -125,9 +125,9 @@ class Calculator(object):
     def __init__(self, window=None, filter=None):
         if window is not None:
             self.window = window
-        if not isinstance(self.window, datetime.timedelta):
+        if not isinstance(self.window, (type(None), datetime.timedelta)):
             if any(getattr(self, e)._fluff_emitter == 'date' for e in self._fluff_emitters):
-                # if window is set to None, for instance
+                # If window is set to something other than a timedelta
                 # fail here and not whenever that's run into below
                 raise NotImplementedError(
                     'window must be timedelta, not %s' % type(self.window))
@@ -160,7 +160,19 @@ class Calculator(object):
             )
         return values
 
-    def get_result(self, key, reduce=True):
+    def get_result(self, key, date_range=None, reduce=True):
+        """
+        If your Calculator does not have a window set, you must pass a tuple of
+        date or datetime objects to date_range
+        """
+        assert isinstance(date_range, tuple) or self.window, self.get_result.__doc__
+        if self.window:
+            now = self.fluff.get_now()
+            start = now - self.window
+            end = now
+        else:
+            start = date_range[0]
+            end = date_range[1]
         result = {}
         for emitter_name in self._fluff_emitters:
             shared_key = [self.fluff._doc_type] + key + [self.slug, emitter_name]
@@ -170,9 +182,6 @@ class Calculator(object):
                 'reduce': reduce,
             }
             if emitter_type == 'date':
-                now = self.fluff.get_now()
-                start = now - self.window
-                end = now
                 if start > end:
                     q_args['descending'] = True
                 q = self.fluff.view(
@@ -486,9 +495,9 @@ class IndicatorDocument(schema.Document):
         return cls._calculators[calc_name]
 
     @classmethod
-    def get_result(cls, calc_name, key, reduce=True):
+    def get_result(cls, calc_name, key, date_range=None, reduce=True):
         calculator = cls.get_calculator(calc_name)
-        return calculator.get_result(key, reduce=reduce)
+        return calculator.get_result(key, date_range=date_range, reduce=reduce)
 
     @classmethod
     def aggregate_results(cls, calc_name, keys, reduce=True):
