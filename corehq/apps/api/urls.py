@@ -7,6 +7,7 @@ from corehq.apps.commtrack.resources.v0_1 import ProductResource,\
     StockStatusResource, StockReportResource, FullStockTransactionResource
 from corehq.apps.fixtures.resources.v0_1 import FixtureResource
 from corehq.apps.locations.resources.v0_1 import LocationResource
+from corehq.apps.reports.resources.v0_1 import ReportResource
 from django.conf.urls.defaults import *
 from django.http import HttpResponseNotFound
 from tastypie.api import Api
@@ -20,6 +21,7 @@ API_LIST = (
         v0_1.CommCareCaseResource,
         v0_1.XFormInstanceResource,
         FixtureResource,
+        ReportResource,
     )),
     ((0, 2), (
         v0_1.CommCareUserResource,
@@ -27,6 +29,7 @@ API_LIST = (
         v0_2.CommCareCaseResource,
         v0_1.XFormInstanceResource,
         FixtureResource,
+        ReportResource,
     )),
     ((0, 3), (
         v0_1.CommCareUserResource,
@@ -34,6 +37,7 @@ API_LIST = (
         v0_3.CommCareCaseResource,
         v0_3.XFormInstanceResource,
         FixtureResource,
+        ReportResource,
     )),
     ((0, 4), (
         v0_1.CommCareUserResource,
@@ -44,7 +48,8 @@ API_LIST = (
         v0_4.XFormInstanceResource,
         v0_4.RepeaterResource,
         v0_4.SingleSignOnResource,
-        FixtureResource
+        FixtureResource,
+        ReportResource,
     ))
 )
 
