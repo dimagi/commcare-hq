@@ -18,14 +18,6 @@ def is_timely(case, limit=0):
 
 class CommtrackDataSourceMixin(object):
 
-    @memoized
-    def get_terminal_location_type(self):
-        relationships = loc_util.parent_child(self.domain)
-        loc_types = loc_util.defined_location_types(self.domain)
-        for loc_type in loc_types:
-            if not relationships.get(loc_type):
-                return loc_type
-
     @property
     def domain(self):
         return self.config.get('domain')
@@ -44,42 +36,12 @@ class CommtrackDataSourceMixin(object):
         if prod_id:
             return Product.get(prod_id)
 
-    @property
-    @memoized
-    def terminal_locations(self):
-        locs = Location.filter_by_type(self.domain, self.get_terminal(), self.active_location)
-        locs = filter(lambda loc: self.outlet_type_filter(loc), locs)
-        return locs
-
-    @property
-    @memoized
-    def outlet_type_filter(self):
-        categories = supply_point_type_categories(self.domain)
-        selected = self.config.get('outlet_type')
-        if not selected:
-            selected = ['_all']
-
-        def types_for_sel(sel):
-            if sel == '_oth':
-                return categories['_oth']
-            elif sel.startswith('cat:'):
-                return categories[sel[len('cat:'):]]
-            else:
-                return [sel]
-        active_outlet_types = reduce(lambda a, b: a.union(b), (types_for_sel(sel) for sel in selected), set())
-
-        def match_filter(loc):
-            outlet_type = loc.dynamic_properties().get('outlet_type')
-            return ('_all' in selected) or (outlet_type in active_outlet_types)
-        return match_filter
-
 
 class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     """
     Config:
         location_id: ID of location to get data for. Omit for all locations.
         product_id: ID of product to get data for. Omit for all products.
-        outlet_type: Only get data for locations with this outlet type.
         aggregate: True to aggregate the indicators by product for the current location.
 
     Data Slugs:
@@ -92,18 +54,22 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         category: The status category. See corehq.apps.commtrack.models.SupplyPointProductCase#stock_category
 
     """
+    slug = 'agg_stock_status'
+
     SLUG_PRODUCT_NAME = 'product_name'
     SLUG_PRODUCT_ID = 'product_id'
     SLUG_MONTHS_REMAINING = 'months_remaining'
     SLUG_CONSUMPTION = 'consumption'
     SLUG_CURRENT_STOCK = 'current_stock'
-    SLUG_LOCATION = 'location'
+    SLUG_LOCATION_ID = 'location_id'
+    SLUG_LOCATION_LINEAGE = 'location_lineage'
 
     SLUG_CATEGORY = 'category'
     _slug_attrib_map = {
         SLUG_PRODUCT_NAME: 'name',
         SLUG_PRODUCT_ID: 'product',
-        SLUG_LOCATION: 'location_',
+        SLUG_LOCATION_ID: lambda p: p.location_[-1],
+        SLUG_LOCATION_LINEAGE: lambda p: list(reversed(p.location_[:-1])),
         SLUG_CURRENT_STOCK: 'current_stock_level',
         SLUG_CONSUMPTION: 'monthly_consumption',
         SLUG_MONTHS_REMAINING: 'months_until_stockout',
@@ -128,7 +94,10 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     def raw_cases(self, product_cases, slugs):
         def _slug_attrib(slug, attrib, product, output):
             if not slugs or slug in slugs:
-                output[slug] = getattr(product, attrib)
+                if callable(attrib):
+                    output[slug] = attrib(product)
+                else:
+                    output[slug] = getattr(product, attrib)
 
         for product in product_cases:
             out = {}
@@ -167,11 +136,12 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             full_output = {
                 self.SLUG_PRODUCT_NAME: p.name,
                 self.SLUG_PRODUCT_ID: p._id,
-                self.self.SLUG_LOCATION: self.active_location.path if self.active_location else None,
+                self.SLUG_LOCATION_ID: self.active_location._id if self.active_location else None,
+                self.SLUG_LOCATION_LINEAGE: self.active_location.lineage if self.active_location else None,
                 self.SLUG_CURRENT_STOCK: stats['total_stock'],
                 self.SLUG_CONSUMPTION: stats['total_consumption'],
                 self.SLUG_MONTHS_REMAINING: months_left,
-                category: category,
+                self.SLUG_CATEGORY: category,
             }
 
             yield dict((slug, full_output['slug']) for slug in slugs) if slugs else full_output

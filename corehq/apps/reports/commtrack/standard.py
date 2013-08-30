@@ -101,7 +101,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 
 class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Inventory')
-    slug = 'agg_stock_status'
+    slug = StockStatusDataSource.slug
     fields = ['corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
     emailable = True
@@ -127,7 +127,6 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             config = {
                 'domain': self.domain,
                 'location_id': self.request.GET.get('location_id'),
-                'outlet_type': self.request.GET.getlist('outlet_type'),
                 'aggregate': True
             }
             self.prod_data = list(StockStatusDataSource(config).get_data())

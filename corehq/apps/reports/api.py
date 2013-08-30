@@ -1,4 +1,6 @@
 class ReportDataSource(object):
+    slug = ''
+
     def __init__(self, config=None):
         """
         :param config: dictionary containing configuration for this data source.
