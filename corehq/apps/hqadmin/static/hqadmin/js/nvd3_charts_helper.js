@@ -131,7 +131,8 @@ function loadCharts(chart_name, xname, data, initial_values, starting_time, endi
     var stacked_cum_chart = null;
     if (!is_data_empty(data)) {
         bar_chart = addHistogram("#" + chart_name + "-bar-chart svg", xname, domain_data);
-    } else if (!are_init_values_zero(initial_values)) {
+    }
+    if (!is_data_empty(data) || !are_init_values_zero(initial_values)) {
         cum_chart = addLineGraph("#" + chart_name + "-cumulative-chart svg", xname, cum_domain_data);
         stacked_cum_chart = addStackedAreaGraph("#" + chart_name + "-stacked-cumulative-chart svg", xname, cum_domain_data);
     }
