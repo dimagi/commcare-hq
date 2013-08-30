@@ -15,7 +15,7 @@ var HQVisualizations = function (options) {
     function update_active_chart() {
         // for some reason nvd3 doesn't fully animate the charts, force this update after the chart is loaded
         var active_chart_name = $(self.chart_tabs_id + ' li.active a').attr('href').substr(1); // remove '#'
-        _update_chart_if_exists(charts[active_chart_name]);
+        _update_chart_if_exists(self.charts[active_chart_name]);
     }
 
     function _update_chart_if_exists(chart) {
@@ -59,7 +59,7 @@ var HQVisualizations = function (options) {
                 $('.nvd3-chart').hide();
                 var $chart = $($(this).attr('href')).children('.nvd3-chart');
                 $chart.show();
-                var chart = charts[$chart.parents('.tab-pane').attr('id')];
+                var chart = self.charts[$chart.parents('.tab-pane').attr('id')];
                     _update_chart_if_exists(chart); // for some reason nvd3 doesn't fully animate the charts, force this update
             });
         });
@@ -69,6 +69,7 @@ var HQVisualizations = function (options) {
         var $loading = $(self.charts_id + ' .loading');
         var $charts = $(self.charts_id + ' .nvd3-chart');
 
+        $(self.charts_id + " .no-data").hide();
         $loading.show();
         var svg_width = $(self.charts_id + " .tab-pane.active").width();
         $charts.each(function(){
@@ -91,10 +92,17 @@ var HQVisualizations = function (options) {
             function(d) {
                 var startdate = new Date(Date.UTC(d.startdate[0], d.startdate[1]-1, d.startdate[2]));
                 var enddate = new Date(Date.UTC(d.enddate[0], d.enddate[1]-1, d.enddate[2]));
-                charts = loadCharts(self.chart_name, self.xaxis_label, d.histo_data, d.initial_values,
+                self.charts = loadCharts(self.chart_name, self.xaxis_label, d.histo_data, d.initial_values,
                         startdate.getTime(), enddate.getTime(), self.interval);
                 $loading.hide();
                 $charts.show();
+
+                _.each(self.charts, function(chart, name) {
+                    if (chart === null) {
+                        $("#" + self.chart_name + "-" + name + " svg").hide();
+                        $("#" + self.chart_name + "-" + name + " .no-data").show();
+                    }
+                });
 
                 // set the date fields if they're not already set
                 $startdate_field = $("#" + self.chart_name + "-startdate");
