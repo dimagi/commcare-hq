@@ -40,6 +40,7 @@ class CommtrackDataSourceMixin(object):
 class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     """
     Config:
+        domain: The domain to report on.
         location_id: ID of location to get data for. Omit for all locations.
         product_id: ID of product to get data for. Omit for all products.
         aggregate: True to aggregate the indicators by product for the current location.
@@ -47,7 +48,8 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     Data Slugs:
         product_name: Name of the product
         product_id: ID of the product
-        location: Location hierarchy, starting with root node
+        location_id: The ID of the current location.
+        location_lineage: The lineage of the current location.
         current_stock: The current stock level
         consumption: The current monthly consumption rate
         months_remaining: The number of months remaining until stock out
