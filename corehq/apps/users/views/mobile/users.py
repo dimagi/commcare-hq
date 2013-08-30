@@ -184,8 +184,7 @@ class EditCommCareUserView(BaseFullEditUserView):
             if self.update_commtrack_form.is_valid():
                 self.update_commtrack_form.save(self.editable_user)
                 messages.success(request, _("CommTrack information updated!"))
-        super(EditCommCareUserView, self).post(request, *args, **kwargs)
-        return self.get(request, *args, **kwargs)
+        return super(EditCommCareUserView, self).post(request, *args, **kwargs)
 
 
 class ListCommCareUsersView(BaseUserSettingsView):
