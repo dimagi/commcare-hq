@@ -573,6 +573,7 @@ def stats(request, org, stat_slug, template='orgs/stats.html'):
         'xaxis_label': xaxis_label,
         'startdate': request.datespan.startdate_display,
         'enddate': request.datespan.enddate_display,
+        'interval': request.GET.get('interval', 'day'),
     })
     return render(request, template, ctxt)
 

@@ -20,7 +20,8 @@
             chart_name: "{{ stat_slug }}",
             histogram_type: "{{ stat_slug }}",
             xaxis_label: "{{ xaxis_label }}",
-            ajax_url: "{% url orgs_stats_data org.name %}"
+            ajax_url: "{% url orgs_stats_data org.name %}",
+            interval: "{{ interval }}"
         });
         visualizations.init();
     </script>

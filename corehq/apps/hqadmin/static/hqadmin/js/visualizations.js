@@ -31,10 +31,16 @@ var HQVisualizations = function (options) {
                 var $this = $(this);
                 var startdate = $this.find('[name="startdate"]').val();
                 var enddate = $this.find('[name="enddate"]').val();
+                var interval = $this.find('[name="interval"]').val();
+
+                if (interval) {
+                    self.interval = interval;
+                }
+
                 self.loadChartData(update_active_chart, startdate, enddate);
 
                 if (self.should_update_url) {
-                    var new_url = "?startdate=" + startdate + "&enddate=" + enddate + window.location.hash;
+                    var new_url = "?interval=" + self.interval + "&startdate=" + startdate + "&enddate=" + enddate + window.location.hash;
                     History.pushState(null, "Reloaded Chart", new_url);
 
                     // keep the urls for the other data visualizations consistent with this datespan
@@ -72,6 +78,8 @@ var HQVisualizations = function (options) {
         });
 
         self.data["histogram_type"] = self.histogram_type;
+        self.data["interval"] = self.interval;
+
         if (enddate) {
             self.data["enddate"] = enddate;
         }
@@ -91,11 +99,15 @@ var HQVisualizations = function (options) {
                 // set the date fields if they're not already set
                 $startdate_field = $("#" + self.chart_name + "-startdate");
                 $enddate_field = $("#" + self.chart_name + "-enddate");
+                $interval_field = $("#" + self.chart_name + "-interval");
                 if (!$startdate_field.val()) {
                     $startdate_field.val(startdate.toISOString().substr(0, 10)); // substr bc date strs are 10 chars
                 }
                 if (!$enddate_field.val()) {
                     $enddate_field.val(enddate.toISOString().substr(0, 10))
+                }
+                if (!$interval_field.val()) {
+                    $interval_field.val(self.interval);
                 }
 
                 if (callback_fn) {
