@@ -97,13 +97,15 @@ def make_trend(reportdata):
         def columns(self):
             cols = super(TR, self).columns
             if self.grouping == 'month':
-                cols[0] = AggregateColumn("Month", combine_month_year,
-                                          YearColumn('date', alias='year'),
-                                          MonthColumn('date', alias='month'), format_fn=format_date)
+                cols[0] = AggregateColumn(
+                    "Month", combine_month_year,
+                    [YearColumn('date', alias='year'), MonthColumn('date', alias='month')],
+                    format_fn=format_date)
             elif self.grouping == 'quarter':
-                cols[0] = AggregateColumn("Quarter", combine_quarter_year,
-                                          YearColumn('date', alias='year'),
-                                          YearQuarterColumn('date', alias='quarter'), format_fn=format_date)
+                cols[0] = AggregateColumn(
+                    "Quarter", combine_quarter_year,
+                    [YearColumn('date', alias='year'), YearQuarterColumn('date', alias='quarter')],
+                    format_fn=format_date)
             else:
                 cols[0] = DatabaseColumn("Year", YearColumn('date', alias='year'), format_fn=format_year)
 
@@ -303,9 +305,9 @@ class CVSUActivityData(BaseSqlData):
             DatabaseColumn("Incidents of Abuse", SumColumn('incidents_total')),
             DatabaseColumn("Outreach activities", SumColumn('outreach_total')),
             DatabaseColumn("IGA Reports", SumColumn('iga_total')),
-            AggregateColumn("Total", self.sum,
-                            AliasColumn('incidents_total'),
-                            AliasColumn('outreach_total')),
+            AggregateColumn(
+                "Total", self.sum,
+                [AliasColumn('incidents_total'), AliasColumn('outreach_total')]),
         ]
 
     def sum(self, no_incidents, outreach):
