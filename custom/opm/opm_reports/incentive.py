@@ -21,7 +21,7 @@ class Worker(object):
         ('last_month_total', "Amount of AWW incentive paid last month"),
     ]
 
-    def __init__(self, worker):
+    def __init__(self, worker, date_range=None):
         self.fluff_doc = OpmUserFluff.get("%s-%s" %
             (OpmUserFluff._doc_type, worker._id))
         self.name = self.fluff_doc.name

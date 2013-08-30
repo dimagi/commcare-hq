@@ -1,3 +1,5 @@
+from datetime import date, timedelta
+
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
@@ -60,7 +62,10 @@ class BaseReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
         rows = []
         for row in self.get_rows():
             try:
-                rows.append(self.model(row))
+                rows.append(self.model(row, date_range=(
+                    date.today()-timedelta(365*2),
+                    date.today()+timedelta(365*2),
+                )))
             except ResourceNotFound:
                 pass
         return rows

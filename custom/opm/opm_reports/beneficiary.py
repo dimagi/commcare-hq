@@ -3,7 +3,7 @@ from datetime import datetime, date, timedelta
 from corehq.apps.fixtures.models import FixtureDataItem
 
 from .constants import *
-from .models import OpmCaseFluff
+from .models import OpmCaseFluff, OpmUserFluff, OpmFormFluff
 
 # clarify: 1 row per bank account?
 
@@ -24,12 +24,13 @@ class Beneficiary(object):
         ('total', "Amount to be paid to beneficiary"),
     ]
 
-    def __init__(self, case, form_range=None):
+    def __init__(self, case, date_range=None):
         """
-        form_range should be a (start, stop) tuple of datetime objects
+        date_range should be a (start, stop) tuple of date objects
         """
+        case_id = case['id']
         self.fluff_doc = OpmCaseFluff.get("%s-%s" %
-            (OpmCaseFluff._doc_type, case['id']))
+            (OpmCaseFluff._doc_type, case_id))
 
         self.name = self.fluff_doc.name
         self.awc_name = self.fluff_doc.awc_name
@@ -38,12 +39,22 @@ class Beneficiary(object):
         self.block = self.fluff_doc.block
         self.village = self.fluff_doc.village
 
-        self.bp1_cash = "Birth Preparedness Form 1"
-        self.bp2_cash = "Birth Preparedness Form 2"
-        self.delivery_cash = "Delivery Form"
-        self.child_cash = "Child Followup Form"
-        self.spacing_cash = "Birth Spacing Bonus"
-        self.total = "Amount to be paid to beneficiary"
+        def get_result(calculator):
+            return OpmFormFluff.get_result(
+                calculator,
+                [DOMAIN, case_id],
+                date_range,
+            )['total']
+
+        self.bp1_cash = get_result('bp1_cash')
+        self.bp2_cash = get_result('bp2_cash')
+        self.delivery_cash = get_result('delivery')
+        # Don't forget to implement Child Followup Form
+        self.child_cash = 0
+        self.spacing_cash = OpmFormFluff.get_result('child_spacing',
+            [DOMAIN, self.account_number], date_range=date_range)
+        self.total = sum([self.bp1_cash, self.bp2_cash,
+            self.delivery_cash, self.spacing_cash])
 
 
         # self.case = case
@@ -103,7 +114,7 @@ class Beneficiary(object):
     # def bp2_cash(self):
     #     cash_fixture = 200
     #     return self.bp_cash(['window_2_1', 'window_2_2', 'window_2_3'], cash_fixture)
-
+# ['window_1_1', 'window_1_2', 'window_1_3', 'window_2_1', 'window_2_2', 'window_2_3']
     # @property
     # def delivery_cash(self):
     #     cash_fixture = 400

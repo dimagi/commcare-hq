@@ -6,6 +6,8 @@ Show only data from the current report period
     fixtures = [f.to_json().get('fields') for f in FixtureDataItem.by_domain('opm').all()]
     prices = dict([f.values() for f in fixtures])
 
+Fluff window only lets you specify a timedelta. Fix that ish!
+
 ### Running tests and getting fixtures
 I had been getting forms from USERS of a domain, but I should have done it from each case!
 
