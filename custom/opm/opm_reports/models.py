@@ -72,17 +72,13 @@ class OpmFormFluff(fluff.IndicatorDocument):
     delivery = case_calcs.Delivery()
     child_followup = "Child Followup Form"
     child_spacing = case_calcs.ChildSpacing()
-    # total = "Amount to be paid to beneficiary"
 
     # per user
-    women_registered = "No. of women registered under BCSP"
-    # women_registered = user_calcs.WomenRegistered()
-    children_registered = "No. of children registered under BCSP"
-    service_forms_count = "Submission of Service Availability form"
-    growth_monitoring_count = "No. of Growth monitoring Sections Filled for eligible children"
-    service_forms = "Payment for Service Availability Form (in Rs.)"
-    growth_monitoring = "Payment for Growth Monitoring Forms (in Rs.)"
-    # month_total = "Total Payment Made for the month (in Rs.)"
+    women_registered = user_calcs.WomenRegistered()
+    # children_registered = user_calcs.ChildrenRegistered()
+    # service_forms = user_calcs.ServiceForms()
+    # growth_monitoring = user.GrowthMonitoring()
+
     # last_month_total = "Amount of AWW incentive paid last month"
 
 

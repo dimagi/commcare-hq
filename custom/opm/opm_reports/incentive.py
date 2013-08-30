@@ -29,13 +29,16 @@ class Worker(object):
         self.bank_name = self.fluff_doc.bank_name
         self.account_number = self.fluff_doc.account_number
         self.block = self.fluff_doc.block
+
         self.women_registered = "No. of women registered under BCSP"
         self.children_registered = "No. of children registered under BCSP"
         self.service_forms_count = "Submission of Service Availability form"
         self.growth_monitoring_count = "No. of Growth monitoring Sections Filled for eligible children"
+
         self.service_forms_cash = "Payment for Service Availability Form (in Rs.)"
         self.growth_monitoring_cash = "Payment for Growth Monitoring Forms (in Rs.)"
         self.month_total = "Total Payment Made for the month (in Rs.)"
+        
         self.last_month_total = "Amount of AWW incentive paid last month"
 
     # def __init__(self, worker):

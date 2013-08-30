@@ -5,18 +5,6 @@ import fluff
 
 from .constants import *
 
-def get_case_id(form):
-    try:
-        return form.form['case']['@case_id']
-    except KeyError:
-        return None
-
-
-def get_user_id(form):
-    try:
-        return form.metadata.userID
-    except AttributeError:
-        return None
 
 def case_date_group(form):
     return { 
@@ -57,9 +45,6 @@ def account_number_from_form(form):
     case = CommCareCase.get(case_id)
     return case.get_case_property("bank_account_number")
 
-def convert_date(date_str):
-    return datetime.date(*[int(d) for d in date_str.split('-')])
-
 
 # This index is grouped by account number to be sure that it is correct
 # across old cases that pertained to the same mother.
@@ -92,6 +77,8 @@ class ChildSpacing(fluff.Calculator):
             endkey=shared_key + [{}],
             **q_args
         ).all()
+        def convert_date(date_str):
+            return datetime.date(*[int(d) for d in date_str.split('-')])
         dates = [convert_date(delivery['key'][-1]) for delivery in query]
         return self.get_cash_amt(dates)
 
