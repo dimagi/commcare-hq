@@ -33,7 +33,7 @@
 
 {% block report %}
     <span style="margin-bottom: 1em" class="label label-info">{% trans "All dates are in UTC" %}</span>
-    {% include "orgs/partials/visualizations.html" with chart_name=stat_slug hq_loading=1 %}
+    {% include "orgs/partials/visualizations.html" with chart_name=stat_slug hq_loading=1 hash_tab=1 %}
 {% endblock %}
 
 {% block org-modals %}

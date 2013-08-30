@@ -2,9 +2,9 @@
 {% load hqstyle_tags %}
 {% load i18n %}
 <ul id="{{ chart_name }}-chart-tabs" class="nav nav-tabs">
-    <li class="active"><a href="#{{ chart_name }}-bar-chart" data-toggle="hash-tab">{% trans "Bar Chart" %}</a></li>
-    <li><a href="#{{ chart_name }}-cumulative-chart" data-toggle="hash-tab">{% trans "Cumulative Chart" %}</a></li>
-    <li><a href="#{{ chart_name }}-stacked-cumulative-chart" data-toggle="hash-tab">{% trans "Stacked Cumulative Chart" %}</a></li>
+    <li class="active"><a href="#{{ chart_name }}-bar-chart" data-toggle="{% if hash_tab %}hash-{% endif %}tab">{% trans "Bar Chart" %}</a></li>
+    <li><a href="#{{ chart_name }}-cumulative-chart" data-toggle="{% if hash_tab %}hash-{% endif %}tab">{% trans "Cumulative Chart" %}</a></li>
+    <li><a href="#{{ chart_name }}-stacked-cumulative-chart" data-toggle="{% if hash_tab %}hash-{% endif %}tab">{% trans "Stacked Cumulative Chart" %}</a></li>
     <form data-chart="{{ chart_name }}" style="margin: 0;" class="form-inline pull-right reload-graph-form">
         <span class="pull-right">
             <label for="{{ chart_name }}-interval" class="sub-label">{% trans 'Interval' %}</label>
@@ -31,7 +31,7 @@
                 <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
             </div>
         </div>
-        <div style="height: 320px; min-height: 320px;" class="no-data">
+        <div style="height: 320px; min-height: 320px;" class="no-data hide">
             <h4>{% trans "Your query returned no data" %}</h4>
         </div>
         <div class='nvd3-chart hide'>
@@ -45,7 +45,7 @@
                 <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
             </div>
         </div>
-        <div style="height: 320px; min-height: 320px;" class="no-data">
+        <div style="height: 320px; min-height: 320px;" class="no-data hide">
             <h4>{% trans "Your query returned no data" %}</h4>
         </div>
         <div class='nvd3-chart hide'>
@@ -59,7 +59,7 @@
                 <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
             </div>
         </div>
-        <div style="height: 320px; min-height: 320px;" class="no-data">
+        <div style="height: 320px; min-height: 320px;" class="no-data hide">
             <h4>{% trans "Your query returned no data" %}</h4>
         </div>
         <div class='nvd3-chart hide'>
