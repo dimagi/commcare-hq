@@ -237,7 +237,7 @@ class AttributeGetter(object):
         """
         self.attribute = attribute
         if getter_function is None:
-            getter_function = lambda item: item[attribute]
+            getter_function = lambda item: getattr(item, attribute)
 
         self.getter_function = getter_function
 
