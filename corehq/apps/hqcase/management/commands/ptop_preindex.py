@@ -21,6 +21,8 @@ def get_reindex_command(pillow_class_name):
         'FullXFormPillow': 'ptop_fast_reindex_fullxforms',
         'UserPillow': 'ptop_fast_reindex_users',
         'AppPillow': 'ptop_fast_reindex_apps',
+        'ReportXFormPillow': 'ptop_fast_reindex_reportxforms',
+        'ReportCasePillow': 'ptop_fast_reindex_reportcases',
     }
     reindex_command = pillow_command_map.get(pillow_class_name, None)
     return reindex_command

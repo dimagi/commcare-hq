@@ -43,7 +43,7 @@ def test_report(report, keys=None, filters=None, group_by=None):
 class UserTestReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
     name = "SQL Demo"
     slug = "sql_demo"
-    field_classes = (DatespanField,)
+    fields = [DatespanMixin.datespan_field]
     table_name = "user_report_data"
 
     @property
@@ -70,8 +70,7 @@ class UserTestReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
         i_b = DatabaseColumn("Indicator B", SumColumn("indicator_b"))
 
         agg_c_d = AggregateColumn("C/D", combine_indicator,
-                                  SumColumn("indicator_c"),
-                                  SumColumn("indicator_d"),
+                                  [SumColumn("indicator_c"), SumColumn("indicator_d")],
                                   format_fn=self.format_percent)
 
         aggregate_cols = [
@@ -89,7 +88,7 @@ class UserTestReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
 class RegionTestReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
     name = "SQL Demo"
     slug = "sql_demo"
-    field_classes = (DatespanField,)
+    fields = [DatespanMixin.datespan_field]
     table_name = "region_report_data"
 
     @property

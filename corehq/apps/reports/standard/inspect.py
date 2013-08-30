@@ -18,7 +18,6 @@ import logging
 
 from casexml.apps.case.models import CommCareCaseAction
 from corehq.apps.api.es import CaseES
-from corehq.apps.hqsofabed.models import HQFormData
 from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
@@ -38,7 +37,6 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
-import rawes
 from corehq import elastic
 
 class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -133,8 +131,11 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
             uid = form["form"]["meta"]["userID"]
             username = form["form"]["meta"].get("username")
             try:
-                name = ('"%s"' % get_cached_property(CouchUser, uid, 'full_name', expiry=7*24*60*60)) \
-                    if username not in ['demo_user', 'admin'] else ""
+                if username not in ['demo_user', 'admin']:
+                    full_name = get_cached_property(CouchUser, uid, 'full_name', expiry=7*24*60*60)
+                    name = '"%s"' % full_name if full_name else ""
+                else:
+                    name = ""
             except (ResourceNotFound, IncompatibleDocument):
                 name = "<b>[unregistered]</b>"
 
@@ -582,8 +583,8 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
 
     def _es_query(self):
         es_config_case = {
-            'index': 'full_cases',
-            'type': 'full_case',
+            'index': 'report_cases',
+            'type': 'report_case',
             'field_to_path': lambda f: '%s.#value' % f,
             'fields': {
                 'date': 'server_modified_on',
@@ -591,8 +592,8 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
             }
         }
         es_config_form = {
-            'index': 'full_xforms',
-            'type': 'full_xform',
+            'index': 'report_xforms',
+            'type': 'report_xform',
             'field_to_path': lambda f: 'form.%s.#value' % f,
             'fields': {
                 'date': 'received_on',

@@ -108,11 +108,11 @@ class PtopReindexer(NoArgsCommand):
 
     def get_seq_filename(self):
         #print "Run file prefix: ptop_fast_reindex_%s_%s" % (self.doc_class.__name__, datestring)
-        seq_filename = "%s%s_%s_seq.txt" % (self.file_prefix, self.doc_class.__name__, self.get_seq_prefix())
+        seq_filename = "%s%s_%s_seq.txt" % (self.file_prefix, self.pillow_class.__name__, self.get_seq_prefix())
         return seq_filename
 
     def get_dump_filename(self):
-        view_dump_filename = "%s%s_%s_data.json" % (self.file_prefix, self.doc_class.__name__,  self.get_seq_prefix())
+        view_dump_filename = "%s%s_%s_data.json" % (self.file_prefix, self.pillow_class.__name__,  self.get_seq_prefix())
         return view_dump_filename
 
     def full_couch_view_iter(self):
@@ -134,7 +134,12 @@ class PtopReindexer(NoArgsCommand):
             for item in view_chunk:
                 yield item
             start_seq += self.chunk_size * self.chunk_size
-            view_chunk = self.db.view(self.view_name, reduce=False, limit=CHUNK_SIZE * self.chunk_size, skip=start_seq)
+            view_chunk = self.db.view(self.view_name,
+                reduce=False,
+                limit=self.chunk_size * self.chunk_size,
+                skip=start_seq,
+                **view_kwargs
+            )
 
     def load_from_view(self):
         """
@@ -193,7 +198,7 @@ class PtopReindexer(NoArgsCommand):
         ALL index data in the case index and will take a while to reload.
         Are you sure you want to do this. Also you MUST have run_ptop disabled for this to run.
 
-        Type 'yes' to continue, or 'no' to cancel: """ % self.doc_class.__name__)
+        Type 'yes' to continue, or 'no' to cancel: """ % self.pillow_class.__name__)
 
             if confirm != 'yes':
                 print "\tReset cancelled."
@@ -222,7 +227,7 @@ class PtopReindexer(NoArgsCommand):
             self.load_from_view()
         else:
             if self.runfile is None:
-                print "\tNeed a previous runfile prefix to access older snapshot of view. eg. ptop_fast_reindex_%s_yyyy-mm-dd-HHMM" % self.doc_class.__name__
+                print "\tNeed a previous runfile prefix to access older snapshot of view. eg. ptop_fast_reindex_%s_yyyy-mm-dd-HHMM" % self.pillow_class.__name__
                 sys.exit()
             print "Starting fast tracked reindexing from view position %d" % self.start_num
             runparts = self.runfile.split('_')
@@ -272,13 +277,8 @@ class PtopReindexer(NoArgsCommand):
             self.process_row(item, ix)
 
     def load_bulk(self):
-        #chunk
-        #if failure, try again
-        curr_counter = 0
         start = self.start_num
         end = start + self.chunk_size
-
-        #all couchy operations completed, faking out db now.
 
         json_iter = self.view_data_file_iter()
 
@@ -288,20 +288,22 @@ class PtopReindexer(NoArgsCommand):
         for curr_counter, json_doc in enumerate(json_iter):
             if curr_counter < start:
                 continue
-            if len(bulk_slice) == self.chunk_size:
-                self.send_bulk(bulk_slice, start, end)
-                bulk_slice = []
-                start += self.chunk_size
-                end += self.chunk_size
             else:
                 bulk_slice.append(json_doc)
-                continue
+                if len(bulk_slice) == self.chunk_size:
+                    self.send_bulk(bulk_slice, start, end)
+                    bulk_slice = []
+                    start += self.chunk_size
+                    end += self.chunk_size
+
+        self.send_bulk(bulk_slice, start, end)
 
     def send_bulk(self, slice, start, end):
         doc_couch_db = self.pillow.document_class.get_db()
         doc_ids = [x['id'] for x in slice]
         slice_docs = doc_couch_db.all_docs(keys=doc_ids, include_docs=True)
-        raw_doc_dict = dict((x['id'], x['doc']) for x in slice_docs.all())
+        slice_docs = filter(self.custom_filter, slice_docs)
+        raw_doc_dict = dict((x['id'], x['doc']) for x in slice_docs)
         self.pillow.couch_db.fake_set_docs(raw_doc_dict) # update the fake couch instance's set of bulk loaded docs
 
         retries = 0

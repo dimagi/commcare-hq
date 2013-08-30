@@ -2,7 +2,7 @@ from collections import namedtuple
 from django.core.urlresolvers import reverse
 from lxml import etree
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField
-from corehq.apps.app_manager.util import split_path
+from corehq.apps.app_manager.util import split_path, create_temp_sort_column
 from corehq.apps.app_manager.xform import SESSION_CASE_ID
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
@@ -375,16 +375,11 @@ def get_detail_column_infos(detail):
     for column in detail.get_columns():
         sort_element, order = sort_elements.pop(column.field, (None, None))
         columns.append(DetailColumnInfo(column, sort_element, order))
+
     # sort elements is now populated with only what's not in any column
     # add invisible columns for these
     for field, (sort_element, order) in sort_elements.items():
-        column = DetailColumn(
-            model='case',
-            field=field,
-            format='invisible',
-            # ._i is exposed as .id, which is used in generating locale_ids
-            _i=len(columns),
-        )
+        column = create_temp_sort_column(field, len(columns))
         columns.append(DetailColumnInfo(column, sort_element, order))
     return columns
 

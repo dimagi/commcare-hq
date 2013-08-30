@@ -58,7 +58,7 @@ from corehq.apps.app_manager.const import APP_V1, APP_V2
 from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings, build_error_utils
 from corehq.apps.app_manager.suite_xml import IdStrings
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
-from corehq.apps.app_manager.util import split_path, save_xform
+from corehq.apps.app_manager.util import split_path, save_xform, create_temp_sort_column
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, XFormError, XFormValidationError, WrappedNode, CaseXPath
 
 MISSING_DEPENDECY = \
@@ -211,6 +211,8 @@ class FormActions(DocumentSchema):
 
 class FormSource(object):
     def __get__(self, form, form_cls):
+        if not form:
+            return self
         unique_id = form.get_unique_id()
         app = form.get_app()
         filename = "%s.xml" % unique_id
@@ -558,21 +560,22 @@ class FormBase(DocumentSchema):
                     else:
                         actions = [action]
                     for action in actions:
+                        action_properties = action.properties()
                         if action.condition.type == 'if':
                             yield action.condition.question
-                        if hasattr(action, 'name_path') and action.name_path:
+                        if 'name_path' in action_properties and action.name_path:
                             yield action.name_path
-                        if hasattr(action, 'case_name'):
+                        if 'case_name' in action_properties:
                             yield action.case_name
-                        if hasattr(action, 'external_id') and action.external_id:
+                        if 'external_id' in action_properties and action.external_id:
                             yield action.external_id
-                        if hasattr(action, 'update'):
+                        if 'update' in action_properties:
                             for _, path in action.update.items():
                                 yield path
-                        if hasattr(action, 'case_properties'):
+                        if 'case_properties' in action_properties:
                             for _, path in action.case_properties.items():
                                 yield path
-                        if hasattr(action, 'preload'):
+                        if 'preload' in action_properties:
                             for path, _ in action.preload.items():
                                 yield path
             paths.update(generate_paths())
@@ -1159,7 +1162,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
                         startkey=[domain],
                         endkey=[domain, {}],
                         include_docs=True,
-                        stale=settings.COUCH_STALE_QUERY).all()
+                        #stale=settings.COUCH_STALE_QUERY,
+        ).all()
 
     def rename_lang(self, old_lang, new_lang):
         validate_lang(new_lang)
@@ -1509,6 +1513,10 @@ def validate_lang(lang):
 class SavedAppBuild(ApplicationBase):
     def to_saved_build_json(self, timezone):
         data = super(SavedAppBuild, self).to_json().copy()
+        for key in ('modules', 'user_registration',
+                    '_attachments', 'profile', 'translations'
+                    'description', 'short_description'):
+            data.pop(key, None)
         data.update({
             'id': self.id,
             'built_on_date': utc_to_timezone(data['built_on'], timezone, "%b %d, %Y"),
@@ -1661,10 +1669,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def _create_custom_app_strings(self, lang):
         def trans(d):
             return clean_trans(d, langs)
+
         id_strings = IdStrings()
         langs = [lang] + self.langs
         yield id_strings.homescreen_title(), self.name
         yield id_strings.app_display_name(), self.name
+
         for module in self.get_modules():
             for detail in module.get_details():
                 if detail.type.startswith('case'):
@@ -1672,11 +1682,30 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 else:
                     label = trans(module.referral_label)
                 yield id_strings.detail_title_locale(module, detail), label
-                for column in detail.get_columns():
+
+                sort_elements = dict((s.field, (s, i + 1))
+                                     for i, s in enumerate(detail.sort_elements))
+
+                columns = list(detail.get_columns())
+                for column in columns:
                     yield id_strings.detail_column_header_locale(module, detail, column), trans(column.header)
+
+                    if column.header:
+                        sort_elements.pop(column.header.values()[0], None)
+
                     if column.format == 'enum':
                         for key, val in column.enum.items():
                             yield id_strings.detail_column_enum_variable(module, detail, column, key), trans(val)
+
+                # everything left is a sort only option
+                for sort_element in sort_elements:
+                    # create a fake column for it
+                    column = create_temp_sort_column(sort_element, len(columns))
+
+                    # now mimic the normal translation
+                    field_text = {'en': str(column.field)}
+                    yield id_strings.detail_column_header_locale(module, detail, column), trans(field_text)
+
             yield id_strings.module_locale(module), trans(module.name)
             if module.case_list.show:
                 yield id_strings.case_list_locale(module), trans(module.case_list.label) or "Case List"

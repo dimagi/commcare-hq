@@ -1,5 +1,5 @@
 function(doc){
-    if(doc.doc_type == "XFormInstance") {
+    if(doc.doc_type == "XFormInstance" && doc.form.meta) {
         emit([
             doc.domain,
             doc.form.meta.userID,

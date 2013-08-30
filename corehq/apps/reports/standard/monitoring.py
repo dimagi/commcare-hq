@@ -27,14 +27,6 @@ from django.utils.translation import ugettext_noop
 from corehq.apps.appstore.views import es_query
 
 
-def cache_report():
-    """do nothing until the real cache_report is fixed"""
-    def _fn(fn):
-        return fn
-    return _fn
-
-monitoring_report_cacher = cache_report()
-
 class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     exportable = True
 
@@ -48,12 +40,10 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
         return self.table_cell(user.get('raw_username'), user_link)
 
     @property
-    @monitoring_report_cacher
     def report_context(self):
         return super(WorkerMonitoringReportTableBase, self).report_context
 
     @property
-    @monitoring_report_cacher
     def export_table(self):
         return super(WorkerMonitoringReportTableBase, self).export_table
 
@@ -118,6 +108,7 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
     display_data = ['percent']
     emailable = True
     description = ugettext_noop("Followup rates on active cases.")
+    is_cacheable = True
 
     @property
     def special_notice(self):
@@ -308,6 +299,8 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase, MultiFormDrilldow
     ]
     fix_left_col = True
     emailable = True
+    is_cacheable = True
+
 
     description = _("Number of submissions by form.")
 
@@ -372,6 +365,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
 
     fix_left_col = True
     emailable = True
+    is_cacheable = True
 
     # todo: get mike to handle deleted reports gracefully
 
@@ -442,6 +436,7 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
               'corehq.apps.reports.fields.DatespanField']
 
     description = ugettext_noop("Statistics on time spent on a particular form.")
+    is_cacheable = True
 
     @property
     @memoized
@@ -528,6 +523,7 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
 class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, MultiFormDrilldownMixin, DatespanMixin):
     name = ugettext_noop("Form Completion vs. Submission Trends")
     slug = "completion_vs_submission"
+    is_cacheable = True
 
     description = ugettext_noop("Time lag between when forms were completed and when forms were successfully "
                                 "sent to CommCare HQ.")
@@ -651,6 +647,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     MultiFormDrilldownMixin, CompletionOrSubmissionTimeMixin, DatespanMixin):
     name = ugettext_noop("Worker Activity Times")
     slug = "worker_activity_times"
+    is_cacheable = True
 
     description = ugettext_noop("Graphical representation of when forms are submitted.")
 
@@ -683,7 +680,6 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
         return [(t.weekday(), t.hour) for t in all_times]
 
     @property
-    @monitoring_report_cacher
     def report_context(self):
         chart_data = defaultdict(int)
         for time in self.activity_times:
@@ -744,6 +740,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
     section_name = ugettext_noop("Project Reports")
     num_avg_intervals = 3 # how many duration intervals we go back to calculate averages
     need_group_ids = True
+    is_cacheable = True
 
     fields = [
         'corehq.apps.reports.fields.MultiSelectGroupField',
@@ -873,7 +870,6 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 "bool": {
                     "must": [
                         {"match": {"domain.exact": self.domain}},
-                        {"range": {"opened_on": {"lt": datespan.startdate_param}}},
                         {"nested": {
                             "path": "actions",
                             "query": {
@@ -881,8 +877,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                                     "actions.date": {
                                         "from": datespan.startdate_param,
                                         "to": datespan.enddate_param,
-                                        "include_upper": True}}}}}],
-                    "must_not": [{"range": {"closed_on": {"lt": datespan.startdate_param}}}]}}}
+                                        "include_upper": True}}}}}]}}}
         if self.case_type:
             q["query"]["bool"]["must"].append({"match": {"type.exact": self.case_type}})
 
@@ -972,8 +967,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 7: "opened_on: [* TO %s] AND NOT closed_on: [* TO %s]" % (end_date, start_date_sub1), # total cases
             }
             if today_or_tomorrow(self.datespan.enddate):
-                search_strings[6] = "opened_on: [* TO %s] AND NOT closed_on: [* TO %s] AND modified_on: [%s TO %s]" % \
-                                    (end_date, start_date_sub1, start_date, end_date), # inactive cases
+                search_strings[6] = "modified_on: [%s TO %s]" % (start_date, end_date), # active cases
 
             def create_case_url(index):
                 """
@@ -1017,13 +1011,16 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                     sum([int(actives_by_owner.get(g_id, 0)) for g_id in case_sharing_groups])
                 total_cases = sum([int(totals_by_owner.get(u["user_id"], 0)) for u in users]) + \
                     sum([int(totals_by_owner.get(g_id, 0)) for g_id in case_sharing_groups])
+                active_users = int(active_users_by_group.get(group, 0))
+                total_users = len(self.users_by_group.get(group, []))
 
                 rows.append([
                     group_cell(group_id, group_name),
                     submit_history_link(group_id,
                             sum([int(submissions_by_user.get(user["user_id"], 0)) for user in users]), param="group"),
                     util.numcell(sum([int(avg_submissions_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
-                    "%s / %s" % (int(active_users_by_group.get(group, 0)), len(self.users_by_group.get(group, []))),
+                    util.numcell("%s / %s" % (active_users, total_users),
+                                 int((float(active_users)/total_users) * 10000) if total_users else -1),
                     util.numcell(sum([int(creations_by_user.get(user["user_id"], 0)) for user in users])),
                     util.numcell(sum([int(closures_by_user.get(user["user_id"], 0)) for user in users])),
                     util.numcell(active_cases),
@@ -1069,7 +1066,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 num, denom = parse(str)
                 return num + result_tuple[0], denom + result_tuple[1]
 
-            self.total_row[3] = '%s / %s' % reduce(add, [row[3] for row in rows], (0, 0))
+            self.total_row[3] = '%s / %s' % reduce(add, [row[3]["html"] for row in rows], (0, 0))
         else:
             num = len(filter(lambda row: row[3] != NO_FORMS_TEXT, rows))
             self.total_row[3] = '%s / %s' % (num, len(rows))

@@ -32,7 +32,7 @@ class UsersMiddleware(object):
                         key=domain,
                         reduce=False,
                         include_docs=True,
-                        stale=settings.COUCH_STALE_QUERY,
+                        #stale=settings.COUCH_STALE_QUERY,
                     ).one()
                     if couch_domain and couch_domain.is_public:
                         request.couch_user = PublicUser(domain)

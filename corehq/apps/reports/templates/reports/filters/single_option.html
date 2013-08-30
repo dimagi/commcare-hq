@@ -3,7 +3,7 @@
 {% block filter_content %}
     <select id="{{ css_id }}"
             class="{{ css_class }}"
-            data-bind="options: select_params, optionsText: 'text', optionsValue: 'val', optionsCaption: '{{ select.default_text }}', value: current_selection"
+            data-bind="options: select_params, optionsText: 'text', optionsValue: 'val', {% if select.default_text %}optionsCaption: '{{ select.default_text }}', {% endif %}value: current_selection"
             name="{{ slug }}"></select>
 {% endblock %}
 {% block filter_js %}
@@ -11,5 +11,4 @@
     $(function () {
         ko.applyBindings({select_params: {{ select.options|JSON }}, current_selection: ko.observable('{{ select.selected|safe|default:'' }}')}, $('#{{ css_id }}').parent().get(0));
     });
-</script>
-{% endblock %}
+</script>{% endblock %}

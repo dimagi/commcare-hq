@@ -118,18 +118,16 @@ class Group(UndoableDocument):
 
     @classmethod
     def by_domain(cls, domain):
-
         db = cls.get_db()
-        res = cache_core.cached_view(db, "groups/by_domain", key=domain, include_docs=True, wrapper=cls.wrap, stale=settings.COUCH_STALE_QUERY)
+        res = cache_core.cached_view(db, "groups/by_domain", key=domain, include_docs=True, wrapper=cls.wrap)
         return res
-
 
     @classmethod
     def by_name(cls, domain, name, one=True):
         result = cls.view('groups/by_name',
             key=[domain, name],
             include_docs=True,
-            stale=settings.COUCH_STALE_QUERY,
+            #stale=settings.COUCH_STALE_QUERY,
         )
         if one:
             return result.one()
@@ -166,14 +164,12 @@ class Group(UndoableDocument):
     @classmethod
     def get_reporting_groups(cls, domain):
         key = ['^Reporting', domain]
-
         db = cls.get_db()
         res = cache_core.cached_view(db, "groups/by_name",
                                          startkey=key,
                                          endkey=key + [{}],
                                          include_docs=True,
                                          wrapper=cls.wrap,
-                                         stale=settings.COUCH_STALE_QUERY,
                                          )
         return res
 

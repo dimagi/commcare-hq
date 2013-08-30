@@ -36,7 +36,7 @@ class Organization(Document):
         result = cls.view("orgs/by_name",
             reduce=False,
             include_docs=True,
-            stale=settings.COUCH_STALE_QUERY,
+            #stale=settings.COUCH_STALE_QUERY,
         ).all()
         return result
 

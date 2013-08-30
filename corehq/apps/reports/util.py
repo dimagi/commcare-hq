@@ -363,7 +363,7 @@ def set_report_announcements_for_user(request, couch_user):
     db = ReportAnnouncement.get_db()
     data = cache_core.cached_view(db, "announcements/all_announcements", reduce=False,
                                  startkey=key + [now.strftime("%Y-%m-%dT%H:00")], endkey=key + [{}],
-                                 stale=settings.COUCH_STALE_QUERY, )
+                                 )
 
     announce_ids = [a['id'] for a in data if a['id'] not in couch_user.announcements_seen]
     for announcement_id in announce_ids:

@@ -131,6 +131,8 @@ DOMAIN_FACETS = [
     "internal.using_adm",
     "internal.using_call_center",
     "internal.platform",
+    "internal.project_manager",
+    "internal.phone_model.exact",
 
     "is_approved",
     "is_public",
@@ -161,9 +163,10 @@ FACET_MAPPING = [
         {"facet": "deployment.city.exact", "name": "City", "expanded": False },
     ]),
     ("Type", True, [
-        {"facet": "internal.area.exact", "name": "Area", "expanded": True },
-        {"facet": "internal.sub_area.exact", "name": "Sub Area", "expanded": True },
-        {"facet": "phone_model", "name": "Phone Model", "expanded": False },
+        {"facet": "internal.area.exact", "name": "Sector", "expanded": True },
+        {"facet": "internal.sub_area.exact", "name": "Sub-Sector", "expanded": True },
+        {"facet": "internal.phone_model.exact", "name": "Phone Model", "expanded": True },
+        {"facet": "internal.project_manager", "name": "Project Manager", "expanded": True },
     ]),
     ("Self Starters", False, [
         {"facet": "internal.self_started", "name": "Self Started", "expanded": True },
@@ -313,13 +316,6 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
         def format_date(dstr, default):
             # use [:19] so that only only the 'YYYY-MM-DDTHH:MM:SS' part of the string is parsed
             return datetime.strptime(dstr[:19], '%Y-%m-%dT%H:%M:%S').strftime('%Y/%m/%d %H:%M:%S') if dstr else default
-
-        def get_name_or_link(d):
-            if not getattr(self, 'show_name', None):
-                return mark_safe('<a href="%s">%s</a>' % \
-                       (reverse("domain_homepage", args=[d['name']]), d.get('hr_name') or d['name']))
-            else:
-                return d['name']
 
         for dom in domains:
             if dom.has_key('name'): # for some reason when using the statistical facet, ES adds an empty dict to hits

@@ -149,8 +149,9 @@ class Permissions(DocumentSchema):
 
     def __or__(self, other):
         permissions = Permissions()
-        for name in permissions.properties():
-            permissions._setattr(name, self._getattr(name) | other._getattr(name))
+        for name, value in permissions.properties().items():
+            if isinstance(value, (BooleanProperty, ListProperty)):
+                permissions._setattr(name, self._getattr(name) | other._getattr(name))
         return permissions
 
     def __eq__(self, other):
@@ -852,7 +853,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                                          reduce=reduce,
                                          startkey=key,
                                          endkey=key + [{}],
-                                         stale=None if strict else settings.COUCH_STALE_QUERY,
                                          wrapper=cls.wrap,
                                          **extra_args)
         return res
@@ -954,11 +954,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def get_by_username(cls, username):
         def get(stale, raise_if_none):
 
-
             view_res = cache_core.cached_view(cls.get_db(), 'users/by_username',
                                               key=username,
                                               include_docs=True,
-                                              stale=stale,
                                               )
             length = len(view_res)
             if length > 1:

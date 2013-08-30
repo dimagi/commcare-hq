@@ -171,6 +171,8 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     notes = StringProperty()
     organization_name = StringProperty()
     platform = StringListProperty()
+    project_manager = StringProperty()
+    phone_model = StringProperty()
 
 
 class CaseDisplaySettings(DocumentSchema):
@@ -333,7 +335,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
                                           keys=[[is_active, d] for d in domain_names],
                                           reduce=False,
                                           include_docs=True,
-                                          stale=settings.COUCH_STALE_QUERY,
+#                                          stale=settings.COUCH_STALE_QUERY,
                                           wrapper=Domain.wrap
             )
         else:
@@ -700,7 +702,12 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         if page:
             skip = (page - 1) * per_page
             limit = per_page
-        results = get_db().search('domain/snapshot_search', q=json.dumps(query), limit=limit, skip=skip, stale='ok')
+        results = get_db().search('domain/snapshot_search',
+            q=json.dumps(query),
+            limit=limit,
+            skip=skip,
+            #stale='ok',
+        )
         return map(cls.get, [r['id'] for r in results]), results.total_rows
 
     @memoized

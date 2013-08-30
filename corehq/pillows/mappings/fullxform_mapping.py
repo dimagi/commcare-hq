@@ -1,6 +1,7 @@
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
 
-FULL_XFORM_INDEX="full_xforms_b3577b244de808e77ac5aa30117268e2"
+FULL_XFORM_INDEX="full_xforms_9ec79af5c2225e08012ecc5b2a992a4f"
+
 
 
 
@@ -88,7 +89,9 @@ FULL_XFORM_MAPPING = {
                         "userID": {"type": "string", "index": "not_analyzed"},
                         "deviceID": {"type": "string", "index": "not_analyzed"},
                         "instanceID": {"type": "string", "index": "not_analyzed"},
-                        "username": {"type": "string", "index": "not_analyzed"}
+                        "username": {"type": "string", "index": "not_analyzed"},
+                        "appVersion": {"type": "string", "index": "not_analyzed"},
+                        "CommCareVersion": {"type": "string", "index": "not_analyzed"},
                     }
                 },
             },

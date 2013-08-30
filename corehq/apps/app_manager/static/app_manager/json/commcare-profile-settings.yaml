@@ -16,6 +16,16 @@
   default: "0"
   values_txt: "Any positive integer. Represents period of purging in days."
 
+- name: "Days for Review"
+  description: "How long the phone will retain completed forms for review."
+  id: "cc-days-form-retain"
+  values: ["1", "7",  "31", "92", "365", "-1"]
+  value_names: ["Just One Day", "One Week", "One Month", "Three Months", "One Year", "Forms are Never Removed"]
+  requires: "{features.sense}='false'"
+  default: "-1"
+  values_txt: "Any positive integer. Represents period of purging in days." 
+  since: "2.8"
+
 - name: "Logging Enabled"
   description: "Whether logging of incidents should be activated on the client."
   id: "logenabled"
