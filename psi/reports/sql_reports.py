@@ -11,7 +11,7 @@ from dimagi.utils.decorators.memoized import memoized
 class PSISQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin):
     fields = ['corehq.apps.reports.fields.DatespanField','psi.reports.AsyncPlaceField']
 
-    @property
+    @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return user and user.is_previewer()
 
