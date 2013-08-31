@@ -180,6 +180,40 @@ def india():
     env.es_endpoint = 'localhost'
     env.flower_port = 5555
 
+
+
+@task
+def zambia():
+    """Our production server in wv zambia."""
+    env.sudo_user = 'cchq'
+    env.environment = 'production'
+    env.django_port = '9010'
+    env.code_branch = 'master'
+    env.should_migrate = True
+
+    env.hosts = ['192.168.7.95'] #LAN setup - THIS WILL CHANGE
+
+    _setup_path()
+
+    env.roledefs = {
+        'couch': [],
+        'pg': [],
+        'rabbitmq': [],
+        'django_celery': [],
+        'django_app': [],
+        'django_pillowtop': [],
+        'formsplayer': [],
+        'staticfiles': [],
+        'lb': [],
+        'deploy': [],
+
+        'django_monolith': ['192.168.7.95'],
+    }
+    env.roles = ['django_monolith']
+    env.es_endpoint = 'localhost'
+    env.flower_port = 5555
+
+
 @task
 def production():
     """ use production environment on remote host"""
