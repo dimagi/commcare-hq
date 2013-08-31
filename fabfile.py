@@ -587,8 +587,8 @@ def deploy():
     run('echo ping!') #hack/workaround for delayed console response
 
     try:
-        #execute(update_code)
-        #execute(update_virtualenv)
+        execute(update_code)
+        execute(update_virtualenv)
         execute(clear_services_dir)
         set_supervisor_config()
         if env.should_migrate:
