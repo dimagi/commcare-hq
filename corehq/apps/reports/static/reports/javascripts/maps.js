@@ -488,6 +488,7 @@ function _summarizeColumn(meta, data) {
 	count++;
 	_uniq[val] = true;
 	if (isNumeric(val)) {
+	    val = +val;
 	    sum += val;
 	    min = (min == null ? val : Math.min(min, val));
 	    max = (max == null ? val : Math.max(max, val));
@@ -520,6 +521,7 @@ function getEnumValues(meta) {
 	    } else {
 		return e + '-' + enums[i + 1];
 	    }
+	    // TODO use manual caption if available and the above only as a fallback
 	};
 
 	var enums = meta.thresholds.slice(0);
@@ -592,9 +594,9 @@ function sizeLegend($e, meta) {
 	$t.append($r);
     };
 
-    entry(10. * legendBaseline);
+    entry(niceRoundNumber(Math.sqrt(10.) * legendBaseline));
     entry(legendBaseline);
-    entry(0.1 * legendBaseline);
+    entry(niceRoundNumber(Math.sqrt(0.1) * legendBaseline));
 
     $e.append($t);
 }
@@ -674,7 +676,7 @@ function enumLegend($e, meta, renderValue) {
 
 
 function isNumeric(x) {
-    return (typeof x == 'number' && !isNaN(+x));
+    return (!isNull(x) && !isNaN(+x));
 }
 
 function isNull(x) {
