@@ -1,3 +1,4 @@
+from collections import defaultdict
 import re
 from couchdbkit.ext.django.schema import *
 from dimagi.utils.couch.undo import DELETED_SUFFIX
@@ -115,6 +116,17 @@ class MobileBackend(Document):
 
     def domain_is_authorized(self, domain):
         return self.is_global or domain == self.domain or domain in self.authorized_domains
+
+    @classmethod
+    def view(cls, view_name, classes=None, wrapper=None, **params):
+        if cls is MobileBackend and not wrapper:
+            classes = classes or defaultdict(lambda: cls, {None: cls})
+        return super(MobileBackend, cls).view(
+            view_name,
+            classes=classes,
+            wrapper=wrapper,
+            **params
+        )
 
     @classmethod
     def auto_load(cls, phone_number, domain=None):
