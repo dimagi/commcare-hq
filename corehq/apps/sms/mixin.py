@@ -119,8 +119,8 @@ class MobileBackend(Document):
 
     @classmethod
     def view(cls, view_name, classes=None, wrapper=None, **params):
-        if cls is MobileBackend and not wrapper:
-            classes = classes or defaultdict(lambda: cls, {None: cls})
+        if cls is MobileBackend and not classes:
+            wrapper = wrapper or (lambda row: cls.wrap(row['doc']))
         return super(MobileBackend, cls).view(
             view_name,
             classes=classes,
