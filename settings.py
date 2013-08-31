@@ -786,7 +786,7 @@ PILLOWTOPS = [
                  'bihar.models.CareBiharFluffPillow',
 
                  #caching
-                 'corehq.pillows.cacheinvalidate.CacheInvalidatePillow'
+                 'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
                  'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
                  'custom.reports.care_sa.models.CareSAFluffPillow',
                  'custom.reports.mc.models.MalariaConsortiumFluffPillow',
