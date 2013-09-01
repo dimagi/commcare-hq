@@ -224,13 +224,8 @@ class CareSAFluff(fluff.IndicatorDocument):
     internal_care_referral = xcalculators.or_calc(
         [internal_refer_hbc, internal_refer_iact]
     )
-    internal_test_results_yes = xcalculators.filtered_form_calc(
-        xmlns=HCT_XMLNS,
-        property_path='form/test_results',
-        property_value='yes',
-    )
     new_hiv_in_care_program = xcalculators.and_calc(
-        [internal_care_referral, internal_test_results_yes]
+        [internal_care_referral, internal_hiv_pos_test]
     )
 
     #1l
