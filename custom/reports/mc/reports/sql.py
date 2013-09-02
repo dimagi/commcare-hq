@@ -276,10 +276,6 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
         self.data_provider = MCSectionedDataProvider(sqldata)
 
     @property
-    def sql_sections(self):
-        return [s for s in self.SECTIONS if s.get('type', 'sql') == 'sql']
-
-    @property
     def sections(self):
         return self.data_provider.sections
 
