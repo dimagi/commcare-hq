@@ -1,3 +1,4 @@
+from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from sqlagg.columns import *
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -7,6 +8,8 @@ from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColu
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_id_to_username
+from couchforms.models import XFormInstance
+from custom.reports.mc.models import WEEKLY_SUMMARY_XMLNS
 from .definitions import *
 from .composed import DataProvider, ComposedTabularReport
 
@@ -44,7 +47,7 @@ def _to_column(coldef):
         )
     return DatabaseColumn(_(coldef), _slug_to_raw_column(coldef))
 
-class Section(SqlData):
+class Section(object):
     """
     A way to represent sections in a report. I wonder if we should genericize/pull this out.
     """
@@ -52,18 +55,28 @@ class Section(SqlData):
         self.report = report
         self.section_def = section_def
 
+    @property
+    def title(self):
+        return _(self.section_def['section'])
+
+    @property
+    def column_slugs(self):
+        return self.section_def['columns']
+
+
+class SqlSection(Section, SqlData):
+    """
+    A way to represent sections in a report. I wonder if we should genericize/pull this out.
+    """
     def __getattribute__(self, item):
         if item in ['table_name', 'group_by', 'filters', 'filter_values', 'keys']:
             return getattr(self.report, item)
         return super(Section, self).__getattribute__(item)
 
-    def title(self):
-        return _(self.section_def['section'])
-
     @property
     @memoized
     def columns(self):
-        return [_to_column(col) for col in self.section_def['columns']]
+        return [_to_column(col) for col in self.column_slugs]
 
     @property
     @memoized
@@ -72,6 +85,47 @@ class Section(SqlData):
         raw_data = list(formatter.format(self.data, keys=self.keys, group_by=self.group_by))
         ret = transpose(self.columns, raw_data)
         return ret
+
+class FormPropertySection(Section):
+    """
+    A section that grabs the most recent form of a given type in a given window
+    and emits some data from it
+    """
+
+    @property
+    def xmlns(self):
+        return self.section_def['xmlns']
+
+
+    @property
+    @memoized
+    def rows(self):
+        domain = self.report.filter_values['domain']
+        startdate = self.report.filter_values['startdate']
+        enddate = self.report.filter_values['enddate']
+        key_base = 'submission xmlns user'
+        # todo this will do one couch view hit per relevant user. could be optimized to sql or something if desired
+        user_ids = self.report.get_user_ids()
+        rows = []
+        for user in user_ids:
+            last_submission = XFormInstance.get_db().view('reports_forms/all_forms',
+                startkey=[key_base, domain, self.xmlns, user, enddate],
+                endkey=[key_base, domain, self.xmlns, user, startdate],
+                limit=1,
+                reduce=False,
+                include_docs=True,
+                descending=True,
+            ).one()
+            if last_submission:
+                wrapped = XFormInstance.wrap(last_submission['doc'])
+                user_row = [wrapped.xpath(path) for path in self.column_slugs]
+            else:
+                user_row = [NO_VALUE] * len(self.column_slugs)
+            rows.append(user_row)
+
+
+        # transpose
+        return [[_(col)] + [r[i] for r in rows] for i, col in enumerate(self.column_slugs)]
 
 
 class McSqlData(SqlData):
@@ -108,7 +162,11 @@ class McSqlData(SqlData):
     @property
     @memoized
     def sections(self):
-        return [Section(self, section) for section in self._sections]
+        def _section_class(section_def):
+            return {
+                'form_lookup': FormPropertySection,
+            }.get(section_def.get('type'), SqlSection)
+        return [_section_class(section)(self, section) for section in self._sections]
 
     @memoized
     def all_rows(self):
@@ -130,12 +188,31 @@ class McSqlData(SqlData):
         return base_filter_values
 
     @property
+    def user_column(self):
+        return DatabaseColumn("User", SimpleColumn("user_id"))
+
+    @property
     def columns(self):
-        user = DatabaseColumn("User", SimpleColumn("user_id"))
-        columns = [user]
+        columns = [self.user_column]
         for section in self.sections:
             columns.extend(section.columns)
         return columns
+
+    @memoized
+    def get_user_ids(self):
+        # make an empty copy of this to just get the ids out
+        header_sql_data = McSqlData(
+            [], # blank sections
+            self.domain,
+            self.datespan,
+            self.fixture_type,
+            self.fixture_item
+        )
+        user_formatter = DataFormatter(TableDataFormat([self.user_column], no_value=NO_VALUE))
+        results = list(user_formatter.format(header_sql_data.data,
+                                             keys=header_sql_data.keys,
+                                             group_by=header_sql_data.group_by))
+        return [r[0] for r in results]
 
 
 class MCSectionedDataProvider(DataProvider):
@@ -150,18 +227,10 @@ class MCSectionedDataProvider(DataProvider):
 
     def headers(self):
         return DataTablesHeader(DataTablesColumn(_('Indicator')),
-                                *[self.user_column(u) for u in [r[0] for r in self._raw_rows]])
-
-    @property
-    @memoized
-    def _raw_rows(self):
-        formatter = DataFormatter(TableDataFormat(self.sqldata.columns, no_value=NO_VALUE))
-        return list(formatter.format(self.sqldata.data, keys=self.sqldata.keys, group_by=self.sqldata.group_by))
+                                *[self.user_column(u) for u in self.sqldata.get_user_ids()])
 
     @memoized
     def rows(self):
-        # a bit of a hack. rows aren't really rows, but the template knows
-        # how to deal with them
         return self.sqldata.all_rows()
 
     @property
