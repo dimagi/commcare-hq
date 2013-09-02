@@ -494,6 +494,6 @@ class IACT(CareReport):
         ['I-ACT registered client with CD4 count <200', 'cd4lt200'],  # 3j
         ['I-ACT registered client with CD4 count 200 - 350', 'cd4lt350'],  # 3k
         ['I-ACT registered client with CD4 cont higher than 350', 'cd4gt350'],  # 3l
-        #['Unknown CD4 count at registration', ''],  # 3m
+        ['Unknown CD4 count at registration', 'unknown_cd4'],  # 3m
         ['I-ACT Support groups completed (all 6 sessions)', 'iact_support_groups'],  # 3n TODO empty?
     ]
