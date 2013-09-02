@@ -7546,59 +7546,63 @@ msgstr "Número de participantes no mês"
 
 #: custom/reports/mc/reports/definitions.py:83
 msgid "Stock Balance"
-msgstr ""
+msgstr "Balanço do Stock"
 
 #: custom/reports/mc/reports/definitions.py:87
 msgid "form/stock/stock_amox_pink"
-msgstr ""
+msgstr "Amoxicilina cor de rosa"
 
 #: custom/reports/mc/reports/definitions.py:88
 msgid "form/stock/stock_amox_green"
-msgstr ""
+msgstr "Amoxicilina cor de verde"
 
 #: custom/reports/mc/reports/definitions.py:89
 msgid "form/stock/stock_ors"
-msgstr ""
+msgstr "Pacotes SRO"
 
 #: custom/reports/mc/reports/definitions.py:90
 msgid "form/stock/stock_ra_50"
-msgstr ""
+msgstr "Artesuato Rectal (50mg)"
 
 #: custom/reports/mc/reports/definitions.py:91
 msgid "form/stock/stock_ra_200"
-msgstr ""
+msgstr "Artesuato Rectal (200mg)"
 
 #: custom/reports/mc/reports/definitions.py:92
 msgid "form/stock/stock_zinc"
-msgstr ""
+msgstr "Zinco"
 
 #: custom/reports/mc/reports/definitions.py:93
 msgid "form/stock/stock_coartem_yellow"
-msgstr ""
+msgstr "Coartem Amarelo"
 
 #: custom/reports/mc/reports/definitions.py:94
 msgid "form/stock/stock_coartem_blue"
-msgstr ""
+msgstr "Coartem Azul"
 
 #: custom/reports/mc/reports/definitions.py:95
 msgid "form/stock/stock_coartem_green"
-msgstr ""
+msgstr "Coartem Verde"
+
+#: custom/reports/mc/reports/definitions.py:95
+msgid "form/stock/stock_coartem_brown"
+msgstr "Coartem Castanho"
 
 #: custom/reports/mc/reports/definitions.py:96
 msgid "form/stock/stock_paracetamol_250"
-msgstr ""
+msgstr "Paracetamol (250mg)"
 
 #: custom/reports/mc/reports/definitions.py:97
 msgid "form/stock/stock_paracetamol_500"
-msgstr ""
+msgstr "Paracetamol (500mg)"
 
 #: custom/reports/mc/reports/definitions.py:98
 msgid "form/stock/stock_rdt"
-msgstr ""
+msgstr "TDR"
 
 #: custom/reports/mc/reports/definitions.py:99
 msgid "form/stock/stock_gloves"
-msgstr ""
+msgstr "Pares de luvas"
 
 #: custom/reports/mc/reports/definitions.py:108
 msgid "home_visits_newborn_reg"
