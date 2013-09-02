@@ -408,9 +408,9 @@ class MessagingTab(UITab):
                 {'title': _("Broadcast Messages"),
                  'url': reverse('one_time_reminders', args=[self.domain]),
                  'subpages': [
-                     {'title': _("Edit Broadcast Message"),
+                     {'title': _("Edit Broadcast"),
                       'urlname': 'edit_one_time_reminder'},
-                     {'title': _("New Broadcast Message"),
+                     {'title': _("New Broadcast"),
                       'urlname': 'add_one_time_reminder'},
                  ]},
                 {'title': _('Message Log'),

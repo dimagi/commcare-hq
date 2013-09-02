@@ -1,6 +1,21 @@
 {% extends "reminders/reminders_base.html" %}
 {% load hq_shared_tags %}
 
+{% block subsection-title %}
+    <li>
+        <a href="#">Broadcast Message</a> <span class="divider">&gt;</span>
+    </li>
+    {% if handler_id %}
+    <li class="active">
+        <a href="{% url edit_one_time_reminder domain handler_id %}">Edit Broadcast</a>
+    </li>
+    {% else %}
+    <li class="active">
+        <a href="{% url add_one_time_reminder domain %}">New Broadcast</a>
+    </li>
+    {% endif %}
+{% endblock %}
+
 {% block head %}{{ block.super }}
 
 <script language="javascript" type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
@@ -50,29 +65,12 @@
     <table id="main_table">
         <tbody>
             <tr>
-                <td>Send</td>
-                <td>{{ form.content_type }}</td>
-                <td></td>
-            </tr>
-            <tr class="for_sms">
-                <td>Message</td>
-                <td>{{ form.message }}</td>
-                <td>{{ form.message.errors }}</td>
-            </tr>
-            <tr class="for_sms_form">
-                <td>Form</td>
-                <td>
-                    <select name="form_unique_id">
-                        {% for f in form_list %}
-                        <option value="{{ f.code }}" {% if form.form_unique_id.value == f.code %}selected="selected"{% endif %}>{{ f.name }}</option>
-                        {% endfor %}
-                    </select>
-                </td>
+                <td>Recipients: </td>
+                <td>{{ form.recipient_type }}</td>
                 <td></td>
             </tr>
             <tr>
-                <td>To</td>
-                <td>{{ form.recipient_type }}</td>
+                <td></td>
                 <td>
                     <div class="for_case_group">
                         <select name="case_group_id">
@@ -82,21 +80,41 @@
                         </select>
                     </div>
                 </td>
+                <td></td>
             </tr>
             <tr>
-                <td>Timing</td>
+                <td>Timing: </td>
                 <td>{{ form.send_type }}</td>
                 <td></td>
             </tr>
             <tr class="for_later">
-                <td>Date</td>
-                <td>{{ form.date }}</td>
-                <td>{{ form.date.errors }}</td>
+                <td></td>
+                <td>
+                    Date: <input type="text" class="input-small" name="date" id="id_date" value="{{ form.date.value|default:'' }}"/>
+                    Time: <input type="text" class="input-small" name="time" id="id_time" value="{{ form.time.value|default:'' }}"/>
+                </td>
+                <td>{{ form.date.errors }}{{ form.time.errors }}</td>
             </tr>
-            <tr class="for_later">
-                <td>Time</td>
-                <td>{{ form.time }}</td>
-                <td>{{ form.time.errors }}</td>
+            <tr>
+                <td>Send: </td>
+                <td>{{ form.content_type }}</td>
+                <td></td>
+            </tr>
+            <tr class="for_sms">
+                <td>Message: </td>
+                <td><textarea id="id_message" name="message">{{ form.message.value|default:'' }}</textarea></td>
+                <td>{{ form.message.errors }}</td>
+            </tr>
+            <tr class="for_sms_form">
+                <td>Form: </td>
+                <td>
+                    <select name="form_unique_id">
+                        {% for f in form_list %}
+                        <option value="{{ f.code }}" {% if form.form_unique_id.value == f.code %}selected="selected"{% endif %}>{{ f.name }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td></td>
             </tr>
         </tbody>
     </table>

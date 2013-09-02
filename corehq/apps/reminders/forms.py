@@ -35,7 +35,7 @@ NOW_OR_LATER = (
 )
 
 CONTENT_CHOICES = (
-    (METHOD_SMS, _("SMS")),
+    (METHOD_SMS, _("SMS Message")),
     (METHOD_SMS_SURVEY, _("SMS Form Interaction")),
 )
 
@@ -608,6 +608,16 @@ class OneTimeReminderForm(Form):
             value = self.cleaned_data.get("time")
             validate_time(value)
             return parse(value).time()
+
+    def clean_message(self):
+        value = self.cleaned_data.get("message")
+        if self.cleaned_data.get("content_type") == METHOD_SMS:
+            if value:
+                return value
+            else:
+                raise ValidationError("This field is required.")
+        else:
+            return None
 
 class RecordListWidget(Widget):
     

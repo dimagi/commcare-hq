@@ -109,6 +109,7 @@ def add_one_time_reminder(request, domain, handler_id=None):
                 handler = CaseReminderHandler(
                     domain = domain,
                     reminder_type = REMINDER_TYPE_ONE_TIME,
+                    nickname = "One-time Reminder",
                 )
             handler.default_lang = "xx"
             handler.method = content_type
@@ -151,6 +152,7 @@ def add_one_time_reminder(request, domain, handler_id=None):
         "form" : form,
         "sample_list" : get_sample_list(domain),
         "form_list" : get_form_list(domain),
+        "handler_id" : handler_id,
     }
 
     return render(request, "reminders/partial/add_one_time_reminder.html", context)
