@@ -130,7 +130,7 @@ function initData(data, config) {
 
 // set up the configured display metrics
 function initMetrics(map, data, config) {
-    if (!config.metrics) {
+    if (!config.metrics || config.debug) {
 	autoConfiguration(config, data);
     }
 
@@ -366,7 +366,7 @@ function formatDetailPopup(feature, config) {
     $.each(config.detail_columns || [], function(i, e) {
 	context.detail.push({
 	    label: getColumnTitle(e, config),
-	    value: getEnumCaption(e, feature.properties[e], config),
+	    value: getEnumCaption(e, feature.properties[e], config, {_null: '\u2014'}),
 	});
     });
 
@@ -448,13 +448,15 @@ function autoConfiguration(config, data) {
     });
     var cols = _.sortBy(_.keys(_cols), function(e) { return getColumnTitle(e, config); });
 
-    config.metrics = $.map(cols, function(e) {
+    var metrics = $.map(cols, function(e) {
 	var meta = {column: e};
 	var stats = summarizeColumn(meta, data);
 	var metric = {}
 	metric[stats.nonnumeric ? 'color' : 'size'] = meta;
 	return metric;
     });
+    // metrics may already exist if we're in debug mode
+    config.metrics = (config.metrics || []).concat(metrics);
 }
 
 function summarizeColumn(meta, data) {
@@ -508,32 +510,30 @@ function _summarizeColumn(meta, data) {
 }
 
 function getEnumValues(meta) {
-    var labelFallback = function() { return null; };
+    var labelFallbacks = {};
     var toLabel = function(e, i) {
-	return getEnumCaption(meta.column, e, CONFIG, labelFallback(e, i)); // eww global var ref
+	return getEnumCaption(meta.column, e, CONFIG, labelFallbacks); // eww global var ref
     }
 
     if (meta.thresholds) {
 	var enums = meta.thresholds.slice(0);
 	enums.splice(0, 0, '-');
-	var ranges_only = enums.slice(0);
+
+	$.each(enums, function(i, e) {
+	    labelFallbacks[e] = (function() {
+		if (i == 0) {
+		    return '<' + enums[1];
+		} else if (i == enums.length - 1) {
+		    return '>' + e;
+		} else {
+		    return e + '-' + enums[i + 1];
+		}
+	    })();
+	});
+
 	if (meta.categories && meta.categories._null) {
 	    enums.push('_null');
 	}
-
-	// override above
-	labelFallback = function(e, i) {
-	    var max = ranges_only.length - 1;
-	    if (i == 0) {
-		return '<' + ranges_only[1];
-	    } else if (i == max) {
-		return '>' + e;
-	    } else if (i < max) {
-		return e + '-' + ranges_only[i + 1];
-	    } else {
-		return null;
-	    }
-	};
     } else {
 	var enums = _.keys(meta.categories);
 	var special = _.filter(enums, function(e) { return e[0] == '_'; });
@@ -547,21 +547,25 @@ function getEnumValues(meta) {
 	    }
 	});
     }
+
     return $.map(enums, function(e, i) { return {label: toLabel(e, i), value: e}; });
 }
 
 // FIXME i18n
 OTHER_LABEL = 'Other';
 NULL_LABEL = 'No Value';
-function getEnumCaption(column, value, config, fallback) {
+function getEnumCaption(column, value, config, fallbacks) {
     if (isNull(value)) {
 	value = '_null';
     }
     var captions = (config.enum_captions || {})[column] || {};
-    fallback = fallback || {
-	'_other': OTHER_LABEL,
-	'_null': NULL_LABEL
-    }[value] || value;
+
+    fallbacks = fallbacks || {};
+    $.each({'_other': OTHER_LABEL, '_null': NULL_LABEL}, function(k, v) {
+	fallbacks[k] = fallbacks[k] || v;
+    });
+    var fallback = fallbacks[value] || value;
+
     return captions[value] || fallback;
 }
 
