@@ -77,7 +77,27 @@ HF_MONTHLY_REPORT = [
 ]
 
 # todo: need to add additional columns for district report
-DISTRICT_MONTHLY_REPORT = HF_MONTHLY_REPORT
+DISTRICT_MONTHLY_REPORT = HF_MONTHLY_REPORT + [
+    {
+        'section': _('Stock Balance'),
+        'type': 'stock_lookup',
+        'columns': [
+            _('form.stock.stock_amox_pink'),
+            _('form.stock.stock_amox_green'),
+            _('form.stock.stock_ors'),
+            _('form.stock.stock_ra_50'),
+            _('form.stock.stock_ra_200'),
+            _('form.stock.stock_zinc'),
+            _('form.stock.stock_coartem_yellow'),
+            _('form.stock.stock_coartem_blue'),
+            _('form.stock.stock_coartem_green'),
+            _('form.stock.stock_paracetamol_250'),
+            _('form.stock.stock_paracetamol_500'),
+            _('form.stock.stock_rdt'),
+            _('form.stock.stock_gloves'),
+        ]
+    },
+]
 
 DISTRICT_WEEKLY_REPORT = [
     {
