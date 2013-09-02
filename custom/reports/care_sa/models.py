@@ -382,23 +382,43 @@ class CareSAFluff(fluff.IndicatorDocument):
         property_path='form/last_session',
         property_value='not_complete',
     )
+    internal_iact_ipt = xcalculators.filtered_form_calc(
+        xmlns=IACT_XMLNS,
+        property_path='form/on_ipt',
+        property_value='yes',
+    )
     iact_participant_ipt = xcalculators.and_calc(
-        [internal_iact_not_complete, internal_on_ipt]
+        [internal_iact_not_complete, internal_iact_ipt]
     )
 
     #3g
+    internal_iact_bactrim = xcalculators.filtered_form_calc(
+        xmlns=IACT_XMLNS,
+        property_path='form/on_bactrim',
+        property_value='yes',
+    )
     iact_participant_bactrim = xcalculators.and_calc(
-        [internal_iact_not_complete, internal_on_bactrim]
+        [internal_iact_not_complete, internal_iact_bactrim]
     )
 
     #3h
+    internal_iact_pre_art = xcalculators.filtered_form_calc(
+        xmlns=IACT_XMLNS,
+        property_path='form/pre_art',
+        property_value='yes',
+    )
     iact_participant_art = xcalculators.and_calc(
-        [internal_iact_not_complete, internal_pre_art]
+        [internal_iact_not_complete, internal_iact_pre_art]
     )
 
     #3i
+    internal_iact_arv = xcalculators.filtered_form_calc(
+        xmlns=IACT_XMLNS,
+        property_path='form/on_arv',
+        property_value='yes',
+    )
     iact_participant_arv = xcalculators.and_calc(
-        [internal_iact_not_complete, internal_on_arv]
+        [internal_iact_not_complete, internal_iact_arv]
     )
 
     #3j
