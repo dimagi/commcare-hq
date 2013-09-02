@@ -203,8 +203,12 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
             fixture_item = None
             fixture_type = None
 
-        sqldata = McSqlData(self.SECTIONS, domain, self.datespan, fixture_type, fixture_item)
+        sqldata = McSqlData(self.sql_sections, domain, self.datespan, fixture_type, fixture_item)
         self.data_provider = MCSectionedDataProvider(sqldata)
+
+    @property
+    def sql_sections(self):
+        return [s for s in self.SECTIONS if s.get('type', 'sql') == 'sql']
 
     @property
     def sections(self):
