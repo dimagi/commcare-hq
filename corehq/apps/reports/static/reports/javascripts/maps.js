@@ -286,17 +286,16 @@ function getColor(meta, props) {
 	    return meta;
 	} else {
 	    var val = getPropValue(props, meta);
-	    if (isNull(val)) {
-		return null;
-	    }
-
 	    if (meta.categories) {
 		return matchCategories(val, meta.categories);
 	    } else {
-		if (!isNumeric(val)) {
+		if (isNull(val)) {
+		    return null;
+		} else if (!isNumeric(val)) {
 		    throw new TypeError('numeric value required [' + val + ']');
+		} else {
+		    return matchSpline(val, meta.colorstops, blendColor);
 		}
-		return matchSpline(val, meta.colorstops, blendColor);
 	    }
 	}
     })();
@@ -316,9 +315,6 @@ function getIcon(meta, props) {
 	    return meta;
 	} else {
 	    var val = getPropValue(props, meta);
-	    if (isNull(val)) {
-		return null;
-	    }
 	    return matchCategories(val, meta.categories);
 	}
     })();
@@ -512,43 +508,60 @@ function _summarizeColumn(meta, data) {
 }
 
 function getEnumValues(meta) {
-    if (meta.thresholds) {
-	var toLabel = function(e, i) {
-	    if (i == 0) {
-		return '<' + enums[1];
-	    } else if (i == enums.length - 1) {
-		return '>' + e;
-	    } else {
-		return e + '-' + enums[i + 1];
-	    }
-	    // TODO use manual caption if available and the above only as a fallback
-	};
+    var labelFallback = function() { return null; };
+    var toLabel = function(e, i) {
+	return getEnumCaption(meta.column, e, CONFIG, labelFallback(e, i)); // eww global var ref
+    }
 
+    if (meta.thresholds) {
 	var enums = meta.thresholds.slice(0);
 	enums.splice(0, 0, '-');
-    } else {
-	var toLabel = function(e) {
-	    return getEnumCaption(meta.column, e, CONFIG); // eww global var ref
-	};
+	var ranges_only = enums.slice(0);
+	if (meta.categories && meta.categories._null) {
+	    enums.push('_null');
+	}
 
+	// override above
+	labelFallback = function(e, i) {
+	    var max = ranges_only.length - 1;
+	    if (i == 0) {
+		return '<' + ranges_only[1];
+	    } else if (i == max) {
+		return '>' + e;
+	    } else if (i < max) {
+		return e + '-' + ranges_only[i + 1];
+	    } else {
+		return null;
+	    }
+	};
+    } else {
 	var enums = _.keys(meta.categories);
-	var has_other = (enums.indexOf('_other') != -1);
-	if (has_other) {
-	    // move 'other' to end
-	    enums.splice(enums.indexOf('_other'), 1);
-	}
+	var special = _.filter(enums, function(e) { return e[0] == '_'; });
+	enums = _.filter(enums, function(e) { return e[0] != '_'; });
+
 	enums = _.sortBy(enums, toLabel);
-	if (has_other) {
-	    enums.push('_other');
-	}
+	// move special categories to the end
+	$.each(['_other', '_null'], function(i, e) {
+	    if (special.indexOf(e) != -1) {
+		enums.push(e);
+	    }
+	});
     }
     return $.map(enums, function(e, i) { return {label: toLabel(e, i), value: e}; });
 }
 
-OTHER_LABEL = 'Other'; // FIXME i18n
-function getEnumCaption(column, value, config) {
+// FIXME i18n
+OTHER_LABEL = 'Other';
+NULL_LABEL = 'No Value';
+function getEnumCaption(column, value, config, fallback) {
+    if (isNull(value)) {
+	value = '_null';
+    }
     var captions = (config.enum_captions || {})[column] || {};
-    var fallback = (value == '_other' ? OTHER_LABEL : value);
+    fallback = fallback || {
+	'_other': OTHER_LABEL,
+	'_null': NULL_LABEL
+    }[value] || value;
     return captions[value] || fallback;
 }
 
@@ -706,8 +719,12 @@ function matchThresholds(val, thresholds, returnIndex) {
 // 'categories' may define a mapping for '_other', which will be used for
 // all values that do not have an explicit value assigned, otherwise
 // those values will resolve to null
+// 'categories' may also define a special mapping '_null' which will match
+// null values
 function matchCategories(val, categories) {
-    if (categories.hasOwnProperty(val)) {
+    if (isNull(val)) {
+	return categories._null;
+    } else if (categories.hasOwnProperty(val)) {
 	return categories[val];
     } else {
 	return categories._other;
