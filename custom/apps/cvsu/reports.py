@@ -127,10 +127,6 @@ class CVSUReport(MultiReportPage):
     exportable = True
     filter_group_name = 'All CVSUs'
 
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return user and user.is_previewer()
-
     @property
     def location(self):
         cvsu = 'All CVSU'

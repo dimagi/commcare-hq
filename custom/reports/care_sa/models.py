@@ -224,13 +224,8 @@ class CareSAFluff(fluff.IndicatorDocument):
     internal_care_referral = xcalculators.or_calc(
         [internal_refer_hbc, internal_refer_iact]
     )
-    internal_test_results_yes = xcalculators.filtered_form_calc(
-        xmlns=HCT_XMLNS,
-        property_path='form/test_results',
-        property_value='yes',
-    )
     new_hiv_in_care_program = xcalculators.and_calc(
-        [internal_care_referral, internal_test_results_yes]
+        [internal_care_referral, internal_hiv_pos_test]
     )
 
     #1l
@@ -422,7 +417,6 @@ class CareSAFluff(fluff.IndicatorDocument):
     )
 
     #3j
-
     cd4lt200 = xcalculators.filtered_form_calc(
         xmlns=IACT_XMLNS,
         property_path='form/cd4_res',
@@ -430,6 +424,7 @@ class CareSAFluff(fluff.IndicatorDocument):
         operator=xcalculators.IN_RANGE,
     )
 
+    #3k
     cd4lt350 = xcalculators.filtered_form_calc(
         xmlns=IACT_XMLNS,
         property_path='form/cd4_res',
@@ -437,6 +432,7 @@ class CareSAFluff(fluff.IndicatorDocument):
         operator=xcalculators.IN_RANGE,
     )
 
+    #3l
     cd4gt350 = xcalculators.filtered_form_calc(
         xmlns=IACT_XMLNS,
         property_path='form/cd4_res',
@@ -444,7 +440,20 @@ class CareSAFluff(fluff.IndicatorDocument):
         operator=xcalculators.IN_RANGE,
     )
 
-    #3m TODO
+    #3m
+    internal_skipped_cd4 = xcalculators.filtered_form_calc(
+        xmlns=IACT_XMLNS,
+        property_path='form/cd4_res',
+        operator=xcalculators.SKIPPED,
+    )
+    internal_first_session = xcalculators.filtered_form_calc(
+        xmlns=IACT_XMLNS,
+        property_path='form/first_session',
+        property_value='yes',
+    )
+    unknown_cd4 = xcalculators.and_calc(
+        [internal_skipped_cd4, internal_first_session]
+    )
 
     #3n
     iact_support_groups = xcalculators.filtered_form_calc(

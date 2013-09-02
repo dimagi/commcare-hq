@@ -132,7 +132,7 @@ DOMAIN_FACETS = [
     "internal.using_call_center",
     "internal.platform",
     "internal.project_manager",
-    "internal.phone_model",
+    "internal.phone_model.exact",
 
     "is_approved",
     "is_public",
