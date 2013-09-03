@@ -1060,6 +1060,7 @@ def absolute_url_property(method):
         return "%s%s" % (self.url_base, method(self))
     return property(_inner)
 
+
 class ApplicationBase(VersionedDoc, SnapshotMixin):
     """
     Abstract base class for Application and RemoteApp.
@@ -1155,6 +1156,17 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         if should_save:
             self.save()
         return self
+
+    @classmethod
+    def view(cls, view_name, wrapper=None, classes=None, **params):
+        if cls is ApplicationBase and not wrapper:
+            classes = classes or dict((k, cls) for k in str_to_cls.keys())
+        return super(ApplicationBase, cls).view(
+            view_name,
+            wrapper=wrapper,
+            classes=classes,
+            **params
+        )
 
     @classmethod
     def by_domain(cls, domain):
