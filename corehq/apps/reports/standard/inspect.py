@@ -699,6 +699,9 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
       'enum_captions': {
         'col with enum values': {'enum value': 'enum caption'}
       },
+      'numeric_format': {
+        'numeric column': 'body of javascript function that formats the number appropriately (variable is 'x')'
+      },
       'metrics': [ <toggleable data display modes> (may be omitted during report prototyping)
         one or more of:
         {
@@ -714,7 +717,9 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
             {
               'column': column containing the relevant variable,
               one of either 'categories' or 'colorstops'
-              'categories': {'enum value': css color}, (special enum value '_other' can act as catch-all)
+              'categories': {'enum value': css color},
+                 - special value '_other' can act as catch-all for values not explicitly listed
+                 - special value '_null' will be used for rows where the value is blank; if absent, such rows will be hidden
               'colorstops': (to create sliding color scales) [list of colorstops: [value, csscolor]],
               'thresholds': [optional] [list of numerical threshold values to convert numeric data into enum 'buckets'],
             },
@@ -797,6 +802,11 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
         for row in raw:
             yield dict(zip(cols, row))
 
+    def _get_data_test2(self):
+        import csv
+        with open('/home/drew/tmp/mountains.csv') as f:
+            return list(csv.DictReader(f))
+            
     @property
     def report_context(self):
         context = {
