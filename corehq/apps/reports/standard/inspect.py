@@ -766,45 +766,10 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
             'features': list(points()),
         }
 
-    def _get_data_test(self):
-        raw = [
-            ['Boston',       '42.36 -71.06', 'ma', 636.5, 'Mass'],
-            ['Worcester',    '42.26 -71.80', 'ma', 182.7, 'Mass'],
-            ['Providence',   '41.82 -71.41', 'ri', 178.4, 'Rhode'],
-            ['Hartford',     '41.76 -72.68', 'ct', None, 'Conn'], #124.9],
-            ['Springfield',  '42.10 -72.59',  None, 153.6, None],
-            ['New London',   '41.35 -72.10', 'ct',  27.6, 'Conn'],
-            ['New Haven',    '41.31 -72.92', 'ct', 130.7, 'Conn'],
-            ['Block Island', '41.17 -71.58', 'ri',   1.0, 'Rhode'],
-            ['Provincetown', '42.06 -70.18', 'ma',   2.9, 'Mass'],
-            ['Newburgh',     '41.52 -74.02', 'ny',  28.8, 'New York'],
-        ]
-
-        def bulk_up(load, radius):
-            import random, math
-            GEO_FIELD = 1
-            for r in raw:
-                yield r
-                pos = [float(k) for k in r[GEO_FIELD].split()]
-                for i in range(load):
-                    dist = radius * random.random()
-                    bearing = math.radians(360. * random.random())
-                    dx = dist * math.cos(bearing) / math.cos(math.radians(pos[0]))
-                    dy = dist * math.sin(bearing)
-                    newpos = [pos[0] + dy, pos[1] + dx]
-                    newr = list(r)
-                    newr[GEO_FIELD] = ' '.join(map(str, newpos))
-                    yield newr
-        raw = list(bulk_up(0, 2.))
-
-        cols = ['city', 'latlon', 'state', 'population', 'state_name']
-
-        for row in raw:
-            yield dict(zip(cols, row))
-
-    def _get_data_test2(self):
+    def _get_data_demo(self):
         import csv
-        with open('/home/drew/tmp/mountains.csv') as f:
+        import os.path
+        with open(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tests/maps_sampledata_mountains.csv')) as f:
             return list(csv.DictReader(f))
             
     @property
