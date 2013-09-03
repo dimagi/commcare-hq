@@ -35,6 +35,7 @@ from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.pagination import CouchFilter
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
+from dimagi.utils.modules import to_function
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
 from corehq import elastic
@@ -690,6 +691,9 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
       'adapter': type of data source ('test', 'report', etc.),
       'geo_column': column in returned data identifying the geo point (defaults to "geo"),
       <custom parameters by adapter>
+
+      adapter == 'report'
+      'report': 'fully qualified name of ReportDataSource class'
     }
 
     display_config: {
@@ -743,7 +747,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
         geo_col = self.data_source.get('geo_column', 'geo')
 
         try:
-            data = getattr(self, '_get_data_%s' % adapter)() # TODO pass along report filters
+            data = getattr(self, '_get_data_%s' % adapter)(self.data_source) # TODO pass along report filters
         except AttributeError:
             raise RuntimeError('unknown adapter [%s]' % adapter)
         return self._to_geojson(data, geo_col)
@@ -766,7 +770,14 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
             'features': list(points()),
         }
 
-    def _get_data_demo(self):
+    def _get_data_report(self, params):
+        DS = to_function(params['report'])
+        config = {
+            'domain': self.domain,
+        }
+        return DS(config).get_data()
+
+    def _get_data_demo(self, params):
         import csv
         import os.path
         with open(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tests/maps_sampledata_mountains.csv')) as f:
