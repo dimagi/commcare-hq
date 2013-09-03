@@ -694,6 +694,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
 
       adapter == 'report'
       'report': 'fully qualified name of ReportDataSource class'
+      'report_params': optional dict of (static) config parameters for ReportDataSource
     }
 
     display_config: {
@@ -747,7 +748,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
         geo_col = self.data_source.get('geo_column', 'geo')
 
         try:
-            data = getattr(self, '_get_data_%s' % adapter)(self.data_source) # TODO pass along report filters
+            data = getattr(self, '_get_data_%s' % adapter)(self.data_source, dict(self.request.GET.iteritems()))
         except AttributeError:
             raise RuntimeError('unknown adapter [%s]' % adapter)
         return self._to_geojson(data, geo_col)
@@ -770,14 +771,17 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
             'features': list(points()),
         }
 
-    def _get_data_report(self, params):
-        DS = to_function(params['report'])
-        config = {
-            'domain': self.domain,
-        }
-        return DS(config).get_data()
+    def _get_data_report(self, params, filters):
+        # this ordering is important!
+        # in the reverse order you could view a different domain's data just by setting the url param!
+        config = dict(filters)
+        config.update(params.get('report_params', {}))
+        config['domain'] = self.domain
 
-    def _get_data_demo(self, params):
+        DataSource = to_function(params['report'])
+        return DataSource(config).get_data()
+
+    def _get_data_demo(self, params, filters):
         import csv
         import os.path
         with open(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tests/maps_sampledata_mountains.csv')) as f:
