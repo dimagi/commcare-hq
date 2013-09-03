@@ -893,7 +893,7 @@ ES_DOMAIN_QUERY_LIMIT = 500
 @datespan_in_request(from_param="startdate", to_param="enddate", default_days=365)
 def stats_data(request):
     histo_type = request.GET.get('histogram_type')
-    interval = request.GET.get("interval", "month")
+    interval = request.GET.get("interval", "week")
 
     params, __ = parse_args_for_es(request, prefix='es_')
     if params:
