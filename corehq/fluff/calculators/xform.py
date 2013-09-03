@@ -9,12 +9,30 @@ from fluff.models import SimpleCalculator
 def default_date(form):
     return form.received_on
 
+
+def in_range_calc(input, reference_tuple):
+    if not input:
+        # filter empty strings
+        return False
+
+    try:
+        # attempt to make it an int first as it would help
+        # make the comparison accurate
+        value = int(input)
+    except ValueError:
+        value = float(input)
+
+    return value >= reference_tuple[0] and value < reference_tuple[1]
+
 # operators
 EQUAL = lambda input, reference: input == reference
 NOT_EQUAL = lambda input, reference: input != reference
 IN = lambda input, reference_list: input in reference_list
 IN_MULTISELECT = lambda input, reference: reference in (input or '').split(' ')
 ANY = lambda input, reference: bool(input)
+SKIPPED = lambda input, reference: input is None
+IN_RANGE = lambda input, reference_tuple: in_range_calc(input, reference_tuple)
+
 
 def ANY_IN_MULTISELECT(input, reference):
     """
@@ -41,6 +59,10 @@ class IntegerPropertyReference(object):
         if value and self.transform:
             value = self.transform(value)
         return value
+
+def requires_property_value(operator):
+    return not (operator == ANY or operator == SKIPPED)
+
 
 class FilteredFormPropertyCalculator(fluff.Calculator):
     """
@@ -83,7 +105,8 @@ class FilteredFormPropertyCalculator(fluff.Calculator):
 
         _conditional_setattr('property_path', property_path)
         _conditional_setattr('property_value', property_value)
-        if self.property_path is not None and operator != ANY:
+
+        if self.property_path is not None and requires_property_value(operator):
             assert self.property_value is not None
 
         self.operator = operator
@@ -125,7 +148,8 @@ class FormPropertyFilter(Filter):
 
         _conditional_setattr('property_path', property_path)
         _conditional_setattr('property_value', property_value)
-        if self.property_path is not None and operator != ANY:
+
+        if self.property_path is not None and requires_property_value(operator):
             assert self.property_value is not None
 
         self.operator = operator
