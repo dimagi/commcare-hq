@@ -797,15 +797,12 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
     def report_context(self):
         context = {
             'data': self._get_data(),
-            'config': self.dynamic_display_config() or self.display_config,
+            'config': self.display_config,
         }
 
         return dict(
             context=context,
         )
-
-    def dynamic_display_config(self):
-        return None
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):

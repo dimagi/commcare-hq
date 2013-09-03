@@ -15,7 +15,8 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
         'report': 'corehq.apps.reports.commtrack.data_sources.StockStatusBySupplyPointDataSource',
     }
 
-    def dynamic_display_config(self):
+    @property
+    def display_config(self):
         conf = {
             'name_column': 'name',
             'detail_columns': ['type'],
