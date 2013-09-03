@@ -205,7 +205,7 @@ class SingleSignOnResource(JsonResource, DomainSpecificResourceMixin):
 
         # Convert to the appropriate type of user
         couch_user = CouchUser.get_by_username(username)
-        if not couch_user.is_member_of(domain) or not couch_user.check_password(password):
+        if couch_user is None or not couch_user.is_member_of(domain) or not couch_user.check_password(password):
             return HttpResponseForbidden()
 
         if couch_user.is_commcare_user():
