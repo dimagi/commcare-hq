@@ -267,6 +267,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.apps.tropo',
     'corehq.apps.yo',
     'crispy_forms',
+    'django_extensions',
     'djcelery',
     'djtables',
     'djkombu',
@@ -279,12 +280,17 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'south',
 
     # submodules with tests that run on travis
+    'couchforms',
+    'casexml.apps.case',
+    'casexml.apps.phone',
     'ctable',
     'ctable_view',
     'dimagi.utils',
     'fluff',
     'fluff_filter',
+    'freddy',
     'pillowtop',
+    'receiver',
 )
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
