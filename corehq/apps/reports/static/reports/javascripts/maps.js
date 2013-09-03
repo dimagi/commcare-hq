@@ -188,7 +188,7 @@ function loadData(map, data, display_context) {
 
 function zoomToAll(map) {
     if (map.activeOverlay) {
-	map.fitBounds(map.activeOverlay.getBounds());
+	map.fitBounds(map.activeOverlay.getBounds(), {padding: [60, 60]});
     }
 }
 

@@ -75,7 +75,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         SLUG_CURRENT_STOCK: 'current_stock_level',
         SLUG_CONSUMPTION: 'monthly_consumption',
         SLUG_MONTHS_REMAINING: 'months_until_stockout',
-        SLUG_CATEGORY: 'current_stock_category'
+        SLUG_CATEGORY: 'current_stock_category',
     }
 
     def slugs(self):
@@ -147,3 +147,28 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             }
 
             yield dict((slug, full_output['slug']) for slug in slugs) if slugs else full_output
+
+class StockStatusBySupplyPointDataSource(StockStatusDataSource):
+    
+    def get_data(self):
+        data = list(super(StockStatusBySupplyPointDataSource, self).get_data())
+
+        products = dict((r['product_id'], r['product_name']) for r in data)
+        product_ids = sorted(products.keys(), key=lambda e: products[e])
+
+        by_supply_point = map_reduce(lambda e: [(e['location_id'],)], data=data, include_docs=True)
+        locs = dict((loc._id, loc) for loc in Location.view('_all_docs', keys=by_supply_point.keys(), include_docs=True))
+
+        for loc_id, subcases in by_supply_point.iteritems():
+            loc = locs[loc_id]
+            by_product = dict((c['product_id'], c) for c in subcases)
+
+            rec = {
+                'name': loc.name,
+                'type': loc.location_type,
+                'geo': '%s %s' % (loc.latitude, loc.longitude) if loc.latitude is not None and loc.longitude is not None else None,
+            }
+            for prod in product_ids:
+                rec.update(dict(('%s-%s' % (prod, key), by_product.get(prod, {}).get(key)) for key in
+                                ('current_stock', 'consumption', 'months_remaining', 'category')))
+            yield rec

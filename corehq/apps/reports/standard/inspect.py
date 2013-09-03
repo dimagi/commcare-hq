@@ -751,6 +751,12 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
             data = getattr(self, '_get_data_%s' % adapter)(self.data_source, dict(self.request.GET.iteritems()))
         except AttributeError:
             raise RuntimeError('unknown adapter [%s]' % adapter)
+
+        # debug
+        #import pprint
+        #data = list(data)
+        #pprint.pprint(data)
+
         return self._to_geojson(data, geo_col)
 
     def _to_geojson(self, data, geo_col):
@@ -791,12 +797,15 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
     def report_context(self):
         context = {
             'data': self._get_data(),
-            'config': self.display_config,
+            'config': self.dynamic_display_config() or self.display_config,
         }
 
         return dict(
             context=context,
         )
+
+    def dynamic_display_config(self):
+        return None
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
