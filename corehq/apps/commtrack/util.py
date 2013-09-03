@@ -37,6 +37,8 @@ def get_supply_point(domain, site_code=None, loc=None):
                             key=[domain, site_code.lower()],
                             include_docs=True).first()
     if loc:
+        # todo: should probably return a SupplyPointCase
+        # by calling SupplyPointCase.get_by_location
         case = CommCareCase.view('commtrack/supply_point_by_loc',
                                  key=[domain, loc._id],
                                  include_docs=True).first()
