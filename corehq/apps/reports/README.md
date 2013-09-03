@@ -120,8 +120,7 @@ class DemoReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
         i_b = DatabaseColumn("Indicator B", SumColumn("indicator_b"))
 
         agg_c_d = AggregateColumn("C/D", self.calc_percentage,
-                                  SumColumn("indicator_c"),
-                                  SumColumn("indicator_d"),
+                                  [SumColumn("indicator_c"), SumColumn("indicator_d")],
                                   format_fn=self.format_percent)
 
         return [

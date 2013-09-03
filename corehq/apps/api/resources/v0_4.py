@@ -1,17 +1,21 @@
 from django.core.urlresolvers import NoReverseMatch, reverse
+from django.http import HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
 from tastypie import fields
 from tastypie.bundle import Bundle
-from corehq.apps.api.util import get_object_or_not_exist
+from tastypie.authentication import Authentication
 
 from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import xform as casexml_xform
 
+from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.app_manager import util as app_manager_util
 from corehq.apps.app_manager.models import ApplicationBase, Application, RemoteApp, Form, get_app
 from corehq.apps.receiverwrapper.models import Repeater, repeater_types
 from corehq.apps.groups.models import Group
 from corehq.apps.cloudcare.api import ElasticCaseQuery
+from corehq.apps.users.util import format_username
+from corehq.apps.users.models import CouchUser, CommCareUser
 
 from corehq.apps.api.resources import v0_1, v0_3, JsonResource, DomainSpecificResourceMixin, dict_object, SimpleSortableResourceMixin
 from corehq.apps.api.es import XFormES, CaseES, ESQuerySet, es_search
@@ -174,6 +178,58 @@ class GroupResource(JsonResource, DomainSpecificResourceMixin):
         object_class = Group    
         list_allowed_methods = ['get']
         resource_name = 'group'
+
+    
+class SingleSignOnResource(JsonResource, DomainSpecificResourceMixin):
+    '''
+    This resource does not require "authorization" per se, but
+    rather allows a POST of username and password and returns
+    just the authenticated user, if the credentials and domain
+    are correct.
+    '''
+
+    def post_list(self, request, **kwargs):
+        domain = kwargs.get('domain')
+        request.domain = domain
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        if username is None:
+            return HttpResponseBadRequest('Missing required parameter: username')
+
+        if password is None:
+            return HttpResponseBadRequest('Missing required parameter: password')
+
+        if '@' not in username:
+            username = format_username(username, domain)
+
+        # Convert to the appropriate type of user
+        couch_user = CouchUser.get_by_username(username)
+        if couch_user is None or not couch_user.is_member_of(domain) or not couch_user.check_password(password):
+            return HttpResponseForbidden()
+
+        if couch_user.is_commcare_user():
+            user_resource = v0_1.CommCareUserResource()
+        elif couch_user.is_web_user():
+            user_resource = v0_1.WebUserResource()
+        else:
+            return HttpResponseForbidden()
+        
+        bundle = user_resource.build_bundle(obj=couch_user, request=request)
+        bundle = user_resource.full_dehydrate(bundle)
+        return user_resource.create_response(request, bundle, response_class=HttpResponse)
+
+    def get_list(self, bundle, **kwargs):
+        return HttpForbidden()
+
+    def get_detail(self, bundle, **kwargs):
+        return HttpForbidden()
+
+    class Meta(v0_1.CustomResourceMeta):
+        authentication = Authentication() 
+        resource_name = 'sso'
+        detail_allowed_methods = []
+        list_allowed_methods = ['post']
 
 class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
 

@@ -1,5 +1,4 @@
 import simplejson
-import time
 from datetime import datetime
 
 import dateutil.parser
@@ -62,7 +61,7 @@ class APIResourceTest(TestCase):
         self.list_endpoint = reverse('api_dispatch_list', kwargs=dict(domain=self.domain.name,
                                                                       api_name=self.api_name,
                                                                       resource_name=self.resource.Meta.resource_name))
-        self.username = 'rudolph'
+        self.username = 'rudolph@qwerty.commcarehq.org'
         self.password = '***'
         self.user = WebUser.create(self.domain.name, self.username, self.password)
         self.user.set_role(self.domain.name, 'admin')
@@ -740,3 +739,65 @@ class TestUseIfRequested(TestCase):
 
         self.assertTrue('something' in dehydrated_bundle.data)
         self.assertEqual(dehydrated_bundle.data['something'], 'foo')
+
+
+class TestSingleSignOnResource(APIResourceTest):
+    resource = v0_4.SingleSignOnResource
+
+    def setUp(self):
+        super(TestSingleSignOnResource, self).setUp()
+        self.commcare_username = 'webby@qwerty.commcarehq.org'
+        self.commcare_password = '*****'
+        self.commcare_user = CommCareUser.create(self.domain.name, self.commcare_username, self.commcare_password)
+
+    def tearDown(self):
+        self.commcare_user.delete()
+        super(TestSingleSignOnResource, self).tearDown()
+
+    def test_web_user_success(self):
+        '''
+        If correct credentials for a web user are submitted, the response is the profile of that web user
+        '''
+        response = self.client.post(self.list_endpoint, {'username': self.username, 'password': self.password})
+        self.assertEqual(response.status_code, 200)
+
+    def test_commcare_user_success(self):
+        '''
+        If correct credentials for a commcare user are submitted, the response is the record for that commcare user
+        '''
+        response = self.client.post(self.list_endpoint, {'username': self.commcare_username, 'password': self.commcare_password})
+        self.assertEqual(response.status_code, 200)
+
+    def test_wrong_domain(self):
+        '''
+        If correct credentials for a user in a different domain are submitted, the response is forbidden
+        '''
+        wrong_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
+        wrong_list_endpoint = reverse('api_dispatch_list', kwargs=dict(domain=wrong_domain.name,
+                                                                       api_name=self.api_name,
+                                                                       resource_name=self.resource.Meta.resource_name))
+        response = self.client.post(wrong_list_endpoint, {'username': self.username, 'password': self.password})
+        self.assertEqual(response.status_code, 403)
+        wrong_domain.delete() 
+
+    def test_wrong_credentials(self):
+        '''
+        If incorrect password for the correct username and domain pair are submitted, the response is forbidden
+        '''
+        response = self.client.post(self.list_endpoint, {'username': self.username, 'password': 'bimbizzleboozle'})
+        self.assertEqual(response.status_code, 403)
+
+    def test_no_username(self):
+        '''
+        If no username supplied, 400
+        '''
+        response = self.client.post(self.list_endpoint, {'password': 'bimbizzleboozle'})
+        self.assertEqual(response.status_code, 400)
+
+    def test_no_password(self):
+        '''
+        If no password supplied, 400
+        '''
+        response = self.client.post(self.list_endpoint, {'username': self.username})
+        self.assertEqual(response.status_code, 400)
+

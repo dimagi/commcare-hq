@@ -4,8 +4,6 @@
     - hq.name  # Name
     - hq.application_version # App Version (disabled)
     # Application
-#    - hq.is_j2me
-#    - hq.is_odk
     - hq.case_sharing  # Case Sharing
     - hq.cloudcare_enabled  # CloudCare
     - hq.use_custom_suite
@@ -49,6 +47,12 @@
     - properties.ViewStyle  # Form Entry Style
     - properties.cc-user-mode  # User Login Mode
     - properties.cc-login-images # Login Buttons
+
+- title: 'Android Settings'
+  id: app-settings-android
+  collapse: true
+  settings:
+    - properties.cc-days-form-retain # Days to Retain for Review
 
 - title: 'Advanced (Logging)'
   id: app-settings-advanced

@@ -175,7 +175,8 @@ var CaseConfig = (function () {
             var $home = $('#case-config-ko');
             _.delay(function () {
                 ko.applyBindings(self, $home.get(0));
-                $home.on('change textchange', 'input, select', self.change)
+                $home.on('textchange', 'input', self.change)
+                     .on('change', 'select', self.change)
                      .on('click', 'a', self.change);
                 self.ensureBlankProperties();
             });

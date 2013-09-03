@@ -42,12 +42,6 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
             test_labels = [self._strip(app) for app in settings.INSTALLED_APPS
                            if not app in settings.APPS_TO_EXCLUDE_FROM_TESTS
                            and not app.startswith('django.')]
-
-        for l in test_labels:
-            try:
-                get_app(l)
-            except ImproperlyConfigured:
-                print l
         return super(HqTestSuiteRunner, self).run_tests(test_labels, extra_tests, **kwargs)
 
     def _strip(self, app_name):
