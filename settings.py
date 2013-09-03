@@ -655,7 +655,6 @@ COUCHDB_APPS = [
     'migration',
     'mobile_auth',
     'phone',
-    'receiverwrapper',
     'reminders',
     'reportfixtures',
     'prescriptions',
@@ -695,6 +694,7 @@ COUCHDB_DATABASES += [
     ('care_sa', COUCH_DATABASE + '__fluff-care_sa'),
     ('cvsu', COUCH_DATABASE + '__fluff-cvsu'),
     ('mc', COUCH_DATABASE + '__fluff-mc'),
+    ('receiverwrapper', COUCH_DATABASE + '__receiverwrapper'),
 ]
 
 INSTALLED_APPS += LOCAL_APPS
