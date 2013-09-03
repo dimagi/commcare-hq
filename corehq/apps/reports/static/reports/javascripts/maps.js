@@ -1,4 +1,14 @@
 
+DISPLAY_DIMENSIONS = ['size', 'color', 'icon'];
+
+function forEachDimension(metric, callback) {
+    $.each(DISPLAY_DIMENSIONS, function(i, e) {
+	if (typeof metric[e] == 'object') {
+	    callback(e, metric[e]);
+	}
+    });
+}
+
 // a map control map that lists the various display metrics for this report
 // and allows you to select and display them
 MetricsControl = L.Control.extend({
@@ -87,9 +97,6 @@ ZoomToFitControl = L.Control.extend({
 
 // main entry point
 function mapsInit(context) {
-    // FIXME global var hack to make this easily accessible from other places
-    CONFIG = context.config;
-
     var map = initMap($('#map'), [30., 0.], 2, 'Map');
     initData(context.data, context.config);
     initMetrics(map, context.data, context.config);
@@ -122,6 +129,12 @@ function initMap($div, default_pos, default_zoom, default_layer) {
 
 // perform any pre-processing of the raw data
 function initData(data, config) {
+    // instantiate data formatting functions
+    config._fmt = {};
+    $.each(config.numeric_format || {}, function(k, v) {
+	config._fmt[k] = eval('(function(x) { ' + v + '})');
+    });
+
     // pre-cache popup detail
     $.each(data.features, function(i, e) {
 	e.popupContent = formatDetailPopup(e, config);
@@ -136,6 +149,17 @@ function initMetrics(map, data, config) {
 
     $.each(config.metrics, function(i, e) {
 	setMetricDefaults(e, data, config);
+    });
+
+    $.each(config.metrics, function(i, e) {
+	forEachDimension(e, function(type, meta) {
+	    meta._enumCaption = function(val, labelFallbacks) {
+		return getEnumCaption(meta.column, val, config, labelFallbacks);
+	    };
+	    meta._formatNum = function(val) {
+		return formatValue(meta.column, val, config);
+	    };
+	});
     });
 
     var l = new LegendControl({config: config}).addTo(map);
@@ -364,9 +388,13 @@ function formatDetailPopup(feature, config) {
     }
     context.detail = [];
     $.each(config.detail_columns || [], function(i, e) {
+	var datum = feature.properties[e];
+	var fallback = {_null: '\u2014'};
+	fallback[datum] = formatValue(e, datum, config);
+
 	context.detail.push({
 	    label: getColumnTitle(e, config),
-	    value: getEnumCaption(e, feature.properties[e], config, {_null: '\u2014'}),
+	    value: getEnumCaption(e, datum, config, fallback)
 	});
     });
 
@@ -379,12 +407,10 @@ function formatDetailPopup(feature, config) {
 function setMetricDefaults(metric, data, config) {
     if (!metric.title) {
 	var varcols = [];
-	$.each(['size', 'color', 'icon'], function(i, e) {
-	    if (typeof metric[e] == 'object' && metric[e].column) {
-		var col = metric[e].column;
-		if (varcols.indexOf(col) == -1) {
-		    varcols.push(col);
-		}
+	forEachDimension(metric, function(type, meta) {
+	    var col = meta.column;
+	    if (varcols.indexOf(col) == -1) {
+		varcols.push(col);
 	    }
 	});
 	metric.title = $.map(varcols, function(e) { return getColumnTitle(e, config); }).join(' / ');
@@ -511,8 +537,8 @@ function _summarizeColumn(meta, data) {
 
 function getEnumValues(meta) {
     var labelFallbacks = {};
-    var toLabel = function(e, i) {
-	return getEnumCaption(meta.column, e, CONFIG, labelFallbacks); // eww global var ref
+    var toLabel = function(e) {
+	return meta._enumCaption(e, labelFallbacks);
     }
 
     if (meta.thresholds) {
@@ -522,11 +548,11 @@ function getEnumValues(meta) {
 	$.each(enums, function(i, e) {
 	    labelFallbacks[e] = (function() {
 		if (i == 0) {
-		    return '<' + enums[1];
+		    return '< ' + meta._formatNum(enums[1]);
 		} else if (i == enums.length - 1) {
-		    return '>' + e;
+		    return '> ' + meta._formatNum(e);
 		} else {
-		    return e + '-' + enums[i + 1];
+		    return meta._formatNum(e) + ' \u2013 ' + meta._formatNum(enums[i + 1]);
 		}
 	    })();
 	});
@@ -548,12 +574,12 @@ function getEnumValues(meta) {
 	});
     }
 
-    return $.map(enums, function(e, i) { return {label: toLabel(e, i), value: e}; });
+    return $.map(enums, function(e, i) { return {label: toLabel(e), value: e}; });
 }
 
 // FIXME i18n
 OTHER_LABEL = 'Other';
-NULL_LABEL = 'No Value';
+NULL_LABEL = 'No Data';
 function getEnumCaption(column, value, config, fallbacks) {
     if (isNull(value)) {
 	value = '_null';
@@ -569,6 +595,15 @@ function getEnumCaption(column, value, config, fallbacks) {
     return captions[value] || fallback;
 }
 
+function formatValue(column, value, config) {
+    if (isNull(value)) {
+	return null;
+    }
+
+    var formatter = config._fmt[column];
+    return (formatter ? formatter(value) : value);
+}
+
 function getColumnTitle(col, config) {
     return (config.column_titles || {})[col] || col;
 }
@@ -577,22 +612,19 @@ function getColumnTitle(col, config) {
 
 
 function renderLegend($e, metric, config) {
-    $.each(['size', 'color', 'icon'], function(i, e) {
-	var meta = metric[e];
-	if (typeof meta == 'object') {
-	    var col = meta.column;
-	    var $h = $('<h4>');
-	    $h.text(getColumnTitle(col, config));
-	    $e.append($h);
+    forEachDimension(metric, function(type, meta) {
+	var col = meta.column;
+	var $h = $('<h4>');
+	$h.text(getColumnTitle(col, config));
+	$e.append($h);
 
-	    $div = $('<div>');
-	    ({	
-		size: sizeLegend,
-		color: colorLegend,
-		icon: iconLegend,
-	    })[e]($div, meta);
-	    $e.append($div);
-	}
+	$div = $('<div>');
+	({	
+	    size: sizeLegend,
+	    color: colorLegend,
+	    icon: iconLegend,
+	})[type]($div, meta);
+	$e.append($div);
     });
 };
 
@@ -607,7 +639,7 @@ function sizeLegend($e, meta) {
 	$r.find('#circ').css('width', diameter + 'px');
 	$r.find('#circ').css('height', diameter + 'px');
 	$r.find('#val').css('padding-left', '0.6em');
-	$r.find('#val').text(val);
+	$r.find('#val').text(meta._formatNum(val));
 	$t.append($r);
     };
 
@@ -660,8 +692,8 @@ function colorScaleLegend($e, meta) {
     var $labmin = $t.find('#labmin');
     var $labmax = $t.find('#labmax');
     $bar.append($canvas);
-    $labmin.text(min);
-    $labmax.text(max);
+    $labmin.text(meta._formatNum(min));
+    $labmax.text(meta._formatNum(max));
     $t.find('.lab').css('padding-left', '0.4em');
     $labmin.css('vertical-align', 'bottom');
     $labmax.css('vertical-align', 'top');
