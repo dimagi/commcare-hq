@@ -40,3 +40,9 @@
 .disabled {
   color: #888;
 }
+
+.detail_data {
+    font-weight: bold;
+    text-align: right;
+    padding-left: 20px;
+}

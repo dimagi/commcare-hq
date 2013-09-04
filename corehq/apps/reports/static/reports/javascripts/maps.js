@@ -368,18 +368,7 @@ function getPropValue(props, meta) {
 
 
 function formatDetailPopup(feature, config) {
-    var DEFAULT_TEMPLATE = [
-	'<h3>{{ name }}</h3>',
-	'<hr>',
-	'<table>',
-	'{{#each detail}}<tr>',
-	  '<td>{{ label }}</td>',
-	  '<td style="font-weight: bold; text-align: right; padding-left: 20px;">',
-	    '{{#if value}}{{ value }}{{ else }}\u2014{{/if}}',
-	  '</td>',
-	'</tr>{{/each}}',
-	'</table>',
-    ].join('\n');
+    var DEFAULT_TEMPLATE = $('#default_detail_popup').text();
     var TEMPLATE = config.detail_template || DEFAULT_TEMPLATE;
 
     var context = {props: feature.properties};
@@ -398,7 +387,7 @@ function formatDetailPopup(feature, config) {
 	});
     });
 
-    var template = Handlebars.compile(TEMPLATE);
+    var template = _.template(TEMPLATE);
     var content = template(context);
     return content;
 }
