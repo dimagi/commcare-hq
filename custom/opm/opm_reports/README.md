@@ -1,4 +1,5 @@
 TODO:
+Add all fixture amts to beneficiary report
 Cron job to finalize reports at the end of each month.  (when, exactly?)
 Show only data from the current report period
 

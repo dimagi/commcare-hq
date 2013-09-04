@@ -29,6 +29,9 @@ class OpmCaseFluff(fluff.IndicatorDocument):
     block = case_property("block_name")
     village = case_property("village_name")
 
+    # Okay, I lied, there's one aggregated field:
+    women_registered = user_calcs.WomenRegistered() # conv to CaseFluff
+
 
 class OpmUserFluff(fluff.IndicatorDocument):
     def user_data(property):
@@ -70,19 +73,15 @@ class OpmFormFluff(fluff.IndicatorDocument):
     bp2_cash = case_calcs.BirthPreparedness(
         ['window_2_1', 'window_2_2', 'window_2_3'])
     delivery = case_calcs.Delivery()
-    child_followup = "Child Followup Form"
+    child_followup = case_calcs.ChildFollowup()
     child_spacing = case_calcs.ChildSpacing()
 
     # per user
-    women_registered = user_calcs.WomenRegistered()
-    # children_registered = user_calcs.ChildrenRegistered()
-    # service_forms = user_calcs.ServiceForms()
-    # growth_monitoring = user.GrowthMonitoring()
+    service_forms = user_calcs.ServiceForms()
+    growth_monitoring = user_calcs.GrowthMonitoring()
 
     # last_month_total = "Amount of AWW incentive paid last month"
 
-
-# OPMFluff.get_result('all_pregnancies', [domain, user_id])
 
 OpmCasePillow = OpmCaseFluff.pillow()
 OpmUserPillow = OpmUserFluff.pillow()

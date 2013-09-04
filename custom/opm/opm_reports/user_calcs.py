@@ -20,31 +20,71 @@ def user_date_group(form, value=1):
 
 # group by user!
 class WomenRegistered(fluff.Calculator):
+    """
     "No. of women registered under BCSP"
 
+    Value represents the number of children delivered by that case
+    """
+
+    @fluff.date_emitter
+    def total(self, case):
+        if case.type == "Pregnancy":
+            total = 0
+            for form in case.get_forms():
+                if form.xmlns == DELIVERY_XMLNS:
+                    children = form.form.get('live_birth_amount')
+                    if children:
+                        total += int(children)
+            yield user_date_group(form, total)
+
+
+class ServiceForms(fluff.Calculator):
+    """
+    "Submission of Service Availability form"
+
+    Number of Service Availability Forms Filled Out in Time Period
+    """
+
     @fluff.date_emitter
     def total(self, form):
-        "Open cases at end of month"
-        if form.xmlns == DELIVERY_XMLNS:
-            children = form.form.get('live_birth_amount')
-            if children:
-                yield user_date_group(form, children)
+        if form.xmlns == VHND_XMLNS:
+            yield user_date_group(form) 
 
 
-class ChildrenRegistered(fluff.Calculator):
-    "No. of children registered under BCSP"
-    
+class GrowthMonitoring(fluff.Calculator):
+    """
+    "No. of Growth monitoring Sections Filled for eligible children"
+
+    Sum of form property (in child followup form) where child1_child_growthmon,
+    child2_child_growthmon, and child3_child_growthmon = '1' in the time period.
+    Within a form, if multiple = '1', give xtimes the amount. "Union" this so
+    that if ever '1' within the time period, that this triggers payment
+    """
+
     @fluff.date_emitter
     def total(self, form):
-        "Open cases at end of month"
-        if form.xmlns == DELIVERY_XMLNS:
-            if form.form.get('mother_preg_outcome') in ['2', '3']:
-                yield case_date_group(form)
+        if form.xmlns == CHILD_FOLLOWUP_XMLNS:
+            # child<n>_child_growthmon == 1 if weight was monitored this month
+            total = 0
+            for child_num in list('123'):
+                child = form.form.get('child_%s' % child_num)
+                if child:
+                    try:
+                        total += int(child.get('child%s_child_growthmon' % child_num))
+                    except:
+                        pass
+            yield user_date_group(form, total)
 
 
-# class ServiceForms(fluff.Calculator):
-#     "Submission of Service Availability form"
-
-# class GrowthMonitoring(fluff.Calculator):
-#     "No. of Growth monitoring Sections Filled for eligible children"
+    # def growth_monitoring_count(self):
+    #     total = 0
+    #     for form in self.forms:
+    #         if form.xmlns == CHILD_FOLLOWUP_XMLNS:
+    #             for child_num in ['1', '2', '3']:
+    #                 try:
+    #                     total += int(form.form.get('child_%s' % child_num
+    #                         ).get('child%s_child_growthmon' % child_num))
+    #                 except:
+    #                     pass
+    #     return total
 

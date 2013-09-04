@@ -1,8 +1,6 @@
-# clarify: "No. of women registered under BCSP" refers only to OPEN cases?
-# Number of Service Availability Forms Filled Out in Time Period --> VHND Services
 
 from .constants import *
-from .models import OpmUserFluff
+from .models import OpmCaseFluff, OpmUserFluff, OpmFormFluff
 
 class Worker(object):
     method_map = [
@@ -30,14 +28,35 @@ class Worker(object):
         self.account_number = self.fluff_doc.account_number
         self.block = self.fluff_doc.block
 
-        self.women_registered = "No. of women registered under BCSP"
-        self.children_registered = "No. of children registered under BCSP"
-        self.service_forms_count = "Submission of Service Availability form"
-        self.growth_monitoring_count = "No. of Growth monitoring Sections Filled for eligible children"
+        def get_result(calculator):
+            return OpmFormFluff.get_result(
+                calculator,
+                [DOMAIN, worker._id],
+                date_range,
+            )['total']
 
-        self.service_forms_cash = "Payment for Service Availability Form (in Rs.)"
-        self.growth_monitoring_cash = "Payment for Growth Monitoring Forms (in Rs.)"
-        self.month_total = "Total Payment Made for the month (in Rs.)"
+        self.women_registered = len(OpmCaseFluff.get_result(
+            'women_registered',
+            [DOMAIN, worker._id],
+            date_range,
+            reduce=False,
+        )['total'])
+        self.children_registered = OpmCaseFluff.get_result(
+            'women_registered',
+            [DOMAIN, worker._id],
+            date_range,
+        )['total']
+        self.service_forms_count = get_result('service_forms')
+        self.growth_monitoring_count = get_result('growth_monitoring')
+
+    # women_registered = user_calcs.WomenRegistered()
+    # children_registered = user_calcs.ChildrenRegistered()
+    # service_forms = user_calcs.ServiceForms()
+    # growth_monitoring = user_calcs.GrowthMonitoring()
+
+        self.service_forms_cash = self.service_forms_count * FIXTURES['service_forms_cash']
+        self.growth_monitoring_cash = self.growth_monitoring_count * FIXTURES['growth_monitoring_cash']
+        self.month_total = self.service_forms_cash + self.growth_monitoring_cash
         
         self.last_month_total = "Amount of AWW incentive paid last month"
 

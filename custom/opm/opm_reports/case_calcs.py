@@ -97,3 +97,18 @@ class ChildSpacing(fluff.Calculator):
                     ]
                 }
             
+class ChildFollowup(fluff.Calculator):
+
+    @fluff.date_emitter
+    def total(self, form):
+        if form.xmlns == CHILD_FOLLOWUP_XMLNS:
+            followed_up = False
+            for prop in ['window%d_child%d' % (window, child)
+                for window in range(3, 15) for child in range(1, 4)]:
+                if form.form.get(prop):# == '1':
+                    followed_up = True
+            if followed_up:
+                print "****** HERE'S ONE!! ******"
+                print form._id
+                yield case_date_group(form)
+                import pdb; pdb.set_trace()
