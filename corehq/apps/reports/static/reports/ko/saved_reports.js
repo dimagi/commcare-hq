@@ -183,10 +183,19 @@ var ReportConfigsViewModel = function (options) {
     self.modalSaveButton = {
         state: ko.observable(),
         saveOptions: function () {
+            var config_data = self.configBeingEdited().unwrap();
+            // remove null filters
+            for (var key in config_data["filters"]) {
+                if (config_data["filters"].hasOwnProperty(key)) {
+                    if (config_data["filters"][key] === null) {
+                        delete config_data["filters"][key];
+                    }
+                }
+            }
             return {
                 url: options.saveUrl,
                 type: 'post',
-                data: JSON.stringify(self.configBeingEdited().unwrap()),
+                data: JSON.stringify(config_data),
                 dataType: 'json',
                 success: function (data) {
                     self.addOrReplaceConfig(data);

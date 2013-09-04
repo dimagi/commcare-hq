@@ -259,4 +259,27 @@
     <div class="row-fluid">
     {% include "hqadmin/partials/project_snapshot.html" %}
     </div>
+    <div class="row-fluid">
+        <h3>Recent Database Changes</h3>
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Domain</th>
+                <th>Doc Type</th>
+                <th>id</th>
+                <th>rev</th>
+            </tr>
+            </thead>
+            <tbody>
+{% for change in recent_changes %}
+            <tr>
+                <td>{{ change.domain }}</td>
+                <td>{{ change.doc_type }}</td>
+                <td>{{ change.id }}</td>
+                <td>{{ change.rev }}</td>
+            </tr>
+{% endfor %}
+            </tbody>
+        </table>
+    </div>
 {% endblock %}

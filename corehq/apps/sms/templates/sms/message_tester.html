@@ -1,11 +1,12 @@
 {% extends 'sms/default.html' %}
+{% load i18n %}
 
 {% block main_column %}
     <form class="form form-horizontal" action="{% url corehq.apps.sms.views.message_test domain phone_number %}" method="post">
         <fieldset>
-            <legend>Simulate Inbound Message from +{{ phone_number }}</legend>
+            <legend>{% trans "Simulate Inbound Message from" %} +{{ phone_number }}</legend>
             <div class="control-group">
-                <label class="control-label" for="sms-message">Message:</label>
+                <label class="control-label" for="sms-message">{% trans "Message:" %}</label>
                 <div class="controls">
                     <div>
                         <textarea id="sms-message" name="message" class="span12"></textarea>
@@ -14,7 +15,7 @@
             </div>
         </fieldset>
         <div class="form-actions">
-            <button type="submit" name="send_sms_button" class="btn btn-primary">Send Message</button>
+            <button type="submit" name="send_sms_button" class="btn btn-primary">{% trans "Send Message" %}</button>
         </div>
     </form>
 {{ block.super }}

@@ -147,6 +147,15 @@ def parse_excel_date(date_val):
 
     return parsed_date
 
+
+def convert_field_value(value):
+    # coerce to string unless it's a unicode string then we want that
+    if isinstance(value, unicode):
+        return value
+    else:
+        return str(value)
+
+
 def parse_search_id(config, columns, row):
     """ Find and convert the search id in an excel row """
 
@@ -164,8 +173,7 @@ def parse_search_id(config, columns, row):
         # if it's not a number that's okay too
         pass
 
-    # need a string no matter what the type was
-    return str(search_id)
+    return convert_field_value(search_id)
 
 def get_key_column_index(config, columns):
     key_column = config.key_column
@@ -256,7 +264,7 @@ def populate_updated_fields(config, columns, row):
             if field_map[key]['is_date_field']:
                 update_value = parse_excel_date(update_value)
             else:
-                update_value = str(update_value)
+                update_value = convert_field_value(update_value)
 
         fields_to_update[update_field_name] = update_value
 

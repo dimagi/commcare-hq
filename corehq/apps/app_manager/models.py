@@ -6,6 +6,7 @@ import logging
 import hashlib
 import random
 import json
+from corehq.apps.app_manager.commcare_settings import check_condition
 import langcodes
 import types
 import re
@@ -57,7 +58,7 @@ from corehq.apps.app_manager.const import APP_V1, APP_V2
 from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings, build_error_utils
 from corehq.apps.app_manager.suite_xml import IdStrings
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
-from corehq.apps.app_manager.util import split_path, save_xform
+from corehq.apps.app_manager.util import split_path, save_xform, create_temp_sort_column
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, XFormError, XFormValidationError, WrappedNode, CaseXPath
 
 MISSING_DEPENDECY = \
@@ -210,6 +211,8 @@ class FormActions(DocumentSchema):
 
 class FormSource(object):
     def __get__(self, form, form_cls):
+        if not form:
+            return self
         unique_id = form.get_unique_id()
         app = form.get_app()
         filename = "%s.xml" % unique_id
@@ -557,21 +560,22 @@ class FormBase(DocumentSchema):
                     else:
                         actions = [action]
                     for action in actions:
+                        action_properties = action.properties()
                         if action.condition.type == 'if':
                             yield action.condition.question
-                        if hasattr(action, 'name_path') and action.name_path:
+                        if 'name_path' in action_properties and action.name_path:
                             yield action.name_path
-                        if hasattr(action, 'case_name'):
+                        if 'case_name' in action_properties:
                             yield action.case_name
-                        if hasattr(action, 'external_id') and action.external_id:
+                        if 'external_id' in action_properties and action.external_id:
                             yield action.external_id
-                        if hasattr(action, 'update'):
+                        if 'update' in action_properties:
                             for _, path in action.update.items():
                                 yield path
-                        if hasattr(action, 'case_properties'):
+                        if 'case_properties' in action_properties:
                             for _, path in action.case_properties.items():
                                 yield path
-                        if hasattr(action, 'preload'):
+                        if 'preload' in action_properties:
                             for path, _ in action.preload.items():
                                 yield path
             paths.update(generate_paths())
@@ -1056,6 +1060,7 @@ def absolute_url_property(method):
         return "%s%s" % (self.url_base, method(self))
     return property(_inner)
 
+
 class ApplicationBase(VersionedDoc, SnapshotMixin):
     """
     Abstract base class for Application and RemoteApp.
@@ -1154,12 +1159,24 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         return self
 
     @classmethod
+    def view(cls, view_name, wrapper=None, classes=None, **params):
+        if cls is ApplicationBase and not wrapper:
+            classes = classes or dict((k, cls) for k in str_to_cls.keys())
+        return super(ApplicationBase, cls).view(
+            view_name,
+            wrapper=wrapper,
+            classes=classes,
+            **params
+        )
+
+    @classmethod
     def by_domain(cls, domain):
         return cls.view('app_manager/applications_brief',
                         startkey=[domain],
                         endkey=[domain, {}],
                         include_docs=True,
-                        stale=settings.COUCH_STALE_QUERY).all()
+                        #stale=settings.COUCH_STALE_QUERY,
+        ).all()
 
     def rename_lang(self, old_lang, new_lang):
         validate_lang(new_lang)
@@ -1355,7 +1372,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
             # e.g. 2011-Apr-11 20:45
             'CommCare-Release': "true",
         }
-        if LooseVersion(self.build_spec.version) < '2.1':
+        if LooseVersion(self.build_spec.version) < '2.8':
             settings['Build-Number'] = self.version
         return settings
 
@@ -1513,6 +1530,10 @@ def validate_lang(lang):
 class SavedAppBuild(ApplicationBase):
     def to_saved_build_json(self, timezone):
         data = super(SavedAppBuild, self).to_json().copy()
+        for key in ('modules', 'user_registration',
+                    '_attachments', 'profile', 'translations'
+                    'description', 'short_description'):
+            data.pop(key, None)
         data.update({
             'id': self.id,
             'built_on_date': utc_to_timezone(data['built_on'], timezone, "%b %d, %Y"),
@@ -1652,23 +1673,25 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                         form.version = self.version
 
     def set_media_versions(self, previous_version):
-        for path, map_item in self.multimedia_map.items():
-            if previous_version:
-                pre_map_item = previous_version.multimedia_map.get(path, None)
-                if pre_map_item and pre_map_item.version and pre_map_item.multimedia_id == map_item.multimedia_id:
-                    map_item.version = pre_map_item.version
-                else:
-                    map_item.version = self.version
+        # access to .multimedia_map is slow
+        prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
+
+        for path, map_item in self.multimedia_map.iteritems():
+            pre_map_item = prev_multimedia_map.get(path, None)
+            if pre_map_item and pre_map_item.version and pre_map_item.multimedia_id == map_item.multimedia_id:
+                map_item.version = pre_map_item.version
             else:
                 map_item.version = self.version
 
     def _create_custom_app_strings(self, lang):
         def trans(d):
             return clean_trans(d, langs)
+
         id_strings = IdStrings()
         langs = [lang] + self.langs
         yield id_strings.homescreen_title(), self.name
         yield id_strings.app_display_name(), self.name
+
         for module in self.get_modules():
             for detail in module.get_details():
                 if detail.type.startswith('case'):
@@ -1676,11 +1699,30 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 else:
                     label = trans(module.referral_label)
                 yield id_strings.detail_title_locale(module, detail), label
-                for column in detail.get_columns():
+
+                sort_elements = dict((s.field, (s, i + 1))
+                                     for i, s in enumerate(detail.sort_elements))
+
+                columns = list(detail.get_columns())
+                for column in columns:
                     yield id_strings.detail_column_header_locale(module, detail, column), trans(column.header)
+
+                    if column.header:
+                        sort_elements.pop(column.header.values()[0], None)
+
                     if column.format == 'enum':
                         for key, val in column.enum.items():
                             yield id_strings.detail_column_enum_variable(module, detail, column, key), trans(val)
+
+                # everything left is a sort only option
+                for sort_element in sort_elements:
+                    # create a fake column for it
+                    column = create_temp_sort_column(sort_element, len(columns))
+
+                    # now mimic the normal translation
+                    field_text = {'en': str(column.field)}
+                    yield id_strings.detail_column_header_locale(module, detail, column), trans(field_text)
+
             yield id_strings.module_locale(module), trans(module.name)
             if module.case_list.show:
                 yield id_strings.case_list_locale(module), trans(module.case_list.label) or "Case List"
@@ -1740,16 +1782,26 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return s
 
     def create_profile(self, is_odk=False, with_media=False, template='app_manager/profile.xml'):
+        self__profile = self.profile
         app_profile = defaultdict(dict)
-        app_profile.update(self.profile)
-        # the following code is to let HQ override CommCare defaults
-        # impetus: Weekly Logging should be Short (HQ override) instead of Never (CommCare default)
-        # setting.default is assumed to also be the CommCare default unless there's a setting.commcare_default
+
         for setting in commcare_settings.SETTINGS:
-            type = setting['type']
-            if type in ('properties', 'features') and setting['id'] not in app_profile[type]:
+            setting_type = setting['type']
+            setting_id = setting['id']
+
+            if setting_type not in ('properties', 'features'):
+                setting_value = None
+            elif setting_id not in self__profile.get(setting_type, {}):
                 if 'commcare_default' in setting and setting['commcare_default'] != setting['default']:
-                    app_profile[type][setting['id']] = setting['default']
+                    setting_value = setting['default']
+                else:
+                    setting_value = None
+            else:
+                setting_value = self__profile[setting_type][setting_id]
+            if setting_value:
+                app_profile[setting_type][setting_id] = setting_value
+            # assert that it gets explicitly set once per loop
+            del setting_value
 
         if self.case_sharing:
             app_profile['properties']['server-tether'] = 'sync'
@@ -2060,6 +2112,18 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def get_by_xmlns(cls, domain, xmlns):
         r = get_db().view('exports_forms/by_xmlns', key=[domain, {}, xmlns], group=True).one()
         return cls.get(r['value']['app']['id']) if r and 'app' in r['value'] else None
+
+    def get_profile_setting(self, s_type, s_id):
+        setting = self.profile.get(s_type, {}).get(s_id)
+        if setting is not None:
+            return setting
+        yaml_setting = commcare_settings.SETTINGS_LOOKUP[s_type][s_id]
+        for contingent in yaml_setting.get("contingent_default", []):
+            if check_condition(self, contingent["condition"]):
+                setting = contingent["value"]
+        if setting is not None:
+            return setting
+        return yaml_setting.get("default")
 
 
 class RemoteApp(ApplicationBase):

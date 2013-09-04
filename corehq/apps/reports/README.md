@@ -120,8 +120,7 @@ class DemoReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
         i_b = DatabaseColumn("Indicator B", SumColumn("indicator_b"))
 
         agg_c_d = AggregateColumn("C/D", self.calc_percentage,
-                                  SumColumn("indicator_c"),
-                                  SumColumn("indicator_d"),
+                                  [SumColumn("indicator_c"), SumColumn("indicator_d")],
                                   format_fn=self.format_percent)
 
         return [
@@ -153,10 +152,13 @@ class DemoReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
 Custom reports can be configured in code or in the database. To configure custom reports in code
 follow the following instructions.
 
-First add a mapping for your domain(s) to the custom reports module root to the `DOMAIN_MODULE_MAP`
+First, you must add the app to `HQ_APPS` in `settings.py`.  It must have an `__init__.py` and a
+`models.py` for django to recognize it as an app.
+
+Next, add a mapping for your domain(s) to the custom reports module root to the `DOMAIN_MODULE_MAP`
 variable in `settings.py`.
 
-Next, add the following to your `__init__.py` in your custom reports submodule:
+Finally, add a mapping to your custom reports to `__init__.py` in your custom reports submodule:
 
 ```
 from myproject import reports

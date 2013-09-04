@@ -26,13 +26,17 @@ from django.core import management
 
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.app_manager.util import get_settings_values
+from corehq.apps.appstore.views import parse_args_for_es
+from corehq.apps.hqadmin.history import get_recent_changes
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index, check_xform_index
+from corehq.apps.orgs.views import get_stats_data
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
+from corehq.apps.reports.standard.domains import es_domain_query
 from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.sms.models import SMSLog
 from corehq.apps.users.models import  CommCareUser, WebUser
@@ -49,10 +53,8 @@ from couchexport.models import Format
 from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.timezones import utils as tz_utils
-from django.utils.translation import ugettext as _
 from dimagi.utils.django.email import send_HTML_email
 from django.template.loader import render_to_string
-from corehq.apps.users.models import CouchUser
 from django.http import Http404
 
 
@@ -351,7 +353,7 @@ def submissions_errors(request, template="hqadmin/submissions_errors_report.html
             reduce=True,
             startkey=key+[datespan.startdate_param_utc],
             endkey=key+[datespan.enddate_param_utc],
-            stale=settings.COUCH_STALE_QUERY,
+            #stale=settings.COUCH_STALE_QUERY,
         ).first()
         num_errors = 0
         num_warnings = 0
@@ -397,7 +399,7 @@ def mobile_user_reports(request):
             reduce=False,
             startkey=[domain.name, "tag", "user-report"],
             endkey=[domain.name, "tag", "user-report", {}],
-            stale=settings.COUCH_STALE_QUERY,
+            #stale=settings.COUCH_STALE_QUERY,
         ).all()
         for report in data:
             val = report.get('value')
@@ -649,10 +651,14 @@ def system_info(request):
         return size
 
     context = get_hqadmin_base_context(request)
-
     context['couch_update'] = request.GET.get('couch_update', 5000)
     context['celery_update'] = request.GET.get('celery_update', 10000)
-    context['celery_flower_url'] = settings.CELERY_FLOWER_URL
+    context['celery_flower_url'] = getattr(settings, 'CELERY_FLOWER_URL', None)
+
+    # recent changes
+    recent_changes = int(request.GET.get('changes', 50))
+    context['recent_changes'] = get_recent_changes(get_db(), recent_changes)
+
 
     context['rabbitmq_url'] = get_rabbitmq_management_url()
 
@@ -879,3 +885,29 @@ class FlagBrokenBuilds(FormView):
                 docs.append(doc)
         db.bulk_save(docs)
         return HttpResponse("posted!")
+
+
+ES_DOMAIN_QUERY_LIMIT = 500
+
+@require_superuser
+@datespan_in_request(from_param="startdate", to_param="enddate", default_days=365)
+def stats_data(request):
+    histo_type = request.GET.get('histogram_type')
+    interval = request.GET.get("interval", "week")
+
+    params, __ = parse_args_for_es(request, prefix='es_')
+    if params:
+        domain_results = es_domain_query(params, fields=["name"], size=99999, show_stats=False)
+        domains = [d["fields"]["name"] for d in domain_results["hits"]["hits"]]
+
+        if len(domains) <= 10:
+            domain_info = [{"names": [d], "display_name": d} for d in domains]
+        elif len(domains) <= ES_DOMAIN_QUERY_LIMIT:
+            domain_info = [{"names": [d for d in domains], "display_name": _("Domains Matching Filter")}]
+        else:
+            domain_info = [{"names": None, "display_name": _("All Domains (NOT applying filters. > 500 projects)")}]
+    else:
+        domain_info = [{"names": None, "display_name": _("All Domains")}]
+
+    stats_data = get_stats_data(domain_info, histo_type, request.datespan, interval=interval)
+    return json_response(stats_data)

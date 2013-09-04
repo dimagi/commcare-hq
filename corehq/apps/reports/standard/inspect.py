@@ -18,7 +18,6 @@ import logging
 
 from casexml.apps.case.models import CommCareCaseAction
 from corehq.apps.api.es import CaseES
-from corehq.apps.hqsofabed.models import HQFormData
 from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
@@ -27,6 +26,7 @@ from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.fields import SelectOpenCloseField, SelectMobileWorkerField, StrongFilterUsersField
 from corehq.apps.reports.generic import GenericTabularReport, ProjectInspectionReportParamsMixin, ElasticProjectInspectionReport
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
+from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.couch import get_cached_property, IncompatibleDocument
@@ -36,7 +36,6 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
-import rawes
 from corehq import elastic
 
 class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -69,6 +68,10 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
             DataTablesColumn(_("Submit Time"), prop_name="form.meta.timeEnd"),
             DataTablesColumn(_("Form"), prop_name="form.@name"))
         return headers
+
+    @property
+    def default_datespan(self):
+        return datespan_from_beginning(self.domain, self.datespan_default_days, self.timezone)
 
     @property
     def es_results(self):
@@ -127,8 +130,11 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
             uid = form["form"]["meta"]["userID"]
             username = form["form"]["meta"].get("username")
             try:
-                name = ('"%s"' % get_cached_property(CouchUser, uid, 'full_name', expiry=7*24*60*60)) \
-                    if username not in ['demo_user', 'admin'] else ""
+                if username not in ['demo_user', 'admin']:
+                    full_name = get_cached_property(CouchUser, uid, 'full_name', expiry=7*24*60*60)
+                    name = '"%s"' % full_name if full_name else ""
+                else:
+                    name = ""
             except (ResourceNotFound, IncompatibleDocument):
                 name = "<b>[unregistered]</b>"
 
@@ -576,8 +582,8 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
 
     def _es_query(self):
         es_config_case = {
-            'index': 'full_cases',
-            'type': 'full_case',
+            'index': 'report_cases',
+            'type': 'report_case',
             'field_to_path': lambda f: '%s.#value' % f,
             'fields': {
                 'date': 'server_modified_on',
@@ -585,8 +591,8 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
             }
         }
         es_config_form = {
-            'index': 'full_xforms',
-            'type': 'full_xform',
+            'index': 'report_xforms',
+            'type': 'report_xform',
             'field_to_path': lambda f: 'form.%s.#value' % f,
             'fields': {
                 'date': 'received_on',

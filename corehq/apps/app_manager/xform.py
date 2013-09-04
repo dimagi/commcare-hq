@@ -359,8 +359,10 @@ class XForm(WrappedNode):
 
         questions = []
         excluded_paths = set()
+        repeat_contexts = set([''])
 
         def build_questions(group, path_context="", repeat_context="", exclude=False):
+            repeat_contexts.add(repeat_context)
             for prompt in group.findall('*'):
                 if prompt.tag_xmlns == namespaces['f'][1:-1] and prompt.tag_name != "label":
                     path = self.resolve_path(get_path(prompt), path_context)
@@ -393,7 +395,7 @@ class XForm(WrappedNode):
                                 question.update({'options': options})
                             questions.append(question)
         build_questions(self.find('{h}body'))
-
+        repeat_contexts = sorted(repeat_contexts, reverse=True)
 
         def build_non_question_paths(parent, path_context=""):
             for child in parent.findall('*'):
@@ -402,10 +404,15 @@ class XForm(WrappedNode):
             if not parent.findall('*'):
                 path = path_context
                 if path not in excluded_paths:
+                    matching_repeat_context = (
+                        repeat_context for repeat_context in repeat_contexts
+                        if repeat_context in path
+                    ).next()
                     questions.append({
                         "label": path,
                         "tag": "hidden",
-                        "value": path
+                        "value": path,
+                        "repeat": matching_repeat_context,
                     })
         build_non_question_paths(self.data_node)
         return questions

@@ -1,7 +1,10 @@
 # coding=utf-8
+from django.template.defaultfilters import slugify
 from sqlagg.columns import SimpleColumn
+from sqlagg.filters import RawFilter, SqlFilter
 import sqlalchemy
 import sqlagg
+from corehq.apps.reports.api import ReportDataSource
 
 from corehq.apps.reports.basic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, \
@@ -47,7 +50,7 @@ class Column(object):
 
 
 class DatabaseColumn(Column):
-    def __init__(self, header, agg_column, format_fn=None, *args, **kwargs):
+    def __init__(self, header, agg_column, format_fn=None, slug=None, *args, **kwargs):
         """
         Args:
             :param header:
@@ -70,10 +73,15 @@ class DatabaseColumn(Column):
             :param format_fn=None:
                 Function to apply to value before display. Useful for formatting and sorting.
                 See corehq.apps.reports.util.format_datatables_data
+            :param slug=None:
+                Unique ID for the column. If not supplied assumed to be 'agg_column.name'.
+                This is used by the Report API.
             :param kwargs:
                 Additional keyword arguments will be passed on when creating the DataTablesColumn
 
         """
+        self.slug = slug or agg_column.name
+
         if 'sortable' not in kwargs:
             kwargs['sortable'] = True
 
@@ -100,7 +108,7 @@ class AggregateColumn(Column):
     """
     Allows combining the values from multiple columns into a single value.
     """
-    def __init__(self, header, aggregate_fn, *columns, **kwargs):
+    def __init__(self, header, aggregate_fn, columns, format_fn=None, slug=None, **kwargs):
         """
         Args:
             :param header:
@@ -113,6 +121,9 @@ class AggregateColumn(Column):
             :param format_fn=None:
                 Function to apply to value before display. Useful for formatting and sorting.
                 See corehq.apps.reports.util.format_datatables_data
+            :param slug=None:
+                Unique ID for the column. If not supplied assumed to be slugify(header).
+                This is used by the Report API.
             :param sortable:
                 Indicates if the column should be sortable. If true and no format_fn is provided then
                 the default datatables format function is used. Defaults to True.
@@ -120,7 +131,7 @@ class AggregateColumn(Column):
                 See corehq.apps.reports.datatables.DTSortType
         """
         self.aggregate_fn = aggregate_fn
-        format_fn = kwargs.pop('format_fn', None)
+        self.slug = slug or slugify(header)
 
         if 'sortable' not in kwargs:
             kwargs['sortable'] = True
@@ -143,7 +154,7 @@ class AggregateColumn(Column):
         return self.view.get_value(row) if row else None
 
 
-class SqlData(object):
+class SqlData(ReportDataSource):
     table_name = None
 
     @property
@@ -163,7 +174,7 @@ class SqlData(object):
     @property
     def filters(self):
         """
-        Returns a list of filter statements e.g. ["date > :enddate"]
+        Returns a list of filter statements e.g. [EQ('date', 'enddate')]
         """
         raise NotImplementedError()
 
@@ -172,7 +183,10 @@ class SqlData(object):
         """
         Return a dict mapping the filter keys to actual values e.g. {"enddate": date(2013,01,01)}
         """
-        raise NotImplementedError()
+        if self.config:
+            return self.config
+        elif self.filters:
+            raise SqlReportException("No filter values specified")
 
     @property
     @memoized
@@ -189,17 +203,47 @@ class SqlData(object):
         return None
 
     @property
-    def query_context(self):
-        return sqlagg.QueryContext(self.table_name, self.filters, self.group_by)
+    def wrapped_filters(self):
+        def _wrap_if_necessary(string_or_filter):
+            if isinstance(string_or_filter, basestring):
+                filter = RawFilter(string_or_filter)
+            else:
+                filter = string_or_filter
+            assert isinstance(filter, SqlFilter)
+            return filter
+
+        if self.filters:
+            return [_wrap_if_necessary(f) for f in self.filters]
+        else:
+            return []
 
     @property
-    def data(self):
+    def query_context(self):
+        return sqlagg.QueryContext(self.table_name, self.wrapped_filters, self.group_by)
+
+    def get_data(self, slugs=None):
+        data = self._get_data(slugs=slugs)
+        columns = [c for c in self.columns if not slugs or c.slug in slugs]
+        formatter = DataFormatter(DictDataFormat(columns, no_value=None))
+        formatted_data = formatter.format(data, keys=self.keys, group_by=self.group_by)
+
+        if self.group_by:
+            return formatted_data.values()
+        else:
+            return [formatted_data]
+
+    def slugs(self):
+        return [c.slug for c in self.columns]
+
+    def _get_data(self, slugs=None):
         if self.keys is not None and not self.group_by:
             raise SqlReportException('Keys supplied without group_by.')
 
         qc = self.query_context
         for c in self.columns:
-            qc.append_column(c.view)
+            if not slugs or c.slug in slugs:
+                qc.append_column(c.view)
+
         engine = sqlalchemy.create_engine(settings.SQL_REPORTING_DATABASE_URL)
         conn = engine.connect()
         try:
@@ -209,100 +253,112 @@ class SqlData(object):
 
         return data
 
+    @property
+    def data(self):
+        return self._get_data()
 
-class SqlTabularReport(SqlData, GenericTabularReport):
+
+class SqlTabularReport(GenericTabularReport, SqlData):
     no_value = '--'
     exportable = True
 
     @property
-    def fields(self):
-        return [cls.__module__ + '.' + cls.__name__
-                for cls in self.field_classes]
-
-    @property
     def headers(self):
-        return DataTablesHeader(*[c.data_tables_column for c in self.columns])
+        datatables_columns = []
+        groups = set()
+        for column in self.columns:
+            if column.header_group and column.header_group not in groups:
+                datatables_columns.append(column.header_group)
+                groups.add(column.header_group)
+            elif not column.header_group:
+                datatables_columns.append(column.data_tables_column)
+
+        return DataTablesHeader(*datatables_columns)
 
     @property
     def rows(self):
-        return TableDataFormatter.from_sqldata(self, no_value=self.no_value).format()
+        formatter = DataFormatter(TableDataFormat(self.columns, no_value=self.no_value))
+        return formatter.format(self.data, keys=self.keys, group_by=self.group_by)
 
 
-class BaseDataFormatter(object):
+class DataFormatter(object):
 
-    @classmethod
-    def from_sqldata(cls, sqldata, no_value='--', row_filter=None):
-        return cls(sqldata.data, sqldata.columns,
-                   keys=sqldata.keys, group_by=sqldata.group_by,
-                   no_value=no_value, row_filter=row_filter)
-
-    def __init__(self, data, columns, keys=None, group_by=None, no_value='--', row_filter=None):
-        self.data = data
-        self.columns = columns
-        self.keys = keys
-        self.group_by = group_by
-        self.no_value = no_value
+    def __init__(self, format, row_filter=None):
         self.row_filter = row_filter
+        self._format = format
 
-    def format(self):
+    def format(self, data, keys=None, group_by=None):
+        row_generator = self.format_rows(data, keys=keys, group_by=group_by)
+        return self._format.format_output(row_generator)
+
+    def format_rows(self, data, keys=None, group_by=None):
         """
         Return tuple of row key and formatted row
         """
-        if self.keys is not None and self.group_by:
-            for key_group in self.keys:
-                row_key = self._row_key(key_group)
-                row = self.data.get(row_key, None)
+        if keys is not None and group_by:
+            for key_group in keys:
+                row_key = self._row_key(group_by, key_group)
+                row = data.get(row_key, None)
                 if not row:
-                    row = dict(zip(self.group_by, key_group))
+                    row = dict(zip(group_by, key_group))
 
-                formatted_row = self.format_row(row)
+                formatted_row = self._format.format_row(row)
                 if self.filter_row(row_key, formatted_row):
                     yield row_key, formatted_row
-        elif self.group_by:
-            for key, row in self.data.items():
-                formatted_row = self.format_row(row)
+        elif group_by:
+            for key, row in data.items():
+                formatted_row = self._format.format_row(row)
                 if self.filter_row(key, formatted_row):
                     yield key, formatted_row
         else:
-            formatted_row = self.format_row(self.data)
+            formatted_row = self._format.format_row(data)
             if self.filter_row(None, formatted_row):
                 yield None, formatted_row
 
     def filter_row(self, key, row):
         return not self.row_filter or self.row_filter(key, row)
 
-    def _row_key(self, key_group):
-        if len(self.group_by) == 1:
+    def _row_key(self, group_by, key_group):
+        if len(group_by) == 1:
             return key_group[0]
-        elif len(self.group_by) > 1:
+        elif len(group_by) > 1:
             return tuple(key_group)
+
+
+class BaseDataFormat(object):
+    def __init__(self, columns, no_value='--'):
+        self.columns = columns
+        self.no_value = no_value
+
+    def format_row(self, row):
+        raise NotImplementedError()
+
+    def format_output(self, row_generator):
+        raise NotImplementedError()
 
     def _or_no_value(self, value):
         return value if value is not None else self.no_value
 
-    def format_row(self, row):
-        """
-        Override to implement specific row formatting
-        """
-        raise NotImplementedError()
 
-
-class TableDataFormatter(BaseDataFormatter):
+class TableDataFormat(BaseDataFormat):
     def format_row(self, row):
         return [self._or_no_value(c.get_value(row)) for c in self.columns]
 
-    def format(self):
-        for key, row in super(TableDataFormatter, self).format():
+    def format_output(self, row_generator):
+        for key, row in row_generator:
             yield row
 
 
-class DictDataFormatter(BaseDataFormatter):
+class DictDataFormat(BaseDataFormat):
+    """
+    Formats the report data as a dictionary
+    """
     def format_row(self, row):
-        return dict([(c.view.name, self._or_no_value(c.get_value(row))) for c in self.columns])
+        return dict([(c.slug, self._or_no_value(c.get_value(row))) for c in self.columns])
 
-    def format(self):
+    def format_output(self, row_generator):
         ret = dict()
-        for key, row in super(DictDataFormatter, self).format():
+        for key, row in row_generator:
             if key is None:
                 return row
             else:

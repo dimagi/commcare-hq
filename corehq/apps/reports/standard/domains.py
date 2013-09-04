@@ -1,4 +1,5 @@
 from datetime import datetime
+from dimagi.utils.decorators.memoized import memoized
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
@@ -8,6 +9,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from corehq.apps.reports.dispatcher import BasicReportDispatcher, AdminReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport, ElasticTabularReport
 from django.utils.translation import ugettext as _
+from corehq.apps.reports.util import numcell
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 
 def format_date(dstr, default):
@@ -74,14 +76,14 @@ class DomainStatsReport(GenericTabularReport):
             if dom.has_key('name'): # for some reason when using the statistical facet, ES adds an empty dict to hits
                 yield [
                     self.get_name_or_link(dom),
-                    dom.get("cp_n_active_cc_users", _("Not yet calculated")),
-                    dom.get("cp_n_cc_users", _("Not yet calculated")),
-                    dom.get("cp_n_active_cases", _("Not yet calculated")),
-                    dom.get("cp_n_cases", _("Not yet calculated")),
-                    dom.get("cp_n_forms", _("Not yet calculated")),
+                    numcell(dom.get("cp_n_active_cc_users", _("Not yet calculated"))),
+                    numcell(dom.get("cp_n_cc_users", _("Not yet calculated"))),
+                    numcell(dom.get("cp_n_active_cases", _("Not yet calculated"))),
+                    numcell(dom.get("cp_n_cases", _("Not yet calculated"))),
+                    numcell(dom.get("cp_n_forms", _("Not yet calculated"))),
                     format_date(dom.get("cp_first_form"), _("No forms")),
                     format_date(dom.get("cp_last_form"), _("No forms")),
-                    dom.get("cp_n_web_users", _("Not yet calculated"))
+                    numcell(dom.get("cp_n_web_users", _("Not yet calculated")))
                 ]
 
 
@@ -130,6 +132,8 @@ DOMAIN_FACETS = [
     "internal.using_adm",
     "internal.using_call_center",
     "internal.platform",
+    "internal.project_manager",
+    "internal.phone_model.exact",
 
     "is_approved",
     "is_public",
@@ -160,9 +164,10 @@ FACET_MAPPING = [
         {"facet": "deployment.city.exact", "name": "City", "expanded": False },
     ]),
     ("Type", True, [
-        {"facet": "internal.area.exact", "name": "Area", "expanded": True },
-        {"facet": "internal.sub_area.exact", "name": "Sub Area", "expanded": True },
-        {"facet": "phone_model", "name": "Phone Model", "expanded": False },
+        {"facet": "internal.area.exact", "name": "Sector", "expanded": True },
+        {"facet": "internal.sub_area.exact", "name": "Sub-Sector", "expanded": True },
+        {"facet": "internal.phone_model.exact", "name": "Phone Model", "expanded": True },
+        {"facet": "internal.project_manager", "name": "Project Manager", "expanded": True },
     ]),
     ("Self Starters", False, [
         {"facet": "internal.self_started", "name": "Self Started", "expanded": True },
@@ -190,12 +195,11 @@ FACET_MAPPING = [
     ]),
 ]
 
-def es_domain_query(params=None, facets=None, terms=None, domains=None, return_q_dict=False, start_at=None, size=None, sort=None):
+def es_domain_query(params=None, facets=None, domains=None, start_at=None, size=None, sort=None, fields=None, show_stats=True):
     from corehq.apps.appstore.views import es_query
     if params is None:
         params = {}
-    if terms is None:
-        terms = ['search']
+    terms = ['search']
     if facets is None:
         facets = []
     q = {"query": {"match_all":{}}}
@@ -223,13 +227,17 @@ def es_domain_query(params=None, facets=None, terms=None, domains=None, return_q
                             "operator" : "or", }}}}}
 
     q["facets"] = {}
-    stats = ['cp_n_active_cases', 'cp_n_inactive_cases', 'cp_n_active_cc_users', 'cp_n_cc_users', 'cp_n_60_day_cases', 'cp_n_web_users', 'cp_n_forms', 'cp_n_cases']
-    for prop in stats:
-        q["facets"].update({"%s-STATS" % prop: {"statistical": {"field": prop}}})
+    if show_stats:
+        stats = ['cp_n_active_cases', 'cp_n_inactive_cases', 'cp_n_active_cc_users', 'cp_n_cc_users', 'cp_n_60_day_cases', 'cp_n_web_users', 'cp_n_forms', 'cp_n_cases']
+        for prop in stats:
+            q["facets"].update({"%s-STATS" % prop: {"statistical": {"field": prop}}})
 
     q["sort"] = sort if sort else [{"name" : {"order": "asc"}},]
 
-    return es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search', start_at, size, dict_only=return_q_dict)
+    if fields:
+        q["fields"] = fields
+
+    return es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search', start_at, size)
 
 ES_PREFIX = "es_"
 class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
@@ -239,7 +247,13 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
     name = ugettext_noop('Project Space List')
     facet_title = ugettext_noop("Project Facets")
     search_for = ugettext_noop("projects...")
+    base_template = "hqadmin/domain_faceted_report.html"
 
+    @property
+    def template_context(self):
+        ctxt = super(AdminDomainStatsReport, self).template_context
+        ctxt["interval"] = "month"
+        return ctxt
 
     def es_query(self, params=None):
         return es_domain_query(params, self.es_facet_list, sort=self.get_sorting_block(),
@@ -312,13 +326,6 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
         def format_date(dstr, default):
             # use [:19] so that only only the 'YYYY-MM-DDTHH:MM:SS' part of the string is parsed
             return datetime.strptime(dstr[:19], '%Y-%m-%dT%H:%M:%S').strftime('%Y/%m/%d %H:%M:%S') if dstr else default
-
-        def get_name_or_link(d):
-            if not getattr(self, 'show_name', None):
-                return mark_safe('<a href="%s">%s</a>' % \
-                       (reverse("domain_homepage", args=[d['name']]), d.get('hr_name') or d['name']))
-            else:
-                return d['name']
 
         for dom in domains:
             if dom.has_key('name'): # for some reason when using the statistical facet, ES adds an empty dict to hits

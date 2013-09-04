@@ -44,7 +44,6 @@ class GenericReportView(CacheableRequestMixIn):
         report_context
             - returns a dict to be inserted into self.context
             - this is where the main processing of the report data should happen
-            - can be cached using @cache_report decorator in memcached where you please
 
         Note: In general you should not be inserting things into self.context directly, unless absolutely
             necessary. Please use the structure in the above properties for updating self.context
@@ -402,7 +401,10 @@ class GenericReportView(CacheableRequestMixIn):
         current_config_id = self.request.GET.get('config_id', '')
         default_config = ReportConfig.default()
 
-        has_datespan = ('corehq.apps.reports.fields.DatespanField' in self.fields)
+        has_datespan = any([ds_field in self.fields for ds_field in (
+            'corehq.apps.reports.fields.DatespanField',
+            'corehq.apps.reports.filters.dates.DatespanFilter'
+        )])
 
         self.context.update(
             report=dict(
@@ -519,7 +521,6 @@ class GenericReportView(CacheableRequestMixIn):
         return render(self.request, self.mobile_template_base, self.context)
     
     @property
-    @request_cache("email")
     def email_response(self):
         """
         This renders a json object containing a pointer to the static html 
@@ -560,7 +561,7 @@ class GenericReportView(CacheableRequestMixIn):
         )
 
     @property
-    @request_cache("filters")
+    @request_cache("filters", expiry=60 * 10)
     def filters_response(self):
         """
             Intention: Not to be overridden in general.

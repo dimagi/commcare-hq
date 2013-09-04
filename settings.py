@@ -42,7 +42,7 @@ LANGUAGE_CODE = 'en-us'
 LANGUAGES = (
     ('en', 'English'),
     ('fr', 'French'),
-    # ('hin', 'Hindi'),
+    ('hin', 'Hindi'),
 )
 
 SITE_ID = 1
@@ -50,10 +50,6 @@ SITE_ID = 1
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
 USE_I18N = True
-
-# Django i18n searches for translation files (django.po) within this dir
-# and then in the locale/ directories of installed apps
-LOCALE_PATHS = ()
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
@@ -65,6 +61,13 @@ FILEPATH = os.path.abspath(os.path.dirname(__file__))
 # media for user uploaded media.  in general this won't be used at all.
 MEDIA_ROOT = os.path.join(FILEPATH, 'mediafiles')
 STATIC_ROOT = os.path.join(FILEPATH, 'staticfiles')
+
+
+# Django i18n searches for translation files (django.po) within this dir
+# and then in the locale/ directories of installed apps
+LOCALE_PATHS = (
+    os.path.join(FILEPATH, 'locale'),
+)
 
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
@@ -188,7 +191,6 @@ HQ_APPS = (
     'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
     'corehq.apps.app_manager',
-    'corehq.apps.orgs',
     'corehq.apps.facilities',
     'corehq.apps.fixtures',
     'corehq.apps.importer',
@@ -208,6 +210,8 @@ HQ_APPS = (
     'corehq.apps.kookoo',
     'corehq.apps.sislog',
     'corehq.apps.yo',
+    'corehq.apps.telerivet',
+    'corehq.apps.mach',
     'corehq.apps.registration',
     'corehq.apps.unicel',
     'corehq.apps.reports',
@@ -220,14 +224,11 @@ HQ_APPS = (
     'custom.apps.wisepill',
     'fluff',
     'fluff.fluff_filter',
-    'sofabed.forms',
     'soil',
-    'corehq.apps.hqsofabed',
     'touchforms.formplayer',
     'hqbilling',
     'phonelog',
     'hutch',
-    'loadtest',
     'pillowtop',
     'hqstyle',
 
@@ -243,9 +244,51 @@ HQ_APPS = (
     'pathindia',
     'pact',
     'psi',
+
+    'custom.reports.care_sa',
+    'custom.apps.cvsu',
+    'custom.reports.mc',
 )
 
 TEST_APPS = ()
+
+# also excludes any app starting with 'django.'
+APPS_TO_EXCLUDE_FROM_TESTS = (
+    'a5288',
+    'couchdbkit.ext.django',
+    'corehq.apps.data_interfaces',
+    'corehq.apps.ivr',
+    'corehq.apps.kookoo',
+    'corehq.apps.mach',
+    'corehq.apps.ota',
+    'corehq.apps.settings',
+    'corehq.apps.sislog',
+    'corehq.apps.telerivet',
+    'corehq.apps.tropo',
+    'corehq.apps.yo',
+    'crispy_forms',
+    'djcelery',
+    'djtables',
+    'djkombu',
+    'gunicorn',
+    'langcodes',
+    'luna',
+    'raven.contrib.django.raven_compat',
+    'rosetta',
+    'soil',
+    'south',
+
+    # submodules with tests that run on travis
+    'casexml.apps.case',
+    'casexml.apps.phone',
+    'couchforms',
+    'ctable',
+    'ctable_view',
+    'dimagi.utils',
+    'fluff',
+    'fluff_filter',
+    'pillowtop',
+)
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
@@ -374,9 +417,6 @@ COUCHLOG_DATABASE_NAME = "commcarehq-couchlog"
 # couchlog/case search
 LUCENE_ENABLED = False
 
-# sofabed
-FORMDATA_MODEL = 'hqsofabed.HQFormData'
-
 
 
 # unicel sms config
@@ -455,9 +495,12 @@ MESSAGE_LOG_OPTIONS = {
 IVR_OUTBOUND_RETRIES = 3
 IVR_OUTBOUND_RETRY_INTERVAL = 10
 
-
 # List of Fluff pillow classes that ctable should process diffs for
-FLUFF_PILLOW_TYPES_TO_SQL = {}
+FLUFF_PILLOW_TYPES_TO_SQL = {
+    'UnicefMalawiFluff': 'SQL',
+    'MalariaConsortiumFluff': 'SQL',
+    'CareSAFluff': 'SQL',
+}
 
 try:
     #try to see if there's an environmental variable set for local_settings
@@ -555,6 +598,9 @@ if DEBUG:
             'luna',
         )
 
+    import warnings
+    warnings.simplefilter('default')
+
 if not DEBUG:
     TEMPLATE_LOADERS = [
         ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
@@ -602,7 +648,6 @@ COUCHDB_APPS = [
     'domain',
     'facilities',
     'fluff_filter',
-    'forms',
     'fixtures',
     'groups',
     'hqcase',
@@ -620,6 +665,7 @@ COUCHDB_APPS = [
     'reports',
     'sms',
     'smsforms',
+    'telerivet',
     'translations',
     'users',
     'utils',  # dimagi-utils
@@ -647,8 +693,11 @@ COUCHDB_APPS += LOCAL_COUCHDB_APPS
 COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label in COUCHDB_APPS]
 
 COUCHDB_DATABASES += [
+    ('fluff', COUCH_DATABASE + '__fluff-bihar'),  # needed to make couchdbkit happy
     ('bihar', COUCH_DATABASE + '__fluff-bihar'),
-    ('fluff', COUCH_DATABASE + '__fluff-bihar'),
+    ('care_sa', COUCH_DATABASE + '__fluff-care_sa'),
+    ('cvsu', COUCH_DATABASE + '__fluff-cvsu'),
+    ('mc', COUCH_DATABASE + '__fluff-mc'),
 ]
 
 INSTALLED_APPS += LOCAL_APPS
@@ -695,17 +744,15 @@ SMS_HANDLERS = [
     'corehq.apps.sms.api.fallback_handler',
 ]
 
-# mapping of phone number prefix (including country code) to a registered
-# outbound sms backend to use for that set of numbers. the backend can be:
-# * the ID of a MobileBackend couch doc ("new-style" backends), or
-# * the python path of a backend module ("old-style" backends)
-# NOTE: Going forward, do not add backends here, add them in localsettings
-if "SMS_BACKENDS" not in globals():
-    SMS_BACKENDS = {}
-
-SMS_BACKENDS[''] = 'MOBILE_BACKEND_MACH' # default backend
-SMS_BACKENDS['91'] = 'MOBILE_BACKEND_UNICEL' # india
-SMS_BACKENDS['999'] = 'MOBILE_BACKEND_TEST' # +999 is an unused country code
+SMS_LOADED_BACKENDS = [
+    "corehq.apps.unicel.api.UnicelBackend",
+    "corehq.apps.mach.api.MachBackend",
+    "corehq.apps.tropo.api.TropoBackend",
+    "corehq.apps.sms.backend.http_api.HttpBackend",
+    "corehq.apps.telerivet.models.TelerivetBackend",
+    "corehq.apps.sms.test_backend.TestSMSBackend",
+    "corehq.apps.sms.backend.test.TestBackend",
+]
 
 SELENIUM_APP_SETTING_DEFAULTS = {
     'cloudcare': {
@@ -736,11 +783,17 @@ PILLOWTOPS = [
                  'corehq.pillows.user.UserPillow',
                  'corehq.pillows.application.AppPillow',
                  'corehq.pillows.commtrack.ConsumptionRatePillow',
-
+                 'corehq.pillows.reportxform.ReportXFormPillow',
+                 'corehq.pillows.reportcase.ReportCasePillow',
                  # fluff
                  'bihar.models.CareBiharFluffPillow',
+                 'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
+                 'custom.reports.care_sa.models.CareSAFluffPillow',
+                 'custom.reports.mc.models.MalariaConsortiumFluffPillow',
+                 # MVP
+                 'corehq.apps.indicators.pillows.FormIndicatorPillow',
+                 'corehq.apps.indicators.pillows.CaseIndicatorPillow',
              ] + LOCAL_PILLOWTOPS
-
 
 #Custom workflow for indexing xform data beyond the standard properties
 XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
@@ -748,12 +801,13 @@ XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
 #Custom fully indexed domains for FullCase index/pillowtop
 # Adding a domain will not automatically index that domain's existing cases
 ES_CASE_FULL_INDEX_DOMAINS = [
-    'pact', 
-    'hsph', 
-    'care-bihar', 
-    'hsph-dev', 
+    'pact',
+    'hsph',
+    'care-bihar',
+    'hsph-dev',
     'hsph-betterbirth-pilot-2',
     'commtrack-public-demo',
+    'uth-rhd-test',
 ]
 
 #Custom fully indexed domains for FullXForm index/pillowtop --
@@ -762,6 +816,7 @@ ES_CASE_FULL_INDEX_DOMAINS = [
 # Adding a domain will not automatically index that domain's existing forms
 ES_XFORM_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
+    'uth-rhd-test',
 ]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
@@ -773,10 +828,13 @@ DOMAIN_MODULE_MAP = {
     'a5288-test': 'a5288',
     'a5288-study': 'a5288',
     'care-bihar': 'bihar',
+    'care-ihapc-live': 'custom.reports.care_sa',
+    'cvsulive': 'custom.apps.cvsu',
     'dca-malawi': 'dca',
     'eagles-fahu': 'dca',
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
+    'mc-inscale': 'custom.reports.mc',
     'mvp-potou': 'mvp',
     'mvp-sauri': 'mvp',
     'mvp-bonsaaso': 'mvp',

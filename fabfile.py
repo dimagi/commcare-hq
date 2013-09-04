@@ -166,7 +166,6 @@ def india():
         'couch': [],
         'pg': [],
         'rabbitmq': [],
-        'sofabed': [],
         'django_celery': [],
         'django_app': [],
         'django_pillowtop': [],
@@ -180,6 +179,40 @@ def india():
     env.roles = ['django_monolith']
     env.es_endpoint = 'localhost'
     env.flower_port = 5555
+
+
+
+@task
+def zambia():
+    """Our production server in wv zambia."""
+    env.sudo_user = 'cchq'
+    env.environment = 'production'
+    env.django_port = '9010'
+    env.code_branch = 'master'
+    env.should_migrate = True
+
+    env.hosts = ['44.222.19.153']  # LIKELY THAT THIS WILL CHANGE
+
+    _setup_path()
+
+    env.roledefs = {
+        'couch': [],
+        'pg': [],
+        'rabbitmq': [],
+        'django_celery': [],
+        'django_app': [],
+        'django_pillowtop': [],
+        'formsplayer': [],
+        'staticfiles': [],
+        'lb': [],
+        'deploy': [],
+
+        'django_monolith': ['44.222.19.153'],
+    }
+    env.roles = ['django_monolith']
+    env.es_endpoint = 'localhost'
+    env.flower_port = 5555
+
 
 @task
 def production():
@@ -195,7 +228,6 @@ def production():
         'couch': ['hqdb0.internal.commcarehq.org'],
         'pg': ['hqdb0.internal.commcarehq.org'],
         'rabbitmq': ['hqdb0.internal.commcarehq.org'],
-        'sofabed': ['hqdb0.internal.commcarehq.org'], #todo, right now group it with celery
         'django_celery': ['hqdb0.internal.commcarehq.org'],
         'django_app': ['hqdjango0.internal.commcarehq.org', 'hqdjango1.internal.commcarehq.org', 'hqdjango2.internal.commcarehq.org'],
         'django_pillowtop': ['hqdb0.internal.commcarehq.org'],
@@ -238,7 +270,6 @@ def realstaging():
         'couch': ['hqdb0-staging.internal.commcarehq.org'],
         'pg': ['hqdb0-staging.internal.commcarehq.org'],
         'rabbitmq': ['hqdb0-staging.internal.commcarehq.org'],
-        'sofabed': ['hqdb0-staging.internal.commcarehq.org'], #todo, right now group it with celery
         'django_celery': ['hqdb0-staging.internal.commcarehq.org'],
         'django_app': ['hqdjango0-staging.internal.commcarehq.org','hqdjango1-staging.internal.commcarehq.org'],
         'django_pillowtop': ['hqdb0-staging.internal.commcarehq.org'],
@@ -274,7 +305,6 @@ def preview():
         'couch': [],
         'pg': [],
         'rabbitmq': ['hqdb0-preview.internal.commcarehq.org'],
-        'sofabed': [], #todo, right now group it with celery
         'django_celery': ['hqdb0-preview.internal.commcarehq.org'],
         'django_app': ['hqdjango0-preview.internal.commcarehq.org','hqdjango1-preview.internal.commcarehq.org'],
         'django_pillowtop': ['hqdb0-preview.internal.commcarehq.org'],
@@ -445,11 +475,40 @@ def clone_repo():
 
 
 @task
+def remove_submodule_source(path):
+    """
+    Remove submodule source folder.
+    :param path: the name of the submodule source folder
+
+    Example usage:
+    > fab realstaging remove_submodule_source:ctable-src
+    """
+    if not console.confirm('Are you sure you want to delete submodules/{path} on {env.environment}?'.format(path=path, env=env), default=False):
+        utils.abort('Action aborted.')
+
+    require('root', provided_by=('staging', 'preview', 'production', 'india'))
+
+    execute(_remove_submodule_source_main, path)
+    execute(_remove_submodule_source_preindex, path)
+
+@roles('django_app','django_celery', 'staticfiles', 'django_monolith')
+@parallel
+def _remove_submodule_source_main(path):
+    with cd(env.code_root):
+        sudo('rm -rf submodules/%s' % path, user=env.sudo_user)
+
+@roles('pg', 'django_monolith')
+@parallel
+def _remove_submodule_source_preindex(path):
+    with cd(env.code_root_preindex):
+        sudo('rm -rf submodules/%s' % path, user=env.sudo_user)
+
+@task
 @roles('pg', 'django_monolith')
 def preindex_views():
     if not env.should_migrate:
         utils.abort('Skipping preindex_views for "%s" because should_migrate = False' % env.environment)
-        
+
     with cd(env.code_root_preindex):
         #update the codebase of the preindex dir...
         update_code(preindex=True)
@@ -494,6 +553,28 @@ def record_successful_deploy():
               'user': env.user,
               'environment': env.environment},
         user=env.sudo_user)
+
+@task
+def hotfix_deploy():
+    """ deploy code to remote host by checking out the latest via git """
+    if not console.confirm('Are you sure you want to deploy {env.environment}?'.format(env=env), default=False) or \
+       not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False) or \
+       not console.confirm('HEY!!!! YOU ARE ONLY DEPLOYING CODE. THIS IS NOT A NORMAL DEPLOY. COOL???', default=False):
+        utils.abort('Deployment aborted.')
+
+    require('root', provided_by=('staging', 'preview', 'production', 'india'))
+    run('echo ping!') #hack/workaround for delayed console response
+
+    try:
+        execute(update_code)
+    except Exception:
+        execute(mail_admins, "Deploy failed", "You had better check the logs.")
+        raise
+    else:
+        execute(record_successful_deploy)
+    finally:
+        # hopefully bring the server back to life if anything goes wrong
+        execute(services_restart)
 
 @task
 def deploy():
@@ -767,15 +848,12 @@ def set_celery_supervisorconf():
     _rebuild_supervisor_conf_file('supervisor_couchdb_lucene.conf') #to be deprecated
 
     #in reality this also should be another machine if the number of listeners gets too high
-    _rebuild_supervisor_conf_file('supervisor_pillowtop.conf')
+    if env.environment not in ['preview']:
+        #preview environment should not run pillowtop and index stuff, just rely on what's on staging
+        _rebuild_supervisor_conf_file('supervisor_pillowtop.conf')
 
 
 
-
-@roles('django_celery', 'django_monolith')
-def set_sofabed_supervisorconf():
-    _rebuild_supervisor_conf_file('supervisor_sofabed.conf')
-    _rebuild_supervisor_conf_file('supervisor_sync_domains.conf')
 
 @roles('django_app', 'django_monolith')
 def set_djangoapp_supervisorconf():
@@ -794,7 +872,6 @@ def set_supervisor_config():
     """Upload and link Supervisor configuration from the template."""
     require('environment', provided_by=('staging', 'preview', 'demo', 'production', 'india'))
     execute(set_celery_supervisorconf)
-    execute(set_sofabed_supervisorconf)
     execute(set_djangoapp_supervisorconf)
     execute(set_formsplayer_supervisorconf)
 

@@ -4,6 +4,7 @@ from corehq.pillows.case import UNKNOWN_DOMAIN, UNKNOWN_TYPE
 from corehq.pillows.core import DATE_FORMATS_ARR
 from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX
 from dimagi.utils.decorators.memoized import memoized
+from .base import HQPillow
 from pillowtop.listener import AliasedElasticPillow
 import hashlib
 import simplejson
@@ -16,54 +17,19 @@ UNKNOWN_VERSION = 'XXX'
 UNKNOWN_UIVERSION = 'XXX'
 
 
-class XFormPillow(AliasedElasticPillow):
+class XFormPillow(HQPillow):
     document_class = XFormInstance
     couch_filter = "couchforms/xforms"
-    es_host = settings.ELASTICSEARCH_HOST
-    es_port = settings.ELASTICSEARCH_PORT
     es_index_prefix = "xforms"
     es_alias = "xforms"
     es_type = "xform"
     es_index = XFORM_INDEX
-    es_timeout = 60
-
-    es_meta = {
-    }
-    xform_handlers = []
 
     #for simplicity, the handlers are managed on the domain level
     handler_domain_map = {}
 
     #type level mapping
-    default_xform_mapping = XFORM_MAPPING
-
-    def __init__(self, **kwargs):
-        super(XFormPillow, self).__init__(**kwargs)
-
-    @memoized
-    def calc_meta(self):
-        """
-        override of the meta calculator since we're separating out all the types,
-        so we just do a hash of the "prototype" instead to determind md5
-        """
-        return self.calc_mapping_hash(self.default_xform_mapping)
-
-    def get_domain(self, doc_dict):
-        """
-        A cache/buffer for the _changes feed situation for xforms.
-        """
-        return doc_dict.get('domain', None)
-
-    def get_type_string(self, doc_dict):
-        return self.es_type
-
-    def get_mapping_from_type(self, doc_dict):
-        """
-        Universal xform mapping for basic properties of case docs
-        """
-        return {
-            self.get_type_string(doc_dict): self.default_xform_mapping
-        }
+    default_mapping = XFORM_MAPPING
 
     def change_transform(self, doc_dict):
         if self.get_domain(doc_dict) is None:
@@ -81,6 +47,10 @@ class XFormPillow(AliasedElasticPillow):
                     doc_ret['form']['meta']['timeEnd'] = None
                 if doc_ret['form']['meta'].get('timeStart', None) == "":
                     doc_ret['form']['meta']['timeStart'] = None
+
+                # Some docs have their @xmlns and #text here
+                if isinstance(doc_ret['form']['meta'].get('appVersion'), dict):
+                    doc_ret['form']['meta']['appVersion'] = doc_ret['form']['meta']['appVersion'].get('#text')
 
             #see:  extract_case_blocks(doc_dict)
             case_blocks = extract_case_blocks(doc_ret)

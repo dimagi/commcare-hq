@@ -1,7 +1,8 @@
 from datetime import date, timedelta
 from couchdbkit.exceptions import MultipleResultsFound
-from sqlagg.columns import SumColumn, SimpleColumn, SumWhen
-from corehq.apps.callcenter.utils import MAPPING_NAME_FORMS, MAPPING_NAME_CASES
+from sqlagg.columns import SumColumn, SimpleColumn, SumWhen, CountUniqueColumn
+from sqlagg import filters
+from corehq.apps.callcenter.utils import MAPPING_NAME_FORMS, MAPPING_NAME_CASES, MAPPING_NAME_CASE_OWNERSHIP
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.reportfixtures.indicator_sets import SqlIndicatorSet
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
@@ -24,11 +25,11 @@ PER_DOMAIN_FORM_INDICATORS = {
     ]
 }
 
-filters_week0 = ['date >= :weekago', 'date < :today']
-filters_week1 = ['date >= :2weekago', 'date < :weekago']
-filters_month0 = ['date >= :30daysago', 'date < :today']
-filters_month1 = ['date >= :60daysago', 'date < :30daysago']
-filters_ever = ['date < :today']
+filters_week0 = [filters.GTE('date', 'weekago'), filters.LT('date', 'today')]
+filters_week1 = [filters.GTE('date', '2weekago'), filters.LT('date', 'weekago')]
+filters_month0 = [filters.GTE('date', '30daysago'), filters.LT('date', 'today')]
+filters_month1 = [filters.GTE('date', '60daysago'), filters.LT('date', '30daysago')]
+filters_ever = [filters.LT('date', 'today')]
 
 custom_form_ranges = {
     'Week0': None,
@@ -69,6 +70,7 @@ class CallCenter(SqlIndicatorSet):
             '2weekago': date.today() - timedelta(days=14),
             '30daysago': date.today() - timedelta(days=30),
             '60daysago': date.today() - timedelta(days=60),
+            'ccCaseType': self.domain.call_center_config.case_type,
         }
 
     @property
@@ -78,7 +80,8 @@ class CallCenter(SqlIndicatorSet):
     @property
     def columns(self):
         case_table_name = '%s_%s' % (self.domain.name, MAPPING_NAME_CASES)
-        case_type_filters = ["case_type != '%s'" % self.domain.call_center_config.case_type]
+        case_ownership_table_name = '%s_%s' % (self.domain.name, MAPPING_NAME_CASE_OWNERSHIP)
+        case_type_filters = [filters.NOTEQ('case_type', 'ccCaseType')]
 
         columns = [
             DatabaseColumn("case", SimpleColumn('user_id'),
@@ -98,21 +101,21 @@ class CallCenter(SqlIndicatorSet):
                                      alias='formsSubmittedMonth0'),
                            sortable=False),
             DatabaseColumn('casesUpdatedMonth0',
-                           SumColumn('case_updates',
+                           CountUniqueColumn('case_id',
                                      table_name=case_table_name,
                                      filters=filters_month0 + case_type_filters,
                                      alias='casesUpdatedMonth0'),
                            sortable=False),
             DatabaseColumn('casesUpdatedMonth1',
-                           SumColumn('case_updates',
+                           CountUniqueColumn('case_id',
                                      table_name=case_table_name,
                                      filters=filters_month1 + case_type_filters,
                                      alias='casesUpdatedMonth1'),
                            sortable=False),
             DatabaseColumn('totalCases',
-                           SumColumn('case_updates',
-                                     table_name=case_table_name,
-                                     filters=filters_ever + case_type_filters,
+                           SumColumn('open_cases',
+                                     table_name=case_ownership_table_name,
+                                     filters=case_type_filters,
                                      alias='totalCases'),
                            sortable=False)
         ]
@@ -156,7 +159,7 @@ class CallCenter(SqlIndicatorSet):
             else_=0,
             filters=filters,
             alias='%s_count' % slug)
-        return AggregateColumn(slug, mean_seconds, dur_col, count_col, sortable=False)
+        return AggregateColumn(slug, mean_seconds, [dur_col, count_col], sortable=False)
 
     @property
     @memoized

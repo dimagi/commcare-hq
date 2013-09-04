@@ -14,7 +14,8 @@ def _clear_all_forms(domain):
                                   reduce=False,
                                   include_docs=True,
                                   startkey=[domain, "by_type"],
-                                  endkey=[domain, "by_type", {}]).all():
+                                  endkey=[domain, "by_type", {}],
+                                  wrapper=lambda row: SubmissionErrorLog.wrap(row['doc'])).all():
 
         item.delete()
 
@@ -70,7 +71,8 @@ class SubmissionErrorTest(TestCase):
                                       reduce=False,
                                       include_docs=True,
                                       startkey=[self.domain.name, "by_type", "XFormDuplicate"],
-                                      endkey=[self.domain.name, "by_type", "XFormDuplicate", {}]).one()
+                                      endkey=[self.domain.name, "by_type", "XFormDuplicate", {}],
+                                      classes={'XFormDuplicate': SubmissionErrorLog}).one()
         
         self.assertTrue(log is not None)
         self.assertTrue("Form is a duplicate" in log.problem)
@@ -100,7 +102,8 @@ class SubmissionErrorTest(TestCase):
                                           reduce=False,
                                           include_docs=True,
                                           startkey=[self.domain.name, "by_type", "XFormError"],
-                                          endkey=[self.domain.name, "by_type", "XFormError", {}]).one()
+                                          endkey=[self.domain.name, "by_type", "XFormError", {}],
+                                          classes={'XFormError': SubmissionErrorLog}).one()
             
             self.assertTrue(log is not None)
             self.assertTrue(evil_laugh in log.problem)

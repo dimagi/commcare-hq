@@ -1,5 +1,6 @@
 from multiprocessing import Process, Queue, Pool
 import sys
+import os
 from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.database import get_db, iter_docs
@@ -48,6 +49,11 @@ class Command(BaseCommand):
                     dest='simulate',
                     default=False,
                     help='Don\'t copy anything, print what would be copied.'),
+        make_option('--id-file',
+                    action='store',
+                    dest='id_file',
+                    default='',
+                    help="File containing one document ID per line. Only docs with these ID's will be copied")
     )
 
     def handle(self, *args, **options):
@@ -78,12 +84,26 @@ class Command(BaseCommand):
             for type in doc_types:
                 startkey = [x for x in [domain, type, since] if x is not None]
                 endkey = [x for x in [domain, type, {}] if x is not None]
-                self.copy_docs(sourcedb, domain, startkey, endkey, simulate, type=type, since=since)
+                self.copy_docs(sourcedb, domain, simulate, startkey, endkey, type=type, since=since)
+        elif options['id_file']:
+            path = options['id_file']
+            if not os.path.isfile(path):
+                print "Path '%s' does not exist or is not a file" % path
+                sys.exit(1)
+
+            with open(path) as input:
+                doc_ids = [line.rstrip('\n') for line in input]
+
+            if not doc_ids:
+                print "Path '%s' does not contain any document ID's" % path
+                sys.exit(1)
+
+            self.copy_docs(sourcedb, domain, simulate, doc_ids=doc_ids)
         else:
             startkey = [domain]
             endkey = [domain, {}]
             exclude_types = DEFAULT_EXCLUDE_TYPES + options['doc_types_exclude'].split(',')
-            self.copy_docs(sourcedb, domain, startkey, endkey, simulate, exclude_types=exclude_types)
+            self.copy_docs(sourcedb, domain, simulate, startkey, endkey, exclude_types=exclude_types)
 
     def list_types(self, sourcedb, domain, since):
         doc_types = sourcedb.view("domain/docs", startkey=[domain],
@@ -100,10 +120,12 @@ class Command(BaseCommand):
             for doc_type in sorted(doc_count.iterkeys()):
                 print "{:<30}- {}".format(doc_type, doc_count[doc_type])
 
-    def copy_docs(self, sourcedb, domain, startkey, endkey, simulate, type=None, since=None, exclude_types=None):
-        doc_ids = [result["id"] for result in sourcedb.view("domain/docs", startkey=startkey,
-                                                            endkey=endkey, reduce=False)]
+    def copy_docs(self, sourcedb, domain, simulate, startkey=None, endkey=None, doc_ids=None,
+                  type=None, since=None, exclude_types=None):
 
+        if not doc_ids:
+            doc_ids = [result["id"] for result in sourcedb.view("domain/docs", startkey=startkey,
+                                                                endkey=endkey, reduce=False)]
         total = len(doc_ids)
         count = 0
         msg = "Found %s matching documents in domain: %s" % (total, domain)
@@ -111,9 +133,11 @@ class Command(BaseCommand):
         msg += " since: %s" % (since) if since else ""
         print msg
 
+        err_log = self._get_err_log()
+
         queue = Queue(150)
         for i in range(NUM_PROCESSES):
-            Worker(queue, sourcedb, self.targetdb, exclude_types, total, simulate).start()
+            Worker(queue, sourcedb, self.targetdb, exclude_types, total, simulate, err_log).start()
 
         for doc in iter_docs(sourcedb, doc_ids, chunksize=100):
             count += 1
@@ -122,6 +146,12 @@ class Command(BaseCommand):
         # shutdown workers
         for i in range(NUM_PROCESSES):
             queue.put(None)
+
+        err_log.close()
+        if os.stat(err_log.name)[6] == 0:
+            os.remove(err_log.name)
+        else:
+            print 'Failed document IDs written to %s' % err_log.name
 
     def copy_domain(self, sourcedb, domain):
         print "Copying domain doc"
@@ -139,10 +169,17 @@ class Command(BaseCommand):
         else:
             print "Domain doc not found for domain %s." % domain
 
+    def _get_err_log(self):
+        name = 'copy_domain.err.%s'
+        for i in range(1000):  # arbitrarily large number
+            candidate = name % i
+            if not os.path.isfile(candidate):
+                return open(candidate, 'a', buffering=1)
+
 
 class Worker(Process):
 
-    def __init__(self, queue, sourcedb, targetdb, exclude_types, total, simulate):
+    def __init__(self, queue, sourcedb, targetdb, exclude_types, total, simulate, err_log):
         super(Worker, self).__init__()
         self.queue = queue
         self.sourcedb = sourcedb
@@ -150,6 +187,7 @@ class Worker(Process):
         self.exclude_types = exclude_types
         self.total = total
         self.simulate = simulate
+        self.err_log = err_log
 
     def run(self):
         for doc, count in iter(self.queue.get, None):
@@ -163,4 +201,5 @@ class Worker(Process):
                         save(dt, self.targetdb)
                     print "     Synced %s/%s docs (%s: %s)" % (count, self.total, doc["doc_type"], doc["_id"])
             except Exception, e:
+                self.err_log.write('%s\n' % doc["_id"])
                 print "     Document %s failed! Error is: %s" % (doc["_id"], e)

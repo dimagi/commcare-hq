@@ -36,6 +36,18 @@ complex_type_mapper = {
 }
 
 
+#dynamic template fragment to auto-multi-field all fields, used for report indices where everything is made into a dict
+everything_is_dict_template = {
+    "everything_else": {
+        "match": "*",
+        "match_mapping_type": "string",
+        "mapping": {
+            "{name}": {"type": "string", "index": "not_analyzed"},
+        }
+    }
+}
+
+
 def type_exact_match_string(prop_name, dual=True):
     """
     Mapping for fields that may want prefixes (based upon the default tokenizer which splits by -'s)
@@ -72,7 +84,7 @@ case_special_types = {
     #to extend, use this and add special date formats here...
 }
 
-case_nested_types = ['actions']
+case_nested_types = ['actions',]
 
 domain_special_types = {
     "name": type_exact_match_string("name", dual=True),
@@ -91,6 +103,7 @@ domain_special_types = {
             "area": type_exact_match_string("area", dual=True),
             "sub_area": type_exact_match_string("sub_area", dual=True),
             "initiative": type_exact_match_string("initiative", dual=True),
+            "phone_model": type_exact_match_string("phone_model", dual=True),
         },
         "cda": {
             "type": {"type": "string", "index": "not_analyzed"},
@@ -99,7 +112,9 @@ domain_special_types = {
 }
 
 user_special_types = {
+    "domain": type_exact_match_string("domain", dual=True),
     "username": type_exact_match_string("username", dual=True),
+    "user_data": {"dynamic": True, "type": "object"},
 }
 
 app_special_types = {
@@ -138,10 +153,3 @@ DEFAULT_MAPPING_WRAPPER = {
         "_meta": {"created": None},
         "properties": {}
     }
-
-def case_mapping_generator():
-    #todo: need to ensure that domain is always mapped
-    m = DEFAULT_MAPPING_WRAPPER
-    doc_class=CommCareCase
-    m['properties'] = set_properties(doc_class, custom_types=case_special_types)
-    return m
