@@ -1557,6 +1557,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     use_custom_suite = BooleanProperty(default=False)
     force_http = BooleanProperty(default=False)
     cloudcare_enabled = BooleanProperty(default=False)
+    translation_strategy = StringProperty(default='dump-known',
+                                          choices=['dump-known', 'simple'])
 
     @classmethod
     def wrap(cls, data):
@@ -1744,8 +1746,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 if name:
                     messages[lc] = name
 
-            cc_trans = commcare_translations.load_translations(lang)
-            messages.update(cc_trans)
+            if self.translation_strategy == 'dump-known':
+                cc_trans = commcare_translations.load_translations(lang)
+                messages.update(cc_trans)
 
             messages.update(non_empty_only(self.translations.get(lang, {})))
         else:
