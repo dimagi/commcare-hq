@@ -207,7 +207,7 @@ class CustomBulkExportHelper(BulkExportHelper):
         bulk_export.domain = self.domain
         self.bulk_files = [bulk_export]
 
-def save_metadata_export_to_tempfile(domain):
+def save_metadata_export_to_tempfile(domain, datespan=None, user_ids=None):
     """
     Saves the domain's form metadata to a file. Returns the filename.
     """
@@ -231,7 +231,18 @@ def save_metadata_export_to_tempfile(domain):
     q = {
         "query": {"match_all": {}},
         "sort": [{"received_on" : {"order": "desc"}}],
+        "filter": {"and": []},
     }
+
+    if datespan:
+        q["query"] = { "range": {
+                            "form.meta.timeEnd": {
+                                "from": datespan.startdate_param,
+                                "to": datespan.enddate_param,
+                                "include_upper": False }}}
+
+    if user_ids is not None:
+        q["filter"]["and"].append({"terms": {"form.meta.userID": user_ids}})
 
     results = stream_es_query(params={"domain.exact": domain}, q=q, es_url=XFORM_INDEX + '/xform/_search', size=999999)
     data = (_form_data_to_row(res["_source"]) for res in results)
