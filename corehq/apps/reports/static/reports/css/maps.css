@@ -72,3 +72,28 @@
 .enumlegend .vallabel {
     padding-left: 0.8em;
 }
+
+.colorscalelegend {
+    margin-top: 0.8em;
+}
+
+.colorscalelegend .width-spacer {
+    color: transparent;
+    line-height: 0em;
+}
+
+.colorscalelegend .tickmarks {
+    position: relative;
+    vertical-align: top;
+    padding-left: 0.5em;
+}
+
+.colorscalelegend .ticklabel {
+    position: absolute;
+    white-space: nowrap;
+    line-height: 1em;
+}
+
+.colorscalelegend .ticklabel-inner {
+    margin-top: -0.5em;
+}

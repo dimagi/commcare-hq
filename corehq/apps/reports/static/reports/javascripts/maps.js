@@ -657,36 +657,46 @@ function iconLegend($e, meta) {
     });
 }
 
+SCALEBAR_HEIGHT = 150; //px
+SCALEBAR_WIDTH = 20; // TODO seems like we want to tie this to em-height instead
+TICK_SPACING = 40; //px
+MIN_BUFFER = 15; //px
 function colorScaleLegend($e, meta) {
     var min = meta.colorstops[0][0];
     var max = meta.colorstops.slice(-1)[0][0];
-    var SCALEBAR_HEIGHT = 150; //px
-    var SCALEBAR_WIDTH = 20; // TODO seems like we want to tie this to em-height instead
-    var $canvas = $('<canvas>');
-    $canvas.attr('width', SCALEBAR_WIDTH); 
-    $canvas.attr('height', SCALEBAR_HEIGHT);
+    var range = max - min;
+    var step = range / (SCALEBAR_HEIGHT - 1);
+
+    var $canvas = make_canvas(SCALEBAR_WIDTH, SCALEBAR_HEIGHT);
     var ctx = $canvas[0].getContext('2d');
     for (var i = 0; i < SCALEBAR_HEIGHT; i++) {
 	var k = i / (SCALEBAR_HEIGHT - 1);
-	var x = min * (1 - k) + max * k;
+	var x = blendLinear(min, max, k);
 	var y = $.Color(matchSpline(x, meta.colorstops, blendColor)).toRgbaString();
 	ctx.fillStyle = y;
 	ctx.fillRect(0, SCALEBAR_HEIGHT - 1 - i, SCALEBAR_WIDTH, 1);
     }
 
-    var $t = $('<table><tr><td rowspan="2" id="bar"></td><td class="lab" id="labmax"></td></tr><tr><td class="lab" id="labmin"></td></tr></table>');
+    var interval = niceRoundNumber(step * TICK_SPACING);
+    var tickvals = [];
+    for (var k = interval * Math.ceil(min / interval); k <= max; k += interval) {
+	tickvals.push(k);
+    }
+    var buffer_dist = step * MIN_BUFFER;
+    if (tickvals[0] - min > buffer_dist) {
+	tickvals.splice(0, 0, min);
+    }
+    if (max - tickvals.slice(-1)[0] > buffer_dist) {
+	tickvals.push(max);
+    }
 
-    var $bar = $t.find('#bar');
-    var $labmin = $t.find('#labmin');
-    var $labmax = $t.find('#labmax');
-    $bar.append($canvas);
-    $labmin.text(meta._formatNum(min));
-    $labmax.text(meta._formatNum(max));
-    $t.find('.lab').css('padding-left', '0.4em');
-    $labmin.css('vertical-align', 'bottom');
-    $labmax.css('vertical-align', 'top');
+    var ticks = $.map(tickvals, function(e) {
+	return {label: meta._formatNum(e), coord: (1. - (e - min) / range) * SCALEBAR_HEIGHT};
+    });
 
-    $e.append($t);
+    var $rendered = $(_.template($('#legend_colorscale').text())({ticks: ticks}));
+    $rendered.find('#scalebar').append($canvas);
+    $e.append($rendered);
 }
 
 function enumLegend($e, meta, renderValue) {
@@ -858,11 +868,6 @@ function testNiceRoundNumber() {
     testStops([1], [1, 3.1, 3.2]);
 }
 
-
-
-
-//// OLD STUFF
-/*
 // create a (hidden) canvas
 function make_canvas(w, h) {
     var $canvas = $('<canvas />');
@@ -871,6 +876,11 @@ function make_canvas(w, h) {
     return $canvas;
 }
 
+
+
+
+//// OLD STUFF
+/*
 function canvas_context(canvas) {
     var ctx = canvas.getContext('2d');
     ctx.clear = function() {

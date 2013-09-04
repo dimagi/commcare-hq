@@ -60,6 +60,22 @@ $(document).ready(function() {
   </table>
 </script>
 
+<script type="text/template" id="legend_colorscale">
+  <table class="colorscalelegend">
+    <tr>
+      <td id="scalebar"></td>
+      <td class="tickmarks">
+	<% _.each(ticks, function(e) { %>
+	<div class="width-spacer"><%= e.label %></div>
+	<div class="ticklabel" style="top: <%= e.coord %>px;">
+	  <div class="ticklabel-inner"><%= e.label %></div>
+	</div>
+	<% }); %>
+      </td>
+    </tr>
+  </table>
+</script>
+
 <div style="position: relative;">
   <div id="map" style="width: 100%;"></div>
   
