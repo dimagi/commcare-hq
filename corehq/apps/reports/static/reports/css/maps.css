@@ -21,7 +21,7 @@
 }
 
 .zoomtofit {
-  background-image: url({{STATIC_URL}}reports/css/leaflet/images/zoomfit.png);
+  background-image: url(/static/reports/css/leaflet/images/zoomfit.png);
   cursor: pointer;
 }
 
