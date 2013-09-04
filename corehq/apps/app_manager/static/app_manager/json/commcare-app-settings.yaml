@@ -101,4 +101,4 @@
   value_names: ['Dump known (old and reliable)', 'Simple (but not tested)']
   default: 'dump-known'
   requires: "{$parent.doc_type}='Application'"
-  disabled: true
+  preview: true
