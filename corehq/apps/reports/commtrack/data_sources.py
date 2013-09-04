@@ -169,6 +169,6 @@ class StockStatusBySupplyPointDataSource(StockStatusDataSource):
                 'geo': '%s %s' % (loc.latitude, loc.longitude) if loc.latitude is not None and loc.longitude is not None else None,
             }
             for prod in product_ids:
-                rec.update(dict(('%s-%s' % (prod, key), by_product.get(prod, {}).get(key)) for key in
+                rec.update(dict(('_%s_%s' % (prod, key), by_product.get(prod, {}).get(key)) for key in
                                 ('current_stock', 'consumption', 'months_remaining', 'category')))
             yield rec

@@ -380,7 +380,7 @@ function formatDetailPopup(feature, config) {
 	'{{#each detail}}<tr>',
 	  '<td>{{ label }}</td>',
 	  '<td style="font-weight: bold; text-align: right; padding-left: 20px;">',
-	    '{{#if value}}{{ value }}{{ else }}\u2014{{/if}}',
+	    '{{ value }}',
 	  '</td>',
 	'</tr>{{/each}}',
 	'</table>',
