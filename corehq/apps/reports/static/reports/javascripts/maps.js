@@ -630,8 +630,6 @@ function renderLegend($e, metric, config) {
 
 // this is pretty hacky
 function sizeLegend($e, meta) {
-    var legendBaseline = niceRoundNumber(meta.baseline);
-
     var $t = $('<table>');
     var entry = function(val) {
 	var diameter = 2 * markerSize(val, meta.baseline);
@@ -643,9 +641,9 @@ function sizeLegend($e, meta) {
 	$t.append($r);
     };
 
-    entry(niceRoundNumber(Math.sqrt(10.) * legendBaseline));
-    entry(legendBaseline);
-    entry(niceRoundNumber(Math.sqrt(0.1) * legendBaseline));
+    $.each([.5, 0, -.5], function(i, e) {
+	entry(niceRoundNumber(Math.pow(10., e) * meta.baseline));
+    });
 
     $e.append($t);
 }
