@@ -44,7 +44,7 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
         products = sorted(Product.view('commtrack/products', startkey=[self.domain], endkey=[self.domain, {}], include_docs=True),
                           key=lambda p: p.name)
         for p in products:
-            col_id = lambda c: '_%s_%s' % (p._id, c)
+            col_id = lambda c: '%s-%s' % (p._id, c)
 
             for c in ('category', 'current_stock', 'months_remaining', 'consumption'):
                 conf['column_titles'][col_id(c)] = '%s: %s' % (p.name, titles[c])
@@ -101,37 +101,28 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
 
         from django.template import Template, Context
         detail_template = """
-<h3><< name >> (<< props.type >>)</h3>
+<h3><%= name %> (<%= props.type %>)</h3>
 <hr>
 <table>
-<tr><td></td>
-{% for c in columns %}
-<td>{{ c.title }}</td>
-{% endfor %}
-</tr>
-{% for p in products %}
-<tr><td>{{ p.name }}</td>
-{% for c in columns %}
-<td style="font-weight: bold;"><< props._{{ p.get_id }}_{{ c.id }} >></td>
-{% endfor %}
-</tr>
-{% endfor %}
+  <tr><td></td>
+    {% for c in columns %}
+    <td>{{ c.title }}</td>
+    {% endfor %}
+  </tr>
+  {% for p in products %}
+  <tr><td>{{ p.name }}</td>
+    {% for c in columns %}
+    <td style="font-weight: bold;"><%= props['{{ p.get_id }}-{{ c.id }}'] %></td>
+    {% endfor %}
+  </tr>
+  {% endfor %}
 </table>
 """
 
-        conf['detail_template'] = Template(escape_template(detail_template)).render(Context({
+        conf['detail_template'] = Template(detail_template).render(Context({
                     'products': products,
                     'columns': [{'id': c, 'title': titles[c]} for c in ('category', 'current_stock', 'consumption', 'months_remaining')],
                 }))
 
         #print conf['detail_template']
         return conf
-
-def escape_template(template):
-    # template generating a template, ugh..., and django template escaping is pretty lacking
-    def replace(text, subfrom, subto):
-        return subto.join(text.split(subfrom))
-    template = '{% autoescape off %}' + template + '{% endautoescape %}'
-    return reduce(lambda text, sub: replace(text, sub[0], '{%% templatetag %svariable %%}' % sub[1]),
-                  (('<<', 'open'), ('>>', 'close')),
-                  template)

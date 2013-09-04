@@ -532,7 +532,7 @@ function _summarizeColumn(meta, data) {
 	min: min,
 	max: max,
 	nonnumeric: nonnumeric,
-    };	
+    };
 }
 
 function getEnumValues(meta) {
