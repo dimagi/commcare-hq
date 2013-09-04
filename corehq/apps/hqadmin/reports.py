@@ -31,7 +31,6 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
         ctxt = super(AdminFacetedReport, self).template_context
 
         self.run_query() # this runs the es query and populates the necessary attributes
-
         ctxt.update({
             'layout_flush_content': True,
             'facet_map': self.es_facet_map,
