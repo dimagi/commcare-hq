@@ -336,7 +336,7 @@ function getColor(meta, props) {
     return {color: c.toHexString(), alpha: c.alpha()};
 }
 
-DEFAULT_ICON_URL = 'http://mrgris.com/dimagispace/media/jonvik_dance.gif';
+DEFAULT_ICON_URL = '/static/reports/css/leaflet/images/default_custom.png';
 function getIcon(meta, props) {
     //TODO support css sprites
     var icon = (function() {
@@ -373,18 +373,7 @@ function getPropValue(props, meta) {
 
 
 function formatDetailPopup(feature, config) {
-    var DEFAULT_TEMPLATE = [
-	'<h3>{{ name }}</h3>',
-	'<hr>',
-	'<table>',
-	'{{#each detail}}<tr>',
-	  '<td>{{ label }}</td>',
-	  '<td style="font-weight: bold; text-align: right; padding-left: 20px;">',
-	    '{{ value }}',
-	  '</td>',
-	'</tr>{{/each}}',
-	'</table>',
-    ].join('\n');
+    var DEFAULT_TEMPLATE = $('#default_detail_popup').text();
     var TEMPLATE = config.detail_template || DEFAULT_TEMPLATE;
 
     var formatForDisplay = function(col, datum) {
@@ -409,7 +398,7 @@ function formatDetailPopup(feature, config) {
 	});
     });
 
-    var template = Handlebars.compile(TEMPLATE);
+    var template = _.template(TEMPLATE);
     var content = template(context);
     return content;
 }
@@ -639,24 +628,26 @@ function renderLegend($e, metric, config) {
     });
 };
 
-// this is pretty hacky
 function sizeLegend($e, meta) {
-    var $t = $('<table>');
-    var entry = function(val) {
-	var diameter = 2 * markerSize(val, meta.baseline);
-	$r = $('<tr><td align="center" style="padding: 5px;"><div id="circ" style="border: 1.5px solid black; background-color: #ddd; border-radius: 50%; -webkit-border-radius: 50%; -moz-border-radius: 50%;"></div></td><td id="val" style="text-align: right;"></td></tr>');
-	$r.find('#circ').css('width', diameter + 'px');
-	$r.find('#circ').css('height', diameter + 'px');
-	$r.find('#val').css('padding-left', '0.6em');
-	$r.find('#val').text(meta._formatNum(val));
-	$t.append($r);
-    };
-
-    $.each([.5, 0, -.5], function(i, e) {
-	entry(niceRoundNumber(Math.pow(10., e) * meta.baseline));
+    var rows = $.map([.5, 0, -.5], function(e) {
+	var val = niceRoundNumber(Math.pow(10., e) * meta.baseline);
+	return {
+	    val: val,
+	    valfmt: meta._formatNum(val),
+	    radius: markerSize(val, meta.baseline),
+	};
     });
 
-    $e.append($t);
+    var $rendered = $(_.template($('#legend_size').text())({entries: rows}));
+
+    $.each(rows, function(i, e) {
+	var $r = $rendered.find('#sizerow-' + i);
+	var diameter = 2 * e.radius;
+	$r.find('.circle').css('width', diameter + 'px');
+	$r.find('.circle').css('height', diameter + 'px');
+    });
+
+    $e.append($rendered);
 }
 
 function colorLegend($e, meta) {
@@ -665,7 +656,6 @@ function colorLegend($e, meta) {
     } else {
 	enumLegend($e, meta, function($cell, value) {
 	    $cell.css('background-color', value);
-	    $cell.css('width', '1.2em');
 	});
     }
 }
@@ -678,57 +668,60 @@ function iconLegend($e, meta) {
     });
 }
 
+SCALEBAR_HEIGHT = 150; //px
+SCALEBAR_WIDTH = 20; // TODO seems like we want to tie this to em-height instead
+TICK_SPACING = 40; //px
+MIN_BUFFER = 15; //px
 function colorScaleLegend($e, meta) {
     var min = meta.colorstops[0][0];
     var max = meta.colorstops.slice(-1)[0][0];
-    var SCALEBAR_HEIGHT = 150; //px
-    var SCALEBAR_WIDTH = 20; // TODO seems like we want to tie this to em-height instead
-    var $canvas = $('<canvas>');
-    $canvas.attr('width', SCALEBAR_WIDTH); 
-    $canvas.attr('height', SCALEBAR_HEIGHT);
+    var range = max - min;
+    var step = range / (SCALEBAR_HEIGHT - 1);
+
+    var $canvas = make_canvas(SCALEBAR_WIDTH, SCALEBAR_HEIGHT);
     var ctx = $canvas[0].getContext('2d');
     for (var i = 0; i < SCALEBAR_HEIGHT; i++) {
 	var k = i / (SCALEBAR_HEIGHT - 1);
-	var x = min * (1 - k) + max * k;
+	var x = blendLinear(min, max, k);
 	var y = $.Color(matchSpline(x, meta.colorstops, blendColor)).toRgbaString();
 	ctx.fillStyle = y;
 	ctx.fillRect(0, SCALEBAR_HEIGHT - 1 - i, SCALEBAR_WIDTH, 1);
     }
 
-    var $t = $('<table><tr><td rowspan="2" id="bar"></td><td class="lab" id="labmax"></td></tr><tr><td class="lab" id="labmin"></td></tr></table>');
+    var interval = niceRoundNumber(step * TICK_SPACING);
+    var tickvals = [];
+    for (var k = interval * Math.ceil(min / interval); k <= max; k += interval) {
+	tickvals.push(k);
+    }
+    var buffer_dist = step * MIN_BUFFER;
+    if (tickvals[0] - min > buffer_dist) {
+	tickvals.splice(0, 0, min);
+    }
+    if (max - tickvals.slice(-1)[0] > buffer_dist) {
+	tickvals.push(max);
+    }
 
-    var $bar = $t.find('#bar');
-    var $labmin = $t.find('#labmin');
-    var $labmax = $t.find('#labmax');
-    $bar.append($canvas);
-    $labmin.text(meta._formatNum(min));
-    $labmax.text(meta._formatNum(max));
-    $t.find('.lab').css('padding-left', '0.4em');
-    $labmin.css('vertical-align', 'bottom');
-    $labmax.css('vertical-align', 'top');
+    var ticks = $.map(tickvals, function(e) {
+	return {label: meta._formatNum(e), coord: (1. - (e - min) / range) * SCALEBAR_HEIGHT};
+    });
 
-    $e.append($t);
+    var $rendered = $(_.template($('#legend_colorscale').text())({ticks: ticks}));
+    $rendered.find('#scalebar').append($canvas);
+    $e.append($rendered);
 }
 
 function enumLegend($e, meta, renderValue) {
-    var $t = $('<table>');
-    $e.append($t);
-
     var enums = getEnumValues(meta);
+
+    var $rendered = $(_.template($('#legend_enum').text())({enums: enums}));
+
     $.each(enums, function(i, e) {
-	var $r = $('<tr>');
-	$t.append($r);
-
-	var $lab = $('<td>');
-	var $val = $('<td>');
-	$r.append($val);
-	$r.append($lab);
-	$lab.css('padding-left', '0.8em');
-
-	$lab.text(e.label);
-	var value = matchCategories(e.value, meta.categories);
-	renderValue($val, value);
+	var $r = $rendered.find('#enumrow-' + i);
+	var cat = matchCategories(e.value, meta.categories);
+	renderValue($r.find('.enum'), cat);
     });
+
+    $e.append($rendered);
 }
 
 
@@ -886,11 +879,6 @@ function testNiceRoundNumber() {
     testStops([1], [1, 3.1, 3.2]);
 }
 
-
-
-
-//// OLD STUFF
-
 // create a (hidden) canvas
 function make_canvas(w, h) {
     var $canvas = $('<canvas />');
@@ -899,6 +887,11 @@ function make_canvas(w, h) {
     return $canvas;
 }
 
+
+
+
+//// OLD STUFF
+/*
 function canvas_context(canvas) {
     var ctx = canvas.getContext('2d');
     ctx.clear = function() {
@@ -928,5 +921,5 @@ function render_marker(draw, w, h, anchor) {
         new google.maps.Point(w * .5 * (anchor[0] + 1.), h * .5 * (1. - anchor[1]))
     );
 }
-
+*/
 

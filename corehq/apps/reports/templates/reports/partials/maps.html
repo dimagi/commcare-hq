@@ -2,13 +2,12 @@
 
 <div class="hq-graphic-report">
 
-<link rel="stylesheet" href="{{STATIC_URL}}reports/css/leaflet/leaflet.css" />
-<link rel="stylesheet" href="{{STATIC_URL}}reports/css/maps.css" />
+<link rel="stylesheet" href="{% static 'reports/css/leaflet/leaflet.css' %}" />
+<link rel="stylesheet" href="{% static 'reports/css/maps.css' %}" />
 
-<script src="{{STATIC_URL}}reports/javascripts/leaflet.js"></script>
-<script src="{{STATIC_URL}}reports/javascripts/handlebars.js"></script>
-<script src="{{STATIC_URL}}reports/javascripts/jquery.color.js"></script>
-<script type="text/javascript" src="{{STATIC_URL}}reports/javascripts/maps.js"></script>
+<script src="{% static 'reports/javascripts/leaflet.js' %}"></script>
+<script src="{% static 'reports/javascripts/jquery.color.js' %}"></script>
+<script type="text/javascript" src="{% static 'reports/javascripts/maps.js' %}"></script>
 <script type="text/javascript">
 
 CONTEXT = {{ context|JSON }};
@@ -21,10 +20,60 @@ $(document).ready(function() {
     setMapHeight();
     $(window).resize(setMapHeight);
 
-    L.Icon.Default.imagePath = '{{STATIC_URL}}reports/css/leaflet/images';
+    L.Icon.Default.imagePath = '{% static 'reports/css/leaflet/images' %}';
     var map = mapsInit(CONTEXT);
 });
 
+</script>
+
+<script type="text/template" id="default_detail_popup">
+  <h3><%= name %></h3>
+  <hr>
+  <table>
+    <% _.each(detail, function(field) { %><tr>
+      <td><%= field.label %></td>
+      <td class="detail_data">
+	<%= field.value %>
+      </td>
+    </tr><% }); %>
+  </table>
+</script>
+
+<script type="text/template" id="legend_size">
+  <table class="sizelegend">
+    <% _.each(entries, function(e, i) { %>
+    <tr id="sizerow-<%= i %>">
+      <td class="circle-container">
+	<div class="circle"></div>
+      </td>
+      <td class="vallabel"><%= e.valfmt %></td>
+    </tr>
+    <% }); %>
+  </table>
+</script>
+
+<script type="text/template" id="legend_enum">
+  <table class="enumlegend">
+    <% _.each(enums, function(e, i) { %>
+    <tr id="enumrow-<%= i %>"><td class="enum"></td><td class="vallabel"><%= e.label %></td></tr>
+    <% }); %>
+  </table>
+</script>
+
+<script type="text/template" id="legend_colorscale">
+  <table class="colorscalelegend">
+    <tr>
+      <td id="scalebar"></td>
+      <td class="tickmarks">
+	<% _.each(ticks, function(e) { %>
+	<div class="width-spacer"><%= e.label %></div>
+	<div class="ticklabel" style="top: <%= e.coord %>px;">
+	  <div class="ticklabel-inner"><%= e.label %></div>
+	</div>
+	<% }); %>
+      </td>
+    </tr>
+  </table>
 </script>
 
 <div style="position: relative;">
