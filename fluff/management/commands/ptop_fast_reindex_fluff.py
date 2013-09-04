@@ -1,11 +1,9 @@
 from datetime import datetime
+from optparse import make_option
 from django.core.management import CommandError
 from corehq.apps.hqcase.management.commands.ptop_fast_reindexer import PtopReindexer
 from dimagi.utils.modules import to_function
 from fluff import FluffPillow
-import gevent
-import signal
-from gevent.queue import Queue, Empty
 
 CHUNK_SIZE = 500
 POOL_SIZE = 15
@@ -43,37 +41,16 @@ class FluffPtopReindexer(PtopReindexer):
                 print "\tReset cancelled."
                 return
 
-        from gevent.monkey import patch_all
-        patch_all()
-
         self._bootstrap(options)
         start = datetime.utcnow()
 
-        gevent.signal(signal.SIGQUIT, gevent.shutdown)
-        queue = Queue(POOL_SIZE)
-        workers = [gevent.spawn(worker, self, queue) for i in range(POOL_SIZE)]
-
         print "Starting fast tracked reindexing"
         for i, row in enumerate(self.full_couch_view_iter()):
-            queue.put((row, i))
-
-        gevent.joinall(workers)
+            print "\tProcessing item %s (%d)" % (row['id'], i)
+            self.process_row(row, i)
 
         end = datetime.utcnow()
         print "done in %s seconds" % (end - start).seconds
-
-
-def worker(reindexer, queue):
-    try:
-        while True:
-            row, count = queue.get(timeout=2)
-            try:
-                reindexer.process_row(row, count)
-                print "\tProcessed item %s (%d)" % (row['id'], count)
-            except Exception, e:
-                print "\tRow %s failed! Error is: %s" % (row["_id"], e)
-    except Empty:
-        pass
 
 
 class Command(FluffPtopReindexer):
