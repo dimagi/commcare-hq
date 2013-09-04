@@ -1,0 +1,42 @@
+/* fix bootstrap / gmaps conflict */
+/*
+#map img {
+  max-width: none !important;
+}
+*/
+
+.control-pane {
+  /* copied from style of other leaflet controls */
+  background: rgba(248, 248, 248, .8);
+  box-shadow: 0 1px 7px rgba(0,0,0,0.4);
+  border-radius: 5px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+
+  padding: 10px;
+}
+
+#sidebar {
+  max-width: 12em;
+}
+
+.zoomtofit {
+  background-image: url({{STATIC_URL}}reports/css/leaflet/images/zoomfit.png);
+  cursor: pointer;
+}
+
+.choice {
+  color: black;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.selected {
+  color: #a00;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.disabled {
+  color: #888;
+}
