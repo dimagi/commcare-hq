@@ -39,6 +39,27 @@ $(document).ready(function() {
   </table>
 </script>
 
+<script type="text/template" id="legend_size">
+  <table class="sizelegend">
+    <% _.each(entries, function(e, i) { %>
+    <tr id="sizerow-<%= i %>">
+      <td class="circle-container">
+	<div class="circle"></div>
+      </td>
+      <td class="vallabel"><%= e.valfmt %></td>
+    </tr>
+    <% }); %>
+  </table>
+</script>
+
+<script type="text/template" id="legend_enum">
+  <table class="enumlegend">
+    <% _.each(enums, function(e, i) { %>
+    <tr id="enumrow-<%= i %>"><td class="enum"></td><td class="vallabel"><%= e.label %></td></tr>
+    <% }); %>
+  </table>
+</script>
+
 <div style="position: relative;">
   <div id="map" style="width: 100%;"></div>
   

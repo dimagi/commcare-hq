@@ -617,24 +617,26 @@ function renderLegend($e, metric, config) {
     });
 };
 
-// this is pretty hacky
 function sizeLegend($e, meta) {
-    var $t = $('<table>');
-    var entry = function(val) {
-	var diameter = 2 * markerSize(val, meta.baseline);
-	$r = $('<tr><td align="center" style="padding: 5px;"><div id="circ" style="border: 1.5px solid black; background-color: #ddd; border-radius: 50%; -webkit-border-radius: 50%; -moz-border-radius: 50%;"></div></td><td id="val" style="text-align: right;"></td></tr>');
-	$r.find('#circ').css('width', diameter + 'px');
-	$r.find('#circ').css('height', diameter + 'px');
-	$r.find('#val').css('padding-left', '0.6em');
-	$r.find('#val').text(meta._formatNum(val));
-	$t.append($r);
-    };
-
-    $.each([.5, 0, -.5], function(i, e) {
-	entry(niceRoundNumber(Math.pow(10., e) * meta.baseline));
+    var rows = $.map([.5, 0, -.5], function(e) {
+	var val = niceRoundNumber(Math.pow(10., e) * meta.baseline);
+	return {
+	    val: val,
+	    valfmt: meta._formatNum(val),
+	    radius: markerSize(val, meta.baseline),
+	};
     });
 
-    $e.append($t);
+    var $rendered = $(_.template($('#legend_size').text())({entries: rows}));
+
+    $.each(rows, function(i, e) {
+	var $r = $rendered.find('#sizerow-' + i);
+	var diameter = 2 * e.radius;
+	$r.find('.circle').css('width', diameter + 'px');
+	$r.find('.circle').css('height', diameter + 'px');
+    });
+
+    $e.append($rendered);
 }
 
 function colorLegend($e, meta) {
@@ -643,7 +645,6 @@ function colorLegend($e, meta) {
     } else {
 	enumLegend($e, meta, function($cell, value) {
 	    $cell.css('background-color', value);
-	    $cell.css('width', '1.2em');
 	});
     }
 }
@@ -689,24 +690,17 @@ function colorScaleLegend($e, meta) {
 }
 
 function enumLegend($e, meta, renderValue) {
-    var $t = $('<table>');
-    $e.append($t);
-
     var enums = getEnumValues(meta);
+
+    var $rendered = $(_.template($('#legend_enum').text())({enums: enums}));
+
     $.each(enums, function(i, e) {
-	var $r = $('<tr>');
-	$t.append($r);
-
-	var $lab = $('<td>');
-	var $val = $('<td>');
-	$r.append($val);
-	$r.append($lab);
-	$lab.css('padding-left', '0.8em');
-
-	$lab.text(e.label);
-	var value = matchCategories(e.value, meta.categories);
-	renderValue($val, value);
+	var $r = $rendered.find('#enumrow-' + i);
+	var cat = matchCategories(e.value, meta.categories);
+	renderValue($r.find('.enum'), cat);
     });
+
+    $e.append($rendered);
 }
 
 
