@@ -132,7 +132,12 @@ function initData(data, config) {
     // instantiate data formatting functions
     config._fmt = {};
     $.each(config.numeric_format || {}, function(k, v) {
-	config._fmt[k] = eval('(function(x) { ' + v + '})');
+	try {
+	    // TODO allow these functions to access other properties for that row?
+	    config._fmt[k] = eval('(function(x) { ' + v + '})');
+	} catch (err) {
+	    console.log('error in formatter function [' + v + ']');
+	}
     });
 
     // pre-cache popup detail
@@ -382,19 +387,25 @@ function formatDetailPopup(feature, config) {
     ].join('\n');
     var TEMPLATE = config.detail_template || DEFAULT_TEMPLATE;
 
-    var context = {props: feature.properties};
+    var formatForDisplay = function(col, datum) {
+	var fallback = {_null: '\u2014'};
+	fallback[datum] = formatValue(col, datum, config);
+	return getEnumCaption(col, datum, config, fallback);
+    };
+    var displayProperties = {};
+    $.each(feature.properties, function(k, v) {
+	displayProperties[k] = formatForDisplay(k, v);
+    });
+
+    var context = {props: displayProperties};
     if (config.name_column) {
 	context.name = feature.properties[config.name_column];
     }
     context.detail = [];
     $.each(config.detail_columns || [], function(i, e) {
-	var datum = feature.properties[e];
-	var fallback = {_null: '\u2014'};
-	fallback[datum] = formatValue(e, datum, config);
-
 	context.detail.push({
 	    label: getColumnTitle(e, config),
-	    value: getEnumCaption(e, datum, config, fallback)
+	    value: displayProperties[e],
 	});
     });
 
