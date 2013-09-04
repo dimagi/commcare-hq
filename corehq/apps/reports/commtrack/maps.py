@@ -1,8 +1,8 @@
-from corehq.apps.reports.standard.inspect import MapReport as BaseMapReport
 from corehq.apps.reports.commtrack.psi_prototype import CommtrackReportMixin
 from django.utils.translation import ugettext_noop
 
-class StockStatusMapReport(CommtrackReportMixin, BaseMapReport):
+# TODO fix me for new map report
+class StockStatusMapReport(CommtrackReportMixin): #, BaseMapReport):
     name = ugettext_noop("Stock Status (map)")
     slug = "stockstatus_map"
     hide_filters = True

@@ -15,6 +15,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 import simplejson
 import logging
+import re
 
 from casexml.apps.case.models import CommCareCaseAction
 from corehq.apps.api.es import CaseES
@@ -679,90 +680,110 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
 
 
 
-class MapReport(ProjectReport, ProjectReportParametersMixin):
-    """
-HOW TO CONFIGURE THIS REPORT
+class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
+    """instances must set:
 
-create a couch doc as such:
+    data_source -- config about backend data source
+    display_config -- configure the front-end display of data
 
-{
-  "doc_type": "MapsReportConfig",
-  "domain": <domain>,
-  "config": {
-    "case_types": [
-      // for each case type
+    data_source: {
+      'adapter': type of data source ('test', 'report', etc.),
+      'geo_column': column in returned data identifying the geo point (defaults to "geo"),
+      <custom parameters by adapter>
+    }
 
-      {
-        "case_type": <commcare case type>,
-        "display_name": <display name of case type>,
-
-        // either of the following two fields
-        "geo_field": <case property for a geopoint question>,
-        "geo_linked_to": <geo-enabled case type that this case links to>,
-
-        "fields": [
-          // for each reportable field
-
-          "field": <case property>, // or one of the following magic values:
-                 // "_count" -- report on the number of cases of this type
-          "display_name": <display name for field>,
-          "type": <datatype for field>, // can be "numeric", "enum", or "num_discrete" (enum with numeric values)
-
-          // if type is "numeric" or "num_discrete"
-          // these control the rendering of numeric data points (all are optional)
-          "scale": <N>, // if absent, scale is calculated dynamically based on the max value in the field
-          "color": <css color>,
-
-          // if type is "enum" or "num_discrete" (optional, but recommended)
-          "values": [
-            // for each multiple-choice value
-
-            {
-              "value": <data value>,
-              "label": <display name>, //optional
-              "color": <css color>, //optional
-            },
-          ]
-        ]
+    display_config: {
+      'name_column': column data used in the header of the detail popup,
+      'column_titles': {'column name': 'display title for column},
+      'detail_columns': [list of column data to display in detail popup],
+      'enum_captions': {
+        'col with enum values': {'enum value': 'enum caption'}
       },
-    ]
-  }
-}
-"""
+      'numeric_format': {
+        'numeric column': 'body of javascript function that formats the number appropriately (variable is 'x')'
+      },
+      'metrics': [ <toggleable data display modes> (may be omitted during report prototyping)
+        one or more of:
+        {
+          'title': display title,
+          'size': [optional] controls the size of the marker-- radius in pixels OR
+            {
+              'column': column containing the relevant variable,
+              'baseline': value corresponding to a marker of radius 10 pixels,
+              'min': minimum marker radius (pixels) [optional],
+              'max': maximum marker radius (pixels) [optional],
+            },
+          'color': [optional] controls the color of the marker-- a css color value OR
+            {
+              'column': column containing the relevant variable,
+              one of either 'categories' or 'colorstops'
+              'categories': {'enum value': css color},
+                 - special value '_other' can act as catch-all for values not explicitly listed
+                 - special value '_null' will be used for rows where the value is blank; if absent, such rows will be hidden
+              'colorstops': (to create sliding color scales) [list of colorstops: [value, csscolor]],
+              'thresholds': [optional] [list of numerical threshold values to convert numeric data into enum 'buckets'],
+            },
+          'icon': [optional] use an icon as the marker; overrides size/color-- an image url OR
+            {
+              'column': column containing the relevant variable,
+              'categories': as in 'color', only a url instead of a color
+              'thresholds': as in 'color'
+            },
+        }
+      ]
+    }
+    """
 
-    name = ugettext_noop("Maps Sandbox")
-    slug = "maps"
-    # todo: support some of these filters -- right now this report
-    hide_filters = True
-    # is more of a playground, so all the filtering is done in its
-    # own ajax sidebar
     report_partial_path = "reports/partials/maps.html"
-    asynchronous = False
     flush_layout = True
+    asynchronous = False  # TODO: we want to support async load
 
-    @classmethod
-    @memoized
-    def get_config(cls, domain):
+    def _get_data(self):
+        adapter = self.data_source['adapter']
+        geo_col = self.data_source.get('geo_column', 'geo')
+
         try:
-            config = get_db().view('reports/maps_config', key=[domain], include_docs=True).one()
-            if config:
-                config = config['doc']['config']
-        except Exception:
-            config = None
-        return config
+            data = getattr(self, '_get_data_%s' % adapter)() # TODO pass along report filters
+        except AttributeError:
+            raise RuntimeError('unknown adapter [%s]' % adapter)
+        return self._to_geojson(data, geo_col)
 
-    @property
-    def config(self):
-        return self.get_config(self.domain)
+    def _to_geojson(self, data, geo_col):
+        def _parse_geopoint(raw):
+            latlon = [float(k) for k in re.split(' *,? *', raw)[:2]]
+            return [latlon[1], latlon[0]] # geojson is lon, lat
 
+        def points():
+            for row in data:
+                geo = row[geo_col]
+                yield {
+                    'type': 'Point',
+                    'coordinates': _parse_geopoint(geo),
+                    'properties': dict((k, v) for k, v in row.iteritems() if k != geo_col),
+                }
+        return {
+            'type': 'FeatureCollection',
+            'features': list(points()),
+        }
+
+    def _get_data_demo(self):
+        import csv
+        import os.path
+        with open(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tests/maps_sampledata_mountains.csv')) as f:
+            return list(csv.DictReader(f))
+            
     @property
     def report_context(self):
+        context = {
+            'data': self._get_data(),
+            'config': self.display_config,
+        }
+
         return dict(
-            maps_api_key=settings.GMAPS_API_KEY,
-            case_api_url=reverse('cloudcare_get_cases', kwargs={'domain': self.domain}),
-            config=json.dumps(self.config)
+            context=context,
         )
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return cls.get_config(domain)
+        return True
+
