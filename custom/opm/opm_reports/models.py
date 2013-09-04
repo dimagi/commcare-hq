@@ -1,3 +1,6 @@
+"""
+Fluff IndicatorDocument definitions for the OPM reports.
+"""
 from corehq.apps.users.models import CommCareUser, CommCareCase
 from corehq.fluff.calculators.xform import IntegerPropertyReference
 from corehq.fluff.calculators import xform as xcalculators
@@ -55,11 +58,6 @@ class OpmUserFluff(fluff.IndicatorDocument):
 # This is a more typical fluff doc, storing arbitrary info pulled from forms.
 # Some stuff only pertains to case level queries, others to user level
 class OpmFormFluff(fluff.IndicatorDocument):
-    # def wrap(self, data):
-    #     if isinstance(data.get('child_spacing'), basestring):
-    #         del data['child_spacing']
-    #     super(OpmFormFluff, self).wrap(data)
-
     document_class = XFormInstance
 
     domains = ('opm',)
@@ -80,9 +78,8 @@ class OpmFormFluff(fluff.IndicatorDocument):
     service_forms = user_calcs.ServiceForms()
     growth_monitoring = user_calcs.GrowthMonitoring()
 
-    # last_month_total = "Amount of AWW incentive paid last month"
 
-
+# These Pillows need to be added to the list of PILLOWTOPS in settings.py
 OpmCasePillow = OpmCaseFluff.pillow()
 OpmUserPillow = OpmUserFluff.pillow()
 OpmFormPillow = OpmFormFluff.pillow()

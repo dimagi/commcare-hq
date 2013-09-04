@@ -1,3 +1,7 @@
+"""
+Fluff calculators that pertain to specific cases/beneficiaries (mothers).
+These are used in the Beneficiary Payment Report
+"""
 import datetime
 
 from corehq.apps.users.models import CommCareUser, CommCareCase
@@ -17,6 +21,18 @@ def case_date_group(form):
     }
 
 class BirthPreparedness(fluff.Calculator):
+    """
+    Birth Preparedness Form
+
+    Within the dates the report is run, in the Birth Preparedness form,
+    if either window_1_1, window_1_2, or window_1_3 = '1' . This will only
+    count for the most recent form submitted within the report range. Cash
+    amounts in fixture. (To be included on my end, data node referencing case
+    type=vhnd to trigger on those data nodes if window_1_x = 0 AND services
+    not available) These will all be based on the form. Will be filled out
+    multiple times throughout pregnancy, but report should only include 1x
+    (most recent) per reporting period.
+    """
 
     def __init__(self, window_attrs, *args, **kwargs):
         self.window_attrs = window_attrs
@@ -32,6 +48,14 @@ class BirthPreparedness(fluff.Calculator):
 
 
 class Delivery(fluff.Calculator):
+    """
+    Delivery Form
+
+    From Delivery Form data, cash amount from fixture if
+    mother_preg_outcome = "2" or "3" to also only be included within the dates
+    the report is run. (These would also close the case). Cash amounts in
+    fixture.
+    """
 
     @fluff.date_emitter
     def total(self, form):
@@ -45,11 +69,55 @@ def account_number_from_form(form):
     case = CommCareCase.get(case_id)
     return case.get_case_property("bank_account_number")
 
+       
+class ChildFollowup(fluff.Calculator):
+    """
+    Child Followup Form
 
-# This index is grouped by account number to be sure that it is correct
-# across old cases that pertained to the same mother.
-# note that get_result is overridden as well
+    Similar to Birth Preparedness Form, this will be calculated in the Child
+    Followup form (data node not yet made) which will trigger "1" based on the
+    combination of relevant conditions - only include those that trigger
+    within the dates the report is run.  Only count the most recent form
+    submitted within the date range. This form will be filled out monthly, so
+    if filled out 10x, does not = 10x the condition amount (should be 1x per
+    report period). Cash amounts will be in fixture.
+    """
+
+    @fluff.date_emitter
+    def total(self, form):
+        if form.xmlns == CHILD_FOLLOWUP_XMLNS:
+            followed_up = False
+            for prop in ['window%d_child%d' % (window, child)
+                for window in range(3, 15) for child in range(1, 4)]:
+                if form.form.get(prop):# == '1':
+                    followed_up = True
+            if followed_up:
+                print "****** HERE'S ONE!! ******"
+                print form._id
+                yield case_date_group(form)
+                import pdb; pdb.set_trace()
+
+
 class ChildSpacing(fluff.Calculator):
+    """
+    Birth Spacing Bonus
+
+    This will be calculated across cases for case type = pregnancy and will
+    include open and closed cases. Since delivery (Delivery form, question
+    id = dod), generally if no other pregnancy with the same bank account
+    number (registration form, question id = bank_account_number) at the time
+    the report is run or there is another match with bank account number,
+    null. If 2yr since delivery (dod) is within date range of report, and this
+    case does not have another case with matching bank account # for a future
+    date of delivery, trigger payment. Also trigger another payment if there
+    is 3yr since dod and if no other matching bank account registrations
+    within the range. This should only trigger for the report which falls
+    under the date range. Cash amounts will be in fixture.
+
+    This index is grouped by account number to be sure that it is correct
+    across old cases that pertained to the same mother.
+    note that get_result is overridden as well
+    """
 
     def in_range(self, date):
         return self.start < date < self.end
@@ -96,19 +164,3 @@ class ChildSpacing(fluff.Calculator):
                         account_number_from_form(form),
                     ]
                 }
-            
-class ChildFollowup(fluff.Calculator):
-
-    @fluff.date_emitter
-    def total(self, form):
-        if form.xmlns == CHILD_FOLLOWUP_XMLNS:
-            followed_up = False
-            for prop in ['window%d_child%d' % (window, child)
-                for window in range(3, 15) for child in range(1, 4)]:
-                if form.form.get(prop):# == '1':
-                    followed_up = True
-            if followed_up:
-                print "****** HERE'S ONE!! ******"
-                print form._id
-                yield case_date_group(form)
-                import pdb; pdb.set_trace()

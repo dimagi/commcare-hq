@@ -1,3 +1,7 @@
+"""
+Fluff calculators that pertain to specific cases/beneficiaries (mothers)
+These are used in the Incentive Payment Report
+"""
 from datetime import datetime, date, timedelta
 
 from corehq.apps.fixtures.models import FixtureDataItem

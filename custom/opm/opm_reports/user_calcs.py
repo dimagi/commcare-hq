@@ -1,3 +1,7 @@
+"""
+Fluff calculators that pertain to specific users (workers).
+These are used in the Incentive Payment Report
+"""
 import datetime
 
 from corehq.apps.users.models import CommCareUser, CommCareCase
@@ -5,7 +9,6 @@ import fluff
 
 from .constants import *
 
-# check out form.form['case']['close']
 
 def user_date_group(form, value=1):
     return { 
@@ -18,7 +21,6 @@ def user_date_group(form, value=1):
     }
 
 
-# group by user!
 class WomenRegistered(fluff.Calculator):
     """
     "No. of women registered under BCSP"
@@ -74,17 +76,3 @@ class GrowthMonitoring(fluff.Calculator):
                     except:
                         pass
             yield user_date_group(form, total)
-
-
-    # def growth_monitoring_count(self):
-    #     total = 0
-    #     for form in self.forms:
-    #         if form.xmlns == CHILD_FOLLOWUP_XMLNS:
-    #             for child_num in ['1', '2', '3']:
-    #                 try:
-    #                     total += int(form.form.get('child_%s' % child_num
-    #                         ).get('child%s_child_growthmon' % child_num))
-    #                 except:
-    #                     pass
-    #     return total
-

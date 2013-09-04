@@ -1,3 +1,6 @@
+"""
+Custom report definitions.
+"""
 from datetime import date, timedelta
 
 from corehq.apps.reports.generic import GenericTabularReport
@@ -14,13 +17,16 @@ from .beneficiary import Beneficiary
 from .incentive import Worker
 from .constants import DOMAIN
 
-# logic here that pulls stuff from fluff
+
 class BaseReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
     """
     Report parent class.  Children must provide a get_rows() method that
     returns a list of the raw data that forms the basis of each row.
+
     The "model" attribute is an object that can accept raw_data for a row
-    and perform the neccessary calculations.
+    and perform the neccessary calculations.  It must also provide a
+    method_map that is a list of (method_name, "Verbose Title") tuples
+    that define the columns in the report.
     """
     name = None
     slug = None
@@ -69,7 +75,6 @@ class BaseReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
             except ResourceNotFound:
                 pass
         return rows
-        # return [self.model(row) for row in self.get_rows()]
 
 
 class BeneficiaryPaymentReport(BaseReport):
@@ -79,7 +84,7 @@ class BeneficiaryPaymentReport(BaseReport):
     fields = [MonthFilter, YearFilter]
 
     def get_rows(self):
-        return CommCareCase.get_all_cases(DOMAIN)#, include_docs=True)
+        return CommCareCase.get_all_cases(DOMAIN)
 
 
 class IncentivePaymentReport(BaseReport):

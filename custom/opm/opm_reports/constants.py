@@ -17,16 +17,6 @@ def get_fixture_amt(raw, k, v):
             assert value != 0, "One of the fixtures returned a zero cash amount"
             return value
 
-# DELETE THIS BLOCK
-# raw = [f.to_json().get('fields') for f in FixtureDataItem.by_domain('opm').all()]
-# >>> ftype = FixtureDataType.by_domain_tag('opm', 'child_followup').one()
-# >>> fixtures = FixtureDataItem.by_data_type('opm', ftype)
-# fixtures = FixtureDataItem.by_data_tag('opm', 'child_followup')
-# fixtures2 = FixtureDataItem.by_data_tag('opm', 'child_followup', queryable=True)
-# fixtures2 = {
-#     'fixture_name': {'Form Property': 'fixture_name', 'Amount': 200}
-# }
-
 
 @memoized
 def get_fixture_data():

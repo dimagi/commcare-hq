@@ -10,6 +10,12 @@ from custom.opm.opm_reports.incentive import Worker
 
 
 class Command(BaseCommand):
+    """
+    Generate test data for the OPM reports.
+    It pulls stuff from the db, runs the report, then saves it as a json file.
+    There's no intelligent testing going on, but it can at least verify
+    consistency.
+    """
     help = "Pull data from the database and write\
         to a json file (currently only works for opm"
 
