@@ -5,7 +5,7 @@ from corehq.apps.commtrack.models import Product, SupplyPointProductCase as SPPC
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
 import corehq.apps.locations.util as loc_util
-
+from datetime import datetime
 
 # TODO make settings
 REPORTING_PERIOD = 'weekly'
@@ -14,6 +14,14 @@ REPORTING_PERIOD_ARGS = (1,)
 
 def is_timely(case, limit=0):
     return num_periods_late(case, REPORTING_PERIOD, *REPORTING_PERIOD_ARGS) <= limit
+
+def reporting_status(case):
+    if is_timely(case):
+        return 'ontime'
+    elif is_timely(case, 1):
+        return 'late'
+    else:
+        return 'nonreporting'
 
 
 class CommtrackDataSourceMixin(object):
@@ -166,9 +174,43 @@ class StockStatusBySupplyPointDataSource(StockStatusDataSource):
             rec = {
                 'name': loc.name,
                 'type': loc.location_type,
-                'geo': '%s %s' % (loc.latitude, loc.longitude) if loc.latitude is not None and loc.longitude is not None else None,
+                'geo': loc._geopoint,
             }
             for prod in product_ids:
                 rec.update(dict(('%s-%s' % (prod, key), by_product.get(prod, {}).get(key)) for key in
                                 ('current_stock', 'consumption', 'months_remaining', 'category')))
             yield rec
+
+class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
+    """
+    Config:
+        domain: The domain to report on.
+        location_id: ID of location to get data for. Omit for all locations.
+    """
+
+    def get_data(self):
+        startkey = [self.domain, self.active_location._id if self.active_location else None]
+        product_cases = SPPCase.view('commtrack/product_cases', startkey=startkey, endkey=startkey + [{}], include_docs=True)
+
+        def latest_case(cases):
+            # getting last report date should probably be moved to a util function in a case wrapper class
+            return max(cases, key=lambda c: getattr(c, 'last_reported', datetime(2000, 1, 1)).date())
+        cases_by_site = map_reduce(lambda c: [(tuple(c.location_),)],
+                                   lambda v: reporting_status(latest_case(v)),
+                                   data=product_cases, include_docs=True)
+
+        # TODO if aggregating, won't want to fetch all these locs (will only want to fetch aggregation sites)
+        locs = dict((loc._id, loc) for loc in Location.view('_all_docs', keys=[path[-1] for path in cases_by_site.keys()], include_docs=True))
+
+        for path, status in cases_by_site.iteritems():
+            loc = locs[path[-1]]
+
+            yield {
+                'loc_id': loc._id,
+                'loc_path': loc.path,
+                'name': loc.name,
+                'type': loc.location_type,
+                'reporting_status': status,
+                'geo': loc._geopoint,
+            }
+

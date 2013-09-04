@@ -126,3 +126,48 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
 
         #print conf['detail_template']
         return conf
+
+class ReportingStatusMapReport(GenericMapReport, CommtrackReportMixin):
+    name = ugettext_noop("Reporting Status (map)")
+    slug = "reportingstatus_map"
+
+    fields = ['corehq.apps.reports.fields.AsyncLocationField']
+
+    data_source = {
+        'adapter': 'report',
+        'geo_column': 'geo',
+        'report': 'corehq.apps.reports.commtrack.data_sources.ReportingStatusDataSource',
+    }
+
+    display_config = {
+        'name_column': 'name',
+        'detail_columns': ['type', 'reporting_status'],
+        'column_titles': {
+            'type': 'Supply Point Type',
+            'reporting_status': 'Current Reporting Status',
+        },
+        'enum_captions': {
+            'reporting_status': {
+                'ontime': 'On-time',
+                'late': 'Late',
+                'nonreporting': 'Non-reporting',
+            },
+        },
+        'metrics': [
+            {
+                'color': {
+                    'column': 'type',
+                },
+            },
+            {
+                'color': {
+                    'column': 'reporting_status',
+                    'categories': {
+                        'ontime': 'rgba(0, 200, 0, .8)',
+                        'late': 'rgba(255, 255, 0, .8)',
+                        'nonreporting': 'rgba(255, 0, 0, .8)',
+                    },
+                },
+            },
+        ],
+    }

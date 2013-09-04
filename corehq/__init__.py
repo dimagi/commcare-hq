@@ -50,6 +50,7 @@ def REPORTS(project):
             psi_prototype.StockOutReport,
             psi_prototype.StockReportExport,
             commtrack_maps.StockStatusMapReport,
+            commtrack_maps.ReportingStatusMapReport,
         )))
 
     messaging = (lambda project, user: (

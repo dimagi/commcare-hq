@@ -1,5 +1,5 @@
 from corehq.apps.commtrack.psi_hacks import is_psi_domain
-from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource, is_timely
+from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource, ReportingStatusDataSource, is_timely
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.commtrack.psi_prototype import CommtrackReportMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -10,14 +10,6 @@ from datetime import datetime
 from corehq.apps.locations.models import Location
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
-
-def reporting_status(case):
-    if is_timely(case):
-        return 'ontime'
-    elif is_timely(case, 1):
-        return 'late'
-    else:
-        return 'nonreporting'
 
 def _enabled_hack(domain):
     return not is_psi_domain(domain)
@@ -180,15 +172,11 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     @property
     @memoized
     def _data(self):
-        startkey = [self.domain, self.active_location._id if self.active_location else None]
-        product_cases = SPPCase.view('commtrack/product_cases', startkey=startkey, endkey=startkey + [{}], include_docs=True)
-
-        def latest_case(cases):
-            # getting last report date should probably be moved to a util function in a case wrapper class
-            return max(cases, key=lambda c: getattr(c, 'last_reported', datetime(2000, 1, 1)).date())
-        cases_by_site = map_reduce(lambda c: [(tuple(c.location_),)],
-                                   lambda v: reporting_status(latest_case(v)),
-                                   data=product_cases, include_docs=True)
+        config = {
+            'domain': self.domain,
+            'location_id': self.request.GET.get('location_id'),
+        }
+        statuses = list(ReportingStatusDataSource(config).get_data())
 
         def child_loc(path):
             root = self.active_location
@@ -198,9 +186,9 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
             except IndexError:
                 return None
         def case_iter():
-            for k, v in cases_by_site.iteritems():
-                if child_loc(k) is not None:
-                    yield (k, v)
+            for site in statuses:
+                if child_loc(site['loc_path']) is not None:
+                    yield (site['loc_path'], site['reporting_status'])
         status_by_agg_site = map_reduce(lambda (path, status): [(child_loc(path), status)],
                                         data=case_iter())
         sites_by_agg_site = map_reduce(lambda (path, status): [(child_loc(path), path[-1])],
@@ -211,7 +199,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
             return map_reduce(lambda s: [(s,)], lambda v: {'count': len(v), 'pct': len(v) / float(total)}, data=statuses)
         status_counts = dict((loc_id, status_tally(statuses)) for loc_id, statuses in status_by_agg_site.iteritems())
 
-        master_tally = status_tally(cases_by_site.values())
+        master_tally = status_tally([site['reporting_status'] for site in statuses])
 
         locs = sorted(Location.view('_all_docs', keys=status_counts.keys(), include_docs=True), key=lambda loc: loc.name)
         def fmt(pct):
