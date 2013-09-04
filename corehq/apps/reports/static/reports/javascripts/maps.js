@@ -331,7 +331,7 @@ function getColor(meta, props) {
     return {color: c.toHexString(), alpha: c.alpha()};
 }
 
-DEFAULT_ICON_URL = 'http://mrgris.com/dimagispace/media/jonvik_dance.gif';
+DEFAULT_ICON_URL = '/static/reports/css/leaflet/images/default_custom.png';
 function getIcon(meta, props) {
     //TODO support css sprites
     var icon = (function() {
@@ -879,7 +879,7 @@ function testNiceRoundNumber() {
 
 
 //// OLD STUFF
-
+/*
 // create a (hidden) canvas
 function make_canvas(w, h) {
     var $canvas = $('<canvas />');
@@ -917,5 +917,5 @@ function render_marker(draw, w, h, anchor) {
         new google.maps.Point(w * .5 * (anchor[0] + 1.), h * .5 * (1. - anchor[1]))
     );
 }
-
+*/
 
