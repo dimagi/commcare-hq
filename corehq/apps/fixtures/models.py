@@ -195,6 +195,20 @@ class FixtureDataItem(Document):
         return cls.view('fixtures/data_items_by_field_value', key=[domain, data_type_id, field_name, field_value],
                         reduce=False, include_docs=True)
 
+    @classmethod
+    def get_item_list(cls, domain, tag):
+        data_type = FixtureDataType.by_domain_tag(domain, tag).one()
+        return cls.by_data_type(domain, data_type).all()
+
+    @classmethod
+    def get_key_value_map(cls, domain, tag, key_field, value_field):
+        """
+        Turns an item list into a flat dictionary, mapping
+        the value in `key_field` to the value in `value_field`.
+        """
+        fixtures = cls.get_item_list(domain, tag)
+        return {f.fields[key_field]: f.fields[value_field] for f in fixtures}
+
     def delete_ownerships(self, transaction):
         ownerships = FixtureOwnership.by_item_id(self.get_id, self.domain)
         transaction.delete_all(ownerships)
