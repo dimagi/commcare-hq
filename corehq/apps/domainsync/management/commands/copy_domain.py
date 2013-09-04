@@ -171,7 +171,7 @@ class Command(BaseCommand):
 
     def _get_err_log(self):
         name = 'copy_domain.err.%s'
-        for i in range(10):
+        for i in range(1000):  # arbitrarily large number
             candidate = name % i
             if not os.path.isfile(candidate):
                 return open(candidate, 'a', buffering=1)
