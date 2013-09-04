@@ -235,11 +235,15 @@ def save_metadata_export_to_tempfile(domain, datespan=None, user_ids=None):
     }
 
     if datespan:
-        q["query"] = { "range": {
-                            "form.meta.timeEnd": {
-                                "from": datespan.startdate_param,
-                                "to": datespan.enddate_param,
-                                "include_upper": False }}}
+        q["query"] = {
+            "range": {
+                "form.meta.timeEnd": {
+                    "from": datespan.startdate_param,
+                    "to": datespan.enddate_param,
+                    "include_upper": False,
+                }
+            }
+        }
 
     if user_ids is not None:
         q["filter"]["and"].append({"terms": {"form.meta.userID": user_ids}})
