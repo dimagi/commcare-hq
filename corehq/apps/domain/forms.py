@@ -447,7 +447,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     platform = forms.MultipleChoiceField(label=ugettext_noop("Platform"), widget=forms.CheckboxSelectMultiple(),
                                          choices=tuple_of_copies(["java", "android", "cloudcare"], blank=False), required=False)
     phone_model = CharField(label=ugettext_noop("Phone Model"), required=False)
-    project_manager = CharField(label=ugettext_noop("Project Manager's Email/Username"), required=False)
+    project_manager = CharField(label=ugettext_noop("Project Manager's Email"), required=False)
 
     def save(self, domain):
         domain.update_internal(sf_contract_id=self.cleaned_data['sf_contract_id'],

@@ -75,7 +75,10 @@ def make_supply_point_product(supply_point_case, product_uuid, owner_id=None):
     casexml = ElementTree.tostring(caseblock.as_xml())
     submit_case_blocks(casexml, domain, username, user_id,
                        xmlns=const.COMMTRACK_SUPPLY_POINT_PRODUCT_XMLNS)
-    return SupplyPointProductCase.get(id)
+    sppc = SupplyPointProductCase.get(id)
+    sppc.bind_to_location(supply_point_case.location)
+    sppc.save()
+    return sppc
 
 def make_psi_config(domain):
     c = CommtrackConfig(

@@ -280,9 +280,9 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'south',
 
     # submodules with tests that run on travis
-    'couchforms',
     'casexml.apps.case',
     'casexml.apps.phone',
+    'couchforms',
     'ctable',
     'ctable_view',
     'dimagi.utils',
