@@ -1,23 +1,23 @@
-import copy
 from datetime import datetime
 import json
 from urllib import urlencode, unquote
+
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.template.loader import render_to_string
 from django.shortcuts import render
+from django.contrib import messages
+from django.utils.translation import ugettext as _
 
 from corehq.apps.appstore.forms import AddReviewForm
 from corehq.apps.appstore.models import Review
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.users.models import CouchUser
-from corehq.elastic import get_es
+from corehq.elastic import es_query
 from corehq.apps.domain.models import Domain
-from django.contrib import messages
-from django.utils.translation import ugettext as _
-from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 from dimagi.utils.couch.database import apply_update
+
 
 SNAPSHOT_FACETS = ['project_type', 'license', 'author.exact']
 DEPLOYMENT_FACETS = ['deployment.region']
@@ -232,75 +232,6 @@ def appstore_api(request):
     params, facets = parse_args_for_es(request)
     results = es_snapshot_query(params, facets)
     return HttpResponse(json.dumps(results), mimetype="application/json")
-
-def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at=None, size=None, dict_only=False):
-    """
-        Any filters you include in your query should an and filter
-        todo: intelligently deal with preexisting filters
-    """
-    if terms is None:
-        terms = []
-    if q is None:
-        q = {}
-    if params is None:
-        params = {}
-
-    q["size"] = size or 9999
-    q["from"] = start_at or 0
-    q["filter"] = q.get("filter", {})
-    q["filter"]["and"] = q["filter"].get("and", [])
-
-    def convert(param):
-        #todo: find a better way to handle bools, something that won't break fields that may be 'T' or 'F' but not bool
-        if param == 'T' or param is True:
-            return 1
-        elif param == 'F' or param is False:
-            return 0
-        return param
-
-    for attr in params:
-        if attr not in terms:
-            attr_val = [convert(params[attr])] if not isinstance(params[attr], list) else [convert(p) for p in params[attr]]
-            q["filter"]["and"].append({"terms": {attr: attr_val}})
-
-    def facet_filter(facet):
-        ff = {"facet_filter": {}}
-        ff["facet_filter"]["and"] = [clause for clause in q["filter"]["and"] if facet not in clause.get("terms", [])]
-        return ff if ff["facet_filter"]["and"] else {}
-
-    if facets:
-        q["facets"] = q.get("facets", {})
-        for facet in facets:
-            q["facets"][facet] = {"terms": {"field": facet, "size": 9999}}
-
-    if q.get('facets'):
-        for facet in q["facets"]:
-            q["facets"][facet].update(facet_filter(facet))
-
-    if not q['filter']['and']:
-        del q["filter"]
-
-    if dict_only:
-        return q
-
-    es_url = es_url or DOMAIN_INDEX + '/hqdomain/_search'
-
-    es = get_es()
-    ret_data = es.get(es_url, data=q)
-
-    return ret_data
-
-def stream_es_query(chunksize=100, **kwargs):
-    size = kwargs.pop("size", None)
-    kwargs.pop("start_at", None)
-    kwargs["size"] = chunksize
-    for i in range(0, size or 9999999, chunksize):
-        kwargs["start_at"] = i
-        res = es_query(**kwargs)
-        if not res["hits"]["hits"]:
-            return
-        for hit in res["hits"]["hits"]:
-            yield hit
 
 def es_snapshot_query(params, facets=None, terms=None, sort_by="snapshot_time"):
     if terms is None:

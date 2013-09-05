@@ -1,4 +1,5 @@
 from datetime import datetime
+from corehq.elastic import es_query
 from dimagi.utils.decorators.memoized import memoized
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
@@ -196,7 +197,6 @@ FACET_MAPPING = [
 ]
 
 def es_domain_query(params=None, facets=None, domains=None, start_at=None, size=None, sort=None, fields=None, show_stats=True):
-    from corehq.apps.appstore.views import es_query
     if params is None:
         params = {}
     terms = ['search']

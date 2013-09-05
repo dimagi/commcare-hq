@@ -9,9 +9,9 @@ from django.http import HttpResponse
 import json
 import zipfile
 from corehq.apps.app_manager.models import Application
-from corehq.apps.appstore.views import stream_es_query
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.models import FormExportSchema
+from corehq.elastic import stream_es_query
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 import couchexport
 from couchexport.export import get_headers, get_writer, format_tables, create_intermediate_tables, export_raw

@@ -5,6 +5,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from corehq.apps.reports.generic import ElasticTabularReport, GenericTabularReport
 from django.utils.translation import ugettext as _, ugettext_noop
+from corehq.elastic import es_query
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.apps.app_manager.commcare_settings import SETTINGS as CC_SETTINGS
@@ -58,7 +59,6 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
         return ret
 
     def es_query(self, params=None):
-        from corehq.apps.appstore.views import es_query
         if params is None:
             params = {}
         terms = ['search']

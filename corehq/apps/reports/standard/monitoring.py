@@ -14,6 +14,7 @@ from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, 
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
+from corehq.elastic import es_query
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.couch.database import get_db
@@ -24,7 +25,6 @@ from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import get_url_base
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
-from corehq.apps.appstore.views import es_query
 
 
 class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
