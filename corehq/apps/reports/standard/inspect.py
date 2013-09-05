@@ -786,8 +786,11 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
                     feature_type = 'MultiPolygon' if depth == 4 else 'Polygon'
 
                 yield {
-                    'type': feature_type,
-                    'coordinates': geo,
+                    'type': 'Feature',
+                    'geometry': {
+                        'type': feature_type,
+                        'coordinates': geo,
+                    },
                     'properties': dict((k, v) for k, v in row.iteritems() if k != geo_col),
                 }
 

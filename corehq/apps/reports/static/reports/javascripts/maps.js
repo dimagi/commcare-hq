@@ -260,7 +260,7 @@ function zoomToAll(map) {
 function makeDisplayContext(metric, setActiveFeature) {
     return {
 	filter: function(feature, layer) {
-	    if (feature.type == "Point") {
+	    if (feature.geometry.type == "Point") {
 		feature._conf = markerFactory(metric, feature.properties);
 	    } else {
 		feature._conf = featureStyle(metric, feature.properties);
@@ -269,7 +269,7 @@ function makeDisplayContext(metric, setActiveFeature) {
 	    return (feature._conf != null);
 	},
 	style: function(feature) {
-	    return feature.geometry._conf;
+	    return feature._conf;
 	},
 	pointToLayer: function (feature, latlng) {
 	    return feature._conf(latlng);
@@ -277,7 +277,7 @@ function makeDisplayContext(metric, setActiveFeature) {
 	onEachFeature: function(feature, layer) {
             layer.bindPopup(feature.popupContent);
 
-	    if (feature.type != 'Point') {
+	    if (feature.geometry.type != 'Point') {
 		layer._activate = function() {
 		    layer.setStyle(ACTIVE_STYLE);
 		};
