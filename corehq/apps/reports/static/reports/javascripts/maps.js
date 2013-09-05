@@ -65,7 +65,10 @@ MetricsControl = L.Control.extend({
     },
 
     render: function(metric) {
-	loadData(this._map, this.options.data, makeDisplayContext(metric));
+	var m = this;
+	loadData(this._map, this.options.data, makeDisplayContext(metric, function(f) {
+	    m.options.info.setActive(f, m.activeMetric);
+	}));
 	this.options.legend.render(metric);
     },
 });
@@ -90,6 +93,42 @@ LegendControl = L.Control.extend({
 	this.$div.show();
 	this.$div.empty();
 	renderLegend(this.$div, metric, this.options.config);
+    },
+});
+
+HeadsUpControl = L.Control.extend({
+    options: {
+        position: 'bottomright'
+    },
+
+    onAdd: function(map) {
+	this.$div = $('#info');
+	this.div = this.$div[0];
+	return this.div;
+    },
+
+    setActive: function(feature, metric) {
+	if (feature == null) {
+	    this.$div.hide();
+	    return;
+	}
+
+	var cols = [];
+	if (metric != null) {
+	    forEachDimension(metric, function(type, meta) {
+		var col = meta.column;
+		if (cols.indexOf(col) == -1) {
+		    cols.push(col);
+		}
+	    });
+	}
+
+	var context = detailContext(feature, this.options.config, cols);
+	var TEMPLATE = $('#info_popup').text();
+	var template = _.template(TEMPLATE);
+	var content = template(context);
+	this.$div.html(content);
+	this.$div.show();
     },
 });
 
@@ -187,7 +226,8 @@ function initMetrics(map, data, config) {
     });
 
     var l = new LegendControl({config: config}).addTo(map);
-    var m = new MetricsControl({data: data, legend: l}).addTo(map);
+    var h = new HeadsUpControl({config: config}).addTo(map);
+    var m = new MetricsControl({data: data, legend: l, info: h}).addTo(map);
 
     $.each(config.metrics, function(i, e) {
 	m.addMetric(e);
@@ -217,7 +257,7 @@ function zoomToAll(map) {
 }
 
 // generate the proper geojson styling for the given display metric
-function makeDisplayContext(metric) {
+function makeDisplayContext(metric, setActiveFeature) {
     return {
 	filter: function(feature, layer) {
 	    if (feature.type == "Point") {
@@ -255,13 +295,13 @@ function makeDisplayContext(metric) {
 			    layer.bringToFront();
 			}
 		    }
-		    ACTIVE = feature;
+		    setActiveFeature(feature);
 		},
 		mouseout: function(e) {
 		    if (layer._deactivate) {
 			layer._deactivate();
 		    }
-		    ACTIVE = null;
+		    setActiveFeature(null);
 		},
 	    });
 	}
@@ -489,11 +529,9 @@ function getPropValue(props, meta) {
 
 
 
-
-
-function formatDetailPopup(feature, config) {
-    var DEFAULT_TEMPLATE = $('#default_detail_popup').text();
-    var TEMPLATE = config.detail_template || DEFAULT_TEMPLATE;
+function detailContext(feature, config, cols) {
+    prop_cols = cols || _.keys(feature.properties);
+    detail_cols = cols || config.detail_columns || [];
 
     var formatForDisplay = function(col, datum) {
 	var fallback = {_null: '\u2014'};
@@ -501,7 +539,8 @@ function formatDetailPopup(feature, config) {
 	return getEnumCaption(col, datum, config, fallback);
     };
     var displayProperties = {};
-    $.each(feature.properties, function(k, v) {
+    $.each(prop_cols, function(i, k) {
+	var v = feature.properties[k];
 	displayProperties[k] = formatForDisplay(k, v);
     });
 
@@ -510,16 +549,22 @@ function formatDetailPopup(feature, config) {
 	context.name = feature.properties[config.name_column];
     }
     context.detail = [];
-    $.each(config.detail_columns || [], function(i, e) {
+    $.each(detail_cols, function(i, e) {
 	context.detail.push({
 	    slug: e, // FIXME this will cause problems if column names have weird chars or spaces
 	    label: getColumnTitle(e, config),
 	    value: displayProperties[e],
 	});
     });
+    return context;
+}
+
+function formatDetailPopup(feature, config) {
+    var DEFAULT_TEMPLATE = $('#default_detail_popup').text();
+    var TEMPLATE = config.detail_template || DEFAULT_TEMPLATE;
 
     var template = _.template(TEMPLATE);
-    var content = template(context);
+    var content = template(detailContext(feature, config));
     return content;
 }
 

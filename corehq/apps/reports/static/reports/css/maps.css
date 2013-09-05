@@ -114,3 +114,7 @@
     -moz-border-radius: 50%;
     border-radius: 50%;
 }
+
+#info {
+    text-align: right;
+}

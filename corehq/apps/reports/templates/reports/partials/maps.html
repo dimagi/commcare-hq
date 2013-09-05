@@ -41,6 +41,14 @@ $(document).ready(function() {
   </table>
 </script>
 
+<script type="text/template" id="info_popup">
+  <% if (name) { %><h4><%= name %></h4><% } %>
+  <% _.each(detail, function(field) { %>
+  <div><%= field.label %></div>
+  <div class="detail_data"><%= field.value %></div>
+  <% }); %>
+</script>
+
 <script type="text/template" id="legend_size">
   <table class="sizelegend">
     <% _.each(entries, function(e, i) { %>
@@ -89,5 +97,8 @@ $(document).ready(function() {
   <div id="legend" class="control-pane" style="display: none;">
   </div>
   
+  <div id="info" class="control-pane" style="display: none;">
+  </div>
+
 </div>
 </div>
