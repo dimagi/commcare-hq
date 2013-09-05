@@ -848,7 +848,7 @@ class DemoMapReport(GenericMapReport):
     it uses a static dataset
     """
 
-    name = ugettext_noop("For Previewers: Maps Demo")
+    name = ugettext_noop("Maps 1")
     slug = "maps_demo"
     data_source = {
         "adapter": "csv",
@@ -1043,7 +1043,7 @@ class DemoMapReport2(GenericMapReport):
     it uses a static dataset
     """
 
-    name = ugettext_noop("For Previewers: Maps Demo 2")
+    name = ugettext_noop("Maps 2")
     slug = "maps_demo2"
     data_source = {
         "adapter": "geojson",

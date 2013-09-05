@@ -25,8 +25,6 @@ def REPORTS(project):
         (_("Inspect Data"), (
             inspect.SubmitHistory,
             inspect.CaseListReport,
-            inspect.DemoMapReport,
-            inspect.DemoMapReport2,
         )),
         (_("Raw Data"), (
             export.ExcelExportReport,
@@ -38,7 +36,11 @@ def REPORTS(project):
             receiverwrapper.SubmissionErrorReport,
             phonelog.FormErrorReport,
             phonelog.DeviceLogDetailsReport
-        ))
+        )),
+        (_("Demos for Previewers"), (
+            inspect.DemoMapReport,
+            inspect.DemoMapReport2,
+        )),
     ]
     
     if project.commtrack_enabled:
