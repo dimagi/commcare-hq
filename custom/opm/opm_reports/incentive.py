@@ -53,8 +53,8 @@ class Worker(object):
         self.service_forms_count = get_result('service_forms')
         self.growth_monitoring_count = get_result('growth_monitoring')
 
-        self.service_forms_cash = self.service_forms_count * FIXTURES['service_forms_cash']
-        self.growth_monitoring_cash = self.growth_monitoring_count * FIXTURES['growth_monitoring_cash']
+        self.service_forms_cash = self.service_forms_count * FIXTURES['service_form_submitted']
+        self.growth_monitoring_cash = self.growth_monitoring_count * FIXTURES['child_growth_monitored']
         self.month_total = self.service_forms_cash + self.growth_monitoring_cash
         
         self.last_month_total = "Amount of AWW incentive paid last month"

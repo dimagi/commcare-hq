@@ -33,7 +33,7 @@ class OpmCaseFluff(fluff.IndicatorDocument):
     village = case_property("village_name")
 
     # Okay, I lied, there's one aggregated field:
-    women_registered = user_calcs.WomenRegistered() # conv to CaseFluff
+    women_registered = user_calcs.WomenRegistered()
 
 
 class OpmUserFluff(fluff.IndicatorDocument):

@@ -49,10 +49,10 @@ class Beneficiary(object):
                 date_range,
             )['total']
 
-        self.bp1_cash = get_result('bp1_cash') * FIXTURES['birth_preparedness_cash']
-        self.bp2_cash = get_result('bp2_cash') * FIXTURES['birth_preparedness_cash']
-        self.delivery_cash = get_result('delivery')
-        self.child_cash = get_result('child_followup') * FIXTURES['child_followup']
+        self.bp1_cash = get_result('bp1_cash') * FIXTURES['window_completed']
+        self.bp2_cash = get_result('bp2_cash') * FIXTURES['window_completed']
+        self.delivery_cash = get_result('delivery') * FIXTURES['delivery_lump_sums']
+        self.child_cash = get_result('child_followup') * FIXTURES['window_completed']
         self.spacing_cash = OpmFormFluff.get_result('child_spacing',
             [DOMAIN, self.account_number], date_range=date_range)
         self.total = sum([self.bp1_cash, self.bp2_cash,

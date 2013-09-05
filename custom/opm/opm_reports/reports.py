@@ -4,11 +4,9 @@ Custom report definitions.
 from datetime import date, timedelta
 
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
+from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin 
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
-from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.users.models import CommCareUser, CommCareCase
-from corehq.apps.fixtures.models import FixtureDataItem
 from dimagi.utils.couch.database import get_db
 
 from couchdbkit.exceptions import ResourceNotFound
@@ -18,7 +16,7 @@ from .incentive import Worker
 from .constants import DOMAIN
 
 
-class BaseReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
+class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
     """
     Report parent class.  Children must provide a get_rows() method that
     returns a list of the raw data that forms the basis of each row.
@@ -31,7 +29,6 @@ class BaseReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
     name = None
     slug = None
     model = None
-    fields = None
 
     @property
     def filters(self):
@@ -66,11 +63,19 @@ class BaseReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
     @property
     def row_iterable(self):
         rows = []
+        print "*"*20
+
+        print self.datespan.startdate.date()
+        print self.datespan.enddate.date()
         for row in self.get_rows():
             try:
+                # self.request_params = {'year': 2013, 'filterSet': True, 'month': u'01'}
+                # import pdb; pdb.set_trace()
                 rows.append(self.model(row, date_range=(
-                    date.today()-timedelta(365*2),
-                    date.today()+timedelta(365*2),
+                    self.datespan.startdate.date(),
+                    self.datespan.enddate.date()
+                    # date.today()-timedelta(365*2),
+                    # date.today()+timedelta(365*2),
                 )))
             except ResourceNotFound:
                 pass
@@ -81,7 +86,6 @@ class BeneficiaryPaymentReport(BaseReport):
     name = "Beneficiary Payment Report"
     slug = 'beneficiary_payment_report'
     model = Beneficiary
-    fields = [MonthFilter, YearFilter]
 
     def get_rows(self):
         return CommCareCase.get_all_cases(DOMAIN)
@@ -91,7 +95,6 @@ class IncentivePaymentReport(BaseReport):
     name = "Incentive Payment Report"
     slug = 'incentive_payment_report'
     model = Worker
-    fields = [MonthFilter, YearFilter]
     
     def get_rows(self):
         return CommCareUser.by_domain(DOMAIN)

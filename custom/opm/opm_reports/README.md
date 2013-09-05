@@ -1,5 +1,4 @@
 TODO:
-finalize fixture stuff.
 in incentive.py, figure out last_month_total
 Cron job to finalize reports at the end of each month.  (when, exactly?)
 Show only data from the current report period

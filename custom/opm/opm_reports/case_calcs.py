@@ -92,10 +92,7 @@ class ChildFollowup(fluff.Calculator):
                 if form.form.get(prop):# == '1':
                     followed_up = True
             if followed_up:
-                print "****** HERE'S ONE!! ******"
-                print form._id
                 yield case_date_group(form)
-                import pdb; pdb.set_trace()
 
 
 class ChildSpacing(fluff.Calculator):
@@ -129,9 +126,9 @@ class ChildSpacing(fluff.Calculator):
         two_year = latest + datetime.timedelta(365*2)
         three_year = latest + datetime.timedelta(365*3)
         if self.in_range(two_year):
-            return FIXTURES['two_year_cash']
+            return FIXTURES['two_year_spacing']
         elif self.in_range(three_year):
-            return FIXTURES['three_year_cash']
+            return FIXTURES['three_year_spacing']
         else:
             return 0
 
