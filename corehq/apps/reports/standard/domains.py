@@ -252,7 +252,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
     @property
     def template_context(self):
         ctxt = super(AdminDomainStatsReport, self).template_context
-        ctxt["interval"] = "month"
+        ctxt["interval"] = "week"
         return ctxt
 
     def es_query(self, params=None):
