@@ -31,8 +31,11 @@
                 <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
             </div>
         </div>
-        <div style="height: 320px; min-height: 320px;" class="no-data hide">
+        <div class="alert alert-warning no-data hide">
             <h4>{% trans "Your query returned no data" %}</h4>
+        </div>
+        <div class="alert alert-error error hide">
+            <h4>{% trans "There was an error retrieving the data" %}</h4>
         </div>
         <div class='nvd3-chart hide'>
             <svg style='height:320px'> </svg>
@@ -45,8 +48,11 @@
                 <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
             </div>
         </div>
-        <div style="height: 320px; min-height: 320px;" class="no-data hide">
+        <div class="alert alert-warning no-data hide">
             <h4>{% trans "Your query returned no data" %}</h4>
+        </div>
+        <div class="alert alert-error error hide">
+            <h4>{% trans "There was an error retrieving the data" %}</h4>
         </div>
         <div class='nvd3-chart hide'>
             <svg style='height:320px'> </svg>
@@ -59,8 +65,11 @@
                 <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
             </div>
         </div>
-        <div style="height: 320px; min-height: 320px;" class="no-data hide">
+        <div class="alert alert-warning no-data hide">
             <h4>{% trans "Your query returned no data" %}</h4>
+        </div>
+        <div class="alert alert-error error hide">
+            <h4>{% trans "There was an error retrieving the data" %}</h4>
         </div>
         <div class='nvd3-chart hide'>
             <svg style='height:320px'> </svg>

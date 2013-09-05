@@ -115,12 +115,12 @@ todo fix
     <form class="form-horizontal" data-bind="foreach: sections">
         <fieldset data-bind="visible: notEmpty">
             <legend>
-                <a class="accordion-toggle" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {'collapsed': reallyCollapse}">
+                <a class="accordion-toggle" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}">
                     <i class="icon-double-angle-down"></i>
                     <span data-bind="text: title"></span>
                 </a>
             </legend>
-            <div class="collapse" data-bind="foreach: settings, attr: {id: id}, css: {'in': !$data.collapse || _(settings).some(function (s) {return s.hasError();})}">
+            <div class="collapse" data-bind="foreach: settings, attr: {id: id}, css: {'in': !reallyCollapse()}">
                 <div class="control-group" data-bind="
                     visible: visible,
                     css: {error: hasError()}
