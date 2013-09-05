@@ -221,21 +221,49 @@ function makeDisplayContext(metric) {
     return {
 	filter: function(feature, layer) {
 	    if (feature.type == "Point") {
-		feature.configure = markerFactory(metric, feature.properties);
+		feature._conf = markerFactory(metric, feature.properties);
 	    } else {
-		feature.configure = featureStyle(metric, feature.properties);
+		feature._conf = featureStyle(metric, feature.properties);
 	    }
 	    // TODO support placeholder markers for 'null' instead of hiding entirely?
-	    return (feature.configure != null);
+	    return (feature._conf != null);
 	},
 	style: function(feature) {
-	    return feature.geometry.configure;
+	    return feature.geometry._conf;
 	},
 	pointToLayer: function (feature, latlng) {
-	    return feature.configure(latlng);
+	    return feature._conf(latlng);
 	},
 	onEachFeature: function(feature, layer) {
             layer.bindPopup(feature.popupContent);
+
+	    if (feature.type != 'Point') {
+		layer._activate = function() {
+		    layer.setStyle(ACTIVE_STYLE);
+		};
+		layer._deactivate = function() {
+		    layer.setStyle(feature._conf);
+		};
+	    }
+
+	    layer.on({
+		mouseover: function(e) {
+		    if (layer._activate) {
+			layer._activate();
+			if (layer.bringToFront) {
+			    // normal markers don't have this method; mimic with 'riseOnHover'
+			    layer.bringToFront();
+			}
+		    }
+		    ACTIVE = feature;
+		},
+		mouseout: function(e) {
+		    if (layer._deactivate) {
+			layer._deactivate();
+		    }
+		    ACTIVE = null;
+		},
+	    });
 	}
     }
 }
@@ -285,8 +313,29 @@ function featureStyle(metric, props) {
     }
 }
 
+ACTIVE_STYLE = {
+    color: '#ff0',
+    weight: 2,
+    opacity: 1
+};
+
+function mkMarker(latlng, options) {
+    options = options || {};
+    options.riseOnHover = true;
+
+    var marker = new L.marker(latlng, options);
+    marker._activate = function() {
+	$(marker._icon).addClass('glow');
+    };
+    marker._deactivate = function() {
+	$(marker._icon).removeClass('glow');
+    };
+
+    return marker;
+}
+
 function defaultMarker() {
-    return L.marker;
+    return mkMarker;
 }
 
 function defaultFeatureStyle() {
@@ -307,14 +356,22 @@ function circleMarker(metric, props) {
     }
 
     return function(latlng) {
-	return L.circleMarker(latlng, {
+	var style = {
 	    color: "#000",
 	    weight: 1,
 	    opacity: 1,
 	    radius: size,
 	    fillColor: fill.color,
 	    fillOpacity: fill.alpha
-	});
+	};
+	var marker = L.circleMarker(latlng, style);
+	marker._activate = function() {
+	    marker.setStyle(ACTIVE_STYLE);
+	};
+	marker._deactivate = function() {
+	    marker.setStyle(style);
+	};
+	return marker;
     };
 }
 
@@ -325,7 +382,7 @@ function iconMarker(metric, props) {
     }
 
     return function(latlng) {
-	var marker = L.marker(latlng, {
+	var marker = mkMarker(latlng, {
 	    icon: L.icon({
 		iconUrl: icon.url,
 	    })
@@ -339,7 +396,7 @@ function iconMarker(metric, props) {
 	    }));
 	};
 	img.src = icon.url;
-
+	
 	return marker;
     }
 }
