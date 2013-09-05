@@ -30,6 +30,7 @@ from corehq.apps.reports.generic import GenericTabularReport, ProjectInspectionR
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.elastic import es_query
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.couch import get_cached_property, IncompatibleDocument
 from dimagi.utils.couch.database import get_db
@@ -83,7 +84,6 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
         return self.es_response
 
     def es_query(self):
-        from corehq.apps.appstore.views import es_query
         if not getattr(self, 'es_response', None):
             q = {
                 "query": {
