@@ -165,7 +165,10 @@ class StockStatusBySupplyPointDataSource(StockStatusDataSource):
         product_ids = sorted(products.keys(), key=lambda e: products[e])
 
         by_supply_point = map_reduce(lambda e: [(e['location_id'],)], data=data, include_docs=True)
-        locs = dict((loc._id, loc) for loc in Location.view('_all_docs', keys=by_supply_point.keys(), include_docs=True))
+        locs = dict((loc._id, loc) for loc in Location.view(
+                '_all_docs',
+                keys=by_supply_point.keys(),
+                include_docs=True))
 
         for loc_id, subcases in by_supply_point.iteritems():
             loc = locs[loc_id]
@@ -190,7 +193,10 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
     def get_data(self):
         startkey = [self.domain, self.active_location._id if self.active_location else None]
-        product_cases = SPPCase.view('commtrack/product_cases', startkey=startkey, endkey=startkey + [{}], include_docs=True)
+        product_cases = SPPCase.view('commtrack/product_cases',
+                                     startkey=startkey,
+                                     endkey=startkey + [{}],
+                                     include_docs=True)
 
         def latest_case(cases):
             # getting last report date should probably be moved to a util function in a case wrapper class
@@ -200,7 +206,10 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                                    data=product_cases, include_docs=True)
 
         # TODO if aggregating, won't want to fetch all these locs (will only want to fetch aggregation sites)
-        locs = dict((loc._id, loc) for loc in Location.view('_all_docs', keys=[path[-1] for path in cases_by_site.keys()], include_docs=True))
+        locs = dict((loc._id, loc) for loc in Location.view(
+                '_all_docs',
+                keys=[path[-1] for path in cases_by_site.keys()],
+                include_docs=True))
 
         for path, status in cases_by_site.iteritems():
             loc = locs[path[-1]]
