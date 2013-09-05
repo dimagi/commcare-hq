@@ -201,13 +201,17 @@ class FixtureDataItem(Document):
         return cls.by_data_type(domain, data_type).all()
 
     @classmethod
-    def get_key_value_map(cls, domain, tag, key_field, value_field):
+    def get_indexed_items(cls, domain, tag, index_field):
         """
-        Turns an item list into a flat dictionary, mapping
-        the value in `key_field` to the value in `value_field`.
+        Looks up an item list and converts to mapping from `index_field`
+        to a dict of all fields for that item.
+
+            fixtures = FixtureDataItem.get_indexed_items('my_domain',
+                'item_list_tag', 'index_field')
+            result = fixtures['index_val']['result_field']
         """
         fixtures = cls.get_item_list(domain, tag)
-        return {f.fields[key_field]: f.fields[value_field] for f in fixtures}
+        return dict((f.fields[key_field], f.fields) for f in fixtures)
 
     def delete_ownerships(self, transaction):
         ownerships = FixtureOwnership.by_item_id(self.get_id, self.domain)
