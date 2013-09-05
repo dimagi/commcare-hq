@@ -195,6 +195,24 @@ class FixtureDataItem(Document):
         return cls.view('fixtures/data_items_by_field_value', key=[domain, data_type_id, field_name, field_value],
                         reduce=False, include_docs=True)
 
+    @classmethod
+    def get_item_list(cls, domain, tag):
+        data_type = FixtureDataType.by_domain_tag(domain, tag).one()
+        return cls.by_data_type(domain, data_type).all()
+
+    @classmethod
+    def get_indexed_items(cls, domain, tag, index_field):
+        """
+        Looks up an item list and converts to mapping from `index_field`
+        to a dict of all fields for that item.
+
+            fixtures = FixtureDataItem.get_indexed_items('my_domain',
+                'item_list_tag', 'index_field')
+            result = fixtures['index_val']['result_field']
+        """
+        fixtures = cls.get_item_list(domain, tag)
+        return dict((f.fields[index_field], f.fields) for f in fixtures)
+
     def delete_ownerships(self, transaction):
         ownerships = FixtureOwnership.by_item_id(self.get_id, self.domain)
         transaction.delete_all(ownerships)

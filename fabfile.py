@@ -191,7 +191,7 @@ def zambia():
     env.code_branch = 'master'
     env.should_migrate = True
 
-    env.hosts = ['192.168.7.95'] #LAN setup - THIS WILL CHANGE
+    env.hosts = ['44.222.19.153']  # LIKELY THAT THIS WILL CHANGE
 
     _setup_path()
 
@@ -207,7 +207,7 @@ def zambia():
         'lb': [],
         'deploy': [],
 
-        'django_monolith': ['192.168.7.95'],
+        'django_monolith': ['44.222.19.153'],
     }
     env.roles = ['django_monolith']
     env.es_endpoint = 'localhost'

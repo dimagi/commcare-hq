@@ -1,6 +1,6 @@
 *.pyc
 *~
-local.ini*
+/local.ini*
 /localsettings*
 /loadtest/test_scripts/localsettings.py
 !localsettings.example.py

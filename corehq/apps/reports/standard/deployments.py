@@ -61,7 +61,7 @@ class ApplicationStatusReport(DeploymentsReport):
                 else:
                     build_id = UNKNOWN
 
-                if data.app_id:
+                if getattr(data, 'app_id', None):
                     try:
                         app = Application.get(data.app_id)
                         app_name = "%s [%s]" % (app.name, build_id)

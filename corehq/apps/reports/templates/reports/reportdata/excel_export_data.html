@@ -35,7 +35,7 @@
 
         var metadataExportManager = new ExportManager( {
             domain: '{{ domain }}',
-            exportFilters: '',
+            exportFilters: '{{ get_filter_params.urlencode|safe }}',
             bulkDownloadUrl: 'n',
             downloadUrl: '{% url corehq.apps.reports.views.export_all_form_metadata_async domain %}'
 
@@ -327,7 +327,7 @@
     <h2>{% trans "Export all Forms' Metadata" %}</h2>
     <div class="well">
         <p>
-            {% trans "Export basic data for all forms in this domain. Note that this export does not support the filters above." %}
+            {% trans "Export basic data for all forms in this domain." %}
         </p>
         <a data-toggle="modal" href="#export-download-status"
                data-modulename=""
