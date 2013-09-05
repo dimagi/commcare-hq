@@ -30,12 +30,14 @@ $(document).ready(function() {
   <h3><%= name %></h3>
   <hr>
   <table>
-    <% _.each(detail, function(field) { %><tr>
+    <% _.each(detail, function(field) { %>
+    <tr class="data data-<%= field.slug %>">
       <td><%= field.label %></td>
       <td class="detail_data">
 	<%= field.value %>
       </td>
-    </tr><% }); %>
+    </tr>
+    <% }); %>
   </table>
 </script>
 

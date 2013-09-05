@@ -112,7 +112,9 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
   {% for p in products %}
   <tr><td>{{ p.name }}</td>
     {% for c in columns %}
-    <td style="font-weight: bold;"><%= props['{{ p.get_id }}-{{ c.id }}'] %></td>
+    <td style="font-weight: bold;" class="data data-{{ p.get_id }}-{{ c.id }}">
+      <%= props['{{ p.get_id }}-{{ c.id }}'] %>
+    </td>
     {% endfor %}
   </tr>
   {% endfor %}

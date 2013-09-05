@@ -17,10 +17,28 @@ MetricsControl = L.Control.extend({
     },
 
     onAdd: function(map) {
+	this.activeMetric = null;
+
 	this.$div = $('#metrics');
 	this.div = this.$div[0];
         L.DomEvent.disableClickPropagation(this.div);
 	this.$div.show();
+
+	var m = this;
+	map.on('popupopen', function(e) {
+	    var $popup = $(e.popup._container);
+	    var metric = m.activeMetric;
+	    if (metric == null) {
+		return;
+	    }
+
+	    // highlight in detail popup
+	    $popup.find('.data').removeClass('detail_active');
+	    forEachDimension(metric, function(type, meta) {
+		$popup.find('.data-' + meta.column).addClass('detail_active');
+	    });
+	});
+
 	return this.div;
     },
 
@@ -32,6 +50,7 @@ MetricsControl = L.Control.extend({
 	$e.text(metric.title);
 	var m = this;
 	$e.click(function() {
+	    m.activeMetric = metric;
 	    m.select($e);
 	    m.render(metric);
 	});
@@ -393,6 +412,7 @@ function formatDetailPopup(feature, config) {
     context.detail = [];
     $.each(config.detail_columns || [], function(i, e) {
 	context.detail.push({
+	    slug: e, // FIXME this will cause problems if column names have weird chars or spaces
 	    label: getColumnTitle(e, config),
 	    value: displayProperties[e],
 	});

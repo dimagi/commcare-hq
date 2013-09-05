@@ -47,6 +47,10 @@
     padding-left: 20px;
 }
 
+.detail_active {
+    background-color: #cff;
+}
+
 .sizelegend .circle-container {
     text-align: center;
     padding: 5px;
