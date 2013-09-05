@@ -16,6 +16,7 @@ from django.utils.translation import ugettext_noop
 import simplejson
 import logging
 import re
+import os.path
 
 from casexml.apps.case.models import CommCareCaseAction
 from corehq.apps.api.es import CaseES
@@ -805,15 +806,13 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
         DataSource = to_function(params['report'])
         return DataSource(config).get_data()
 
-    def _get_data_demo(self, params, filters):
+    def _get_data_csv(self, params, filters):
         import csv
-        import os.path
-        with open(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tests/maps_demo/mountains.csv')) as f:
+        with open(params['path']) as f:
             return list(csv.DictReader(f))
 
-    def _get_data_demo2(self, params, filters):
-        import os.path
-        with open(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tests/maps_demo/india.geojson')) as f:
+    def _get_data_geojson(self, params, filters):
+        with open(params['path']) as f:
             data = json.load(f)
 
         for feature in data['features']:
@@ -852,8 +851,9 @@ class DemoMapReport(GenericMapReport):
     name = ugettext_noop("For Previewers: Maps Demo")
     slug = "maps_demo"
     data_source = {
-        "adapter": "demo",
-        "geo_column": "geo"
+        "adapter": "csv",
+        "geo_column": "geo",
+        "path": os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tests/maps_demo/mountains.csv'),
     }
     display_config = {
         "name_column": "name",
@@ -1046,8 +1046,9 @@ class DemoMapReport2(GenericMapReport):
     name = ugettext_noop("For Previewers: Maps Demo 2")
     slug = "maps_demo2"
     data_source = {
-        "adapter": "demo2",
-        "geo_column": "geo"
+        "adapter": "geojson",
+        "geo_column": "geo",
+        "path": os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tests/maps_demo/india.geojson'),
     }
     display_config = {
         'name_column': 'name',
