@@ -1,5 +1,5 @@
 from couchdbkit import ResourceNotFound
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import get_app
 from corehq.apps.reports import util
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
@@ -63,7 +63,7 @@ class ApplicationStatusReport(DeploymentsReport):
 
                 if getattr(data, 'app_id', None):
                     try:
-                        app = Application.get(data.app_id)
+                        app = get_app(self.domain, data.app_id)
                         app_name = "%s [%s]" % (app.name, build_id)
                     except ResourceNotFound:
                         pass
