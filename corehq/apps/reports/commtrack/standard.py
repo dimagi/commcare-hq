@@ -196,12 +196,16 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
 
         def status_tally(statuses):
             total = len(statuses)
-            return map_reduce(lambda s: [(s,)], lambda v: {'count': len(v), 'pct': len(v) / float(total)}, data=statuses)
-        status_counts = dict((loc_id, status_tally(statuses)) for loc_id, statuses in status_by_agg_site.iteritems())
+            return map_reduce(lambda s: [(s,)],
+                              lambda v: {'count': len(v), 'pct': len(v) / float(total)},
+                              data=statuses)
+        status_counts = dict((loc_id, status_tally(statuses))
+                             for loc_id, statuses in status_by_agg_site.iteritems())
 
         master_tally = status_tally([site['reporting_status'] for site in statuses])
 
-        locs = sorted(Location.view('_all_docs', keys=status_counts.keys(), include_docs=True), key=lambda loc: loc.name)
+        locs = sorted(Location.view('_all_docs', keys=status_counts.keys(), include_docs=True),
+                      key=lambda loc: loc.name)
         def fmt(pct):
             return '%.1f%%' % (100. * pct)
         def fmt_col(loc, col_type):

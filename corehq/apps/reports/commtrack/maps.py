@@ -2,6 +2,7 @@ from corehq.apps.reports.commtrack.psi_prototype import CommtrackReportMixin
 from corehq.apps.reports.standard.inspect import GenericMapReport
 from django.utils.translation import ugettext_noop
 from corehq.apps.commtrack.models import Product
+from django.template.loader import render_to_string
 
 class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
     name = ugettext_noop("Stock Status (map)")
@@ -99,35 +100,13 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
                     'consumption': "return x + ' %s / month'" % (p.unit or 'unit'),
                 }[c]
 
-        from django.template import Template, Context
-        # note this is a django template that generates an underscore template
-        detail_template = """
-<h3><%= name %> (<%= props.type %>)</h3>
-<hr>
-<table>
-  <tr><td></td>
-    {% for c in columns %}
-    <td>{{ c.title }}</td>
-    {% endfor %}
-  </tr>
-  {% for p in products %}
-  <tr><td>{{ p.name }}</td>
-    {% for c in columns %}
-    <td style="font-weight: bold;" class="data data-{{ p.get_id }}-{{ c.id }}">
-      <%= props['{{ p.get_id }}-{{ c.id }}'] %>
-    </td>
-    {% endfor %}
-  </tr>
-  {% endfor %}
-</table>
-"""
-
-        conf['detail_template'] = Template(detail_template).render(Context({
-                    'products': products,
-                    'columns': [{'id': c, 'title': titles[c]} for c in ('category', 'current_stock', 'consumption', 'months_remaining')],
-                }))
-
+        conf['detail_template'] = render_to_string('reports/partials/commtrack/stockstatus_mapdetail.html', {
+                'products': products,
+                'columns': [{'id': c, 'title': titles[c]} for c in
+                            ('category', 'current_stock', 'consumption', 'months_remaining')],
+                })
         #print conf['detail_template']
+
         return conf
 
 class ReportingStatusMapReport(GenericMapReport, CommtrackReportMixin):
