@@ -17,10 +17,28 @@ MetricsControl = L.Control.extend({
     },
 
     onAdd: function(map) {
+	this.activeMetric = null;
+
 	this.$div = $('#metrics');
 	this.div = this.$div[0];
         L.DomEvent.disableClickPropagation(this.div);
 	this.$div.show();
+
+	var m = this;
+	map.on('popupopen', function(e) {
+	    var $popup = $(e.popup._container);
+	    var metric = m.activeMetric;
+	    if (metric == null) {
+		return;
+	    }
+
+	    // highlight in detail popup
+	    $popup.find('.data').removeClass('detail_active');
+	    forEachDimension(metric, function(type, meta) {
+		$popup.find('.data-' + meta.column).addClass('detail_active');
+	    });
+	});
+
 	return this.div;
     },
 
@@ -32,6 +50,7 @@ MetricsControl = L.Control.extend({
 	$e.text(metric.title);
 	var m = this;
 	$e.click(function() {
+	    m.activeMetric = metric;
 	    m.select($e);
 	    m.render(metric);
 	});
@@ -46,7 +65,10 @@ MetricsControl = L.Control.extend({
     },
 
     render: function(metric) {
-	loadData(this._map, this.options.data, makeDisplayContext(metric));
+	var m = this;
+	loadData(this._map, this.options.data, makeDisplayContext(metric, function(f) {
+	    m.options.info.setActive(f, m.activeMetric);
+	}));
 	this.options.legend.render(metric);
     },
 });
@@ -71,6 +93,42 @@ LegendControl = L.Control.extend({
 	this.$div.show();
 	this.$div.empty();
 	renderLegend(this.$div, metric, this.options.config);
+    },
+});
+
+HeadsUpControl = L.Control.extend({
+    options: {
+        position: 'bottomright'
+    },
+
+    onAdd: function(map) {
+	this.$div = $('#info');
+	this.div = this.$div[0];
+	return this.div;
+    },
+
+    setActive: function(feature, metric) {
+	if (feature == null) {
+	    this.$div.hide();
+	    return;
+	}
+
+	var cols = [];
+	if (metric != null) {
+	    forEachDimension(metric, function(type, meta) {
+		var col = meta.column;
+		if (cols.indexOf(col) == -1) {
+		    cols.push(col);
+		}
+	    });
+	}
+
+	var context = detailContext(feature, this.options.config, cols);
+	var TEMPLATE = $('#info_popup').text();
+	var template = _.template(TEMPLATE);
+	var content = template(context);
+	this.$div.html(content);
+	this.$div.show();
     },
 });
 
@@ -132,7 +190,12 @@ function initData(data, config) {
     // instantiate data formatting functions
     config._fmt = {};
     $.each(config.numeric_format || {}, function(k, v) {
-	config._fmt[k] = eval('(function(x) { ' + v + '})');
+	try {
+	    // TODO allow these functions to access other properties for that row?
+	    config._fmt[k] = eval('(function(x) { ' + v + '})');
+	} catch (err) {
+	    console.log('error in formatter function [' + v + ']');
+	}
     });
 
     // pre-cache popup detail
@@ -163,7 +226,8 @@ function initMetrics(map, data, config) {
     });
 
     var l = new LegendControl({config: config}).addTo(map);
-    var m = new MetricsControl({data: data, legend: l}).addTo(map);
+    var h = new HeadsUpControl({config: config}).addTo(map);
+    var m = new MetricsControl({data: data, legend: l, info: h}).addTo(map);
 
     $.each(config.metrics, function(i, e) {
 	m.addMetric(e);
@@ -188,23 +252,58 @@ function loadData(map, data, display_context) {
 
 function zoomToAll(map) {
     if (map.activeOverlay) {
-	map.fitBounds(map.activeOverlay.getBounds());
+	map.fitBounds(map.activeOverlay.getBounds(), {padding: [60, 60]});
     }
 }
 
 // generate the proper geojson styling for the given display metric
-function makeDisplayContext(metric) {
+function makeDisplayContext(metric, setActiveFeature) {
     return {
 	filter: function(feature, layer) {
-	    feature.mkMarker = markerFactory(metric, feature.properties);
+	    if (feature.type == "Point") {
+		feature._conf = markerFactory(metric, feature.properties);
+	    } else {
+		feature._conf = featureStyle(metric, feature.properties);
+	    }
 	    // TODO support placeholder markers for 'null' instead of hiding entirely?
-	    return (feature.mkMarker != null);
+	    return (feature._conf != null);
+	},
+	style: function(feature) {
+	    return feature.geometry._conf;
 	},
 	pointToLayer: function (feature, latlng) {
-	    return feature.mkMarker(latlng);
+	    return feature._conf(latlng);
 	},
 	onEachFeature: function(feature, layer) {
             layer.bindPopup(feature.popupContent);
+
+	    if (feature.type != 'Point') {
+		layer._activate = function() {
+		    layer.setStyle(ACTIVE_STYLE);
+		};
+		layer._deactivate = function() {
+		    layer.setStyle(feature._conf);
+		};
+	    }
+
+	    layer.on({
+		mouseover: function(e) {
+		    if (layer._activate) {
+			layer._activate();
+			if (layer.bringToFront) {
+			    // normal markers don't have this method; mimic with 'riseOnHover'
+			    layer.bringToFront();
+			}
+		    }
+		    setActiveFeature(feature);
+		},
+		mouseout: function(e) {
+		    if (layer._deactivate) {
+			layer._deactivate();
+		    }
+		    setActiveFeature(null);
+		},
+	    });
 	}
     }
 }
@@ -228,8 +327,65 @@ function markerFactory(metric, props) {
     }
 }
 
-function defaultMarker(props) {
-    return L.marker;
+function featureStyle(metric, props) {
+    if (metric == null) {
+	return defaultFeatureStyle(props);
+    }
+
+    try {
+	var fill = getColor(metric.color, props);
+	if (fill == null) {
+	    return null;
+	}
+
+	return {
+	    color: "#000",
+	    weight: 1,
+	    opacity: 1,
+	    fillColor: fill.color,
+	    fillOpacity: fill.alpha
+	};
+    } catch (err) {
+	// marker cannot be rendered due to data error
+	// TODO log or display 'error' marker?
+	console.log(err);
+	return null;
+    }
+}
+
+ACTIVE_STYLE = {
+    color: '#ff0',
+    weight: 2,
+    opacity: 1
+};
+
+function mkMarker(latlng, options) {
+    options = options || {};
+    options.riseOnHover = true;
+
+    var marker = new L.marker(latlng, options);
+    marker._activate = function() {
+	$(marker._icon).addClass('glow');
+    };
+    marker._deactivate = function() {
+	$(marker._icon).removeClass('glow');
+    };
+
+    return marker;
+}
+
+function defaultMarker() {
+    return mkMarker;
+}
+
+function defaultFeatureStyle() {
+    return {
+	color: "#000",
+	weight: 1,
+	opacity: .8,
+	fillColor: '#888',
+	fillOpacity: .3
+    };
 }
 
 function circleMarker(metric, props) {
@@ -240,14 +396,22 @@ function circleMarker(metric, props) {
     }
 
     return function(latlng) {
-	return L.circleMarker(latlng, {
+	var style = {
 	    color: "#000",
 	    weight: 1,
 	    opacity: 1,
 	    radius: size,
 	    fillColor: fill.color,
 	    fillOpacity: fill.alpha
-	});
+	};
+	var marker = L.circleMarker(latlng, style);
+	marker._activate = function() {
+	    marker.setStyle(ACTIVE_STYLE);
+	};
+	marker._deactivate = function() {
+	    marker.setStyle(style);
+	};
+	return marker;
     };
 }
 
@@ -258,7 +422,7 @@ function iconMarker(metric, props) {
     }
 
     return function(latlng) {
-	var marker = L.marker(latlng, {
+	var marker = mkMarker(latlng, {
 	    icon: L.icon({
 		iconUrl: icon.url,
 	    })
@@ -272,7 +436,7 @@ function iconMarker(metric, props) {
 	    }));
 	};
 	img.src = icon.url;
-
+	
 	return marker;
     }
 }
@@ -365,30 +529,42 @@ function getPropValue(props, meta) {
 
 
 
+function detailContext(feature, config, cols) {
+    prop_cols = cols || _.keys(feature.properties);
+    detail_cols = cols || config.detail_columns || [];
 
+    var formatForDisplay = function(col, datum) {
+	var fallback = {_null: '\u2014'};
+	fallback[datum] = formatValue(col, datum, config);
+	return getEnumCaption(col, datum, config, fallback);
+    };
+    var displayProperties = {};
+    $.each(prop_cols, function(i, k) {
+	var v = feature.properties[k];
+	displayProperties[k] = formatForDisplay(k, v);
+    });
+
+    var context = {props: displayProperties};
+    if (config.name_column) {
+	context.name = feature.properties[config.name_column];
+    }
+    context.detail = [];
+    $.each(detail_cols, function(i, e) {
+	context.detail.push({
+	    slug: e, // FIXME this will cause problems if column names have weird chars or spaces
+	    label: getColumnTitle(e, config),
+	    value: displayProperties[e],
+	});
+    });
+    return context;
+}
 
 function formatDetailPopup(feature, config) {
     var DEFAULT_TEMPLATE = $('#default_detail_popup').text();
     var TEMPLATE = config.detail_template || DEFAULT_TEMPLATE;
 
-    var context = {props: feature.properties};
-    if (config.name_column) {
-	context.name = feature.properties[config.name_column];
-    }
-    context.detail = [];
-    $.each(config.detail_columns || [], function(i, e) {
-	var datum = feature.properties[e];
-	var fallback = {_null: '\u2014'};
-	fallback[datum] = formatValue(e, datum, config);
-
-	context.detail.push({
-	    label: getColumnTitle(e, config),
-	    value: getEnumCaption(e, datum, config, fallback)
-	});
-    });
-
     var template = _.template(TEMPLATE);
-    var content = template(context);
+    var content = template(detailContext(feature, config));
     return content;
 }
 
@@ -467,7 +643,10 @@ function autoConfiguration(config, data) {
 	var meta = {column: e};
 	var stats = summarizeColumn(meta, data);
 	var metric = {}
-	metric[stats.nonnumeric ? 'color' : 'size'] = meta;
+	metric.color = meta;
+	if (!stats.nonnumeric) {
+	    metric.size = meta;
+	}
 	return metric;
     });
     // metrics may already exist if we're in debug mode
@@ -521,7 +700,7 @@ function _summarizeColumn(meta, data) {
 	min: min,
 	max: max,
 	nonnumeric: nonnumeric,
-    };	
+    };
 }
 
 function getEnumValues(meta) {

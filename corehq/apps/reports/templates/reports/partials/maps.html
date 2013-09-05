@@ -30,13 +30,23 @@ $(document).ready(function() {
   <h3><%= name %></h3>
   <hr>
   <table>
-    <% _.each(detail, function(field) { %><tr>
+    <% _.each(detail, function(field) { %>
+    <tr class="data data-<%= field.slug %>">
       <td><%= field.label %></td>
       <td class="detail_data">
 	<%= field.value %>
       </td>
-    </tr><% }); %>
+    </tr>
+    <% }); %>
   </table>
+</script>
+
+<script type="text/template" id="info_popup">
+  <% if (name) { %><h4><%= name %></h4><% } %>
+  <% _.each(detail, function(field) { %>
+  <div><%= field.label %></div>
+  <div class="detail_data"><%= field.value %></div>
+  <% }); %>
 </script>
 
 <script type="text/template" id="legend_size">
@@ -65,12 +75,14 @@ $(document).ready(function() {
     <tr>
       <td id="scalebar"></td>
       <td class="tickmarks">
-	<% _.each(ticks, function(e) { %>
-	<div class="width-spacer"><%= e.label %></div>
-	<div class="ticklabel" style="top: <%= e.coord %>px;">
-	  <div class="ticklabel-inner"><%= e.label %></div>
-	</div>
-	<% }); %>
+	<div class="tickmarks-inner">
+	  <% _.each(ticks, function(e) { %>
+	  <div class="width-spacer"><%= e.label %></div>
+	  <div class="ticklabel" style="top: <%= e.coord %>px;">
+	    <div class="ticklabel-inner"><%= e.label %></div>
+	  </div>
+	  <% }); %>
+        </div>
       </td>
     </tr>
   </table>
@@ -85,5 +97,8 @@ $(document).ready(function() {
   <div id="legend" class="control-pane" style="display: none;">
   </div>
   
+  <div id="info" class="control-pane" style="display: none;">
+  </div>
+
 </div>
 </div>

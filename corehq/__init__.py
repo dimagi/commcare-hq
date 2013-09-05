@@ -36,7 +36,11 @@ def REPORTS(project):
             receiverwrapper.SubmissionErrorReport,
             phonelog.FormErrorReport,
             phonelog.DeviceLogDetailsReport
-        ))
+        )),
+        (_("Demos for Previewers"), (
+            inspect.DemoMapReport,
+            inspect.DemoMapReport2,
+        )),
     ]
     
     if project.commtrack_enabled:
@@ -50,6 +54,7 @@ def REPORTS(project):
             psi_prototype.StockOutReport,
             psi_prototype.StockReportExport,
             commtrack_maps.StockStatusMapReport,
+            commtrack_maps.ReportingStatusMapReport,
         )))
 
     messaging = (lambda project, user: (
