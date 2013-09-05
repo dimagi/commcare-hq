@@ -87,9 +87,12 @@
 }
 
 .colorscalelegend .tickmarks {
-    position: relative;
     vertical-align: top;
     padding-left: 0.5em;
+}
+
+.colorscalelegend .tickmarks-inner {
+    position: relative;
 }
 
 .colorscalelegend .ticklabel {

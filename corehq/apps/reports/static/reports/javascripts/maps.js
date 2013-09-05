@@ -295,7 +295,7 @@ function defaultFeatureStyle() {
 	weight: 1,
 	opacity: .8,
 	fillColor: '#888',
-	fillOpacity: .3,
+	fillOpacity: .3
     };
 }
 

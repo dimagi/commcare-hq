@@ -67,12 +67,14 @@ $(document).ready(function() {
     <tr>
       <td id="scalebar"></td>
       <td class="tickmarks">
-	<% _.each(ticks, function(e) { %>
-	<div class="width-spacer"><%= e.label %></div>
-	<div class="ticklabel" style="top: <%= e.coord %>px;">
-	  <div class="ticklabel-inner"><%= e.label %></div>
-	</div>
-	<% }); %>
+	<div class="tickmarks-inner">
+	  <% _.each(ticks, function(e) { %>
+	  <div class="width-spacer"><%= e.label %></div>
+	  <div class="ticklabel" style="top: <%= e.coord %>px;">
+	    <div class="ticklabel-inner"><%= e.label %></div>
+	  </div>
+	  <% }); %>
+        </div>
       </td>
     </tr>
   </table>
