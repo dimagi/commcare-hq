@@ -849,7 +849,7 @@ class DemoMapReport(GenericMapReport):
     it uses a static dataset
     """
 
-    name = ugettext_noop("Maps Demo (Previewers only)")
+    name = ugettext_noop("For Previewers: Maps Demo")
     slug = "maps_demo"
     data_source = {
         "adapter": "demo",
@@ -1043,7 +1043,7 @@ class DemoMapReport2(GenericMapReport):
     it uses a static dataset
     """
 
-    name = ugettext_noop("Maps Demo 2 (Previewers only)")
+    name = ugettext_noop("For Previewers: Maps Demo 2")
     slug = "maps_demo2"
     data_source = {
         "adapter": "demo2",
@@ -1074,12 +1074,12 @@ class DemoMapReport2(GenericMapReport):
         },
         'metrics': [
             {'color': {'column': 'pop'}},
-            {'color': {'column': 'area'}},
             {'color': {'column': 'pop_dens',
                        'colorstops': [
                         [0, 'rgba(20, 20, 20, .8)'],
                         [1200, 'rgba(255, 120, 0, .8)'],
                         ]}},
+            {'color': {'column': 'area'}},
             {'color': {'column': 'lang',
                        'categories': {
                         'Bengali': 'hsla(0, 100%, 50%, .8)',
@@ -1102,7 +1102,7 @@ class DemoMapReport2(GenericMapReport):
                         ]}},
             {'color': {'column': 'urbanity',
                        'colorstops': [
-                        [0, 'rgba(20, 20, 20, .8)'],
+                        [10, 'rgba(20, 20, 20, .8)'],
                         [50, 'rgba(255, 120, 0, .8)'],
                         ]}},
             {'color': {'column': 'sex_ratio',
