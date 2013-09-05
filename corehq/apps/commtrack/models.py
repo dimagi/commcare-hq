@@ -168,7 +168,9 @@ class OpenLMISConfig(DocumentSchema):
 
     url = StringProperty()
     username = StringProperty()
-    password = StringProperty() # todo: hash?
+    # we store passwords in cleartext right now, but in the future may want
+    # to leverage something like oauth to manage this better
+    password = StringProperty()
 
     using_requisitions = BooleanProperty(default=False) # whether openlmis handles our requisitions for us
 
