@@ -21,7 +21,10 @@
                 urls: {
                     save: '{% url edit_commcare_settings domain app.id %}'
                 },
-                edit: {{ edit|BOOL }}
+                edit: {{ edit|BOOL }},
+                user: {
+                    is_previewer: {{ request.couch_user.is_previewer|BOOL }}
+                }
             }
         };
         $(function () {
