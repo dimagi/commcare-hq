@@ -165,14 +165,12 @@ class Calculator(object):
         If your Calculator does not have a window set, you must pass a tuple of
         date or datetime objects to date_range
         """
-        assert isinstance(date_range, tuple) or self.window, self.get_result.__doc__
         if self.window:
             now = self.fluff.get_now()
             start = now - self.window
             end = now
-        else:
-            start = date_range[0]
-            end = date_range[1]
+        elif date_range is not None:
+            start, end = date_range
         result = {}
         for emitter_name in self._fluff_emitters:
             shared_key = [self.fluff._doc_type] + key + [self.slug, emitter_name]
@@ -182,6 +180,9 @@ class Calculator(object):
                 'reduce': reduce,
             }
             if emitter_type == 'date':
+                assert isinstance(date_range, tuple) or self.window, (
+                    "You must either set a window on your Calculator "
+                    "or pass in a date range")
                 if start > end:
                     q_args['descending'] = True
                 q = self.fluff.view(
