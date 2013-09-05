@@ -1050,7 +1050,67 @@ class DemoMapReport2(GenericMapReport):
         "geo_column": "geo"
     }
     display_config = {
-        'name_column': 'NAME_1',
+        'name_column': 'name',
+        'detail_columns': ['iso', 'type', 'pop', 'area', 'pop_dens', 'lang', 'literacy', 'urbanity', 'sex_ratio'],
+        'column_titles': {
+            'iso': 'ISO 3166-2',
+            'type': 'Type',
+            'pop': 'Population',
+            'area': 'Area',
+            'pop_dens': 'Population Density',
+            'lang': 'Primary Official Language',
+            'literacy': 'Literacy Rate',
+            'urbanity': '% Urban',
+            'sex_ratio': 'Sex Ratio',
+        },
+        'numeric_format': {
+            'iso': "return 'IN-' + x",
+            'area': "return x + ' km^2'",
+            'pop': "return x.toString().replace(/\B(?=(?:\d{3})+(?!\d))/g, ',')",
+            'pop_dens': "return x + ' /km^2'",
+            'literacy': "return x + '%'",
+            'urbanity': "return x + '%'",
+            'sex_ratio': "return x/1000. + ' females per male'",
+        },
+        'metrics': [
+            {'color': {'column': 'pop'}},
+            {'color': {'column': 'area'}},
+            {'color': {'column': 'pop_dens',
+                       'colorstops': [
+                        [0, 'rgba(20, 20, 20, .8)'],
+                        [1200, 'rgba(255, 120, 0, .8)'],
+                        ]}},
+            {'color': {'column': 'lang',
+                       'categories': {
+                        'Bengali': 'hsla(0, 100%, 50%, .8)',
+                        'English': 'hsla(36, 100%, 50%, .8)',
+                        'Gujarati': 'hsla(72, 100%, 50%, .8)',
+                        'Hindi': 'hsla(108, 100%, 50%, .8)',
+                        'Kannada': 'hsla(144, 100%, 50%, .8)',
+                        'Nepali': 'hsla(180, 100%, 50%, .8)',
+                        'Punjabi': 'hsla(216, 100%, 50%, .8)',
+                        'Tamil': 'hsla(252, 100%, 50%, .8)',
+                        'Telugu': 'hsla(288, 100%, 50%, .8)',
+                        'Urdu': 'hsla(324, 100%, 50%, .8)',
+                        '_other': 'hsla(0, 0%, 60%, .8)',
+                        }
+                       }},
+            {'color': {'column': 'literacy',
+                       'colorstops': [
+                        [60, 'rgba(20, 20, 20, .8)'],
+                        [100, 'rgba(255, 120, 0, .8)'],
+                        ]}},
+            {'color': {'column': 'urbanity',
+                       'colorstops': [
+                        [0, 'rgba(20, 20, 20, .8)'],
+                        [50, 'rgba(255, 120, 0, .8)'],
+                        ]}},
+            {'color': {'column': 'sex_ratio',
+                       'colorstops': [
+                        [850, 'rgba(20, 20, 255, .8)'],
+                        [1050, 'rgba(255, 20, 20, .8)'],
+                        ]}},
+        ],
     }
 
     @classmethod
