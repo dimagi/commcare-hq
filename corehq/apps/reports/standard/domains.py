@@ -1,4 +1,5 @@
 from datetime import datetime
+from dimagi.utils.decorators.memoized import memoized
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
@@ -132,7 +133,7 @@ DOMAIN_FACETS = [
     "internal.using_call_center",
     "internal.platform",
     "internal.project_manager",
-    "internal.phone_model",
+    "internal.phone_model.exact",
 
     "is_approved",
     "is_public",
@@ -194,12 +195,11 @@ FACET_MAPPING = [
     ]),
 ]
 
-def es_domain_query(params=None, facets=None, terms=None, domains=None, return_q_dict=False, start_at=None, size=None, sort=None):
+def es_domain_query(params=None, facets=None, domains=None, start_at=None, size=None, sort=None, fields=None, show_stats=True):
     from corehq.apps.appstore.views import es_query
     if params is None:
         params = {}
-    if terms is None:
-        terms = ['search']
+    terms = ['search']
     if facets is None:
         facets = []
     q = {"query": {"match_all":{}}}
@@ -227,13 +227,17 @@ def es_domain_query(params=None, facets=None, terms=None, domains=None, return_q
                             "operator" : "or", }}}}}
 
     q["facets"] = {}
-    stats = ['cp_n_active_cases', 'cp_n_inactive_cases', 'cp_n_active_cc_users', 'cp_n_cc_users', 'cp_n_60_day_cases', 'cp_n_web_users', 'cp_n_forms', 'cp_n_cases']
-    for prop in stats:
-        q["facets"].update({"%s-STATS" % prop: {"statistical": {"field": prop}}})
+    if show_stats:
+        stats = ['cp_n_active_cases', 'cp_n_inactive_cases', 'cp_n_active_cc_users', 'cp_n_cc_users', 'cp_n_60_day_cases', 'cp_n_web_users', 'cp_n_forms', 'cp_n_cases']
+        for prop in stats:
+            q["facets"].update({"%s-STATS" % prop: {"statistical": {"field": prop}}})
 
     q["sort"] = sort if sort else [{"name" : {"order": "asc"}},]
 
-    return es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search', start_at, size, dict_only=return_q_dict)
+    if fields:
+        q["fields"] = fields
+
+    return es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search', start_at, size)
 
 ES_PREFIX = "es_"
 class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
@@ -243,7 +247,13 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
     name = ugettext_noop('Project Space List')
     facet_title = ugettext_noop("Project Facets")
     search_for = ugettext_noop("projects...")
+    base_template = "hqadmin/domain_faceted_report.html"
 
+    @property
+    def template_context(self):
+        ctxt = super(AdminDomainStatsReport, self).template_context
+        ctxt["interval"] = "month"
+        return ctxt
 
     def es_query(self, params=None):
         return es_domain_query(params, self.es_facet_list, sort=self.get_sorting_block(),

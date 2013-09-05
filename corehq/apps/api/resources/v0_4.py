@@ -1,5 +1,5 @@
 from django.core.urlresolvers import NoReverseMatch, reverse
-from django.http import HttpResponseForbidden, HttpResponse
+from django.http import HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
 from tastypie import fields
 from tastypie.bundle import Bundle
 from tastypie.authentication import Authentication
@@ -194,12 +194,18 @@ class SingleSignOnResource(JsonResource, DomainSpecificResourceMixin):
         username = request.POST.get('username')
         password = request.POST.get('password')
 
+        if username is None:
+            return HttpResponseBadRequest('Missing required parameter: username')
+
+        if password is None:
+            return HttpResponseBadRequest('Missing required parameter: password')
+
         if '@' not in username:
             username = format_username(username, domain)
 
         # Convert to the appropriate type of user
         couch_user = CouchUser.get_by_username(username)
-        if not couch_user.is_member_of(domain) or not couch_user.check_password(password):
+        if couch_user is None or not couch_user.is_member_of(domain) or not couch_user.check_password(password):
             return HttpResponseForbidden()
 
         if couch_user.is_commcare_user():

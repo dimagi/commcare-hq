@@ -14,97 +14,16 @@
 {% block js-inline %} {{ block.super }}
     <script src="{% static 'hqwebapp/js/hash-tab.js' %}"></script>
     <script src='{% static 'hqadmin/js/nvd3_charts_helper.js' %}' type='text/javascript'></script>
+    <script src='{% static 'hqadmin/js/visualizations.js' %}' type='text/javascript'></script>
     <script type="text/javascript">
-        var charts = { "bar-chart": null, "cumulative-chart": null, "stacked-cumulative-chart": null };
-
-        // given the chart_id of a chart element in the dom, the function fetches the data associated with that chart
-        // and renders the chart in the specified element
-        function loadChartData(callback_fn, startdate, enddate) {
-            var $loading = $('.loading');
-            var $charts = $('.nvd3-chart');
-
-            $loading.show();
-            var svg_width = $(".tab-pane.active").width();
-            $charts.each(function(){
-                // hack: need to explicitly set the width to a pixel value because nvd3 has issues when it's set to 100%
-                var $svg_ele = $("<svg style='height:320px;'> </svg>").width(svg_width);
-                $(this).hide().html('').append($svg_ele); // create a new svg element to stop update issues
-            });
-
-            var data = {histogram_type: "{{ stat_slug }}"};
-            if (enddate) {
-                data["enddate"] = enddate;
-            }
-            if (startdate) {
-                data["startdate"] = startdate;
-            }
-
-            $.getJSON('{% url orgs_stats_data org.name %}', data,
-                function(d) {
-                    var startdate = new Date(Date.UTC(d.startdate[0], d.startdate[1]-1, d.startdate[2]));
-                    var enddate = new Date(Date.UTC(d.enddate[0], d.enddate[1]-1, d.enddate[2]));
-                    charts = loadCharts("{{ xaxis_label }}", d.histo_data, d.initial_values,
-                            startdate.getTime(), enddate.getTime());
-                    $loading.hide();
-                    $charts.show();
-
-                    // set the date fields if they're not already set
-                    $startdate_field = $("#{{ chart_name }}-startdate");
-                    $enddate_field = $("#{{ chart_name }}-enddate");
-                    if (!$startdate_field.val()) {
-                        $startdate_field.val(startdate.toISOString().substr(0, 10)); // substr bc date strs are 10 chars
-                    }
-                    if (!$enddate_field.val()) {
-                        $enddate_field.val(enddate.toISOString().substr(0, 10))
-                    }
-
-                    if (callback_fn) {
-                        callback_fn();
-                    }
-                }
-            )
-        }
-
-        function _update_chart_if_exists(chart) {
-            if (chart) {
-                chart.update();
-            }
-        }
-        function update_active_chart() {
-            // for some reason nvd3 doesn't fully animate the charts, force this update after the chart is loaded
-            var active_chart_name = $('#chart-tabs li.active a').attr('href').substr(1); // remove '#'
-            _update_chart_if_exists(charts[active_chart_name]);
-        }
-
-        $(function() {
-            // load new chart when daterange is clicked
-            $(document).on('submit', '.reload-graph-form', function() {
-                var $this = $(this);
-                var startdate = $this.find('[name="startdate"]').val();
-                var enddate = $this.find('[name="enddate"]').val();
-                loadChartData(update_active_chart, startdate, enddate);
-                var new_url = "?startdate=" + startdate + "&enddate=" + enddate + window.location.hash;
-                History.pushState(null, "Reloaded Chart", new_url);
-
-                // keep the urls for the other data visualizations consistent with this datespan
-                $(".viz-url").each(function() {
-                    var new_href = $(this).attr('href').split("?")[0] + new_url;
-                    $(this).attr('href', new_href);
-                });
-
-                return false;
-            });
-            $('.reload-graph-form').submit();
-
-            // load chart if not already visible on the screen
-            $('#chart-tabs').on('click', 'a[data-toggle="hash-tab"]', function(){
-                $('.nvd3-chart').hide();
-                var $chart = $($(this).attr('href')).children('.nvd3-chart');
-                $chart.show();
-                var chart = charts[$chart.parents('.tab-pane').attr('id')];
-                    _update_chart_if_exists(chart); // for some reason nvd3 doesn't fully animate the charts, force this update
-            });
+        var visualizations = new HQVisualizations({
+            chart_name: "{{ stat_slug }}",
+            histogram_type: "{{ stat_slug }}",
+            xaxis_label: "{{ xaxis_label }}",
+            ajax_url: "{% url orgs_stats_data org.name %}",
+            interval: "{{ interval }}"
         });
+        visualizations.init();
     </script>
 {% endblock %}
 
@@ -114,56 +33,7 @@
 
 {% block report %}
     <span style="margin-bottom: 1em" class="label label-info">{% trans "All dates are in UTC" %}</span>
-    <ul id="chart-tabs" class="nav nav-tabs">
-        <li class="active"><a href="#bar-chart" data-toggle="hash-tab">{% trans "Bar Chart" %}</a></li>
-        <li><a href="#cumulative-chart" data-toggle="hash-tab">{% trans "Cumulative Chart" %}</a></li>
-        <li><a href="#stacked-cumulative-chart" data-toggle="hash-tab">{% trans "Stacked Cumulative Chart" %}</a></li>
-        <form data-chart="{{ chart_name }}" style="margin: 0;" class="form-inline pull-right reload-graph-form">
-            <span class="pull-right">
-                <label for="{{ chart_name }}-startdate" class="sub-label">{% trans 'From' %}</label>
-                <input type="text" id="{{ chart_name }}-startdate" name="startdate" value="{{ startdate }}" class="date-picker input-small">
-                <label for="{{ chart_name }}-enddate" class="sub-label">{% trans 'To' %}</label>
-                <input type="text" id="{{ chart_name }}-enddate" name="enddate" value="{{ enddate }}" class="date-picker input-small">
-                <button type="submit" class="btn btn-info">{% trans "Apply" %}</button>
-            </span>
-        </form>
-    </ul>
-
-    <div id="charts" class="tab-content">
-        <div class="tab-pane active" id="bar-chart">
-            <div style="height: 320px; min-height: 320px;" class="loading">
-                <div class="hq-loading">
-                    <h4>{% trans "Loading Bar Chart" %}</h4>
-                    <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
-                </div>
-            </div>
-            <div class='nvd3-chart hide'>
-                <svg style='height:320px'> </svg>
-            </div>
-        </div>
-        <div class="tab-pane" id="cumulative-chart">
-            <div style="height: 320px; min-height: 320px;" class="loading">
-                <div class="hq-loading">
-                    <h4>{% trans "Loading Cumulative Chart" %}</h4>
-                    <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
-                </div>
-            </div>
-            <div class='nvd3-chart hide'>
-                <svg style='height:320px'> </svg>
-            </div>
-        </div>
-        <div class="tab-pane" id="stacked-cumulative-chart">
-            <div style="height: 320px; min-height: 320px;" class="loading">
-                <div class="hq-loading">
-                    <h4>{% trans "Loading Stacked Cumulative Chart" %}</h4>
-                    <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
-                </div>
-            </div>
-            <div class='nvd3-chart hide'>
-                <svg style='height:320px'> </svg>
-            </div>
-        </div>
-    </div>
+    {% include "orgs/partials/visualizations.html" with chart_name=stat_slug hq_loading=1 hash_tab=1 %}
 {% endblock %}
 
 {% block org-modals %}

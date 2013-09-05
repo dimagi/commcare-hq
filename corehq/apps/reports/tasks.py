@@ -53,8 +53,8 @@ def send_report(notification_id):
         pass
 
 @task
-def create_metadata_export(download_id, domain, format, filename):
-    tmp_path = save_metadata_export_to_tempfile(domain)
+def create_metadata_export(download_id, domain, format, filename, datespan=None, user_ids=None):
+    tmp_path = save_metadata_export_to_tempfile(domain, datespan, user_ids)
 
     class FakeCheckpoint(object):
         # for some silly reason the export cache function wants an object that looks like this

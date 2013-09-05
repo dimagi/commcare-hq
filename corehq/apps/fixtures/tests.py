@@ -9,10 +9,11 @@ from django.test import TestCase
 class FixtureDataTest(TestCase):
     def setUp(self):
         self.domain = 'qwerty'
+        self.tag = "contact"
 
         self.data_type = FixtureDataType(
             domain=self.domain,
-            tag="contact",
+            tag=self.tag,
             name="Contact",
             fields=['name', 'number']
         )
@@ -27,6 +28,18 @@ class FixtureDataTest(TestCase):
             }
         )
         self.data_item.save()
+
+        for name, number in [('Michael', '+16666666666'),
+            ('Eric', '+17777777777')]:
+            data_item = FixtureDataItem(
+                domain=self.domain,
+                data_type_id=self.data_type.get_id,
+                fields={
+                    'name': name,
+                    'number': number,
+                }
+            )
+            data_item.save()
 
         self.user = CommCareUser.create(self.domain, 'rudolph', '***')
 
@@ -74,3 +87,9 @@ class FixtureDataTest(TestCase):
 
         self.fixture_ownership = self.data_item.add_user(self.user)
         self.assertItemsEqual([self.user.get_id], self.data_item.get_all_users(wrap=False))
+
+    def test_get_indexed_items(self):
+        fixtures = FixtureDataItem.get_indexed_items(self.domain,
+            self.tag, 'name')
+        john_num = fixtures['John']['number']
+        self.assertEqual(john_num, '+15555555555')

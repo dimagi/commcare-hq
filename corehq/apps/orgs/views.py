@@ -573,87 +573,81 @@ def stats(request, org, stat_slug, template='orgs/stats.html'):
         'xaxis_label': xaxis_label,
         'startdate': request.datespan.startdate_display,
         'enddate': request.datespan.enddate_display,
+        'interval': request.GET.get('interval', 'day'),
     })
     return render(request, template, ctxt)
 
 @org_member_required
 @datespan_in_request(from_param="startdate", to_param="enddate")
 def stats_data(request, org):
-    params, _ = parse_args_for_es(request)
-    domains = [{"name": d.name, "hr_name": d.hr_name} for d in Domain.get_by_organization(org).all()]
+    domains = [{"names": [d.name], "display_name": d.hr_name} for d in Domain.get_by_organization(org).all()]
     histo_type = request.GET.get('histogram_type')
+    stats_data = get_stats_data(domains, histo_type, request.datespan)
+    return json_response(stats_data)
 
-    enddate = request.GET.get('enddate')
-    enddate = datetime.strptime(enddate, "%Y-%m-%d") if enddate else date.today()
-    startdate = request.GET.get('startdate')
-    startdate = datetime.strptime(startdate, "%Y-%m-%d") if startdate else enddate - timedelta(days=30)
+ADD_TO_FILTERS = {
+    "forms": [
+        {"not": {"in": {"doc_type": ["xformduplicate", "xformdeleted"]}}},
+        {"not": {"missing": {"field": "xmlns"}}},
+        {"not": {"missing": {"field": "form.meta.userID"}}},
+    ],
+    "users": [{"term": {"doc_type": "CommCareUser"}}],
+}
 
-    histo_data = dict([(d['hr_name'],
-                        es_histogram(histo_type, [d["name"]], request.datespan.startdate_display, request.datespan.enddate_display))
+DATE_FIELDS = {
+    "forms": "received_on",
+    "cases": "opened_on",
+    "users": "created_on",
+}
+
+ES_URLS = {
+    "forms": XFORM_INDEX + '/xform/_search',
+    "cases": CASE_INDEX + '/case/_search',
+    "users": USER_INDEX + '/user/_search',
+}
+
+def get_stats_data(domains, histo_type, datespan, interval="day"):
+    from corehq.apps.appstore.views import es_query
+    histo_data = dict([(d['display_name'],
+                        es_histogram(histo_type, d["names"], datespan.startdate_display, datespan.enddate_display))
                         for d in domains])
 
-    def _total_forms_until_date(dom, date):
-        key = ["submission", dom]
-        r = get_db().view('reports_forms/all_forms',
-            startkey=key+[""],
-            endkey=key+[json_format_datetime(date)],
-            group=False
-        ).one()
-        return r['value'] if r else 0
-
-    def _total_cases_until_date(dom, date):
-        key = ["", dom]
-        r = get_db().view('reports/case_activity',
-            startkey=key + [""],
-            endkey=key + [json_format_datetime(date), '{}']).one()
-        return r['value'] if r else 0
-
-    def _total_users_until_date(dom, date):
-        from corehq.apps.appstore.views import es_query
+    def _total_until_date(histo_type, doms=None):
+        query = {"in": {"domain.exact": doms}} if doms is not None else {"match_all": {}}
         q = {
-            "query": {"term": {"domain": dom}},
+            "query": query,
             "filter": {
                 "and": [
-                    {"range": {"created_on": {"lt": date.strftime('%Y-%m-%d')}}},
-                    {"term": {"doc_type": "CommCareUser"}},
+                    {"range": {DATE_FIELDS[histo_type]: {"lt": datespan.startdate_display}}},
                 ],
             },
         }
-        return es_query(q=q, es_url=USER_INDEX + '/user/_search')["hits"]["total"]
+        q["filter"]["and"].extend(ADD_TO_FILTERS.get(histo_type, []))
 
+        return es_query(q=q, es_url=ES_URLS[histo_type], size=1)["hits"]["total"]
 
-    init_val_fn = {
-        "forms": _total_forms_until_date,
-        "cases": _total_cases_until_date,
-        "users": _total_users_until_date,
-    }[histo_type]
-
-    return json_response({
+    return {
         'histo_data': histo_data,
-        'initial_values': dict([(dom["name"], init_val_fn(dom["name"], startdate)) for dom in domains]),
-        'startdate': request.datespan.startdate_key_utc,
-        'enddate': request.datespan.enddate_key_utc,
-    })
+        'initial_values': dict([(dom["display_name"],
+                                 _total_until_date(histo_type, dom["names"])) for dom in domains]),
+        'startdate': datespan.startdate_key_utc,
+        'enddate': datespan.enddate_key_utc,
+    }
 
-def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None):
-    date_field = {  "forms": "received_on",
-                    "cases": "opened_on",
-                    "users": "created_on", }[histo_type]
-    es_url = {  "forms": XFORM_INDEX + '/xform/_search',
-                "cases": CASE_INDEX + '/case/_search',
-                "users": USER_INDEX + '/user/_search' }[histo_type]
-
+def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None, interval="day"):
     q = {"query": {"match_all":{}}}
 
     if domains is not None:
         q["query"] = {"in" : {"domain.exact": domains}}
+
+    date_field = DATE_FIELDS[histo_type]
 
     q.update({
         "facets": {
             "histo": {
                 "date_histogram": {
                     "field": date_field,
-                    "interval": "day"
+                    "interval": interval
                 },
                 "facet_filter": {
                     "and": [{
@@ -668,14 +662,8 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff
     if tz_diff:
         q["facets"]["histo"]["date_histogram"]["time_zone"] = tz_diff
 
-    if histo_type == "forms":
-        q["facets"]["histo"]["facet_filter"]["and"].append({"not": {"in": {"doc_type": ["xformduplicate", "xformdeleted"]}}})
-        q["facets"]["histo"]["facet_filter"]["and"].append({"not": {"missing": {"field": "xmlns"}}})
-        q["facets"]["histo"]["facet_filter"]["and"].append({"not": {"missing": {"field": "form.meta.userID"}}})
-
-    if histo_type == "users":
-        q["facets"]["histo"]["facet_filter"]["and"].append({"term": {"doc_type": "CommCareUser"}})
+    q["facets"]["histo"]["facet_filter"]["and"].extend(ADD_TO_FILTERS.get(histo_type, []))
 
     es = get_es()
-    ret_data = es.get(es_url, data=q)
+    ret_data = es.get(ES_URLS[histo_type], data=q)
     return ret_data["facets"]["histo"]["entries"]

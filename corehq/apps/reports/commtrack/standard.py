@@ -1,32 +1,15 @@
 from corehq.apps.commtrack.psi_hacks import is_psi_domain
+from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource, ReportingStatusDataSource, is_timely
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.commtrack.psi_prototype import CommtrackReportMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.models import Product, SupplyPointProductCase as SPPCase
 from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
 from dimagi.utils.couch.loosechange import map_reduce
-from corehq.apps.commtrack.util import num_periods_late
-from datetime import date, datetime
+from datetime import datetime
 from corehq.apps.locations.models import Location
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
-
-# TODO make settings
-
-REPORTING_PERIOD = 'weekly'
-REPORTING_PERIOD_ARGS = (1,)
-
-def is_timely(case, limit=0):
-    return num_periods_late(case, REPORTING_PERIOD, *REPORTING_PERIOD_ARGS) <= limit
-
-def reporting_status(case):
-    if is_timely(case):
-        return 'ontime'
-    elif is_timely(case, 1):
-        return 'late'
-    else:
-        return 'nonreporting'
 
 def _enabled_hack(domain):
     return not is_psi_domain(domain)
@@ -79,7 +62,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 
     @property
     def rows(self):
-        return [pd[0:2] + ['%.1f%%' %d for d in pd[2:]] for pd in self.product_data]
+        return [pd[0:2] + ['%.1f%%' % d for d in pd[2:]] for pd in self.product_data]
 
     def get_data_for_graph(self):
         ret = [
@@ -110,7 +93,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 
 class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Inventory')
-    slug = 'agg_stock_status'
+    slug = StockStatusDataSource.slug
     fields = ['corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
     emailable = True
@@ -133,46 +116,13 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     @property
     def product_data(self):
         if getattr(self, 'prod_data', None) is None:
-            self.prod_data = list(self.get_prod_data())
-        return self.prod_data
-
-    def get_prod_data(self):
-        startkey = [self.domain, self.active_location._id if self.active_location else None]
-        product_cases = SPPCase.view('commtrack/product_cases', startkey=startkey, endkey=startkey + [{}], include_docs=True)
-
-        cases_by_product = map_reduce(lambda c: [(c.product,)], data=product_cases, include_docs=True)
-        products = Product.view('_all_docs', keys=cases_by_product.keys(), include_docs=True)
-
-        def _sum(vals):
-            return sum(vals) if vals else None
-
-        def aggregate_product(cases):
-            data = [(c.current_stock_level, c.monthly_consumption) for c in cases if is_timely(c, 1000)]
-            total_stock = _sum([d[0] for d in data if d[0] is not None])
-            total_consumption = _sum([d[1] for d in data if d[1] is not None])
-            # exclude stock values w/o corresponding consumption figure from total months left calculation
-            consumable_stock = _sum([d[0] for d in data if d[0] is not None and d[1] is not None])
-
-            return {
-                'total_stock': total_stock,
-                'total_consumption': total_consumption,
-                'consumable_stock': consumable_stock,
+            config = {
+                'domain': self.domain,
+                'location_id': self.request.GET.get('location_id'),
+                'aggregate': True
             }
-
-        status_by_product = dict((p, aggregate_product(cases)) for p, cases in cases_by_product.iteritems())
-        for p in sorted(products, key=lambda p: p.name):
-            stats = status_by_product[p._id]
-
-            months_left = SPPCase.months_of_stock_remaining(stats['consumable_stock'], stats['total_consumption'])
-            category = SPPCase.stock_category(stats['total_stock'], stats['total_consumption'], stats['consumable_stock'])
-
-            yield [
-                p.name,
-                stats['total_stock'],
-                stats['total_consumption'],
-                months_left,
-                category,
-            ]
+            self.prod_data = list(StockStatusDataSource(config).get_data())
+        return self.prod_data
 
     @property
     def rows(self):
@@ -188,11 +138,14 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             }
 
             for row in self.product_data:
-                row[1] = fmt(row[1])
-                row[2] = fmt(row[2], int)
-                row[3] = fmt(row[3], lambda k: '%.1f' % k)
-                row[4] = fmt(row[4], lambda k: statuses.get(k, k))
-                yield row
+                yield [
+                    fmt(row[StockStatusDataSource.SLUG_PRODUCT_NAME]),
+                    fmt(row[StockStatusDataSource.SLUG_CURRENT_STOCK]),
+                    fmt(row[StockStatusDataSource.SLUG_CONSUMPTION], int),
+                    fmt(row[StockStatusDataSource.SLUG_MONTHS_REMAINING], lambda k: '%.1f' % k),
+                    fmt(row[StockStatusDataSource.SLUG_CATEGORY], lambda k: statuses.get(k, k))
+                ]
+
 
 class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Reporting Rate')
@@ -219,15 +172,11 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     @property
     @memoized
     def _data(self):
-        startkey = [self.domain, self.active_location._id if self.active_location else None]
-        product_cases = SPPCase.view('commtrack/product_cases', startkey=startkey, endkey=startkey + [{}], include_docs=True)
-
-        def latest_case(cases):
-            # getting last report date should probably be moved to a util function in a case wrapper class
-            return max(cases, key=lambda c: getattr(c, 'last_reported', datetime(2000, 1, 1)).date())
-        cases_by_site = map_reduce(lambda c: [(tuple(c.location_),)],
-                                   lambda v: reporting_status(latest_case(v)),
-                                   data=product_cases, include_docs=True)
+        config = {
+            'domain': self.domain,
+            'location_id': self.request.GET.get('location_id'),
+        }
+        statuses = list(ReportingStatusDataSource(config).get_data())
 
         def child_loc(path):
             root = self.active_location
@@ -237,9 +186,9 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
             except IndexError:
                 return None
         def case_iter():
-            for k, v in cases_by_site.iteritems():
-                if child_loc(k) is not None:
-                    yield (k, v)
+            for site in statuses:
+                if child_loc(site['loc_path']) is not None:
+                    yield (site['loc_path'], site['reporting_status'])
         status_by_agg_site = map_reduce(lambda (path, status): [(child_loc(path), status)],
                                         data=case_iter())
         sites_by_agg_site = map_reduce(lambda (path, status): [(child_loc(path), path[-1])],
@@ -247,12 +196,16 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
 
         def status_tally(statuses):
             total = len(statuses)
-            return map_reduce(lambda s: [(s,)], lambda v: {'count': len(v), 'pct': len(v) / float(total)}, data=statuses)
-        status_counts = dict((loc_id, status_tally(statuses)) for loc_id, statuses in status_by_agg_site.iteritems())
+            return map_reduce(lambda s: [(s,)],
+                              lambda v: {'count': len(v), 'pct': len(v) / float(total)},
+                              data=statuses)
+        status_counts = dict((loc_id, status_tally(statuses))
+                             for loc_id, statuses in status_by_agg_site.iteritems())
 
-        master_tally = status_tally(cases_by_site.values())
+        master_tally = status_tally([site['reporting_status'] for site in statuses])
 
-        locs = sorted(Location.view('_all_docs', keys=status_counts.keys(), include_docs=True), key=lambda loc: loc.name)
+        locs = sorted(Location.view('_all_docs', keys=status_counts.keys(), include_docs=True),
+                      key=lambda loc: loc.name)
         def fmt(pct):
             return '%.1f%%' % (100. * pct)
         def fmt_col(loc, col_type):
