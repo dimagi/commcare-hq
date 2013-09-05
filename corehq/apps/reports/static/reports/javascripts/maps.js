@@ -220,12 +220,19 @@ function zoomToAll(map) {
 function makeDisplayContext(metric) {
     return {
 	filter: function(feature, layer) {
-	    feature.mkMarker = markerFactory(metric, feature.properties);
+	    if (feature.type == "Point") {
+		feature.configure = markerFactory(metric, feature.properties);
+	    } else {
+		feature.configure = featureStyle(metric, feature.properties);
+	    }
 	    // TODO support placeholder markers for 'null' instead of hiding entirely?
-	    return (feature.mkMarker != null);
+	    return (feature.configure != null);
+	},
+	style: function(feature) {
+	    return feature.geometry.configure;
 	},
 	pointToLayer: function (feature, latlng) {
-	    return feature.mkMarker(latlng);
+	    return feature.configure(latlng);
 	},
 	onEachFeature: function(feature, layer) {
             layer.bindPopup(feature.popupContent);
@@ -252,8 +259,44 @@ function markerFactory(metric, props) {
     }
 }
 
-function defaultMarker(props) {
+function featureStyle(metric, props) {
+    if (metric == null) {
+	return defaultFeatureStyle(props);
+    }
+
+    try {
+	var fill = getColor(metric.color, props);
+	if (fill == null) {
+	    return null;
+	}
+
+	return {
+	    color: "#000",
+	    weight: 1,
+	    opacity: 1,
+	    fillColor: fill.color,
+	    fillOpacity: fill.alpha
+	};
+    } catch (err) {
+	// marker cannot be rendered due to data error
+	// TODO log or display 'error' marker?
+	console.log(err);
+	return null;
+    }
+}
+
+function defaultMarker() {
     return L.marker;
+}
+
+function defaultFeatureStyle() {
+    return {
+	color: "#000",
+	weight: 1,
+	opacity: .8,
+	fillColor: '#888',
+	fillOpacity: .3,
+    };
 }
 
 function circleMarker(metric, props) {
@@ -498,7 +541,10 @@ function autoConfiguration(config, data) {
 	var meta = {column: e};
 	var stats = summarizeColumn(meta, data);
 	var metric = {}
-	metric[stats.nonnumeric ? 'color' : 'size'] = meta;
+	metric.color = meta;
+	if (!stats.nonnumeric) {
+	    metric.size = meta;
+	}
 	return metric;
     });
     // metrics may already exist if we're in debug mode

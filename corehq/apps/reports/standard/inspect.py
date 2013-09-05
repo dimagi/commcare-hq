@@ -748,9 +748,10 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
         geo_col = self.data_source.get('geo_column', 'geo')
 
         try:
-            data = getattr(self, '_get_data_%s' % adapter)(self.data_source, dict(self.request.GET.iteritems()))
+            loader = getattr(self, '_get_data_%s' % adapter)
         except AttributeError:
             raise RuntimeError('unknown adapter [%s]' % adapter)
+        data = loader(self.data_source, dict(self.request.GET.iteritems()))
 
         # debug
         #import pprint
@@ -767,11 +768,28 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
         def points():
             for row in data:
                 geo = row[geo_col]
+                e = geo
+                depth = 0
+                while hasattr(e, '__iter__'):
+                    e = e[0]
+                    depth += 1
+
+                if depth < 2:
+                    if depth == 0:
+                        geo = _parse_geopoint(geo)
+                    feature_type = 'Point'
+                else:
+                    if depth == 2:
+                        geo = [geo]
+                        depth += 1
+                    feature_type = 'MultiPolygon' if depth == 4 else 'Polygon'
+
                 yield {
-                    'type': 'Point',
-                    'coordinates': _parse_geopoint(geo),
+                    'type': feature_type,
+                    'coordinates': geo,
                     'properties': dict((k, v) for k, v in row.iteritems() if k != geo_col),
                 }
+
         return {
             'type': 'FeatureCollection',
             'features': list(points()),
@@ -790,8 +808,18 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
     def _get_data_demo(self, params, filters):
         import csv
         import os.path
-        with open(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tests/maps_sampledata_mountains.csv')) as f:
+        with open(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tests/maps_demo/mountains.csv')) as f:
             return list(csv.DictReader(f))
+
+    def _get_data_demo2(self, params, filters):
+        import os.path
+        with open(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tests/maps_demo/india.geojson')) as f:
+            data = json.load(f)
+
+        for feature in data['features']:
+            item = dict(feature['properties'])
+            item['geo'] = feature['geometry']['coordinates']
+            yield item
 
     @property
     def report_context(self):
@@ -1004,6 +1032,25 @@ class DemoMapReport(GenericMapReport):
                 }
             }
         ]
+    }
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return user and user.is_previewer()
+
+class DemoMapReport2(GenericMapReport):
+    """this report is a demonstration of the maps report's capabilities
+    it uses a static dataset
+    """
+
+    name = ugettext_noop("Maps Demo 2 (Previewers only)")
+    slug = "maps_demo2"
+    data_source = {
+        "adapter": "demo2",
+        "geo_column": "geo"
+    }
+    display_config = {
+        'name_column': 'NAME_1',
     }
 
     @classmethod

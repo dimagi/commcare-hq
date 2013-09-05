@@ -100,6 +100,7 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
                 }[c]
 
         from django.template import Template, Context
+        # note this is a django template that generates an underscore template
         detail_template = """
 <h3><%= name %> (<%= props.type %>)</h3>
 <hr>

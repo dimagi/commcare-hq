@@ -26,6 +26,7 @@ def REPORTS(project):
             inspect.SubmitHistory,
             inspect.CaseListReport,
             inspect.DemoMapReport,
+            inspect.DemoMapReport2,
         )),
         (_("Raw Data"), (
             export.ExcelExportReport,
