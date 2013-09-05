@@ -1,0 +1,21 @@
+{% comment %}
+this template generates an underscore.js template used by the maps report
+{% endcomment %}
+<h3><%= name %> (<%= props.type %>)</h3>
+<hr />
+<table>
+  <tr><td></td>
+    {% for c in columns %}
+    <td>{{ c.title }}</td>
+    {% endfor %}
+  </tr>
+  {% for p in products %}
+  <tr><td>{{ p.name }}</td>
+    {% for c in columns %}
+    <td style="font-weight: bold;" class="data data-{{ p.get_id }}-{{ c.id }}">
+      <%= props['{{ p.get_id }}-{{ c.id }}'] %>
+    </td>
+    {% endfor %}
+  </tr>
+  {% endfor %}
+</table>

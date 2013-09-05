@@ -21,7 +21,7 @@
 }
 
 .zoomtofit {
-  background-image: url({{STATIC_URL}}reports/css/leaflet/images/zoomfit.png);
+  background-image: url(/static/reports/css/leaflet/images/zoomfit.png);
   cursor: pointer;
 }
 
@@ -45,6 +45,10 @@
     font-weight: bold;
     text-align: right;
     padding-left: 20px;
+}
+
+.detail_active {
+    background-color: #cff;
 }
 
 .sizelegend .circle-container {
@@ -83,9 +87,12 @@
 }
 
 .colorscalelegend .tickmarks {
-    position: relative;
     vertical-align: top;
     padding-left: 0.5em;
+}
+
+.colorscalelegend .tickmarks-inner {
+    position: relative;
 }
 
 .colorscalelegend .ticklabel {
@@ -96,4 +103,18 @@
 
 .colorscalelegend .ticklabel-inner {
     margin-top: -0.5em;
+}
+
+.glow {
+    background-color: rgba(255, 255, 190, .75);
+    -webkit-box-shadow: 0px 0px 10px 10px rgba(255, 255, 190, .75);
+    -moz-box-shadow: 0px 0px 10px 10px rgba(255, 255, 190, .75);
+    box-shadow: 0px 0px 10px 10px rgba(255, 255, 190, .75);
+    -webkit-border-radius: 50%;
+    -moz-border-radius: 50%;
+    border-radius: 50%;
+}
+
+#info {
+    text-align: right;
 }
