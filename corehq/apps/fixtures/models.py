@@ -211,7 +211,7 @@ class FixtureDataItem(Document):
             result = fixtures['index_val']['result_field']
         """
         fixtures = cls.get_item_list(domain, tag)
-        return dict((f.fields[key_field], f.fields) for f in fixtures)
+        return dict((f.fields[index_field], f.fields) for f in fixtures)
 
     def delete_ownerships(self, transaction):
         ownerships = FixtureOwnership.by_item_id(self.get_id, self.domain)
