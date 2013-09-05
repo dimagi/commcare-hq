@@ -54,13 +54,14 @@
   settings:
     - properties.cc-days-form-retain # Days to Retain for Review
 
-- title: 'Advanced (Logging)'
+- title: 'Advanced'
   id: app-settings-advanced
   collapse: true
   settings:
     - properties.logenabled  # Logging Enabled
     - properties.log_prop_weekly  # Weekly Log Sending Frequency
     - properties.log_prop_daily  # Daily Log Sending Frequency
+    - hq.translation_strategy
 
 - title: 'Disabled'
   id: app-settings-disabled
@@ -72,9 +73,3 @@
     - properties.restore-tolerance  # OTA Restore Tolerance (disabled)
     - features.users  # No Users Mode (disabled)
     - properties.loose_media  # Loose Media Mode (disabled)
-- title: 'Settings in Preview'
-  id: app-settings-preview
-  collapse: true
-  always_show: false
-  settings:
-    - hq.translation_strategy
