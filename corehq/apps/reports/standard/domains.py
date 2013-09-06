@@ -1,6 +1,5 @@
 from datetime import datetime
-from corehq.elastic import es_query, fill_mapping_with_facets
-from dimagi.utils.decorators.memoized import memoized
+from corehq.elastic import es_query, ADD_TO_ES_FILTER, ES_URLS
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
@@ -238,6 +237,19 @@ def es_domain_query(params=None, facets=None, domains=None, start_at=None, size=
 
     return es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search', start_at, size)
 
+def total_distinct_users(domains=None):
+    """
+    Get total number of users who've ever submitted a form.
+    """
+    query = {"in": {"domain.exact": domains}} if domains is not None else {"match_all": {}}
+    q = {
+        "query": query,
+        "filter": {"and": ADD_TO_ES_FILTER.get("forms", [])},
+    }
+
+    res = es_query(q=q, facets=["form.meta.userID"], es_url=ES_URLS["forms"], size=0)
+    return len(res["facets"]["form.meta.userID"]["terms"])
+
 ES_PREFIX = "es_"
 class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
     slug = "domains"
@@ -252,6 +264,13 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
     def template_context(self):
         ctxt = super(AdminDomainStatsReport, self).template_context
         ctxt["interval"] = "week"
+
+        if self.es_params:
+            domain_results = es_domain_query(self.es_params, fields=["name"], size=99999, show_stats=False)
+            domains = [d["fields"]["name"] for d in domain_results["hits"]["hits"]]
+            ctxt["total_distinct_users"] = total_distinct_users(domains)
+        else:
+            ctxt["total_distinct_users"] = total_distinct_users()
         return ctxt
 
     def es_query(self, params=None, size=None):
