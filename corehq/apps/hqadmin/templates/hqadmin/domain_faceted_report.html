@@ -54,10 +54,10 @@
     <hr />
     <h4>{% trans "Total Distinct Active Users (matching filters)" %}: {{ total_distinct_users }}</h4>
     <hr />
-    <h2>Visualize Forms</h2>
+    <h2>{% trans "Visualize Forms" %}</h2>
     {% include "orgs/partials/visualizations.html" with chart_name="forms" %}
-    <h2>Visualize Cases</h2>
+    <h2>{% trans "Visualize Cases" %}</h2>
     {% include "orgs/partials/visualizations.html" with chart_name="cases" %}
-    <h2>Visualize Users</h2>
+    <h2>{% trans "Visualize Users" %}</h2>
     {% include "orgs/partials/visualizations.html" with chart_name="users" %}
 {% endblock %}
