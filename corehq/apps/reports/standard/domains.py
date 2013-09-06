@@ -254,9 +254,10 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
         ctxt["interval"] = "week"
         return ctxt
 
-    def es_query(self, params=None):
+    def es_query(self, params=None, size=None):
+        size = size if size is not None else self.pagination.count
         return es_domain_query(params, self.es_facet_list, sort=self.get_sorting_block(),
-                                  start_at=self.pagination.start, size=self.pagination.count)
+                               start_at=self.pagination.start, size=size)
 
     @property
     def headers(self):
