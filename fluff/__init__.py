@@ -239,7 +239,8 @@ class FlatField(schema.StringProperty):
     """
     This constructs a field for your indicator document that can perform basic
     operations on an item.  Pass in a function that accepts an item and returns
-    a dict.
+    a string.  This field is not a calculator, so it cannot be accessed with
+    get_results (yet).  Instead, access the fluff doc directly.
     Example:
 
         class MyFluff(fluff.IndicatorDocument):
@@ -254,9 +255,6 @@ class FlatField(schema.StringProperty):
 
     def calculate(self, item):
         return self.fn(item)
-
-    # def get_result(self, doc_id):
-        # return something
 
 
 class AttributeGetter(object):
