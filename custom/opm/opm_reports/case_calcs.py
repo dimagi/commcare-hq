@@ -117,7 +117,7 @@ class ChildSpacing(fluff.Calculator):
     """
 
     def in_range(self, date):
-        return self.start < date < self.end
+        return self.start.date() <= date < self.end.date()
 
     def get_cash_amt(self, dates):
         if not dates:

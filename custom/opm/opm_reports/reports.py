@@ -1,7 +1,7 @@
 """
 Custom report definitions.
 """
-from datetime import date, timedelta
+import datetime
 
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin 
@@ -51,9 +51,6 @@ class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
 
     @property
     def rows(self):
-        # print ([self.datespan.startdate_param_utc],
-        #     [self.datespan.enddate_param_utc])
-        # startdate_utc is a datetime object
         rows = []
         for row in self.row_iterable:
             rows.append([getattr(row, method) for 
@@ -62,21 +59,20 @@ class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
 
     @property
     def row_iterable(self):
-        rows = []
-        print "*"*20
+        start = self.datespan.startdate_utc
+        end = self.datespan.enddate_utc
+        now = datetime.datetime.utcnow()
+        if start.year == now.year and start.month == now.month:
+            end = now
 
-        print self.datespan.startdate.date()
-        print self.datespan.enddate.date()
+        print "*"*20
+        print start
+        print end
+
+        rows = []
         for row in self.get_rows():
             try:
-                # self.request_params = {'year': 2013, 'filterSet': True, 'month': u'01'}
-                # import pdb; pdb.set_trace()
-                rows.append(self.model(row, date_range=(
-                    self.datespan.startdate.date(),
-                    self.datespan.enddate.date()
-                    # date.today()-timedelta(365*2),
-                    # date.today()+timedelta(365*2),
-                )))
+                rows.append(self.model(row, date_range=(start, end)))
             except ResourceNotFound:
                 pass
         return rows
