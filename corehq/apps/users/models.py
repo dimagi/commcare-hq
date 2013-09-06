@@ -935,6 +935,15 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return couch_user
 
     @classmethod
+    def view(cls, view_name, classes=None, **params):
+        if cls is CouchUser:
+            classes = classes or {
+                'CommCareUser': CouchUser,
+                'WebUser': CouchUser,
+            }
+        return super(CouchUser, cls).view(view_name, classes=classes, **params)
+
+    @classmethod
     def wrap_correctly(cls, source):
         if source['doc_type'] == 'CouchUser' and \
                 source.has_key('commcare_accounts') and \

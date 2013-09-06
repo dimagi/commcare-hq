@@ -944,7 +944,8 @@ class BasicCommTrackSettingsView(BaseCommTrackAdminView):
             'requisition_config': {
                 'enabled': self.commtrack_settings.requisition_config.enabled,
                 'actions': [self._get_action_info(a) for a in self.commtrack_settings.requisition_config.actions],
-            }
+            },
+            'openlmis_config': self.commtrack_settings.openlmis_config._doc,
         }
 
     def _get_loctype_info(self, loctype):
@@ -1006,6 +1007,11 @@ class BasicCommTrackSettingsView(BaseCommTrackAdminView):
         self.commtrack_settings.location_types = [mk_loctype(l) for l in payload['loc_types']]
         self.commtrack_settings.requisition_config.enabled = payload['requisition_config']['enabled']
         self.commtrack_settings.requisition_config.actions =  [mk_action(a) for a in payload['requisition_config']['actions']]
+
+        if 'openlmis_config' in payload:
+            for item in payload['openlmis_config']:
+                setattr(self.commtrack_settings.openlmis_config, item, payload['openlmis_config'][item])
+
         self.commtrack_settings.save()
 
         return self.get(request, *args, **kwargs)

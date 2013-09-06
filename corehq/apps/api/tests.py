@@ -786,3 +786,18 @@ class TestSingleSignOnResource(APIResourceTest):
         '''
         response = self.client.post(self.list_endpoint, {'username': self.username, 'password': 'bimbizzleboozle'})
         self.assertEqual(response.status_code, 403)
+
+    def test_no_username(self):
+        '''
+        If no username supplied, 400
+        '''
+        response = self.client.post(self.list_endpoint, {'password': 'bimbizzleboozle'})
+        self.assertEqual(response.status_code, 400)
+
+    def test_no_password(self):
+        '''
+        If no password supplied, 400
+        '''
+        response = self.client.post(self.list_endpoint, {'username': self.username})
+        self.assertEqual(response.status_code, 400)
+

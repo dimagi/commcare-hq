@@ -1,10 +1,10 @@
 from collections import defaultdict
 from datetime import datetime, timedelta, time
 from django.template.loader import render_to_string
-from corehq.apps.appstore.views import es_query
 from corehq.apps.domain.models import Domain
 from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.reports.util import make_form_couch_key
+from corehq.elastic import es_query
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.couch.database import get_db

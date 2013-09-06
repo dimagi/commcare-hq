@@ -25,6 +25,7 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^run_command/$', 'run_command', name="run_management_command"),
     url(r'^phone/restore/$', 'admin_restore', name="admin_restore"),
     url(r'^flag_broken_builds/$', FlagBrokenBuilds.as_view(), name="flag_broken_builds"),
+    url(r'^stats_data/$', 'stats_data', name="admin_stats_data"),
     AdminReportDispatcher.url_pattern(),
 )
 

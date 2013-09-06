@@ -238,7 +238,7 @@ class CareReport(SqlTabularReport,
 
     def age_seperated_dict(self, default):
         """ Build a dictionary with a copy of default for each age group """
-        return dict((str(i), copy(default)) for i in range(3))
+        return dict((str(i), copy(default)) for i in range(4))
 
     def initialize_user_stuff(self):
         """
@@ -350,6 +350,8 @@ class CareReport(SqlTabularReport,
             return '15-24 years'
         elif age_group_val == '2':
             return '25+ years'
+        else:
+            return 'Unknown'
 
     def get_grouping_name(self, user):
         """
@@ -453,7 +455,7 @@ class TestingAndCounseling(CareReport):
         ['Individuals HIV infected provided with CD4 count test results',
          'new_hiv_cd4_results'],  # 1i
         ['Individuals HIV infected provided with CD4 count test results from previous months',
-         'new_hiv_in_care_program'],  # 1k TODO empty?
+         'new_hiv_in_care_program'],  # 1k
         ['People tested as individuals', 'individual_tests'],  # 1l
         ['People tested as couples', 'couple_tests', 'SumColumn'],  # 1m
         ['People tested at the community', 'hiv_community'],
@@ -487,13 +489,15 @@ class IACT(CareReport):
         ['HIV+ client completed I-ACT', 'hiv_pos_completed'],  # 3b
         ['HIV+ clients registered for I-ACT & in the pipeline (5th session)', 'hiv_pos_pipeline'],  # 3c
         #['HIV+client registered for I-ACT after diagnosis', #TODO],  # 3d
-        ['I-ACT participants receiving INH/IPT prophylaxis', 'iact_participant_ipt'],  # 3f TODO empty?
-        ['I-ACT participants receiving Cotrimoxizole prophylaxis/Dapsone', 'iact_participant_bactrim'],  # 3g TODO empty?
-        ['I-ACT participant on Pre-ART', 'iact_participant_art'],  # 3h TODO empty?
-        ['I-ACT participant on ARV', 'iact_participant_arv'],  # 3i TODO empty?
+        ['I-ACT participants receiving INH/IPT prophylaxis',
+         'iact_participant_ipt'],  # 3f
+        ['I-ACT participants receiving Cotrimoxizole prophylaxis/Dapsone',
+         'iact_participant_bactrim'],  # 3g
+        ['I-ACT participant on Pre-ART', 'iact_participant_art'],  # 3h
+        ['I-ACT participant on ARV', 'iact_participant_arv'],  # 3i
         ['I-ACT registered client with CD4 count <200', 'cd4lt200'],  # 3j
         ['I-ACT registered client with CD4 count 200 - 350', 'cd4lt350'],  # 3k
         ['I-ACT registered client with CD4 cont higher than 350', 'cd4gt350'],  # 3l
-        #['Unknown CD4 count at registration', ''],  # 3m
-        ['I-ACT Support groups completed (all 6 sessions)', 'iact_support_groups'],  # 3n TODO empty?
+        ['Unknown CD4 count at registration', 'unknown_cd4'],  # 3m
+        ['I-ACT Support groups completed (all 6 sessions)', 'iact_support_groups'],  # 3n
     ]

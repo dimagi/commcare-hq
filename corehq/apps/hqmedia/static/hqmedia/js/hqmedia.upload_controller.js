@@ -271,6 +271,7 @@ function BaseHQMediaUploadController (uploader_name, marker, options) {
         /*
             Begin Upload was clicked.
          */
+        $(self.uploadButtonSelector).addClass('disabled').removeClass('btn-success');
         self.startUploadUI();
         var postParams = _.clone(self.uploadParams);
         if ($(self.uploadFormSelector).find('[name="shared"]').prop('checked')) {

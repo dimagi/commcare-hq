@@ -1451,6 +1451,7 @@ def edit_app_attr(request, domain, app_id, attr):
         'cloudcare_enabled',
         'application_version',
         'case_sharing',
+        'translation_strategy'
         # RemoteApp only
         'profile_url',
         'manage_urls'
@@ -1474,6 +1475,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('show_user_registration', None),
         ('text_input', None),
         ('use_custom_suite', None),
+        ('translation_strategy', None),
     )
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):

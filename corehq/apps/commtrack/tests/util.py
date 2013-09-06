@@ -1,6 +1,10 @@
-from casexml.apps.case.tests import delete_all_cases, delete_all_xforms
+import uuid
+from xml.etree import ElementTree
+from casexml.apps.case.tests import delete_all_cases, delete_all_xforms, CaseBlock
+from casexml.apps.case.xml import V2
 from corehq.apps.commtrack import const
 from corehq.apps.groups.models import Group
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import Location
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.commtrack.util import bootstrap_commtrack_settings_if_necessary
@@ -90,11 +94,28 @@ def bootstrap_user(setup, username=TEST_USER, domain=TEST_DOMAIN,
     user.save_verified_number(domain, phone_number, verified=True, backend_id=backend)
     return user
 
-def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE):
+def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE, parent=None):
     name = name or code
-    loc = Location(site_code=code, name=name, domain=domain, type=type)
+    loc = Location(site_code=code, name=name, domain=domain, type=type, parent=parent)
     loc.save()
     return loc
+
+def update_supply_point_product_stock_level(spp, current_stock):
+    caseblock = CaseBlock(
+        case_id=spp._id,
+        create=False,
+        version=V2,
+        user_id=spp.user_id,
+        owner_id=spp.owner_id,
+        case_type=const.SUPPLY_POINT_PRODUCT_CASE_TYPE,
+        update={
+            "current_stock": current_stock
+        },
+    )
+    username = const.COMMTRACK_USERNAME
+    casexml = ElementTree.tostring(caseblock.as_xml())
+    submit_case_blocks(casexml, spp.domain, username, spp.user_id,
+                       xmlns=const.COMMTRACK_SUPPLY_POINT_PRODUCT_XMLNS)
 
 class CommTrackTest(TestCase):
     requisitions_enabled = False # can be overridden

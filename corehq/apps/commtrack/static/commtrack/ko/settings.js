@@ -16,6 +16,7 @@ function CommtrackSettingsViewModel() {
     this.actions = ko.observableArray();
     this.loc_types = ko.observableArray();
     this.requisition_config = ko.observable();
+    this.openlmis_config = ko.observable();
 
     this.json_payload = ko.observable();
 
@@ -40,6 +41,7 @@ function CommtrackSettingsViewModel() {
             return new LocationTypeModel(e);
         }));
         this.requisition_config(new RequisitionConfigModel(data.requisition_config));
+        this.openlmis_config(new OpenLMISConfigModel(data.openlmis_config));
     };
 
     var settings = this;
@@ -156,7 +158,8 @@ function CommtrackSettingsViewModel() {
             keyword: this.keyword(),
             actions: $.map(this.actions(), function(e) { return e.to_json(); }),
             loc_types: $.map(this.loc_types(), function(e) { return e.to_json(); }),
-            requisition_config: this.requisition_config().to_json()
+            requisition_config: this.requisition_config().to_json(),
+            openlmis_config: this.openlmis_config().to_json()
         };
     };
 }
@@ -274,6 +277,25 @@ function RequisitionConfigModel(data) {
         return {
             enabled: this.enabled(),
             actions: $.map(this.actions(), function(e) { return e.to_json(); })
+        };
+    };
+}
+
+
+function OpenLMISConfigModel(data) {
+    this.enabled = ko.observable(data.enabled);
+    this.url = ko.observable(data.url);
+    this.username = ko.observable(data.username);
+    this.password = ko.observable(data.password);
+    this.using_requisitions = ko.observable(data.using_requisitions);
+
+    this.to_json = function() {
+        return {
+            enabled: this.enabled(),
+            url: this.url(),
+            username: this.username(),
+            password: this.password(),
+            using_requisitions: this.using_requisitions()
         };
     };
 }

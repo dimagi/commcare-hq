@@ -1,8 +1,36 @@
 // Contains helper functions for rendering nvd3 multibar charts with data pulled from an elastic search histogram filter
 
-var DAY_VALUE = 86400000;
+var INTERVAL_VALUES = {
+    "day": 86400000,
+    "week": 86400000 * 7,
+    "month": 86400000 * 30,
+    "year": 86400000 * 365
+};
+
 function isInt(n) {
     return typeof n === 'number' && parseFloat(n) == parseInt(n, 10) && !isNaN(n);
+}
+
+function is_data_empty(histo_data) {
+    for (var key in histo_data) {
+        if (histo_data.hasOwnProperty(key)) {
+            if (histo_data[key].length > 0) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+function are_init_values_zero(values) {
+    for (var key in values) {
+        if (values.hasOwnProperty(key)) {
+            if (values[key] > 0) {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 function intervalize(vals, start, end, interval) {
@@ -11,7 +39,7 @@ function intervalize(vals, start, end, interval) {
         ret.push({x: t, y: 0});
     }
     for (var i = 0; i < vals.length; i++){
-        var index = Math.floor((vals[i].x - start) / interval)
+        var index = Math.floor((vals[i].x - start) / interval);
         if (index >= 0) {
             ret[index].y += vals[i].y;
         }
@@ -60,11 +88,11 @@ function trim_data(data) {
     })
 }
 
-function format_data(data, start, end) {
+function format_data(data, start, end, interval_val) {
     var ret = [];
     _.each(data, function (vals, name) {
         vals = _.map(vals, function(o) { return swap_prop_names(o, {time: "x", count: "y"})});
-        vals = intervalize(vals, start, end, DAY_VALUE);
+        vals = intervalize(vals, start, end, interval_val);
         ret.push({key: name, values: vals});
     });
     return trim_data(ret);
@@ -80,7 +108,7 @@ function formatDataForLineGraph(data, init_val) {
     return ret
 }
 
-function loadCharts(xname, data, initial_values, starting_time, ending_time) {
+function loadCharts(chart_name, xname, data, initial_values, starting_time, ending_time, interval) {
     for (var key in data) {
         if (data.hasOwnProperty(key)) {
             if (data[key].length > 0) {
@@ -93,14 +121,21 @@ function loadCharts(xname, data, initial_values, starting_time, ending_time) {
             }
         }
     }
-    var domain_data = format_data(data, starting_time, ending_time);
+    var domain_data = format_data(data, starting_time, ending_time, INTERVAL_VALUES[interval]);
     var cum_domain_data = _.map(domain_data, function (domain_datum) {
         return formatDataForLineGraph(domain_datum, initial_values[domain_datum.key]);
     });
 
-    var bar_chart = addHistogram("#bar-chart svg", xname, domain_data);
-    var cum_chart = addLineGraph("#cumulative-chart svg", xname, cum_domain_data);
-    var stacked_cum_chart = addStackedAreaGraph("#stacked-cumulative-chart svg", xname, cum_domain_data);
+    var bar_chart = null;
+    var cum_chart = null;
+    var stacked_cum_chart = null;
+    if (!is_data_empty(data)) {
+        bar_chart = addHistogram("#" + chart_name + "-bar-chart svg", xname, domain_data);
+    }
+    if (!is_data_empty(data) || !are_init_values_zero(initial_values)) {
+        cum_chart = addLineGraph("#" + chart_name + "-cumulative-chart svg", xname, cum_domain_data);
+        stacked_cum_chart = addStackedAreaGraph("#" + chart_name + "-stacked-cumulative-chart svg", xname, cum_domain_data);
+    }
 
     // move the yaxis label to the left a lil
     var yaxislabel = d3.selectAll('.nv-y.nv-axis .nv-axislabel');

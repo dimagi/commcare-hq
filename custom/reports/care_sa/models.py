@@ -36,7 +36,7 @@ class CareSAForm(XFormInstance):
         except (AttributeError, ValueError):
             # catch fun things like no age being found or age not being
             # a number
-            return -1
+            return '3'
 
         if age < 15:
             return '0'
@@ -99,7 +99,6 @@ class CareSAFluff(fluff.IndicatorDocument):
         NOTFilter(xcalculators.FormPropertyFilter(xmlns='http://openrosa.org/user-registration')),
         NOTFilter(xcalculators.FormPropertyFilter(xmlns='http://openrosa.org/user/registration')),
         NOTFilter(xcalculators.FormPropertyFilter(xmlns='http://code.javarosa.org/devicereport')),
-        CustomFilter(lambda f: f.age_group >= 0),
         CustomFilter(lambda f: f.gender in ['male', 'female']),
         CustomFilter(lambda f: f.cbo),
     ])
@@ -224,13 +223,8 @@ class CareSAFluff(fluff.IndicatorDocument):
     internal_care_referral = xcalculators.or_calc(
         [internal_refer_hbc, internal_refer_iact]
     )
-    internal_test_results_yes = xcalculators.filtered_form_calc(
-        xmlns=HCT_XMLNS,
-        property_path='form/test_results',
-        property_value='yes',
-    )
     new_hiv_in_care_program = xcalculators.and_calc(
-        [internal_care_referral, internal_test_results_yes]
+        [internal_care_referral, internal_hiv_pos_test]
     )
 
     #1l
@@ -382,27 +376,46 @@ class CareSAFluff(fluff.IndicatorDocument):
         property_path='form/last_session',
         property_value='not_complete',
     )
+    internal_iact_ipt = xcalculators.filtered_form_calc(
+        xmlns=IACT_XMLNS,
+        property_path='form/on_ipt',
+        property_value='yes',
+    )
     iact_participant_ipt = xcalculators.and_calc(
-        [internal_iact_not_complete, internal_on_ipt]
+        [internal_iact_not_complete, internal_iact_ipt]
     )
 
     #3g
+    internal_iact_bactrim = xcalculators.filtered_form_calc(
+        xmlns=IACT_XMLNS,
+        property_path='form/on_bactrim',
+        property_value='yes',
+    )
     iact_participant_bactrim = xcalculators.and_calc(
-        [internal_iact_not_complete, internal_on_bactrim]
+        [internal_iact_not_complete, internal_iact_bactrim]
     )
 
     #3h
+    internal_iact_pre_art = xcalculators.filtered_form_calc(
+        xmlns=IACT_XMLNS,
+        property_path='form/pre_art',
+        property_value='yes',
+    )
     iact_participant_art = xcalculators.and_calc(
-        [internal_iact_not_complete, internal_pre_art]
+        [internal_iact_not_complete, internal_iact_pre_art]
     )
 
     #3i
+    internal_iact_arv = xcalculators.filtered_form_calc(
+        xmlns=IACT_XMLNS,
+        property_path='form/on_arv',
+        property_value='yes',
+    )
     iact_participant_arv = xcalculators.and_calc(
-        [internal_iact_not_complete, internal_on_arv]
+        [internal_iact_not_complete, internal_iact_arv]
     )
 
     #3j
-
     cd4lt200 = xcalculators.filtered_form_calc(
         xmlns=IACT_XMLNS,
         property_path='form/cd4_res',
@@ -410,6 +423,7 @@ class CareSAFluff(fluff.IndicatorDocument):
         operator=xcalculators.IN_RANGE,
     )
 
+    #3k
     cd4lt350 = xcalculators.filtered_form_calc(
         xmlns=IACT_XMLNS,
         property_path='form/cd4_res',
@@ -417,6 +431,7 @@ class CareSAFluff(fluff.IndicatorDocument):
         operator=xcalculators.IN_RANGE,
     )
 
+    #3l
     cd4gt350 = xcalculators.filtered_form_calc(
         xmlns=IACT_XMLNS,
         property_path='form/cd4_res',
@@ -424,7 +439,20 @@ class CareSAFluff(fluff.IndicatorDocument):
         operator=xcalculators.IN_RANGE,
     )
 
-    #3m TODO
+    #3m
+    internal_skipped_cd4 = xcalculators.filtered_form_calc(
+        xmlns=IACT_XMLNS,
+        property_path='form/cd4_res',
+        operator=xcalculators.SKIPPED,
+    )
+    internal_first_session = xcalculators.filtered_form_calc(
+        xmlns=IACT_XMLNS,
+        property_path='form/first_session',
+        property_value='yes',
+    )
+    unknown_cd4 = xcalculators.and_calc(
+        [internal_skipped_cd4, internal_first_session]
+    )
 
     #3n
     iact_support_groups = xcalculators.filtered_form_calc(

@@ -328,7 +328,7 @@ def bug_report(req):
         ).format(**report)
 
     if full_name and not any([c in full_name for c in '<>"']):
-        reply_to = '"{full_name}" <{username}>'.format(**report)
+        reply_to = u'"{full_name}" <{username}>'.format(**report)
     else:
         reply_to = report['username']
 
