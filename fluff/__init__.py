@@ -243,6 +243,7 @@ class FlatField(schema.StringProperty):
     Example:
 
         class MyFluff(fluff.IndicatorDocument):
+            document_class = CommCareCase
             ...
             name = fluff.FlatField(lambda case: case.name)
     """
