@@ -1,10 +1,9 @@
 from datetime import datetime
-from corehq.elastic import es_query
+from corehq.elastic import es_query, fill_mapping_with_facets
 from dimagi.utils.decorators.memoized import memoized
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
-from corehq.apps.appstore.views import fill_mapping_with_facets
 from corehq.apps.hqadmin.reports import AdminFacetedReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.dispatcher import BasicReportDispatcher, AdminReportDispatcher
