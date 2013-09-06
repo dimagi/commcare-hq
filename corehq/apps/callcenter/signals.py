@@ -40,7 +40,7 @@ def catch_signal(app, **kwargs):
             hits = result.get('hits', {}).get('hits', {})
             for hit in hits:
                 domain = Domain.get(hit['_id'])
-                print('  callcenter bootstap `{}`'.format(domain.name))
+                print('  callcenter bootstap `{0}`'.format(domain.name))
                 bootstrap_callcenter(domain)
         except RequestException:
             if not settings.DEBUG:
