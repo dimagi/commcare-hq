@@ -112,7 +112,7 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
     if params is None:
         params = {}
 
-    q["size"] = size or 9999
+    q["size"] = size if size is not None else q.get("size", 9999)
     q["from"] = start_at or 0
     q["filter"] = q.get("filter", {})
     q["filter"]["and"] = q["filter"].get("and", [])
