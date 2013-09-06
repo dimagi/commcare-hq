@@ -8,6 +8,7 @@ from corehq.apps.callcenter.utils import sync_user_cases, bootstrap_callcenter
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.signals import commcare_domain_post_save
 from corehq.apps.users.signals import commcare_user_post_save
+from corehq.elastic import es_query
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +29,6 @@ _module = __name__.rsplit('.', 1)[0]
 def catch_signal(app, **kwargs):
     app_name = app.__name__.rsplit('.', 1)[0]
     if app_name == _module:
-        from corehq.apps.appstore.views import es_query
 
         try:
             q = {'fields': ['name']}

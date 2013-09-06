@@ -1,9 +1,9 @@
 from datetime import datetime
+from corehq.elastic import es_query, fill_mapping_with_facets
 from dimagi.utils.decorators.memoized import memoized
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
-from corehq.apps.appstore.views import fill_mapping_with_facets
 from corehq.apps.hqadmin.reports import AdminFacetedReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.dispatcher import BasicReportDispatcher, AdminReportDispatcher
@@ -196,7 +196,6 @@ FACET_MAPPING = [
 ]
 
 def es_domain_query(params=None, facets=None, domains=None, start_at=None, size=None, sort=None, fields=None, show_stats=True):
-    from corehq.apps.appstore.views import es_query
     if params is None:
         params = {}
     terms = ['search']
@@ -252,7 +251,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
     @property
     def template_context(self):
         ctxt = super(AdminDomainStatsReport, self).template_context
-        ctxt["interval"] = "month"
+        ctxt["interval"] = "week"
         return ctxt
 
     def es_query(self, params=None):
