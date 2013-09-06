@@ -1,6 +1,6 @@
 from datetime import datetime
 import json
-from urllib import urlencode, unquote
+from urllib import urlencode
 
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
@@ -14,7 +14,7 @@ from corehq.apps.appstore.forms import AddReviewForm
 from corehq.apps.appstore.models import Review
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.users.models import CouchUser
-from corehq.elastic import es_query
+from corehq.elastic import es_query, parse_args_for_es, generate_sortables_from_facets, fill_mapping_with_facets
 from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.database import apply_update
 
@@ -125,58 +125,6 @@ def project_info(request, domain, template="appstore/project_info.html"):
         "url_base": reverse('appstore'),
         'display_import': True if getattr(request, "couch_user", "") and request.couch_user.get_domains() else False
     })
-
-def parse_args_for_es(request, prefix=None):
-    """
-    Parses a request's query string for url parameters. It specifically parses the facet url parameter so that each term
-    is counted as a separate facet. e.g. 'facets=region author category' -> facets = ['region', 'author', 'category']
-    """
-    params, facets = {}, []
-    for attr in request.GET.iterlists():
-        param, vals = attr[0], attr[1]
-        if param == 'facets':
-            facets = vals[0].split()
-            continue
-        if prefix:
-            if param.startswith(prefix):
-                params[param[len(prefix):]] = [unquote(a) for a in vals]
-        else:
-            params[param] = [unquote(a) for a in vals]
-
-    return params, facets
-
-def generate_sortables_from_facets(results, params=None):
-    """
-    Sortable is a list of tuples containing the field name (e.g. Category) and a list of dictionaries for each facet
-    under that field (e.g. HIV and MCH are under Category). Each facet's dict contains the query string, display name,
-    count and active-status for each facet.
-    """
-
-    def generate_facet_dict(f_name, ft):
-        if isinstance(ft['term'], unicode): #hack to get around unicode encoding issues. However it breaks this specific facet
-            ft['term'] = ft['term'].encode('ascii','replace')
-
-        return {'name': ft["term"],
-                'count': ft["count"],
-                'active': str(ft["term"]) in params.get(f_name, "")}
-
-    sortable = []
-    res_facets = results.get("facets", [])
-    for facet in res_facets:
-        if res_facets[facet].has_key("terms"):
-            sortable.append((facet, [generate_facet_dict(facet, ft) for ft in res_facets[facet]["terms"] if ft["term"]]))
-
-    return sortable
-
-def fill_mapping_with_facets(facet_mapping, results, params=None):
-    sortables = dict(generate_sortables_from_facets(results, params))
-    for _, _, facets in facet_mapping:
-        for facet_dict in facets:
-            facet_dict["choices"] = sortables.get(facet_dict["facet"], [])
-            if facet_dict.get('mapping'):
-                for choice in facet_dict["choices"]:
-                    choice["display"] = facet_dict.get('mapping').get(choice["name"], choice["name"])
-    return facet_mapping
 
 def appstore(request, template="appstore/appstore_base.html"):
     page_length = 10
