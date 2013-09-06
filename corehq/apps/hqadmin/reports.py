@@ -1,11 +1,10 @@
 from datetime import datetime
 from corehq.apps.app_manager.models import Application
-from corehq.apps.appstore.views import fill_mapping_with_facets
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from corehq.apps.reports.generic import ElasticTabularReport, GenericTabularReport
 from django.utils.translation import ugettext as _, ugettext_noop
-from corehq.elastic import es_query
+from corehq.elastic import es_query, parse_args_for_es, fill_mapping_with_facets
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.apps.app_manager.commcare_settings import SETTINGS as CC_SETTINGS
@@ -89,7 +88,6 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
         return self.es_response
 
     def run_query(self):
-        from corehq.apps.appstore.views import parse_args_for_es
         self.es_params, _ = parse_args_for_es(self.request, prefix=self.es_prefix)
         results = self.es_query(self.es_params)
         self.es_facet_map = fill_mapping_with_facets(self.es_facet_mapping, results, self.es_params)

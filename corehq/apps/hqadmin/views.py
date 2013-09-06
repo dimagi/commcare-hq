@@ -26,7 +26,6 @@ from django.core import management
 
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.app_manager.util import get_settings_values
-from corehq.apps.appstore.views import parse_args_for_es
 from corehq.apps.hqadmin.history import get_recent_changes
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
@@ -40,7 +39,7 @@ from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.sms.models import SMSLog
 from corehq.apps.users.models import  CommCareUser, WebUser
 from corehq.apps.users.util import format_username
-from corehq.elastic import get_stats_data
+from corehq.elastic import get_stats_data, parse_args_for_es
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from corehq.apps.domain.decorators import  require_superuser
