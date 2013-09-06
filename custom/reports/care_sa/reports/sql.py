@@ -238,7 +238,7 @@ class CareReport(SqlTabularReport,
 
     def age_seperated_dict(self, default):
         """ Build a dictionary with a copy of default for each age group """
-        return dict((str(i), copy(default)) for i in range(3))
+        return dict((str(i), copy(default)) for i in range(4))
 
     def initialize_user_stuff(self):
         """
@@ -350,6 +350,8 @@ class CareReport(SqlTabularReport,
             return '15-24 years'
         elif age_group_val == '2':
             return '25+ years'
+        else:
+            return 'Unknown'
 
     def get_grouping_name(self, user):
         """
