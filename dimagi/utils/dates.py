@@ -345,7 +345,8 @@ class DateSpan(object):
             year = datetime.date.today().year
         assert isinstance(month, int) and isinstance(year, int)
         start = datetime.datetime(year, month, 1)
-        end = datetime.datetime(year, month + 1, 1) - datetime.timedelta(days=1)
+        next = start + datetime.timedelta(days=32)
+        end = datetime.datetime(next.year, next.month, 1) - datetime.timedelta(days=1)
         return DateSpan(start, end, format, inclusive, timezone)
 
 
