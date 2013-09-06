@@ -413,6 +413,8 @@ class MessagingTab(UITab):
                       'urlname': 'edit_one_time_reminder'},
                      {'title': _("New Broadcast"),
                       'urlname': 'add_one_time_reminder'},
+                     {'title': _("New Broadcast"),
+                      'urlname': 'copy_one_time_reminder'},
                  ]},
                 {'title': _('Message Log'),
                  'url': MessageLogReport.get_url(domain=self.domain)},

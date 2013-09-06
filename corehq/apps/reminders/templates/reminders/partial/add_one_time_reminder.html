@@ -1,17 +1,18 @@
 {% extends "reminders/reminders_base.html" %}
+{% load i18n %}
 {% load hq_shared_tags %}
 
 {% block subsection-title %}
     <li>
-        <a href="#">Broadcast Message</a> <span class="divider">&gt;</span>
+        <a href="#">{% trans 'Broadcast Message' %}</a> <span class="divider">&gt;</span>
     </li>
     {% if handler_id %}
     <li class="active">
-        <a href="{% url edit_one_time_reminder domain handler_id %}">Edit Broadcast</a>
+        <a href="{% url edit_one_time_reminder domain handler_id %}">{% trans 'Edit Broadcast' %}</a>
     </li>
     {% else %}
     <li class="active">
-        <a href="{% url add_one_time_reminder domain %}">New Broadcast</a>
+        <a href="{% url add_one_time_reminder domain %}">{% trans 'New Broadcast' %}</a>
     </li>
     {% endif %}
 {% endblock %}
@@ -61,64 +62,66 @@
 {% endblock %}
 
 {% block main_column %}
-<form id="one_time_reminder_form" action="" method="post">
-    <table id="main_table">
-        <tbody>
-            <tr>
-                <td>Recipients: </td>
-                <td>{{ form.recipient_type }}</td>
-                <td></td>
-            </tr>
-            <tr>
-                <td></td>
-                <td>
-                    <div class="for_case_group">
-                        <select name="case_group_id">
-                            {% for sample in sample_list %}
-                            <option value="{{ sample.code }}" {% if form.case_group_id.value == sample.code %}selected="selected"{% endif %}>{{ sample.name }}</option>
+<h4>Broadcast Message</h4>
+<form id="one_time_reminder_form" action="{% if handler_id %}{% url edit_one_time_reminder domain handler_id %}{% else %}{% url add_one_time_reminder domain %}{% endif %}" method="post">
+    <div class="form-block">
+        <table id="main_table">
+            <tbody>
+                <tr>
+                    <td>{% trans 'Recipients' %}: </td>
+                    <td>{{ form.recipient_type }}</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>
+                        <div class="for_case_group">
+                            <select name="case_group_id">
+                                {% for sample in sample_list %}
+                                <option value="{{ sample.code }}" {% if form.case_group_id.value == sample.code %}selected="selected"{% endif %}>{{ sample.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>{% trans 'Timing' %}: </td>
+                    <td>{{ form.send_type }}</td>
+                    <td></td>
+                </tr>
+                <tr class="for_later">
+                    <td></td>
+                    <td>
+                        {% trans 'Date' %}: <input type="text" class="input-small" name="date" id="id_date" value="{{ form.date.value|default:'' }}"/>
+                        {% trans 'Time' %}: <input type="text" class="input-small" name="time" id="id_time" value="{{ form.time.value|default:'' }}"/>
+                    </td>
+                    <td>{{ form.date.errors }}{{ form.time.errors }}</td>
+                </tr>
+                <tr>
+                    <td>{% trans 'Send' %}: </td>
+                    <td>{{ form.content_type }}</td>
+                    <td></td>
+                </tr>
+                <tr class="for_sms">
+                    <td>{% trans 'Message' %}: </td>
+                    <td><textarea id="id_message" name="message">{{ form.message.value|default:'' }}</textarea></td>
+                    <td>{{ form.message.errors }}</td>
+                </tr>
+                <tr class="for_sms_form">
+                    <td>{% trans 'Form' %}: </td>
+                    <td>
+                        <select name="form_unique_id">
+                            {% for f in form_list %}
+                            <option value="{{ f.code }}" {% if form.form_unique_id.value == f.code %}selected="selected"{% endif %}>{{ f.name }}</option>
                             {% endfor %}
                         </select>
-                    </div>
-                </td>
-                <td></td>
-            </tr>
-            <tr>
-                <td>Timing: </td>
-                <td>{{ form.send_type }}</td>
-                <td></td>
-            </tr>
-            <tr class="for_later">
-                <td></td>
-                <td>
-                    Date: <input type="text" class="input-small" name="date" id="id_date" value="{{ form.date.value|default:'' }}"/>
-                    Time: <input type="text" class="input-small" name="time" id="id_time" value="{{ form.time.value|default:'' }}"/>
-                </td>
-                <td>{{ form.date.errors }}{{ form.time.errors }}</td>
-            </tr>
-            <tr>
-                <td>Send: </td>
-                <td>{{ form.content_type }}</td>
-                <td></td>
-            </tr>
-            <tr class="for_sms">
-                <td>Message: </td>
-                <td><textarea id="id_message" name="message">{{ form.message.value|default:'' }}</textarea></td>
-                <td>{{ form.message.errors }}</td>
-            </tr>
-            <tr class="for_sms_form">
-                <td>Form: </td>
-                <td>
-                    <select name="form_unique_id">
-                        {% for f in form_list %}
-                        <option value="{{ f.code }}" {% if form.form_unique_id.value == f.code %}selected="selected"{% endif %}>{{ f.name }}</option>
-                        {% endfor %}
-                    </select>
-                </td>
-                <td></td>
-            </tr>
-        </tbody>
-    </table>
+                    </td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
     <input type="submit" class="btn btn-primary" value="Save" />
 </form>
-
 {% endblock %}

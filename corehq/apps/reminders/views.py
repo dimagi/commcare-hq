@@ -8,9 +8,9 @@ from django.shortcuts import render
 from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm, SurveySampleForm, EditContactForm, RemindersInErrorForm, KeywordForm, OneTimeReminderForm
 from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, CaseReminder, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET, EVENT_AS_SCHEDULE, SurveyKeyword, Survey, SurveySample, SURVEY_METHOD_LIST, SurveyWave, ON_DATETIME, RECIPIENT_SURVEY_SAMPLE, QUESTION_RETRY_CHOICES, REMINDER_TYPE_ONE_TIME, REMINDER_TYPE_DEFAULT, SEND_NOW, SEND_LATER, METHOD_SMS, METHOD_SMS_SURVEY
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import CommCareUser, Permissions
+from corehq.apps.users.models import CommCareUser, Permissions, CouchUser
 from .models import UI_SIMPLE_FIXED, UI_COMPLEX
-from .util import get_form_list, get_sample_list, get_recipient_name
+from .util import get_form_list, get_sample_list, get_recipient_name, get_form_name
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.util import register_sms_contact, update_contact
 from corehq.apps.domain.models import DomainCounter
@@ -29,8 +29,38 @@ def default(request, domain):
 
 @reminders_permission
 def list_reminders(request, domain, reminder_type=REMINDER_TYPE_DEFAULT):
-    handlers = CaseReminderHandler.get_handlers(domain=domain).all()
-    handlers = filter(lambda x : x.reminder_type == reminder_type, handlers)
+    all_handlers = CaseReminderHandler.get_handlers(domain=domain).all()
+    all_handlers = filter(lambda x : x.reminder_type == reminder_type, all_handlers)
+    if reminder_type == REMINDER_TYPE_ONE_TIME:
+        all_handlers.sort(key=lambda handler : handler.start_datetime)
+    handlers = []
+    utcnow = datetime.utcnow()
+    for handler in all_handlers:
+        if reminder_type == REMINDER_TYPE_ONE_TIME:
+            recipients = get_recipient_name(handler.get_reminders()[0].recipient, include_desc=False)
+            
+            if handler.method == METHOD_SMS_SURVEY:
+                content = get_form_name(handler.events[0].form_unique_id)
+            else:
+                message = handler.events[0].message[handler.default_lang]
+                if len(message) > 50:
+                    content = '"%s..."' % message[:47]
+                else:
+                    content = '"%s"' % message
+            
+            sent = handler.start_datetime <= utcnow
+        else:
+            recipients = None
+            content = None
+            sent = None
+        
+        handlers.append({
+            "handler" : handler,
+            "recipients" : recipients,
+            "content" : content,
+            "sent" : sent,
+        })
+    
     return render(request, "reminders/partial/list_reminders.html", {
         'domain': domain,
         'reminder_handlers': handlers,
@@ -85,6 +115,17 @@ def add_reminder(request, domain, handler_id=None, template="reminders/partial/a
         'domain': domain
     })
 
+def render_one_time_reminder_form(request, domain, form, handler_id):
+    context = {
+        "domain": domain,
+        "form" : form,
+        "sample_list" : get_sample_list(domain),
+        "form_list" : get_form_list(domain),
+        "handler_id" : handler_id,
+    }
+
+    return render(request, "reminders/partial/add_one_time_reminder.html", context)
+
 @reminders_permission
 def add_one_time_reminder(request, domain, handler_id=None):
     if handler_id:
@@ -121,7 +162,7 @@ def add_one_time_reminder(request, domain, handler_id=None):
                 day_num = 0,
                 fire_time = time(0,0),
                 form_unique_id = form.cleaned_data.get("form_unique_id") if content_type == METHOD_SMS_SURVEY else None,
-                message = {"xx" : form.cleaned_data.get("message")} if content_type == METHOD_SMS else {},
+                message = {handler.default_lang : form.cleaned_data.get("message")} if content_type == METHOD_SMS else {},
                 callback_timeout_intervals = [],
             )]
             handler.schedule_length = 1
@@ -139,7 +180,7 @@ def add_one_time_reminder(request, domain, handler_id=None):
                 "recipient_type" : handler.recipient,
                 "case_group_id" : handler.sample_id,
                 "content_type" : handler.method,
-                "message" : handler.events[0].message["xx"] if "xx" in handler.events[0].message else None,
+                "message" : handler.events[0].message[handler.default_lang] if handler.default_lang in handler.events[0].message else None,
                 "form_unique_id" : handler.events[0].form_unique_id if handler.events[0].form_unique_id is not None else None,
             }
         else:
@@ -147,15 +188,20 @@ def add_one_time_reminder(request, domain, handler_id=None):
 
         form = OneTimeReminderForm(initial=initial)
 
-    context = {
-        "domain": domain,
-        "form" : form,
-        "sample_list" : get_sample_list(domain),
-        "form_list" : get_form_list(domain),
-        "handler_id" : handler_id,
-    }
+    return render_one_time_reminder_form(request, domain, form, handler_id)
 
-    return render(request, "reminders/partial/add_one_time_reminder.html", context)
+@reminders_permission
+def copy_one_time_reminder(request, domain, handler_id):
+    handler = CaseReminderHandler.get(handler_id)
+    initial = {
+        "send_type" : SEND_NOW,
+        "recipient_type" : handler.recipient,
+        "case_group_id" : handler.sample_id,
+        "content_type" : handler.method,
+        "message" : handler.events[0].message[handler.default_lang] if handler.default_lang in handler.events[0].message else None,
+        "form_unique_id" : handler.events[0].form_unique_id if handler.events[0].form_unique_id is not None else None,
+    }
+    return render_one_time_reminder_form(request, domain, OneTimeReminderForm(initial=initial), None)
 
 @reminders_permission
 def delete_reminder(request, domain, handler_id):
