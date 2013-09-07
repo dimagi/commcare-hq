@@ -593,14 +593,14 @@ function setMetricDefaults(metric, data, config) {
 	    var stats = summarizeColumn(metric.color, data);
 	    var numeric_data = (!metric.color.thresholds && !stats.nonnumeric);
 	    if (numeric_data) {
-		metric.color.colorstops = (stats.min < 0 ?
-					   [
-					       [stats.min, 'rgba(0, 0, 255, .8)'],
-					       [stats.max, 'rgba(255, 0, 0, .8)'],
-					   ] :
+		metric.color.colorstops = (magnitude_based_field(stats) ?
 					   [
 					       [0, 'rgba(20, 20, 20, .8)'],
 					       [stats.max, DEFAULT_COLOR],
+					   ] :
+					   [
+					       [stats.min, 'rgba(0, 0, 255, .8)'],
+					       [stats.max, 'rgba(255, 0, 0, .8)'],
 					   ]);
 	    } else {
 		if (metric.color.thresholds) {
@@ -643,8 +643,9 @@ function autoConfiguration(config, data) {
 	var meta = {column: e};
 	var stats = summarizeColumn(meta, data);
 	var metric = {}
-	metric.color = meta;
-	if (!stats.nonnumeric) {
+	if (stats.nonnumeric || !magnitude_based_field(stats)) {
+	    metric.color = meta;
+	} else {
 	    metric.size = meta;
 	}
 	return metric;
@@ -666,21 +667,27 @@ function summarizeColumn(meta, data) {
 function _summarizeColumn(meta, data) {
     var _uniq = {};
     var sum = 0;
-    var count = 0;
+    var count = 0; // of numeric values only
     var min = null;
     var max = null;
     var nonnumeric = false;
 
-    $.each(data.features, function(i, e) {
-	var val = getPropValue(e.properties, meta);
-	if (isNull(val)) {
-	    return;
-	}
+    var iterate = function(callback) {
+	$.each(data.features, function(i, e) {
+	    var val = getPropValue(e.properties, meta);
+	    if (isNull(val)) {
+		return;
+	    }
 
-	count++;
+	    var numeric = isNumeric(val);
+	    callback(numeric ? +val : val, numeric);
+	});
+    }
+
+    iterate(function(val, numeric) {
 	_uniq[val] = true;
-	if (isNumeric(val)) {
-	    val = +val;
+	if (numeric) {
+	    count++;
 	    sum += val;
 	    min = (min == null ? val : Math.min(min, val));
 	    max = (max == null ? val : Math.max(max, val));
@@ -694,13 +701,32 @@ function _summarizeColumn(meta, data) {
     });
     uniq.sort();
 
+    var mean = (count > 0 ? sum / count : null);
+    var stdev = null;
+    if (count > 1) {
+	var _accum = 0;
+	iterate(function(val, numeric) {
+	    if (numeric) {
+		_accum += Math.pow(val - mean, 2.);
+	    }
+	});
+	stdev = Math.sqrt(_accum / (count - 1));
+    }
+
     return {
 	distinct: uniq,
-	mean: (count > 0 ? sum / count : null),
+	mean: mean,
+	stdev: stdev,
 	min: min,
 	max: max,
 	nonnumeric: nonnumeric,
     };
+}
+
+// based on the results of summarizeColumn, determine if this column is better
+// represented as a magnitude (0-max) or narrower range (min-max)
+function magnitude_based_field(stats) {
+    return !(stats.min < 0 || (stats.stdev != null && stats.stdev / stats.max < .05));
 }
 
 function getEnumValues(meta) {
