@@ -643,7 +643,7 @@ function autoConfiguration(config, data) {
 	var meta = {column: e};
 	var stats = summarizeColumn(meta, data);
 	var metric = {}
-	if (stats.nonnumeric || !magnitude_based_field(stats)) {
+	if (stats.nonnumeric || !magnitude_based_field(stats) || stats.nonpoint) {
 	    metric.color = meta;
 	} else {
 	    metric.size = meta;
@@ -658,6 +658,7 @@ function summarizeColumn(meta, data) {
     // cache the computed results
     if (!meta._stats) {
 	meta._stats = _summarizeColumn(meta, data);
+	//console.log(meta.column, meta._stats);
     }
     return meta._stats;
 }
@@ -671,6 +672,7 @@ function _summarizeColumn(meta, data) {
     var min = null;
     var max = null;
     var nonnumeric = false;
+    var nonpoint = false;
 
     var iterate = function(callback) {
 	$.each(data.features, function(i, e) {
@@ -680,11 +682,12 @@ function _summarizeColumn(meta, data) {
 	    }
 
 	    var numeric = isNumeric(val);
-	    callback(numeric ? +val : val, numeric);
+	    var polygon = e.geometry.type != 'Point';
+	    callback(numeric ? +val : val, numeric, polygon);
 	});
     }
 
-    iterate(function(val, numeric) {
+    iterate(function(val, numeric, polygon) {
 	_uniq[val] = true;
 	if (numeric) {
 	    count++;
@@ -693,6 +696,9 @@ function _summarizeColumn(meta, data) {
 	    max = (max == null ? val : Math.max(max, val));
 	} else {
 	    nonnumeric = true;
+	}
+	if (polygon) {
+	    nonpoint = true;
 	}
     });
     var uniq = [];
@@ -720,13 +726,14 @@ function _summarizeColumn(meta, data) {
 	min: min,
 	max: max,
 	nonnumeric: nonnumeric,
+	nonpoint: nonpoint,
     };
 }
 
 // based on the results of summarizeColumn, determine if this column is better
 // represented as a magnitude (0-max) or narrower range (min-max)
 function magnitude_based_field(stats) {
-    return !(stats.min < 0 || (stats.stdev != null && stats.stdev / stats.max < .05));
+    return !(stats.min < 0 || (stats.stdev != null && stats.stdev / stats.max < .1));
 }
 
 function getEnumValues(meta) {
