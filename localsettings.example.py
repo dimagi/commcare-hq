@@ -151,7 +151,7 @@ CACHES = {
     },
     'redis': {
         'BACKEND': 'redis_cache.cache.RedisCache',
-        'LOCATION': 'localhost:6379',
+        'LOCATION': 'localhost:6379:0',
         'OPTIONS': {},
     },
 }
