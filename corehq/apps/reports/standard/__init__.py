@@ -10,6 +10,7 @@ from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjec
 from corehq.apps.reports.fields import FilterUsersField
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.models import HQUserType
+from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.dates import DateSpan
 from django.utils.translation import ugettext_noop
@@ -313,3 +314,26 @@ class DatespanMixin(object):
         datespan = DateSpan.since(self.datespan_default_days, timezone=self.timezone, inclusive=self.inclusive)
         datespan.is_default = True
         return datespan
+
+
+class MonthYearMixin(object):
+    """
+        Similar to DatespanMixin, but works with MonthField and YearField
+    """
+    fields = [MonthFilter, YearFilter]
+
+    _datespan = None
+    @property
+    def datespan(self):
+        if self._datespan is None:
+            if 'month' in self.request_params and 'year' in self.request_params:
+                datespan = DateSpan.from_month(
+                    int(self.request_params['month']),
+                    int(self.request_params['year'])
+                )
+            else:
+                datespan = DateSpan.from_month()
+            self.request.datespan = datespan
+            self.context.update(dict(datespan=datespan))
+            self._datespan = datespan
+        return self._datespan
