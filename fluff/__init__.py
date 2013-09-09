@@ -234,6 +234,29 @@ class Calculator(object):
 
         return results
 
+
+class FlatField(schema.StringProperty):
+    """
+    This constructs a field for your indicator document that can perform basic
+    operations on an item.  Pass in a function that accepts an item and returns
+    a string.  This field is not a calculator, so it cannot be accessed with
+    get_results (yet).  Instead, access the fluff doc directly.
+    Example:
+
+        class MyFluff(fluff.IndicatorDocument):
+            document_class = CommCareCase
+            ...
+            name = fluff.FlatField(lambda case: case.name)
+    """
+
+    def __init__(self, fn, *args, **kwargs):
+        self.fn = fn
+        super(FlatField, self).__init__(*args, **kwargs)
+
+    def calculate(self, item):
+        return self.fn(item)
+
+
 class AttributeGetter(object):
     """
     If you need to do something fancy in your group_by you would use this.
@@ -256,15 +279,19 @@ class IndicatorDocumentMeta(schema.DocumentMeta):
 
     def __new__(mcs, name, bases, attrs):
         calculators = {}
+        flat_fields = {}
         for attr_name, attr_value in attrs.items():
             if isinstance(attr_value, Calculator):
                 calculators[attr_name] = attr_value
                 attrs[attr_name] = schema.DictProperty()
+            if isinstance(attr_value, FlatField):
+                flat_fields[attr_name] = attr_value
         cls = super(IndicatorDocumentMeta, mcs).__new__(mcs, name, bases, attrs)
         for slug, calculator in calculators.items():
             calculator.fluff = cls
             calculator.slug = slug
         cls._calculators = calculators
+        cls._flat_fields = flat_fields 
         return cls
 
 
@@ -304,6 +331,10 @@ class IndicatorDocument(schema.Document):
     def get_now(cls):
         return datetime.datetime.utcnow().date()
 
+    def update(self, item):
+        for attr, field in self._flat_fields.items():
+            self[attr] = field.calculate(item)
+
     def calculate(self, item):
         for attr, calculator in self._calculators.items():
             self[attr] = calculator.calculate(item)
@@ -312,6 +343,7 @@ class IndicatorDocument(schema.Document):
             self[getter.attribute] = getter.getter_function(item)
         # overwrite whatever's in group_by with the default
         self._doc['group_by'] = list(self.get_group_names())
+        self.update(item)
 
     def diff(self, other_doc):
         """
