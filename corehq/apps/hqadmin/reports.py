@@ -1,10 +1,10 @@
 from datetime import datetime
 from corehq.apps.app_manager.models import Application
-from corehq.apps.appstore.views import fill_mapping_with_facets
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from corehq.apps.reports.generic import ElasticTabularReport, GenericTabularReport
 from django.utils.translation import ugettext as _, ugettext_noop
+from corehq.elastic import es_query, parse_args_for_es, fill_mapping_with_facets
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.apps.app_manager.commcare_settings import SETTINGS as CC_SETTINGS
@@ -30,8 +30,7 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
     def template_context(self):
         ctxt = super(AdminFacetedReport, self).template_context
 
-        self.run_query() # this runs the es query and populates the necessary attributes
-
+        self.run_query(0)
         ctxt.update({
             'layout_flush_content': True,
             'facet_map': self.es_facet_map,
@@ -58,8 +57,7 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
                     ret.append(dict(name=param[0], value=val))
         return ret
 
-    def es_query(self, params=None):
-        from corehq.apps.appstore.views import es_query
+    def es_query(self, params=None, size=None):
         if params is None:
             params = {}
         terms = ['search']
@@ -79,7 +77,7 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
 
         q["sort"] = self.get_sorting_block()
         start_at=self.pagination.start
-        size=self.pagination.count
+        size = size if size is not None else self.pagination.count
 
         return es_query(params, self.es_facet_list, terms, q, self.es_url, start_at, size)
 
@@ -89,10 +87,9 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
             self.run_query()
         return self.es_response
 
-    def run_query(self):
-        from corehq.apps.appstore.views import parse_args_for_es
+    def run_query(self, size=None):
         self.es_params, _ = parse_args_for_es(self.request, prefix=self.es_prefix)
-        results = self.es_query(self.es_params)
+        results = self.es_query(self.es_params, size)
         self.es_facet_map = fill_mapping_with_facets(self.es_facet_mapping, results, self.es_params)
         self.es_response = results
         self.es_queried = True

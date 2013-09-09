@@ -1,8 +1,10 @@
 # coding=utf-8
+from django.template.defaultfilters import slugify
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import RawFilter, SqlFilter
 import sqlalchemy
 import sqlagg
+from corehq.apps.reports.api import ReportDataSource
 
 from corehq.apps.reports.basic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, \
@@ -48,7 +50,7 @@ class Column(object):
 
 
 class DatabaseColumn(Column):
-    def __init__(self, header, agg_column, format_fn=None, *args, **kwargs):
+    def __init__(self, header, agg_column, format_fn=None, slug=None, *args, **kwargs):
         """
         Args:
             :param header:
@@ -71,10 +73,15 @@ class DatabaseColumn(Column):
             :param format_fn=None:
                 Function to apply to value before display. Useful for formatting and sorting.
                 See corehq.apps.reports.util.format_datatables_data
+            :param slug=None:
+                Unique ID for the column. If not supplied assumed to be 'agg_column.name'.
+                This is used by the Report API.
             :param kwargs:
                 Additional keyword arguments will be passed on when creating the DataTablesColumn
 
         """
+        self.slug = slug or agg_column.name
+
         if 'sortable' not in kwargs:
             kwargs['sortable'] = True
 
@@ -101,7 +108,7 @@ class AggregateColumn(Column):
     """
     Allows combining the values from multiple columns into a single value.
     """
-    def __init__(self, header, aggregate_fn, columns, format_fn=None, **kwargs):
+    def __init__(self, header, aggregate_fn, columns, format_fn=None, slug=None, **kwargs):
         """
         Args:
             :param header:
@@ -114,6 +121,9 @@ class AggregateColumn(Column):
             :param format_fn=None:
                 Function to apply to value before display. Useful for formatting and sorting.
                 See corehq.apps.reports.util.format_datatables_data
+            :param slug=None:
+                Unique ID for the column. If not supplied assumed to be slugify(header).
+                This is used by the Report API.
             :param sortable:
                 Indicates if the column should be sortable. If true and no format_fn is provided then
                 the default datatables format function is used. Defaults to True.
@@ -121,6 +131,7 @@ class AggregateColumn(Column):
                 See corehq.apps.reports.datatables.DTSortType
         """
         self.aggregate_fn = aggregate_fn
+        self.slug = slug or slugify(header)
 
         if 'sortable' not in kwargs:
             kwargs['sortable'] = True
@@ -143,7 +154,7 @@ class AggregateColumn(Column):
         return self.view.get_value(row) if row else None
 
 
-class SqlData(object):
+class SqlData(ReportDataSource):
     table_name = None
 
     @property
@@ -172,7 +183,10 @@ class SqlData(object):
         """
         Return a dict mapping the filter keys to actual values e.g. {"enddate": date(2013,01,01)}
         """
-        raise NotImplementedError()
+        if self.config:
+            return self.config
+        elif self.filters:
+            raise SqlReportException("No filter values specified")
 
     @property
     @memoized
@@ -207,14 +221,29 @@ class SqlData(object):
     def query_context(self):
         return sqlagg.QueryContext(self.table_name, self.wrapped_filters, self.group_by)
 
-    @property
-    def data(self):
+    def get_data(self, slugs=None):
+        data = self._get_data(slugs=slugs)
+        columns = [c for c in self.columns if not slugs or c.slug in slugs]
+        formatter = DataFormatter(DictDataFormat(columns, no_value=None))
+        formatted_data = formatter.format(data, keys=self.keys, group_by=self.group_by)
+
+        if self.group_by:
+            return formatted_data.values()
+        else:
+            return [formatted_data]
+
+    def slugs(self):
+        return [c.slug for c in self.columns]
+
+    def _get_data(self, slugs=None):
         if self.keys is not None and not self.group_by:
             raise SqlReportException('Keys supplied without group_by.')
 
         qc = self.query_context
         for c in self.columns:
-            qc.append_column(c.view)
+            if not slugs or c.slug in slugs:
+                qc.append_column(c.view)
+
         engine = sqlalchemy.create_engine(settings.SQL_REPORTING_DATABASE_URL)
         conn = engine.connect()
         try:
@@ -224,19 +253,27 @@ class SqlData(object):
 
         return data
 
+    @property
+    def data(self):
+        return self._get_data()
 
-class SqlTabularReport(SqlData, GenericTabularReport):
+
+class SqlTabularReport(GenericTabularReport, SqlData):
     no_value = '--'
     exportable = True
 
     @property
-    def fields(self):
-        return [cls.__module__ + '.' + cls.__name__
-                for cls in self.field_classes]
-
-    @property
     def headers(self):
-        return DataTablesHeader(*[c.data_tables_column for c in self.columns])
+        datatables_columns = []
+        groups = set()
+        for column in self.columns:
+            if column.header_group and column.header_group not in groups:
+                datatables_columns.append(column.header_group)
+                groups.add(column.header_group)
+            elif not column.header_group:
+                datatables_columns.append(column.data_tables_column)
+
+        return DataTablesHeader(*datatables_columns)
 
     @property
     def rows(self):
@@ -317,7 +354,7 @@ class DictDataFormat(BaseDataFormat):
     Formats the report data as a dictionary
     """
     def format_row(self, row):
-        return dict([(c.view.name, self._or_no_value(c.get_value(row))) for c in self.columns])
+        return dict([(c.slug, self._or_no_value(c.get_value(row))) for c in self.columns])
 
     def format_output(self, row_generator):
         ret = dict()

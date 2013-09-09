@@ -94,3 +94,11 @@
   default: false
   requires: "{$parent.doc_type}='Application'"
   hide_if_not_enabled: true
+
+- id: translation_strategy
+  name: 'Translations Strategy'
+  values: ['dump-known', 'simple']
+  value_names: ['Dump known (old and reliable)', 'Simple (but not tested)']
+  default: 'dump-known'
+  requires: "{$parent.doc_type}='Application'"
+  preview: true

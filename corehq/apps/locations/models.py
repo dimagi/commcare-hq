@@ -99,6 +99,11 @@ class Location(Document):
         # returns arbitrary doc types, so can't call self.view()
         return [k['doc'] for k in get_db().view('locations/linked_docs', startkey=startkey, endkey=endkey, include_docs=True)]
 
+    @property
+    def _geopoint(self):
+        return '%s %s' % (self.latitude, self.longitude) if self.latitude is not None and self.longitude is not None else None
+
+
 def location_tree(domain):
     """build a hierarchical tree of the entire location structure for a domain"""
     # this is going to be extremely slow as the number of locations gets big

@@ -104,11 +104,29 @@ def bulk_import_async(import_id, config, domain, excel_id):
             owner_id = user_id
 
         external_id = fields_to_update.pop('external_id', None)
+        parent_id = fields_to_update.pop('parent_id', None)
+        parent_external_id = fields_to_update.pop('parent_external_id', None)
+
+        extras = {}
+        if parent_id:
+            extras['index'] = {
+                'parent': (config.case_type, parent_id)
+            }
+        elif parent_external_id:
+            parent_case, error = importer_util.lookup_case(
+                'external_id',
+                parent_external_id,
+                domain,
+                config.case_type
+            )
+            if parent_case:
+                extras['index'] = {
+                    'parent': (config.case_type, parent_case._id)
+                }
 
         if not case:
             id = uuid.uuid4().hex
 
-            extras = {}
             if config.search_field == 'external_id':
                 extras['external_id'] = search_id
 
@@ -129,7 +147,6 @@ def bulk_import_async(import_id, config, domain, excel_id):
             except CaseBlockError:
                 errors += 1
         elif case and case.type == config.case_type:
-            extras = {}
             if external_id:
                 extras['external_id'] = external_id
 

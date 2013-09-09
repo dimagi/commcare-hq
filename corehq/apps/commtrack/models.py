@@ -162,6 +162,19 @@ class StockLevelsConfig(DocumentSchema):
     overstock_threshold = DecimalProperty(default=3)  # in months
 
 
+class OpenLMISConfig(DocumentSchema):
+    # placeholder class for when this becomes fancier
+    enabled = BooleanProperty(default=False)
+
+    url = StringProperty()
+    username = StringProperty()
+    # we store passwords in cleartext right now, but in the future may want
+    # to leverage something like oauth to manage this better
+    password = StringProperty()
+
+    using_requisitions = BooleanProperty(default=False) # whether openlmis handles our requisitions for us
+
+
 class CommtrackConfig(Document):
 
     domain = StringProperty()
@@ -179,6 +192,7 @@ class CommtrackConfig(Document):
     supply_point_types = SchemaListProperty(SupplyPointType)
 
     requisition_config = SchemaProperty(CommtrackRequisitionConfig)
+    openlmis_config = SchemaProperty(OpenLMISConfig)
 
     # configured on Advanced Settings page
     use_auto_emergency_levels = BooleanProperty(default=False)
@@ -244,6 +258,10 @@ class CommtrackConfig(Document):
     @property
     def requisitions_enabled(self):
         return self.requisition_config.enabled
+
+    @property
+    def openlmis_enabled(self):
+        return self.openlmis_config.enabled
 
 def _view_shared(view_name, domain, location_id=None, skip=0, limit=100):
     extras = {"limit": limit} if limit else {}
@@ -386,6 +404,13 @@ class SupplyPointCase(CommCareCase):
         #data['last_reported'] = None
 
         return data
+
+    @classmethod
+    def get_by_location(cls, location):
+        return cls.view('commtrack/supply_point_by_loc',
+            key=[location.domain, location._id],
+            include_docs=True
+        ).one()
 
     @classmethod
     def get_display_config(cls):

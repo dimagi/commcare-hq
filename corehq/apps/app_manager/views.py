@@ -1451,6 +1451,7 @@ def edit_app_attr(request, domain, app_id, attr):
         'cloudcare_enabled',
         'application_version',
         'case_sharing',
+        'translation_strategy'
         # RemoteApp only
         'profile_url',
         'manage_urls'
@@ -1474,6 +1475,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('show_user_registration', None),
         ('text_input', None),
         ('use_custom_suite', None),
+        ('translation_strategy', None),
     )
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):
@@ -1616,6 +1618,7 @@ def validate_form_for_build(request, domain, app_id, unique_form_id):
     errors = form.validate_for_build()
     lang, langs = get_langs(request, app)
     return json_response({
+        "errored": len(errors) > 0,
         "error_html": render_to_string('app_manager/partials/build_errors.html', {
             'app': app,
             'form': form,
