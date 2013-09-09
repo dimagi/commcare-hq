@@ -330,6 +330,26 @@ class DateSpan(object):
         return DateSpan(start, end, format, inclusive, timezone)
 
 
+    @classmethod
+    def from_month(cls, month=None, year=None, format=DEFAULT_DATE_FORMAT,
+        inclusive=True, timezone=pytz.utc):
+        """
+        Generate a DateSpan object given a numerical month and year.
+        Both are optional and default to the current month/year.
+
+            april = DateSpan.from_month(04, 2013)
+        """
+        if month is None:
+            month = datetime.date.today().month
+        if year is None:
+            year = datetime.date.today().year
+        assert isinstance(month, int) and isinstance(year, int)
+        start = datetime.datetime(year, month, 1)
+        next = start + datetime.timedelta(days=32)
+        end = datetime.datetime(next.year, next.month, 1) - datetime.timedelta(days=1)
+        return DateSpan(start, end, format, inclusive, timezone)
+
+
     def parse(self, startdate_str, enddate_str, parse_format, display_format=None):
         """
         Generate a DateSpan with string formats. 
