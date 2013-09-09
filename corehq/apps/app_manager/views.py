@@ -322,6 +322,7 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
     xform_questions = []
     xform = None
     form_errors = []
+    xform_validation_errored = False
 
     try:
         xform = form.wrapped_xform()
@@ -346,6 +347,7 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         except AppError as e:
             form_errors.append("Error in application: %s" % e)
         except XFormValidationError:
+            xform_validation_errored = True
             # showing these messages is handled by validate_form_for_build ajax
             pass
         except XFormError as e:
@@ -399,6 +401,7 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         'is_user_registration': is_user_registration,
         'module_case_types': module_case_types,
         'form_errors': form_errors,
+        'xform_validation_errored': xform_validation_errored,
     }
 
 
@@ -1618,7 +1621,6 @@ def validate_form_for_build(request, domain, app_id, unique_form_id):
     errors = form.validate_for_build()
     lang, langs = get_langs(request, app)
     return json_response({
-        "errored": len(errors) > 0,
         "error_html": render_to_string('app_manager/partials/build_errors.html', {
             'app': app,
             'form': form,
