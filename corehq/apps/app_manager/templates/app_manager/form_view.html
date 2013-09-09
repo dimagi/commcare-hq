@@ -442,12 +442,12 @@
                     {% include 'app_manager/partials/case_config.html' %}
                 </div>
                 <div id="case-management-disabled" class="hide alert alert-warning">
-                    {% trans "Case management is disabled because there are errors in your form." %}
+                    {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}
                 </div>
             {% endif %}
         {% else %}
             <p class="alert alert-warning">
-                {% trans "Case management is disabled because you have not created a form yet." %}
+                {% trans "You have not created a form yet. Create a form in order to view and edit Case Management." %}
             </p>
         {% endif %}
         {% endif %}
