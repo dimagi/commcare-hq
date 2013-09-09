@@ -72,14 +72,14 @@ class ParentCasePropertyBuilder(object):
         forms_info = []
         for module in self.app.get_modules():
             for form in module.get_forms():
-                forms_info.append((module.case_type, form.actions))
+                forms_info.append((module.case_type, form.actions, form.requires))
         return forms_info
 
     @memoized
     def get_parent_types_and_contributed_properties(self, case_type):
         parent_types = set()
         case_properties = set()
-        for m_case_type, f_actions in self.forms_info:
+        for m_case_type, f_actions, _ in self.forms_info:
             for subcase in f_actions.subcases:
                 if subcase.case_type == case_type:
                     case_properties.update(
@@ -94,7 +94,7 @@ class ParentCasePropertyBuilder(object):
         return parent_types
 
     @memoized
-    def get_properties(self, case_type, already_visited=()):
+    def get_properties(self, case_type, already_visited=(), is_parent=False):
         if case_type in already_visited:
             return ()
 
@@ -103,9 +103,11 @@ class ParentCasePropertyBuilder(object):
             already_visited=already_visited + (case_type,)
         )
 
-        case_properties = set(self.defaults)
+        case_properties = set(self.defaults) if not is_parent else set([])
 
-        for m_case_type, f_actions in self.forms_info:
+        for m_case_type, f_actions, f_requires in self.forms_info:
+            if is_parent and f_requires != "case":
+                continue
             if m_case_type == case_type:
                 case_properties.update(
                     f_actions.update_case.update.keys()
@@ -114,7 +116,7 @@ class ParentCasePropertyBuilder(object):
             self.get_parent_types_and_contributed_properties(case_type)
         case_properties.update(contributed_properties)
         for parent_type in parent_types:
-            for property in get_properties_recursive(parent_type):
+            for property in get_properties_recursive(parent_type, is_parent=True):
                 case_properties.add('parent/%s' % property)
 
         return case_properties
