@@ -657,21 +657,21 @@ class XForm(WrappedNode):
                 make_case_elem('owner_id'),
                 case_type_node,
             ])
+
+            def add_setvalue_or_bind(ref, value):
+                if not delay_case_id:
+                    self.add_setvalue(ref=ref, value=value)
+                else:
+                    self.add_bind(nodeset=ref, calculate=value)
+
             self.add_bind(
                 nodeset='%scase' % path,
                 relevant=relevance(action),
             )
-            if not delay_case_id:
-                self.add_setvalue(
-                    ref='%scase/@case_id' % path,
-                    value='uuid()',
-                )
-            else:
-                self.add_bind(
-                    nodeset='%scase/@case_id' % path,
-                    calculate='uuid()',
-                    # relevant='count(%scase) > 0' % path,
-                )
+            add_setvalue_or_bind(
+                ref='%scase/@case_id' % path,
+                value='uuid()',
+            )
             self.add_bind(
                 nodeset="%scase/create/case_name" % path,
                 calculate=self.resolve_path(case_name),
@@ -679,7 +679,7 @@ class XForm(WrappedNode):
 
             if form.get_app().case_sharing:
                 self.add_instance('groups', src='jr://fixture/user-groups')
-                self.add_setvalue(
+                add_setvalue_or_bind(
                     ref="%scase/create/owner_id" % path,
                     value="instance('groups')/groups/group/@id"
                 )

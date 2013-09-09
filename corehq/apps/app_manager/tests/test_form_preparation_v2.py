@@ -88,10 +88,6 @@ class SubcaseRepeatTest(FormPrepBase):
                               self.get_xml('subcase-repeat'))
 
     def test_subcase_repeat_sharing(self):
-        """
-        Tests current but *incorrect* behavior
-        The fix should fix the test fixture as well
-        """
         self.app.case_sharing = True
         self.assert_xml_equiv(self.app.get_module(0).get_form(0).render_xform(),
                               self.get_xml('subcase-repeat-sharing'))
