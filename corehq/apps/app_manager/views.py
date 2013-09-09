@@ -613,7 +613,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
             #stale=settings.COUCH_STALE_QUERY,
         ).all()
         if all_applications:
-            app_id = all_applications[0]['id']
+            app_id = all_applications[0].id
             del edit
             return back_to_main(**locals())
     if app and app.copy_of:
