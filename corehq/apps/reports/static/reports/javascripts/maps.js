@@ -174,7 +174,7 @@ function initMap($div, default_pos, default_zoom, default_layer) {
     var layers = {
 	// TODO: these tags should probably not be hard-coded
 	'Map': mapboxLayer('dimagi.map-0cera12g'),
-	'Satellite': mapboxLayer('examples.map-qfyrx5r8'), // note: we need a pay account to use this for real
+	'Satellite': mapboxLayer('dimagi.map-jvzwkbwu'),
     }
     L.control.layers(layers).addTo(map);
     map.addLayer(layers[default_layer]);
