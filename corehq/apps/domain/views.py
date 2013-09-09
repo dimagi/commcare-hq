@@ -468,7 +468,8 @@ def create_snapshot(request, domain):
                 m_file.save()
 
         old = domain.published_snapshot()
-        new_domain = domain.save_snapshot()
+        ignore = ["CaseReminderHandler"] if not request.POST.get('share_reminders', False) else []
+        new_domain = domain.save_snapshot(ignore)
         new_domain.license = new_license
         new_domain.description = request.POST['description']
         new_domain.short_description = request.POST['short_description']
@@ -665,6 +666,11 @@ def commtrack_settings(request, domain):
         settings.location_types = [mk_loctype(l) for l in payload['loc_types']]
         settings.requisition_config.enabled = payload['requisition_config']['enabled']
         settings.requisition_config.actions =  [mk_action(a) for a in payload['requisition_config']['actions']]
+
+        if 'openlmis_config' in payload:
+            for item in payload['openlmis_config']:
+                setattr(settings.openlmis_config, item, payload['openlmis_config'][item])
+
         settings.save()
 
     def settings_to_json(config):
@@ -675,9 +681,10 @@ def commtrack_settings(request, domain):
             'requisition_config': {
                 'enabled': config.requisition_config.enabled,
                 'actions': [action_to_json(a) for a in config.requisition_config.actions],
-            }
-
+            },
+            'openlmis_config': config.openlmis_config._doc,
         }
+
     def action_to_json(action):
         return {
             'type': action.action_type,

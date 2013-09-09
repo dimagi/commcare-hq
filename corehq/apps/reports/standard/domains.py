@@ -1,8 +1,8 @@
 from datetime import datetime
+from corehq.elastic import es_query, ADD_TO_ES_FILTER, ES_URLS
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
-from corehq.apps.appstore.views import fill_mapping_with_facets
 from corehq.apps.hqadmin.reports import AdminFacetedReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.dispatcher import BasicReportDispatcher, AdminReportDispatcher
@@ -194,12 +194,10 @@ FACET_MAPPING = [
     ]),
 ]
 
-def es_domain_query(params=None, facets=None, terms=None, domains=None, return_q_dict=False, start_at=None, size=None, sort=None):
-    from corehq.apps.appstore.views import es_query
+def es_domain_query(params=None, facets=None, domains=None, start_at=None, size=None, sort=None, fields=None, show_stats=True):
     if params is None:
         params = {}
-    if terms is None:
-        terms = ['search']
+    terms = ['search']
     if facets is None:
         facets = []
     q = {"query": {"match_all":{}}}
@@ -227,13 +225,30 @@ def es_domain_query(params=None, facets=None, terms=None, domains=None, return_q
                             "operator" : "or", }}}}}
 
     q["facets"] = {}
-    stats = ['cp_n_active_cases', 'cp_n_inactive_cases', 'cp_n_active_cc_users', 'cp_n_cc_users', 'cp_n_60_day_cases', 'cp_n_web_users', 'cp_n_forms', 'cp_n_cases']
-    for prop in stats:
-        q["facets"].update({"%s-STATS" % prop: {"statistical": {"field": prop}}})
+    if show_stats:
+        stats = ['cp_n_active_cases', 'cp_n_inactive_cases', 'cp_n_active_cc_users', 'cp_n_cc_users', 'cp_n_60_day_cases', 'cp_n_web_users', 'cp_n_forms', 'cp_n_cases']
+        for prop in stats:
+            q["facets"].update({"%s-STATS" % prop: {"statistical": {"field": prop}}})
 
     q["sort"] = sort if sort else [{"name" : {"order": "asc"}},]
 
-    return es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search', start_at, size, dict_only=return_q_dict)
+    if fields:
+        q["fields"] = fields
+
+    return es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search', start_at, size)
+
+def total_distinct_users(domains=None):
+    """
+    Get total number of users who've ever submitted a form.
+    """
+    query = {"in": {"domain.exact": domains}} if domains is not None else {"match_all": {}}
+    q = {
+        "query": query,
+        "filter": {"and": ADD_TO_ES_FILTER.get("forms", [])},
+    }
+
+    res = es_query(q=q, facets=["form.meta.userID"], es_url=ES_URLS["forms"], size=0)
+    return len(res["facets"]["form.meta.userID"]["terms"])
 
 ES_PREFIX = "es_"
 class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
@@ -243,11 +258,25 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
     name = ugettext_noop('Project Space List')
     facet_title = ugettext_noop("Project Facets")
     search_for = ugettext_noop("projects...")
+    base_template = "hqadmin/domain_faceted_report.html"
 
+    @property
+    def template_context(self):
+        ctxt = super(AdminDomainStatsReport, self).template_context
+        ctxt["interval"] = "week"
 
-    def es_query(self, params=None):
+        if self.es_params:
+            domain_results = es_domain_query(self.es_params, fields=["name"], size=99999, show_stats=False)
+            domains = [d["fields"]["name"] for d in domain_results["hits"]["hits"]]
+            ctxt["total_distinct_users"] = total_distinct_users(domains)
+        else:
+            ctxt["total_distinct_users"] = total_distinct_users()
+        return ctxt
+
+    def es_query(self, params=None, size=None):
+        size = size if size is not None else self.pagination.count
         return es_domain_query(params, self.es_facet_list, sort=self.get_sorting_block(),
-                                  start_at=self.pagination.start, size=self.pagination.count)
+                               start_at=self.pagination.start, size=size)
 
     @property
     def headers(self):

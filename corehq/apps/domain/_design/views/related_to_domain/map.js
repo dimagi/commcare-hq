@@ -9,7 +9,8 @@ function(doc) {
         'CommCareCase': false,
         'UserRole': true,
         'Application': true,
-        'RemoteApp': true
+        'RemoteApp': true,
+        'CaseReminderHandler': true
     };
 
     if (doc.domain) {

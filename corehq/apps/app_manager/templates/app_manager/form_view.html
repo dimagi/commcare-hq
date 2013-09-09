@@ -411,9 +411,9 @@
         </div>
     {% endif %}
         <div class="tab-pane" id="case-configuration">
-        {% if form_errors %}
+        {% if form_errors or xform_validation_errored %}
             <p class="alert alert-warning">
-                {% trans "Case management is disabled because you have errors in your form.  Edit your form in the Form Builder and fix all errors to proceed." %}
+                {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}
             </p>
         {% else %}{% if form.source %}
             {% if app.application_version == '1.0' %}
@@ -440,7 +440,7 @@
             {% endif %}
         {% else %}
             <p class="alert alert-warning">
-                {% trans "Case management is disabled because you have not created a form yet." %}
+                {% trans "You have not created a form yet. Create a form in order to view and edit Case Management." %}
             </p>
         {% endif %}
         {% endif %}

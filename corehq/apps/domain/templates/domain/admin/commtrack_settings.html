@@ -56,9 +56,9 @@ var other_sms_codes = {{ other_sms_codes|JSON }};
 
 <hr />
 
-<h3>Stock Actions</h3>
+<h3>{% trans "Stock Actions" %}</h3>
 
-<p class="help">For a given incoming stock report, stock actions will be applied in the order listed below.</p>
+<p class="help">{% trans "For a given incoming stock report, stock actions will be applied in the order listed below." %}</p>
 {% include "domain/admin/commtrack_action_table.html" %}
 <button type="button" class="btn btn-primary" data-bind="click: new_action"><i class="icon-plus icon-white"></i> {% trans "New Action" %}</button>
 <hr />
@@ -110,6 +110,43 @@ var other_sms_codes = {{ other_sms_codes|JSON }};
 </table>
 <button type="button" class="btn btn-primary" data-bind="click: new_loctype"><i class="icon-plus icon-white"></i> {% trans "New Location Type" %}</button>
 
+{% if request.couch_user.is_previewer %}
+<h3>{% trans "OpenLMIS Integration" %}</h3>
+<fieldset>
+    <div class="control-group" >
+        <label class="control-label" for="openlmis_enabled">{% trans "Enable OpenLMIS Integration?" %}</label>
+        <div class="controls">
+          <input id="openlmis_enabled" type="checkbox" data-bind="checked: openlmis_config().enabled">
+        </div>
+    </div>
+</fieldset>
+<fieldset data-bind="with: openlmis_config(), visible: openlmis_config().enabled">
+    <div class="control-group" >
+        <label class="control-label" for="openlmis_url">{% trans "API URL" %}</label>
+        <div class="controls">
+          <input id="openlmis_url" type="text" data-bind="value: url">
+        </div>
+    </div>
+    <div class="control-group" >
+        <label class="control-label" for="openlmis_username">{% trans "Username" %}</label>
+        <div class="controls">
+          <input id="openlmis_username" type="text" data-bind="value: username">
+        </div>
+    </div>
+    <div class="control-group" >
+        <label class="control-label" for="openlmis_password">{% trans "Password" %}</label>
+        <div class="controls">
+          <input id="openlmis_password" type="password" data-bind="value: password">
+        </div>
+    </div>
+    <div class="control-group" >
+        <label class="control-label" for="openlmis_using_requisitions">{% trans "Use OpenLMIS for Requisitions?" %}</label>
+        <div class="controls">
+          <input id="openlmis_using_requisitions" type="checkbox" data-bind="checked: using_requisitions">
+        </div>
+    </div>
+</fieldset>
+{% endif %}
 
 <!--
 
