@@ -152,7 +152,9 @@ def query_observations(case_id, start_date, end_date):
     """
     startkey = [case_id, 'anchor_date', start_date.year, start_date.month, start_date.day]
     endkey = [case_id, 'anchor_date', end_date.year, end_date.month, end_date.day]
-    observations = CObservation.view('pact/dots_observations', startkey=startkey, endkey=endkey).all()
+    observations = CObservation.view('pact/dots_observations',
+                                     startkey=startkey, endkey=endkey,
+                                     classes={None: CObservation}).all()
     return observations
 
 def query_observations_singledoc(doc_id):
@@ -160,7 +162,8 @@ def query_observations_singledoc(doc_id):
     Hit couch to get the CObservations for a single xform submission
     """
     key = ['doc_id', doc_id]
-    observations = CObservation.view('pact/dots_observations', key=key).all()
+    observations = CObservation.view('pact/dots_observations', key=key,
+                                     classes={None: CObservation}).all()
     return observations
 
 def cmp_observation(x, y):
