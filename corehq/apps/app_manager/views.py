@@ -613,7 +613,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
             #stale=settings.COUCH_STALE_QUERY,
         ).all()
         if all_applications:
-            app_id = all_applications[0]['id']
+            app_id = all_applications[0].id
             del edit
             return back_to_main(**locals())
     if app and app.copy_of:
@@ -1618,6 +1618,7 @@ def validate_form_for_build(request, domain, app_id, unique_form_id):
     errors = form.validate_for_build()
     lang, langs = get_langs(request, app)
     return json_response({
+        "errored": len(errors) > 0,
         "error_html": render_to_string('app_manager/partials/build_errors.html', {
             'app': app,
             'form': form,

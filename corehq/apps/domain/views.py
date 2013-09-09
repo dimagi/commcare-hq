@@ -863,6 +863,7 @@ def calculated_properties(request, domain):
         data = {"value": dom_calc(calc_tag, domain, extra_arg)}
     return json_response(data)
 
+
 def _publish_snapshot(request, domain, published_snapshot=None):
     snapshots = domain.snapshots()
     for snapshot in snapshots:

@@ -876,6 +876,12 @@ class CaseReminderHandler(Document):
         )
 
     @classmethod
+    def get_referenced_forms(cls, domain):
+        handlers = cls.get_handlers(domain=domain).all()
+        referenced_forms = [e.form_unique_id for events in [h.events for h in handlers] for e in events]
+        return filter(None, referenced_forms)
+
+    @classmethod
     def get_all_reminders(cls, domain=None, due_before=None):
         if due_before:
             now_json = json_format_datetime(due_before)
