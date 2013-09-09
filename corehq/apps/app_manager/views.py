@@ -1618,6 +1618,7 @@ def validate_form_for_build(request, domain, app_id, unique_form_id):
     errors = form.validate_for_build()
     lang, langs = get_langs(request, app)
     return json_response({
+        "errored": len(errors) > 0,
         "error_html": render_to_string('app_manager/partials/build_errors.html', {
             'app': app,
             'form': form,
