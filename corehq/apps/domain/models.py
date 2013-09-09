@@ -631,16 +631,21 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
                 form_copy = new_comps[form_app._id].get_module(m_index).get_form(f_index)
                 event.form_unique_id = form_copy.unique_id
 
+        def update_for_copy(handler):
+            handler.active = False
+            update_events(handler)
+
         if 'CaseReminderHandler' not in ignore:
             for handler in CaseReminderHandler.get_handlers(new_domain_name):
-                apply_update(handler, update_events)
+                apply_update(handler, update_for_copy)
 
         return new_domain
 
     def copy_component(self, doc_type, id, new_domain_name, user=None):
         from corehq.apps.app_manager.models import import_app
         from corehq.apps.users.models import UserRole
-        from corehq.apps.reminders.models import CaseReminderHandler
+        from corehq.apps.reminders.models import CaseReminderHandler, ON_DATETIME
+
         str_to_cls = {
             'UserRole': UserRole,
             'CaseReminderHandler': CaseReminderHandler,
@@ -654,6 +659,10 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             new_id = db.copy_doc(id)['id']
 
             new_doc = cls.get(new_id)
+
+            if new_doc.doc_type == 'CaseReminderHandler' and new_doc.start_condition_type == ON_DATETIME:
+                return None
+
             for field in self._dirty_fields:
                 if hasattr(new_doc, field):
                     delattr(new_doc, field)
