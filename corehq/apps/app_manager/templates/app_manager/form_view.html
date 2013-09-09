@@ -210,10 +210,6 @@
             COMMCAREHQ.app_manager.fetchAndShowFormValidation = function () {
                 $.getJSON(validation_url, function (data) {
                     $('#form_build_errors').html(data.error_html);
-                    if (data.errored) {
-                        $("#casexml_home").hide();
-                        $("#case-management-disabled").show();
-                    }
                 });
             };
             if ($.cookie('suppress_build_errors')) {
@@ -415,9 +411,9 @@
         </div>
     {% endif %}
         <div class="tab-pane" id="case-configuration">
-        {% if form_errors %}
+        {% if form_errors or xform_validation_errored %}
             <p class="alert alert-warning">
-                {% trans "Case management is disabled because you have errors in your form.  Edit your form in the Form Builder and fix all errors to proceed." %}
+                {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}
             </p>
         {% else %}{% if form.source %}
             {% if app.application_version == '1.0' %}
@@ -440,9 +436,6 @@
                 </header>
                 <div class="casexml" id="casexml_home">
                     {% include 'app_manager/partials/case_config.html' %}
-                </div>
-                <div id="case-management-disabled" class="hide alert alert-warning">
-                    {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}
                 </div>
             {% endif %}
         {% else %}
