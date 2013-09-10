@@ -521,12 +521,12 @@ class FormBase(DocumentSchema):
         # Here, case-config-ui-*.js, and module_view.html
         reserved_words = load_case_reserved_words()
         for key in self.actions.all_property_names():
-            _, key = split_path(key)
-            if key in reserved_words:
-                errors.append({'type': 'update_case uses reserved word', 'word': key})
             # this regex is also copied in propertyList.ejs
             if not re.match(r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$', key):
                 errors.append({'type': 'update_case word illegal', 'word': key})
+            _, key = split_path(key)
+            if key in reserved_words:
+                errors.append({'type': 'update_case uses reserved word', 'word': key})
 
         for subcase_action in self.actions.subcases:
             if not subcase_action.case_type:
