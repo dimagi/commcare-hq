@@ -1,8 +1,18 @@
 TODO:
-in incentive.py, figure out last_month_total
-Cron job to finalize reports at the end of each month.  (when, exactly?)
+testing -_-
 
-### Extracting data from the db:
+
+## Module structure
+
+* constants.py - useful stuff to be imported wherever
+* reports.py - controls the display of the reports.
+* beneficiary.py - handles the generation of a row for a specific case
+* incentive.py - handles the generation of a row for a specific user/worker
+* models.py - stores fluff models for users, cases, and forms
+* case_calcs.py/user_calcs.py - houses per-case or per-user Calculators
+
+
+## Extracting data from the db:
 
 from corehq.apps.users.models import CommCareUser, CommCareCase
 from dimagi.utils.couch.database import get_db

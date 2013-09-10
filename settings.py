@@ -241,6 +241,7 @@ HQ_APPS = (
     'mvp',
     'mvp_apps',
     'custom.opm.opm_reports',
+    'custom.opm.opm_tasks',
     'pathfinder',
     'pathindia',
     'pact',
@@ -385,6 +386,16 @@ BROKER_URL = 'django://' #default django db based
 
 #this is the default celery queue - for periodic tasks on a separate queue override this to something else
 CELERY_PERIODIC_QUEUE = 'celery'
+
+from celery.schedules import crontab
+# schedule options can be seen here:
+# http://docs.celeryproject.org/en/latest/reference/celery.schedules.html
+CELERYBEAT_SCHEDULE = {
+    'monthly-opm-report-snapshot': {
+        'task': 'custom.opm.opm_tasks.tasks.snapshot',
+        'schedule': crontab(hour=1, day_of_month=1),
+    },
+}
 
 SKIP_SOUTH_TESTS = True
 #AUTH_PROFILE_MODULE = 'users.HqUserProfile'
@@ -683,6 +694,7 @@ COUCHDB_APPS = [
     'dca',
     'hsph',
     'mvp',
+    'opm_tasks',
     'pathfinder',
     'pathindia',
     'pact',
@@ -696,7 +708,7 @@ COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label
 COUCHDB_DATABASES += [
     ('fluff', COUCH_DATABASE + '__fluff-bihar'),  # needed to make couchdbkit happy
     ('bihar', COUCH_DATABASE + '__fluff-bihar'),
-    ('opm', COUCH_DATABASE + '__fluff-opm'),
+    ('opm_reports', COUCH_DATABASE + '__fluff-opm'),
     ('fluff', COUCH_DATABASE + '__fluff-opm'),
     ('care_sa', COUCH_DATABASE + '__fluff-care_sa'),
     ('cvsu', COUCH_DATABASE + '__fluff-cvsu'),

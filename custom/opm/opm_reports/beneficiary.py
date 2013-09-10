@@ -13,6 +13,7 @@ from .models import OpmCaseFluff, OpmUserFluff, OpmFormFluff
 class Beneficiary(object):
     # maps method name to header
     method_map = [
+        # If you need to change any of these names, keep the key intact
         ('name', "List of Beneficiaries"),
         ('awc_name', "AWC Name"),
         ('bank_name', "Bank Name"),

@@ -1,14 +1,17 @@
 """
 Fluff IndicatorDocument definitions for the OPM reports.
 """
+from couchdbkit.ext.django.schema import (Document, DictProperty,
+    StringProperty, StringListProperty, IntegerProperty, ListProperty)
+
 from corehq.apps.users.models import CommCareUser, CommCareCase
 from corehq.fluff.calculators.xform import IntegerPropertyReference
 from corehq.fluff.calculators import xform as xcalculators
-
 from couchforms.models import XFormInstance
 import fluff
 
 from . import case_calcs, user_calcs
+from .constants import DOMAIN
 
 
 # OpmCaseFluff and OpmUserFluff are unusual in that they store only

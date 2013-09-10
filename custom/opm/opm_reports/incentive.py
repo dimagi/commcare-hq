@@ -3,11 +3,15 @@ Field definitions for the Incentive Payment Report.
 Takes a CommCareUser and points to the appropriate fluff indicators
 for each field.
 """
+import datetime
+
+from ..opm_tasks.models import OpmReportSnapshot
 from .constants import *
 from .models import OpmCaseFluff, OpmUserFluff, OpmFormFluff
 
 class Worker(object):
     method_map = [
+        # If you need to change any of these names, keep the key intact
         ('name', "List of AWWs"),
         ('awc_name', "AWC Name"),
         ('bank_name', "AWW Bank Name"),
@@ -23,9 +27,14 @@ class Worker(object):
         ('last_month_total', "Amount of AWW incentive paid last month"),
     ]
 
-    def __init__(self, worker, date_range=None):
-        self.fluff_doc = OpmUserFluff.get("%s-%s" %
-            (OpmUserFluff._doc_type, worker._id))
+    def __init__(self, seed, date_range=None):
+        worker, self.last_month_totals = seed
+        try:
+            self.fluff_doc = OpmUserFluff.get("%s-%s" %
+                (OpmUserFluff._doc_type, worker._id))
+        except ResourceNotFound:
+            return 
+        self.date_range = date_range
         self.name = self.fluff_doc.name
         self.awc_name = self.fluff_doc.awc_name
         self.bank_name = self.fluff_doc.bank_name
@@ -56,5 +65,8 @@ class Worker(object):
         self.service_forms_cash = self.service_forms_count * FIXTURES['service_form_submitted']
         self.growth_monitoring_cash = self.growth_monitoring_count * FIXTURES['child_growth_monitored']
         self.month_total = self.service_forms_cash + self.growth_monitoring_cash
-        
-        self.last_month_total = "Amount of AWW incentive paid last month"
+        if self.last_month_totals is not None:
+            self.last_month_total = self.last_month_totals.get(self.account_number, 0)
+        else:
+            self.last_month_total = 0
+
