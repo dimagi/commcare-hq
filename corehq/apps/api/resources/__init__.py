@@ -52,13 +52,30 @@ class SimpleSortableResourceMixin(object):
             return obj_list
 
         order_by = options.getlist('order_by')
+        order_by_args = []
         for field in order_by:
-            stripped_field = field[1:] if field.startswith('-') else field
-            if stripped_field not in self._meta.ordering:
-                raise InvalidSortError("The '%s' field does not allow ordering" % stripped_field)
+            if field.startswith('-'):
+                order = '-'
+                field_name = field[1:]
+            else:
+                order = ''
+                field_name = field
 
-        return obj_list.order_by(*order_by)
-    
+            # Map the field back to the actual attribute
+            if not field_name in self.fields:
+                raise InvalidSortError("No matching '%s' field for ordering on." % field_name)
+
+            if not field_name in self._meta.ordering:
+                raise InvalidSortError("The '%s' field does not allow ordering." % field_name)
+
+            if self.fields[field_name].attribute is None:
+                raise InvalidSortError("The '%s' field has no 'attribute' for ordering with." % field_name)
+
+            order_by_args.append("%s%s" % (order, self.fields[field_name].attribute))
+
+        return obj_list.order_by(*order_by_args)
+
+
 class DomainSpecificResourceMixin(object):
     def get_list(self, request, **kwargs):
         """
