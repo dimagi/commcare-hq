@@ -5,6 +5,9 @@ var CaseConfig = (function () {
 
 
     var utils = {
+        getDisplay: function (question, MAXLEN) {
+            return utils.getLabel(question, MAXLEN) + " (" + question.value + ")";
+        },
         getLabel: function (question, MAXLEN) {
             return utils.truncateLabel((question.repeat ? '- ' : '') + question.label, question.tag == 'hidden' ? ' (Hidden)' : '', MAXLEN);
         },
@@ -49,14 +52,14 @@ var CaseConfig = (function () {
                     placeholder: 'Select a Question',
                     data: {
                         results: _(optionObjects).map(function (o) {
-                            return {id: o.value, text: o.label, question: o};
+                            return {id: o.value, text: utils.getDisplay(o), question: o};
                         })
                     },
                     formatSelection: function (o) {
-                        return utils.getLabel(o.question);
+                        return utils.getDisplay(o.question);
                     },
                     formatResult: function (o) {
-                        return utils.getLabel(o.question, 90);
+                        return utils.getDisplay(o.question, 90);
                     },
                     dropdownCssClass: 'bigdrop'
                 });
