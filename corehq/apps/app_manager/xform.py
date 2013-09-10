@@ -805,12 +805,11 @@ class XForm(WrappedNode):
                         path='x/y/z' will append <x><y><z/></y></x> to base_node
                         """
                         prev_node = base_node
-                        tail, head = split_path(path)
-                        if tail:
-                            for node_name in tail.split('/'):
-                                prev_node = prev_node.find('{x}%s' % node_name)
-                        node = _make_elem('{x}%s' % head)
-                        prev_node.append(node)
+                        node = None
+                        for node_name in path.split('/'):
+                            node = _make_elem('{x}%s' % node_name)
+                            prev_node.append(node)
+                            prev_node = node
                         return node
 
                     def make_parent_case_block(node_path, parent_path):
