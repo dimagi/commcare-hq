@@ -396,7 +396,7 @@ class UnicefMalawiFluff(fluff.IndicatorDocument):
 
     abuse_category_other = SimpleCalculator(
         date_provider=date_reported,
-        filter=filter_abuse('other')
+        filter=filter_abuse('abuse_other')
     )
 
     abuse_category_total = ORCalculator(
