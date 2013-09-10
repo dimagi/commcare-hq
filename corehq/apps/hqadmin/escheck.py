@@ -1,3 +1,4 @@
+from couchdbkit import ResourceNotFound
 import rawes
 from casexml.apps.case.models import CommCareCase
 from corehq.elastic import get_es
@@ -5,6 +6,7 @@ from corehq.pillows.case import CasePillow
 from corehq.pillows.xform import XFormPillow
 from couchforms.models import XFormInstance
 from django.conf import settings
+import time
 
 CLUSTER_HEALTH = 'cluster_health'
 def check_cluster_health():
@@ -20,7 +22,38 @@ def check_cluster_health():
     ret[CLUSTER_HEALTH] = cluster_health['status']
     return ret
 
-def check_xform_index():
+
+def check_index_by_doc(es_index, db, doc_id):
+    """
+    Given a doc, update it in couch (meaningless save that updates rev)
+    and check to make sure that ES will eventually see it after some arbitrary delay
+    """
+    try:
+        couch_doc = db.open_doc(doc_id)
+        save_results = db.save_doc(couch_doc)
+        target_rev = save_results['rev']
+        time.sleep(3) #could be less, but just in case
+        return _check_es_rev(es_index, doc_id, target_rev)
+    except ResourceNotFound:
+        pass
+
+
+def check_xform_index_by_doc(doc_id):
+    db = XFormInstance.get_db()
+    es_index = XFormPillow.es_alias
+    return check_index_by_doc(es_index, db, doc_id)
+
+
+def check_case_index_by_doc(doc_id):
+    db = CommCareCase.get_db()
+    es_index = CasePillow.es_alias
+    return check_index_by_doc(es_index, db, doc_id)
+
+
+def check_xform_index_by_view():
+    """
+    View based xform index checker - to be deprecated
+    """
     latest_xforms = _get_latest_xforms()
     found_xform = False
     start_skip = 0
@@ -56,45 +89,54 @@ def _get_latest_xforms(skip=0, limit=100):
 
     return recent_xforms
 
+
 def _check_es_rev(index, doc_id, couch_rev):
+    """
+    Specific docid and rev checker.
+
+    index: rawes index
+    doc_id: id to query in ES
+    couch_rev: target couch_rev that you want to match
+    """
     es = get_es()
     doc_id_query = {
         "filter": {
-            "ids": { "values": [ doc_id ] }
+            "ids": {"values": [doc_id]}
         },
-        "fields": [ "_id", "_rev" ]
+        "fields": ["_id", "_rev"]
     }
 
     try:
         res = es[index].get('_search', data=doc_id_query)
-        status=False
-        message="Not in sync"
+        status = False
+        message = "Not in sync"
 
         if res.has_key('hits'):
             if res['hits'].get('total', 0) == 0:
-                status=False
+                status = False
                 #if doc doesn't exist it's def. not in sync
-                message="Not in sync %s" % index
-            elif res['hits'].has_key('hits'):
+                message = "Not in sync %s" % index
+            elif 'hits' in res['hits']:
                 fields = res['hits']['hits'][0]['fields']
                 if fields['_rev'] == couch_rev:
-                    status=True
-                    message="%s OK" % index
+                    status = True
+                    message = "%s OK" % index
                 else:
-                    status=False
+                    status = False
                     #less likely, but if it's there but the rev is off
-                    message="Not in sync - %s stale" % index
+                    message = "Not in sync - %s stale" % index
         else:
-            status=False
-            message="Not in sync - query failed"
+            status = False
+            message = "Not in sync - query failed"
     except Exception, ex:
         message = "ES Error: %s" % ex
-        status=False
-    return {"%s_status" % index: status, "%s_message" % index: message }
+        status = False
+    return {"%s_status" % index: status, "%s_message" % index: message}
 
 
-def check_case_index():
+def check_case_index_by_view():
     """
+    View based case index checker - to be deprecated
     Verify couch case view and ES views are up to date with the latest xform to update a case, and that the revs are in sync.
     Query recent xforms and their cases, as this is a more accurate way to get case changes in the wild with existing working views
     """

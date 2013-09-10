@@ -31,7 +31,7 @@ from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index, check_xform_index
+from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index_by_view, check_xform_index_by_view
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.reports.standard.domains import es_domain_query
@@ -758,8 +758,8 @@ def system_info(request):
     #elasticsearch status
     #node status
     context.update(check_cluster_health())
-    context.update(check_case_index())
-    context.update(check_xform_index())
+    context.update(check_case_index_by_view())
+    context.update(check_xform_index_by_view())
 
     return render(request, "hqadmin/system_info.html", context)
 
