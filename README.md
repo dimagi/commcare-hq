@@ -38,16 +38,23 @@ class VisitCalculator(fluff.Calculator):
         for action in case.actions:
             if is_temp(case):
                 yield [action.date, action.temperature]
+    
+    @fluff.date_emitter
+    def group_list(self, case):
+        yield dict(date=date(2013, 1, 1), value=3, group_by=['abc', 'xyz'])
 
 
 class MyIndicators(fluff.IndicatorDocument):
     document_class = CommCareCase
-    group_by = [
+    group_by = (
         # this is the standard style of group_by
         'domain',
-        # this is the more complicated style of group_by - redundant here, but useful for more complex things
+        # this is the more complicated style of group_by - redundant here,
+        # but useful for more complex things
+        # note: if you use anything more complicated than a string (like here),
+        # group_by should be a tuple, else couchdbkit will complain
         fluff.AttributeGetter('owner_id', getter_function=lambda item: item['owner_id']),
-    ]
+    )
     domains = ('droberts', 'test', 'corpora')
 
     visits_week = VisitCalculator(window=timedelta(days=7))

@@ -31,7 +31,9 @@ class base_emitter(object):
                     if 'value' not in v:
                         v['value'] = 1
                     assert v.get('group_by') is not None
-                    if not isinstance(v['group_by'], list):
+                    if isinstance(v['group_by'], tuple):
+                        v['group_by'] = list(v['group_by'])
+                    elif not isinstance(v['group_by'], list):
                         v['group_by'] = [v['group_by']]
                 elif isinstance(v, list):
                     v = dict(date=v[0], value=v[1], group_by=None)
@@ -123,9 +125,9 @@ class Calculator(object):
     def __init__(self, window=None, filter=None):
         if window is not None:
             self.window = window
-        if not isinstance(self.window, datetime.timedelta):
+        if not isinstance(self.window, (type(None), datetime.timedelta)):
             if any(getattr(self, e)._fluff_emitter == 'date' for e in self._fluff_emitters):
-                # if window is set to None, for instance
+                # If window is set to something other than a timedelta
                 # fail here and not whenever that's run into below
                 raise NotImplementedError(
                     'window must be timedelta, not %s' % type(self.window))
@@ -158,7 +160,17 @@ class Calculator(object):
             )
         return values
 
-    def get_result(self, key, reduce=True):
+    def get_result(self, key, date_range=None, reduce=True):
+        """
+        If your Calculator does not have a window set, you must pass a tuple of
+        date or datetime objects to date_range
+        """
+        if self.window:
+            now = self.fluff.get_now()
+            start = now - self.window
+            end = now
+        elif date_range is not None:
+            start, end = date_range
         result = {}
         for emitter_name in self._fluff_emitters:
             shared_key = [self.fluff._doc_type] + key + [self.slug, emitter_name]
@@ -168,9 +180,9 @@ class Calculator(object):
                 'reduce': reduce,
             }
             if emitter_type == 'date':
-                now = self.fluff.get_now()
-                start = now - self.window
-                end = now
+                assert isinstance(date_range, tuple) or self.window, (
+                    "You must either set a window on your Calculator "
+                    "or pass in a date range")
                 if start > end:
                     q_args['descending'] = True
                 q = self.fluff.view(
@@ -222,6 +234,29 @@ class Calculator(object):
 
         return results
 
+
+class FlatField(schema.StringProperty):
+    """
+    This constructs a field for your indicator document that can perform basic
+    operations on an item.  Pass in a function that accepts an item and returns
+    a string.  This field is not a calculator, so it cannot be accessed with
+    get_results (yet).  Instead, access the fluff doc directly.
+    Example:
+
+        class MyFluff(fluff.IndicatorDocument):
+            document_class = CommCareCase
+            ...
+            name = fluff.FlatField(lambda case: case.name)
+    """
+
+    def __init__(self, fn, *args, **kwargs):
+        self.fn = fn
+        super(FlatField, self).__init__(*args, **kwargs)
+
+    def calculate(self, item):
+        return self.fn(item)
+
+
 class AttributeGetter(object):
     """
     If you need to do something fancy in your group_by you would use this.
@@ -235,7 +270,7 @@ class AttributeGetter(object):
         """
         self.attribute = attribute
         if getter_function is None:
-            getter_function = lambda item: item[attribute]
+            getter_function = lambda item: getattr(item, attribute)
 
         self.getter_function = getter_function
 
@@ -244,15 +279,19 @@ class IndicatorDocumentMeta(schema.DocumentMeta):
 
     def __new__(mcs, name, bases, attrs):
         calculators = {}
+        flat_fields = {}
         for attr_name, attr_value in attrs.items():
             if isinstance(attr_value, Calculator):
                 calculators[attr_name] = attr_value
                 attrs[attr_name] = schema.DictProperty()
+            if isinstance(attr_value, FlatField):
+                flat_fields[attr_name] = attr_value
         cls = super(IndicatorDocumentMeta, mcs).__new__(mcs, name, bases, attrs)
         for slug, calculator in calculators.items():
             calculator.fluff = cls
             calculator.slug = slug
         cls._calculators = calculators
+        cls._flat_fields = flat_fields 
         return cls
 
 
@@ -292,6 +331,10 @@ class IndicatorDocument(schema.Document):
     def get_now(cls):
         return datetime.datetime.utcnow().date()
 
+    def update(self, item):
+        for attr, field in self._flat_fields.items():
+            self[attr] = field.calculate(item)
+
     def calculate(self, item):
         for attr, calculator in self._calculators.items():
             self[attr] = calculator.calculate(item)
@@ -300,6 +343,7 @@ class IndicatorDocument(schema.Document):
             self[getter.attribute] = getter.getter_function(item)
         # overwrite whatever's in group_by with the default
         self._doc['group_by'] = list(self.get_group_names())
+        self.update(item)
 
     def diff(self, other_doc):
         """
@@ -484,9 +528,9 @@ class IndicatorDocument(schema.Document):
         return cls._calculators[calc_name]
 
     @classmethod
-    def get_result(cls, calc_name, key, reduce=True):
+    def get_result(cls, calc_name, key, date_range=None, reduce=True):
         calculator = cls.get_calculator(calc_name)
-        return calculator.get_result(key, reduce=reduce)
+        return calculator.get_result(key, date_range=date_range, reduce=reduce)
 
     @classmethod
     def aggregate_results(cls, calc_name, keys, reduce=True):
