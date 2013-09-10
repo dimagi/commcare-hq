@@ -7,10 +7,11 @@ from django.forms.forms import Form
 from django.forms.widgets import CheckboxSelectMultiple
 from django.forms import Field, Widget, Select, TextInput
 from django.utils.datastructures import DotExpandedDict
+from casexml.apps.case.models import CommCareCaseGroup
 from .models import REPEAT_SCHEDULE_INDEFINITELY, CaseReminderEvent,\
 RECIPIENT_USER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE, RECIPIENT_OWNER,\
 MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE, EVENT_AS_SCHEDULE, EVENT_AS_OFFSET,\
-SurveySample, CaseReminderHandler, FIRE_TIME_DEFAULT, FIRE_TIME_CASE_PROPERTY,\
+CaseReminderHandler, FIRE_TIME_DEFAULT, FIRE_TIME_CASE_PROPERTY,\
 METHOD_SMS, METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY,\
 CASE_CRITERIA, QUESTION_RETRY_CHOICES, FORM_TYPE_ONE_BY_ONE,\
 FORM_TYPE_ALL_AT_ONCE, SurveyKeyword, RECIPIENT_PARENT_CASE, RECIPIENT_SUBCASE,\
@@ -619,7 +620,7 @@ class SurveyForm(Form):
     def clean_waves(self):
         value = self.cleaned_data["waves"]
         datetimes = {}
-        samples = [SurveySample.get(sample["sample_id"]) for sample in self.cleaned_data.get("samples",[])]
+        samples = [CommCareCaseGroup.get(sample["sample_id"]) for sample in self.cleaned_data.get("samples",[])]
         utcnow = datetime.utcnow()
         followups = [int(followup["interval"]) for followup in self.cleaned_data.get("followups", [])]
         followup_duration = sum(followups)
