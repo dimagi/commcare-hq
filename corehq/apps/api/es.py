@@ -328,7 +328,7 @@ class ESQuerySet(object):
 
     Sorting:
 
-    - Meh?
+    - order_by('field') or order_by('-field') both become ES service-side sort directives
 
     Serialization:
 
