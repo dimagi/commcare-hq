@@ -28,7 +28,7 @@ from .util import get_form_list, get_sample_list, get_recipient_name
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.util import register_sms_contact, update_contact
 from corehq.apps.domain.models import DomainCounter
-from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
 from dateutil.parser import parse
 from corehq.apps.sms.util import close_task
 from dimagi.utils.timezones import utils as tz_utils
@@ -540,7 +540,7 @@ def add_survey(request, domain, survey_id=None):
         initial = {}
         if survey is not None:
             waves = []
-            samples = [SurveySample.get(sample["sample_id"]) for sample in survey.samples]
+            samples = [CommCareCaseGroup.get(sample["sample_id"]) for sample in survey.samples]
             utcnow = datetime.utcnow()
             for wave in survey.waves:
                 wave_json = {
@@ -591,7 +591,7 @@ def survey_list(request, domain):
 def add_sample(request, domain, sample_id=None):
     sample = None
     if sample_id is not None:
-        sample = SurveySample.get(sample_id)
+        sample = CommCareCaseGroup.get(sample_id)
     
     if request.method == "POST":
         form = SurveySampleForm(request.POST, request.FILES)
@@ -603,14 +603,14 @@ def add_sample(request, domain, sample_id=None):
             contact_upload_file = form.cleaned_data.get("contact_upload_file")
             
             if sample is None:
-                sample = SurveySample (
-                    domain = domain,
-                    name = name,
-                    time_zone = time_zone.zone
+                sample = CommCareCaseGroup(
+                    domain=domain,
+                    name=name,
+                    timezone=time_zone.zone
                 )
             else:
                 sample.name = name
-                sample.time_zone = time_zone.zone
+                sample.timezone = time_zone.zone
             
             errors = []
             
@@ -650,7 +650,8 @@ def add_sample(request, domain, sample_id=None):
                                                 include_docs=True
                                            ).all()
                 
-                sample.contacts = [v.owner_id for v in existing_number_entries] + [v.owner_id for v in newly_registered_entries]
+                sample.cases = ([v.owner_id for v in existing_number_entries]
+                                + [v.owner_id for v in newly_registered_entries])
                 
                 sample.save()
                 
@@ -665,9 +666,9 @@ def add_sample(request, domain, sample_id=None):
         initial = {}
         if sample is not None:
             initial["name"] = sample.name
-            initial["time_zone"] = sample.time_zone
+            initial["time_zone"] = sample.timezone
             contact_info = []
-            for case_id in sample.contacts:
+            for case_id in sample.cases:
                 case = CommCareCase.get(case_id)
                 contact_info.append({"id":case.name, "phone_number":case.contact_phone_number, "case_id" : case_id})
             initial["sample_contacts"] = contact_info
@@ -684,7 +685,7 @@ def add_sample(request, domain, sample_id=None):
 def sample_list(request, domain):
     context = {
         "domain" : domain,
-        "samples" : SurveySample.get_all(domain)
+        "samples": CommCareCaseGroup.get_all(domain)
     }
     return render(request, "reminders/partial/sample_list.html", context)
 
