@@ -168,6 +168,11 @@ LOGSTASH_HOST = 'localhost'
 
 LOCAL_PILLOWTOPS = []
 
+#If there are existing doc_ids and case_ids you want to check directly - they are referenced
+#in your localsettings for more accurate direct checks, otherwise use view based which can be inaccurate.
+ES_CASE_CHECK_DIRECT_DOC_ID = None
+ES_XFORM_CHECK_DIRECT_DOC_ID = None
+
 ####### API throttling #####
 
 API_THROTTLE_REQUESTS=20  # number of requests allowed per timeframe
