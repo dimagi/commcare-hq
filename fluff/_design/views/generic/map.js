@@ -1,19 +1,4 @@
 function (doc) {
-    function typeOf(value) {
-        // from Crockford himself: http://javascript.crockford.com/remedial.html
-        var s = typeof value;
-        if (s === 'object') {
-            if (value) {
-                if (Object.prototype.toString.call(value) == '[object Array]') {
-                    s = 'array';
-                }
-            } else {
-                s = 'null';
-            }
-        }
-        return s;
-    }
-
     var excludes = ['group_by_type_map'];
     if (doc.base_doc === 'IndicatorDocument') {
         var key = [doc.doc_type], i;
@@ -28,7 +13,7 @@ function (doc) {
                         if (doc[calcName].hasOwnProperty(emitterName)) {
                             for (i = 0; i < doc[calcName][emitterName].length; i++) {
                                 var value = doc[calcName][emitterName][i];
-                                if (typeOf(value) === 'object') {
+                                if (Object.prototype.toString.call(value) === '[object Object]') {
                                     var custom_key = value['group_by'] === null ? key : [doc.doc_type].concat(value['group_by']);
                                     emit(custom_key.concat([calcName, emitterName, value['date']]), value['value']);
                                 } else {
