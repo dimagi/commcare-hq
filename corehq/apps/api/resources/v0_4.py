@@ -117,7 +117,7 @@ class RepeaterResource(JsonResource, DomainSpecificResourceMixin):
         list_allowed_methods = ['get', 'post']
         authorization = v0_1.DomainAdminAuthorization
 
-class CommCareCaseResource(v0_3.CommCareCaseResource, DomainSpecificResourceMixin):
+class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResource, DomainSpecificResourceMixin):
     xforms = UseIfRequested(ToManyDocumentsField('corehq.apps.api.resources.v0_4.XFormInstanceResource',
                                                  attribute=lambda case: case.get_forms()))
 
@@ -145,14 +145,15 @@ class CommCareCaseResource(v0_3.CommCareCaseResource, DomainSpecificResourceMixi
             del query['from']
         if 'size' in query:
             del query['size']
-        
+
         return ESQuerySet(payload = query,
-                          model = CommCareCase, #lambda jvalue: dict_object(CommCareCase.wrap(jvalue).get_json()),
-                          es_client = self.case_es(domain)) # Not that XFormES is used only as an ES client, for `run_query` against the proper index
+                          model = CommCareCase,
+                          es_client = self.case_es(domain)).order_by('server_modified_on') # Not that CaseES is used only as an ES client, for `run_query` against the proper index
 
     class Meta(v0_3.CommCareCaseResource.Meta):
         max_limit = 100 # Today, takes ~25 seconds for some domains
         serializer = CommCareCaseSerializer()
+        ordering = ['server_date_modified', 'date_modified']
 
 class GroupResource(JsonResource, DomainSpecificResourceMixin):
     id = fields.CharField(attribute='get_id', unique=True, readonly=True)
