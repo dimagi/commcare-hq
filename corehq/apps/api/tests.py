@@ -245,7 +245,7 @@ class TestCommCareCaseResource(APIResourceTest):
 
         modify_date = datetime.utcnow()
 
-        backend_case = CommCareCase(server_modified_on = modify_date)
+        backend_case = CommCareCase(server_modified_on=modify_date, domain=self.domain.name)
         backend_case.save()
 
         translated_doc = pillow.change_transform(backend_case.to_json())
