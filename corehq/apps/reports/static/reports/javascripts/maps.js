@@ -9,6 +9,64 @@ function forEachDimension(metric, callback) {
     });
 }
 
+// iterate over all metrics, which can potentially be stored in a tree structure
+function forEachMetric(metrics, callback) {
+    $.each(metrics, function(i, e) {
+        if (e.group) {
+            forEachMetric(e.children, callback);
+        } else {
+            callback(e);
+        }
+    });
+}
+
+function MetricsViewModel(control) {
+    var model = this;
+    
+    this.control = control;
+    this.root = ko.observable();
+    
+    this.load = function(metrics) {
+        this.root(new MetricModel({title: '_root', children: metrics}, this));
+        this.root().expanded(true);
+    }
+}
+
+function MetricModel(data, root) {
+    var m = this;
+    
+    this.metric = null;
+    this.name = ko.observable();
+    this.children = ko.observableArray();
+    this.expanded = ko.observable(false);
+
+    this.group = ko.computed(function() {
+        return this.children().length > 0;
+    }, this);
+    
+    this.onclick = function() {
+        if (this.group()) {
+            this.toggle();
+        } else {
+            root.control.render(this.metric);
+        }
+    }
+
+    this.toggle = function() {
+        this.expanded(!this.expanded());
+    }
+
+    this.load = function(data) {
+        this.metric = data;
+        this.name(data.title);
+        this.children($.map(data.children || [], function(e) {
+            return new MetricModel(e, root);
+        }));
+    }
+
+    this.load(data);
+}
+
 // a map control map that lists the various display metrics for this report
 // and allows you to select and display them
 MetricsControl = L.Control.extend({
@@ -24,6 +82,8 @@ MetricsControl = L.Control.extend({
         L.DomEvent.disableClickPropagation(this.div);
         this.$div.show();
         
+        this.init();
+
         var m = this;
         map.on('popupopen', function(e) {
             var $popup = $(e.popup._container);
@@ -42,19 +102,20 @@ MetricsControl = L.Control.extend({
         return this.div;
     },
     
+    init: function() {
+        var koModel = new MetricsViewModel(this);
+        ko.applyBindings(koModel, $('#metrics')[0]);
+        koModel.load(this.options.metrics);
+    },
+
     // TODO support an explicit 'show just markers again' option
     
     addMetric: function(metric) {
-        var $e = $('<div></div>');
         $e.addClass('choice');
-        $e.text(metric.title);
-        var m = this;
         $e.click(function() {
-            m.activeMetric = metric;
             m.select($e);
             m.render(metric);
         });
-        this.$div.append($e);
     },
     
     select: function($e) {
@@ -65,6 +126,7 @@ MetricsControl = L.Control.extend({
     },
     
     render: function(metric) {
+        this.activeMetric = metric;
         var m = this;
         loadData(this._map, this.options.data, makeDisplayContext(metric, function(f) {
             m.options.info.setActive(f, m.activeMetric);
@@ -206,16 +268,19 @@ function initData(data, config) {
 
 // set up the configured display metrics
 function initMetrics(map, data, config) {
+    // auto-generate metrics from data columns (if none provided)
     if (!config.metrics || config.debug) {
         autoConfiguration(config, data);
     }
 
-    $.each(config.metrics, function(i, e) {
-        setMetricDefaults(e, data, config);
+    // set sensible defaults for metric parameters (if omitted)
+    forEachMetric(config.metrics, function(metric) {
+        setMetricDefaults(metric, data, config);
     });
 
-    $.each(config.metrics, function(i, e) {
-        forEachDimension(e, function(type, meta) {
+    // necessary closures (TODO make a class?)
+    forEachMetric(config.metrics, function(metric) {
+        forEachDimension(metric, function(type, meta) {
             meta._enumCaption = function(val, labelFallbacks) {
                 return getEnumCaption(meta.column, val, config, labelFallbacks);
             };
@@ -227,11 +292,7 @@ function initMetrics(map, data, config) {
 
     var l = new LegendControl({config: config}).addTo(map);
     var h = new HeadsUpControl({config: config}).addTo(map);
-    var m = new MetricsControl({data: data, legend: l, info: h}).addTo(map);
-
-    $.each(config.metrics, function(i, e) {
-        m.addMetric(e);
-    });
+    var m = new MetricsControl({metrics: config.metrics, data: data, legend: l, info: h}).addTo(map);
 
     // load markers and set initial viewport
     m.render(null);
@@ -651,7 +712,7 @@ function autoConfiguration(config, data) {
         return metric;
     });
     // metrics may already exist if we're in debug mode
-    config.metrics = (config.metrics || []).concat(metrics);
+    config.metrics = (config.metrics || []).concat([{title: 'Auto', group: true, children: metrics}]);
 }
 
 function summarizeColumn(meta, data) {

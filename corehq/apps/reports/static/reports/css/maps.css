@@ -118,3 +118,11 @@
 #info {
     text-align: right;
 }
+
+.metrics-container {
+    margin-left: -1.5em;
+}
+
+.metric-group {
+    margin-left: 1.5em;
+}
