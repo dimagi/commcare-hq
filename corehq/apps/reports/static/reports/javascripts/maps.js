@@ -292,6 +292,11 @@ function initData(data, config) {
         }
     });
 
+    // make a default detail view if not specified
+    if (config.detail_columns == null) {
+        config.detail_columns = getAllCols(config, data);
+    }
+
     // pre-cache popup detail
     $.each(data.features, function(i, e) {
         e.popupContent = formatDetailPopup(e, config);
@@ -722,7 +727,7 @@ function setMetricDefaults(metric, data, config) {
     }
 }
 
-function autoConfiguration(config, data) {
+function getAllCols(config, data) {
     var ignoreCols = [config.name_column];
     var _cols = {};
     $.each(data.features, function(i, e) {
@@ -732,9 +737,11 @@ function autoConfiguration(config, data) {
             }
         });
     });
-    var cols = _.sortBy(_.keys(_cols), function(e) { return getColumnTitle(e, config); });
+    return _.sortBy(_.keys(_cols), function(e) { return getColumnTitle(e, config); });
+}
 
-    var metrics = $.map(cols, function(e) {
+function autoConfiguration(config, data) {
+    var metrics = $.map(getAllCols(config, data), function(e) {
         var meta = {column: e};
         var stats = summarizeColumn(meta, data);
         var metric = {}
