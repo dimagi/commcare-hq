@@ -98,8 +98,8 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
 
                 conf['numeric_format'][col_id(c)] = {
                     'current_stock': "return x + ' %s'" % (p.unit or 'unit'),
-                    'months_remaining': "return x + (x == 1 ? ' month' : ' months')",
-                    'consumption': "return x + ' %s / month'" % (p.unit or 'unit'),
+                    'months_remaining': "return (Math.round(10 * x) / 10) + (x == 1 ? ' month' : ' months')",
+                    'consumption': "return (Math.round(10 * x) / 10) + ' %s / month'" % (p.unit or 'unit'),
                 }[c]
 
             conf['metrics'].append({

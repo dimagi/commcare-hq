@@ -367,7 +367,9 @@ function makeDisplayContext(metric, setActiveFeature) {
             return feature._conf(latlng);
         },
         onEachFeature: function(feature, layer) {
-            layer.bindPopup(feature.popupContent);
+            layer.bindPopup(feature.popupContent, {
+                maxWidth: 600,
+            });
 
             if (feature.geometry.type != 'Point') {
                 layer._activate = function() {
