@@ -20,6 +20,7 @@ ES_URLS = {
     "forms": XFORM_INDEX + '/xform/_search',
     "cases": CASE_INDEX + '/case/_search',
     "users": USER_INDEX + '/user/_search',
+    "domains": DOMAIN_INDEX + '/hqdomain/_search'
 }
 
 ADD_TO_ES_FILTER = {
@@ -132,9 +133,7 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
             q["filter"]["and"].append({"terms": {attr: attr_val}})
 
     def facet_filter(facet):
-        ff = {"facet_filter": {}}
-        ff["facet_filter"]["and"] = [clause for clause in q["filter"]["and"] if facet not in clause.get("terms", [])]
-        return ff if ff["facet_filter"]["and"] else {}
+        return [clause for clause in q["filter"]["and"] if facet not in clause.get("terms", [])]
 
     if facets:
         q["facets"] = q.get("facets", {})
@@ -143,7 +142,9 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
 
     if q.get('facets'):
         for facet in q["facets"]:
-            q["facets"][facet].update(facet_filter(facet))
+            if "facet_filter" not in q["facets"][facet]:
+                q["facets"][facet]["facet_filter"] = {"and": []}
+            q["facets"][facet]["facet_filter"]["and"].extend(facet_filter(facet))
 
     if not q['filter']['and']:
         del q["filter"]

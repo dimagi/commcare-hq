@@ -39,7 +39,7 @@ from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.sms.models import SMSLog
 from corehq.apps.users.models import  CommCareUser, WebUser
 from corehq.apps.users.util import format_username
-from corehq.elastic import get_stats_data, parse_args_for_es
+from corehq.elastic import get_stats_data, parse_args_for_es, es_query, ES_URLS
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from corehq.apps.domain.decorators import  require_superuser
@@ -886,6 +886,35 @@ class FlagBrokenBuilds(FormView):
         return HttpResponse("posted!")
 
 
+def get_domain_stats_data(params, datespan, interval='week'):
+    q = {
+        "query": {"bool": {"must":
+                                  [{"match": {'doc_type': "Domain"}},
+                                   {"term": {"is_snapshot": False}}]}},
+        "facets": {
+            "histo": {
+                "date_histogram": {
+                    "field": "date_created",
+                    "interval": interval
+                },
+                "facet_filter": {
+                    "and": [{
+                        "range": {
+                            "date_created": {
+                                "from": datespan.startdate_display,
+                                "to": datespan.enddate_display,
+                            }}}]}}}}
+
+    histo_data = es_query(params, q=q, size=0, es_url=ES_URLS["domains"])
+
+    return {
+        'histo_data': {"All Domains": histo_data["facets"]["histo"]["entries"]},
+        'initial_values': [{"All Domains": 0}],
+        'startdate': datespan.startdate_key_utc,
+        'enddate': datespan.enddate_key_utc,
+    }
+
+
 ES_DOMAIN_QUERY_LIMIT = 500
 
 @require_superuser
@@ -895,6 +924,10 @@ def stats_data(request):
     interval = request.GET.get("interval", "week")
 
     params, __ = parse_args_for_es(request, prefix='es_')
+
+    if histo_type == "domains":
+        return json_response(get_domain_stats_data(params, request.datespan, interval=interval))
+
     if params:
         domain_results = es_domain_query(params, fields=["name"], size=99999, show_stats=False)
         domains = [d["fields"]["name"] for d in domain_results["hits"]["hits"]]

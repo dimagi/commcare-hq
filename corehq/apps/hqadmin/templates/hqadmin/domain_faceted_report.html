@@ -19,7 +19,8 @@
         var visualizations = {
             forms: {name: "forms", xaxis_label: "# form submissions", viz: null},
             cases: {name: "cases", xaxis_label: "# case creations", viz: null},
-            users: {name: "users", xaxis_label: "# mobile workers created", viz: null}
+            users: {name: "users", xaxis_label: "# mobile workers created", viz: null},
+            domains: {name: "domains", xaxis_label: "# domains created", viz: null }
         };
 
         function parse_url_params() {
@@ -54,6 +55,8 @@
     <hr />
     <h4>{% trans "Total Distinct Active Users (matching filters)" %}: {{ total_distinct_users }}</h4>
     <hr />
+    <h2>{% trans "Visualize Project Spaces" %}</h2>
+    {% include "orgs/partials/visualizations.html" with chart_name="domains" %}
     <h2>{% trans "Visualize Forms" %}</h2>
     {% include "orgs/partials/visualizations.html" with chart_name="forms" %}
     <h2>{% trans "Visualize Cases" %}</h2>
