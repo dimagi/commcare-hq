@@ -1,3 +1,4 @@
+import logging
 from corehq.apps.commtrack.models import Product, CommtrackConfig,\
     CommtrackActionConfig, SupplyPointType, SupplyPointProductCase, SupplyPointCase
 from corehq.apps.commtrack import const
@@ -133,5 +134,11 @@ def make_psi_config(domain):
 def set_commtrack_location(user, location):
     user.commtrack_location = location._id
     supply_point_case = SupplyPointCase.get_by_location(location)
-    reconcile_ownership(supply_point_case, user)
+    if supply_point_case:
+        reconcile_ownership(supply_point_case, user)
+    else:
+        logging.error(('no linked supply point found for location {loc} ({id}) '
+                       'in {dom}. ownership was not set').format(
+            loc=location.name, id=location._id, dom=location.domain,
+        ))
     user.save()

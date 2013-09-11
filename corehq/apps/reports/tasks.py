@@ -3,7 +3,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 from corehq.apps.domain.calculations import CALC_FNS, _all_domain_stats
-from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index, CLUSTER_HEALTH, check_xform_index
+from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index_by_view, CLUSTER_HEALTH, check_xform_index_by_view, check_case_index_by_doc, check_xform_index_by_doc
 from corehq.apps.reports.export import save_metadata_export_to_tempfile
 from corehq.apps.reports.models import (ReportNotification,
     UnsupportedScheduledReportError, HQGroupExportConfiguration)
@@ -26,8 +26,18 @@ def check_es_index():
 
     es_status = {}
     es_status.update(check_cluster_health())
-    es_status.update(check_case_index())
-    es_status.update(check_xform_index())
+
+    es_check_case_doc = getattr(settings, 'ES_CASE_CHECK_DIRECT_DOC_ID', None)
+    if es_check_case_doc:
+        es_status.update(check_case_index_by_doc(es_check_case_doc))
+    else:
+        es_status.update(check_case_index_by_view())
+
+    es_check_xform_doc = getattr(settings, 'ES_XFORM_CHECK_DIRECT_DOC_ID', None)
+    if es_check_xform_doc:
+        es_status.update(check_xform_index_by_doc(es_check_xform_doc))
+    else:
+        es_status.update(check_xform_index_by_view())
 
     do_notify = False
     message = []
