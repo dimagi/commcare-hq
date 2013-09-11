@@ -827,10 +827,14 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
 
     @property
     def report_context(self):
+        layers = getattr(settings, 'MAPS_LAYERS', None)
+        if not layers:
+            layers = {'Default': {'family': 'fallback'}}
+
         context = {
             'data': self._get_data(),
             'config': self.display_config,
-            'layers': settings.MAPS_LAYERS,
+            'layers': layers,
         }
 
         return dict(

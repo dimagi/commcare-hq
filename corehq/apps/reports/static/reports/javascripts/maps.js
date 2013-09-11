@@ -259,6 +259,12 @@ function initMap($div, layers, default_pos, default_zoom) {
 
 function initLayers(map, layers_spec) {
     LAYER_FAMILIES = {
+        'fallback': {
+            url_template: 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            args: {
+                attribution: '<a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }
+        },
         'mapbox': {
             url_template: 'http://api.tiles.mapbox.com/v3/{apikey}/{z}/{x}/{y}.png',
             args: {
@@ -288,9 +294,11 @@ function initLayers(map, layers_spec) {
         }
     });
     L.control.layers(layers).addTo(map);
-    if (defaultLayer) {
-        map.addLayer(layers[defaultLayer]);
+
+    if (!defaultLayer) {
+        defaultLayer = _.keys(layers)[0];
     }
+    map.addLayer(layers[defaultLayer]);
 }
 
 // perform any pre-processing of the raw data
