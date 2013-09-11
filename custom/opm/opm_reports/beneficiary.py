@@ -28,7 +28,7 @@ class Beneficiary(object):
         ('total', "Amount to be paid to beneficiary"),
     ]
 
-    def __init__(self, case, date_range=None):
+    def __init__(self, case, date_range):
         """
         date_range should be a (start, stop) tuple of date objects
         """

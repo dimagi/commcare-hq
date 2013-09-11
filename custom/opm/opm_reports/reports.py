@@ -1,5 +1,10 @@
 """
-Custom report definitions.
+Custom report definitions - control display of reports.
+
+The BaseReport is somewhat general, but it's
+currently specific to monthly reports.  It would be pretty simple to make
+this more general and subclass for montly reports , but I'm holding off on
+that until we actually have another use case for it.
 """
 import datetime
 
@@ -33,19 +38,6 @@ class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
     model = None
 
     @property
-    def filters(self):
-        return [
-            "date between :startdate and :enddate"
-        ]
-
-    @property
-    def filter_values(self):
-        return {
-            "startdate": self.datespan.startdate_param_utc,
-            "enddate": self.datespan.enddate_param_utc
-        }
-
-    @property
     @memoized
     def snapshot(self):
         start = self.datespan.startdate_utc
@@ -69,13 +61,16 @@ class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
         if self.snapshot is not None:
             return self.snapshot.rows
         rows = []
-        for row in self.row_iterable:
+        for row in self.row_objects:
             rows.append([getattr(row, method) for 
                 method, header in self.model.method_map])
         return rows
 
     @property
-    def row_iterable(self):
+    def row_objects(self):
+        """
+        Returns a list of objects, each representing a row in the report
+        """
         start = self.datespan.startdate_utc
         end = self.datespan.enddate_utc
         now = datetime.datetime.utcnow()
@@ -84,10 +79,21 @@ class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
         rows = []
         for row in self.get_rows(self.datespan):
             try:
-                rows.append(self.model(row, date_range=(start, end)))
+                rows.append(self.model(
+                    row,
+                    date_range=(start, end),
+                    **self.get_model_kwargs()
+                ))
             except ResourceNotFound:
                 pass
         return rows
+
+    def get_model_kwargs(self):
+        """
+        Override this method to provide a dict of extra kwargs to the
+        row constructor
+        """
+        return {}
 
 
 class BeneficiaryPaymentReport(BaseReport):
@@ -95,7 +101,6 @@ class BeneficiaryPaymentReport(BaseReport):
     slug = 'beneficiary_payment_report'
     model = Beneficiary
 
-    @classmethod
     def get_rows(self, datespan):
         return CommCareCase.get_all_cases(DOMAIN)
 
@@ -118,8 +123,12 @@ class IncentivePaymentReport(BaseReport):
                 (row[account_index], row[total_index]) for row in snapshot.rows
             )
 
+    def get_model_kwargs(self):
+        return {'last_month_totals': self.last_month_totals}
+
     def get_rows(self, datespan):
-        return [(row, self.last_month_totals) for row in CommCareUser.by_domain(DOMAIN)]
+        # return [(row, self.last_month_totals) for row in CommCareUser.by_domain(DOMAIN)]
+        return CommCareUser.by_domain(DOMAIN)
 
 # may be better to have an optional method in BaseReport to override that gives
 # extra kwargs to pass to the individual row constructor
