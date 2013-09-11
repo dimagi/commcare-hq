@@ -742,7 +742,6 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
 
     report_partial_path = "reports/partials/maps.html"
     flush_layout = True
-    asynchronous = False  # TODO: we want to support async load
 
     def _get_data(self):
         adapter = self.data_source['adapter']
