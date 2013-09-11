@@ -4198,6 +4198,68 @@ input[type="submit"].btn.btn-mini {
 .btn-project.active {
   background-color: #cf7000 \9;
 }
+.btn-project-active {
+  color: #ffffff;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+  background-color: #e27b01;
+  background-image: -moz-linear-gradient(top, #cf7000, #ff8b03);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#cf7000), to(#ff8b03));
+  background-image: -webkit-linear-gradient(top, #cf7000, #ff8b03);
+  background-image: -o-linear-gradient(top, #cf7000, #ff8b03);
+  background-image: linear-gradient(to bottom, #cf7000, #ff8b03);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffcf7000', endColorstr='#ffff8b03', GradientType=0);
+  border-color: #ff8b03 #ff8b03 #b56200;
+  border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+  *background-color: #ff8b03;
+  /* Darken IE7 buttons by default so they stand out more given they won't have borders */
+
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
+}
+.btn-project-active:hover,
+.btn-project-active:active,
+.btn-project-active.active,
+.btn-project-active.disabled,
+.btn-project-active[disabled] {
+  color: #ffffff;
+  background-color: #ff8b03;
+  *background-color: #e97d00;
+}
+.btn-project-active:active,
+.btn-project-active.active {
+  background-color: #cf7000 \9;
+}
+.btn-account-active {
+  color: #ffffff;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+  background-color: #153a65;
+  background-image: -moz-linear-gradient(top, #15273c, #1557a2);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#15273c), to(#1557a2));
+  background-image: -webkit-linear-gradient(top, #15273c, #1557a2);
+  background-image: -o-linear-gradient(top, #15273c, #1557a2);
+  background-image: linear-gradient(to bottom, #15273c, #1557a2);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff15273c', endColorstr='#ff1557a2', GradientType=0);
+  border-color: #1557a2 #1557a2 #0c335e;
+  border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+  *background-color: #1557a2;
+  /* Darken IE7 buttons by default so they stand out more given they won't have borders */
+
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
+}
+.btn-account-active:hover,
+.btn-account-active:active,
+.btn-account-active.active,
+.btn-account-active.disabled,
+.btn-account-active[disabled] {
+  color: #ffffff;
+  background-color: #1557a2;
+  *background-color: #124b8b;
+}
+.btn-account-active:active,
+.btn-account-active.active {
+  background-color: #0f3f75 \9;
+}
 .btn-group.open .btn.dropdown-toggle.btn-project {
   color: #ffffff;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
@@ -4953,6 +5015,10 @@ input[type="submit"].btn.btn-mini {
 }
 .hq-content > .tab-content {
   margin-right: 40px;
+}
+.nav-list .nav-header-role {
+  font-size: 11.049999999999999px;
+  padding-top: 0;
 }
 .navbar {
   overflow: visible;

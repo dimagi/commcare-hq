@@ -30,6 +30,15 @@
 .btn-project {
   .buttonBackground(lighten(@orange, 15%), @orange);
 }
+
+.btn-project-active {
+  .buttonBackground(darken(@orange, 10%), @orange);
+}
+
+.btn-account-active {
+  .buttonBackground(desaturate(darken(@btnPrimaryBackground, 20), 30), @btnPrimaryBackground);
+}
+
 .btn-group.open .btn.dropdown-toggle.btn-project {
     .buttonBackground(lighten(@orange, 15%), @orange);
 }
