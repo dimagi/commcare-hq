@@ -17,7 +17,7 @@ class Command(BaseCommand):
     consistency.
     """
     help = "Pull data from the database and write\
-        to a json file (currently only works for opm"
+        to a json file (currently only works for opm)"
 
     def get_beneficiary_results(self, case):
         beneficiary = Beneficiary(case)

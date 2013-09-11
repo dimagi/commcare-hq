@@ -4,7 +4,6 @@ import os, json
 from django.http import HttpRequest
 from django.test import TestCase
 
-from bihar.reports.due_list import VaccinationSummary, get_due_list_by_task_name, get_due_list_records
 from corehq.apps.users.models import WebUser
 from corehq.apps.users.models import CommCareUser, CommCareCase
 from dimagi.utils.couch.database import get_db
@@ -32,14 +31,15 @@ class OPMTestBase(object):
         if not fixtures_loaded:
             fixtures_loaded = True
             self.load_fixtures()
-        self.postSetUp()
-
-    def postSetUp(self):
-        return
+        # do equivalent of:
+        # ptop_fast_reindex_fluff opm custom.opm.opm_reports.models.OpmCasePillow
 
     def test_all_results(self):
         for row in self.get_rows(): 
-            row_object = self.report.model(row)
+            row_object = self.ReportClass.model(
+                row,
+                date_range,
+            )
             for method, result in row['test_results']:
                 self.assertEquals(
                     str(getattr(row_object, method)),
@@ -48,14 +48,14 @@ class OPMTestBase(object):
 
 
 class TestBeneficiary(OPMTestBase, TestCase):
-    report = BeneficiaryPaymentReport
+    ReportClass = BeneficiaryPaymentReport
     
     def get_rows(self):
         return CommCareCase.get_all_cases('opm', include_docs=True)
 
 
 class TestIncentive(OPMTestBase, TestCase):
-    report = IncentivePaymentReport
+    ReportClass = IncentivePaymentReport
 
     def get_rows(self):
         return CommCareUser.by_domain('opm')
