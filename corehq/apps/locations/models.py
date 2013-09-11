@@ -19,10 +19,6 @@ class Location(Document):
     lineage = StringListProperty()
     previous_parents = StringListProperty()
 
-    # hotfix, might need to update this
-    latitude = StringProperty()
-    longitude = StringProperty()
-
     def __init__(self, *args, **kwargs):
         if 'parent' in kwargs:
             parent = kwargs['parent']
