@@ -89,9 +89,9 @@ $(document).ready(function() {
 </script>
 
 <script type="text/template" id="metrics-group">
-  <div data-bind="if: name() != '_root', click: onclick">
+  <div class="choice" data-bind="if: name() != '_root', click: onclick">
     <i data-bind="visible: group, css: { 'icon-caret-right': !expanded(), 'icon-caret-down': expanded }"></i>
-    <span data-bind="text: name"></span>
+    <span data-bind="text: name, css: { selected: selected }"></span>
   </div>
 
   <div data-bind="visible: expanded, foreach: children" class="metric-group">

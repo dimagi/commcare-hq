@@ -27,18 +27,30 @@ function MetricsViewModel(control) {
     this.root = ko.observable();
     
     this.load = function(metrics) {
-        this.root(new MetricModel({title: '_root', children: metrics}, this));
+        this.root(new MetricModel({title: '_root', children: metrics}, null, this));
         this.root().expanded(true);
+    }
+
+    this.unselectAll = function() {
+        var unselect = function(node) {
+            $.each(node.children(), function(i, e) {
+                unselect(e);
+            });
+            node.selected(false);
+        }
+        unselect(this.root());
     }
 }
 
-function MetricModel(data, root) {
+function MetricModel(data, parent, root) {
     var m = this;
     
     this.metric = null;
     this.name = ko.observable();
     this.children = ko.observableArray();
     this.expanded = ko.observable(false);
+    this.selected = ko.observable(false);
+    this.parent = parent;
 
     this.group = ko.computed(function() {
         return this.children().length > 0;
@@ -48,6 +60,7 @@ function MetricModel(data, root) {
         if (this.group()) {
             this.toggle();
         } else {
+            this.select();
             root.control.render(this.metric);
         }
     }
@@ -56,11 +69,21 @@ function MetricModel(data, root) {
         this.expanded(!this.expanded());
     }
 
+    this.select = function() {
+        root.unselectAll();
+        
+        var node = this;
+        while (node != null) {
+            node.selected(true);
+            node = node.parent;
+        }
+    }
+
     this.load = function(data) {
         this.metric = data;
         this.name(data.title);
         this.children($.map(data.children || [], function(e) {
-            return new MetricModel(e, root);
+            return new MetricModel(e, m, root);
         }));
     }
 
