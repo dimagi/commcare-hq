@@ -150,6 +150,7 @@ class ReportingStatusMapReport(GenericMapReport, CommtrackReportMixin):
                 },
             },
             {
+                'default': True,
                 'color': {
                     'column': 'reporting_status',
                     'categories': {

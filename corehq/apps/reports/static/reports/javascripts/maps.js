@@ -23,12 +23,22 @@ function forEachMetric(metrics, callback) {
 function MetricsViewModel(control) {
     var model = this;
     
-    this.control = control;
     this.root = ko.observable();
+    this.defaultMetric = null;
     
     this.load = function(metrics) {
         this.root(new MetricModel({title: '_root', children: metrics}, null, this));
         this.root().expanded(true);
+
+        if (this.defaultMetric) {
+            this.defaultMetric.onclick();
+        } else {
+            this.renderMetric(null);
+        }
+    }
+
+    this.renderMetric = function(metric) {
+        control.render(metric);
     }
 
     this.unselectAll = function() {
@@ -61,7 +71,7 @@ function MetricModel(data, parent, root) {
             this.toggle();
         } else {
             this.select();
-            root.control.render(this.metric);
+            root.renderMetric(this.metric);
         }
     }
 
@@ -75,6 +85,7 @@ function MetricModel(data, parent, root) {
         var node = this;
         while (node != null) {
             node.selected(true);
+            node.expanded(true);
             node = node.parent;
         }
     }
@@ -85,6 +96,9 @@ function MetricModel(data, parent, root) {
         this.children($.map(data.children || [], function(e) {
             return new MetricModel(e, m, root);
         }));
+        if (data['default']) {
+            root.defaultMetric = this;
+        }
     }
 
     this.load(data);
@@ -331,8 +345,6 @@ function initMetrics(map, data, config) {
     var h = new HeadsUpControl({config: config}).addTo(map);
     var m = new MetricsControl({metrics: config.metrics, data: data, legend: l, info: h}).addTo(map);
 
-    // load markers and set initial viewport
-    m.render(null);
     zoomToAll(map);
 }
 
