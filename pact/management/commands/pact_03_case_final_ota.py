@@ -8,8 +8,8 @@ import uuid
 
 from django.core.management.base import NoArgsCommand
 from gunicorn.http import body
+from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests import CaseBlock
 from corehq.apps.domain.models import Domain
 import sys
 import getpass
