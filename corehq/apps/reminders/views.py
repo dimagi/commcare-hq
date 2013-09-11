@@ -23,6 +23,12 @@ from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count
 
 reminders_permission = require_permission(Permissions.edit_data)
 
+def get_project_time_info(domain):
+    timezone = report_utils.get_timezone(None, domain)
+    now = pytz.utc.localize(datetime.utcnow())
+    timezone_now = now.astimezone(timezone)
+    return (timezone, now, timezone_now)
+
 @reminders_permission
 def default(request, domain):
     return HttpResponseRedirect(reverse('list_reminders', args=[domain]))
@@ -35,6 +41,7 @@ def list_reminders(request, domain, reminder_type=REMINDER_TYPE_DEFAULT):
         all_handlers.sort(key=lambda handler : handler.start_datetime)
     handlers = []
     utcnow = datetime.utcnow()
+    timezone, now, timezone_now = get_project_time_info(domain)
     for handler in all_handlers:
         if reminder_type == REMINDER_TYPE_ONE_TIME:
             recipients = get_recipient_name(handler.get_reminders()[0].recipient, include_desc=False)
@@ -59,12 +66,16 @@ def list_reminders(request, domain, reminder_type=REMINDER_TYPE_DEFAULT):
             "recipients" : recipients,
             "content" : content,
             "sent" : sent,
+            "start_datetime" : tz_utils.adjust_datetime_to_timezone(handler.start_datetime, pytz.utc.zone, timezone.zone) if handler.start_datetime is not None else None,
         })
     
     return render(request, "reminders/partial/list_reminders.html", {
         'domain': domain,
         'reminder_handlers': handlers,
         'reminder_type': reminder_type,
+        'timezone' : timezone,
+        'now' : now,
+        'timezone_now' : timezone_now,
     })
 
 @reminders_permission
@@ -116,12 +127,17 @@ def add_reminder(request, domain, handler_id=None, template="reminders/partial/a
     })
 
 def render_one_time_reminder_form(request, domain, form, handler_id):
+    timezone, now, timezone_now = get_project_time_info(domain)
+
     context = {
         "domain": domain,
         "form" : form,
         "sample_list" : get_sample_list(domain),
         "form_list" : get_form_list(domain),
         "handler_id" : handler_id,
+        "timezone" : timezone,
+        "timezone_now" : timezone_now,
+        "now" : now,
     }
 
     return render(request, "reminders/partial/add_one_time_reminder.html", context)
@@ -135,6 +151,8 @@ def add_one_time_reminder(request, domain, handler_id=None):
     else:
         handler = None
 
+    timezone = report_utils.get_timezone(None, domain) # Use project timezone only
+
     if request.method == "POST":
         form = OneTimeReminderForm(request.POST)
         if form.is_valid():
@@ -142,6 +160,7 @@ def add_one_time_reminder(request, domain, handler_id=None):
                 start_datetime = datetime.utcnow() + timedelta(minutes=1)
             else:
                 start_datetime = datetime.combine(form.cleaned_data.get("date"), form.cleaned_data.get("time"))
+                start_datetime = tz_utils.adjust_datetime_to_timezone(start_datetime, timezone.zone, pytz.utc.zone)
 
             content_type = form.cleaned_data.get("content_type")
             recipient_type = form.cleaned_data.get("recipient_type")
@@ -173,10 +192,11 @@ def add_one_time_reminder(request, domain, handler_id=None):
             return HttpResponseRedirect(reverse('one_time_reminders', args=[domain]))
     else:
         if handler is not None:
+            start_datetime = tz_utils.adjust_datetime_to_timezone(handler.start_datetime, pytz.utc.zone, timezone.zone)
             initial = {
                 "send_type" : SEND_LATER,
-                "date" : handler.start_datetime.strftime("%Y-%m-%d"),
-                "time" : handler.start_datetime.strftime("%H:%M"),
+                "date" : start_datetime.strftime("%Y-%m-%d"),
+                "time" : start_datetime.strftime("%H:%M"),
                 "recipient_type" : handler.recipient,
                 "case_group_id" : handler.sample_id,
                 "content_type" : handler.method,

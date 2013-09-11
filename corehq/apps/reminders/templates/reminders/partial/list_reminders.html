@@ -48,7 +48,10 @@
 {% endblock %}
 
 {% block main_column %}
-    {% if reminder_type == "ONE_TIME" %}<h4>{% trans 'Scheduled Broadcasts' %}</h4>{% endif %}
+    {% if reminder_type == "ONE_TIME" %}
+        {% include "hqwebapp/partials/time-notice.html" %}
+        <h4>{% trans 'Scheduled Broadcasts' %}</h4>
+    {% endif %}
     <table id="table_1" class="table table-striped datatable table-bordered">
         <thead>
             <tr>
@@ -76,7 +79,7 @@
                     <td>{{ handler.handler.case_type|default:"n/a" }}</td>
                     {% endif %}
                     {% if reminder_type == "ONE_TIME" %}
-                    <td>{{ handler.handler.start_datetime|date:"Y-m-d H:i" }}</td>
+                    <td>{{ handler.start_datetime|date:"Y-m-d H:i" }}</td>
                     <td>{{ handler.recipients }}</td>
                     <td>{{ handler.content }}</td>
                     {% endif %}
@@ -120,7 +123,7 @@
             {% for handler in reminder_handlers %}
                 {% if handler.sent %}
                 <tr>
-                    <td>{{ handler.handler.start_datetime|date:"Y-m-d H:i" }}</td>
+                    <td>{{ handler.start_datetime|date:"Y-m-d H:i" }}</td>
                     <td>{{ handler.recipients }}</td>
                     <td>{{ handler.content }}</td>
                     <td><a href="{% url copy_one_time_reminder domain handler.handler.get_id %}"><span class="btn btn-primary">{% trans 'Copy' %}</span></a></td>
