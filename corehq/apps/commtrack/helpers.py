@@ -23,28 +23,7 @@ def make_product(domain, name, code):
     return p
 
 def make_supply_point(domain, location, owner_id=None):
-    # a supply point is currently just a case with a special type
-    id = uuid.uuid4().hex
-    user_id = const.get_commtrack_user_id(domain)
-    owner_id = owner_id or user_id
-    username = const.COMMTRACK_USERNAME
-    caseblock = CaseBlock(
-        case_id=id,
-        create=True,
-        version=V2,
-        case_name=location.name,
-        user_id=user_id,
-        owner_id=owner_id,
-        case_type=const.SUPPLY_POINT_CASE_TYPE,
-        update={
-            'location_id': location._id,
-        }
-    )
-    casexml = ElementTree.tostring(caseblock.as_xml())
-    submit_case_blocks(casexml, domain, username, user_id,
-                       xmlns=const.COMMTRACK_SUPPLY_POINT_XMLNS)
-    return SupplyPointCase.get(id)
-
+    return SupplyPointCase.create_from_location(domain, location, owner_id)
 
 def make_supply_point_product(supply_point_case, product_uuid, owner_id=None):
     domain = supply_point_case.domain

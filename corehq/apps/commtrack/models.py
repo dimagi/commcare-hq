@@ -1,8 +1,13 @@
+import uuid
+from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.ext.django.schema import *
 from django.utils.translation import ugettext as _
+from casexml.apps.case.tests import CaseBlock
+from casexml.apps.case.xml import V2
 
 from corehq.apps.commtrack import const
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.loosechange import map_reduce
 from couchforms.models import XFormInstance
@@ -11,7 +16,7 @@ from datetime import datetime
 from casexml.apps.case.models import CommCareCase
 from copy import copy
 from django.dispatch import receiver
-from corehq.apps.locations.signals import location_created
+from corehq.apps.locations.signals import location_created, location_edited
 from corehq.apps.locations.models import Location
 from corehq.apps.commtrack.const import RequisitionActions, RequisitionStatus
 
@@ -386,6 +391,30 @@ class SupplyPointCase(CommCareCase):
             except ResourceNotFound:
                 pass
         return None
+
+    @classmethod
+    def create_from_location(cls, domain, location, owner_id=None):
+        # a supply point is currently just a case with a special type
+        id = uuid.uuid4().hex
+        user_id = const.get_commtrack_user_id(domain)
+        owner_id = owner_id or user_id
+        username = const.COMMTRACK_USERNAME
+        caseblock = CaseBlock(
+            case_id=id,
+            create=True,
+            version=V2,
+            case_name=location.name,
+            user_id=user_id,
+            owner_id=owner_id,
+            case_type=const.SUPPLY_POINT_CASE_TYPE,
+            update={
+                'location_id': location._id,
+            }
+        )
+        casexml = ElementTree.tostring(caseblock.as_xml())
+        submit_case_blocks(casexml, domain, username, user_id,
+                           xmlns=const.COMMTRACK_SUPPLY_POINT_XMLNS)
+        return cls.get(id)
 
     def to_full_dict(self):
         data = super(SupplyPointCase, self).to_full_dict()
