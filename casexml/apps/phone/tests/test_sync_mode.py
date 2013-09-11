@@ -1,9 +1,10 @@
 from django.test import TestCase
 import os
+from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.xml import SYNC_XMLNS
 from couchforms.util import post_xform_to_couch
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests.util import CaseBlock, check_user_has_case, delete_all_sync_logs, delete_all_xforms, delete_all_cases
+from casexml.apps.case.tests.util import check_user_has_case, delete_all_sync_logs, delete_all_xforms, delete_all_cases
 from casexml.apps.case.signals import process_cases
 from casexml.apps.phone.models import SyncLog, User
 from casexml.apps.phone.restore import generate_restore_payload
