@@ -133,21 +133,6 @@ MetricsControl = L.Control.extend({
 
     // TODO support an explicit 'show just markers again' option
     
-    addMetric: function(metric) {
-        $e.addClass('choice');
-        $e.click(function() {
-            m.select($e);
-            m.render(metric);
-        });
-    },
-    
-    select: function($e) {
-        this.$div.find('div').removeClass('selected');
-        if ($e) {
-            $e.addClass('selected');
-        }
-    },
-    
     render: function(metric) {
         this.activeMetric = metric;
         var m = this;
