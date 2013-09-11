@@ -3,7 +3,6 @@ from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.ext.django.schema import *
 from django.utils.translation import ugettext as _
-from casexml.apps.case.tests import CaseBlock
 from casexml.apps.case.xml import V2
 
 from corehq.apps.commtrack import const
@@ -402,6 +401,8 @@ class SupplyPointCase(CommCareCase):
 
     @classmethod
     def create_from_location(cls, domain, location, owner_id=None):
+        # don't move this import! it breaks tests!
+        from casexml.apps.case.tests import CaseBlock
         # a supply point is currently just a case with a special type
         id = uuid.uuid4().hex
         user_id = const.get_commtrack_user_id(domain)
@@ -421,6 +422,8 @@ class SupplyPointCase(CommCareCase):
         return cls._from_caseblock(domain, caseblock)
 
     def update_from_location(self, location):
+        # don't move this import! it breaks tests!
+        from casexml.apps.case.tests import CaseBlock
         assert self.domain == location.domain
         caseblock = CaseBlock(
             case_id=self._id,
