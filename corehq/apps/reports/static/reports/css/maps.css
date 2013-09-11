@@ -5,6 +5,15 @@
 }
 */
 
+/* fix bootstrap / leaflet conflict */
+.leaflet-control-layers label {
+  line-height: 1.5em;
+  margin: auto;
+}
+.leaflet-control-layers input {
+  margin: auto;
+}
+
 .control-pane {
   /* copied from style of other leaflet controls */
   background: rgba(248, 248, 248, .8);
@@ -53,7 +62,6 @@
 
 .sizelegend .circle-container {
     text-align: center;
-    //padding: 5px;
 }
 
 .sizelegend .circle {
