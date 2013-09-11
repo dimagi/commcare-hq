@@ -409,7 +409,8 @@ class SupplyPointCase(CommCareCase):
     def get_by_location(cls, location):
         return cls.view('commtrack/supply_point_by_loc',
             key=[location.domain, location._id],
-            include_docs=True
+            include_docs=True,
+            classes={'CommCareCase': SupplyPointCase},
         ).one()
 
     @classmethod
