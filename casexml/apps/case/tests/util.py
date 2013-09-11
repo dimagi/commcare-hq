@@ -204,6 +204,7 @@ class CaseBlock(dict):
 
         """
         super(CaseBlock, self).__init__()
+        self._id = case_id
         date_modified = date_modified or datetime.utcnow()
         update = update or {}
         index = index or {}
