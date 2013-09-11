@@ -178,7 +178,8 @@ HeadsUpControl = L.Control.extend({
     },
     
     setActive: function(feature, metric) {
-        if (feature == null) {
+        if (feature == null ||
+            (metric == null && !this.options.config.name_column)) { // nothing to show
             this.$div.hide();
             return;
         }
@@ -638,14 +639,14 @@ function detailContext(feature, config, cols) {
         displayProperties[k] = formatForDisplay(k, v);
     });
 
-    var context = {props: displayProperties};
-    if (config.name_column) {
-        context.name = feature.properties[config.name_column];
-    }
+    var context = {
+        props: displayProperties,
+        name: (config.name_column ? feature.properties[config.name_column] : null),
+    };
     context.detail = [];
     $.each(detail_cols, function(i, e) {
         context.detail.push({
-            slug: e, // FIXME this will cause problems if column names have weird chars or spaces
+            slug: e, // FIXME this will cause problems if column keys have weird chars or spaces
             label: getColumnTitle(e, config),
             value: displayProperties[e],
         });
