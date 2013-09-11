@@ -14,7 +14,6 @@
 <script>
     $(function () {
         // init releases
-        {# The '___' in these urls will later be replaced by an app's _id ReleasesMain's url function #}
         var urls = {
             fetch: '{% url paginate_releases domain app.id %}',
             delete: '{% url corehq.apps.app_manager.views.delete_copy domain app.id %}',
@@ -22,8 +21,7 @@
             cloudcare: '{% url cloudcare_get_app domain '___' %}',
             jad: '{% url corehq.apps.app_manager.views.download_jad domain '___' %}',
             jar: '{% url corehq.apps.app_manager.views.download_jar domain '___' %}',
-            odk: '{% url odk_install domain '___' %}',
-            odk_media: '{% url odk_media_install domain '___' %}',
+            odk: '{% url corehq.apps.app_manager.views.odk_install domain '___' %}',
             source: '{% url download_index domain '___' %}',
             release: '{% url release_build domain app.id '___' %}',
             newBuild: '{% url corehq.apps.app_manager.views.save_copy domain app.id %}',
@@ -320,28 +318,24 @@
                         </div>
                         <div class="accordion-body collapse">
                             <div class="accordion-inner">
-                                <label class="checkbox">
-                                    <input type="checkbox" data-bind="checked: include_media">
-                                    {% trans "Include Multimedia" %}
-                                </label>
                                 <p>
-                                    <span data-bind="visible: get_short_odk_url()">
+                                    <span data-bind="visible: short_odk_url()">
                                         {% blocktrans %}
                                             Install by typing the following URL
                                             into the application install screen:
                                         {% endblocktrans %}
                                         <a data-bind="
-                                            attr: {href: get_short_odk_url()},
-                                            text: get_short_odk_url()
+                                            attr: {href: short_odk_url()},
+                                            text: short_odk_url()
                                         "></a>
                                     </span>
-                                    <span class="text-warning" data-bind="visible: !get_short_odk_url()">
+                                    <span class="text-warning" data-bind="visible: !short_odk_url()">
                                         {% trans "No short code available; try making another version." %}
                                     </span>
                                 </p>
                                 <p>
                                     {% trans "Or" %}
-                                    <a href="#" data-bind="openJqm: get_odk_install_url">
+                                    <a href="#" data-bind="openJqm: $root.url('odk', id)">
                                     {% trans "scan the bar code" %}
                                     </a>
                                 </p>
@@ -371,16 +365,12 @@
                                         <div class="tab-content" data-bind="foreach: [short_url(), short_odk_url()]">
                                             <div class="tab-pane">
                                                 <div data-bind="visible: $data">
-                                                    <label class="checkbox" data-bind="visible: $parent.short_odk_media_url && $index() === 1">
-                                                        <input type="checkbox" data-bind="checked: $parent.include_media">
-                                                        {% trans "Include Multimedia" %}
-                                                    </label>
                                                     <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
                                                         <label>{% trans "Send to:" %}</label>
                                                         <input type="text" name="recipients" data-bind="multiTypeahead: $root.recipients" value=""/>
                                                         <br />
                                                         <textarea name="message" data-bind="text: 'Update to CommCare: ' +
-                                                            $parent.sms_url($index()) + ' (&quot;' + $parent.short_name() + '&quot; v. ' + $parent.version() + ')'"></textarea>
+                                                            $data + ' (&quot;' + $parent.short_name() + '&quot; v. ' + $parent.version() + ')'"></textarea>
                                                         <br />
                                                         <input type="submit" class="btn" value="Send"/>
                                                     </form>
