@@ -1,8 +1,13 @@
+import uuid
+from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.ext.django.schema import *
 from django.utils.translation import ugettext as _
+from casexml.apps.case.tests import CaseBlock
+from casexml.apps.case.xml import V2
 
 from corehq.apps.commtrack import const
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.loosechange import map_reduce
 from couchforms.models import XFormInstance
@@ -11,7 +16,7 @@ from datetime import datetime
 from casexml.apps.case.models import CommCareCase
 from copy import copy
 from django.dispatch import receiver
-from corehq.apps.locations.signals import location_created
+from corehq.apps.locations.signals import location_created, location_edited
 from corehq.apps.locations.models import Location
 from corehq.apps.commtrack.const import RequisitionActions, RequisitionStatus
 
@@ -386,6 +391,49 @@ class SupplyPointCase(CommCareCase):
             except ResourceNotFound:
                 pass
         return None
+
+    @classmethod
+    def _from_caseblock(cls, domain, caseblock):
+        username = const.COMMTRACK_USERNAME
+        casexml = ElementTree.tostring(caseblock.as_xml())
+        submit_case_blocks(casexml, domain, username, const.get_commtrack_user_id(domain),
+                           xmlns=const.COMMTRACK_SUPPLY_POINT_XMLNS)
+        return cls.get(caseblock._id)
+
+    @classmethod
+    def create_from_location(cls, domain, location, owner_id=None):
+        # a supply point is currently just a case with a special type
+        id = uuid.uuid4().hex
+        user_id = const.get_commtrack_user_id(domain)
+        owner_id = owner_id or user_id
+        caseblock = CaseBlock(
+            case_id=id,
+            create=True,
+            version=V2,
+            case_name=location.name,
+            user_id=user_id,
+            owner_id=owner_id,
+            case_type=const.SUPPLY_POINT_CASE_TYPE,
+            update={
+                'location_id': location._id,
+            }
+        )
+        return cls._from_caseblock(domain, caseblock)
+
+    def update_from_location(self, location):
+        assert self.domain == location.domain
+        caseblock = CaseBlock(
+            case_id=self._id,
+            create=False,
+            version=V2,
+            case_name=location.name,
+            user_id=const.get_commtrack_user_id(location.domain),
+            update={
+                'location_id': location._id,
+            }
+        )
+        return SupplyPointCase._from_caseblock(location.domain, caseblock)
+
 
     def to_full_dict(self):
         data = super(SupplyPointCase, self).to_full_dict()
@@ -921,20 +969,34 @@ class StockReport(object):
                                    endkey=endkey,
                                    include_docs=True)]
 
-@receiver(location_created)
-def post_loc_created(sender, loc=None, **kwargs):
-    # circular imports
-    from corehq.apps.commtrack.helpers import make_supply_point
+def sync_location_supply_point(loc):
+    # circular import
     from corehq.apps.domain.models import Domain
 
     domain = Domain.get_by_name(loc.domain)
     if not domain.commtrack_enabled:
         return
-    config = domain.commtrack_settings
 
-    # exclude administrative-only locs
-    if loc.location_type in [loc_type.name for loc_type in config.location_types if not loc_type.administrative]:
-        make_supply_point(loc.domain, loc)
+    def _needs_supply_point(loc, config):
+        """Exclude administrative-only locs"""
+        return loc.location_type in [loc_type.name for loc_type in config.location_types if not loc_type.administrative]
+
+    config = domain.commtrack_settings
+    if _needs_supply_point(loc, config):
+        supply_point = SupplyPointCase.get_by_location(loc)
+        if supply_point:
+            supply_point.update_from_location(loc)
+            return supply_point
+        else:
+            return SupplyPointCase.create_from_location(loc.domain, loc)
+
+@receiver(location_edited)
+def post_loc_edited(sender, loc=None, **kwargs):
+    sync_location_supply_point(loc)
+
+@receiver(location_created)
+def post_loc_created(sender, loc=None, **kwargs):
+    sync_location_supply_point(loc)
 
 # import signals
 from . import signals
