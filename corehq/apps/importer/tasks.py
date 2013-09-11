@@ -1,12 +1,12 @@
 from celery.task import task
 from xml.etree import ElementTree
 from dimagi.utils.parsing import json_format_datetime
+from casexml.apps.case.mock import CaseBlock, CaseBlockError
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.importer.const import LookupErrors
 import corehq.apps.importer.util as importer_util
 from corehq.apps.users.models import CouchUser
 from soil import DownloadBase
-from casexml.apps.case.tests.util import CaseBlock, CaseBlockError
 from casexml.apps.case.xml import V2
 from dimagi.utils.prime_views import prime_views
 import uuid
