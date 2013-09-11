@@ -769,6 +769,9 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
         def points():
             for row in data:
                 geo = row[geo_col]
+                if geo is None:
+                    continue
+
                 e = geo
                 depth = 0
                 while hasattr(e, '__iter__'):

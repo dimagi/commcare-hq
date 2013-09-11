@@ -12,6 +12,9 @@ class Location(Document):
     # unique id from some external data source
     external_id = StringProperty()
 
+    latitude = FloatProperty()
+    longitude = FloatProperty()
+
     # a list of doc ids, referring to the parent location, then the
     # grand-parent, and so on up to the root location in the hierarchy
     # TODO: in future, support multiple types of parentage with
