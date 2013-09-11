@@ -225,16 +225,16 @@ ZoomToFitControl = L.Control.extend({
 
 // main entry point
 function mapsInit(context) {
-    var map = initMap($('#map'), context.layers, [30., 0.], 2, 'Map');
+    var map = initMap($('#map'), context.layers, [30., 0.], 2);
     initData(context.data, context.config);
     initMetrics(map, context.data, context.config);
     return map;
 }
 
 // initialize leaflet map
-function initMap($div, layers, default_pos, default_zoom, default_layer) {
+function initMap($div, layers, default_pos, default_zoom) {
     var map = L.map($div.attr('id')).setView(default_pos, default_zoom);
-    initLayers(map, layers, default_layer);
+    initLayers(map, layers);
 
     new ZoomToFitControl().addTo(map);
     L.control.scale().addTo(map);
@@ -242,7 +242,7 @@ function initMap($div, layers, default_pos, default_zoom, default_layer) {
     return map;
 }
 
-function initLayers(map, layers_spec, default_layer) {
+function initLayers(map, layers_spec) {
     LAYER_FAMILIES = {
         'mapbox': {
             url_template: 'http://api.tiles.mapbox.com/v3/{apikey}/{z}/{x}/{y}.png',
@@ -265,11 +265,17 @@ function initLayers(map, layers_spec, default_layer) {
     }
 
     var layers = {};
+    var defaultLayer = null;
     $.each(layers_spec, function(k, v) {
         layers[k] = mkLayer(v);
+        if (v['default']) {
+            defaultLayer = k;
+        }
     });
     L.control.layers(layers).addTo(map);
-    map.addLayer(layers[default_layer]);
+    if (defaultLayer) {
+        map.addLayer(layers[defaultLayer]);
+    }
 }
 
 // perform any pre-processing of the raw data

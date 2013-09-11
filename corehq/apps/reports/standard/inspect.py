@@ -831,6 +831,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
         context = {
             'data': self._get_data(),
             'config': self.display_config,
+            'layers': settings.MAPS_LAYERS,
         }
 
         return dict(
