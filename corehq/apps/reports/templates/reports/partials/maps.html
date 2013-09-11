@@ -12,6 +12,22 @@
 
 CONTEXT = {{ context|JSON }};
 
+// TODO get this from server
+CONTEXT.layers = {
+    'Map': {
+        family: 'mapbox',
+        args: {
+            apikey: 'dimagi.map-0cera12g'
+        }
+    },
+    'Satellite': {
+        family: 'mapbox',
+        args: {
+            apikey: 'dimagi.map-jvzwkbwu'
+        }
+    },
+}
+
 function setMapHeight() {
     $('#map').height($(window).height() - 200);
 }

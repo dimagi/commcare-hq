@@ -225,34 +225,51 @@ ZoomToFitControl = L.Control.extend({
 
 // main entry point
 function mapsInit(context) {
-    var map = initMap($('#map'), [30., 0.], 2, 'Map');
+    var map = initMap($('#map'), context.layers, [30., 0.], 2, 'Map');
     initData(context.data, context.config);
     initMetrics(map, context.data, context.config);
     return map;
 }
 
 // initialize leaflet map
-function initMap($div, default_pos, default_zoom, default_layer) {
+function initMap($div, layers, default_pos, default_zoom, default_layer) {
     var map = L.map($div.attr('id')).setView(default_pos, default_zoom);
-
-    var mapboxLayer = function(tag) {
-        return L.tileLayer('http://api.tiles.mapbox.com/v3/' + tag + '/{z}/{x}/{y}.png', {
-            attribution: '<a href="http://www.mapbox.com/about/maps/">MapBox</a>',
-        });
-    };
-
-    var layers = {
-        // TODO: these tags should probably not be hard-coded
-        'Map': mapboxLayer('dimagi.map-0cera12g'),
-        'Satellite': mapboxLayer('dimagi.map-jvzwkbwu'),
-    }
-    L.control.layers(layers).addTo(map);
-    map.addLayer(layers[default_layer]);
+    initLayers(map, layers, default_layer);
 
     new ZoomToFitControl().addTo(map);
     L.control.scale().addTo(map);
 
     return map;
+}
+
+function initLayers(map, layers_spec, default_layer) {
+    LAYER_FAMILIES = {
+        'mapbox': {
+            url_template: 'http://api.tiles.mapbox.com/v3/{apikey}/{z}/{x}/{y}.png',
+            args: {
+                attribution: '<a href="http://www.mapbox.com/about/maps/">MapBox</a>'
+            }
+        }
+    }
+
+    var mkLayer = function(spec) {
+        if (spec.family) {
+            var family_spec = LAYER_FAMILIES[spec.family];
+            spec.url_template = family_spec.url_template;
+            spec.args = spec.args || {};
+            $.each(family_spec.args || {}, function(k, v) {
+                spec.args[k] = v;
+            });
+        }
+        return L.tileLayer(spec.url_template, spec.args);
+    }
+
+    var layers = {};
+    $.each(layers_spec, function(k, v) {
+        layers[k] = mkLayer(v);
+    });
+    L.control.layers(layers).addTo(map);
+    map.addLayer(layers[default_layer]);
 }
 
 // perform any pre-processing of the raw data
