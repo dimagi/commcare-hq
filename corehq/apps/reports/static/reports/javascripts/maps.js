@@ -684,7 +684,7 @@ function setMetricDefaults(metric, data, config) {
     if (typeof metric.size == 'object') {
         if (!metric.size.baseline) {
             var stats = summarizeColumn(metric.size, data);
-            metric.size.baseline = stats.mean;
+            metric.size.baseline = (stats.mean || 1);
         }
     }
 
@@ -696,11 +696,11 @@ function setMetricDefaults(metric, data, config) {
                 metric.color.colorstops = (magnitude_based_field(stats) ?
                                            [
                                                [0, 'rgba(20, 20, 20, .8)'],
-                                               [stats.max, DEFAULT_COLOR],
+                                               [stats.max || 1, DEFAULT_COLOR],
                                            ] :
                                            [
                                                [stats.min, 'rgba(0, 0, 255, .8)'],
-                                               [stats.max, 'rgba(255, 0, 0, .8)'],
+                                               [stats.min == stats.max ? 0 : stats.max, 'rgba(255, 0, 0, .8)'],
                                            ]);
             } else {
                 if (metric.color.thresholds) {
@@ -835,7 +835,14 @@ function _summarizeColumn(meta, data) {
 // based on the results of summarizeColumn, determine if this column is better
 // represented as a magnitude (0-max) or narrower range (min-max)
 function magnitude_based_field(stats) {
-    return !(stats.min < 0 || (stats.stdev != null && stats.stdev / stats.max < .1));
+    if (stats.min < 0) {
+        return false;
+    } else if (stats.stdev != null && stats.stdev > 0) {
+        var effective_range = Math.max(stats.max, 0) - Math.min(stats.min, 0);
+        return (stats.stdev / effective_range > .1);
+    } else {
+        return true;
+    }
 }
 
 function getEnumValues(meta) {
