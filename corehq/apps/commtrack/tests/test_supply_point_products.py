@@ -1,6 +1,6 @@
 from datetime import datetime
 from corehq.apps.commtrack.helpers import make_supply_point,\
-    make_supply_point_product, make_product, get_commtrack_user_id
+    make_supply_point_product, make_product
 from corehq.apps.commtrack.tests.util import (TEST_DOMAIN, make_loc,
     CommTrackTest, bootstrap_domain)
 from corehq.apps.commtrack import const
@@ -28,7 +28,7 @@ class SupplyPointProductTest(CommTrackTest):
         self.assertEqual(self.product._id, spp.product)
         self.assertEqual(self.product._id, spp.get_product()._id)
         self.assertEqual(self.sp.location_, spp.location_)
-        self.assertEqual(get_commtrack_user_id(TEST_DOMAIN), spp.user_id)
+        self.assertEqual(const.get_commtrack_user_id(TEST_DOMAIN), spp.user_id)
         self.assertEqual(self.sp.owner_id, spp.owner_id)
         self.assertFalse(spp.closed)
         self.assertTrue(len(spp.actions) > 0)
