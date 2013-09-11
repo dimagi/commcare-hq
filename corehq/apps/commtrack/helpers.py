@@ -7,17 +7,12 @@ from casexml.apps.case.xml import V2
 import uuid
 from corehq.apps.hqcase.utils import submit_case_blocks
 from xml.etree import ElementTree
-from corehq.apps.users.cases import get_owner_id, get_wrapped_owner, reconcile_ownership
+from corehq.apps.users.cases import get_owner_id, reconcile_ownership
 
 """
 helper code to populate the various commtrack models, for ease of
 development/testing, before we have proper UIs and imports
 """
-
-def get_commtrack_user_id(domain):
-    # abstracted out in case we one day want to back this
-    # by a real user, but for now it's like demo_user
-    return const.COMMTRACK_USERNAME
 
 def make_product(domain, name, code):
     p = Product()
@@ -30,7 +25,7 @@ def make_product(domain, name, code):
 def make_supply_point(domain, location, owner_id=None):
     # a supply point is currently just a case with a special type
     id = uuid.uuid4().hex
-    user_id = get_commtrack_user_id(domain)
+    user_id = const.get_commtrack_user_id(domain)
     owner_id = owner_id or user_id
     username = const.COMMTRACK_USERNAME
     caseblock = CaseBlock(
@@ -50,10 +45,11 @@ def make_supply_point(domain, location, owner_id=None):
                        xmlns=const.COMMTRACK_SUPPLY_POINT_XMLNS)
     return SupplyPointCase.get(id)
 
+
 def make_supply_point_product(supply_point_case, product_uuid, owner_id=None):
     domain = supply_point_case.domain
     id = uuid.uuid4().hex
-    user_id = get_commtrack_user_id(domain)
+    user_id = const.get_commtrack_user_id(domain)
     owner_id = owner_id or get_owner_id(supply_point_case) or user_id
     username = const.COMMTRACK_USERNAME
     product_name = Product.get(product_uuid).name
