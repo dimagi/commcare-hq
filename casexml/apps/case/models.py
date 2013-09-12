@@ -1018,5 +1018,6 @@ class CommCareCaseGroup(Document):
             'case/groups_by_domain',
             startkey=[domain],
             endkey=[domain, {}],
-            include_docs=True
+            include_docs=True,
+            reduce=False
         ).all()
