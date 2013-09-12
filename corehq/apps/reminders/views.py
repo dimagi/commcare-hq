@@ -6,7 +6,7 @@ from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render
 
 from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm, SurveySampleForm, EditContactForm, RemindersInErrorForm, KeywordForm, OneTimeReminderForm
-from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, CaseReminder, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET, EVENT_AS_SCHEDULE, SurveyKeyword, Survey, SurveySample, SURVEY_METHOD_LIST, SurveyWave, ON_DATETIME, RECIPIENT_SURVEY_SAMPLE, QUESTION_RETRY_CHOICES, REMINDER_TYPE_ONE_TIME, REMINDER_TYPE_DEFAULT, SEND_NOW, SEND_LATER, METHOD_SMS, METHOD_SMS_SURVEY
+from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, CaseReminder, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET, EVENT_AS_SCHEDULE, SurveyKeyword, Survey, SurveySample, SURVEY_METHOD_LIST, SurveyWave, ON_DATETIME, RECIPIENT_SURVEY_SAMPLE, QUESTION_RETRY_CHOICES, REMINDER_TYPE_ONE_TIME, REMINDER_TYPE_DEFAULT, SEND_NOW, SEND_LATER, METHOD_SMS, METHOD_SMS_SURVEY, RECIPIENT_USER_GROUP
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CommCareUser, Permissions, CouchUser
 from .models import UI_SIMPLE_FIXED, UI_COMPLEX
@@ -14,6 +14,7 @@ from .util import get_form_list, get_sample_list, get_recipient_name, get_form_n
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.util import register_sms_contact, update_contact
 from corehq.apps.domain.models import DomainCounter
+from corehq.apps.groups.models import Group
 from casexml.apps.case.models import CommCareCase
 from dateutil.parser import parse
 from corehq.apps.sms.util import close_task
@@ -44,7 +45,13 @@ def list_reminders(request, domain, reminder_type=REMINDER_TYPE_DEFAULT):
     timezone, now, timezone_now = get_project_time_info(domain)
     for handler in all_handlers:
         if reminder_type == REMINDER_TYPE_ONE_TIME:
-            recipients = get_recipient_name(handler.get_reminders()[0].recipient, include_desc=False)
+            reminders = handler.get_reminders()
+            try:
+                reminder = reminders[0]
+            except IndexError:
+                handler.retire()
+                continue
+            recipients = get_recipient_name(reminder.recipient, include_desc=False)
             
             if handler.method == METHOD_SMS_SURVEY:
                 content = get_form_name(handler.events[0].form_unique_id)
@@ -134,6 +141,7 @@ def render_one_time_reminder_form(request, domain, form, handler_id):
         "form" : form,
         "sample_list" : get_sample_list(domain),
         "form_list" : get_form_list(domain),
+        "groups" : Group.by_domain(domain),
         "handler_id" : handler_id,
         "timezone" : timezone,
         "timezone_now" : timezone_now,
@@ -188,6 +196,7 @@ def add_one_time_reminder(request, domain, handler_id=None):
             handler.event_interpretation = EVENT_AS_OFFSET
             handler.max_iteration_count = 1
             handler.sample_id = form.cleaned_data.get("case_group_id") if recipient_type == RECIPIENT_SURVEY_SAMPLE else None
+            handler.user_group_id = form.cleaned_data.get("user_group_id") if recipient_type == RECIPIENT_USER_GROUP else None
             handler.save()
             return HttpResponseRedirect(reverse('one_time_reminders', args=[domain]))
     else:
@@ -199,6 +208,7 @@ def add_one_time_reminder(request, domain, handler_id=None):
                 "time" : start_datetime.strftime("%H:%M"),
                 "recipient_type" : handler.recipient,
                 "case_group_id" : handler.sample_id,
+                "user_group_id" : handler.user_group_id,
                 "content_type" : handler.method,
                 "message" : handler.events[0].message[handler.default_lang] if handler.default_lang in handler.events[0].message else None,
                 "form_unique_id" : handler.events[0].form_unique_id if handler.events[0].form_unique_id is not None else None,

@@ -51,7 +51,8 @@ RECIPIENT_CASE = "CASE"
 RECIPIENT_PARENT_CASE = "PARENT_CASE"
 RECIPIENT_SUBCASE = "SUBCASE"
 RECIPIENT_SURVEY_SAMPLE = "SURVEY_SAMPLE"
-RECIPIENT_CHOICES = [RECIPIENT_USER, RECIPIENT_OWNER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE, RECIPIENT_PARENT_CASE, RECIPIENT_SUBCASE]
+RECIPIENT_USER_GROUP = "USER_GROUP"
+RECIPIENT_CHOICES = [RECIPIENT_USER, RECIPIENT_OWNER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE, RECIPIENT_PARENT_CASE, RECIPIENT_SUBCASE, RECIPIENT_USER_GROUP]
 
 FIRE_TIME_DEFAULT = "DEFAULT"
 FIRE_TIME_CASE_PROPERTY = "CASE_PROPERTY"
@@ -339,6 +340,7 @@ class CaseReminderHandler(Document):
     recipient = StringProperty(choices=RECIPIENT_CHOICES, default=RECIPIENT_USER)
     ui_frequency = StringProperty(choices=UI_FREQUENCY_CHOICES, default=UI_FREQUENCY_ADVANCED) # This will be used to simplify the scheduling process in the ui
     sample_id = StringProperty()
+    user_group_id = StringProperty()
     reminder_type = StringProperty(choices=REMINDER_TYPE_CHOICES, default=REMINDER_TYPE_DEFAULT)
     
     # Only used when recipient is RECIPIENT_SUBCASE.
@@ -841,6 +843,8 @@ class CaseReminderHandler(Document):
         
         if self.recipient == RECIPIENT_SURVEY_SAMPLE:
             recipient = SurveySample.get(self.sample_id)
+        elif self.recipient == RECIPIENT_USER_GROUP:
+            recipient = Group.get(self.user_group_id)
         else:
             # TODO: Need to support sending directly to users / cases without case criteria being set
             recipient = None
@@ -1016,6 +1020,8 @@ class CaseReminder(Document, LockableMixIn):
                     if case_matches_criteria(subcase, handler.recipient_case_match_type, handler.recipient_case_match_property, handler.recipient_case_match_value):
                         recipients.append(subcase)
             return recipients
+        elif handler.recipient == RECIPIENT_USER_GROUP:
+            return Group.get(handler.user_group_id)
         else:
             return None
     

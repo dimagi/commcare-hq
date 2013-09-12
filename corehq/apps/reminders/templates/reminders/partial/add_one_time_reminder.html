@@ -50,12 +50,25 @@
         }
     }
     
+    function recipient_type_changed() {
+        var value = $("#id_recipient_type").val();
+        if(value == "USER_GROUP") {
+            $(".for_user_group").show();
+            $(".for_case_group").hide();
+        } else {
+            $(".for_user_group").hide();
+            $(".for_case_group").show();
+        }
+    }
+    
     $(function() {
         $("input[name$='date']").datepicker({dateFormat : "yy-mm-dd"});
         $("#id_send_type").change(send_type_changed);
         $("#id_content_type").change(content_type_changed);
+        $("#id_recipient_type").change(recipient_type_changed);
         send_type_changed();
         content_type_changed();
+        recipient_type_changed();
     });
 </script>
 
@@ -80,6 +93,13 @@
                             <select name="case_group_id">
                                 {% for sample in sample_list %}
                                 <option value="{{ sample.code }}" {% if form.case_group_id.value == sample.code %}selected="selected"{% endif %}>{{ sample.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="for_user_group">
+                            <select name="user_group_id">
+                                {% for group in groups %}
+                                <option value="{{ group.get_id }}" {% if form.user_group_id.value == group.get_id %}selected="selected"{% endif %}>{{ group.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
