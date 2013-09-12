@@ -907,9 +907,18 @@ def get_domain_stats_data(params, datespan, interval='week'):
 
     histo_data = es_query(params, q=q, size=0, es_url=ES_URLS["domains"])
 
+    del q["facets"]
+    q["filter"] = {
+        "and": [
+            {"range": {"date_created": {"lt": datespan.startdate_display}}},
+        ],
+    }
+
+    domains_before_date = es_query(params, q=q, size=0, es_url=ES_URLS["domains"])
+
     return {
         'histo_data': {"All Domains": histo_data["facets"]["histo"]["entries"]},
-        'initial_values': [{"All Domains": 0}],
+        'initial_values': {"All Domains": domains_before_date["hits"]["total"]},
         'startdate': datespan.startdate_key_utc,
         'enddate': datespan.enddate_key_utc,
     }
