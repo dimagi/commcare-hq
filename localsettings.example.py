@@ -123,7 +123,23 @@ LUCENE_ENABLED = True
 INSECURE_URL_BASE = "http://submit.commcarehq.org"
 
 PREVIEWER_RE = r'^.*@dimagi\.com$'
+
 GMAPS_API_KEY = '******'
+MAPS_LAYERS = {
+    'Maps': {
+        'family': 'mapbox',
+        'args': {
+            'apikey': '*****'
+        }
+    },
+    'Satellite': {
+        'family': 'mapbox',
+        'args': {
+            'apikey': '*****'
+        }
+    },
+}
+
 FORMTRANSLATE_TIMEOUT = 5
 LOCAL_APPS = (
 #    'django_coverage', # Adds `python manage.py test_coverage` (settings below)
