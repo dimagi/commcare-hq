@@ -140,7 +140,7 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
         for facet in facets:
             q["facets"][facet] = {"terms": {"field": facet, "size": 9999}}
 
-    if q.get('facets'):
+    if q.get('facets') and q.get("filter", {}).get("and"):
         for facet in q["facets"]:
             if "facet_filter" not in q["facets"][facet]:
                 q["facets"][facet]["facet_filter"] = {"and": []}
