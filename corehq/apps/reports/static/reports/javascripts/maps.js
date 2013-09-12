@@ -9,6 +9,101 @@ function forEachDimension(metric, callback) {
     });
 }
 
+// iterate over all metrics, which can potentially be stored in a tree structure
+function forEachMetric(metrics, callback) {
+    $.each(metrics, function(i, e) {
+        if (e.group) {
+            forEachMetric(e.children, callback);
+        } else {
+            callback(e);
+        }
+    });
+}
+
+function MetricsViewModel(control) {
+    var model = this;
+    
+    this.root = ko.observable();
+    this.defaultMetric = null;
+    
+    this.load = function(metrics) {
+        this.root(new MetricModel({title: '_root', children: metrics}, null, this));
+        this.root().expanded(true);
+
+        if (this.defaultMetric) {
+            this.defaultMetric.onclick();
+        } else {
+            this.renderMetric(null);
+        }
+    }
+
+    this.renderMetric = function(metric) {
+        control.render(metric);
+    }
+
+    this.unselectAll = function() {
+        var unselect = function(node) {
+            $.each(node.children(), function(i, e) {
+                unselect(e);
+            });
+            node.selected(false);
+        }
+        unselect(this.root());
+    }
+}
+
+function MetricModel(data, parent, root) {
+    var m = this;
+    
+    this.metric = null;
+    this.name = ko.observable();
+    this.children = ko.observableArray();
+    this.expanded = ko.observable(false);
+    this.selected = ko.observable(false);
+    this.parent = parent;
+
+    this.group = ko.computed(function() {
+        return this.children().length > 0;
+    }, this);
+    
+    this.onclick = function() {
+        if (this.group()) {
+            this.toggle();
+        } else {
+            this.select();
+            root.renderMetric(this.metric);
+        }
+    }
+
+    this.toggle = function() {
+        this.expanded(!this.expanded());
+    }
+
+    this.select = function() {
+        root.unselectAll();
+        
+        var node = this;
+        while (node != null) {
+            node.selected(true);
+            node.expanded(true);
+            node = node.parent;
+        }
+    }
+
+    this.load = function(data) {
+        this.metric = data;
+        this.name(data.title);
+        this.children($.map(data.children || [], function(e) {
+            return new MetricModel(e, m, root);
+        }));
+        if (data['default']) {
+            root.defaultMetric = this;
+        }
+    }
+
+    this.load(data);
+}
+
 // a map control map that lists the various display metrics for this report
 // and allows you to select and display them
 MetricsControl = L.Control.extend({
@@ -24,6 +119,8 @@ MetricsControl = L.Control.extend({
         L.DomEvent.disableClickPropagation(this.div);
         this.$div.show();
         
+        this.init();
+
         var m = this;
         map.on('popupopen', function(e) {
             var $popup = $(e.popup._container);
@@ -42,29 +139,16 @@ MetricsControl = L.Control.extend({
         return this.div;
     },
     
+    init: function() {
+        var koModel = new MetricsViewModel(this);
+        ko.applyBindings(koModel, $('#metrics')[0]);
+        koModel.load(this.options.metrics);
+    },
+
     // TODO support an explicit 'show just markers again' option
     
-    addMetric: function(metric) {
-        var $e = $('<div></div>');
-        $e.addClass('choice');
-        $e.text(metric.title);
-        var m = this;
-        $e.click(function() {
-            m.activeMetric = metric;
-            m.select($e);
-            m.render(metric);
-        });
-        this.$div.append($e);
-    },
-    
-    select: function($e) {
-        this.$div.find('div').removeClass('selected');
-        if ($e) {
-            $e.addClass('selected');
-        }
-    },
-    
     render: function(metric) {
+        this.activeMetric = metric;
         var m = this;
         loadData(this._map, this.options.data, makeDisplayContext(metric, function(f) {
             m.options.info.setActive(f, m.activeMetric);
@@ -108,7 +192,8 @@ HeadsUpControl = L.Control.extend({
     },
     
     setActive: function(feature, metric) {
-        if (feature == null) {
+        if (feature == null ||
+            (metric == null && !this.options.config.name_column)) { // nothing to show
             this.$div.hide();
             return;
         }
@@ -155,34 +240,65 @@ ZoomToFitControl = L.Control.extend({
 
 // main entry point
 function mapsInit(context) {
-    var map = initMap($('#map'), [30., 0.], 2, 'Map');
+    var map = initMap($('#map'), context.layers, [30., 0.], 2);
     initData(context.data, context.config);
     initMetrics(map, context.data, context.config);
     return map;
 }
 
 // initialize leaflet map
-function initMap($div, default_pos, default_zoom, default_layer) {
+function initMap($div, layers, default_pos, default_zoom) {
     var map = L.map($div.attr('id')).setView(default_pos, default_zoom);
-
-    var mapboxLayer = function(tag) {
-        return L.tileLayer('http://api.tiles.mapbox.com/v3/' + tag + '/{z}/{x}/{y}.png', {
-            attribution: '<a href="http://www.mapbox.com/about/maps/">MapBox</a>',
-        });
-    };
-
-    var layers = {
-        // TODO: these tags should probably not be hard-coded
-        'Map': mapboxLayer('dimagi.map-0cera12g'),
-        'Satellite': mapboxLayer('dimagi.map-jvzwkbwu'),
-    }
-    L.control.layers(layers).addTo(map);
-    map.addLayer(layers[default_layer]);
+    initLayers(map, layers);
 
     new ZoomToFitControl().addTo(map);
     L.control.scale().addTo(map);
 
     return map;
+}
+
+function initLayers(map, layers_spec) {
+    LAYER_FAMILIES = {
+        'fallback': {
+            url_template: 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            args: {
+                attribution: '<a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }
+        },
+        'mapbox': {
+            url_template: 'http://api.tiles.mapbox.com/v3/{apikey}/{z}/{x}/{y}.png',
+            args: {
+                attribution: '<a href="http://www.mapbox.com/about/maps/">MapBox</a>'
+            }
+        }
+    }
+
+    var mkLayer = function(spec) {
+        if (spec.family) {
+            var family_spec = LAYER_FAMILIES[spec.family];
+            spec.url_template = family_spec.url_template;
+            spec.args = spec.args || {};
+            $.each(family_spec.args || {}, function(k, v) {
+                spec.args[k] = v;
+            });
+        }
+        return L.tileLayer(spec.url_template, spec.args);
+    }
+
+    var layers = {};
+    var defaultLayer = null;
+    $.each(layers_spec, function(k, v) {
+        layers[k] = mkLayer(v);
+        if (v['default']) {
+            defaultLayer = k;
+        }
+    });
+    L.control.layers(layers).addTo(map);
+
+    if (!defaultLayer) {
+        defaultLayer = _.keys(layers)[0];
+    }
+    map.addLayer(layers[defaultLayer]);
 }
 
 // perform any pre-processing of the raw data
@@ -198,6 +314,11 @@ function initData(data, config) {
         }
     });
 
+    // make a default detail view if not specified
+    if (config.detail_columns == null) {
+        config.detail_columns = getAllCols(config, data);
+    }
+
     // pre-cache popup detail
     $.each(data.features, function(i, e) {
         e.popupContent = formatDetailPopup(e, config);
@@ -206,16 +327,19 @@ function initData(data, config) {
 
 // set up the configured display metrics
 function initMetrics(map, data, config) {
+    // auto-generate metrics from data columns (if none provided)
     if (!config.metrics || config.debug) {
         autoConfiguration(config, data);
     }
 
-    $.each(config.metrics, function(i, e) {
-        setMetricDefaults(e, data, config);
+    // set sensible defaults for metric parameters (if omitted)
+    forEachMetric(config.metrics, function(metric) {
+        setMetricDefaults(metric, data, config);
     });
 
-    $.each(config.metrics, function(i, e) {
-        forEachDimension(e, function(type, meta) {
+    // necessary closures (TODO make a class?)
+    forEachMetric(config.metrics, function(metric) {
+        forEachDimension(metric, function(type, meta) {
             meta._enumCaption = function(val, labelFallbacks) {
                 return getEnumCaption(meta.column, val, config, labelFallbacks);
             };
@@ -227,14 +351,8 @@ function initMetrics(map, data, config) {
 
     var l = new LegendControl({config: config}).addTo(map);
     var h = new HeadsUpControl({config: config}).addTo(map);
-    var m = new MetricsControl({data: data, legend: l, info: h}).addTo(map);
+    var m = new MetricsControl({metrics: config.metrics, data: data, legend: l, info: h}).addTo(map);
 
-    $.each(config.metrics, function(i, e) {
-        m.addMetric(e);
-    });
-
-    // load markers and set initial viewport
-    m.render(null);
     zoomToAll(map);
 }
 
@@ -275,7 +393,9 @@ function makeDisplayContext(metric, setActiveFeature) {
             return feature._conf(latlng);
         },
         onEachFeature: function(feature, layer) {
-            layer.bindPopup(feature.popupContent);
+            layer.bindPopup(feature.popupContent, {
+                maxWidth: 600,
+            });
 
             if (feature.geometry.type != 'Point') {
                 layer._activate = function() {
@@ -544,14 +664,14 @@ function detailContext(feature, config, cols) {
         displayProperties[k] = formatForDisplay(k, v);
     });
 
-    var context = {props: displayProperties};
-    if (config.name_column) {
-        context.name = feature.properties[config.name_column];
-    }
+    var context = {
+        props: displayProperties,
+        name: (config.name_column ? feature.properties[config.name_column] : null),
+    };
     context.detail = [];
     $.each(detail_cols, function(i, e) {
         context.detail.push({
-            slug: e, // FIXME this will cause problems if column names have weird chars or spaces
+            slug: e, // FIXME this will cause problems if column keys have weird chars or spaces
             label: getColumnTitle(e, config),
             value: displayProperties[e],
         });
@@ -584,7 +704,7 @@ function setMetricDefaults(metric, data, config) {
     if (typeof metric.size == 'object') {
         if (!metric.size.baseline) {
             var stats = summarizeColumn(metric.size, data);
-            metric.size.baseline = stats.mean;
+            metric.size.baseline = (stats.mean || 1);
         }
     }
 
@@ -596,11 +716,11 @@ function setMetricDefaults(metric, data, config) {
                 metric.color.colorstops = (magnitude_based_field(stats) ?
                                            [
                                                [0, 'rgba(20, 20, 20, .8)'],
-                                               [stats.max, DEFAULT_COLOR],
+                                               [stats.max || 1, DEFAULT_COLOR],
                                            ] :
                                            [
                                                [stats.min, 'rgba(0, 0, 255, .8)'],
-                                               [stats.max, 'rgba(255, 0, 0, .8)'],
+                                               [stats.min == stats.max ? 0 : stats.max, 'rgba(255, 0, 0, .8)'],
                                            ]);
             } else {
                 if (metric.color.thresholds) {
@@ -627,7 +747,7 @@ function setMetricDefaults(metric, data, config) {
     }
 }
 
-function autoConfiguration(config, data) {
+function getAllCols(config, data) {
     var ignoreCols = [config.name_column];
     var _cols = {};
     $.each(data.features, function(i, e) {
@@ -637,9 +757,11 @@ function autoConfiguration(config, data) {
             }
         });
     });
-    var cols = _.sortBy(_.keys(_cols), function(e) { return getColumnTitle(e, config); });
+    return _.sortBy(_.keys(_cols), function(e) { return getColumnTitle(e, config); });
+}
 
-    var metrics = $.map(cols, function(e) {
+function autoConfiguration(config, data) {
+    var metrics = $.map(getAllCols(config, data), function(e) {
         var meta = {column: e};
         var stats = summarizeColumn(meta, data);
         var metric = {}
@@ -651,7 +773,7 @@ function autoConfiguration(config, data) {
         return metric;
     });
     // metrics may already exist if we're in debug mode
-    config.metrics = (config.metrics || []).concat(metrics);
+    config.metrics = (config.metrics || []).concat([{title: 'Auto', group: true, children: metrics}]);
 }
 
 function summarizeColumn(meta, data) {
@@ -733,7 +855,14 @@ function _summarizeColumn(meta, data) {
 // based on the results of summarizeColumn, determine if this column is better
 // represented as a magnitude (0-max) or narrower range (min-max)
 function magnitude_based_field(stats) {
-    return !(stats.min < 0 || (stats.stdev != null && stats.stdev / stats.max < .1));
+    if (stats.min < 0) {
+        return false;
+    } else if (stats.stdev != null && stats.stdev > 0) {
+        var effective_range = Math.max(stats.max, 0) - Math.min(stats.min, 0);
+        return (stats.stdev / effective_range > .1);
+    } else {
+        return true;
+    }
 }
 
 function getEnumValues(meta) {

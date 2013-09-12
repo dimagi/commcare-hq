@@ -1,0 +1,69 @@
+{% extends 'settings/base_template.html' %}
+
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block main_column %}
+    <div class="row-fluid">
+        <table class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th class="span6">{% trans "Project" %}</th>
+                    <th class="span6">{% trans "Status" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% if not domains %}
+                <tr>
+                    <td colspan="2">{% blocktrans %}You are currently not a member of any projects.{% endblocktrans %}</td>
+                </tr>
+            {% endif %}
+            {% for domain in domains %}
+                <tr>
+                    <td class="span6">
+                        <a href="{% url domain_homepage domain.name %}">{{ domain.name }}</a>
+                    </td>
+                    <td class="span6">
+                        {% if not domain.is_admin %}
+                            <a class="btn btn-danger"
+                               data-toggle="modal"
+                               href="#delete_domain_{{ domain.name }}"><i class="icon-remove"></i> {% trans 'Remove My Membership' %}
+                            </a>
+                            <div id="delete_domain_{{ domain.name }}"
+                                 class="modal hide fade">
+                                <div class="modal-header">
+                                    <a class="close" data-dismiss="modal">&times;</a>
+                                    <h3>{% trans 'Remove Project Membership?' %}</h3>
+                                </div>
+                                <form class="form form-horizontal"
+                                      name="delete_domain_membership"
+                                      method="post">
+                                    <input type="hidden" value="{{ domain.name }}" name="domain" />
+                                    <div class="modal-body">
+                                        <p>
+                                            {% blocktrans with domain.name as dn %}
+                                            Are you sure you want to remove yourself from the project {{ dn }}?
+                                            {% endblocktrans %}
+                                        </p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <a href="#" data-dismiss="modal" class="btn">{% trans 'Cancel' %}</a>
+                                        <button type="submit" class="btn btn-danger">
+                                            <i class="icon-remove"></i> {% trans 'Remove' %}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        {% else %}
+                            <p class="muted">{% blocktrans %}You are this project's administrator.{% endblocktrans %}</p>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p>
+        <a class="btn btn-success" href="{% url registration_domain %}?referer={{ request.path }}"><i class="icon-plus"></i> {% trans 'Create a New Project' %}</a>
+    </p>
+{% endblock %}

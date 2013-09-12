@@ -1,5 +1,6 @@
 #from django.conf.urls.defaults import patterns, url
 from django.conf.urls.defaults import *
+from corehq.apps.commtrack.views import ProductListView, FetchProductListView, NewProductView, EditProductView
 
 urlpatterns = patterns('corehq.apps.commtrack.views',
     url(r'^debug/bootstrap/$', 'bootstrap'),
@@ -13,8 +14,8 @@ urlpatterns = patterns('corehq.apps.commtrack.views',
 
 # used in settings urls
 settings_urls = patterns('corehq.apps.commtrack.views',
-    url(r'^products/$', 'product_list', name='commtrack_product_list'),
-    url(r'^products/list/$', 'product_fetch', name='commtrack_product_fetch'),
-    url(r'^products/new/$', 'product_edit', name='commtrack_product_new'),
-    url(r'^products/(?P<prod_id>[\w-]+)/$', 'product_edit', name='commtrack_product_edit'),
+    url(r'^products/$', ProductListView.as_view(), name=ProductListView.urlname),
+    url(r'^products/list/$', FetchProductListView.as_view(), name=FetchProductListView.urlname),
+    url(r'^products/new/$', NewProductView.as_view(), name=NewProductView.urlname),
+    url(r'^products/(?P<prod_id>[\w-]+)/$', EditProductView.as_view(), name=EditProductView.urlname),
 )

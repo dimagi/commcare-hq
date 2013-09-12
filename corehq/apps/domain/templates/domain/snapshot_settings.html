@@ -1,4 +1,4 @@
-{% extends "users/users_base.html" %}
+{% extends "settings/base_template.html" %}
 {% load hqstyle_tags %}
 {% load i18n %}
 
@@ -30,13 +30,7 @@
     </script>
 {% endblock %}
 
-{% block subsection-title %}
-<li class="active">
-    <a href="#">CommCare Exchange</a>
-</li>
-{% endblock %}
-
-{% block user-view %}
+{% block main_column %}
 <div>
     {% if published_snapshot %}
         {% include 'domain/partials/project_version_display.html' with version=published_snapshot published=1 %}

@@ -48,10 +48,11 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
             col_id = lambda c: '%s-%s' % (p._id, c)
 
             for c in ('category', 'current_stock', 'months_remaining', 'consumption'):
-                conf['column_titles'][col_id(c)] = '%s: %s' % (p.name, titles[c])
+                conf['column_titles'][col_id(c)] = titles[c]
                 conf['detail_columns'].append(col_id(c))
 
-            conf['metrics'].append({
+            product_metrics = [
+                {
                     'icon': {
                         'column': col_id('category'),
                         'categories': {
@@ -63,7 +64,8 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
                             '_null': '/static/commtrack/img/no_data.png',
                         },
                     }
-                })
+                }
+            ]
             conf['enum_captions'][col_id('category')] = {
                 'stockout': 'Stocked out',
                 'understock': 'Under-stock',
@@ -92,13 +94,19 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
                     }
                 else:
                     metric['color'] = 'rgba(120, 120, 255, .8)'
-                conf['metrics'].append(metric)
+                product_metrics.append(metric)
 
                 conf['numeric_format'][col_id(c)] = {
                     'current_stock': "return x + ' %s'" % (p.unit or 'unit'),
-                    'months_remaining': "return x + (x == 1 ? ' month' : ' months')",
-                    'consumption': "return x + ' %s / month'" % (p.unit or 'unit'),
+                    'months_remaining': "return (Math.round(10 * x) / 10) + (x == 1 ? ' month' : ' months')",
+                    'consumption': "return (Math.round(10 * x) / 10) + ' %s / month'" % (p.unit or 'unit'),
                 }[c]
+
+            conf['metrics'].append({
+                    'title': p.name,
+                    'group': True,
+                    'children': product_metrics,
+                })
 
         conf['detail_template'] = render_to_string('reports/partials/commtrack/stockstatus_mapdetail.html', {
                 'products': products,
@@ -142,6 +150,7 @@ class ReportingStatusMapReport(GenericMapReport, CommtrackReportMixin):
                 },
             },
             {
+                'default': True,
                 'color': {
                     'column': 'reporting_status',
                     'categories': {

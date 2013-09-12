@@ -1,4 +1,5 @@
 from couchdbkit import ResourceConflict
+from django.utils.decorators import method_decorator
 from dimagi.utils.couch.database import iter_docs
 from django.views.decorators.cache import cache_page
 from casexml.apps.case.models import CommCareCase
@@ -8,6 +9,7 @@ from corehq.apps.cloudcare.touchforms_api import DELEGATION_STUB_CASE_TYPE
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.views import BaseUserSettingsView
 from dimagi.utils.web import json_response, get_url_base
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404,\
     HttpResponseServerError
@@ -27,7 +29,8 @@ from xml.etree import ElementTree
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 import HTMLParser
 from django.contrib import messages
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_noop
+
 
 @require_cloudcare_access
 def default(request, domain):
@@ -291,22 +294,30 @@ def get_fixtures(request, domain, user_id, fixture_id=None):
 class HttpResponseConflict(HttpResponse):
     status_code = 409
 
-@domain_admin_required
-def app_settings(request, domain):
-    if request.method == 'GET':
-        apps = get_cloudcare_apps(domain)
-        access = ApplicationAccess.get_template_json(domain, apps)
-        groups = Group.by_domain(domain)
 
-        return render(request, 'cloudcare/config.html', {
-            'domain': domain,
+class EditCloudcareUserPermissionsView(BaseUserSettingsView):
+    template_name = 'cloudcare/config.html'
+    urlname = 'cloudcare_app_settings'
+    page_title = ugettext_noop("CloudCare Permissions")
+
+    @method_decorator(domain_admin_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(EditCloudcareUserPermissionsView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        apps = get_cloudcare_apps(self.domain)
+        access = ApplicationAccess.get_template_json(self.domain, apps)
+        groups = Group.by_domain(self.domain)
+        return {
             'apps': apps,
             'groups': groups,
             'access': access,
-        })
-    elif request.method == 'PUT':
+        }
+
+    def put(self, request, *args, **kwargs):
         j = json.loads(request.raw_post_data)
-        old = ApplicationAccess.get_by_domain(domain)
+        old = ApplicationAccess.get_by_domain(self.domain)
         new = ApplicationAccess.wrap(j)
         old.restrict = new.restrict
         old.app_groups = new.app_groups

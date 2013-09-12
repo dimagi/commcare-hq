@@ -123,7 +123,23 @@ LUCENE_ENABLED = True
 INSECURE_URL_BASE = "http://submit.commcarehq.org"
 
 PREVIEWER_RE = r'^.*@dimagi\.com$'
+
 GMAPS_API_KEY = '******'
+MAPS_LAYERS = {
+    'Maps': {
+        'family': 'mapbox',
+        'args': {
+            'apikey': '*****'
+        }
+    },
+    'Satellite': {
+        'family': 'mapbox',
+        'args': {
+            'apikey': '*****'
+        }
+    },
+}
+
 FORMTRANSLATE_TIMEOUT = 5
 LOCAL_APPS = (
 #    'django_coverage', # Adds `python manage.py test_coverage` (settings below)
@@ -167,6 +183,11 @@ LOGSTASH_AUDITCARE_PORT = 10999
 LOGSTASH_HOST = 'localhost'
 
 LOCAL_PILLOWTOPS = []
+
+#If there are existing doc_ids and case_ids you want to check directly - they are referenced
+#in your localsettings for more accurate direct checks, otherwise use view based which can be inaccurate.
+ES_CASE_CHECK_DIRECT_DOC_ID = None
+ES_XFORM_CHECK_DIRECT_DOC_ID = None
 
 ####### API throttling #####
 

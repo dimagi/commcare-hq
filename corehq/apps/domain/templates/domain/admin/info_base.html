@@ -1,0 +1,22 @@
+{% extends "settings/base_template.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block js-inline %} {{ block.super }}
+<script type="text/javascript">
+    $(function() {
+        {% for field in autocomplete_fields %}
+            $("#id_{{ field }}").focus(function() {
+                if (!$("#id_{{ field }}").data('loaded')) {
+                    $("#id_{{ field }}").data('loaded', 'true');
+                    $.getJSON('{% url domain_autocomplete_fields field %}', function(results) {
+                        $("#id_{{ field }}").typeahead({ source: results,
+                            items: 8
+                        }).attr("autocomplete", "off");
+                    });
+                }
+            });
+        {% endfor %}
+    });
+</script>
+{% endblock %}

@@ -301,21 +301,26 @@ def create_export_filter(request, domain, export_type='form'):
             filter &= SerializableFunction(group_filter, group=group)
     return filter
 
+
 def get_possible_reports(domain):
-    from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
-        CustomProjectReportDispatcher)
+    from corehq.apps.reports.dispatcher import (ProjectReportDispatcher, CustomProjectReportDispatcher)
     from corehq.apps.adm.dispatcher import ADMSectionDispatcher
+    from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
+
+    # todo: exports should be its own permission at some point?
+    report_map = (ProjectReportDispatcher().get_reports(domain) +
+                  CustomProjectReportDispatcher().get_reports(domain) +
+                  ADMSectionDispatcher().get_reports(domain) +
+                  DataInterfaceDispatcher().get_reports(domain))
     reports = []
-    report_map = ProjectReportDispatcher().get_reports(domain) + \
-                 CustomProjectReportDispatcher().get_reports(domain) +\
-                 ADMSectionDispatcher().get_reports(domain)
     for heading, models in report_map:
         for model in models:
             reports.append({
-                'path': model.__module__ + '.' + model.__name__, 
+                'path': model.__module__ + '.' + model.__name__,
                 'name': model.name
             })
     return reports
+
 
 def format_relative_date(date, tz=pytz.utc):
     #todo cleanup

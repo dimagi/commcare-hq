@@ -102,9 +102,7 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^rearrange/(?P<app_id>[\w-]+)/(?P<key>[\w-]+)/$', 'rearrange'),
 
     url(r'^odk/(?P<app_id>[\w-]+)/qr_code/$', 'odk_qr_code'),
-    url(r'^odk/(?P<app_id>[\w-]+)/media_qr_code/$', 'odk_media_qr_code'),
-    url(r'^odk/(?P<app_id>[\w-]+)/install/$', 'odk_install', name="odk_install"),
-    url(r'^odk/(?P<app_id>[\w-]+)/media_install/$', 'odk_install', {'with_media': True}, name="odk_media_install"),
+    url(r'^odk/(?P<app_id>[\w-]+)/install/$', 'odk_install'),
 
     url(r'^save/(?P<app_id>[\w-]+)/$', 'save_copy'),
     url(r'^revert/(?P<app_id>[\w-]+)/$', 'revert_to_copy'),

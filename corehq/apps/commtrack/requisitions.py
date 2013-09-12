@@ -5,12 +5,12 @@ Created on Feb 28, 2013
 '''
 from copy import copy
 from datetime import datetime
+from casexml.apps.case.mock import CaseBlock
 from corehq.apps.commtrack.const import RequisitionActions, RequisitionStatus, UserRequisitionRoles
 import uuid
 from corehq.apps.commtrack.models import RequisitionCase
 from corehq.apps.users.cases import get_owning_users, get_owner_id
 from corehq.apps.users.models import CouchUser
-from casexml.apps.case.tests.util import CaseBlock
 from casexml.apps.case.xml import V2
 from corehq.apps.commtrack import const
 from xml.etree import ElementTree

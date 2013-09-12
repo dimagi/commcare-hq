@@ -216,6 +216,7 @@ HQ_APPS = (
     'corehq.apps.unicel',
     'corehq.apps.reports',
     'corehq.apps.data_interfaces',
+    'corehq.apps.export',
     'corehq.apps.builds',
     'corehq.apps.orgs',
     'corehq.apps.api',
@@ -234,7 +235,6 @@ HQ_APPS = (
 
     # custom reports
     'a5288',
-    'benin',
     'bihar',
     'dca',
     'hsph',
@@ -245,6 +245,7 @@ HQ_APPS = (
     'pact',
     'psi',
 
+    'custom.apps.care_benin',
     'custom.reports.care_sa',
     'custom.apps.cvsu',
     'custom.reports.mc',
@@ -469,6 +470,11 @@ LOCAL_COUCHDB_APPS = ()
 LOCAL_MIDDLEWARE_CLASSES = ()
 LOCAL_PILLOWTOPS = []
 
+#If there are existing doc_ids and case_ids you want to check directly - they are refernced
+#in your localsettings for more accurate direct checks, otherwise use view based which can be inaccurate.
+ES_CASE_CHECK_DIRECT_DOC_ID = None
+ES_XFORM_CHECK_DIRECT_DOC_ID = None
+
 # our production logstash aggregation
 LOGSTASH_DEVICELOG_PORT = 10777
 LOGSTASH_COUCHLOG_PORT = 10888
@@ -678,7 +684,7 @@ COUCHDB_APPS = [
     'wisepill',
 
     # custom reports
-    'benin',
+    'care_benin',
     'dca',
     'hsph',
     'mvp',
@@ -842,6 +848,7 @@ DOMAIN_MODULE_MAP = {
     'mvp-mwandama': 'mvp',
     'mvp-sada': 'mvp',
     'psi-unicef': 'psi',
+    'project': 'custom.apps.care_benin',
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

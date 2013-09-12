@@ -24,14 +24,16 @@ class CustomExportHelper(object):
 
     subclasses_map = {}  # filled in below
 
+    export_type = 'form'
+
     @property
     def default_order(self):
         return {}
 
     @classmethod
-    def make(cls, request, *args, **kwargs):
-        export_type = request.GET.get('type', 'form')
-        return cls.subclasses_map[export_type](request, *args, **kwargs)
+    def make(cls, request, export_type, domain=None, export_id=None):
+        export_type = export_type or request.GET.get('request_type', 'form')
+        return cls.subclasses_map[export_type](request, domain, export_id=export_id)
 
     def update_custom_params(self):
         pass
@@ -48,7 +50,6 @@ class CustomExportHelper(object):
     def __init__(self, request, domain, export_id=None):
         self.request = request
         self.domain = domain
-        self.export_type = request.GET.get('type', 'form')
         self.presave = False
 
         if export_id:
@@ -120,10 +121,9 @@ class CustomExportHelper(object):
         else:
             HQGroupExportConfiguration.remove_custom_export(self.domain, self.custom_export.get_id)
 
-    def get_response(self):
+    def get_context(self):
         table_configuration = self.custom_export.table_configuration
-
-        return render(self.request, 'reports/reportdata/customize_export.html', {
+        return {
             'custom_export': self.custom_export,
             'default_order': self.default_order,
             'deid_options': self.DEID.json_options,
@@ -138,7 +138,7 @@ class CustomExportHelper(object):
                 'allow_deid': self.allow_deid,
                 'allow_repeats': self.allow_repeats
             }
-        })
+        }
 
 
 class FormCustomExportHelper(CustomExportHelper):
@@ -174,6 +174,8 @@ class CaseCustomExportHelper(CustomExportHelper):
 
     ExportSchemaClass = SavedExportSchema
     ExportReport = export.CaseExportReport
+
+    export_type = 'case'
 
     @property
     def export_title(self):
