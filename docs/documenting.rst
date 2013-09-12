@@ -143,6 +143,5 @@ for stuff like pointing to other files and modules.
 To build a local copy of the docs, navigate to the ``docs/`` directory and run ``make html``.
 Open ``<path_to_commcare-hq>/docs/_build/html/index.html`` in your browser and you should have access to the docs for your current version (I bookmarked it on my machine).
 
-
 * `Sphinx Docs <http://sphinx-doc.org/>`_
 * `Full index <http://sphinx-doc.org/genindex.html>`_
