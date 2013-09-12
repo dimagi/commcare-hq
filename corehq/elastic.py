@@ -177,6 +177,9 @@ def parse_args_for_es(request, prefix=None):
     Parses a request's query string for url parameters. It specifically parses the facet url parameter so that each term
     is counted as a separate facet. e.g. 'facets=region author category' -> facets = ['region', 'author', 'category']
     """
+    def strip_array(str):
+        return str[:-2] if str.endswith('[]') else str
+
     params, facets = {}, []
     for attr in request.GET.iterlists():
         param, vals = attr[0], attr[1]
@@ -185,9 +188,9 @@ def parse_args_for_es(request, prefix=None):
             continue
         if prefix:
             if param.startswith(prefix):
-                params[param[len(prefix):]] = [unquote(a) for a in vals]
+                params[strip_array(param[len(prefix):])] = [unquote(a) for a in vals]
         else:
-            params[param] = [unquote(a) for a in vals]
+            params[strip_array(param)] = [unquote(a) for a in vals]
 
     return params, facets
 
