@@ -1,0 +1,260 @@
+{% extends 'users/base_template.html' %}
+{# This is for editing information for a CommCareUser #}
+
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load hqstyle_tags %}
+{% load i18n %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'users/js/key_filters.js' %}"></script>
+
+    <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %} {{ block.super }}
+{% include 'users/partial/basic_info_js_inline.html' %}
+<script>
+    $(function () {
+        var activeTabCookie = 'active_tab',
+                last_active_tab = $.cookie(activeTabCookie);
+        if(last_active_tab) {
+            $(last_active_tab).addClass('active');
+            $('#user-settings-tabs a[href="'+last_active_tab+'"]').parent().addClass('active');
+        } else {
+            var first_tab = $('#user-settings-tabs a[data-toggle="tab"]').first();
+            first_tab.parent().addClass('active');
+            $(first_tab.attr('href')).addClass('active');
+        }
+        $('#user-settings-tabs a[data-toggle="tab"]').on('shown', function (e) {
+            $.cookie(activeTabCookie, $(this).attr('href'),
+                    {path: '{{ request.path }}',
+                    expires: 1});
+        });
+
+        var customDataEditor;
+
+        function handleChange() {
+            var data = customDataEditor.val();
+
+            {% if commtrack %}
+            $(".user-data-role").each(function (i, el) {
+                var attrName = $(el).attr('name');
+                data[attrName] = $(el).is(':checked') ? 'true' : 'false';
+            });
+            $("input#commtrack-user-data-input").val(JSON.stringify(data));
+            {% endif %}
+
+            $("input#user-data-input").val(JSON.stringify(data));
+        }
+
+        customDataEditor = uiElement.map_list('{{ couch_user.user_id }}', '{% trans 'User Data' %}');
+        customDataEditor.val({{ custom_user_data|JSON }});
+        customDataEditor.on('change', handleChange);
+
+        $("#user-data-form .custom-data-controls").append(customDataEditor.ui);
+
+        {% if commtrack %}
+        $(".user-data-role").change(handleChange);
+        {% endif %}
+
+        $('.reset-password-form').submit(function(){
+            $(this).ajaxSubmit({
+                url: $(this).attr('action'),
+                type: 'POST',
+                dataType: 'json',
+                success: function (response, status, xhr, form) {
+                    form.find('.reset-password-body').html(response.formHTML);
+                    if (response.status == "OK") {
+                        var $alert = $('<p />')
+                                .addClass('alert alert-success')
+                                .text('{% trans 'Password changed successfully' %}');
+                        form.find('.reset-password-body').prepend($alert);
+                        form.find('input').val('');
+                    }
+                },
+                error: function (response) {
+                    console.log('error');
+                }
+            });
+            return false;
+        });
+        {% if not is_currently_logged_in_user %}
+        $(function () {
+            function DeleteUserButtonModel() {
+                 var self = this;
+                 self.signOff = ko.observable('');
+                 self.formDeleteUserSent = ko.observable(false);
+                 self.disabled = function () {
+                     var understand = self.signOff().toLowerCase() === 'i understand';
+                     return self.formDeleteUserSent() || !understand;
+                 };
+                 self.submit = function () {
+                     if (!self.disabled()) {
+                         self.formDeleteUserSent(true);
+                         return true;
+                     }
+                 }
+             }
+             if ($('#delete_user_{{ couch_user.user_id }}').get(0)) {
+                 ko.applyBindings(new DeleteUserButtonModel(), $('#delete_user_{{ couch_user.user_id }}').get(0));
+             }
+        });
+        {% endif %}
+    });
+</script>
+{% endblock %}
+
+{% block main_column %}
+    <ul class="nav nav-tabs" id="user-settings-tabs">
+        <li><a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a></li>
+        <li><a href="#user-data" data-toggle="tab">{% trans "Custom Registration Data" %}</a></li>
+        {% if commtrack %}
+        <li><a href="#commtrack-data" data-toggle="tab">{% trans "CommTrack" %}</a></li>
+        {% endif %}
+        <li><a href="#user-password" data-toggle="tab">{% trans "Password" %}</a></li>
+        {% if not is_currently_logged_in_user %}
+        <li><a href="#user-permanent" data-toggle="tab">{% trans "Permanent Actions" %}</a></li>
+        {% endif %}
+    </ul>
+    <div class="tab-content" id="settings">
+        <div class="tab-pane" id="basic-info">
+            {% include 'users/partial/basic_info_form.html' %}
+        </div>
+        <div class="tab-pane" id="user-data">
+
+            <form id="user-data-form"
+                  class="form form-horizontal"
+                  name="user-data-form"
+                  method="post"
+                  action="{% url update_user_data domain couch_user.user_id %}">
+                <input name="user-data" id="user-data-input" type="hidden" />
+
+                <fieldset>
+                    <legend>{% trans "Custom Registration Data" %}</legend>
+                    <div class="control-group">
+                        <label class="control-label">{% trans 'Current Data' %}</label>
+                        <div class="controls custom-data-controls"></div>
+                    </div>
+                </fieldset>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        {% trans "Update Information" %}
+                    </button>
+                </div>
+            </form>
+
+        </div>
+        {% if commtrack %}
+        <div class="tab-pane" id="commtrack-data">
+            {% include "users/partial/edit_commtrack_user_settings.html" %}
+        </div>
+        {% endif %}
+        <div class="tab-pane" id="user-password">
+            <form class="form form-horizontal reset-password-form"
+                  action="{% url change_password domain couch_user.user_id %}"
+                  method="post">
+                <fieldset>
+                    <legend>{% trans 'Reset Password' %}</legend>
+                    <div class="reset-password-body">
+                        {% include 'users/partial/reset_password.html' %}
+                    </div>
+                </fieldset>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">{% trans 'Reset Password' %}</button>
+                </div>
+            </form>
+        </div>
+        {% if not is_currently_logged_in_user %}
+        <div class="tab-pane" id="user-permanent">
+            <div class="form form-horizontal">
+                <fieldset>
+                    <legend>{% trans 'Delete Mobile Worker' %}</legend>
+                    <div class="alert alert-error">
+                        <p><i class="icon-warning-sign"></i> {% trans 'The following action is permanent!' %}</p>
+                        <p>
+                            <a class="btn btn-danger" href="#delete_user_{{ couch_user.user_id }}" data-toggle="modal">
+                                <i class="icon-white icon-trash"></i> {% trans "Delete Mobile Worker" %}
+                            </a>
+                        </p>
+                    </div>
+                </fieldset>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block modals %} {{ block.super }}
+    {% include 'users/partial/basic_info_modals.html' %}
+    {% if not is_currently_logged_in_user %}
+    <div id="delete_user_{{ couch_user.user_id }}" class="modal hide fade">
+        <div class="modal-header">
+            <a class="close" data-dismiss="modal">&times;</a>
+            <h3>{% blocktrans with couch_user.human_friendly_name as friendly_name %}Delete Mobile Worker {{ friendly_name }}?{% endblocktrans %}
+                <small>{% trans "Permanent Action" %}</small>
+            </h3>
+        </div>
+        <form class="form form-horizontal"
+              style="margin: 0; padding: 0"
+              action="{% url delete_commcare_user domain couch_user.user_id %}"
+              method="post"
+              data-bind="submit: submit">
+            <div class="modal-body">
+                <p class="alert">
+                    <i class="icon-white icon-warning-sign"></i>
+                    {% trans "Bad things will happen if you don't read this" %}
+                </p>
+                <p>
+                    {% blocktrans with couch_user.human_friendly_name as friendly_name %}
+                    Are you sure you want to permanently delete <strong>{{ friendly_name }}</strong>?
+                    {% endblocktrans %}
+                </p>
+                <p>{% trans "This action:" %}</p>
+                <ul>
+                    <li>
+                        {% blocktrans with couch_user.human_friendly_name as friendly_name %}Will delete {{ friendly_name }}.{% endblocktrans %}
+                    </li>
+                    <li>{% blocktrans with couch_user.human_friendly_name as friendly_name %}
+                        Will delete <strong>all</strong> of {{ friendly_name }}'s form submissions.
+                    {% endblocktrans %}</li>
+                    <li>{% trans "Is permanent." %}</li>
+                </ul>
+                <p>
+                    {% blocktrans with couch_user.human_friendly_name as friendly_name %}
+                    If you ever want to use {{ friendly_name }}'s data in the future, we suggest that you use the <strong>Archive User</strong> option
+                    <a href="{{ archive_url }}">here</a>.
+                    {% endblocktrans %}
+                </p>
+                <p>
+                    {% blocktrans %}
+                    If even after reading this you decide that you really want
+                    to delete this user and all of their data, type "I
+                    understand" into the box below.
+                    {% endblocktrans %}
+                </p>
+
+                <input data-bind="value: signOff, valueUpdate: 'textchange'" />
+            </div>
+            <div class="modal-footer">
+                <a href="#" data-dismiss="modal" class="btn">{% trans 'Cancel' %}</a>
+                <button type="submit" class="btn btn-danger" data-bind="
+                     css: {disabled: disabled()},
+                     attr: {disabled: disabled()}
+                 ">
+                     <i id="delete-user-icon" class="icon-trash" data-bind="
+                         css: {
+                             'icon-trash': !formDeleteUserSent(),
+                             'icon-refresh': formDeleteUserSent,
+                             'icon-spin': formDeleteUserSent
+                         }
+                     "></i>
+                     {% trans "Delete Mobile Worker" %}
+                 </button>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+{% endblock %}

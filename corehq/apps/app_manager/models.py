@@ -521,12 +521,12 @@ class FormBase(DocumentSchema):
         # Here, case-config-ui-*.js, and module_view.html
         reserved_words = load_case_reserved_words()
         for key in self.actions.all_property_names():
-            _, key = split_path(key)
-            if key in reserved_words:
-                errors.append({'type': 'update_case uses reserved word', 'word': key})
             # this regex is also copied in propertyList.ejs
             if not re.match(r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$', key):
                 errors.append({'type': 'update_case word illegal', 'word': key})
+            _, key = split_path(key)
+            if key in reserved_words:
+                errors.append({'type': 'update_case uses reserved word', 'word': key})
 
         for subcase_action in self.actions.subcases:
             if not subcase_action.case_type:
@@ -613,6 +613,9 @@ class FormBase(DocumentSchema):
 
     def requires_referral(self):
         return self.requires == "referral"
+
+    def default_name(self):
+        return self.name[self.get_app().default_language]
 
 class JRResourceProperty(StringProperty):
     def validate(self, value, required=True):
@@ -1911,6 +1914,13 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         for obj in self.get_forms(bare):
             if matches(obj if bare else obj['form']):
                 return obj
+        raise KeyError("Form in app '%s' with unique id '%s' not found" % (self.id, unique_form_id))
+
+    def get_form_location(self, unique_form_id):
+        for m_index, module in enumerate(self.get_modules()):
+            for f_index, form in enumerate(module.get_forms()):
+                if unique_form_id == form.unique_id:
+                    return m_index, f_index
         raise KeyError("Form in app '%s' with unique id '%s' not found" % (self.id, unique_form_id))
 
     @classmethod

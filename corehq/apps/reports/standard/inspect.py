@@ -769,6 +769,9 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
         def points():
             for row in data:
                 geo = row[geo_col]
+                if geo is None:
+                    continue
+
                 e = geo
                 depth = 0
                 while hasattr(e, '__iter__'):
@@ -786,8 +789,11 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
                     feature_type = 'MultiPolygon' if depth == 4 else 'Polygon'
 
                 yield {
-                    'type': feature_type,
-                    'coordinates': geo,
+                    'type': 'Feature',
+                    'geometry': {
+                        'type': feature_type,
+                        'coordinates': geo,
+                    },
                     'properties': dict((k, v) for k, v in row.iteritems() if k != geo_col),
                 }
 

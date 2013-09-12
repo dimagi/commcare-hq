@@ -1,5 +1,5 @@
 from django.utils.safestring import mark_safe
-from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
+from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
 from corehq.apps.groups.models import Group
 from django.core.urlresolvers import reverse
 from corehq.apps.reports import util
@@ -11,17 +11,19 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 
+
 class DataInterface(GenericReportView):
     # overriding properties from GenericReportView
-    section_name = ugettext_noop('Manage Data')
+    section_name = ugettext_noop("Data")
     base_template = "reports/standard/base_template.html"
     asynchronous = True
-    dispatcher = DataInterfaceDispatcher
+    dispatcher = EditDataInterfaceDispatcher
     exportable = False
 
     @property
     def default_report_url(self):
         return reverse('data_interfaces_default', args=[self.request.project])
+
 
 class CaseReassignmentInterface(CaseListMixin, DataInterface):
     name = ugettext_noop("Reassign Cases")

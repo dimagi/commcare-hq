@@ -1,4 +1,4 @@
-{% extends "users/users_base.html" %}
+{% extends "settings/base_template.html" %}
 {% load hqstyle_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -8,38 +8,32 @@
 <script type="text/javascript">ko.applyBindings(new MediaManager({{ media|JSON }}, {{ licenses|JSON }}));</script>
 {% endblock %}
 
-{% block subsection-title %}
-<li class="active">
-    <a href="#">Multimedia Sharing</a>
-</li>
-{% endblock %}
-
-{% block user-view %}
+{% block main_column %}
 <form method="post">
     <fieldset>
-        <legend>Change Multimedia Sharing Settings</legend>
+        <legend>{% trans 'Change Multimedia Sharing Settings' %}</legend>
         <p>
-            Multimedia shared below will show up in projects shared on CommCare Exchange and in the list of available multimedia for others to use.
+            {% blocktrans %}Multimedia shared below will show up in projects shared on CommCare Exchange and in the list of available multimedia for others to use.{% endblocktrans %}
         </p>
     <table class="table table-striped table-bordered table-condensed hqtable-vcentered">
         <thead>
             <tr>
                 <td>
-                    Type
+                    {% trans 'Type' %}
                 </td>
                 <td>
-                    Preview
+                    {% trans 'Preview' %}
                 </td>
                 <td>
-                    Shared?<br />
-                    Check all
+                    {% trans 'Shared?' %}<br />
+                    {% trans 'Check all' %}
                     <input type="checkbox" data-bind="checked: allShared" />
                 </td>
                 <td>
-                    Tags
+                    {% trans 'Tags' %}
                 </td>
                 <td>
-                    License<br />
+                    {% trans 'License' %}<br />
                     {% include "domain/partials/license_explanations.html" %}
                 </td>
             </tr>
@@ -52,19 +46,19 @@
                     <a data-bind="attr: {href: url}" class="thumbnail" target="_blank"><img data-bind="attr: {src: url}" /></a>
                 </div>
                 <div data-bind="if: audio || other">
-                    <a data-bind="attr: {href: url}" class="btn btn-primary" target="_blank">Listen in a new window</a>
+                    <a data-bind="attr: {href: url}" class="btn btn-primary" target="_blank">{% trans 'Listen in a new window' %}</a>
                 </div>
                 </td>
                 <td><input type="checkbox" data-bind="checked: shared, attr: {name: m_id + '_shared'}" /></td>
                 <td><input type="text" data-bind="value: tags, enable: shared, attr: {name: m_id + '_tags'}" placeholder="Space-separated tags" /></td>
                 <td><select data-bind="options: $root.licenses, optionsText: 'name', optionsValue: 'code', value: license, enable: shared, attr: {name: m_id + '_license'}"></select>
                     <br />
-                    <a data-toggle="modal" href="#license-explanations">More information...</a>
+                    <a data-toggle="modal" href="#license-explanations">{% trans 'More information...' %}</a>
                 </td>
             </tr>
         </tbody>
     </table>
-    <div class="form-actions"><button type="submit" class="btn btn-primary">Update media sharing settings</button></div>
+    <div class="form-actions"><button type="submit" class="btn btn-primary">{% trans 'Update media sharing settings' %}</button></div>
     </fieldset>
 </form>
 {% endblock %}>

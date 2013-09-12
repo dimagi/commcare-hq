@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.reminders.forms import RecordListField
 from django.utils.translation import ugettext as _, ugettext_noop
+from corehq.apps.sms.util import get_available_backends
 
 FORWARDING_CHOICES = (
     (FORWARD_ALL, ugettext_noop("All messages")),
@@ -43,13 +44,14 @@ class BackendForm(Form):
             raise ValidationError(_("This field is required."))
         if re.compile("\s").search(value) is not None:
             raise ValidationError(_("Name may not contain any spaces."))
-        
+
+        backend_classes = get_available_backends()
         if self._cchq_domain is None:
             # Ensure name is not duplicated among other global backends
-            backend = SMSBackend.view("sms/global_backends", key=[value], include_docs=True).one()
+            backend = SMSBackend.view("sms/global_backends", classes=backend_classes, key=[value], include_docs=True).one()
         else:
             # Ensure name is not duplicated among other backends owned by this domain
-            backend = SMSBackend.view("sms/backend_by_owner_domain", key=[self._cchq_domain, value], include_docs=True).one()
+            backend = SMSBackend.view("sms/backend_by_owner_domain", classes=backend_classes, key=[self._cchq_domain, value], include_docs=True).one()
         if backend is not None and backend._id != self._cchq_backend_id:
             raise ValidationError(_("Name is already in use."))
         

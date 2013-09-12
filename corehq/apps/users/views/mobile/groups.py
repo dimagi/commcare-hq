@@ -1,10 +1,14 @@
 from couchdbkit.exceptions import ResourceNotFound
+from django.core.urlresolvers import reverse
 from django.http import Http404
-from django.shortcuts import render
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _, ugettext_noop
 
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, CommCareUser
-from corehq.apps.users.views import _users_context, require_can_edit_commcare_users
+from corehq.apps.users.decorators import require_can_edit_commcare_users
+from corehq.apps.users.views import BaseUserSettingsView
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.excel import alphanumeric_sort_key
 
 def _get_sorted_groups(domain):
@@ -13,59 +17,127 @@ def _get_sorted_groups(domain):
         key=lambda group: alphanumeric_sort_key(group.name)
     )
 
-@require_can_edit_commcare_users
-def all_groups(request, domain, template="groups/all_groups.html"):
-    context = _users_context(request, domain)
-    all_groups = _get_sorted_groups(domain)
-    context.update({
-        'domain': domain,
-        'all_groups': all_groups
-    })
-    return render(request, template, context)
 
-@require_can_edit_commcare_users
-def group_members(request, domain, group_id, template="groups/group_members.html"):
-    context = _users_context(request, domain)
-    all_groups = _get_sorted_groups(domain)
-    try:
-        group = Group.get(group_id)
-    except ResourceNotFound:
-        raise Http404("Group %s does not exist" % group_id)
-    member_ids = group.get_user_ids()
-    members = CouchUser.view("_all_docs", keys=member_ids, include_docs=True).all()
-    members.sort(key=lambda user: user.username)
-    all_users = CommCareUser.by_domain(domain)
-    member_ids = set(member_ids)
-    nonmembers = [user for user in all_users if user.user_id not in member_ids]
+class BaseGroupsView(BaseUserSettingsView):
 
-    context.update({"domain": domain,
-                    "group": group,
-                    "all_groups": all_groups,
-                    "members": members,
-                    "nonmembers": nonmembers,
-                    })
-    return render(request, template, context)
+    @method_decorator(require_can_edit_commcare_users)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseGroupsView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def all_groups(self):
+        return _get_sorted_groups(self.domain)
+
+    @property
+    def main_context(self):
+        context = super(BaseGroupsView, self).main_context
+        context.update({
+            'all_groups': self.all_groups,
+        })
+        return context
 
 
-@require_can_edit_commcare_users
-def group_membership(request, domain, couch_user_id, template="groups/groups.html"):
-    context = _users_context(request, domain)
-    couch_user = CouchUser.get_by_user_id(couch_user_id, domain)
-    if request.method == "POST" and 'group' in request.POST:
-        group = request.POST['group']
-        group.add_user(couch_user)
-        group.save()
-        #messages.success(request, '%s joined group %s' % (couch_user.username, group.name))
-    
-    my_groups = Group.by_user(couch_user_id)
-    all_groups = _get_sorted_groups(domain)
-    other_groups = []
-    for group in all_groups:
-        if group.get_id not in [g.get_id for g in my_groups]:
-            other_groups.append(group)
-            #other_groups = [group for group in all_groups if group not in my_groups]
-    context.update({"domain": domain,
-                    "groups": my_groups,
-                    "other_groups": other_groups,
-                    "couch_user":couch_user })
-    return render(request, template, context)
+class EditGroupsView(BaseGroupsView):
+    template_name = "groups/all_groups.html"
+    page_title = ugettext_noop("Groups")
+    urlname = 'all_groups'
+
+    @property
+    def page_context(self):
+        return {}
+
+
+class EditGroupMembersView(BaseGroupsView):
+    urlname = 'group_members'
+    page_title = ugettext_noop("Edit Group")
+    template_name = 'groups/group_members.html'
+
+    @property
+    def page_name(self):
+        return _('Editing Group "%s"') % self.group.name
+
+    @property
+    def group_id(self):
+        return self.kwargs.get('group_id')
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.group_id])
+
+    @property
+    @memoized
+    def group(self):
+        try:
+            return Group.get(self.group_id)
+        except ResourceNotFound:
+            raise Http404("Group %s does not exist" % self.group_id)
+
+    @property
+    @memoized
+    def member_ids(self):
+        return self.group.get_user_ids()
+
+    @property
+    def members(self):
+        members = CouchUser.view("_all_docs", keys=self.member_ids, include_docs=True).all()
+        members.sort(key=lambda user: user.username)
+        return members
+
+    @property
+    def nonmembers(self):
+        all_users = CommCareUser.by_domain(self.domain)
+        member_ids = set(self.member_ids)
+        return [user for user in all_users if user.user_id not in member_ids]
+
+    @property
+    def page_context(self):
+        return {
+            'group': self.group,
+            'members': self.members,
+            'nonmembers': self.nonmembers,
+        }
+
+
+class EditGroupMembership(BaseGroupsView):
+    urlname = 'group_membership'
+    page_title = ugettext_noop("Membership Info")
+    template_name = 'groups/groups.html'
+
+    @property
+    def editable_user_id(self):
+        return self.kwargs['couch_user_id']
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.editable_user_id])
+
+    @property
+    @memoized
+    def editable_user(self):
+        return CouchUser.get_by_user_id(self.editable_user_id)
+
+    @property
+    @memoized
+    def my_groups(self):
+        return Group.by_user(self.editable_user_id)
+
+    @property
+    def other_groups(self):
+        for group in self.all_groups:
+            if group.get_id not in [g.get_id for g in self.my_groups]:
+                yield group
+
+    @property
+    def page_context(self):
+        return {
+            'groups': self.my_groups,
+            'other_grups': list(self.other_groups),
+            'couch_user': self.editable_user,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if 'group' in request.POST:
+            group = request.POST['group']
+            group.add_user(self.editable_user)
+            group.save()
+        return self.get(request, *args, **kwargs)

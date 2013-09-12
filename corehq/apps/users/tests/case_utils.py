@@ -1,8 +1,8 @@
 from unittest import TestCase
 import uuid
 from dimagi.utils.parsing import json_format_datetime
+from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests import CaseBlock
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from corehq.apps.domain.shortcuts import create_domain

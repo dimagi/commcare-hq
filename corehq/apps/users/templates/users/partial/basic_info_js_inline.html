@@ -1,0 +1,13 @@
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<script type="text/javascript">
+    $(function() {
+        $('#id_add_phone_number').keydown(allowNumeric);
+        $('.verify-button').tooltip();
+        $('#id_language').combobox({
+            placeholder: "{% trans 'Select a language...' %}"
+        });
+    });
+</script>

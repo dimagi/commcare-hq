@@ -26,11 +26,6 @@ def REPORTS(project):
             inspect.SubmitHistory,
             inspect.CaseListReport,
         )),
-        (_("Raw Data"), (
-            export.ExcelExportReport,
-            export.CaseExportReport,
-            export.DeidExportReport,
-        )),
         (_("Manage Deployments"), (
             deployments.ApplicationStatusReport,
             receiverwrapper.SubmissionErrorReport,
@@ -98,7 +93,15 @@ from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface
 from corehq.apps.importer.base import ImportCases
 
 DATA_INTERFACES = (
-    (_('Case Management'), (
+    (_("Export Data"), (
+        export.ExcelExportReport,
+        export.CaseExportReport,
+        export.DeidExportReport,
+    )),
+)
+
+EDIT_DATA_INTERFACES = (
+    (_('Edit Data'), (
         CaseReassignmentInterface,
         ImportCases
     )),
@@ -188,13 +191,13 @@ from corehq.apps.hqwebapp.models import *
 TABS = (
     ProjectInfoTab,
     ReportsTab,
-    ManageDataTab,
+    ProjectDataTab,
+    ProjectUsersTab,
     ApplicationsTab,
     CloudcareTab,
     MessagingTab,
-    ProjectSettingsTab,
-    OrgReportTab,
-    OrgSettingsTab,
-    AdminTab,
     ExchangeTab,
+    OrgReportTab,
+    OrgSettingsTab, # separate menu?
+    AdminTab,
 )

@@ -1,0 +1,54 @@
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% for phone_number in phonenumbers %}
+    <div id="delete_phonenumber_{{ forloop.counter }}" class="modal hide fade">
+        <div class="modal-header">
+            <a class="close" data-dismiss="modal">&times;</a>
+            <h3>{% blocktrans with phone_number.number as number %}Delete +{{ number }}?{% endblocktrans %}</h3>
+        </div>
+        <form class="form form-horizontal hq-form"
+              name="delete_phone_number"
+              action="{% url delete_phone_number domain couch_user.couch_id %}"
+              method="POST">
+
+            <input type="hidden" name="phone_number" value="{{ phone_number.number }}"/>
+
+            <div class="modal-body">
+                <p>{% blocktrans with phone_number.number as number %}
+                    Are you sure you want to delete the phone number: "+{{ number }}"?
+                {% endblocktrans %}</p>
+            </div>
+            <div class="modal-footer">
+                <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
+                <button type="submit" class="btn btn-danger"><i class="icon-remove"></i> {% trans "Delete" %}</button>
+            </div>
+        </form>
+    </div>
+    {% ifequal phone_number.status "pending" %}
+        <div id="reverify_{{phone_number.number|urlencode}}" class="modal hide fade">
+            <div class="modal-header">
+                <a class="close" data-dismiss="modal">&times;</a>
+                <h3>{% blocktrans with phone_number.number as number %}Verify +{{ number }}?{% endblocktrans %}</h3>
+            </div>
+            <form class="form form-horizontal hq-form"
+                  name="reverify_phone_number"
+                  action="{% url verify_phone_number domain couch_user.couch_id %}?phone_number={{phone_number.number|urlencode}}"
+                  method="post">
+                <div class="modal-body">
+                    <p>
+                    {% blocktrans %}
+                    A verification message has already been sent to this phone.
+                    The phone has not replied yet. Send again?
+                    {% endblocktrans %}
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
+                    <button type="submit" class="btn btn-primary"><i class="icon-signal"></i> {% trans "Verify" %}</button>
+                </div>
+            </form>
+        </div>
+    {% endifequal %}
+{% endfor %}

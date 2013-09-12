@@ -1,4 +1,4 @@
-{% extends "users/users_base.html" %}
+{% extends "settings/base_template.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
@@ -53,13 +53,7 @@ $(function() {
 </script>
 {% endblock %}
 
-{% block subsection-title %}
-    <li class="active">
-        <a href="#">{% trans "Locations" %}</a>
-    </li>
-{% endblock %}
-
-{% block user-view %}
+{% block main_column %}
 <header>
     <div class="row-fluid">
         <div class="span8">
@@ -132,6 +126,3 @@ $(function() {
 </div>
 {% endblock %}
 
-{% block modals %}{{ block.super }}
-    
-{% endblock %}
