@@ -1,17 +1,17 @@
-{% load i18n %}
+{% extends 'settings/base_template.html' %}
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
-<form id="my-project-settings-form" name="update_project_settings" class="form-horizontal" method="post">
-    <input type="hidden" name="form_type" value="project-settings" />
-    {% bootstrap_form_errors proj_settings_form %}
-    {% bootstrap_fieldset proj_settings_form "User-Specific Project Settings" %}
-    <div class="form-actions"><button type="submit" id="update-proj-settings" data-bind="hqbSubmitReady: form_is_ready" class="btn disabled">Update My Project Settings</button></div>
-</form>
+{% load i18n %}
+
+{% block js %} {{ block.super }}
 <script src="{% static 'users/ko/project_settings.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %} {{ block.super }}
 <script type="text/javascript">
     $(function() {
         ko.applyBindings(new HQTimezoneHandler({
-            override: {{ override_global_tz|lower }}
+            override: {{ override_global_tz|BOOL }}
         }), $('#my-project-settings-form').get(0));
 
         var $globalTimezone = $('#id_global_timezone'),
@@ -20,7 +20,7 @@
         var $matchMessage = $('<span class="matched-message help-inline" />');
         $userTimezone.parent().append($matchMessage);
 
-        var $matchTzButton = $('<a href="#" class="btn" style="margin-left: 1em;" />').text("Reset to Default");
+        var $matchTzButton = $('<a href="#" class="btn" style="margin-left: 1em;" />').text("{% trans 'Reset to Default' %}");
         $matchTzButton.click(function () {
             $userTimezone.val($globalTimezone.val());
             $userTimezone.change();
@@ -39,11 +39,27 @@
         function compare_global_user_timezones() {
             if($globalTimezone.val() == $userTimezone.val()) {
                 $userTimezone.parent().parent().addClass('success').removeClass('warning');
-                $matchMessage.html('This matches the global setting of <strong>'+$globalTimezone.val()+'</strong>.');
+                $matchMessage.html('{% blocktrans %}This matches the global setting of <strong>'+$globalTimezone.val()+'</strong>.{% endblocktrans %}');
             } else {
                 $userTimezone.parent().parent().addClass('warning').removeClass('success');
-                $matchMessage.html('<strong>'+$userTimezone.val()+'</strong> does not match global setting of <strong>'+$globalTimezone.val()+'</strong>.');
+                $matchMessage.html('{% blocktrans %}<strong>'+$userTimezone.val()+'</strong> does not match global setting of <strong>'+$globalTimezone.val()+'</strong>.{% endblocktrans %}');
             }
         }
     });
 </script>
+{% endblock %}
+
+{% block main_column %}
+    <form id="my-project-settings-form" class="form form-horizontal" name="update_project_settings" method="post">
+        {% bootstrap_form_errors my_project_settings_form %}
+        {% bootstrap_fieldset my_project_settings_form "Override Project Timezone" %}
+        <div class="form-actions">
+            <button type="submit"
+                    id="update-proj-settings"
+                    data-bind="hqbSubmitReady: form_is_ready"
+                    class="btn disabled">
+                {% trans 'Update My Settings' %}
+            </button>
+        </div>
+    </form>
+{% endblock %}

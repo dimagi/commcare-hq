@@ -2,10 +2,13 @@ from collections import defaultdict
 import json
 import logging
 import datetime
+from django.utils.translation import ugettext_noop
+from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
+from corehq.apps.data_interfaces.interfaces import DataInterface
 from dimagi.utils.dates import DateSpan
 from django.conf import settings
 from django.http import Http404
-from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport, DatespanMixin
+from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.models import FormExportSchema,\
     HQGroupExportConfiguration
 from corehq.apps.reports.util import make_form_couch_key, datespan_from_beginning
@@ -14,11 +17,13 @@ from dimagi.utils.couch.database import get_db
 from corehq.apps.app_manager.models import get_app
 from dimagi.utils.parsing import string_to_datetime
 
-class ExportReport(ProjectReport, ProjectReportParametersMixin):
+
+class ExportReport(DataInterface, ProjectReportParametersMixin):
     """
         Base class for export reports.
     """
     flush_layout = True
+    dispatcher = DataInterfaceDispatcher
 
     @property
     def custom_bulk_export_format(self):
@@ -32,6 +37,7 @@ class ExportReport(ProjectReport, ProjectReportParametersMixin):
             timezone=self.timezone,
             get_filter_params=self.get_filter_params(),
         )
+
 
 class FormExportReportBase(ExportReport, DatespanMixin):
     fields = ['corehq.apps.reports.fields.FilterUsersField',
@@ -60,8 +66,23 @@ class FormExportReportBase(ExportReport, DatespanMixin):
         params['enddate'] = self.datespan.enddate_display
         return params
 
+    @classmethod
+    def get_subpages(self):
+        from corehq.apps.export.views import CreateCustomFormExportView, EditCustomFormExportView
+        return [
+            {
+                'title': CreateCustomFormExportView.page_title,
+                'urlname': CreateCustomFormExportView.urlname,
+            },
+            {
+                'title': EditCustomFormExportView.page_title,
+                'urlname': EditCustomFormExportView.urlname,
+            },
+        ]
+
+
 class ExcelExportReport(FormExportReportBase):
-    name = "Export Submissions to Excel"
+    name = ugettext_noop("Export Forms")
     slug = "excel_export_data"
     report_template_path = "reports/reportdata/excel_export_data.html"
     icon = "icon-list-alt"
@@ -189,7 +210,7 @@ class ExcelExportReport(FormExportReportBase):
 
 
 class CaseExportReport(ExportReport):
-    name = "Export Cases, Referrals, & Users"
+    name = ugettext_noop("Export Cases")
     slug = "case_export"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField']
@@ -221,6 +242,20 @@ class CaseExportReport(ExportReport):
             case_types=[case['key'][1] for case in cases],
         )
         return context
+
+    @classmethod
+    def get_subpages(self):
+        from corehq.apps.export.views import CreateCustomCaseExportView, EditCustomCaseExportView
+        return [
+            {
+                'title': CreateCustomCaseExportView.page_title,
+                'urlname': CreateCustomCaseExportView.urlname,
+            },
+            {
+                'title': EditCustomCaseExportView.page_title,
+                'urlname': EditCustomCaseExportView.urlname,
+            },
+        ]
 
 
 class DeidExportReport(FormExportReportBase):
@@ -254,3 +289,7 @@ class DeidExportReport(FormExportReportBase):
         params = super(DeidExportReport, self).get_filter_params()
         params['deid'] = 'true'
         return params
+
+    @classmethod
+    def get_subpages(self):
+        return []

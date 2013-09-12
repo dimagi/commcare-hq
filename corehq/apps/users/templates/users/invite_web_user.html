@@ -1,17 +1,8 @@
-{% extends "users/users_base.html" %}
+{% extends "users/base_template.html" %}
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
 
-{% block subsection-title %}
-    <li>
-        <a href="{% url web_users domain %}">{% hq_web_user %}s</a> <span class="divider">&gt;</span>
-    </li>
-    <li class="active">
-        <a href="#">Invite {% hq_web_user %} to Project</a>
-    </li>
-{% endblock %}
-
-{% block user-view %}
+{% block main_column %}
     <form class="form form-horizontal" method="post" action="">
         {% bootstrap_form_errors registration_form %}
         {% bootstrap_fieldset registration_form "Information for the person you would like to invite to your project" %}

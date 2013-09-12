@@ -1,14 +1,8 @@
-{% extends "users/users_base.html" %}
+{% extends "settings/base_template.html" %}
 {% load i18n %}
 {% load crispy_forms_tags %}
 
-{% block subsection-title %}
-<li class="active">
-    <a href="#">{% trans "CommTrack Advanced Settings" %}</a>
-</li>
-{% endblock %}
-
-{% block js-inline %}
+{% block js-inline %} {{ block.super }}
 <script>
     $("#id_use_auto_consumption").change(function () {
         $("#id_consumption_min_transactions, " +
@@ -19,6 +13,6 @@
 </script>
 {% endblock %}
 
-{% block user-view %}
+{% block main_column %}
     {% crispy form %}
 {% endblock %}
