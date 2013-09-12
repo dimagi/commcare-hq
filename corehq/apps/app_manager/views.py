@@ -1745,6 +1745,12 @@ def download_profile(req, domain, app_id):
         req.app.create_profile()
     )
 
+@safe_download
+def download_media_profile(req, domain, app_id):
+    return HttpResponse(
+        req.app.create_profile(with_media=True)
+    )
+
 def odk_install(req, domain, app_id, with_media=False):
     app = get_app(domain, app_id)
     qr_code_view = "odk_qr_code" if not with_media else "odk_media_qr_code"

@@ -1316,6 +1316,13 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         return "%s?latest=true" % (
             reverse('download_profile', args=[self.domain, self._id])
         )
+
+    @absolute_url_property
+    def hq_media_profile_url(self):
+        return "%s?latest=true" % (
+            reverse('download_media_profile', args=[self.domain, self._id])
+        )
+
     @property
     def profile_loc(self):
         return "jr://resource/profile.xml"
@@ -1617,6 +1624,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return self.hq_profile_url
 
     @property
+    def media_profile_url(self):
+        return self.hq_media_profile_url
+
+    @property
     def url_base(self):
         # force_http is a deprecated hack
         # for safety we're just special-casing the only
@@ -1830,10 +1841,15 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if self.case_sharing:
             app_profile['properties']['server-tether'] = 'sync'
 
+        if with_media:
+            profile_url = self.media_profile_url if not is_odk else (self.odk_media_profile_url + '?latest=true')
+        else:
+            profile_url = self.profile_url if not is_odk else (self.odk_profile_url + '?latest=true')
+
         return render_to_string(template, {
             'is_odk': is_odk,
             'app': self,
-            'profile_url': self.profile_url if not is_odk else (self.odk_profile_url + '?latest=true'),
+            'profile_url': profile_url,
             'app_profile': app_profile,
             'suite_url': self.suite_url,
             'suite_loc': self.suite_loc,
