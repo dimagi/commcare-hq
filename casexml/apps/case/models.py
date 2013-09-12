@@ -996,3 +996,27 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
 
 
 import casexml.apps.case.signals
+
+
+class CommCareCaseGroup(Document):
+    """
+        This is a group of CommCareCases. Useful for managing cases in larger projects.
+    """
+    name = StringProperty()
+    domain = StringProperty()
+    cases = ListProperty()
+    timezone = StringProperty()
+
+    def get_time_zone(self):
+        # Necessary for the CommCareCaseGroup to interact with CommConnect, as if using the CommCareMobileContactMixin
+        # However, the entire mixin is not necessary.
+        return self.timezone
+
+    @classmethod
+    def get_all(cls, domain):
+        return cls.view(
+            'case/groups_by_domain',
+            startkey=[domain],
+            endkey=[domain, {}],
+            include_docs=True
+        ).all()
