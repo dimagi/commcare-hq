@@ -1,3 +1,4 @@
+import functools
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.app_manager.util import create_temp_sort_column
 import langcodes
@@ -126,7 +127,22 @@ class SimpleAppStrings(AppStringsBase):
             yield non_empty_only(app.translations.get(lang, {}))
 
 
+class SelectKnownAppStrings(AppStringsBase):
+
+    def get_app_translation_keys(self, app):
+        return set.union(*(set(t.keys()) for t in app.translations.values()))
+
+    def app_strings_parts(self, app, lang, for_default=False):
+        yield self.create_custom_app_strings(app, lang, for_default=for_default)
+        cc_trans = self.get_default_translations(lang)
+        yield dict((key, cc_trans[key]) for key in self.get_app_translation_keys(app) if key in cc_trans)
+        yield non_empty_only(app.translations.get(lang, {}))
+
+
 CHOICES = {
     'dump-known': DumpKnownAppStrings(commcare_translations.load_translations),
     'simple': SimpleAppStrings(None),
+    'select-known': SelectKnownAppStrings(
+        functools.partial(commcare_translations.load_translations, version=2)
+    ),
 }
