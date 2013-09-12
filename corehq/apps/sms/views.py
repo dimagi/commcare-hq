@@ -387,10 +387,11 @@ def _list_backends(request, show_global=False, domain=None):
         domain_obj = Domain.get_by_name(domain, strict=True)
     raw_backends = []
     if not show_global:
-        raw_backends += SMSBackend.view("sms/backend_by_domain", startkey=[domain], endkey=[domain, {}], include_docs=True).all()
+        raw_backends += SMSBackend.view("sms/backend_by_domain", classes=backend_classes,
+                                        startkey=[domain], endkey=[domain, {}], include_docs=True).all()
         if len(raw_backends) > 0 and domain_obj.default_sms_backend_id in [None, ""]:
             messages.error(request, _("WARNING: You have not specified a default SMS connection. By default, the system will automatically select one of the SMS connections owned by the system when sending sms."))
-    raw_backends += SMSBackend.view("sms/global_backends", include_docs=True).all()
+    raw_backends += SMSBackend.view("sms/global_backends", classes=backend_classes, include_docs=True).all()
     for backend in raw_backends:
         backends.append(backend_classes[backend.doc_type].wrap(backend.to_json()))
         if show_global or (not backend.is_global and backend.domain == domain):
@@ -468,7 +469,8 @@ def unset_default_domain_backend(request, domain, backend_id):
 
 @require_superuser
 def global_backend_map(request):
-    global_backends = SMSBackend.view("sms/global_backends", include_docs=True).all()
+    backend_classes = get_available_backends()
+    global_backends = SMSBackend.view("sms/global_backends", classes=backend_classes, include_docs=True).all()
     current_map = {}
     catchall_entry = None
     for entry in BackendMapping.view("sms/backend_map", startkey=["*"], endkey=["*", {}], include_docs=True).all():
