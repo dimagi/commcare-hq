@@ -176,7 +176,8 @@ var CaseConfig = (function () {
             _.delay(function () {
                 ko.applyBindings(self, $home.get(0));
                 $home.on('textchange', 'input', self.change)
-                     .on('change', 'select', self.change)
+                     // all select2's are represented by an input[type="hidden"]
+                     .on('change', 'select, input[type="hidden"]', self.change)
                      .on('click', 'a', self.change);
                 self.ensureBlankProperties();
             });

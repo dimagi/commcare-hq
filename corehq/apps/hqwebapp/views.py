@@ -12,6 +12,7 @@ from django.contrib.sites.models import Site
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
     HttpResponseServerError, HttpResponseNotFound
 from django.shortcuts import redirect, render
+from django.views.generic import TemplateView
 from corehq.apps.announcements.models import Notification
 
 from corehq.apps.app_manager.models import BUG_REPORTS_DOMAIN
@@ -327,7 +328,7 @@ def bug_report(req):
         ).format(**report)
 
     if full_name and not any([c in full_name for c in '<>"']):
-        reply_to = '"{full_name}" <{username}>'.format(**report)
+        reply_to = u'"{full_name}" <{username}>'.format(**report)
     else:
         reply_to = report['username']
 
@@ -405,3 +406,85 @@ def unsubscribe(request, user_id):
                     'click "Update Information" if you do '
                     'not want to receive future emails from us.'))
     return HttpResponseRedirect(reverse('commcare_user_account', args=[domain, user_id]))
+
+
+class BasePageView(TemplateView):
+    urlname = None  # name of the view used in urls
+    page_title = None  # what shows up in the <title>
+    template_name = 'hqwebapp/base_page.html'
+
+    @property
+    def page_name(self):
+        """
+        This is what is visible to the user.
+        page_title is what shows up in <title> tags.
+        """
+        return self.page_title
+
+    @property
+    def page_url(self):
+        raise NotImplementedError()
+
+    @property
+    def parent_pages(self):
+        """
+        Specify parent pages as a list of
+        [{
+            'title': <name>,
+            'url: <url>,
+        }]
+        """
+        return []
+
+    @property
+    def main_context(self):
+        """
+        The shared context for rendering this page.
+        """
+        return {
+            'current_page': {
+                'page_name': self.page_name,
+                'title': self.page_title,
+                'url': self.page_url,
+                'parents': self.parent_pages,
+            },
+        }
+
+    @property
+    def page_context(self):
+        """
+        The Context for the settings page
+        """
+        raise NotImplementedError("This should return a dict.")
+
+    def get_context_data(self, **kwargs):
+        context = super(BasePageView, self).get_context_data(**kwargs)
+        context.update(self.main_context)
+        context.update(self.page_context)
+        return context
+
+    def render_to_response(self, context, **response_kwargs):
+        """
+        Returns a response with a template rendered with the given context.
+        """
+        return render(self.request, self.template_name, context)
+
+
+class BaseSectionPageView(BasePageView):
+    section_name = ""
+    template_name = "hqwebapp/base_section.html"
+
+    @property
+    def section_url(self):
+        raise NotImplementedError
+
+    @property
+    def main_context(self):
+        context = super(BaseSectionPageView, self).main_context
+        context.update({
+            'section': {
+                'page_name': self.section_name,
+                'url': self.section_url,
+            }
+        })
+        return context

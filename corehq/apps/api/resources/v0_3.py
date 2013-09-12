@@ -32,6 +32,9 @@ class CaseListFilters(object):
             self.format = self.filters['format']
             del self.filters['format']
 
+        if 'order_by' in self.filters:
+            del self.filters['order_by']
+
 class CommCareCaseResource(v0_2.CommCareCaseResource, DomainSpecificResourceMixin):
     
     # in v2 this can't be null, but in v3 it can

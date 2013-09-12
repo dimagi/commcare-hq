@@ -1,11 +1,16 @@
+{% load hq_shared_tags %}
+
 <div class="hq-graphic-report">
 
-<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key={{ maps_api_key }}&sensor=false"></script>
-<script type="text/javascript" src="{{STATIC_URL}}reports/javascripts/maps.js"></script>
-<script type="text/javascript">
+<link rel="stylesheet" href="{% static 'reports/css/leaflet/leaflet.css' %}" />
+<link rel="stylesheet" href="{% static 'reports/css/maps.css' %}" />
 
-CASE_API_URL = '{{ case_api_url }}';
-CONFIG = {{ config|safe }};
+<script src="{% static 'reports/javascripts/leaflet.js' %}"></script>
+<script src="{% static 'reports/javascripts/jquery.color.js' %}"></script>
+<script src="{% static 'reports/javascripts/maps.js' %}"></script>
+<script>
+
+CONTEXT = {{ context|JSON }};
 
 function setMapHeight() {
     $('#map').height($(window).height() - 200);
@@ -15,93 +20,96 @@ $(document).ready(function() {
     setMapHeight();
     $(window).resize(setMapHeight);
 
-    var map = maps_init(CONFIG);
-    $.get(CASE_API_URL, null, function(data) {
-      maps_refresh(map, data);
-    }, 'json');
+    L.Icon.Default.imagePath = '{% static 'reports/css/leaflet/images' %}';
+    var map = mapsInit(CONTEXT);
 });
 
 </script>
 
-<style>
+<script type="text/template" id="default_detail_popup">
+  <h3><%= name %></h3>
+  <hr>
+  <table>
+    <% _.each(detail, function(field) { %>
+    <tr class="data data-<%= field.slug %>">
+      <td><%= field.label %></td>
+      <td class="detail_data">
+	<%= field.value %>
+      </td>
+    </tr>
+    <% }); %>
+  </table>
+</script>
 
-/* fix bootstrap / gmaps conflict */
-#map img {
-  max-width: none !important;
-}
+<script type="text/template" id="info_popup">
+  <% if (name) { %><h4><%= name %></h4><% } %>
+  <% _.each(detail, function(field) { %>
+  <div><%= field.label %></div>
+  <div class="detail_data"><%= field.value %></div>
+  <% }); %>
+</script>
 
-#sidebar {
-  position: absolute;
-  bottom: 30px;
-  right: 12px;
-  padding: 10px;
-  max-width: 12em;
-  background: rgba(255, 255, 255, .7);
-  border: 5px #aaa solid;
-  border-radius: 20px;
-  -moz-border-radius: 20px;
-  -webkit-border-radius: 20px;
-}
+<script type="text/template" id="legend_size">
+  <table class="sizelegend">
+    <% _.each(entries, function(e, i) { %>
+    <tr id="sizerow-<%= i %>">
+      <td class="circle-container">
+	<div class="circle"></div>
+      </td>
+      <td class="vallabel"><%= e.valfmt %></td>
+    </tr>
+    <% }); %>
+  </table>
+</script>
 
-.choice {
-  color: black;
-  font-weight: normal;
-  cursor: pointer;
-}
+<script type="text/template" id="legend_enum">
+  <table class="enumlegend">
+    <% _.each(enums, function(e, i) { %>
+    <tr id="enumrow-<%= i %>"><td class="enum"></td><td class="vallabel"><%= e.label %></td></tr>
+    <% }); %>
+  </table>
+</script>
 
-.selected {
-  color: #a00;
-  font-weight: bold;
-  cursor: pointer;
-}
+<script type="text/template" id="legend_colorscale">
+  <table class="colorscalelegend">
+    <tr>
+      <td id="scalebar"></td>
+      <td class="tickmarks">
+	<div class="tickmarks-inner">
+	  <% _.each(ticks, function(e) { %>
+	  <div class="width-spacer"><%= e.label %></div>
+	  <div class="ticklabel" style="top: <%= e.coord %>px;">
+	    <div class="ticklabel-inner"><%= e.label %></div>
+	  </div>
+	  <% }); %>
+        </div>
+      </td>
+    </tr>
+  </table>
+</script>
 
-.disabled {
-  color: #888;
-}
+<script type="text/template" id="metrics-group">
+  <div class="choice" data-bind="if: name() != '_root', click: onclick">
+    <i data-bind="visible: group, css: { 'icon-caret-right': !expanded(), 'icon-caret-down': expanded }"></i>
+    <span data-bind="text: name, css: { selected: selected }"></span>
+  </div>
 
-.enumlegendcolor {
-  width: 1.4em;
-}
-
-.enumlegendlabel {
-  padding-left: 0.5em;
-}
-
-</style>
+  <div data-bind="visible: expanded, foreach: children" class="metric-group">
+    <div data-bind="template: { name: 'metrics-group' }"></div>
+  </div>
+</script>
 
 <div style="position: relative;">
   <div id="map" style="width: 100%;"></div>
   
-  <div id="sidebar" style="display: none;">
-    <div id="legend" style="display: none; margin-bottom: 30px;">
-      <h3>Legend</h3>
-      <div id="legend-inner"></div>
-    </div>
+  <div id="metrics" class="control-pane" style="display: none;">
+    <div data-bind="template: { name: 'metrics-group', if: root, data: root }" class="metrics-container"></div>
+  </div>
 
-    <div id="style" style="display: none; margin-bottom: 30px;">
-      <h3>Style</h3>
-	<span type="intens">intensity</span> &middot;
-	<span type="blob">size</span> &middot;
-        <span type="gauge">gauge</span> &middot;
-	<span type="dot">dot</span> &middot;
-	<span type="pie">pie<sub>A</sub></span> &middot;
-	<span type="varpie">pie<sub>B</sub></span> &middot;
-	<span type="explodepie">pie<sub>C</sub></span>
-    </div>
-
-    <div id="agg" style="display: none; margin-bottom: 30px;">
-      <h3>Metric</h3>
-      <span type="count">count</span> &middot;
-      <span type="val">value</span> &middot;
-      <span type="sum">sum</span> &middot;
-      <span type="min">min</span> &middot;
-      <span type="max">max</span> &middot;
-      <span type="avg">average</span> &middot;
-      <span type="tally">tally</span>
-    </div>
-
-    <div id="panel"></div>
+  <div id="legend" class="control-pane" style="display: none;">
   </div>
   
-</div>
+  <div id="info" class="control-pane" style="display: none;">
+  </div>
+
 </div>

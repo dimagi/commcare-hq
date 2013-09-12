@@ -93,3 +93,8 @@ class RequisitionStatus(object):
             cls.PACKED: RequisitionActions.PACK,
             cls.RECEIVED: RequisitionActions.RECEIPTS,
         }[status]
+
+def get_commtrack_user_id(domain):
+    # abstracted out in case we one day want to back this
+    # by a real user, but for now it's like demo_user
+    return COMMTRACK_USERNAME

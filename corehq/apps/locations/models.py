@@ -12,6 +12,9 @@ class Location(Document):
     # unique id from some external data source
     external_id = StringProperty()
 
+    latitude = FloatProperty()
+    longitude = FloatProperty()
+
     # a list of doc ids, referring to the parent location, then the
     # grand-parent, and so on up to the root location in the hierarchy
     # TODO: in future, support multiple types of parentage with
@@ -98,6 +101,11 @@ class Location(Document):
         endkey.append({})
         # returns arbitrary doc types, so can't call self.view()
         return [k['doc'] for k in get_db().view('locations/linked_docs', startkey=startkey, endkey=endkey, include_docs=True)]
+
+    @property
+    def _geopoint(self):
+        return '%s %s' % (self.latitude, self.longitude) if self.latitude is not None and self.longitude is not None else None
+
 
 def location_tree(domain):
     """build a hierarchical tree of the entire location structure for a domain"""

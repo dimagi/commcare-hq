@@ -1,4 +1,4 @@
-{% extends "domain/internal_settings.html" %}
+{% extends "settings/base_template.html" %}
 {% load hqstyle_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -39,24 +39,24 @@
     </script>
 {% endblock %}
 
-{% block subsection-title %}
-    <li class="active">
-        <a href="#">Internal Calculated Properties</a>
-    </li>
-{% endblock %}
-
-{% block section-view %}
-    <div class="form-actions container">
-        <button type="submit" id="load-all-btn" class="btn btn-primary">Load EVERYTHING</button>
-    </div>
-    {% for calc_tag in order %}
-        <div class="row-fluid calc-group">
-            <div class="span2"><p style="text-align: right">{{ calcs|dict_lookup:calc_tag }}</p></div>
-            <div id="calc-{{ calc_tag }}" class="well well-small span4 calc-display"></div>
-            <div class="span6">
-                <button class="btn btn-info load-calc-btn" data-calc-tag="{{ calc_tag }}">Load Property</button>
-                <span class="calc-error"></span>
+{% block main_column %}
+    <div class="form form-horizontal">
+        <p><button type="button" id="load-all-btn" class="btn btn-primary">{% trans 'Load EVERYTHING' %}</button></p>
+        <hr />
+        {% for calc_tag in order %}
+            <div class="control-group calc-group">
+                <label class="control-label">{{ calcs|dict_lookup:calc_tag }}</label>
+                <div class="controls control-row">
+                    <div class="pull-right" style="width: 200px;">
+                        <button class="btn btn-info load-calc-btn" data-calc-tag="{{ calc_tag }}">Load Property</button>
+                        <div class="calc-error"></div>
+                    </div>
+                    <div id="calc-{{ calc_tag }}" 
+                         class="well well-small calc-display" 
+                         style="margin: 0; margin-right: 210px"></div>
+                    
+                </div>
             </div>
-        </div>
-    {% endfor %}
+        {% endfor %}
+    </div>
 {% endblock %}

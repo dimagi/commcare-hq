@@ -67,9 +67,11 @@ var HQVisualizations = function (options) {
 
     self.loadChartData = function(callback_fn, startdate, enddate) {
         var $loading = $(self.charts_id + ' .loading');
+        var $error = $(self.charts_id + ' .error');
         var $charts = $(self.charts_id + ' .nvd3-chart');
 
         $(self.charts_id + " .no-data").hide();
+        $error.hide()
         $loading.show();
         var svg_width = $(self.charts_id + " .tab-pane.active").width();
         $charts.each(function(){
@@ -122,6 +124,9 @@ var HQVisualizations = function (options) {
                     callback_fn();
                 }
             }
-        )
+        ).fail(function() {
+            $loading.hide();
+            $error.show();
+        });
     };
 };

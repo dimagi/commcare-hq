@@ -1,3 +1,4 @@
+import logging
 from couchdbkit.exceptions import ResourceNotFound
 from django.contrib import messages
 from django.contrib.auth.views import redirect_to_login
@@ -5,14 +6,18 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
+from django.views.generic import TemplateView
 
 from corehq.apps.hqwebapp.views import logout
 from corehq.apps.registration.forms import NewWebUserRegistrationForm
 from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.users.models import Invitation, CouchUser
 
+logger = logging.getLogger(__name__)
+
 
 class InvitationView():
+    # todo cleanup this view so it properly inherits from BaseSectionPageView
     inv_type = Invitation
     template = ""
     need = [] # a list of strings containing which parameters of the call function should be set as attributes to self
@@ -48,6 +53,7 @@ class InvitationView():
         messages.success(self.request, self.success_msg)
 
     def __call__(self, request, invitation_id, **kwargs):
+        logging.warning("Don't use this view in more apps until it gets cleaned up.")
         # add the correct parameters to this instance
         self.request = request
         for k, v in kwargs.iteritems():

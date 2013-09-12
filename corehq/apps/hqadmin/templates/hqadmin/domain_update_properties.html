@@ -27,7 +27,7 @@
         <td>{{ domain.forms }}<span title="{{ domain.forms }}"></span></td>
 		<td>{{ domain.first_submission }}</td>
 		<td>{{ domain.last_submission }}</td>
-        <td><a href="{% url domain_project_settings domain.name %}">edit</a></td>
+        <td><a href="{% url domain_basic_info domain.name %}">edit</a></td>
     </tr>
 {% endfor %}
 </tbody>

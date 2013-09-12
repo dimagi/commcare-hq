@@ -322,6 +322,7 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
     xform_questions = []
     xform = None
     form_errors = []
+    xform_validation_errored = False
 
     try:
         xform = form.wrapped_xform()
@@ -346,6 +347,7 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         except AppError as e:
             form_errors.append("Error in application: %s" % e)
         except XFormValidationError:
+            xform_validation_errored = True
             # showing these messages is handled by validate_form_for_build ajax
             pass
         except XFormError as e:
@@ -399,6 +401,7 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         'is_user_registration': is_user_registration,
         'module_case_types': module_case_types,
         'form_errors': form_errors,
+        'xform_validation_errored': xform_validation_errored,
     }
 
 
@@ -613,7 +616,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
             #stale=settings.COUCH_STALE_QUERY,
         ).all()
         if all_applications:
-            app_id = all_applications[0]['id']
+            app_id = all_applications[0].id
             del edit
             return back_to_main(**locals())
     if app and app.copy_of:
@@ -1451,6 +1454,7 @@ def edit_app_attr(request, domain, app_id, attr):
         'cloudcare_enabled',
         'application_version',
         'case_sharing',
+        'translation_strategy'
         # RemoteApp only
         'profile_url',
         'manage_urls'
@@ -1475,6 +1479,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('text_input', None),
         ('use_custom_suite', None),
         ('secure_submissions', None),
+        ('translation_strategy', None),
     )
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):

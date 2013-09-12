@@ -521,12 +521,12 @@ class FormBase(DocumentSchema):
         # Here, case-config-ui-*.js, and module_view.html
         reserved_words = load_case_reserved_words()
         for key in self.actions.all_property_names():
-            _, key = split_path(key)
-            if key in reserved_words:
-                errors.append({'type': 'update_case uses reserved word', 'word': key})
             # this regex is also copied in propertyList.ejs
             if not re.match(r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$', key):
                 errors.append({'type': 'update_case word illegal', 'word': key})
+            _, key = split_path(key)
+            if key in reserved_words:
+                errors.append({'type': 'update_case uses reserved word', 'word': key})
 
         for subcase_action in self.actions.subcases:
             if not subcase_action.case_type:
@@ -613,6 +613,9 @@ class FormBase(DocumentSchema):
 
     def requires_referral(self):
         return self.requires == "referral"
+
+    def default_name(self):
+        return self.name[self.get_app().default_language]
 
 class JRResourceProperty(StringProperty):
     def validate(self, value, required=True):
@@ -1562,6 +1565,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     use_custom_suite = BooleanProperty(default=False)
     force_http = BooleanProperty(default=False)
     cloudcare_enabled = BooleanProperty(default=False)
+    translation_strategy = StringProperty(default='dump-known',
+                                          choices=['dump-known', 'simple'])
 
     @classmethod
     def wrap(cls, data):
@@ -1692,6 +1697,15 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         yield id_strings.homescreen_title(), self.name
         yield id_strings.app_display_name(), self.name
 
+        yield 'cchq.case', "Case"
+        yield 'cchq.referral', "Referral"
+
+        # include language code names
+        for lc in self.langs:
+            name = langcodes.get_name(lc) or lc
+            if name:
+                yield lc, name
+
         for module in self.get_modules():
             for detail in module.get_details():
                 if detail.type.startswith('case'):
@@ -1731,35 +1745,32 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             for form in module.get_forms():
                 yield id_strings.form_locale(form), trans(form.name) + ('${0}' if form.show_count else '')
 
-    def create_app_strings(self, lang, include_blank_custom=False):
+    def create_app_strings(self, lang, for_default=False):
         def non_empty_only(dct):
             return dict([(key, value) for key, value in dct.items() if value])
         if lang != "default":
-            messages = {"cchq.case": "Case", "cchq.referral": "Referral"}
+            messages = {}
 
             custom = dict(self._create_custom_app_strings(lang))
-            if include_blank_custom:
+            if for_default:
                 messages.update(custom)
             else:
                 messages.update(non_empty_only(custom))
 
-            # include language code names
-            for lc in self.langs:
-                name = langcodes.get_name(lc) or lc
-                if name:
-                    messages[lc] = name
-
-            cc_trans = commcare_translations.load_translations(lang)
-            messages.update(cc_trans)
-
-            messages.update(non_empty_only(self.translations.get(lang, {})))
+            if self.translation_strategy == 'dump-known':
+                cc_trans = commcare_translations.load_translations(lang)
+                messages.update(cc_trans)
+            if self.translation_strategy == 'dump-known' or \
+                    (self.translation_strategy == 'simple' and not for_default):
+                messages.update(non_empty_only(self.translations.get(lang, {})))
         else:
             messages = {}
+
             for lc in reversed(self.langs):
                 if lc == "default":
                     continue
                 new_messages = commcare_translations.loads(
-                    self.create_app_strings(lc, include_blank_custom=True)
+                    self.create_app_strings(lc, for_default=True)
                 )
 
                 for key, val in new_messages.items():
@@ -1908,6 +1919,13 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         for obj in self.get_forms(bare):
             if matches(obj if bare else obj['form']):
                 return obj
+        raise KeyError("Form in app '%s' with unique id '%s' not found" % (self.id, unique_form_id))
+
+    def get_form_location(self, unique_form_id):
+        for m_index, module in enumerate(self.get_modules()):
+            for f_index, form in enumerate(module.get_forms()):
+                if unique_form_id == form.unique_id:
+                    return m_index, f_index
         raise KeyError("Form in app '%s' with unique id '%s' not found" % (self.id, unique_form_id))
 
     @classmethod

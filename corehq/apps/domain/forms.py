@@ -11,9 +11,11 @@ from django.forms.fields import (ChoiceField, CharField, BooleanField,
 from django.forms.widgets import  Select
 from django.utils.encoding import smart_str
 from django.contrib.auth.forms import PasswordResetForm
+from corehq.apps.app_manager.models import Application, FormBase
 
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES)
+from corehq.apps.reminders.models import CaseReminderHandler
 
 from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.apps.groups.models import Group
@@ -22,6 +24,7 @@ from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
+from hqstyle.forms.widgets import BootstrapCheckboxInput, BootstrapDisabledInput
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
@@ -32,6 +35,49 @@ def tf_choices(true_txt, false_txt):
 class SnapshotSettingsMixin(forms.Form):
     project_type = CharField(label=ugettext_noop("Project Category"), required=False,
         help_text=ugettext_noop("e.g. MCH, HIV, etc."))
+
+
+class ProjectSettingsForm(forms.Form):
+    """
+    Form for updating a user's project settings
+    """
+    global_timezone = forms.CharField(
+        initial="UTC",
+        label="Project Timezone",
+        widget=BootstrapDisabledInput(attrs={'class': 'input-xlarge'}))
+    override_global_tz = forms.BooleanField(
+        initial=False,
+        required=False,
+        label="",
+        widget=BootstrapCheckboxInput(
+            attrs={'data-bind': 'checked: override_tz, event: {change: updateForm}'},
+            inline_label=ugettext_noop("Override project's timezone setting just for me.")))
+    user_timezone = TimeZoneChoiceField(
+        label="My Timezone",
+        initial=global_timezone.initial,
+        widget=forms.Select(attrs={'class': 'input-xlarge', 'bindparent': 'visible: override_tz',
+                                   'data-bind': 'event: {change: updateForm}'}))
+
+    def clean_user_timezone(self):
+        data = self.cleaned_data['user_timezone']
+        timezone_field = TimeZoneField()
+        timezone_field.run_validators(data)
+        return smart_str(data)
+
+    def save(self, user, domain):
+        try:
+            timezone = self.cleaned_data['global_timezone']
+            override = self.cleaned_data['override_global_tz']
+            if override:
+                timezone = self.cleaned_data['user_timezone']
+            dm = user.get_domain_membership(domain)
+            dm.timezone = timezone
+            dm.override_global_tz = override
+            user.save()
+            return True
+        except Exception:
+            return False
+
 
 class SnapshotApplicationForm(forms.Form):
     publish = BooleanField(label=ugettext_noop("Publish?"), required=False)
@@ -72,6 +118,8 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
         help_text=ugettext_noop("A brief description of your project (max. 200 characters)"))
     share_multimedia = BooleanField(label=ugettext_noop("Share all multimedia?"), required=False,
         help_text=ugettext_noop("This will allow any user to see and use all multimedia in this project"))
+    share_reminders = BooleanField(label=ugettext_noop("Share Reminders?"), required=False,
+        help_text=ugettext_noop("This will publish reminders along with this project"))
     image = forms.ImageField(label=ugettext_noop("Exchange image"), required=False,
         help_text=ugettext_noop("An optional image to show other users your logo or what your app looks like"))
     video = CharField(label=ugettext_noop("Youtube Video"), required=False,
@@ -89,6 +137,7 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
             'image',
             'video',
             'share_multimedia',
+            'share_reminders',
             'license',
             'cda_confirmed',]
 
@@ -136,14 +185,29 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
         cleaned_data = self.cleaned_data
         sm = cleaned_data["share_multimedia"]
         license = cleaned_data["license"]
-        apps = self._get_apps_to_publish()
+        app_ids = self._get_apps_to_publish()
 
-        if sm and license not in self.dom.most_restrictive_licenses(apps_to_check=apps):
-            license_choices = [LICENSES[l] for l in self.dom.most_restrictive_licenses(apps_to_check=apps)]
+        if sm and license not in self.dom.most_restrictive_licenses(apps_to_check=app_ids):
+            license_choices = [LICENSES[l] for l in self.dom.most_restrictive_licenses(apps_to_check=app_ids)]
             msg = render_to_string('domain/partials/restrictive_license.html', {'licenses': license_choices})
             self._errors["license"] = self.error_class([msg])
 
             del cleaned_data["license"]
+
+        sr = cleaned_data["share_reminders"]
+        if sr:  # check that the forms referenced by the events in each reminders exist in the project
+            referenced_forms = CaseReminderHandler.get_referenced_forms(domain=self.dom.name)
+            if referenced_forms:
+                apps = [Application.get(app_id) for app_id in app_ids]
+                app_forms = [f.unique_id for forms in [app.get_forms() for app in apps] for f in forms]
+                nonexistent_forms = filter(lambda f: f not in app_forms, referenced_forms)
+                nonexistent_forms = [FormBase.get_form(f) for f in nonexistent_forms]
+                if nonexistent_forms:
+                    msg = """
+                        Your reminders reference forms that are not being published.
+                        Make sure the following forms are being published: %s
+                    """ % str([f.default_name() for f in nonexistent_forms]).strip('[]')
+                    self._errors["share_reminders"] = self.error_class([msg])
 
         return cleaned_data
 

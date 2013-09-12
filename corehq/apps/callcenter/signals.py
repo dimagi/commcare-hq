@@ -1,6 +1,7 @@
 from __future__ import print_function
 import sys
 import logging
+from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from django.db.models import signals
 from requests.exceptions import RequestException
@@ -8,6 +9,7 @@ from corehq.apps.callcenter.utils import sync_user_cases, bootstrap_callcenter
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.signals import commcare_domain_post_save
 from corehq.apps.users.signals import commcare_user_post_save
+from corehq.elastic import es_query
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +30,11 @@ _module = __name__.rsplit('.', 1)[0]
 def catch_signal(app, **kwargs):
     app_name = app.__name__.rsplit('.', 1)[0]
     if app_name == _module:
-        from corehq.apps.appstore.views import es_query
+        def _log(msg):
+            if not settings.DEBUG:
+                logging.exception(msg)
+            else:
+                print(msg, file=sys.stderr)
 
         try:
             q = {'fields': ['name']}
@@ -39,14 +45,14 @@ def catch_signal(app, **kwargs):
             }, q=q)
             hits = result.get('hits', {}).get('hits', {})
             for hit in hits:
-                domain = Domain.get(hit['_id'])
-                print('  callcenter bootstap `{}`'.format(domain.name))
-                bootstrap_callcenter(domain)
-        except RequestException:
-            if not settings.DEBUG:
-                logging.exception('Unable to query ES for call-center domains during syncdb')
-            else:
-                print('WARNING: unable to query ES for call-center domains', file=sys.stderr)
+                try:
+                    domain = Domain.get(hit['_id'])
+                    print('  callcenter bootstap `{0}`'.format(domain.name))
+                    bootstrap_callcenter(domain)
+                except ResourceNotFound:
+                    _log("Couldn't find domain {dom} during call center sync".format(dom=hit['_id']))
 
+        except RequestException:
+            _log('Unable to query ES for call-center domains during syncdb')
 
 signals.post_syncdb.connect(catch_signal)

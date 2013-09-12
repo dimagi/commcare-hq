@@ -1,11 +1,13 @@
-{% extends "users/users_base.html" %}
+{% extends "users/base_template.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
+
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/lib/knockout.mapping.js' %}"></script>
     <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
     <script src="{% static 'users/js/roles.js' %}"></script>
 {% endblock %}
+
 {% block js-inline %}{{ block.super }}
     <script>
         $(function () {
@@ -63,20 +65,8 @@
         });
     </script>
 {% endblock %}
-{% block head %}
-    {{ block.super }}
-    <style>
-    </style>
-{% endblock %}
 
-
-{% block subsection-title %}
-    <li class="active">
-        <a href="{% url web_users domain %}">{% hq_web_user %}s</a>
-    </li>
-{% endblock %}
-
-{% block user-view %}
+{% block main_column %}
 <div class="row-fluid">
     <div>
     <h2>{% hq_web_user %}s</h2>
@@ -280,7 +270,6 @@
     </div>
     {% endif %}
 </div>
-
 
 {% endblock %}
 

@@ -1,9 +1,8 @@
 from datetime import datetime
-from dimagi.utils.decorators.memoized import memoized
+from corehq.elastic import es_query, ADD_TO_ES_FILTER, ES_URLS
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
-from corehq.apps.appstore.views import fill_mapping_with_facets
 from corehq.apps.hqadmin.reports import AdminFacetedReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.dispatcher import BasicReportDispatcher, AdminReportDispatcher
@@ -196,7 +195,6 @@ FACET_MAPPING = [
 ]
 
 def es_domain_query(params=None, facets=None, domains=None, start_at=None, size=None, sort=None, fields=None, show_stats=True):
-    from corehq.apps.appstore.views import es_query
     if params is None:
         params = {}
     terms = ['search']
@@ -239,6 +237,19 @@ def es_domain_query(params=None, facets=None, domains=None, start_at=None, size=
 
     return es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search', start_at, size)
 
+def total_distinct_users(domains=None):
+    """
+    Get total number of users who've ever submitted a form.
+    """
+    query = {"in": {"domain.exact": domains}} if domains is not None else {"match_all": {}}
+    q = {
+        "query": query,
+        "filter": {"and": ADD_TO_ES_FILTER.get("forms", [])},
+    }
+
+    res = es_query(q=q, facets=["form.meta.userID"], es_url=ES_URLS["forms"], size=0)
+    return len(res["facets"]["form.meta.userID"]["terms"])
+
 ES_PREFIX = "es_"
 class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
     slug = "domains"
@@ -252,12 +263,20 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
     @property
     def template_context(self):
         ctxt = super(AdminDomainStatsReport, self).template_context
-        ctxt["interval"] = "month"
+        ctxt["interval"] = "week"
+
+        if self.es_params:
+            domain_results = es_domain_query(self.es_params, fields=["name"], size=99999, show_stats=False)
+            domains = [d["fields"]["name"] for d in domain_results["hits"]["hits"]]
+            ctxt["total_distinct_users"] = total_distinct_users(domains)
+        else:
+            ctxt["total_distinct_users"] = total_distinct_users()
         return ctxt
 
-    def es_query(self, params=None):
+    def es_query(self, params=None, size=None):
+        size = size if size is not None else self.pagination.count
         return es_domain_query(params, self.es_facet_list, sort=self.get_sorting_block(),
-                                  start_at=self.pagination.start, size=self.pagination.count)
+                               start_at=self.pagination.start, size=size)
 
     @property
     def headers(self):

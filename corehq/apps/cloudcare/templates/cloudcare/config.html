@@ -1,15 +1,13 @@
-{% extends "users/users_base.html" %}
+{% extends "users/base_template.html" %}
+{% load i18n %}
 {% load hq_shared_tags %}
-{% block subsection-title %}
-    <li class="active">
-        <a href="{% url cloudcare_app_settings domain %}">App Access</a>
-    </li>
-{% endblock %}
+
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/main.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/knockout.mapping.js' %}"></script>
     <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
 {% endblock %}
+
 {% block js-inline %}{{ block.super }}
 <script>
     $(function () {
@@ -134,25 +132,25 @@
 {% endblock %}
 
 {% block main_column %}
-    <h2>CloudCare App Settings</h2>
+    <h2>{% trans 'Manage CloudCare Permissions' %}</h2>
     <section id="cloudcare-app-settings" class="hide">
         <div data-bind="saveButton: saveButton"></div>
         <div id="cloudcare-app-settings-form" data-bind="with: applicationAccess">
             <label class="radio">
                 <input type="radio" value="false" data-bind="checked: restrict.JSON"/>
-                Allow all mobile workers to see all CloudCare apps
+                {% blocktrans %}Allow all mobile workers to see all CloudCare apps{% endblocktrans %}
             </label>
             <label class="radio">
                 <input type="radio" value="true" data-bind="checked: restrict.JSON"/>
-                Customize each mobile worker's CloudCare access
+                {% blocktrans %}Customize each mobile worker's CloudCare access{% endblocktrans %}
                 <code data-bind="visible: !restrict()">...</code>
             </label>
             <div data-bind="visible: restrict">
                 <table class="table table-bordered table-striped" data-bind="if: app_groups().length">
                     <thead>
                         <tr>
-                            <th>Application</th>
-                            <th>Group</th>
+                            <th>{% trans 'Application' %}</th>
+                            <th>{% trans 'Group' %}</th>
                         </tr>
                     </thead>
                     <tbody data-bind="foreach: app_groups">
@@ -167,7 +165,7 @@
                                     optionsValue: '_id',
                                     optionsCaption: 'No one'
                                 "></select>
-                                <span data-bind="visible: !$root.groupDB._sorted.length">You have no groups</span>
+                                <span data-bind="visible: !$root.groupDB._sorted.length">{% trans '}You have no groups' %}x</span>
                             </td>
                         </tr>
                     </tbody>
@@ -178,22 +176,22 @@
                         <li>
                             <span></span>
                             <span data-bind="if: group">
-                                Mobile workers in group
+                                {% blocktrans %}Mobile workers in group
                                 <strong data-bind="text: group.name"></strong>
-                                have access to
+                                have access to{% endblocktrans %}
                             </span>
                             <span data-bind="if: !group">
-                                <strong>No Mobile Workers</strong> have access to
+                                {% blocktrans %}<strong>No Mobile Workers</strong> have access to{% endblocktrans %}
                             </span>
                             <ul data-bind="foreach: apps">
                                 <li data-bind="text: name"></li>
                             </ul>
                         </li>
                     </ul>
-                    <p>...and all other mobile workers have no access to CloudCare.</p>
+                    <p>{% blocktrans %}...and all other mobile workers have no access to CloudCare.{% endblocktrans %}</p>
                 </div>
                 <div data-bind="if: !app_groups().length">
-                    You have no apps
+                    {% trans 'No CloudCare Applications Available' %}
                 </div>
             </div>
         </div>

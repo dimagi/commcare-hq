@@ -62,6 +62,7 @@
     - properties.logenabled  # Logging Enabled
     - properties.log_prop_weekly  # Weekly Log Sending Frequency
     - properties.log_prop_daily  # Daily Log Sending Frequency
+    - hq.translation_strategy
 
 - title: 'Disabled'
   id: app-settings-disabled

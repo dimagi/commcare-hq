@@ -26,11 +26,13 @@
 
     {% for group in report_table.rows %}
         {% if group.username == 'TOTAL_ROW' %}
-            <tr style="background-color: #3a87ad">
+            <tr>
                 {% if group.row_data %}
-                    <td colspan="{{ group.total_width }}">Total:</td>
+                    <td colspan="{{ group.total_width }}" style="background-color: #3a87ad">Total:</td>
                     {% for col in group.row_data %}
-                        {% include 'reports/async/partials/tabular_cell.html' %}
+                        <td style="background-color: #3a87ad">
+                            {{ col }}
+                        </td>
                     {% endfor %}
                 {% else %}
                     {% if group.gender %}

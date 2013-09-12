@@ -1,22 +1,18 @@
+import logging
+from casexml.apps.case.mock import CaseBlock
 from corehq.apps.commtrack.models import Product, CommtrackConfig,\
     CommtrackActionConfig, SupplyPointType, SupplyPointProductCase, SupplyPointCase
 from corehq.apps.commtrack import const
-from casexml.apps.case.tests.util import CaseBlock
 from casexml.apps.case.xml import V2
 import uuid
 from corehq.apps.hqcase.utils import submit_case_blocks
 from xml.etree import ElementTree
-from corehq.apps.users.cases import get_owner_id, get_wrapped_owner, reconcile_ownership
+from corehq.apps.users.cases import get_owner_id, reconcile_ownership
 
 """
 helper code to populate the various commtrack models, for ease of
 development/testing, before we have proper UIs and imports
 """
-
-def get_commtrack_user_id(domain):
-    # abstracted out in case we one day want to back this
-    # by a real user, but for now it's like demo_user
-    return const.COMMTRACK_USERNAME
 
 def make_product(domain, name, code):
     p = Product()
@@ -27,32 +23,12 @@ def make_product(domain, name, code):
     return p
 
 def make_supply_point(domain, location, owner_id=None):
-    # a supply point is currently just a case with a special type
-    id = uuid.uuid4().hex
-    user_id = get_commtrack_user_id(domain)
-    owner_id = owner_id or user_id
-    username = const.COMMTRACK_USERNAME
-    caseblock = CaseBlock(
-        case_id=id,
-        create=True,
-        version=V2,
-        case_name=location.name,
-        user_id=user_id,
-        owner_id=owner_id,
-        case_type=const.SUPPLY_POINT_CASE_TYPE,
-        update={
-            'location_id': location._id,
-        }
-    )
-    casexml = ElementTree.tostring(caseblock.as_xml())
-    submit_case_blocks(casexml, domain, username, user_id,
-                       xmlns=const.COMMTRACK_SUPPLY_POINT_XMLNS)
-    return SupplyPointCase.get(id)
+    return SupplyPointCase.create_from_location(domain, location, owner_id)
 
 def make_supply_point_product(supply_point_case, product_uuid, owner_id=None):
     domain = supply_point_case.domain
     id = uuid.uuid4().hex
-    user_id = get_commtrack_user_id(domain)
+    user_id = const.get_commtrack_user_id(domain)
     owner_id = owner_id or get_owner_id(supply_point_case) or user_id
     username = const.COMMTRACK_USERNAME
     product_name = Product.get(product_uuid).name
@@ -133,5 +109,11 @@ def make_psi_config(domain):
 def set_commtrack_location(user, location):
     user.commtrack_location = location._id
     supply_point_case = SupplyPointCase.get_by_location(location)
-    reconcile_ownership(supply_point_case, user)
+    if supply_point_case:
+        reconcile_ownership(supply_point_case, user)
+    else:
+        logging.error(('no linked supply point found for location {loc} ({id}) '
+                       'in {dom}. ownership was not set').format(
+            loc=location.name, id=location._id, dom=location.domain,
+        ))
     user.save()

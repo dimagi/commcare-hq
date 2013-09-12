@@ -25,19 +25,17 @@ def REPORTS(project):
         (_("Inspect Data"), (
             inspect.SubmitHistory,
             inspect.CaseListReport,
-            inspect.MapReport,
-        )),
-        (_("Raw Data"), (
-            export.ExcelExportReport,
-            export.CaseExportReport,
-            export.DeidExportReport,
         )),
         (_("Manage Deployments"), (
             deployments.ApplicationStatusReport,
             receiverwrapper.SubmissionErrorReport,
             phonelog.FormErrorReport,
             phonelog.DeviceLogDetailsReport
-        ))
+        )),
+        (_("Demos for Previewers"), (
+            inspect.DemoMapReport,
+            inspect.DemoMapReport2,
+        )),
     ]
     
     if project.commtrack_enabled:
@@ -51,6 +49,7 @@ def REPORTS(project):
             psi_prototype.StockOutReport,
             psi_prototype.StockReportExport,
             commtrack_maps.StockStatusMapReport,
+            commtrack_maps.ReportingStatusMapReport,
         )))
 
     messaging = (lambda project, user: (
@@ -94,7 +93,15 @@ from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface
 from corehq.apps.importer.base import ImportCases
 
 DATA_INTERFACES = (
-    (_('Case Management'), (
+    (_("Export Data"), (
+        export.ExcelExportReport,
+        export.CaseExportReport,
+        export.DeidExportReport,
+    )),
+)
+
+EDIT_DATA_INTERFACES = (
+    (_('Edit Data'), (
         CaseReassignmentInterface,
         ImportCases
     )),
@@ -184,13 +191,13 @@ from corehq.apps.hqwebapp.models import *
 TABS = (
     ProjectInfoTab,
     ReportsTab,
-    ManageDataTab,
+    ProjectDataTab,
+    ProjectUsersTab,
     ApplicationsTab,
     CloudcareTab,
     MessagingTab,
-    ProjectSettingsTab,
-    OrgReportTab,
-    OrgSettingsTab,
-    AdminTab,
     ExchangeTab,
+    OrgReportTab,
+    OrgSettingsTab, # separate menu?
+    AdminTab,
 )

@@ -45,7 +45,7 @@
             </td>
             {% if allow_edit %}
                 <td class="cell-vertical-centered">
-                    <a class="btn btn-info" href='{% url corehq.apps.reports.views.edit_custom_export domain export.get_id %}?type=form'>
+                    <a class="btn btn-info" href='{% url edit_custom_export_form domain export.get_id %}'>
                         <i class="icon-pencil icon-white"></i> {% trans "Edit" %}
                     </a>
                 </td>
@@ -73,7 +73,7 @@
             {% if allow_edit %}
                 <td class="cell-vertical-centered">
                     <a class="btn btn-danger" data-toggle="modal" class="delete_link" href="#delete-export-modal-{{ export.get_id }}"><i class="icon-remove icon-white"></i> Delete</a>
-                    {% include "reports/dialogs/delete_custom_export_dialog.html" %}
+                    {% include "export/dialogs/delete_custom_export_dialog.html" %}
                 </td>
             {% endif %}
         </tr>

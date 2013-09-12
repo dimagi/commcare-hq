@@ -1,21 +1,17 @@
 from django import forms
-from django.contrib.auth.forms import SetPasswordForm
 from django.core.validators import EmailValidator, email_re
 from django.core.urlresolvers import reverse
 from django.forms.widgets import PasswordInput, HiddenInput
-from django.utils.encoding import smart_str
-from django.utils.translation import ugettext_lazy as _
+from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext as _, ugettext_noop
 from django.template.loader import get_template
-from django.template import Template, Context
-from hqstyle.forms.widgets import BootstrapCheckboxInput, BootstrapDisabledInput
-from dimagi.utils.timezones.fields import TimeZoneField
-from dimagi.utils.timezones.forms import TimeZoneChoiceField
+from django.template import Context
 from corehq.apps.commtrack.helpers import set_commtrack_location
 from corehq.apps.locations.models import Location
-from corehq.apps.users.models import CouchUser, WebUser, OldRoles, DomainMembership
+from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.app_manager.models import validate_lang
-import re
+
 
 def wrapped_language_validation(value):
     try:
@@ -23,6 +19,7 @@ def wrapped_language_validation(value):
     except ValueError:
         raise forms.ValidationError("%s is not a valid language code! Please "
                                     "enter a valid two or three digit code." % value)
+
 
 class LanguageField(forms.CharField):
     """
@@ -38,42 +35,98 @@ class LanguageField(forms.CharField):
     }
     default_validators = [wrapped_language_validation]
 
-class ProjectSettingsForm(forms.Form):
-    """
-    Form for updating a user's project settings
-    """
-    global_timezone = forms.CharField(initial="UTC",
-        label="Project Timezone",
-        widget=BootstrapDisabledInput(attrs={'class': 'input-xlarge'}))
-    override_global_tz = forms.BooleanField(initial=False,
-        required=False,
-        label="",
-        widget=BootstrapCheckboxInput(attrs={'data-bind': 'checked: override_tz, event: {change: updateForm}'},
-            inline_label="Override project's timezone setting"))
-    user_timezone = TimeZoneChoiceField(label="My Timezone",
-        initial=global_timezone.initial,
-        widget=forms.Select(attrs={'class': 'input-xlarge', 'bindparent': 'visible: override_tz',
-                                   'data-bind': 'event: {change: updateForm}'}))
 
-    def clean_user_timezone(self):
-        data = self.cleaned_data['user_timezone']
-        timezone_field = TimeZoneField()
-        timezone_field.run_validators(data)
-        return smart_str(data)
+class BaseUpdateUserForm(forms.Form):
 
-    def save(self, web_user, domain):
-        try:
-            timezone = self.cleaned_data['global_timezone']
-            override = self.cleaned_data['override_global_tz']
-            if override:
-                timezone = self.cleaned_data['user_timezone']
-            dm = web_user.get_domain_membership(domain)
-            dm.timezone = timezone
-            dm.override_global_tz = override
-            web_user.save()
-            return True
-        except Exception:
-            return False
+    @property
+    def direct_properties(self):
+        return []
+
+    def update_user(self, existing_user=None, **kwargs):
+        is_update_successful = False
+        if not existing_user and 'email' in self.cleaned_data:
+            from django.contrib.auth.models import User
+            django_user = User()
+            django_user.username = self.cleaned_data['email']
+            django_user.save()
+            existing_user = CouchUser.from_django_user(django_user)
+            existing_user.save()
+            is_update_successful = True
+
+        for prop in self.direct_properties:
+            setattr(existing_user, prop, self.cleaned_data[prop])
+            is_update_successful = True
+
+        if is_update_successful:
+            existing_user.save()
+        return is_update_successful
+
+    def initialize_form(self, existing_user=None, **kwargs):
+        if existing_user is None:
+            return
+
+        for prop in self.direct_properties:
+            self.initial[prop] = getattr(existing_user, prop, "")
+
+
+class UpdateUserRoleForm(BaseUpdateUserForm):
+    role = forms.ChoiceField(choices=(), required=False)
+
+    def update_user(self, existing_user=None, domain=None, **kwargs):
+        is_update_successful = super(UpdateUserRoleForm, self).update_user(existing_user)
+
+        if domain and 'role' in self.cleaned_data:
+            role = self.cleaned_data['role']
+            try:
+                existing_user.set_role(domain, role)
+                existing_user.save()
+                is_update_successful = True
+            except KeyError:
+                pass
+
+        return is_update_successful
+
+    def load_roles(self, role_choices=None, current_role=None):
+        if role_choices is None:
+            role_choices = []
+        self.fields['role'].choices = role_choices
+
+        if current_role:
+            self.initial['role'] = current_role
+
+
+class BaseUserInfoForm(forms.Form):
+    first_name = forms.CharField(max_length=50, required=False)
+    last_name = forms.CharField(max_length=50, required=False)
+    email = forms.EmailField(label=ugettext_noop("E-mail"), max_length=75, required=False)
+    language = forms.ChoiceField(choices=(), initial=None, required=False, help_text=mark_safe(_(
+        "<i class=\"icon-info-sign\"></i> Becomes default language seen in CloudCare and reports (if applicable). "
+        "Supported languages for reports are en, fr (partial), and hin (partial)."
+    )))
+
+    def load_language(self, language_choices=None):
+        if language_choices is None:
+            language_choices = []
+        self.fields['language'].choices = [('', '')] + language_choices
+
+
+class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
+    email_opt_out = forms.BooleanField(required=False,
+                                      label="",
+                                      help_text=ugettext_noop("Opt out of emails about new features and other CommCare updates."))
+
+    @property
+    def direct_properties(self):
+        return self.fields.keys()
+
+
+class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
+
+    @property
+    def direct_properties(self):
+        indirect_props = ['role']
+        return [k for k in self.fields.keys() if k not in indirect_props]
+
 
 class RoleForm(forms.Form):
 
@@ -85,34 +138,6 @@ class RoleForm(forms.Form):
         super(RoleForm, self).__init__(*args, **kwargs)
         self.fields['role'].choices = role_choices
 
-class UserForm(RoleForm):
-    """
-    Form for Users
-    """
-
-    #username = forms.CharField(max_length=15)
-    first_name = forms.CharField(max_length=50, required=False)
-    last_name = forms.CharField(max_length=50, required=False)
-    email = forms.EmailField(label=_("E-mail"), max_length=75, required=False)
-    language = forms.ChoiceField(choices=(), initial=None, required=False, help_text=_(
-        "Set the default language this user "
-        "sees in CloudCare applications and in reports (if applicable). "
-        "Current supported languages for reports are en, fr (partial), "
-        "and hin (partial)."))
-    role = forms.ChoiceField(choices=(), required=False)
-
-    def __init__(self, *args, **kwargs):
-        if kwargs.has_key('language_choices'):
-            language_choices = kwargs.pop('language_choices')
-        else:
-            language_choices = ()
-        super(UserForm, self).__init__(*args, **kwargs)
-        self.fields['language'].choices = [('', '')] + language_choices
-
-class WebUserForm(UserForm):
-    email_opt_out = forms.BooleanField(required=False,
-                                       label="",
-                                       help_text=_("Opt out of emails about new features and other CommCare updates."))
 
 class Meta:
         app_label = 'users'

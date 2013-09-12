@@ -10,16 +10,8 @@ from corehq.apps.app_manager.models import Application, OpenCaseAction, UpdateCa
 from django.test import TestCase
 from corehq.apps.app_manager.tests.util import TestFileMixin
 
-class FormPreparationV2Test(TestCase, TestFileMixin):
-    file_path = 'data', 'form_preparation_v2'
-    def setUp(self):
-        self.app = Application.new_app('domain', 'New App', APP_V2)
-        self.app.version = 3
-        self.module = self.app.new_module('New Module', lang='en')
-        self.form = self.app.new_form(0, 'New Form', lang='en')
-        self.module.case_type = 'test_case_type'
-        self.form.source = self.get_xml('original')
 
+class FormPrepBase(TestCase, TestFileMixin):
     def assert_xml_equiv(self, actual, expected):
         actual_canonicalized = io.BytesIO()
         expected_canonicalized = io.BytesIO()
@@ -28,9 +20,20 @@ class FormPreparationV2Test(TestCase, TestFileMixin):
 
         lxml.etree.fromstring(actual, parser=parser).getroottree().write_c14n(actual_canonicalized)
         lxml.etree.fromstring(expected, parser=parser).getroottree().write_c14n(expected_canonicalized)
-        
+
         if actual_canonicalized.getvalue() != expected_canonicalized.getvalue():
             check_xml_line_by_line(self, actual, expected)
+
+
+class FormPreparationV2Test(FormPrepBase):
+    file_path = 'data', 'form_preparation_v2'
+    def setUp(self):
+        self.app = Application.new_app('domain', 'New App', APP_V2)
+        self.app.version = 3
+        self.module = self.app.new_module('New Module', lang='en')
+        self.form = self.app.new_form(0, 'New Form', lang='en')
+        self.module.case_type = 'test_case_type'
+        self.form.source = self.get_xml('original')
 
     def test_no_actions(self):
         self.assert_xml_equiv(self.get_xml('no_actions'), self.form.render_xform())
@@ -71,3 +74,20 @@ class FormPreparationV2Test(TestCase, TestFileMixin):
         self.form.actions.close_case = FormAction()
         self.form.actions.close_case.condition.type = 'always'
         self.assert_xml_equiv(self.get_xml('close_case'), self.form.render_xform())
+
+
+class SubcaseRepeatTest(FormPrepBase):
+    file_path = ('data', 'form_preparation_v2')
+
+    def setUp(self):
+        self.app = Application.wrap(self.get_json('subcase-repeat'))
+
+    def test_subcase_repeat(self):
+        self.app.case_sharing = False
+        self.assert_xml_equiv(self.app.get_module(0).get_form(0).render_xform(),
+                              self.get_xml('subcase-repeat'))
+
+    def test_subcase_repeat_sharing(self):
+        self.app.case_sharing = True
+        self.assert_xml_equiv(self.app.get_module(0).get_form(0).render_xform(),
+                              self.get_xml('subcase-repeat-sharing'))

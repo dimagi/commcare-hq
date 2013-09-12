@@ -34,7 +34,7 @@
                     <select class="input-small" name="include_closed" id="include-closed-select">
                         <option value="false">{% trans "all open" %}</option>
                         <option value="true">{% trans "all" %}</option>
-                    </select> {% trans "cases, all referrals, and all CHW users." %}
+                    </select> {% trans "cases and all CHW users." %}
                 </div>
             </div>
         </fieldset>
@@ -72,7 +72,7 @@
                         </a>
                     </td>
                     <td class="cell-vertical-centered">
-                        <a class="btn btn-info" href='{% url corehq.apps.reports.views.edit_custom_export domain export.get_id %}?type=case'>
+                        <a class="btn btn-info" href='{% url edit_custom_export_case domain export.get_id %}'>
                             <i class="icon-pencil icon-white"></i> {% trans "Edit" %}
                         </a>
                     </td>
@@ -82,7 +82,7 @@
                     </td>
                     <td class="cell-vertical-centered">
                         <a class="btn btn-danger" data-toggle="modal" class="delete_link" href="#delete-export-modal-{{ export.get_id }}"><i class="icon-remove icon-white"></i> {% trans "Delete" %}</a>
-                        {% include "reports/dialogs/delete_custom_export_dialog.html" %}
+                        {% include "export/dialogs/delete_custom_export_dialog.html" %}
                      </td>
                  </tr>
                 {% endfor %}
@@ -117,7 +117,7 @@
                         </td>
                         <td class="cell-vertical-centered">
                             {% if case %}
-                                <a class="btn" href='{% url corehq.apps.reports.views.custom_export domain %}?export_tag="{{ case }}"&type=case'><i class="icon-star-empty"></i> {% trans "Create Custom Export" %}</a>
+                                <a class="btn" href='{% url custom_export_case domain %}?export_tag="{{ case }}"'><i class="icon-star-empty"></i> {% trans "Create Custom Export" %}</a>
                             {% endif %}
                         </td>
                     </tr>
