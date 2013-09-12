@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 import uuid
 from xml.etree import ElementTree
@@ -13,8 +14,6 @@ MAPPING_NAME_CASE_OWNERSHIP = 'cc_case_ownership'
 
 
 def sync_user_cases(commcare_user):
-    from casexml.apps.case.tests.util import CaseBlock
-
     domain = commcare_user.project
     if not (domain and domain.call_center_config.enabled):
         return

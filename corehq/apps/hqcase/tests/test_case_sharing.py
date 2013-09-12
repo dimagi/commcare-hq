@@ -1,6 +1,7 @@
 from django.utils.unittest.case import TestCase
+from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests.util import CaseBlock, check_user_has_case
+from casexml.apps.case.tests.util import check_user_has_case
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V1, V2
 from corehq.apps.domain.shortcuts import create_domain
