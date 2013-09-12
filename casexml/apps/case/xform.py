@@ -2,7 +2,6 @@
 Work on cases based on XForms. In our world XForms are special couch documents.
 """
 import logging
-from couchdbkit import DocumentSchema
 
 from couchdbkit.resource import ResourceNotFound
 from couchforms.models import XFormInstance

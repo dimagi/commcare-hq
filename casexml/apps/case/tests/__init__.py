@@ -1,4 +1,6 @@
 from dimagi.utils.logging import log_exception
+from casexml.apps.case.mock import CaseBlock, CaseBlockError
+
 try:
     from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
     from .test_multimedia import *
@@ -20,7 +22,6 @@ except ImportError, e:
     raise e
 
 # need all imports used by the doc tests here
-from .util import CaseBlock, CaseBlockError
 from datetime import datetime
 from xml.etree import ElementTree
 

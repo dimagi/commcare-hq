@@ -1,6 +1,7 @@
 from xml.etree import ElementTree
 from casexml.apps.case import settings
-from casexml.apps.case.tests.util import CaseBlock, check_user_has_case
+from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.tests.util import check_user_has_case
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.models import User
