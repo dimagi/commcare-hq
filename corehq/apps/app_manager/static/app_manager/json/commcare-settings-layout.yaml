@@ -58,10 +58,10 @@
   id: app-settings-advanced
   collapse: true
   settings:
-    - hq.secure_submissions
     - properties.logenabled  # Logging Enabled
     - properties.log_prop_weekly  # Weekly Log Sending Frequency
     - properties.log_prop_daily  # Daily Log Sending Frequency
+    - hq.secure_submissions
     - hq.translation_strategy
 
 - title: 'Disabled'
