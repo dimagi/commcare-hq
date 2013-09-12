@@ -6,6 +6,8 @@ werkzeug
 line_profiler
 git+git://github.com/dimagi/couchdbkit-debugpanel.git
 Fabric==1.4.3
-
+Sphinx==1.2b1
+Jinja2==2.7.1
+docutils==0.11
 -e git+git://github.com/dimagi/luna.git@1.0.0#egg=luna
 fixture
