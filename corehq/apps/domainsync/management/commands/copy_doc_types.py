@@ -52,32 +52,30 @@ class Command(BaseCommand):
     def iter_chunks(self, db, view_name, startkey=None, endkey=None, reduce=False, chunksize=1000):
         "iterates over chunks of the raw docs of the view, for bulk processing"
 
-        chunk = db.view(
-            view_name,
-            startkey=startkey,
-            endkey=endkey,
-            reduce=reduce,
-            include_docs=True,
-            limit=chunksize + 1 # The last doc provides the startkey for the next chunk
-        )
+        # A recursive formulation is superior but Python does not optimize tail calls
+        more_to_fetch = True
+        nextkey = startkey
 
-        rows = chunk.all()
+        while more_to_fetch:
 
-        yield [row['doc'] for row in rows[:chunksize]]
-
-        if len(rows) > chunksize:
-            remainder = self.iter_chunks(
-                db,
+            chunk = db.view(
                 view_name,
-                startkey=rows[-1]['key'],
+                startkey=nextkey,
                 endkey=endkey,
                 reduce=reduce,
+                include_docs=True,
+                limit=chunksize + 1 # The last doc provides the startkey for the next chunk
             )
 
-            # Apparently Python 3.3 does not allow a direct return, though it is correct
-            # return remainder
-            for chunk in remainder:
-                yield chunk
+            rows = chunk.all()
+
+            yield [row['doc'] for row in rows[:chunksize]]
+
+            if len(rows) <= chunksize:
+                more_to_fetch = False
+                nextkey = None
+            else:
+                nextkey = rows[-1]['key']
 
     def copy_docs(self, sourcedb, destdb, pretend=False, doc_types=[]):
 
@@ -90,6 +88,10 @@ class Command(BaseCommand):
             logger.info('%d/%d docs considered' % (processed, metadata.total_rows))
 
             docs_to_copy = [doc for doc in chunk if doc.get('doc_type') and doc['doc_type'] in doc_types]
+
+            for doc in docs_to_copy:
+                if '_rev' in doc:
+                    del doc['_rev']
 
             if len(docs_to_copy) > 0:
                 if not pretend:
