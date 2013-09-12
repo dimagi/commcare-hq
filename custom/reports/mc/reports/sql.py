@@ -142,8 +142,13 @@ class McSqlData(SqlData):
     @memoized
     def _get_users_matching_location(self, fixture_item, fixture_type):
         # todo: optimize
+        def _tag_to_user_data(tag):
+            return {
+                'hf': 'health_facility',
+            }.get(tag) or tag
+
         return filter(
-            lambda u: u.user_data.get(fixture_type.tag, None) == fixture_item.fields.get('name'),
+            lambda u: u.user_data.get(_tag_to_user_data(fixture_type.tag), None) == fixture_item.fields.get('name'),
             CommCareUser.by_domain(fixture_item.domain)
         )
 
