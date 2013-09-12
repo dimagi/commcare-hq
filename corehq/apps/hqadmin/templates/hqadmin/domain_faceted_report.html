@@ -30,9 +30,9 @@
             while (m = re.exec(queryString)) {
                 var param = decodeURIComponent(m[1]), val = decodeURIComponent(m[2]);
                 if (result.hasOwnProperty(param)) {
-                    result[param] = [result[param], val];
+                    result[param].push.apply(result[param], [val]);
                 } else {
-                    result[param] = val;
+                    result[param] = [val];
                 }
             }
 
