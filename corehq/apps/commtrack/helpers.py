@@ -1,8 +1,8 @@
 import logging
+from casexml.apps.case.mock import CaseBlock
 from corehq.apps.commtrack.models import Product, CommtrackConfig,\
     CommtrackActionConfig, SupplyPointType, SupplyPointProductCase, SupplyPointCase
 from corehq.apps.commtrack import const
-from casexml.apps.case.tests.util import CaseBlock
 from casexml.apps.case.xml import V2
 import uuid
 from corehq.apps.hqcase.utils import submit_case_blocks
