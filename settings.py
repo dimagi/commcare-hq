@@ -234,7 +234,6 @@ HQ_APPS = (
 
     # custom reports
     'a5288',
-    'benin',
     'bihar',
     'dca',
     'hsph',
@@ -245,6 +244,7 @@ HQ_APPS = (
     'pact',
     'psi',
 
+    'custom.apps.care_benin',
     'custom.reports.care_sa',
     'custom.apps.cvsu',
     'custom.reports.mc',
@@ -683,7 +683,7 @@ COUCHDB_APPS = [
     'wisepill',
 
     # custom reports
-    'benin',
+    'care_benin',
     'dca',
     'hsph',
     'mvp',
@@ -847,6 +847,7 @@ DOMAIN_MODULE_MAP = {
     'mvp-mwandama': 'mvp',
     'mvp-sada': 'mvp',
     'psi-unicef': 'psi',
+    'project': 'custom.apps.care_benin',
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
