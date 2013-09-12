@@ -1,0 +1,117 @@
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<form class="form form-horizontal" name="user_information" method="post">
+    <input type="hidden" name="form_type" value="update-user" />
+    <fieldset>
+        <legend>{{ edit_user_form_title }}</legend>
+        <div class="control-group">
+            <label class="control-label">{% trans 'Username' %}</label>
+            <div class="controls">
+                <span class="input-xlarge uneditable-input">{{ couch_user.html_username|safe }}</span>
+            </div>
+        </div>
+        {% crispy form_user_update %}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">{% trans 'Update Information' %}</button>
+        </div>
+    </fieldset>
+</form>
+{% if phonenumbers %}
+    {% block phonenumber_list %}
+    <div class="form form-horizontal">
+        <fieldset>
+            <legend>{% blocktrans %}Registered Phone Numbers{% endblocktrans %}</legend>
+        {% for phone in phonenumbers %}
+            <div class="control-group">
+                <label class="control-label">+{{ phone.number }}<br />
+                    {% ifequal phone.status "verified" %}
+                    <span class="label label-success">{% trans 'VERIFIED' %}</span>
+                    {% endifequal %}
+
+                    {% ifequal phone.status "pending" %}
+                    <span class="label">{% trans 'VERIFICATION PENDING' %}</span>
+                    {% endifequal %}
+
+                    {% ifequal phone.status "duplicate" %}
+                    {% if phone.dup_url %}<a href="{{ phone.dup_url }}">{% endif %}
+                        <span class="label label-warning">{% trans 'ALREADY IN USE' %}</span>
+                    {% if phone.dup_url %}</a>{% endif %}
+                    {% endifequal %}
+
+                    {% ifequal phone.status "invalid" %}
+                    <span class="label">{% trans 'INVALID FORMAT' %}</span>
+                    {% endifequal %}
+                </label>
+                <div class="controls">
+                    {% ifequal phone.status "unverified" %}
+                        <form method="post"
+                              action="{% url verify_phone_number domain couch_user.couch_id %}?phone_number={{phone.number|urlencode}}"
+                              style="display: inline;">
+                            <button type="submit"
+                                    data-title="{% trans 'Send a verification SMS to this phone. When the user replies to this SMS, the phone number will be verified.' %}"
+                                    class="btn btn-primary verify-button"><i class="icon-signal"></i> {% trans 'Verify' %}
+                            </button>
+                        </form>
+                    {% endifequal %}
+
+                    {% ifequal phone.status "duplicate" %}
+                        <button data-title="You cannot verify this phone because it is already being used elsewhere"
+                                class="btn btn-primary disabled verify-button">
+                            <i class="icon-signal"></i> {% trans 'Verify' %}
+                        </button>
+                    {% endifequal %}
+
+                    {% ifequal phone.status "pending" %}
+                        <button data-title="Re-send the verification SMS to this phone"
+                                class="btn btn-primary verify-button"
+                                data-toggle="modal"
+                                href="#reverify_{{phone.number|urlencode}}">
+                            <i class="icon icon-signal icon-white"></i> {% trans 'Verify (retry)' %}
+                        </button>
+                    {% endifequal %}
+
+                    <a class="btn btn-danger"
+                       data-toggle="modal"
+                       href="#delete_phonenumber_{{ forloop.counter }}">
+                        <i class="icon-remove"></i> {% trans 'Delete' %}
+                    </a>
+                    {% if not forloop.first %}
+                        <form class="input-inline input-append"
+                              name="make_phone_number_default"
+                              action="{% url make_phone_number_default domain couch_user.couch_id %}"
+                              method="POST">
+                            <input type="hidden" name="phone_number" value="{{ phone.number }}"/>
+                            <button type="submit" class="btn">
+                                {% blocktrans %}Mark as primary{% endblocktrans %}
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+        </fieldset>
+    </div>
+    {% endblock %}
+{% endif %}
+
+<form class="form form-horizontal" name="add_phone_number" method="post">
+    <input type="hidden" name="form_type" value="add-phonenumber" />
+    <fieldset>
+        <legend>{% trans 'Add a Phone Number' %}</legend>
+        <div class="control-group">
+            <label class="control-label" for="id_add_phone_number">{% trans 'Phone Number' %}</label>
+            <div class="controls">
+                <div class="input-prepend">
+                    <span class="add-on">+</span>
+                    <input id="id_add_phone_number" type="text" name="phone_number" value="" maxlength="50" />
+                </div>
+                <p class="help-block">
+                    {% blocktrans %}Please enter number, including international code, in digits only.{% endblocktrans %}
+                </p>
+            </div>
+        </div>
+    </fieldset>
+    <div class="form-actions"><button type="submit" class="btn btn-primary">{% trans 'Add Number' %}</button></div>
+</form>

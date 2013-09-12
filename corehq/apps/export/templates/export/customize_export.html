@@ -1,9 +1,11 @@
-{% extends "reports/base_template.html" %}
+{% extends "settings/base_template.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
 {% block js %}
     {{ block.super }}
+    <script src="{% static 'hqwebapp/js/lib/knockout.mapping.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
 {% endblock %}
 
@@ -67,7 +69,7 @@
                                 {regex: /^form\.meta\.(.*)$/, tag: 'meta'},
                                 {regex: /^form\.case\.(.*)$/, tag: 'case'},
                                 {regex: /^form\.([#@].*)$/, tag: 'tag'},
-                                {regex: /^form\.(.*)$/, tag: ''},
+                                {regex: /^form\.(.*)$/, tag: ''}
                             ], pattern, stripped;
                             for (var i = 0; i < patterns.length; i++) {
                                 pattern = patterns[i];
@@ -335,22 +337,6 @@
     </script>
 {% endblock %}
 
-{% block page-title %}
-    <ul class="breadcrumb">
-        <li>
-            <a href="{% url reports_home domain %}"><strong>{% trans "Project Reports" %}</strong></a>
-            <span class="divider">&gt;</span>
-        </li>
-        <li>
-            <a href="{{ helper.back_url }}">{{ helper.export_title }}</a>
-            <span class="divider">&gt;</span>
-        </li>
-        <li class="active">
-            <a href="#">{% trans "Create Custom Export" %}</a>
-        </li>
-    </ul>
-{% endblock %}
-
 {% block main_column %}
 <div id="customize-export" style="display: none;" data-bind="visible: true">
     <form class="form-horizontal" method="post">
@@ -499,11 +485,10 @@
 </div>
 {% endblock %}
 
-
 {% block modals %}{{ block.super }}
     {% if custom_export.get_id %}
         {% with custom_export as export %}
-            {% include "reports/dialogs/delete_custom_export_dialog.html" %}
+            {% include "export/dialogs/delete_custom_export_dialog.html" %}
         {% endwith %}
     {% endif %}
 {% endblock %}

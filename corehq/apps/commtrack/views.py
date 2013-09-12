@@ -1,6 +1,8 @@
 from collections import defaultdict
 from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseNotFound
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _, ugettext_noop
 
 from corehq.apps.domain.decorators import require_superuser, domain_admin_required, require_previewer, login_and_domain_required
 from corehq.apps.domain.models import Domain
@@ -8,6 +10,8 @@ from corehq.apps.commtrack.management.commands import bootstrap_psi
 from corehq.apps.commtrack.models import Product
 from corehq.apps.commtrack.forms import ProductForm
 from corehq.apps.locations.models import Location
+from corehq.apps.settings.views import BaseProjectDataView
+from dimagi.utils.decorators.memoized import memoized
 from soil.util import expose_download
 import uuid
 from django.core.urlresolvers import reverse
@@ -20,80 +24,138 @@ import csv
 from dimagi.utils.couch.database import iter_docs
 import itertools
 
-DEFAULT_PRODUCT_LIST_LIMIT = 10
 
-@domain_admin_required # TODO: will probably want less restrictive permission
-def product_list(request, domain, template="commtrack/manage/products.html"):
-    page = request.GET.get('page', 1)
-    limit = request.GET.get('limit', DEFAULT_PRODUCT_LIST_LIMIT)
+class BaseCommTrackManageView(BaseProjectDataView):
 
-    show_inactive = json.loads(request.GET.get('show_inactive', 'false'))
+    @method_decorator(domain_admin_required)  # TODO: will probably want less restrictive permission?
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseCommTrackManageView, self).dispatch(request, *args, **kwargs)
 
-    total = len(Product.by_domain(domain))
 
-    context = {
-        'domain': domain,
-    }
-    context.update(
-        product_list=dict(
-            page=page,
-            limit=limit,
-            total=total,
-        ),
-        show_inactive=show_inactive,
-        pagination_limit_options=range(DEFAULT_PRODUCT_LIST_LIMIT, 51, DEFAULT_PRODUCT_LIST_LIMIT)
-    )
-    return render(request, template, context)
+class ProductListView(BaseCommTrackManageView):
+    # todo mobile workers shares this type of view too---maybe there should be a class for this?
+    urlname = 'commtrack_product_list'
+    template_name = 'commtrack/manage/products.html'
+    page_title = ugettext_noop("Manage Products")
 
-@domain_admin_required # TODO: will probably want less restrictive permission
-def product_fetch(request, domain):
-    page = int(request.GET.get('page', 1))
-    limit = int(request.GET.get('limit', DEFAULT_PRODUCT_LIST_LIMIT))
-    skip = (page-1)*limit
+    DEFAULT_LIMIT = 10
 
-    sort_by = request.GET.get('sortBy', 'abc')
+    @property
+    def page(self):
+        return self.request.GET.get('page', 1)
 
-    show_inactive = json.loads(request.GET.get('show_inactive', 'false'))
+    @property
+    def limit(self):
+        return self.request.GET.get('limit', self.DEFAULT_LIMIT)
 
-    products = Product.by_domain(domain) #limit=limit, skip=skip)
-    def product_data(p):
-        info = p._doc
-        info['edit_url'] = reverse('commtrack_product_edit', kwargs={'domain': domain, 'prod_id': p._id})
-        return info
+    @property
+    def show_inactive(self):
+        return json.loads(self.request.GET.get('show_inactive', 'false'))
 
-    return HttpResponse(json.dumps(dict(
-        success=True,
-        current_page=page,
-        product_list=[product_data(p) for p in products],
-    )), 'text/json')
+    @property
+    def total(self):
+        return len(Product.by_domain(self.domain))
 
-@domain_admin_required # TODO: will probably want less restrictive permission
-def product_edit(request, domain, prod_id=None): 
-    if prod_id:
+    @property
+    def page_context(self):
+        return {
+            'product_list': {
+                'page': self.page,
+                'limit': self.limit,
+                'total': self.total
+            },
+            'show_inactive': self.show_inactive,
+            'pagination_limit_options': range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT)
+        }
+
+
+class FetchProductListView(ProductListView):
+    urlname = 'commtrack_product_fetch'
+
+    @property
+    def product_data(self):
+        data = []
+        products = Product.by_domain(self.domain)
+        for p in products:
+            info = p._doc
+            info['edit_url'] = reverse('commtrack_product_edit', kwargs={'domain': self.domain, 'prod_id': p._id})
+            data.append(info)
+        return data
+
+    def get(self, request, *args, **kwargs):
+        return HttpResponse(json.dumps({
+            'success': True,
+            'current_page': self.page,
+            'product_list': self.product_data,
+        }), 'text/json')
+
+
+class NewProductView(BaseCommTrackManageView):
+    urlname = 'commtrack_product_new'
+    page_title = ugettext_noop("New Product")
+    template_name = 'commtrack/manage/product.html'
+
+    @property
+    @memoized
+    def product(self):
+        return Product(domain=self.domain)
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': ProductListView.page_title,
+            'url': reverse(ProductListView.urlname, args=[self.domain]),
+        }]
+
+    @property
+    @memoized
+    def new_product_form(self):
+        if self.request.method == 'POST':
+            return ProductForm(self.product, self.request.POST)
+        return ProductForm(self.product)
+
+    @property
+    def page_context(self):
+        return {
+            'product': self.product,
+            'form': self.new_product_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.new_product_form.is_valid():
+            self.new_product_form.save()
+            messages.success(request, _("Product saved!"))
+            return HttpResponseRedirect(reverse(ProductListView.urlname, args=[self.domain]))
+        return self.get(request, *args, **kwargs)
+
+
+class EditProductView(NewProductView):
+    urlname = 'commtrack_product_edit'
+    page_title = ugettext_noop("Edit Product")
+
+    @property
+    def product_id(self):
         try:
-            product = Product.get(prod_id)
+            return self.kwargs['prod_id']
+        except KeyError:
+            raise Http404()
+
+    @property
+    @memoized
+    def product(self):
+        try:
+            return Product.get(self.product_id)
         except ResourceNotFound:
-            raise Http404
-    else:
-        product = Product(domain=domain)
+            raise Http404()
 
-    if request.method == "POST":
-        form = ProductForm(product, request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Product saved!')
-            return HttpResponseRedirect(reverse('commtrack_product_list', kwargs={'domain': domain}))
-    else:
-        form = ProductForm(product)
+    @property
+    def page_name(self):
+        return _("Edit %s") % self.product.name
 
-    context = {
-        'domain': domain,
-        'product': product,
-        'form': form,
-    }
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.product_id])
 
-    template="commtrack/manage/product.html"
-    return render(request, template, context)
 
 @require_superuser
 def bootstrap(request, domain):
