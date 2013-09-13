@@ -14,6 +14,7 @@ class Command(LabelCommand):
         target_uri = XFormInstance.get_db().uri
         if source_uri is None:
             print "\n\tNo production URI to replicate from, we're done here.\n"
+            print "\n\tNo settings.PRODUCTION_COUCHDB_URI has been set\n"
             sys.exit()
 
         domain_list = getattr(settings, 'STAGING_DOMAINS', [])
@@ -40,7 +41,6 @@ class Command(LabelCommand):
             print "\n\tStarting staging replication from prod with these params: %s" % repl_params
 
         server = XFormInstance.get_db().server
-        #import ipdb;ipdb.set_trace()
-        #server.replicate(source_uri, target_uri, **repl_params)
+        server.replicate(source_uri, target_uri, **repl_params)
 
 
