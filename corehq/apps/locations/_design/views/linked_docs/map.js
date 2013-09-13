@@ -1,6 +1,6 @@
 function(doc) {
     var path = doc.location_;
-    if (path != null) {
+    if (path && path.length) {
         path = path.slice(0);
         path.splice(0, 0, null);
         for (var i = 0; i < path.length; i++) {
