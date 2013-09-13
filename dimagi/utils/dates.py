@@ -282,9 +282,10 @@ class DateSpan(object):
     def get_validation_reason(self):
         if self.startdate is None or self.enddate is None:
             return "You have to specify both dates!"
-        else:
-            if self.enddate < self.startdate:
-                return "You can't have an end date of %s after start date of %s" % (self.enddate, self.startdate)
+        elif self.enddate < self.startdate:
+            return "You can't have an end date of %s after start date of %s" % (self.enddate, self.startdate)
+        elif self.startdate < datetime.datetime(1900, 01, 01) or self.enddate < datetime.datetime(1900, 01, 01):
+            return "You can't use dates earlier than the year 1900"
         return ""
     
     def __str__(self):
