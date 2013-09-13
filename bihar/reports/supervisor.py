@@ -137,8 +137,10 @@ class GroupReferenceMixIn(object):
     @property
     @memoized
     def group_display(self):
-        return u"{group} ({awcc})".format(group=self.group.name,
-                                          awcc=get_awcc(self.group))
+        return {
+            'supervisor': u'{group} ({awcc})',
+            'manager': u'{group}',
+        }[self.mode].format(group=self.group.name, awcc=get_awcc(self.group))
 
     @property
     def rendered_report_title(self):
