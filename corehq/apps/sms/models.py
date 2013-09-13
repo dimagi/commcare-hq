@@ -16,6 +16,10 @@ from corehq.apps.sms import util as smsutil
 INCOMING = "I"
 OUTGOING = "O"
 
+WORKFLOW_REMINDER = "REMINDER"
+WORKFLOW_KEYWORD = "KEYWORD"
+WORKFLOW_BROADCAST = "BROADCAST"
+
 DIRECTION_CHOICES = (
     (INCOMING, "Incoming"),
     (OUTGOING, "Outgoing"))
@@ -32,6 +36,7 @@ class MessageLog(Document, UnicodeMixIn):
     backend_id                  = StringProperty()
     billed                      = BooleanProperty(default=False)
     billing_errors              = ListProperty()
+    workflow = StringProperty() # One of the WORKFLOW_* constants above describing what kind of workflow this sms was a part of
 
     def __unicode__(self):
         to_from = (self.direction == INCOMING) and "from" or "to"
