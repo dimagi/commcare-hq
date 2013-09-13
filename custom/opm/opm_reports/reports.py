@@ -14,6 +14,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from corehq.apps.users.models import CommCareUser, CommCareCase
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.dates import DateSpan
 
 from couchdbkit.exceptions import ResourceNotFound
 
@@ -130,5 +131,32 @@ class IncentivePaymentReport(BaseReport):
         # return [(row, self.last_month_totals) for row in CommCareUser.by_domain(DOMAIN)]
         return CommCareUser.by_domain(DOMAIN)
 
-# may be better to have an optional method in BaseReport to override that gives
-# extra kwargs to pass to the individual row constructor
+
+def get_report(ReportClass, month=None, year=None):
+    """
+    Utility method to run a report for an arbitrary month without a request
+    """
+    if month is not None:
+        assert year is not None, \
+            "You must pass either nothing or a month AND a year"
+    else:
+        last_month = datetime.datetime.now() - datetime.timedelta(days=4)
+        month = last_month.month
+        year = last_month.year
+
+    class Report(ReportClass):
+        snapshot = None
+        report_class = ReportClass
+        def __init__(self, *args, **kwargs):
+            pass
+
+        @property
+        def headers(self):
+            self.slugs, headers = [list(tup) for tup in zip(*self.model.method_map)]
+            return headers
+
+        @property
+        def datespan(self):
+            return DateSpan.from_month(month, year)
+
+    return Report()

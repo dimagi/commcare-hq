@@ -83,6 +83,6 @@ class OpmFormFluff(fluff.IndicatorDocument):
 
 
 # These Pillows need to be added to the list of PILLOWTOPS in settings.py
-OpmCasePillow = OpmCaseFluff.pillow()
-OpmUserPillow = OpmUserFluff.pillow()
-OpmFormPillow = OpmFormFluff.pillow()
+OpmCaseFluffPillow = OpmCaseFluff.pillow()
+OpmUserFluffPillow = OpmUserFluff.pillow()
+OpmFormFluffPillow = OpmFormFluff.pillow()

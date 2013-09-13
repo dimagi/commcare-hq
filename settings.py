@@ -808,9 +808,9 @@ PILLOWTOPS = [
                  'corehq.pillows.reportcase.ReportCasePillow',
                  # fluff
                  'bihar.models.CareBiharFluffPillow',
-                 'custom.opm.opm_reports.models.OpmCasePillow',
-                 'custom.opm.opm_reports.models.OpmUserPillow',
-                 'custom.opm.opm_reports.models.OpmFormPillow',
+                 'custom.opm.opm_reports.models.OpmCaseFluffPillow',
+                 'custom.opm.opm_reports.models.OpmUserFluffPillow',
+                 'custom.opm.opm_reports.models.OpmFormFluffPillow',
                  'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
                  'custom.reports.care_sa.models.CareSAFluffPillow',
                  'custom.reports.mc.models.MalariaConsortiumFluffPillow',

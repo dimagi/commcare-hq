@@ -4,34 +4,24 @@ from django.core.management.base import BaseCommand
 from corehq.apps.users.models import CommCareUser, CommCareCase
 from dimagi.utils.couch.database import get_db
 
-from custom.opm.opm_reports.tests import test_data_location
+from custom.opm.opm_reports.tests import test_data_location, test_month_year
 from custom.opm.opm_reports.beneficiary import Beneficiary
+from custom.opm.opm_reports.constants import DOMAIN
 from custom.opm.opm_reports.incentive import Worker
+from custom.opm.opm_reports.reports import (BeneficiaryPaymentReport,
+    IncentivePaymentReport, get_report)
+from custom.opm.opm_tasks.models import OpmReportSnapshot
 
 
 class Command(BaseCommand):
     """
     Generate test data for the OPM reports.
-    It pulls stuff from the db, runs the report, then saves it as a json file.
+    It pulls stuff from the db, runs the reports, then saves it all as a json file.
     There's no intelligent testing going on, but it can at least verify
     consistency.
     """
     help = "Pull data from the database and write\
         to a json file (currently only works for opm)"
-
-    def get_beneficiary_results(self, case):
-        beneficiary = Beneficiary(case)
-        results = []
-        for method, name in beneficiary.method_map:
-            results.append((method, getattr(beneficiary, method)))
-        return results
-
-    def get_test_results(self, item, model):
-        instance = model(item)
-        results = []
-        for method, name in model.method_map:
-            results.append((method, getattr(instance, method)))
-        return results
 
     def handle(self, *args, **options):
 
@@ -42,27 +32,39 @@ class Command(BaseCommand):
 
         for b in beneficiaries:
             forms += b.get_forms()
-            # add Beneficiary test results
-            b.test_results = self.get_beneficiary_results(b)
 
-        # add Incentive test results
-        for u in users:
-            u.test_results = self.get_test_results(u, Worker)
+        test_data = []
 
-        test_data = [form.to_json() for form in forms]
+        month, year = test_month_year
+        for report_class in [IncentivePaymentReport, BeneficiaryPaymentReport]:
+            self.stdout.write("Running %s\n" % report_class.__name__)
+            report = get_report(report_class)
+            snapshot = OpmReportSnapshot(
+                domain=DOMAIN,
+                month=month,
+                year=year,
+                report_class=report.report_class.__name__,
+                headers=report.headers,
+                slugs=report.slugs,
+                rows=report.rows,
+            )
+            test_data.append(snapshot.to_json())
+
+        self.stdout.write("Saving raw data\n")
+        test_data += [form.to_json() for form in forms]
         test_data += [u.to_json() for u in users]
         test_data += [b.to_json() for b in beneficiaries]
 
         doc_ids = set()
         docs = []
         for doc in test_data:
-            if doc['_id'] not in doc_ids:
+            if doc.get('_id') not in doc_ids:
                 for attrib in ['_rev', '_attachments']:
                     try:
                         del doc[attrib]
                     except KeyError:
                         pass                
-                doc_ids.add(doc['_id'])
+                doc_ids.add(doc.get('_id', 'null'))
                 docs.append(doc)
             else:
                 self.stdout.write("Ignoring duplicates\n")
