@@ -8,7 +8,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import SyncLog
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, UserRole
 from couchforms.models import XFormInstance
 from dimagi.utils.chunked import chunked
 
@@ -132,9 +132,22 @@ class Command(LabelCommand):
             include_docs=True,
             wrapper=wrap_user
         ).all()
+
+        role_ids = set([])
         for user in users:
             # if we use bulk save, django user doesn't get sync'd
+            if user.domain_membership.role_id:
+                role_ids.add(user.domain_membership.role_id)
             user.save(force_update=True)
+
+        print 'copying %s roles' % len(role_ids)
+        for i, subset in enumerate(chunked(role_ids, CHUNK_SIZE)):
+            roles = [UserRole.wrap(role['doc']) for role in sourcedb.all_docs(
+                keys=list(subset),
+                include_docs=True,
+            )]
+            self.lenient_bulk_save(UserRole, roles)
+
 
         if options['include_sync_logs']:
             print 'copying sync logs'
