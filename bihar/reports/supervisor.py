@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
-from bihar.utils import get_team_members, get_all_owner_ids, get_all_owner_ids_from_group
+from bihar.utils import get_team_members, get_all_owner_ids_from_group
 
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.reports.standard import CustomProjectReport
@@ -25,7 +25,8 @@ from bihar.reports.indicators.mixins import IndicatorConfigMixIn
 def shared_bihar_context(report):
     return {
         'home':      MainNavReport.get_url(report.domain, render_as=report.render_next),
-        'render_as': report.render_next
+        'render_as': report.render_next,
+        'mode': report.mode,
     }
 
 
@@ -48,7 +49,8 @@ class ConvenientBaseMixIn(object):
     _headers = []  # override
     @property
     def headers(self):
-        return DataTablesHeader(*(DataTablesColumn(_(h)) for h in self._headers))
+        headers = self._headers[self.mode] if isinstance(self._headers, dict) else self._headers
+        return DataTablesHeader(*(DataTablesColumn(_(h)) for h in headers))
 
     @property
     def render_next(self):
@@ -57,6 +59,24 @@ class ConvenientBaseMixIn(object):
     @classmethod
     def show_in_navigation(cls, *args, **kwargs):
         return False
+
+    @property
+    @memoized
+    def mode(self):
+        # sup_roles = ('ANM', 'LS') # todo if we care about these
+        man_roles = ('MOIC', 'BHM', 'BCM', 'CDPO')
+        if self.request.couch_user.is_commcare_user():
+            if self.request.couch_user.user_data.get('role', '').upper() in man_roles:
+                return 'manager'
+        return 'supervisor'
+
+    @property
+    def is_supervisor(self):
+        return self.mode == 'supervisor'
+
+    @property
+    def is_manager(self):
+        return self.mode == 'manager'
 
 
 def list_prompt(index, value):
@@ -173,10 +193,10 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
     slug = "subcenter"
     description = ugettext_noop("Subcenter selection report")
     
-    _headers = [ugettext_noop("Team Name"), 
-                ugettext_noop("AWCC"),
-                # ugettext_noop("Rank")
-                ]
+    _headers = {
+        'supervisor': [ugettext_noop("Team Name"), ugettext_noop("AWCC")],
+        'manager': [ugettext_noop("Subcentre")],
+    }
 
     @memoized
     def _get_groups(self):
@@ -196,15 +216,17 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
 
     def _row(self, group, rank):
 
-        def _awcc_link(g):
+        def _link(g, text):
             params = copy(self.request_params)
             params["group"] = g.get_id
-            return format_html(u'<a href="{details}">{awcc}</a>',
-                awcc=get_awcc(g),
+            return format_html(u'<a href="{details}">{text}</a>',
+                text=text,
                 details=url_and_params(self.next_report_class.get_url(domain=self.domain,
                                                                       render_as=self.render_next),
                                        params))
-        return [group.name, _awcc_link(group)]
+
+
+        return [group.name, _link(group, get_awcc(group))] if self.is_supervisor else [_link(group, group.name)]
 
 
 class MainNavReport(BiharSummaryReport, IndicatorConfigMixIn):
