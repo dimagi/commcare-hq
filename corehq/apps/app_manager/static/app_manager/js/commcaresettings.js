@@ -197,7 +197,7 @@ function CommcareSettings(options) {
             });
         });
         section.reallyCollapse = ko.computed(function () {
-            return section.collapse || _(section.settings).some(function (setting) {
+            return section.collapse && !_(section.settings).some(function (setting) {
                 return setting.hasError();
             });
         });
