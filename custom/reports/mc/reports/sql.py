@@ -42,9 +42,10 @@ def _to_column(coldef):
         return AggregateColumn(
             _(coldef['slug']),
             _fraction,
-            [_slug_to_raw_column(s) for s in coldef['columns']]
+            [_slug_to_raw_column(s) for s in coldef['columns']],
+            sortable=False,
         )
-    return DatabaseColumn(_(coldef), _slug_to_raw_column(coldef))
+    return DatabaseColumn(_(coldef), _slug_to_raw_column(coldef), sortable=False)
 
 def _empty_row(len):
     return [NO_VALUE] * len
@@ -66,6 +67,47 @@ class UserDataFormat(TableDataFormat):
                 yield raw_data[user._id]
             else:
                 yield _empty_row(len(self.columns))
+
+class FacilityDataFormat(TableDataFormat):
+
+    def __init__(self, columns, users):
+        self.columns = columns
+        self.no_value = NO_VALUE
+        self.users = users
+        self.facility_user_map = defaultdict(lambda: [])
+        for u in users:
+            self.facility_user_map[u.user_data.get('health_facility')].append(u)
+
+    def get_headers(self):
+        return sorted(self.facility_user_map.keys())
+
+    def format_output(self, row_generator):
+        raw_data = dict(row_generator)
+
+        def _combine_rows(row1, row2):
+            def _combine(a, b):
+                def _int(val):
+                    return 0 if val == NO_VALUE else int(val)
+
+                if a == NO_VALUE and b == NO_VALUE:
+                    return NO_VALUE
+                else:
+                    return _int(a) + _int(b)
+
+            if not row1:
+                return row2
+            return [_combine(row1[i], row2[i]) for i in range(len(row1))]
+
+        for facility in sorted(self.facility_user_map.keys()):
+            users = self.facility_user_map[facility]
+            data = []
+            for user in users:
+                if user._id in raw_data:
+                    user_data = raw_data[user._id]
+                else:
+                    user_data = _empty_row(len(self.columns))
+                data = _combine_rows(data, user_data)
+            yield data
 
 class Section(object):
     """
@@ -227,7 +269,7 @@ class McSqlData(SqlData):
 
     @property
     def user_column(self):
-        return DatabaseColumn("User", SimpleColumn("user_id"))
+        return DatabaseColumn("User", SimpleColumn("user_id"), sortable=False)
 
     @property
     def columns(self):
@@ -320,7 +362,7 @@ class DistrictMonthly(MCBase):
     slug = 'district_monthly'
     name = ugettext_noop("District Monthly Report")
     SECTIONS = DISTRICT_MONTHLY_REPORT
-    format_class = UserDataFormat
+    format_class = FacilityDataFormat
 
 class DistrictWeekly(MCBase):
     fields = [
@@ -330,7 +372,7 @@ class DistrictWeekly(MCBase):
     slug = 'district_weekly'
     name = ugettext_noop("District Weekly Report")
     SECTIONS = DISTRICT_WEEKLY_REPORT
-    format_class = UserDataFormat
+    format_class = FacilityDataFormat
 
 class HealthFacilityWeekly(MCBase):
     fields = [
