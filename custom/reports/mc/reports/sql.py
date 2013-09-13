@@ -56,6 +56,9 @@ class UserDataFormat(TableDataFormat):
         self.no_value = NO_VALUE
         self.users = users
 
+    def get_headers(self):
+        return [raw_username(u.username) for u in self.users]
+
     def format_output(self, row_generator):
         raw_data = dict(row_generator)
         for user in self.users:
@@ -157,6 +160,14 @@ class McSqlData(SqlData):
         self.fixture_item = fixture_item
         self._sections = sections
 
+    @property
+    @memoized
+    def format(self):
+        return self.format_class([], self.get_users())
+
+    def get_headers(self):
+        return self.format.get_headers()
+
     @memoized
     def get_users(self):
         self.fixture_item, self.fixture_type
@@ -234,14 +245,10 @@ class MCSectionedDataProvider(DataProvider):
     def __init__(self, sqldata):
         self.sqldata = sqldata
 
-    @memoized
-    def user_column(self, user):
-        return DataTablesColumn(raw_username(user.username))
-
 
     def headers(self):
         return DataTablesHeader(DataTablesColumn(_('Indicator')),
-                                *[self.user_column(u) for u in self.sqldata.get_users()])
+                                *[DataTablesColumn(header) for header in self.sqldata.get_headers()])
 
     @memoized
     def rows(self):
