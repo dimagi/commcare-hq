@@ -13,26 +13,10 @@
 
 import sys, os
 
-sys.path.insert(0, os.path.abspath('..'))
-filedir = os.path.abspath('..')
-submodules_list = os.listdir(os.path.join(filedir, 'submodules'))
-
-for d in submodules_list:
-    if d == "__init__.py" or d == '.' or d == '..':
-        continue
-    sys.path.insert(1, os.path.join(filedir, 'submodules', d))
-
-sys.path.append(os.path.join(filedir, 'submodules'))
-
-import settings
-from django.core.management import setup_environ
-
-setup_environ(settings)
-
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath('..'))
+#sys.path.insert(0, os.path.abspath('.'))
 
 # -- General configuration -----------------------------------------------------
 

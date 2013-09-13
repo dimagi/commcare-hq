@@ -1,9 +1,5 @@
 Reporting
 =========
-
-report
-    logical grouping of indicators with common config options (filters etc)
-
 The way reports are produced in CommCare is still evolving so there are a number
 of different frameworks and methods for generating reports. Some of these are
 *legacy* frameworks and should not be used for any future reports.
@@ -82,13 +78,28 @@ Reporting on data stored in SQL
 As described above there are various ways of getting reporting data into
 and SQL database. From there we can query the data in a number of ways.
 
-Extending the ``SqlData`` class
+Extending the :class:`SqlData` class
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The ``SqlData`` class allows you to define how to query the data
-in a declarative manner by breaking down a query into a number of components.
+The :class:`SqlData` class allows you to define how to query the data
+in a declarative manner by providing the following:
 
-.. autoclass:: corehq.apps.reports.sqlreport.SqlData
-    :members: table_name, columns, filters, filter_values, group_by, keys
+* A list of *column* classes.
+
+  * These make up the *from* portion of the SQL query.
+
+* A list of filters.
+
+  * Filters are instances of :class:`sqlagg.filters.SqlFilter`.
+  * See the :mod:`sqlagg.filters` module for a list of standard filters.
+
+* A dictionary mapping filter parameters to values.
+* A list of *keys*.
+
+  * These allow you to specify which rows you expect in the output data.
+    Its main use is to add rows for keys that don't exist in the data.
+
+* A list of columns to include in the *group by* clause.
+* The name of the table to run the query against.
 
 This approach means you don't write any raw SQL. It also allows you to
 easily include or exclude columns, format column values and combine values
@@ -97,7 +108,7 @@ from different query columns into a single report column (e.g. calculate percent
 In cases where some columns may have different filter values e.g. males vs females,
 **sqlagg** will handle executing the different queries and combining the results.
 
-This class also implements the ``corehq.apps.reports.api.ReportDataSource``.
+This class also implements the :class:`corehq.apps.reports.api.ReportDataSource`.
 
 See `Report API <report_api_>`_ and `sqlagg`_ for more info.
 
@@ -197,18 +208,15 @@ e.g.
   ]
 
 This is implemented by creating a report data source class that extends
-``corehq.apps.reports.api.ReportDataSource`` and overriding the
+:class:`corehq.apps.reports.api.ReportDataSource` and overriding the
 :func:`get_data` function.
-
-.. autoclass:: corehq.apps.reports.api.ReportDataSource
-    :members: slugs, get_data
 
 These data sources can then be used independently or the CommCare reporting
 user interface and can also be reused for multiple use cases such as
 displaying the data in the CommCare UI as a table, displaying it in a map,
 making it available via HTTP etc.
 
-An extension of this base data source class is the ``corehq.apps.reports.sqlreport.SqlData``
+An extension of this base data source class is the :class:`corehq.apps.reports.sqlreport.SqlData`
 class which simplifies creating data sources that get data by running
 an SQL query. See section on `SQL reporting <sql_>`_ for more info.
 
@@ -230,8 +238,7 @@ e.g.
   data = ds.get_data()
 
 
-Adding dynamic reports
-----------------------
+## Adding dynamic reports
 
 Domains support dynamic reports. Currently the only verison of this is the pie charts
 that show breakdowns of forms/cases by a particular property. See the `add_pie_chart_report`
@@ -301,3 +308,4 @@ coerced to a list.
 
 to rephrase:  fluff emitters accept a doc and return a generator where each
 element corresponds to a contribution to the indicator
+
