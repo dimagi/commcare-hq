@@ -33,6 +33,12 @@
                             uses cases but doesn't have
                             detail screens configured for cases.
                         {% endif %}
+                        {% if error.type == "invalid id key" %}
+                            Module
+                            <a href="{% url view_module domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                            has an incorrectly formatted ID key ({{ error.key }}).
+                            Make sure your key starts with a letter and does not contain spaces.
+                        {% endif %}
                         {% if error.type == "no modules" %}
                             This application has no modules.
                         {% endif %}
