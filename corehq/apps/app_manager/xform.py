@@ -800,6 +800,7 @@ class XForm(WrappedNode):
                     basic_updates = updates_by_case.pop('')
                     add_update_block(case_block, basic_updates)
                 if updates_by_case:
+                    needs_casedb_instance = True
                     def make_nested_subnode(base_node, path):
                         """
                         path='x/y/z' will append <x><y><z/></y></x> to base_node
