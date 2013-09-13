@@ -76,7 +76,7 @@ class FacilityDataFormat(TableDataFormat):
         self.users = users
         self.facility_user_map = defaultdict(lambda: [])
         for u in users:
-            self.facility_user_map[u.user_data.get('health_facility')].append(u)
+            self.facility_user_map[u.user_data.get('health_facility') or '[none]'].append(u)
 
     def get_headers(self):
         return sorted(self.facility_user_map.keys())
