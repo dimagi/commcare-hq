@@ -209,7 +209,7 @@ function CommcareSettings(options) {
         for (i = 0; i < setting.contingent_default.length; i += 1) {
             _case = setting.contingent_default[i];
             condition = self.parseCondition(_case.condition);
-            var j
+            var j;
             for (j = 0; j < condition.settings.length; j += 1) {
                 condition.settings[j].value.subscribe(function() {
                     setting.value(setting.computeDefault());
