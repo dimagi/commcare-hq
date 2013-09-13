@@ -184,10 +184,12 @@ class FormPropertySection(Section):
                 user_row = [wrapped.xpath(path) for path in self.column_slugs]
             else:
                 user_row = [NO_VALUE] * len(self.column_slugs)
-            rows.append(user_row)
+            rows.append((user, user_row))
 
+        # format
+        formatted_rows = list(self.report.format.format_output(rows))
         # transpose
-        return [[_(col)] + [r[i] for r in rows] for i, col in enumerate(self.column_slugs)]
+        return [[_(col)] + [r[i] for r in formatted_rows] for i, col in enumerate(self.column_slugs)]
 
 
 class McSqlData(SqlData):
