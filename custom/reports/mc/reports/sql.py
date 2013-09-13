@@ -1,15 +1,13 @@
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from sqlagg.columns import *
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn, DataFormatter, TableDataFormat
+from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn, DataFormatter, TableDataFormat, DictDataFormat
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.util import user_id_to_username
+from corehq.apps.users.util import raw_username
 from couchforms.models import XFormInstance
-from custom.reports.mc.models import WEEKLY_SUMMARY_XMLNS
 from .definitions import *
 from .composed import DataProvider, ComposedTabularReport
 
@@ -66,7 +64,7 @@ class Section(object):
 
 class SqlSection(Section, SqlData):
     """
-    A way to represent sections in a report. I wonder if we should genericize/pull this out.
+    A sql-based implementation of sections
     """
     def __getattribute__(self, item):
         if item in ['table_name', 'group_by', 'filters', 'filter_values', 'keys']:
@@ -81,9 +79,23 @@ class SqlSection(Section, SqlData):
     @property
     @memoized
     def rows(self):
-        formatter = DataFormatter(TableDataFormat(self.columns, no_value=NO_VALUE))
-        raw_data = list(formatter.format(self.data, keys=self.keys, group_by=self.group_by))
-        ret = transpose(self.columns, raw_data)
+        formatter = DataFormatter(DictDataFormat(self.columns, no_value=NO_VALUE))
+        raw_data = formatter.format(self.data, keys=self.keys, group_by=self.group_by)
+
+        def _dict_to_row(row_dict):
+            return [row_dict[c.slug] for c in self.columns]
+
+        def _empty_row():
+            return [NO_VALUE] * len(self.columns)
+
+        raw_rows = []
+        for u in self.report.get_user_ids():
+            if u in raw_data:
+                raw_rows.append(_dict_to_row(raw_data[u]))
+            else:
+                raw_rows.append(_empty_row())
+
+        ret = transpose(self.columns, raw_rows)
         return ret
 
 class FormPropertySection(Section):
@@ -140,17 +152,19 @@ class McSqlData(SqlData):
         self._sections = sections
 
     @memoized
-    def _get_users_matching_location(self, fixture_item, fixture_type):
+    def get_users(self):
+        self.fixture_item, self.fixture_type
         # todo: optimize
         def _tag_to_user_data(tag):
             return {
                 'hf': 'health_facility',
             }.get(tag) or tag
 
-        return filter(
-            lambda u: u.user_data.get(_tag_to_user_data(fixture_type.tag), None) == fixture_item.fields.get('name'),
-            CommCareUser.by_domain(fixture_item.domain)
+        unsorted = filter(
+            lambda u: u.user_data.get(_tag_to_user_data(self.fixture_type.tag), None) == self.fixture_item.fields.get('name'),
+            CommCareUser.by_domain(self.domain)
         )
+        return sorted(unsorted, key=lambda u: u.username)
 
 
     @property
@@ -185,7 +199,7 @@ class McSqlData(SqlData):
             'enddate': self.datespan.enddate_param_utc,
         }
         if self.fixture_item is not None:
-            user_ids = tuple(u._id for u in self._get_users_matching_location(self.fixture_item, self.fixture_type))
+            user_ids = tuple(u._id for u in self.get_users())
             if user_ids:
                 base_filter_values['userids'] = user_ids
             else:
@@ -205,20 +219,7 @@ class McSqlData(SqlData):
 
     @memoized
     def get_user_ids(self):
-        # make an empty copy of this to just get the ids out
-        header_sql_data = McSqlData(
-            [], # blank sections
-            self.domain,
-            self.datespan,
-            self.fixture_type,
-            self.fixture_item
-        )
-        user_formatter = DataFormatter(TableDataFormat([self.user_column], no_value=NO_VALUE))
-        results = list(user_formatter.format(header_sql_data.data,
-                                             keys=header_sql_data.keys,
-                                             group_by=header_sql_data.group_by))
-        return [r[0] for r in results]
-
+        return [u._id for u in self.get_users()]
 
 class MCSectionedDataProvider(DataProvider):
 
@@ -226,13 +227,13 @@ class MCSectionedDataProvider(DataProvider):
         self.sqldata = sqldata
 
     @memoized
-    def user_column(self, user_id):
-        return DataTablesColumn(user_id_to_username(user_id))
+    def user_column(self, user):
+        return DataTablesColumn(raw_username(user.username))
 
 
     def headers(self):
         return DataTablesHeader(DataTablesColumn(_('Indicator')),
-                                *[self.user_column(u) for u in self.sqldata.get_user_ids()])
+                                *[self.user_column(u) for u in self.sqldata.get_users()])
 
     @memoized
     def rows(self):
