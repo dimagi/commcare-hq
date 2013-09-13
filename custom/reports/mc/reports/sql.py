@@ -1,3 +1,4 @@
+from collections import defaultdict
 from dimagi.utils.decorators.memoized import memoized
 from sqlagg.columns import *
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -45,13 +46,32 @@ def _to_column(coldef):
         )
     return DatabaseColumn(_(coldef), _slug_to_raw_column(coldef))
 
+def _empty_row(len):
+    return [NO_VALUE] * len
+
+class UserDataFormat(TableDataFormat):
+
+    def __init__(self, columns, users):
+        self.columns = columns
+        self.no_value = NO_VALUE
+        self.users = users
+
+    def format_output(self, row_generator):
+        raw_data = dict(row_generator)
+        for user in self.users:
+            if user._id in raw_data:
+                yield raw_data[user._id]
+            else:
+                yield _empty_row(len(self.columns))
+
 class Section(object):
     """
     A way to represent sections in a report. I wonder if we should genericize/pull this out.
     """
-    def __init__(self, report, section_def):
+    def __init__(self, report, section_def, format_class):
         self.report = report
         self.section_def = section_def
+        self.format_class  = format_class
 
     @property
     def title(self):
@@ -79,24 +99,10 @@ class SqlSection(Section, SqlData):
     @property
     @memoized
     def rows(self):
-        formatter = DataFormatter(DictDataFormat(self.columns, no_value=NO_VALUE))
+        formatter = DataFormatter(self.format_class(self.columns, self.report.get_users()))
         raw_data = formatter.format(self.data, keys=self.keys, group_by=self.group_by)
+        return transpose(self.columns, list(raw_data))
 
-        def _dict_to_row(row_dict):
-            return [row_dict[c.slug] for c in self.columns]
-
-        def _empty_row():
-            return [NO_VALUE] * len(self.columns)
-
-        raw_rows = []
-        for u in self.report.get_user_ids():
-            if u in raw_data:
-                raw_rows.append(_dict_to_row(raw_data[u]))
-            else:
-                raw_rows.append(_empty_row())
-
-        ret = transpose(self.columns, raw_rows)
-        return ret
 
 class FormPropertySection(Section):
     """
@@ -135,7 +141,6 @@ class FormPropertySection(Section):
                 user_row = [NO_VALUE] * len(self.column_slugs)
             rows.append(user_row)
 
-
         # transpose
         return [[_(col)] + [r[i] for r in rows] for i, col in enumerate(self.column_slugs)]
 
@@ -144,7 +149,8 @@ class McSqlData(SqlData):
 
     table_name = "mc-inscale_MalariaConsortiumFluff"
 
-    def __init__(self, sections, domain, datespan, fixture_type, fixture_item):
+    def __init__(self, sections, format_class, domain, datespan, fixture_type, fixture_item):
+        self.format_class = format_class
         self.domain = domain
         self.datespan = datespan
         self.fixture_type = fixture_type
@@ -187,7 +193,7 @@ class McSqlData(SqlData):
             return {
                 'form_lookup': FormPropertySection,
             }.get(section_def.get('type'), SqlSection)
-        return [_section_class(section)(self, section) for section in self._sections]
+        return [_section_class(section)(self, section, self.format_class) for section in self._sections]
 
     @memoized
     def all_rows(self):
@@ -261,6 +267,7 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
         'corehq.apps.reports.fields.DatespanField',
     ]
     SECTIONS = None  # override
+    format_class = None # override
     extra_context_providers = [section_context]
 
     @classmethod
@@ -270,6 +277,7 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         super(MCBase, self).__init__(request, base_context, domain, **kwargs)
         assert self.SECTIONS is not None
+        assert self.format_class is not None
         fixture = self.request_params.get('fixture_id', None)
         if fixture:
             type_string, id = fixture.split(":")
@@ -280,7 +288,7 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
             fixture_item = None
             fixture_type = None
 
-        sqldata = McSqlData(self.SECTIONS, domain, self.datespan, fixture_type, fixture_item)
+        sqldata = McSqlData(self.SECTIONS, self.format_class, domain, self.datespan, fixture_type, fixture_item)
         self.data_provider = MCSectionedDataProvider(sqldata)
 
     @property
@@ -295,6 +303,7 @@ class HeathFacilityMonthly(MCBase):
     ]
     name = ugettext_noop("Health Facility Monthly Report")
     SECTIONS = HF_MONTHLY_REPORT
+    format_class = UserDataFormat
 
 class DistrictMonthly(MCBase):
     fields = [
@@ -304,6 +313,7 @@ class DistrictMonthly(MCBase):
     slug = 'district_monthly'
     name = ugettext_noop("District Monthly Report")
     SECTIONS = DISTRICT_MONTHLY_REPORT
+    format_class = UserDataFormat
 
 class DistrictWeekly(MCBase):
     fields = [
@@ -313,6 +323,7 @@ class DistrictWeekly(MCBase):
     slug = 'district_weekly'
     name = ugettext_noop("District Weekly Report")
     SECTIONS = DISTRICT_WEEKLY_REPORT
+    format_class = UserDataFormat
 
 class HealthFacilityWeekly(MCBase):
     fields = [
@@ -322,3 +333,4 @@ class HealthFacilityWeekly(MCBase):
     slug = 'hf_weekly'
     name = ugettext_noop("Health Facility Weekly Report")
     SECTIONS = HF_WEEKLY_REPORT
+    format_class = UserDataFormat
