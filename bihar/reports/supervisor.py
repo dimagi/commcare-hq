@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
-from bihar.utils import get_team_members, get_all_owner_ids_from_group
+from bihar.utils import get_team_members, get_all_owner_ids_from_group, SUPERVISOR_ROLES, FLW_ROLES
 
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.reports.standard import CustomProjectReport
@@ -115,7 +115,12 @@ class GroupReferenceMixIn(object):
         """
         Get any commcare users that are either "asha" or "aww".
         """
-        return get_team_members(self.group)
+        roles = {
+            'supervisor': FLW_ROLES,
+            'manager': SUPERVISOR_ROLES,
+        }
+        return get_team_members(self.group, roles=roles[self.mode])
+
     @property
     @memoized
     def all_owner_ids(self):
@@ -146,11 +151,11 @@ def team_member_context(report):
     Gets context for adding a team members listing to a report.
     """
     return {
-        "team_members": report.get_team_members()
+        "team_members": report.get_team_members(),
     }
 
 
-class BiharSummaryReport(ConvenientBaseMixIn, SummaryTablularReport, 
+class BiharSummaryReport(ConvenientBaseMixIn, SummaryTablularReport,
                          CustomProjectReport):
     # this is literally just a way to do a multiple inheritance without having
     # the same 3 classes extended by a bunch of other classes
