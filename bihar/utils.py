@@ -4,19 +4,18 @@ from corehq.apps.groups.models import Group
 
 ASHA_ROLE = ugettext_noop('ASHA')
 AWW_ROLE = ugettext_noop('AWW')
+ANM_ROLE = ugettext_noop('ANM')
+LS_ROLE = ugettext_noop('LS')
 
+FLW_ROLES = (ASHA_ROLE, AWW_ROLE)
+SUPERVISOR_ROLES = (ANM_ROLE, LS_ROLE)
 
-def get_team_members(group):
+def get_team_members(group, roles=FLW_ROLES):
     """
     Get any commcare users that are either "asha" or "aww".
     """
     users = group.get_users(only_commcare=True)
-
-    def is_team_member(user):
-        role = user.user_data.get('role', '')
-        return role == ASHA_ROLE or role == AWW_ROLE
-
-    return sorted([u for u in users if is_team_member(u)],
+    return sorted([u for u in users if u.user_data.get('role', '') in roles],
                   key=lambda u: u.user_data['role'])
 
 
