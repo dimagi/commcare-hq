@@ -15,7 +15,7 @@ Welcome to CommCareHQ's documentation!
    :maxdepth: 2
 
    documenting
-   fluff
+   reporting
 
 
 Indices and tables
