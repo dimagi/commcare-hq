@@ -7,6 +7,7 @@ import pytz
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
+from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.fields import FilterUsersField
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.models import HQUserType
@@ -303,6 +304,8 @@ class DatespanMixin(object):
                 datespan.enddate = self.request.datespan.enddate
                 datespan.startdate = self.request.datespan.startdate
                 datespan.is_default = False
+            elif self.request.datespan.get_validation_reason() == "You can't use dates earlier than the year 1900":
+                raise BadRequestError()
             self.request.datespan = datespan
             # todo: don't update self.context here. find a better place! AGH! Sorry, sorry.
             self.context.update(dict(datespan=datespan))
