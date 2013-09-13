@@ -143,22 +143,14 @@ def filter_abuse(category):
     )
 
 
-class CustomFilter(Filter):
-    def __init__(self, filter):
-        self._filter = filter
-
-    def filter(self, item):
-        return self._filter(item)
-
-
 class UnicefMalawiFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
     document_filter = ANDFilter([
         NOTFilter(xcalc.FormPropertyFilter(xmlns='http://openrosa.org/user-registration')),
         NOTFilter(xcalc.FormPropertyFilter(xmlns='http://openrosa.org/user/registration')),
         NOTFilter(xcalc.FormPropertyFilter(xmlns='http://code.javarosa.org/devicereport')),
-        CustomFilter(lambda f: get_user_id(f) != 'demo_user'),
-        CustomFilter(lambda f: get_group_id(f)),
+        xcalc.CustomFilter(lambda f: get_user_id(f) != 'demo_user'),
+        xcalc.CustomFilter(lambda f: get_group_id(f)),
     ])
 
     domains = ('cvsulive',)
