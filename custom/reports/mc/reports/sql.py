@@ -160,11 +160,13 @@ class McSqlData(SqlData):
                 'hf': 'health_facility',
             }.get(tag) or tag
 
-        unsorted = filter(
-            lambda u: u.user_data.get(_tag_to_user_data(self.fixture_type.tag), None) == self.fixture_item.fields.get('name'),
-            CommCareUser.by_domain(self.domain)
-        )
-        return sorted(unsorted, key=lambda u: u.username)
+        users = CommCareUser.by_domain(self.domain)
+        if self.fixture_type and self.fixture_item:
+            users = filter(
+                lambda u: u.user_data.get(_tag_to_user_data(self.fixture_type.tag), None) == self.fixture_item.fields.get('name'),
+                users,
+            )
+        return sorted(users, key=lambda u: u.username)
 
 
     @property
