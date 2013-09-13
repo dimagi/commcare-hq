@@ -24,7 +24,7 @@ def get_case_errors(module, needs_case_type, needs_case_detail,
                 'type': 'no case detail',
                 'module': module_info,
             }
-        columns = module.get_detail('case_short').columns + module.get_detail('case_short').columns
+        columns = module.get_detail('case_short').columns + module.get_detail('case_long').columns
         for column in columns:
             for key in column.enum.keys():
                 if not re.match('^([a-zA-Z][\w_-]+)$', key):
