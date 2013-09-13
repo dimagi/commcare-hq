@@ -7,17 +7,17 @@ AWW_ROLE = ugettext_noop('AWW')
 
 
 def get_team_members(group):
-        """
-        Get any commcare users that are either "asha" or "aww".
-        """
-        users = group.get_users(only_commcare=True)
+    """
+    Get any commcare users that are either "asha" or "aww".
+    """
+    users = group.get_users(only_commcare=True)
 
-        def is_team_member(user):
-            role = user.user_data.get('role', '')
-            return role == ASHA_ROLE or role == AWW_ROLE
+    def is_team_member(user):
+        role = user.user_data.get('role', '')
+        return role == ASHA_ROLE or role == AWW_ROLE
 
-        return sorted([u for u in users if is_team_member(u)],
-                      key=lambda u: u.user_data['role'])
+    return sorted([u for u in users if is_team_member(u)],
+                  key=lambda u: u.user_data['role'])
 
 
 def get_all_owner_ids(user_ids):
