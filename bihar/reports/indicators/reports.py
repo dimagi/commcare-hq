@@ -51,7 +51,10 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
     
     @property
     def _headers(self):
-        return [_("Team Name")] + [_(i.name) for i in self.summary_indicators]
+        return {
+            'supervisor': [_("Team Name")] + [_(i.name) for i in self.summary_indicators],
+            'manager': [_("Subcentre")] + [_(i.name) for i in self.summary_indicators],
+        }
     
     @property
     @memoized
