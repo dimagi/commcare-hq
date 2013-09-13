@@ -1,0 +1,40 @@
+import logging
+from bihar.calculations.utils import xmlns
+
+
+VISIT_TYPES = {
+    'bp': xmlns.BP,
+    'del': xmlns.DELIVERY,
+    'pnc': xmlns.PNC,
+    'eb': xmlns.EBF,
+    'cf': xmlns.CF,
+    'reg': xmlns.REGISTRATION,
+}
+
+
+def visit_is(action, visit_type):
+    """
+    for a given action returns whether it's a visit of the type
+    """
+    assert visit_type in VISIT_TYPES, 'Unknown visit type %r not in %r' % (
+        visit_type,
+        VISIT_TYPES
+    )
+    actual_visit_type = action.updated_unknown_properties.get('last_visit_type')
+
+    if (action.xform_xmlns and actual_visit_type in VISIT_TYPES
+            and VISIT_TYPES[actual_visit_type] != action.xform_xmlns):
+        logging.error('last_visit_type is %r but xmlns is not %r: %r' % (
+            actual_visit_type,
+            VISIT_TYPES[actual_visit_type],
+            action.to_json()
+        ))
+
+    return actual_visit_type == visit_type
+
+
+def has_visit(case, type):
+    """
+    returns whether a visit of a type exists in the case
+    """
+    return len(filter(lambda a: visit_is(a, type), case.actions)) > 0
