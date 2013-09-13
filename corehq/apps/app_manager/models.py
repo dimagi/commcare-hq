@@ -532,14 +532,7 @@ class FormBase(DocumentSchema):
 
         if self.requires == 'none' and self.actions.open_case.is_active() \
                 and not self.actions.open_case.name_path:
-            errors.append({
-                'type': 'case_name required',
-                'message': ugettext(
-                    'Every case must have a name. '
-                    'Please specify a value for the name property under '
-                    '"Save data to the following case properties"'
-                )
-            })
+            errors.append({'type': 'case_name required'})
 
         try:
             valid_paths = set([question['value'] for question in self.get_questions(langs=[])])
