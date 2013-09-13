@@ -77,8 +77,12 @@
                             in form {% include "app_manager/partials/form_error_message.html" %}
                         {% endif %}
                         {% if error.type == "path error" %}
-                            The case configuration in form {% include "app_manager/partials/form_error_message.html" %}
-                            contains the invalid path "{{ error.path }}".
+                            {% if error.path %}
+                                The case configuration in form {% include "app_manager/partials/form_error_message.html" %}
+                                contains the invalid path "{{ error.path }}".
+                            {% else %}
+                                {% trans "You're loading or saving a case property but have not chosen a question from the form. Please choose a question from the dropdown next to the case property." %}
+                            {% endif %}
                         {% endif %}
                         {% if error.type == "remote error" %}
                             Remote Error:
