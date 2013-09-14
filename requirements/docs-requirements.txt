@@ -1,0 +1,5 @@
+-r requirements.txt
+
+Sphinx==1.2b1
+Jinja2==2.7.1
+docutils==0.11
