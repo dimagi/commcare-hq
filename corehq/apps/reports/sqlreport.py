@@ -156,32 +156,37 @@ class AggregateColumn(Column):
 
 class SqlData(ReportDataSource):
     table_name = None
+    """The name of the table to run the query against."""
 
     @property
     def columns(self):
         """
-        Returns a list of Column objects
+        Returns a list of Column objects. These are used to
+        make up the from portion of the SQL query.
         """
         raise NotImplementedError()
 
     @property
     def group_by(self):
         """
-        Returns a list of 'group by' column names
+        Returns a list of 'group by' column names.
         """
         raise NotImplementedError()
 
     @property
     def filters(self):
         """
-        Returns a list of filter statements e.g. [EQ('date', 'enddate')]
+        Returns a list of filter statements. Filters are instances of sqlagg.filters.SqlFilter.
+        See the sqlagg.filters module for a list of standard filters.
+
+        e.g. [EQ('date', 'enddate')]
         """
         raise NotImplementedError()
 
     @property
     def filter_values(self):
         """
-        Return a dict mapping the filter keys to actual values e.g. {"enddate": date(2013,01,01)}
+        Return a dict mapping the filter keys to actual values e.g. {"enddate": date(2013, 1, 1)}
         """
         if self.config:
             return self.config
@@ -195,6 +200,9 @@ class SqlData(ReportDataSource):
         The list of report keys (e.g. users) or None to just display all the data returned from the query. Each value
         in this list should be a list of the same dimension as the 'group_by' list. If group_by is None then keys
         must also be None.
+
+        These allow you to specify which rows you expect in the output data.
+        Its main use is to add rows for keys that don’t exist in the data.
 
         e.g.
             group_by = ['region', 'sub_region']
