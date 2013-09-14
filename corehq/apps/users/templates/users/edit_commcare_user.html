@@ -161,7 +161,13 @@
         <div class="tab-pane" id="groups">
             <form class="form" action="{% url update_user_groups domain couch_user.user_id %}" method='post'>
                 <legend>{% trans 'Edit Groups' %}</legend>
+                {% if not are_groups %}
+                <p>{% blocktrans %}
+                    No groups created yet. Go to <a href="{{ groups_url }}">groups configuration</a> to create them.
+                   {% endblocktrans %}</p>
+                {% else %}
                 {% crispy group_form %}
+                {% endif %}
             </form>
         </div>
         {% if commtrack %}

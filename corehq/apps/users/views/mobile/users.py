@@ -154,7 +154,8 @@ class EditCommCareUserView(BaseFullEditUserView):
     @property
     def page_context(self):
         context = {
-            'groups': self.groups,
+            'are_groups': bool(len(self.all_groups)),
+            'groups_url': reverse('all_groups', args=[self.domain]),
             'group_form': self.group_form,
             'custom_user_data': self.custom_user_data,
             'reset_password_form': self.reset_password_form,
