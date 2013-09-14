@@ -214,20 +214,26 @@ class McSqlData(SqlData):
 
     @memoized
     def get_users(self):
-        self.fixture_item, self.fixture_type
-        # todo: optimize
-        def _tag_to_user_data(tag):
-            return {
-                'hf': 'health_facility',
-            }.get(tag) or tag
+        def _is_ape(user):
+            return user.user_data.get('level') == 'APE'
 
-        users = CommCareUser.by_domain(self.domain)
-        if self.fixture_type and self.fixture_item:
-            users = filter(
-                lambda u: u.user_data.get(_tag_to_user_data(self.fixture_type.tag), None) == self.fixture_item.fields.get('name'),
-                users,
-            )
-        return sorted(users, key=lambda u: u.username)
+        def _matches_location(user):
+            def _tag_to_user_data(tag):
+                return {
+                    'hf': 'health_facility',
+                }.get(tag) or tag
+
+            if self.fixture_type and self.fixture_item:
+                return user.user_data.get(_tag_to_user_data(self.fixture_type.tag), None) == self.fixture_item.fields.get('name')
+            else:
+                return True
+
+        unfiltered_users = CommCareUser.by_domain(self.domain)
+        filtered_users = filter(
+            lambda u: _is_ape(u) and _matches_location(u),
+            unfiltered_users,
+        )
+        return sorted(filtered_users, key=lambda u: u.username)
 
 
     @property
