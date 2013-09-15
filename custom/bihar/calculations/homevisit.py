@@ -11,23 +11,31 @@ import fluff
 
 class BPCalculator(DoneDueCalculator):
 
-    def __init__(self, days, n_visits, window=A_MONTH):
+    def __init__(self, days, window=A_MONTH):
         self.days = days
-        self.n_visits = n_visits
         super(BPCalculator, self).__init__(window)
 
     def filter(self, case):
         return is_pregnant_mother(case) and get_edd(case)
 
+    def _form_filter(self, case, form):
+        lower, upper = self.days
+        form_date_modified = form.xpath('form/date_modified')
+        return upper <= case.edd - form_date_modified < upper
+
     @fluff.date_emitter
     def numerator(self, case):
-        yield case.edd - datetime.timedelta(days=self.days) + GRACE_PERIOD
+        for form in get_forms(case, action_filter=lambda a: visit_is(a, 'bp')):
+            date = form.xpath('form/days_visit_overdue')
+            if date and self._form_filter(case, form):
+                yield date
 
-    @fluff.null_emitter
+    @fluff.date_emitter
     def total(self, case):
-        n_visits = len(filter(lambda a: visit_is(a, 'bp'), case.actions))
-        if n_visits >= self.n_visits:
-            yield None
+        for form in get_forms(case, action_filter=lambda a: visit_is(a, 'bp') or visit_is(a, 'reg')):
+            date = form.xpath('form/date_next_bp')
+            if date and self._form_filter(case, form):
+                yield date
 
 
 class VisitCalculator(DoneDueCalculator):
