@@ -1,7 +1,7 @@
 import datetime
-from bihar.calculations.types import CaseCalculator, DoneDueCalculator, AddCalculator
-from bihar.calculations.utils.calculations import get_related_prop, get_form
-from bihar.calculations.utils.filters import get_add, A_MONTH, A_DAY
+from custom.bihar.calculations.types import CaseCalculator, DoneDueCalculator, AddCalculator
+from custom.bihar.calculations.utils.calculations import get_related_prop, get_form
+from custom.bihar.calculations.utils.filters import get_add, A_MONTH, A_DAY
 import fluff
 
 

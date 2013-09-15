@@ -4,8 +4,8 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from django.utils.translation import ugettext_noop, ugettext as _
-from bihar.reports.indicators.reports import ClientListBase
-from bihar.reports.supervisor import (SubCenterSelectionReport, BiharNavReport, GroupReferenceMixIn,
+from custom.bihar.reports.indicators.reports import ClientListBase
+from custom.bihar.reports.supervisor import (SubCenterSelectionReport, BiharNavReport, GroupReferenceMixIn,
                                       shared_bihar_context, team_member_context, BiharSummaryReport,
                                       url_and_params)
 from casexml.apps.case.models import CommCareCase

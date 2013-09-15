@@ -1,5 +1,5 @@
 from django.core.management import BaseCommand
-from bihar.utils import get_groups_for_group
+from custom.bihar.utils import get_groups_for_group
 from corehq.apps.groups.models import Group
 
 

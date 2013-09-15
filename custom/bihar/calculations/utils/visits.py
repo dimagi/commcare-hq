@@ -1,5 +1,5 @@
 import logging
-from bihar.calculations.utils import xmlns
+from custom.bihar.calculations.utils import xmlns
 
 
 VISIT_TYPES = {

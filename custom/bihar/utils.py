@@ -36,7 +36,7 @@ def get_all_owner_ids_from_group(group):
 
 
 def get_calculation(owner_ids, slug):
-    from bihar.models import CareBiharFluff
+    from custom.bihar.models import CareBiharFluff
     r = CareBiharFluff.aggregate_results(slug, (
         ['care-bihar', owner_id] for owner_id in owner_ids
     ), reduce=True)
@@ -52,7 +52,7 @@ def get_calculation(owner_ids, slug):
 
 def get_all_calculations(owner_ids):
 
-    from bihar.reports.indicators.indicators import IndicatorConfig, INDICATOR_SETS
+    from custom.bihar.reports.indicators.indicators import IndicatorConfig, INDICATOR_SETS
 
     config = IndicatorConfig(INDICATOR_SETS)
     for indicator_set in config.indicator_sets:

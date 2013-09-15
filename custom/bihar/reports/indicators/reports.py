@@ -1,5 +1,5 @@
 from functools import partial
-from bihar.reports.supervisor import BiharNavReport, MockEmptyReport, \
+from custom.bihar.reports.supervisor import BiharNavReport, MockEmptyReport, \
     url_and_params, BiharSummaryReport, \
     ConvenientBaseMixIn, GroupReferenceMixIn, list_prompt, shared_bihar_context,\
     team_member_context
@@ -10,7 +10,7 @@ from corehq.apps.reports.standard import CustomProjectReport
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from django.utils.translation import ugettext as _, ugettext_noop
-from bihar.reports.indicators.mixins import IndicatorSetMixIn, IndicatorMixIn
+from custom.bihar.reports.indicators.mixins import IndicatorSetMixIn, IndicatorMixIn
 
 DEFAULT_EMPTY = "?"
 

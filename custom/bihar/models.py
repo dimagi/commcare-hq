@@ -1,6 +1,6 @@
 import datetime
 from casexml.apps.case.models import CommCareCase
-from bihar.calculations import homevisit, pregnancy, postpartum, newborn, familyplanning, mortality
+from custom.bihar.calculations import homevisit, pregnancy, postpartum, newborn, familyplanning, mortality
 import fluff
 
 A_DAY = datetime.timedelta(days=1)

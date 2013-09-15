@@ -1,8 +1,8 @@
 import gevent
-from bihar.models import CareBiharFluffPillow
+from custom.bihar.models import CareBiharFluffPillow
 from dimagi.utils.couch.database import iter_docs
 from django.core.management import BaseCommand
-from bihar.utils import get_all_owner_ids_from_group
+from custom.bihar.utils import get_all_owner_ids_from_group
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.groups.models import Group
 

@@ -1,9 +1,9 @@
-from bihar.calculations.pregnancy import VisitedQuickly
-from bihar.calculations.types import DoneDueCalculator, TotalCalculator, CaseCalculator
-from bihar.calculations.utils.calculations import get_related_prop
-from bihar.calculations.utils.filters import is_pregnant_mother, get_add, A_MONTH
-from bihar.calculations.utils.xmlns import REGISTRATION
-from bihar.calculations.utils.calculations import get_form
+from custom.bihar.calculations.pregnancy import VisitedQuickly
+from custom.bihar.calculations.types import DoneDueCalculator, TotalCalculator, CaseCalculator
+from custom.bihar.calculations.utils.calculations import get_related_prop
+from custom.bihar.calculations.utils.filters import is_pregnant_mother, get_add, A_MONTH
+from custom.bihar.calculations.utils.xmlns import REGISTRATION
+from custom.bihar.calculations.utils.calculations import get_form
 from django.utils.translation import ugettext_noop as _
 import fluff
 

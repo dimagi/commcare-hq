@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
-from bihar.utils import get_team_members, get_all_owner_ids_from_group, SUPERVISOR_ROLES, FLW_ROLES
+from custom.bihar.utils import get_team_members, get_all_owner_ids_from_group, SUPERVISOR_ROLES, FLW_ROLES
 
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.reports.standard import CustomProjectReport
@@ -19,7 +19,7 @@ from corehq.apps.groups.models import Group
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.adm.reports.supervisor import SupervisorReportsADMSection
-from bihar.reports.indicators.mixins import IndicatorConfigMixIn
+from custom.bihar.reports.indicators.mixins import IndicatorConfigMixIn
 
 
 def shared_bihar_context(report):
@@ -243,7 +243,7 @@ class MainNavReport(BiharSummaryReport, IndicatorConfigMixIn):
 
     @classmethod
     def additional_reports(cls):
-        from bihar.reports.due_list import DueListSelectionReport
+        from custom.bihar.reports.due_list import DueListSelectionReport
         return [WorkerRankSelectionReport, DueListSelectionReport, ToolsNavReport]
 
     @classmethod
@@ -256,7 +256,7 @@ class MainNavReport(BiharSummaryReport, IndicatorConfigMixIn):
 
     @property
     def data(self):
-        from bihar.reports.indicators.reports import IndicatorNav
+        from custom.bihar.reports.indicators.reports import IndicatorNav
 
         def _indicator_nav_link(i, indicator_set):
             params = copy(self.request_params)

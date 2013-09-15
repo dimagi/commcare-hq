@@ -1,4 +1,4 @@
-from bihar.calculations.utils.filters import get_add, get_edd
+from custom.bihar.calculations.utils.filters import get_add, get_edd
 import datetime
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _

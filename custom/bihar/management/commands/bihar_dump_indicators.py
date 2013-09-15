@@ -1,6 +1,6 @@
 from couchdbkit import ResourceNotFound
 from django.core.management import BaseCommand
-from bihar.utils import get_all_calculations, get_calculation, \
+from custom.bihar.utils import get_all_calculations, get_calculation, \
     get_all_owner_ids_from_group
 from corehq.apps.groups.models import Group
 

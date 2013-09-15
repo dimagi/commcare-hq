@@ -1,4 +1,4 @@
-from bihar.calculations.utils.filters import is_pregnant_mother, get_add
+from custom.bihar.calculations.utils.filters import is_pregnant_mother, get_add
 import fluff
 
 

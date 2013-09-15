@@ -1,10 +1,10 @@
 import datetime
 from django.utils.translation import ugettext_noop as _
-from bihar.calculations.newborn import is_recently_delivered
-from bihar.calculations.types import DoneDueCalculator, TotalCalculator, AddCalculator
-from bihar.calculations.utils.filters import get_add, A_MONTH, is_pregnant_mother, get_edd
-from bihar.calculations.utils.xmlns import DELIVERY
-from bihar.calculations.utils.calculations import get_form
+from custom.bihar.calculations.newborn import is_recently_delivered
+from custom.bihar.calculations.types import DoneDueCalculator, TotalCalculator, AddCalculator
+from custom.bihar.calculations.utils.filters import get_add, A_MONTH, is_pregnant_mother, get_edd
+from custom.bihar.calculations.utils.xmlns import DELIVERY
+from custom.bihar.calculations.utils.calculations import get_form
 import fluff
 
 

@@ -1,7 +1,7 @@
 from inspect import ismethod
-from bihar.calculations.types import DoneDueCalculator, TotalCalculator
-from bihar.models import CareBiharFluff
-from bihar.reports.indicators.clientlistdisplay import PreDeliveryDoneDueCLD, PreDeliveryCLD, PreDeliverySummaryCLD, PostDeliverySummaryCLD, ComplicationsCalculator
+from custom.bihar.calculations.types import DoneDueCalculator, TotalCalculator
+from custom.bihar.models import CareBiharFluff
+from custom.bihar.reports.indicators.clientlistdisplay import PreDeliveryDoneDueCLD, PreDeliveryCLD, PreDeliverySummaryCLD, PostDeliverySummaryCLD, ComplicationsCalculator
 from django.utils.translation import ugettext_noop as _
 from django.utils.datastructures import SortedDict
 

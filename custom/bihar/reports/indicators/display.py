@@ -1,4 +1,4 @@
-from bihar.reports.indicators.reports import DEFAULT_EMPTY
+from custom.bihar.reports.indicators.reports import DEFAULT_EMPTY
 
 
 def _format_date(d):

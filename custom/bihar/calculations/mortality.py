@@ -1,11 +1,11 @@
 import datetime
 import logging
 from django.utils.translation import ugettext_noop as _
-from bihar.calculations.pregnancy import BirthPlace
-from bihar.calculations.types import TotalCalculator, AddCalculator
-from bihar.calculations.utils.calculations import get_actions, get_forms
-from bihar.calculations.utils.filters import is_pregnant_mother, A_MONTH, is_newborn_child
-from bihar.calculations.utils.xmlns import DELIVERY, PNC
+from custom.bihar.calculations.pregnancy import BirthPlace
+from custom.bihar.calculations.types import TotalCalculator, AddCalculator
+from custom.bihar.calculations.utils.calculations import get_actions, get_forms
+from custom.bihar.calculations.utils.filters import is_pregnant_mother, A_MONTH, is_newborn_child
+from custom.bihar.calculations.utils.xmlns import DELIVERY, PNC
 import fluff
 
 

@@ -1,5 +1,5 @@
-from bihar.reports import supervisor, due_list
-from bihar.reports.indicators import reports as indicators
+from custom.bihar.reports import supervisor, due_list
+from custom.bihar.reports.indicators import reports as indicators
 
 CUSTOM_REPORTS = (
     ('Custom Reports', (
