@@ -1480,8 +1480,24 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def get_group_ids(self):
         from corehq.apps.groups.models import Group
-
         return Group.by_user(self, wrap=False)
+
+    def set_groups(self, group_ids):
+        from corehq.apps.groups.models import Group
+        desired = set(group_ids)
+        current = set(self.get_group_ids())
+        touched = []
+        for to_add in desired - current:
+            group = Group.get(to_add)
+            group.add_user(self._id, save=False)
+            touched.append(group)
+        for to_remove in current - desired:
+            group = Group.get(to_remove)
+            group.remove_user(self._id, save=False)
+            touched.append(group)
+
+        Group.bulk_save(touched)
+
 
     def get_time_zone(self):
         try:
