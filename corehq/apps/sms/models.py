@@ -37,7 +37,7 @@ class MessageLog(Document, UnicodeMixIn):
     billed                      = BooleanProperty(default=False)
     billing_errors              = ListProperty()
     workflow = StringProperty() # One of the WORKFLOW_* constants above describing what kind of workflow this sms was a part of
-    xforms_session_id = StringProperty() # Points to the _id of an instance of corehq.apps.smsforms.models.XFormsSession that this sms is tied to
+    xforms_session_couch_id = StringProperty() # Points to the _id of an instance of corehq.apps.smsforms.models.XFormsSession that this sms is tied to
     reminder_id = StringProperty() # Points to the _id of an instance of corehq.apps.reminders.models.CaseReminder that this sms is tied to
 
     def __unicode__(self):
