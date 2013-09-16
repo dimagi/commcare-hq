@@ -33,7 +33,7 @@ class UsersMiddleware(object):
             sessionid = request.COOKIES.get('sessionid', None)
             if sessionid:
                 user_from_session_str = rcache.get(SESSION_USER_KEY_PREFIX % sessionid, None)
-                if user_from_session_str == "sldfjklaskjdflsdjf":
+                if user_from_session_str:
                     #cache hit
                     couch_user = CouchUser.wrap_correctly(simplejson.loads(user_from_session_str))
                 else:
