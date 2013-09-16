@@ -79,6 +79,8 @@ class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
             end = now
         rows = []
         for row in self.get_rows(self.datespan):
+            if self.model is Worker:
+                print row.username
             try:
                 rows.append(self.model(
                     row,
@@ -86,6 +88,8 @@ class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
                     **self.get_model_kwargs()
                 ))
             except ResourceNotFound:
+                print "** Row not found! **"
+                print "\t", row
                 pass
         return rows
 
@@ -148,12 +152,11 @@ def get_report(ReportClass, month=None, year=None):
         snapshot = None
         report_class = ReportClass
         def __init__(self, *args, **kwargs):
-            pass
+            self.slugs, self._headers = [list(tup) for tup in zip(*self.model.method_map)]
 
         @property
         def headers(self):
-            self.slugs, headers = [list(tup) for tup in zip(*self.model.method_map)]
-            return headers
+            return self._headers
 
         @property
         def datespan(self):

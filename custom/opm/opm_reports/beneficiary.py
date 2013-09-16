@@ -4,6 +4,7 @@ These are used in the Incentive Payment Report
 """
 from datetime import datetime, date, timedelta
 
+from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.fixtures.models import FixtureDataItem
 
 from .constants import *
@@ -33,9 +34,11 @@ class Beneficiary(object):
         date_range should be a (start, stop) tuple of date objects
         """
         case_id = case['id']
+        # try:
         self.fluff_doc = OpmCaseFluff.get("%s-%s" %
             (OpmCaseFluff._doc_type, case_id))
-
+        # except ResourceNotFound:
+        #     return 
         self.name = self.fluff_doc.name
         self.awc_name = self.fluff_doc.awc_name
         self.bank_name = self.fluff_doc.bank_name

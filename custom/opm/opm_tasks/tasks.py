@@ -4,7 +4,6 @@ Celery tasks to save a snapshot of the reports each month
 import datetime
 from celery import task
 from django.http import HttpRequest
-from couchdbkit.exceptions import ResourceNotFound
 
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.couch.database import get_db

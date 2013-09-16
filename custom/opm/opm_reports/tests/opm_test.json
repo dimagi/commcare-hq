@@ -31094,17 +31094,18 @@
     "password": "sha1$46fb2$c3bb7a1a871796f6c429ebad2305e29be69349ea", 
     "_id": "698767f84b4dd413204dd2ce018cbbf1"
   }, 
+
   {
     "username": "demo@opm.commcarehq.org", 
     "domain": "opm", 
     "last_name": "", 
     "user_data": {
-      "bank_name": "", 
-      "awc": "", 
-      "account_number": "", 
-      "block": "", 
-      "village": ""
-    }, 
+       "bank_name": "SBI",
+       "awc": "Muzzafarpur",
+       "account_number": "739827409",
+       "block": "Atri",
+       "village": "Muzzafarpur"
+    },
     "created_on": "2013-07-02T06:55:00Z", 
     "is_staff": false, 
     "base_doc": "CouchUser", 

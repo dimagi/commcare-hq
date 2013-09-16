@@ -1,7 +1,3 @@
-TODO:
-testing -_-
-
-
 ## Module structure
 
 * constants.py - useful stuff to be imported wherever
@@ -11,6 +7,14 @@ testing -_-
 * models.py - stores fluff models for users, cases, and forms
 * case_calcs.py/user_calcs.py - houses per-case or per-user Calculators
 
+## Testing
+
+Currently this report has just regression tests.
+The normal functionality of the report relies on monthly definitive snapshots.
+There is a json file that stores a snapshot, and the data from which it was
+generated.
+To verify fidelity in reporting, tests recalculate the report based on the
+data and check if it matches the snapshot.
 
 ## Extracting data from the db:
 

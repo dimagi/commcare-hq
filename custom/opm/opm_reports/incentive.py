@@ -5,6 +5,8 @@ for each field.
 """
 import datetime
 
+from couchdbkit.exceptions import ResourceNotFound
+
 from ..opm_tasks.models import OpmReportSnapshot
 from .constants import *
 from .models import OpmCaseFluff, OpmUserFluff, OpmFormFluff
@@ -32,7 +34,8 @@ class Worker(object):
             self.fluff_doc = OpmUserFluff.get("%s-%s" %
                 (OpmUserFluff._doc_type, worker._id))
         except ResourceNotFound:
-            return 
+            print "Couldn't find fluff doc"
+            raise ResourceNotFound
         self.date_range = date_range
         self.name = self.fluff_doc.name
         self.awc_name = self.fluff_doc.awc_name

@@ -11,6 +11,7 @@ from corehq.apps.users.models import CommCareUser, CommCareCase
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.modules import to_function
 
+from custom.opm.opm_tasks.models import OpmReportSnapshot
 from ..constants import DOMAIN
 from ..beneficiary import Beneficiary
 from ..reports import (BeneficiaryPaymentReport, IncentivePaymentReport,
@@ -32,7 +33,8 @@ class OPMTestBase(object):
         self.db = get_db()
         with open(test_data_location) as f:
             docs = json.loads(f.read())
-        for doc in docs:
+        for i, doc in enumerate(docs):
+            print i, doc.get('_id', '')
             self.db.save_doc(doc)
 
     def reindex_fluff(self, pillow):
@@ -59,9 +61,52 @@ class OPMTestBase(object):
             self.load_fixtures()
             for pillow in [OpmCaseFluffPillow, OpmUserFluffPillow, OpmFormFluffPillow]:
                 self.reindex_fluff(pillow)
+        print "Finished setup, on to tests!"
+
+    def the_same(self, a, b):
+        # for some reason types aren't consistent
+        # so there's this beautiful kludge
+        if a == b:
+            return True
+        try:
+            if str(a) == str(b):
+                return True
+        except:
+            pass
+        return False
 
     def test_all_results(self):
-        pass
+        print "%s Tests:" % self.ReportClass.__name__
+        month, year = test_month_year
+        # report produced from test data
+        report = get_report(self.ReportClass, month, year)
+        # saved report snapshot
+        snapshot = OpmReportSnapshot.by_month(month, year,
+            self.ReportClass.__name__)
+        # sort rows?
+        errors = []
+        total = len(snapshot.rows)
+        report_rows = report.rows
+        print "********"
+        print "%d snapshot_rows, %d report rows" % (total, len(report_rows))
+        for i, snapshot_row in enumerate(snapshot.rows):
+            print "Testing row %d/%d" % (i, total)
+            report_row = report_rows[i]
+            for snapshot_index, slug in enumerate(snapshot.slugs):
+                report_index = report.slugs.index(slug)
+                snapshot_item = snapshot_row[snapshot_index]
+                report_item = report_row[report_index]
+                if not self.the_same(snapshot_item, report_item):
+                    errors.append('row %d: %s != %s' %
+                        (i, snapshot_item, report_item))
+        self.assertEquals(errors, [], '\n'.join(errors))
+
+
+class TestIncentive(OPMTestBase, TestCase):
+    ReportClass = IncentivePaymentReport
+
+    def get_rows(self):
+        return CommCareUser.by_domain('opm')
 
 
 class TestBeneficiary(OPMTestBase, TestCase):
@@ -71,8 +116,3 @@ class TestBeneficiary(OPMTestBase, TestCase):
         return CommCareCase.get_all_cases('opm', include_docs=True)
 
 
-class TestIncentive(OPMTestBase, TestCase):
-    ReportClass = IncentivePaymentReport
-
-    def get_rows(self):
-        return CommCareUser.by_domain('opm')
