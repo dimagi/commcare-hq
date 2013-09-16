@@ -24,6 +24,13 @@ import csv
 from dimagi.utils.couch.database import iter_docs
 import itertools
 
+@domain_admin_required
+def default(request, domain):
+    if not (request.project and request.project.commtrack_enabled):
+        raise Http404()
+    return HttpResponseRedirect(reverse(ProductListView.urlname,
+                                            args=[domain]))
+
 
 class BaseCommTrackManageView(BaseProjectDataView):
 

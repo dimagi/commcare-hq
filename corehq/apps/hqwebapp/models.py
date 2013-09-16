@@ -271,6 +271,19 @@ class ProjectInfoTab(UITab):
         return self.project and self.project.is_snapshot
 
 
+class CommTrackSetupTab(UITab):
+    title = ugettext_noop("Setup")
+    view = "corehq.apps.commtrack.views.default"
+
+    @property
+    def is_viewable(self):
+        return self.project.commtrack_enabled and self.couch_user.is_domain_admin()
+
+    @property
+    def sidebar_items(self):
+        return []
+
+
 class ProjectDataTab(UITab):
     title = ugettext_noop("Data")
     view = "corehq.apps.data_interfaces.views.default"
