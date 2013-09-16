@@ -115,7 +115,6 @@ class CacheInvalidatePillow(BasicPillow):
             "users/web_users_by_domain",
             "users/by_username",
         ]
-        #print "invalidating users!"
         self.invalidate_views(user_views, name="users")
 
     def invalidate_groups(self):
