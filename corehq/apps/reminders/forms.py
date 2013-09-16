@@ -15,7 +15,7 @@ CaseReminderHandler, FIRE_TIME_DEFAULT, FIRE_TIME_CASE_PROPERTY,\
 METHOD_SMS, METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY,\
 CASE_CRITERIA, QUESTION_RETRY_CHOICES, FORM_TYPE_ONE_BY_ONE,\
 FORM_TYPE_ALL_AT_ONCE, SurveyKeyword, RECIPIENT_PARENT_CASE, RECIPIENT_SUBCASE,\
-FIRE_TIME_RANDOM
+FIRE_TIME_RANDOM, ON_DATETIME
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
@@ -276,7 +276,7 @@ class ComplexCaseReminderForm(Form):
             return REPEAT_SCHEDULE_INDEFINITELY
     
     def clean_case_type(self):
-        if self.cleaned_data.get("start_condition_type") == "CASE_CRITERIA":
+        if self.cleaned_data.get("start_condition_type") == CASE_CRITERIA:
             value = self.cleaned_data.get("case_type").strip()
             if value == "":
                 raise ValidationError("Please enter the case type.")
@@ -285,7 +285,7 @@ class ComplexCaseReminderForm(Form):
             return None
     
     def clean_start_property(self):
-        if self.cleaned_data.get("start_condition_type") == "CASE_CRITERIA":
+        if self.cleaned_data.get("start_condition_type") == CASE_CRITERIA:
             value = self.cleaned_data.get("start_property").strip()
             if value == "":
                 raise ValidationError("Please enter the case property's name.")
@@ -294,13 +294,13 @@ class ComplexCaseReminderForm(Form):
             return None
     
     def clean_start_match_type(self):
-        if self.cleaned_data.get("start_condition_type") == "CASE_CRITERIA":
+        if self.cleaned_data.get("start_condition_type") == CASE_CRITERIA:
             return self.cleaned_data.get("start_match_type")
         else:
             return None
     
     def clean_start_value(self):
-        if self.cleaned_data.get("start_match_type", None) == MATCH_ANY_VALUE or self.cleaned_data.get("start_condition_type") != "CASE_CRITERIA":
+        if self.cleaned_data.get("start_match_type", None) == MATCH_ANY_VALUE or self.cleaned_data.get("start_condition_type") != CASE_CRITERIA:
             return None
         else:
             value = self.cleaned_data.get("start_value").strip()
@@ -309,7 +309,7 @@ class ComplexCaseReminderForm(Form):
             return value
     
     def clean_start_date(self):
-        if self.cleaned_data.get("start_choice", None) == START_IMMEDIATELY or self.cleaned_data.get("start_condition_type") != "CASE_CRITERIA":
+        if self.cleaned_data.get("start_choice", None) == START_IMMEDIATELY or self.cleaned_data.get("start_condition_type") != CASE_CRITERIA:
             return None
         else:
             value = self.cleaned_data.get("start_date").strip()
@@ -318,7 +318,7 @@ class ComplexCaseReminderForm(Form):
             return value
     
     def clean_start_offset(self):
-        if self.cleaned_data.get("start_condition_type") == "CASE_CRITERIA":
+        if self.cleaned_data.get("start_condition_type") == CASE_CRITERIA:
             value = self.cleaned_data.get("start_offset").strip()
             try:
                 value = int(value)
@@ -329,7 +329,7 @@ class ComplexCaseReminderForm(Form):
             return 0
     
     def clean_until(self):
-        if self.cleaned_data.get("use_until", None) == "N" or self.cleaned_data.get("start_condition_type") != "CASE_CRITERIA":
+        if self.cleaned_data.get("use_until", None) == "N" or self.cleaned_data.get("start_condition_type") != CASE_CRITERIA:
             return None
         else:
             value = self.cleaned_data.get("until").strip()
@@ -347,7 +347,7 @@ class ComplexCaseReminderForm(Form):
             return None
     
     def clean_start_datetime_date(self):
-        if self.cleaned_data.get("start_condition_type") == "ON_DATETIME":
+        if self.cleaned_data.get("start_condition_type") == ON_DATETIME:
             value = self.cleaned_data.get("start_datetime_date")
             validate_date(value)
             return value
@@ -355,7 +355,7 @@ class ComplexCaseReminderForm(Form):
             return None
     
     def clean_start_datetime_time(self):
-        if self.cleaned_data.get("start_condition_type") == "ON_DATETIME":
+        if self.cleaned_data.get("start_condition_type") == ON_DATETIME:
             value = self.cleaned_data.get("start_datetime_time")
             validate_time(value)
             return value
@@ -363,7 +363,7 @@ class ComplexCaseReminderForm(Form):
             return None
     
     def clean_sample_id(self):
-        if self.cleaned_data.get("recipient") == "SURVEY_SAMPLE":
+        if self.cleaned_data.get("recipient") == RECIPIENT_SURVEY_SAMPLE:
             value = self.cleaned_data.get("sample_id")
             if value is None or value == "":
                 raise ValidationError("Please select a Survey Sample.")
@@ -378,9 +378,9 @@ class ComplexCaseReminderForm(Form):
         except ValueError:
             raise ValidationError("Please enter a number.")
         
-        if self.cleaned_data.get("event_interpretation") == "OFFSET" and value < 0:
+        if self.cleaned_data.get("event_interpretation") == EVENT_AS_OFFSET and value < 0:
             raise ValidationError("Please enter a non-negative number.")
-        elif self.cleaned_data.get("event_interpretation") == "SCHEDULE" and value <= 0:
+        elif self.cleaned_data.get("event_interpretation") == EVENT_AS_SCHEDULE and value <= 0:
             raise ValidationError("Please enter a positive number.")
         
         return value
