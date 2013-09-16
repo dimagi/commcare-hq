@@ -155,9 +155,8 @@ def cached_view(db, view_name, wrapper=None, cache_expire=COUCH_CACHE_TIMEOUT, *
     view_name, params: couch view call parameters
 
     Note, a view call with include_docs=True will not be wrapped, you must wrap it on your own.
-
-
     """
+
     include_docs = params.get('include_docs', False)
 
     cache_view_key = key_view_full(view_name, params)
