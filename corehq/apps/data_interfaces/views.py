@@ -64,13 +64,15 @@ class CaseGroupListView(BaseDomainView, CRUDPaginatedViewMixin):
         return AddCaseGroupForm()
 
     def get_new_item_data(self, create_form):
+        # todo create the case group here
         return {
             'itemData': {
                 'id': 'ewreawr121342',
                 'name': 'All New Group',
                 'numCases': 2,
             },
-            'templateSelector': '#new-group-row',
+            'template': 'new-group-template',
+        }
 
     def get_updated_item_data(self, item_id):
         # todo delete the case group here
@@ -108,7 +110,7 @@ class CRUDCaseGroupListView(FetchCRUDPaginatedDataView, CaseGroupListView):
                     'name': 'New Group',
                     'numCases': 0,
                 },
-                'templateSelector': '#existing-group-row',
+                'template': 'existing-group-template',
             }
         ]
 
