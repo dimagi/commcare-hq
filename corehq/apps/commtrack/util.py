@@ -1,13 +1,13 @@
 from dimagi.utils.couch.database import get_db
 from corehq.apps.commtrack.models import *
 from corehq.apps.locations.models import Location
-from corehq.apps.domain.models import Domain
 from casexml.apps.case.models import CommCareCase
 import itertools
 from datetime import datetime, date, timedelta
 from calendar import monthrange
 import math
 import bisect
+
 
 def all_supply_point_types(domain):
     return [e['key'][1] for e in get_db().view('commtrack/supply_point_types', startkey=[domain], endkey=[domain, {}], group_level=2)]

@@ -742,7 +742,6 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
 
     report_partial_path = "reports/partials/maps.html"
     flush_layout = True
-    asynchronous = False  # TODO: we want to support async load
 
     def _get_data(self):
         adapter = self.data_source['adapter']
@@ -769,6 +768,9 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
         def points():
             for row in data:
                 geo = row[geo_col]
+                if geo is None:
+                    continue
+
                 e = geo
                 depth = 0
                 while hasattr(e, '__iter__'):
@@ -825,9 +827,14 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
 
     @property
     def report_context(self):
+        layers = getattr(settings, 'MAPS_LAYERS', None)
+        if not layers:
+            layers = {'Default': {'family': 'fallback'}}
+
         context = {
             'data': self._get_data(),
             'config': self.display_config,
+            'layers': layers,
         }
 
         return dict(

@@ -2,16 +2,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>odk {% if media %}media {% endif %}install</title>
+    <title>odk install</title>
 </head>
 <body>
     <div style="background-color:white; border:1px solid #555; padding:2em;">
         <h3>{% trans "Install to Android by taking a picture of the image below on your phone." %}</h3>
         <p style="text-align:center;">
-            <img src="{{ qr_code }}" width=250 alt="Download" >
+            <img src="{% url corehq.apps.app_manager.views.odk_qr_code domain app.get_id %}" width=250 alt="Download" >
         </p>
-        <p>{% trans "You can also visit:" %} <a href="{{ profile_url }}">{{ profile_url }}</a> {% trans "in your mobile browser." %}</p>
-        <p>{% trans "For more about CommCare on Android, visit" %} <a href="https://confluence.dimagi.com/display/commcarepublic/Installing+CommCareODK+Android">{% trans "Installing CommCareODK Android" %}</a></p>
+        <p>{% trans "You can also visit:" %} <a href="{{app.odk_profile_display_url}}">{{ app.odk_profile_display_url }}</a> {% trans "in your mobile browser." %}</p>
+        <p>For more about CommCare on Android, visit <a href="https://confluence.dimagi.com/display/commcarepublic/Installing+CommCareODK+Android">{% trans "Installing CommCareODK Android" %}</a></p>
     </div>
 </body>
 </html>

@@ -7,7 +7,6 @@ import hashlib
 import random
 import json
 from corehq.apps.app_manager.commcare_settings import check_condition
-import langcodes
 import types
 import re
 from collections import defaultdict
@@ -32,8 +31,6 @@ from django.template.loader import render_to_string
 
 from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
-from couchdbkit.exceptions import BadValueError
-from couchdbkit.ext.django.schema import *
 
 from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
@@ -53,13 +50,10 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property
 
-from corehq.apps.app_manager import current_builds
-from corehq.apps.app_manager.const import APP_V1, APP_V2
+from corehq.apps.app_manager import current_builds, app_strings
 from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings, build_error_utils
-from corehq.apps.app_manager.suite_xml import IdStrings
-from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
-from corehq.apps.app_manager.util import split_path, save_xform, create_temp_sort_column
-from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, XFormError, XFormValidationError, WrappedNode, CaseXPath
+from corehq.apps.app_manager.util import split_path, save_xform
+from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, XFormError, XFormValidationError, WrappedNode
 
 MISSING_DEPENDECY = \
 """Aw shucks, someone forgot to install the google chart library
@@ -521,12 +515,12 @@ class FormBase(DocumentSchema):
         # Here, case-config-ui-*.js, and module_view.html
         reserved_words = load_case_reserved_words()
         for key in self.actions.all_property_names():
-            _, key = split_path(key)
-            if key in reserved_words:
-                errors.append({'type': 'update_case uses reserved word', 'word': key})
             # this regex is also copied in propertyList.ejs
             if not re.match(r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$', key):
                 errors.append({'type': 'update_case word illegal', 'word': key})
+            _, key = split_path(key)
+            if key in reserved_words:
+                errors.append({'type': 'update_case uses reserved word', 'word': key})
 
         for subcase_action in self.actions.subcases:
             if not subcase_action.case_type:
@@ -538,14 +532,7 @@ class FormBase(DocumentSchema):
 
         if self.requires == 'none' and self.actions.open_case.is_active() \
                 and not self.actions.open_case.name_path:
-            errors.append({
-                'type': 'case_name required',
-                'message': ugettext(
-                    'Every case must have a name. '
-                    'Please specify a value for the name property under '
-                    '"Save data to the following case properties"'
-                )
-            })
+            errors.append({'type': 'case_name required'})
 
         try:
             valid_paths = set([question['value'] for question in self.get_questions(langs=[])])
@@ -928,9 +915,8 @@ class VersionedDoc(LazyAttachmentDoc):
     version = IntegerProperty()
     short_url = StringProperty()
     short_odk_url = StringProperty()
-    short_odk_media_url = StringProperty()
 
-    _meta_fields = ['_id', '_rev', 'domain', 'copy_of', 'version', 'short_url', 'short_odk_url', 'short_odk_media_url']
+    _meta_fields = ['_id', '_rev', 'domain', 'copy_of', 'version', 'short_url', 'short_odk_url']
 
     @property
     def id(self):
@@ -957,7 +943,7 @@ class VersionedDoc(LazyAttachmentDoc):
         else:
             copy = deepcopy(self.to_json())
             bad_keys = ('_id', '_rev', '_attachments',
-                        'short_url', 'short_odk_url', 'short_odk_media_url', 'recipients')
+                        'short_url', 'short_odk_url', 'recipients')
 
             for bad_key in bad_keys:
                 if bad_key in copy:
@@ -1114,6 +1100,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     langs = StringListProperty()
     # only the languages that go in the build
     build_langs = StringListProperty()
+    secure_submissions = BooleanProperty(default=False)
 
     # exchange properties
     cached_properties = DictProperty()
@@ -1292,7 +1279,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
 
     @absolute_url_property
     def post_url(self):
-        return reverse('receiver_post_with_app_id', args=[self.domain, self.copy_of or self.get_id])
+        if self.secure_submissions:
+            url_name = 'receiver_secure_post'
+        else:
+            url_name = 'receiver_post_with_app_id'
+        return reverse(url_name, args=[self.domain, self.copy_of or self.get_id])
 
     @absolute_url_property
     def key_server_url(self):
@@ -1428,19 +1419,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     def odk_profile_url(self):
         return reverse('corehq.apps.app_manager.views.download_odk_profile', args=[self.domain, self._id])
 
-    @absolute_url_property
-    def odk_media_profile_url(self):
-        return reverse('corehq.apps.app_manager.views.download_odk_media_profile', args=[self.domain, self._id])
-
     @property
     def odk_profile_display_url(self):
         return self.short_odk_url or self.odk_profile_url
 
-    @property
-    def odk_media_profile_display_url(self):
-        return self.short_odk_media_url or self.odk_media_profile_url
-
-    def get_odk_qr_code(self, with_media=False):
+    def get_odk_qr_code(self):
         """Returns a QR code, as a PNG to install on CC-ODK"""
         try:
             return self.lazy_fetch_attachment("qrcode.png")
@@ -1451,7 +1434,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
                 raise Exception(MISSING_DEPENDECY)
             HEIGHT = WIDTH = 250
             code = QRChart(HEIGHT, WIDTH)
-            code.add_data(self.odk_profile_url if not with_media else self.odk_media_profile_url)
+            code.add_data(self.odk_profile_url)
 
             # "Level H" error correction with a 0 pixel margin
             code.set_ec('H', 0)
@@ -1495,9 +1478,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
             copy.short_odk_url = bitly.shorten(
                 get_url_base() + reverse('corehq.apps.app_manager.views.download_odk_profile', args=[copy.domain, copy._id])
             )
-            copy.short_odk_media_url = bitly.shorten(
-                get_url_base() + reverse('corehq.apps.app_manager.views.download_odk_media_profile', args=[copy.domain, copy._id])
-            )
         except AssertionError:
             raise
         except:        # URLError, BitlyError
@@ -1505,7 +1485,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
             logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
             copy.short_url = None
             copy.short_odk_url = None
-            copy.short_odk_media_url = None
 
         copy.build_comment = comment
         copy.comment_from = user_id
@@ -1574,7 +1553,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     force_http = BooleanProperty(default=False)
     cloudcare_enabled = BooleanProperty(default=False)
     translation_strategy = StringProperty(default='dump-known',
-                                          choices=['dump-known', 'simple'])
+                                          choices=app_strings.CHOICES.keys())
 
     @classmethod
     def wrap(cls, data):
@@ -1696,96 +1675,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             else:
                 map_item.version = self.version
 
-    def _create_custom_app_strings(self, lang):
-        def trans(d):
-            return clean_trans(d, langs)
-
-        id_strings = IdStrings()
-        langs = [lang] + self.langs
-        yield id_strings.homescreen_title(), self.name
-        yield id_strings.app_display_name(), self.name
-
-        yield 'cchq.case', "Case"
-        yield 'cchq.referral', "Referral"
-
-        # include language code names
-        for lc in self.langs:
-            name = langcodes.get_name(lc) or lc
-            if name:
-                yield lc, name
-
-        for module in self.get_modules():
-            for detail in module.get_details():
-                if detail.type.startswith('case'):
-                    label = trans(module.case_label)
-                else:
-                    label = trans(module.referral_label)
-                yield id_strings.detail_title_locale(module, detail), label
-
-                sort_elements = dict((s.field, (s, i + 1))
-                                     for i, s in enumerate(detail.sort_elements))
-
-                columns = list(detail.get_columns())
-                for column in columns:
-                    yield id_strings.detail_column_header_locale(module, detail, column), trans(column.header)
-
-                    if column.header:
-                        sort_elements.pop(column.header.values()[0], None)
-
-                    if column.format == 'enum':
-                        for key, val in column.enum.items():
-                            yield id_strings.detail_column_enum_variable(module, detail, column, key), trans(val)
-
-                # everything left is a sort only option
-                for sort_element in sort_elements:
-                    # create a fake column for it
-                    column = create_temp_sort_column(sort_element, len(columns))
-
-                    # now mimic the normal translation
-                    field_text = {'en': str(column.field)}
-                    yield id_strings.detail_column_header_locale(module, detail, column), trans(field_text)
-
-            yield id_strings.module_locale(module), trans(module.name)
-            if module.case_list.show:
-                yield id_strings.case_list_locale(module), trans(module.case_list.label) or "Case List"
-            if module.referral_list.show:
-                yield id_strings.referral_list_locale(module), trans(module.referral_list.label)
-            for form in module.get_forms():
-                yield id_strings.form_locale(form), trans(form.name) + ('${0}' if form.show_count else '')
-
-    def create_app_strings(self, lang, for_default=False):
-        def non_empty_only(dct):
-            return dict([(key, value) for key, value in dct.items() if value])
-        if lang != "default":
-            messages = {}
-
-            custom = dict(self._create_custom_app_strings(lang))
-            if for_default:
-                messages.update(custom)
-            else:
-                messages.update(non_empty_only(custom))
-
-            if self.translation_strategy == 'dump-known':
-                cc_trans = commcare_translations.load_translations(lang)
-                messages.update(cc_trans)
-            if self.translation_strategy == 'dump-known' or \
-                    (self.translation_strategy == 'simple' and not for_default):
-                messages.update(non_empty_only(self.translations.get(lang, {})))
+    def create_app_strings(self, lang):
+        gen = app_strings.CHOICES[self.translation_strategy]
+        if lang == 'default':
+            return gen.create_default_app_strings(self)
         else:
-            messages = {}
-
-            for lc in reversed(self.langs):
-                if lc == "default":
-                    continue
-                new_messages = commcare_translations.loads(
-                    self.create_app_strings(lc, for_default=True)
-                )
-
-                for key, val in new_messages.items():
-                    # do not overwrite a real trans with a blank trans
-                    if not (val == '' and key in messages):
-                        messages[key] = val
-        return commcare_translations.dumps(messages).encode('utf-8')
+            return gen.create_app_strings(self, lang)
 
     @property
     def skip_validation(self):

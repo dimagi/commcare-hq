@@ -35,6 +35,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResou
     # not present for e.g. devicelogs and must be allowed blank
     uiversion = fields.CharField(attribute='uiversion', blank=True, null=True)
     metadata = fields.DictField(attribute='metadata', blank=True, null=True)
+    domain = fields.CharField(attribute='domain')
 
     cases = UseIfRequested(ToManyDocumentsField('corehq.apps.api.resources.v0_4.CommCareCaseResource',
                                                 attribute=lambda xform: [dict_object(case.get_json()) for case in casexml_xform.cases_referenced_by_xform(xform)]))
@@ -117,7 +118,7 @@ class RepeaterResource(JsonResource, DomainSpecificResourceMixin):
         list_allowed_methods = ['get', 'post']
         authorization = v0_1.DomainAdminAuthorization
 
-class CommCareCaseResource(v0_3.CommCareCaseResource, DomainSpecificResourceMixin):
+class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResource, DomainSpecificResourceMixin):
     xforms = UseIfRequested(ToManyDocumentsField('corehq.apps.api.resources.v0_4.XFormInstanceResource',
                                                  attribute=lambda case: case.get_forms()))
 
@@ -126,6 +127,8 @@ class CommCareCaseResource(v0_3.CommCareCaseResource, DomainSpecificResourceMixi
 
     parent_cases = UseIfRequested(ToManyDictField('corehq.apps.api.resources.v0_4.CommCareCaseResource',
                                                   attribute=lambda case: dict([ (index.identifier, CommCareCase.get(index.referenced_id)) for index in case.reverse_indices])))
+
+    domain = fields.CharField(attribute='domain')
 
     # Fields that v0.2 assumed were pre-transformed but we are now operating on straight CommCareCase objects again
     date_modified = fields.CharField(attribute='modified_on', default="1900-01-01")
@@ -145,14 +148,15 @@ class CommCareCaseResource(v0_3.CommCareCaseResource, DomainSpecificResourceMixi
             del query['from']
         if 'size' in query:
             del query['size']
-        
+
         return ESQuerySet(payload = query,
-                          model = CommCareCase, #lambda jvalue: dict_object(CommCareCase.wrap(jvalue).get_json()),
-                          es_client = self.case_es(domain)) # Not that XFormES is used only as an ES client, for `run_query` against the proper index
+                          model = CommCareCase,
+                          es_client = self.case_es(domain)).order_by('server_modified_on') # Not that CaseES is used only as an ES client, for `run_query` against the proper index
 
     class Meta(v0_3.CommCareCaseResource.Meta):
         max_limit = 100 # Today, takes ~25 seconds for some domains
         serializer = CommCareCaseSerializer()
+        ordering = ['server_date_modified', 'date_modified']
 
 class GroupResource(JsonResource, DomainSpecificResourceMixin):
     id = fields.CharField(attribute='get_id', unique=True, readonly=True)

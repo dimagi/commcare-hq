@@ -1,6 +1,6 @@
 import itertools
+from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests.util import CaseBlock
 from casexml.apps.case.xml import V2
 from lxml import etree
 from lxml.builder import ElementMaker

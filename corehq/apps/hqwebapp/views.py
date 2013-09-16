@@ -3,6 +3,7 @@ from datetime import datetime
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
@@ -12,6 +13,8 @@ from django.contrib.sites.models import Site
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
     HttpResponseServerError, HttpResponseNotFound
 from django.shortcuts import redirect, render
+from django.views.generic import TemplateView
+import json
 from corehq.apps.announcements.models import Notification
 
 from corehq.apps.app_manager.models import BUG_REPORTS_DOMAIN
@@ -23,7 +26,7 @@ from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthent
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from dimagi.utils.logging import notify_exception
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_noop
 
 from dimagi.utils.web import get_url_base, json_response
 from django.core.urlresolvers import reverse
@@ -405,3 +408,267 @@ def unsubscribe(request, user_id):
                     'click "Update Information" if you do '
                     'not want to receive future emails from us.'))
     return HttpResponseRedirect(reverse('commcare_user_account', args=[domain, user_id]))
+
+
+class BasePageView(TemplateView):
+    urlname = None  # name of the view used in urls
+    page_title = None  # what shows up in the <title>
+    template_name = 'hqwebapp/base_page.html'
+
+    @property
+    def page_name(self):
+        """
+        This is what is visible to the user.
+        page_title is what shows up in <title> tags.
+        """
+        return self.page_title
+
+    @property
+    def page_url(self):
+        raise NotImplementedError()
+
+    @property
+    def parent_pages(self):
+        """
+        Specify parent pages as a list of
+        [{
+            'title': <name>,
+            'url: <url>,
+        }]
+        """
+        return []
+
+    @property
+    def main_context(self):
+        """
+        The shared context for rendering this page.
+        """
+        return {
+            'current_page': {
+                'page_name': self.page_name,
+                'title': self.page_title,
+                'url': self.page_url,
+                'parents': self.parent_pages,
+            },
+        }
+
+    @property
+    def page_context(self):
+        """
+        The Context for the settings page
+        """
+        raise NotImplementedError("This should return a dict.")
+
+    def get_context_data(self, **kwargs):
+        context = super(BasePageView, self).get_context_data(**kwargs)
+        context.update(self.main_context)
+        context.update(self.page_context)
+        return context
+
+    def render_to_response(self, context, **response_kwargs):
+        """
+        Returns a response with a template rendered with the given context.
+        """
+        return render(self.request, self.template_name, context)
+
+
+class BaseSectionPageView(BasePageView):
+    section_name = ""
+    template_name = "hqwebapp/base_section.html"
+
+    @property
+    def section_url(self):
+        raise NotImplementedError
+
+    @property
+    def main_context(self):
+        context = super(BaseSectionPageView, self).main_context
+        context.update({
+            'section': {
+                'page_name': self.section_name,
+                'url': self.section_url,
+            }
+        })
+        return context
+
+
+class PaginatedItemException(Exception):
+    pass
+
+
+class CRUDPaginatedViewMixin(object):
+    """
+    To be mixed in with a TemplateView.
+    """
+    DEFAULT_LIMIT = 10
+
+    limit_text = ugettext_noop("items per page")
+    empty_notification = ugettext_noop("You have no items.")
+    loading_message = ugettext_noop("Loading...")
+    updated_items_header = ugettext_noop("Updated Items:")
+    new_items_header = ugettext_noop("New Items:")
+
+    def _safe_escape(self, expression, default):
+        try:
+            return expression()
+        except ValueError:
+            return default
+
+    @property
+    def page(self):
+        return self._safe_escape(
+            lambda: int(self.request.GET.get('page', 1)),
+            1
+        )
+
+    @property
+    def limit(self):
+        return self._safe_escape(
+            lambda: int(self.request.GET.get('limit', self.DEFAULT_LIMIT)),
+            self.DEFAULT_LIMIT
+        )
+
+    @property
+    def total(self):
+        raise NotImplementedError("You must implement total.")
+
+    @property
+    def crud_url(self):
+        raise NotImplementedError("you must specify a fetch_url")
+
+    @property
+    def column_names(self):
+        raise NotImplementedError("you must return a list of column names")
+
+    @property
+    def pagination_context(self):
+        return {
+            'pagination': {
+                'crud_url': self.crud_url,
+                'page': self.page,
+                'limit': self.limit,
+                'total': self.total,
+                'limit_options': range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT),
+                'column_names': self.column_names,
+                'num_columns': len(self.column_names),
+                'text': {
+                    'limit': self.limit_text,
+                    'empty': self.empty_notification,
+                    'loading': self.loading_message,
+                    'updated_items': self.updated_items_header,
+                    'new_items': self.new_items_header,
+                },
+                'create_item_form': self.get_create_form_response(self.get_create_form()),
+            }
+        }
+
+    @property
+    def new_item_response(self):
+        create_form = self.get_create_form()
+        new_item = None
+        if create_form.is_valid():
+            new_item = self.get_new_item_data(create_form)
+            create_form = self.get_create_form(is_blank=True)
+        return {
+            'newItem': new_item,
+            'form': self.get_create_form_response(create_form)
+        }
+
+    @property
+    def updated_item_response(self):
+        """
+        Update the paginated item here...
+        """
+        try:
+            try:
+                item_id = self.request.POST['itemId']
+            except KeyError:
+                raise PaginatedItemException("Someone didn't pass the item's ID to the server. :-(")
+            response = self.get_updated_item_data(item_id)
+            return {
+                'updatedItem': response
+            }
+        except PaginatedItemException as e:
+            return {
+                'error': "<strong>Problem Updating:</strong> %s" % e,
+            }
+
+    def get_create_form(self, is_blank=False):
+        raise NotImplementedError("You must return a form object that will create an Item")
+
+    def get_create_form_response(self, create_form):
+        return render_to_string(
+            'hqwebapp/partials/create_item_form.html', {
+                'form': create_form
+            }
+        )
+
+    def get_new_item_data(self, create_form):
+        """
+        This should return a dict of data for the new item.
+        {
+            'itemData': {
+                <json dict of item data for the knockout model to use>
+            },
+            'template': <knockout template id>
+        }
+        """
+        raise NotImplementedError("You must implement get_new_item_data")
+
+    def get_updated_item_data(self, item_id):
+        """
+        This should return a dict of data for the updated item.
+        {
+            'itemData': {
+                <json dict of item data for the knockout model to use>
+            },
+            'template': <knockout template id>
+        }
+        """
+        raise NotImplementedError("You must implement update_item")
+
+    def post(self, *args, **kwargs):
+        action = self.request.POST.get('action')
+        response = {
+            'create': self.new_item_response,
+            'update': self.updated_item_response,
+        }.get(action, {})
+        return HttpResponse(json.dumps(response))
+
+
+class FetchCRUDPaginatedDataView(object):
+    """
+    Mix this in in with a TemplateView that subclasses a view using the CRUDPaginatedViewMixin.
+    """
+
+    @property
+    def sort_by(self):
+        return self.request.GET.get('sortBy', 'abc')
+
+    @property
+    def skip(self):
+        return (self.page - 1) * self.limit
+
+    @property
+    def paginated_list(self):
+        """
+        This should return a list of data formatted as follows:
+        [
+            {
+                'itemData': {
+                    <json dict of item data for the knockout model to use>
+                },
+                'template': <knockout template id>
+            }
+        ]
+        """
+        raise NotImplementedError("Return a list of data for the request response.")
+
+    def render_to_response(self, context, **response_kwargs):
+        return HttpResponse(json.dumps({
+            'success': True,
+            'currentPage': self.page,
+            'paginatedList': self.paginated_list,
+        }))
+
+

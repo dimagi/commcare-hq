@@ -24,10 +24,10 @@ def get_form_list(domain):
 
 def get_sample_list(domain):
     #Circular import
-    from corehq.apps.reminders.models import SurveySample
+    from casexml.apps.case.models import CommCareCaseGroup
     
     sample_list = []
-    for sample in SurveySample.view("reminders/sample_by_domain", startkey=[domain], endkey=[domain, {}], include_docs=True):
+    for sample in CommCareCaseGroup.get_all(domain):
         sample_list.append({"code" : sample._id, "name" : sample.name})
     return sample_list
 
@@ -54,7 +54,7 @@ def get_recipient_name(recipient, include_desc=True):
     from corehq.apps.users.models import CouchUser
     from corehq.apps.groups.models import Group
     from casexml.apps.case.models import CommCareCase
-    from .models import SurveySample
+    from casexml.apps.case.models import CommCareCaseGroup
     
     if recipient == None:
         return "(no recipient)"
@@ -72,7 +72,7 @@ def get_recipient_name(recipient, include_desc=True):
     elif isinstance(recipient, Group):
         name = recipient.name
         desc = "Group"
-    elif isinstance(recipient, SurveySample):
+    elif isinstance(recipient, CommCareCaseGroup):
         name = recipient.name
         desc = "Survey Sample"
     else:

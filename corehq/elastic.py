@@ -20,6 +20,7 @@ ES_URLS = {
     "forms": XFORM_INDEX + '/xform/_search',
     "cases": CASE_INDEX + '/case/_search',
     "users": USER_INDEX + '/user/_search',
+    "domains": DOMAIN_INDEX + '/hqdomain/_search'
 }
 
 ADD_TO_ES_FILTER = {
@@ -132,18 +133,18 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
             q["filter"]["and"].append({"terms": {attr: attr_val}})
 
     def facet_filter(facet):
-        ff = {"facet_filter": {}}
-        ff["facet_filter"]["and"] = [clause for clause in q["filter"]["and"] if facet not in clause.get("terms", [])]
-        return ff if ff["facet_filter"]["and"] else {}
+        return [clause for clause in q["filter"]["and"] if facet not in clause.get("terms", [])]
 
     if facets:
         q["facets"] = q.get("facets", {})
         for facet in facets:
             q["facets"][facet] = {"terms": {"field": facet, "size": 9999}}
 
-    if q.get('facets'):
+    if q.get('facets') and q.get("filter", {}).get("and"):
         for facet in q["facets"]:
-            q["facets"][facet].update(facet_filter(facet))
+            if "facet_filter" not in q["facets"][facet]:
+                q["facets"][facet]["facet_filter"] = {"and": []}
+            q["facets"][facet]["facet_filter"]["and"].extend(facet_filter(facet))
 
     if not q['filter']['and']:
         del q["filter"]
@@ -177,6 +178,9 @@ def parse_args_for_es(request, prefix=None):
     Parses a request's query string for url parameters. It specifically parses the facet url parameter so that each term
     is counted as a separate facet. e.g. 'facets=region author category' -> facets = ['region', 'author', 'category']
     """
+    def strip_array(str):
+        return str[:-2] if str.endswith('[]') else str
+
     params, facets = {}, []
     for attr in request.GET.iterlists():
         param, vals = attr[0], attr[1]
@@ -185,9 +189,9 @@ def parse_args_for_es(request, prefix=None):
             continue
         if prefix:
             if param.startswith(prefix):
-                params[param[len(prefix):]] = [unquote(a) for a in vals]
+                params[strip_array(param[len(prefix):])] = [unquote(a) for a in vals]
         else:
-            params[param] = [unquote(a) for a in vals]
+            params[strip_array(param)] = [unquote(a) for a in vals]
 
     return params, facets
 

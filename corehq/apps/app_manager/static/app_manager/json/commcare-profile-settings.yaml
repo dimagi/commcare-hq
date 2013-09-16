@@ -161,8 +161,7 @@
 - name: "Send Forms Mode"
   description: "How Send All Unsent functionality is presented to the user"
   id: "cc-send-unsent"
-  requires: "{features.sense}='false' && {properties.server-tether}='push-only'"
-  requires_txt: "If server-tether is set to sync, automatic cannot be used."
+  requires: "{features.sense}='false'"
   values: ["cc-su-auto", "cc-su-man"]
   value_names: ["Automatic", "Manual"]
   values_txt: "If automatic is enabled, forms will attempt to send on their own without intervention from the user. If manual is enabled, the user must manually decide when to attempt to send forms."

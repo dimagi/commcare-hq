@@ -7,8 +7,8 @@
 
 <script src="{% static 'reports/javascripts/leaflet.js' %}"></script>
 <script src="{% static 'reports/javascripts/jquery.color.js' %}"></script>
-<script type="text/javascript" src="{% static 'reports/javascripts/maps.js' %}"></script>
-<script type="text/javascript">
+<script src="{% static 'reports/javascripts/maps.js' %}"></script>
+<script>
 
 CONTEXT = {{ context|JSON }};
 
@@ -27,6 +27,7 @@ $(document).ready(function() {
 </script>
 
 <script type="text/template" id="default_detail_popup">
+<div class="default-popup">
   <h3><%= name %></h3>
   <hr>
   <table>
@@ -39,6 +40,7 @@ $(document).ready(function() {
     </tr>
     <% }); %>
   </table>
+</div>
 </script>
 
 <script type="text/template" id="info_popup">
@@ -88,10 +90,22 @@ $(document).ready(function() {
   </table>
 </script>
 
+<script type="text/template" id="metrics-group">
+  <div class="choice" data-bind="if: name() != '_root', click: onclick">
+    <i data-bind="visible: group, css: { 'icon-caret-right': !expanded(), 'icon-caret-down': expanded }"></i>
+    <span data-bind="text: name, css: { selected: selected }"></span>
+  </div>
+
+  <div data-bind="visible: expanded, foreach: children" class="metric-group">
+    <div data-bind="template: { name: 'metrics-group' }"></div>
+  </div>
+</script>
+
 <div style="position: relative;">
   <div id="map" style="width: 100%;"></div>
   
   <div id="metrics" class="control-pane" style="display: none;">
+    <div data-bind="template: { name: 'metrics-group', if: root, data: root }" class="metrics-container"></div>
   </div>
 
   <div id="legend" class="control-pane" style="display: none;">
@@ -100,5 +114,4 @@ $(document).ready(function() {
   <div id="info" class="control-pane" style="display: none;">
   </div>
 
-</div>
 </div>

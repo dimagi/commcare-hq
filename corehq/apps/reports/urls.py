@@ -54,11 +54,9 @@ urlpatterns = patterns('corehq.apps.reports.views',
 
     # Create and Manage Custom Exports
     url(r"^export/$", 'export_data'),
-    url(r"^export/customize/$", 'custom_export', name="custom_export"),
-    url(r"^export/custom/(?P<export_id>[\w\-]+)/edit/$", 'edit_custom_export', name="edit_custom_export"),
-    url(r"^export/custom/(?P<export_id>[\w\-]+)/delete/$", 'delete_custom_export', name="delete_custom_export"),
 
     # Download Exports
+    # todo should eventually be moved to corehq.apps.export
     ## Custom
     url(r"^export/custom/(?P<export_id>[\w\-]+)/download/$", 'export_default_or_custom_data', name="export_custom_data"),
     ## Default

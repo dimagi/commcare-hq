@@ -1,41 +1,8 @@
-function SavedApp(o, r) {
-    var $root = r;
+function SavedApp(o) {
     var self = ko.mapping.fromJS(o);
     $.each(['comment_user_name', '_deleteState'], function (i, attr) {
         self[attr] = self[attr] || ko.observable();
     });
-    self.include_media = ko.observable(false);
-
-    self.get_short_odk_url = ko.computed(function() {
-        if (self.include_media()) {
-           if (self.short_odk_media_url) {
-               return self.short_odk_media_url();
-           }
-        } else {
-            if (self.short_odk_url) {
-                return self.short_odk_url();
-            }
-        }
-        return false;
-    });
-
-    self.get_odk_install_url = ko.computed(function() {
-        var slug = self.include_media() ? 'odk_media' : 'odk';
-        return $root.url(slug, self.id());
-    });
-
-    self.sms_url = function(index) {
-        console.log(index)
-        if (index === 0) { // sending to sms
-            return self.short_url()
-        } else { // sending to odk
-            if (self.include_media() && self.short_odk_media_url()) {
-                return self.short_odk_media_url();
-            } else {
-                return self.short_odk_url();
-            }
-        }
-    };
     return self;
 }
 
@@ -99,7 +66,7 @@ function ReleasesMain(o) {
         }).success(function (savedApps) {
             var i, savedApp;
             for (i = 0; i < savedApps.length; i++) {
-                savedApp = SavedApp(savedApps[i], self);
+                savedApp = SavedApp(savedApps[i]);
                 self.addSavedApp(savedApp);
             }
             if (i) {
@@ -176,7 +143,7 @@ function ReleasesMain(o) {
         }).success(function (data) {
                 $('#build-errors-wrapper').html(data.error_html);
                 if (data.saved_app) {
-                    self.addSavedApp(SavedApp(data.saved_app, self), true);
+                    self.addSavedApp(SavedApp(data.saved_app), true);
                 }
                 self.buildState('');
             }).error(function () {

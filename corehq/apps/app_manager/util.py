@@ -85,7 +85,11 @@ class ParentCasePropertyBuilder(object):
                     case_properties.update(
                         subcase.case_properties.keys()
                     )
-                    parent_types.add(m_case_type)
+                    if case_type != m_case_type and (
+                            f_actions.open_case.is_active() or
+                            f_actions.update_case.is_active() or
+                            f_actions.close_case.is_active()):
+                        parent_types.add(m_case_type)
         return parent_types, case_properties
 
     def get_parent_types(self, case_type):
