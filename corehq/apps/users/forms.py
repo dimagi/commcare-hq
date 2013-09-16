@@ -1,3 +1,5 @@
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
 from django import forms
 from django.core.validators import EmailValidator, email_re
 from django.core.urlresolvers import reverse
@@ -190,6 +192,20 @@ class CommCareAccountForm(forms.Form):
         return self.cleaned_data
 
 validate_username = EmailValidator(email_re, _(u'Username contains invalid characters.'), 'invalid')
+
+
+class GroupSelectionForm(forms.Form):
+    group_ids = forms.MultipleChoiceField(
+        label="",
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.add_input(Submit('submit', 'Submit'))
+        super(GroupSelectionForm, self).__init__(*args, **kwargs)
+
 
 class SupplyPointSelectWidget(forms.Widget):
     def __init__(self, attrs=None, domain=None):
