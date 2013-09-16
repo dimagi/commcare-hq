@@ -37,7 +37,7 @@
                             Module
                             <a href="{% url view_module domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                             has an incorrectly formatted ID key ({{ error.key }}).
-                            Make sure your key starts with a letter and does not contain spaces.
+                            Make sure your key has only letters and numbers and no spaces.
                         {% endif %}
                         {% if error.type == "no modules" %}
                             This application has no modules.
