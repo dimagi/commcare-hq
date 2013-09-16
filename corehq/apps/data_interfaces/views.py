@@ -52,7 +52,13 @@ class CaseGroupListView(BaseDomainView, CRUDPaginatedViewMixin):
     @property
     @memoized
     def total(self):
-        return len(CommCareCaseGroup.get_all(self.domain))
+        data = CommCareCaseGroup.view(
+            'case/groups_by_domain',
+            startkey=[self.domain],
+            endkey=[self.domain, {}],
+            reduce=True
+        ).first()
+        return data['value'] if data else 0
 
     @property
     def crud_url(self):
