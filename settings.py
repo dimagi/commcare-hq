@@ -108,6 +108,8 @@ MIDDLEWARE_CLASSES = [
     'auditcare.middleware.AuditMiddleware',
 ]
 
+SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+
 ROOT_URLCONF = "urls"
 
 TEMPLATE_CONTEXT_PROCESSORS = [
@@ -221,6 +223,7 @@ HQ_APPS = (
     'corehq.apps.orgs',
     'corehq.apps.api',
     'corehq.apps.indicators',
+    'corehq.apps.cachehq',
     'corehq.couchapps',
     'custom.apps.wisepill',
     'fluff',
@@ -793,6 +796,10 @@ PILLOWTOPS = [
                  'corehq.pillows.reportcase.ReportCasePillow',
                  # fluff
                  'bihar.models.CareBiharFluffPillow',
+
+                 # caching
+                 'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
+
                  'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
                  'custom.reports.care_sa.models.CareSAFluffPillow',
                  'custom.reports.mc.models.MalariaConsortiumFluffPillow',
