@@ -823,6 +823,15 @@ ES_CASE_FULL_INDEX_DOMAINS = [
 ES_XFORM_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
     'uth-rhd-test',
+    'mvp-bonsaaso',
+    'mvp-koraro',
+    'mvp-mbola',
+    'mvp-mwandama',
+    'mvp-potou',
+    'mvp-ruhiira',
+    'mvp-sada',
+    'mvp-sauri',
+    'mvp-tiby',
 ]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"

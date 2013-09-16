@@ -16,12 +16,7 @@ from django.utils.translation import ugettext as _, ugettext_noop
 def default(request, domain):
     if not request.project or request.project.is_snapshot:
         raise Http404()
-    if request.project.commtrack_enabled:
-        if not request.couch_user.is_domain_admin():
-            raise Http404()
-        from corehq.apps.commtrack.views import ProductListView
-        return HttpResponseRedirect(reverse(ProductListView.urlname,
-                                            args=[domain]))
+
     if request.couch_user.can_view_reports():
         return HttpResponseRedirect(reverse(DataInterfaceDispatcher.name(),
                                             args=[domain, ExcelExportReport.slug]))
