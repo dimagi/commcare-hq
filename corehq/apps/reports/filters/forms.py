@@ -3,6 +3,7 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 import re
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 
@@ -454,12 +455,20 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         if app_id is not None:
             key[0] = "xmlns app"
             key.append(app_id)
-        data = get_db().view('reports_forms/name_by_xmlns',
-            reduce=False,
-            startkey=key,
-            endkey=key+[{}],
-            limit=1,
-        ).first()
+
+        results = cache_core.cached_view(get_db(),
+                                         'reports_forms/name_by_xmlns',
+                                         reduce=False,
+                                         startkey=key,
+                                         endkey=key + [{}],
+                                         limit=1,
+                                         cache_expire=300)
+
+        try:
+            data = list(results)[0]
+        except IndexError:
+            data = None
+
         if data:
             return data['value']
         return None if none_if_not_found else "Name Unknown"

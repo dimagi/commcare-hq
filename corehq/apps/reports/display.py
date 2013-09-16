@@ -86,7 +86,7 @@ class FormType(object):
             if form:
                 form = form['value']
             # only cache for 10 seconds
-            cache.set(cache_key, json.dumps(form), 10)
+            cache.set(cache_key, json.dumps(form), 30)
         return form
 
 def xmlns_to_name(domain, xmlns, app_id, html=False):

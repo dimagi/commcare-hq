@@ -10,6 +10,8 @@ from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import user_id_to_username
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
+from couchforms.models import XFormInstance
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.modules import to_function
@@ -354,12 +356,12 @@ def friendly_timedelta(td):
 def set_report_announcements_for_user(request, couch_user):
     key = ["type", ReportAnnouncement.__name__]
     now = datetime.utcnow()
-    data = ReportAnnouncement.get_db().view('announcements/all_announcements',
-        reduce=False,
-        startkey=key + [now.isoformat()],
-        endkey=key + [{}],
-        #stale=settings.COUCH_STALE_QUERY,
-    ).all()
+
+    db = ReportAnnouncement.get_db()
+    data = cache_core.cached_view(db, "announcements/all_announcements", reduce=False,
+                                 startkey=key + [now.strftime("%Y-%m-%dT%H:00")], endkey=key + [{}],
+                                 )
+
     announce_ids = [a['id'] for a in data if a['id'] not in couch_user.announcements_seen]
     for announcement_id in announce_ids:
         try:

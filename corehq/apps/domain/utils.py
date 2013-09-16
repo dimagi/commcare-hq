@@ -1,6 +1,7 @@
 import re
 from couchdbkit import ResourceNotFound
 from django.conf import settings
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_db
 from django.core.cache import cache
 
@@ -33,24 +34,22 @@ def get_domain_from_url(path):
 
 def get_domain_module_map():
     hardcoded = getattr(settings, 'DOMAIN_MODULE_MAP', {})
-    dynamic = cache.get(DOMAIN_MODULE_KEY)
-    if not dynamic:
-        try:
-            dynamic = get_db().get(DOMAIN_MODULE_KEY).get('module_map', {})
-            cache.set(DOMAIN_MODULE_KEY, dynamic, 3600)
-        except ResourceNotFound:
-            dynamic = {}
+
+    try:
+        dynamic = cache_core.cached_open_doc(get_db(), 'DOMAIN_MODULE_CONFIG').get('module_map', {})
+    except ResourceNotFound:
+        dynamic = {}
 
     hardcoded.update(dynamic)
     return hardcoded
 
 
 def get_adm_enabled_domains():
-    domains = cache.get(ADM_DOMAIN_KEY)
-    if not domains:
-        try:
-            domains = get_db().get(ADM_DOMAIN_KEY).get('domains', [])
-            cache.set(ADM_DOMAIN_KEY, domains, 3600)
-        except ResourceNotFound:
-            domains = []
+    try:
+
+        #cache_core GET
+        domains = cache_core.cached_open_doc(get_db(), 'ADM_ENABLED_DOMAINS').get('domains', {})
+        #domains = get_db().get('ADM_ENABLED_DOMAINS').get('domains', [])
+    except ResourceNotFound:
+        domains = []
     return domains
