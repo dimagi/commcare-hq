@@ -122,7 +122,7 @@ class BasicPillow(object):
         while True:
             try:
                 c.wait(self.parsing_processor, since=self.since, filter=self.couch_filter,
-                       heartbeat=WAIT_HEARTBEAT, feed='continuous', timeout=30000, **self.extra_args)
+                       heartbeat=WAIT_HEARTBEAT, include_docs=True, feed='continuous', timeout=30000, **self.extra_args)
             except Exception, ex:
                 pillow_logging.exception("Exception in form listener: %s, sleeping and restarting" % ex)
                 gevent.sleep(RETRY_INTERVAL)
@@ -133,7 +133,7 @@ class BasicPillow(object):
         http://couchdbkit.org/docs/changes.html
         """
         with ChangesStream(self.couch_db, feed='continuous', heartbeat=True, since=self.since,
-                           filter=self.couch_filter, **self.extra_args) as st:
+                           filter=self.couch_filter, include_docs=True, **self.extra_args) as st:
             for c in st:
                 self.processor(c)
 
@@ -246,7 +246,7 @@ class BasicPillow(object):
         if changes_dict.get('deleted', False):
             #override deleted behavior on consumers that care/deal with deletions
             return None
-        return self.couch_db.open_doc(changes_dict['id'])
+        return changes_dict['doc']
 
     def change_transform(self, doc_dict):
         """
