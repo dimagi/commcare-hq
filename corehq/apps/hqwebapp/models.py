@@ -281,7 +281,49 @@ class CommTrackSetupTab(UITab):
 
     @property
     def sidebar_items(self):
-        return []
+        items = []
+
+        # circular import
+        from corehq.apps.commtrack.views import ProductListView, NewProductView, EditProductView
+        products_section = [
+            {
+                'title': ProductListView.page_title,
+                'url': reverse(ProductListView.urlname, args=[self.domain]),
+                'subpages': [
+                    {
+                        'title': NewProductView.page_title,
+                        'urlname': NewProductView.urlname,
+                    },
+                    {
+                        'title': EditProductView.page_title,
+                        'urlname': EditProductView.urlname,
+                    },
+                ]
+            },
+        ]
+        items.append([_("Products"), products_section])
+
+        # circular import
+        from corehq.apps.locations.views import LocationsListView, NewLocationView, EditLocationView
+        locations_section = [
+            {
+                'title': LocationsListView.page_title,
+                'url': reverse(LocationsListView.urlname, args=[self.domain]),
+                'subpages': [
+                    {
+                        'title': NewLocationView.page_title,
+                        'urlname': NewLocationView.urlname,
+                    },
+                    {
+                        'title': EditLocationView.page_title,
+                        'urlname': EditLocationView.urlname,
+                    },
+                ]
+            },
+        ]
+        items.append([_("Locations"), locations_section])
+
+        return items
 
 
 class ProjectDataTab(UITab):
