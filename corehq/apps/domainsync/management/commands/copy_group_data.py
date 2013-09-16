@@ -1,7 +1,6 @@
 import logging
 from optparse import make_option
-from couchdbkit import Database, BulkSaveError, ResourceConflict
-from dimagi.utils.couch.database import iter_docs
+from couchdbkit import Database, BulkSaveError
 from django.core.management.base import LabelCommand, CommandError
 import itertools
 from casexml.apps.case.models import CommCareCase
