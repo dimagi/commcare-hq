@@ -3,7 +3,7 @@ from pytz import timezone
 from datetime import timedelta, datetime, date, time
 import re
 from couchdbkit.ext.django.schema import *
-from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
 from corehq.apps.sms.models import CommConnectCase
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, CouchUser
@@ -673,8 +673,8 @@ class CaseReminderHandler(Document):
             recipients = [recipient]
         elif isinstance(recipient, Group):
             recipients = recipient.get_users(is_active=True, only_commcare=False)
-        elif isinstance(recipient, SurveySample):
-            recipients = [CommConnectCase.get(case_id) for case_id in recipient.contacts]
+        elif isinstance(recipient, CommCareCaseGroup):
+            recipients = [CommConnectCase.get(case_id) for case_id in recipient.cases]
         else:
             from corehq.apps.reminders.event_handlers import raise_error, ERROR_NO_RECIPIENTS
             raise_error(reminder, ERROR_NO_RECIPIENTS)
@@ -832,7 +832,7 @@ class CaseReminderHandler(Document):
         now = self.get_now()
         
         if self.recipient == RECIPIENT_SURVEY_SAMPLE:
-            recipient = SurveySample.get(self.sample_id)
+            recipient = CommCareCaseGroup.get(self.sample_id)
         else:
             # TODO: Need to support sending directly to users / cases without case criteria being set
             recipient = None
@@ -988,7 +988,7 @@ class CaseReminder(Document, LockableMixIn):
         elif handler.recipient == RECIPIENT_CASE:
             return CommConnectCase.get(self.case_id)
         elif handler.recipient == RECIPIENT_SURVEY_SAMPLE:
-            return SurveySample.get(self.sample_id)
+            return CommCareCaseGroup.get(self.sample_id)
         elif handler.recipient == RECIPIENT_OWNER:
             return get_wrapped_owner(get_owner_id(self.case))
         elif handler.recipient == RECIPIENT_PARENT_CASE:
@@ -1079,11 +1079,11 @@ class SurveyWave(DocumentSchema):
     time = TimeProperty()
     end_date = DateProperty()
     form_id = StringProperty()
-    reminder_definitions = DictProperty() # Dictionary of SurveySample._id : CaseReminderHandler._id
+    reminder_definitions = DictProperty() # Dictionary of CommCareCaseGroup._id : CaseReminderHandler._id
     delegation_tasks = DictProperty() # Dictionary of {sample id : {contact id : delegation task id, ...}, ...}
     
     def has_started(self, parent_survey_ref):
-        samples = [SurveySample.get(sample["sample_id"]) for sample in parent_survey_ref.samples]
+        samples = [CommCareCaseGroup.get(sample["sample_id"]) for sample in parent_survey_ref.samples]
         for sample in samples:
             if CaseReminderHandler.timestamp_to_utc(sample, datetime.combine(self.date, self.time)) <= datetime.utcnow():
                 return True
@@ -1121,7 +1121,7 @@ class Survey(Document):
             if sample_json["method"] == "CATI":
                 sample_id = sample_json["sample_id"]
                 cati_sample_data[sample_id] = {
-                    "sample_object" : SurveySample.get(sample_id),
+                    "sample_object": CommCareCaseGroup.get(sample_id),
                     "incentive" : sample_json["incentive"],
                     "cati_operator" : sample_json["cati_operator"],
                 }
@@ -1137,7 +1137,8 @@ class Survey(Document):
                         close_task(self.domain, delegation_case_id, submitting_user_id)
                     del wave.delegation_tasks[sample_id]
                 else:
-                    for case_id in list(set(tasks.keys()).difference(cati_sample_data[sample_id]["sample_object"].contacts)):
+                    for case_id in list(set(tasks.keys()).difference(
+                            cati_sample_data[sample_id]["sample_object"].cases)):
                         close_task(self.domain, tasks[case_id], submitting_user_id)
                         del wave.delegation_tasks[sample_id][case_id]
             
@@ -1147,7 +1148,7 @@ class Survey(Document):
                 task_deactivation_datetime = CaseReminderHandler.timestamp_to_utc(sample_data["sample_object"], datetime.combine(wave.end_date, wave.time))
                 if sample_id not in wave.delegation_tasks:
                     wave.delegation_tasks[sample_id] = {}
-                    for case_id in sample_data["sample_object"].contacts:
+                    for case_id in sample_data["sample_object"].cases:
                         wave.delegation_tasks[sample_id][case_id] = create_task(
                             CommCareCase.get(case_id), 
                             submitting_user_id, 
@@ -1158,7 +1159,7 @@ class Survey(Document):
                             sample_data["incentive"]
                         )
                 else:
-                    for case_id in sample_data["sample_object"].contacts:
+                    for case_id in sample_data["sample_object"].cases:
                         delegation_case_id = wave.delegation_tasks[sample_id].get(case_id, None)
                         if delegation_case_id is None:
                             wave.delegation_tasks[sample_id][case_id] = create_task(

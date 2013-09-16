@@ -1023,7 +1023,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                     util.numcell(sum([int(closures_by_user.get(user["user_id"], 0)) for user in users])),
                     util.numcell(active_cases),
                     util.numcell(total_cases),
-                    util.numcell((float(active_cases)/total_cases) * 100 if active_cases else 'nan', convert='float'),
+                    util.numcell((float(active_cases)/total_cases) * 100 if total_cases else 'nan', convert='float'),
                 ])
 
         else:
@@ -1042,7 +1042,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                     int(closures_by_user.get(user["user_id"], 0)),
                     util.numcell(active_cases) if not today_or_tomorrow(self.datespan.enddate) else active_cases,
                     total_cases,
-                    util.numcell((float(active_cases)/total_cases) * 100 if active_cases else 'nan', convert='float'),
+                    util.numcell((float(active_cases)/total_cases) * 100 if total_cases else 'nan', convert='float'),
                 ]))
 
         self.total_row = [_("Total")]

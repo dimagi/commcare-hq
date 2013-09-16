@@ -5,40 +5,53 @@
 }
 */
 
-.control-pane {
-  /* copied from style of other leaflet controls */
-  background: rgba(248, 248, 248, .8);
-  box-shadow: 0 1px 7px rgba(0,0,0,0.4);
-  border-radius: 5px;
-  -webkit-border-radius: 5px;
-  -moz-border-radius: 5px;
+/* fix bootstrap / leaflet conflict */
+.leaflet-control-layers label {
+    line-height: 1.5em;
+    margin: auto;
+}
+.leaflet-control-layers input {
+    margin: auto;
+}
 
-  padding: 10px;
+.control-pane {
+    /* copied from style of other leaflet controls */
+    background: rgba(248, 248, 248, .8);
+    box-shadow: 0 1px 7px rgba(0,0,0,0.4);
+    border-radius: 5px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    
+    padding: 10px;
 }
 
 #sidebar {
-  max-width: 12em;
+    max-width: 12em;
 }
 
 .zoomtofit {
-  background-image: url(/static/reports/css/leaflet/images/zoomfit.png);
-  cursor: pointer;
+    background-image: url(/static/reports/css/leaflet/images/zoomfit.png);
+    cursor: pointer;
 }
 
 .choice {
-  color: black;
-  font-weight: normal;
-  cursor: pointer;
+    color: black;
+    font-weight: normal;
+    cursor: pointer;
 }
 
 .selected {
-  color: #a00;
-  font-weight: bold;
-  cursor: pointer;
+    color: #a00;
+    font-weight: bold;
+    cursor: pointer;
 }
 
 .disabled {
-  color: #888;
+    color: #888;
+}
+
+.default-popup {
+    max-width: 300px; /* match leaflet default */
 }
 
 .detail_data {
@@ -48,12 +61,11 @@
 }
 
 .detail_active {
-    background-color: #cff;
+    background-color: #ffc;
 }
 
 .sizelegend .circle-container {
     text-align: center;
-    //padding: 5px;
 }
 
 .sizelegend .circle {

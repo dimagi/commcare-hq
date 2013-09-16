@@ -235,7 +235,7 @@ HQ_APPS = (
 
     # custom reports
     'a5288',
-    'bihar',
+    'custom.bihar',
     'dca',
     'hsph',
     'mvp',
@@ -807,7 +807,7 @@ PILLOWTOPS = [
                  'corehq.pillows.reportxform.ReportXFormPillow',
                  'corehq.pillows.reportcase.ReportCasePillow',
                  # fluff
-                 'bihar.models.CareBiharFluffPillow',
+                 'custom.bihar.models.CareBiharFluffPillow',
                  'custom.opm.opm_reports.models.OpmCaseFluffPillow',
                  'custom.opm.opm_reports.models.OpmUserFluffPillow',
                  'custom.opm.opm_reports.models.OpmFormFluffPillow',
@@ -851,7 +851,7 @@ REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 DOMAIN_MODULE_MAP = {
     'a5288-test': 'a5288',
     'a5288-study': 'a5288',
-    'care-bihar': 'bihar',
+    'care-bihar': 'custom.bihar',
     'care-ihapc-live': 'custom.reports.care_sa',
     'cvsulive': 'custom.apps.cvsu',
     'dca-malawi': 'dca',

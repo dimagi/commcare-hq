@@ -5,7 +5,7 @@
 
 $(function() {
 
-$("#supply-point").select2({
+$("#{{ id }}").select2({
     placeholder: "Enter Name of Supply Point",
     minimumInputLength: 1,
     ajax: {
@@ -38,5 +38,4 @@ $("#supply-point").select2({
 
 </script>
 
-<!-- FIXME should not use a global id or else you can only ever have one of these widgets on the page -->
-<input type="hidden" id="supply-point" name="{{ name }}" value="{{ value }}" style="width: 30em;" />
+<input type="hidden" id="{{ id }}" name="{{ name }}" value="{{ value }}" style="width: 30em;" />

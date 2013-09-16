@@ -33,6 +33,12 @@
                             uses cases but doesn't have
                             detail screens configured for cases.
                         {% endif %}
+                        {% if error.type == "invalid id key" %}
+                            Module
+                            <a href="{% url view_module domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                            has an incorrectly formatted ID key ({{ error.key }}).
+                            Make sure your key has only letters and numbers and no spaces.
+                        {% endif %}
                         {% if error.type == "no modules" %}
                             This application has no modules.
                         {% endif %}
@@ -71,9 +77,18 @@
                             Case Update "{{ error.word }}" should start with a letter and only contain letters, numbers, '-', and '_'
                             in form {% include "app_manager/partials/form_error_message.html" %}
                         {% endif %}
+                        {% if error.type == "case_name required" %}
+                            Every case must have a name. Please specify a value for the name property under
+                            "Save data to the following case properties"
+                            in form {% include "app_manager/partials/form_error_message.html" %}
+                        {% endif %}
                         {% if error.type == "path error" %}
-                            The case configuration in form {% include "app_manager/partials/form_error_message.html" %}
-                            contains the invalid path "{{ error.path }}".
+                            {% if error.path %}
+                                The case configuration in form {% include "app_manager/partials/form_error_message.html" %}
+                                contains the invalid path "{{ error.path }}".
+                            {% else %}
+                                {% trans "You're loading or saving a case property but have not chosen a question from the form. Please choose a question from the dropdown next to the case property." %}
+                            {% endif %}
                         {% endif %}
                         {% if error.type == "remote error" %}
                             Remote Error:

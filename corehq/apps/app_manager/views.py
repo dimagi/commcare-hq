@@ -1478,6 +1478,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('show_user_registration', None),
         ('text_input', None),
         ('use_custom_suite', None),
+        ('secure_submissions', None),
         ('translation_strategy', None),
     )
     for attribute, transformation in easy_attrs:
