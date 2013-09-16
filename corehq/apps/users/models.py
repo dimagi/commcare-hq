@@ -856,6 +856,21 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             **extra_args
         ).all()
 
+
+    @classmethod
+    def ids_by_domain(cls, domain, is_active=True):
+        flag = "active" if is_active else "inactive"
+        if cls.__name__ == "CouchUser":
+            key = [flag, domain]
+        else:
+            key = [flag, domain, cls.__name__]
+        return [r['id'] for r in cls.get_db().view("users/by_domain",
+            startkey=key,
+            endkey=key + [{}],
+            reduce=False,
+            include_docs=False,
+        )]
+
     @classmethod
     def total_by_domain(cls, domain, is_active=True):
         data = cls.by_domain(domain, is_active, reduce=True)
