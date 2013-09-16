@@ -6,11 +6,18 @@
 {% load hqstyle_tags %}
 {% load i18n %}
 
+{% block head %}{{ block.super }}
+    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
+    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.css' %}" />
+{% endblock %}
+
 {% block js %}{{ block.super }}
     <script src="{% static 'users/js/key_filters.js' %}"></script>
 
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
     <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
@@ -102,6 +109,9 @@
              }
         });
         {% endif %}
+
+        // groups form
+        $("#id_group_ids").width(800).height(400).multiselect();
     });
 </script>
 {% endblock %}
@@ -109,6 +119,7 @@
 {% block main_column %}
     <ul class="nav nav-tabs" id="user-settings-tabs">
         <li><a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a></li>
+        <li><a href="#groups" data-toggle="tab">{% trans "Groups" %}</a></li>
         <li><a href="#user-data" data-toggle="tab">{% trans "Custom Registration Data" %}</a></li>
         {% if commtrack %}
         <li><a href="#commtrack-data" data-toggle="tab">{% trans "CommTrack" %}</a></li>
@@ -146,6 +157,18 @@
                 </div>
             </form>
 
+        </div>
+        <div class="tab-pane" id="groups">
+            <form class="form" action="{% url update_user_groups domain couch_user.user_id %}" method='post'>
+                <legend>{% trans 'Edit Groups' %}</legend>
+                {% if not are_groups %}
+                <p>{% blocktrans %}
+                    No groups created yet. Go to <a href="{{ groups_url }}">groups configuration</a> to create them.
+                   {% endblocktrans %}</p>
+                {% else %}
+                {% crispy group_form %}
+                {% endif %}
+            </form>
         </div>
         {% if commtrack %}
         <div class="tab-pane" id="commtrack-data">

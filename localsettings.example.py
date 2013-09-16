@@ -22,6 +22,14 @@ COUCH_USERNAME = 'admin'
 COUCH_PASSWORD = '********'
 COUCH_DATABASE_NAME = 'commcarehq'
 
+### Staging Replication Setup for Production/Staging
+
+#Staging domains you want to replicate
+STAGING_DOMAINS = []
+
+#COUCHDB URI {http|https}://username:password@host:optionalport/dbname
+PRODUCTION_COUCHDB_URI = ""
+
 ####### # Email setup ########
 # email settings: these ones are the custom hq ones
 EMAIL_LOGIN = "notifications@dimagi.com"

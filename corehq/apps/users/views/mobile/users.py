@@ -21,7 +21,7 @@ from django.views.generic.base import TemplateView
 from django.shortcuts import render
 
 from couchexport.models import Format
-from corehq.apps.users.forms import CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm
+from corehq.apps.users.forms import CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm, GroupSelectionForm
 from corehq.apps.users.models import CommCareUser, UserRole, CouchUser
 from corehq.apps.groups.models import Group
 from corehq.apps.users.bulkupload import create_or_update_users_and_groups,\
@@ -117,6 +117,29 @@ class EditCommCareUserView(BaseFullEditUserView):
 
     @property
     @memoized
+    def groups(self):
+        if not self.editable_user:
+            return []
+        return Group.by_user(self.editable_user)
+
+    @property
+    @memoized
+    def all_groups(self):
+        # note: will slow things down if there are loads of groups. worth it?
+        # justification: ~every report already does this.
+        return Group.by_domain(self.domain)
+
+    @property
+    @memoized
+    def group_form(self):
+        form = GroupSelectionForm(initial={
+            'group_ids': [g._id for g in self.groups],
+        })
+        form.fields['group_ids'].choices = [(g._id, g.name) for g in self.all_groups]
+        return form
+
+    @property
+    @memoized
     def custom_user_data(self):
         return copy.copy(dict(self.editable_user.user_data))
 
@@ -125,15 +148,18 @@ class EditCommCareUserView(BaseFullEditUserView):
     def update_commtrack_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
             return CommtrackUserForm(self.request.POST, domain=self.domain)
-        linked_loc = self.editable_user.dynamic_properties().get('commtrack_location') # FIXME update user model appropriately
+        linked_loc = self.editable_user.dynamic_properties().get('commtrack_location')
         return CommtrackUserForm(domain=self.domain, initial={'supply_point': linked_loc})
 
     @property
     def page_context(self):
         context = {
+            'are_groups': bool(len(self.all_groups)),
+            'groups_url': reverse('all_groups', args=[self.domain]),
+            'group_form': self.group_form,
             'custom_user_data': self.custom_user_data,
             'reset_password_form': self.reset_password_form,
-            'is_currently_logged_in_user': self.is_currently_logged_in_user
+            'is_currently_logged_in_user': self.is_currently_logged_in_user,
         }
         if self.request.project.commtrack_enabled:
             context.update({
@@ -388,6 +414,22 @@ def restore_commcare_user(request, domain, user_id):
     user.unretire()
     messages.success(request, "User %s and all their submissions have been restored" % user.username)
     return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
+
+@require_can_edit_commcare_users
+@require_POST
+def update_user_groups(request, domain, couch_user_id):
+    form = GroupSelectionForm(request.POST)
+    form.fields['group_ids'].choices = [(id, 'throwaway') for id in Group.ids_by_domain(domain)]
+    if form.is_valid():
+        user = CommCareUser.get(couch_user_id)
+        assert user.doc_type == "CommCareUser"
+        assert user.domain == domain
+        user.set_groups(form.cleaned_data['group_ids'])
+        messages.success(request, "User groups updated!")
+    else:
+        messages.error(request, _("Form not valid. A group may have been deleted while you were viewing this page"
+                                  "Please try again."))
+    return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id]))
 
 @require_can_edit_commcare_users
 @require_POST

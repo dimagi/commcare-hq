@@ -1,3 +1,4 @@
+from collections import defaultdict
 from dimagi.utils.decorators.memoized import memoized
 from sqlagg.columns import *
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -41,17 +42,81 @@ def _to_column(coldef):
         return AggregateColumn(
             _(coldef['slug']),
             _fraction,
-            [_slug_to_raw_column(s) for s in coldef['columns']]
+            [_slug_to_raw_column(s) for s in coldef['columns']],
+            sortable=False,
         )
-    return DatabaseColumn(_(coldef), _slug_to_raw_column(coldef))
+    return DatabaseColumn(_(coldef), _slug_to_raw_column(coldef), sortable=False)
+
+def _empty_row(len):
+    return [NO_VALUE] * len
+
+class UserDataFormat(TableDataFormat):
+
+    def __init__(self, columns, users):
+        self.columns = columns
+        self.no_value = NO_VALUE
+        self.users = users
+
+    def get_headers(self):
+        return [raw_username(u.username) for u in self.users]
+
+    def format_output(self, row_generator):
+        raw_data = dict(row_generator)
+        for user in self.users:
+            if user._id in raw_data:
+                yield raw_data[user._id]
+            else:
+                yield _empty_row(len(self.columns))
+
+class FacilityDataFormat(TableDataFormat):
+
+    def __init__(self, columns, users):
+        self.columns = columns
+        self.no_value = NO_VALUE
+        self.users = users
+        self.facility_user_map = defaultdict(lambda: [])
+        for u in users:
+            self.facility_user_map[u.user_data.get('health_facility') or NO_VALUE].append(u)
+
+    def get_headers(self):
+        return sorted(self.facility_user_map.keys())
+
+    def format_output(self, row_generator):
+        raw_data = dict(row_generator)
+
+        def _combine_rows(row1, row2):
+            def _combine(a, b):
+                def _int(val):
+                    return 0 if val == NO_VALUE else int(val)
+
+                if a == NO_VALUE and b == NO_VALUE:
+                    return NO_VALUE
+                else:
+                    return _int(a) + _int(b)
+
+            if not row1:
+                return row2
+            return [_combine(row1[i], row2[i]) for i in range(len(row1))]
+
+        for facility in sorted(self.facility_user_map.keys()):
+            users = self.facility_user_map[facility]
+            data = []
+            for user in users:
+                if user._id in raw_data:
+                    user_data = raw_data[user._id]
+                else:
+                    user_data = _empty_row(len(self.columns))
+                data = _combine_rows(data, user_data)
+            yield data
 
 class Section(object):
     """
     A way to represent sections in a report. I wonder if we should genericize/pull this out.
     """
-    def __init__(self, report, section_def):
+    def __init__(self, report, section_def, format_class):
         self.report = report
         self.section_def = section_def
+        self.format_class  = format_class
 
     @property
     def title(self):
@@ -79,24 +144,10 @@ class SqlSection(Section, SqlData):
     @property
     @memoized
     def rows(self):
-        formatter = DataFormatter(DictDataFormat(self.columns, no_value=NO_VALUE))
+        formatter = DataFormatter(self.format_class(self.columns, self.report.get_users()))
         raw_data = formatter.format(self.data, keys=self.keys, group_by=self.group_by)
+        return transpose(self.columns, list(raw_data))
 
-        def _dict_to_row(row_dict):
-            return [row_dict[c.slug] for c in self.columns]
-
-        def _empty_row():
-            return [NO_VALUE] * len(self.columns)
-
-        raw_rows = []
-        for u in self.report.get_user_ids():
-            if u in raw_data:
-                raw_rows.append(_dict_to_row(raw_data[u]))
-            else:
-                raw_rows.append(_empty_row())
-
-        ret = transpose(self.columns, raw_rows)
-        return ret
 
 class FormPropertySection(Section):
     """
@@ -133,38 +184,56 @@ class FormPropertySection(Section):
                 user_row = [wrapped.xpath(path) for path in self.column_slugs]
             else:
                 user_row = [NO_VALUE] * len(self.column_slugs)
-            rows.append(user_row)
+            rows.append((user, user_row))
 
-
+        # format
+        formatted_rows = list(self.report.format.format_output(rows))
         # transpose
-        return [[_(col)] + [r[i] for r in rows] for i, col in enumerate(self.column_slugs)]
+        return [[_(col)] + [r[i] for r in formatted_rows] for i, col in enumerate(self.column_slugs)]
 
 
 class McSqlData(SqlData):
 
     table_name = "mc-inscale_MalariaConsortiumFluff"
 
-    def __init__(self, sections, domain, datespan, fixture_type, fixture_item):
+    def __init__(self, sections, format_class, domain, datespan, fixture_type, fixture_item):
+        self.format_class = format_class
         self.domain = domain
         self.datespan = datespan
         self.fixture_type = fixture_type
         self.fixture_item = fixture_item
         self._sections = sections
 
+    @property
+    @memoized
+    def format(self):
+        return self.format_class([], self.get_users())
+
+    def get_headers(self):
+        return self.format.get_headers()
+
     @memoized
     def get_users(self):
-        self.fixture_item, self.fixture_type
-        # todo: optimize
-        def _tag_to_user_data(tag):
-            return {
-                'hf': 'health_facility',
-            }.get(tag) or tag
+        def _is_ape(user):
+            return user.user_data.get('level') == 'APE'
 
-        unsorted = filter(
-            lambda u: u.user_data.get(_tag_to_user_data(self.fixture_type.tag), None) == self.fixture_item.fields.get('name'),
-            CommCareUser.by_domain(self.domain)
+        def _matches_location(user):
+            def _tag_to_user_data(tag):
+                return {
+                    'hf': 'health_facility',
+                }.get(tag) or tag
+
+            if self.fixture_type and self.fixture_item:
+                return user.user_data.get(_tag_to_user_data(self.fixture_type.tag), None) == self.fixture_item.fields.get('name')
+            else:
+                return True
+
+        unfiltered_users = CommCareUser.by_domain(self.domain)
+        filtered_users = filter(
+            lambda u: _is_ape(u) and _matches_location(u),
+            unfiltered_users,
         )
-        return sorted(unsorted, key=lambda u: u.username)
+        return sorted(filtered_users, key=lambda u: u.username)
 
 
     @property
@@ -185,7 +254,7 @@ class McSqlData(SqlData):
             return {
                 'form_lookup': FormPropertySection,
             }.get(section_def.get('type'), SqlSection)
-        return [_section_class(section)(self, section) for section in self._sections]
+        return [_section_class(section)(self, section, self.format_class) for section in self._sections]
 
     @memoized
     def all_rows(self):
@@ -208,7 +277,7 @@ class McSqlData(SqlData):
 
     @property
     def user_column(self):
-        return DatabaseColumn("User", SimpleColumn("user_id"))
+        return DatabaseColumn("User", SimpleColumn("user_id"), sortable=False)
 
     @property
     def columns(self):
@@ -226,14 +295,10 @@ class MCSectionedDataProvider(DataProvider):
     def __init__(self, sqldata):
         self.sqldata = sqldata
 
-    @memoized
-    def user_column(self, user):
-        return DataTablesColumn(raw_username(user.username))
-
 
     def headers(self):
         return DataTablesHeader(DataTablesColumn(_('Indicator')),
-                                *[self.user_column(u) for u in self.sqldata.get_users()])
+                                *[DataTablesColumn(header) for header in self.sqldata.get_headers()])
 
     @memoized
     def rows(self):
@@ -259,6 +324,7 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
         'corehq.apps.reports.fields.DatespanField',
     ]
     SECTIONS = None  # override
+    format_class = None # override
     extra_context_providers = [section_context]
 
     @classmethod
@@ -268,6 +334,7 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         super(MCBase, self).__init__(request, base_context, domain, **kwargs)
         assert self.SECTIONS is not None
+        assert self.format_class is not None
         fixture = self.request_params.get('fixture_id', None)
         if fixture:
             type_string, id = fixture.split(":")
@@ -278,7 +345,7 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
             fixture_item = None
             fixture_type = None
 
-        sqldata = McSqlData(self.SECTIONS, domain, self.datespan, fixture_type, fixture_item)
+        sqldata = McSqlData(self.SECTIONS, self.format_class, domain, self.datespan, fixture_type, fixture_item)
         self.data_provider = MCSectionedDataProvider(sqldata)
 
     @property
@@ -293,6 +360,7 @@ class HeathFacilityMonthly(MCBase):
     ]
     name = ugettext_noop("Health Facility Monthly Report")
     SECTIONS = HF_MONTHLY_REPORT
+    format_class = UserDataFormat
 
 class DistrictMonthly(MCBase):
     fields = [
@@ -302,6 +370,7 @@ class DistrictMonthly(MCBase):
     slug = 'district_monthly'
     name = ugettext_noop("District Monthly Report")
     SECTIONS = DISTRICT_MONTHLY_REPORT
+    format_class = FacilityDataFormat
 
 class DistrictWeekly(MCBase):
     fields = [
@@ -311,6 +380,7 @@ class DistrictWeekly(MCBase):
     slug = 'district_weekly'
     name = ugettext_noop("District Weekly Report")
     SECTIONS = DISTRICT_WEEKLY_REPORT
+    format_class = FacilityDataFormat
 
 class HealthFacilityWeekly(MCBase):
     fields = [
@@ -320,3 +390,4 @@ class HealthFacilityWeekly(MCBase):
     slug = 'hf_weekly'
     name = ugettext_noop("Health Facility Weekly Report")
     SECTIONS = HF_WEEKLY_REPORT
+    format_class = UserDataFormat

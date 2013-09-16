@@ -34,12 +34,9 @@ class ReportDataSource(object):
 
         :param slugs: List of slugs to return for each row. Return all values if slugs = None or [].
         :return: A list of dictionaries mapping slugs to values.
-            e.g. [{
-                'village': 'Mazu',
-                'births': 30,
-                'deaths': 28
-                },
-                {...}
-            ]
+
+        e.g.
+        [{'village': 'Mazu', 'births': 30, 'deaths': 28},{...}]
         """
+
         return {}
