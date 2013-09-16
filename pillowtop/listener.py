@@ -3,19 +3,19 @@ from datetime import datetime
 import hashlib
 import os
 import traceback
-from django.core.mail import send_mail
 import math
+
+from django.core.mail import send_mail
 from requests import ConnectionError
-from restkit import RequestFailed
 import simplejson
 from gevent import socket
 import rawes
 import gevent
 from django.conf import settings
-from casexml.apps.case.models import CommCareCase
-from couchforms.models import XFormInstance
-from dimagi.utils.decorators.memoized import memoized
 import couchdbkit
+
+from dimagi.utils.decorators.memoized import memoized
+
 
 if couchdbkit.version_info < (0, 6, 0):
     USE_NEW_CHANGES = False
@@ -48,7 +48,7 @@ INDEX_STANDARD_SETTINGS = {"index": {"refresh_interval": "1s",
 
 
 import functools
-import logging
+
 
 class autoretry_connection(object):
     """
@@ -417,8 +417,6 @@ class ElasticPillow(BasicPillow):
         Parent processor for a pillow class - this should not be overridden.
         This workflow is made for the situation where 1 change yields 1 transport/transaction
         """
-        import random
-        r = random.Random()
         self.changes_seen += 1
         if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
             pillow_logging.info(
