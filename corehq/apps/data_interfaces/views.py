@@ -71,6 +71,16 @@ class CaseGroupListView(BaseDomainView, CRUDPaginatedViewMixin):
                 'numCases': 2,
             },
             'templateSelector': '#new-group-row',
+
+    def get_updated_item_data(self, item_id):
+        # todo delete the case group here
+        return {
+            'itemData': {
+                'id': '313235dsfa',
+                'name': 'New Group (Deleted)',
+                'numCases': 0,
+            },
+            'template': 'modified-group-template',
         }
 
     @property

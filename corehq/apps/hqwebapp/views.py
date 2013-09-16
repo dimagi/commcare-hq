@@ -492,6 +492,10 @@ class BaseSectionPageView(BasePageView):
         return context
 
 
+class PaginatedItemException(Exception):
+    pass
+
+
 class CRUDPaginatedViewMixin(object):
     """
     To be mixed in with a TemplateView.
@@ -572,9 +576,22 @@ class CRUDPaginatedViewMixin(object):
 
     @property
     def updated_item_response(self):
-        return {
-            'foo': 'bar',
-        }
+        """
+        Update the paginated item here...
+        """
+        try:
+            try:
+                item_id = self.request.POST['itemId']
+            except KeyError:
+                raise PaginatedItemException("Someone didn't pass the item's ID to the server. :-(")
+            response = self.get_updated_item_data(item_id)
+            return {
+                'updatedItem': response
+            }
+        except PaginatedItemException as e:
+            return {
+                'error': "<strong>Problem Updating:</strong> %s" % e,
+            }
 
     def get_create_form(self, is_blank=False):
         raise NotImplementedError("You must return a form object that will create an Item")
@@ -591,6 +608,9 @@ class CRUDPaginatedViewMixin(object):
         This should return a dict of data for the new item.
         """
         raise NotImplementedError("You must implement get_new_item_data")
+
+    def get_updated_item_data(self, item_id):
+        raise NotImplementedError("You must implement update_item")
 
     def post(self, *args, **kwargs):
         action = self.request.POST.get('action')

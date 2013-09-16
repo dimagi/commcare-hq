@@ -186,14 +186,16 @@ var CRUDPaginatedListModel = function (
             type: 'post',
             dataType: 'json',
             data: {
-                action: 'update'
+                action: 'update',
+                itemId: paginatedItem.itemId
             },
             statusCode: self.handleStatusCode,
             success: function (data) {
                 if (data.error) {
-                    self.alertHtml(self.alertHtml() + data.error);
-                } else {
-                    paginatedItem.handleSuccessfulUpdate(data);
+                    self.alertHtml(data.error);
+                }
+                if (data.updatedItem) {
+                    paginatedItem.handleSuccessfulUpdate(data.updatedItem);
                 }
             }
         })
