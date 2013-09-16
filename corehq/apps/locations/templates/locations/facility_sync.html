@@ -1,0 +1,46 @@
+{% extends 'settings/base_template.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block js-inline %}{{ block.super }}
+<script>
+    $("#sync_facilities").click(function() {
+        $(this).addClass("disabled").html('{% trans "Syncing..." %}');
+
+        $.ajax({
+            type: 'POST',
+            url: '{% url sync_facilities_with_locations domain %}',
+            success: function() {
+                $("#sync_facilities").html('{% trans "Sync Successful" %}');
+            },
+            error: function() {
+                $("#sync_facilities").html('{% trans "Error!" %}').addClass("btn-danger");
+
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+{% block main_column %}
+<header>
+    <div class="row-fluid">
+        <div class="span8">
+            <h2>{% trans "Sync with Facility Registry" %}</h2>
+        </div>
+    </div>
+</header>
+<div class="row-fluid">
+    <div class="span12">
+        <div class="btn-toolbar">
+            <a class="btn" id="sync_facilities">
+                {% trans "Sync Now" %}
+            </a>
+          <!-- not supported yet!
+            <a class="btn" href="#">Bulk Import</a>
+            <a class="btn" href="#">Bulk Export</a>
+            -->
+        </div>
+    </div>
+</div>
+{% endblock %}

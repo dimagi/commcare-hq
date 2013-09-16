@@ -1,0 +1,73 @@
+{% extends 'hqwebapp/base_paginated_crud.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+
+{% block pagination_templates %}
+    <script type="text/html" id="existing-group-template">
+        <td data-bind="text: name"></td>
+        <td data-bind="text: numCases"></td>
+        <td>
+            <button type="button"
+                    data-toggle="modal"
+                    data-bind="
+                        attr: {
+                            'data-target': '#delete-group-' + id
+                        }
+                    "
+                    class="btn btn-danger">
+                <i class="icon-remove"></i> {% trans "Delete Group" %}
+            </button>
+
+            <div class="modal hide fade update-item-modal"
+                 data-bind="
+                    attr: {
+                        id: 'delete-group-' + id
+                    }
+                 ">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3>
+                       {% blocktrans %}
+                           Delete case group <strong data-bind="text: name"></strong>?
+                       {% endblocktrans %}
+                    </h3>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        {% blocktrans %}
+                            Yes, delete the case group <strong data-bind="text: name"></strong>.
+                        {% endblocktrans %}
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn"
+                            data-dismiss="modal">
+                        {% trans 'Cancel' %}
+                    </button>
+                    <button type="button"
+                            class="btn btn-danger update-item-confirm"
+                            data-loading-text="{% trans 'Deleting Group...' %}">
+                        <i class="icon-remove"></i> {% trans 'Delete Group' %}
+                    </button>
+                </div>
+            </div>
+        </td>
+    </script>
+
+    <script type="text/html" id="modified-group-template">
+        <td data-bind="text: name"></td>
+        <td data-bind="text: numCases"></td>
+        <td><span class="label label-important">{% trans 'Group Deleted' %}</span></td>
+    </script>
+
+    <script type="text/html" id="new-group-template">
+        <td data-bind="text: name"></td>
+        <td data-bind="text: numCases"></td>
+        <td><span class="label label-success">{% trans 'Group Created' %}</span></td>
+    </script>
+
+{% endblock %}
+
+
