@@ -563,11 +563,11 @@ class CRUDPaginatedViewMixin(object):
         }
 
     @property
-    def new_item_response(self):
+    def create_item_response(self):
         create_form = self.get_create_form()
         new_item = None
         if create_form.is_valid():
-            new_item = self.get_new_item_data(create_form)
+            new_item = self.get_create_item_data(create_form)
             create_form = self.get_create_form(is_blank=True)
         return {
             'newItem': new_item,
@@ -603,9 +603,9 @@ class CRUDPaginatedViewMixin(object):
             }
         )
 
-    def get_new_item_data(self, create_form):
+    def get_create_item_data(self, create_form):
         """
-        This should return a dict of data for the new item.
+        This should return a dict of data for the created item.
         {
             'itemData': {
                 <json dict of item data for the knockout model to use>
@@ -630,8 +630,9 @@ class CRUDPaginatedViewMixin(object):
     def post(self, *args, **kwargs):
         action = self.request.POST.get('action')
         response = {
-            'create': self.new_item_response,
+            'create': self.create_item_response,
             'update': self.updated_item_response,
+            'delete': self.deleted_item_response,
         }.get(action, {})
         return HttpResponse(json.dumps(response))
 
