@@ -208,12 +208,14 @@ class GroupSelectionForm(forms.Form):
 
 
 class SupplyPointSelectWidget(forms.Widget):
-    def __init__(self, attrs=None, domain=None):
+    def __init__(self, attrs=None, domain=None, id='supply-point'):
         super(SupplyPointSelectWidget, self).__init__(attrs)
         self.domain = domain
+        self.id = id
 
     def render(self, name, value, attrs=None):
         return get_template('locations/manage/partials/autocomplete_select_widget.html').render(Context({
+                    'id': self.id,
                     'name': name,
                     'value': value or '',
                     'query_url': reverse('corehq.apps.commtrack.views.api_query_supply_point', args=[self.domain]),
