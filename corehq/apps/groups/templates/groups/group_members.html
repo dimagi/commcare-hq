@@ -31,6 +31,21 @@
 
             // user selection form
             $("#id_selected_ids").width(800).height(400).multiselect();
+
+            // "are you sure?" stuff
+            var unsavedChanges = false;
+            $("#id_selected_ids").change(function () {
+                unsavedChanges = true;
+            });
+
+            $(window).bind('beforeunload', function () {
+                if (unsavedChanges) {
+                    return "{% trans "Group membership has changed." %}";
+                }
+            });
+            $("#edit_membership").submit(function () {
+                $(window).unbind("beforeunload");
+            });
         });
     </script>
 {% endblock %}
@@ -93,7 +108,7 @@
 
 {% block group-view %}
     <div class="row-fluid">
-        <form class="form" action="{% url update_group_membership domain group.get_id %}" method='post'>
+        <form class="form" id="edit_membership" action="{% url update_group_membership domain group.get_id %}" method='post'>
                 <legend>{% trans 'Edit Group Membership' %}</legend>
                 {% crispy user_form %}
         </form>
