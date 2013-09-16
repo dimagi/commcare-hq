@@ -20,20 +20,23 @@ class BPCalculator(DoneDueCalculator):
 
     def _form_filter(self, case, form):
         lower, upper = self.days
-        form_date_modified = form.xpath('form/date_modified')
-        return upper <= case.edd - form_date_modified < upper
+        form_date_modified = form.xpath('form/case/update/date_modified')
+        if form_date_modified:
+            return upper <= (case.edd - form_date_modified).days < upper
+        else:
+            return False
 
     @fluff.date_emitter
     def numerator(self, case):
         for form in get_forms(case, action_filter=lambda a: visit_is(a, 'bp')):
-            date = form.xpath('form/days_visit_overdue')
+            date = form.xpath('form/case/update/days_visit_overdue')
             if date and self._form_filter(case, form):
                 yield date
 
     @fluff.date_emitter
     def total(self, case):
         for form in get_forms(case, action_filter=lambda a: visit_is(a, 'bp') or visit_is(a, 'reg')):
-            date = form.xpath('form/date_next_bp')
+            date = form.xpath('form/case/update/date_next_bp')
             if date and self._form_filter(case, form):
                 yield date
 
