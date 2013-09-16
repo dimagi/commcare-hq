@@ -19,6 +19,11 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from dimagi.utils.decorators.memoized import memoized
 
 
+@domain_admin_required
+def default(request, domain):
+    return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
+
+
 class BaseLocationView(BaseCommTrackManageView):
 
     @property
@@ -115,6 +120,22 @@ class EditLocationView(NewLocationView):
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.location_id])
+
+
+class FacilitySyncView(BaseLocationView):
+    urlname = 'sync_facilities'
+    page_title = ugettext_noop("Sync with Facility Registry")
+    template_name = 'locations/facility_sync.html'
+
+    @property
+    def page_context(self):
+        return {}
+
+
+class EditLocationHierarchy(BaseLocationView):
+    urlname = 'location_hierarchy'
+    page_title = ugettext_noop("Location Hierarchy")
+    template_name = 'locations/location_hierarchy.html'
 
 
 @domain_admin_required # TODO: will probably want less restrictive permission
