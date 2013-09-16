@@ -606,10 +606,25 @@ class CRUDPaginatedViewMixin(object):
     def get_new_item_data(self, create_form):
         """
         This should return a dict of data for the new item.
+        {
+            'itemData': {
+                <json dict of item data for the knockout model to use>
+            },
+            'template': <knockout template id>
+        }
         """
         raise NotImplementedError("You must implement get_new_item_data")
 
     def get_updated_item_data(self, item_id):
+        """
+        This should return a dict of data for the updated item.
+        {
+            'itemData': {
+                <json dict of item data for the knockout model to use>
+            },
+            'template': <knockout template id>
+        }
+        """
         raise NotImplementedError("You must implement update_item")
 
     def post(self, *args, **kwargs):
@@ -643,7 +658,7 @@ class FetchCRUDPaginatedDataView(object):
                 'itemData': {
                     <json dict of item data for the knockout model to use>
                 },
-                'templateSelector': <template selector>
+                'template': <knockout template id>
             }
         ]
         """
