@@ -1,5 +1,5 @@
+from __future__ import absolute_import
 from datetime import timedelta
-from django.core.cache import cache
 from dimagi.utils.couch.delete import delete
 from dimagi.utils.couch.safe_index import safe_index
 from couchdbkit.ext.django.schema import DateTimeProperty, DocumentSchema
@@ -53,6 +53,7 @@ def get_cached_property(couch_cls, obj_id, prop_name, expiry=12*60*60):
         the couch query to pull the object and grabs the property. Then it caches the retrieved property.
         Note: The property needs to be pickleable
     """
+    from django.core.cache import cache
     cache_str = "{0}:{1}:{2}".format(couch_cls.__name__, obj_id, prop_name)
     ret = cache.get(cache_str)
     if not ret:
