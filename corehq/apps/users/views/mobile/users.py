@@ -21,7 +21,7 @@ from django.views.generic.base import TemplateView
 from django.shortcuts import render
 
 from couchexport.models import Format
-from corehq.apps.users.forms import CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm, GroupSelectionForm
+from corehq.apps.users.forms import CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm, MultipleSelectionForm
 from corehq.apps.users.models import CommCareUser, UserRole, CouchUser
 from corehq.apps.groups.models import Group
 from corehq.apps.users.bulkupload import create_or_update_users_and_groups,\
@@ -132,10 +132,10 @@ class EditCommCareUserView(BaseFullEditUserView):
     @property
     @memoized
     def group_form(self):
-        form = GroupSelectionForm(initial={
-            'group_ids': [g._id for g in self.groups],
+        form = MultipleSelectionForm(initial={
+            'selected_ids': [g._id for g in self.groups],
         })
-        form.fields['group_ids'].choices = [(g._id, g.name) for g in self.all_groups]
+        form.fields['selected_ids'].choices = [(g._id, g.name) for g in self.all_groups]
         return form
 
     @property
@@ -418,14 +418,14 @@ def restore_commcare_user(request, domain, user_id):
 @require_can_edit_commcare_users
 @require_POST
 def update_user_groups(request, domain, couch_user_id):
-    form = GroupSelectionForm(request.POST)
-    form.fields['group_ids'].choices = [(id, 'throwaway') for id in Group.ids_by_domain(domain)]
+    form = MultipleSelectionForm(request.POST)
+    form.fields['selected_ids'].choices = [(id, 'throwaway') for id in Group.ids_by_domain(domain)]
     if form.is_valid():
         user = CommCareUser.get(couch_user_id)
         assert user.doc_type == "CommCareUser"
         assert user.domain == domain
-        user.set_groups(form.cleaned_data['group_ids'])
-        messages.success(request, "User groups updated!")
+        user.set_groups(form.cleaned_data['selected_ids'])
+        messages.success(request, _("User groups updated!"))
     else:
         messages.error(request, _("Form not valid. A group may have been deleted while you were viewing this page"
                                   "Please try again."))
