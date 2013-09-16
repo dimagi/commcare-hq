@@ -576,22 +576,33 @@ class CRUDPaginatedViewMixin(object):
 
     @property
     def updated_item_response(self):
-        """
-        Update the paginated item here...
-        """
         try:
-            try:
-                item_id = self.request.POST['itemId']
-            except KeyError:
-                raise PaginatedItemException("Someone didn't pass the item's ID to the server. :-(")
-            response = self.get_updated_item_data(item_id)
+            response = self.get_updated_item_data(self.get_item_id())
             return {
                 'updatedItem': response
             }
         except PaginatedItemException as e:
             return {
-                'error': "<strong>Problem Updating:</strong> %s" % e,
+                'error': _("<strong>Problem Updating:</strong> %s") % e,
             }
+
+    @property
+    def deleted_item_response(self):
+        try:
+            response = self.get_deleted_item_data(self.get_item_id())
+            return {
+                'deletedItem': response
+            }
+        except PaginatedItemException as e:
+            return {
+                'error': _("<strong>Problem Deleting:</strong> %s") % e,
+            }
+
+    def get_item_id(self):
+        try:
+            return self.request.POST['itemId']
+        except KeyError:
+            raise PaginatedItemException(_("The item's ID was not passed to the server."))
 
     def get_create_form(self, is_blank=False):
         raise NotImplementedError("You must return a form object that will create an Item")
@@ -625,7 +636,19 @@ class CRUDPaginatedViewMixin(object):
             'template': <knockout template id>
         }
         """
-        raise NotImplementedError("You must implement update_item")
+        raise NotImplementedError("You must implement get_updated_item_data")
+
+    def get_deleted_item_data(self, item_id):
+        """
+        This should return a dict of data for the deleted item.
+        {
+            'itemData': {
+                <json dict of item data for the knockout model to use>
+            },
+            'template': <knockout template id>
+        }
+        """
+        raise NotImplementedError("You must implement get_deleted_item_data")
 
     def post(self, *args, **kwargs):
         action = self.request.POST.get('action')
