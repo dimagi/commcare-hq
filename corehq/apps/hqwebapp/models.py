@@ -295,44 +295,12 @@ class ProjectDataTab(UITab):
 
     @property
     @memoized
-    def can_edit_commtrack_data(self):
-        return self.couch_user.is_domain_admin() and self.project and self.project.commtrack_enabled
-
-    @property
-    @memoized
     def can_export_data(self):
         return self.project and not self.project.is_snapshot and self.couch_user.can_export_data()
 
     @property
     def is_viewable(self):
-        return (self.domain and
-                self.can_edit_commcare_data or self.can_edit_commtrack_data or self.can_export_data)
-
-    @property
-    @memoized
-    def is_active(self):
-        if not self.domain:
-            return False
-        manage_data_url = reverse('data_interfaces_default', args=[self.domain])
-
-        full_path = self._request.get_full_path()
-        is_active = ('importer/excel' in full_path  # hack because subpages of excel importer are at a different url
-                     or super(ProjectDataTab, self).is_active
-                     or full_path.startswith(manage_data_url))
-
-        if self.can_edit_commtrack_data:
-            from corehq.apps.commtrack.views import ProductListView
-            commtrack_products_url = reverse(ProductListView.urlname, args=[self.domain])
-
-            from corehq.apps.locations.views import LocationsListView
-            commtrack_locations_url = reverse(LocationsListView.urlname, args=[self.domain])
-
-            is_active = is_active or (
-                full_path.startswith(commtrack_products_url)
-                or full_path.startswith(commtrack_locations_url)
-            )
-
-        return is_active
+        return self.domain and (self.can_edit_commcare_data or self.can_export_data)
 
     @property
     def sidebar_items(self):
@@ -342,41 +310,6 @@ class ProjectDataTab(UITab):
             'request': self._request,
             'domain': self.domain,
         }
-
-        if self.can_edit_commtrack_data:
-            from corehq.apps.commtrack.views import ProductListView, NewProductView, EditProductView
-            from corehq.apps.locations.views import LocationsListView, NewLocationView, EditLocationView
-            commtrack_data_views = [
-                {
-                    'title': ProductListView.page_title,
-                    'url': reverse(ProductListView.urlname, args=[self.domain]),
-                    'subpages': [
-                        {
-                            'title': NewProductView.page_title,
-                            'urlname': NewProductView.urlname,
-                        },
-                        {
-                            'title': EditProductView.page_title,
-                            'urlname': EditProductView.urlname,
-                        },
-                    ]
-                },
-                {
-                    'title': LocationsListView.page_title,
-                    'url': reverse(LocationsListView.urlname, args=[self.domain]),
-                    'subpages': [
-                        {
-                            'title': NewLocationView.page_title,
-                            'urlname': NewLocationView.urlname,
-                        },
-                        {
-                            'title': EditLocationView.page_title,
-                            'urlname': EditLocationView.urlname,
-                        },
-                    ]
-                },
-            ]
-            items.append([_("CommTrack Data"), commtrack_data_views])
 
         if self.can_export_data:
             from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
