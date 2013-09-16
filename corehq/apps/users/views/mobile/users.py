@@ -17,8 +17,6 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
 from django.contrib import messages
-from django.views.generic.base import TemplateView
-from django.shortcuts import render
 
 from couchexport.models import Format
 from corehq.apps.users.forms import CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm, GroupSelectionForm
