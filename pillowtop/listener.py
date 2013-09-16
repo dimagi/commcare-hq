@@ -12,6 +12,8 @@ from gevent import socket
 import rawes
 import gevent
 from django.conf import settings
+from casexml.apps.case.models import CommCareCase
+from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
 import couchdbkit
 
@@ -215,6 +217,7 @@ class BasicPillow(object):
         Parent processsor for a pillow class - this should not be overridden.
         This workflow is made for the situation where 1 change yields 1 transport/transaction
         """
+
         self.changes_seen += 1
         if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
             pillow_logging.info(
@@ -228,8 +231,7 @@ class BasicPillow(object):
                 if tr is not None:
                     self.change_transport(tr)
         except Exception, ex:
-            pillow_logging.exception("Error on change: %s, %s" % (change['id'], ex))
-            gevent.sleep(RETRY_INTERVAL)
+            pillow_logging.exception("[%s] Error on change: %s, %s" % (self.get_name(), change['id'], ex))
 
 
     def change_trigger(self, changes_dict):
@@ -395,7 +397,7 @@ class ElasticPillow(BasicPillow):
                                       "_id": tr['_id']}}
                         yield tr
             except Exception, ex:
-                pillow_logging.error("Error on change: %s, %s" % (change['id'], ex))
+                pillow_logging.error("[%s] Error on change: %s, %s" % (self.get_name(), change['id'], ex))
 
     def process_bulk(self, changes):
         self.allow_updates = False
@@ -415,6 +417,8 @@ class ElasticPillow(BasicPillow):
         Parent processor for a pillow class - this should not be overridden.
         This workflow is made for the situation where 1 change yields 1 transport/transaction
         """
+        import random
+        r = random.Random()
         self.changes_seen += 1
         if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
             pillow_logging.info(
@@ -428,7 +432,7 @@ class ElasticPillow(BasicPillow):
                 if tr is not None:
                     self.change_transport(tr)
         except Exception, ex:
-            pillow_logging.error("Error on change: %s, %s" % (change['id'], ex))
+            pillow_logging.error("[%s] Error on change: %s, %s" % (self.get_name(), change['id'], ex))
 
     def send_robust(self, path, data={}, retries=MAX_RETRIES, except_on_failure=False, update=False):
         """
