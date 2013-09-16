@@ -13,8 +13,7 @@
 <script>
 
 var LOAD_LOCS_URL = '{{ api_root }}',
-    NEW_LOC_URL = '{% url create_location domain %}',
-    SYNC_FACILITIES_URL = '{% url sync_facilities_with_locations domain %}';
+    NEW_LOC_URL = '{% url create_location domain %}';
 
 
 var locs = {{ locations|JSON }};
@@ -27,23 +26,6 @@ function loc_edit_url(loc_id) {
 }
 
 $(function() {
-    $("#sync_facilities").click(function() {
-        $(this).addClass("disabled").html('{% trans "Syncing..." %}');
-
-        $.ajax({
-            type: 'POST',
-            url: SYNC_FACILITIES_URL,
-            success: function() {
-                $("#sync_facilities").html('{% trans "Synced" %}');
-                window.location.reload()
-            },
-            error: function() {
-                $("#sync_facilities").html('{% trans "Error!" %}').addClass("btn-danger");
-
-            }
-        });
-    });
-
     var model = new LocationTreeViewModel(hierarchy);
     ko.applyBindings(model, $('#location_tree')[0]);
     model.load(locs, selected_loc);
@@ -62,22 +44,6 @@ $(function() {
     </div>
 </header>
 <div>
-
-    <div class="row-fluid">
-        <div class="span12">
-            <div class="btn-toolbar">
-                <a class="btn" id="sync_facilities">
-                    {% trans "Sync with Facility Registries" %}
-                </a>
-              <!-- not supported yet!
-                <a class="btn" href="#">Bulk Import</a>
-                <a class="btn" href="#">Bulk Export</a>
-                -->
-            </div>
-        </div>
-    </div>
-
-    <hr />
 
     <script type="text/html" id="location-template">
 
