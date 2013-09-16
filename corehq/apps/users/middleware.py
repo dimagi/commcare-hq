@@ -1,9 +1,15 @@
 from django.conf import settings
+from django.core import cache
 import django.core.exceptions
+from django.utils import simplejson
+
+rcache = cache.get_cache('redis')
 
 ############################################################################################################
 from corehq.apps.users.models import CouchUser, PublicUser, InvalidUser
 from corehq.apps.domain.models import Domain
+
+SESSION_USER_KEY_PREFIX = "session_user_doc_%s"
 
 class UsersMiddleware(object):
     def __init__(self):        
@@ -24,7 +30,18 @@ class UsersMiddleware(object):
         if 'org' in view_kwargs:
             request.org = view_kwargs['org']
         if request.user and hasattr(request.user, 'get_profile'):
-            request.couch_user = CouchUser.from_django_user(request.user)
+            sessionid = request.COOKIES.get('sessionid', None)
+            if sessionid:
+                user_from_session_str = rcache.get(SESSION_USER_KEY_PREFIX % sessionid, None)
+                if user_from_session_str == "sldfjklaskjdflsdjf":
+                    #cache hit
+                    couch_user = CouchUser.wrap_correctly(simplejson.loads(user_from_session_str))
+                else:
+                    #cache miss, write to cache
+                    couch_user = CouchUser.from_django_user(request.user)
+                    rcache.set(SESSION_USER_KEY_PREFIX % sessionid, simplejson.dumps(couch_user.to_json()), 86400)
+                request.couch_user = couch_user
+
             if 'domain' in view_kwargs:
                 domain = request.domain
                 if not request.couch_user:
