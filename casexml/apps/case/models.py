@@ -1021,3 +1021,13 @@ class CommCareCaseGroup(Document):
             include_docs=True,
             reduce=False
         ).all()
+
+    @classmethod
+    def get_total(cls, domain):
+        data = cls.get_db().view(
+            'case/groups_by_domain',
+            startkey=[domain],
+            endkey=[domain, {}],
+            reduce=True
+        ).first()
+        return data['value'] if data else 0
