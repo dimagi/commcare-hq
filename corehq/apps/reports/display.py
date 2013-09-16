@@ -85,7 +85,7 @@ class FormType(object):
             form = get_db().view('exports_forms/by_xmlns', key=[domain, app_id, xmlns], group=True).one()
             if form:
                 form = form['value']
-            # only cache for 10 seconds
+            # only cache for 30 seconds
             cache.set(cache_key, json.dumps(form), 30)
         return form
 
