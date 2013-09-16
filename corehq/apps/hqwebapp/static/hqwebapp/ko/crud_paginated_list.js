@@ -106,10 +106,6 @@ var CRUDPaginatedListModel = function (
                 ));
                 self.modifiedList([]);
                 self.newList([]);
-
-                _.each(self.paginatedList(), function (item) {
-                    item.init();
-                });
             }
         }
     };
@@ -126,8 +122,6 @@ var CRUDPaginatedListModel = function (
             self.alertHtml(statusText);
         };
     });
-
-    self.updatedItemTemplateSelector = options.updatedItemTemplateSelector || '#template-modified-item-row';
 
     // Actions
     self.init = function () {
@@ -186,9 +180,6 @@ var CRUDPaginatedListModel = function (
         var pList = self.paginatedList();
         paginatedItem.dismissModal();
         self.paginatedList(_(pList).without(paginatedItem));
-        if ($(self.updatedItemTemplateSelector)) {
-            paginatedItem.templateSelector = self.updatedItemTemplateSelector;
-        }
         self.modifiedList.push(paginatedItem);
         $.ajax({
             url: "",
@@ -214,14 +205,8 @@ var PaginatedItem = function (itemSpec) {
     var self = this;
     self.itemId = itemSpec.itemData.id;
     self.itemRowId = 'item-row-' + self.itemId;
-    self.itemData = itemSpec.itemData;
-    self.templateSelector = itemSpec.templateSelector;
-
-    self.getRow = function () {
-        return _.template($(self.templateSelector).text(), {
-            item: self.itemData
-        });
-    };
+    self.itemData = ko.observable(itemSpec.itemData);
+    self.template = ko.observable(itemSpec.template);
 
     self.getItemRow = function () {
         return $('#' + self.itemRowId);
@@ -233,12 +218,16 @@ var PaginatedItem = function (itemSpec) {
     };
 
     self.handleSuccessfulUpdate = function (data) {
-        self.getItemRow().find('.status')
-            .removeClass('hide');
+        if (data.template) {
+            self.template(data.template);
+        }
+        if (data.itemData) {
+            self.itemData(data.itemData);
+        }
     };
 
-    self.init = function () {
-        var $updateButton = self.getItemRow().find('.update-item-confirm');
+    self.initTemplate = function (elems) {
+        var $updateButton = $(elems).find('.update-item-confirm');
         if ($updateButton) {
             $updateButton.click(function () {
                 $updateButton.button('loading');

@@ -103,7 +103,11 @@
                                 </tr>
                                 <!-- ko foreach: paginatedList -->
                                 <tr data-bind="
-                                    html: getRow(),
+                                    template: {
+                                        name: template(),
+                                        data: itemData,
+                                        afterRender: initTemplate
+                                    },
                                     attr: {
                                         id: itemRowId
                                     },
@@ -128,7 +132,13 @@
                                     </th>
                                 </tr>
                                 <!-- ko foreach: newList -->
-                                <tr data-bind="html: getRow()"></tr>
+                                <tr data-bind="
+                                        template: {
+                                            name: template(),
+                                            data: itemData,
+                                            afterRender: initTemplate
+                                        }
+                                    "></tr>
                                 <!-- /ko -->
                             </tbody>
                             <tbody>
@@ -138,7 +148,13 @@
                                     </th>
                                 </tr>
                                 <!-- ko foreach: modifiedList -->
-                                <tr data-bind="html: getRow()"></tr>
+                                <tr data-bind="
+                                        template: {
+                                            name: template(),
+                                            data: itemData,
+                                            afterRender: initTemplate
+                                        }
+                                    "></tr>
                                 <!-- /ko -->
                             </tbody>
                        </table>
