@@ -43,52 +43,49 @@ $(function() {
         </div>
     </div>
 </header>
-<div>
 
-    <script type="text/html" id="location-template">
+<script type="text/html" id="location-template">
 
-      <!-- header bar -->
-      <div class="loc_header" data-bind="if: name() != '_root'">
-        <a class="loc_edit btn btn-primary" data-bind="attr: { href: loc_edit_url(uuid()) }">Edit</a>
-        <span data-bind="click: toggle, style: { cursor: (can_have_children() ? 'pointer' : 'default') }"> <!-- want to make entire row clickable, but overrides click on 'edit' button -->
-          <span data-bind="if: can_have_children"><a class="label"><i data-bind="css: { 'icon-plus': !expanded(), 'icon-minus': expanded() }"></i></a></span>
-          <span class="loc_name" data-bind="text: name"></span> <span class="loc_type">(<span data-bind="text: type"></span>)</span>
-        </span>
-        <div style="clear: both;"></div>
-      </div>
+  <!-- header bar -->
+  <div class="loc_header" data-bind="if: name() != '_root'">
+    <a class="loc_edit btn btn-primary" data-bind="attr: { href: loc_edit_url(uuid()) }">Edit</a>
+    <span data-bind="click: toggle, style: { cursor: (can_have_children() ? 'pointer' : 'default') }"> <!-- want to make entire row clickable, but overrides click on 'edit' button -->
+      <span data-bind="if: can_have_children"><a class="label"><i data-bind="css: { 'icon-plus': !expanded(), 'icon-minus': expanded() }"></i></a></span>
+      <span class="loc_name" data-bind="text: name"></span> <span class="loc_type">(<span data-bind="text: type"></span>)</span>
+    </span>
+    <div style="clear: both;"></div>
+  </div>
 
-      <!-- child content -->
-      <div class="loc_children" data-bind="visible: expanded, style: { borderColor: 'rgba(0, 0, 255, ' + Math.min(.08 * depth, .5) + ')' }">
+  <!-- child content -->
+  <div class="loc_children" data-bind="visible: expanded, style: { borderColor: 'rgba(0, 0, 255, ' + Math.min(.08 * depth, .5) + ')' }">
 
-        <!-- ajax spinner -->
-        <div class="loc_child" data-bind="visible: children_status() == 'loading'">
-          <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" /> Loading&hellip;
-        </div>
-
-        <!-- ajax content -->
-        <div data-bind="fadeVisible: children_status() == 'loaded'">
-
-          <!-- child entries -->
-          <div data-bind="foreach: children">
-            <div class="loc_child" data-bind="template: { name: 'location-template' }"></div>
-          </div>
-
-          <!-- 'no children' message -->
-          <div class="loc_child no_children" data-bind="visible: children().length == 0, text: no_children_caption"></div>
-
-        </div>
-
-        <!-- create child button -->
-        <a class="btn btn-success loc_child" data-bind="attr: { href: NEW_LOC_URL + '?parent=' + (uuid() || '') }"><i class="icon icon-white icon-plus"></i> <span data-bind="text: new_child_caption"></span></a>
-
-      </div>
-
-    </script>
-
-    <div id="location_tree">
-      <div data-bind="template: { name: 'location-template', if: root, data: root }"></div>
+    <!-- ajax spinner -->
+    <div class="loc_child" data-bind="visible: children_status() == 'loading'">
+      <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" /> Loading&hellip;
     </div>
 
+    <!-- ajax content -->
+    <div data-bind="fadeVisible: children_status() == 'loaded'">
+
+      <!-- child entries -->
+      <div data-bind="foreach: children">
+        <div class="loc_child" data-bind="template: { name: 'location-template' }"></div>
+      </div>
+
+      <!-- 'no children' message -->
+      <div class="loc_child no_children" data-bind="visible: children().length == 0, text: no_children_caption"></div>
+
+    </div>
+
+    <!-- create child button -->
+    <a class="btn btn-success loc_child" data-bind="attr: { href: NEW_LOC_URL + '?parent=' + (uuid() || '') }"><i class="icon icon-white icon-plus"></i> <span data-bind="text: new_child_caption"></span></a>
+
+  </div>
+
+</script>
+
+<div id="location_tree">
+  <div data-bind="template: { name: 'location-template', if: root, data: root }"></div>
 </div>
 {% endblock %}
 
