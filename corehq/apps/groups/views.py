@@ -5,8 +5,9 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponseForbidden
 from django.views.decorators.http import require_POST
 from django.utils.translation import ugettext as _
+from corehq.apps.users.forms import MultipleSelectionForm
 
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import Permissions, CommCareUser
 from corehq.apps.groups.models import Group, DeleteGroupRecord
 from corehq.apps.users.decorators import require_permission
 from dimagi.utils.couch.resource_conflict import repeat
@@ -105,6 +106,24 @@ def update_group_data(request, domain, group_id):
         )
     else:
         return HttpResponseForbidden()
+
+@require_can_edit_groups
+@require_POST
+def update_group_membership(request, domain, group_id):
+    group = Group.get(group_id)
+    if group.domain != domain:
+        return HttpResponseForbidden()
+
+    form = MultipleSelectionForm(request.POST)
+    form.fields['selected_ids'].choices = [(id, 'throwaway') for id in CommCareUser.ids_by_domain(domain)]
+    if form.is_valid():
+        group.users = form.cleaned_data['selected_ids']
+        group.save()
+        messages.success(request, _("Group %s updated!") % group.name)
+    else:
+        messages.error(request, _("Form not valid. A user may have been deleted while you were viewing this page"
+                                  "Please try again."))
+    return HttpResponseRedirect(reverse("group_members", args=[domain, group_id]))
 
 @require_can_edit_groups
 def join_group(request, domain, group_id, couch_user_id):

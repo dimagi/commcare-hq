@@ -194,8 +194,11 @@ class CommCareAccountForm(forms.Form):
 validate_username = EmailValidator(email_re, _(u'Username contains invalid characters.'), 'invalid')
 
 
-class GroupSelectionForm(forms.Form):
-    group_ids = forms.MultipleChoiceField(
+class MultipleSelectionForm(forms.Form):
+    """
+    Form for selecting groups (used by the group UI on the user page)
+    """
+    selected_ids = forms.MultipleChoiceField(
         label="",
         required=False,
     )
@@ -203,8 +206,8 @@ class GroupSelectionForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.helper = FormHelper()
         self.helper.form_tag = False
-        self.helper.add_input(Submit('submit', 'Submit'))
-        super(GroupSelectionForm, self).__init__(*args, **kwargs)
+        self.helper.add_input(Submit('submit', 'Update'))
+        super(MultipleSelectionForm, self).__init__(*args, **kwargs)
 
 
 class SupplyPointSelectWidget(forms.Widget):
