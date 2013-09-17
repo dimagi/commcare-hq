@@ -16,9 +16,15 @@ from custom.opm.opm_tasks.models import OpmReportSnapshot
 class Command(BaseCommand):
     """
     Generate test data for the OPM reports.
-    It pulls stuff from the db, runs the reports, then saves it all as a json file.
+    It pulls stuff from the db and saves it as a json file.
     There's no intelligent testing going on, but it can at least verify
     consistency.
+
+    To save a copy of the reports, uncomment `class TestMakeReport` in
+    tests/__init__ (you can comment out the other two tests, so they
+    don't run).
+    That will load the data saved by this command and run reports on it,
+    saving that for regression testing.
     """
     help = "Pull data from the database and write\
         to a json file (currently only works for opm)"
@@ -33,12 +39,21 @@ class Command(BaseCommand):
         for b in beneficiaries:
             forms += b.get_forms()
 
+        # db = get_db()
+        # forms = db.view(
+        #     "receiverwrapper/all_submissions_by_domain",
+        #     startkey=['opm'],
+        #     endkey=['opm', {}],
+        #     include_docs=True, reduce=False
+        # ).all()
+
+
         test_data = []
 
         month, year = test_month_year
         for report_class in [IncentivePaymentReport, BeneficiaryPaymentReport]:
             self.stdout.write("Running %s\n" % report_class.__name__)
-            report = get_report(report_class)
+            report = get_report(report_class, month, year)
             snapshot = OpmReportSnapshot(
                 domain=DOMAIN,
                 month=month,

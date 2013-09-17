@@ -28,7 +28,7 @@ class WomenRegistered(fluff.Calculator):
     Value represents the number of children delivered by that case
     """
 
-    @fluff.date_emitter
+    @fluff.null_emitter
     def total(self, case):
         if case.type == "Pregnancy":
             total = 0
@@ -37,7 +37,14 @@ class WomenRegistered(fluff.Calculator):
                     children = form.form.get('live_birth_amount')
                     if children:
                         total += int(children)
-            yield user_date_group(form, total)
+            yield { 
+                'date': None,
+                'value': total,
+                'group_by': [
+                    case.domain,
+                    case.user_id,
+                ],
+            }
 
 
 class ServiceForms(fluff.Calculator):

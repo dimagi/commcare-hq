@@ -79,8 +79,6 @@ class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
             end = now
         rows = []
         for row in self.get_rows(self.datespan):
-            if self.model is Worker:
-                print row.username
             try:
                 rows.append(self.model(
                     row,
