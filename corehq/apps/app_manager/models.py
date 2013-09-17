@@ -2413,11 +2413,4 @@ Module.get_case_list_locale_id = lambda self: "case_lists.m{module.id}".format(m
 Module.get_referral_list_command_id = lambda self: "m{module.id}-referral-list".format(module=self)
 Module.get_referral_list_locale_id = lambda self: "referral_lists.m{module.id}".format(module=self)
 
-
-@register_repeater_type
-class AppStructureRepeater(Repeater):
-    def get_payload(self, repeat_record):
-        # This is the id of the application, currently all we forward
-        return repeat_record.payload_id
-
 import corehq.apps.app_manager.signals
