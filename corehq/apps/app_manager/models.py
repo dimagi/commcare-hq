@@ -2374,7 +2374,3 @@ Module.get_referral_list_command_id = lambda self: "m{module.id}-referral-list".
 Module.get_referral_list_locale_id = lambda self: "referral_lists.m{module.id}".format(module=self)
 import corehq.apps.app_manager.signals
 
-@register_repeater_type
-class AppStructureRepeater(Repeater):
-    def get_payload(self, repeat_record):
-        return repeat_record.payload_id # This is the id of the application, currently all we forward

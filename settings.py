@@ -268,6 +268,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.apps.tropo',
     'corehq.apps.yo',
     'crispy_forms',
+    'django_extensions',
     'djcelery',
     'djtables',
     'djkombu',
@@ -288,7 +289,9 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'dimagi.utils',
     'fluff',
     'fluff_filter',
+    'freddy',
     'pillowtop',
+    'receiver',
 )
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
@@ -664,7 +667,6 @@ COUCHDB_APPS = [
     'migration',
     'mobile_auth',
     'phone',
-    'receiverwrapper',
     'reminders',
     'reportfixtures',
     'prescriptions',
@@ -704,6 +706,7 @@ COUCHDB_DATABASES += [
     ('care_sa', COUCH_DATABASE + '__fluff-care_sa'),
     ('cvsu', COUCH_DATABASE + '__fluff-cvsu'),
     ('mc', COUCH_DATABASE + '__fluff-mc'),
+    ('receiverwrapper', COUCH_DATABASE + '__receiverwrapper'),
 ]
 
 INSTALLED_APPS += LOCAL_APPS
