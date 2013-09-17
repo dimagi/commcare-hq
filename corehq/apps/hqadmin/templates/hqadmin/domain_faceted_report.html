@@ -49,7 +49,8 @@
                     ajax_url: "{% url admin_stats_data %}",
                     data: url_params,
                     should_update_url: false,
-                    interval: "{{ interval }}"
+                    interval: "{{ interval }}",
+                    show_datefield: true
                 });
                 visualizations[key].viz.init();
             }
@@ -61,7 +62,7 @@
     <h4>{% trans "Total Distinct Active Users (matching filters)" %}: {{ total_distinct_users }}</h4>
     <hr />
     <h2>{% trans "Visualize Project Spaces" %}</h2>
-    {% include "orgs/partials/visualizations.html" with chart_name="domains" %}
+    {% include "orgs/partials/visualizations.html" with chart_name="domains" date_field_opts=domain_datefields %}
     <h2>{% trans "Visualize Forms" %}</h2>
     {% include "orgs/partials/visualizations.html" with chart_name="forms" %}
     <h2>{% trans "Visualize Cases" %}</h2>

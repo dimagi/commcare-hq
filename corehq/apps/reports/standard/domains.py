@@ -271,6 +271,13 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             ctxt["total_distinct_users"] = total_distinct_users(domains)
         else:
             ctxt["total_distinct_users"] = total_distinct_users()
+
+        ctxt["domain_datefields"] = [
+            {"value": "date_created", "name": _("Date Created")},
+            {"value": "deployment.date", "name": _("Deployment Date")},
+            {"value": "cp_first_form", "name": _("First Form Submitted")},
+            {"value": "cp_last_form", "name": _("Last Form Submitted")},
+        ]
         return ctxt
 
     def es_query(self, params=None, size=None):
