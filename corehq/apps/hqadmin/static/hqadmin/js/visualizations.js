@@ -75,7 +75,7 @@ var HQVisualizations = function (options) {
         var $loading = $(self.charts_id + ' .loading');
         var $error = $(self.charts_id + ' .error');
         var $charts = $(self.charts_id + ' .nvd3-chart');
-        var data = {}
+        var data = {};
 
         $(self.charts_id + " .no-data").hide();
         $error.hide();
