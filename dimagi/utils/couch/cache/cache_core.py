@@ -73,7 +73,7 @@ def purge_by_doc_id(doc_id):
         rcache().delete(key_doc_id(doc_id))
         #then all the reverse indices by that doc_id
         rcache().delete_pattern(key_reverse_doc(doc_id, '*'))
-        return True, exists
+        return True, simplejson.loads(exists)
     else:
         return False, None
 
