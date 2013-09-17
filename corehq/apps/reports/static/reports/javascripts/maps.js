@@ -332,6 +332,11 @@ function initData(data, config) {
         var cell = function(e) {
             var $td = $(header ? '<th>' : '<td>');
             $td.text(e[header ? 'label' : 'value']);
+            if (header) {
+                $td.prepend('<i class="icon-white"></i>&nbsp;');
+            } else {
+                $td.append('<span title="' + e.raw + '"></span>');
+            }
             $tr.append($td);
         };
 
@@ -349,7 +354,10 @@ function initData(data, config) {
         }
         tableRow(e, false);
     });
-    var table = new HQReportDataTables({dataTableElem: '#tabular'});
+    var x = {sType: 'title-numeric'};
+    var table = new HQReportDataTables({
+        aoColumns: [null, null, null, x, x, x, null, x, x, x],
+    });
     table.render();
 }
 
@@ -687,13 +695,16 @@ function detailContext(feature, config, cols) {
         return getEnumCaption(col, datum, config, fallback);
     };
     var displayProperties = {};
+    var rawProperties = {};
     $.each(prop_cols, function(i, k) {
         var v = feature.properties[k];
         displayProperties[k] = formatForDisplay(k, v);
+        rawProperties[k] = v;
     });
 
     var context = {
         props: displayProperties,
+        raw: rawProperties,
         name: (config.name_column ? feature.properties[config.name_column] : null),
     };
     context.detail = [];
@@ -702,6 +713,7 @@ function detailContext(feature, config, cols) {
             slug: e, // FIXME this will cause problems if column keys have weird chars or spaces
             label: getColumnTitle(e, config),
             value: displayProperties[e],
+            raw: rawProperties[e],
         });
     });
 
