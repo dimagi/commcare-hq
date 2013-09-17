@@ -323,6 +323,28 @@ function initData(data, config) {
     $.each(data.features, function(i, e) {
         e.popupContent = formatDetailPopup(e, config);
     });
+
+    var tableRow = function(e, header) {
+        var ctx = detailContext(e, config);
+        var $tr = $('<tr>');
+        $.each(ctx.detail, function(i, e) {
+            var $td = $(header ? '<th>' : '<td>');
+            $td.text(e[header ? 'label' : 'value']);
+            $tr.append($td);
+        });
+        $('#tabular').find(header ? 'thead' : 'tbody').append($tr);
+    };
+    $('#tabular').append('<thead></thead><tbody></tbody>');
+    var first = true;
+    $.each(data.features, function(i, e) {
+        if (first) {
+            tableRow(e, true);
+            first = false;
+        }
+        tableRow(e, false);
+    });
+    var table = new HQReportDataTables({dataTableElem: '#tabular'});
+    table.render();
 }
 
 // set up the configured display metrics
