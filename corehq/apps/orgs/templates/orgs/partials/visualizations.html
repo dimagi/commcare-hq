@@ -7,6 +7,14 @@
     <li><a href="#{{ chart_name }}-stacked-cumulative-chart" data-toggle="{% if hash_tab %}hash-{% endif %}tab">{% trans "Stacked Cumulative Chart" %}</a></li>
     <form data-chart="{{ chart_name }}" style="margin: 0;" class="form-inline pull-right reload-graph-form">
         <span class="pull-right">
+            {% if date_field_opts %}
+                <label for="{{ chart_name }}-datefield">{% trans 'Date Field' %}</label>
+                <select id="{{ chart_name }}-datefield" name="datefield">
+                {% for opt in date_field_opts %}
+                    <option value="{{ opt.value }}"{% if opt.selected %} selected{% endif %}>{{ opt.name }}</option>
+                {% endfor %}
+                </select>
+            {% endif %}
             <label for="{{ chart_name }}-interval" class="sub-label">{% trans 'Interval' %}</label>
             <select id="{{ chart_name }}-interval" name="interval" class="interval-input input-small">
                 <option {% if interval == 'day' %}selected {% endif %}value="day">{% trans 'Day' %}</option>
