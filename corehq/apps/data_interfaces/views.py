@@ -1,6 +1,6 @@
 from casexml.apps.case.models import CommCareCaseGroup
 from corehq import CaseReassignmentInterface
-from corehq.apps.data_interfaces.forms import AddCaseGroupForm
+from corehq.apps.data_interfaces.forms import AddCaseGroupForm, UpdateCaseGroupForm
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, FetchCRUDPaginatedDataView
@@ -57,6 +57,11 @@ class CaseGroupListView(BaseDomainView, CRUDPaginatedViewMixin):
         if self.request.method == 'POST' and not is_blank:
             return AddCaseGroupForm(self.request.POST)
         return AddCaseGroupForm()
+
+    def get_update_form(self, initial_data=None):
+        if self.request.method == 'POST':
+            return UpdateCaseGroupForm(self.request.POST)
+        return UpdateCaseGroupForm(initial=initial_data)
 
     @property
     def column_names(self):
