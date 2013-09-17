@@ -13,12 +13,15 @@
 CONTEXT = {{ context|JSON }};
 
 function setMapHeight() {
-    $('#map').height($(window).height() - 200);
+    var $map = $('#map');
+    $map.height($(window).height() - $map.offset().top);
 }
 
 $(document).ready(function() { 
     setMapHeight();
     $(window).resize(setMapHeight);
+    $('#reportFiltersAccordion').on('shown', setMapHeight);
+    $('#reportFiltersAccordion').on('hidden', setMapHeight);
 
     L.Icon.Default.imagePath = '{% static 'reports/css/leaflet/images' %}';
     var map = mapsInit(CONTEXT);
