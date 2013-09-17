@@ -886,7 +886,7 @@ class FlagBrokenBuilds(FormView):
         return HttpResponse("posted!")
 
 
-def get_domain_stats_data(params, datespan, interval='week'):
+def get_domain_stats_data(params, datespan, interval='week', datefield="date_created"):
     q = {
         "query": {"bool": {"must":
                                   [{"match": {'doc_type': "Domain"}},
@@ -894,13 +894,13 @@ def get_domain_stats_data(params, datespan, interval='week'):
         "facets": {
             "histo": {
                 "date_histogram": {
-                    "field": "date_created",
+                    "field": datefield,
                     "interval": interval
                 },
                 "facet_filter": {
                     "and": [{
                         "range": {
-                            "date_created": {
+                            datefield: {
                                 "from": datespan.startdate_display,
                                 "to": datespan.enddate_display,
                             }}}]}}}}
@@ -910,7 +910,7 @@ def get_domain_stats_data(params, datespan, interval='week'):
     del q["facets"]
     q["filter"] = {
         "and": [
-            {"range": {"date_created": {"lt": datespan.startdate_display}}},
+            {"range": {datefield: {"lt": datespan.startdate_display}}},
         ],
     }
 
@@ -929,11 +929,12 @@ def get_domain_stats_data(params, datespan, interval='week'):
 def stats_data(request):
     histo_type = request.GET.get('histogram_type')
     interval = request.GET.get("interval", "week")
+    datefield = request.GET.get("datefield")
 
     params, __ = parse_args_for_es(request, prefix='es_')
 
     if histo_type == "domains":
-        return json_response(get_domain_stats_data(params, request.datespan, interval=interval))
+        return json_response(get_domain_stats_data(params, request.datespan, interval=interval, datefield=datefield))
 
     if params:
         domain_results = es_domain_query(params, fields=["name"], size=99999, show_stats=False)
