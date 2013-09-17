@@ -1,5 +1,4 @@
 var CRUDPaginatedListModel = function (
-    crudURL,
     total,
     pageLimit,
     currentPage,
@@ -9,6 +8,8 @@ var CRUDPaginatedListModel = function (
     options = options || {};
 
     var self = this;
+
+    self.sortBy = options.sortBy || 'abc';
 
     self.hasInitialLoadFinished = ko.observable(false);
 
@@ -50,8 +51,6 @@ var CRUDPaginatedListModel = function (
         return self.deletedList().length > 0;
     });
 
-    self.crudURL = crudURL;  // the url we'll be fetching data from
-
     self.total = ko.observable(total);
     self.pageLimit = ko.observable(pageLimit);
     self.maxPage = ko.computed(function () {
@@ -83,14 +82,6 @@ var CRUDPaginatedListModel = function (
     });
 
     self.utils = {
-        formatUrl: function (page) {
-            if (!page) {
-                return '#';
-            }
-            return self.crudURL +
-                '?page=' + page +
-                '&limit=' + self.pageLimit();
-        },
         reloadList: function (data) {
             if (data.success) {
                 if (!self.hasInitialLoadFinished()) {
@@ -160,8 +151,15 @@ var CRUDPaginatedListModel = function (
         page = ko.utils.unwrapObservable(page);
         if (page) {
             $.ajax({
-                url: self.utils.formatUrl(page),
+                url: "",
+                type: 'post',
                 dataType: 'json',
+                data: {
+                    action: 'paginate',
+                    page: page,
+                    limit: self.pageLimit(),
+                    sortBy: self.sortBy
+                },
                 statusCode: self.handleStatusCode,
                 success: function (data) {
                     self.utils.reloadList(data);

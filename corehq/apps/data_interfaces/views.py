@@ -3,7 +3,7 @@ from corehq import CaseReassignmentInterface
 from corehq.apps.data_interfaces.forms import AddCaseGroupForm, UpdateCaseGroupForm
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, FetchCRUDPaginatedDataView
+from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.reports.standard.export import ExcelExportReport
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher, EditDataInterfaceDispatcher
 from django.core.urlresolvers import reverse
@@ -74,9 +74,5 @@ class CaseGroupListView(BaseDomainView, CRUDPaginatedViewMixin):
     @property
     def page_context(self):
         return self.pagination_context
-
-
-class CRUDCaseGroupListView(FetchCRUDPaginatedDataView, CaseGroupListView):
-    urlname = 'fetch_case_group_list'
 
 

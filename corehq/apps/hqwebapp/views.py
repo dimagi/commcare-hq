@@ -25,6 +25,7 @@ from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 from django.utils.translation import ugettext as _, ugettext_noop
 
@@ -515,16 +516,25 @@ class CRUDPaginatedViewMixin(object):
             return default
 
     @property
+    def parameters(self):
+        """
+        Specify GET or POST from a request object.
+        """
+        raise NotImplementedError("you need to implement get_param_source")
+
+    @property
+    @memoized
     def page(self):
         return self._safe_escape(
-            lambda: int(self.request.GET.get('page', 1)),
+            lambda: int(self.parameters.get('page', 1)),
             1
         )
 
     @property
+    @memoized
     def limit(self):
         return self._safe_escape(
-            lambda: int(self.request.GET.get('limit', self.DEFAULT_LIMIT)),
+            lambda: int(self.parameters.get('limit', self.DEFAULT_LIMIT)),
             self.DEFAULT_LIMIT
         )
 
@@ -533,8 +543,16 @@ class CRUDPaginatedViewMixin(object):
         raise NotImplementedError("You must implement total.")
 
     @property
-    def crud_url(self):
-        raise NotImplementedError("you must specify a fetch_url")
+    def sort_by(self):
+        return self.parameters.GET.get('sortBy', 'abc')
+
+    @property
+    def skip(self):
+        return (self.page - 1) * self.limit
+
+    @property
+    def action(self):
+        return self.parameters.get('action')
 
     @property
     def column_names(self):
@@ -544,7 +562,6 @@ class CRUDPaginatedViewMixin(object):
     def pagination_context(self):
         return {
             'pagination': {
-                'crud_url': self.crud_url,
                 'page': self.page,
                 'limit': self.limit,
                 'total': self.total,
@@ -561,6 +578,19 @@ class CRUDPaginatedViewMixin(object):
                 'create_item_form': self.get_create_form_response(self.get_create_form()),
             }
         }
+
+    @property
+    def paginate_crud_response(self):
+        """
+        Return this in the post method of your view class.
+        """
+        response = {
+            'create': self.create_item_response,
+            'update': self.updated_item_response,
+            'delete': self.deleted_item_response,
+            'paginate': self.paginated_response,
+        }.get(self.action, {})
+        return HttpResponse(json.dumps(response))
 
     @property
     def create_item_response(self):
@@ -589,7 +619,7 @@ class CRUDPaginatedViewMixin(object):
     def deleted_item_response(self):
         try:
             try:
-                item_id = self.request.POST['itemId']
+                item_id = self.parameters['itemId']
             except KeyError:
                 raise PaginatedItemException(_("The item's ID was not passed to the server."))
             response = self.get_deleted_item_data(item_id)
@@ -601,6 +631,29 @@ class CRUDPaginatedViewMixin(object):
                 'error': _("<strong>Problem Deleting:</strong> %s") % e,
             }
 
+    @property
+    def paginated_response(self):
+        return {
+            'success': True,
+            'currentPage': self.page,
+            'paginatedList': self.paginated_list,
+        }
+
+    @property
+    def paginated_list(self):
+        """
+        This should return a list of data formatted as follows:
+        [
+            {
+                'itemData': {
+                    'id': <id of item>,
+                    <json dict of item data for the knockout model to use>
+                },
+                'template': <knockout template id>
+            }
+        ]
+        """
+        raise NotImplementedError("Return a list of data for the request response.")
 
     def get_create_form(self, is_blank=False):
         raise NotImplementedError("You must return a form object that will create an Item")
@@ -660,51 +713,3 @@ class CRUDPaginatedViewMixin(object):
         }
         """
         raise NotImplementedError("You must implement get_deleted_item_data")
-
-    def post(self, *args, **kwargs):
-        action = self.request.POST.get('action')
-        response = {
-            'create': self.create_item_response,
-            'update': self.updated_item_response,
-            'delete': self.deleted_item_response,
-        }.get(action, {})
-        return HttpResponse(json.dumps(response))
-
-
-class FetchCRUDPaginatedDataView(object):
-    """
-    Mix this in in with a TemplateView that subclasses a view using the CRUDPaginatedViewMixin.
-    """
-
-    @property
-    def sort_by(self):
-        return self.request.GET.get('sortBy', 'abc')
-
-    @property
-    def skip(self):
-        return (self.page - 1) * self.limit
-
-    @property
-    def paginated_list(self):
-        """
-        This should return a list of data formatted as follows:
-        [
-            {
-                'itemData': {
-                    'id': <id of item>,
-                    <json dict of item data for the knockout model to use>
-                },
-                'template': <knockout template id>
-            }
-        ]
-        """
-        raise NotImplementedError("Return a list of data for the request response.")
-
-    def render_to_response(self, context, **response_kwargs):
-        return HttpResponse(json.dumps({
-            'success': True,
-            'currentPage': self.page,
-            'paginatedList': self.paginated_list,
-        }))
-
-

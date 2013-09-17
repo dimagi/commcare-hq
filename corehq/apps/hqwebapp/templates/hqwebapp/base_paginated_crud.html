@@ -10,7 +10,6 @@
 {% block js-inline %}{{ block.super }}
     <script>
         var paginatedListModel = new CRUDPaginatedListModel(
-            '{{ pagination.crud_url }}',
             {{ pagination.total }},
             {{ pagination.limit }},
             {{ pagination.page }},
