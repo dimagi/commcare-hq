@@ -112,7 +112,7 @@
                                         id: itemRowId
                                     },
                                     event: {
-                                        updateItem: $parent.updateItem
+                                        deleteItem: $parent.deleteItem
                                     }
                                 "></tr>
                                 <!-- /ko -->
@@ -142,12 +142,12 @@
                                 <!-- /ko -->
                             </tbody>
                             <tbody>
-                                <tr data-bind="visible: isModifiedListVisible">
+                                <tr data-bind="visible: isDeletedListVisible">
                                     <th colspan="{{ pagination.num_columns }}">
-                                        {{ pagination.text.updated_items }}
+                                        {{ pagination.text.deleted_items }}
                                     </th>
                                 </tr>
-                                <!-- ko foreach: modifiedList -->
+                                <!-- ko foreach: deletedList -->
                                 <tr data-bind="
                                         template: {
                                             name: template(),

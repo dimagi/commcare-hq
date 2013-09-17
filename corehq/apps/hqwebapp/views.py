@@ -505,7 +505,7 @@ class CRUDPaginatedViewMixin(object):
     limit_text = ugettext_noop("items per page")
     empty_notification = ugettext_noop("You have no items.")
     loading_message = ugettext_noop("Loading...")
-    updated_items_header = ugettext_noop("Updated Items:")
+    deleted_items_header = ugettext_noop("Deleted Items:")
     new_items_header = ugettext_noop("New Items:")
 
     def _safe_escape(self, expression, default):
@@ -555,7 +555,7 @@ class CRUDPaginatedViewMixin(object):
                     'limit': self.limit_text,
                     'empty': self.empty_notification,
                     'loading': self.loading_message,
-                    'updated_items': self.updated_items_header,
+                    'deleted_items': self.deleted_items_header,
                     'new_items': self.new_items_header,
                 },
                 'create_item_form': self.get_create_form_response(self.get_create_form()),
@@ -576,20 +576,23 @@ class CRUDPaginatedViewMixin(object):
 
     @property
     def updated_item_response(self):
-        try:
-            response = self.get_updated_item_data(self.get_item_id())
-            return {
-                'updatedItem': response
-            }
-        except PaginatedItemException as e:
-            return {
-                'error': _("<strong>Problem Updating:</strong> %s") % e,
-            }
+        update_form = self.get_update_form()
+        updated_item = None
+        if update_form.is_valid():
+            updated_item = self.get_updated_item_data(update_form)
+        return {
+            'updatedItem': updated_item,
+            'form': self.get_update_form_response(update_form),
+        }
 
     @property
     def deleted_item_response(self):
         try:
-            response = self.get_deleted_item_data(self.get_item_id())
+            try:
+                item_id = self.request.POST['itemId']
+            except KeyError:
+                raise PaginatedItemException(_("The item's ID was not passed to the server."))
+            response = self.get_deleted_item_data(item_id)
             return {
                 'deletedItem': response
             }
@@ -598,11 +601,6 @@ class CRUDPaginatedViewMixin(object):
                 'error': _("<strong>Problem Deleting:</strong> %s") % e,
             }
 
-    def get_item_id(self):
-        try:
-            return self.request.POST['itemId']
-        except KeyError:
-            raise PaginatedItemException(_("The item's ID was not passed to the server."))
 
     def get_create_form(self, is_blank=False):
         raise NotImplementedError("You must return a form object that will create an Item")
@@ -611,6 +609,16 @@ class CRUDPaginatedViewMixin(object):
         return render_to_string(
             'hqwebapp/partials/create_item_form.html', {
                 'form': create_form
+            }
+        )
+
+    def get_update_form(self, initial_data=None):
+        raise NotImplementedError("You must return a form object that will update an Item")
+
+    def get_update_form_response(self, update_form):
+        return render_to_string(
+            'hqwebapp/partials/update_item_form.html', {
+                'form': update_form
             }
         )
 
@@ -626,7 +634,7 @@ class CRUDPaginatedViewMixin(object):
         """
         raise NotImplementedError("You must implement get_new_item_data")
 
-    def get_updated_item_data(self, item_id):
+    def get_updated_item_data(self, update_form):
         """
         This should return a dict of data for the updated item.
         {
