@@ -45,21 +45,21 @@ class CaseGroupListView(BaseDomainView, CRUDPaginatedViewMixin):
         return reverse(self.urlname, args=[self.domain])
 
     @property
+    def parameters(self):
+        return self.request.POST if self.request.method == 'POST' else self.request.GET
+
+    @property
     @memoized
     def total(self):
         return CommCareCaseGroup.get_total(self.domain)
 
-    @property
-    def crud_url(self):
-        return reverse(CRUDCaseGroupListView.urlname, args=[self.domain])
-
     def get_create_form(self, is_blank=False):
-        if self.request.method == 'POST' and not is_blank:
+        if self.request.method == 'POST' and self.action == 'create' and not is_blank:
             return AddCaseGroupForm(self.request.POST)
         return AddCaseGroupForm()
 
     def get_update_form(self, initial_data=None):
-        if self.request.method == 'POST':
+        if self.request.method == 'POST' and self.action == 'update':
             return UpdateCaseGroupForm(self.request.POST)
         return UpdateCaseGroupForm(initial=initial_data)
 
@@ -75,4 +75,6 @@ class CaseGroupListView(BaseDomainView, CRUDPaginatedViewMixin):
     def page_context(self):
         return self.pagination_context
 
+    def post(self, *args, **kwargs):
+        return self.paginate_crud_response
 
