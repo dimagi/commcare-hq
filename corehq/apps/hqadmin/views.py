@@ -39,7 +39,7 @@ from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.sms.models import SMSLog
 from corehq.apps.users.models import  CommCareUser, WebUser
 from corehq.apps.users.util import format_username
-from corehq.elastic import get_stats_data, parse_args_for_es, es_query, ES_URLS
+from corehq.elastic import get_stats_data, parse_args_for_es, es_query, ES_URLS, ES_MAX_CLAUSE_COUNT
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from corehq.apps.domain.decorators import  require_superuser
@@ -924,8 +924,6 @@ def get_domain_stats_data(params, datespan, interval='week'):
     }
 
 
-ES_DOMAIN_QUERY_LIMIT = 500
-
 @require_superuser
 @datespan_in_request(from_param="startdate", to_param="enddate", default_days=365)
 def stats_data(request):
@@ -943,7 +941,7 @@ def stats_data(request):
 
         if len(domains) <= 10:
             domain_info = [{"names": [d], "display_name": d} for d in domains]
-        elif len(domains) <= ES_DOMAIN_QUERY_LIMIT:
+        elif len(domains) < ES_MAX_CLAUSE_COUNT:
             domain_info = [{"names": [d for d in domains], "display_name": _("Domains Matching Filter")}]
         else:
             domain_info = [{"names": None, "display_name": _("All Domains (NOT applying filters. > 500 projects)")}]
