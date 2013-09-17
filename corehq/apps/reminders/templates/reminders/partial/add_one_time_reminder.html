@@ -117,7 +117,7 @@
                         {% trans 'Date' %}: <input type="text" class="input-small" name="date" id="id_date" value="{{ form.date.value|default:'' }}"/>
                         {% trans 'Time' %}: <input type="text" class="input-small" name="time" id="id_time" value="{{ form.time.value|default:'' }}"/>
                     </td>
-                    <td>{{ form.date.errors }}{{ form.time.errors }}</td>
+                    <td>{{ form.date.errors }}{{ form.time.errors }}{{ form.datetime.errors }}</td>
                 </tr>
                 <tr>
                     <td>{% trans 'Send' %}: </td>

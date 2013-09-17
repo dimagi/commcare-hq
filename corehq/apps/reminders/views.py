@@ -183,13 +183,8 @@ def add_one_time_reminder(request, domain, handler_id=None):
 
     if request.method == "POST":
         form = OneTimeReminderForm(request.POST)
+        form._cchq_domain = domain
         if form.is_valid():
-            if form.cleaned_data.get("send_type") == SEND_NOW:
-                start_datetime = datetime.utcnow() + timedelta(minutes=1)
-            else:
-                start_datetime = datetime.combine(form.cleaned_data.get("date"), form.cleaned_data.get("time"))
-                start_datetime = tz_utils.adjust_datetime_to_timezone(start_datetime, timezone.zone, pytz.utc.zone)
-
             content_type = form.cleaned_data.get("content_type")
             recipient_type = form.cleaned_data.get("recipient_type")
 
@@ -203,7 +198,7 @@ def add_one_time_reminder(request, domain, handler_id=None):
             handler.method = content_type
             handler.recipient = recipient_type
             handler.start_condition_type = ON_DATETIME
-            handler.start_datetime = start_datetime
+            handler.start_datetime = form.cleaned_data.get("datetime")
             handler.start_offset = 0
             handler.events = [CaseReminderEvent(
                 day_num = 0,

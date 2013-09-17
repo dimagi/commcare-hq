@@ -1,5 +1,6 @@
 import json
 import re
+import pytz
 from datetime import timedelta, datetime
 from django.core.exceptions import ValidationError
 from django.forms.fields import *
@@ -24,6 +25,8 @@ from openpyxl.shared.exc import InvalidFileException
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.models import Form as CCHQForm
 from dimagi.utils.django.fields import TrimmedCharField
+from corehq.apps.reports import util as report_utils
+from dimagi.utils.timezones import utils as tz_utils
 
 YES_OR_NO = (
     ("Y","Yes"),
@@ -586,9 +589,11 @@ class ComplexCaseReminderForm(Form):
         return cleaned_data
 
 class OneTimeReminderForm(Form):
+    _cchq_domain = None
     send_type = ChoiceField(choices=NOW_OR_LATER)
     date = CharField(required=False)
     time = CharField(required=False)
+    datetime = DateTimeField(required=False)
     recipient_type = ChoiceField(choices=ONE_TIME_RECIPIENT_CHOICES)
     case_group_id = CharField(required=False)
     user_group_id = CharField(required=False)
@@ -621,6 +626,23 @@ class OneTimeReminderForm(Form):
                 raise ValidationError("This field is required.")
         else:
             return None
+
+    def clean_datetime(self):
+        utcnow = datetime.utcnow()
+        timezone = report_utils.get_timezone(None, self._cchq_domain) # Use project timezone only
+        if self.cleaned_data.get("send_type") == SEND_NOW:
+            start_datetime = utcnow + timedelta(minutes=1)
+        else:
+            dt = self.cleaned_data.get("date")
+            tm = self.cleaned_data.get("time")
+            if dt is None or tm is None:
+                return None
+            start_datetime = datetime.combine(dt, tm)
+            start_datetime = tz_utils.adjust_datetime_to_timezone(start_datetime, timezone.zone, pytz.utc.zone)
+            start_datetime = start_datetime.replace(tzinfo=None)
+            if start_datetime < utcnow:
+                raise ValidationError(_("Date and time cannot occur in the past."))
+        return start_datetime
 
 class RecordListWidget(Widget):
     
