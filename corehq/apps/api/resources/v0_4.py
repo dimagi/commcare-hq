@@ -1,5 +1,4 @@
 from collections import defaultdict
-from itertools import groupby
 
 from django.core.urlresolvers import NoReverseMatch, reverse
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
