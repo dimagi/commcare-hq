@@ -735,30 +735,34 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
             return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 
+class OrgSettingsView(BaseAdminProjectSettingsView):
+    template_name = 'domain/orgs_settings.html'
+    urlname = 'domain_org_settings'
+    page_title = ugettext_noop("Organization")
 
-@domain_admin_required
-def org_settings(request, domain):
-    domain = Domain.get_by_name(domain)
+    @property
+    def page_context(self):
+        domain = self.domain_object
+        org_users = []
+        teams = Team.get_by_domain(domain.name)
+        for team in teams:
+            for user in team.get_members():
+                user.team_id = team.get_id
+                user.team = team.name
+                org_users.append(user)
 
-    org_users = []
-    teams = Team.get_by_domain(domain.name)
-    for team in teams:
-        for user in team.get_members():
-            user.team_id = team.get_id
-            user.team = team.name
-            org_users.append(user)
+        for user in org_users:
+            user.current_domain = domain.name
 
-    for user in org_users:
-        user.current_domain = domain.name
+        all_orgs = Organization.get_all()
 
-    all_orgs = Organization.get_all()
-
-    return render(request, 'domain/orgs_settings.html', {
-        "project": domain, 'domain': domain.name,
-        "organization": Organization.get_by_name(getattr(domain, "organization", None)),
-        "org_users": org_users,
-        "all_orgs": all_orgs,
-    })
+        return {
+            "project": domain,
+            'domain': domain.name,
+            "organization": Organization.get_by_name(getattr(domain, "organization", None)),
+            "org_users": org_users,
+            "all_orgs": all_orgs,
+        }
 
 
 class BaseInternalDomainSettingsView(BaseProjectSettingsView):
