@@ -5,6 +5,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 
 from corehq.apps.groups.models import Group
+from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.views import BaseUserSettingsView
@@ -75,26 +76,49 @@ class EditGroupMembersView(BaseGroupsView):
     @property
     @memoized
     def member_ids(self):
-        return self.group.get_user_ids()
+        return set([u._id for u in self.members])
 
     @property
+    @memoized
+    def all_users(self):
+        return sorted(CommCareUser.by_domain(self.domain), key=lambda user: user.username)
+
+    @property
+    @memoized
+    def all_user_ids(self):
+        return set([u._id for u in self.all_users])
+
+    @property
+    @memoized
     def members(self):
-        members = CouchUser.view("_all_docs", keys=self.member_ids, include_docs=True).all()
-        members.sort(key=lambda user: user.username)
-        return members
+        member_ids = set(self.group.get_user_ids())
+        return [u for u in self.all_users if u._id in member_ids]
 
     @property
     def nonmembers(self):
-        all_users = CommCareUser.by_domain(self.domain)
-        member_ids = set(self.member_ids)
-        return [user for user in all_users if user.user_id not in member_ids]
+        member_ids = self.member_ids
+        return [u for u in self.all_users if u not in member_ids]
+
+    @property
+    @memoized
+    def user_selection_form(self):
+        def _user_display(user):
+            return '{username}{full_name}'.format(
+                username=user.raw_username,
+                full_name=' (%s)'% user.full_name if user.full_name.strip() else ''
+            )
+
+        form = MultipleSelectionForm(initial={
+            'selected_ids': list(self.member_ids),
+        })
+        form.fields['selected_ids'].choices = [(u._id, _user_display(u)) for u in self.all_users]
+        return form
 
     @property
     def page_context(self):
         return {
             'group': self.group,
-            'members': self.members,
-            'nonmembers': self.nonmembers,
+            'user_form': self.user_selection_form
         }
 
 
