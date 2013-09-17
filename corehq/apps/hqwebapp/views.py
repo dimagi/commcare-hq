@@ -627,6 +627,7 @@ class CRUDPaginatedViewMixin(object):
         This should return a dict of data for the created item.
         {
             'itemData': {
+                'id': <id of item>,
                 <json dict of item data for the knockout model to use>
             },
             'template': <knockout template id>
@@ -639,6 +640,7 @@ class CRUDPaginatedViewMixin(object):
         This should return a dict of data for the updated item.
         {
             'itemData': {
+                'id': <id of item>,
                 <json dict of item data for the knockout model to use>
             },
             'template': <knockout template id>
@@ -651,6 +653,7 @@ class CRUDPaginatedViewMixin(object):
         This should return a dict of data for the deleted item.
         {
             'itemData': {
+                'id': <id of item>,
                 <json dict of item data for the knockout model to use>
             },
             'template': <knockout template id>
@@ -688,6 +691,7 @@ class FetchCRUDPaginatedDataView(object):
         [
             {
                 'itemData': {
+                    'id': <id of item>,
                     <json dict of item data for the knockout model to use>
                 },
                 'template': <knockout template id>
