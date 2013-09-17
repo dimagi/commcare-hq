@@ -9,6 +9,7 @@ from django.forms.widgets import CheckboxSelectMultiple
 from django.forms import Field, Widget, Select, TextInput
 from django.utils.datastructures import DotExpandedDict
 from casexml.apps.case.models import CommCareCaseGroup
+from corehq.apps.groups.models import Group
 from .models import REPEAT_SCHEDULE_INDEFINITELY, CaseReminderEvent,\
 RECIPIENT_USER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE, RECIPIENT_OWNER,\
 MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE, EVENT_AS_SCHEDULE, EVENT_AS_OFFSET,\
@@ -44,6 +45,7 @@ CONTENT_CHOICES = (
 )
 
 ONE_TIME_RECIPIENT_CHOICES = (
+    ("", _("---choose---")),
     (RECIPIENT_SURVEY_SAMPLE, _("Case Group")),
     (RECIPIENT_USER_GROUP, _("User Group")),
 )
@@ -588,6 +590,12 @@ class ComplexCaseReminderForm(Form):
         
         return cleaned_data
 
+def clean_selection(value):
+    if value == "" or value is None:
+        raise ValidationError(_("Please make a selection."))
+    else:
+        return value
+
 class OneTimeReminderForm(Form):
     _cchq_domain = None
     send_type = ChoiceField(choices=NOW_OR_LATER)
@@ -600,6 +608,35 @@ class OneTimeReminderForm(Form):
     content_type = ChoiceField(choices=CONTENT_CHOICES)
     message = TrimmedCharField(required=False)
     form_unique_id = CharField()
+
+    def clean_recipient_type(self):
+        return clean_selection(self.cleaned_data.get("recipient_type"))
+
+    def clean_case_group_id(self):
+        if self.cleaned_data.get("recipient_type") == RECIPIENT_SURVEY_SAMPLE:
+            value = clean_selection(self.cleaned_data.get("case_group_id"))
+            try:
+                group = CommCareCaseGroup.get(value)
+                assert group.doc_type == "CommCareCaseGroup"
+                assert group.domain == self._cchq_domain
+            except Exception:
+                raise ValidationError(_("Invalid selection."))
+            return value
+        else:
+            return None
+
+    def clean_user_group_id(self):
+        if self.cleaned_data.get("recipient_type") == RECIPIENT_USER_GROUP:
+            value = clean_selection(self.cleaned_data.get("user_group_id"))
+            try:
+                group = Group.get(value)
+                assert group.doc_type == "Group"
+                assert group.domain == self._cchq_domain
+            except Exception:
+                raise ValidationError(_("Invalid selection."))
+            return value
+        else:
+            return None
 
     def clean_date(self):
         if self.cleaned_data.get("send_type") == SEND_NOW:

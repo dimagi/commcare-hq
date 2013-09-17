@@ -52,11 +52,11 @@
     
     function recipient_type_changed() {
         var value = $("#id_recipient_type").val();
+        $(".for_user_group").hide();
+        $(".for_case_group").hide();
         if(value == "USER_GROUP") {
             $(".for_user_group").show();
-            $(".for_case_group").hide();
-        } else {
-            $(".for_user_group").hide();
+        } else if (value == "SURVEY_SAMPLE") {
             $(".for_case_group").show();
         }
     }
@@ -84,13 +84,14 @@
                 <tr>
                     <td>{% trans 'Recipients' %}: </td>
                     <td>{{ form.recipient_type }}</td>
-                    <td></td>
+                    <td>{{ form.recipient_type.errors }}</td>
                 </tr>
                 <tr>
                     <td></td>
                     <td>
                         <div class="for_case_group">
                             <select name="case_group_id">
+                                <option value="">{% trans '---choose---' %}</option>
                                 {% for sample in sample_list %}
                                 <option value="{{ sample.code }}" {% if form.case_group_id.value == sample.code %}selected="selected"{% endif %}>{{ sample.name }}</option>
                                 {% endfor %}
@@ -98,13 +99,14 @@
                         </div>
                         <div class="for_user_group">
                             <select name="user_group_id">
+                                <option value="">{% trans '---choose---' %}</option>
                                 {% for group in groups %}
                                 <option value="{{ group.get_id }}" {% if form.user_group_id.value == group.get_id %}selected="selected"{% endif %}>{{ group.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                     </td>
-                    <td></td>
+                    <td>{{ form.case_group_id.errors }}{{ form.user_group_id.errors }}</td>
                 </tr>
                 <tr>
                     <td>{% trans 'Timing' %}: </td>
