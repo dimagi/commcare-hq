@@ -1,7 +1,9 @@
 import json
 
 from django.core.management.base import BaseCommand
+
 from corehq.apps.users.models import CommCareUser, CommCareCase
+from corehq.apps.fixtures.models import FixtureDataItem
 from dimagi.utils.couch.database import get_db
 
 from custom.opm.opm_reports.tests import test_data_location, test_month_year
@@ -17,14 +19,9 @@ class Command(BaseCommand):
     """
     Generate test data for the OPM reports.
     It pulls stuff from the db and saves it as a json file.
+    It also runs reports, saves a snapshot, and stores that in the json file
     There's no intelligent testing going on, but it can at least verify
     consistency.
-
-    To save a copy of the reports, uncomment `class TestMakeReport` in
-    tests/__init__ (you can comment out the other two tests, so they
-    don't run).
-    That will load the data saved by this command and run reports on it,
-    saving that for regression testing.
     """
     help = "Pull data from the database and write\
         to a json file (currently only works for opm)"
@@ -34,19 +31,11 @@ class Command(BaseCommand):
         self.stdout.write("Pulling stuff\n")
         beneficiaries = CommCareCase.get_all_cases('opm', include_docs=True)
         users = CommCareUser.by_domain('opm')
+        fixtures = FixtureDataItem.get_item_list('opm', 'condition_amounts')
         forms = []
 
         for b in beneficiaries:
             forms += b.get_forms()
-
-        # db = get_db()
-        # forms = db.view(
-        #     "receiverwrapper/all_submissions_by_domain",
-        #     startkey=['opm'],
-        #     endkey=['opm', {}],
-        #     include_docs=True, reduce=False
-        # ).all()
-
 
         test_data = []
 
@@ -69,6 +58,7 @@ class Command(BaseCommand):
         test_data += [form.to_json() for form in forms]
         test_data += [u.to_json() for u in users]
         test_data += [b.to_json() for b in beneficiaries]
+        test_data += [f.to_json() for f in fixtures]
 
         doc_ids = set()
         docs = []

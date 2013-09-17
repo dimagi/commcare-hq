@@ -21,22 +21,12 @@ from ..models import (OpmUserFluff, OpmCaseFluffPillow,
 
 DIR_PATH = os.path.abspath(os.path.dirname(__file__))
 test_data_location = os.path.join(DIR_PATH, 'opm_test.json')
-test_results_location = os.path.join(DIR_PATH, 'opm_results.json')
-# test_data_location = os.path.join(DIR_PATH, 'opm_temp.json')
 test_month_year = (8, 2013)
 
 fixtures_loaded = False
 
 
 class OPMTestBase(object):
-
-    def load_test_results(self):
-        print "loading test results"
-        # with open(test_results_location) as f:
-        #     docs = json.loads(f.read())
-        # for doc in docs:
-        #     print doc.get('report_class', 'something...')
-        #     self.db.save_doc(doc)
 
     def load_test_data(self):
         print "loading test data"
@@ -69,7 +59,6 @@ class OPMTestBase(object):
             fixtures_loaded = True
             self.db = get_db()
             self.load_test_data()
-            self.load_test_results()
             for pillow in [OpmCaseFluffPillow, OpmUserFluffPillow, OpmFormFluffPillow]:
                 self.reindex_fluff(pillow)
         print "Finished setup, on to tests!"
@@ -131,36 +120,3 @@ class TestIncentive(OPMTestBase, TestCase):
 
 class TestBeneficiary(OPMTestBase, TestCase):
     ReportClass = BeneficiaryPaymentReport
-    
-# class TestMakeReports(OPMTestBase, TestCase):
-#     """
-#     This "test" can be uncommented and run to save a snapshot of
-#     the reports for regression testing.  It's here so it has the
-#     same data set and environment as the tests which it'll be
-#     compared against.
-#     """
-
-#     def load_test_results(self):
-#         pass
-
-#     def test_all_results(self):
-#         pass
-
-#     def test_data(self):
-#         month, year = test_month_year
-#         report_data = []
-#         for report_class in [IncentivePaymentReport, BeneficiaryPaymentReport]:
-#             print "Running %s\n" % report_class.__name__
-#             report = get_report(report_class, month, year)
-#             snapshot = OpmReportSnapshot(
-#                 domain=DOMAIN,
-#                 month=month,
-#                 year=year,
-#                 report_class=report.report_class.__name__,
-#                 headers=report.headers,
-#                 slugs=report.slugs,
-#                 rows=report.rows,
-#             )
-#             report_data.append(snapshot.to_json()) 
-#         with open(test_results_location, 'w') as f:
-#             f.write(json.dumps(report_data, indent=2))

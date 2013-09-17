@@ -86,8 +86,6 @@ class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
                     **self.get_model_kwargs()
                 ))
             except ResourceNotFound:
-                print "** Row not found! **"
-                print "\t", row
                 pass
         return rows
 

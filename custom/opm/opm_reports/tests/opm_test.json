@@ -48605,5 +48605,71 @@
     "case_attachments": {}, 
     "external_id": null, 
     "big_weight_machine_avail": "1"
+  }, 
+  {
+    "doc_type": "FixtureDataItem", 
+    "domain": "opm", 
+    "sort_key": null, 
+    "fields": {
+      "rs_amount": "2000", 
+      "condition": "two_year_spacing"
+    }, 
+    "data_type_id": "a080305d0a3ff8fe3244345f2057b3c4", 
+    "_id": "0594d9494ef3bdf38c52a5fcfc53299a"
+  }, 
+  {
+    "doc_type": "FixtureDataItem", 
+    "domain": "opm", 
+    "sort_key": null, 
+    "fields": {
+      "rs_amount": "5", 
+      "condition": "child_growth_monitored"
+    }, 
+    "data_type_id": "a080305d0a3ff8fe3244345f2057b3c4", 
+    "_id": "0594d9494ef3bdf38c52a5fcfce39c75"
+  }, 
+  {
+    "doc_type": "FixtureDataItem", 
+    "domain": "opm", 
+    "sort_key": null, 
+    "fields": {
+      "rs_amount": "750", 
+      "condition": "delivery_lump_sums"
+    }, 
+    "data_type_id": "a080305d0a3ff8fe3244345f2057b3c4", 
+    "_id": "13813da5af72e0725ab80469a2d3d0e0"
+  }, 
+  {
+    "doc_type": "FixtureDataItem", 
+    "domain": "opm", 
+    "sort_key": null, 
+    "fields": {
+      "rs_amount": "3000", 
+      "condition": "three_year_spacing"
+    }, 
+    "data_type_id": "a080305d0a3ff8fe3244345f2057b3c4", 
+    "_id": "6da9604abaf949715695b7ec1492fde7"
+  }, 
+  {
+    "doc_type": "FixtureDataItem", 
+    "domain": "opm", 
+    "sort_key": null, 
+    "fields": {
+      "rs_amount": "100", 
+      "condition": "service_form_submitted"
+    }, 
+    "data_type_id": "a080305d0a3ff8fe3244345f2057b3c4", 
+    "_id": "a080305d0a3ff8fe3244345f20a84ef7"
+  }, 
+  {
+    "doc_type": "FixtureDataItem", 
+    "domain": "opm", 
+    "sort_key": null, 
+    "fields": {
+      "rs_amount": "250", 
+      "condition": "window_completed"
+    }, 
+    "data_type_id": "a080305d0a3ff8fe3244345f2057b3c4", 
+    "_id": "ceb6ab2b194da41b311b288f2b9009ef"
   }
 ]
