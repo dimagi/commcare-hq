@@ -324,13 +324,19 @@ function initData(data, config) {
         e.popupContent = formatDetailPopup(e, config);
     });
 
+    // data table
     var tableRow = function(e, header) {
         var ctx = detailContext(e, config);
+
         var $tr = $('<tr>');
-        $.each(ctx.detail, function(i, e) {
+        var cell = function(e) {
             var $td = $(header ? '<th>' : '<td>');
             $td.text(e[header ? 'label' : 'value']);
             $tr.append($td);
+        };
+
+        $.each(ctx.table, function(i, e) {
+            cell(e);
         });
         $('#tabular').find(header ? 'thead' : 'tbody').append($tr);
     };
@@ -698,6 +704,13 @@ function detailContext(feature, config, cols) {
             value: displayProperties[e],
         });
     });
+
+    // TODO customizable tabular columns
+    context.table = context.detail.slice(0);
+    if (config.name_column) {
+        context.table.splice(0, 0, {label: getColumnTitle(config.name_column, config), value: context.name});
+    }
+
     return context;
 }
 

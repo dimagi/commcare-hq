@@ -879,6 +879,7 @@ class DemoMapReport(GenericMapReport):
             "death_rate"
         ],
         "column_titles": {
+            "name": "Mountain",
             "country": "Country",
             "height": "Elevation",
             "prominence": "Topographic Prominence",
@@ -1064,6 +1065,7 @@ class DemoMapReport2(GenericMapReport):
         'name_column': 'name',
         'detail_columns': ['iso', 'type', 'pop', 'area', 'pop_dens', 'lang', 'literacy', 'urbanity', 'sex_ratio'],
         'column_titles': {
+            'name': 'State/Territory',
             'iso': 'ISO 3166-2',
             'type': 'Type',
             'pop': 'Population',
