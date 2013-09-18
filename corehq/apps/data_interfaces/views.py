@@ -1,3 +1,4 @@
+from couchdbkit import ResourceNotFound
 from casexml.apps.case.models import CommCareCaseGroup
 from corehq import CaseReassignmentInterface
 from corehq.apps.data_interfaces.forms import AddCaseGroupForm, UpdateCaseGroupForm
@@ -30,15 +31,18 @@ def default(request, domain):
     raise Http404()
 
 
-class CaseGroupListView(BaseDomainView, CRUDPaginatedViewMixin):
-    template_name = "data_interfaces/list_case_groups.html"
-    urlname = 'case_group_list'
-    page_title = ugettext_noop("Case Groups")
+class DataInterfaceSection(BaseDomainView):
     section_name = ugettext_noop("Data")
 
     @property
     def section_url(self):
         return reverse("data_interfaces_default", args=[self.domain])
+
+
+class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
+    template_name = "data_interfaces/list_case_groups.html"
+    urlname = 'case_group_list'
+    page_title = ugettext_noop("Case Groups")
 
     @property
     def page_url(self):
@@ -89,6 +93,7 @@ class CaseGroupListView(BaseDomainView, CRUDPaginatedViewMixin):
             'id': case_group._id,
             'name': case_group.name,
             'numCases': len(case_group.cases),
+            'manageUrl': reverse(CaseGroupCaseManagementView.urlname, args=[self.domain, case_group._id])
         }
 
     def post(self, *args, **kwargs):
@@ -128,3 +133,72 @@ class CaseGroupListView(BaseDomainView, CRUDPaginatedViewMixin):
             'itemData': item_data,
             'template': 'deleted-group-template',
         }
+
+
+class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
+    template_name = 'data_interfaces/manage_case_groups.html'
+    urlname = 'manage_case_groups'
+    page_title = ugettext_noop("Manage Group")
+
+    @property
+    def group_id(self):
+        return self.kwargs.get('group_id')
+
+    @property
+    @memoized
+    def case_group(self):
+        try:
+            return CommCareCaseGroup.get(self.group_id)
+        except ResourceNotFound:
+            raise Http404()
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': CaseGroupListView.page_title,
+            'url': reverse(CaseGroupListView.urlname, args=[self.domain])
+        }]
+
+    @property
+    def page_name(self):
+        return _("Manage Group '%s'" % self.case_group.name)
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.group_id])
+
+    @property
+    def page_context(self):
+        return self.pagination_context
+
+    @property
+    def parameters(self):
+        return self.request.POST if self.request.method == 'POST' else self.request.GET
+
+    @property
+    def total(self):
+        return len(self.case_group.cases)
+
+    @property
+    def column_names(self):
+        return [
+            _("Case Name"),
+            _("Phone Number"),
+            _("External ID"),
+            _("Action"),
+        ]
+
+    @property
+    def paginated_list(self):
+        yield {
+            'itemData': {
+                'name': 'A case',
+                'phoneNumber': '(617) 500-5454',
+                'externalId': '23521351',
+            },
+            'template': 'existing-case-template',
+        }
+
+    def post(self, *args, **kwargs):
+        return self.paginate_crud_response
+
