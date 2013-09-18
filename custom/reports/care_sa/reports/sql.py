@@ -18,10 +18,12 @@ class ProvinceField(AsyncDrillableField):
 class ShowAgeField(BooleanField):
     label = "Show Age"
     slug = "show_age_field"
+    template = "care_sa/reports/partials/checkbox.html"
 
 class ShowGenderField(BooleanField):
     label = "Show Gender"
     slug = "show_gender_field"
+    template = "care_sa/reports/partials/checkbox.html"
 
 class CBOField(GroupField):
     name = 'CBO'
