@@ -5,19 +5,33 @@
 
 {% block pagination_templates %}
     <script type="text/html" id="existing-group-template">
-        <td data-bind="text: name"></td>
-        <td data-bind="text: numCases"></td>
-        <td>
+        <td class="span5" data-bind="text: name"></td>
+        <td class="span3" data-bind="text: numCases"></td>
+        <td class="span4">
+            <a href="#" class="btn btn-primary">
+                {% trans "Manage Cases" %}
+            </a>
             <button type="button"
-                    data-toggle="modal"
-                    data-bind="
+                data-toggle="modal"
+                data-bind="
                         attr: {
-                            'data-target': '#delete-group-' + id
+                            'data-target': '#update-group-' + id
                         }
                     "
-                    class="btn btn-danger">
-                <i class="icon-remove"></i> {% trans "Delete Group" %}
+                    class="btn">
+                <i class="icon-edit"></i> {% trans "Edit Info" %}
             </button>
+            <button type="button"
+                data-toggle="modal"
+                data-bind="
+                    attr: {
+                        'data-target': '#delete-group-' + id
+                    }
+                "
+                class="btn btn-danger pull-right">
+                <i class="icon-remove"></i> {% trans "Delete" %}
+            </button>
+
 
             <div class="modal hide fade"
                  data-bind="
@@ -53,17 +67,6 @@
                     </button>
                 </div>
             </div>
-
-            <button type="button"
-                    data-toggle="modal"
-                    data-bind="
-                        attr: {
-                            'data-target': '#update-group-' + id
-                        }
-                    "
-                    class="btn btn-primary">
-                {% trans "Update Group" %}
-            </button>
 
             <div class="modal hide fade"
                  data-bind="
