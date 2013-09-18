@@ -53,16 +53,6 @@ class CaseGroupListView(BaseDomainView, CRUDPaginatedViewMixin):
     def total(self):
         return CommCareCaseGroup.get_total(self.domain)
 
-    def get_create_form(self, is_blank=False):
-        if self.request.method == 'POST' and not is_blank:
-            return AddCaseGroupForm(self.request.POST)
-        return AddCaseGroupForm()
-
-    def get_update_form(self, initial_data=None):
-        if self.request.method == 'POST' and self.action == 'update':
-            return UpdateCaseGroupForm(self.request.POST)
-        return UpdateCaseGroupForm(initial=initial_data)
-
     @property
     def column_names(self):
         return [
@@ -77,4 +67,14 @@ class CaseGroupListView(BaseDomainView, CRUDPaginatedViewMixin):
 
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
+    
+    def get_create_form(self, is_blank=False):
+        if self.request.method == 'POST' and not is_blank:
+            return AddCaseGroupForm(self.request.POST)
+        return AddCaseGroupForm()
+
+    def get_update_form(self, initial_data=None):
+        if self.request.method == 'POST' and self.action == 'update':
+            return UpdateCaseGroupForm(self.request.POST)
+        return UpdateCaseGroupForm(initial=initial_data)
 
