@@ -1,0 +1,67 @@
+{% load hq_shared_tags %}
+
+<link href="{% static 'penn_state/css/smiley_reports.css' %}" rel="stylesheet">
+
+<div class="container">
+	<div class="smiley-report">
+		<h3>Daily Site PAX GBG Strategy Use</h3>
+		<p>
+			Every day a PAX GBG Strategy was used by any staff member at your afterschool program is marked by a "Peace" sign.  Any day that a PAX GBG strategy was not used is marked by a "Remember" finger.  The "Weekly Total" is show many days PAX GBG Strategies were used this week.
+		</p>
+		<div class="row">
+			{% for day, amount in site_strategy.days %}
+			<div class="span2">
+				<h4>{{ day }}</h4>
+				{%if amount %}
+					<div style="height: 200px; width:100%; background: blue;">&nbsp;</div>
+					<p>{{ amount }}</p>
+				{% else %}
+					<div style="height: 200px; width:100%; background: red;">&nbsp;</div>
+					<p>{{ amount }}</p>
+					<p>Remember to use your PAX kernels!</p>
+				{% endif %}
+			</div>
+			{% endfor %}
+			<div class="span2">
+				<h4>Weekly Total</h4>
+				<div class="week-total">
+					{{ site_strategy.fraction }}
+				</div>
+				<div class="week-total">
+					{{ site_strategy.total }}
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="smiley-report">
+		<h3>Daily Site GBG Game Goal</h3>
+		<p>
+			Every day the GBG game was played by anyone at your afterschool program site is marked by a "Smiley" face.  Any day the GBG Game was not played is marked by a "Remember" finger.  The "Weekly Total" is how many days the game was played.
+		</p>
+		<div class="row">
+			{% for day, amount in site_strategy.days %}
+			<div class="span2">
+				<h4>{{ day }}</h4>
+				<div style="height: 200px; width:100%; background: 
+				{%if amount %}
+					blue
+				{% else %}
+					red
+				{% endif %}
+				;">&nbsp;</div>
+				<p>{{ amount }}</p>
+			</div>
+			{% endfor %}
+			<div class="span2">
+				<h4>Weekly Total</h4>
+				<div class="week-total">
+					{{ site_strategy.fraction }}
+				</div>
+				<div class="week-total">
+					{{ site_strategy.total }}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
