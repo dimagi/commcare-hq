@@ -58,16 +58,42 @@ class CaseGroupListView(BaseDomainView, CRUDPaginatedViewMixin):
         return [
             _("Group Name"),
             _("Number of Cases"),
-            _("Action"),
+            _("Actions"),
         ]
 
     @property
     def page_context(self):
         return self.pagination_context
 
+    @property
+    def paginated_list(self):
+        for group in CommCareCaseGroup.get_all(
+                self.domain,
+                limit=self.limit,
+                skip=self.skip
+            ):
+            item_data = self._get_item_data(group)
+            item_data['updateForm'] = self.get_update_form_response(
+                self.get_update_form(initial_data={
+                    'item_id': group._id,
+                    'name': group.name,
+                })
+            )
+            yield {
+                'itemData': item_data,
+                'template': 'existing-group-template',
+            }
+
+    def _get_item_data(self, case_group):
+        return {
+            'id': case_group._id,
+            'name': case_group.name,
+            'numCases': len(case_group.cases),
+        }
+
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
-    
+
     def get_create_form(self, is_blank=False):
         if self.request.method == 'POST' and not is_blank:
             return AddCaseGroupForm(self.request.POST)
@@ -78,3 +104,27 @@ class CaseGroupListView(BaseDomainView, CRUDPaginatedViewMixin):
             return UpdateCaseGroupForm(self.request.POST)
         return UpdateCaseGroupForm(initial=initial_data)
 
+    def get_create_item_data(self, create_form):
+        case_group = create_form.create_group(self.domain)
+        return {
+            'itemData': self._get_item_data(case_group),
+            'template': 'new-group-template',
+        }
+
+    def get_updated_item_data(self, update_form):
+        case_group = update_form.update_group()
+        item_data = self._get_item_data(case_group)
+        item_data['updateForm'] = self.get_update_form_response(update_form)
+        return {
+            'itemData': item_data,
+            'template': 'existing-group-template',
+        }
+
+    def get_deleted_item_data(self, item_id):
+        case_group = CommCareCaseGroup.get(item_id)
+        item_data = self._get_item_data(case_group)
+        case_group.delete()
+        return {
+            'itemData': item_data,
+            'template': 'deleted-group-template',
+        }
