@@ -231,7 +231,7 @@ var PaginatedItem = function (itemSpec) {
     self.initTemplate = function (elems) {
         var $updateForm = $(elems).find('.update-item-form');
         if ($updateForm) {
-            $updateForm.click(function (e) {
+            $updateForm.submit(function (e) {
                 e.preventDefault();
                 $updateForm.ajaxSubmit({
                     url: "",
