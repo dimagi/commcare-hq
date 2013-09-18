@@ -477,7 +477,11 @@ class IndicatorDocument(schema.Document):
 
             if other_doc:
                 self_values = set([NormalizedEmittedValue(v) for v in self[calc_name][emitter_name]])
-                other_values = set([NormalizedEmittedValue(v) for v in other_doc[calc_name][emitter_name]])
+                try:
+                    _vals = other_doc[calc_name][emitter_name]
+                except KeyError:
+                    _vals = ()
+                other_values = set([NormalizedEmittedValue(v) for v in _vals])
                 values_diff = [v for v in list(self_values - other_values)]
             else:
                 values_diff = [NormalizedEmittedValue(v) for v in self[calc_name][emitter_name]]
