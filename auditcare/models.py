@@ -210,6 +210,7 @@ class ModelActionAudit(AuditEvent):
 
     def get_changed_fields(self, filters=None, excludes=None):
         """
+        Gets all the changed fields for an audit event.
 
         Returns a tuple of field KEYS that lets you access the changed fields and also get the values from them programmatically later.
         """
