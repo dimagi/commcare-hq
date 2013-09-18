@@ -575,7 +575,7 @@ class CRUDPaginatedViewMixin(object):
                     'deleted_items': self.deleted_items_header,
                     'new_items': self.new_items_header,
                 },
-                'create_item_form': self.get_create_form_response(self.get_create_form()),
+                'create_item_form': self.get_create_form_response(create_form) if create_form else None,
             }
         }
 
@@ -656,7 +656,11 @@ class CRUDPaginatedViewMixin(object):
         raise NotImplementedError("Return a list of data for the request response.")
 
     def get_create_form(self, is_blank=False):
-        raise NotImplementedError("You must return a form object that will create an Item")
+        """
+        This should be a crispy form that creates an item.
+        It's not required if you just want a paginated view.
+        """
+        pass
 
     def get_create_form_response(self, create_form):
         return render_to_string(
