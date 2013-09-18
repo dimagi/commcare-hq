@@ -452,21 +452,22 @@ class AuditCommand(AuditEvent):
     """
     Audit wrapper class to capture environmental information around a management command run.
     """
-    sudo_user = StringProperty() # the instance data of the model at this rev.  So at any given moment, the CURRENT instance of this model will be equal to this.
-    ip_address = StringProperty() #hard to get when in sudo
+    sudo_user = StringProperty()
+    #ip address if available of logged in user running cmd
+    ip_address = StringProperty()
     pid = IntegerProperty()
 
 
     @classmethod
     def audit_command(cls):
         """
-        Log a management command
+        Log a management command with available information
         """
-        audit = cls.create_audit(cls, None)
         import os
         import platform
-        puname = platform.uname()
 
+        audit = cls.create_audit(cls, None)
+        puname = platform.uname()
         audit.user = os.environ.get('USER', None)
         audit.pid = os.getpid()
 
@@ -480,9 +481,8 @@ class AuditCommand(AuditEvent):
                     audit.description = cmd_args.replace('\0', ' ')
         audit.save()
 
+
 setattr(AuditEvent, 'audit_command', AuditCommand.audit_command)
-
-
 
 
 def audit_login(sender, **kwargs):
@@ -525,6 +525,27 @@ class ModelAuditEvent(models.Model):
 
     class Meta:
         app_label = 'auditcare'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
