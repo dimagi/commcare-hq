@@ -453,7 +453,8 @@ class AuditCommand(AuditEvent):
     Audit wrapper class to capture environmental information around a management command run.
     """
     sudo_user = StringProperty()
-    #ip address if available of logged in user running cmd
+
+    # ip address if available of logged in user running cmd
     ip_address = StringProperty()
     pid = IntegerProperty()
 
@@ -462,6 +463,8 @@ class AuditCommand(AuditEvent):
     def audit_command(cls):
         """
         Log a management command with available information
+
+        The command line run will be recorded in the self.description
         """
         import os
         import platform
@@ -475,10 +478,23 @@ class AuditCommand(AuditEvent):
             audit.description = os.environ.get('SUDO_COMMAND', None)
             audit.sudo_user = os.environ.get('SUDO_USER', None)
         else:
+
+            # Note: this is a work in progress
+            # getting command line arg from a pid is a system specific trick
+            # only supporting linux at this point, adding other OS's can be done later
+            # This is largely for production logging of these commands.
             if puname[0] == 'Linux':
                 with open('/proc/%s/cmdline' % audit.pid, 'r') as fin:
                     cmd_args = fin.read()
                     audit.description = cmd_args.replace('\0', ' ')
+            elif puname[0] == 'Darwin':
+                # mac osx
+                # TODO
+                pass
+            elif puname[0] == 'Windows':
+                # TODO
+                pass
+
         audit.save()
 
 
