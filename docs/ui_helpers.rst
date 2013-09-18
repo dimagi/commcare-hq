@@ -216,15 +216,15 @@ The `UpdatePuppyForm` should look something like:
 .. code-block:: python
 
     class UpdatePuppyForm(CreatePuppyForm):
-        item_id = forms.hiddenInput()
+        item_id = forms.CharField(widget=forms.HiddenInput())
 
         def __init__(self, *args, **kwargs):
             super(UpdatePuppyForm, self).__init__(*args, **kwargs)
             self.helper.form_style = 'default'
             self.helper.form_show_labels = True
             self.helper.layout = Layout(
-                InlineField('item_id'),
                 Div(
+                    Field('item_id'),
                     Field('name'),
                     Field('breed'),
                     Field('dob'),
