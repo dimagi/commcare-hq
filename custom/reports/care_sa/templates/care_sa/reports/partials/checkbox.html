@@ -1,0 +1,10 @@
+<label class="control-label" for="{{ slug }}">
+    {{ label }}
+</label>
+<div class="controls">
+    {% if checked %}
+        <input id="{{ slug }}" type="checkbox" name="{{ slug }}" checked>
+    {% else %}
+        <input id="{{ slug }}" type="checkbox" name="{{ slug }}">
+    {% endif %}
+</div>

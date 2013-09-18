@@ -1,5 +1,5 @@
 from datetime import datetime
-from corehq.elastic import es_query, ADD_TO_ES_FILTER, ES_URLS
+from corehq.elastic import es_query, ADD_TO_ES_FILTER, ES_URLS, ES_MAX_CLAUSE_COUNT
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
@@ -268,9 +268,18 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
         if self.es_params:
             domain_results = es_domain_query(self.es_params, fields=["name"], size=99999, show_stats=False)
             domains = [d["fields"]["name"] for d in domain_results["hits"]["hits"]]
-            ctxt["total_distinct_users"] = total_distinct_users(domains)
-        else:
+            if len(domains) < ES_MAX_CLAUSE_COUNT:
+                ctxt["total_distinct_users"] = total_distinct_users(domains)
+                ctxt["matching_filters"] = True
+        if "total_distinct_users" not in ctxt:
             ctxt["total_distinct_users"] = total_distinct_users()
+
+        ctxt["domain_datefields"] = [
+            {"value": "date_created", "name": _("Date Created")},
+            {"value": "deployment.date", "name": _("Deployment Date")},
+            {"value": "cp_first_form", "name": _("First Form Submitted")},
+            {"value": "cp_last_form", "name": _("Last Form Submitted")},
+        ]
         return ctxt
 
     def es_query(self, params=None, size=None):

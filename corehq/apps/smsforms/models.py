@@ -27,6 +27,7 @@ class XFormsSession(Document):
     submission_id = StringProperty()
     survey_incentive = StringProperty()
     session_type = StringProperty(choices=XFORMS_SESSION_TYPES, default=XFORMS_SESSION_SMS)
+    workflow = StringProperty() # One of the corehq.apps.sms.models.WORKFLOW_* constants describing what kind of workflow this session was a part of
     
     def save(self, *args, **kwargs):
         if is_bigcouch() and "w" not in kwargs:

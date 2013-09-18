@@ -10,7 +10,7 @@ from couchforms.models import SubmissionErrorLog, XFormInstance
 from couchforms.signals import xform_saved
 
 def _clear_all_forms(domain):
-    for item in SubmissionErrorLog.view("receiverwrapper/all_submissions_by_domain",
+    for item in SubmissionErrorLog.view("couchforms/all_submissions_by_domain",
                                   reduce=False,
                                   include_docs=True,
                                   startkey=[domain, "by_type"],
@@ -67,7 +67,7 @@ class SubmissionErrorTest(TestCase):
             self.assertTrue("Form is a duplicate" in res.content)
         
         # make sure we logged it
-        log = SubmissionErrorLog.view("receiverwrapper/all_submissions_by_domain",
+        log = SubmissionErrorLog.view("couchforms/all_submissions_by_domain",
                                       reduce=False,
                                       include_docs=True,
                                       startkey=[self.domain.name, "by_type", "XFormDuplicate"],
@@ -98,7 +98,7 @@ class SubmissionErrorTest(TestCase):
                 self.assertTrue(evil_laugh in res.content)
             
             # make sure we logged it
-            log = SubmissionErrorLog.view("receiverwrapper/all_submissions_by_domain",
+            log = SubmissionErrorLog.view("couchforms/all_submissions_by_domain",
                                           reduce=False,
                                           include_docs=True,
                                           startkey=[self.domain.name, "by_type", "XFormError"],
@@ -125,7 +125,7 @@ class SubmissionErrorTest(TestCase):
             self.assertTrue("render_error" in res.content)
         
         # make sure we logged it
-        log = SubmissionErrorLog.view("receiverwrapper/all_submissions_by_domain",
+        log = SubmissionErrorLog.view("couchforms/all_submissions_by_domain",
                                       reduce=False,
                                       include_docs=True,
                                       startkey=[self.domain.name, "by_type", "SubmissionErrorLog"],

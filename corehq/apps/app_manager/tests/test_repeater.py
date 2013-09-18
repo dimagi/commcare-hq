@@ -5,8 +5,8 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.test.client import Client
 
-from corehq.apps.receiverwrapper.models import RepeatRecord
-from corehq.apps.app_manager.models import AppStructureRepeater, Application
+from corehq.apps.receiverwrapper.models import RepeatRecord, AppStructureRepeater
+from corehq.apps.app_manager.models import Application
 
 class TestAppStructureRepeater(TestCase):
     def setUp(self):

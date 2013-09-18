@@ -41,7 +41,7 @@ def get_custom_response_message(sender, xform, **kwargs):
                     Certainty.STRONG)
 
 def create_app_structure_repeat_records(sender, application, **kwargs):
-    from corehq.apps.app_manager.models import AppStructureRepeater
+    from corehq.apps.receiverwrapper.models import AppStructureRepeater
     domain = application.domain
     if domain:
         repeaters = AppStructureRepeater.by_domain(domain)
