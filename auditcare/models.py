@@ -5,13 +5,14 @@ from couchdbkit.schema.properties import StringProperty, DateTimeProperty, Strin
 from django.db import models
 import uuid
 from django.contrib.auth.models import User, AnonymousUser
-
 from datetime import datetime
 from django.contrib.contenttypes.models import ContentType
 import logging
 import hashlib
 import json
 from auditcare import utils
+import os
+import platform
 
 try:
     from django.contrib.auth.signals import user_logged_in, user_logged_out
@@ -466,9 +467,6 @@ class AuditCommand(AuditEvent):
 
         The command line run will be recorded in the self.description
         """
-        import os
-        import platform
-
         audit = cls.create_audit(cls, None)
         puname = platform.uname()
         audit.user = os.environ.get('USER', None)
@@ -541,28 +539,4 @@ class ModelAuditEvent(models.Model):
 
     class Meta:
         app_label = 'auditcare'
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
