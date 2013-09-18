@@ -54,7 +54,7 @@ class CaseGroupListView(BaseDomainView, CRUDPaginatedViewMixin):
         return CommCareCaseGroup.get_total(self.domain)
 
     def get_create_form(self, is_blank=False):
-        if self.request.method == 'POST' and self.action == 'create' and not is_blank:
+        if self.request.method == 'POST' and not is_blank:
             return AddCaseGroupForm(self.request.POST)
         return AddCaseGroupForm()
 
