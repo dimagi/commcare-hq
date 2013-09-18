@@ -1013,13 +1013,19 @@ class CommCareCaseGroup(Document):
         return self.timezone
 
     @classmethod
-    def get_all(cls, domain):
+    def get_all(cls, domain, limit=None, skip=None):
+        extra_kwargs = {}
+        if limit is not None:
+            extra_kwargs['limit'] = limit
+        if skip is not None:
+            extra_kwargs['skip'] = skip
         return cls.view(
             'case/groups_by_domain',
             startkey=[domain],
             endkey=[domain, {}],
             include_docs=True,
-            reduce=False
+            reduce=False,
+            **extra_kwargs
         ).all()
 
     @classmethod
