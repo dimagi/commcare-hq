@@ -210,7 +210,6 @@ class ModelActionAudit(AuditEvent):
 
     def get_changed_fields(self, filters=None, excludes=None):
         """
-        Gets all the changed fields for an audit event.
 
         Returns a tuple of field KEYS that lets you access the changed fields and also get the values from them programmatically later.
         """
@@ -448,6 +447,43 @@ setattr(AuditEvent, 'audit_login_failed', AccessAudit.audit_login_failed)
 setattr(AuditEvent, 'audit_logout', AccessAudit.audit_logout)
 
 
+class AuditCommand(AuditEvent):
+    """
+    Audit wrapper class to capture environmental information around a management command run.
+    """
+    sudo_user = StringProperty() # the instance data of the model at this rev.  So at any given moment, the CURRENT instance of this model will be equal to this.
+    ip_address = StringProperty() #hard to get when in sudo
+    pid = IntegerProperty()
+
+
+    @classmethod
+    def audit_command(cls):
+        """
+        Log a management command
+        """
+        audit = cls.create_audit(cls, None)
+        import os
+        import platform
+        puname = platform.uname()
+
+        audit.user = os.environ.get('USER', None)
+        audit.pid = os.getpid()
+
+        if 'SUDO_COMMAND' in os.environ:
+            audit.description = os.environ.get('SUDO_COMMAND', None)
+            audit.sudo_user = os.environ.get('SUDO_USER', None)
+        else:
+            if puname[0] == 'Linux':
+                with open('/proc/%s/cmdline' % audit.pid, 'r') as fin:
+                    cmd_args = fin.read()
+                    audit.description = cmd_args.replace('\0', ' ')
+        audit.save()
+
+setattr(AuditEvent, 'audit_command', AuditCommand.audit_command)
+
+
+
+
 def audit_login(sender, **kwargs):
     AuditEvent.audit_login(kwargs["request"], kwargs["user"], True) # success
 
@@ -488,5 +524,7 @@ class ModelAuditEvent(models.Model):
 
     class Meta:
         app_label = 'auditcare'
+
+
 
 
