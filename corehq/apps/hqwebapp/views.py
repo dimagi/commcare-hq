@@ -552,7 +552,10 @@ class CRUDPaginatedViewMixin(object):
 
     @property
     def action(self):
-        return self.parameters.get('action')
+        action = self.parameters.get('action')
+        if action not in self.allowed_actions:
+            raise Http404()
+        return action
 
     @property
     def column_names(self):
@@ -560,6 +563,7 @@ class CRUDPaginatedViewMixin(object):
 
     @property
     def pagination_context(self):
+        create_form = self.get_create_form()
         return {
             'pagination': {
                 'page': self.page,
@@ -580,20 +584,24 @@ class CRUDPaginatedViewMixin(object):
         }
 
     @property
+    def allowed_actions(self):
+        return [
+            'create',
+            'update',
+            'delete',
+            'paginate',
+        ]
+
+    @property
     def paginate_crud_response(self):
         """
         Return this in the post method of your view class.
         """
-        response = {
-            'create': self.create_item_response,
-            'update': self.updated_item_response,
-            'delete': self.deleted_item_response,
-            'paginate': self.paginated_response,
-        }.get(self.action, {})
+        response = getattr(self, '%s_response' % self.action)
         return HttpResponse(json.dumps(response))
 
     @property
-    def create_item_response(self):
+    def create_response(self):
         create_form = self.get_create_form()
         new_item = None
         if create_form.is_valid():
@@ -605,7 +613,7 @@ class CRUDPaginatedViewMixin(object):
         }
 
     @property
-    def updated_item_response(self):
+    def update_response(self):
         update_form = self.get_update_form()
         updated_item = None
         if update_form.is_valid():
@@ -616,7 +624,7 @@ class CRUDPaginatedViewMixin(object):
         }
 
     @property
-    def deleted_item_response(self):
+    def delete_response(self):
         try:
             try:
                 item_id = self.parameters['itemId']
@@ -632,11 +640,11 @@ class CRUDPaginatedViewMixin(object):
             }
 
     @property
-    def paginated_response(self):
+    def paginate_response(self):
         return {
             'success': True,
             'currentPage': self.page,
-            'paginatedList': self.paginated_list,
+            'paginatedList': list(self.paginated_list),
         }
 
     @property
