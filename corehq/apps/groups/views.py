@@ -125,34 +125,3 @@ def update_group_membership(request, domain, group_id):
                                   "Please try again."))
     return HttpResponseRedirect(reverse("group_members", args=[domain, group_id]))
 
-@require_can_edit_groups
-def join_group(request, domain, group_id, couch_user_id):
-    def add_user():
-        group = Group.get(group_id)
-        if group:
-                group.add_user(couch_user_id)
-    repeat(add_user, 3)
-    if 'redirect_url' in request.POST:
-        return HttpResponseRedirect(
-            reverse(request.POST['redirect_url'], args=(domain, group_id))
-        )
-    else:
-        return HttpResponseRedirect(
-            reverse("group_membership", args=(domain, couch_user_id))
-        )
-
-@require_can_edit_groups
-def leave_group(request, domain, group_id, couch_user_id):
-    def remove_user():
-        group = Group.get(group_id)
-        if group:
-            group.remove_user(couch_user_id)
-    repeat(remove_user, 3)
-    if 'redirect_url' in request.POST:
-        return HttpResponseRedirect(
-            reverse(request.POST['redirect_url'], args=(domain, group_id))
-        )
-    else:
-        return HttpResponseRedirect(
-            reverse("group_membership", args=(domain, couch_user_id))
-        )
