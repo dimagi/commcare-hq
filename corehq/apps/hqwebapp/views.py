@@ -650,7 +650,7 @@ class CRUDPaginatedViewMixin(object):
     @property
     def paginated_list(self):
         """
-        This should return a list of data formatted as follows:
+        This should return a list (or generator object) of data formatted as follows:
         [
             {
                 'itemData': {
