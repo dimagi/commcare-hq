@@ -916,16 +916,20 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
             last_form_by_user = self.es_last_submissions()
 
         case_creation_data = self.es_case_queries('opened_on', 'opened_by')
-        creations_by_user = dict([(t["term"], t["count"]) for t in case_creation_data["facets"]["opened_by"]["terms"]])
+        creations_by_user = dict([(t["term"].lower(), t["count"])
+                                  for t in case_creation_data["facets"]["opened_by"]["terms"]])
 
         case_closure_data = self.es_case_queries('closed_on', 'closed_by')
-        closures_by_user = dict([(t["term"], t["count"]) for t in case_closure_data["facets"]["closed_by"]["terms"]])
+        closures_by_user = dict([(t["term"].lower(), t["count"])
+                                 for t in case_closure_data["facets"]["closed_by"]["terms"]])
 
         active_case_data = self.es_active_cases()
-        actives_by_owner = dict([(t["term"], t["count"]) for t in active_case_data["facets"]["owner_id"]["terms"]])
+        actives_by_owner = dict([(t["term"].lower(), t["count"])
+                                 for t in active_case_data["facets"]["owner_id"]["terms"]])
 
         total_case_data = self.es_total_cases()
-        totals_by_owner = dict([(t["term"], t["count"]) for t in total_case_data["facets"]["owner_id"]["terms"]])
+        totals_by_owner = dict([(t["term"].lower(), t["count"])
+                                for t in total_case_data["facets"]["owner_id"]["terms"]])
 
         def dates_for_linked_reports(case_list=False):
             start_date = self.datespan.startdate_param
@@ -965,7 +969,11 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 7: "opened_on: [* TO %s] AND NOT closed_on: [* TO %s]" % (end_date, start_date_sub1), # total cases
             }
             if today_or_tomorrow(self.datespan.enddate):
-                search_strings[6] = "modified_on: [%s TO %s]" % (start_date, end_date), # active cases
+                search_strings[6] = "modified_on: [%s TO %s]" % (start_date, end_date) # active cases
+
+            if self.case_type:
+                for index, search_string in search_strings.items():
+                    search_strings[index] = search_string + " AND type.exact: %s" % self.case_type
 
             def create_case_url(index):
                 """
@@ -1005,9 +1013,9 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                     continue
 
                 case_sharing_groups = set(reduce(operator.add, [u['group_ids'] for u in users], []))
-                active_cases = sum([int(actives_by_owner.get(u["user_id"], 0)) for u in users]) + \
+                active_cases = sum([int(actives_by_owner.get(u["user_id"].lower(), 0)) for u in users]) + \
                     sum([int(actives_by_owner.get(g_id, 0)) for g_id in case_sharing_groups])
-                total_cases = sum([int(totals_by_owner.get(u["user_id"], 0)) for u in users]) + \
+                total_cases = sum([int(totals_by_owner.get(u["user_id"].lower(), 0)) for u in users]) + \
                     sum([int(totals_by_owner.get(g_id, 0)) for g_id in case_sharing_groups])
                 active_users = int(active_users_by_group.get(group, 0))
                 total_users = len(self.users_by_group.get(group, []))
@@ -1019,8 +1027,8 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                     util.numcell(sum([int(avg_submissions_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
                     util.numcell("%s / %s" % (active_users, total_users),
                                  int((float(active_users)/total_users) * 10000) if total_users else -1),
-                    util.numcell(sum([int(creations_by_user.get(user["user_id"], 0)) for user in users])),
-                    util.numcell(sum([int(closures_by_user.get(user["user_id"], 0)) for user in users])),
+                    util.numcell(sum([int(creations_by_user.get(user["user_id"].lower(), 0)) for user in users])),
+                    util.numcell(sum([int(closures_by_user.get(user["user_id"].lower(), 0)) for user in users])),
                     util.numcell(active_cases),
                     util.numcell(total_cases),
                     util.numcell((float(active_cases)/total_cases) * 100 if total_cases else 'nan', convert='float'),
@@ -1028,9 +1036,9 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
 
         else:
             for user in self.users_to_iterate:
-                active_cases = int(actives_by_owner.get(user["user_id"], 0)) + \
+                active_cases = int(actives_by_owner.get(user["user_id"].lower(), 0)) + \
                     sum([int(actives_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
-                total_cases = int(totals_by_owner.get(user["user_id"], 0)) + \
+                total_cases = int(totals_by_owner.get(user["user_id"].lower(), 0)) + \
                     sum([int(totals_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
 
                 rows.append(add_case_list_links(user['user_id'], [
@@ -1038,8 +1046,8 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                     submit_history_link(user['user_id'], submissions_by_user.get(user["user_id"], 0)),
                     util.numcell(int(avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
                     last_form_by_user.get(user["user_id"]) or NO_FORMS_TEXT,
-                    int(creations_by_user.get(user["user_id"],0)),
-                    int(closures_by_user.get(user["user_id"], 0)),
+                    int(creations_by_user.get(user["user_id"].lower(),0)),
+                    int(closures_by_user.get(user["user_id"].lower(), 0)),
                     util.numcell(active_cases) if not today_or_tomorrow(self.datespan.enddate) else active_cases,
                     total_cases,
                     util.numcell((float(active_cases)/total_cases) * 100 if total_cases else 'nan', convert='float'),
