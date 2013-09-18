@@ -39,7 +39,7 @@ def is_newborn(case):
     return is_pregnant_mother(case) and (
         is_recently_delivered(case)
         or get_related_prop(case, 'birth_status') == "live_birth"
-    )
+    ) and get_add(case)
 
 
 class Newborn(CaseCalculator):
