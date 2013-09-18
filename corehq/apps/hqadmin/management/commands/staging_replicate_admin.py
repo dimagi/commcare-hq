@@ -103,9 +103,9 @@ class Command(LabelCommand):
             print "\n\tStarting staging replication from prod"
 
         if do_replicate:
-            AuditEvent.audit_command()
             server = CommCareUser.get_db().server
             server.replicate(source_uri, target_uri, **repl_params)
+            AuditEvent.audit_command()
         else:
             print "\n\tReplication dry run with params: %s" % repl_params
 
