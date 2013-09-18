@@ -499,7 +499,8 @@ class PaginatedItemException(Exception):
 
 class CRUDPaginatedViewMixin(object):
     """
-    To be mixed in with a TemplateView.
+    Mix this in with a TemplateView view object.
+    For usage tips, see the docs for UI Helpers > Paginated CRUD View.
     """
     DEFAULT_LIMIT = 10
 
