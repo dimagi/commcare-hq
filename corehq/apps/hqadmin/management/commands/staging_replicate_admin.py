@@ -1,13 +1,15 @@
 import copy
 from optparse import make_option
+import sys
+
 from django.core.management.base import LabelCommand
 from django.conf import settings
-import sys
-import simplejson
+
 from auditcare.models import AuditEvent
 from corehq.apps.users.models import CommCareUser
 from corehq.pillows.user import UserPillow
 from couchforms.models import XFormInstance
+
 
 BASE_QUERY = "is_superuser: true"
 
@@ -24,6 +26,14 @@ QUERY_DICT = {
 }
 
 def get_query(query_string, start=0, size=25):
+    """
+    Running a query_string based ES query.
+    Use Lucene query syntax:
+    See: http://www.elasticsearch.org/guide/reference/query-dsl/query-string-query/
+        and http://www.lucenetutorial.com/lucene-query-syntax.html
+
+    See the UserPillow mapping definition specifically for not_analyzed querying and dual indexed fields.
+    """
     ret = copy.deepcopy(QUERY_DICT)
     ret['query']['filtered']['query']['query_string']['query'] = query_string
     ret['from'] = start
@@ -36,13 +46,12 @@ def get_query_results(es, query_string, start=0, size=100):
         return es.post("_search", data=get_query(query_string, start=st, size=sz))
 
     search_results = get_results(query_string, start, size)
-    print "### total users in query: %s" % search_results['hits']['total']
+    print "\n\tTotal users in query: %s" % search_results['hits']['total']
 
     yielded = 0
     while yielded < search_results['hits']['total']:
         for res in search_results['hits']['hits']:
             if '_source' in res:
-                #print "\tUser [%s]: %s, is_superuser: %s" % (yielded, res['_source']['username'], res['_source']['is_superuser'])
                 yield res['_source']
             yielded += 1
         new_start = yielded
@@ -59,7 +68,7 @@ class Command(LabelCommand):
                                   action='store',
                                   dest='query_string',
                                   default=None,
-                                  help="Single Pillow class to flip alias"),
+                                  help="Lucene query to hit the Users ES Index, bound with quotes"),
                       make_option('--makeitso',
                                   action='store_true',
                                   dest='makeitso',
@@ -78,7 +87,7 @@ class Command(LabelCommand):
         input_query = options['query_string']
 
         if not input_query:
-            print "\tRunning default admins query"
+            print "\tRunning default query for user.is_superuser"
             query_string = BASE_QUERY
 
         else:
