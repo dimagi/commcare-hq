@@ -48671,5 +48671,16 @@
     }, 
     "data_type_id": "a080305d0a3ff8fe3244345f2057b3c4", 
     "_id": "ceb6ab2b194da41b311b288f2b9009ef"
+  }, 
+  {
+    "doc_type": "FixtureDataType", 
+    "domain": "opm", 
+    "name": "Cash Payments", 
+    "fields": [
+      "condition", 
+      "rs_amount"
+    ], 
+    "tag": "condition_amounts", 
+    "_id": "a080305d0a3ff8fe3244345f2057b3c4"
   }
 ]

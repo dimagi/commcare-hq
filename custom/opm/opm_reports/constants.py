@@ -10,10 +10,10 @@ DELIVERY_XMLNS = "http://openrosa.org/formdesigner/492F8F0E-EE7D-4B28-B890-7CDA5
 CHILD_FOLLOWUP_XMLNS = "http://openrosa.org/formdesigner/C90C2C1F-3B34-47F3-B3A3-061EAAC1A601"
 
 
-@memoized
+# @memoized
 def get_fixture_data():
     fixtures = FixtureDataItem.get_indexed_items(DOMAIN, 'condition_amounts',
         'condition')
     return dict((k, int(fixture['rs_amount'])) for k, fixture in fixtures.items())
 
-FIXTURES = get_fixture_data()
+# FIXTURES = get_fixture_data()

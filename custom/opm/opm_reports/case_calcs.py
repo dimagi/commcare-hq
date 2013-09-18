@@ -125,6 +125,7 @@ class ChildSpacing(fluff.Calculator):
         latest = sorted(dates).pop()
         two_year = latest + datetime.timedelta(365*2)
         three_year = latest + datetime.timedelta(365*3)
+        FIXTURES = get_fixture_data()
         if self.in_range(two_year):
             return FIXTURES['two_year_spacing']
         elif self.in_range(three_year):

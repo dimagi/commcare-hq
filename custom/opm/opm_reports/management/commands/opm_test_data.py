@@ -3,7 +3,7 @@ import json
 from django.core.management.base import BaseCommand
 
 from corehq.apps.users.models import CommCareUser, CommCareCase
-from corehq.apps.fixtures.models import FixtureDataItem
+from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from dimagi.utils.couch.database import get_db
 
 from custom.opm.opm_reports.tests import test_data_location, test_month_year
@@ -32,6 +32,9 @@ class Command(BaseCommand):
         beneficiaries = CommCareCase.get_all_cases('opm', include_docs=True)
         users = CommCareUser.by_domain('opm')
         fixtures = FixtureDataItem.get_item_list('opm', 'condition_amounts')
+        # you won't be able to get the fixtures without the FixtureDataType
+        fixtures.append(FixtureDataType.by_domain_tag('opm',
+            'condition_amounts').one())
         forms = []
 
         for b in beneficiaries:
