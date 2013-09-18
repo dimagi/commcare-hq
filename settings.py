@@ -249,6 +249,7 @@ HQ_APPS = (
     'custom.reports.care_sa',
     'custom.apps.cvsu',
     'custom.reports.mc',
+    'corehq.apps.crs_reports'
 )
 
 TEST_APPS = ()

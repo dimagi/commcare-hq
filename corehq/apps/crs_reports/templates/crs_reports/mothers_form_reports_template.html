@@ -1,0 +1,107 @@
+{% extends "reports/base_template.html" %}
+{% load case_tags %}
+{% load hq_shared_tags %}
+
+{% block title %}Case: {{ report.name }}{% endblock %}
+
+{% block head %} {{ block.super }}
+    {% include "imports/proptable.html" %}
+    {% include "imports/fancy-code.html" %}
+
+    <style type="text/css">
+        .hq-generic-report {
+            padding: 10px;
+        }
+    </style>
+{% endblock %}
+
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url reports_home domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
+        </li>
+        <li>
+            <a href="{% url custom_project_report_dispatcher domain report.slug %}">Case List</a> <span class="divider">&gt;</span>
+        </li>
+        <li class="active">
+            <a href="#">{{ report.name }}</a>
+        </li>
+    </ul>
+{% endblock %}
+
+{% block main_column %}
+<div class="hq-generic-report">
+    <table style="width: 100%" border="1" cellpadding="0" cellspacing="0">
+            <tbody>
+                <tr>
+                    <td>Mother&rsquo;s name: {{ case.name }}</td>
+                    <td>Husband&rsquo;s name: {{ case.husband_name }}</td>
+                    <td>Villages name: {{ case.village }}</td>
+                    <td>Name of sub-centre: {{ sub_center }}</td>
+                    <td>District: </td>
+                </tr>
+                <tr>
+                    <td colspan="3" rowspan="1" style="border: 0">Place of delivery- {{ case.place_birth }}</td>
+                    <td colspan="1" rowspan="1" style="border: 0">Format Serial Number:</td>
+                    <td colspan="1" rowspan="1" style="border: 0"></td>
+                </tr>
+                <tr>
+                    <td colspan="5" rowspan="1" style="border: 0">Outcome of delivery - {{ case.pregnancy_outcome }}</td>
+                </tr>
+            </tbody>
+    </table>
+    <br>
+    <table style="width: 100%" border="1" cellpadding="0" cellspacing="0">
+        <tbody>
+            <tr>
+                <td colspan="2" rowspan="2">Ask/check date of ASHA&rsquo;s visit {{ case.date_modified }}</td>
+                <td colspan="7">&nbsp;</td>
+                <td colspan="2" rowspan="2">Works performed by ASHA</td>
+                <td colspan="2" rowspan="2">Inspection by supervisor</td>
+            </tr>
+            <tr>
+                <td colspan="1">1st</td>
+                <td colspan="1">3rd</td>
+                <td colspan="1">7th</td>
+                <td colspan="1">14th</td>
+                <td colspan="1">21th</td>
+                <td colspan="1">28th</td>
+                <td colspan="1">42nd</td>
+            </tr>
+            {% for question in questions %}
+                <tr>
+                    <td colspan="2" rowspan="1">{{question.label}}</td>
+                    {% for answer in question.answers %}
+                        <td colspan="1">{{ answer }}</td>
+                    {% endfor %}
+                    <td colspan="2" rowspan="1">&nbsp;</td>
+                    <td colspan="2" rowspan="1">&nbsp;</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <br>
+    <table style="width: 100%" border="1" cellpadding="0" cellspacing="0">
+        <tbody>
+            <tr>
+                <td colspan="11" rowspan="1">NOTE:</td>
+            </tr>
+            <tr>
+                <td colspan="3" rowspan="1">Name of ASHA: {{ user.full_name }}</td>
+                <td colspan="3" rowspan="1">Name of Village: {{ user.user_data.village }}</td>
+                <td colspan="5" rowspan="1">Name of CHC/PHC: </td>
+            </tr>
+            <tr>
+                <td colspan="3" rowspan="1">Name of supervisor/facilitator: {{ owner_name }}</td>
+                <td colspan="2" rowspan="1">Sign of Supervisor: </td>
+                <td colspan="2" rowspan="1">Date: </td>
+                <td colspan="2">Signature of HEO: </td>
+                <td colspan="2" rowspan="1">Date:</td>
+            </tr>
+            <tr>
+                <td colspan="11">NOTE:</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -135,6 +135,32 @@ class BooleanField(ReportField):
         self.context[self.slug] = self.request.GET.get(self.slug, False)
         self.context['checked'] = self.request.GET.get(self.slug, False)
 
+class SelectPNCStatusField(ReportSelectField):
+    slug = "PNC_status"
+    name = ugettext_noop("Status")
+    cssId = "opened_closed"
+    cssClasses = "span3"
+    default_option = "Complete PNC"
+    options = [dict(val="Incomplete PNC", text=ugettext_noop("Incomplete PNC")),
+               dict(val="I progress PNC", text=ugettext_noop("In progress PNC"))]
+
+class SelectBlockField(ReportSelectField):
+    slug = "block"
+    name = ugettext_noop("Block")
+    cssId = "opened_closed"
+    cssClasses = "span3"
+    default_option = "Select Block"
+    options = []
+
+class SelectSubCenterField(ReportSelectField):
+    slug = "sub_center"
+    name = ugettext_noop("Sub Center")
+    cssId = "opened_closed"
+    cssClasses = "span3"
+    default_option = "Select Sub Center"
+    options = []
+
+
 class GroupFieldMixin():
     slug = "group"
     name = ugettext_noop("Group")
@@ -491,6 +517,15 @@ class DatespanField(ReportField):
         self.context['timezone'] = self.timezone.zone
         self.context['datespan'] = self.datespan
 
+
+class SelectASHAField(SelectCaseOwnerField):
+    name = ugettext_noop("ASHA")
+    default_option = ugettext_noop("Type ASHA name")
+
+    def update_params(self):
+        case_sharing_groups = Group.get_case_sharing_groups(self.domain)
+        self.context["groups"] = [dict(group_id=group._id, name=group.name) for group in case_sharing_groups]
+
 class AsyncLocationField(ReportField):
     name = ugettext_noop("Location")
     slug = "location_async"
@@ -615,7 +650,7 @@ class AsyncDrillableField(BaseReportFilter):
             'fdis': json.dumps(root_fdis),
             'hierarchy': self.full_hierarchy
         }
-        
+
 class DeviceLogTagField(ReportField):
     slug = "logtag"
     errors_only_slug = "errors_only"
