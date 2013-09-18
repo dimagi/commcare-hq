@@ -1,5 +1,6 @@
 import datetime
 import logging
+from custom.bihar import getters
 from custom.bihar.calculations.types import DoneDueCalculator, TotalCalculator
 from custom.bihar.calculations.utils.calculations import get_forms
 from custom.bihar.calculations.utils.filters import is_pregnant_mother,\
@@ -20,23 +21,21 @@ class BPCalculator(DoneDueCalculator):
 
     def _form_filter(self, case, form):
         lower, upper = self.days
-        form_date_modified = form.xpath('form/case/update/date_modified')
-        if form_date_modified:
-            return upper <= (case.edd - form_date_modified).days < upper
-        else:
-            return False
+        date_modified = getters.date_modified(form)
+        return lower <= (case.edd - date_modified).days < upper
 
     @fluff.date_emitter
     def numerator(self, case):
         for form in get_forms(case, action_filter=lambda a: visit_is(a, 'bp')):
-            date = form.xpath('form/case/update/days_visit_overdue')
-            if date and self._form_filter(case, form):
+            date = getters.date_next_bp(form)
+            days_overdue = getters.days_visit_overdue(form)
+            if date and days_overdue == 0 and self._form_filter(case, form):
                 yield date
 
     @fluff.date_emitter
     def total(self, case):
         for form in get_forms(case, action_filter=lambda a: visit_is(a, 'bp') or visit_is(a, 'reg')):
-            date = form.xpath('form/case/update/date_next_bp')
+            date = getters.date_next_bp(form)
             if date and self._form_filter(case, form):
                 yield date
 
