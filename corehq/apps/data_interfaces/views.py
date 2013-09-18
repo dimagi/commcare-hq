@@ -190,13 +190,17 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
 
     @property
     def paginated_list(self):
-        yield {
-            'itemData': {
-                'name': 'A case',
-                'phoneNumber': '(617) 500-5454',
-                'externalId': '23521351',
-            },
-            'template': 'existing-case-template',
+        for case in self.case_group.get_cases(limit=self.limit, skip=self.skip):
+            yield {
+                'itemData': self._get_item_data(case),
+                'template': 'existing-case-template',
+            }
+
+    def _get_item_data(self, case):
+        return {
+            'name': case.name,
+            'externalId': case.external_id if case.external_id else '--',
+            'phoneNumber': getattr(case, 'contact_phone_number', '--'),
         }
 
     def post(self, *args, **kwargs):
