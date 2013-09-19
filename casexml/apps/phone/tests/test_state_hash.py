@@ -1,11 +1,10 @@
 from django.test import TestCase
+from casexml.apps.case.exceptions import BadStateException
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import SyncLog, User
-from couchforms.models import XFormInstance
-from casexml.apps.case.models import CommCareCase
 from datetime import datetime
 from casexml.apps.phone.restore import generate_restore_payload,\
-    generate_restore_response, BadStateException
+    generate_restore_response
 from casexml.apps.phone.checksum import EMPTY_HASH, CaseStateHash
 from casexml.apps.case.xml import V2
 from casexml.apps.case.util import post_case_blocks

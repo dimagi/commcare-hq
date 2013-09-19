@@ -1,5 +1,6 @@
 import warnings
 from dimagi.utils.decorators.memoized import memoized
+from casexml.apps.case.exceptions import BadStateException
 from casexml.apps.phone.models import SyncLog, CaseState
 import logging
 from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
@@ -11,19 +12,6 @@ from casexml.apps.case.xml import check_version, V1
 from casexml.apps.phone.fixtures import generator
 from django.http import HttpResponse
 from casexml.apps.phone.checksum import CaseStateHash
-
-class BadStateException(Exception):
-    
-    def __init__(self, expected, actual, case_ids, **kwargs):
-        super(BadStateException, self).__init__(**kwargs)
-        self.expected = expected
-        self.actual = actual
-        self.case_ids = case_ids
-        
-    def __str__(self):
-        return "Phone state has mismatch. Expected %s but was %s. Cases: [%s]" % \
-                (self.expected, self.actual, ", ".join(self.case_ids))
-        
 
 
 class RestoreConfig(object):
@@ -117,7 +105,7 @@ def generate_restore_payload(user, restore_id="", version=V1, state_hash=""):
 
 def generate_restore_response(user, restore_id="", version="1.0", state_hash=""):
     try:
-        response = generate_restore_payload(user, restore_id, version, state_hash)
+        response = RestoreConfig(user, restore_id, version, state_hash).get_payload()
         return HttpResponse(response, mimetype="text/xml")
     except BadStateException, e:
         logging.exception("Bad case state hash submitted by %s: %s" % (user.username, str(e)))
