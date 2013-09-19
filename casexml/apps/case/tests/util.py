@@ -14,7 +14,7 @@ from couchforms.util import post_xform_to_couch
 from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import process_cases
-from casexml.apps.phone.restore import generate_restore_payload
+from casexml.apps.phone.restore import RestoreConfig
 from casexml.apps.case.util import post_case_blocks
 
 
@@ -82,11 +82,13 @@ def check_xml_line_by_line(test_case, expected, actual):
 
 
 def check_user_has_case(testcase, user, case_block, should_have=True,
-                        line_by_line=True, restore_id="", version=V1):
+                        line_by_line=True, restore_id="", version=V1,
+                        caching_enabled=False):
     XMLNS = NS_VERSION_MAP.get(version, 'http://openrosa.org/http/response')
     case_block.set('xmlns', XMLNS)
     case_block = ElementTree.fromstring(ElementTree.tostring(case_block))
-    payload_string = generate_restore_payload(user, restore_id, version=version)
+
+    payload_string = RestoreConfig(user, restore_id, version=version, caching_enabled=caching_enabled).get_payload()
     payload = ElementTree.fromstring(payload_string)
     
     blocks = payload.findall('{{{0}}}case'.format(XMLNS))
