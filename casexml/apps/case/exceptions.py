@@ -23,10 +23,13 @@ class RestoreException(ValueError):
     """
     For stuff that goes wrong during restore
     """
-    pass
-
+    message = "unknown problem during OTA restore"
 
 class BadStateException(RestoreException):
+    """
+    Case state hash inconsistencies
+    """
+    message = "Phone case list is inconsistant with server's records."
 
     def __init__(self, expected, actual, case_ids, **kwargs):
         super(BadStateException, self).__init__(**kwargs)
@@ -43,4 +46,4 @@ class BadVersionException(RestoreException):
     """
     Bad ota version
     """
-    pass
+    message = "Bad version number submitted during sync."

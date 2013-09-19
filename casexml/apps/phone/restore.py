@@ -1,6 +1,6 @@
 import warnings
 from dimagi.utils.decorators.memoized import memoized
-from casexml.apps.case.exceptions import BadStateException
+from casexml.apps.case.exceptions import BadStateException, RestoreException
 from casexml.apps.phone.models import SyncLog, CaseState
 import logging
 from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
@@ -107,11 +107,11 @@ def generate_restore_response(user, restore_id="", version="1.0", state_hash="")
     try:
         response = RestoreConfig(user, restore_id, version, state_hash).get_payload()
         return HttpResponse(response, mimetype="text/xml")
-    except BadStateException, e:
-        logging.exception("Bad case state hash submitted by %s: %s" % (user.username, str(e)))
+    except RestoreException, e:
+        logging.exception("%s error during restore submitted by %s: %s" % (type(e).__name__, user.username, str(e)))
         response = get_simple_response_xml(
-            "Phone case list is inconsistant with server's records.",
-            ResponseNature.OTA_RESTORE_ERROR)
+            e.message,
+            ResponseNature.OTA_RESTORE_ERROR
+        )
         return HttpResponse(response, mimetype="text/xml", 
-                            status=412) # precondition failed
-    
+                            status=412)  # precondition failed
