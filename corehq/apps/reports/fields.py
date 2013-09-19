@@ -149,8 +149,21 @@ class SelectBlockField(ReportSelectField):
     name = ugettext_noop("Block")
     cssId = "opened_closed"
     cssClasses = "span3"
-    default_option = "Select Block"
-    options = []
+
+    def update_params(self):
+        blocks = set(self.get_blocks(self.domain))
+        block = self.request.GET.get(self.slug, '')
+
+        self.selected = block
+        self.options = [dict(val=block_item, text="%s" % block_item) for block_item in blocks]
+        self.default_option = _("Select Block")
+
+    @classmethod
+    def get_blocks(cls, domain):
+        for r in get_db().view("case/get_lite").all():
+            row =  dict(r['value'])
+            if(row.has_key('block') and row.get('block') !=''):
+                yield row.get('block')
 
 class SelectSubCenterField(ReportSelectField):
     slug = "sub_center"

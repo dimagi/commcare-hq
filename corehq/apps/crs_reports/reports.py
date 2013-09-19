@@ -65,7 +65,7 @@ class HNBCReportDisplay(CaseDisplay):
 class BaseHNBCReport(CustomProjectReport, DatespanMixin, CaseListReport):
 
     fields = ['corehq.apps.reports.fields.SelectBlockField',
-              'corehq.apps.reports.fields.SelectSubCenterField',
+              'corehq.apps.reports.fields.SelectSubCenterField', # Todo: Currently there is no data about it in case
               'corehq.apps.reports.fields.SelectASHAField',
               'corehq.apps.reports.fields.SelectPNCStatusField',
               'corehq.apps.reports.standard.inspect.CaseSearchFilter']
@@ -106,7 +106,13 @@ class BaseHNBCReport(CustomProjectReport, DatespanMixin, CaseListReport):
 
     @property
     def case_filter(self):
-        filters = [{'term': {'pp_case_filter': "1"}}]
+        block = self.request_params.get('block', '')
+
+        filters = [{'term': {'pp_case_filter': 1}}]
+
+        if(block):
+            filters.append({'term': {'site_number': block.lower()}})
+
         return {'and': filters} if filters else {}
 
     @property
