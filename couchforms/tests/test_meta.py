@@ -62,3 +62,52 @@ class TestMeta(TestCase):
             'clinic_id': u'5020280',
         })
 
+    def testMetaBadUsername(self):
+        file_path = os.path.join(os.path.dirname(__file__), "data", "meta_bad_username.xml")
+        xml_data = open(file_path, "rb").read()
+        doc_id, errors = post_authenticated_data(xml_data,
+                                                 settings.XFORMS_POST_URL,
+                                                 settings.COUCH_USERNAME,
+                                                 settings.COUCH_PASSWORD)
+        xform = XFormInstance.get(doc_id)
+        self.assertEqual(xform.metadata.appVersion, '2.0')
+
+        self.assertEqual(xform.metadata.to_json(), {
+            'username': u'2013-07-19',
+            'doc_type': 'Metadata',
+            'instanceID': u'e8afaec3c66745ef80e48062d4b91b56',
+            'userID': u'f7f0c79e-8b79-11df-b7de-005056c00008',
+            'timeEnd': '2013-07-20T00:02:27Z',
+            'appVersion': u'2.0',
+            'timeStart': '2013-07-19T21:21:31Z',
+            'deprecatedID': None,
+            'deviceID': u'commconnect'
+        })
+
+
+    def testMetaAppVersionDict(self):
+        file_path = os.path.join(os.path.dirname(__file__), "data", "meta_dict_appversion.xml")
+        xml_data = open(file_path, "rb").read()
+        doc_id, errors = post_authenticated_data(xml_data,
+                                                 settings.XFORMS_POST_URL,
+                                                 settings.COUCH_USERNAME,
+                                                 settings.COUCH_PASSWORD)
+        xform = XFormInstance.get(doc_id)
+        self.assertEqual(xform.metadata.appVersion, '2.0')
+
+        j = xform.metadata.to_json()
+        self.assertEqual(xform.metadata.to_json(), {
+            'username': u'some_username@test.commcarehq.org',
+            'doc_type': 'Metadata',
+            'instanceID': u'5d3d01561f584e85b53669a48bfc6039',
+            'userID': u'f7f0c79e-8b79-11df-b7de-005056c00008',
+            'timeEnd': '2013-07-20T00:02:27Z',
+            'appVersion': u'2.0',
+            'timeStart': '2013-07-19T21:21:31Z',
+            'deprecatedID': None,
+            'deviceID': u'commconnect'
+        })
+
+
+
+

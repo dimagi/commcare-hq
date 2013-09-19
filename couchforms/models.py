@@ -135,34 +135,41 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin):
                 # couchdbkit chokes on dates that aren't actually dates
                 # so check their validity before passing them up
                 ret = copy(dict(meta_block))
+                for key in ret.keys():
+                    #remove attributes from the meta block
+                    if key.startswith('@'):
+                        del ret[key]
 
                 # couchdbkit erroneously converts appVersion to a Decimal just because it is possible (due to it being within a "dynamic" property)
                 # (see https://github.com/benoitc/couchdbkit/blob/a23343e539370cffcf8b0ce483c712911bb022c1/couchdbkit/schema/properties.py#L1038)
                 if meta_block.get('appVersion') is not None and not isinstance(meta_block['appVersion'], basestring):
-                    ret['appVersion'] = str(meta_block['appVersion'])
+                    if isinstance(meta_block['appVersion'], dict) and '#text' in meta_block['appVersion']:
+                        ret['appVersion'] = str(meta_block['appVersion']['#text'])
+                    else:
+                        ret['appVersion'] = str(meta_block['appVersion'])
 
                 if meta_block:
                     for key in ("timeStart", "timeEnd"):
                         if key in meta_block:
                             if meta_block[key]:
                                 try:
+                                    #try to parse to ensure correctness
                                     parsed = string_to_datetime(meta_block[key])
-                                    ret[key] = parsed
                                 except ValueError:
                                     # we couldn't parse it
                                     del ret[key]
                             else:
                                 # it was empty, also a failure
                                 del ret[key]
-                    # also clean dicts, since those are not allowed
-                    for key in meta_block:
-                        if isinstance(meta_block[key], dict):
+                    # also clean dicts on the return value, since those are not allowed
+                    for key in ret:
+                        if isinstance(ret[key], dict):
                             ret[key] = ", ".join(\
                                 "%s:%s" % (k, v) \
-                                for k, v in meta_block[key].items())
+                                for k, v in ret[key].items())
                 return ret
-            return Metadata(**_clean(self._form[const.TAG_META]))
-        
+            return Metadata.wrap(_clean(self.to_json()[const.TAG_FORM][const.TAG_META]))
+
         return None
 
     def __unicode__(self):
