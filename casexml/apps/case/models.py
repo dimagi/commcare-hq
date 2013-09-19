@@ -4,7 +4,6 @@ import re
 from datetime import datetime
 import logging
 from copy import copy
-import itertools
 
 from django.core.cache import cache
 from django.conf import settings
@@ -15,8 +14,6 @@ from couchdbkit.ext.django.schema import *
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from PIL import Image
 from dimagi.utils.django.cached_object import CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage, IMAGE_SIZE_ORDERING
-from django.utils.translation import ugettext_noop, ugettext as _
-from django.utils.translation import ugettext as _
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml,\
@@ -29,7 +26,6 @@ from dimagi.utils.indicators import ComputedDocumentMixin
 from receiver.util import spoof_submission
 from couchforms.models import XFormInstance
 from casexml.apps.case.sharedmodels import IndexHoldingMixIn, CommCareCaseIndex, CommCareCaseAttachment
-from copy import copy
 from dimagi.utils.couch.database import get_db, SafeSaveDocument
 from dimagi.utils.couch import LooselyEqualDocumentSchema
 
