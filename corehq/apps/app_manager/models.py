@@ -2046,6 +2046,16 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                         needs_case_detail=True
                     )
                 )
+            for column in module.get_detail('case_short').columns:
+                if column.format == 'filter':
+                    try:
+                        etree.XPath(column.filter_xpath or '')
+                    except etree.XPathSyntaxError:
+                        errors.append({
+                            'type': 'invalid filter xpath',
+                            'module': build_error_utils.get_module_info(module),
+                            'column': column,
+                        })
 
         for form in self.get_forms():
             errors.extend(form.validate_for_build())
