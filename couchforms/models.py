@@ -161,12 +161,12 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin):
                             else:
                                 # it was empty, also a failure
                                 del ret[key]
-                    # also clean dicts, since those are not allowed
-                    for key in meta_block:
-                        if isinstance(meta_block[key], dict) and key not in ret:
+                    # also clean dicts on the return value, since those are not allowed
+                    for key in ret:
+                        if isinstance(ret[key], dict):
                             ret[key] = ", ".join(\
                                 "%s:%s" % (k, v) \
-                                for k, v in meta_block[key].items())
+                                for k, v in ret[key].items())
                 return ret
             return Metadata.wrap(_clean(self.to_json()[const.TAG_FORM][const.TAG_META]))
 
