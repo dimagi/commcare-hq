@@ -16,4 +16,3 @@ def check_version(version):
     if not version in LEGAL_VERSIONS:
         raise ValueError("%s is not a legal version, must be one of: %s" % \
                          (version, ", ".join(LEGAL_VERSIONS)))
-    
