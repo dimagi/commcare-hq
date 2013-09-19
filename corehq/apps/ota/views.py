@@ -1,7 +1,7 @@
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CouchUser
 from django_digest.decorators import *
-from casexml.apps.phone.restore import generate_restore_response
-
+from casexml.apps.phone.restore import RestoreConfig
 
 
 @httpdigest
@@ -34,5 +34,9 @@ def get_restore_response(domain, couch_user, since=None, version='1.0', state=No
         return HttpResponse("%s was not in the domain %s" % (couch_user.username, domain),
                             status=401)
 
-    return generate_restore_response(couch_user.to_casexml_user(), since,
-                                     version, state)
+    project = Domain.get_by_name(domain)
+    restore_config = RestoreConfig(
+        couch_user.to_casexml_user(), since, version, state,
+        caching_enabled=project.ota_restore_caching,
+    )
+    return restore_config.get_response()
