@@ -207,6 +207,7 @@ var PaginatedItem = function (itemSpec) {
     self.itemRowId = 'item-row-' + self.itemId;
     self.itemData = ko.observable(itemSpec.itemData);
     self.template = ko.observable(itemSpec.template);
+    self.rowClass = ko.observable(itemSpec.rowClass);
 
     self.getItemRow = function () {
         return $('#' + self.itemRowId);
@@ -225,6 +226,9 @@ var PaginatedItem = function (itemSpec) {
         }
         if (data.itemData) {
             self.itemData(data.itemData);
+        }
+        if (data.rowClass) {
+            self.rowClass(data.rowClass);
         }
     };
 
