@@ -18,11 +18,12 @@ class RestoreConfig(object):
     """
     A collection of attributes associated with an OTA restore
     """
-    def __init__(self, user, restore_id="", version=V1, state_hash=""):
+    def __init__(self, user, restore_id="", version=V1, state_hash="", caching_enabled=False):
         self.user = user
         self.restore_id = restore_id
         self.version = version
         self.state_hash = state_hash
+        self.caching_enabled = caching_enabled
 
     @property
     @memoized
@@ -46,6 +47,11 @@ class RestoreConfig(object):
         last_sync = self.sync_log
 
         self.validate()
+
+        if self.caching_enabled and self.sync_log:
+            payload = self.sync_log.get_cached_payload(self.version)
+            if payload:
+                return payload
 
         sync_operation = user.get_case_updates(last_sync)
         case_xml_elements = [xml.get_case_element(op.case, op.required_updates, self.version)
@@ -82,7 +88,23 @@ class RestoreConfig(object):
         for case_elem in case_xml_elements:
             response.append(case_elem)
 
-        return xml.tostring(response)
+        resp = xml.tostring(response)
+        if self.caching_enabled and self.sync_log:
+            self.sync_log.set_cached_payload(resp, self.version)
+        return resp
+
+    def get_response(self):
+        try:
+            return HttpResponse(self.get_payload(), mimetype="text/xml")
+        except RestoreException, e:
+            logging.exception("%s error during restore submitted by %s: %s" %
+                              (type(e).__name__, self.user.username, str(e)))
+            response = get_simple_response_xml(
+                e.message,
+                ResponseNature.OTA_RESTORE_ERROR
+            )
+            return HttpResponse(response, mimetype="text/xml",
+                                status=412)  # precondition failed
 
 
 def generate_restore_payload(user, restore_id="", version=V1, state_hash=""):
@@ -99,19 +121,8 @@ def generate_restore_payload(user, restore_id="", version=V1, state_hash=""):
         
         returns: the xml payload of the sync operation
     """
-    warnings.warn("generate_restore_payload is deprecated. use RestoreConfig", DeprecationWarning)
     config = RestoreConfig(user, restore_id, version, state_hash)
     return config.get_payload()
 
 def generate_restore_response(user, restore_id="", version="1.0", state_hash=""):
-    try:
-        response = RestoreConfig(user, restore_id, version, state_hash).get_payload()
-        return HttpResponse(response, mimetype="text/xml")
-    except RestoreException, e:
-        logging.exception("%s error during restore submitted by %s: %s" % (type(e).__name__, user.username, str(e)))
-        response = get_simple_response_xml(
-            e.message,
-            ResponseNature.OTA_RESTORE_ERROR
-        )
-        return HttpResponse(response, mimetype="text/xml", 
-                            status=412)  # precondition failed
+    return RestoreConfig(user, restore_id, version, state_hash).get_response()
