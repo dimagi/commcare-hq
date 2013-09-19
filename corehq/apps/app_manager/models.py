@@ -15,6 +15,7 @@ from functools import wraps
 from copy import deepcopy
 from urllib2 import urlopen
 from urlparse import urljoin
+from lxml import etree
 
 from django.core.cache import cache
 from django.utils.encoding import force_unicode
@@ -2112,8 +2113,7 @@ class RemoteApp(ApplicationBase):
                 node = profile_xml.find('property[@key="%s"]' % key)
 
                 if node.xml is None:
-                    from lxml import etree as ET
-                    node = ET.Element('property')
+                    node = etree.Element('property')
                     profile_xml.xml.insert(0, node)
                     node.attrib['key'] = key
 
