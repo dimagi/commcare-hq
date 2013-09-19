@@ -133,6 +133,8 @@ var HQVisualizations = function (options) {
                     $interval_field.val(self.interval);
                 }
 
+                d3.selectAll(self.charts_id + ' g.nv-x.nv-axis g text').each(insertLinebreaks);
+
                 if (callback_fn) {
                     callback_fn();
                 }
