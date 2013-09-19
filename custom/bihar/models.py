@@ -14,8 +14,8 @@ class CareBiharFluff(fluff.IndicatorDocument):
 
     # home visit
 
-    bp2 = homevisit.BPCalculator(days=75, n_visits=2)
-    bp3 = homevisit.BPCalculator(days=45, n_visits=3)
+    bp2 = homevisit.BPCalculator(days=(94, 187))
+    bp3 = homevisit.BPCalculator(days=(0, 94))
     pnc = homevisit.VisitCalculator(schedule=(1, 3, 6), visit_type='pnc')
     ebf = homevisit.VisitCalculator(
         schedule=(14, 28, 60, 90, 120, 150),
