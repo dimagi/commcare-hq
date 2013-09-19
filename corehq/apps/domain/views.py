@@ -286,12 +286,19 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
     @property
     @memoized
     def my_project_settings_form(self):
-        initial = {
-            'global_timezone': self.domain_object.default_timezone,
-            'override_global_tz': self.domain_membership.override_global_tz,
-            'user_timezone': (self.domain_membership.timezone if self.domain_membership.override_global_tz
-                              else self.domain_object.default_timezone),
-        }
+        initial = { 'global_timezone': self.domain_object.default_timezone }
+        if self.domain_membership:
+            initial.update({
+                'override_global_tz': self.domain_membership.override_global_tz,
+                'user_timezone': (self.domain_membership.timezone if self.domain_membership.override_global_tz
+                                  else self.domain_object.default_timezone),
+            })
+        else:
+            initial.update({
+                'override_global_tz': False,
+                'user_timezone': initial["global_timezone"],
+            })
+
         if self.request.method == 'POST':
             return ProjectSettingsForm(self.request.POST, initial=initial)
         return ProjectSettingsForm(initial=initial)
@@ -305,7 +312,8 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
     def page_context(self):
         return {
             'my_project_settings_form': self.my_project_settings_form,
-            'override_global_tz': self.domain_membership.override_global_tz,
+            'override_global_tz': self.domain_membership.override_global_tz if self.domain_membership else False,
+            'no_domain_membership': not self.domain_membership,
         }
 
     def post(self, request, *args, **kwargs):
