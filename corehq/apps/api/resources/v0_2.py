@@ -14,7 +14,7 @@ class CommCareCaseResource(JsonResource, DomainSpecificResourceMixin):
     user_id = fields.CharField(attribute='user_id')
     date_modified = fields.CharField(attribute='date_modified', default="1900-01-01")
     closed = fields.BooleanField(attribute='closed')
-    date_closed = fields.CharField(attribute='date_closed', null=True)
+    date_closed = fields.CharField(attribute='closed_on', null=True)
 
     server_date_modified = fields.CharField(attribute='server_date_modified', default="1900-01-01")
     server_date_opened = fields.CharField(attribute='server_date_opened', null=True)
