@@ -48,8 +48,10 @@ class RestoreConfig(object):
 
         self.validate()
 
-        if self.caching_enabled and self.sync_log and self.sync_log.get_cached_payload(self.version):
-            return self.sync_log.get_cached_payload(self.version)
+        if self.caching_enabled:
+            payload = self.sync_log.get_cached_payload(self.version)
+            if payload:
+                return payload
 
         sync_operation = user.get_case_updates(last_sync)
         case_xml_elements = [xml.get_case_element(op.case, op.required_updates, self.version)

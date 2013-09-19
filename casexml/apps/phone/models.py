@@ -102,7 +102,10 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
     def get_payload_attachment_name(self, version):
         return 'restore_payload_{version}.xml'.format(version=version)
 
-    @memoized
+    def has_cached_payload(self, version):
+        return self._attachments and self.get_payload_attachment_name(version) in self._attachments
+
+
     def get_cached_payload(self, version):
         try:
             return self.fetch_attachment(self.get_payload_attachment_name(version))
