@@ -41,7 +41,6 @@ from dimagi.utils.couch.database import get_db
 import commcare_translations
 
 from corehq.util import bitly
-from corehq.apps.receiverwrapper.models import Repeater, register_repeater_type
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
@@ -171,7 +170,7 @@ class UpdateReferralAction(FormAction):
     def get_followup_date(self):
         if self.followup_date:
             return "if(date({followup_date}) >= date(today()), {followup_date}, date(today() + 2))".format(
-                followup_date = self.followup_date,
+                followup_date=self.followup_date,
             )
         return self.followup_date or "date(today() + 2)"
 
