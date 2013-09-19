@@ -1,3 +1,4 @@
+from casexml.apps.case import settings
 from django.test import TestCase
 import os
 from casexml.apps.case.mock import CaseBlock
@@ -27,6 +28,7 @@ class SyncBaseTest(TestCase):
     """
 
     def setUp(self):
+        settings.CASEXML_FORCE_DOMAIN_CHECK = False
         delete_all_cases()
         delete_all_xforms()
         delete_all_sync_logs()
@@ -88,7 +90,6 @@ class SyncBaseTest(TestCase):
             self._checkLists(indices, state.indices)
         
     
-        
 class SyncTokenUpdateTest(SyncBaseTest):
     """
     Tests sync token updates on submission related to the list of cases
@@ -384,6 +385,57 @@ class SyncTokenCachingTest(SyncBaseTest):
         self.assertNotEqual(original_payload, versioned_payload)
         versioned_sync_log = synclog_from_restore_payload(versioned_payload)
         self.assertNotEqual(next_sync_log._id, versioned_sync_log._id)
+
+    def testCacheInvalidation(self):
+        original_payload = RestoreConfig(
+            self.user, version=V2, caching_enabled=True,
+            restore_id=self.sync_log._id,
+        ).get_payload()
+        self.sync_log = SyncLog.get(self.sync_log._id)
+        self.assertTrue(self.sync_log.has_cached_payload(V2))
+
+        # posting a case associated with this sync token should invalidate the cache
+        case_id = "cache_invalidation"
+        self._createCaseStubs([case_id])
+        self.sync_log = SyncLog.get(self.sync_log._id)
+        self.assertFalse(self.sync_log.has_cached_payload(V2))
+
+        # resyncing should recreate the cache
+        next_payload = RestoreConfig(
+            self.user, version=V2, caching_enabled=True,
+            restore_id=self.sync_log._id,
+        ).get_payload()
+        self.sync_log = SyncLog.get(self.sync_log._id)
+        self.assertTrue(self.sync_log.has_cached_payload(V2))
+        self.assertNotEqual(original_payload, next_payload)
+        self.assertFalse(case_id in original_payload)
+        self.assertTrue(case_id in next_payload)
+
+    def testCacheNonInvalidation(self):
+        original_payload = RestoreConfig(
+            self.user, version=V2, caching_enabled=True,
+            restore_id=self.sync_log._id,
+        ).get_payload()
+        self.sync_log = SyncLog.get(self.sync_log._id)
+        self.assertTrue(self.sync_log.has_cached_payload(V2))
+
+        # posting a case associated with this sync token should invalidate the cache
+        # submitting a case not with the token will not touch the cache for that token
+        case_id =  "cache_noninvalidation"
+        post_case_blocks([CaseBlock(
+            create=True,
+            case_id=case_id,
+            user_id=self.user.user_id,
+            owner_id=self.user.user_id,
+            case_type=PARENT_TYPE,
+            version=V2,
+        ).as_xml()])
+        next_payload = RestoreConfig(
+            self.user, version=V2, caching_enabled=True,
+            restore_id=self.sync_log._id,
+        ).get_payload()
+        self.assertEqual(original_payload, next_payload)
+        self.assertFalse(case_id in next_payload)
 
 
 class MultiUserSyncTest(SyncBaseTest):
