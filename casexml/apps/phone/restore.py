@@ -121,10 +121,8 @@ def generate_restore_payload(user, restore_id="", version=V1, state_hash=""):
         
         returns: the xml payload of the sync operation
     """
-    warnings.warn("generate_restore_payload is deprecated. use RestoreConfig", DeprecationWarning)
     config = RestoreConfig(user, restore_id, version, state_hash)
     return config.get_payload()
 
 def generate_restore_response(user, restore_id="", version="1.0", state_hash=""):
-    warnings.warn("generate_restore_payload is deprecated. use RestoreConfig", DeprecationWarning)
     return RestoreConfig(user, restore_id, version, state_hash).get_response()
