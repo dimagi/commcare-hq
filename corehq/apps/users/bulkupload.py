@@ -14,7 +14,6 @@ class UserUploadError(Exception):
     pass
 
 
-pw_display_str = "********"
 required_headers = set(['username'])
 allowed_headers = set(['password', 'phone-number', 'email', 'user_id', 'name', 'group', 'data', 'language']) | required_headers
 
@@ -191,7 +190,10 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
                         user = CommCareUser.get_by_username(username)
 
                     def is_password(password):
-                        return password != pw_display_str and bool(password)
+                        for c in password:
+                            if c != "*":
+                                return True
+                        return bool(password)
 
                     if user:
                         if user.domain != domain:
@@ -299,8 +301,8 @@ def dump_users_and_groups(response, domain):
             'data': data,
             'group': group_names,
             'name': user.full_name,
-            # display ******* or something for stored passwords
-            'password': pw_display_str,
+            # dummy display string for passwords
+            'password': "********", 
             'phone-number': user.phone_number,
             'email': user.email,
             'username': user.raw_username,
