@@ -4,29 +4,24 @@ import os
 from django.core.management.base import NoArgsCommand
 from django.conf import settings
 
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.management.commands.ptop_generate_mapping import MappingOutputCommand
 from corehq.pillows.mappings import xform_mapping
 from corehq.pillows.xform import XFormPillow
 
 
 class Command(MappingOutputCommand):
-    help="Generate mapping JSON of our ES indexed types. For casexml"
-    option_list = NoArgsCommand.option_list + (
-    )
-    doc_class_str = "casexml.apps.case.models.CommCareCase"
-    doc_class = CommCareCase
+    help = "Recalculate the xform mapping meta. default mapping is hand made/managed. run this any time you modify the xform_mapping"
+    option_list = NoArgsCommand.option_list + ()
+    doc_class_str = "" #artifact of the mapping output command
 
 
     def finish_handle(self):
         filepath = os.path.join(settings.FILEPATH, 'corehq','pillows','mappings','xform_mapping.py')
         xform_pillow = XFormPillow(create_index=False)
 
-        #current index
         #check current index
         aliased_indices = xform_pillow.check_alias()
 
-#        current_index = '%s_%s' % (xform_pillow.es_index_prefix, xform_pillow.calc_meta())
         current_index = xform_pillow.es_index
 
         sys.stderr.write("current index:\n")
@@ -36,10 +31,7 @@ class Command(MappingOutputCommand):
         mapping = xform_mapping.XFORM_MAPPING
         xform_pillow.default_mapping = mapping
         delattr(xform_pillow, '_calc_meta_cache')
-        #xform_pillow.calc_meta.reset_cache()
         calc_index = "%s_%s" % (xform_pillow.es_index_prefix, xform_pillow.calc_meta())
-
-
 
         if calc_index not in aliased_indices and calc_index != current_index:
             sys.stderr.write("\n\tWarning, current index %s is not aliased at the moment\n" % current_index)
