@@ -64,20 +64,21 @@ def get_questions_with_answers(forms, domain, case):
         if 'current_count' in form.get_form:
             needed_forms.append(form)
 
-    for question in app.get_questions(needed_forms[0].xmlns):
-        if question['tag'] != "hidden":
-            answer_field = re.search('.*/(.*)', question['value']).group(1)
-            questions_with_answers.append({"label": question["label"],
-                                           "answer_field": answer_field})
+    if needed_forms:
+        for question in app.get_questions(needed_forms[0].xmlns):
+            if question['tag'] != "hidden":
+                answer_field = re.search('.*/(.*)', question['value']).group(1)
+                questions_with_answers.append({"label": question["label"],
+                                               "answer_field": answer_field})
 
-    for question in questions_with_answers:
-        question["answers"] = ["", "", "", "", "", "", ""]
-        i = 0
-        for form in needed_forms:
-            if question["answer_field"] in form.get_form:
-                question['answers'][i] = form.get_form[question["answer_field"]]
-            else:
-                question['answers'][i] = "---"
-            i += 1
+        for question in questions_with_answers:
+            question["answers"] = ["", "", "", "", "", "", ""]
+            i = 0
+            for form in needed_forms:
+                if question["answer_field"] in form.get_form:
+                    question['answers'][i] = form.get_form[question["answer_field"]]
+                else:
+                    question['answers'][i] = "---"
+                i += 1
     return questions_with_answers
 

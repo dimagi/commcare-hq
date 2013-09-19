@@ -186,15 +186,6 @@ ADMIN_REPORTS = (
     )),
 )
 
-from corehq.apps.crs_reports.reports import HNBCMotherReport, HNBCInfantReport
-
-CUSTOM_REPORTS = (
-    (_('Custom Reports'), (
-       HNBCMotherReport,
-       HNBCInfantReport,
-    )),
-)
-
 from corehq.apps.hqwebapp.models import *
 
 TABS = (

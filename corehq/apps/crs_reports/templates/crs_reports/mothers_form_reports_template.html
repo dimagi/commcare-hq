@@ -1,4 +1,5 @@
 {% extends "reports/base_template.html" %}
+{% load i18n %}
 {% load case_tags %}
 {% load hq_shared_tags %}
 
@@ -34,19 +35,19 @@
     <table style="width: 100%" border="1" cellpadding="0" cellspacing="0">
             <tbody>
                 <tr>
-                    <td>Mother&rsquo;s name: {{ case.name }}</td>
-                    <td>Husband&rsquo;s name: {{ case.husband_name }}</td>
-                    <td>Villages name: {{ case.village }}</td>
-                    <td>Name of sub-centre: {{ sub_center }}</td>
-                    <td>District: </td>
+                    <td>{% trans "Mother's name:" %} {{ case.name }}</td>
+                    <td>{% trans "Husband's name:" %} {{ case.husband_name }}</td>
+                    <td>{% trans "Villages name:" %} {{ case.village }}</td>
+                    <td>{% trans "Name of sub-centre:"%} {{ sub_center }}</td>
+                    <td>{% trans "District:" %} </td>
                 </tr>
                 <tr>
-                    <td colspan="3" rowspan="1" style="border: 0">Place of delivery- {{ case.place_birth }}</td>
-                    <td colspan="1" rowspan="1" style="border: 0">Format Serial Number:</td>
+                    <td colspan="3" rowspan="1" style="border: 0">{% trans "Place of delivery-" %} {{ case.place_birth }}</td>
+                    <td colspan="1" rowspan="1" style="border: 0">{% trans "Format Serial Number:" %}</td>
                     <td colspan="1" rowspan="1" style="border: 0"></td>
                 </tr>
                 <tr>
-                    <td colspan="5" rowspan="1" style="border: 0">Outcome of delivery - {{ case.pregnancy_outcome }}</td>
+                    <td colspan="5" rowspan="1" style="border: 0">{% trans "Outcome of delivery" %} - {{ case.pregnancy_outcome }}</td>
                 </tr>
             </tbody>
     </table>
@@ -54,19 +55,19 @@
     <table style="width: 100%" border="1" cellpadding="0" cellspacing="0">
         <tbody>
             <tr>
-                <td colspan="2" rowspan="2">Ask/check date of ASHA&rsquo;s visit {{ case.date_modified }}</td>
+                <td colspan="2" rowspan="2">{% trans "Ask/check date of ASHA's visit" %} {{ case.date_modified }}</td>
                 <td colspan="7">&nbsp;</td>
-                <td colspan="2" rowspan="2">Works performed by ASHA</td>
-                <td colspan="2" rowspan="2">Inspection by supervisor</td>
+                <td colspan="2" rowspan="2">{% trans "Works performed by ASHA" %}</td>
+                <td colspan="2" rowspan="2">{% trans "Inspection by superviso" %}r</td>
             </tr>
             <tr>
-                <td colspan="1">1st</td>
-                <td colspan="1">3rd</td>
-                <td colspan="1">7th</td>
-                <td colspan="1">14th</td>
-                <td colspan="1">21th</td>
-                <td colspan="1">28th</td>
-                <td colspan="1">42nd</td>
+                <td colspan="1">{% trans "1st" %}</td>
+                <td colspan="1">{% trans "3rd" %}</td>
+                <td colspan="1">{% trans "7th" %}</td>
+                <td colspan="1">{% trans "14th" %}</td>
+                <td colspan="1">{% trans "21th" %}</td>
+                <td colspan="1">{% trans "28th" %}</td>
+                <td colspan="1">{% trans "42nd" %}</td>
             </tr>
             {% for question in questions %}
                 <tr>
@@ -84,22 +85,22 @@
     <table style="width: 100%" border="1" cellpadding="0" cellspacing="0">
         <tbody>
             <tr>
-                <td colspan="11" rowspan="1">NOTE:</td>
+                <td colspan="11" rowspan="1">{% trans "NOTE:" %}</td>
             </tr>
             <tr>
-                <td colspan="3" rowspan="1">Name of ASHA: {{ user.full_name }}</td>
-                <td colspan="3" rowspan="1">Name of Village: {{ user.user_data.village }}</td>
-                <td colspan="5" rowspan="1">Name of CHC/PHC: </td>
+                <td colspan="3" rowspan="1">{% trans "Name of ASHA:" %} {{ user.full_name }}</td>
+                <td colspan="3" rowspan="1">{% trans "Name of Village:" %} {{ user.user_data.village }}</td>
+                <td colspan="5" rowspan="1">{% trans "Name of CHC/PHC:" %} </td>
             </tr>
             <tr>
-                <td colspan="3" rowspan="1">Name of supervisor/facilitator: {{ owner_name }}</td>
-                <td colspan="2" rowspan="1">Sign of Supervisor: </td>
-                <td colspan="2" rowspan="1">Date: </td>
-                <td colspan="2">Signature of HEO: </td>
-                <td colspan="2" rowspan="1">Date:</td>
+                <td colspan="3" rowspan="1">{% trans "Name of supervisor/facilitator:" %} {{ owner_name }}</td>
+                <td colspan="2" rowspan="1">{% trans "Sign of Supervisor:" %} </td>
+                <td colspan="2" rowspan="1">{% trans "Date:" %} </td>
+                <td colspan="2">{% trans "Signature of HEO:" %} </td>
+                <td colspan="2" rowspan="1">{% trans "Date:" %}</td>
             </tr>
             <tr>
-                <td colspan="11">NOTE:</td>
+                <td colspan="11">{% trans "NOTE:" %}</td>
             </tr>
         </tbody>
     </table>

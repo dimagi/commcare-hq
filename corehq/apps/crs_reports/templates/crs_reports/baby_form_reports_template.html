@@ -34,27 +34,27 @@
      <table style="width: 100%" border="1" cellpadding="0" cellspacing="0">
         <tbody>
             <tr>
-                <td>Mother&rsquo;s name: {{ case.mother_name }}</td>
-                <td>Husband&rsquo;s name: {{ case.fathers_name }}</td>
-                <td>Villages name: {{ case.hamlet_name }}</td>
-                <td>Name of sub-centre: {{ sub_center }}</td>
-                <td>District:</td>
+                <td>{% trans "Mother's name:" %} {{ case.mother_name }}</td>
+                <td>{% trans "Husband's name:" %} {{ case.fathers_name }}</td>
+                <td>{% trans "Villages name:" %} {{ case.hamlet_name }}</td>
+                <td>{% trans "Name of sub-centre:" %} {{ sub_center }}</td>
+                <td>{% trans "District:" %}</td>
             </tr>
             <tr>
-                <td valign="top" colspan="3" rowspan="2">Section 1</td>
+                <td valign="top" colspan="3" rowspan="2">{% trans "Section 1" %}</td>
                 <td colspan="2" rowspan="1">
-                    BCG Vaccation:<br>
-                    Birth Registartion Number:<br>
+                    {% trans "BCG Vaccation:" %}<br>
+                    {% trans "Birth Registartion Number:" %}<br>
                     <br>
-                    Has CCSP for case been filled:<br>
+                    {% trans "Has CCSP for case been filled:" %}<br>
                 </td>
             </tr>
             <tr>
                 <td align="center" colspan="2" rowspan="1">
-                    For office use: <br>
-                    Payment bank advice number ___<br>
-                    by<br>
-                    Signature of MOI/c
+                    {% trans "For office use:" %}<br>
+                    {% trans "Payment bank advice number ___" %}<br>
+                    {% trans "by" %}<br>
+                    {% trans "Signature of MOI/c" %}
                 </td>
             </tr>
         </tbody>
@@ -63,16 +63,16 @@
     <table style="width: 100%" border="1" cellpadding="0" cellspacing="0">
         <tbody>
             <tr>
-                <td colspan="2" rowspan="1">Ask/check date of ASHA&rsquo;s visit</td>
-                <td colspan="1">1st</td>
-                <td colspan="1">3rd</td>
-                <td colspan="1">7th</td>
-                <td colspan="1">14th</td>
-                <td colspan="1">21th</td>
-                <td colspan="1">28th</td>
-                <td colspan="1">42nd</td>
-                <td colspan="2" rowspan="1">Works performed by ASHA</td>
-                <td colspan="2" rowspan="1">Inspection by supervisor</td>
+                <td colspan="2" rowspan="1">{% trans "Ask/check date of ASHA's visit" %}</td>
+                <td colspan="1">{% trans "1st" %}</td>
+                <td colspan="1">{% trans "3rd" %}</td>
+                <td colspan="1">{% trans "7th" %}</td>
+                <td colspan="1">{% trans "14th" %}</td>
+                <td colspan="1">{% trans "21th" %}</td>
+                <td colspan="1">{% trans "28th" %}</td>
+                <td colspan="1">{% trans "42nd" %}</td>
+                <td colspan="2" rowspan="1">{% trans "Works performed by ASHA" %}</td>
+                <td colspan="2" rowspan="1">{% trans "Inspection by supervisor" %}</td>
             </tr>
             {% for question in questions %}
                 <tr>
@@ -90,22 +90,22 @@
     <table style="width: 100%" border="1" cellpadding="0" cellspacing="0">
         <tbody>
             <tr>
-                <td colspan="11" rowspan="1">NOTE:</td>
+                <td colspan="11" rowspan="1">{% trans "NOTE:" %}</td>
             </tr>
             <tr>
-                <td colspan="3" rowspan="1">Name of ASHA: {{ user.full_name }}</td>
-                <td colspan="3" rowspan="1">Name of Village: {{ user.user_data.village }}</td>
-                <td colspan="5" rowspan="1">Name of CHC/PHC:</td>
+                <td colspan="3" rowspan="1">{% trans "Name of ASHA:" %} {{ user.full_name }}</td>
+                <td colspan="3" rowspan="1">{% trans "Name of Village:" %} {{ user.user_data.village }}</td>
+                <td colspan="5" rowspan="1">{% trans "Name of CHC/PHC:" %}</td>
             </tr>
             <tr>
-                <td colspan="3" rowspan="1">Name of supervisor/facilitator: {{ owner_name }}</td>
-                <td colspan="2" rowspan="1">Sign of Supervisor:</td>
-                <td colspan="2" rowspan="1">Date: </td>
-                <td colspan="2">Signature of HEO:</td>
-                <td colspan="2" rowspan="1">Date:</td>
+                <td colspan="3" rowspan="1">{% trans "Name of supervisor/facilitator:" %} {{ owner_name }}</td>
+                <td colspan="2" rowspan="1">{% trans "Sign of Supervisor:" %}</td>
+                <td colspan="2" rowspan="1">{% trans "Date:" %}</td>
+                <td colspan="2">{% trans "Signature of HEO:" %}</td>
+                <td colspan="2" rowspan="1">{% trans "Date:" %}</td>
             </tr>
             <tr>
-                <td colspan="11">NOTE:</td>
+                <td colspan="11">{% trans "NOTE:" %}</td>
             </tr>
         </tbody>
     </table>

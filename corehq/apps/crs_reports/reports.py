@@ -1,9 +1,9 @@
+from couchdbkit import RequestFailed
 from django.utils.translation import ugettext_noop
 
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
-from corehq.apps.reports.fields import StrongFilterUsersField
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.standard.inspect import CaseDisplay, CaseListReport
+from corehq.apps.reports.standard.inspect import CaseDisplay, CaseListReport, CaseListMixin
 from django.utils import html
 from django.core.urlresolvers import reverse, NoReverseMatch
 
@@ -17,7 +17,7 @@ from dimagi.utils.timezones import utils as tz_utils
 def visit_completion_counter(case):
     counter = 0
     for i in range(1, 8):
-        if "pp_visit_%s" % i in case and case["case_pp_%s_done" % i].upper() == "YES":
+        if "case_pp_%s_done" % i in case and case["case_pp_%s_done" % i].upper() == "YES":
             counter += 1
     return counter
 
@@ -45,9 +45,9 @@ class HNBCReportDisplay(CaseDisplay):
     @property
     def pnc_status(self):
         if visit_completion_counter(self.case) == 7:
-            return "On Time"
+            return _("On Time")
         else:
-            return "Late"
+            return _("Late")
 
     @property
     def case_link(self):
@@ -71,7 +71,6 @@ class BaseHNBCReport(CustomProjectReport, DatespanMixin, CaseListReport):
               'corehq.apps.reports.standard.inspect.CaseSearchFilter']
 
     ajax_pagination = True
-    filter_users_field_class = StrongFilterUsersField
     include_inactive = True
     module_name = 'crs_reports'
     report_template_name = None

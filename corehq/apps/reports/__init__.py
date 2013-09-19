@@ -5,7 +5,6 @@ from django.utils.translation import ugettext_noop as _
 # in a safer way.
 # there is almost certainly a smarter way to do this.
 
-_("Custom Reports")
 _("Monitor Workers")
 _("Inspect Data")
 _("Raw Data")

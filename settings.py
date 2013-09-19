@@ -864,6 +864,7 @@ DOMAIN_MODULE_MAP = {
     'mvp-sada': 'mvp',
     'psi-unicef': 'psi',
     'project': 'custom.apps.care_benin',
+    'crs-remind': 'corehq.apps.crs_reports'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
