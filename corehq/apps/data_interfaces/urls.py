@@ -1,10 +1,9 @@
 from django.conf.urls.defaults import *
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher, EditDataInterfaceDispatcher
-from corehq.apps.data_interfaces.views import CaseGroupListView, CRUDCaseGroupListView
+from corehq.apps.data_interfaces.views import CaseGroupListView
 
 edit_data_urls = patterns(
     'corehq.apps.data_interfaces.views',
-    url(r'^case_groups/crud/$', CRUDCaseGroupListView.as_view(), name=CRUDCaseGroupListView.urlname),
     url(r'^case_groups/$', CaseGroupListView.as_view(), name=CaseGroupListView.urlname),
     EditDataInterfaceDispatcher.url_pattern(),
 )

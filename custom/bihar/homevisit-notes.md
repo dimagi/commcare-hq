@@ -1,8 +1,9 @@
 # Homevisit
 ## Done/Due
 
-Note: all 'form' properties are actually located in the form's case update block:
-e.g. `date_next_bp` means `case/update/date_next_bp`.
+Note: all 'form' properties are actually located in the form's case block:
+e.g. `date_next_bp` means `case/update/date_next_bp`,
+and `date_modified` means `case/@date_modified`.
 
 ### 2nd Trimester Birth Preparedness Visits
 `bp2` *BP (2nd Tri) Visits*

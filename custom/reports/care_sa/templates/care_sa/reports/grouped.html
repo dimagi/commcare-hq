@@ -25,12 +25,21 @@
     {% endif %}
 
     {% for group in report_table.rows %}
-        {% if group.username == 'TOTAL_ROW' %}
+        {% if group.username == 'TOTAL_ROW' or group.username == 'OVERALL_TOTAL_ROW' %}
             <tr>
                 {% if group.row_data %}
-                    <td colspan="{{ group.total_width }}" style="background-color: #3a87ad">Total:</td>
+                    {% if group.username == 'OVERALL_TOTAL_ROW' %}
+                        <td colspan="{{ group.total_width }}" style="background-color: #3a87ad">Overall Total:</td>
+                    {% else %}
+                        <td colspan="{{ group.total_width }}" style="background-color: #d3e7f0">Total:</td>
+                    {% endif %}
+
                     {% for col in group.row_data %}
+                        {% if group.username == 'OVERALL_TOTAL_ROW' %}
                         <td style="background-color: #3a87ad">
+                        {% else %}
+                        <td style="background-color: #d3e7f0">
+                        {% endif %}
                             {{ col }}
                         </td>
                     {% endfor %}

@@ -1,5 +1,4 @@
 var CRUDPaginatedListModel = function (
-    crudURL,
     total,
     pageLimit,
     currentPage,
@@ -9,6 +8,8 @@ var CRUDPaginatedListModel = function (
     options = options || {};
 
     var self = this;
+
+    self.sortBy = options.sortBy || 'abc';
 
     self.hasInitialLoadFinished = ko.observable(false);
 
@@ -28,10 +29,10 @@ var CRUDPaginatedListModel = function (
 
     self.paginatedList = ko.observableArray();  // the list of data to be paginated
     self.newList = ko.observableArray(); // the list of data that was created
-    self.modifiedList = ko.observableArray();  // the list of data that was modified
+    self.deletedList = ko.observableArray();  // the list of data that was modified
 
     self.isPaginationActive = ko.computed(function () {
-        return (self.paginatedList().length + self.modifiedList().length + self.newList().length) > 0;
+        return (self.paginatedList().length + self.deletedList().length + self.newList().length) > 0;
     });
 
     self.isPaginationTableVisible = ko.computed(function () {
@@ -46,11 +47,9 @@ var CRUDPaginatedListModel = function (
         return self.newList().length > 0;
     });
 
-    self.isModifiedListVisible = ko.computed(function () {
-        return self.modifiedList().length > 0;
+    self.isDeletedListVisible = ko.computed(function () {
+        return self.deletedList().length > 0;
     });
-
-    self.crudURL = crudURL;  // the url we'll be fetching data from
 
     self.total = ko.observable(total);
     self.pageLimit = ko.observable(pageLimit);
@@ -83,14 +82,6 @@ var CRUDPaginatedListModel = function (
     });
 
     self.utils = {
-        formatUrl: function (page) {
-            if (!page) {
-                return '#';
-            }
-            return self.crudURL +
-                '?page=' + page +
-                '&limit=' + self.pageLimit();
-        },
         reloadList: function (data) {
             if (data.success) {
                 if (!self.hasInitialLoadFinished()) {
@@ -104,7 +95,7 @@ var CRUDPaginatedListModel = function (
                         return new PaginatedItem(listItem);
                     }
                 ));
-                self.modifiedList([]);
+                self.deletedList([]);
                 self.newList([]);
             }
         }
@@ -160,8 +151,15 @@ var CRUDPaginatedListModel = function (
         page = ko.utils.unwrapObservable(page);
         if (page) {
             $.ajax({
-                url: self.utils.formatUrl(page),
+                url: "",
+                type: 'post',
                 dataType: 'json',
+                data: {
+                    action: 'paginate',
+                    page: page,
+                    limit: self.pageLimit(),
+                    sortBy: self.sortBy
+                },
                 statusCode: self.handleStatusCode,
                 success: function (data) {
                     self.utils.reloadList(data);
@@ -176,17 +174,17 @@ var CRUDPaginatedListModel = function (
         self.changePage(1);
     };
 
-    self.updateItem = function (paginatedItem, event) {
+    self.deleteItem = function (paginatedItem, event) {
         var pList = self.paginatedList();
-        paginatedItem.dismissModal();
+        paginatedItem.dismissModals();
         self.paginatedList(_(pList).without(paginatedItem));
-        self.modifiedList.push(paginatedItem);
+        self.deletedList.push(paginatedItem);
         $.ajax({
             url: "",
             type: 'post',
             dataType: 'json',
             data: {
-                action: 'update',
+                action: 'delete',
                 itemId: paginatedItem.itemId
             },
             statusCode: self.handleStatusCode,
@@ -194,11 +192,11 @@ var CRUDPaginatedListModel = function (
                 if (data.error) {
                     self.alertHtml(data.error);
                 }
-                if (data.updatedItem) {
-                    paginatedItem.handleSuccessfulUpdate(data.updatedItem);
+                if (data.deletedItem) {
+                    paginatedItem.updateItemSpec(data.deletedItem);
                 }
             }
-        })
+        });
     };
 };
 
@@ -214,12 +212,14 @@ var PaginatedItem = function (itemSpec) {
         return $('#' + self.itemRowId);
     };
 
-    self.dismissModal = function () {
-        self.getItemRow().find('.update-item-modal')
-            .modal('hide');
+    self.dismissModals = function () {
+        var $modals = self.getItemRow().find('.modal');
+        if ($modals) {
+            $modals.modal('hide');
+        }
     };
 
-    self.handleSuccessfulUpdate = function (data) {
+    self.updateItemSpec = function (data) {
         if (data.template) {
             self.template(data.template);
         }
@@ -229,11 +229,36 @@ var PaginatedItem = function (itemSpec) {
     };
 
     self.initTemplate = function (elems) {
-        var $updateButton = $(elems).find('.update-item-confirm');
-        if ($updateButton) {
-            $updateButton.click(function () {
-                $updateButton.button('loading');
-                self.getItemRow().trigger('updateItem');
+        var $updateForm = $(elems).find('.update-item-form');
+        if ($updateForm) {
+            $updateForm.submit(function (e) {
+                e.preventDefault();
+                $updateForm.ajaxSubmit({
+                    url: "",
+                    type: 'post',
+                    dataType: 'json',
+                    data: {
+                        action: 'update'
+                    },
+                    success: function (data) {
+                        if (data.updatedItem) {
+                            self.dismissModals();
+                            self.updateItemSpec(data.updatedItem);
+                        } else if (data.form) {
+                            var $updateForm = self.getItemRow().find('.update-item-form');
+                            if ($updateForm) {
+                                $updateForm.html($(data.form).html());
+                            }
+                        }
+                    }
+                });
+            });
+        }
+        var $deleteButton = $(elems).find('.delete-item-confirm');
+        if ($deleteButton) {
+            $deleteButton.click(function () {
+                $(this).button('loading');
+                self.getItemRow().trigger('deleteItem');
             });
         }
     };
