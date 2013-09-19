@@ -5,7 +5,7 @@ from casexml.apps.phone import xml
 from datetime import datetime
 from receiver.xml import get_response_element, get_simple_response_xml,\
     ResponseNature
-from casexml.apps.case.xml import check_version
+from casexml.apps.case.xml import check_version, V1
 from casexml.apps.phone.fixtures import generator
 from django.http import HttpResponse
 from casexml.apps.phone.checksum import CaseStateHash
@@ -22,8 +22,79 @@ class BadStateException(Exception):
         return "Phone state has mismatch. Expected %s but was %s. Cases: [%s]" % \
                 (self.expected, self.actual, ", ".join(self.case_ids))
         
-        
-def generate_restore_payload(user, restore_id="", version="1.0", state_hash=""):
+
+
+class RestoreConfig(object):
+    """
+    A struct-like collection of attributes associated with an OTA restore
+    """
+    def __init__(self, user, restore_id="", version=V1, state_hash=""):
+        self.user = user
+        self.restore_id = restore_id
+        self.version = version
+        self.state_hash = state_hash
+
+    def get_payload(self):
+        version = self.version
+        restore_id = self.restore_id
+        state_hash = self.state_hash
+        user = self.user
+        check_version(version)
+
+
+        last_sync = None
+        if restore_id:
+            try:
+                last_sync = SyncLog.get(restore_id)
+            except Exception:
+                logging.error("Request for bad sync log %s by %s, ignoring..." % (restore_id, user))
+
+        if last_sync and state_hash:
+            parsed_hash = CaseStateHash.parse(state_hash)
+            if last_sync.get_state_hash() != parsed_hash:
+                raise BadStateException(expected=last_sync.get_state_hash(),
+                                        actual=parsed_hash,
+                                        case_ids=last_sync.get_footprint_of_cases_on_phone())
+
+        sync_operation = user.get_case_updates(last_sync)
+        case_xml_elements = [xml.get_case_element(op.case, op.required_updates, version) \
+                             for op in sync_operation.actual_cases_to_sync]
+
+
+        last_seq = str(get_db().info()["update_seq"])
+
+        # create a sync log for this
+        previous_log_id = last_sync.get_id if last_sync else None
+
+        synclog = SyncLog(user_id=user.user_id, last_seq=last_seq,
+                          owner_ids_on_phone=user.get_owner_ids(),
+                          date=datetime.utcnow(), previous_log_id=previous_log_id,
+                          cases_on_phone=[CaseState.from_case(c) for c in \
+                                          sync_operation.actual_owned_cases],
+                          dependent_cases_on_phone=[CaseState.from_case(c) for c in \
+                                                    sync_operation.actual_extended_cases])
+        synclog.save(**get_safe_write_kwargs())
+
+        # start with standard response
+        response = get_response_element(
+            "Successfully restored account %s!" % user.username,
+            ResponseNature.OTA_RESTORE_SUCCESS)
+
+        # add sync token info
+        response.append(xml.get_sync_element(synclog.get_id))
+        # registration block
+        response.append(xml.get_registration_element(user))
+        # fixture block
+        for fixture in generator.get_fixtures(user, version, last_sync):
+            response.append(fixture)
+        # case blocks
+        for case_elem in case_xml_elements:
+            response.append(case_elem)
+
+        return xml.tostring(response)
+
+
+def generate_restore_payload(user, restore_id="", version=V1, state_hash=""):
     """
     Gets an XML payload suitable for OTA restore. If you need to do something
     other than find all cases matching user_id = user.user_id then you have
@@ -37,60 +108,9 @@ def generate_restore_payload(user, restore_id="", version="1.0", state_hash=""):
         
         returns: the xml payload of the sync operation
     """
-    check_version(version)
-    
-    last_sync = None
-    if restore_id:
-        try:
-            last_sync = SyncLog.get(restore_id)
-        except Exception:
-            logging.error("Request for bad sync log %s by %s, ignoring..." % (restore_id, user))
-    
-    if last_sync and state_hash:
-        parsed_hash = CaseStateHash.parse(state_hash)
-        if last_sync.get_state_hash() != parsed_hash:
-            raise BadStateException(expected=last_sync.get_state_hash(), 
-                                    actual=parsed_hash,
-                                    case_ids=last_sync.get_footprint_of_cases_on_phone())
-        
-    sync_operation = user.get_case_updates(last_sync)
-    case_xml_elements = [xml.get_case_element(op.case, op.required_updates, version) \
-                         for op in sync_operation.actual_cases_to_sync]
-    
-    
-    last_seq = str(get_db().info()["update_seq"])
-    
-    # create a sync log for this
-    previous_log_id = last_sync.get_id if last_sync else None
-    
-    synclog = SyncLog(user_id=user.user_id, last_seq=last_seq,
-                      owner_ids_on_phone=user.get_owner_ids(),
-                      date=datetime.utcnow(), previous_log_id=previous_log_id,
-                      cases_on_phone=[CaseState.from_case(c) for c in \
-                                      sync_operation.actual_owned_cases],
-                      dependent_cases_on_phone=[CaseState.from_case(c) for c in \
-                                                sync_operation.actual_extended_cases])
-    synclog.save(**get_safe_write_kwargs())
-    
-    # start with standard response
-    response = get_response_element(
-        "Successfully restored account %s!" % user.username, 
-        ResponseNature.OTA_RESTORE_SUCCESS)
-    
-    # add sync token info
-    response.append(xml.get_sync_element(synclog.get_id))
-    # registration block
-    response.append(xml.get_registration_element(user))
-    # fixture block
-    for fixture in generator.get_fixtures(user, version, last_sync):
-        response.append(fixture)
-    # case blocks
-    for case_elem in case_xml_elements:
-        response.append(case_elem)
-    
-    return xml.tostring(response)
+    config = RestoreConfig(user, restore_id, version, state_hash)
+    return config.get_payload()
 
-    
 def generate_restore_response(user, restore_id="", version="1.0", state_hash=""):
     try:
         response = generate_restore_payload(user, restore_id, version, state_hash)
