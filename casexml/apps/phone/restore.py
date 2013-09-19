@@ -27,7 +27,7 @@ class BadStateException(Exception):
 
 class RestoreConfig(object):
     """
-    A struct-like collection of attributes associated with an OTA restore
+    A collection of attributes associated with an OTA restore
     """
     def __init__(self, user, restore_id="", version=V1, state_hash=""):
         self.user = user
@@ -40,22 +40,26 @@ class RestoreConfig(object):
     def sync_log(self):
         return SyncLog.get(self.restore_id) if self.restore_id else None
 
+
+    def validate(self):
+        # runs validation checks, raises exceptions if anything is amiss
+        check_version(self.version)
+        if self.sync_log and self.state_hash:
+            parsed_hash = CaseStateHash.parse(self.state_hash)
+            if self.sync_log.get_state_hash() != parsed_hash:
+                raise BadStateException(expected=self.sync_log.get_state_hash(),
+                                        actual=parsed_hash,
+                                        case_ids=self.sync_log.get_footprint_of_cases_on_phone())
+
+
     def get_payload(self):
-        version = self.version
-        state_hash = self.state_hash
         user = self.user
         last_sync = self.sync_log
 
-        check_version(version)
-        if last_sync and state_hash:
-            parsed_hash = CaseStateHash.parse(state_hash)
-            if last_sync.get_state_hash() != parsed_hash:
-                raise BadStateException(expected=last_sync.get_state_hash(),
-                                        actual=parsed_hash,
-                                        case_ids=last_sync.get_footprint_of_cases_on_phone())
+        self.validate()
 
         sync_operation = user.get_case_updates(last_sync)
-        case_xml_elements = [xml.get_case_element(op.case, op.required_updates, version) \
+        case_xml_elements = [xml.get_case_element(op.case, op.required_updates, self.version)
                              for op in sync_operation.actual_cases_to_sync]
 
 
@@ -83,7 +87,7 @@ class RestoreConfig(object):
         # registration block
         response.append(xml.get_registration_element(user))
         # fixture block
-        for fixture in generator.get_fixtures(user, version, last_sync):
+        for fixture in generator.get_fixtures(user, self.version, last_sync):
             response.append(fixture)
         # case blocks
         for case_elem in case_xml_elements:
