@@ -48,7 +48,7 @@ class RestoreConfig(object):
 
         self.validate()
 
-        if self.caching_enabled:
+        if self.caching_enabled and self.sync_log:
             payload = self.sync_log.get_cached_payload(self.version)
             if payload:
                 return payload
@@ -89,7 +89,7 @@ class RestoreConfig(object):
             response.append(case_elem)
 
         resp = xml.tostring(response)
-        if self.caching_enabled:
+        if self.caching_enabled and self.sync_log:
             self.sync_log.set_cached_payload(resp, self.version)
         return resp
 
