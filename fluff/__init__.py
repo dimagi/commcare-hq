@@ -1,4 +1,5 @@
 from collections import defaultdict
+import logging
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django import schema
 import datetime
@@ -154,10 +155,14 @@ class Calculator(object):
         values = {}
         for slug in self._fluff_emitters:
             fn = getattr(self, slug)
-            values[slug] = (
-                list(fn(item))
-                if passes_filter else []
-            )
+            try:
+                values[slug] = (
+                    list(fn(item))
+                    if passes_filter else []
+                )
+            except Exception:
+                logging.error('%s emitter %s' % (item, slug))
+                raise
         return values
 
     def get_result(self, key, date_range=None, reduce=True):
@@ -337,7 +342,11 @@ class IndicatorDocument(schema.Document):
 
     def calculate(self, item):
         for attr, calculator in self._calculators.items():
-            self[attr] = calculator.calculate(item)
+            try:
+                self[attr] = calculator.calculate(item)
+            except Exception:
+                logging.error('%s calculator %s' % (item, attr))
+                raise
         self.id = item.get_id
         for getter in self.wrapped_group_by:
             self[getter.attribute] = getter.getter_function(item)
