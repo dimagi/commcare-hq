@@ -74,3 +74,24 @@ class UpdateCaseGroupForm(AddCaseGroupForm):
         self.current_group.name = self.cleaned_data['name']
         self.current_group.save()
         return self.current_group
+
+
+class AddCaseToGroup(forms.Form):
+    case_identifier = forms.CharField(label=ugettext_noop("Case ID, External ID, or Phone Number"))
+
+    def __init__(self, *args, **kwargs):
+        super(AddCaseToGroup, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_style = 'inline'
+        self.helper.form_show_labels = False
+        self.helper.layout = Layout(
+            InlineField(
+                'case_identifier',
+                css_class='input-xlarge'
+            ),
+            StrictButton(
+                mark_safe('<i class="icon-plus"></i> %s' % _("Add Case")),
+                css_class='btn-success',
+                type="submit"
+            )
+        )

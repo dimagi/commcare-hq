@@ -203,6 +203,38 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
             'phoneNumber': getattr(case, 'contact_phone_number', '--'),
         }
 
+    def get_create_form(self, is_blank=False):
+        if self.request.method == 'POST' and not is_blank:
+            return AddCaseToGroup(self.request.POST)
+        return AddCaseToGroup()
+
+    def get_create_item_data(self, create_form):
+        case_identifier = create_form.cleaned_data['case_identifier']
+        case = CommCareCase.get_by_identifier(self.domain, case_identifier)
+        if case is None:
+            return {
+                'itemData': {
+                    'id': case_identifier.replace(' ', '_'),
+                    'identifier': case_identifier,
+                    'message': _('Sorry, we could not a find a case that '
+                                 'matched the identifier you provided.'),
+                },
+                'rowClass': 'warning',
+                'template': 'case-message-template',
+            }
+        item_data = self._get_item_data(case)
+        if case._id in self.case_group.cases:
+            message = _('<span class="label label-important">Case already in group</span>')
+        else:
+            message = _('<span class="label label-success">Case added</span>')
+            self.case_group.cases.append(case._id)
+            self.case_group.save()
+        item_data['message'] = message
+        return {
+            'itemData': item_data,
+            'template': 'new-case-template',
+        }
+
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
 
