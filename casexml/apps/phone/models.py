@@ -221,44 +221,39 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
         for case in case_list:
             actions = case.get_actions_for_form(xform.get_id)
             for action in actions:
-                try:
-                    if action.action_type == const.CASE_ACTION_CREATE:
-                        self._assert(not self.phone_has_case(case._id),
-                                     'phone has case being created: %s' % case._id)
-                        if self._phone_owns(action):
-                            self.cases_on_phone.append(CaseState(case_id=case.get_id,
-                                                                 indices=[]))
-                    elif action.action_type == const.CASE_ACTION_UPDATE:
-                        self._assert(
-                            self.phone_has_case(case._id),
-                            "phone doesn't have case being updated: %s" % case._id,
-                            case._id,
-                        )
 
-                        if not self._phone_owns(action):
-                            # only action necessary here is in the case of
-                            # reassignment to an owner the phone doesn't own
-                            self.archive_case(case.get_id)
-                    elif action.action_type == const.CASE_ACTION_INDEX:
-                        # in the case of parallel reassignment and index update
-                        # the phone might not have the case
-                        if self.phone_has_case(case.get_id):
-                            case_state = self.get_case_state(case.get_id)
-                        else:
-                            self._assert(self.phone_has_dependent_case(case._id),
-                                         "phone doesn't have referenced case: %s" % case._id)
-                            case_state = self.get_dependent_case_state(case.get_id)
-                        # reconcile indices
-                        if case_state:
-                            case_state.update_indices(action.indices)
-                    elif action.action_type == const.CASE_ACTION_CLOSE:
-                        if self.phone_has_case(case.get_id):
-                            self.archive_case(case.get_id)
-                except Exception, e:
-                    # debug
-                    # import pdb
-                    # pdb.set_trace()
-                    raise
+                if action.action_type == const.CASE_ACTION_CREATE:
+                    self._assert(not self.phone_has_case(case._id),
+                                 'phone has case being created: %s' % case._id)
+                    if self._phone_owns(action):
+                        self.cases_on_phone.append(CaseState(case_id=case.get_id,
+                                                             indices=[]))
+                elif action.action_type == const.CASE_ACTION_UPDATE:
+                    self._assert(
+                        self.phone_has_case(case._id),
+                        "phone doesn't have case being updated: %s" % case._id,
+                        case._id,
+                    )
+
+                    if not self._phone_owns(action):
+                        # only action necessary here is in the case of
+                        # reassignment to an owner the phone doesn't own
+                        self.archive_case(case.get_id)
+                elif action.action_type == const.CASE_ACTION_INDEX:
+                    # in the case of parallel reassignment and index update
+                    # the phone might not have the case
+                    if self.phone_has_case(case.get_id):
+                        case_state = self.get_case_state(case.get_id)
+                    else:
+                        self._assert(self.phone_has_dependent_case(case._id),
+                                     "phone doesn't have referenced case: %s" % case._id)
+                        case_state = self.get_dependent_case_state(case.get_id)
+                    # reconcile indices
+                    if case_state:
+                        case_state.update_indices(action.indices)
+                elif action.action_type == const.CASE_ACTION_CLOSE:
+                    if self.phone_has_case(case.get_id):
+                        self.archive_case(case.get_id)
         if case_list:
             self.invalidate_cached_payloads()
             try:
