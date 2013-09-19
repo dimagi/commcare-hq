@@ -136,6 +136,7 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin):
                 # so check their validity before passing them up
                 ret = copy(dict(meta_block))
                 for key in ret.keys():
+                    #remove attributes from the meta block
                     if key.startswith('@'):
                         del ret[key]
 
