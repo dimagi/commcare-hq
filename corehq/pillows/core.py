@@ -13,8 +13,6 @@ from datetime import datetime
 
 
 DATE_FORMATS_ARR = ["yyyy-MM-dd",
-                   #"date_time_no_millis",
-                   #                      'date_optional_time',
                    "yyyy-MM-dd'T'HH:mm:ssZZ",
                    "yyyy-MM-dd'T'HH:mm:ss.SSSSSS",
                    "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'",
@@ -27,6 +25,7 @@ DATE_FORMATS_ARR = ["yyyy-MM-dd",
                    "yyyy-MM-dd' 'HH:mm:ss.SSSSSS",
                    "mm/dd/yy' 'HH:mm:ss",
 ]
+
 #https://github.com/elasticsearch/elasticsearch/issues/2132
 #elasticsearch Illegal pattern component: t
 #no builtin types for || joins
