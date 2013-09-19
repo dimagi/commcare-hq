@@ -1,3 +1,4 @@
+from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.models import SyncLog, CaseState
 import logging
 from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
@@ -34,21 +35,18 @@ class RestoreConfig(object):
         self.version = version
         self.state_hash = state_hash
 
+    @property
+    @memoized
+    def sync_log(self):
+        return SyncLog.get(self.restore_id) if self.restore_id else None
+
     def get_payload(self):
         version = self.version
-        restore_id = self.restore_id
         state_hash = self.state_hash
         user = self.user
+        last_sync = self.sync_log
+
         check_version(version)
-
-
-        last_sync = None
-        if restore_id:
-            try:
-                last_sync = SyncLog.get(restore_id)
-            except Exception:
-                logging.error("Request for bad sync log %s by %s, ignoring..." % (restore_id, user))
-
         if last_sync and state_hash:
             parsed_hash = CaseStateHash.parse(state_hash)
             if last_sync.get_state_hash() != parsed_hash:
