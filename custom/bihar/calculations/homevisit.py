@@ -1,5 +1,6 @@
 import datetime
 import logging
+from custom.bihar import getters
 from custom.bihar.calculations.types import DoneDueCalculator, TotalCalculator
 from custom.bihar.calculations.utils.calculations import get_forms
 from custom.bihar.calculations.utils.filters import is_pregnant_mother,\
@@ -11,23 +12,32 @@ import fluff
 
 class BPCalculator(DoneDueCalculator):
 
-    def __init__(self, days, n_visits, window=A_MONTH):
+    def __init__(self, days, window=A_MONTH):
         self.days = days
-        self.n_visits = n_visits
         super(BPCalculator, self).__init__(window)
 
     def filter(self, case):
         return is_pregnant_mother(case) and get_edd(case)
 
+    def _form_filter(self, case, form):
+        lower, upper = self.days
+        date_modified = getters.date_modified(form)
+        return lower <= (case.edd - date_modified).days < upper
+
     @fluff.date_emitter
     def numerator(self, case):
-        yield case.edd - datetime.timedelta(days=self.days) + GRACE_PERIOD
+        for form in get_forms(case, action_filter=lambda a: visit_is(a, 'bp')):
+            date = getters.date_next_bp(form)
+            days_overdue = getters.days_visit_overdue(form)
+            if date and days_overdue == 0 and self._form_filter(case, form):
+                yield date
 
-    @fluff.null_emitter
+    @fluff.date_emitter
     def total(self, case):
-        n_visits = len(filter(lambda a: visit_is(a, 'bp'), case.actions))
-        if n_visits >= self.n_visits:
-            yield None
+        for form in get_forms(case, action_filter=lambda a: visit_is(a, 'bp') or visit_is(a, 'reg')):
+            date = getters.date_next_bp(form)
+            if date and self._form_filter(case, form):
+                yield date
 
 
 class VisitCalculator(DoneDueCalculator):
