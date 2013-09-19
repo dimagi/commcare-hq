@@ -205,11 +205,6 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
                             user.change_username(username)
                         if is_password(password):
                             user.set_password(password)
-                        elif not bool(password):
-                            raise UserUploadError(
-                                _("User %s cannot have a blank password") %
-                                user.username
-                            )
                         status_row['flag'] = 'updated'
                     else:
                         if not is_password(password):
