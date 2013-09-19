@@ -1,3 +1,4 @@
+from copy import copy
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from couchdbkit.ext.django.schema import *
 from dimagi.utils.couch.database import SafeSaveDocument
@@ -115,7 +116,7 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
                             content_type='text/xml')
 
     def invalidate_cached_payloads(self):
-        for name in self._doc.get('_attachments', {}):
+        for name in copy(self._doc.get('_attachments', {})):
             self.delete_attachment(name)
 
     def _assert(self, conditional, msg="", case_id=None):
