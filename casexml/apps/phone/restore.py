@@ -1,3 +1,6 @@
+import warnings
+from dimagi.utils.decorators.memoized import memoized
+from casexml.apps.case.exceptions import BadStateException, RestoreException
 from casexml.apps.phone.models import SyncLog, CaseState
 import logging
 from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
@@ -10,23 +13,10 @@ from casexml.apps.phone.fixtures import generator
 from django.http import HttpResponse
 from casexml.apps.phone.checksum import CaseStateHash
 
-class BadStateException(Exception):
-    
-    def __init__(self, expected, actual, case_ids, **kwargs):
-        super(BadStateException, self).__init__(**kwargs)
-        self.expected = expected
-        self.actual = actual
-        self.case_ids = case_ids
-        
-    def __str__(self):
-        return "Phone state has mismatch. Expected %s but was %s. Cases: [%s]" % \
-                (self.expected, self.actual, ", ".join(self.case_ids))
-        
-
 
 class RestoreConfig(object):
     """
-    A struct-like collection of attributes associated with an OTA restore
+    A collection of attributes associated with an OTA restore
     """
     def __init__(self, user, restore_id="", version=V1, state_hash=""):
         self.user = user
@@ -34,30 +24,31 @@ class RestoreConfig(object):
         self.version = version
         self.state_hash = state_hash
 
-    def get_payload(self):
-        version = self.version
-        restore_id = self.restore_id
-        state_hash = self.state_hash
-        user = self.user
-        check_version(version)
+    @property
+    @memoized
+    def sync_log(self):
+        return SyncLog.get(self.restore_id) if self.restore_id else None
 
 
-        last_sync = None
-        if restore_id:
-            try:
-                last_sync = SyncLog.get(restore_id)
-            except Exception:
-                logging.error("Request for bad sync log %s by %s, ignoring..." % (restore_id, user))
-
-        if last_sync and state_hash:
-            parsed_hash = CaseStateHash.parse(state_hash)
-            if last_sync.get_state_hash() != parsed_hash:
-                raise BadStateException(expected=last_sync.get_state_hash(),
+    def validate(self):
+        # runs validation checks, raises exceptions if anything is amiss
+        check_version(self.version)
+        if self.sync_log and self.state_hash:
+            parsed_hash = CaseStateHash.parse(self.state_hash)
+            if self.sync_log.get_state_hash() != parsed_hash:
+                raise BadStateException(expected=self.sync_log.get_state_hash(),
                                         actual=parsed_hash,
-                                        case_ids=last_sync.get_footprint_of_cases_on_phone())
+                                        case_ids=self.sync_log.get_footprint_of_cases_on_phone())
+
+
+    def get_payload(self):
+        user = self.user
+        last_sync = self.sync_log
+
+        self.validate()
 
         sync_operation = user.get_case_updates(last_sync)
-        case_xml_elements = [xml.get_case_element(op.case, op.required_updates, version) \
+        case_xml_elements = [xml.get_case_element(op.case, op.required_updates, self.version)
                              for op in sync_operation.actual_cases_to_sync]
 
 
@@ -85,7 +76,7 @@ class RestoreConfig(object):
         # registration block
         response.append(xml.get_registration_element(user))
         # fixture block
-        for fixture in generator.get_fixtures(user, version, last_sync):
+        for fixture in generator.get_fixtures(user, self.version, last_sync):
             response.append(fixture)
         # case blocks
         for case_elem in case_xml_elements:
@@ -108,18 +99,19 @@ def generate_restore_payload(user, restore_id="", version=V1, state_hash=""):
         
         returns: the xml payload of the sync operation
     """
+    warnings.warn("generate_restore_payload is deprecated. use RestoreConfig", DeprecationWarning)
     config = RestoreConfig(user, restore_id, version, state_hash)
     return config.get_payload()
 
 def generate_restore_response(user, restore_id="", version="1.0", state_hash=""):
     try:
-        response = generate_restore_payload(user, restore_id, version, state_hash)
+        response = RestoreConfig(user, restore_id, version, state_hash).get_payload()
         return HttpResponse(response, mimetype="text/xml")
-    except BadStateException, e:
-        logging.exception("Bad case state hash submitted by %s: %s" % (user.username, str(e)))
+    except RestoreException, e:
+        logging.exception("%s error during restore submitted by %s: %s" % (type(e).__name__, user.username, str(e)))
         response = get_simple_response_xml(
-            "Phone case list is inconsistant with server's records.",
-            ResponseNature.OTA_RESTORE_ERROR)
+            e.message,
+            ResponseNature.OTA_RESTORE_ERROR
+        )
         return HttpResponse(response, mimetype="text/xml", 
-                            status=412) # precondition failed
-    
+                            status=412)  # precondition failed
