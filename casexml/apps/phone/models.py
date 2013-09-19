@@ -103,8 +103,7 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
         return 'restore_payload_{version}.xml'.format(version=version)
 
     def has_cached_payload(self, version):
-        return self._attachments and self.get_payload_attachment_name(version) in self._attachments
-
+        return self.get_payload_attachment_name(version) in self._doc.get('_attachments', {})
 
     def get_cached_payload(self, version):
         try:
@@ -112,12 +111,13 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
         except ResourceNotFound:
             return None
 
-
-    @memoized
     def set_cached_payload(self, payload, version):
         self.put_attachment(payload, name=self.get_payload_attachment_name(version),
                             content_type='text/xml')
 
+    def invalidate_cached_payloads(self):
+        for name in self._doc.get('_attachments', {}):
+            self.delete_attachment(name)
 
     def _assert(self, conditional, msg="", case_id=None):
         if not conditional:
@@ -259,14 +259,15 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
                     # import pdb
                     # pdb.set_trace()
                     raise
-        try:
-            self.save()
-        except ResourceConflict:
-            logging.exception('doc update conflict saving sync log {id}'.format(
+        if case_list:
+            self.invalidate_cached_payloads()
+            try:
+                self.save()
+            except ResourceConflict:
+                logging.exception('doc update conflict saving sync log {id}'.format(
                     id=self._id,
-            ))
-            raise
-
+                ))
+                raise
 
     def get_footprint_of_cases_on_phone(self):
         """

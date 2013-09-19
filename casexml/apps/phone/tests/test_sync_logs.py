@@ -78,6 +78,9 @@ class PhoneFootprintTest(TestCase):
         log.save()
         self.assertFalse(log.has_cached_payload(V1))
         self.assertFalse(log.has_cached_payload(V2))
+        self.assertEqual(None, log.get_cached_payload(V1))
+        self.assertEqual(None, log.get_cached_payload(V2))
+        log.invalidate_cached_payloads()
 
         payload = "<node>melting hippo</node>"
         log.set_cached_payload(payload, V1)
@@ -93,3 +96,9 @@ class PhoneFootprintTest(TestCase):
         self.assertTrue(log.has_cached_payload(V2))
         self.assertEqual(payload, log.get_cached_payload(V1))
         self.assertEqual(v2_payload, log.get_cached_payload(V2))
+
+        log.invalidate_cached_payloads()
+        self.assertFalse(log.has_cached_payload(V1))
+        self.assertFalse(log.has_cached_payload(V2))
+        self.assertEqual(None, log.get_cached_payload(V1))
+        self.assertEqual(None, log.get_cached_payload(V2))
