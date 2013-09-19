@@ -1,6 +1,7 @@
-from couchdbkit.exceptions import ResourceConflict
+from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from couchdbkit.ext.django.schema import *
 from dimagi.utils.couch.database import SafeSaveDocument
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
 from casexml.apps.case import const
@@ -73,7 +74,6 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
     """
     A log of a single sync operation.
     """
-
     date = DateTimeProperty()
     user_id = StringProperty()
     previous_log_id = StringProperty()  # previous sync log, forming a chain
@@ -98,6 +98,23 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
     owner_ids_on_phone = StringListProperty()
 
     strict = True # for asserts
+
+    def get_payload_attachment_name(self, version):
+        return 'restore_payload_{version}.xml'.format(version=version)
+
+    @memoized
+    def get_cached_payload(self, version):
+        try:
+            return self.fetch_attachment(self.get_payload_attachment_name(version))
+        except ResourceNotFound:
+            return None
+
+
+    @memoized
+    def set_cached_payload(self, payload, version):
+        self.put_attachment(payload, name=self.get_payload_attachment_name(version),
+                            content_type='text/xml')
+
 
     def _assert(self, conditional, msg="", case_id=None):
         if not conditional:
