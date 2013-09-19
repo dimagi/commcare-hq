@@ -7,10 +7,10 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import check_user_has_case, delete_all_sync_logs, delete_all_xforms, delete_all_cases
 from casexml.apps.case.signals import process_cases
 from casexml.apps.phone.models import SyncLog, User
-from casexml.apps.phone.restore import generate_restore_payload
+from casexml.apps.phone.restore import generate_restore_payload, RestoreConfig
 from dimagi.utils.parsing import json_format_datetime
 from couchforms.models import XFormInstance
-from casexml.apps.case.xml import V2
+from casexml.apps.case.xml import V2, V1
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from datetime import datetime
@@ -25,7 +25,7 @@ class SyncBaseTest(TestCase):
     """
     Shared functionality among tests
     """
-    
+
     def setUp(self):
         delete_all_cases()
         delete_all_xforms()
@@ -34,8 +34,9 @@ class SyncBaseTest(TestCase):
         self.user = User(user_id=USER_ID, username="syncguy", 
                          password="changeme", date_joined=datetime(2011, 6, 9)) 
         # this creates the initial blank sync token in the database
-        self.sync_log = synclog_from_restore_payload(generate_restore_payload(self.user))
-    
+        restore_config = RestoreConfig(self.user)
+        self.sync_log = synclog_from_restore_payload(restore_config.get_payload())
+
     def _createCaseStubs(self, id_list, user_id=USER_ID, owner_id=USER_ID):
         for id in id_list:
             caseblock = CaseBlock(
@@ -344,6 +345,46 @@ class SyncTokenUpdateTest(SyncBaseTest):
         self._testUpdate(self.sync_log.get_id, {parent_id: []},
                          {child_id: [index_ref]})
         
+
+class SyncTokenCachingTest(SyncBaseTest):
+
+    def testCaching(self):
+        self.assertFalse(self.sync_log.has_cached_payload(V2))
+        # first request should populate the cache
+        original_payload = RestoreConfig(
+            self.user, version=V2, caching_enabled=True,
+            restore_id=self.sync_log._id,
+        ).get_payload()
+        next_sync_log = synclog_from_restore_payload(original_payload)
+
+        self.sync_log = SyncLog.get(self.sync_log._id)
+        self.assertTrue(self.sync_log.has_cached_payload(V2))
+
+        # a second request with the same config should be exactly the same
+        cached_payload = RestoreConfig(
+            self.user, version=V2, caching_enabled=True,
+            restore_id=self.sync_log._id,
+        ).get_payload()
+        self.assertEqual(original_payload, cached_payload)
+
+        # a second request without caching should be different (generate a new id)
+        uncached_payload = RestoreConfig(
+            self.user, version=V2, caching_enabled=False,
+            restore_id=self.sync_log._id,
+        ).get_payload()
+        self.assertNotEqual(original_payload, uncached_payload)
+        uncached_sync_log = synclog_from_restore_payload(uncached_payload)
+        self.assertNotEqual(next_sync_log._id, uncached_sync_log._id)
+
+        # caching a different version should also produce something new
+        versioned_payload = RestoreConfig(
+            self.user, version=V1, caching_enabled=True,
+            restore_id=self.sync_log._id,
+        ).get_payload()
+        self.assertNotEqual(original_payload, versioned_payload)
+        versioned_sync_log = synclog_from_restore_payload(versioned_payload)
+        self.assertNotEqual(next_sync_log._id, versioned_sync_log._id)
+
 
 class MultiUserSyncTest(SyncBaseTest):
     """
