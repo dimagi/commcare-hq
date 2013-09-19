@@ -99,7 +99,7 @@ def send_domain_registration_email(recipient, domain_name, guid):
     wiki_link = 'http://wiki.commcarehq.org/display/commcarepublic/Home'
     users_link = 'http://groups.google.com/group/commcare-users'
 
-    message_plaintext = """
+    message_plaintext = u"""
 Welcome to CommCareHQ!
 
 Please click this link:
@@ -124,7 +124,7 @@ The CommCareHQ Team
 
 """
 
-    message_html = """
+    message_html = u"""
 <h1>Welcome to CommCare HQ!</h1>
 <p>Please <a href="{activation_link}">go here to activate your new project</a>.  You will not be able to use your project until you have confirmed this email address.</p>
 <p><strong>Project name:</strong> {domain}</p>
@@ -156,7 +156,7 @@ def send_global_domain_registration_email(requesting_user, domain_name):
     wiki_link = 'http://wiki.commcarehq.org/display/commcarepublic/Home'
     users_link = 'http://groups.google.com/group/commcare-users'
 
-    message_plaintext = """
+    message_plaintext = u"""
 Hello {name},
 
 You have successfully created and activated the project "{domain}" for the CommCare HQ user "{username}".
@@ -177,7 +177,7 @@ The CommCareHQ Team
 
 """
 
-    message_html = """
+    message_html = u"""
 <h1>New project "{domain}" created!</h1>
 <p>Hello {name},</p>
 <p>You may now  <a href="{domain_link}">visit your newly created project</a> with the CommCare HQ User <strong>{username}</strong>.</p>
@@ -211,7 +211,7 @@ def send_new_request_update_email(user, requesting_ip, entity_name, entity_type=
         message = "A brand new user just requested a %s called %s." % (entity_texts[0], entity_name)
     else:
         message = "An existing user just created a new %s called %s." % (entity_texts[0], entity_name)
-    message = """%s
+    message = u"""%s
 
 Details include...
 
@@ -226,7 +226,7 @@ You can view the %s here: %s""" % (
         get_url_base() + "/%s/%s/" % ("o" if entity_type == "org" else "a", entity_name))
     try:
         recipients = settings.NEW_DOMAIN_RECIPIENTS
-        send_mail("New %s: %s" % (entity_texts[0], entity_name), message, settings.SERVER_EMAIL, recipients)
+        send_mail(u"New %s: %s" % (entity_texts[0], entity_name), message, settings.SERVER_EMAIL, recipients)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message)
 
