@@ -1,3 +1,4 @@
+import warnings
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.models import SyncLog, CaseState
 import logging
@@ -110,6 +111,7 @@ def generate_restore_payload(user, restore_id="", version=V1, state_hash=""):
         
         returns: the xml payload of the sync operation
     """
+    warnings.warn("generate_restore_payload is deprecated. use RestoreConfig", DeprecationWarning)
     config = RestoreConfig(user, restore_id, version, state_hash)
     return config.get_payload()
 
