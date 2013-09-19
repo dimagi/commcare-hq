@@ -1,7 +1,8 @@
 from couchdbkit import ResourceNotFound
-from casexml.apps.case.models import CommCareCaseGroup
+from django.utils.safestring import mark_safe
+from casexml.apps.case.models import CommCareCaseGroup, CommCareCase
 from corehq import CaseReassignmentInterface
-from corehq.apps.data_interfaces.forms import AddCaseGroupForm, UpdateCaseGroupForm
+from corehq.apps.data_interfaces.forms import AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroup
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
@@ -185,6 +186,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
             _("Case Name"),
             _("Phone Number"),
             _("External ID"),
+            _("Case Details"),
             _("Action"),
         ]
 
@@ -198,6 +200,8 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
 
     def _get_item_data(self, case):
         return {
+            'id': case._id,
+            'detailsUrl': reverse('case_details', args=[self.domain, case._id]),
             'name': case.name,
             'externalId': case.external_id if case.external_id else '--',
             'phoneNumber': getattr(case, 'contact_phone_number', '--'),

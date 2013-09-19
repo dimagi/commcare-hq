@@ -5,10 +5,16 @@
 {% block pagination_templates %}
     <script type="text/html" id="existing-case-template">
         <td class="span3" data-bind="text: name"></td>
-        <td class="span3" data-bind="text: phoneNumber"></td>
+        <td class="span2" data-bind="text: phoneNumber"></td>
         <td class="span3" data-bind="text: externalId"></td>
-        <td class="span3">
-            Delete
+        <td class="span2">
+            <a data-bind="attr: { href: detailsUrl }"
+               class="btn">
+                {% trans 'View Details' %}
+           </a>
+        </td>
+        <td class="span2">
+            Remove
         </td>
     </script>
 
