@@ -19,7 +19,7 @@ class NoDomainProvided(Exception):
     pass
 
 
-class RestoreException(Exception):
+class RestoreException(ValueError):
     """
     For stuff that goes wrong during restore
     """
@@ -37,3 +37,10 @@ class BadStateException(RestoreException):
     def __str__(self):
         return "Phone state has mismatch. Expected %s but was %s. Cases: [%s]" % \
                 (self.expected, self.actual, ", ".join(self.case_ids))
+
+
+class BadVersionException(RestoreException):
+    """
+    Bad ota version
+    """
+    pass

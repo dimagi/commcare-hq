@@ -1,3 +1,4 @@
+from casexml.apps.case.exceptions import BadVersionException
 
 V1 = "1.0"
 V2 = "2.0"
@@ -14,5 +15,7 @@ NS_REVERSE_LOOKUP_MAP = dict((v, k) for k, v in NS_VERSION_MAP.items())
 
 def check_version(version):
     if not version in LEGAL_VERSIONS:
-        raise ValueError("%s is not a legal version, must be one of: %s" % \
-                         (version, ", ".join(LEGAL_VERSIONS)))
+        raise BadVersionException(
+            "%s is not a legal version, must be one of: %s" %
+            (version, ", ".join(LEGAL_VERSIONS))
+        )
