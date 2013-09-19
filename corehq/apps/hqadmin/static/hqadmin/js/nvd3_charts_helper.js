@@ -177,10 +177,11 @@ function addStackedAreaGraph(selector, xname, data) {
     return chart;
 }
 
+var linebreak_txt = "|||";
 function formatChart(chart, selector, xname, data, margin_left) {
     chart.xAxis
         .axisLabel('Date')
-        .tickFormat(function(d){return d3.time.format.utc('%d-%b-%Y')(new Date(d));});
+        .tickFormat(function(d){return d3.time.format.utc('%b %d' + linebreak_txt + '%Y')(new Date(d));});
 
     chart.yAxis
         .tickFormat(d3.format(',.1d'))
@@ -196,3 +197,15 @@ function formatChart(chart, selector, xname, data, margin_left) {
     chart.margin({left: margin_left || 75});
     return chart;
 }
+
+var insertLinebreaks = function (d) {
+    var el = d3.select(this);
+    var words = this.textContent.split(linebreak_txt);
+    el.text('');
+
+    for (var i = 0; i < words.length; i++) {
+        var tspan = el.append('tspan').text(words[i]);
+        if (i > 0)
+            tspan.attr('x', 0).attr('dy', '15');
+    }
+};
