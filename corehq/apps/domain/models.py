@@ -822,6 +822,8 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             media_ids = set()
             apps = [app for app in dom_with_media.full_applications() if app.get_id in from_apps]
             for app in apps:
+                if app.doc_type != 'Application':
+                    continue
                 for _, m in app.get_media_objects():
                     if m.get_id not in media_ids:
                         media.append(m)
