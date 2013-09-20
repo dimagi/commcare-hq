@@ -46,6 +46,12 @@ class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     urlname = 'case_group_list'
     page_title = ugettext_noop("Case Groups")
 
+    limit_text = ugettext_noop("groups per page")
+    empty_notification = ugettext_noop("You have no case groups. Please create one!")
+    loading_message = ugettext_noop("Loading groups...")
+    deleted_items_header = ugettext_noop("Deleted Groups:")
+    new_items_header = ugettext_noop("New Groups:")
+
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
@@ -140,7 +146,13 @@ class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
 class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
     template_name = 'data_interfaces/manage_case_groups.html'
     urlname = 'manage_case_groups'
-    page_title = ugettext_noop("Manage Group")
+    page_title = ugettext_noop("Manage Case Group")
+
+    limit_text = ugettext_noop("cases per page")
+    empty_notification = ugettext_noop("You have no cases in your group.")
+    loading_message = ugettext_noop("Loading cases...")
+    deleted_items_header = ugettext_noop("Removed Cases:")
+    new_items_header = ugettext_noop("Added Cases:")
 
     @property
     def group_id(self):
