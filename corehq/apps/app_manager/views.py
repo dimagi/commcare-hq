@@ -82,7 +82,10 @@ CASE_TYPE_CONFLICT_MSG = (
 
 class ApplicationViewMixin(DomainViewMixin):
     """
-        Paving the way for class-based views in app manager. Yo yo yo.
+    Helper for class-based views in app manager
+
+    Currently only used in hqmedia
+
     """
 
     @property
@@ -94,7 +97,8 @@ class ApplicationViewMixin(DomainViewMixin):
     @memoized
     def app(self):
         try:
-            # if get_app is mainly used for views, maybe it should be a classmethod of this mixin? todo
+            # if get_app is mainly used for views,
+            # maybe it should be a classmethod of this mixin? todo
             return get_app(self.domain, self.app_id)
         except Exception:
             pass
