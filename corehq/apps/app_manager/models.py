@@ -1,6 +1,7 @@
 # coding=utf-8
 from distutils.version import LooseVersion
 import tempfile
+from couchdbkit import ResourceConflict
 import os
 import logging
 import hashlib
@@ -296,7 +297,10 @@ class CouchCachedStringProperty(CachedStringProperty):
     def set(cls, key, value):
         c = cls._get(key)
         c.value = value
-        c.save()
+        try:
+            c.save()
+        except ResourceConflict:
+            cls.set(key, value)
 
 
 class FormBase(DocumentSchema):
