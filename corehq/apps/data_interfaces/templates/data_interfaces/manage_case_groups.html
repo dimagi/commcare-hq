@@ -14,7 +14,11 @@
            </a>
         </td>
         <td class="span2">
-            Remove
+            <button type="button"
+                    class="btn btn-danger delete-item-confirm"
+                    data-loading-text="{% trans 'Removing...' %}">
+                <i class="icon-remove"></i> {% trans 'Remove' %}
+            </button>
         </td>
     </script>
 
@@ -28,9 +32,7 @@
                 {% trans 'View Details' %}
            </a>
         </td>
-        <td class="span3"
-            data-bind="html: message">
-        </td>
+        <td data-bind="html: message"></td>
     </script>
 
     <script type="text/html" id="case-message-template">
@@ -41,5 +43,20 @@
         <td colspan="{{ pagination.num_columns|add:'-1' }}"
             data-bind="text: message"
             class="warning"></td>
+    </script>
+
+    <script type="text/html" id="removed-case-template">
+        <td data-bind="text: name"></td>
+        <td data-bind="text: phoneNumber"></td>
+        <td data-bind="text: externalId"></td>
+        <td>
+            <a data-bind="attr: { href: detailsUrl }"
+               class="btn">
+                {% trans 'View Details' %}
+           </a>
+        </td>
+        <td>
+            <span class="label label-important">{% trans 'Case Removed' %}</span>
+        </td>
     </script>
 {% endblock %}
