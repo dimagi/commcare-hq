@@ -1,6 +1,7 @@
 from StringIO import StringIO
 import logging
 import hashlib
+from lxml import etree
 import os
 import re
 import json
@@ -59,12 +60,6 @@ from corehq.apps.app_manager.models import Application, get_app, DetailColumn, F
 from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST
-
-
-try:
-    from lxml.etree import XMLSyntaxError
-except ImportError:
-    logging.error("lxml not installed! apps won't work properly!!")
 from django.contrib import messages
 
 require_can_edit_apps = require_permission(Permissions.edit_apps)
@@ -87,7 +82,10 @@ CASE_TYPE_CONFLICT_MSG = (
 
 class ApplicationViewMixin(DomainViewMixin):
     """
-        Paving the way for class-based views in app manager. Yo yo yo.
+    Helper for class-based views in app manager
+
+    Currently only used in hqmedia
+
     """
 
     @property
@@ -99,7 +97,8 @@ class ApplicationViewMixin(DomainViewMixin):
     @memoized
     def app(self):
         try:
-            # if get_app is mainly used for views, maybe it should be a classmethod of this mixin? todo
+            # if get_app is mainly used for views,
+            # maybe it should be a classmethod of this mixin? todo
             return get_app(self.domain, self.app_id)
         except Exception:
             pass
@@ -340,7 +339,7 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         try:
             form.validate_form()
             xform_questions = xform.get_questions(langs)
-        except XMLSyntaxError as e:
+        except etree.XMLSyntaxError as e:
             form_errors.append("Syntax Error: %s" % e)
         except AppError as e:
             form_errors.append("Error in application: %s" % e)
