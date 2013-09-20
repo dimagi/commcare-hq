@@ -5,6 +5,7 @@ from corehq import CaseReassignmentInterface
 from corehq.apps.data_interfaces.forms import AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroup
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.hqcase.utils import get_case_by_identifier
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.reports.standard.export import ExcelExportReport
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher, EditDataInterfaceDispatcher
@@ -214,7 +215,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
 
     def get_create_item_data(self, create_form):
         case_identifier = create_form.cleaned_data['case_identifier']
-        case = CommCareCase.get_by_identifier(self.domain, case_identifier)
+        case = get_case_by_identifier(self.domain, case_identifier)
         if case is None:
             return {
                 'itemData': {
