@@ -27,12 +27,15 @@ var CRUDPaginatedListModel = function (
         return !self.hasInitialLoadFinished();
     });
 
+    self.total = ko.observable(total);
+    self.pageLimit = ko.observable(pageLimit);
+
     self.paginatedList = ko.observableArray();  // the list of data to be paginated
     self.newList = ko.observableArray(); // the list of data that was created
     self.deletedList = ko.observableArray();  // the list of data that was modified
 
     self.isPaginationActive = ko.computed(function () {
-        return (self.paginatedList().length + self.deletedList().length + self.newList().length) > 0;
+        return self.total() > 0;
     });
 
     self.isPaginationTableVisible = ko.computed(function () {
@@ -51,8 +54,6 @@ var CRUDPaginatedListModel = function (
         return self.deletedList().length > 0;
     });
 
-    self.total = ko.observable(total);
-    self.pageLimit = ko.observable(pageLimit);
     self.maxPage = ko.computed(function () {
         return Math.ceil(self.total()/self.pageLimit());
     });
