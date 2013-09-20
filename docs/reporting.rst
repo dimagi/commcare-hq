@@ -35,25 +35,25 @@ Example Custom Report Scaffolding
 .. code-block:: python
 
     class MyBasicReport(GenericTabularReport, CustomProjectReport):
-            name = "My Basic Report"
-            slug = "my_basic_report"
-            fields = ('corehq.apps.reports.fields.DatespanField',)
+        name = "My Basic Report"
+        slug = "my_basic_report"
+        fields = ('corehq.apps.reports.fields.DatespanField',)
 
-            @property
-            def headers(self):
-                return DataTablesHeader(DataTablesColumn("Col A"),
-                                        DataTablesColumnGroup(
-                                            "Group 1",
-                                            DataTablesColumn("Col B"),
-                                            DataTablesColumn("Col C")),
-                                        DataTablesColumn("Col D"))
+        @property
+        def headers(self):
+            return DataTablesHeader(DataTablesColumn("Col A"),
+                                    DataTablesColumnGroup(
+                                        "Group 1",
+                                        DataTablesColumn("Col B"),
+                                        DataTablesColumn("Col C")),
+                                    DataTablesColumn("Col D"))
 
-            @property
-            def rows(self):
-                return [
-                    ['Row 1', 2, 3, 4],
-                    ['Row 2', 3, 2, 1]
-                ]
+        @property
+        def rows(self):
+            return [
+                ['Row 1', 2, 3, 4],
+                ['Row 2', 3, 2, 1]
+            ]
 
 Hooking up reports to CommCare HQ
 ----------------------------------
