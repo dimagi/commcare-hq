@@ -282,9 +282,10 @@ class DateSpan(object):
     def get_validation_reason(self):
         if self.startdate is None or self.enddate is None:
             return "You have to specify both dates!"
-        else:
-            if self.enddate < self.startdate:
-                return "You can't have an end date of %s after start date of %s" % (self.enddate, self.startdate)
+        elif self.enddate < self.startdate:
+            return "You can't have an end date of %s after start date of %s" % (self.enddate, self.startdate)
+        elif self.startdate < datetime.datetime(1900, 01, 01) or self.enddate < datetime.datetime(1900, 01, 01):
+            return "You can't use dates earlier than the year 1900"
         return ""
     
     def __str__(self):
@@ -327,6 +328,26 @@ class DateSpan(object):
 
         end = datetime.datetime(enddate.year, enddate.month, enddate.day)
         start = end - datetime.timedelta(days=days)
+        return DateSpan(start, end, format, inclusive, timezone)
+
+
+    @classmethod
+    def from_month(cls, month=None, year=None, format=DEFAULT_DATE_FORMAT,
+        inclusive=True, timezone=pytz.utc):
+        """
+        Generate a DateSpan object given a numerical month and year.
+        Both are optional and default to the current month/year.
+
+            april = DateSpan.from_month(04, 2013)
+        """
+        if month is None:
+            month = datetime.date.today().month
+        if year is None:
+            year = datetime.date.today().year
+        assert isinstance(month, int) and isinstance(year, int)
+        start = datetime.datetime(year, month, 1)
+        next = start + datetime.timedelta(days=32)
+        end = datetime.datetime(next.year, next.month, 1) - datetime.timedelta(days=1)
         return DateSpan(start, end, format, inclusive, timezone)
 
 

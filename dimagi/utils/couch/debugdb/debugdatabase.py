@@ -126,23 +126,13 @@ class DebugViewResults64(ViewResults):
         view_name = view_args[3]
         self.debug_view = '%s/%s' % (design_doc, view_name)
 
-
-        newparams = self.params.copy()
-        if newparams.has_key('key'):
-            newparams['key'] = process_key(newparams['key'])
-        if newparams.has_key('startkey'):
-            newparams['startkey'] = process_key(newparams['startkey'])
-        if newparams.has_key('endkey'):
-            newparams['endkey'] = process_key(newparams['endkey'])
-        if newparams.has_key('keys'):
-            newparams['keys'] = process_key(newparams['keys'])
         start = datetime.now()
 
         if not self._result_cache:
-            result_cached=False
+            result_cached = False
             self.debug_fetch()
         else:
-            result_cached=True
+            result_cached = True
 
         stop = datetime.now()
         duration = ms_from_timedelta(stop - start)
@@ -151,7 +141,7 @@ class DebugViewResults64(ViewResults):
         self._queries.append({
                 'view_path': self.debug_view,
                 'duration': duration,
-                'params': newparams,
+                'params': self.params,
                 'stacktrace': stacktrace,
                 'start_time': start,
                 'stop_time': stop,
@@ -160,7 +150,7 @@ class DebugViewResults64(ViewResults):
                 'offset': self._result_cache.get('offset', 0),
                 'rows': self._result_cache.get('total_rows', 0),
                 'result_cached': result_cached,
-                'include_docs': newparams.get('include_docs', False)
+                'include_docs': self.params.get('include_docs', False)
             })
     _fetch_if_needed = _debug_fetch_if_needed
 
@@ -193,15 +183,6 @@ class DebugViewResults57(ViewResults):
                 setattr(self, key, self._result_cache[key])
 
     def _debug_fetch_if_needed(self):
-        newparams = self.params.copy()
-        if newparams.has_key('key'):
-            newparams['key'] = process_key(newparams['key'])
-        if newparams.has_key('startkey'):
-            newparams['startkey'] = process_key(newparams['startkey'])
-        if newparams.has_key('endkey'):
-            newparams['endkey'] = process_key(newparams['endkey'])
-        if newparams.has_key('keys'):
-            newparams['keys'] = process_key(newparams['keys'])
         start = datetime.now()
 
         if not self._result_cache:
@@ -212,9 +193,10 @@ class DebugViewResults57(ViewResults):
         stacktrace = tidy_stacktrace(traceback.extract_stack())
 
         view_path_arr = self.view.view_path.split('/')
-        view_path_arr.pop(0) #pop out the leading _design
-        view_path_arr.pop(1) #pop out the middle _view
-        view_path_display = '/'.join(view_path_arr)
+        if len(view_path_arr) == 4:
+            view_path_display = '%s/%s' % (view_path_arr[1], view_path_arr[3])
+        else:
+            view_path_display = view_path_arr[0] # _all_docs
 
         if not self._result_cache:
             result_cached = False
@@ -225,7 +207,7 @@ class DebugViewResults57(ViewResults):
         self._queries.append({
             'view_path': view_path_display,
             'duration': duration,
-            'params': newparams,
+            'params': self.params,
             'stacktrace': stacktrace,
             'start_time': start,
             'stop_time': stop,
@@ -233,8 +215,8 @@ class DebugViewResults57(ViewResults):
             'total_rows': len(self._result_cache.get('rows', [])),
             'offset': self._result_cache.get('offset', 0),
             'rows': self._result_cache.get('total_rows', 0),
-            'result_cached': result_cached,
-            'include_docs': newparams.get('include_docs', False)
+            'result_cached': result_cached
+            'include_docs': self.params.get('include_docs', False)
         })
 
     _fetch_if_needed = _debug_fetch_if_needed
