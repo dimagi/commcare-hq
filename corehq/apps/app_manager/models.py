@@ -1,6 +1,7 @@
 # coding=utf-8
 from distutils.version import LooseVersion
 import tempfile
+from couchdbkit import ResourceConflict
 import os
 import logging
 import hashlib
@@ -15,6 +16,7 @@ from functools import wraps
 from copy import deepcopy
 from urllib2 import urlopen
 from urlparse import urljoin
+from lxml import etree
 
 from django.core.cache import cache
 from django.utils.encoding import force_unicode
@@ -40,7 +42,6 @@ from dimagi.utils.couch.database import get_db
 import commcare_translations
 
 from corehq.util import bitly
-from corehq.apps.receiverwrapper.models import Repeater, register_repeater_type
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
@@ -170,7 +171,7 @@ class UpdateReferralAction(FormAction):
     def get_followup_date(self):
         if self.followup_date:
             return "if(date({followup_date}) >= date(today()), {followup_date}, date(today() + 2))".format(
-                followup_date = self.followup_date,
+                followup_date=self.followup_date,
             )
         return self.followup_date or "date(today() + 2)"
 
@@ -296,7 +297,10 @@ class CouchCachedStringProperty(CachedStringProperty):
     def set(cls, key, value):
         c = cls._get(key)
         c.value = value
-        c.save()
+        try:
+            c.save()
+        except ResourceConflict:
+            cls.set(key, value)
 
 
 class FormBase(DocumentSchema):
@@ -2045,6 +2049,16 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                         needs_case_detail=True
                     )
                 )
+            for column in module.get_detail('case_short').columns:
+                if column.format == 'filter':
+                    try:
+                        etree.XPath(column.filter_xpath or '')
+                    except etree.XPathSyntaxError:
+                        errors.append({
+                            'type': 'invalid filter xpath',
+                            'module': build_error_utils.get_module_info(module),
+                            'column': column,
+                        })
 
         for form in self.get_forms():
             errors.extend(form.validate_for_build())
@@ -2112,8 +2126,7 @@ class RemoteApp(ApplicationBase):
                 node = profile_xml.find('property[@key="%s"]' % key)
 
                 if node.xml is None:
-                    from lxml import etree as ET
-                    node = ET.Element('property')
+                    node = etree.Element('property')
                     profile_xml.xml.insert(0, node)
                     node.attrib['key'] = key
 

@@ -1,14 +1,17 @@
 from StringIO import StringIO
 from datetime import datetime, timedelta
+
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from casexml.apps.case.xml import V1
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.receiverwrapper.models import RepeatRecord, CaseRepeater, FormRepeater
-from couchforms.models import XFormInstance
+
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.test.client import Client
+
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.receiverwrapper.models import RepeatRecord, CaseRepeater, FormRepeater
+from couchforms.models import XFormInstance
 
 case_id = "ABC123CASEID"
 instance_id = "XKVB636DFYL38FNX3D38WV5EH"
@@ -62,9 +65,9 @@ class RepeaterTest(TestCase):
         self.client = Client()
         self.domain = "test-domain"
         create_domain(self.domain)
-        self.case_repeater = CaseRepeater(domain=self.domain, url='case-repeater-url', version=V1)
+        self.case_repeater = CaseRepeater(domain=self.domain, url='case-repeater-url', version=V1, next_check=datetime.utcnow() - timedelta(seconds=5))
         self.case_repeater.save()
-        self.form_repeater = FormRepeater(domain=self.domain, url='form-repeater-url')
+        self.form_repeater = FormRepeater(domain=self.domain, url='form-repeater-url', next_check=datetime.utcnow() - timedelta(seconds=10))
         self.form_repeater.save()
         self.log = []
         self.post_xml(xform_xml)
@@ -128,7 +131,7 @@ class RepeaterTest(TestCase):
         repeat_records = RepeatRecord.all(domain=self.domain, due_before=next_check_time + timedelta(seconds=2))
         self.assertEqual(len(repeat_records), 2)
 
-        for repeat_record in repeat_records:
+        for repeat_record in sorted(repeat_records, key=lambda rr: rr.next_check):
             self.assertLess(abs(next_check_time - repeat_record.next_check), timedelta(seconds=2))
             repeat_record.fire(post_fn=self.make_post_fn([404, 200]))
             repeat_record.save()

@@ -500,8 +500,16 @@ LOGSTASH_HOST = 'localhost'
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
 
+####### Couch Config ######
 #for production this ought to be set to true on your configured couch instance
 COUCH_HTTPS = False
+COUCH_SERVER_ROOT = 'localhost:5984'  # 6984 for https couch
+COUCH_USERNAME = ''
+COUCH_PASSWORD = ''
+COUCH_DATABASE_NAME = 'commcarehq'
+
+BITLY_LOGIN = ''
+BITLY_APIKEY = ''
 
 # this should be overridden in localsettings
 INTERNAL_DATA = defaultdict(list)
