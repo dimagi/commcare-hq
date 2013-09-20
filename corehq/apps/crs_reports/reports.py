@@ -64,10 +64,10 @@ class HNBCReportDisplay(CaseDisplay):
 
 class BaseHNBCReport(CustomProjectReport, DatespanMixin, CaseListReport):
 
-    fields = ['corehq.apps.reports.fields.SelectBlockField',
-              'corehq.apps.reports.fields.SelectSubCenterField', # Todo: Currently there is no data about it in case
-              'corehq.apps.reports.fields.SelectASHAField',
-              'corehq.apps.reports.fields.SelectPNCStatusField',
+    fields = ['corehq.apps.crs_reports.fields.SelectBlockField',
+              'corehq.apps.crs_reports.fields.SelectSubCenterField', # Todo: Currently there is no data about it in case
+              'corehq.apps.crs_reports.fields.SelectASHAField',
+              'corehq.apps.crs_reports.fields.SelectPNCStatusField',
               'corehq.apps.reports.standard.inspect.CaseSearchFilter']
 
     ajax_pagination = True
@@ -107,11 +107,23 @@ class BaseHNBCReport(CustomProjectReport, DatespanMixin, CaseListReport):
     @property
     def case_filter(self):
         block = self.request_params.get('block', '')
+        status = self.request_params.get('PNC_status', '')
 
         filters = [{'term': {'pp_case_filter': 1}}]
+        or_stmt = []
 
         if(block):
-            filters.append({'term': {'site_number': block.lower()}})
+            filters.append({'term': {'block': block}})
+
+        if(status):
+            if(status == 'On Time'):
+                for i in range(1, 8):
+                    filters.append({'term': {'case_pp_%s_done' % i: 'yes'}})
+            else:
+                for i in range(1, 8):
+                    or_stmt.append({'term': {'case_pp_%s_done' % i: 'no'}})
+                or_stmt = {'or': or_stmt}
+                filters.append(or_stmt)
 
         return {'and': filters} if filters else {}
 

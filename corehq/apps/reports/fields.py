@@ -135,45 +135,6 @@ class BooleanField(ReportField):
         self.context[self.slug] = self.request.GET.get(self.slug, False)
         self.context['checked'] = self.request.GET.get(self.slug, False)
 
-class SelectPNCStatusField(ReportSelectField):
-    slug = "PNC_status"
-    name = ugettext_noop("Status")
-    cssId = "opened_closed"
-    cssClasses = "span3"
-    default_option = "Complete PNC"
-    options = [dict(val="Incomplete PNC", text=ugettext_noop("Incomplete PNC")),
-               dict(val="I progress PNC", text=ugettext_noop("In progress PNC"))]
-
-class SelectBlockField(ReportSelectField):
-    slug = "block"
-    name = ugettext_noop("Block")
-    cssId = "opened_closed"
-    cssClasses = "span3"
-
-    def update_params(self):
-        blocks = set(self.get_blocks(self.domain))
-        block = self.request.GET.get(self.slug, '')
-
-        self.selected = block
-        self.options = [dict(val=block_item, text="%s" % block_item) for block_item in blocks]
-        self.default_option = _("Select Block")
-
-    @classmethod
-    def get_blocks(cls, domain):
-        for r in get_db().view("case/get_lite").all():
-            row =  dict(r['value'])
-            if(row.has_key('block') and row.get('block') !=''):
-                yield row.get('block')
-
-class SelectSubCenterField(ReportSelectField):
-    slug = "sub_center"
-    name = ugettext_noop("Sub Center")
-    cssId = "opened_closed"
-    cssClasses = "span3"
-    default_option = "Select Sub Center"
-    options = []
-
-
 class GroupFieldMixin():
     slug = "group"
     name = ugettext_noop("Group")
@@ -529,15 +490,6 @@ class DatespanField(ReportField):
             self.datespan.enddate = self.request.datespan.enddate
         self.context['timezone'] = self.timezone.zone
         self.context['datespan'] = self.datespan
-
-
-class SelectASHAField(SelectCaseOwnerField):
-    name = ugettext_noop("ASHA")
-    default_option = ugettext_noop("Type ASHA name")
-
-    def update_params(self):
-        case_sharing_groups = Group.get_case_sharing_groups(self.domain)
-        self.context["groups"] = [dict(group_id=group._id, name=group.name) for group in case_sharing_groups]
 
 class AsyncLocationField(ReportField):
     name = ugettext_noop("Location")
