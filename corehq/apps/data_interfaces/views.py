@@ -178,8 +178,9 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
         return self.request.POST if self.request.method == 'POST' else self.request.GET
 
     @property
+    @memoized
     def total(self):
-        return len(self.case_group.cases)
+        return self.case_group.get_total_cases(clean_list=True)
 
     @property
     def column_names(self):
