@@ -26,7 +26,7 @@ from dimagi.utils.indicators import ComputedDocumentMixin
 from receiver.util import spoof_submission
 from couchforms.models import XFormInstance
 from casexml.apps.case.sharedmodels import IndexHoldingMixIn, CommCareCaseIndex, CommCareCaseAttachment
-from dimagi.utils.couch.database import get_db, SafeSaveDocument
+from dimagi.utils.couch.database import get_db, SafeSaveDocument, iter_docs
 from dimagi.utils.couch import LooselyEqualDocumentSchema
 
 
@@ -1007,6 +1007,32 @@ class CommCareCaseGroup(Document):
         # Necessary for the CommCareCaseGroup to interact with CommConnect, as if using the CommCareMobileContactMixin
         # However, the entire mixin is not necessary.
         return self.timezone
+
+    def get_cases(self, limit=None, skip=None):
+        case_ids = self.cases
+        if skip is not None:
+            case_ids = case_ids[skip:]
+        if limit is not None:
+            case_ids = case_ids[:limit]
+        for case_doc in iter_docs(CommCareCase.get_db(), case_ids):
+            # don't let CommCareCase-Deleted get through
+            if case_doc['doc_type'] == 'CommCareCase':
+                yield CommCareCase.wrap(case_doc)
+
+    def get_total_cases(self, clean_list=False):
+        if clean_list:
+            self.clean_cases()
+        return len(self.cases)
+
+    def clean_cases(self):
+        cleaned_list = []
+        for case_doc in iter_docs(CommCareCase.get_db(), self.cases):
+            # don't let CommCareCase-Deleted get through
+            if case_doc['doc_type'] == 'CommCareCase':
+                cleaned_list.append(case_doc['_id'])
+        if len(self.cases) != len(cleaned_list):
+            self.cases = cleaned_list
+            self.save()
 
     @classmethod
     def get_all(cls, domain, limit=None, skip=None):
