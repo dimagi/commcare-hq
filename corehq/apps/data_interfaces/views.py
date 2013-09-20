@@ -6,7 +6,7 @@ from corehq.apps.data_interfaces.forms import AddCaseGroupForm, UpdateCaseGroupF
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqcase.utils import get_case_by_identifier
-from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
+from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, PaginatedItemException
 from corehq.apps.reports.standard.export import ExcelExportReport
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher, EditDataInterfaceDispatcher
 from django.core.urlresolvers import reverse
@@ -239,6 +239,16 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
         return {
             'itemData': item_data,
             'template': 'new-case-template',
+        }
+
+    def get_deleted_item_data(self, item_id):
+        if not item_id:
+            raise PaginatedItemException("The case's ID was blank.")
+        current_cases = set(self.case_group.cases)
+        self.case_group.cases = list(current_cases.difference([item_id]))
+        self.case_group.save()
+        return {
+            'template': 'removed-case-template',
         }
 
     def post(self, *args, **kwargs):
