@@ -368,7 +368,22 @@ class ProjectDataTab(UITab):
 
         if self.can_edit_commcare_data:
             from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
-            items.extend(EditDataInterfaceDispatcher.navigation_sections(context))
+            edit_section = EditDataInterfaceDispatcher.navigation_sections(context)
+
+            from corehq.apps.data_interfaces.views import CaseGroupListView, CaseGroupCaseManagementView
+            if self.couch_user.is_previewer:
+                edit_section[0][1].append({
+                    'title': CaseGroupListView.page_title,
+                    'url': reverse(CaseGroupListView.urlname, args=[self.domain]),
+                    'subpages': [
+                        {
+                            'title': CaseGroupCaseManagementView.page_title,
+                            'urlname': CaseGroupCaseManagementView.urlname,
+                        }
+                    ]
+                })
+
+            items.extend(edit_section)
 
         return items
 
