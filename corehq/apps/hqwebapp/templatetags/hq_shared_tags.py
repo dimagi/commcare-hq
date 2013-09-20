@@ -6,6 +6,7 @@ from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from corehq.apps.domain.models import Domain
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_handler
 
@@ -83,6 +84,15 @@ def get_report_analytics_tag(request):
 
 @register.simple_tag
 def domains_for_user(request, selected_domain=None):
+    """
+    Generate pulldown menu for domains.
+    Cache the entire string alongside the couch_user's doc_id that can get invalidated when
+    the user doc updates via save.
+    """
+    cached_val = cache_core.get_cached_prop(request.couch_user.get_id, 'domain_list')
+    if cached_val:
+        return cached_val.get('domain_list', "")
+
     lst = list()
     lst.append('<ul class="dropdown-menu nav-list dropdown-orange">')
     new_domain_url = reverse("registration_domain")
@@ -112,7 +122,11 @@ def domains_for_user(request, selected_domain=None):
     lst.append('<li><a href="%s">CommCare Exchange...</a></li>' % reverse("appstore"))
     lst.append("</ul>")
 
-    return "".join(lst)
+    domain_list_str = "".join(lst)
+    ret = {"domain_list": domain_list_str }
+    cache_core.cache_doc_prop(request.couch_user.get_id, 'domain_list', ret)
+
+    return domain_list_str
 
 @register.simple_tag
 def list_my_domains(request):
