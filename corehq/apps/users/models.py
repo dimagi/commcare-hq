@@ -1066,6 +1066,18 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
         super(CouchUser, self).save(**params)
 
+        results = couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
+        for result in results:
+            # Second argument is None if there was no error
+            if result[1]:
+                notify_exception(
+                    None,
+                    message="Error occured while syncing user %s: %s" %
+                            (self.username, str(result[1]))
+                )
+
+
+
     @classmethod
     def django_user_post_save_signal(cls, sender, django_user, created, max_tries=3):
         if hasattr(django_user, 'DO_NOT_SAVE_COUCH_USER'):
@@ -1167,8 +1179,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         super(CommCareUser, self).save(**params)
 
         from corehq.apps.users.signals import commcare_user_post_save
-        results = commcare_user_post_save.send_robust(sender='couch_user',
-                                                     couch_user=self)
+        results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self)
         for result in results:
             # Second argument is None if there was no error
             if result[1]:
