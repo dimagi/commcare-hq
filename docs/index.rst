@@ -14,9 +14,15 @@ Welcome to CommCareHQ's documentation!
 .. toctree::
    :maxdepth: 2
 
-   documenting
    reporting
+   ui_helpers
 
+Tips for documenting
+--------------------
+
+.. toctree::
+
+    documenting
 
 Indices and tables
 ==================

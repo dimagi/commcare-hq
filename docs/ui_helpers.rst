@@ -87,6 +87,7 @@ to render the data you pass back to the view. Each template will have access to
 everything inside of `itemData`. Here's an example:
 
 .. code-block:: html
+
     {% extends 'hqwebapp/base_paginated_crud.html' %}
 
     {% block pagination_templates %}

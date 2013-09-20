@@ -224,17 +224,10 @@ def import_app(req, domain, template="app_manager/import_app.html"):
     if req.method == "POST":
         _clear_app_cache(req, domain)
         name = req.POST.get('name')
-        try:
-            source = req.POST.get('source')
-            source = json.loads(source)
-            assert(source is not None)
-            app = import_app_util(source, domain, name=name)
-        except Exception:
-            app_id = req.POST.get('app_id')
-            def validate_source_domain(src_dom):
-                if src_dom != EXAMPLE_DOMAIN and not req.couch_user.can_edit_apps(domain=domain):
-                    return HttpResponseForbidden()
-            app = import_app_util(app_id, domain, name=name, validate_source_domain=validate_source_domain)
+        source = req.POST.get('source')
+        source = json.loads(source)
+        assert(source is not None)
+        app = import_app_util(source, domain, name=name)
 
         app_id = app._id
         return back_to_main(**locals())

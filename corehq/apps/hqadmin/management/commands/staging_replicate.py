@@ -1,11 +1,12 @@
 from django.core.management.base import LabelCommand
 from django.conf import settings
 import sys
+from auditcare.models import AuditEvent
 from couchforms.models import XFormInstance
 
 
 class Command(LabelCommand):
-    help = "Run a blocking replication of select domains"
+    help = "Run a continuous replication of select domains"
     args = "cancel"
     label = ""
 
@@ -42,5 +43,6 @@ class Command(LabelCommand):
 
         server = XFormInstance.get_db().server
         server.replicate(source_uri, target_uri, **repl_params)
+        AuditEvent.audit_command()
 
 
