@@ -1019,6 +1019,21 @@ class CommCareCaseGroup(Document):
             if case_doc['doc_type'] == 'CommCareCase':
                 yield CommCareCase.wrap(case_doc)
 
+    def get_total_cases(self, clean_list=False):
+        if clean_list:
+            self.clean_cases()
+        return len(self.cases)
+
+    def clean_cases(self):
+        cleaned_list = []
+        for case_doc in iter_docs(CommCareCase.get_db(), self.cases):
+            # don't let CommCareCase-Deleted get through
+            if case_doc['doc_type'] == 'CommCareCase':
+                cleaned_list.append(case_doc['_id'])
+        if len(self.cases) != len(cleaned_list):
+            self.cases = cleaned_list
+            self.save()
+
     @classmethod
     def get_all(cls, domain, limit=None, skip=None):
         extra_kwargs = {}
