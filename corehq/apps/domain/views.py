@@ -504,6 +504,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
     @memoized
     def has_published_apps(self):
         for app in self.domain_object.applications():
+            app = app.get_latest_saved() or app
             if self.request.POST.get("%s-publish" % app.id, False):
                 return True
         messages.error(self.request, _("Cannot publish a project without applications to CommCare Exchange"))
