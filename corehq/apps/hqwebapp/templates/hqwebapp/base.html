@@ -73,9 +73,7 @@
                             {% block tabs %}
                                 {% format_main_menu %}
                             {% endblock %}
-                            {% cache 500 header_user_buttons c_username c_domain c_org %}
-                                {% include 'hqwebapp/partials/global_navigation_bar.html' %}
-                            {% endcache %}
+                            {% include 'hqwebapp/partials/global_navigation_bar.html' %}
                         </nav>
                     {% else %}
                         {% block extra_tabs %}
