@@ -1,4 +1,5 @@
 from couchdbkit import ResourceNotFound
+from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from casexml.apps.case.models import CommCareCaseGroup, CommCareCase
 from corehq import CaseReassignmentInterface
@@ -8,7 +9,8 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqcase.utils import get_case_by_identifier
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, PaginatedItemException
 from corehq.apps.reports.standard.export import ExcelExportReport
-from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher, EditDataInterfaceDispatcher
+from corehq.apps.data_interfaces.dispatcher import (DataInterfaceDispatcher, EditDataInterfaceDispatcher,
+                                                    require_can_edit_data)
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404
 from dimagi.utils.decorators.memoized import memoized
@@ -35,6 +37,10 @@ def default(request, domain):
 
 class DataInterfaceSection(BaseDomainView):
     section_name = ugettext_noop("Data")
+
+    @method_decorator(require_can_edit_data)
+    def dispatch(self, request, *args, **kwargs):
+        return super(DataInterfaceSection, self).dispatch(request, *args, **kwargs)
 
     @property
     def section_url(self):
