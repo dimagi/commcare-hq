@@ -16,11 +16,17 @@ CACHED_VIEW_PREFIX = '#cached_view_'
 
 #the actual payload of the cached_doc
 CACHED_DOC_PREFIX = '#cached_doc_'
+CACHED_DOC_PROP_PREFIX = '#cached_doc_helper_'
 
 #for a given doc_id, a reverse relationship to see which views are touched by this cache
 #value is a list of the cached_view keys
 CACHED_VIEW_DOC_REVERSE = '#reverse_cached_doc_'
 
+
+
+def key_doc_prop(doc_id, property):
+    key = "%s%s_%s" % (CACHED_DOC_PROP_PREFIX, doc_id, property)
+    return key
 
 def key_doc_id(doc_id):
     """
@@ -71,8 +77,12 @@ def purge_by_doc_id(doc_id):
 
     if exists:
         rcache().delete(key_doc_id(doc_id))
+
         #then all the reverse indices by that doc_id
         rcache().delete_pattern(key_reverse_doc(doc_id, '*'))
+
+        #then delete all properties
+        rcache().delete_pattern(key_doc_prop(doc_id, '*'))
         return True, simplejson.loads(exists)
     else:
         return False, None
@@ -120,6 +130,28 @@ def cached_open_doc(db, doc_id, cache_expire=COUCH_CACHE_TIMEOUT, **params):
     else:
         return cached_doc
 
+
+def cache_doc_prop(doc_id, property, doc_data, cache_expire=COUCH_CACHE_TIMEOUT, **params):
+    """
+    Cache Helper
+
+    Wrap additional data around a doc_id's properties, and invalidate when the doc gets invalidated
+
+    doc_id: doc_id in question
+    property: property name
+    doc_data: json_dict that is to be cached
+    """
+    key = key_doc_prop(doc_id, property)
+    rcache().set(key, simplejson.dumps(doc_data), timeout=cache_expire)
+
+
+def get_cached_prop(doc_id, property):
+    key = key_doc_prop(doc_id, property)
+    retval = rcache().get(key, None)
+    if retval:
+        return simplejson.loads(retval)
+    else:
+        return None
 
 def _get_cached_doc_only(doc_id):
     """
