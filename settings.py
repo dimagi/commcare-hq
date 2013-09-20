@@ -249,7 +249,7 @@ HQ_APPS = (
     'custom.reports.care_sa',
     'custom.apps.cvsu',
     'custom.reports.mc',
-    'corehq.apps.crs_reports',
+    'custom.apps.crs_reports',
 )
 
 TEST_APPS = ()
@@ -280,7 +280,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'rosetta',
     'soil',
     'south',
-    'corehq.apps.crs_reports',
+    'custom.apps.crs_reports',
 
     # submodules with tests that run on travis
     'casexml.apps.case',
@@ -864,7 +864,7 @@ DOMAIN_MODULE_MAP = {
     'mvp-sada': 'mvp',
     'psi-unicef': 'psi',
     'project': 'custom.apps.care_benin',
-    'crs-remind': 'corehq.apps.crs_reports'
+    'crs-remind': 'custom.apps.crs_reports'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

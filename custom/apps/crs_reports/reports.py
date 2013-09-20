@@ -64,10 +64,10 @@ class HNBCReportDisplay(CaseDisplay):
 
 class BaseHNBCReport(CustomProjectReport, DatespanMixin, CaseListReport):
 
-    fields = ['corehq.apps.crs_reports.fields.SelectBlockField',
-              'corehq.apps.crs_reports.fields.SelectSubCenterField', # Todo: Currently there is no data about it in case
-              'corehq.apps.crs_reports.fields.SelectASHAField',
-              'corehq.apps.crs_reports.fields.SelectPNCStatusField',
+    fields = ['custom.apps.crs_reports.fields.SelectBlockField',
+              'custom.apps.crs_reports.fields.SelectSubCenterField', # Todo: Currently there is no data about it in case
+              'custom.apps.crs_reports.fields.SelectASHAField',
+              'custom.apps.crs_reports.fields.SelectPNCStatusField',
               'corehq.apps.reports.standard.inspect.CaseSearchFilter']
 
     ajax_pagination = True
