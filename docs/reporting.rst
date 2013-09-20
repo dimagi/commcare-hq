@@ -1,8 +1,8 @@
 Reporting
 =========
 
-report
-    logical grouping of indicators with common config options (filters etc)
+A report is
+    a logical grouping of indicators with common config options (filters etc)
 
 The way reports are produced in CommCare is still evolving so there are a number
 of different frameworks and methods for generating reports. Some of these are
@@ -12,7 +12,12 @@ of different frameworks and methods for generating reports. Some of these are
 Recommended approaches for building reports
 -------------------------------------------
 
-TODO
+TODO: SQL reports, Elastic reports, Custom case lists / details,
+
+Things to keep in mind:
+
+* `report API <report_api>`_
+
 
 * `Fluff`_
 * `Ctable`_
