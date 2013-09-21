@@ -83,7 +83,7 @@ class TestMeta(TestCase):
             'deprecatedID': None,
             'deviceID': u'commconnect'
         })
-
+        xform.delete()
 
     def testMetaAppVersionDict(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "meta_dict_appversion.xml")
@@ -107,7 +107,4 @@ class TestMeta(TestCase):
             'deprecatedID': None,
             'deviceID': u'commconnect'
         })
-
-
-
-
+        xform.delete()
