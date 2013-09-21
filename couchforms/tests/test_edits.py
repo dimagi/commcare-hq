@@ -18,6 +18,8 @@ class EditFormTest(TestCase):
         with open(edit_file, "rb") as f:
             xml_data2 = f.read()
 
+        docs = []
+
         doc = post_xform_to_couch(xml_data1)
         self.assertEqual("7H46J37FGH3", doc.get_id)
         self.assertEqual("XFormInstance", doc.doc_type)
@@ -30,6 +32,8 @@ class EditFormTest(TestCase):
         self.assertEqual("100", doc.form['vitals']['height'])
         self.assertEqual("Edited Baby!", doc.form['assessment']['categories'])
 
+        docs.append(doc)
+
         doc = XFormDeprecated.view('couchforms/edits', include_docs=True).first()
         self.assertEqual("7H46J37FGH3", doc.orig_id)
         self.assertNotEqual("7H46J37FGH3", doc.get_id)
@@ -37,4 +41,5 @@ class EditFormTest(TestCase):
         self.assertEqual("", doc.form['vitals']['height'])
         self.assertEqual("other", doc.form['assessment']['categories'])
 
-
+        for doc in docs:
+            doc.delete()
