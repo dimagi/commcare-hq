@@ -110,6 +110,14 @@ def validate_time(value):
     if time_regex.match(value) is None:
         raise ValidationError("Times must be in hh:mm format.")
 
+def validate_form_unique_id(form_unique_id, domain):
+    try:
+        form = CCHQForm.get_form(form_unique_id)
+        app = form.get_app()
+        assert app.domain == domain
+    except Exception:
+        raise ValidationError(_("Invalid form chosen."))
+
 # Used for validating the phone number from a UI. Returns the phone number if valid, otherwise raises a ValidationError.
 def validate_phone_number(value):
     error_msg = _("Phone numbers must consist only of digits and must be in international format.")
@@ -607,7 +615,7 @@ class OneTimeReminderForm(Form):
     user_group_id = CharField(required=False)
     content_type = ChoiceField(choices=CONTENT_CHOICES)
     message = TrimmedCharField(required=False)
-    form_unique_id = CharField()
+    form_unique_id = CharField(required=False)
 
     def clean_recipient_type(self):
         return clean_selection(self.cleaned_data.get("recipient_type"))
@@ -680,6 +688,16 @@ class OneTimeReminderForm(Form):
             if start_datetime < utcnow:
                 raise ValidationError(_("Date and time cannot occur in the past."))
         return start_datetime
+
+    def clean_form_unique_id(self):
+        if self.cleaned_data.get("content_type") == METHOD_SMS_SURVEY:
+            value = self.cleaned_data.get("form_unique_id")
+            if value is None:
+                raise ValidationError(_("Please create a form first, and then create the broadcast."))
+            validate_form_unique_id(value, self._cchq_domain)
+            return value
+        else:
+            return None
 
 class RecordListWidget(Widget):
     
@@ -905,12 +923,7 @@ class KeywordForm(Form):
         value = self.cleaned_data.get("form_unique_id")
         if value is None:
             raise ValidationError(_("Please create a form first, and then add a keyword for it."))
-        try:
-            form = CCHQForm.get_form(value)
-            app = form.get_app()
-            assert app.domain == self._cchq_domain
-        except Exception:
-            raise ValidationError(_("Invalid form chosen."))
+        validate_form_unique_id(value, self._cchq_domain)
         return value
     
     def clean_delimiter(self):
