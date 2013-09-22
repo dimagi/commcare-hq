@@ -242,6 +242,7 @@ def copy_one_time_reminder(request, domain, handler_id):
         "send_type" : SEND_NOW,
         "recipient_type" : handler.recipient,
         "case_group_id" : handler.sample_id,
+        "user_group_id" : handler.user_group_id,
         "content_type" : handler.method,
         "message" : handler.events[0].message[handler.default_lang] if handler.default_lang in handler.events[0].message else None,
         "form_unique_id" : handler.events[0].form_unique_id if handler.events[0].form_unique_id is not None else None,
