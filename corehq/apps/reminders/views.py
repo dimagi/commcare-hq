@@ -254,7 +254,8 @@ def delete_reminder(request, domain, handler_id):
     if handler.doc_type != 'CaseReminderHandler' or handler.domain != domain:
         raise Http404
     handler.retire()
-    return HttpResponseRedirect(reverse('list_reminders', args=[domain]))
+    view_name = "one_time_reminders" if handler.reminder_type == REMINDER_TYPE_ONE_TIME else "list_reminders"
+    return HttpResponseRedirect(reverse(view_name, args=[domain]))
 
 @reminders_permission
 def scheduled_reminders(request, domain, template="reminders/partial/scheduled_reminders.html"):

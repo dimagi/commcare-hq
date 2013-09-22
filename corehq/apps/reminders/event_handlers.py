@@ -54,6 +54,10 @@ to not move the reminder forward to the next event.
 def fire_sms_event(reminder, handler, recipients, verified_numbers):
     current_event = reminder.current_event
     if handler.method in [METHOD_SMS, METHOD_SMS_CALLBACK]:
+        template_params = {}
+        case = reminder.case
+        if case is not None:
+            template_params["case"] = case.case_properties()
         for recipient in recipients:
             try:
                 lang = recipient.get_language_code()
@@ -62,7 +66,7 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers):
             
             message = current_event.message.get(lang, current_event.message[handler.default_lang])
             try:
-                message = Message.render(message, case=reminder.case.case_properties())
+                message = Message.render(message, **template_params)
             except Exception:
                 if len(recipients) == 1:
                     raise_error(reminder, ERROR_RENDERING_MESSAGE % lang)
