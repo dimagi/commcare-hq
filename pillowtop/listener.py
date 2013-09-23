@@ -81,7 +81,6 @@ class autoretry_connection(object):
         return decorated
 
 
-
 class PillowtopIndexingError(Exception):
     pass
 
@@ -99,7 +98,7 @@ def ms_from_timedelta(td):
 
 class BasicPillow(object):
     couch_filter = None  # string for filter if needed
-    extra_args = {} # filter args if needed
+    extra_args = {}  # filter args if needed
     document_class = None  # couchdbkit Document class
     changes_seen = 0
     couch_db = None
@@ -140,7 +139,7 @@ class BasicPillow(object):
             for c in st:
                 self.processor(c)
 
-    def run(self, since=0):
+    def run(self):
         """
         Couch changes stream creation
         """
