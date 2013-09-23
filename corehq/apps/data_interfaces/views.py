@@ -3,7 +3,7 @@ from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from casexml.apps.case.models import CommCareCaseGroup, CommCareCase
 from corehq import CaseReassignmentInterface
-from corehq.apps.data_interfaces.forms import AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroup
+from corehq.apps.data_interfaces.forms import AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroupForm
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqcase.utils import get_case_by_identifier
@@ -229,8 +229,8 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
 
     def get_create_form(self, is_blank=False):
         if self.request.method == 'POST' and not is_blank:
-            return AddCaseToGroup(self.request.POST)
-        return AddCaseToGroup()
+            return AddCaseToGroupForm(self.request.POST)
+        return AddCaseToGroupForm()
 
     def get_create_item_data(self, create_form):
         case_identifier = create_form.cleaned_data['case_identifier']

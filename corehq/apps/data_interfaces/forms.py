@@ -76,11 +76,11 @@ class UpdateCaseGroupForm(AddCaseGroupForm):
         return self.current_group
 
 
-class AddCaseToGroup(forms.Form):
+class AddCaseToGroupForm(forms.Form):
     case_identifier = forms.CharField(label=ugettext_noop("Case ID, External ID, or Phone Number"))
 
     def __init__(self, *args, **kwargs):
-        super(AddCaseToGroup, self).__init__(*args, **kwargs)
+        super(AddCaseToGroupForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_style = 'inline'
         self.helper.form_show_labels = False
