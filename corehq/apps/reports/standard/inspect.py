@@ -702,6 +702,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
       'name_column': column data used in the header of the detail popup,
       'column_titles': {'column name': 'display title for column},
       'detail_columns': [list of column data to display in detail popup],
+      'table_columns': [list of columns to display in table view],
       'enum_captions': {
         'col with enum values': {'enum value': 'enum caption'}
       },

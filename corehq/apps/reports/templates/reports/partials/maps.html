@@ -34,7 +34,7 @@ $(document).ready(function() {
   <h3><%= name %></h3>
   <hr>
   <table>
-    <% _.each(detail, function(field) { %>
+    <% _.each(info, function(field) { %>
     <tr class="data data-<%= field.slug %>">
       <td><%= field.label %></td>
       <td class="detail_data">
@@ -48,7 +48,7 @@ $(document).ready(function() {
 
 <script type="text/template" id="info_popup">
   <% if (name) { %><h4><%= name %></h4><% } %>
-  <% _.each(detail, function(field) { %>
+  <% _.each(info, function(field) { %>
   <div><%= field.label %></div>
   <div class="detail_data"><%= field.value %></div>
   <% }); %>

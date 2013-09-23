@@ -208,7 +208,7 @@ HeadsUpControl = L.Control.extend({
             });
         }
 
-        var context = detailContext(feature, this.options.config, cols);
+        var context = infoContext(feature, this.options.config, cols);
         var TEMPLATE = $('#info_popup').text();
         var template = _.template(TEMPLATE);
         var content = template(context);
@@ -318,45 +318,55 @@ function initData(data, config) {
     if (config.detail_columns == null) {
         config.detail_columns = getAllCols(config, data);
     }
+    if (config.table_columns == null) {
+        config.table_columns = config.detail_columns.slice(0);
+    }
 
     // pre-cache popup detail
     $.each(data.features, function(i, e) {
         e.popupContent = formatDetailPopup(e, config);
     });
 
-    // data table
-    var tableRow = function(e, header) {
-        var ctx = detailContext(e, config);
+    initTable(data, config);
+}
 
+function initTable(data, config) {
+    var row = function($table, header, items, toCell) {
+        var $container = $table.find(header ? 'thead' : 'tbody');
         var $tr = $('<tr>');
-        var cell = function(e) {
-            var $td = $(header ? '<th>' : '<td>');
-            $td.text(e[header ? 'label' : 'value']);
-            if (header) {
-                $td.prepend('<i class="icon-white"></i>&nbsp;');
-            } else {
-                $td.append('<span title="' + e.raw + '"></span>');
-            }
-            $tr.append($td);
-        };
-
-        $.each(ctx.table, function(i, e) {
-            cell(e);
+        $.each(items, function(i, e) {
+            var $cell = $(header ? '<th>' : '<td>');
+            toCell($cell, e);
+            $tr.append($cell);
         });
-        $('#tabular').find(header ? 'thead' : 'tbody').append($tr);
+        $container.append($tr);
     };
+
+    var sorting = [];
+    var sortColumnAs = function(datatype) {
+        sorting.push({
+            'numeric': {sType: 'title-numeric'}
+        }[datatype]);
+    };
+
     $('#tabular').append('<thead></thead><tbody></tbody>');
-    var first = true;
-    $.each(data.features, function(i, e) {
-        if (first) {
-            tableRow(e, true);
-            first = false;
-        }
-        tableRow(e, false);
+    row($('#tabular'), true, getTableColumns(config), function($cell, e) {
+        $cell.text(getColumnTitle(e, config));
+        $cell.prepend('<i class="icon-white"></i>&nbsp;');
+
+        var stats = summarizeColumn({column: e}, data);
+        sortColumnAs(stats.nonnumeric ? 'text' : 'numeric');
     });
-    var x = {sType: 'title-numeric'};
+    $.each(data.features, function(i, e) {
+        var ctx = infoContext(e, config, 'table');
+        row($('#tabular'), false, ctx.info, function($cell, e) {
+            $cell.text(e.value);
+            $cell.append('<span title="' + e.raw + '"></span>'); // sort key
+        });
+    });
+
     var table = new HQReportDataTables({
-        aoColumns: [null, null, null, x, x, x, null, x, x, x],
+        aoColumns: sorting,
     });
     table.render();
 }
@@ -684,10 +694,22 @@ function getPropValue(props, meta) {
 }
 
 
-
-function detailContext(feature, config, cols) {
-    prop_cols = cols || _.keys(feature.properties);
-    detail_cols = cols || config.detail_columns || [];
+// return formatted info about a row/feature, suitable for display
+// in different places (detail popup, hover infobox, table row, etc.)
+function infoContext(feature, config, mode) {
+    var prop_cols = _.keys(feature.properties);
+    var info_cols;
+    if (mode == null) {
+        throw "no context mode provided!";
+    } else if (mode == 'detail') {
+        info_cols = config.detail_columns;
+    } else if (mode == 'table') {
+        info_cols = getTableColumns(config);
+    } else {
+        // 'mode' is an explicit list (subset) of columns
+        prop_cols = mode;
+        info_cols = mode;
+    }
 
     var formatForDisplay = function(col, datum) {
         var fallback = {_null: '\u2014'};
@@ -706,22 +728,16 @@ function detailContext(feature, config, cols) {
         props: displayProperties,
         raw: rawProperties,
         name: (config.name_column ? feature.properties[config.name_column] : null),
+        info: []
     };
-    context.detail = [];
-    $.each(detail_cols, function(i, e) {
-        context.detail.push({
+    $.each(info_cols, function(i, e) {
+        context.info.push({
             slug: e, // FIXME this will cause problems if column keys have weird chars or spaces
             label: getColumnTitle(e, config),
             value: displayProperties[e],
             raw: rawProperties[e],
         });
     });
-
-    // TODO customizable tabular columns
-    context.table = context.detail.slice(0);
-    if (config.name_column) {
-        context.table.splice(0, 0, {label: getColumnTitle(config.name_column, config), value: context.name});
-    }
 
     return context;
 }
@@ -731,7 +747,7 @@ function formatDetailPopup(feature, config) {
     var TEMPLATE = config.detail_template || DEFAULT_TEMPLATE;
 
     var template = _.template(TEMPLATE);
-    var content = template(detailContext(feature, config));
+    var content = template(infoContext(feature, config, 'detail'));
     return content;
 }
 
@@ -985,6 +1001,13 @@ function getColumnTitle(col, config) {
     return (config.column_titles || {})[col] || col;
 }
 
+function getTableColumns(config) {
+    var cols = config.table_columns.slice(0);
+    if (config.name_column) {
+        cols.splice(0, 0, config.name_column);
+    }
+    return cols;
+}
 
 
 
