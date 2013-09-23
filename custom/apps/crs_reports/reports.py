@@ -1,5 +1,6 @@
 from couchdbkit import RequestFailed
 from django.utils.translation import ugettext_noop
+from corehq.apps.api.es import FullCaseES
 
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -62,7 +63,7 @@ class HNBCReportDisplay(CaseDisplay):
             return "%s (bad ID format)" % case_name
 
 
-class BaseHNBCReport(CustomProjectReport, DatespanMixin, CaseListReport):
+class BaseHNBCReport(CustomProjectReport, CaseListReport):
 
     fields = ['custom.apps.crs_reports.fields.SelectBlockField',
               'custom.apps.crs_reports.fields.SelectSubCenterField', # Todo: Currently there is no data about it in case
@@ -76,15 +77,20 @@ class BaseHNBCReport(CustomProjectReport, DatespanMixin, CaseListReport):
     report_template_name = None
 
     @property
+    @memoized
+    def case_es(self):
+        return FullCaseES(self.domain)
+
+    @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn(_("Case Type"), prop_name="type.exact"),
-            DataTablesColumn(_("Case Name"), prop_name="name.exact"),
-            DataTablesColumn(_("CHW Name"), prop_name="owner_display", sortable=False),
-            DataTablesColumn(_("DOB"), prop_name="dob"),
-            DataTablesColumn(_("PNC Visit Completion"), prop_name="visit_completion"),
-            DataTablesColumn(_("Delivery"), prop_name="delivery"),
-            DataTablesColumn(_("Case/PNC Status"), prop_name="pnc_status")
+            DataTablesColumn(_("Case Type")),
+            DataTablesColumn(_("Case Name")),
+            DataTablesColumn(_("CHW Name")),
+            DataTablesColumn(_("DOB")),
+            DataTablesColumn(_("PNC Visit Completion")),
+            DataTablesColumn(_("Delivery")),
+            DataTablesColumn(_("Case/PNC Status"))
         )
         return headers
 
@@ -112,11 +118,11 @@ class BaseHNBCReport(CustomProjectReport, DatespanMixin, CaseListReport):
         filters = [{'term': {'pp_case_filter': 1}}]
         or_stmt = []
 
-        if(block):
+        if block:
             filters.append({'term': {'block': block}})
 
-        if(status):
-            if(status == 'On Time'):
+        if status:
+            if status == 'On Time':
                 for i in range(1, 8):
                     filters.append({'term': {'case_pp_%s_done' % i: 'yes'}})
             else:
@@ -124,7 +130,6 @@ class BaseHNBCReport(CustomProjectReport, DatespanMixin, CaseListReport):
                     or_stmt.append({'term': {'case_pp_%s_done' % i: 'no'}})
                 or_stmt = {'or': or_stmt}
                 filters.append(or_stmt)
-
         return {'and': filters} if filters else {}
 
     @property

@@ -820,6 +820,7 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'hsph-betterbirth-pilot-2',
     'commtrack-public-demo',
     'uth-rhd-test',
+    'crs-remind',
 ]
 
 #Custom fully indexed domains for FullXForm index/pillowtop --
