@@ -15,6 +15,7 @@ from django.conf import settings
 import couchdbkit
 
 from dimagi.utils.decorators.memoized import memoized
+from .utils import import_settings
 
 
 if couchdbkit.version_info < (0, 6, 0):
@@ -113,6 +114,8 @@ class BasicPillow(object):
         if not self.couch_db:
             self.couch_db = self.document_class.get_db() if self.document_class else None
 
+        self.settings = import_settings()
+
     def old_changes(self):
         """
         Couchdbkit < 0.6.0 changes feed listener
@@ -150,16 +153,19 @@ class BasicPillow(object):
         else:
             self.old_changes()
 
-    def _get_os_name(self):
-        os_name = "unknown_os"
-        if hasattr(os, "uname"):
+    def _get_machine_id(self):
+        if hasattr(self.settings, 'PILLOWTOP_MACHINE_ID'):
+            os_name = getattr(self.settings, 'PILLOWTOP_MACHINE_ID')
+        elif hasattr(os, 'uname'):
             os_name = os.uname()[1].replace('.', '_')
+        else:
+            os_name = 'unknown_os'
         return os_name
 
     @memoized
     def get_name(self):
         return "%s.%s.%s" % (
-            self.__module__, self.__class__.__name__, self._get_os_name())
+            self.__module__, self.__class__.__name__, self._get_machine_id())
 
     def get_checkpoint_doc_name(self):
         return "pillowtop_%s" % self.get_name()
@@ -641,7 +647,7 @@ class AliasedElasticPillow(ElasticPillow):
         class name and the hashed name representation.
         """
         return "%s.%s.%s.%s" % (
-            self.__module__, self.__class__.__name__, self.calc_meta(), self._get_os_name())
+            self.__module__, self.__class__.__name__, self.calc_meta(), self._get_machine_id())
 
     def get_mapping_from_type(self, doc_dict):
         raise NotImplementedError("This must be implemented in this subclass!")
