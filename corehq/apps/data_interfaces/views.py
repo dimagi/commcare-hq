@@ -198,7 +198,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
     @property
     @memoized
     def total(self):
-        return self.case_group.get_total_cases(clean_list=True)
+        return self.case_group.get_total_cases()
 
     @property
     def column_names(self):
@@ -272,3 +272,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
 
+    def get(self, request, *args, **kwargs):
+        # To make sure that the total is accurate.
+        self.case_group.clean_cases()
+        return super(CaseGroupCaseManagementView, self).get(request, *args, **kwargs)
