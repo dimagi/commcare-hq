@@ -206,6 +206,9 @@ class BasicPillow(object):
         checkpoint['seq'] = change['seq']
         self.couch_db.save_doc(checkpoint)
 
+    def get_db_seq(self):
+        return self.couch_db.info()['update_seq']
+
     def parsing_processor(self, change):
         """
         Processor that also parses the change to json - only for pre 0.6.0 couchdbkit,
