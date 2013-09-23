@@ -30,6 +30,7 @@ pillow_logging.setLevel(logging.INFO)
 
 CHECKPOINT_FREQUENCY = 100
 WAIT_HEARTBEAT = 10000
+CHANGES_TIMEOUT = 60000
 RETRY_INTERVAL = 2 #seconds, exponentially increasing
 MAX_RETRIES = 4 #exponential factor threshold for alerts
 
@@ -124,7 +125,7 @@ class BasicPillow(object):
         while True:
             try:
                 c.wait(self.parsing_processor, since=self.since, filter=self.couch_filter,
-                       heartbeat=WAIT_HEARTBEAT, feed='continuous', timeout=30000, **self.extra_args)
+                       heartbeat=WAIT_HEARTBEAT, feed='continuous', timeout=CHANGES_TIMEOUT, **self.extra_args)
             except Exception, ex:
                 pillow_logging.exception("Exception in form listener: %s, sleeping and restarting" % ex)
                 gevent.sleep(RETRY_INTERVAL)
