@@ -8,7 +8,10 @@
         <td class="span5" data-bind="text: name"></td>
         <td class="span3" data-bind="text: numCases"></td>
         <td class="span4">
-            <a href="#" class="btn btn-primary">
+            <a class="btn btn-primary"
+               data-bind="attr: {
+                    href: manageUrl
+               }">
                 {% trans "Manage Cases" %}
             </a>
             <button type="button"
@@ -94,9 +97,19 @@
     </script>
 
     <script type="text/html" id="new-group-template">
-        <td data-bind="text: name"></td>
+        <td>
+            <span class="label label-success">{% trans 'New' %}</span>
+            <span data-bind="text: name"></span>
+        </td>
         <td data-bind="text: numCases"></td>
-        <td><span class="label label-success">{% trans 'Group Created' %}</span></td>
+        <td>
+            <a class="btn btn-primary"
+               data-bind="attr: {
+                    href: manageUrl
+               }">
+                {% trans "Manage Cases" %}
+            </a>
+        </td>
     </script>
 
 {% endblock %}
