@@ -54,7 +54,8 @@ from corehq.apps.domain.models import cached_property
 from corehq.apps.app_manager import current_builds, app_strings
 from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings, build_error_utils
 from corehq.apps.app_manager.util import split_path, save_xform
-from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, XFormError, XFormValidationError, WrappedNode
+from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml
+from .exceptions import AppError, VersioningError, XFormError, XFormValidationError
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -929,11 +930,6 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
     @memoized
     def all_forms_require_a_case(self):
         return all([form.requires == 'case' for form in self.get_forms()])
-
-
-class VersioningError(Exception):
-    """For errors that violate the principles of versioning in VersionedDoc"""
-    pass
 
 
 class VersionedDoc(LazyAttachmentDoc):
@@ -2259,14 +2255,6 @@ class RemoteApp(ApplicationBase):
             self.save()
         questions = self.questions_map.get(xmlns, [])
         return questions
-
-
-class DomainError(Exception):
-    pass
-
-
-class AppError(Exception):
-    pass
 
 
 def get_app(domain, app_id, wrap_cls=None, latest=False):
