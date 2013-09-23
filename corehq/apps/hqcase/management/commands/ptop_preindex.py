@@ -5,7 +5,7 @@ from gevent import monkey;monkey.patch_all()
 import gevent
 from pillowtop.listener import AliasedElasticPillow
 from pillowtop.management.pillowstate import get_pillow_states
-from pillowtop.run_pillowtop import import_pillows
+from pillowtop import get_all_pillows
 from django.core.management.base import NoArgsCommand, BaseCommand
 from django.core.management import call_command
 from django.conf import settings
@@ -25,6 +25,7 @@ def get_reindex_command(pillow_class_name):
     }
     reindex_command = pillow_command_map.get(pillow_class_name, None)
     return reindex_command
+
 
 def do_reindex(pillow_class_name):
     print "Starting pillow preindex %s" % pillow_class_name
@@ -46,7 +47,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         runs = []
-        pillow_classes = import_pillows(instantiate=False)
+        pillow_classes = get_all_pillow(instantiate=False)
         aliased_classes = filter(lambda x: issubclass(x, AliasedElasticPillow), pillow_classes)
         aliasable_pillows = [p(create_index=False) for p in aliased_classes]
 
@@ -82,7 +83,7 @@ class Command(BaseCommand):
             preindex_message = """
         Heads up!
 
-        %sis going to start preindexing the following pillows:
+        %s is going to start preindexing the following pillows:
         %s
 
         This may take a while, so don't deploy until all these have reported finishing.
@@ -109,10 +110,3 @@ class Command(BaseCommand):
                 (datetime.utcnow() - start).seconds
             ))
         print "All pillowtop reindexing jobs completed"
-
-
-
-
-
-
-
