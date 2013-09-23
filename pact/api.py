@@ -7,6 +7,7 @@ import dateutil
 from lxml import etree
 from django.core.servers.basehttp import FileWrapper
 from django.utils.decorators import method_decorator
+from casexml.apps.phone.middleware import LAST_SYNCTOKEN_HEADER
 from django_digest.decorators import httpdigest
 import simplejson
 from django.http import Http404, HttpResponse
@@ -236,7 +237,7 @@ def prepare_case_update_xml_block(casedoc, couch_user, update_dict, submit_date)
 
     return case_lxml
 
-def recompute_dots_casedata(casedoc, couch_user, submit_date=None):
+def recompute_dots_casedata(casedoc, couch_user, submit_date=None, sync_token=None):
     """
     On a DOT submission, recompute the DOT block and submit a casedoc update xform
     Recompute and reset the ART regimen and NONART regimen to whatever the server says it is, in the casedoc where there's an idiosyncracy with how the phone has it set.
@@ -248,9 +249,9 @@ def recompute_dots_casedata(casedoc, couch_user, submit_date=None):
         dots_data = get_dots_case_json(casedoc)
 
         update_dict['dots'] = simplejson.dumps(dots_data)
-        submit_case_update_form(casedoc, update_dict, couch_user, submit_date=submit_date, xmlns=XMLNS_PATIENT_UPDATE_DOT)
+        submit_case_update_form(casedoc, update_dict, couch_user, submit_date=submit_date, xmlns=XMLNS_PATIENT_UPDATE_DOT, sync_token=sync_token)
 
-def submit_case_update_form(casedoc, update_dict, couch_user, submit_date=None, xmlns=XMLNS_PATIENT_UPDATE):
+def submit_case_update_form(casedoc, update_dict, couch_user, submit_date=None, xmlns=XMLNS_PATIENT_UPDATE, sync_token=None):
     """
     Main entry point for submitting an update for a pact patient
 
@@ -273,7 +274,11 @@ def submit_case_update_form(casedoc, update_dict, couch_user, submit_date=None, 
     form.append(encounter_date)
 
     submission_xml_string = etree.tostring(form)
-    return submit_xform('/a/pact/receiver', PACT_DOMAIN, submission_xml_string)
+    if sync_token:
+        extra_meta = {LAST_SYNCTOKEN_HEADER: sync_token}
+    else:
+        extra_meta = None
+    return submit_xform('/a/pact/receiver', PACT_DOMAIN, submission_xml_string, extra_meta=extra_meta)
 
 
 def isodate_string(date):
