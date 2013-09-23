@@ -55,6 +55,7 @@ from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.django.email import send_HTML_email
 from django.template.loader import render_to_string
 from django.http import Http404
+from pillowtop import get_all_pillows_json
 
 
 @require_superuser
@@ -591,7 +592,6 @@ def system_ajax(request):
     task_limit = getattr(settings, 'CELERYMON_TASK_LIMIT', 12)
     celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
     db = XFormInstance.get_db()
-    ret = {}
     if type == "_active_tasks":
         tasks = [] if is_bigcouch() else filter(lambda x: x['type'] == "indexer", db.server.active_tasks())
         #for reference structure is:
@@ -603,11 +603,13 @@ def system_ajax(request):
         #            'design_document': 'mockymock', 'progress': 70,
         #            'started_on': 1349906040.723517, 'updated_on': 1349905800.679458,
         #            'total_changes': 1023}]
-        return HttpResponse(json.dumps(tasks), mimetype='application/json')
+        return json_response(tasks)
     elif type == "_stats":
-        return HttpResponse(json.dumps({}), mimetype = 'application/json')
+        return json_response({})
     elif type == "_logs":
         pass
+    elif type == 'pillowtop':
+        return json_response(get_all_pillows_json())
 
     if celery_monitoring:
         cresource = Resource(celery_monitoring, timeout=3)
