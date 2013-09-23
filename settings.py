@@ -251,6 +251,8 @@ HQ_APPS = (
     'custom.reports.care_sa',
     'custom.apps.cvsu',
     'custom.reports.mc',
+
+    'custom.trialconnect',
 )
 
 TEST_APPS = ()
@@ -889,6 +891,8 @@ DOMAIN_MODULE_MAP = {
     'opm': 'custom.opm.opm_reports',
     'psi-unicef': 'psi',
     'project': 'custom.apps.care_benin',
+
+    'gc': 'custom.trialconnect',
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
