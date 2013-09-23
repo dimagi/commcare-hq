@@ -216,6 +216,7 @@ HQ_APPS = (
     'corehq.apps.unicel',
     'corehq.apps.reports',
     'corehq.apps.data_interfaces',
+    'corehq.apps.export',
     'corehq.apps.builds',
     'corehq.apps.orgs',
     'corehq.apps.api',
@@ -234,8 +235,7 @@ HQ_APPS = (
 
     # custom reports
     'a5288',
-    'benin',
-    'bihar',
+    'custom.bihar',
     'dca',
     'hsph',
     'mvp',
@@ -245,6 +245,7 @@ HQ_APPS = (
     'pact',
     'psi',
 
+    'custom.apps.care_benin',
     'custom.reports.care_sa',
     'custom.apps.cvsu',
     'custom.reports.mc',
@@ -267,6 +268,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.apps.tropo',
     'corehq.apps.yo',
     'crispy_forms',
+    'django_extensions',
     'djcelery',
     'djtables',
     'djkombu',
@@ -287,7 +289,9 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'dimagi.utils',
     'fluff',
     'fluff_filter',
+    'freddy',
     'pillowtop',
+    'receiver',
 )
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
@@ -469,6 +473,11 @@ LOCAL_COUCHDB_APPS = ()
 LOCAL_MIDDLEWARE_CLASSES = ()
 LOCAL_PILLOWTOPS = []
 
+#If there are existing doc_ids and case_ids you want to check directly - they are refernced
+#in your localsettings for more accurate direct checks, otherwise use view based which can be inaccurate.
+ES_CASE_CHECK_DIRECT_DOC_ID = None
+ES_XFORM_CHECK_DIRECT_DOC_ID = None
+
 # our production logstash aggregation
 LOGSTASH_DEVICELOG_PORT = 10777
 LOGSTASH_COUCHLOG_PORT = 10888
@@ -479,8 +488,16 @@ LOGSTASH_HOST = 'localhost'
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
 
+####### Couch Config ######
 #for production this ought to be set to true on your configured couch instance
 COUCH_HTTPS = False
+COUCH_SERVER_ROOT = 'localhost:5984'  # 6984 for https couch
+COUCH_USERNAME = ''
+COUCH_PASSWORD = ''
+COUCH_DATABASE_NAME = 'commcarehq'
+
+BITLY_LOGIN = ''
+BITLY_APIKEY = ''
 
 # this should be overridden in localsettings
 INTERNAL_DATA = defaultdict(list)
@@ -658,7 +675,6 @@ COUCHDB_APPS = [
     'migration',
     'mobile_auth',
     'phone',
-    'receiverwrapper',
     'reminders',
     'reportfixtures',
     'prescriptions',
@@ -678,7 +694,7 @@ COUCHDB_APPS = [
     'wisepill',
 
     # custom reports
-    'benin',
+    'care_benin',
     'dca',
     'hsph',
     'mvp',
@@ -698,6 +714,7 @@ COUCHDB_DATABASES += [
     ('care_sa', COUCH_DATABASE + '__fluff-care_sa'),
     ('cvsu', COUCH_DATABASE + '__fluff-cvsu'),
     ('mc', COUCH_DATABASE + '__fluff-mc'),
+    ('receiverwrapper', COUCH_DATABASE + '__receiverwrapper'),
 ]
 
 INSTALLED_APPS += LOCAL_APPS
@@ -786,7 +803,7 @@ PILLOWTOPS = [
                  'corehq.pillows.reportxform.ReportXFormPillow',
                  'corehq.pillows.reportcase.ReportCasePillow',
                  # fluff
-                 'bihar.models.CareBiharFluffPillow',
+                 'custom.bihar.models.CareBiharFluffPillow',
                  'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
                  'custom.reports.care_sa.models.CareSAFluffPillow',
                  'custom.reports.mc.models.MalariaConsortiumFluffPillow',
@@ -817,6 +834,15 @@ ES_CASE_FULL_INDEX_DOMAINS = [
 ES_XFORM_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
     'uth-rhd-test',
+    'mvp-bonsaaso',
+    'mvp-koraro',
+    'mvp-mbola',
+    'mvp-mwandama',
+    'mvp-potou',
+    'mvp-ruhiira',
+    'mvp-sada',
+    'mvp-sauri',
+    'mvp-tiby',
 ]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
@@ -827,7 +853,7 @@ REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 DOMAIN_MODULE_MAP = {
     'a5288-test': 'a5288',
     'a5288-study': 'a5288',
-    'care-bihar': 'bihar',
+    'care-bihar': 'custom.bihar',
     'care-ihapc-live': 'custom.reports.care_sa',
     'cvsulive': 'custom.apps.cvsu',
     'dca-malawi': 'dca',
@@ -842,6 +868,7 @@ DOMAIN_MODULE_MAP = {
     'mvp-mwandama': 'mvp',
     'mvp-sada': 'mvp',
     'psi-unicef': 'psi',
+    'project': 'custom.apps.care_benin',
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

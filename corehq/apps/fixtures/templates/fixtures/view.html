@@ -59,22 +59,23 @@
                         <button class="btn disabled" data-bind="visible: saveState() === 'saving'">Saving...</button>
                         <div data-bind="modal: editing">
                             <div class="modal-header">
+                                <a class="close" data-bind="click: cancelEdit">×</a>
                                 <h3>Edit Data Type "<span data-bind="text: name"></span>"</h3>
                             </div>
                             <div class="modal-body">
-                                <div class="row">
-                                    <label class="span2">Name</label>
-                                    <input data-bind="value: name"/>
+                                <div class="control-group">
+                                    <label class="control-label">Name</label>
+                                    <input type="text" class="control" data-bind="value: name"/>
                                 </div>
-                                <div class="row">
-                                    <label class="span2">Tag</label>
-                                    <input data-bind="value: tag"/>
+                                <div class="control-group">
+                                    <label class="control-label">Tag</label>
+                                    <input type="text" class="control" data-bind="value: tag"/>
                                 </div>
                                 <h4>Fields</h4>
                                 <div>
-                                    <ul data-bind="foreach: fields">
+                                    <ul class="unstyled" data-bind="foreach: fields">
                                         <li>
-                                            <input class="input-small" data-bind="value: editTag, hasfocus: true"/>
+                                            <input type="text" class="input-small" data-bind="value: editTag, hasfocus: true"/>
                                             <button class="btn btn-danger" data-bind="click: $parent.removeField">
                                                 <i class="icon-white icon-trash"></i>
                                             </button>

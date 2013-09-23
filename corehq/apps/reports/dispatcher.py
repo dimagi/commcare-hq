@@ -180,6 +180,7 @@ class ReportDispatcher(View):
                             'description': _(report.description),
                             'icon': report.icon,
                             'title': _(report.name),
+                            'subpages': report.get_subpages(),
                         })
             if report_contexts:
                 if hasattr(section_name, '__call__'):
@@ -193,6 +194,7 @@ class ReportDispatcher(View):
         return url(cls.pattern(), cls.as_view(), name=cls.name())
 
 cls_to_view_login_and_domain = cls_to_view(additional_decorator=login_and_domain_required)
+
 
 class ProjectReportDispatcher(ReportDispatcher):
     prefix = 'project_report' # string. ex: project, custom, billing, interface, admin
@@ -216,13 +218,16 @@ class ProjectReportDispatcher(ReportDispatcher):
             return False
         return request.couch_user.can_view_report(domain, report)
 
+
 class CustomProjectReportDispatcher(ProjectReportDispatcher):
     prefix = 'custom_project_report'
     map_name = 'CUSTOM_REPORTS'
 
+
 class BasicReportDispatcher(ReportDispatcher):
     prefix = 'basic_report'
     map_name = 'BASIC_REPORTS'
+
 
 class AdminReportDispatcher(ReportDispatcher):
     prefix = 'admin_report'

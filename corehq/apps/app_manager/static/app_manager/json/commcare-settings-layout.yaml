@@ -54,13 +54,15 @@
   settings:
     - properties.cc-days-form-retain # Days to Retain for Review
 
-- title: 'Advanced (Logging)'
+- title: 'Advanced'
   id: app-settings-advanced
   collapse: true
   settings:
     - properties.logenabled  # Logging Enabled
     - properties.log_prop_weekly  # Weekly Log Sending Frequency
     - properties.log_prop_daily  # Daily Log Sending Frequency
+    - hq.secure_submissions
+    - hq.translation_strategy
 
 - title: 'Disabled'
   id: app-settings-disabled

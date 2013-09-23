@@ -1,0 +1,17 @@
+{% load crispy_forms_field %}
+{# this is to support inline fields until we upgrade to bootstrap 3 #}
+
+{% if field.is_hidden %}
+	{{ field }}
+{% else %}
+    {% if field|is_checkbox %}
+        <div id="div_{{ field.auto_id }}" class="checkbox">
+            <label for="{{ field.id_for_label }}" class="{% if field.field.required %} requiredField{% endif %}">
+                {% crispy_field field 'class' 'checkbox' %}
+                {{ field.label|safe }}
+            </label>
+        </div>
+    {% else %}
+        {% crispy_field field 'placeholder' field.label %}
+    {% endif %}
+{% endif %}

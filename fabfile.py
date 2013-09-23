@@ -42,7 +42,7 @@ env.project = 'commcare-hq'
 env.code_repo = 'git://github.com/dimagi/commcare-hq.git'
 
 if not hasattr(env, 'code_branch'):
-    print "WARNING: code_branch not specified, using 'master'. You can set it with '--set code_branch=<branch>'"
+    print "code_branch not specified, using 'master'. You can set it with '--set code_branch=<branch>'"
     env.code_branch = 'master'
 
 env.home = "/home/cchq"
@@ -220,8 +220,15 @@ def production():
     env.sudo_user = 'cchq'
     env.environment = 'production'
     env.django_port = '9010'
-    env.code_branch = 'master'
     env.should_migrate = True
+
+    if env.code_branch != 'master':
+        branch_message = (
+            "Woah there bud! You're deploying branch {env.code_branch}. "
+            "ARE YOU DOING SOMETHING EXCEPTIONAL THAT WARRANTS THIS?"
+        ).format(env=env)
+        if not console.confirm(branch_message, default=False):
+            utils.abort('Action aborted.')
 
     #env.hosts = None
     env.roledefs = {

@@ -212,6 +212,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     case_sharing = BooleanProperty(default=False)
     secure_submissions = BooleanProperty(default=False)
+    ota_restore_caching = BooleanProperty(default=False)
     organization = StringProperty()
     hr_name = StringProperty() # the human-readable name for this project within an organization
     creating_user = StringProperty() # username of the user who created this domain
@@ -562,8 +563,11 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
                             (self.name, str(result[1]))
                 )
 
-    def save_copy(self, new_domain_name=None, user=None):
+    def save_copy(self, new_domain_name=None, user=None, ignore=None):
         from corehq.apps.app_manager.models import get_app
+        from corehq.apps.reminders.models import CaseReminderHandler
+
+        ignore = ignore if ignore is not None else []
         if new_domain_name is not None and Domain.get_by_name(new_domain_name):
             return None
         db = get_db()
@@ -592,15 +596,20 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             if hasattr(new_domain, field):
                 delattr(new_domain, field)
 
+        new_comps = {}  # a mapping of component's id to it's copy
         for res in db.view('domain/related_to_domain', key=[self.name, True]):
             if not self.is_snapshot and res['value']['doc_type'] in ('Application', 'RemoteApp'):
                 app = get_app(self.name, res['value']['_id']).get_latest_saved()
                 if app:
-                    self.copy_component(app.doc_type, app._id, new_domain_name, user=user)
+                    comp = self.copy_component(app.doc_type, app._id, new_domain_name, user=user)
                 else:
-                    self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
+                    comp = self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
+            elif res['value']['doc_type'] not in ignore:
+                comp = self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
             else:
-                self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
+                comp = None
+            if comp:
+                new_comps[res['value']['_id']] = comp
 
         new_domain.save()
 
@@ -609,14 +618,39 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
                 user.add_domain_membership(new_domain_name, is_admin=True)
             apply_update(user, add_dom_to_user)
 
+        def update_events(handler):
+            """
+            Change the form_unique_id to the proper form for each event in a newly copied CaseReminderHandler
+            """
+            from corehq.apps.app_manager.models import FormBase
+            for event in handler.events:
+                if not event.form_unique_id:
+                    continue
+                form = FormBase.get_form(event.form_unique_id)
+                form_app = form.get_app()
+                m_index, f_index = form_app.get_form_location(form.unique_id)
+                form_copy = new_comps[form_app._id].get_module(m_index).get_form(f_index)
+                event.form_unique_id = form_copy.unique_id
+
+        def update_for_copy(handler):
+            handler.active = False
+            update_events(handler)
+
+        if 'CaseReminderHandler' not in ignore:
+            for handler in CaseReminderHandler.get_handlers(new_domain_name):
+                apply_update(handler, update_for_copy)
+
         return new_domain
 
     def copy_component(self, doc_type, id, new_domain_name, user=None):
         from corehq.apps.app_manager.models import import_app
         from corehq.apps.users.models import UserRole
+        from corehq.apps.reminders.models import CaseReminderHandler, ON_DATETIME
+
         str_to_cls = {
             'UserRole': UserRole,
-            }
+            'CaseReminderHandler': CaseReminderHandler,
+        }
         db = get_db()
         if doc_type in ('Application', 'RemoteApp'):
             new_doc = import_app(id, new_domain_name)
@@ -626,6 +660,10 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             new_id = db.copy_doc(id)['id']
 
             new_doc = cls.get(new_id)
+
+            if new_doc.doc_type == 'CaseReminderHandler' and new_doc.start_condition_type == ON_DATETIME:
+                return None
+
             for field in self._dirty_fields:
                 if hasattr(new_doc, field):
                     delattr(new_doc, field)
@@ -643,11 +681,12 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         new_doc.save()
         return new_doc
 
-    def save_snapshot(self):
+    def save_snapshot(self, ignore=None):
         if self.is_snapshot:
             return self
         else:
-            copy = self.save_copy()
+            ignore = ignore if ignore is not None else []
+            copy = self.save_copy(ignore=ignore)
             if copy is None:
                 return None
             copy.is_snapshot = True
@@ -783,6 +822,8 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             media_ids = set()
             apps = [app for app in dom_with_media.full_applications() if app.get_id in from_apps]
             for app in apps:
+                if app.doc_type != 'Application':
+                    continue
                 for _, m in app.get_media_objects():
                     if m.get_id not in media_ids:
                         media.append(m)

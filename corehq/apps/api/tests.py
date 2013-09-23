@@ -245,7 +245,7 @@ class TestCommCareCaseResource(APIResourceTest):
 
         modify_date = datetime.utcnow()
 
-        backend_case = CommCareCase(server_modified_on = modify_date)
+        backend_case = CommCareCase(server_modified_on=modify_date, domain=self.domain.name)
         backend_case.save()
 
         translated_doc = pillow.change_transform(backend_case.to_json())
@@ -378,6 +378,7 @@ class TestRepeaterResource(APIResourceTest):
             self.assertEqual(result['url'], repeater.url)
             self.assertEqual(result['domain'], repeater.domain)
             self.assertEqual(result['type'], cls.__name__)
+            repeater.delete()
 
     def test_get_list(self):
         self.client.login(username=self.username, password=self.password)
@@ -435,6 +436,7 @@ class TestRepeaterResource(APIResourceTest):
             self.assertEqual(repeater_json['domain'], repeater_back.domain)
             self.assertEqual(repeater_json['type'], repeater_back.doc_type)
             self.assertEqual(repeater_json['url'], repeater_back.url)
+            repeater_back.delete()
 
 
     def test_update(self):
@@ -457,6 +459,7 @@ class TestRepeaterResource(APIResourceTest):
             self.assertEqual(1, len(cls.by_domain(self.domain.name)))
             modified = cls.get(backend_id)
             self.assertTrue('modified' in modified.url)
+            repeater.delete()
 
 class TestESQuerySet(TestCase):
     '''

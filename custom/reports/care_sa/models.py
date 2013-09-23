@@ -36,7 +36,7 @@ class CareSAForm(XFormInstance):
         except (AttributeError, ValueError):
             # catch fun things like no age being found or age not being
             # a number
-            return -1
+            return '3'
 
         if age < 15:
             return '0'
@@ -84,13 +84,6 @@ class CareSAForm(XFormInstance):
     def care_case(self):
         return CommCareCase.get_by_xform_id(self._id).first()
 
-class CustomFilter(Filter):
-    def __init__(self, filter):
-        self._filter = filter
-
-    def filter(self, item):
-        return self._filter(item)
-
 class CareSAFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
     wrapper = CareSAForm
@@ -99,9 +92,8 @@ class CareSAFluff(fluff.IndicatorDocument):
         NOTFilter(xcalculators.FormPropertyFilter(xmlns='http://openrosa.org/user-registration')),
         NOTFilter(xcalculators.FormPropertyFilter(xmlns='http://openrosa.org/user/registration')),
         NOTFilter(xcalculators.FormPropertyFilter(xmlns='http://code.javarosa.org/devicereport')),
-        CustomFilter(lambda f: f.age_group >= 0),
-        CustomFilter(lambda f: f.gender in ['male', 'female']),
-        CustomFilter(lambda f: f.cbo),
+        xcalculators.CustomFilter(lambda f: f.gender in ['male', 'female']),
+        xcalculators.CustomFilter(lambda f: f.cbo),
     ])
 
 

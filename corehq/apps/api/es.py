@@ -238,7 +238,10 @@ class XFormES(ESView):
                     xmlns = res['_source'].get('xmlns', None)
                     name = None
                     if xmlns:
-                        name = form_filter.get_unknown_form_name(xmlns, none_if_not_found=True)
+                        name = form_filter.get_unknown_form_name(xmlns,
+                                                                 app_id=res['_source'].get('app_id',
+                                                                                           None),
+                                                                 none_if_not_found=True)
                     if not name:
                         name = 'unknown' # try to fix it below but this will be the default
                         # fall back
@@ -328,7 +331,7 @@ class ESQuerySet(object):
 
     Sorting:
 
-    - Meh?
+    - order_by('field') or order_by('-field') both become ES service-side sort directives
 
     Serialization:
 

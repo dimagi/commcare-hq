@@ -3,6 +3,7 @@ from datetime import datetime
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
@@ -12,6 +13,8 @@ from django.contrib.sites.models import Site
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
     HttpResponseServerError, HttpResponseNotFound
 from django.shortcuts import redirect, render
+from django.views.generic import TemplateView
+import json
 from corehq.apps.announcements.models import Notification
 
 from corehq.apps.app_manager.models import BUG_REPORTS_DOMAIN
@@ -22,8 +25,9 @@ from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_noop
 
 from dimagi.utils.web import get_url_base, json_response
 from django.core.urlresolvers import reverse
@@ -327,7 +331,7 @@ def bug_report(req):
         ).format(**report)
 
     if full_name and not any([c in full_name for c in '<>"']):
-        reply_to = '"{full_name}" <{username}>'.format(**report)
+        reply_to = u'"{full_name}" <{username}>'.format(**report)
     else:
         reply_to = report['username']
 
@@ -405,3 +409,320 @@ def unsubscribe(request, user_id):
                     'click "Update Information" if you do '
                     'not want to receive future emails from us.'))
     return HttpResponseRedirect(reverse('commcare_user_account', args=[domain, user_id]))
+
+
+class BasePageView(TemplateView):
+    urlname = None  # name of the view used in urls
+    page_title = None  # what shows up in the <title>
+    template_name = 'hqwebapp/base_page.html'
+
+    @property
+    def page_name(self):
+        """
+        This is what is visible to the user.
+        page_title is what shows up in <title> tags.
+        """
+        return self.page_title
+
+    @property
+    def page_url(self):
+        raise NotImplementedError()
+
+    @property
+    def parent_pages(self):
+        """
+        Specify parent pages as a list of
+        [{
+            'title': <name>,
+            'url: <url>,
+        }]
+        """
+        return []
+
+    @property
+    def main_context(self):
+        """
+        The shared context for rendering this page.
+        """
+        return {
+            'current_page': {
+                'page_name': self.page_name,
+                'title': self.page_title,
+                'url': self.page_url,
+                'parents': self.parent_pages,
+            },
+        }
+
+    @property
+    def page_context(self):
+        """
+        The Context for the settings page
+        """
+        raise NotImplementedError("This should return a dict.")
+
+    def get_context_data(self, **kwargs):
+        context = super(BasePageView, self).get_context_data(**kwargs)
+        context.update(self.main_context)
+        context.update(self.page_context)
+        return context
+
+    def render_to_response(self, context, **response_kwargs):
+        """
+        Returns a response with a template rendered with the given context.
+        """
+        return render(self.request, self.template_name, context)
+
+
+class BaseSectionPageView(BasePageView):
+    section_name = ""
+    template_name = "hqwebapp/base_section.html"
+
+    @property
+    def section_url(self):
+        raise NotImplementedError
+
+    @property
+    def main_context(self):
+        context = super(BaseSectionPageView, self).main_context
+        context.update({
+            'section': {
+                'page_name': self.section_name,
+                'url': self.section_url,
+            }
+        })
+        return context
+
+
+class PaginatedItemException(Exception):
+    pass
+
+
+class CRUDPaginatedViewMixin(object):
+    """
+    Mix this in with a TemplateView view object.
+    For usage tips, see the docs for UI Helpers > Paginated CRUD View.
+    """
+    DEFAULT_LIMIT = 10
+
+    limit_text = ugettext_noop("items per page")
+    empty_notification = ugettext_noop("You have no items.")
+    loading_message = ugettext_noop("Loading...")
+    deleted_items_header = ugettext_noop("Deleted Items:")
+    new_items_header = ugettext_noop("New Items:")
+
+    def _safe_escape(self, expression, default):
+        try:
+            return expression()
+        except ValueError:
+            return default
+
+    @property
+    def parameters(self):
+        """
+        Specify GET or POST from a request object.
+        """
+        raise NotImplementedError("you need to implement get_param_source")
+
+    @property
+    @memoized
+    def page(self):
+        return self._safe_escape(
+            lambda: int(self.parameters.get('page', 1)),
+            1
+        )
+
+    @property
+    @memoized
+    def limit(self):
+        return self._safe_escape(
+            lambda: int(self.parameters.get('limit', self.DEFAULT_LIMIT)),
+            self.DEFAULT_LIMIT
+        )
+
+    @property
+    def total(self):
+        raise NotImplementedError("You must implement total.")
+
+    @property
+    def sort_by(self):
+        return self.parameters.GET.get('sortBy', 'abc')
+
+    @property
+    def skip(self):
+        return (self.page - 1) * self.limit
+
+    @property
+    def action(self):
+        action = self.parameters.get('action')
+        if action not in self.allowed_actions:
+            raise Http404()
+        return action
+
+    @property
+    def column_names(self):
+        raise NotImplementedError("you must return a list of column names")
+
+    @property
+    def pagination_context(self):
+        create_form = self.get_create_form()
+        return {
+            'pagination': {
+                'page': self.page,
+                'limit': self.limit,
+                'total': self.total,
+                'limit_options': range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT),
+                'column_names': self.column_names,
+                'num_columns': len(self.column_names),
+                'text': {
+                    'limit': self.limit_text,
+                    'empty': self.empty_notification,
+                    'loading': self.loading_message,
+                    'deleted_items': self.deleted_items_header,
+                    'new_items': self.new_items_header,
+                },
+                'create_item_form': self.get_create_form_response(create_form) if create_form else None,
+            }
+        }
+
+    @property
+    def allowed_actions(self):
+        return [
+            'create',
+            'update',
+            'delete',
+            'paginate',
+        ]
+
+    @property
+    def paginate_crud_response(self):
+        """
+        Return this in the post method of your view class.
+        """
+        response = getattr(self, '%s_response' % self.action)
+        return HttpResponse(json.dumps(response))
+
+    @property
+    def create_response(self):
+        create_form = self.get_create_form()
+        new_item = None
+        if create_form.is_valid():
+            new_item = self.get_create_item_data(create_form)
+            create_form = self.get_create_form(is_blank=True)
+        return {
+            'newItem': new_item,
+            'form': self.get_create_form_response(create_form)
+        }
+
+    @property
+    def update_response(self):
+        update_form = self.get_update_form()
+        updated_item = None
+        if update_form.is_valid():
+            updated_item = self.get_updated_item_data(update_form)
+        return {
+            'updatedItem': updated_item,
+            'form': self.get_update_form_response(update_form),
+        }
+
+    @property
+    def delete_response(self):
+        try:
+            try:
+                item_id = self.parameters['itemId']
+            except KeyError:
+                raise PaginatedItemException(_("The item's ID was not passed to the server."))
+            response = self.get_deleted_item_data(item_id)
+            return {
+                'deletedItem': response
+            }
+        except PaginatedItemException as e:
+            return {
+                'error': _("<strong>Problem Deleting:</strong> %s") % e,
+            }
+
+    @property
+    def paginate_response(self):
+        return {
+            'success': True,
+            'currentPage': self.page,
+            'paginatedList': list(self.paginated_list),
+        }
+
+    @property
+    def paginated_list(self):
+        """
+        This should return a list (or generator object) of data formatted as follows:
+        [
+            {
+                'itemData': {
+                    'id': <id of item>,
+                    <json dict of item data for the knockout model to use>
+                },
+                'template': <knockout template id>
+            }
+        ]
+        """
+        raise NotImplementedError("Return a list of data for the request response.")
+
+    def get_create_form(self, is_blank=False):
+        """
+        This should be a crispy form that creates an item.
+        It's not required if you just want a paginated view.
+        """
+        pass
+
+    def get_create_form_response(self, create_form):
+        return render_to_string(
+            'hqwebapp/partials/create_item_form.html', {
+                'form': create_form
+            }
+        )
+
+    def get_update_form(self, initial_data=None):
+        raise NotImplementedError("You must return a form object that will update an Item")
+
+    def get_update_form_response(self, update_form):
+        return render_to_string(
+            'hqwebapp/partials/update_item_form.html', {
+                'form': update_form
+            }
+        )
+
+    def get_create_item_data(self, create_form):
+        """
+        This should return a dict of data for the created item.
+        {
+            'itemData': {
+                'id': <id of item>,
+                <json dict of item data for the knockout model to use>
+            },
+            'template': <knockout template id>
+        }
+        """
+        raise NotImplementedError("You must implement get_new_item_data")
+
+    def get_updated_item_data(self, update_form):
+        """
+        This should return a dict of data for the updated item.
+        {
+            'itemData': {
+                'id': <id of item>,
+                <json dict of item data for the knockout model to use>
+            },
+            'template': <knockout template id>
+        }
+        """
+        raise NotImplementedError("You must implement get_updated_item_data")
+
+    def get_deleted_item_data(self, item_id):
+        """
+        This should return a dict of data for the deleted item.
+        {
+            'itemData': {
+                'id': <id of item>,
+                <json dict of item data for the knockout model to use>
+            },
+            'template': <knockout template id>
+        }
+        """
+        raise NotImplementedError("You must implement get_deleted_item_data")

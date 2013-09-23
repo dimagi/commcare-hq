@@ -1,6 +1,7 @@
 import uuid
 from xml.etree import ElementTree
-from casexml.apps.case.tests import delete_all_cases, delete_all_xforms, CaseBlock
+from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.tests import delete_all_cases, delete_all_xforms
 from casexml.apps.case.xml import V2
 from corehq.apps.commtrack import const
 from corehq.apps.groups.models import Group

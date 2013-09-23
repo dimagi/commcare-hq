@@ -1,7 +1,6 @@
-from datetime import datetime, timedelta, date
+from datetime import datetime
+
 from couchdbkit import ResourceNotFound
-from casexml.apps.case.models import CommCareCase
-from dimagi.utils.couch.database import get_db
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect, Http404
@@ -9,9 +8,9 @@ from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
 from django.shortcuts import render
 from django.contrib import messages
-from corehq.apps.announcements.models import Notification
-from corehq.apps.appstore.views import parse_args_for_es
+from django.utils.translation import ugettext as _
 
+from corehq.apps.announcements.models import Notification
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.orgs.decorators import org_admin_required, org_member_required
@@ -19,18 +18,13 @@ from corehq.apps.registration.forms import DomainRegistrationForm
 from corehq.apps.orgs.forms import AddProjectForm, InviteMemberForm, AddTeamForm, UpdateOrgInfo
 from corehq.apps.reports.standard.domains import OrgDomainStatsReport
 from corehq.apps.users.models import WebUser, UserRole, OrgRemovalRecord
-from corehq.elastic import get_es
-from corehq.pillows.mappings.case_mapping import CASE_INDEX
-from corehq.pillows.mappings.user_mapping import USER_INDEX
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
+from corehq.elastic import get_stats_data
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.web import json_response
 from corehq.apps.orgs.models import Organization, Team, DeleteTeamRecord, \
     OrgInvitation, OrgRequest
 from corehq.apps.domain.models import Domain
-from django.utils.translation import ugettext as _
 
 
 @memoized
@@ -291,6 +285,7 @@ class OrgInvitationView(InvitationView):
 
 @transaction.commit_on_success
 def accept_invitation(request, org, invitation_id):
+    # todo, why wasn't this a TemplateView?
     return OrgInvitationView()(request, invitation_id, organization=org)
 
 @org_admin_required
@@ -584,86 +579,3 @@ def stats_data(request, org):
     histo_type = request.GET.get('histogram_type')
     stats_data = get_stats_data(domains, histo_type, request.datespan)
     return json_response(stats_data)
-
-ADD_TO_FILTERS = {
-    "forms": [
-        {"not": {"in": {"doc_type": ["xformduplicate", "xformdeleted"]}}},
-        {"not": {"missing": {"field": "xmlns"}}},
-        {"not": {"missing": {"field": "form.meta.userID"}}},
-    ],
-    "users": [{"term": {"doc_type": "CommCareUser"}}],
-}
-
-DATE_FIELDS = {
-    "forms": "received_on",
-    "cases": "opened_on",
-    "users": "created_on",
-}
-
-ES_URLS = {
-    "forms": XFORM_INDEX + '/xform/_search',
-    "cases": CASE_INDEX + '/case/_search',
-    "users": USER_INDEX + '/user/_search',
-}
-
-def get_stats_data(domains, histo_type, datespan, interval="day"):
-    from corehq.apps.appstore.views import es_query
-    histo_data = dict([(d['display_name'],
-                        es_histogram(histo_type, d["names"], datespan.startdate_display, datespan.enddate_display))
-                        for d in domains])
-
-    def _total_until_date(histo_type, doms=None):
-        query = {"in": {"domain.exact": doms}} if doms is not None else {"match_all": {}}
-        q = {
-            "query": query,
-            "filter": {
-                "and": [
-                    {"range": {DATE_FIELDS[histo_type]: {"lt": datespan.startdate_display}}},
-                ],
-            },
-        }
-        q["filter"]["and"].extend(ADD_TO_FILTERS.get(histo_type, []))
-
-        return es_query(q=q, es_url=ES_URLS[histo_type], size=1)["hits"]["total"]
-
-    return {
-        'histo_data': histo_data,
-        'initial_values': dict([(dom["display_name"],
-                                 _total_until_date(histo_type, dom["names"])) for dom in domains]),
-        'startdate': datespan.startdate_key_utc,
-        'enddate': datespan.enddate_key_utc,
-    }
-
-def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None, interval="day"):
-    q = {"query": {"match_all":{}}}
-
-    if domains is not None:
-        q["query"] = {"in" : {"domain.exact": domains}}
-
-    date_field = DATE_FIELDS[histo_type]
-
-    q.update({
-        "facets": {
-            "histo": {
-                "date_histogram": {
-                    "field": date_field,
-                    "interval": interval
-                },
-                "facet_filter": {
-                    "and": [{
-                        "range": {
-                            date_field: {
-                                "from": startdate,
-                                "to": enddate
-                            }}}]}}},
-        "size": 0
-    })
-
-    if tz_diff:
-        q["facets"]["histo"]["date_histogram"]["time_zone"] = tz_diff
-
-    q["facets"]["histo"]["facet_filter"]["and"].extend(ADD_TO_FILTERS.get(histo_type, []))
-
-    es = get_es()
-    ret_data = es.get(ES_URLS[histo_type], data=q)
-    return ret_data["facets"]["histo"]["entries"]

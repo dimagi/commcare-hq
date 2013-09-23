@@ -3,6 +3,7 @@ function CommcareSettings(options) {
     var initialValues = options.values;
     self.sections = options.sections;
     self.edit = ko.observable(options.edit);
+    self.user = options.user;
 
     self.settings = [];
     self.settingsIndex = {};
@@ -159,7 +160,8 @@ function CommcareSettings(options) {
         setting.visible = ko.computed(function () {
             return !(
                 (setting.disabled && setting.visibleValue() === setting['default']) ||
-                    (setting.hide_if_not_enabled && !setting.enabled())
+                    (setting.hide_if_not_enabled && !setting.enabled()) ||
+                    (setting.preview && !self.user.is_previewer)
                 );
         });
         setting.disabledButHasValue = ko.computed(function () {
@@ -195,7 +197,7 @@ function CommcareSettings(options) {
             });
         });
         section.reallyCollapse = ko.computed(function () {
-            return section.collapse || _(section.settings).some(function (setting) {
+            return section.collapse && !_(section.settings).some(function (setting) {
                 return setting.hasError();
             });
         });
@@ -207,7 +209,7 @@ function CommcareSettings(options) {
         for (i = 0; i < setting.contingent_default.length; i += 1) {
             _case = setting.contingent_default[i];
             condition = self.parseCondition(_case.condition);
-            var j
+            var j;
             for (j = 0; j < condition.settings.length; j += 1) {
                 condition.settings[j].value.subscribe(function() {
                     setting.value(setting.computeDefault());

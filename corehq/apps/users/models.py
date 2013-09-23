@@ -443,7 +443,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 domain = self.current_domain
             else:
                 return False # no domain, no admin
-        if self.is_global_admin():
+        if self.is_global_admin() and (domain is None or not Domain.get_by_name(domain).restrict_superusers):
             return True
         dm = self.get_domain_membership(domain)
         if dm:
@@ -726,6 +726,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def full_name(self):
         return ("%s %s" % (self.first_name or '', self.last_name or '')).strip()
 
+    @property
+    def human_friendly_name(self):
+        return self.full_name if self.full_name else self.username
+
     formatted_name = full_name
     name = full_name
 
@@ -801,8 +805,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                             'CommCareCase': 'case',
                             'CommConnectCase': 'case',
                         }[duplicate.owner_doc_type]
+                        from corehq.apps.users.views.mobile import EditCommCareUserView
                         url_ref, doc_id_param = {
-                            'user': ('user_account', 'couch_user_id'),
+                            'user': (EditCommCareUserView.urlname, 'couch_user_id'),
                             'case': ('case_details', 'case_id'),
                         }[doc_type]
                         dup_url = reverse(url_ref, kwargs={'domain': duplicate.domain, doc_id_param: duplicate.owner_id})
@@ -850,6 +855,21 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             #stale=None if strict else settings.COUCH_STALE_QUERY,
             **extra_args
         ).all()
+
+
+    @classmethod
+    def ids_by_domain(cls, domain, is_active=True):
+        flag = "active" if is_active else "inactive"
+        if cls.__name__ == "CouchUser":
+            key = [flag, domain]
+        else:
+            key = [flag, domain, cls.__name__]
+        return [r['id'] for r in cls.get_db().view("users/by_domain",
+            startkey=key,
+            endkey=key + [{}],
+            reduce=False,
+            include_docs=False,
+        )]
 
     @classmethod
     def total_by_domain(cls, domain, is_active=True):
@@ -1079,7 +1099,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def is_deleted(self):
         return self.base_doc.endswith(DELETED_SUFFIX)
 
-    def get_viewable_reports(self, domain=None, name=True):
+    def get_viewable_reports(self, domain=None, name=True, slug=False):
         try:
             domain = domain or self.current_domain
         except AttributeError:
@@ -1094,12 +1114,25 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             else:
                 models = self.get_domain_membership(domain).viewable_reports()
 
+            if slug:
+                return [to_function(m).slug for m in models]
             if name:
                 return [to_function(m).name for m in models]
-            else:
-                return models
+            return models
         except AttributeError:
             return []
+
+    def get_exportable_reports(self, domain=None):
+        viewable_reports = self.get_viewable_reports(domain=domain, slug=True)
+        from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
+        export_reports = set(DataInterfaceDispatcher().get_reports_dict(domain).keys())
+        return list(export_reports.intersection(viewable_reports))
+
+    def can_export_data(self, domain=None):
+        can_see_exports = self.can_view_reports()
+        if not can_see_exports:
+            can_see_exports = bool(self.get_exportable_reports(domain))
+        return can_see_exports
 
     def is_current_web_user(self, request):
         return self.user_id == request.couch_user.user_id
@@ -1462,8 +1495,24 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def get_group_ids(self):
         from corehq.apps.groups.models import Group
-
         return Group.by_user(self, wrap=False)
+
+    def set_groups(self, group_ids):
+        from corehq.apps.groups.models import Group
+        desired = set(group_ids)
+        current = set(self.get_group_ids())
+        touched = []
+        for to_add in desired - current:
+            group = Group.get(to_add)
+            group.add_user(self._id, save=False)
+            touched.append(group)
+        for to_remove in current - desired:
+            group = Group.get(to_remove)
+            group.remove_user(self._id, save=False)
+            touched.append(group)
+
+        Group.bulk_save(touched)
+
 
     def get_time_zone(self):
         try:
@@ -1649,7 +1698,7 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
     @memoized
     def has_permission(self, domain, permission, data=None):
         # is_admin is the same as having all the permissions set
-        if self.is_global_admin():
+        if (self.is_global_admin() and (domain is None or not Domain.get_by_name(domain).restrict_superusers)):
             return True
         elif self.is_domain_admin(domain):
             return True
