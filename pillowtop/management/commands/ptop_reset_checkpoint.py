@@ -1,8 +1,8 @@
 from optparse import make_option
-from django.core.management.base import NoArgsCommand, LabelCommand
+from django.core.management.base import LabelCommand
 import sys
-from pillowtop.run_pillowtop import import_pillows
-from django.conf import settings
+from pillowtop import get_all_pillows
+
 
 class Command(LabelCommand):
     help = "Reset checkpoints for pillowtop"
@@ -22,7 +22,7 @@ class Command(LabelCommand):
         """
         More targeted pillow checkpoint reset system - must specify the pillow class_name to reset the checkpoint
         """
-        all_pillows = import_pillows()
+        all_pillows = get_all_pillows()
 
         pillow_class_names = [x.__class__.__name__ for x in all_pillows]
 

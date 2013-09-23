@@ -5,7 +5,7 @@ import simplejson
 from corehq.elastic import get_es
 from pillowtop.listener import AliasedElasticPillow
 from pillowtop.management.pillowstate import get_pillow_states
-from pillowtop.run_pillowtop import import_pillows
+from pillowtop import get_all_pillows
 
 
 class Command(LabelCommand):
@@ -45,7 +45,7 @@ class Command(LabelCommand):
         flip_single = options['pillow_class']
         es = get_es()
 
-        pillows = import_pillows()
+        pillows = get_all_pillows()
         aliased_pillows = filter(lambda x: isinstance(x, AliasedElasticPillow), pillows)
 
         if show_info:
