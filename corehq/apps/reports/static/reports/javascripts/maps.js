@@ -340,6 +340,7 @@ function initTable(data, config) {
             $tr.append($cell);
         });
         $container.append($tr);
+        return $tr;
     };
 
     var sorting = [];
@@ -359,7 +360,7 @@ function initTable(data, config) {
     });
     $.each(data.features, function(i, e) {
         var ctx = infoContext(e, config, 'table');
-        row($('#tabular'), false, ctx.info, function($cell, e) {
+        e.$tr = row($('#tabular'), false, ctx.info, function($cell, e) {
             $cell.text(e.value);
             $cell.append('<span title="' + e.raw + '"></span>'); // sort key
         });
@@ -422,6 +423,10 @@ function zoomToAll(map) {
 
 // generate the proper geojson styling for the given display metric
 function makeDisplayContext(metric, setActiveFeature) {
+    // reset table rows (markers are regenerated but rows are long-lived)
+    $('#tabular tr').unbind();
+    $('#tabular tr').removeClass('inactiverow');
+
     return {
         filter: function(feature, layer) {
             if (feature.geometry.type == "Point") {
@@ -430,7 +435,11 @@ function makeDisplayContext(metric, setActiveFeature) {
                 feature._conf = featureStyle(metric, feature.properties);
             }
             // TODO support placeholder markers for 'null' instead of hiding entirely?
-            return (feature._conf != null);
+            var show = (feature._conf != null);
+            if (!show) {
+                feature.$tr.addClass('inactiverow');
+            }
+            return show;
         },
         style: function(feature) {
             return feature._conf;
@@ -439,10 +448,29 @@ function makeDisplayContext(metric, setActiveFeature) {
             return feature._conf(latlng);
         },
         onEachFeature: function(feature, layer) {
+            // popup
             layer.bindPopup(feature.popupContent, {
                 maxWidth: 600,
             });
+            // open popup on table row click / highlight table row on popup open
+            var selectRow = function($tr) {
+                $('#tabular tr').removeClass('selectedrow');
+                if ($tr != null) {
+                    $tr.addClass('selectedrow');
+                }
+            };
+            feature.$tr.click(function() {
+                layer.openPopup();
+                selectRow(feature.$tr);
+            });
+            layer.on('popupopen', function() {
+                selectRow(feature.$tr);
+            });
+            layer.on('popupclose', function() {
+                selectRow(null);
+            });
 
+            // highlight layer / table row on hover-over
             if (feature.geometry.type != 'Point') {
                 layer._activate = function() {
                     layer.setStyle(ACTIVE_STYLE);
@@ -451,25 +479,29 @@ function makeDisplayContext(metric, setActiveFeature) {
                     layer.setStyle(feature._conf);
                 };
             }
-
+            var hoverOn = function() {
+                if (layer._activate) {
+                    layer._activate();
+                    if (layer.bringToFront) {
+                        // normal markers don't have this method; mimic with 'riseOnHover'
+                        layer.bringToFront();
+                    }
+                }
+                feature.$tr.addClass('hoverrow');
+                setActiveFeature(feature);
+            };
+            var hoverOff = function() {
+                if (layer._deactivate) {
+                    layer._deactivate();
+                }
+                feature.$tr.removeClass('hoverrow');
+                setActiveFeature(null);
+            };
             layer.on({
-                mouseover: function(e) {
-                    if (layer._activate) {
-                        layer._activate();
-                        if (layer.bringToFront) {
-                            // normal markers don't have this method; mimic with 'riseOnHover'
-                            layer.bringToFront();
-                        }
-                    }
-                    setActiveFeature(feature);
-                },
-                mouseout: function(e) {
-                    if (layer._deactivate) {
-                        layer._deactivate();
-                    }
-                    setActiveFeature(null);
-                },
+                mouseover: hoverOn,
+                mouseout: hoverOff,
             });
+            feature.$tr.hover(hoverOn, hoverOff);
         }
     }
 }
