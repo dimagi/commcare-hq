@@ -1,11 +1,16 @@
-from casexml.apps.case.models import CommCareCaseGroup
+from couchdbkit import ResourceNotFound
+from django.utils.decorators import method_decorator
+from django.utils.safestring import mark_safe
+from casexml.apps.case.models import CommCareCaseGroup, CommCareCase
 from corehq import CaseReassignmentInterface
-from corehq.apps.data_interfaces.forms import AddCaseGroupForm, UpdateCaseGroupForm
+from corehq.apps.data_interfaces.forms import AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroupForm
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
+from corehq.apps.hqcase.utils import get_case_by_identifier
+from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, PaginatedItemException
 from corehq.apps.reports.standard.export import ExcelExportReport
-from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher, EditDataInterfaceDispatcher
+from corehq.apps.data_interfaces.dispatcher import (DataInterfaceDispatcher, EditDataInterfaceDispatcher,
+                                                    require_can_edit_data)
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404
 from dimagi.utils.decorators.memoized import memoized
@@ -30,15 +35,28 @@ def default(request, domain):
     raise Http404()
 
 
-class CaseGroupListView(BaseDomainView, CRUDPaginatedViewMixin):
-    template_name = "data_interfaces/list_case_groups.html"
-    urlname = 'case_group_list'
-    page_title = ugettext_noop("Case Groups")
+class DataInterfaceSection(BaseDomainView):
     section_name = ugettext_noop("Data")
+
+    @method_decorator(require_can_edit_data)
+    def dispatch(self, request, *args, **kwargs):
+        return super(DataInterfaceSection, self).dispatch(request, *args, **kwargs)
 
     @property
     def section_url(self):
         return reverse("data_interfaces_default", args=[self.domain])
+
+
+class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
+    template_name = "data_interfaces/list_case_groups.html"
+    urlname = 'case_group_list'
+    page_title = ugettext_noop("Case Groups")
+
+    limit_text = ugettext_noop("groups per page")
+    empty_notification = ugettext_noop("You have no case groups. Please create one!")
+    loading_message = ugettext_noop("Loading groups...")
+    deleted_items_header = ugettext_noop("Deleted Groups:")
+    new_items_header = ugettext_noop("New Groups:")
 
     @property
     def page_url(self):
@@ -89,6 +107,7 @@ class CaseGroupListView(BaseDomainView, CRUDPaginatedViewMixin):
             'id': case_group._id,
             'name': case_group.name,
             'numCases': len(case_group.cases),
+            'manageUrl': reverse(CaseGroupCaseManagementView.urlname, args=[self.domain, case_group._id])
         }
 
     def post(self, *args, **kwargs):
@@ -128,3 +147,128 @@ class CaseGroupListView(BaseDomainView, CRUDPaginatedViewMixin):
             'itemData': item_data,
             'template': 'deleted-group-template',
         }
+
+
+class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
+    template_name = 'data_interfaces/manage_case_groups.html'
+    urlname = 'manage_case_groups'
+    page_title = ugettext_noop("Manage Case Group")
+
+    limit_text = ugettext_noop("cases per page")
+    empty_notification = ugettext_noop("You have no cases in your group.")
+    loading_message = ugettext_noop("Loading cases...")
+    deleted_items_header = ugettext_noop("Removed Cases:")
+    new_items_header = ugettext_noop("Added Cases:")
+
+    @property
+    def group_id(self):
+        return self.kwargs.get('group_id')
+
+    @property
+    @memoized
+    def case_group(self):
+        try:
+            return CommCareCaseGroup.get(self.group_id)
+        except ResourceNotFound:
+            raise Http404()
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': CaseGroupListView.page_title,
+            'url': reverse(CaseGroupListView.urlname, args=[self.domain])
+        }]
+
+    @property
+    def page_name(self):
+        return _("Manage Group '%s'" % self.case_group.name)
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.group_id])
+
+    @property
+    def page_context(self):
+        return self.pagination_context
+
+    @property
+    def parameters(self):
+        return self.request.POST if self.request.method == 'POST' else self.request.GET
+
+    @property
+    @memoized
+    def total(self):
+        return self.case_group.get_total_cases()
+
+    @property
+    def column_names(self):
+        return [
+            _("Case Name"),
+            _("Phone Number"),
+            _("External ID"),
+            _("Case Details"),
+            _("Action"),
+        ]
+
+    @property
+    def paginated_list(self):
+        for case in self.case_group.get_cases(limit=self.limit, skip=self.skip):
+            yield {
+                'itemData': self._get_item_data(case),
+                'template': 'existing-case-template',
+            }
+
+    def _get_item_data(self, case):
+        return {
+            'id': case._id,
+            'detailsUrl': reverse('case_details', args=[self.domain, case._id]),
+            'name': case.name,
+            'externalId': case.external_id if case.external_id else '--',
+            'phoneNumber': getattr(case, 'contact_phone_number', '--'),
+        }
+
+    def get_create_form(self, is_blank=False):
+        if self.request.method == 'POST' and not is_blank:
+            return AddCaseToGroupForm(self.request.POST)
+        return AddCaseToGroupForm()
+
+    def get_create_item_data(self, create_form):
+        case_identifier = create_form.cleaned_data['case_identifier']
+        case = get_case_by_identifier(self.domain, case_identifier)
+        if case is None:
+            return {
+                'itemData': {
+                    'id': case_identifier.replace(' ', '_'),
+                    'identifier': case_identifier,
+                    'message': _('Sorry, we could not a find a case that '
+                                 'matched the identifier you provided.'),
+                },
+                'rowClass': 'warning',
+                'template': 'case-message-template',
+            }
+        item_data = self._get_item_data(case)
+        if case._id in self.case_group.cases:
+            message = '<span class="label label-important">%s</span>' % _("Case already in group")
+        else:
+            message = '<span class="label label-success">%s</span>' % _("Case added")
+            self.case_group.cases.append(case._id)
+            self.case_group.save()
+        item_data['message'] = message
+        return {
+            'itemData': item_data,
+            'template': 'new-case-template',
+        }
+
+    def get_deleted_item_data(self, item_id):
+        if not item_id:
+            raise PaginatedItemException("The case's ID was blank.")
+        current_cases = set(self.case_group.cases)
+        self.case_group.cases = list(current_cases.difference([item_id]))
+        self.case_group.save()
+        return {
+            'template': 'removed-case-template',
+        }
+
+    def post(self, *args, **kwargs):
+        return self.paginate_crud_response
+
