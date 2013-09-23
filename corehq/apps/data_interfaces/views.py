@@ -272,7 +272,3 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
 
-    def get(self, request, *args, **kwargs):
-        # To make sure that the total is accurate.
-        self.case_group.clean_cases()
-        return super(CaseGroupCaseManagementView, self).get(request, *args, **kwargs)
