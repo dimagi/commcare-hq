@@ -300,7 +300,7 @@ def force_empty_string_to_null(value):
         return value
 
 
-class FormDataSchema(DocumentSchema):
+class StringDataSchema(DocumentSchema):
 
     @classmethod
     def force_wrap(cls, data):
@@ -313,14 +313,14 @@ class FormDataSchema(DocumentSchema):
                 DateTimeProperty: force_empty_string_to_null,
             }.get(property.__class__, lambda x: x)
             data[property.name] = transform(data.get(property.name))
-        return super(FormDataSchema, cls).wrap(data)
+        return super(StringDataSchema, cls).wrap(data)
 
     @classmethod
     def wrap(cls, data):
         raise NotImplementedError()
 
 
-class StockStatus(FormDataSchema):
+class StockStatus(StringDataSchema):
     """
     This is a wrapper/helper class to represent the current stock status
     of a commtrack case.
@@ -352,7 +352,7 @@ class StockStatus(FormDataSchema):
             skip=skip, limit=limit)]
 
 
-class StockTransaction(FormDataSchema):
+class StockTransaction(StringDataSchema):
     """
     wrapper/helper for transactions
     """
