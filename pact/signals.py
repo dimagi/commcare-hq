@@ -23,7 +23,8 @@ def process_dots_submission(sender, xform, **kwargs):
         #get user from xform
         user_id = xform.metadata.userID
         cc_user = CouchUser.get_by_user_id(user_id)
-        recalculate_dots_data(case_id, cc_user)
+        last_sync_token = getattr(xform, 'last_sync_token', None)
+        recalculate_dots_data(case_id, cc_user, sync_token=last_sync_token)
 
     except Exception, ex:
         tb = traceback.format_exc()

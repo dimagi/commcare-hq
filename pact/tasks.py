@@ -14,7 +14,7 @@ DOT_RECOMPUTE=True
 #cc_user = CommCareUser.get_by_username('pactimporter@pact.commcarehq.org')
 
 @task(ignore_result=True)
-def recalculate_dots_data(case_id, cc_user):
+def recalculate_dots_data(case_id, cc_user, sync_token=None):
     """
     Recalculate the dots data and resubmit calling the pact api for dot recompute
     """
@@ -23,7 +23,7 @@ def recalculate_dots_data(case_id, cc_user):
     if DOT_RECOMPUTE:
         try:
             casedoc = PactPatientCase.get(case_id)
-            recompute_dots_casedata(casedoc, cc_user)
+            recompute_dots_casedata(casedoc, cc_user, sync_token=sync_token)
         except Exception, ex:
             tb = traceback.format_exc()
             notify_exception(None, message="PACT error recomputing DOTS case block: %s\n%s" % (ex, tb))
