@@ -88,9 +88,9 @@ def get_case_by_identifier(domain, identifier):
             return case
 
     # Try by case id
-        try:
-            return CommCareCase.get(identifier)
-        except (ResourceNotFound, KeyError):
-            pass
+    try:
+        return CommCareCase.get(identifier)
+    except (ResourceNotFound, KeyError):
+        pass
 
     return None
