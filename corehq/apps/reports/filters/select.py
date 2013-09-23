@@ -68,10 +68,10 @@ class GroupFilterMixin(object):
         return [(group.get_id, group.name) for group in Group.get_reporting_groups(self.domain)]
 
 class GroupFilter(GroupFilterMixin, BaseSingleOptionFilter):
-    placeholder = 'Click to select a group'
+    placeholder = ugettext_noop('Click to select a group')
 
 class MultiGroupFilter(GroupFilterMixin, BaseMultipleOptionFilter):
-    placeholder = 'Click to select groups'
+    placeholder = ugettext_noop('Click to select groups')
 
 class YearFilter(BaseSingleOptionFilter):
     slug = "year"
