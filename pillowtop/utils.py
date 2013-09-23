@@ -43,3 +43,27 @@ def get_all_pillows(instantiate=True):
                      "could not be imported") % full_str
                 )
     return pillowtops
+
+
+def force_seq_int(seq):
+    if seq is None:
+        return None
+    elif isinstance(seq, basestring):
+        return int(seq.split('-')[0])
+    else:
+        assert isinstance(seq, int)
+        return seq
+
+
+def get_all_pillows_json():
+    pillows = get_all_pillows()
+    pillows_json = []
+    for pillow in pillows:
+        checkpoint = pillow.get_checkpoint()
+        pillows_json.append({
+            'name': pillow.__class__.__name__,
+            'seq': force_seq_int(checkpoint.get('seq')),
+            'old_seq': force_seq_int(checkpoint.get('old_seq')) or 0,
+            'db_seq': force_seq_int(pillow.get_db_seq()),
+        })
+    return pillows_json
