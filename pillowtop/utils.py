@@ -9,7 +9,7 @@ def import_settings():
     try:
         from django.conf import settings
     except Exception, ex:
-        #if we are not in a django context, then import local pillowsettings
+        # if we are not in a django context, then import local pillowsettings
         print "django import"
         print ex
         import pillowsettings as settings
