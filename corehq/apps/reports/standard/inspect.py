@@ -30,7 +30,7 @@ from corehq.apps.reports.generic import GenericTabularReport, ProjectInspectionR
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.users.models import CommCareUser, CouchUser
-from corehq.elastic import es_query
+from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.couch import get_cached_property, IncompatibleDocument
 from dimagi.utils.couch.database import get_db
@@ -92,7 +92,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
                             "from": self.datespan.startdate_param,
                             "to": self.datespan.enddate_param,
                             "include_upper": False}}},
-                "filter": {"and": []}}
+                "filter": {"and": ADD_TO_ES_FILTER["forms"]}}
 
             xmlnss = filter(None, [f["xmlns"] for f in self.all_relevant_forms.values()])
             if xmlnss:
