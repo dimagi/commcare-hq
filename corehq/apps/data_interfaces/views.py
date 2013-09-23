@@ -248,9 +248,9 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
             }
         item_data = self._get_item_data(case)
         if case._id in self.case_group.cases:
-            message = _('<span class="label label-important">Case already in group</span>')
+            message = '<span class="label label-important">%s</span>' % _("Case already in group")
         else:
-            message = _('<span class="label label-success">Case added</span>')
+            message = '<span class="label label-success">%s</span>' % _("Case added")
             self.case_group.cases.append(case._id)
             self.case_group.save()
         item_data['message'] = message
