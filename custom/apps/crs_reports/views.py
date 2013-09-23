@@ -61,7 +61,7 @@ def get_questions_with_answers(forms, domain, case):
     needed_forms = []
     app = get_app(domain, getattr(forms[0], "app_id", None))
     for form in forms:
-        if 'current_count' in form.get_form and int(form.get_form['current_count']) >= 1:
+        if 'current_count' in form.get_form and form.get_form['current_count'] and int(form.get_form['current_count']) >= 1:
             needed_forms.append(form)
 
     if needed_forms:

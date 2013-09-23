@@ -42,12 +42,23 @@
                     <td>{% trans "District:" %} </td>
                 </tr>
                 <tr>
-                    <td colspan="3" rowspan="1" style="border: 0">{% trans "Place of delivery-" %} <strong>{{ case.place_birth }}</strong></td>
+                    <td colspan="3" rowspan="1" style="border: 0">{% trans "Place of delivery-" %}
+                        <strong>
+                            {% if case.place_birth == "at_home" %}{% trans "Home" %}{% endif %}
+                            {% if case.place_birth == "in_hospital" %}{% trans "Hospital" %}{% endif %}
+                            {% if case.place_birth != "at_home" and case.place_birth != "in_hospital" %}{% trans "Other" %}{% endif %}
+                        </strong>
+                    </td>
                     <td colspan="1" rowspan="1" style="border: 0">{% trans "Format Serial Number:" %}</td>
                     <td colspan="1" rowspan="1" style="border: 0"></td>
                 </tr>
                 <tr>
-                    <td colspan="5" rowspan="1" style="border: 0">{% trans "Outcome of delivery" %} - <strong>{{ case.pregnancy_outcome }}</strong></td>
+                    <td colspan="5" rowspan="1" style="border: 0">{% trans "Outcome of delivery" %} -
+                        <strong>
+                            {% if case.pregnancy_outcome == "live_birth" %}{% trans "Live" %}{% else %}{% trans "Dead" %}{% endif %}
+                        </strong> &nbsp;
+                        <strong>{{ case.baby_sex|title }} </strong>
+                    </td>
                 </tr>
             </tbody>
     </table>

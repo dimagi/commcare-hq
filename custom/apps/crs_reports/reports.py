@@ -30,7 +30,7 @@ class HNBCReportDisplay(CaseDisplay):
         if 'date_birth' not in self.case:
             return '---'
         else:
-            return self.case['date_birth']
+            return self.report.date_to_json(self.parse_date(self.case['date_birth']))
 
     @property
     def visit_completion(self):
@@ -41,7 +41,13 @@ class HNBCReportDisplay(CaseDisplay):
         if 'place_birth' not in self.case:
             return '---'
         else:
-            return self.case['place_birth']
+            if "at_home" == self.case['place_birth']:
+                return _('Home')
+            elif "in_hospital" == self.case['place_birth']:
+                return _('Hospital')
+            else:
+                return _('Other')
+
 
     @property
     def pnc_status(self):
@@ -88,7 +94,7 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
             DataTablesColumn(_("Case Type")),
             DataTablesColumn(_("Case Name")),
             DataTablesColumn(_("CHW Name")),
-            DataTablesColumn(_("DOB")),
+            DataTablesColumn(_("Date of Delivery")),
             DataTablesColumn(_("PNC Visit Completion")),
             DataTablesColumn(_("Delivery")),
             DataTablesColumn(_("Case/PNC Status"))
@@ -143,7 +149,7 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
     def date_to_json(self, date):
         return tz_utils.adjust_datetime_to_timezone\
             (date, pytz.utc.zone, self.timezone.zone).strftime\
-            ('%Y-%m-%d') if date else ""
+            ('%d-%m-%Y') if date else ""
 
 
 class HNBCMotherReport(BaseHNBCReport):
