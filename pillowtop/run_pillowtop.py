@@ -1,13 +1,13 @@
 from gevent.pool import Pool
 from restkit.session import set_session; set_session("gevent")
-from pillowtop.utils import import_pillows
+from pillowtop import get_all_pillows
 
 
 #standalone pillowtop runner
 def start_pillows():
     #gevent patching: logging doesn't seem to work unless thread is not patched
 
-    pillows = import_pillows()
+    pillows = get_all_pillows()
     pool = Pool(len(pillows))
     while True:
         for p in pillows:
