@@ -814,6 +814,7 @@ PILLOWTOPS = [
                  'corehq.pillows.domain.DomainPillow',
                  'corehq.pillows.user.UserPillow',
                  'corehq.pillows.application.AppPillow',
+                 'corehq.pillows.sms.SMSPillow',
                  'corehq.pillows.commtrack.ConsumptionRatePillow',
                  'corehq.pillows.reportxform.ReportXFormPillow',
                  'corehq.pillows.reportcase.ReportCasePillow',
