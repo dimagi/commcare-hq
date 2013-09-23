@@ -115,7 +115,7 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
         block = self.request_params.get('block', '')
         status = self.request_params.get('PNC_status', '')
 
-        filters = [{'term': {'pp_case_filter': 1}}]
+        filters = []
         or_stmt = []
 
         if block:
@@ -153,6 +153,10 @@ class HNBCMotherReport(BaseHNBCReport):
     slug = 'hnbc_mother_report'
     report_template_name = 'mothers_form_reports_template'
     default_case_type = 'pregnant_mother'
+
+    @property
+    def case_filter(self):
+        return {'term': {'pp_case_filter': "1"}}
 
     @property
     def user_filter(self):
