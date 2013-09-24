@@ -235,6 +235,19 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
                 'template': 'existing-case-template',
             }
 
+    @property
+    def allowed_actions(self):
+        actions = super(CaseGroupCaseManagementView, self).allowed_actions
+        actions.append('bulk')
+        return actions
+
+    @property
+    def bulk_response(self):
+        return cache.get(self.request.POST['upload_id'])
+
+    @property
+    def is_bulk_upload(self):
+        return self.request.method == 'POST' and self.request.POST.get('action') == 'bulk_upload'
 
     @property
     def bulk_upload_id(self):
@@ -304,6 +317,8 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
         item_data = self._get_item_data(case)
         if case._id in self.case_group.cases:
             message = '<span class="label label-important">%s</span>' % _("Case already in group")
+        elif case.doc_type != 'CommCareCase':
+            message = '<span class="label label-important">%s</span>' % _("It looks like this case was deleted.")
         else:
             message = '<span class="label label-success">%s</span>' % _("Case added")
             self.case_group.cases.append(case._id)
