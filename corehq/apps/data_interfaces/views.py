@@ -1,9 +1,17 @@
+import csv
+import io
+import uuid
 from couchdbkit import ResourceNotFound
+from django.contrib import messages
+from django.core.cache import cache
+from dimagi.utils.excel import WorkbookJSONReader, JSONReaderError
 from django.utils.decorators import method_decorator
-from django.utils.safestring import mark_safe
-from casexml.apps.case.models import CommCareCaseGroup, CommCareCase
+from openpyxl.shared.exc import InvalidFileException
+from casexml.apps.case.models import CommCareCaseGroup
 from corehq import CaseReassignmentInterface
-from corehq.apps.data_interfaces.forms import AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroupForm
+from corehq.apps.data_interfaces.tasks import bulk_upload_cases_to_group
+from corehq.apps.data_interfaces.forms import (AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroupForm,
+                                               UploadBulkCaseGroupForm)
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqcase.utils import get_case_by_identifier
@@ -33,6 +41,10 @@ def default(request, domain):
         return HttpResponseRedirect(reverse(EditDataInterfaceDispatcher.name(),
                                             args=[domain, CaseReassignmentInterface.slug]))
     raise Http404()
+
+
+class BulkUploadCasesException(Exception):
+    pass
 
 
 class DataInterfaceSection(BaseDomainView):
@@ -189,7 +201,12 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
 
     @property
     def page_context(self):
-        return self.pagination_context
+        context = self.pagination_context
+        context.update({
+            'bulk_upload_from': UploadBulkCaseGroupForm(),
+            'bulk_upload_id': self.bulk_upload_id,
+        })
+        return context
 
     @property
     def parameters(self):
@@ -217,6 +234,57 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
                 'itemData': self._get_item_data(case),
                 'template': 'existing-case-template',
             }
+
+    @property
+    def allowed_actions(self):
+        actions = super(CaseGroupCaseManagementView, self).allowed_actions
+        actions.append('bulk')
+        return actions
+
+    @property
+    def bulk_response(self):
+        return cache.get(self.request.POST['upload_id'])
+
+    @property
+    def is_bulk_upload(self):
+        return self.request.method == 'POST' and self.request.POST.get('action') == 'bulk_upload'
+
+    @property
+    def bulk_upload_id(self):
+        if not self.is_bulk_upload:
+            return None
+        try:
+            if self.uploaded_file:
+                upload_id = uuid.uuid4().hex
+                bulk_upload_cases_to_group.delay(
+                    upload_id,
+                    self.domain,
+                    self.group_id,
+                    list(self.uploaded_file.get_worksheet())
+                )
+                messages.success(self.request, _("We received your file and are processing it..."))
+                return upload_id
+        except BulkUploadCasesException as e:
+            messages.error(self.request, e.message)
+        return None
+
+    @property
+    @memoized
+    def uploaded_file(self):
+        bulk_file = self.request.FILES['bulk_file']
+        try:
+            return WorkbookJSONReader(bulk_file)
+        except InvalidFileException:
+            try:
+                csv.DictReader(io.StringIO(bulk_file.read().decode('ascii'),
+                                           newline=None))
+                raise BulkUploadCasesException(_("CommCare HQ no longer supports CSV upload. "
+                                                 "Please convert to Excel 2007 or higher (.xlsx) "
+                                                 "and try again."))
+            except UnicodeDecodeError:
+                raise BulkUploadCasesException(_("Unrecognized format"))
+        except JSONReaderError as e:
+            raise BulkUploadCasesException(_('Your upload was unsuccessful. %s') % e.message)
 
     def _get_item_data(self, case):
         return {
@@ -249,6 +317,8 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
         item_data = self._get_item_data(case)
         if case._id in self.case_group.cases:
             message = '<span class="label label-important">%s</span>' % _("Case already in group")
+        elif case.doc_type != 'CommCareCase':
+            message = '<span class="label label-important">%s</span>' % _("It looks like this case was deleted.")
         else:
             message = '<span class="label label-success">%s</span>' % _("Case added")
             self.case_group.cases.append(case._id)
@@ -269,6 +339,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
             'template': 'removed-case-template',
         }
 
-    def post(self, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
+        if self.is_bulk_upload:
+            return self.get(request, *args, **kwargs)
         return self.paginate_crud_response
-
