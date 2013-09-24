@@ -145,7 +145,7 @@ class CaseBugTest(TestCase):
         How do we do when submitting a form with multiple blocks for the same case?
         """
         self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
-        file_path = os.path.join(os.path.dirname(__file__), "data", "bugs", "mutiple_case_blocks.xml")
+        file_path = os.path.join(os.path.dirname(__file__), "data", "bugs", "multiple_case_blocks.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
