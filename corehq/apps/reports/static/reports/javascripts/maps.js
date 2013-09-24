@@ -1,5 +1,24 @@
 
 DISPLAY_DIMENSIONS = ['size', 'color', 'icon'];
+TABLE_TOGGLE = false;
+
+function setMapHeight(map, animate) {
+    var $map = $('#map');
+    var height = $(window).height() - $map.offset().top;
+    if (TABLE_TOGGLE) {
+        height *= .6;
+    } else {
+        height -= 0.5 * $('.dataTable thead').height();
+    }
+    if (animate) {
+        $map.animate({height: height}, null, null, function() {
+            map.invalidateSize();
+        });
+    } else {
+        $map.height(height);
+        map.invalidateSize();
+    }
+}
 
 function forEachDimension(metric, callback) {
     $.each(DISPLAY_DIMENSIONS, function(i, e) {
@@ -242,6 +261,40 @@ ZoomToFitControl = L.Control.extend({
     }
 });
 
+// a control button to scroll table into view
+ToggleTableControl = L.Control.extend({
+    options: {
+        position: 'topright'
+    },
+
+    onAdd: function(map) {
+        this.$div = $('<div></div>');
+        this.$div.addClass('leaflet-control-layers');
+        var $inner = $('<div></div>');
+        $inner.addClass('leaflet-control-layers-toggle');
+        $inner.addClass('toggletable');
+        $inner.append('<i class="icon-table">');
+        this.$div.append($inner);
+        $inner.click(function() {
+            TABLE_TOGGLE = !TABLE_TOGGLE;
+            setMapHeight(map, true);
+        });
+        return this.$div[0];
+    }
+});
+
+function load(context, iconPath) {
+    L.Icon.Default.imagePath = iconPath;
+    var map = mapsInit(context);
+
+    var resize = function() {
+        setMapHeight(map);
+    };
+    $(window).resize(resize);
+    $('#reportFiltersAccordion').on('shown', resize);
+    $('#reportFiltersAccordion').on('hidden', resize);
+    resize();
+}
 
 // main entry point
 function mapsInit(context) {
@@ -253,10 +306,11 @@ function mapsInit(context) {
 
 // initialize leaflet map
 function initMap($div, layers, default_pos, default_zoom) {
-    var map = L.map($div.attr('id')).setView(default_pos, default_zoom);
+    var map = L.map($div.attr('id'), {trackResize: false}).setView(default_pos, default_zoom);
     initLayers(map, layers);
 
     new ZoomToFitControl().addTo(map);
+    new ToggleTableControl().addTo(map);
     L.control.scale().addTo(map);
 
     return map;

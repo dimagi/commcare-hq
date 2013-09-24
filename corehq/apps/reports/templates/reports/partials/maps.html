@@ -11,20 +11,10 @@
 <script>
 
 CONTEXT = {{ context|JSON }};
+ICON_PATH = '{% static 'reports/css/leaflet/images' %}';
 
-function setMapHeight() {
-    var $map = $('#map');
-    $map.height($(window).height() - $map.offset().top);
-}
-
-$(document).ready(function() { 
-    setMapHeight();
-    $(window).resize(setMapHeight);
-    $('#reportFiltersAccordion').on('shown', setMapHeight);
-    $('#reportFiltersAccordion').on('hidden', setMapHeight);
-
-    L.Icon.Default.imagePath = '{% static 'reports/css/leaflet/images' %}';
-    var map = mapsInit(CONTEXT);
+$(document).ready(function() {
+    load(CONTEXT, ICON_PATH);
 });
 
 </script>
@@ -104,7 +94,7 @@ $(document).ready(function() {
   </div>
 </script>
 
-<div style="position: relative;">
+<div>
   <div id="map" style="width: 100%;"></div>
   
   <div id="metrics" class="control-pane" style="display: none;">

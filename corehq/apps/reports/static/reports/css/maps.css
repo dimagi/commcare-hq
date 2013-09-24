@@ -34,6 +34,14 @@
     cursor: pointer;
 }
 
+.toggletable {
+    cursor: pointer;
+    background: none;
+    text-align: center;
+    color: #777;
+    font-size: 26px;
+}
+
 .choice {
     color: black;
     font-weight: normal;
