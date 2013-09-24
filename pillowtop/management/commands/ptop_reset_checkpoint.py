@@ -1,7 +1,7 @@
 from optparse import make_option
 from django.core.management.base import LabelCommand
 import sys
-from pillowtop import get_all_pillows
+from pillowtop import get_pillow_by_name, get_all_pillows
 
 
 class Command(LabelCommand):
@@ -22,17 +22,17 @@ class Command(LabelCommand):
         """
         More targeted pillow checkpoint reset system - must specify the pillow class_name to reset the checkpoint
         """
-        all_pillows = get_all_pillows()
-
-        pillow_class_names = [x.__class__.__name__ for x in all_pillows]
+        pillow_class_name = labels[0]
 
         if not labels:
+            pillow_class_names = [pillow.__class__.__name__
+                                  for pillow in get_all_pillows()]
             print ""
             print "\nNo pillow class defined, options are: %s\n" % ('\n\t'.join(pillow_class_names))
             sys.exit()
 
-        pillow_class_name = labels[0]
-        if pillow_class_name not in pillow_class_names:
+        pillow_to_use = get_pillow_by_name(pillow_class_name)
+        if not pillow_to_use:
             print ""
             print "\n\tPillow class [%s] not in configuration, what are you trying to do?\n" % pillow_class_name
             sys.exit()
@@ -51,8 +51,6 @@ Type 'yes' to continue, or 'no' to cancel: """  % pillow_class_name)
             print "Reset cancelled."
             return
 
-
-        pillow_to_use = all_pillows[pillow_class_names.index(pillow_class_name)]
         print "Resetting checkpoint for %s" % pillow_to_use.get_checkpoint_doc_name()
         print "\tOld checkpoint: %s" % pillow_to_use.get_checkpoint()['seq']
         pillow_to_use.reset_checkpoint()

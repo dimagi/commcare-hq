@@ -45,6 +45,13 @@ def get_all_pillows(instantiate=True):
     return pillowtops
 
 
+def get_pillow_by_name(pillow_class_name):
+    all_pillows = get_all_pillows()
+    for pillow in all_pillows:
+        if pillow.__class__.__name__ == pillow_class_name:
+            return pillow
+
+
 def force_seq_int(seq):
     if seq is None:
         return None
