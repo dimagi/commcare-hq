@@ -261,9 +261,6 @@ class DomainMembership(Membership):
     """
 
     domain = StringProperty()
-    # i don't think the following two lines are ever actually used
-#    last_login = DateTimeProperty()
-#    date_joined = DateTimeProperty()
     timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     override_global_tz = BooleanProperty(default=False)
     role_id = StringProperty()
