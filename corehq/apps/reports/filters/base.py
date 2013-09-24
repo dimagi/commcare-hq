@@ -118,7 +118,7 @@ class BaseSingleOptionFilter(BaseReportFilter):
         return None
 
 
-class BaseMutipleOptionFilter(BaseSingleOptionFilter):
+class BaseMultipleOptionFilter(BaseSingleOptionFilter):
     """
         Displays a multiselect field.
     """
