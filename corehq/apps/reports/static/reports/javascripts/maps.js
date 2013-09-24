@@ -402,21 +402,8 @@ function initTable(data, config) {
         return $tr;
     };
 
-    var sorting = [];
-    var sortColumnAs = function(datatype) {
-        sorting.push({
-            'numeric': {sType: 'title-numeric'}
-        }[datatype]);
-    };
-
     $('#tabular').append('<thead></thead><tbody></tbody>');
-    row($('#tabular'), true, getTableColumns(config), function($cell, e) {
-        $cell.text(getColumnTitle(e, config));
-        $cell.prepend('<i class="icon-white"></i>&nbsp;');
-
-        var stats = summarizeColumn({column: e}, data);
-        sortColumnAs(stats.nonnumeric ? 'text' : 'numeric');
-    });
+    var colSorting = initTableHeader(config, data, row);
     $.each(data.features, function(i, e) {
         var ctx = infoContext(e, config, 'table');
         e.$tr = row($('#tabular'), false, ctx.info, function($cell, e) {
@@ -432,10 +419,72 @@ function initTable(data, config) {
         }
     );
     var table = new HQReportDataTables({
-        aoColumns: sorting,
+        aoColumns: colSorting,
     });
     table.render();
     return table.datatable;
+}
+
+// the ridiculousness of this function is from handling nested column headers
+function initTableHeader(config, data, mkRow) {
+    var cols = getTableColumns(config);
+
+    var maxDepth = function(col) {
+        return 1 + (typeof col == 'string' ? 0 :
+                    _.reduce(_.map(col.subcolumns, maxDepth), function(a, b) { return Math.max(a, b); }, 0));
+    }
+    var totalMaxDepth = maxDepth({subcolumns: cols}) - 1;
+    var breadth = function(col) {
+        return (typeof col == 'string' ? 1 :
+                _.reduce(_.map(col.subcolumns, breadth), function(a, b) { return a + b; }, 0));
+    }
+
+    var headerRows = [];
+    for (var i = 0; i < totalMaxDepth; i++) {
+        headerRows.push([]);
+    }
+
+    var sorting = [];
+    var sortColumnAs = function(datatype) {
+        sorting.push({
+            'numeric': {sType: 'title-numeric'}
+        }[datatype]);
+    };
+
+    config._table_columns_flat = [];
+
+    var process = function(col, depth) {
+        if (typeof col == 'string') {
+            var entry = {title: getColumnTitle(col, config), terminal: true};
+            config._table_columns_flat.push(col); // a bit hacky
+            var stats = summarizeColumn({column: col}, data);
+            sortColumnAs(stats.nonnumeric ? 'text' : 'numeric');
+        } else {
+            var entry = {title: col.title, span: breadth(col)};
+            $.each(col.subcolumns, function(i, e) {
+                process(e, depth + 1);
+            });
+        }
+        if (depth >= 0) {
+            headerRows[depth].push(entry);
+        }
+    }
+    process({subcolumns: cols}, -1);
+
+    $.each(headerRows, function(depth, row) {
+        mkRow($('#tabular'), true, row, function($cell, e) {
+            $cell.text(e.title);
+            if (e.span) {
+                $cell.attr('colspan', e.span);
+            }
+            if (e.terminal) {
+                $cell.prepend('<i class="icon-white"></i>&nbsp;');
+                $cell.attr('rowspan', totalMaxDepth - depth);
+            }
+        });
+    });
+
+    return sorting;
 }
 
 function resetTable(data) {
@@ -821,7 +870,7 @@ function infoContext(feature, config, mode) {
     } else if (mode == 'detail') {
         info_cols = config.detail_columns;
     } else if (mode == 'table') {
-        info_cols = getTableColumns(config);
+        info_cols = getTableColumns(config, true);
     } else {
         // 'mode' is an explicit list (subset) of columns
         prop_cols = mode;
@@ -1118,7 +1167,11 @@ function getColumnTitle(col, config) {
     return (config.column_titles || {})[col] || col;
 }
 
-function getTableColumns(config) {
+function getTableColumns(config, flat) {
+    if (flat) {
+        return config._table_columns_flat;
+    }
+
     var cols = config.table_columns.slice(0);
     if (config.name_column) {
         cols.splice(0, 0, config.name_column);
