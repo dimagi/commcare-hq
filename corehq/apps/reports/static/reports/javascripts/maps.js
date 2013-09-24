@@ -149,11 +149,16 @@ MetricsControl = L.Control.extend({
     
     render: function(metric) {
         this.activeMetric = metric;
+
+        resetTable(this.options.data); // clear out handlers on table before makeDisplayContext adds new ones
+
         var m = this;
         loadData(this._map, this.options.data, makeDisplayContext(metric, function(f) {
             m.options.info.setActive(f, m.activeMetric);
         }));
+
         this.options.legend.render(metric);
+        this.options.table.fnDraw(); // update datatables filtering
     },
 });
 
@@ -241,8 +246,8 @@ ZoomToFitControl = L.Control.extend({
 // main entry point
 function mapsInit(context) {
     var map = initMap($('#map'), context.layers, [30., 0.], 2);
-    initData(context.data, context.config);
-    initMetrics(map, context.data, context.config);
+    var table = initData(context.data, context.config);
+    initMetrics(map, table, context.data, context.config);
     return map;
 }
 
@@ -327,7 +332,7 @@ function initData(data, config) {
         e.popupContent = formatDetailPopup(e, config);
     });
 
-    initTable(data, config);
+    return initTable(data, config);
 }
 
 function initTable(data, config) {
@@ -366,14 +371,33 @@ function initTable(data, config) {
         });
     });
 
+    $.fn.dataTableExt.afnFiltering.push(
+        function(settings, row, i) {
+            // datatables doesn't really offer a better way to do this
+            return data.features[i].visible;
+        }
+    );
     var table = new HQReportDataTables({
         aoColumns: sorting,
     });
     table.render();
+    return table.datatable;
+}
+
+function resetTable(data) {
+    // we can't use $('#tabular tr') as that will only select the rows currently shown by datatables
+    var rows = [];
+    $.each(data.features, function(i, e) {
+        rows.push(e.$tr[0]);
+    });
+    rows = $(rows);
+
+    rows.unbind('click').unbind('mouseenter').unbind('mouseleave');
+    rows.removeClass('inactiverow');
 }
 
 // set up the configured display metrics
-function initMetrics(map, data, config) {
+function initMetrics(map, table, data, config) {
     // auto-generate metrics from data columns (if none provided)
     if (!config.metrics || config.debug) {
         autoConfiguration(config, data);
@@ -398,7 +422,7 @@ function initMetrics(map, data, config) {
 
     var l = new LegendControl({config: config}).addTo(map);
     var h = new HeadsUpControl({config: config}).addTo(map);
-    var m = new MetricsControl({metrics: config.metrics, data: data, legend: l, info: h}).addTo(map);
+    var m = new MetricsControl({metrics: config.metrics, data: data, legend: l, info: h, table: table}).addTo(map);
 
     zoomToAll(map);
 }
@@ -426,11 +450,6 @@ function zoomToAll(map) {
 
 // generate the proper geojson styling for the given display metric
 function makeDisplayContext(metric, setActiveFeature) {
-    // reset table rows (markers are regenerated but rows are long-lived
-    // FIXME the hover events don't seem to be unbinding
-    $('#tabular tr').unbind('click').unbind('mouseenter').unbind('mouseleave');
-    $('#tabular tr').removeClass('inactiverow');
-
     return {
         filter: function(feature, layer) {
             if (feature.geometry.type == "Point") {
@@ -439,11 +458,12 @@ function makeDisplayContext(metric, setActiveFeature) {
                 feature._conf = featureStyle(metric, feature.properties);
             }
             // TODO support placeholder markers for 'null' instead of hiding entirely?
-            var show = (feature._conf != null);
-            if (!show) {
+            // store visibility on the feature object so datatables can access it
+            feature.visible = (feature._conf != null);
+            if (!feature.visible) {
                 feature.$tr.addClass('inactiverow');
             }
-            return show;
+            return feature.visible;
         },
         style: function(feature) {
             return feature._conf;
