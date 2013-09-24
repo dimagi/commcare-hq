@@ -1,4 +1,5 @@
 from django.conf.urls.defaults import *
+from corehq.apps.reminders.models import REMINDER_TYPE_ONE_TIME
 
 urlpatterns = patterns('corehq.apps.reminders.views',
     url(r'^$', 'default', name='reminders_default'),
@@ -21,4 +22,8 @@ urlpatterns = patterns('corehq.apps.reminders.views',
     url(r'^sample_list/$', 'sample_list', name='sample_list'),
     url(r'^edit_contact/(?P<sample_id>[\w-]+)/(?P<case_id>[\w-]+)/$', 'edit_contact', name='edit_contact'),
     url(r'^reminders_in_error/$', 'reminders_in_error', name='reminders_in_error'),
+    url(r'^one_time_reminders/$', 'list_reminders', name='one_time_reminders', kwargs={"reminder_type" : REMINDER_TYPE_ONE_TIME}),
+    url(r'^one_time_reminders/add/$', 'add_one_time_reminder', name='add_one_time_reminder'),
+    url(r'^one_time_reminders/edit/(?P<handler_id>[\w-]+)/$', 'add_one_time_reminder', name='edit_one_time_reminder'),
+    url(r'^one_time_reminders/copy/(?P<handler_id>[\w-]+)/$', 'copy_one_time_reminder', name='copy_one_time_reminder'),
 )
