@@ -417,14 +417,18 @@ function loadData(map, data, display_context) {
 
 function zoomToAll(map) {
     if (map.activeOverlay) {
-        map.fitBounds(map.activeOverlay.getBounds(), {padding: [60, 60]});
+        setTimeout(function() {
+            map.fitBounds(map.activeOverlay.getBounds(), {padding: [60, 60]});
+        }, 0); // run at next tick to avoid race condition and freeze
+               // (https://github.com/Leaflet/Leaflet/issues/2021)
     }
 }
 
 // generate the proper geojson styling for the given display metric
 function makeDisplayContext(metric, setActiveFeature) {
-    // reset table rows (markers are regenerated but rows are long-lived)
-    $('#tabular tr').unbind();
+    // reset table rows (markers are regenerated but rows are long-lived
+    // FIXME the hover events don't seem to be unbinding
+    $('#tabular tr').unbind('click').unbind('mouseenter').unbind('mouseleave');
     $('#tabular tr').removeClass('inactiverow');
 
     return {
@@ -460,6 +464,9 @@ function makeDisplayContext(metric, setActiveFeature) {
                 }
             };
             feature.$tr.click(function() {
+                // TODO for polygons, provide a 'center' point to openPopup, or else
+                //   it picks a random point on the boundary
+                // FIXME openPopup seems to crash for MultiPolygons (https://github.com/Leaflet/Leaflet/issues/2046)
                 layer.openPopup();
                 selectRow(feature.$tr);
             });

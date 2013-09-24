@@ -46,19 +46,15 @@
     cursor: pointer;
 }
 
-.selectedrow {
-    color: #f00; /* TODO figure out how to change background color */
+.selectedrow td {
+    background-color: #abd !important;
 }
 
-.hoverrow {
-    color: #5fa;
+.hoverrow td {
+    background-color: #ffa !important; 
 }
 
 .inactiverow {
-    color: #888;
-}
-
-.disabled {
     color: #888;
 }
 
