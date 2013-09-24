@@ -2146,36 +2146,40 @@ class RemoteApp(ApplicationBase):
         tree = _parse_xml(files['profile.xml'])
 
         def add_file_from_path(path, strict=False):
+            added_files = []
+            # must find at least one
             try:
-                loc = tree.find(path).text
+                tree.find(path).text
             except (TypeError, AttributeError):
                 if strict:
                     raise AppError("problem with file path reference!")
                 else:
                     return
-
-            loc, file = self.fetch_file(loc)
-            files[loc] = file
-            return file
+            for loc_node in tree.findall(path):
+                loc, file = self.fetch_file(loc_node.text)
+                files[loc] = file
+                added_files.append(file)
+            return added_files
 
         add_file_from_path('features/users/logo')
         try:
-            suite = add_file_from_path(self.SUITE_XPATH, strict=True)
+            suites = add_file_from_path(self.SUITE_XPATH, strict=True)
         except AppError:
             raise AppError(ugettext('Problem loading suite file from profile file. Is your profile file correct?'))
 
-        suite_xml = _parse_xml(suite)
+        for suite in suites:
+            suite_xml = _parse_xml(suite)
 
-        for tag, location in self.get_locations(suite_xml):
-            location, data = self.fetch_file(location)
-            if tag == 'xform' and self.build_langs:
-                try:
-                    xform = XForm(data)
-                except XFormError as e:
-                    raise XFormError('In file %s: %s' % (location, e))
-                xform.exclude_languages(whitelist=self.build_langs)
-                data = xform.render()
-            files.update({location: data})
+            for tag, location in self.get_locations(suite_xml):
+                location, data = self.fetch_file(location)
+                if tag == 'xform' and self.build_langs:
+                    try:
+                        xform = XForm(data)
+                    except XFormError as e:
+                        raise XFormError('In file %s: %s' % (location, e))
+                    xform.exclude_languages(whitelist=self.build_langs)
+                    data = xform.render()
+                files.update({location: data})
         return files
 
     def scrub_source(self, source):
