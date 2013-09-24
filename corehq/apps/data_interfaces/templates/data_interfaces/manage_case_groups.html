@@ -1,6 +1,8 @@
 {% extends 'hqwebapp/base_paginated_crud.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
 
 {% block pagination_templates %}
     <script type="text/html" id="existing-case-template">
@@ -59,4 +61,41 @@
             <span class="label label-important">{% trans 'Case Removed' %}</span>
         </td>
     </script>
+{% endblock %}
+
+{% block pagination_footer %}
+    <div class="row-fluid">
+        <div class="span12">
+            <h3>{% trans 'Bulk upload cases to group' %}</h3>
+            <div class="well">
+                <h4>{% trans 'Steps' %}</h4>
+                <ol>
+                    <li>
+                        {% blocktrans %}
+                            Download this example file:
+                        {% endblocktrans %}
+                        <a href="{% static 'data_interfaces/files/cases_bulk_example.xlsx' %}">
+                            cases_bulk_example.xlsx
+                        </a>
+                    </li>
+                    <li>
+                        {% blocktrans %}
+                            Add your case identifiers to the case_identifier column.
+                            This can be either a Phone Number, External ID, or Case ID.
+                        {% endblocktrans %}
+                    </li>
+                    <li>
+                        {% blocktrans %}
+                            Upload your file below.
+                        {% endblocktrans %}
+                    </li>
+                </ol>
+            </div>
+            <form class="form form-horizontal"
+                  enctype="multipart/form-data"
+                  method="post">
+                {% crispy bulk_upload_from %}
+            </form>
+        </div>
+    </div>
 {% endblock %}

@@ -3,7 +3,8 @@ from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from casexml.apps.case.models import CommCareCaseGroup, CommCareCase
 from corehq import CaseReassignmentInterface
-from corehq.apps.data_interfaces.forms import AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroupForm
+from corehq.apps.data_interfaces.forms import (AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroupForm,
+                                               UploadBulkCaseGroupForm)
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqcase.utils import get_case_by_identifier
@@ -189,7 +190,11 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
 
     @property
     def page_context(self):
-        return self.pagination_context
+        context = self.pagination_context
+        context.update({
+            'bulk_upload_from': UploadBulkCaseGroupForm(),
+        })
+        return context
 
     @property
     def parameters(self):

@@ -2,11 +2,10 @@ from couchdbkit import ResourceNotFound
 from crispy_forms.bootstrap import StrictButton, InlineField, FormActions
 from django import forms
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Field, HTML, Div
+from crispy_forms.layout import Layout, Field, HTML, Div, Fieldset
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop
 from casexml.apps.case.models import CommCareCaseGroup
-from corehq.apps.hqwebapp.views import PaginatedItemException
 
 
 class AddCaseGroupForm(forms.Form):
@@ -93,5 +92,32 @@ class AddCaseToGroupForm(forms.Form):
                 mark_safe('<i class="icon-plus"></i> %s' % _("Add Case")),
                 css_class='btn-success',
                 type="submit"
+            )
+        )
+
+
+class UploadBulkCaseGroupForm(forms.Form):
+    bulk_file = forms.FileField(
+        label=ugettext_noop("Bulk File"),
+        help_text=ugettext_noop("An excel file of case identifiers (Phone Number, External ID, or Case ID).")
+    )
+    action = forms.CharField(widget=forms.HiddenInput(), initial='bulk_upload')
+
+    def __init__(self, *args, **kwargs):
+        super(UploadBulkCaseGroupForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.layout = Layout(
+            Fieldset(
+                _('Upload bulk file'),
+                Field('bulk_file'),
+                Field('action')
+            ),
+            FormActions(
+                StrictButton(
+                    _("Upload Bulk Cases"),
+                    css_class="btn-primary",
+                    type="submit"
+                )
             )
         )
