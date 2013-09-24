@@ -195,6 +195,11 @@ class ShortFormRepeater(Repeater):
     def __unicode__(self):
         return "forwarding short form to: %s" % self.url
 
+@register_repeater_type
+class AppStructureRepeater(Repeater):
+    def get_payload(self, repeat_record):
+        return repeat_record.payload_id # This is the id of the application, currently all we forward
+
 class RepeatRecord(Document, LockableMixIn):
     """
     An record of a particular instance of something that needs to be forwarded

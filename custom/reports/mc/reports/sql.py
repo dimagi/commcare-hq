@@ -19,19 +19,39 @@ def transpose(columns, data):
     return [[column.data_tables_column.html] + [r[i] for r in data] \
             for i, column in enumerate(columns)]
 
-def _fraction(num, denom):
+class Fraction(object):
 
-    _pct = lambda num, denom: float(num or 0) / float(denom) if denom else None
-    _fmt_pct = lambda pct: ('%.1f%%' % (100. * pct))
+    def __init__(self, num, denom):
+        self.num = num or 0
+        self.denom = denom or 0
 
-    pct = _pct(num, denom)
-    if pct is None:
-        return NO_VALUE
-    return '{pct} ({num}/{denom})'.format(
-        pct=_fmt_pct(pct),
-        num=num or 0,
-        denom=denom,
-    )
+    def is_empty(self):
+        return not (bool(self.num) and bool(self.denom))
+
+    def pct(self):
+        return (float(self.num) / float(self.denom)) * 100
+
+    def pct_display(self):
+        return '%.1f%%' % (100. * self.pct())
+
+    def __unicode__(self):
+        if self.is_empty():
+            return NO_VALUE
+        else:
+            return '{pct:.1f}% ({num}/{denom})'.format(
+                pct=self.pct(),
+                num=self.num,
+                denom=self.denom,
+            )
+
+    def combine(self, other):
+        if isinstance(other, Fraction):
+            return Fraction(self.num + other.num, self.denom + other.denom)
+        elif not other or other == NO_VALUE:
+            return self
+        else:
+            raise ValueError("Can't combine %s (%s) with a fraction" % (other, type(other)))
+
 
 def _to_column(coldef):
 
@@ -41,7 +61,7 @@ def _to_column(coldef):
     if isinstance(coldef, dict):
         return AggregateColumn(
             _(coldef['slug']),
-            _fraction,
+            Fraction,
             [_slug_to_raw_column(s) for s in coldef['columns']],
             sortable=False,
         )
@@ -91,6 +111,10 @@ class FacilityDataFormat(TableDataFormat):
 
                 if a == NO_VALUE and b == NO_VALUE:
                     return NO_VALUE
+                elif isinstance(a, Fraction):
+                    return a.combine(b)
+                elif isinstance(b, Fraction):
+                    return b.combine(a)
                 else:
                     return _int(a) + _int(b)
 

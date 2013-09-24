@@ -261,9 +261,6 @@ class DomainMembership(Membership):
     """
 
     domain = StringProperty()
-    # i don't think the following two lines are ever actually used
-#    last_login = DateTimeProperty()
-#    date_joined = DateTimeProperty()
     timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     override_global_tz = BooleanProperty(default=False)
     role_id = StringProperty()
@@ -443,7 +440,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 domain = self.current_domain
             else:
                 return False # no domain, no admin
-        if self.is_global_admin():
+        if self.is_global_admin() and (domain is None or not Domain.get_by_name(domain).restrict_superusers):
             return True
         dm = self.get_domain_membership(domain)
         if dm:
@@ -855,6 +852,21 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             #stale=None if strict else settings.COUCH_STALE_QUERY,
             **extra_args
         ).all()
+
+
+    @classmethod
+    def ids_by_domain(cls, domain, is_active=True):
+        flag = "active" if is_active else "inactive"
+        if cls.__name__ == "CouchUser":
+            key = [flag, domain]
+        else:
+            key = [flag, domain, cls.__name__]
+        return [r['id'] for r in cls.get_db().view("users/by_domain",
+            startkey=key,
+            endkey=key + [{}],
+            reduce=False,
+            include_docs=False,
+        )]
 
     @classmethod
     def total_by_domain(cls, domain, is_active=True):
@@ -1694,7 +1706,7 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
     @memoized
     def has_permission(self, domain, permission, data=None):
         # is_admin is the same as having all the permissions set
-        if self.is_global_admin():
+        if (self.is_global_admin() and (domain is None or not Domain.get_by_name(domain).restrict_superusers)):
             return True
         elif self.is_domain_admin(domain):
             return True

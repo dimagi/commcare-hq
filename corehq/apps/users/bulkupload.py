@@ -15,7 +15,7 @@ class UserUploadError(Exception):
 
 
 required_headers = set(['username'])
-allowed_headers = set(['password', 'phone-number', 'user_id', 'name', 'group', 'data', 'language']) | required_headers
+allowed_headers = set(['password', 'phone-number', 'email', 'user_id', 'name', 'group', 'data', 'language']) | required_headers
 
     
 def check_headers(user_specs):
@@ -153,10 +153,11 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
 
     try:
         for row in user_specs:
-            data, group_names, language, name, password, phone_number, user_id, username = (
+            data, email, group_names, language, name, password, phone_number, user_id, username = (
                 row.get(k) for k in sorted(allowed_headers)
             )
-            password = unicode(password)
+            if password:
+                password = unicode(password)
             group_names = group_names or []
             try:
                 username = normalize_username(username, domain)
@@ -187,17 +188,26 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
                         user = CommCareUser.get_by_user_id(user_id, domain)
                     else:
                         user = CommCareUser.get_by_username(username)
+
+                    def is_password(password):
+                        for c in password:
+                            if c != "*":
+                                return True
+                        return bool(password)
+
                     if user:
                         if user.domain != domain:
-                            raise UserUploadError(_('User with username %(username)r is somehow in domain %(domain)r') %
-                                            {'username': user.username, 'domain': user.domain})
+                            raise UserUploadError(_(
+                                'User with username %(username)r is '
+                                'somehow in domain %(domain)r'
+                            ) % {'username': user.username, 'domain': user.domain})
                         if username and user.username != username:
                             user.change_username(username)
-                        if password:
+                        if is_password(password):
                             user.set_password(password)
                         status_row['flag'] = 'updated'
                     else:
-                        if not password:
+                        if not is_password(password):
                             raise UserUploadError(_("Cannot create a new user with a blank password"))
                         user = CommCareUser.create(domain, username, password, uuid=user_id or '')
                         status_row['flag'] = 'created'
@@ -209,8 +219,10 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
                         user.user_data.update(data)
                     if language:
                         user.language = language
+                    if email:
+                        user.email = email
                     user.save()
-                    if password:
+                    if is_password(password):
                         # Without this line, digest auth doesn't work.
                         # With this line, digest auth works.
                         # Other than that, I'm not sure what's going on
@@ -284,7 +296,10 @@ def dump_users_and_groups(response, domain):
             'data': data,
             'group': group_names,
             'name': user.full_name,
+            # dummy display string for passwords
+            'password': "********", 
             'phone-number': user.phone_number,
+            'email': user.email,
             'username': user.raw_username,
             'language': user.language,
         })
@@ -302,8 +317,8 @@ def dump_users_and_groups(response, domain):
         })
         group_data_keys.update(group.metadata.keys() if group.metadata else {})
 
-    # include blank password column for adding new users
-    user_headers = ['username', 'password', 'name', 'phone-number', 'language']
+    # include obscured password column for adding new users
+    user_headers = ['username', 'password', 'name', 'phone-number', 'email', 'language']
     user_headers.extend(json_to_headers(
         {'data': dict([(key, None) for key in user_data_keys])}
     ))

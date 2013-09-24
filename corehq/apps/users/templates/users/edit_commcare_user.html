@@ -111,7 +111,22 @@
         {% endif %}
 
         // groups form
-        $("#id_group_ids").width(800).height(400).multiselect();
+        $("#id_selected_ids").width(800).height(400).multiselect();
+
+        // "are you sure?" stuff
+        var unsavedChanges = false;
+        $("#id_selected_ids").change(function () {
+            unsavedChanges = true;
+        });
+
+        $(window).bind('beforeunload', function () {
+            if (unsavedChanges) {
+                return "{% trans "Group membership has changed." %}";
+            }
+        });
+        $("#groups").submit(function () {
+            $(window).unbind("beforeunload");
+        });
     });
 </script>
 {% endblock %}

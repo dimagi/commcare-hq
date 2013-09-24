@@ -53,6 +53,14 @@
                             uses cases but doesn't have a
                             case type defined.
                         {% endif %}
+                        {% if error.type == "invalid filter xpath" %}
+                            {% if error.column.filter_xpath %}
+                                Case List has invalid filter xpath <code>{{ error.column.filter_xpath }}</code> in module
+                            {% else %}
+                                Case List has blank filter in module
+                            {% endif %}
+                            <a href="{% url view_module domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                        {% endif %}
                         {% if error.type == "subcase has no case type" %}
                             Child case specifies no module
                             in form {% include "app_manager/partials/form_error_message.html" %}

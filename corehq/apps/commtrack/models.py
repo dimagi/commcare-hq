@@ -276,7 +276,51 @@ def _view_shared(view_name, domain, location_id=None, skip=0, limit=100):
         view_name, startkey=startkey, endkey=endkey,
         reduce=False, skip=skip, **extras)
 
-class StockStatus(DocumentSchema):
+
+def force_int(value):
+    if value is None:
+        return None
+    else:
+        return int(value)
+
+
+def force_bool(value):
+    if value is None:
+        return None
+    elif value is 'false':
+        return False
+    else:
+        return bool(value)
+
+
+def force_empty_string_to_null(value):
+    if value == '':
+        return None
+    else:
+        return value
+
+
+class StringDataSchema(DocumentSchema):
+
+    @classmethod
+    def force_wrap(cls, data):
+        data = copy(data)
+        for property in cls.properties().values():
+            transform = {
+                IntegerProperty: force_int,
+                BooleanProperty: force_bool,
+                DateProperty: force_empty_string_to_null,
+                DateTimeProperty: force_empty_string_to_null,
+            }.get(property.__class__, lambda x: x)
+            data[property.name] = transform(data.get(property.name))
+        return super(StringDataSchema, cls).wrap(data)
+
+    @classmethod
+    def wrap(cls, data):
+        raise NotImplementedError()
+
+
+class StockStatus(StringDataSchema):
     """
     This is a wrapper/helper class to represent the current stock status
     of a commtrack case.
@@ -294,28 +338,21 @@ class StockStatus(DocumentSchema):
 
     @classmethod
     def from_case(cls, case):
-        return StockStatus.wrap(case._doc)
-
-    @classmethod
-    def wrap(cls, data):
-        # couchdbkit doesn't like passing empty strings (instead of nulls)
-        # to DateTimeProperty fields
-        if data.get('stocked_out_since', None) == '':
-            del data['stocked_out_since']
-        return super(StockStatus, cls).wrap(data) 
+        return StockStatus.force_wrap(case._doc)
 
     @classmethod
     def by_domain(cls, domain, skip=0, limit=100):
-        return [StockStatus.wrap(row["value"]) for row in _view_shared(
+        return [StockStatus.force_wrap(row["value"]) for row in _view_shared(
             'commtrack/current_stock_status', domain, skip=skip, limit=limit)]
 
     @classmethod
     def by_location(cls, domain, location_id, skip=0, limit=100):
-        return [StockStatus.wrap(row["value"]) for row in _view_shared(
+        return [StockStatus.force_wrap(row["value"]) for row in _view_shared(
             'commtrack/current_stock_status', domain, location_id,
             skip=skip, limit=limit)]
 
-class StockTransaction(DocumentSchema):
+
+class StockTransaction(StringDataSchema):
     """
     wrapper/helper for transactions
     """
@@ -331,12 +368,12 @@ class StockTransaction(DocumentSchema):
 
     @classmethod
     def by_domain(cls, domain, skip=0, limit=100):
-        return [StockTransaction.wrap(row["value"]) for row in _view_shared(
+        return [StockTransaction.force_wrap(row["value"]) for row in _view_shared(
             'commtrack/stock_transactions', domain, skip=skip, limit=limit)]
 
     @classmethod
     def by_location(cls, domain, location_id, skip=0, limit=100):
-        return [StockTransaction.wrap(row["value"]) for row in _view_shared(
+        return [StockTransaction.force_wrap(row["value"]) for row in _view_shared(
             'commtrack/stock_transactions', domain, location_id,
             skip=skip, limit=limit)]
 
@@ -345,8 +382,7 @@ class StockTransaction(DocumentSchema):
         q = CommCareCase.get_db().view('commtrack/stock_transactions_by_product',
                                        startkey=[product_case, start_date],
                                        endkey=[product_case, end_date, {}])
-        return [StockTransaction.wrap(row['value']) for row in q]
-
+        return [StockTransaction.force_wrap(row['value']) for row in q]
 
 
 def _get_single_index(case, identifier, type, wrapper=None):
@@ -358,6 +394,7 @@ def _get_single_index(case, identifier, type, wrapper=None):
         ref_id = matching[0].referenced_id
         return wrapper.get(ref_id) if wrapper else ref_id
     return None
+
 
 def get_case_wrapper(data):
     return {
@@ -943,7 +980,7 @@ class StockReport(object):
 
     @property
     def transactions(self):
-        return [StockTransaction.wrap(t) for t in \
+        return [StockTransaction.force_wrap(t) for t in \
                 self._form.form.get('transaction', [])]
 
     @property

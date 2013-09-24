@@ -67,7 +67,7 @@ class Complications(DoneDueCalculator):
             for form, date in self.get_forms_with_complications(case):
                 complication_date = date
                 if form.xmlns == DELIVERY:
-                    add = form.xpath('form/add')
+                    add = form.xpath('form/case/update/add')
                 else:
                     add = get_add(case)
                 add = string_to_datetime(add).date()

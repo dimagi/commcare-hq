@@ -31,8 +31,7 @@ from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.web import get_ip, json_response
 from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.apps.receiverwrapper.forms import FormRepeaterForm
-from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater
-from corehq.apps.app_manager.models import AppStructureRepeater
+from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 import json
@@ -160,6 +159,7 @@ class BaseEditProjectInfoView(BaseAdminProjectSettingsView):
                 # i will not worry about it until he is done
             'call_center_enabled': self.domain_object.call_center_config.enabled,
             'restrict_superusers': self.domain_object.restrict_superusers,
+            'ota_restore_caching': self.domain_object.ota_restore_caching,
         })
         return context
 
@@ -206,6 +206,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 'default_sms_backend_id',
                 'commtrack_enabled',
                 'restrict_superusers',
+                'ota_restore_caching',
             ]:
                 initial[attr] = getattr(self.domain_object, attr)
             initial.update({
@@ -287,12 +288,19 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
     @property
     @memoized
     def my_project_settings_form(self):
-        initial = {
-            'global_timezone': self.domain_object.default_timezone,
-            'override_global_tz': self.domain_membership.override_global_tz,
-            'user_timezone': (self.domain_membership.timezone if self.domain_membership.override_global_tz
-                              else self.domain_object.default_timezone),
-        }
+        initial = { 'global_timezone': self.domain_object.default_timezone }
+        if self.domain_membership:
+            initial.update({
+                'override_global_tz': self.domain_membership.override_global_tz,
+                'user_timezone': (self.domain_membership.timezone if self.domain_membership.override_global_tz
+                                  else self.domain_object.default_timezone),
+            })
+        else:
+            initial.update({
+                'override_global_tz': False,
+                'user_timezone': initial["global_timezone"],
+            })
+
         if self.request.method == 'POST':
             return ProjectSettingsForm(self.request.POST, initial=initial)
         return ProjectSettingsForm(initial=initial)
@@ -306,7 +314,8 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
     def page_context(self):
         return {
             'my_project_settings_form': self.my_project_settings_form,
-            'override_global_tz': self.domain_membership.override_global_tz,
+            'override_global_tz': self.domain_membership.override_global_tz if self.domain_membership else False,
+            'no_domain_membership': not self.domain_membership,
         }
 
     def post(self, request, *args, **kwargs):
@@ -497,6 +506,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
     @memoized
     def has_published_apps(self):
         for app in self.domain_object.applications():
+            app = app.get_latest_saved() or app
             if self.request.POST.get("%s-publish" % app.id, False):
                 return True
         messages.error(self.request, _("Cannot publish a project without applications to CommCare Exchange"))
@@ -735,30 +745,34 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
             return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 
+class OrgSettingsView(BaseAdminProjectSettingsView):
+    template_name = 'domain/orgs_settings.html'
+    urlname = 'domain_org_settings'
+    page_title = ugettext_noop("Organization")
 
-@domain_admin_required
-def org_settings(request, domain):
-    domain = Domain.get_by_name(domain)
+    @property
+    def page_context(self):
+        domain = self.domain_object
+        org_users = []
+        teams = Team.get_by_domain(domain.name)
+        for team in teams:
+            for user in team.get_members():
+                user.team_id = team.get_id
+                user.team = team.name
+                org_users.append(user)
 
-    org_users = []
-    teams = Team.get_by_domain(domain.name)
-    for team in teams:
-        for user in team.get_members():
-            user.team_id = team.get_id
-            user.team = team.name
-            org_users.append(user)
+        for user in org_users:
+            user.current_domain = domain.name
 
-    for user in org_users:
-        user.current_domain = domain.name
+        all_orgs = Organization.get_all()
 
-    all_orgs = Organization.get_all()
-
-    return render(request, 'domain/orgs_settings.html', {
-        "project": domain, 'domain': domain.name,
-        "organization": Organization.get_by_name(getattr(domain, "organization", None)),
-        "org_users": org_users,
-        "all_orgs": all_orgs,
-    })
+        return {
+            "project": domain,
+            'domain': domain.name,
+            "organization": Organization.get_by_name(getattr(domain, "organization", None)),
+            "org_users": org_users,
+            "all_orgs": all_orgs,
+        }
 
 
 class BaseInternalDomainSettingsView(BaseProjectSettingsView):

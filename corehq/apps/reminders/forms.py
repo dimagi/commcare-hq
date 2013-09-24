@@ -1,5 +1,6 @@
 import json
 import re
+import pytz
 from datetime import timedelta, datetime
 from django.core.exceptions import ValidationError
 from django.forms.fields import *
@@ -8,6 +9,7 @@ from django.forms.widgets import CheckboxSelectMultiple
 from django.forms import Field, Widget, Select, TextInput
 from django.utils.datastructures import DotExpandedDict
 from casexml.apps.case.models import CommCareCaseGroup
+from corehq.apps.groups.models import Group
 from .models import REPEAT_SCHEDULE_INDEFINITELY, CaseReminderEvent,\
 RECIPIENT_USER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE, RECIPIENT_OWNER,\
 MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE, EVENT_AS_SCHEDULE, EVENT_AS_OFFSET,\
@@ -15,7 +17,7 @@ CaseReminderHandler, FIRE_TIME_DEFAULT, FIRE_TIME_CASE_PROPERTY,\
 METHOD_SMS, METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY,\
 CASE_CRITERIA, QUESTION_RETRY_CHOICES, FORM_TYPE_ONE_BY_ONE,\
 FORM_TYPE_ALL_AT_ONCE, SurveyKeyword, RECIPIENT_PARENT_CASE, RECIPIENT_SUBCASE,\
-FIRE_TIME_RANDOM, ON_DATETIME
+FIRE_TIME_RANDOM, ON_DATETIME, SEND_NOW, SEND_LATER, RECIPIENT_USER_GROUP
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
@@ -23,10 +25,29 @@ from dimagi.utils.excel import WorkbookJSONReader
 from openpyxl.shared.exc import InvalidFileException
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.models import Form as CCHQForm
+from dimagi.utils.django.fields import TrimmedCharField
+from corehq.apps.reports import util as report_utils
+from dimagi.utils.timezones import utils as tz_utils
 
 YES_OR_NO = (
     ("Y","Yes"),
     ("N","No"),
+)
+
+NOW_OR_LATER = (
+    (SEND_NOW, _("Now")),
+    (SEND_LATER ,_("Later")),
+)
+
+CONTENT_CHOICES = (
+    (METHOD_SMS, _("SMS Message")),
+    (METHOD_SMS_SURVEY, _("SMS Form Interaction")),
+)
+
+ONE_TIME_RECIPIENT_CHOICES = (
+    ("", _("---choose---")),
+    (RECIPIENT_SURVEY_SAMPLE, _("Case Group")),
+    (RECIPIENT_USER_GROUP, _("User Group")),
 )
 
 METHOD_CHOICES = (
@@ -88,6 +109,14 @@ def validate_time(value):
     time_regex = re.compile("^\d{1,2}:\d\d(:\d\d){0,1}$")
     if time_regex.match(value) is None:
         raise ValidationError("Times must be in hh:mm format.")
+
+def validate_form_unique_id(form_unique_id, domain):
+    try:
+        form = CCHQForm.get_form(form_unique_id)
+        app = form.get_app()
+        assert app.domain == domain
+    except Exception:
+        raise ValidationError(_("Invalid form chosen."))
 
 # Used for validating the phone number from a UI. Returns the phone number if valid, otherwise raises a ValidationError.
 def validate_phone_number(value):
@@ -569,7 +598,106 @@ class ComplexCaseReminderForm(Form):
         
         return cleaned_data
 
+def clean_selection(value):
+    if value == "" or value is None:
+        raise ValidationError(_("Please make a selection."))
+    else:
+        return value
 
+class OneTimeReminderForm(Form):
+    _cchq_domain = None
+    send_type = ChoiceField(choices=NOW_OR_LATER)
+    date = CharField(required=False)
+    time = CharField(required=False)
+    datetime = DateTimeField(required=False)
+    recipient_type = ChoiceField(choices=ONE_TIME_RECIPIENT_CHOICES)
+    case_group_id = CharField(required=False)
+    user_group_id = CharField(required=False)
+    content_type = ChoiceField(choices=CONTENT_CHOICES)
+    message = TrimmedCharField(required=False)
+    form_unique_id = CharField(required=False)
+
+    def clean_recipient_type(self):
+        return clean_selection(self.cleaned_data.get("recipient_type"))
+
+    def clean_case_group_id(self):
+        if self.cleaned_data.get("recipient_type") == RECIPIENT_SURVEY_SAMPLE:
+            value = clean_selection(self.cleaned_data.get("case_group_id"))
+            try:
+                group = CommCareCaseGroup.get(value)
+                assert group.doc_type == "CommCareCaseGroup"
+                assert group.domain == self._cchq_domain
+            except Exception:
+                raise ValidationError(_("Invalid selection."))
+            return value
+        else:
+            return None
+
+    def clean_user_group_id(self):
+        if self.cleaned_data.get("recipient_type") == RECIPIENT_USER_GROUP:
+            value = clean_selection(self.cleaned_data.get("user_group_id"))
+            try:
+                group = Group.get(value)
+                assert group.doc_type == "Group"
+                assert group.domain == self._cchq_domain
+            except Exception:
+                raise ValidationError(_("Invalid selection."))
+            return value
+        else:
+            return None
+
+    def clean_date(self):
+        if self.cleaned_data.get("send_type") == SEND_NOW:
+            return None
+        else:
+            value = self.cleaned_data.get("date")
+            validate_date(value)
+            return parse(value).date()
+
+    def clean_time(self):
+        if self.cleaned_data.get("send_type") == SEND_NOW:
+            return None
+        else:
+            value = self.cleaned_data.get("time")
+            validate_time(value)
+            return parse(value).time()
+
+    def clean_message(self):
+        value = self.cleaned_data.get("message")
+        if self.cleaned_data.get("content_type") == METHOD_SMS:
+            if value:
+                return value
+            else:
+                raise ValidationError("This field is required.")
+        else:
+            return None
+
+    def clean_datetime(self):
+        utcnow = datetime.utcnow()
+        timezone = report_utils.get_timezone(None, self._cchq_domain) # Use project timezone only
+        if self.cleaned_data.get("send_type") == SEND_NOW:
+            start_datetime = utcnow + timedelta(minutes=1)
+        else:
+            dt = self.cleaned_data.get("date")
+            tm = self.cleaned_data.get("time")
+            if dt is None or tm is None:
+                return None
+            start_datetime = datetime.combine(dt, tm)
+            start_datetime = tz_utils.adjust_datetime_to_timezone(start_datetime, timezone.zone, pytz.utc.zone)
+            start_datetime = start_datetime.replace(tzinfo=None)
+            if start_datetime < utcnow:
+                raise ValidationError(_("Date and time cannot occur in the past."))
+        return start_datetime
+
+    def clean_form_unique_id(self):
+        if self.cleaned_data.get("content_type") == METHOD_SMS_SURVEY:
+            value = self.cleaned_data.get("form_unique_id")
+            if value is None:
+                raise ValidationError(_("Please create a form first, and then create the broadcast."))
+            validate_form_unique_id(value, self._cchq_domain)
+            return value
+        else:
+            return None
 
 class RecordListWidget(Widget):
     
@@ -795,12 +923,7 @@ class KeywordForm(Form):
         value = self.cleaned_data.get("form_unique_id")
         if value is None:
             raise ValidationError(_("Please create a form first, and then add a keyword for it."))
-        try:
-            form = CCHQForm.get_form(value)
-            app = form.get_app()
-            assert app.domain == self._cchq_domain
-        except Exception:
-            raise ValidationError(_("Invalid form chosen."))
+        validate_form_unique_id(value, self._cchq_domain)
         return value
     
     def clean_delimiter(self):

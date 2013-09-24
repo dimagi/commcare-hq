@@ -213,6 +213,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     case_sharing = BooleanProperty(default=False)
     secure_submissions = BooleanProperty(default=False)
+    ota_restore_caching = BooleanProperty(default=False)
     organization = StringProperty()
     hr_name = StringProperty() # the human-readable name for this project within an organization
     creating_user = StringProperty() # username of the user who created this domain
@@ -826,6 +827,8 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             media_ids = set()
             apps = [app for app in dom_with_media.full_applications() if app.get_id in from_apps]
             for app in apps:
+                if app.doc_type != 'Application':
+                    continue
                 for _, m in app.get_media_objects():
                     if m.get_id not in media_ids:
                         media.append(m)

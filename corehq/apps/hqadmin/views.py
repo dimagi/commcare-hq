@@ -39,7 +39,7 @@ from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.sms.models import SMSLog
 from corehq.apps.users.models import  CommCareUser, WebUser
 from corehq.apps.users.util import format_username
-from corehq.elastic import get_stats_data, parse_args_for_es, es_query, ES_URLS
+from corehq.elastic import get_stats_data, parse_args_for_es, es_query, ES_URLS, ES_MAX_CLAUSE_COUNT
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from corehq.apps.domain.decorators import  require_superuser
@@ -55,6 +55,7 @@ from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.django.email import send_HTML_email
 from django.template.loader import render_to_string
 from django.http import Http404
+from pillowtop import get_all_pillows_json
 
 
 @require_superuser
@@ -591,7 +592,6 @@ def system_ajax(request):
     task_limit = getattr(settings, 'CELERYMON_TASK_LIMIT', 12)
     celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
     db = XFormInstance.get_db()
-    ret = {}
     if type == "_active_tasks":
         tasks = [] if is_bigcouch() else filter(lambda x: x['type'] == "indexer", db.server.active_tasks())
         #for reference structure is:
@@ -603,11 +603,13 @@ def system_ajax(request):
         #            'design_document': 'mockymock', 'progress': 70,
         #            'started_on': 1349906040.723517, 'updated_on': 1349905800.679458,
         #            'total_changes': 1023}]
-        return HttpResponse(json.dumps(tasks), mimetype='application/json')
+        return json_response(tasks)
     elif type == "_stats":
-        return HttpResponse(json.dumps({}), mimetype = 'application/json')
+        return json_response({})
     elif type == "_logs":
         pass
+    elif type == 'pillowtop':
+        return json_response(get_all_pillows_json())
 
     if celery_monitoring:
         cresource = Resource(celery_monitoring, timeout=3)
@@ -886,7 +888,7 @@ class FlagBrokenBuilds(FormView):
         return HttpResponse("posted!")
 
 
-def get_domain_stats_data(params, datespan, interval='week'):
+def get_domain_stats_data(params, datespan, interval='week', datefield="date_created"):
     q = {
         "query": {"bool": {"must":
                                   [{"match": {'doc_type': "Domain"}},
@@ -894,13 +896,13 @@ def get_domain_stats_data(params, datespan, interval='week'):
         "facets": {
             "histo": {
                 "date_histogram": {
-                    "field": "date_created",
+                    "field": datefield,
                     "interval": interval
                 },
                 "facet_filter": {
                     "and": [{
                         "range": {
-                            "date_created": {
+                            datefield: {
                                 "from": datespan.startdate_display,
                                 "to": datespan.enddate_display,
                             }}}]}}}}
@@ -910,7 +912,7 @@ def get_domain_stats_data(params, datespan, interval='week'):
     del q["facets"]
     q["filter"] = {
         "and": [
-            {"range": {"date_created": {"lt": datespan.startdate_display}}},
+            {"range": {datefield: {"lt": datespan.startdate_display}}},
         ],
     }
 
@@ -924,18 +926,17 @@ def get_domain_stats_data(params, datespan, interval='week'):
     }
 
 
-ES_DOMAIN_QUERY_LIMIT = 500
-
 @require_superuser
 @datespan_in_request(from_param="startdate", to_param="enddate", default_days=365)
 def stats_data(request):
     histo_type = request.GET.get('histogram_type')
     interval = request.GET.get("interval", "week")
+    datefield = request.GET.get("datefield")
 
     params, __ = parse_args_for_es(request, prefix='es_')
 
     if histo_type == "domains":
-        return json_response(get_domain_stats_data(params, request.datespan, interval=interval))
+        return json_response(get_domain_stats_data(params, request.datespan, interval=interval, datefield=datefield))
 
     if params:
         domain_results = es_domain_query(params, fields=["name"], size=99999, show_stats=False)
@@ -943,7 +944,7 @@ def stats_data(request):
 
         if len(domains) <= 10:
             domain_info = [{"names": [d], "display_name": d} for d in domains]
-        elif len(domains) <= ES_DOMAIN_QUERY_LIMIT:
+        elif len(domains) < ES_MAX_CLAUSE_COUNT:
             domain_info = [{"names": [d for d in domains], "display_name": _("Domains Matching Filter")}]
         else:
             domain_info = [{"names": None, "display_name": _("All Domains (NOT applying filters. > 500 projects)")}]

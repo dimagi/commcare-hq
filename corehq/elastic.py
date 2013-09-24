@@ -38,6 +38,9 @@ DATE_FIELDS = {
     "users": "created_on",
 }
 
+ES_MAX_CLAUSE_COUNT = 1024  #  this is what ES's maxClauseCount is currently set to,
+                            #  can change this config value if we want to support querying over more domains
+
 
 def get_stats_data(domains, histo_type, datespan, interval="day"):
     histo_data = dict([(d['display_name'],

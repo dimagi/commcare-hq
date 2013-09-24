@@ -1,6 +1,7 @@
 from StringIO import StringIO
 import logging
 import hashlib
+from lxml import etree
 import os
 import re
 import json
@@ -16,7 +17,6 @@ from corehq import ApplicationsTab
 from corehq.apps.app_manager import commcare_settings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.sms.views import get_sms_autocomplete_context
-from django.utils import html
 from django.utils.http import urlencode as django_urlencode
 from couchdbkit.exceptions import ResourceConflict
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseForbidden
@@ -25,12 +25,12 @@ from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, RegexURLResolver
 from django.shortcuts import render
 from django.utils.http import urlencode
-from django.views.decorators.http import require_POST, require_GET
+from django.views.decorators.http import require_GET
 from django.conf import settings
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
-from corehq.apps.app_manager.util import is_valid_case_type, get_case_properties, get_all_case_properties, add_odk_profile_after_build, ParentCasePropertyBuilder
+from corehq.apps.app_manager.util import is_valid_case_type, get_all_case_properties, add_odk_profile_after_build, ParentCasePropertyBuilder
 from corehq.apps.app_manager.util import save_xform, get_settings_values
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
@@ -56,33 +56,36 @@ from dimagi.utils.web import json_response, json_request
 from corehq.apps.reports import util as report_utils
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
-    AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, EXAMPLE_DOMAIN, str_to_cls, validate_lang, SavedAppBuild, ParentSelect
+    AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, str_to_cls, validate_lang, SavedAppBuild, ParentSelect
 from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST
-
-
-try:
-    from lxml.etree import XMLSyntaxError
-except ImportError:
-    logging.error("lxml not installed! apps won't work properly!!")
 from django.contrib import messages
 
 require_can_edit_apps = require_permission(Permissions.edit_apps)
 
+
 def set_file_download(response, filename):
     response["Content-Disposition"] = "attachment; filename=%s" % filename
+
 
 def _encode_if_unicode(s):
     return s.encode('utf-8') if isinstance(s, unicode) else s
 
-CASE_TYPE_CONFLICT_MSG = "Warning: The form's new module has a different case type from the old module.<br />" + \
-                             "Make sure all case properties you are loading are available in the new case type"
+CASE_TYPE_CONFLICT_MSG = (
+    "Warning: The form's new module "
+    "has a different case type from the old module.<br />"
+    "Make sure all case properties you are loading "
+    "are available in the new case type"
+)
 
 
 class ApplicationViewMixin(DomainViewMixin):
     """
-        Paving the way for class-based views in app manager. Yo yo yo.
+    Helper for class-based views in app manager
+
+    Currently only used in hqmedia
+
     """
 
     @property
@@ -94,7 +97,8 @@ class ApplicationViewMixin(DomainViewMixin):
     @memoized
     def app(self):
         try:
-            # if get_app is mainly used for views, maybe it should be a classmethod of this mixin? todo
+            # if get_app is mainly used for views,
+            # maybe it should be a classmethod of this mixin? todo
             return get_app(self.domain, self.app_id)
         except Exception:
             pass
@@ -224,17 +228,10 @@ def import_app(req, domain, template="app_manager/import_app.html"):
     if req.method == "POST":
         _clear_app_cache(req, domain)
         name = req.POST.get('name')
-        try:
-            source = req.POST.get('source')
-            source = json.loads(source)
-            assert(source is not None)
-            app = import_app_util(source, domain, name=name)
-        except Exception:
-            app_id = req.POST.get('app_id')
-            def validate_source_domain(src_dom):
-                if src_dom != EXAMPLE_DOMAIN and not req.couch_user.can_edit_apps(domain=domain):
-                    return HttpResponseForbidden()
-            app = import_app_util(app_id, domain, name=name, validate_source_domain=validate_source_domain)
+        source = req.POST.get('source')
+        source = json.loads(source)
+        assert(source is not None)
+        app = import_app_util(source, domain, name=name)
 
         app_id = app._id
         return back_to_main(**locals())
@@ -342,7 +339,7 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         try:
             form.validate_form()
             xform_questions = xform.get_questions(langs)
-        except XMLSyntaxError as e:
+        except etree.XMLSyntaxError as e:
             form_errors.append("Syntax Error: %s" % e)
         except AppError as e:
             form_errors.append("Error in application: %s" % e)

@@ -351,6 +351,16 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         help_text=_("If access to a domain is restricted only users added " +
                     "to the domain and staff members will have access.")
     )
+    ota_restore_caching = BooleanField(
+        label=_("Enable Restore Caching (beta)"),
+        required=False,
+        help_text=_(
+            "Speed up phone restores. Useful if you have users with "
+            "large case lists and are getting timeouts during restore. "
+            "This feature is still in testing. Don't enable unless "
+            "you are an advanced user."
+        )
+    )
     logo = ImageField(
         label=_("Custom Logo"),
         required=False,
@@ -456,6 +466,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
                 domain.call_center_config.case_owner_id = self.cleaned_data.get('call_center_case_owner', None)
                 domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type', None)
             domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
+            domain.ota_restore_caching = self.cleaned_data.get('ota_restore_caching', False)
             domain.save()
             return True
         except Exception:

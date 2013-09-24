@@ -54,14 +54,51 @@
                 visualizations[key].viz.init();
             }
         }
+
+        $(function() {
+            $("#all-charts-filter").on("submit", function() {
+                var $this = $(this);
+                var startdate = $this.find('[name="startdate"]').val();
+                var enddate = $this.find('[name="enddate"]').val();
+                var interval = $this.find('[name="interval"]').val();
+
+                $('.startdate-input').val(startdate);
+                $('.enddate-input').val(enddate);
+                $('.interval-input').val(interval);
+
+                $('.reload-graph-form').submit();
+
+                return false;
+            });
+        });
+
     </script>
 {% endblock %}
 {% block main_column %}{{ block.super }}
     <hr />
-    <h4>{% trans "Total Distinct Active Users (matching filters)" %}: {{ total_distinct_users }}</h4>
+    <h4># of users who have submitted a form {% if matching_filters %}(across domains matching filters){% else %}(across all domains){% endif %}: {{ total_distinct_users }}</h4>
     <hr />
+
+    <form id="all-charts-filter" style="margin: 0;" class="form-inline">
+        <span>
+            <h4 style="display: inline-block;">{% trans "Filters for All Charts: " %}</h4>
+            <label for="all-charts-interval" class="sub-label">{% trans 'Interval' %}</label>
+            <select id="all-charts-interval" name="interval" class="input-small">
+                <option {% if interval == 'day' %}selected {% endif %}value="day">{% trans 'Day' %}</option>
+                <option {% if interval == 'week' %}selected {% endif %}value="week">{% trans 'Week' %}</option>
+                <option {% if interval == 'month' %}selected {% endif %}value="month">{% trans 'Month' %}</option>
+                <option {% if interval == 'year' %}selected {% endif %}value="year">{% trans 'Year' %}</option>
+            </select>
+            <label for="all-charts-startdate" class="sub-label">{% trans 'From' %}</label>
+            <input type="text" id="all-charts-startdate" name="startdate" value="{{ startdate }}" class="date-picker input-small">
+            <label for="all-charts-enddate" class="sub-label">{% trans 'To' %}</label>
+            <input type="text" id="all-charts-enddate" name="enddate" value="{{ enddate }}" class="date-picker input-small">
+            <button type="submit" class="btn btn-info">{% trans "Apply to All Charts" %}</button>
+        </span>
+    </form>
+
     <h2>{% trans "Visualize Project Spaces" %}</h2>
-    {% include "orgs/partials/visualizations.html" with chart_name="domains" %}
+    {% include "orgs/partials/visualizations.html" with chart_name="domains" date_field_opts=domain_datefields %}
     <h2>{% trans "Visualize Forms" %}</h2>
     {% include "orgs/partials/visualizations.html" with chart_name="forms" %}
     <h2>{% trans "Visualize Cases" %}</h2>
