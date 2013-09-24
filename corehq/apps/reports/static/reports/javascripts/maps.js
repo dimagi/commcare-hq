@@ -455,6 +455,7 @@ function makeDisplayContext(metric, setActiveFeature) {
             // popup
             layer.bindPopup(feature.popupContent, {
                 maxWidth: 600,
+                autoPanPadding: [200, 100]
             });
             // open popup on table row click / highlight table row on popup open
             var selectRow = function($tr) {
@@ -464,10 +465,13 @@ function makeDisplayContext(metric, setActiveFeature) {
                 }
             };
             feature.$tr.click(function() {
-                // TODO for polygons, provide a 'center' point to openPopup, or else
-                //   it picks a random point on the boundary
+                var popupAnchor = null;
+                if (layer.getBounds) { // polygon layer
+                    popupAnchor = layer.getBounds().getCenter();
+                    // TODO would be better to compute polygon centroid
+                }
+                layer.openPopup(popupAnchor);
                 // FIXME openPopup seems to crash for MultiPolygons (https://github.com/Leaflet/Leaflet/issues/2046)
-                layer.openPopup();
                 selectRow(feature.$tr);
             });
             layer.on('popupopen', function() {
