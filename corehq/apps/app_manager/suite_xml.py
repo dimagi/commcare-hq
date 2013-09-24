@@ -2,6 +2,7 @@ from collections import namedtuple
 from django.core.urlresolvers import reverse
 from lxml import etree
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField
+from .exceptions import MediaResourceError, ParentModuleReferenceError, SuiteValidationError
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column
 from corehq.apps.app_manager.xform import SESSION_CASE_ID
 from dimagi.utils.decorators.memoized import memoized
@@ -337,13 +338,6 @@ class IdStrings(object):
         return u"indicators_%s" % indicator_set_name
 
 
-class MediaResourceError(Exception):
-    pass
-
-class ParentModuleReferenceError(Exception):
-    pass
-
-
 def get_detail_column_infos(detail):
     """
     This is not intented to be a widely used format
@@ -677,10 +671,6 @@ class SuiteGenerator(object):
 
         map(add_to_suite, sections)
         return suite.serializeDocument(pretty=True)
-
-
-class SuiteValidationError(Exception):
-    pass
 
 
 def validate_suite(suite):
