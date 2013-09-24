@@ -3,6 +3,7 @@ import rawes
 from django.conf import settings
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
+from corehq.pillows.mappings.sms_mapping import SMS_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 
@@ -20,7 +21,8 @@ ES_URLS = {
     "forms": XFORM_INDEX + '/xform/_search',
     "cases": CASE_INDEX + '/case/_search',
     "users": USER_INDEX + '/user/_search',
-    "domains": DOMAIN_INDEX + '/hqdomain/_search'
+    "domains": DOMAIN_INDEX + '/hqdomain/_search',
+    "sms": SMS_INDEX + '/sms/_search',
 }
 
 ADD_TO_ES_FILTER = {
