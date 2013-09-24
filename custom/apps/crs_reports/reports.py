@@ -81,7 +81,6 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
     include_inactive = True
     module_name = 'crs_reports'
     report_template_name = None
-    filters = []
 
     @property
     @memoized
@@ -126,25 +125,27 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
             }
         return self.name
 
-    def case_filter(self):
+
+    def base_filters(self):
         block = self.request_params.get('block', '')
         status = self.request_params.get('PNC_status', '')
 
+        filters = []
         or_stmt = []
 
         if block:
-            self.filters.append({'term': {'block': block}})
+            filters.append({'term': {'block': block}})
 
         if status:
             if status == 'On Time':
                 for i in range(1, 8):
-                    self.filters.append({'term': {'case_pp_%s_done' % i: 'yes'}})
+                    filters.append({'term': {'case_pp_%s_done' % i: 'yes'}})
             else:
                 for i in range(1, 8):
                     or_stmt.append({'term': {'case_pp_%s_done' % i: 'no'}})
                 or_stmt = {'or': or_stmt}
-                self.filters.append(or_stmt)
-        return self.filters
+                filters.append(or_stmt)
+        return filters
 
     def date_to_json(self, date):
         return tz_utils.adjust_datetime_to_timezone\
@@ -161,9 +162,9 @@ class HNBCMotherReport(BaseHNBCReport):
 
     @property
     def case_filter(self):
-        self.filters.append({'term': {'pp_case_filter': "1"}})
-        BaseHNBCReport.case_filter(self)
-        return {'and': self.filters} if self.filters else {}
+        pp_case_filter = BaseHNBCReport.base_filters(self)
+        pp_case_filter.append({'term': {'pp_case_filter': "1"}})
+        return {'and': pp_case_filter} if pp_case_filter else {}
 
     @property
     def user_filter(self):
