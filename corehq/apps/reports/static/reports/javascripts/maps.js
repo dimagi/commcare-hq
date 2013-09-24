@@ -253,6 +253,7 @@ ZoomToFitControl = L.Control.extend({
         var $inner = $('<div></div>');
         $inner.addClass('leaflet-control-layers-toggle');
         $inner.addClass('zoomtofit');
+        $inner.attr('title', 'Fit all data into view'); // TODO i18n
         this.$div.append($inner);
         $inner.click(function() {
             zoomToAll(map);
@@ -273,6 +274,7 @@ ToggleTableControl = L.Control.extend({
         var $inner = $('<div></div>');
         $inner.addClass('leaflet-control-layers-toggle');
         $inner.addClass('toggletable');
+        $inner.attr('title', 'Show/hide data table'); // TODO i18n
         $inner.append('<i class="icon-table">');
         this.$div.append($inner);
         $inner.click(function() {
