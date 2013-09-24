@@ -22,6 +22,7 @@ from ..opm_tasks.models import OpmReportSnapshot
 from .beneficiary import Beneficiary
 from .incentive import Worker
 from .constants import DOMAIN
+from .filters import BlockFilter, AWCFilter
 
 
 class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
@@ -37,6 +38,10 @@ class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
     name = None
     slug = None
     model = None
+
+    @property
+    def fields(self):
+        return [BlockFilter, AWCFilter] + super(BaseReport, self).fields
 
     @property
     @memoized

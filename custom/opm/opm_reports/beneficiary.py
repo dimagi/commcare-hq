@@ -19,6 +19,8 @@ class Beneficiary(object):
         ('awc_name', "AWC Name"),
         ('bank_name', "Bank Name"),
         ('account_number', "Bank Account Number"),
+        # double check this variable name
+        ('ifsc_code', "IFC Code"),
         ('block', "Block Name"),
         ('village', "Village Name"),
         ('bp1_cash', "Birth Preparedness Form 1"),
@@ -43,6 +45,7 @@ class Beneficiary(object):
         self.awc_name = self.fluff_doc.awc_name
         self.bank_name = self.fluff_doc.bank_name
         self.account_number = self.fluff_doc.account_number
+        self.ifsc_code = self.fluff_doc.ifsc_code
         self.block = self.fluff_doc.block
         self.village = self.fluff_doc.village
 

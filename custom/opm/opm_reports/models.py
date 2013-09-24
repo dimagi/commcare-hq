@@ -29,11 +29,12 @@ class OpmCaseFluff(fluff.IndicatorDocument):
     group_by = ('domain', )
 
     name = fluff.FlatField(lambda case: case.name)
-    awc_name = case_property("awc_name")
-    bank_name = case_property("bank_name")
-    account_number = case_property("bank_account_number")
-    block = case_property("block_name")
-    village = case_property("village_name")
+    awc_name = case_property('awc_name')
+    bank_name = case_property('bank_name')
+    account_number = case_property('bank_account_number')
+    ifsc_code = case_property('ifsc_code')
+    block = case_property('block_name')
+    village = case_property('village_name')
 
     # Okay, I lied, there's one aggregated field:
     women_registered = user_calcs.WomenRegistered()
