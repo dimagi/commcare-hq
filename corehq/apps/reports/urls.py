@@ -1,6 +1,8 @@
 from django.conf.urls.defaults import *
+from corehq.apps.reports.util import installed_plugins_list
 from corehq.apps.reports.dispatcher import (ProjectReportDispatcher, 
         CustomProjectReportDispatcher, BasicReportDispatcher)
+import logging
 
 dodoma_reports = patterns('corehq.apps.reports.dodoma',
     url('^household_verification_json$', 'household_verification_json'),
@@ -39,7 +41,6 @@ urlpatterns = patterns('corehq.apps.reports.views',
 
     url(r'^case_data/(?P<case_id>[\w\-]+)/(?P<xform_id>[\w\-:]+)/$', 'case_form_data', name="case_form_data"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/$', 'case_details', name="case_details"),
-    url(r'^case_details_report/', include("custom.apps.crs_reports.urls")),
 
     # Download and view form data
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/$', 'form_data', name='render_form_data'),
@@ -102,3 +103,14 @@ urlpatterns = patterns('corehq.apps.reports.views',
 report_urls = patterns('',
     BasicReportDispatcher.url_pattern(),
 )
+
+
+installed_plugins = installed_plugins_list()
+
+for plugin in installed_plugins:
+    try:
+        urlpatterns += patterns('',
+             (r"^%s/" % plugin, include("custom.apps.%s.urls" % plugin)),
+        )
+    except:
+        logging.info ("Plugin %s does not provides urls" % plugin)

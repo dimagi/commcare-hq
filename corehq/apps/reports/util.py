@@ -21,6 +21,7 @@ from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import json_request
 from django.conf import settings
+import os
 
 
 def make_form_couch_key(domain, by_submission_time=True,
@@ -428,3 +429,12 @@ def datespan_from_beginning(domain, default_days, timezone):
     datespan = DateSpan(startdate, now, timezone=timezone)
     datespan.is_default = True
     return datespan
+
+def installed_plugins_list():
+    path = os.path.dirname('custom/apps/')
+    installed_plugins = []
+    for module in os.listdir(path):
+        if os.path.isdir(path + '/' + module) == True and os.path.exists(path + '/' + module + '/urls.py') and 'urlpatterns' in open(path + '/' + module + '/urls.py').read():
+            installed_plugins.append(module)
+    return installed_plugins
+

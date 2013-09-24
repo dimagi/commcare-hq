@@ -4,7 +4,7 @@ from corehq.apps.api.es import FullCaseES
 
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.standard.inspect import CaseDisplay, CaseListReport, CaseListMixin
+from corehq.apps.reports.standard.inspect import CaseDisplay, CaseListReport
 from django.utils import html
 from django.core.urlresolvers import reverse, NoReverseMatch
 
@@ -50,24 +50,24 @@ class HNBCReportDisplay(CaseDisplay):
 
 
     @property
-    def pnc_status(self):
-        if visit_completion_counter(self.case) == 7:
-            return _("On Time")
-        else:
-            return _("Late")
-
-    @property
     def case_link(self):
         case_id, case_name = self.case['_id'], self.case['name']
         try:
             return html.mark_safe("<a class='ajax_dialog' href='%s'>%s</a>" % (
-                html.escape(reverse('case_details_report', args=[self.report.domain, case_id,
+                html.escape(reverse('crs_details_report', args=[self.report.domain, case_id,
                             self.report.module_name, self.report.report_template_name, self.report.slug])),
                 html.escape(case_name),
             ))
         except NoReverseMatch:
             return "%s (bad ID format)" % case_name
 
+
+    @property
+    def pnc_status(self):
+        if visit_completion_counter(self.case) == 7:
+            return _("On Time")
+        else:
+            return _("Late")
 
 class BaseHNBCReport(CustomProjectReport, CaseListReport):
 

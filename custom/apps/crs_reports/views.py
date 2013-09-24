@@ -11,11 +11,10 @@ from corehq.apps.users.models import CommCareUser
 import re
 
 
-
 @require_case_view_permission
 @login_and_domain_required
 @require_GET
-def case_details_report(request, domain, case_id, module_name, report_template, report_slug):
+def crs_details_report(request, domain, case_id, module_name, report_template, report_slug):
 
     try:
         case = CommCareCase.get(case_id)
@@ -38,7 +37,7 @@ def case_details_report(request, domain, case_id, module_name, report_template, 
     except Exception:
         user = None
 
-    questions = get_questions_with_answers(case.get_forms(), domain, case)
+    questions = get_questions_with_answers(case.get_forms(), domain)
 
     return render(request, "%s/%s.html" % (module_name, report_template), {
         "domain": domain,
@@ -56,7 +55,7 @@ def case_details_report(request, domain, case_id, module_name, report_template, 
     })
 
 
-def get_questions_with_answers(forms, domain, case):
+def get_questions_with_answers(forms, domain):
     questions_with_answers = []
     needed_forms = []
     app = get_app(domain, getattr(forms[0], "app_id", None))
@@ -81,4 +80,3 @@ def get_questions_with_answers(forms, domain, case):
                     question['answers'][i] = "---"
                 i += 1
     return questions_with_answers
-
