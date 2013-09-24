@@ -61,13 +61,13 @@ def make_remote_profile(app):
                 'download_index',
                 args=[app.domain, app.get_id],
             )
-            suite_node = profile_xml.find('suite')
-            reset_suite_remote_url(
-                suite_node=suite_node,
-                profile_url=app.profile_url,
-                url_base=app.url_base,
-                download_index_url=download_index_url,
-            )
+            for suite_node in profile_xml.findall('suite'):
+                reset_suite_remote_url(
+                    suite_node=suite_node,
+                    profile_url=app.profile_url,
+                    url_base=app.url_base,
+                    download_index_url=download_index_url
+                )
 
         if app.build_langs:
             profile_xml.set_property("cur_locale", app.build_langs[0])
