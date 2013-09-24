@@ -51,10 +51,11 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property
 
-from corehq.apps.app_manager import current_builds, app_strings
+from corehq.apps.app_manager import current_builds, app_strings, remote_app
 from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings, build_error_utils
 from corehq.apps.app_manager.util import split_path, save_xform
-from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, XFormError, XFormValidationError, WrappedNode
+from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml
+from .exceptions import AppError, VersioningError, XFormError, XFormValidationError
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -929,11 +930,6 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
     @memoized
     def all_forms_require_a_case(self):
         return all([form.requires == 'case' for form in self.get_forms()])
-
-
-class VersioningError(Exception):
-    """For errors that violate the principles of versioning in VersionedDoc"""
-    pass
 
 
 class VersionedDoc(LazyAttachmentDoc):
@@ -2114,57 +2110,10 @@ class RemoteApp(ApplicationBase):
 
     def create_profile(self, is_odk=False):
         # we don't do odk for now anyway
-        try:
-            profile = urlopen(self.profile_url).read()
-        except Exception:
-            raise AppError('Unable to access profile url: "%s"' % self.profile_url)
-
-        if self.manage_urls or self.build_langs:
-            profile_xml = WrappedNode(profile)
-
-            def set_property(key, value):
-                node = profile_xml.find('property[@key="%s"]' % key)
-
-                if node.xml is None:
-                    node = etree.Element('property')
-                    profile_xml.xml.insert(0, node)
-                    node.attrib['key'] = key
-
-                node.attrib['value'] = value
-
-            def set_attribute(key, value):
-                profile_xml.attrib[key] = value
-
-            def reset_suite_remote_url():
-                suite_local_text = profile_xml.findtext('suite/resource/location[@authority="local"]')
-                suite_remote = profile_xml.find('suite/resource/location[@authority="remote"]')
-                suite_name = self.strip_location(suite_local_text)
-                suite_remote.xml.text = self.url_base + urljoin(reverse('download_index', args=[self.domain, self.get_id]), suite_name)
-
-            if self.manage_urls:
-                set_attribute('update', self.hq_profile_url)
-                set_property("ota-restore-url", self.ota_restore_url)
-                set_property("PostURL", self.post_url)
-                set_property("cc_user_domain", cc_user_domain(self.domain))
-                set_property('form-record-url', self.form_record_url)
-                set_property('key_server', self.key_server_url)
-                reset_suite_remote_url()
-
-            if self.build_langs:
-                set_property("cur_locale", self.build_langs[0])
-
-            profile = profile_xml.render()
-        return profile
+        return remote_app.make_remote_profile(self)
 
     def strip_location(self, location):
-        base = '/'.join(self.profile_url.split('/')[:-1]) + '/'
-
-        def strip_left(prefix):
-            string = location
-            if string.startswith(prefix):
-                return string[len(prefix):]
-
-        return strip_left('./') or strip_left(base) or strip_left('jr://resource/') or location
+        return remote_app.strip_location(self.profile_url, location)
 
     def fetch_file(self, location):
         location = self.strip_location(location)
@@ -2204,13 +2153,14 @@ class RemoteApp(ApplicationBase):
                     raise AppError("problem with file path reference!")
                 else:
                     return
+
             loc, file = self.fetch_file(loc)
             files[loc] = file
-            return loc, file
+            return file
 
         add_file_from_path('features/users/logo')
         try:
-            _, suite = add_file_from_path(self.SUITE_XPATH, strict=True)
+            suite = add_file_from_path(self.SUITE_XPATH, strict=True)
         except AppError:
             raise AppError(ugettext('Problem loading suite file from profile file. Is your profile file correct?'))
 
@@ -2259,14 +2209,6 @@ class RemoteApp(ApplicationBase):
             self.save()
         questions = self.questions_map.get(xmlns, [])
         return questions
-
-
-class DomainError(Exception):
-    pass
-
-
-class AppError(Exception):
-    pass
 
 
 def get_app(domain, app_id, wrap_cls=None, latest=False):
