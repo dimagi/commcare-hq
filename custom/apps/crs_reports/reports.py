@@ -178,8 +178,8 @@ class HNBCInfantReport(BaseHNBCReport):
 
     @property
     def case_filter(self):
-        BaseHNBCReport.case_filter(self)
-        return {'and': self.filters} if self.filters else {}
+        filters = BaseHNBCReport.base_filters(self)
+        return {'and': filters} if filters else {}
 
     @property
     def user_filter(self):
