@@ -78,8 +78,8 @@ def get_dict_to_report(domain, case_id, report_slug):
         owner_name = None
 
     try:
-        owning_group = Group.get(case.owner_id)
-        sub_center = owning_group.display_name if owning_group.domain == domain else ''
+        owning_group = Group.by_user(case.owner_id)
+        sub_center = ", ".join([ r.name.encode('UTF-8') for r in owning_group])
     except Exception:
         sub_center = None
 
