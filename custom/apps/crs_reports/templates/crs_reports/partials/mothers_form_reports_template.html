@@ -2,6 +2,7 @@
 <style>
     table {
         border-collapse: collapse;
+        table-layout: fixed;
         font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
         font-size: 13px;
         line-height: 18px
@@ -44,7 +45,7 @@
         <tbody>
             <tr>
                 <td style="border: 1px solid;" colspan="2" rowspan="2">{% trans "Ask/check date of ASHA's visit" %}</td>
-                <td style="border: 1px solid;" colspan="7">&nbsp;</td>
+                <td style="border: 1px solid; width: 40%" colspan="7">&nbsp;</td>
                 <td style="border: 1px solid;" colspan="2" rowspan="2">{% trans "Works performed by ASHA" %}</td>
                 <td style="border: 1px solid;" colspan="2" rowspan="2">{% trans "Inspection by supervisor" %}</td>
             </tr>
@@ -92,4 +93,17 @@
             </tr>
         </tbody>
     </table>
+    <br>
+    <table style="width: 100%">
+        <tbody>
+            <tr>
+                <td style="width: 70%; ">&nbsp;</td>
+                <td style="vertical-align: top; width: 30%; height: 100px; border: 1px solid;" >{% trans "Signature of ASHA" %} <strong></strong></td>
+
+            </tr>
+        </tbody>
+    </table>
+
+
+
 </div>
