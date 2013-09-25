@@ -89,13 +89,13 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
     @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn(_("Case Type")),
-            DataTablesColumn(_("Case Name")),
-            DataTablesColumn(_("CHW Name")),
-            DataTablesColumn(_("Date of Delivery")),
-            DataTablesColumn(_("PNC Visit Completion")),
-            DataTablesColumn(_("Delivery")),
-            DataTablesColumn(_("Case/PNC Status"))
+            DataTablesColumn(_("Case Type"), prop_name="type.exact"),
+            DataTablesColumn(_("Case Name"), prop_name="name.exact"),
+            DataTablesColumn(_("CHW Name"), prop_name="owner_display", sortable=False),
+            DataTablesColumn(_("Date of Delivery"),  prop_name="date_birth"),
+            DataTablesColumn(_("PNC Visit Completion"), sortable=False),
+            DataTablesColumn(_("Delivery"), prop_name="place_birth"),
+            DataTablesColumn(_("Case/PNC Status"), sortable=False)
         )
         return headers
 
