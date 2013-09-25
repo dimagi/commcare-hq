@@ -161,7 +161,14 @@ class Calculator(object):
                     if passes_filter else []
                 )
             except Exception:
-                logging.error('%s emitter %s' % (item, slug))
+                logging.exception((
+                    "Error in emitter %s > %s > %s: '%s'"
+                ) % (
+                    self.fluff.__name__,
+                    self.slug,
+                    slug,
+                    item.get_id,
+                ))
                 raise
         return values
 
@@ -342,11 +349,7 @@ class IndicatorDocument(schema.Document):
 
     def calculate(self, item):
         for attr, calculator in self._calculators.items():
-            try:
-                self[attr] = calculator.calculate(item)
-            except Exception:
-                logging.error('%s calculator %s' % (item, attr))
-                raise
+            self[attr] = calculator.calculate(item)
         self.id = item.get_id
         for getter in self.wrapped_group_by:
             self[getter.attribute] = getter.getter_function(item)
