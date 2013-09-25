@@ -842,7 +842,7 @@ def admin_restore(request):
     user = CommCareUser.get_by_username(full_username)
     if not user:
         return HttpResponseNotFound('User %s not found.' % full_username)
-    return get_restore_response(user, **get_restore_params(request))
+    return get_restore_response(user.domain, user, **get_restore_params(request))
 
 @require_superuser
 def management_commands(request, template="hqadmin/management_commands.html"):
