@@ -26,7 +26,8 @@ from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersM
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.fields import SelectOpenCloseField, SelectMobileWorkerField, StrongFilterUsersField
-from corehq.apps.reports.generic import GenericTabularReport, ProjectInspectionReportParamsMixin, ElasticProjectInspectionReport
+from corehq.apps.reports.generic import GenericReportView, GenericTabularReport, ProjectInspectionReportParamsMixin, ElasticProjectInspectionReport
+from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.users.models import CommCareUser, CouchUser
@@ -696,6 +697,15 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
       adapter == 'report'
       'report': 'fully qualified name of ReportDataSource class'
       'report_params': optional dict of (static) config parameters for ReportDataSource
+
+      # for backwards compatibility with existing tabular reports not yet converted to
+      # ReportDataSources... **NOT RECOMMENDED** because tabular reports generally emit
+      # formatted data, whereas the maps report works best on raw data; also, the report
+      # api is complex and i make no guarantees that invoking it secondhand via the map
+      # report won't overlook something important
+      adapter == 'legacyreport'
+      'report': 'fully qualified name of tabular report view class'
+      'report_params': optional dict of (static) config parameters for report
     }
 
     display_config: {
@@ -810,7 +820,34 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
         config['domain'] = self.domain
 
         DataSource = to_function(params['report'])
+
+        assert issubclass(DataSource, ReportDataSource), '[%s] does not implement the ReportDataSource API!' % params['report']
+        assert not issubclass(DataSource, GenericReportView), '[%s] cannot be a ReportView (even if it is also a ReportDataSource)! You must separate your code into a class of each type, or use the "legacyreport" adapater.' % params['report']
+
         return DataSource(config).get_data()
+
+    def _get_data_legacyreport(self, params, filters):
+        Report = to_function(params['report'])
+        assert issubclass(Report, GenericTabularReport), '[%s] must be a GenericTabularReport!' % params['report']
+
+        # TODO it would be nice to indicate to the report that it was being used in a map context, (so
+        # that it could add a geo column) but it does not seem like reports can be arbitrarily
+        # parameterized in this way
+        report = Report(request=self.request, domain=self.domain, **params.get('report_params', {}))
+
+        def _headers(e, root=[]):
+            if hasattr(e, '__iter__'):
+                if hasattr(e, 'html'):
+                    root = list(root) + [e.html]
+                for sub in e:
+                    for k in _headers(sub, root):
+                        yield k
+            else:
+                yield root + [e.html]
+        headers = ['::'.join(k) for k in _headers(report.headers)]
+
+        for row in report.rows:
+            yield dict(zip(headers, row))
 
     def _get_data_csv(self, params, filters):
         import csv
