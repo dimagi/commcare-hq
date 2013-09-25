@@ -436,21 +436,12 @@ function initTableHeader(config, data, mkRow) {
         headerRows.push([]);
     }
 
-    var sorting = [];
-    var sortColumnAs = function(datatype) {
-        sorting.push({
-            'numeric': {sType: 'title-numeric'}
-        }[datatype]);
-    };
-
     config._table_columns_flat = [];
 
     var process = function(col, depth) {
         if (typeof col == 'string') {
             var entry = {title: getColumnTitle(col, config), terminal: true};
             config._table_columns_flat.push(col); // a bit hacky
-            var stats = summarizeColumn({column: col}, data);
-            sortColumnAs(stats.nonnumeric ? 'text' : 'numeric');
         } else {
             var entry = {title: col.title, span: breadth(col)};
             $.each(col.subcolumns, function(i, e) {
@@ -476,7 +467,15 @@ function initTableHeader(config, data, mkRow) {
         });
     });
 
-    return sorting;
+    var sortColumnAs = function(datatype) {
+        return {
+            'numeric': {sType: 'title-numeric'}
+        }[datatype];
+    };
+    return _.map(getTableColumns(config, true), function(col) {
+        var stats = summarizeColumn({column: col}, data);
+        return sortColumnAs(stats.nonnumeric ? 'text' : 'numeric');
+    });
 }
 
 function resetTable(data) {
