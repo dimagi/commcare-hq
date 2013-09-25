@@ -77,6 +77,7 @@ class BaseSingleOptionFilter(BaseReportFilter):
     """
     template = "reports/filters/single_option.html"
     default_text = ugettext_noop("Filter by...")
+    placeholder = ''
 
     @property
     def options(self):
@@ -102,6 +103,7 @@ class BaseSingleOptionFilter(BaseReportFilter):
                 'options': options,
                 'default_text': self.default_text,
                 'selected': self.selected,
+                'placeholder': self.placeholder,
             }
         }
 
@@ -127,7 +129,6 @@ class BaseMultipleOptionFilter(BaseSingleOptionFilter):
 
     @classmethod
     def get_value(cls, request, domain):
-        print request.GET.getlist(cls.slug)
         return request.GET.getlist(cls.slug)
 
     @property

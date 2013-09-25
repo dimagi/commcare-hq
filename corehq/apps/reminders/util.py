@@ -1,6 +1,7 @@
 from corehq.apps.app_manager.models import get_app, ApplicationBase, Form
 from couchdbkit.resource import ResourceNotFound
 from django.utils.translation import ugettext as _
+from corehq.apps.groups.models import Group
 
 def get_form_list(domain):
     form_list = []

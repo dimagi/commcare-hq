@@ -108,7 +108,8 @@
                                         afterRender: initTemplate
                                     },
                                     attr: {
-                                        id: itemRowId
+                                        id: itemRowId,
+                                        class: rowClass
                                     },
                                     event: {
                                         deleteItem: $parent.deleteItem
@@ -136,6 +137,10 @@
                                             name: template(),
                                             data: itemData,
                                             afterRender: initTemplate
+                                        },
+                                        attr: {
+                                            id: itemRowId,
+                                            class: rowClass
                                         }
                                     "></tr>
                                 <!-- /ko -->
@@ -152,6 +157,10 @@
                                             name: template(),
                                             data: itemData,
                                             afterRender: initTemplate
+                                        },
+                                        attr: {
+                                            id: itemRowId,
+                                            class: rowClass
                                         }
                                     "></tr>
                                 <!-- /ko -->
@@ -160,7 +169,11 @@
                     </div>
                 </div>
             </div>
-            {% include 'hqwebapp/partials/pagination.html' %}
+            <div class="row-fluid">
+                <div class="span12">
+                    {% include 'hqwebapp/partials/pagination.html' %}
+                </div>
+            </div>
         </div>
     {% endblock %}
     {% block pagination_footer %}
