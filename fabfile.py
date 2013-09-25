@@ -606,13 +606,12 @@ def deploy():
             execute(flip_es_aliases)
     except Exception:
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
+        # hopefully bring the server back to life
+        execute(services_restart)
         raise
     else:
-        execute(record_successful_deploy)
-    finally:
-        # hopefully bring the server back to life if anything goes wrong
         execute(services_restart)
-
+        execute(record_successful_deploy)
 
 
 @task
