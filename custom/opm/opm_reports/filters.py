@@ -1,7 +1,5 @@
-# from corehq.apps.reports.filters.base import BaseMultipleOptionFilter
+from corehq.apps.reports.filters.base import BaseMultipleOptionFilter
 
-class BaseMultipleOptionFilter():
-    pass
 
 class BlockFilter(BaseMultipleOptionFilter):
     slug = "block"
