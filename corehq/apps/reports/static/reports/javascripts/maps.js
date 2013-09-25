@@ -248,14 +248,8 @@ ZoomToFitControl = L.Control.extend({
     },
 
     onAdd: function(map) {
-        this.$div = $('<div></div>');
-        this.$div.addClass('leaflet-control-layers');
-        var $inner = $('<div></div>');
-        $inner.addClass('leaflet-control-layers-toggle');
-        $inner.addClass('zoomtofit');
-        $inner.attr('title', 'Fit all data into view'); // TODO i18n
-        this.$div.append($inner);
-        $inner.click(function() {
+        this.$div = $('#zoomtofit');
+        this.$div.find('#zoomtofit-target').click(function() {
             zoomToAll(map);
         });
         return this.$div[0];
@@ -269,15 +263,8 @@ ToggleTableControl = L.Control.extend({
     },
 
     onAdd: function(map) {
-        this.$div = $('<div></div>');
-        this.$div.addClass('leaflet-control-layers');
-        var $inner = $('<div></div>');
-        $inner.addClass('leaflet-control-layers-toggle');
-        $inner.addClass('toggletable');
-        $inner.attr('title', 'Show/hide data table'); // TODO i18n
-        $inner.append('<i class="icon-table">');
-        this.$div.append($inner);
-        $inner.click(function() {
+        this.$div = $('#toggletable');
+        this.$div.find('#toggletable-target').click(function() {
             TABLE_TOGGLE = !TABLE_TOGGLE;
             setMapHeight(map, true);
         });
@@ -410,13 +397,16 @@ function initTable(data, config) {
         var ctx = infoContext(e, config, 'table');
         e.$tr = row($('#tabular'), false, ctx.info, function($cell, e) {
             $cell.text(e.value);
-            $cell.append('<span title="' + e.raw + '"></span>'); // sort key
+            var $sortkey = $('<span>');
+            $sortkey.attr('title', e.raw);
+            $cell.append($sortkey);
         });
     });
 
     $.fn.dataTableExt.afnFiltering.push(
         function(settings, row, i) {
-            // datatables doesn't really offer a better way to do this
+            // datatables doesn't really offer a better way to do this;
+            // you have to set all filtering up-front
             return data.features[i].visible;
         }
     );
@@ -498,7 +488,7 @@ function resetTable(data) {
     rows = $(rows);
 
     rows.unbind('click').unbind('mouseenter').unbind('mouseleave');
-    rows.removeClass('inactiverow');
+    rows.removeClass('inactive-row');
 }
 
 // set up the configured display metrics
@@ -527,7 +517,13 @@ function initMetrics(map, table, data, config) {
 
     var l = new LegendControl({config: config}).addTo(map);
     var h = new HeadsUpControl({config: config}).addTo(map);
-    var m = new MetricsControl({metrics: config.metrics, data: data, legend: l, info: h, table: table}).addTo(map);
+    var m = new MetricsControl({
+        metrics: config.metrics,
+        data: data,
+        table: table,
+        legend: l,
+        info: h
+    }).addTo(map);
 
     zoomToAll(map);
 }
@@ -566,7 +562,7 @@ function makeDisplayContext(metric, setActiveFeature) {
             // store visibility on the feature object so datatables can access it
             feature.visible = (feature._conf != null);
             if (!feature.visible) {
-                feature.$tr.addClass('inactiverow');
+                feature.$tr.addClass('inactive-row');
             }
             return feature.visible;
         },
@@ -584,9 +580,9 @@ function makeDisplayContext(metric, setActiveFeature) {
             });
             // open popup on table row click / highlight table row on popup open
             var selectRow = function($tr) {
-                $('#tabular tr').removeClass('selectedrow');
+                $('#tabular tr').removeClass('selected-row');
                 if ($tr != null) {
-                    $tr.addClass('selectedrow');
+                    $tr.addClass('selected-row');
                 }
             };
             feature.$tr.click(function() {
@@ -623,14 +619,14 @@ function makeDisplayContext(metric, setActiveFeature) {
                         layer.bringToFront();
                     }
                 }
-                feature.$tr.addClass('hoverrow');
+                feature.$tr.addClass('hover-row');
                 setActiveFeature(feature);
             };
             var hoverOff = function() {
                 if (layer._deactivate) {
                     layer._deactivate();
                 }
-                feature.$tr.removeClass('hoverrow');
+                feature.$tr.removeClass('hover-row');
                 setActiveFeature(null);
             };
             layer.on({

@@ -54,15 +54,15 @@
     cursor: pointer;
 }
 
-.selectedrow td {
+.selected-row td {
     background-color: #abd !important;
 }
 
-.hoverrow td {
+.hover-row td {
     background-color: #ffa !important; 
 }
 
-.inactiverow {
+.inactive-row {
     color: #888;
 }
 
