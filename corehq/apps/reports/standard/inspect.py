@@ -702,6 +702,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
       'name_column': column data used in the header of the detail popup,
       'column_titles': {'column name': 'display title for column},
       'detail_columns': [list of column data to display in detail popup],
+      'table_columns': [list of columns to display in table view],
       'enum_captions': {
         'col with enum values': {'enum value': 'enum caption'}
       },
@@ -879,6 +880,7 @@ class DemoMapReport(GenericMapReport):
             "death_rate"
         ],
         "column_titles": {
+            "name": "Mountain",
             "country": "Country",
             "height": "Elevation",
             "prominence": "Topographic Prominence",
@@ -1064,6 +1066,7 @@ class DemoMapReport2(GenericMapReport):
         'name_column': 'name',
         'detail_columns': ['iso', 'type', 'pop', 'area', 'pop_dens', 'lang', 'literacy', 'urbanity', 'sex_ratio'],
         'column_titles': {
+            'name': 'State/Territory',
             'iso': 'ISO 3166-2',
             'type': 'Type',
             'pop': 'Population',

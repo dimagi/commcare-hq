@@ -187,44 +187,39 @@ $.extend( $.fn.dataTableExt.oStdClasses, {
 } );
 
 // For sorting rows
-jQuery.fn.dataTableExt.oSort['title-numeric-asc']  = function(a,b) {
-    var x = a.match(/title="*(-?[0-9]+)/);
-    var y = b.match(/title="*(-?[0-9]+)/);
 
-    if (x === null && y === null) return 0;
-    if (x === null) return -1;
-    if (y === null) return 1;
+function sortSpecial(a, b, asc, convert) {
+    var x = convert(a);
+    var y = convert(b);
 
-    x = parseFloat(x[1]);
-    y = parseFloat(y[1]);
-    return ((x < y) ? -1 : ((x > y) ?  1 : 0));
-};
-
-jQuery.fn.dataTableExt.oSort['title-numeric-desc'] = function(a,b) {
-    var x = a.match(/title="*(-?[0-9]+)/);
-    var y = b.match(/title="*(-?[0-9]+)/);
-
+    // sort nulls at end regardless of current sort direction
     if (x === null && y === null) return 0;
     if (x === null) return 1;
     if (y === null) return -1;
 
-    x = parseFloat(x[1]);
-    y = parseFloat(y[1]);
-    return ((x < y) ?  1 : ((x > y) ? -1 : 0));
-};
+    return (asc ? 1 : -1) * ((x < y) ? -1 : ((x > y) ?  1 : 0));
+}
 
-jQuery.fn.dataTableExt.oSort['title-date-asc']  = function(a,b) {
-    var x = a.match(/title="*(.+)"/);
-    var y = b.match(/title="*(.+)"/);
-    x = new Date(x[1]);
-    y = new Date(y[1]);
-    return ((x < y) ? -1 : ((x > y) ?  1 : 0));
-};
+function convertNum(k) {
+    var m = k.match(/title="*([-+.0-9eE]+)/);
+    if (m !== null) {
+        m = +m[1];
+        if (isNaN(m)) {
+            m = null;
+        }
+    }
+    return m;
+}
 
-jQuery.fn.dataTableExt.oSort['title-date-desc']  = function(a,b) {
-    var x = a.match(/title="*(.+)"/);
-    var y = b.match(/title="*(.+)"/);
-    x = new Date(x[1]);
-    y = new Date(y[1]);
-    return ((x < y) ?  1 : ((x > y) ? -1 : 0));
-};
+function convertDate(k) {
+    var m = k.match(/title="*(.+)"/);
+    return new Date(m);
+}
+
+jQuery.fn.dataTableExt.oSort['title-numeric-asc'] = function(a, b) { return sortSpecial(a, b, true, convertNum); };
+
+jQuery.fn.dataTableExt.oSort['title-numeric-desc'] = function(a, b) { return sortSpecial(a, b, false, convertNum); };
+
+jQuery.fn.dataTableExt.oSort['title-date-asc']  = function(a,b) { return sortSpecial(a, b, true, convertDate); };
+
+jQuery.fn.dataTableExt.oSort['title-date-desc']  = function(a,b) { return sortSpecial(a, b, false, convertDate); };
