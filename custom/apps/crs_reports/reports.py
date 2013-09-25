@@ -152,10 +152,10 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
             ('%d-%m-%Y') if date else ""
 
 
-class HNBCMotherReport(BaseHNBCReport):
+class HBNCMotherReport(BaseHNBCReport):
 
-    name = ugettext_noop('Mother HNBC Form')
-    slug = 'hnbc_mother_report'
+    name = ugettext_noop('Mother HBNC Form')
+    slug = 'hbnc_mother_report'
     report_template_name = 'mothers_form_reports_template'
     default_case_type = 'pregnant_mother'
 
@@ -167,12 +167,12 @@ class HNBCMotherReport(BaseHNBCReport):
 
     @property
     def user_filter(self):
-        return super(HNBCMotherReport, self).user_filter
+        return super(HBNCMotherReport, self).user_filter
 
 
-class HNBCInfantReport(BaseHNBCReport):
-    name = ugettext_noop('Infant HNBC Form')
-    slug = 'hnbc_infant_report'
+class HBNCInfantReport(BaseHNBCReport):
+    name = ugettext_noop('Infant HBNC Form')
+    slug = 'hbnc_infant_report'
     report_template_name = 'baby_form_reports_template'
     default_case_type = 'baby'
 
@@ -183,5 +183,5 @@ class HNBCInfantReport(BaseHNBCReport):
 
     @property
     def user_filter(self):
-        return super(HNBCInfantReport, self).user_filter
+        return super(HBNCInfantReport, self).user_filter
 
