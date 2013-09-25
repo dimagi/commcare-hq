@@ -340,8 +340,8 @@ class MonthYearMixin(object):
 
     @property
     def month(self):
-        int(self.request_params['month'])
+        return int(self.request_params['month'])
 
     @property
     def year(self):
-        int(self.request_params['year'])
+        return int(self.request_params['year'])
