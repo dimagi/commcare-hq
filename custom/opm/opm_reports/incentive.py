@@ -29,10 +29,12 @@ class Worker(object):
         ('last_month_total', "Amount of AWW incentive paid last month"),
     ]
 
-    def __init__(self, worker, date_range, last_month_totals):
-        self.fluff_doc = OpmUserFluff.get("%s-%s" %
-            (OpmUserFluff._doc_type, worker._id))
-        self.date_range = date_range
+    def __init__(self, worker, report): #, date_range, last_month_totals):
+        try:
+            self.fluff_doc = OpmUserFluff.get("%s-%s" %
+                (OpmUserFluff._doc_type, worker._id))
+        except ResourceNotFound:
+            raise InvalidRow
         self.name = self.fluff_doc.name
         self.awc_name = self.fluff_doc.awc_name
         self.bank_name = self.fluff_doc.bank_name
@@ -43,19 +45,19 @@ class Worker(object):
             return OpmFormFluff.get_result(
                 calculator,
                 [DOMAIN, worker._id],
-                date_range,
+                report.date_range,
             )['total']
 
         self.women_registered = len(OpmCaseFluff.get_result(
             'women_registered',
             [DOMAIN, worker._id],
-            date_range,
+            report.date_range,
             reduce=False,
         )['total'])
         self.children_registered = OpmCaseFluff.get_result(
             'women_registered',
             [DOMAIN, worker._id],
-            date_range,
+            report.date_range,
         )['total']
         self.service_forms_count = get_result('service_forms')
         self.growth_monitoring_count = get_result('growth_monitoring')
@@ -64,8 +66,9 @@ class Worker(object):
         self.service_forms_cash = self.service_forms_count * FIXTURES['service_form_submitted']
         self.growth_monitoring_cash = self.growth_monitoring_count * FIXTURES['child_growth_monitored']
         self.month_total = self.service_forms_cash + self.growth_monitoring_cash
-        if last_month_totals is not None:
-            self.last_month_total = last_month_totals.get(self.account_number, 0)
+        if report.last_month_totals is not None:
+            self.last_month_total = report.last_month_totals.get(
+                self.account_number, 0)
         else:
             self.last_month_total = 0
 

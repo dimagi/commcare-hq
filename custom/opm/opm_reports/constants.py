@@ -1,5 +1,6 @@
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.fixtures.models import FixtureDataItem
+from corehq.apps.users.models import CommCareUser, CommCareCase
 
 DOMAIN = 'opm'
 
@@ -14,6 +15,17 @@ CHILD_FOLLOWUP_XMLNS = "http://openrosa.org/formdesigner/C90C2C1F-3B34-47F3-B3A3
 def get_fixture_data():
     fixtures = FixtureDataItem.get_indexed_items(DOMAIN, 'condition_amounts',
         'condition')
-    return dict((k, int(fixture['rs_amount'])) for k, fixture in fixtures.items())
+    return dict((k, int(fixture['rs_amount']))for k, fixture in fixtures.items())
 
-# FIXTURES = get_fixture_data()
+# memoize or cache?
+def get_user_data_set():
+    users = CommCareUser.by_domain(DOMAIN)
+    return {
+        'blocks': sorted(list(set(u.user_data.get('block') for u in users))),
+        'awcs': sorted(list(set(u.user_data.get('awc') for u in users))),
+    }
+
+class InvalidRow(Exception):
+    """
+    Raise this in the row constructor to skip row
+    """

@@ -21,7 +21,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from ..opm_tasks.models import OpmReportSnapshot
 from .beneficiary import Beneficiary
 from .incentive import Worker
-from .constants import DOMAIN
+from .constants import *
 from .filters import BlockFilter, AWCFilter
 
 
@@ -46,9 +46,10 @@ class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
     @property
     @memoized
     def snapshot(self):
-        start = self.datespan.startdate_utc
-        return OpmReportSnapshot.by_month(start.month, start.year,
-            self.__class__.__name__)
+        return OpmReportSnapshot.from_view(self)
+        # start = self.datespan.startdate_utc
+        # return OpmReportSnapshot.by_month(start.month, start.year,
+        #     self.__class__.__name__)
 
     @property
     def headers(self):
@@ -73,26 +74,36 @@ class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
         return rows
 
     @property
+    def filter_data(self):
+        return dict([
+            (field.slug, field.get_value(self.request, DOMAIN))
+            for field in self.fields
+        ])
+
+    @property
     def row_objects(self):
         """
         Returns a list of objects, each representing a row in the report
         """
-        start = self.datespan.startdate_utc
-        end = self.datespan.enddate_utc
-        now = datetime.datetime.utcnow()
-        if start.year == now.year and start.month == now.month:
-            end = now
+        # import bpdb; bpdb.set_trace()
         rows = []
         for row in self.get_rows(self.datespan):
             try:
-                rows.append(self.model(
-                    row,
-                    date_range=(start, end),
-                    **self.get_model_kwargs()
-                ))
-            except ResourceNotFound:
+                rows.append(self.model(row, self))
+            except InvalidRow:
                 pass
         return rows
+
+    @property
+    def date_range(self):
+        start = self.datespan.startdate_utc
+        end = self.datespan.enddate_utc
+        now = datetime.datetime.utcnow()
+        # if report is run on current month, date range should be
+        # this month up till now
+        if start.year == now.year and start.month == now.month:
+            end = now
+        return (start, end)
 
     def get_model_kwargs(self):
         """
@@ -117,7 +128,7 @@ class IncentivePaymentReport(BaseReport):
     model = Worker
 
     @property
-    @memoized
+    @memoized # actually memoizing this might not be a good idea
     def last_month_totals(self):
         last_month = self.datespan.startdate_utc - datetime.timedelta(days=4)
         snapshot = OpmReportSnapshot.by_month(last_month.month, last_month.year,
@@ -133,7 +144,6 @@ class IncentivePaymentReport(BaseReport):
         return {'last_month_totals': self.last_month_totals}
 
     def get_rows(self, datespan):
-        # return [(row, self.last_month_totals) for row in CommCareUser.by_domain(DOMAIN)]
         return CommCareUser.by_domain(DOMAIN)
 
 
@@ -162,5 +172,9 @@ def get_report(ReportClass, month=None, year=None):
         @property
         def datespan(self):
             return DateSpan.from_month(month, year)
+
+        @property
+        def filter_data(self):
+            return {}
 
     return Report()

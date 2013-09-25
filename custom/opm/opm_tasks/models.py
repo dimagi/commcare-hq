@@ -24,3 +24,12 @@ class OpmReportSnapshot(Document):
             reduce=False,
             include_docs=True
         ).first()
+
+    @classmethod
+    def from_view(cls, report):
+        return cls.view(
+            'opm_tasks/opm_snapshots',
+            key=[DOMAIN, report.month, report.year, report.__class__.__name__],
+            reduce=False,
+            include_docs=True
+        ).first()

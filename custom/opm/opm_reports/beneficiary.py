@@ -12,6 +12,10 @@ from .models import OpmCaseFluff, OpmUserFluff, OpmFormFluff
 
 
 class Beneficiary(object):
+    """
+    Constructor object for each row in the Beneficiary Payment Report
+    """
+
     # maps method name to header
     method_map = [
         # If you need to change any of these names, keep the key intact
@@ -31,16 +35,13 @@ class Beneficiary(object):
         ('total', "Amount to be paid to beneficiary"),
     ]
 
-    def __init__(self, case, date_range):
-        """
-        date_range should be a (start, stop) tuple of date objects
-        """
+    def __init__(self, case, report):
         case_id = case['id']
-        # try:
-        self.fluff_doc = OpmCaseFluff.get("%s-%s" %
-            (OpmCaseFluff._doc_type, case_id))
-        # except ResourceNotFound:
-        #     return 
+        try:
+            self.fluff_doc = OpmCaseFluff.get("%s-%s" %
+                (OpmCaseFluff._doc_type, case_id))
+        except ResourceNotFound:
+            raise InvalidRow
         self.name = self.fluff_doc.name
         self.awc_name = self.fluff_doc.awc_name
         self.bank_name = self.fluff_doc.bank_name
@@ -53,7 +54,7 @@ class Beneficiary(object):
             return OpmFormFluff.get_result(
                 calculator,
                 [DOMAIN, case_id],
-                date_range,
+                report.date_range,
             )['total']
 
         FIXTURES = get_fixture_data() 
@@ -62,6 +63,6 @@ class Beneficiary(object):
         self.delivery_cash = get_result('delivery') * FIXTURES['delivery_lump_sums']
         self.child_cash = get_result('child_followup') * FIXTURES['window_completed']
         self.spacing_cash = OpmFormFluff.get_result('child_spacing',
-            [DOMAIN, self.account_number], date_range=date_range)
+            [DOMAIN, self.account_number], date_range=report.date_range)
         self.total = sum([self.bp1_cash, self.bp2_cash,
             self.delivery_cash, self.child_cash, self.spacing_cash])
