@@ -17,9 +17,15 @@ from dimagi.utils.timezones import utils as tz_utils
 
 def visit_completion_counter(case):
     counter = 0
-    for i in range(1, 8):
-        if "case_pp_%s_done" % i in case and case["case_pp_%s_done" % i].upper() == "YES":
-            counter += 1
+
+    if case["type"] == "baby":
+        for i in range(1, 8):
+            if "baby_case_pp_%s_done" % i in case and case["baby_case_pp_%s_done" % i].upper() == "YES":
+                counter += 1
+    elif case["type"] == "pregnant_mother":
+        for i in range(1, 8):
+            if "case_pp_%s_done" % i in case and case["case_pp_%s_done" % i].upper() == "YES":
+                counter += 1
     return counter
 
 
@@ -127,23 +133,12 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
 
     def base_filters(self):
         block = self.request_params.get('block', '')
-        status = self.request_params.get('PNC_status', '')
 
         filters = []
-        or_stmt = []
 
         if block:
             filters.append({'term': {'block': block}})
 
-        if status:
-            if status == 'On Time':
-                for i in range(1, 8):
-                    filters.append({'term': {'case_pp_%s_done' % i: 'yes'}})
-            else:
-                for i in range(1, 8):
-                    or_stmt.append( {"not": {'term': {'case_pp_%s_done' % i: 'yes'}}})
-                or_stmt = {'or': or_stmt}
-                filters.append(or_stmt)
         return filters
 
     def date_to_json(self, date):
@@ -161,9 +156,24 @@ class HBNCMotherReport(BaseHNBCReport):
 
     @property
     def case_filter(self):
-        pp_case_filter = BaseHNBCReport.base_filters(self)
-        pp_case_filter.append({'term': {'pp_case_filter': "1"}})
-        return {'and': pp_case_filter} if pp_case_filter else {}
+        filters = BaseHNBCReport.base_filters(self)
+        filters.append({'term': {'pp_case_filter': "1"}})
+
+        status = self.request_params.get('PNC_status', '')
+
+        or_stmt = []
+
+        if status:
+            if status == 'On Time':
+                for i in range(1, 8):
+                    filters.append({'term': {'case_pp_%s_done' % i: 'yes'}})
+            else:
+                for i in range(1, 8):
+                    or_stmt.append( {"not": {'term': {'case_pp_%s_done' % i: 'yes'}}})
+                or_stmt = {'or': or_stmt}
+                filters.append(or_stmt)
+
+        return {'and': filters} if filters else {}
 
     @property
     def user_filter(self):
@@ -179,6 +189,21 @@ class HBNCInfantReport(BaseHNBCReport):
     @property
     def case_filter(self):
         filters = BaseHNBCReport.base_filters(self)
+
+        status = self.request_params.get('PNC_status', '')
+
+        or_stmt = []
+
+        if status:
+            if status == 'On Time':
+                for i in range(1, 8):
+                    filters.append({'term': {'baby_case_pp_%s_done' % i: 'yes'}})
+            else:
+                for i in range(1, 8):
+                    or_stmt.append( {"not": {'term': {'baby_case_pp_%s_done' % i: 'yes'}}})
+                or_stmt = {'or': or_stmt}
+                filters.append(or_stmt)
+
         return {'and': filters} if filters else {}
 
     @property
