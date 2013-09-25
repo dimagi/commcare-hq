@@ -1,9 +1,12 @@
 from datetime import timedelta, datetime, time
 import json
+from django.utils.decorators import method_decorator
 import pytz
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render
+
+from django.utils.translation import ugettext as _, ugettext_noop
 
 from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm, SurveySampleForm, EditContactForm, RemindersInErrorForm, KeywordForm, OneTimeReminderForm
 from corehq.apps.reminders.models import (
@@ -27,6 +30,7 @@ from corehq.apps.reminders.models import (
     METHOD_SMS_SURVEY,
     RECIPIENT_USER_GROUP,
 )
+from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CommCareUser, Permissions, CouchUser
 from .models import UI_SIMPLE_FIXED, UI_COMPLEX
@@ -435,6 +439,52 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
         "handler_id":   handler_id,
         "sample_list":  sample_list,
     })
+
+
+class CreateScheduledReminderView(BaseMessagingSectionView):
+    urlname = 'create_reminder_schedule'
+    page_title = ugettext_noop("Schedule Reminder")
+    template_name = 'reminders/manage_scheduled_reminder.html'
+
+    @property
+    def schedule_form(self):
+        raise NotImplementedError("implement schedule form!")
+
+    @property
+    def parent_pages(self):
+        return [
+            {
+                'title': _("Reminders"),
+                'url': reverse('list_reminders', args=[self.domain]),
+            },
+        ]
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.schedule_form,
+        }
+
+    @method_decorator(reminders_permission)
+    def dispatch(self, request, *args, **kwargs):
+        return super(CreateScheduledReminderView, self).dispatch(request, *args, **kwargs)
+
+
+class EditScheduledReminderView(CreateScheduledReminderView):
+    urlname = 'edit_reminder_schedule'
+    page_title = ugettext_noop("Edit Scheduled Reminder")
+
+    @property
+    def handler_id(self):
+        return self.kwargs.get('handler_id')
+
+    @property
+    def page_context(self):
+        page_context = super(EditScheduledReminderView, self).page_context
+        page_context.update({
+            'handler_id': self.handler_id,
+        })
+        return page_context
 
 
 @reminders_permission
