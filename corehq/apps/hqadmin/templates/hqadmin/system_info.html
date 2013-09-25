@@ -107,12 +107,9 @@
             var self = this;
             self.name = pillow.name;
             self.seq = pillow.seq;
-            self.old_seq = pillow.old_seq;
             self.db_seq = pillow.db_seq;
             self.show_progress = function () {
-                    return ((self.old_seq
-                             && self.old_seq > self.seq)
-                            || (self.seq * 100) / self.db_seq <= 99);
+                    return (self.seq * 100) / self.db_seq <= 99;
                 }
         }
 
@@ -221,7 +218,7 @@
             <thead>
                 <tr>
                     <th>Name</th>
-                    <th title="seq / old_seq">Reindex Progress</th>
+                    <th title="seq / db_seq">Reindex Progress</th>
                     <th title="db_seq - seq"># Changes behind</th>
                     <th title="seq / db_seq">Seq / Total Seq</th>
                 </tr>
@@ -234,8 +231,7 @@
                             <div class="bar" data-bind="style: {width: ((seq * 100)/db_seq) + '%'}"></div>
                         </div>
                         <div data-bind="visible: !show_progress()">
-                            <span data-bind="visible: old_seq">All caught up</span>
-                            <span data-bind="visible: !old_seq">Never been reindexed</span>
+                            <span>All caught up</span>
                         </div>
                     </td>
                     <td>
