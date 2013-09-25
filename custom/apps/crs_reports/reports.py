@@ -141,7 +141,7 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
                     filters.append({'term': {'case_pp_%s_done' % i: 'yes'}})
             else:
                 for i in range(1, 8):
-                    or_stmt.append({'term': {'case_pp_%s_done' % i: 'no'}})
+                    or_stmt.append( {"not": {'term': {'case_pp_%s_done' % i: 'yes'}}})
                 or_stmt = {'or': or_stmt}
                 filters.append(or_stmt)
         return filters
