@@ -281,6 +281,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'rosetta',
     'soil',
     'south',
+    'weasyprint',
     'custom.apps.crs_reports',
 
     # submodules with tests that run on travis
