@@ -64,6 +64,7 @@ of django's `TemplateView`.
     Your template should extend `hqwebapp/base_page.html`
 
     It might look something like:
+
     .. code-block:: html
 
         {% extends 'hqwebapp/base_page.html' %}
@@ -118,6 +119,7 @@ in addition to:
     Your template should extend `hqwebapp/base_section.html`
 
     It might look something like:
+
     .. code-block:: html
 
         {% extends 'hqwebapp/base_section.html' %}
