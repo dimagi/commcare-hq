@@ -54,8 +54,7 @@ class HNBCReportDisplay(CaseDisplay):
         case_id, case_name = self.case['_id'], self.case['name']
         try:
             return html.mark_safe("<a class='ajax_dialog' href='%s'>%s</a>" % (
-                html.escape(reverse('crs_details_report', args=[self.report.domain, case_id,
-                            self.report.module_name, self.report.report_template_name, self.report.slug])),
+                html.escape(reverse('crs_details_report', args=[self.report.domain, case_id, self.report.slug])),
                 html.escape(case_name),
             ))
         except NoReverseMatch:

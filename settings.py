@@ -150,6 +150,7 @@ DEFAULT_APPS = (
     'django.contrib.markup',
     'gunicorn',
     'raven.contrib.django.raven_compat',
+    'weasyprint',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
