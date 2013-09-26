@@ -89,7 +89,8 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return user and user.is_previewer()
+        # return user and user.is_previewer()
+        return False
 
     @property
     @memoized
