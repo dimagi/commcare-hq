@@ -36,10 +36,15 @@ class Beneficiary(object):
     ]
 
     def __init__(self, case, report):
-        case_id = case['id']
+        # check filters
+        for key, field in [('awc_name', 'awcs'), ('block_name', 'blocks')]:
+            keys = report.filter_data.get(field, [])
+            if keys and case.get_case_property(key) not in keys:
+                raise InvalidRow
+
         try:
             self.fluff_doc = OpmCaseFluff.get("%s-%s" %
-                (OpmCaseFluff._doc_type, case_id))
+                (OpmCaseFluff._doc_type, case._id))
         except ResourceNotFound:
             raise InvalidRow
         self.name = self.fluff_doc.name
@@ -53,7 +58,7 @@ class Beneficiary(object):
         def get_result(calculator):
             return OpmFormFluff.get_result(
                 calculator,
-                [DOMAIN, case_id],
+                [DOMAIN, case._id],
                 report.date_range,
             )['total']
 

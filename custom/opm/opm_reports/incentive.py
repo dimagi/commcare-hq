@@ -29,7 +29,14 @@ class Worker(object):
         ('last_month_total', "Amount of AWW incentive paid last month"),
     ]
 
-    def __init__(self, worker, report): #, date_range, last_month_totals):
+    def __init__(self, worker, report):
+        
+        # check filters
+        for key, field in [('awc', 'awcs'), ('block', 'blocks')]:
+            keys = report.filter_data.get(field, []) 
+            if keys and worker.user_data.get(key) not in keys:
+                raise InvalidRow
+
         try:
             self.fluff_doc = OpmUserFluff.get("%s-%s" %
                 (OpmUserFluff._doc_type, worker._id))

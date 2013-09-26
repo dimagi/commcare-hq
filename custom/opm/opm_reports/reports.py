@@ -85,7 +85,6 @@ class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
         """
         Returns a list of objects, each representing a row in the report
         """
-        # import bpdb; bpdb.set_trace()
         rows = []
         for row in self.get_rows(self.datespan):
             try:
@@ -119,7 +118,7 @@ class BeneficiaryPaymentReport(BaseReport):
     model = Beneficiary
 
     def get_rows(self, datespan):
-        return CommCareCase.get_all_cases(DOMAIN)
+        return CommCareCase.get_all_cases(DOMAIN, include_docs=True)
 
 
 class IncentivePaymentReport(BaseReport):
