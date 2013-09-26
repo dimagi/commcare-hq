@@ -40,6 +40,11 @@ class SystemOverviewReport(GenericTabularReport, CustomProjectReport, ProjectRep
         else:
             q["filter"] = {"and": [{"not": {"in": {"workflow": WORKFLOWS}}}]}
 
+        if self.users_by_group:
+            q["query"]["bool"]["must"].append({"in": {"couch_recipient": self.combined_user_ids}})
+        if self.cases_by_case_group:
+            q["query"]["bool"]["must"].append({"in": {"couch_recipient": self.cases_by_case_group}})
+
         facets = ['couch_recipient_doc_type', 'direction']
         return es_query(q=q, facets=facets, es_url=ES_URLS['sms'], size=0)
 
