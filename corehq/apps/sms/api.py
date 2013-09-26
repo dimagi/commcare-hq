@@ -588,7 +588,11 @@ def structured_sms_handler(verified_number, text, msg=None, contact=None):
                 error_msg = "ERROR: Internal server error"
             
             if error_occurred and verified_number is not None:
-                send_sms_to_verified_number(verified_number, error_msg, workflow=WORKFLOW_KEYWORD, xforms_session_couch_id=session._id)
+                kwargs = {
+                    "workflow" : WORKFLOW_KEYWORD,
+                    "xforms_session_couch_id" : session._id if session is not None else None,
+                }
+                send_sms_to_verified_number(verified_number, error_msg, **kwargs)
             
             if session is not None and (error_occurred or not form_complete):
                 session = XFormsSession.get(session._id)
