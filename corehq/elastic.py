@@ -27,7 +27,7 @@ ES_URLS = {
 
 ADD_TO_ES_FILTER = {
     "forms": [
-        {"not": {"in": {"doc_type": ["xformduplicate", "xformdeleted"]}}},
+        {"term": {"doc_type": "xforminstance"}},
         {"not": {"missing": {"field": "xmlns"}}},
         {"not": {"missing": {"field": "form.meta.userID"}}},
     ],

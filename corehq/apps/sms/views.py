@@ -8,6 +8,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.shortcuts import render
 from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_SMS
+from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.sms.api import send_sms, incoming, send_sms_with_backend_name
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users import models as user_models
@@ -27,6 +28,15 @@ from django.utils.translation import ugettext as _, ugettext_noop
 @login_and_domain_required
 def default(request, domain):
     return HttpResponseRedirect(reverse(compose_message, args=[domain]))
+
+
+class BaseMessagingSectionView(BaseDomainView):
+    section_name = ugettext_noop("Messaging")
+
+    @property
+    def section_url(self):
+        return reverse("sms_default", args=[self.domain])
+
 
 @login_and_domain_required
 def messaging(request, domain, template="sms/default.html"):

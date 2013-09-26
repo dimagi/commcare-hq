@@ -75,6 +75,7 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
         return [self.group_display] + \
                [_nav_link(i) for i in self.summary_indicators]
 
+    @memoized
     def get_indicator_value(self, indicator):
         calculator = indicator.fluff_calculator
         assert calculator

@@ -1,5 +1,24 @@
 
 DISPLAY_DIMENSIONS = ['size', 'color', 'icon'];
+TABLE_TOGGLE = false;
+
+function setMapHeight(map, animate) {
+    var $map = $('#map');
+    var height = $(window).height() - $map.offset().top;
+    if (TABLE_TOGGLE) {
+        height *= .6;
+    } else {
+        height -= 0.5 * $('.dataTable thead').height();
+    }
+    if (animate) {
+        $map.animate({height: height}, null, null, function() {
+            map.invalidateSize();
+        });
+    } else {
+        $map.height(height);
+        map.invalidateSize();
+    }
+}
 
 function forEachDimension(metric, callback) {
     $.each(DISPLAY_DIMENSIONS, function(i, e) {
@@ -149,11 +168,16 @@ MetricsControl = L.Control.extend({
     
     render: function(metric) {
         this.activeMetric = metric;
+
+        resetTable(this.options.data); // clear out handlers on table before makeDisplayContext adds new ones
+
         var m = this;
         loadData(this._map, this.options.data, makeDisplayContext(metric, function(f) {
             m.options.info.setActive(f, m.activeMetric);
         }));
+
         this.options.legend.render(metric);
+        this.options.table.fnDraw(); // update datatables filtering
     },
 });
 
@@ -208,7 +232,7 @@ HeadsUpControl = L.Control.extend({
             });
         }
 
-        var context = detailContext(feature, this.options.config, cols);
+        var context = infoContext(feature, this.options.config, cols);
         var TEMPLATE = $('#info_popup').text();
         var template = _.template(TEMPLATE);
         var content = template(context);
@@ -224,34 +248,58 @@ ZoomToFitControl = L.Control.extend({
     },
 
     onAdd: function(map) {
-        this.$div = $('<div></div>');
-        this.$div.addClass('leaflet-control-layers');
-        var $inner = $('<div></div>');
-        $inner.addClass('leaflet-control-layers-toggle');
-        $inner.addClass('zoomtofit');
-        this.$div.append($inner);
-        $inner.click(function() {
+        this.$div = $('#zoomtofit');
+        this.$div.find('#zoomtofit-target').click(function() {
             zoomToAll(map);
         });
         return this.$div[0];
     }
 });
 
+// a control button to scroll table into view
+ToggleTableControl = L.Control.extend({
+    options: {
+        position: 'topright'
+    },
+
+    onAdd: function(map) {
+        this.$div = $('#toggletable');
+        this.$div.find('#toggletable-target').click(function() {
+            TABLE_TOGGLE = !TABLE_TOGGLE;
+            setMapHeight(map, true);
+        });
+        return this.$div[0];
+    }
+});
+
+function load(context, iconPath) {
+    L.Icon.Default.imagePath = iconPath;
+    var map = mapsInit(context);
+
+    var resize = function() {
+        setMapHeight(map);
+    };
+    $(window).resize(resize);
+    $('#reportFiltersAccordion').on('shown', resize);
+    $('#reportFiltersAccordion').on('hidden', resize);
+    resize();
+}
 
 // main entry point
 function mapsInit(context) {
     var map = initMap($('#map'), context.layers, [30., 0.], 2);
-    initData(context.data, context.config);
-    initMetrics(map, context.data, context.config);
+    var table = initData(context.data, context.config);
+    initMetrics(map, table, context.data, context.config);
     return map;
 }
 
 // initialize leaflet map
 function initMap($div, layers, default_pos, default_zoom) {
-    var map = L.map($div.attr('id')).setView(default_pos, default_zoom);
+    var map = L.map($div.attr('id'), {trackResize: false}).setView(default_pos, default_zoom);
     initLayers(map, layers);
 
     new ZoomToFitControl().addTo(map);
+    new ToggleTableControl().addTo(map);
     L.control.scale().addTo(map);
 
     return map;
@@ -318,15 +366,132 @@ function initData(data, config) {
     if (config.detail_columns == null) {
         config.detail_columns = getAllCols(config, data);
     }
+    if (config.table_columns == null) {
+        config.table_columns = config.detail_columns.slice(0);
+    }
 
     // pre-cache popup detail
     $.each(data.features, function(i, e) {
         e.popupContent = formatDetailPopup(e, config);
     });
+
+    return initTable(data, config);
+}
+
+function initTable(data, config) {
+    var row = function($table, header, items, toCell) {
+        var $container = $table.find(header ? 'thead' : 'tbody');
+        var $tr = $('<tr>');
+        $.each(items, function(i, e) {
+            var $cell = $(header ? '<th>' : '<td>');
+            toCell($cell, e);
+            $tr.append($cell);
+        });
+        $container.append($tr);
+        return $tr;
+    };
+
+    $('#tabular').append('<thead></thead><tbody></tbody>');
+    var colSorting = initTableHeader(config, data, row);
+    $.each(data.features, function(i, e) {
+        var ctx = infoContext(e, config, 'table');
+        e.$tr = row($('#tabular'), false, ctx.info, function($cell, e) {
+            $cell.text(e.value);
+            var $sortkey = $('<span>');
+            $sortkey.attr('title', e.raw);
+            $cell.append($sortkey);
+        });
+    });
+
+    $.fn.dataTableExt.afnFiltering.push(
+        function(settings, row, i) {
+            // datatables doesn't really offer a better way to do this;
+            // you have to set all filtering up-front
+            return data.features[i].visible;
+        }
+    );
+    var table = new HQReportDataTables({
+        aoColumns: colSorting,
+    });
+    table.render();
+    return table.datatable;
+}
+
+// the ridiculousness of this function is from handling nested column headers
+function initTableHeader(config, data, mkRow) {
+    var cols = getTableColumns(config);
+
+    var maxDepth = function(col) {
+        return 1 + (typeof col == 'string' ? 0 :
+                    _.reduce(_.map(col.subcolumns, maxDepth), function(a, b) { return Math.max(a, b); }, 0));
+    }
+    var totalMaxDepth = maxDepth({subcolumns: cols}) - 1;
+    var breadth = function(col) {
+        return (typeof col == 'string' ? 1 :
+                _.reduce(_.map(col.subcolumns, breadth), function(a, b) { return a + b; }, 0));
+    }
+
+    var headerRows = [];
+    for (var i = 0; i < totalMaxDepth; i++) {
+        headerRows.push([]);
+    }
+
+    config._table_columns_flat = [];
+
+    var process = function(col, depth) {
+        if (typeof col == 'string') {
+            var entry = {title: getColumnTitle(col, config), terminal: true};
+            config._table_columns_flat.push(col); // a bit hacky
+        } else {
+            var entry = {title: col.title, span: breadth(col)};
+            $.each(col.subcolumns, function(i, e) {
+                process(e, depth + 1);
+            });
+        }
+        if (depth >= 0) {
+            headerRows[depth].push(entry);
+        }
+    }
+    process({subcolumns: cols}, -1);
+
+    $.each(headerRows, function(depth, row) {
+        mkRow($('#tabular'), true, row, function($cell, e) {
+            $cell.text(e.title);
+            if (e.span) {
+                $cell.attr('colspan', e.span);
+            }
+            if (e.terminal) {
+                $cell.prepend('<i class="icon-white"></i>&nbsp;');
+                $cell.attr('rowspan', totalMaxDepth - depth);
+            }
+        });
+    });
+
+    var sortColumnAs = function(datatype) {
+        return {
+            'numeric': {sType: 'title-numeric'}
+        }[datatype];
+    };
+    return _.map(getTableColumns(config, true), function(col) {
+        var stats = summarizeColumn({column: col}, data);
+        return sortColumnAs(stats.nonnumeric ? 'text' : 'numeric');
+    });
+}
+
+function resetTable(data) {
+    // we can't use $('#tabular tr') as that will only select the rows currently shown by datatables
+    var rows = [];
+    $.each(data.features, function(i, e) {
+        rows.push(e.$tr[0]);
+    });
+    rows = $(rows);
+
+    rows.unbind('click').unbind('mouseenter').unbind('mouseleave');
+    rows.removeClass('inactive-row');
 }
 
 // set up the configured display metrics
-function initMetrics(map, data, config) {
+function initMetrics(map, table, data, config) {
     // auto-generate metrics from data columns (if none provided)
     if (!config.metrics || config.debug) {
         autoConfiguration(config, data);
@@ -351,7 +516,13 @@ function initMetrics(map, data, config) {
 
     var l = new LegendControl({config: config}).addTo(map);
     var h = new HeadsUpControl({config: config}).addTo(map);
-    var m = new MetricsControl({metrics: config.metrics, data: data, legend: l, info: h}).addTo(map);
+    var m = new MetricsControl({
+        metrics: config.metrics,
+        data: data,
+        table: table,
+        legend: l,
+        info: h
+    }).addTo(map);
 
     zoomToAll(map);
 }
@@ -370,7 +541,10 @@ function loadData(map, data, display_context) {
 
 function zoomToAll(map) {
     if (map.activeOverlay) {
-        map.fitBounds(map.activeOverlay.getBounds(), {padding: [60, 60]});
+        setTimeout(function() {
+            map.fitBounds(map.activeOverlay.getBounds(), {padding: [60, 60]});
+        }, 0); // run at next tick to avoid race condition and freeze
+               // (https://github.com/Leaflet/Leaflet/issues/2021)
     }
 }
 
@@ -384,7 +558,12 @@ function makeDisplayContext(metric, setActiveFeature) {
                 feature._conf = featureStyle(metric, feature.properties);
             }
             // TODO support placeholder markers for 'null' instead of hiding entirely?
-            return (feature._conf != null);
+            // store visibility on the feature object so datatables can access it
+            feature.visible = (feature._conf != null);
+            if (!feature.visible) {
+                feature.$tr.addClass('inactive-row');
+            }
+            return feature.visible;
         },
         style: function(feature) {
             return feature._conf;
@@ -393,10 +572,36 @@ function makeDisplayContext(metric, setActiveFeature) {
             return feature._conf(latlng);
         },
         onEachFeature: function(feature, layer) {
+            // popup
             layer.bindPopup(feature.popupContent, {
                 maxWidth: 600,
+                autoPanPadding: [200, 100]
+            });
+            // open popup on table row click / highlight table row on popup open
+            var selectRow = function($tr) {
+                $('#tabular tr').removeClass('selected-row');
+                if ($tr != null) {
+                    $tr.addClass('selected-row');
+                }
+            };
+            feature.$tr.click(function() {
+                var popupAnchor = null;
+                if (layer.getBounds) { // polygon layer
+                    popupAnchor = layer.getBounds().getCenter();
+                    // TODO would be better to compute polygon centroid
+                }
+                layer.openPopup(popupAnchor);
+                // FIXME openPopup seems to crash for MultiPolygons (https://github.com/Leaflet/Leaflet/issues/2046)
+                selectRow(feature.$tr);
+            });
+            layer.on('popupopen', function() {
+                selectRow(feature.$tr);
+            });
+            layer.on('popupclose', function() {
+                selectRow(null);
             });
 
+            // highlight layer / table row on hover-over
             if (feature.geometry.type != 'Point') {
                 layer._activate = function() {
                     layer.setStyle(ACTIVE_STYLE);
@@ -405,25 +610,29 @@ function makeDisplayContext(metric, setActiveFeature) {
                     layer.setStyle(feature._conf);
                 };
             }
-
+            var hoverOn = function() {
+                if (layer._activate) {
+                    layer._activate();
+                    if (layer.bringToFront) {
+                        // normal markers don't have this method; mimic with 'riseOnHover'
+                        layer.bringToFront();
+                    }
+                }
+                feature.$tr.addClass('hover-row');
+                setActiveFeature(feature);
+            };
+            var hoverOff = function() {
+                if (layer._deactivate) {
+                    layer._deactivate();
+                }
+                feature.$tr.removeClass('hover-row');
+                setActiveFeature(null);
+            };
             layer.on({
-                mouseover: function(e) {
-                    if (layer._activate) {
-                        layer._activate();
-                        if (layer.bringToFront) {
-                            // normal markers don't have this method; mimic with 'riseOnHover'
-                            layer.bringToFront();
-                        }
-                    }
-                    setActiveFeature(feature);
-                },
-                mouseout: function(e) {
-                    if (layer._deactivate) {
-                        layer._deactivate();
-                    }
-                    setActiveFeature(null);
-                },
+                mouseover: hoverOn,
+                mouseout: hoverOff,
             });
+            feature.$tr.hover(hoverOn, hoverOff);
         }
     }
 }
@@ -648,10 +857,22 @@ function getPropValue(props, meta) {
 }
 
 
-
-function detailContext(feature, config, cols) {
-    prop_cols = cols || _.keys(feature.properties);
-    detail_cols = cols || config.detail_columns || [];
+// return formatted info about a row/feature, suitable for display
+// in different places (detail popup, hover infobox, table row, etc.)
+function infoContext(feature, config, mode) {
+    var prop_cols = _.keys(feature.properties);
+    var info_cols;
+    if (mode == null) {
+        throw "no context mode provided!";
+    } else if (mode == 'detail') {
+        info_cols = config.detail_columns;
+    } else if (mode == 'table') {
+        info_cols = getTableColumns(config, true);
+    } else {
+        // 'mode' is an explicit list (subset) of columns
+        prop_cols = mode;
+        info_cols = mode;
+    }
 
     var formatForDisplay = function(col, datum) {
         var fallback = {_null: '\u2014'};
@@ -659,23 +880,28 @@ function detailContext(feature, config, cols) {
         return getEnumCaption(col, datum, config, fallback);
     };
     var displayProperties = {};
+    var rawProperties = {};
     $.each(prop_cols, function(i, k) {
         var v = feature.properties[k];
         displayProperties[k] = formatForDisplay(k, v);
+        rawProperties[k] = v;
     });
 
     var context = {
         props: displayProperties,
+        raw: rawProperties,
         name: (config.name_column ? feature.properties[config.name_column] : null),
+        info: []
     };
-    context.detail = [];
-    $.each(detail_cols, function(i, e) {
-        context.detail.push({
+    $.each(info_cols, function(i, e) {
+        context.info.push({
             slug: e, // FIXME this will cause problems if column keys have weird chars or spaces
             label: getColumnTitle(e, config),
             value: displayProperties[e],
+            raw: rawProperties[e],
         });
     });
+
     return context;
 }
 
@@ -684,7 +910,7 @@ function formatDetailPopup(feature, config) {
     var TEMPLATE = config.detail_template || DEFAULT_TEMPLATE;
 
     var template = _.template(TEMPLATE);
-    var content = template(detailContext(feature, config));
+    var content = template(infoContext(feature, config, 'detail'));
     return content;
 }
 
@@ -938,6 +1164,17 @@ function getColumnTitle(col, config) {
     return (config.column_titles || {})[col] || col;
 }
 
+function getTableColumns(config, flat) {
+    if (flat) {
+        return config._table_columns_flat;
+    }
+
+    var cols = config.table_columns.slice(0);
+    if (config.name_column) {
+        cols.splice(0, 0, config.name_column);
+    }
+    return cols;
+}
 
 
 

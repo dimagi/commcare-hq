@@ -76,7 +76,7 @@
 {% endblock %}
 {% block main_column %}{{ block.super }}
     <hr />
-    <h4>Total Distinct Active Users {% if matching_filters %}(across domains matching filters){% else %}(across all domains){% endif %}: {{ total_distinct_users }}</h4>
+    <h4># of users who have submitted a form {% if matching_filters %}(across domains matching filters){% else %}(across all domains){% endif %}: {{ total_distinct_users }}</h4>
     <hr />
 
     <form id="all-charts-filter" style="margin: 0;" class="form-inline">

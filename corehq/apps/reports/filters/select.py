@@ -153,7 +153,6 @@ class SelectOpenCloseFilter(BaseSingleOptionFilter):
             ('closed', _("Only Closed")),
         ]
 
-
 class SelectApplicationFilter(BaseSingleOptionFilter):
     slug = "app"
     label = ugettext_noop("Application")
