@@ -458,7 +458,8 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
         # in theory since case ids are unique and modification dates get updated
         # upon any change, this is all we need
         return "%s::%s" % (self.case_id, self.modified_on)
-    
+
+    @memoized
     def get_forms(self):
         """
         Gets the form docs associated with a case. If it can't find a form
