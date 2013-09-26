@@ -21,10 +21,11 @@ class SystemOverviewReport(GenericTabularReport, CustomProjectReport, ProjectRep
     ]
     emailable = True
 
-    def query_sms(self, workflow=None):
+    def query_sms(self, workflow=None, additional_facets=None):
         """
-            Open cases that haven't been modified within time range
+        Open cases that haven't been modified within time range
         """
+        additional_facets = additional_facets or []
         q = {"query": {
                 "bool": {
                     "must": [
@@ -45,14 +46,14 @@ class SystemOverviewReport(GenericTabularReport, CustomProjectReport, ProjectRep
         if self.cases_by_case_group:
             q["query"]["bool"]["must"].append({"in": {"couch_recipient": self.cases_by_case_group}})
 
-        facets = ['couch_recipient_doc_type', 'direction']
+        facets = ['couch_recipient_doc_type', 'direction'] + additional_facets
         return es_query(q=q, facets=facets, es_url=ES_URLS['sms'], size=0)
 
     @property
     def headers(self):
         return DataTablesHeader(
             DataTablesColumn("", sortable=False),
-            DataTablesColumn(_("Numbers")),
+            DataTablesColumn(_("Number")),
             DataTablesColumn(_("Mobile Worker Messages")),
             DataTablesColumn(_("Case Messages")),
             DataTablesColumn(_("Incoming")),
@@ -63,7 +64,12 @@ class SystemOverviewReport(GenericTabularReport, CustomProjectReport, ProjectRep
     def rows(self):
 
         def row(rowname, workflow=None):
-            facets = self.query_sms(workflow)['facets']
+            additional_workflow_facets = {
+                "workflow_keyword": ['xforms_session_couch_id'],
+                "workflow_reminder": ['reminder_id'],
+            }
+            additional_facets = additional_workflow_facets.get(workflow)
+            facets = self.query_sms(workflow, additional_facets)['facets']
             to_cases, to_users, outgoing, incoming = 0, 0, 0, 0
 
             for term in facets['couch_recipient_doc_type']['terms']:
@@ -78,7 +84,11 @@ class SystemOverviewReport(GenericTabularReport, CustomProjectReport, ProjectRep
                 elif term['term'] == 'i':
                     incoming = term['count']
 
-            return [rowname, 0, to_users, to_cases, incoming, outgoing]
+            number = 0
+            if workflow in additional_workflow_facets:
+                number = len(facets[additional_workflow_facets[workflow][0]]["terms"])
+
+            return [rowname, number, to_users, to_cases, incoming, outgoing]
 
         rows =  [
             row(_("Keywords"), "workflow_keyword"),
