@@ -1,6 +1,8 @@
 from inspect import ismethod
+from dimagi.utils.decorators.memoized import memoized
 from custom.bihar.calculations.types import DoneDueCalculator, TotalCalculator
 from custom.bihar.models import CareBiharFluff
+from custom.bihar.utils import get_all_owner_ids_from_group
 from custom.bihar.reports.indicators.clientlistdisplay import PreDeliveryDoneDueCLD, PreDeliveryCLD, PreDeliverySummaryCLD, PostDeliverySummaryCLD, ComplicationsCalculator
 from django.utils.translation import ugettext_noop as _
 from django.utils.datastructures import SortedDict
@@ -317,6 +319,45 @@ class Indicator(object):
     def as_row(self, case, context):
         return self._display.as_row(case, context)
 
+class IndicatorDataProvider(object):
+
+    def __init__(self, domain, indicator_set, group):
+        self.domain = domain
+        self.indicator_set = indicator_set
+        self.group = group
+
+    @property
+    @memoized
+    def all_owner_ids(self):
+        return get_all_owner_ids_from_group(self.group)
+
+    @property
+    def summary_indicators(self):
+        return [i for i in self.indicator_set.get_indicators() if i.show_in_indicators]
+
+    @memoized
+    def get_indicator_data(self, indicator):
+        calculator = indicator.fluff_calculator
+        assert calculator
+
+        def pairs():
+            for owner_id in self.all_owner_ids:
+                result = calculator.get_result(
+                    [self.domain, owner_id]
+                )
+                yield (result['numerator'], result['total'])
+        # (0, 0) to set the dimensions
+        # otherwise if results is ()
+        # it'll be num, denom = () and that'll raise a ValueError
+        num, denom = map(sum, zip((0, 0), *pairs()))
+        return num, denom
+
+    @memoized
+    def get_case_ids(self, indicator):
+        return indicator.fluff_calculator.aggregate_results(
+            ([self.domain, owner_id] for owner_id in self.all_owner_ids),
+            reduce=False
+        )[indicator.fluff_calculator.primary]
 
 def flatten_config():
     props = """
