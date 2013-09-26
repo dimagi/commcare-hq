@@ -190,10 +190,12 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
                         user = CommCareUser.get_by_username(username)
 
                     def is_password(password):
+                        if not password:
+                            return False
                         for c in password:
                             if c != "*":
                                 return True
-                        return bool(password)
+                        return False
 
                     if user:
                         if user.domain != domain:
