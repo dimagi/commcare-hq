@@ -1,0 +1,175 @@
+{% extends 'hqwebapp/base_paginated_crud.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
+{% block js-inline %}{{ block.super }}
+    {% if bulk_upload_id %}
+        <script>
+            var pollingInterval,
+                isPollingActive = true,
+                attempts = 0;
+            var pollStatus = function () {
+                if (isPollingActive && attempts < 10) {
+                    $.ajax({
+                        url: '',
+                        type: 'post',
+                        dataType: 'json',
+                        data: {
+                            action: 'bulk',
+                            upload_id: '{{ bulk_upload_id }}'
+                        },
+                        error: function (data) {
+                            attempts += 1;
+                        },
+                        success: function (data) {
+                            if (data) {
+                                isPollingActive = false;
+                                $('#upload-notice').html(
+                                    _.template($('#template-bulk-status').text(), data)
+                                );
+                            }
+                        }
+                    });
+                } else {
+                    if (attempts >= 10) {
+                        $('#upload-notice').text('{% trans 'Sorry, it looks like the upload failed.' %}');
+                    }
+                    clearInterval(pollingInterval);
+                }
+            };
+            $(function () {
+                pollingInterval = setInterval(pollStatus, 2000);
+            });
+        </script>
+    {% endif %}
+{% endblock %}
+
+{% block pagination_header %}
+    {% if bulk_upload_id %}
+    <script type="template/html" id="template-bulk-status">
+        <% if (success.length > 0) { %>
+        <div class="alert alert-success">
+            <h4>{% trans 'Cases were successfully added:' %}</h4>
+            <ul>
+            <% _.each(success, function (s) { %>
+                <li><%=s%></li>
+            <% }); %>
+            </ul>
+        </div>
+        <% } %>
+
+        <% if (errors.length > 0) { %>
+        <div class="alert">
+            <h4>{% trans 'Issues encountered during bulk upload:' %}</h4>
+            <ul>
+            <% _.each(errors, function (error) { %>
+                <li><%=error%></li>
+            <% }); %>
+            </ul>
+        </div>
+        <% } %>
+    </script>
+    <div id="upload-notice">
+        <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading" />
+        {% trans 'Processing file...' %}
+        <hr />
+    </div>
+    {% endif %}
+{% endblock %}
+
+{% block pagination_templates %}
+    <script type="text/html" id="existing-case-template">
+        <td class="span3" data-bind="text: name"></td>
+        <td class="span2" data-bind="text: phoneNumber"></td>
+        <td class="span3" data-bind="text: externalId"></td>
+        <td class="span2">
+            <a data-bind="attr: { href: detailsUrl }"
+               class="btn">
+                {% trans 'View Details' %}
+           </a>
+        </td>
+        <td class="span2">
+            <button type="button"
+                    class="btn btn-danger delete-item-confirm"
+                    data-loading-text="{% trans 'Removing...' %}">
+                <i class="icon-remove"></i> {% trans 'Remove' %}
+            </button>
+        </td>
+    </script>
+
+    <script type="text/html" id="new-case-template">
+        <td data-bind="text: name"></td>
+        <td data-bind="text: phoneNumber"></td>
+        <td data-bind="text: externalId"></td>
+        <td>
+            <a data-bind="attr: { href: detailsUrl }"
+               class="btn">
+                {% trans 'View Details' %}
+           </a>
+        </td>
+        <td data-bind="html: message"></td>
+    </script>
+
+    <script type="text/html" id="case-message-template">
+        <td>
+            ID: <span class="label label-inverse"
+                  data-bind="text: identifier"></span>
+        </td>
+        <td colspan="{{ pagination.num_columns|add:'-1' }}"
+            data-bind="text: message"
+            class="warning"></td>
+    </script>
+
+    <script type="text/html" id="removed-case-template">
+        <td data-bind="text: name"></td>
+        <td data-bind="text: phoneNumber"></td>
+        <td data-bind="text: externalId"></td>
+        <td>
+            <a data-bind="attr: { href: detailsUrl }"
+               class="btn">
+                {% trans 'View Details' %}
+           </a>
+        </td>
+        <td>
+            <span class="label label-important">{% trans 'Case Removed' %}</span>
+        </td>
+    </script>
+{% endblock %}
+
+{% block pagination_footer %}
+    <div class="row-fluid">
+        <div class="span12">
+            <h3>{% trans 'Bulk upload cases to group' %}</h3>
+            <div class="well">
+                <h4>{% trans 'Steps' %}</h4>
+                <ol>
+                    <li>
+                        {% blocktrans %}
+                            Download this example file:
+                        {% endblocktrans %}
+                        <a href="{% static 'data_interfaces/files/cases_bulk_example.xlsx' %}">
+                            cases_bulk_example.xlsx
+                        </a>
+                    </li>
+                    <li>
+                        {% blocktrans %}
+                            Add your case identifiers to the case_identifier column.
+                            This can be either a Phone Number, External ID, or Case ID.
+                        {% endblocktrans %}
+                    </li>
+                    <li>
+                        {% blocktrans %}
+                            Upload your file below.
+                        {% endblocktrans %}
+                    </li>
+                </ol>
+            </div>
+            <form class="form form-horizontal"
+                  enctype="multipart/form-data"
+                  method="post">
+                {% crispy bulk_upload_from %}
+            </form>
+        </div>
+    </div>
+{% endblock %}

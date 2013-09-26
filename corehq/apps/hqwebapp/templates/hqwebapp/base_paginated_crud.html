@@ -10,7 +10,6 @@
 {% block js-inline %}{{ block.super }}
     <script>
         var paginatedListModel = new CRUDPaginatedListModel(
-            '{{ pagination.crud_url }}',
             {{ pagination.total }},
             {{ pagination.limit }},
             {{ pagination.page }},
@@ -109,10 +108,11 @@
                                         afterRender: initTemplate
                                     },
                                     attr: {
-                                        id: itemRowId
+                                        id: itemRowId,
+                                        class: rowClass
                                     },
                                     event: {
-                                        updateItem: $parent.updateItem
+                                        deleteItem: $parent.deleteItem
                                     }
                                 "></tr>
                                 <!-- /ko -->
@@ -137,22 +137,30 @@
                                             name: template(),
                                             data: itemData,
                                             afterRender: initTemplate
+                                        },
+                                        attr: {
+                                            id: itemRowId,
+                                            class: rowClass
                                         }
                                     "></tr>
                                 <!-- /ko -->
                             </tbody>
                             <tbody>
-                                <tr data-bind="visible: isModifiedListVisible">
+                                <tr data-bind="visible: isDeletedListVisible">
                                     <th colspan="{{ pagination.num_columns }}">
-                                        {{ pagination.text.updated_items }}
+                                        {{ pagination.text.deleted_items }}
                                     </th>
                                 </tr>
-                                <!-- ko foreach: modifiedList -->
+                                <!-- ko foreach: deletedList -->
                                 <tr data-bind="
                                         template: {
                                             name: template(),
                                             data: itemData,
                                             afterRender: initTemplate
+                                        },
+                                        attr: {
+                                            id: itemRowId,
+                                            class: rowClass
                                         }
                                     "></tr>
                                 <!-- /ko -->
@@ -161,7 +169,11 @@
                     </div>
                 </div>
             </div>
-            {% include 'hqwebapp/partials/pagination.html' %}
+            <div class="row-fluid">
+                <div class="span12">
+                    {% include 'hqwebapp/partials/pagination.html' %}
+                </div>
+            </div>
         </div>
     {% endblock %}
     {% block pagination_footer %}

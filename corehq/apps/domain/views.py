@@ -159,6 +159,7 @@ class BaseEditProjectInfoView(BaseAdminProjectSettingsView):
                 # i will not worry about it until he is done
             'call_center_enabled': self.domain_object.call_center_config.enabled,
             'restrict_superusers': self.domain_object.restrict_superusers,
+            'ota_restore_caching': self.domain_object.ota_restore_caching,
         })
         return context
 
@@ -205,6 +206,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 'default_sms_backend_id',
                 'commtrack_enabled',
                 'restrict_superusers',
+                'ota_restore_caching',
             ]:
                 initial[attr] = getattr(self.domain_object, attr)
             initial.update({
@@ -286,12 +288,19 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
     @property
     @memoized
     def my_project_settings_form(self):
-        initial = {
-            'global_timezone': self.domain_object.default_timezone,
-            'override_global_tz': self.domain_membership.override_global_tz,
-            'user_timezone': (self.domain_membership.timezone if self.domain_membership.override_global_tz
-                              else self.domain_object.default_timezone),
-        }
+        initial = { 'global_timezone': self.domain_object.default_timezone }
+        if self.domain_membership:
+            initial.update({
+                'override_global_tz': self.domain_membership.override_global_tz,
+                'user_timezone': (self.domain_membership.timezone if self.domain_membership.override_global_tz
+                                  else self.domain_object.default_timezone),
+            })
+        else:
+            initial.update({
+                'override_global_tz': False,
+                'user_timezone': initial["global_timezone"],
+            })
+
         if self.request.method == 'POST':
             return ProjectSettingsForm(self.request.POST, initial=initial)
         return ProjectSettingsForm(initial=initial)
@@ -305,7 +314,8 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
     def page_context(self):
         return {
             'my_project_settings_form': self.my_project_settings_form,
-            'override_global_tz': self.domain_membership.override_global_tz,
+            'override_global_tz': self.domain_membership.override_global_tz if self.domain_membership else False,
+            'no_domain_membership': not self.domain_membership,
         }
 
     def post(self, request, *args, **kwargs):
@@ -496,6 +506,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
     @memoized
     def has_published_apps(self):
         for app in self.domain_object.applications():
+            app = app.get_latest_saved() or app
             if self.request.POST.get("%s-publish" % app.id, False):
                 return True
         messages.error(self.request, _("Cannot publish a project without applications to CommCare Exchange"))

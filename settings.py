@@ -150,6 +150,7 @@ DEFAULT_APPS = (
     'django.contrib.markup',
     'gunicorn',
     'raven.contrib.django.raven_compat',
+    # 'weasyprint',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
@@ -241,6 +242,8 @@ HQ_APPS = (
     'hsph',
     'mvp',
     'mvp_apps',
+    'custom.opm.opm_reports',
+    'custom.opm.opm_tasks',
     'pathfinder',
     'pathindia',
     'pact',
@@ -250,6 +253,7 @@ HQ_APPS = (
     'custom.reports.care_sa',
     'custom.apps.cvsu',
     'custom.reports.mc',
+    'custom.apps.crs_reports',
 )
 
 TEST_APPS = ()
@@ -280,6 +284,8 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'rosetta',
     'soil',
     'south',
+    # 'weasyprint',
+    'custom.apps.crs_reports',
 
     # submodules with tests that run on travis
     'casexml.apps.case',
@@ -377,6 +383,7 @@ FIXTURE_GENERATORS = [
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",
     "corehq.apps.reportfixtures.fixturegenerators.indicators",
+    "custom.bihar.reports.indicators.fixtures.generator",
 ]
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
@@ -389,6 +396,16 @@ BROKER_URL = 'django://' #default django db based
 
 #this is the default celery queue - for periodic tasks on a separate queue override this to something else
 CELERY_PERIODIC_QUEUE = 'celery'
+
+from celery.schedules import crontab
+# schedule options can be seen here:
+# http://docs.celeryproject.org/en/latest/reference/celery.schedules.html
+CELERYBEAT_SCHEDULE = {
+    'monthly-opm-report-snapshot': {
+        'task': 'custom.opm.opm_tasks.tasks.snapshot',
+        'schedule': crontab(hour=1, day_of_month=1),
+    },
+}
 
 SKIP_SOUTH_TESTS = True
 #AUTH_PROFILE_MODULE = 'users.HqUserProfile'
@@ -489,8 +506,16 @@ LOGSTASH_HOST = 'localhost'
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
 
+####### Couch Config ######
 #for production this ought to be set to true on your configured couch instance
 COUCH_HTTPS = False
+COUCH_SERVER_ROOT = 'localhost:5984'  # 6984 for https couch
+COUCH_USERNAME = ''
+COUCH_PASSWORD = ''
+COUCH_DATABASE_NAME = 'commcarehq'
+
+BITLY_LOGIN = ''
+BITLY_APIKEY = ''
 
 # this should be overridden in localsettings
 INTERNAL_DATA = defaultdict(list)
@@ -685,6 +710,7 @@ COUCHDB_APPS = [
     'hqbilling',
     'couchlog',
     'wisepill',
+    'crs_reports',
 
     # custom reports
     'penn_state',
@@ -692,6 +718,7 @@ COUCHDB_APPS = [
     'dca',
     'hsph',
     'mvp',
+    'opm_tasks',
     'pathfinder',
     'pathindia',
     'pact',
@@ -705,6 +732,8 @@ COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label
 COUCHDB_DATABASES += [
     ('fluff', COUCH_DATABASE + '__fluff-bihar'),  # needed to make couchdbkit happy
     ('bihar', COUCH_DATABASE + '__fluff-bihar'),
+    ('opm_reports', COUCH_DATABASE + '__fluff-opm'),
+    ('fluff', COUCH_DATABASE + '__fluff-opm'),
     ('care_sa', COUCH_DATABASE + '__fluff-care_sa'),
     ('cvsu', COUCH_DATABASE + '__fluff-cvsu'),
     ('mc', COUCH_DATABASE + '__fluff-mc'),
@@ -793,11 +822,15 @@ PILLOWTOPS = [
                  'corehq.pillows.domain.DomainPillow',
                  'corehq.pillows.user.UserPillow',
                  'corehq.pillows.application.AppPillow',
+                 'corehq.pillows.sms.SMSPillow',
                  'corehq.pillows.commtrack.ConsumptionRatePillow',
                  'corehq.pillows.reportxform.ReportXFormPillow',
                  'corehq.pillows.reportcase.ReportCasePillow',
                  # fluff
                  'custom.bihar.models.CareBiharFluffPillow',
+                 'custom.opm.opm_reports.models.OpmCaseFluffPillow',
+                 'custom.opm.opm_reports.models.OpmUserFluffPillow',
+                 'custom.opm.opm_reports.models.OpmFormFluffPillow',
                  'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
                  'custom.reports.care_sa.models.CareSAFluffPillow',
                  'custom.reports.mc.models.MalariaConsortiumFluffPillow',
@@ -819,6 +852,7 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'hsph-betterbirth-pilot-2',
     'commtrack-public-demo',
     'uth-rhd-test',
+    'crs-remind',
 ]
 
 #Custom fully indexed domains for FullXForm index/pillowtop --
@@ -862,8 +896,10 @@ DOMAIN_MODULE_MAP = {
     'mvp-ruhiira': 'mvp',
     'mvp-mwandama': 'mvp',
     'mvp-sada': 'mvp',
+    'opm': 'custom.opm.opm_reports',
     'psi-unicef': 'psi',
     'project': 'custom.apps.care_benin',
+    'crs-remind': 'custom.apps.crs_reports'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

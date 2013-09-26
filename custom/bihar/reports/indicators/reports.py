@@ -41,14 +41,21 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
     base_template_mobile = "bihar/indicator_summary.html"
     is_cacheable = True
 
+    def __init__(self, *args, **kwargs):
+        super(IndicatorSummaryReport, self).__init__(*args, **kwargs)
+        from custom.bihar.reports.indicators.indicators import IndicatorDataProvider
+        self.data_provider = IndicatorDataProvider(
+            self.domain, self.indicator_set, self.group
+        )
+
     @property
     def rendered_report_title(self):
         return _(self.indicator_set.name)
 
     @property
     def summary_indicators(self):
-        return [i for i in self.indicator_set.get_indicators() if i.show_in_indicators]
-    
+        return self.data_provider.summary_indicators
+
     @property
     def _headers(self):
         return {
@@ -75,21 +82,9 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
         return [self.group_display] + \
                [_nav_link(i) for i in self.summary_indicators]
 
+    @memoized
     def get_indicator_value(self, indicator):
-        calculator = indicator.fluff_calculator
-        assert calculator
-
-        def pairs():
-            for owner_id in self.all_owner_ids:
-                result = calculator.get_result(
-                    [self.domain, owner_id]
-                )
-                yield (result['numerator'], result['total'])
-        # (0, 0) to set the dimentions
-        # otherwise if results is ()
-        # it'll be num, denom = () and that'll raise a ValueError
-        num, denom = map(sum, zip((0, 0), *pairs()))
-        return "%s/%s" % (num, denom)
+        return "%s/%s" % self.data_provider.get_indicator_data(indicator)
 
     def get_chart(self, indicator):
         # this is a serious hack for now
@@ -200,7 +195,7 @@ class IndicatorClientList(ClientListBase, IndicatorMixIn):
             ([self.domain, owner_id] for owner_id in self.all_owner_ids),
             reduce=False
         )
-        
+
     @property
     def rows(self):
         case_ids = self.fluff_results[self.indicator.fluff_calculator.primary]

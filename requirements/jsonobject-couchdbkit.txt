@@ -1,2 +1,2 @@
-git+git://github.com/dannyroberts/couchdbkit.git@jsonobject-0.6.5.1#egg=couchdbkit
-jsonobject>=0.2.6
+git+git://github.com/dannyroberts/couchdbkit.git@jsonobject-0.6.5.4#egg=couchdbkit
+jsonobject>=0.2.7

@@ -1,8 +1,8 @@
 Reporting
 =========
 
-report
-    logical grouping of indicators with common config options (filters etc)
+A report is
+    a logical grouping of indicators with common config options (filters etc)
 
 The way reports are produced in CommCare is still evolving so there are a number
 of different frameworks and methods for generating reports. Some of these are
@@ -12,7 +12,12 @@ of different frameworks and methods for generating reports. Some of these are
 Recommended approaches for building reports
 -------------------------------------------
 
-TODO
+TODO: SQL reports, Elastic reports, Custom case lists / details,
+
+Things to keep in mind:
+
+* `report API <report_api>`_
+
 
 * `Fluff`_
 * `Ctable`_
@@ -30,25 +35,25 @@ Example Custom Report Scaffolding
 .. code-block:: python
 
     class MyBasicReport(GenericTabularReport, CustomProjectReport):
-            name = "My Basic Report"
-            slug = "my_basic_report"
-            fields = ('corehq.apps.reports.fields.DatespanField',)
+        name = "My Basic Report"
+        slug = "my_basic_report"
+        fields = ('corehq.apps.reports.fields.DatespanField',)
 
-            @property
-            def headers(self):
-                return DataTablesHeader(DataTablesColumn("Col A"),
-                                        DataTablesColumnGroup(
-                                            "Group 1",
-                                            DataTablesColumn("Col B"),
-                                            DataTablesColumn("Col C")),
-                                        DataTablesColumn("Col D"))
+        @property
+        def headers(self):
+            return DataTablesHeader(DataTablesColumn("Col A"),
+                                    DataTablesColumnGroup(
+                                        "Group 1",
+                                        DataTablesColumn("Col B"),
+                                        DataTablesColumn("Col C")),
+                                    DataTablesColumn("Col D"))
 
-            @property
-            def rows(self):
-                return [
-                    ['Row 1', 2, 3, 4],
-                    ['Row 2', 3, 2, 1]
-                ]
+        @property
+        def rows(self):
+            return [
+                ['Row 1', 2, 3, 4],
+                ['Row 2', 3, 2, 1]
+            ]
 
 Hooking up reports to CommCare HQ
 ----------------------------------

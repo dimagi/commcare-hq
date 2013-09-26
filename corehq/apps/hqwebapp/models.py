@@ -368,7 +368,22 @@ class ProjectDataTab(UITab):
 
         if self.can_edit_commcare_data:
             from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
-            items.extend(EditDataInterfaceDispatcher.navigation_sections(context))
+            edit_section = EditDataInterfaceDispatcher.navigation_sections(context)
+
+            from corehq.apps.data_interfaces.views import CaseGroupListView, CaseGroupCaseManagementView
+            if self.couch_user.is_previewer:
+                edit_section[0][1].append({
+                    'title': CaseGroupListView.page_title,
+                    'url': reverse(CaseGroupListView.urlname, args=[self.domain]),
+                    'subpages': [
+                        {
+                            'title': CaseGroupCaseManagementView.page_title,
+                            'urlname': CaseGroupCaseManagementView.urlname,
+                        }
+                    ]
+                })
+
+            items.extend(edit_section)
 
         return items
 
@@ -487,6 +502,16 @@ class MessagingTab(UITab):
             (_("Messages"), [
                 {'title': _('Compose SMS Message'),
                  'url': reverse('sms_compose_message', args=[self.domain])},
+                {'title': _("Broadcast Messages"),
+                 'url': reverse('one_time_reminders', args=[self.domain]),
+                 'subpages': [
+                     {'title': _("Edit Broadcast"),
+                      'urlname': 'edit_one_time_reminder'},
+                     {'title': _("New Broadcast"),
+                      'urlname': 'add_one_time_reminder'},
+                     {'title': _("New Broadcast"),
+                      'urlname': 'copy_one_time_reminder'},
+                 ]},
                 {'title': _('Message Log'),
                  'url': MessageLogReport.get_url(domain=self.domain)},
                 {'title': _('SMS Connectivity'),
@@ -507,7 +532,6 @@ class MessagingTab(UITab):
                      {'title': _("New Reminder Definition"),
                       'urlname': 'add_complex_reminder_schedule'},
                  ]},
-
                 {'title': _("Reminder Calendar"),
                  'url': reverse('scheduled_reminders', args=[self.domain])},
 

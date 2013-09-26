@@ -38,7 +38,13 @@ def default(request, domain):
 
 @require_cloudcare_access
 def cloudcare_main(request, domain, urlPath):
-    preview = string_to_boolean(request.REQUEST.get("preview", "false"))
+    try:
+        preview = string_to_boolean(request.REQUEST.get("preview", "false"))
+    except ValueError:
+        # this is typically only set at all if it's intended to be true so this
+        # is a reasonable default for "something went wrong"
+        preview = True
+
     app_access = ApplicationAccess.get_by_domain(domain)
     
     def _app_latest_build_json(app_id):

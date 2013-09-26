@@ -1,7 +1,12 @@
 import datetime
+from custom.bihar import getters
+from pillowtop.listener import BasicPillow
 from casexml.apps.case.models import CommCareCase
+from couchforms.models import XFormInstance
 from custom.bihar.calculations import homevisit, pregnancy, postpartum, newborn, familyplanning, mortality
+from custom.bihar.calculations.utils.visits import VISIT_TYPES
 import fluff
+from django.db import models
 
 A_DAY = datetime.timedelta(days=1)
 
@@ -14,8 +19,8 @@ class CareBiharFluff(fluff.IndicatorDocument):
 
     # home visit
 
-    bp2 = homevisit.BPCalculator(days=75, n_visits=2)
-    bp3 = homevisit.BPCalculator(days=45, n_visits=3)
+    bp2 = homevisit.BPCalculator(days=(94, 187))
+    bp3 = homevisit.BPCalculator(days=(0, 94))
     pnc = homevisit.VisitCalculator(schedule=(1, 3, 6), visit_type='pnc')
     ebf = homevisit.VisitCalculator(
         schedule=(14, 28, 60, 90, 120, 150),
@@ -81,3 +86,45 @@ class CareBiharFluff(fluff.IndicatorDocument):
         app_label = 'bihar'
 
 CareBiharFluffPillow = CareBiharFluff.pillow()
+
+
+class BirthPreparednessForm(models.Model):
+    """Testing only"""
+    _id = models.CharField(primary_key=True, max_length=40)
+
+    date_modified = models.DateField()
+    date_next_bp = models.DateField(null=True)
+    days_visit_overdue = models.IntegerField(null=True)
+
+    @classmethod
+    def from_couch(cls, form):
+        assert form.xmlns == VISIT_TYPES['bp']
+
+        return cls(
+            _id=form._id,
+            date_modified=getters.date_modified(form),
+            date_next_bp=getters.date_next_bp(form),
+            days_visit_overdue=getters.days_visit_overdue(form),
+        )
+
+
+class CareBiharFormPillow(BasicPillow):
+    """
+    Run this as a way to validate/debug form data
+    by saving it to SQL it validates a schema
+    and lets you look through the data to make sure it seems reasonable
+    """
+    couch_filter = 'fluff_filter/domain_type'
+    extra_args = {
+        'domains': 'care-bihar',
+        'doc_type': 'XFormInstance'
+    }
+    document_class = XFormInstance
+
+    def change_transform(self, doc_dict):
+        form = self.document_class.wrap(doc_dict)
+        if form.xmlns == VISIT_TYPES['bp']:
+            return BirthPreparednessForm.from_couch(form)
+
+    def change_transport(self, form_model):
+        form_model.save()

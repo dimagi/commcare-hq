@@ -1,3 +1,4 @@
+from corehq.apps.app_manager.exceptions import SuiteValidationError
 from couchdbkit import ResourceNotFound
 from django.core.management import BaseCommand
 from corehq.apps.app_manager.models import Application
@@ -23,7 +24,7 @@ def find_broken_suite_files(start, end):
         else:
             try:
                 suite_xml.validate_suite(suite)
-            except suite_xml.SuiteValidationError as error:
+            except SuiteValidationError as error:
                 pass
         if error:
             build = db.get(build_id)
