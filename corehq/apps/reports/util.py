@@ -430,11 +430,12 @@ def datespan_from_beginning(domain, default_days, timezone):
     datespan.is_default = True
     return datespan
 
-def installed_plugins_list():
+def get_installed_custom_modules_names():
     path = os.path.dirname('custom/apps/')
-    installed_plugins = []
+    installed_custom_module_names = []
+
     for module in os.listdir(path):
         if os.path.isdir(path + '/' + module) == True and os.path.exists(path + '/' + module + '/urls.py') and 'urlpatterns' in open(path + '/' + module + '/urls.py').read():
-            installed_plugins.append(module)
-    return installed_plugins
+            installed_custom_module_names.append(module)
+    return installed_custom_module_names
 

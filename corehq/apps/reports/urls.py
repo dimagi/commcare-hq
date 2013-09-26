@@ -1,5 +1,6 @@
 from django.conf.urls.defaults import *
-from corehq.apps.reports.util import installed_plugins_list
+from django.core.exceptions import ImproperlyConfigured
+from corehq.apps.reports.util import get_installed_custom_modules_names
 from corehq.apps.reports.dispatcher import (ProjectReportDispatcher, 
         CustomProjectReportDispatcher, BasicReportDispatcher)
 import logging
@@ -104,13 +105,10 @@ report_urls = patterns('',
     BasicReportDispatcher.url_pattern(),
 )
 
-
-installed_plugins = installed_plugins_list()
-
-for plugin in installed_plugins:
+for module_name in get_installed_custom_modules_names():
     try:
-        urlpatterns += patterns('',
-             (r"^%s/" % plugin, include("custom.apps.%s.urls" % plugin)),
+        custom_report_urls += patterns('',
+             (r"^%s/" % module_name, include("custom.apps.%s.urls" % module_name)),
         )
-    except:
-        logging.info ("Plugin %s does not provides urls" % plugin)
+    except ImproperlyConfigured:
+        logging.info("Module %s does not provide urls" % module_name)
