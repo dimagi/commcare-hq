@@ -12,7 +12,7 @@ import re
 from django.template.loader import get_template
 from django.template import Context
 from django.http import HttpResponse
-import weasyprint
+# import weasyprint
 
 
 @require_case_view_permission

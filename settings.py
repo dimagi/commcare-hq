@@ -150,7 +150,7 @@ DEFAULT_APPS = (
     'django.contrib.markup',
     'gunicorn',
     'raven.contrib.django.raven_compat',
-    'weasyprint',
+    # 'weasyprint',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
@@ -283,7 +283,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'rosetta',
     'soil',
     'south',
-    'weasyprint',
+    # 'weasyprint',
     'custom.apps.crs_reports',
 
     # submodules with tests that run on travis
