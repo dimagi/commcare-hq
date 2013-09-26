@@ -52,7 +52,7 @@ to not move the reminder forward to the next event.
 """
 
 def get_workflow(handler):
-    from corehq.apps.reminder.models import REMINER_TYPE_ONE_TIME
+    from corehq.apps.reminders.models import REMINDER_TYPE_ONE_TIME
     if handler.reminder_type == REMINDER_TYPE_ONE_TIME:
         return WORKFLOW_BROADCAST
     else:
