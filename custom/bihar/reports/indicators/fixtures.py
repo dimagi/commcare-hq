@@ -1,11 +1,42 @@
 from xml.etree import ElementTree
+from corehq.apps.groups.models import Group
+from corehq.apps.users.models import CommCareUser
+from custom.bihar.reports.indicators.indicators import IndicatorDataProvider, IndicatorConfig, INDICATOR_SETS
 
+# meh
+hard_coded_domain = 'bihar' # note this is just for testing, will change to 'care-bihar' for deploy
+hard_coded_indicators = 'homevisit'
+hard_coded_group_filter = lambda group: bool(group.metadata.get('awc-code', False))
+hard_coded_fixture_id = 'indicators:bihar-supervisor'
+
+def generator(user, *args, **kwargs):
+    # todo: this appears in the beginning of all fixture generators. should fix
+    if isinstance(user, CommCareUser):
+        pass
+    elif hasattr(user, "_hq_user") and user._hq_user is not None:
+        user = user._hq_user
+    else:
+        return []
+
+    if user.domain == hard_coded_domain:
+        groups = filter(hard_coded_group_filter, Group.by_user(user))
+        if len(groups) == 1:
+            data_provider = IndicatorDataProvider(
+                domain=user.domain,
+                indicator_set=IndicatorConfig(INDICATOR_SETS).get_indicator_set(hard_coded_indicators),
+                group=groups[0],
+            )
+            fixture_provider = IndicatorFixtureProvider(
+                hard_coded_fixture_id, user, data_provider
+            )
+            return [fixture_provider.to_fixture()]
+    return []
 
 class IndicatorFixtureProvider(object):
 
-    def __init__(self, id, user_id, data_provider):
+    def __init__(self, id, user, data_provider):
         self.id = id
-        self.user_id = user_id
+        self.user = user
         self.data_provider = data_provider
 
     def to_fixture(self):
@@ -55,7 +86,7 @@ class IndicatorFixtureProvider(object):
             return ind_el
 
         root = ElementTree.Element('fixture',
-            attrib={'id': self.id, 'user_id': self.user_id},
+            attrib={'id': self.id, 'user_id': self.user._id},
         )
         group = ElementTree.Element('group',
             attrib={
@@ -68,6 +99,9 @@ class IndicatorFixtureProvider(object):
         for indicator in self.data_provider.summary_indicators:
             indicators.append(_indicator_to_fixture(indicator))
         group.append(indicators)
-        return ElementTree.tostring(root, encoding="utf-8")
+        return root
+
+    def to_string(self):
+        return ElementTree.tostring(self.to_fixture(), encoding="utf-8")
 
 
