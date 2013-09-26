@@ -87,6 +87,10 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
     module_name = 'crs_reports'
     report_template_name = None
 
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return user and user.is_previewer()
+
     @property
     @memoized
     def case_es(self):
