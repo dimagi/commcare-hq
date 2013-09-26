@@ -1,11 +1,15 @@
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+from corehq.apps.reminders.models import REMINDER_TYPE_ONE_TIME
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
+from corehq.apps.sms.models import WORKFLOW_KEYWORD, WORKFLOW_REMINDER, WORKFLOW_BROADCAST
 from corehq.elastic import es_query, ES_URLS
+from dimagi.utils.couch.database import get_db
 
-WORKFLOWS = ["workflow_keyword", "workflow_reminder", "workflow_broadcast"]
+WORKFLOWS = [WORKFLOW_KEYWORD, WORKFLOW_REMINDER, WORKFLOW_BROADCAST]
+NA = 'N/A'
 
 class SystemOverviewReport(GenericTabularReport, CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
     slug = 'system_overview'
@@ -65,8 +69,8 @@ class SystemOverviewReport(GenericTabularReport, CustomProjectReport, ProjectRep
 
         def row(rowname, workflow=None):
             additional_workflow_facets = {
-                "workflow_keyword": ['xforms_session_couch_id'],
-                "workflow_reminder": ['reminder_id'],
+                WORKFLOW_KEYWORD: ['xforms_session_couch_id'],
+                WORKFLOW_REMINDER: ['reminder_id'],
             }
             additional_facets = additional_workflow_facets.get(workflow)
             facets = self.query_sms(workflow, additional_facets)['facets']
@@ -84,21 +88,29 @@ class SystemOverviewReport(GenericTabularReport, CustomProjectReport, ProjectRep
                 elif term['term'] == 'i':
                     incoming = term['count']
 
-            number = 0
+            number = NA
             if workflow in additional_workflow_facets:
                 number = len(facets[additional_workflow_facets[workflow][0]]["terms"])
+            elif workflow == WORKFLOW_BROADCAST:
+                key = [self.domain, REMINDER_TYPE_ONE_TIME]
+                data = get_db().view('reminders/handlers_by_reminder_type',
+                    reduce=True,
+                    startkey=key + [self.datespan.startdate_param_utc],
+                    endkey=key + [self.datespan.enddate_param_utc],
+                ).one()
+                number = data["value"] if data else 0
 
             return [rowname, number, to_users, to_cases, incoming, outgoing]
 
         rows =  [
-            row(_("Keywords"), "workflow_keyword"),
-            row(_("Reminders"), "workflow_reminder"),
-            row(_("Broadcasts"), "workflow_broadcast"),
+            row(_("Keywords"), WORKFLOW_KEYWORD),
+            row(_("Reminders"), WORKFLOW_REMINDER),
+            row(_("Broadcasts"), WORKFLOW_BROADCAST),
             row(_("Unknown")),
         ]
 
         def total(index):
-            return sum([l[index] for l in rows])
+            return sum([l[index] for l in rows if l[index] != NA])
 
         self.total_row = [_("Total"), total(1), total(2), total(3), total(4), total(5)]
 
