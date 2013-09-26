@@ -329,10 +329,7 @@ class MonthYearMixin(object):
     @property
     def datespan(self):
         if self._datespan is None:
-            if 'month' in self.request_params and 'year' in self.request_params:
-                datespan = DateSpan.from_month(self.month, self.year)
-            else:
-                datespan = DateSpan.from_month()
+            datespan = DateSpan.from_month(self.month, self.year)
             self.request.datespan = datespan
             self.context.update(dict(datespan=datespan))
             self._datespan = datespan
@@ -340,8 +337,14 @@ class MonthYearMixin(object):
 
     @property
     def month(self):
-        return int(self.request_params['month'])
+        if 'month' in self.request_params:
+            return int(self.request_params['month'])
+        else:
+            return datetime.now().month
 
     @property
     def year(self):
-        return int(self.request_params['year'])
+        if 'year' in self.request_params:
+            return int(self.request_params['year'])
+        else:
+            return datetime.now().year
