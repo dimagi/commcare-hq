@@ -3,7 +3,7 @@ from django.conf import settings
 
 from dimagi.utils.modules import to_function
 from corehq.apps.sms.util import clean_phone_number, create_billable_for_sms, format_message_list, clean_text
-from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING, ForwardingRule, FORWARD_ALL, FORWARD_BY_KEYWORD
+from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING, ForwardingRule, FORWARD_ALL, FORWARD_BY_KEYWORD, WORKFLOW_KEYWORD
 from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber
 from corehq.apps.domain.models import Domain
 from datetime import datetime
@@ -24,7 +24,12 @@ REGISTRATION_MOBILE_WORKER_KEYWORDS = ["WORKER"]
 class BackendAuthorizationException(Exception):
     pass
 
-def send_sms(domain, id, phone_number, text):
+def add_msg_tags(msg, *args, **kwargs):
+    msg.workflow = kwargs.get("workflow", None)
+    msg.xforms_session_couch_id = kwargs.get("xforms_session_couch_id", None)
+    msg.reminder_id = kwargs.get("reminder_id", None)
+
+def send_sms(domain, id, phone_number, text, **kwargs):
     """
     Sends an outbound SMS. Returns false if it fails.
     """
@@ -43,12 +48,13 @@ def send_sms(domain, id, phone_number, text):
         date = datetime.utcnow(),
         text = text
     )
+    add_msg_tags(msg, **kwargs)
     
     def onerror():
         logging.exception("Problem sending SMS to %s" % phone_number)
     return send_message_via_backend(msg, onerror=onerror)
 
-def send_sms_to_verified_number(verified_number, text):
+def send_sms_to_verified_number(verified_number, text, **kwargs):
     """
     Sends an sms using the given verified phone number entry.
     
@@ -66,12 +72,13 @@ def send_sms_to_verified_number(verified_number, text):
         domain                      = verified_number.domain,
         text                        = text
     )
+    add_msg_tags(msg, **kwargs)
 
     def onerror():
         logging.exception("Exception while sending SMS to VerifiedNumber id " + verified_number._id)
     return send_message_via_backend(msg, verified_number.backend, onerror=onerror)
 
-def send_sms_with_backend(domain, phone_number, text, backend_id):
+def send_sms_with_backend(domain, phone_number, text, backend_id, **kwargs):
     phone_number = clean_phone_number(phone_number)
     msg = SMSLog(
         domain=domain,
@@ -80,12 +87,13 @@ def send_sms_with_backend(domain, phone_number, text, backend_id):
         date=datetime.utcnow(),
         text=text
     )
+    add_msg_tags(msg, **kwargs)
 
     def onerror():
         logging.exception("Exception while sending SMS to %s with backend %s" % (phone_number, backend_id))
     return send_message_via_backend(msg, MobileBackend.load(backend_id), onerror=onerror)
 
-def send_sms_with_backend_name(domain, phone_number, text, backend_name):
+def send_sms_with_backend_name(domain, phone_number, text, backend_name, **kwargs):
     phone_number = clean_phone_number(phone_number)
     msg = SMSLog(
         domain=domain,
@@ -94,6 +102,7 @@ def send_sms_with_backend_name(domain, phone_number, text, backend_name):
         date=datetime.utcnow(),
         text=text
     )
+    add_msg_tags(msg, **kwargs)
 
     def onerror():
         logging.exception("Exception while sending SMS to %s with backend name %s from domain %s" % (phone_number, backend_name, domain))
@@ -136,7 +145,7 @@ def send_message_via_backend(msg, backend=None, onerror=lambda: None):
         return False
 
 
-def start_session_from_keyword(survey_keyword, verified_number):
+def start_session_from_keyword(survey_keyword, verified_number, msg=None):
     try:
         form_unique_id = survey_keyword.form_unique_id
         form = Form.get_form(form_unique_id)
@@ -150,10 +159,16 @@ def start_session_from_keyword(survey_keyword, verified_number):
             case_id = None
         
         session, responses = start_session(verified_number.domain, verified_number.owner, app, module, form, case_id)
+        session.workflow = WORKFLOW_KEYWORD
+        session.save()
+        if msg is not None:
+            msg.workflow = WORKFLOW_KEYWORD
+            msg.xforms_session_couch_id = session._id
+            msg.save()
         
         if len(responses) > 0:
             message = format_message_list(responses)
-            send_sms_to_verified_number(verified_number, message)
+            send_sms_to_verified_number(verified_number, message, workflow=WORKFLOW_KEYWORD, xforms_session_couch_id=session._id)
         
     except Exception:
         logging.exception("Exception while starting survey for keyword %s, domain %s" % (survey_keyword.keyword, verified_number.domain))
@@ -260,7 +275,7 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None,
                 continue
 
             try:
-                was_handled = handler(v, text)
+                was_handled = handler(v, text, msg=msg)
             except:
                 logging.exception('unhandled error in sms handler %s for message [%s]' % (h, text))
                 was_handled = False
@@ -396,13 +411,12 @@ def close_open_sessions(domain, connection_id):
         session.end(False)
         session.save()
 
-def structured_sms_handler(verified_number, text, contact=None):
+def structured_sms_handler(verified_number, text, msg=None, contact=None):
     """
     If contact is present, it is used as the contact who is submitting
     the data. If not, verified_number is used to determine who the contact
     is.
     """
-    
     # Circular Import
     from corehq.apps.reminders.models import SurveyKeyword, FORM_TYPE_ALL_AT_ONCE
     
@@ -451,6 +465,12 @@ def structured_sms_handler(verified_number, text, contact=None):
                     case_id = None
                 
                 session, responses = start_session(domain, contact, app, module, form, case_id=case_id, yield_responses=True)
+                session.workflow = WORKFLOW_KEYWORD
+                session.save()
+                if msg is not None:
+                    msg.workflow = WORKFLOW_KEYWORD
+                    msg.xforms_session_couch_id = session._id
+                    msg.save()
                 assert len(responses) > 0, "There should be at least one response."
                 
                 current_question = responses[-1]
@@ -568,7 +588,7 @@ def structured_sms_handler(verified_number, text, contact=None):
                 error_msg = "ERROR: Internal server error"
             
             if error_occurred and verified_number is not None:
-                send_sms_to_verified_number(verified_number, error_msg)
+                send_sms_to_verified_number(verified_number, error_msg, workflow=WORKFLOW_KEYWORD, xforms_session_couch_id=session._id)
             
             if session is not None and (error_occurred or not form_complete):
                 session = XFormsSession.get(session._id)
@@ -579,7 +599,7 @@ def structured_sms_handler(verified_number, text, contact=None):
     
     return False
 
-def form_session_handler(v, text):
+def form_session_handler(v, text, msg=None):
     # Circular Import
     from corehq.apps.reminders.models import SurveyKeyword, FORM_TYPE_ONE_BY_ONE
     
@@ -587,7 +607,11 @@ def form_session_handler(v, text):
     session = XFormsSession.view("smsforms/open_sms_sessions_by_connection",
                                  key=[v.domain, v.owner_id],
                                  include_docs=True).one()
-    
+    if session is not None and msg is not None:
+        msg.workflow = session.workflow
+        msg.reminder_id = session.reminder_id
+        msg.xforms_session_couch_id = session._id
+        msg.save()
     text_words = text.upper().split()
     
     # Respond to "#START <keyword>" command
@@ -598,11 +622,11 @@ def form_session_handler(v, text):
                 if session is not None:
                     session.end(False)
                     session.save()
-                start_session_from_keyword(sk, v)
+                start_session_from_keyword(sk, v, msg=msg)
             else:
-                send_sms_to_verified_number(v, "Survey '" + text_words[1] + "' not found.")
+                send_sms_to_verified_number(v, "Survey '" + text_words[1] + "' not found.", workflow=WORKFLOW_KEYWORD)
         else:
-            send_sms_to_verified_number(v, "Usage: #START <keyword>")
+            send_sms_to_verified_number(v, "Usage: #START <keyword>", workflow=WORKFLOW_KEYWORD)
         
     # Respond to "#STOP" keyword
     elif len(text_words) > 0 and text_words[0] == "#STOP":
@@ -614,7 +638,7 @@ def form_session_handler(v, text):
     elif len(text_words) > 0 and text_words[0] == "#CURRENT":
         if session is not None:
             resp = current_question(session.session_id)
-            send_sms_to_verified_number(v, resp.event.text_prompt)
+            send_sms_to_verified_number(v, resp.event.text_prompt, workflow=session.workflow, reminder_id=session.reminder_id, xforms_session_couch_id=session._id)
         
     # Respond to unknown command
     elif len(text_words) > 0 and text_words[0][0] == "#":
@@ -630,22 +654,22 @@ def form_session_handler(v, text):
             responses = _get_responses(v.domain, v.owner_id, text)
             if len(responses) > 0:
                 response_text = format_message_list(responses)
-                send_sms_to_verified_number(v, response_text)
+                send_sms_to_verified_number(v, response_text, workflow=session.workflow, reminder_id=session.reminder_id, xforms_session_couch_id=session._id)
         else:
-            send_sms_to_verified_number(v, error_msg + event.text_prompt)
+            send_sms_to_verified_number(v, error_msg + event.text_prompt, workflow=session.workflow, reminder_id=session.reminder_id, xforms_session_couch_id=session._id)
         
     # Try to match the text against a keyword to start a survey
     elif len(text_words) > 0:
         sk = SurveyKeyword.get_keyword(v.domain, text_words[0])
         if sk is not None and sk.form_type == FORM_TYPE_ONE_BY_ONE:
-            start_session_from_keyword(sk, v)
+            start_session_from_keyword(sk, v, msg=msg)
 
     # TODO should clarify what scenarios this handler actually handles. i.e.,
     # should the error responses instead be handler by some generic error/fallback
     # handler
     return True
 
-def forwarding_handler(v, text):
+def forwarding_handler(v, text, msg=None):
     rules = ForwardingRule.view("sms/forwarding_rule", key=[v.domain], include_docs=True).all()
     text_words = text.upper().split()
     keyword_to_match = text_words[0] if len(text_words) > 0 else ""
@@ -661,7 +685,7 @@ def forwarding_handler(v, text):
             return True
     return False
 
-def fallback_handler(v, text):
+def fallback_handler(v, text, msg=None):
     send_sms_to_verified_number(v, 'could not understand your message. please check keyword.')
     return True
 
