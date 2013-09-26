@@ -30,12 +30,12 @@ class Worker(object):
     ]
 
     def __init__(self, worker, report):
-        
-        # check filters
-        for key, field in [('awc', 'awcs'), ('block', 'blocks')]:
-            keys = report.filter_data.get(field, []) 
-            if keys and worker.user_data.get(key) not in keys:
-                raise InvalidRow
+
+        # make sure worker passes the filters
+        report.filter(
+            lambda key: worker.user_data.get(key),
+            [('awc', 'awcs'), ('block', 'blocks')]
+        )
 
         try:
             self.fluff_doc = OpmUserFluff.get("%s-%s" %

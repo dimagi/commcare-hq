@@ -43,6 +43,23 @@ class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
     def fields(self):
         return [BlockFilter, AWCFilter] + super(BaseReport, self).fields
 
+    def filter(self, fn, filter_fields=None):
+        """
+        This function is to be called by the row constructer to verify that
+        the row matches the filters
+        ``fn`` should be a callable that accepts a key, and returns the value
+        that should match the filters for a given field.
+
+        I'm not super happy with this implementation, but it beats repeating
+        the same logic in incentive, beneficiary, and snapshot.
+        """
+        if filter_fields is None:
+            filter_fields = [('awc_name', 'awcs'), ('block_name', 'blocks')]
+        for key, field in filter_fields:
+            keys = self.filter_data.get(field, []) 
+            if keys and fn(key) not in keys:
+                raise InvalidRow
+
     @property
     @memoized
     def snapshot(self):

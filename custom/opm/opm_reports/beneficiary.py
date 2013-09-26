@@ -36,11 +36,14 @@ class Beneficiary(object):
     ]
 
     def __init__(self, case, report):
-        # check filters
-        for key, field in [('awc_name', 'awcs'), ('block_name', 'blocks')]:
-            keys = report.filter_data.get(field, [])
-            if keys and case.get_case_property(key) not in keys:
-                raise InvalidRow
+        # # check filters
+        # for key, field in [('awc_name', 'awcs'), ('block_name', 'blocks')]:
+        #     keys = report.filter_data.get(field, [])
+        #     if keys and case.get_case_property(key) not in keys:
+        #         raise InvalidRow
+        
+        # make sure worker passes the filters
+        report.filter(lambda key: case.get_case_property(key))
 
         try:
             self.fluff_doc = OpmCaseFluff.get("%s-%s" %
