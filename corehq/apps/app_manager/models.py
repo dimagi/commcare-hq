@@ -1465,8 +1465,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
             code = QRChart(HEIGHT, WIDTH)
             code.add_data(self.odk_profile_url)
 
-            # "Level H" error correction with a 0 pixel margin
-            code.set_ec('H', 0)
+            # "Level L" error correction with a 0 pixel margin
+            code.set_ec('L', 0)
             f, fname = tempfile.mkstemp()
             code.download(fname)
             os.close(f)
