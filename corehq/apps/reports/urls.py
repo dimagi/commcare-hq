@@ -1,9 +1,6 @@
 from django.conf.urls.defaults import *
-from django.core.exceptions import ImproperlyConfigured
-from corehq.apps.reports.util import get_installed_custom_modules_names
 from corehq.apps.reports.dispatcher import (ProjectReportDispatcher, 
         CustomProjectReportDispatcher, BasicReportDispatcher)
-import logging
 
 dodoma_reports = patterns('corehq.apps.reports.dodoma',
     url('^household_verification_json$', 'household_verification_json'),
@@ -104,11 +101,3 @@ urlpatterns = patterns('corehq.apps.reports.views',
 report_urls = patterns('',
     BasicReportDispatcher.url_pattern(),
 )
-
-for module_name in get_installed_custom_modules_names():
-    try:
-        custom_report_urls += patterns('',
-             (r"^%s/" % module_name, include("custom.apps.%s.urls" % module_name)),
-        )
-    except ImproperlyConfigured:
-        logging.info("Module %s does not provide urls" % module_name)
