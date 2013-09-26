@@ -25,11 +25,8 @@ class SystemOverviewReport(GenericTabularReport, CustomProjectReport, ProjectRep
     ]
     emailable = True
 
-    def query_sms(self, workflow=None, additional_facets=None):
-        """
-        Open cases that haven't been modified within time range
-        """
-        additional_facets = additional_facets or []
+    @property
+    def base_query(self):
         q = {"query": {
                 "bool": {
                     "must": [
@@ -40,18 +37,31 @@ class SystemOverviewReport(GenericTabularReport, CustomProjectReport, ProjectRep
                                 "to": self.datespan.enddate_param,
                                 "include_upper": True}}}]}}}
 
-        if workflow:
-            q["filter"] = {"and": [{"term": {"workflow": workflow}}]}
-        else:
-            q["filter"] = {"and": [{"not": {"in": {"workflow": WORKFLOWS}}}]}
-
         if self.users_by_group:
             q["query"]["bool"]["must"].append({"in": {"couch_recipient": self.combined_user_ids}})
         if self.cases_by_case_group:
             q["query"]["bool"]["must"].append({"in": {"couch_recipient": self.cases_by_case_group}})
 
+        return q
+
+    def workflow_query(self, workflow=None, additional_facets=None):
+        additional_facets = additional_facets or []
+
+        q = self.base_query
+
+        if workflow:
+            q["filter"] = {"and": [{"term": {"workflow": workflow}}]}
+        else:
+            q["filter"] = {"and": [{"not": {"in": {"workflow": WORKFLOWS}}}]}
+
         facets = ['couch_recipient_doc_type', 'direction'] + additional_facets
         return es_query(q=q, facets=facets, es_url=ES_URLS['sms'], size=0)
+
+    def active_query(self, recipient_type):
+        q = self.base_query
+        q["query"]["bool"]["must"].append({"term": {"direction": "i"}})
+        q["query"]["bool"]["must"].append({"term": {"couch_recipient_doc_type": recipient_type}})
+        return es_query(q=q, facets=['couch_recipient'], es_url=ES_URLS['sms'], size=0)
 
     @property
     def headers(self):
@@ -73,7 +83,7 @@ class SystemOverviewReport(GenericTabularReport, CustomProjectReport, ProjectRep
                 WORKFLOW_REMINDER: ['reminder_id'],
             }
             additional_facets = additional_workflow_facets.get(workflow)
-            facets = self.query_sms(workflow, additional_facets)['facets']
+            facets = self.workflow_query(workflow, additional_facets)['facets']
             to_cases, to_users, outgoing, incoming = 0, 0, 0, 0
 
             for term in facets['couch_recipient_doc_type']['terms']:
@@ -113,6 +123,18 @@ class SystemOverviewReport(GenericTabularReport, CustomProjectReport, ProjectRep
             return sum([l[index] for l in rows if l[index] != NA])
 
         self.total_row = [_("Total"), total(1), total(2), total(3), total(4), total(5)]
+
+        def get_actives(recipient_type):
+            # print self.active_query(recipient_type)['facets']
+            return len(self.active_query(recipient_type)['facets']['couch_recipient']['terms'])
+
+        active_users = get_actives('commcareuser')
+        active_cases = get_actives('commcarecase')
+
+        print "\n===================="
+        print "Active Users: %s" % active_users
+        print "Active Cases: %s" % active_cases
+        print "====================\n"
 
         return rows
 
