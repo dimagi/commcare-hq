@@ -45,7 +45,7 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
         super(IndicatorSummaryReport, self).__init__(*args, **kwargs)
         from custom.bihar.reports.indicators.indicators import IndicatorDataProvider
         self.data_provider = IndicatorDataProvider(
-            self.domain, self.indicator_set, self.group
+            self.domain, self.indicator_set, [self.group],
         )
 
     @property

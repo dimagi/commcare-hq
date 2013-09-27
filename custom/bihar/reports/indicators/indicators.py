@@ -321,15 +321,15 @@ class Indicator(object):
 
 class IndicatorDataProvider(object):
 
-    def __init__(self, domain, indicator_set, group):
+    def __init__(self, domain, indicator_set, groups):
         self.domain = domain
         self.indicator_set = indicator_set
-        self.group = group
+        self.groups = groups
 
     @property
     @memoized
     def all_owner_ids(self):
-        return get_all_owner_ids_from_group(self.group)
+        return set([id for group in self.groups for id in get_all_owner_ids_from_group(group)])
 
     @property
     def summary_indicators(self):
