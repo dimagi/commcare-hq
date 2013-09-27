@@ -83,10 +83,21 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
 
 
 
-class MyPerformanceReport(IndicatorSummaryReport):
+class MyPerformanceReport(BiharSummaryReport):
     name = ugettext_noop('My Performance')
     slug = 'myperformance'
     description = "My performance indicators report"
+
+    def __init__(self, *args, **kwargs):
+        from custom.bihar.reports.indicators.indicators import IndicatorConfig, INDICATOR_SETS
+        from custom.bihar.reports.indicators.indicators import IndicatorDataProvider
+        self.indicator_set = IndicatorConfig(INDICATOR_SETS).get_indicator_set('homevisit')
+        super(MyPerformanceReport, self).__init__(*args, **kwargs)
+        groups = groups_for_user(self.request.couch_user, self.domain)
+        self.data_provider = IndicatorDataProvider(
+            self.domain, self.indicator_set, groups,
+        )
+
 
 
 class IndicatorCharts(MockEmptyReport):
