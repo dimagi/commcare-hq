@@ -11,7 +11,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from django.utils.translation import ugettext as _, ugettext_noop
 from custom.bihar.reports.indicators.mixins import IndicatorSetMixIn, IndicatorMixIn
-from custom.bihar.utils import groups_for_user
+from custom.bihar.utils import groups_for_user, get_all_owner_ids_from_group
 
 DEFAULT_EMPTY = "?"
 
@@ -84,11 +84,13 @@ class MyPerformanceReport(BiharSummaryReport):
     name = ugettext_noop('My Performance')
     slug = 'myperformance'
     description = "My performance indicators report"
+    set_slug = 'homevisit'  # hard coded to homevisit indicators
+    base_template_mobile = "bihar/indicator_summary.html"
 
     def __init__(self, *args, **kwargs):
         from custom.bihar.reports.indicators.indicators import IndicatorConfig, INDICATOR_SETS
         from custom.bihar.reports.indicators.indicators import IndicatorDataProvider
-        self.indicator_set = IndicatorConfig(INDICATOR_SETS).get_indicator_set('homevisit')
+        self.indicator_set = IndicatorConfig(INDICATOR_SETS).get_indicator_set(self.set_slug)
         super(MyPerformanceReport, self).__init__(*args, **kwargs)
         groups = groups_for_user(self.request.couch_user, self.domain)
         self.data_provider = IndicatorDataProvider(
@@ -104,11 +106,16 @@ class MyPerformanceReport(BiharSummaryReport):
     def data(self):
         def _nav_link(indicator):
             params = copy(self.request_params)
+            params["indicators"] = self.set_slug
             params['indicator'] = indicator.slug
             return format_html(u'{chart}<a href="{next}">{val}</a>',
                 val=self.data_provider.get_indicator_value(indicator),
                 chart=self.data_provider.get_chart(indicator),
-                next='#fixme',
+                next=url_and_params(
+                    MyPerformanceList.get_url(domain=self.domain,
+                                              render_as=self.render_next),
+                    params,
+                )
             )
 
         return [_nav_link(i) for i in self.data_provider.summary_indicators]
@@ -223,3 +230,17 @@ class IndicatorClientList(ClientListBase, IndicatorMixIn):
                 key=partial(self.indicator.sortkey, context=self.fluff_results)
             )
         ]
+
+class MyPerformanceList(IndicatorClientList):
+    slug = "myperformancelist"
+
+    @property
+    def rendered_report_title(self):
+        return 'My Performance Clients'
+
+    # hack this a bit to not have to reimplement everything else
+    @property
+    @memoized
+    def all_owner_ids(self):
+        groups = groups_for_user(self.request.couch_user, self.domain)
+        return set([id for group in groups for id in get_all_owner_ids_from_group(group)])

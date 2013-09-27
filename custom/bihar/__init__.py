@@ -24,5 +24,6 @@ CUSTOM_REPORTS = (
         indicators.IndicatorClientList,
         indicators.IndicatorCharts,
         indicators.MyPerformanceReport,
+        indicators.MyPerformanceList,
     )),
 )
