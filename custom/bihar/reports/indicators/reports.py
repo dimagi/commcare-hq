@@ -101,6 +101,12 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
         return ''  # no chart
 
 
+class MyPerformanceReport(IndicatorSummaryReport):
+    name = ugettext_noop('My Performance')
+    slug = 'myperformance'
+    description = "My performance indicators report"
+
+
 class IndicatorCharts(MockEmptyReport):
     name = ugettext_noop("Charts")
     slug = "indicatorcharts"
