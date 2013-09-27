@@ -9,7 +9,7 @@ def get_submit_url(domain, app_id=None):
 
 
 def get_meta_appversion_text(xform):
-    form_data = xform.get_form
+    form_data = xform.form
     try:
         text = form_data['meta']['appVersion']['#text']
     except KeyError:
