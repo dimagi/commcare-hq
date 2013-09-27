@@ -131,7 +131,18 @@ class SystemOverviewReport(GenericTabularReport, CustomProjectReport, ProjectRep
         active_users = get_actives('commcareuser')
         active_cases = get_actives('commcarecase')
 
+        def users_with_verified_numbers(owner_type):
+            owners = get_db().view('sms/verified_number_by_domain',
+                reduce=True,
+                group=True,
+                startkey=[self.domain, owner_type],
+                endkey=[self.domain, owner_type, {}],
+            ).all()
+            return len(owners)
+
         print "\n===================="
+        print "All Users: %s" % users_with_verified_numbers("CommCareUser")
+        print "All Cases: %s" % users_with_verified_numbers("CommCareCase")
         print "Active Users: %s" % active_users
         print "Active Cases: %s" % active_cases
         print "====================\n"
