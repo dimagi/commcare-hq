@@ -127,3 +127,31 @@ class PieChart(Chart):
                     showLabels=self.showLabels,
                     tooltips=self.tooltips,
                     donut=self.donut)
+
+
+class LineChart(Chart):
+    template_partial = 'reports/partials/graphs/line_chart.html'
+
+    def __init__(self, title, x_axis, y_axis):
+        self.title = title
+
+        self.x_axis = x_axis
+        self.y_axis = y_axis
+
+        self.data = []
+        self.marginTop = 30
+        self.marginRight = 20
+        self.marginBottom = 50
+        self.marginLeft = 100
+        self.reduceXTicks = False
+        self.rotateLabels = 0
+        self.tooltips = True
+
+    def config_dict(self):
+        return dict(margin={'top': self.marginTop,
+                            'right': self.marginRight,
+                            'bottom': self.marginBottom,
+                            'left': self.marginLeft},
+                    reduceXTicks=self.reduceXTicks,
+                    rotateLabels=self.rotateLabels,
+                    tooltips=self.tooltips)

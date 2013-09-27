@@ -22,18 +22,21 @@ class OpmCaseFluff(fluff.IndicatorDocument):
         """
         returns a flat field with a callable looking for `property` on the case
         """
-        return fluff.FlatField(lambda case: case.get_case_property(property))
+        return fluff.FlatField(lambda case: case.get_case_property(property) or "")
 
     document_class = CommCareCase
     domains = ('opm',)
     group_by = ('domain', )
 
     name = fluff.FlatField(lambda case: case.name)
-    awc_name = case_property("awc_name")
-    bank_name = case_property("bank_name")
-    account_number = case_property("bank_account_number")
-    block = case_property("block_name")
-    village = case_property("village_name")
+    husband_name = case_property('husband_name')
+    awc_name = case_property('awc_name')
+    bank_name = case_property('bank_name')
+    bank_branch_name = case_property('bank_branch_name')
+    bank_branch_code = case_property('bank_branch_code')
+    account_number = case_property('bank_account_number')
+    block = case_property('block_name')
+    village = case_property('village_name')
 
     # Okay, I lied, there's one aggregated field:
     women_registered = user_calcs.WomenRegistered()
@@ -44,7 +47,7 @@ class OpmUserFluff(fluff.IndicatorDocument):
         """
         returns a flat field with a callable looking for `property` on the user
         """
-        return fluff.FlatField(lambda user: user.user_data.get(property))
+        return fluff.FlatField(lambda user: user.user_data.get(property) or "")
     
     document_class = CommCareUser
     domains = ('opm',)
