@@ -24,7 +24,7 @@ def generator(user, *args, **kwargs):
             data_provider = IndicatorDataProvider(
                 domain=user.domain,
                 indicator_set=IndicatorConfig(INDICATOR_SETS).get_indicator_set(hard_coded_indicators),
-                group=groups[0],
+                groups=groups,
             )
             fixture_provider = IndicatorFixtureProvider(
                 hard_coded_fixture_id, user, data_provider
@@ -90,8 +90,8 @@ class IndicatorFixtureProvider(object):
         )
         group = ElementTree.Element('group',
             attrib={
-                'id': self.data_provider.group._id,
-                'team': self.data_provider.group.name
+                'id': self.data_provider.groups[0]._id,
+                'team': self.data_provider.groups[0].name
             },
         )
         root.append(group)
