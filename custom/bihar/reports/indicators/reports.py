@@ -53,34 +53,31 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
         return _(self.indicator_set.name)
 
     @property
-    def summary_indicators(self):
-        return self.data_provider.summary_indicators
-
-    @property
     def _headers(self):
         return {
-            'supervisor': [_("Team Name")] + [_(i.name) for i in self.summary_indicators],
-            'manager': [_("Subcentre")] + [_(i.name) for i in self.summary_indicators],
+            'supervisor': [_("Team Name")] + [_(i.name) for i in self.data_provider.summary_indicators],
+            'manager': [_("Subcentre")] + [_(i.name) for i in self.data_provider.summary_indicators],
         }
     
+
+    def nav_link(self, indicator):
+        params = copy(self.request_params)
+        params['indicator'] = indicator.slug
+        del params['next_report']
+        return format_html(u'{chart}<a href="{next}">{val}</a>',
+            val=self.get_indicator_value(indicator),
+            chart=self.get_chart(indicator),
+            next=url_and_params(
+                IndicatorClientList.get_url(self.domain,
+                                            render_as=self.render_next),
+                params,
+        ))
+
     @property
     @memoized
     def data(self):
-        def _nav_link(indicator):
-            params = copy(self.request_params)
-            params['indicator'] = indicator.slug
-            del params['next_report']
-            return format_html(u'{chart}<a href="{next}">{val}</a>',
-                val=self.get_indicator_value(indicator),
-                chart=self.get_chart(indicator),
-                next=url_and_params(
-                    IndicatorClientList.get_url(self.domain, 
-                                                render_as=self.render_next),
-                    params
-            ))
-
         return [self.group_display] + \
-               [_nav_link(i) for i in self.summary_indicators]
+               [self._nav_link(i) for i in self.data_provider.summary_indicators]
 
     @memoized
     def get_indicator_value(self, indicator):
