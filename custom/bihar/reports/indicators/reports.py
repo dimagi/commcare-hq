@@ -60,8 +60,6 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
             'manager': [_("Subcentre")] + [_(i.name) for i in self.data_provider.summary_indicators],
         }
     
-
-
     @property
     @memoized
     def data(self):
@@ -82,8 +80,6 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
                [_nav_link(i) for i in self.data_provider.summary_indicators]
 
 
-
-
 class MyPerformanceReport(BiharSummaryReport):
     name = ugettext_noop('My Performance')
     slug = 'myperformance'
@@ -98,6 +94,24 @@ class MyPerformanceReport(BiharSummaryReport):
         self.data_provider = IndicatorDataProvider(
             self.domain, self.indicator_set, groups,
         )
+
+    @property
+    def _headers(self):
+        return [_(i.name) for i in self.data_provider.summary_indicators]
+
+    @property
+    @memoized
+    def data(self):
+        def _nav_link(indicator):
+            params = copy(self.request_params)
+            params['indicator'] = indicator.slug
+            return format_html(u'{chart}<a href="{next}">{val}</a>',
+                val=self.data_provider.get_indicator_value(indicator),
+                chart=self.data_provider.get_chart(indicator),
+                next='#fixme',
+            )
+
+        return [_nav_link(i) for i in self.data_provider.summary_indicators]
 
 
 
