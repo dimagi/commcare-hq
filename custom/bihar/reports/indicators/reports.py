@@ -11,6 +11,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from django.utils.translation import ugettext as _, ugettext_noop
 from custom.bihar.reports.indicators.mixins import IndicatorSetMixIn, IndicatorMixIn
+from custom.bihar.utils import groups_for_user
 
 DEFAULT_EMPTY = "?"
 
@@ -65,8 +66,8 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
         params['indicator'] = indicator.slug
         del params['next_report']
         return format_html(u'{chart}<a href="{next}">{val}</a>',
-            val=self.get_indicator_value(indicator),
-            chart=self.get_chart(indicator),
+            val=self.data_provider.get_indicator_value(indicator),
+            chart=self.data_provider.get_chart(indicator),
             next=url_and_params(
                 IndicatorClientList.get_url(self.domain,
                                             render_as=self.render_next),
@@ -77,25 +78,9 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
     @memoized
     def data(self):
         return [self.group_display] + \
-               [self._nav_link(i) for i in self.data_provider.summary_indicators]
+               [self.nav_link(i) for i in self.data_provider.summary_indicators]
 
-    @memoized
-    def get_indicator_value(self, indicator):
-        return "%s/%s" % self.data_provider.get_indicator_data(indicator)
 
-    def get_chart(self, indicator):
-        # this is a serious hack for now
-        pie_class = 'sparkpie'
-        split = self.get_indicator_value(indicator).split("/")
-        chart_template = (
-            '<span data-numerator="{num}" '
-            'data-denominator="{denom}" class="{pie_class}"></span>'
-        )
-        if len(split) == 2:
-            return format_html(chart_template, num=split[0],
-                               denom=int(split[1]) - int(split[0]),
-                               pie_class=pie_class)
-        return ''  # no chart
 
 
 class MyPerformanceReport(IndicatorSummaryReport):
