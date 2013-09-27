@@ -5,7 +5,25 @@ from corehq.apps.reports.standard import CustomProjectReport
 
 domain = 'mikesproject'
 
-class LegacyReportView(CustomProjectReport):
+class LegacyMixin(object):
+    """
+    Contains logic specific to this report.
+    """
+
+    def site_strategy(self):
+        return [3, -1, 0, 4, 2]
+    
+    def site_game(self):
+        return [2, 4, 3, 1, 0]
+    
+    def individual_strategy(self):
+        return [2, 4, 0, 1, 3]
+    
+    def individual_game(self):
+        return [1, 2, 4, 1, 0]
+
+
+class LegacyReportView(LegacyMixin, CustomProjectReport):
     name = "Legacy Report"
     slug = "legacy"
     description = "Legacy Report for Pennsylvania State University"
@@ -38,8 +56,21 @@ class LegacyReportView(CustomProjectReport):
     @property
     def report_context(self):
         return {
-            'site_strategy': self.context_for([3, -1, 0, 4, 2], 'peace'),
-            'site_game': self.context_for([2, 4, 3, 1, 0], 'smiley'),
-            'individual_strategy': self.context_for([2, 4, 0, 1, 3], 'peace'),
-            'individual_game': self.context_for([1, 2, 4, 1, 0], 'smiley'),
+            'site_strategy': self.context_for(
+                self.site_strategy(), 'peace'),
+            'site_game': self.context_for(
+                self.site_game(), 'smiley'),
+            'individual_strategy': self.context_for(
+                self.individual_strategy(), 'peace'),
+            'individual_game': self.context_for(
+                self.individual_game(),'smiley'),
         }
+        # return dict(
+        #     (name, self.context_for(getattr(self, name)(), icon))
+        #     for name, icon in [
+        #         ('site_strategy', 'peace'),
+        #         ('site_game', 'smiley'),
+        #         ('individual_strategy', 'peace'),
+        #         ('individual_game', 'smiley'),
+        #     ]
+        # )

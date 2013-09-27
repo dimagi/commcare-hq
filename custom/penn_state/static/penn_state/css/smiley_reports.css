@@ -17,14 +17,6 @@
 	font-size: 20px;
 	margin: 10px;
 }
-
-body {
-  overflow-y:scroll;
-}
-
-text {
-  font: 12px sans-serif;
-}
 svg {
   display: block;
 }
