@@ -36,8 +36,8 @@ class SelectBlockField(ReportSelectField):
                       startkey=key,
                       endkey=key + [{}],
                       group_level=3).all():
-            _, case_type, block_name = r['key']
-            if block_name and (case_type == "pregnant_mother" or case_type == "baby"):
+            _, _, block_name = r['key']
+            if block_name:
                 yield block_name
 
 
