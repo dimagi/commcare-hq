@@ -15,7 +15,7 @@ CHILD_FOLLOWUP_XMLNS = "http://openrosa.org/formdesigner/C90C2C1F-3B34-47F3-B3A3
 def get_fixture_data():
     fixtures = FixtureDataItem.get_indexed_items(DOMAIN, 'condition_amounts',
         'condition')
-    return dict((k, int(fixture['rs_amount']))for k, fixture in fixtures.items())
+    return dict((k, int(fixture['rs_amount'])) for k, fixture in fixtures.items())
 
 # memoize or cache?
 def get_user_data_set():

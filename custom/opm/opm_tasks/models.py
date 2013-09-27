@@ -51,5 +51,4 @@ class OpmReportSnapshot(Document):
         ).first()
         if not snapshot:
             return None
-        print "*** pulling from snapshot ***"
         return cls.filtered(snapshot, report)

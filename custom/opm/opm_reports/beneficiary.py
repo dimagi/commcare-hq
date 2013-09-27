@@ -20,11 +20,12 @@ class Beneficiary(object):
     method_map = [
         # If you need to change any of these names, keep the key intact
         ('name', "List of Beneficiaries"),
+        ('husband_name', "Husband Name"),
         ('awc_name', "AWC Name"),
         ('bank_name', "Bank Name"),
+        ('bank_branch_name', "Bank Branch Name"),
+        ('bank_branch_code', "Bank Branch Code"),
         ('account_number', "Bank Account Number"),
-        # double check this variable name
-        ('ifsc_code', "IFC Code"),
         ('block', "Block Name"),
         ('village', "Village Name"),
         ('bp1_cash', "Birth Preparedness Form 1"),
@@ -36,13 +37,6 @@ class Beneficiary(object):
     ]
 
     def __init__(self, case, report):
-        # # check filters
-        # for key, field in [('awc_name', 'awcs'), ('block_name', 'blocks')]:
-        #     keys = report.filter_data.get(field, [])
-        #     if keys and case.get_case_property(key) not in keys:
-        #         raise InvalidRow
-        
-        # make sure worker passes the filters
         report.filter(lambda key: case.get_case_property(key))
 
         try:
@@ -51,10 +45,12 @@ class Beneficiary(object):
         except ResourceNotFound:
             raise InvalidRow
         self.name = self.fluff_doc.name
+        self.husband_name = self.fluff_doc.husband_name
         self.awc_name = self.fluff_doc.awc_name
         self.bank_name = self.fluff_doc.bank_name
+        self.bank_branch_name = self.fluff_doc.bank_branch_name
+        self.bank_branch_code = self.fluff_doc.bank_branch_code
         self.account_number = self.fluff_doc.account_number
-        self.ifsc_code = self.fluff_doc.ifsc_code
         self.block = self.fluff_doc.block
         self.village = self.fluff_doc.village
 

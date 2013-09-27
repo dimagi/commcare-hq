@@ -12,6 +12,7 @@ class BlockFilter(BaseMultipleOptionFilter):
     def options(self):
         return [(block, block) for block in get_user_data_set()['blocks']]
 
+
 class AWCFilter(BaseMultipleOptionFilter):
     slug = "awcs"
     label = "AWC"

@@ -64,9 +64,6 @@ class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
     @memoized
     def snapshot(self):
         return OpmReportSnapshot.from_view(self)
-        # start = self.datespan.startdate_utc
-        # return OpmReportSnapshot.by_month(start.month, start.year,
-        #     self.__class__.__name__)
 
     @property
     def headers(self):
@@ -144,7 +141,7 @@ class IncentivePaymentReport(BaseReport):
     model = Worker
 
     @property
-    @memoized # actually memoizing this might not be a good idea
+    @memoized
     def last_month_totals(self):
         last_month = self.datespan.startdate_utc - datetime.timedelta(days=4)
         snapshot = OpmReportSnapshot.by_month(last_month.month, last_month.year,
