@@ -5,7 +5,8 @@ from datetime import datetime, timedelta
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
-from custom.bihar.utils import get_team_members, get_all_owner_ids_from_group, SUPERVISOR_ROLES, FLW_ROLES, groups_for_user
+from custom.bihar.utils import (get_team_members, get_all_owner_ids_from_group, SUPERVISOR_ROLES, FLW_ROLES,
+    groups_for_user)
 
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.reports.standard import CustomProjectReport
