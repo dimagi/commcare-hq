@@ -61,24 +61,25 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
         }
     
 
-    def nav_link(self, indicator):
-        params = copy(self.request_params)
-        params['indicator'] = indicator.slug
-        del params['next_report']
-        return format_html(u'{chart}<a href="{next}">{val}</a>',
-            val=self.data_provider.get_indicator_value(indicator),
-            chart=self.data_provider.get_chart(indicator),
-            next=url_and_params(
-                IndicatorClientList.get_url(self.domain,
-                                            render_as=self.render_next),
-                params,
-        ))
 
     @property
     @memoized
     def data(self):
+        def _nav_link(indicator):
+            params = copy(self.request_params)
+            params['indicator'] = indicator.slug
+            del params['next_report']
+            return format_html(u'{chart}<a href="{next}">{val}</a>',
+                val=self.data_provider.get_indicator_value(indicator),
+                chart=self.data_provider.get_chart(indicator),
+                next=url_and_params(
+                    IndicatorClientList.get_url(self.domain,
+                                                render_as=self.render_next),
+                    params,
+            ))
+
         return [self.group_display] + \
-               [self.nav_link(i) for i in self.data_provider.summary_indicators]
+               [_nav_link(i) for i in self.data_provider.summary_indicators]
 
 
 
