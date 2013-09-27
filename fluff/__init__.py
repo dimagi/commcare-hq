@@ -31,8 +31,9 @@ class base_emitter(object):
                 if isinstance(v, dict):
                     if 'value' not in v:
                         v['value'] = 1
-                    assert v.get('group_by') is not None
-                    if isinstance(v['group_by'], tuple):
+                    if v.get('group_by') is None:
+                        v['group_by'] = None
+                    elif isinstance(v['group_by'], tuple):
                         v['group_by'] = list(v['group_by'])
                     elif not isinstance(v['group_by'], list):
                         v['group_by'] = [v['group_by']]
