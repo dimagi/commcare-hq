@@ -483,7 +483,7 @@ var DetailScreenConfig = (function () {
             }
 
             // set up the custom column
-            this.customColumn = Column.init({model: "case", format: "plain"}, this);
+            this.customColumn = Column.init({model: "case", format: "plain", includeInShort: false}, this);
             this.customColumn.field.on('change', function () {
                 that.customColumn.header.val(toTitleCase(this.val()));
                 if (this.val() && !field_val_re.test(this.val())) {
@@ -519,7 +519,8 @@ var DetailScreenConfig = (function () {
                         column = Column.init({
                             model: model,
                             field: property,
-                            header: header
+                            header: header,
+                            includeInShort: false
                         }, this);
                         initColumnAsSuggestion(column);
                         this.suggestedColumns.push(column);
