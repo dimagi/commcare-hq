@@ -3,7 +3,7 @@ from dimagi.utils.decorators.memoized import memoized
 from custom.bihar.calculations.types import DoneDueCalculator, TotalCalculator
 from custom.bihar.models import CareBiharFluff
 from custom.bihar.utils import get_all_owner_ids_from_group
-from custom.bihar.reports.indicators.clientlistdisplay import PreDeliveryDoneDueCLD, PreDeliveryCLD, PreDeliverySummaryCLD, PostDeliverySummaryCLD, ComplicationsCalculator
+from custom.bihar.reports.indicators.clientlistdisplay import PreDeliveryDoneDueCLD, PreDeliveryCLD, PreDeliverySummaryCLD, PostDeliverySummaryCLD, ComplicationsCalculator, PostDeliveryDoneDueCLD
 from django.utils.translation import ugettext_noop as _
 from django.utils.datastructures import SortedDict
 
@@ -32,17 +32,17 @@ INDICATOR_SETS = [
             {
                 "slug": "pnc",
                 "name": _("PNC Visits"),
-                "clientlistdisplay": PreDeliveryDoneDueCLD,
+                "clientlistdisplay": PostDeliveryDoneDueCLD,
             },
             {
                 "slug": "ebf",
                 "name": _("EBF Visits"),
-                "clientlistdisplay": PreDeliveryDoneDueCLD,
+                "clientlistdisplay": PostDeliveryDoneDueCLD,
             },
             {
                 "slug": "cf",
                 "name": _("CF Visits"),
-                "clientlistdisplay": PreDeliveryDoneDueCLD,
+                "clientlistdisplay": PostDeliveryDoneDueCLD,
             },
             {
                 "slug": "upcoming_deliveries",
