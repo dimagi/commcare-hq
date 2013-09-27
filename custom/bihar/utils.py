@@ -18,6 +18,12 @@ def get_team_members(group, roles=FLW_ROLES):
     return sorted([u for u in users if u.user_data.get('role', '') in roles],
                   key=lambda u: u.user_data['role'])
 
+def groups_for_user(user, domain):
+    if user.is_commcare_user():
+        return Group.by_user(user)
+    else:
+        # for web users just show everything?
+        return Group.by_domain(domain)
 
 def get_all_owner_ids(user_ids):
     all_group_ids = [

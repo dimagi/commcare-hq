@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
-from custom.bihar.utils import get_team_members, get_all_owner_ids_from_group, SUPERVISOR_ROLES, FLW_ROLES
+from custom.bihar.utils import get_team_members, get_all_owner_ids_from_group, SUPERVISOR_ROLES, FLW_ROLES, groups_for_user
 
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.reports.standard import CustomProjectReport
@@ -207,11 +207,7 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
 
     @memoized
     def _get_groups(self):
-        if self.request.couch_user.is_commcare_user():
-            groups = Group.by_user(self.request.couch_user)
-        else:
-            # for web users just show everything?
-            groups = Group.by_domain(self.domain)
+        groups = groups_for_user(self.request.couch_user, self.domain)
         return sorted(
             groups,
             key=lambda group: alphanumeric_sort_key(group.name)
