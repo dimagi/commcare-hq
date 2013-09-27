@@ -65,7 +65,7 @@ def custom_content_handler(reminder, handler, recipient):
     the next message to send.
     """
     case = reminder.case
-    order = ((reminder.schedule_iteration_num - 1) * 5) + reminder.current_event_sequence_num
+    order = ((reminder.schedule_iteration_num - 1) * 35) + reminder.current_event_sequence_num
     randomized_message = get_randomized_message(case, order)
     if randomized_message is None:
         randomize_messages(case)

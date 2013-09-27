@@ -333,6 +333,9 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
     
     if request.method == "POST":
         form = ComplexCaseReminderForm(request.POST)
+        form._cchq_is_superuser = request.couch_user.is_superuser
+        form._cchq_use_custom_content_handler = (h is not None and h.custom_content_handler is not None)
+        form._cchq_custom_content_handler = h.custom_content_handler if h is not None else None
         if form.is_valid():
             if h is None:
                 h = CaseReminderHandler(domain=domain)
@@ -368,6 +371,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
             h.recipient_case_match_property = form.cleaned_data["recipient_case_match_property"]
             h.recipient_case_match_type = form.cleaned_data["recipient_case_match_type"]
             h.recipient_case_match_value = form.cleaned_data["recipient_case_match_value"]
+            h.custom_content_handler = form.cleaned_data["custom_content_handler"]
             if form.cleaned_data["start_condition_type"] == "ON_DATETIME":
                 dt = parse(form.cleaned_data["start_datetime_date"]).date()
                 tm = parse(form.cleaned_data["start_datetime_time"]).time()
@@ -417,6 +421,8 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
                 "recipient_case_match_property" : h.recipient_case_match_property,
                 "recipient_case_match_type" : h.recipient_case_match_type,
                 "recipient_case_match_value" : h.recipient_case_match_value,
+                "use_custom_content_handler" : h.custom_content_handler is not None,
+                "custom_content_handler" : h.custom_content_handler,
             }
         else:
             initial = {
@@ -434,6 +440,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
         "form_list":    form_list,
         "handler_id":   handler_id,
         "sample_list":  sample_list,
+        "is_superuser" : request.couch_user.is_superuser,
     })
 
 

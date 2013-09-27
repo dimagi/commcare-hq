@@ -2,6 +2,7 @@ import json
 import re
 import pytz
 from datetime import timedelta, datetime
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.forms.fields import *
 from django.forms.forms import Form
@@ -199,6 +200,11 @@ class ComplexCaseReminderForm(Form):
     """
     A form used to create/edit CaseReminderHandlers with any type of schedule.
     """
+    _cchq_is_superuser = False
+    _cchq_use_custom_content_handler = False
+    _cchq_custom_content_handler = None
+    use_custom_content_handler = BooleanField(required=False)
+    custom_content_handler = TrimmedCharField(required=False)
     active = BooleanField(required=False)
     nickname = CharField(error_messages={"required":"Please enter the name of this reminder definition."})
     start_condition_type = CharField()
@@ -291,7 +297,26 @@ class ComplexCaseReminderForm(Form):
         
         self.initial["events"] = events
         self.initial["enable_advanced_time_choices"] = enable_advanced_time_choices
-    
+
+    def clean_use_custom_content_handler(self):
+        if self._cchq_is_superuser:
+            return self.cleaned_data.get("use_custom_content_handler")
+        else:
+            return self._cchq_use_custom_content_handler
+
+    def clean_custom_content_handler(self):
+        if self._cchq_is_superuser:
+            value = self.cleaned_data.get("custom_content_handler")
+            if self.cleaned_data.get("use_custom_content_handler"):
+                if value in settings.ALLOWED_CUSTOM_CONTENT_HANDLERS:
+                    return value
+                else:
+                    raise ValidationError(_("Invalid custom content handler."))
+            else:
+                return None
+        else:
+            return self._cchq_custom_content_handler
+
     def clean_max_iteration_count(self):
         if self.cleaned_data.get("iteration_type") == ITERATE_FIXED_NUMBER:
             max_iteration_count = self.cleaned_data.get("max_iteration_count_input")
@@ -465,7 +490,7 @@ class ComplexCaseReminderForm(Form):
                 time_window_length = None
             
             message = {}
-            if method in [METHOD_SMS, METHOD_SMS_CALLBACK]:
+            if (method in [METHOD_SMS, METHOD_SMS_CALLBACK]) and (not self.cleaned_data.get("use_custom_content_handler")):
                 for key in e["messages"]:
                     language = e["messages"][key]["language"].strip()
                     text = e["messages"][key]["text"].strip()
@@ -589,7 +614,7 @@ class ComplexCaseReminderForm(Form):
         events = cleaned_data.get("events")
         
         if (default_lang is not None) and (method is not None) and (events is not None):
-            if (method == "sms" or method == "callback"):
+            if (method in [METHOD_SMS, METHOD_SMS_CALLBACK]) and (not self.cleaned_data.get("use_custom_content_handler")):
                 for e in events:
                     if default_lang not in e.message:
                         self._errors["events"] = self.error_class(["Every message must contain a translation for the default language."])

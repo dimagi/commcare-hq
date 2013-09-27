@@ -388,6 +388,11 @@ class CaseReminderHandler(Document):
     # stop condition
     until = StringProperty()
 
+    # If present, defines the name of a function that should be called to retrieve the sms content to send in an sms reminder.
+    # Note that the functions allowed to be here should be defined in settings.ALLOWED_CUSTOM_CONTENT_HANDLERS.
+    # The signature of a custom content handler should be function(reminder, handler, recipient)
+    custom_content_handler = StringProperty()
+
     @property
     def uses_parent_case_property(self):
         events_use_parent_case_property = False
