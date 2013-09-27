@@ -4,6 +4,7 @@ from corehq.apps.groups.models import Group
 from dimagi.utils.couch.database import get_db
 from django.utils.translation import ugettext as _
 
+
 class SelectPNCStatusField(ReportSelectField):
     slug = "PNC_status"
     name = ugettext_noop("Status")
@@ -12,6 +13,7 @@ class SelectPNCStatusField(ReportSelectField):
     default_option = "Select PNC Status"
     options = [dict(val="On Time", text=ugettext_noop("On time")),
                dict(val="Late", text=ugettext_noop("Late"))]
+
 
 class SelectBlockField(ReportSelectField):
     slug = "block"
@@ -29,10 +31,15 @@ class SelectBlockField(ReportSelectField):
 
     @classmethod
     def get_blocks(cls, domain):
-        for r in get_db().view("case/get_lite").all():
-            row =  dict(r['value'])
-            if(row.has_key('block') and row.get('block') !=''):
-                yield row.get('block')
+        key = [domain]
+        for r in get_db().view('crs_reports/field_block',
+                      startkey=key,
+                      endkey=key + [{}],
+                      group_level=3).all():
+            _, case_type, block_name = r['key']
+            if block_name and (case_type == "pregnant_mother" or case_type == "baby"):
+                yield block_name
+
 
 class SelectSubCenterField(ReportSelectField):
     slug = "sub_center"
@@ -41,6 +48,7 @@ class SelectSubCenterField(ReportSelectField):
     cssClasses = "span3"
     default_option = "Select Sub Center"
     options = []
+
 
 class SelectASHAField(SelectCaseOwnerField):
     name = ugettext_noop("ASHA")

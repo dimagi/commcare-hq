@@ -89,8 +89,8 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        # return user and user.is_previewer()
-        return False
+        return user and user.is_previewer()
+        #return False
 
     @property
     @memoized
@@ -174,7 +174,7 @@ class HBNCMotherReport(BaseHNBCReport):
                     filters.append({'term': {'case_pp_%s_done' % i: 'yes'}})
             else:
                 for i in range(1, 8):
-                    or_stmt.append( {"not": {'term': {'case_pp_%s_done' % i: 'yes'}}})
+                    or_stmt.append({"not": {'term': {'case_pp_%s_done' % i: 'yes'}}})
                 or_stmt = {'or': or_stmt}
                 filters.append(or_stmt)
 
