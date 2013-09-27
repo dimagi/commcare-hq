@@ -692,7 +692,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             return self.username
 
     def html_username(self):
-        username = self.username
+        username = self.raw_username
         if '@' in username:
             html = "<span class='user_username'>%s</span><span class='user_domainname'>@%s</span>" % \
                    tuple(username.split('@'))
