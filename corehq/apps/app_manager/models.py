@@ -18,6 +18,8 @@ from urllib2 import urlopen
 from urlparse import urljoin
 from lxml import etree
 
+import types
+from django.contrib.auth.hashers import make_password
 from django.core.cache import cache
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
@@ -26,7 +28,6 @@ from corehq.apps.app_manager.const import APP_V1, APP_V2
 from couchdbkit.exceptions import BadValueError
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
-from django.contrib.auth.models import get_hexdigest
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.template.loader import render_to_string
@@ -1242,11 +1243,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         return self._latest_saved
 
     def set_admin_password(self, raw_password):
-        import random
-        algo = 'sha1'
-        salt = get_hexdigest(algo, str(random.random()), str(random.random()))[:5]
-        hsh = get_hexdigest(algo, salt, raw_password)
-        self.admin_password = '%s$%s$%s' % (algo, salt, hsh)
+        salt = os.urandom(5).encode('hex')
+        self.admin_password = make_password(raw_password, salt=salt)
 
         if raw_password.isnumeric():
             self.admin_password_charset = 'n'
