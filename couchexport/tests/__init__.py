@@ -1,3 +1,4 @@
+from .test_cleanup_attachments import *
 from .test_raw import *
 from .test_saved import *
 from .test_schema import *

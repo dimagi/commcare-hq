@@ -7,7 +7,7 @@ from dimagi.utils.couch.database import get_db, iter_docs
 from couchexport import writers
 from soil import DownloadBase
 from dimagi.utils.decorators.memoized import memoized
-from couchexport.util import get_schema_index_view_keys
+from couchexport.util import get_schema_index_view_keys, clear_attachments
 from datetime import datetime
 
 class ExportConfiguration(object):
@@ -17,7 +17,7 @@ class ExportConfiguration(object):
     """
     
     def __init__(self, database, schema_index, previous_export=None, filter=None,
-                 disable_checkpoints=False):
+                 disable_checkpoints=False, cleanup_fn=clear_attachments):
         self.database = database
         if len(schema_index) > 2:
             schema_index = schema_index[0:2]
@@ -28,6 +28,7 @@ class ExportConfiguration(object):
         self.timestamp = datetime.utcnow()
         self.potentially_relevant_ids = self._potentially_relevant_ids()
         self.disable_checkpoints = disable_checkpoints
+        self.cleanup_fn = cleanup_fn
 
     def include(self, document):
         """
@@ -35,6 +36,14 @@ class ExportConfiguration(object):
         otherwise false
         """
         return self.filter(document) if self.filter else True
+
+    def cleanup(self, document_or_schema):
+        """
+        Given a doc or schema, pass it through a cleanup function prior to mapping
+        to remove potential unwanted properties. One example of this is to remove
+        the overly verbose _attachments fields.
+        """
+        return self.cleanup_fn(document_or_schema) if self.cleanup_fn else document_or_schema
 
     @property
     @memoized
@@ -68,7 +77,7 @@ class ExportConfiguration(object):
         """
         for i, doc in enumerate(self.get_potentially_relevant_docs()):
             if self.include(doc):
-                yield i, doc
+                yield i, self.cleanup(doc)
 
     def get_docs(self):
         for _, doc in self.enum_docs():
@@ -80,10 +89,10 @@ class ExportConfiguration(object):
     @memoized
     def get_latest_schema(self):
         last_export = self.last_checkpoint()
-        schema = dict(last_export.schema) if last_export else None
+        schema = self.cleanup(dict(last_export.schema) if last_export else None)
         doc_ids = last_export.get_new_ids(self.database) if last_export else self.all_doc_ids
         for doc in iter_docs(self.database, doc_ids):
-            schema = extend_schema(schema, doc)
+            schema = extend_schema(schema, self.cleanup(doc))
         return schema
 
     def create_new_checkpoint(self):
@@ -286,7 +295,6 @@ def fit_to_schema(doc, schema):
         #log("%s is not a string" % doc)
             doc = unicode(doc)
         return doc
-
 
 def get_headers(schema, separator="|"):
     return format_tables(
