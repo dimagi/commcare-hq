@@ -37,6 +37,7 @@ class DOTCalendarReporter(object):
             observations = query_observations(case_id, self.start_date, self.end_date)
         else:
             observations = query_observations_singledoc(self.single_submit)
+
         return sorted(observations, key=lambda x: x['observed_date'])
 
     def __init__(self, patient_casedoc, start_date=None, end_date=None, submit_id=None):

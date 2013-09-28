@@ -14,42 +14,17 @@
         </div>
         <div class="span9">
 
-            {% if selected_plan %}
-                <h3>{{ selected_plan.title }}</h3>
-                <p>{{ selected_plan.description }}</p>
-                <table class="table table-striped"
-                    <thead>
-                    <tr>
-                        <th>Plan Item</th>
-                        <th>Status</th>
-                        <th>Issues</th>
-                        <th>Due</th>
-                    </tr>
-                    </thead>
-                    {% for item in selected_plan.plan_items %}
-                        <tr>
-                            <td>
-                                <strong>{{ item.title }}</strong><br>
-                                {{ item.description }}
-                            </td>
-                            <td>
-                                {{ item.status }}
-                            </td>
-                            <td>
-                                {{ item.issue_container }}
-                            </td>
-                            <td>
-                                {% if item.due_date %}
-                                {{ item.due_date }}
-                                {% else %}
+{% load case_tags %}
 
-                                {% endif %}
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </table>
-            {% endif %}
+{% block patient-tab-container %}
+<script>
+    // have to do this here too because this page is loaded asynchronously
+    $(function () {
+        $(".timeago").timeago();
+    });
+</script>
 
-        </div>
-    </div>
+<div class="row">
+    {% render_case_hierarchy case case_hierarchy_options %}
+</div>
 {% endblock %}

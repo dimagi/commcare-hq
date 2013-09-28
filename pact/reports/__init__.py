@@ -1,15 +1,11 @@
 import dateutil
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
-from corehq.apps.reports.generic import ElasticTabularReport
+from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
 
 
 class PactPatientDispatcher(CustomProjectReportDispatcher):
     prefix = 'pactpatient'
-    #    map_name = ''
-
-    #    prefix = 'adm_section'
-    #    map_name = 'ADM_SECTION_MAP'
 
     def dispatch(self, request, *args, **kwargs):
         ret =  super(PactPatientDispatcher, self).dispatch(request, *args, **kwargs)
@@ -19,7 +15,7 @@ class PactPatientDispatcher(CustomProjectReportDispatcher):
         return self.report_map.get(domain, {})
 
 
-class PactElasticTabularReportMixin(CustomProjectReport, ElasticTabularReport, ProjectReportParametersMixin):
+class PactElasticTabularReportMixin(CustomProjectReport, ElasticProjectInspectionReport, ProjectReportParametersMixin):
     def format_date(self, date_string, format="%Y-%m-%d"):
         try:
             date_obj = dateutil.parser.parse(date_string)
@@ -29,7 +25,7 @@ class PactElasticTabularReportMixin(CustomProjectReport, ElasticTabularReport, P
 
 
 class PactDrilldownReportMixin(object):
-    # this is everything that's shared amongst the Bihar supervision reports
+    # this is everything that's shared amongst the Pact reports
     # this class is an amalgamation of random behavior and is just
     # for convenience
 
@@ -49,11 +45,3 @@ class PactDrilldownReportMixin(object):
     @classmethod
     def show_in_navigation(cls, *args, **kwargs):
         return False
-        #
-#    @property
-#    def report_context(self):
-#        raise NotImplementedError("Todo")
-
-
-
-

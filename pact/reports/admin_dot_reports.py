@@ -41,7 +41,14 @@ class PactDOTAdminReport(GenericTabularReport, CustomProjectReport):
             startkey = [start_date.year, start_date.month, start_date.day]
             endkey = [end_date.year, end_date.month, end_date.day]
         skip = 0
-        view_results = CObservation.view('pact/dots_observations', startkey=startkey, endkey=endkey, limit=COUCH_CHUNK_LIMIT, skip=skip).all()
+        view_results = CObservation.view(
+            'pact/dots_observations',
+            startkey=startkey,
+            endkey=endkey,
+            limit=COUCH_CHUNK_LIMIT,
+            skip=skip,
+            classes={None: CObservation},
+        ).all()
         while len(view_results) > 0:
             if skip > COUCH_MAX_LIMIT:
                 logging.error("Pact DOT admin query: Too much data returned for query %s-%s" % (startkey, endkey))
@@ -49,7 +56,14 @@ class PactDOTAdminReport(GenericTabularReport, CustomProjectReport):
             for v in view_results:
                 yield v
             skip += COUCH_CHUNK_LIMIT
-            view_results = CObservation.view('pact/dots_observations', startkey=startkey, endkey=endkey, limit=COUCH_CHUNK_LIMIT, skip=skip).all()
+            view_results = CObservation.view(
+                'pact/dots_observations',
+                startkey=startkey,
+                endkey=endkey,
+                limit=COUCH_CHUNK_LIMIT,
+                skip=skip,
+                classes={None: CObservation},
+            ).all()
 
     @property
     def headers(self):
@@ -90,7 +104,6 @@ class PactDOTAdminReport(GenericTabularReport, CustomProjectReport):
 
         if case_id == '':
             mode = 'all'
-            case_id = None
         else:
             mode = ''
 

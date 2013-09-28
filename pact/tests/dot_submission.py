@@ -50,9 +50,10 @@ class dotsSubmissionTests(TestCase):
 
         nonart_case_regimens = regimen_dict_from_choice(DOT_NONART, "morning,evening,bedtime")
         art_case_regimens = regimen_dict_from_choice(DOT_ART, "morning,noon")
-        props= {'_id': CASE_ID}
+        props= {'_id': CASE_ID, 'dot_status': 'DOT1', 'domain': self.domain.name}
         props.update(nonart_case_regimens)
         props.update(art_case_regimens)
+
         case = CommCareCase(**props)
         case.save()
 

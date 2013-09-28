@@ -9,7 +9,9 @@
                     &nbsp;&nbsp;
 
                     &nbsp;<a class="btn" {% if not notabs %}target="_blank"{% endif %} href="{{ cloudcare_pn_url }}">New Progress Note</a>
+                    {% if patient_doc.dot_status != "" %}
                     &nbsp;<a class="btn" {% if not notabs %}target="_blank"{% endif %} href="{{ cloudcare_dot_url }}">New DOT</a>
+                    {% endif %}
                     &nbsp;<a class="btn" {% if not notabs %}target="_blank"{% endif %} href="{{ cloudcare_bw_url }}">New Bloodwork</a>
                 </h4>
             </div>
@@ -21,14 +23,14 @@
                         <th>DOB</th>
                         <td>{{ patient_doc.dob|date:"m/d/Y" }} ({{ patient_doc.dob|timesince }})</td>
                         <th>Gender</th>
-                        <td>{{ patient_doc.get_gender_display}}</td>
+                        <td>{{ patient_doc.gender_display}}</td>
                         <th>SSN</th>
                         <td>{{ patient_doc.ssn }}</td>
                     </tr>
 
                     <tr>
                         <th class="span3">Race</th>
-                        <td>{{ patient_doc.get_race_display}}</td>
+                        <td>{{ patient_doc.race_display}}</td>
                         <th class="span3">Latino</th>
                         <td>{% if  patient_doc.is_latino %}
                             Yes
@@ -43,11 +45,11 @@
                         <th>Primary HP</th>
                         <td><span class="label label-info">{{ patient_doc.hp }}</span></td>
                         <th>HP Status</th>
-                        <td><span class="label label-info">{{ patient_doc.get_hp_status_display }}</span></td>
+                        <td><span class="label label-info">{{ patient_doc.hp_status_display }}</span></td>
                         <th>DOT Status</th>
                         <td>
                             {% if patient_doc.is_dot %}
-                               <a href="/a/{{ domain }}/reports/custom/dots/?dot_patient={{ patient_doc.get_id }}"{{ patient_doc.get_dot_status_display }}>{{ patient_doc.get_dot_status_display }}</a>
+                               <a href="/a/{{ domain }}/reports/custom/dots/?dot_patient={{ patient_doc.get_id }}">{{ patient_doc.dot_status_display }}</a>
                             {% else %}
                                <span class="label">No DOT</span>
                             {% endif %}

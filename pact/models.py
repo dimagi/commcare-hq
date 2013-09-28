@@ -1,4 +1,5 @@
 from functools import partial
+from django.utils.translation import ugettext as _
 import uuid
 from dateutil.parser import parser
 import simplejson
@@ -56,32 +57,31 @@ class DOTSubmission(XFormInstance):
 
 
 class PactPatientCase(CommCareCase):
-#class PactPatientCase(Document):
-    def __init__(self, *args, **kwargs):
-        super(PactPatientCase, self).__init__(*args, **kwargs)
-
-        self._set_display_methods()
+    class Meta:
+        app_label='pact'
 
     @memoized
     def get_user_map(self):
         domain_users = CommCareUser.by_domain(enums.PACT_DOMAIN)
         return dict((du.get_id, du.username_in_report) for du in domain_users)
 
-    def _set_display_methods(self):
-        properties =[
-                    ('race', enums.PACT_RACE_CHOICES_DICT),
-                     ('gender', enums.GENDER_CHOICES_DICT),
-                     ('preferred_language', enums.PACT_LANGUAGE_CHOICES_DICT),
-                     ('hp_status',enums.PACT_HP_CHOICES_DICT),
-                     ('dot_status', enums.PACT_DOT_CHOICES_DICT),
-                     ('artregimen',enums.PACT_REGIMEN_CHOICES_FLAT_DICT),
-                     ('nonartregimen',enums.PACT_REGIMEN_CHOICES_FLAT_DICT),
-                     ('hiv_care_clinic', enums.PACT_HIV_CLINIC_CHOICES_DICT),
-                     ('primary_hp', self.get_user_map),
-                     ]
-        for prop, source_dict in properties:
-            setattr(self, 'get_%s_display' % prop, partial(self._get_display_string, prop, source_dict))
+    @property
+    def gender_display(self):
+        return self._get_display_string('gender', enums.GENDER_CHOICES_DICT)
 
+    @property
+    def race_display(self):
+        return self._get_display_string('race', enums.PACT_RACE_CHOICES_DICT)
+
+    @property
+    def hp_status_display(self):
+        return self._get_display_string(
+            'hp_status', enums.PACT_HP_CHOICES_DICT)
+
+    @property
+    def dot_status_display(self):
+        return self._get_display_string(
+            'dot_status', enums.PACT_DOT_CHOICES_DICT)
 
     def update_providers(self, cc_user, provider_ids):
         from pact.api import submit_case_update_form
@@ -307,9 +307,74 @@ class PactPatientCase(CommCareCase):
                 number = getattr(self, "Phone%d" % ix, None)
                 if number is not None and number != "":
                     yield {'id': ix, 'number': number, "type": getattr(self, "Phone%dType" % ix)}
+  
+    @property
+    def related_cases_columns(self):
+        return [
+            {
+                'name': _('Status'),
+                'expr': "status",
+            },
+            {
+                'name': _('Follow-Up Date'),
+                'expr': "date_followup",
+                'parse_date': True,
+                'timeago': True,
+            },
+            {
+                'name': _('Date Modified'),
+                'expr': "modified_on",
+                'parse_date': True,
+                'timeago': True,
+            }
+        ]
 
-    class Meta:
-        app_label='pact'
+    @property
+    def related_type_info(self):
+        """For Care Plan module"""
+        PACT_CLOUD_APP_ID = "615bff7178e2a14eeddd2cddbed60b79" 
+
+        return {
+            "cc_path_client": {
+                "case_id_attr": "case_id",
+                "child_type": "pact_careplan_goal",
+            },
+            "pact_careplan_goal": {
+                'type_name': _("Goal"),
+                'open_sortkeys': (('date_followup', 'asc'),),
+                'closed_sortkeys': (('closed_on', 'desc'),),
+
+                # should get these automatically from xmlns
+                "app_id": PACT_CLOUD_APP_ID,
+                "edit_module_id": "1",
+                "edit_form_id": "3",
+                "create_module_id": "1",
+                "create_form_id": "0",
+                "case_id_attr": "case_id_goal",
+                "child_type": "pact_careplan_task",
+                "description_property": "description",
+
+                #'create_form_xmlns': "http://dev.commcarehq.org/pact/careplan/goal/create",
+                #'update_form_xmlns': "http://dev.commcarehq.org/pact/careplan/goal/update"
+            },
+            "pact_careplan_task": {
+                'type_name': _("Task"),
+                'open_sortkeys': (('date_followup', 'asc'),),
+                'closed_sortkeys': (('closed_on', 'desc'),),
+               
+                'app_id': PACT_CLOUD_APP_ID,
+                "edit_module_id": "1",
+                "edit_form_id": "2",
+                "create_module_id": "1",
+                "create_form_id": "1",
+                "case_id_attr": "case_id_task",
+                "description_property": "description",
+
+                #'create_form_xmlns': "http://dev.commcarehq.org/pact/careplan/task/create",
+                #'update_form_xmlns': "http://dev.commcarehq.org/pact/careplan/task/update"
+            },
+        }
+
 
 
 

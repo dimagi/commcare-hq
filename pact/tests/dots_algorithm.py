@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import random
 from django.test import TestCase
 from pact.dot_data import cmp_observation, sort_observations
-from pact.enums import DOT_ADHERENCE_EMPTY, DOT_OBSERVATION_DIRECT, DOT_OBSERVATION_PILLBOX, DOT_OBSERVATION_SELF
+from pact.enums import DOT_ADHERENCE_EMPTY, DOT_OBSERVATION_DIRECT, DOT_OBSERVATION_PILLBOX, DOT_OBSERVATION_SELF, DOT_ADHERENCE_UNCHECKED
 from pact.models import CObservation
 
 
@@ -14,6 +14,11 @@ def _observationGenerator(encounter_date, observation_date, adherence=DOT_ADHERE
 def generateDirect(encounter_date, observation_date, adherence=DOT_ADHERENCE_EMPTY):
     obs = _observationGenerator(encounter_date,observation_date, adherence=adherence)
     obs.method=DOT_OBSERVATION_DIRECT
+    return obs
+
+def generateUnchecked(encounter_date, observation_date, adherence=DOT_ADHERENCE_UNCHECKED):
+    obs = _observationGenerator(encounter_date, observation_date, adherence=adherence)
+    obs.method = DOT_OBSERVATION_PILLBOX
     return obs
 
 def generateReconciliation():
@@ -43,12 +48,39 @@ class dotsAlgorithmTests(TestCase):
 
 
     def testDirectTrumpsAll(self):
-
         direct = generateDirect(self.encounter_dates[0], self.observed_date)
+
         self_report = generateSelf(self.encounter_dates[0], self.observed_date)
+        unchecked = generateUnchecked(self.encounter_dates[0], self.observed_date)
+        pillbox = generatePillbox(self.encounter_dates[0], self.observed_date)
 
         self.assertEqual(cmp_observation(direct, self_report), 1)
         self.assertEqual(cmp_observation(self_report, direct), -1)
+
+        self.assertEqual(cmp_observation(unchecked, direct), -1)
+        self.assertEqual(cmp_observation(direct, unchecked), 1)
+
+        self.assertEqual(cmp_observation(pillbox, direct), -1)
+        self.assertEqual(cmp_observation(direct, pillbox), 1)
+
+    def testAllTrumpUnchecked(self):
+        """
+        verify to make sure that an "unchecked", "pillbox" entry always loses to any real data.
+        """
+        unchecked = generateUnchecked(self.encounter_dates[0], self.observed_date)
+
+        direct = generateDirect(self.encounter_dates[0], self.observed_date)
+        self_report = generateSelf(self.encounter_dates[0], self.observed_date)
+        pillbox = generatePillbox(self.encounter_dates[0], self.observed_date)
+
+        self.assertEqual(cmp_observation(unchecked, self_report), -1)
+        self.assertEqual(cmp_observation(self_report, unchecked), 1)
+
+        self.assertEqual(cmp_observation(unchecked, direct), -1)
+        self.assertEqual(cmp_observation(direct, unchecked), 1)
+
+        self.assertEqual(cmp_observation(unchecked, pillbox), -1)
+        self.assertEqual(cmp_observation(pillbox, unchecked), 1)
 
 
     def testDirects(self):
@@ -86,11 +118,7 @@ class dotsAlgorithmTests(TestCase):
         num = 8
         observed_date = datetime.utcnow()
         encounter_dates = [datetime.utcnow()-timedelta(days=x) for x in range(num)]
-
-
-
         #whole bunch of others
-
         no_direct = [generateAny(x, observed_date) for x in encounter_dates]
         no_direct_winner = no_direct[-1] #earliest is last
 
@@ -108,6 +136,11 @@ class dotsAlgorithmTests(TestCase):
         with_direct_sorted = sort_observations(with_direct)
         self.assertEqual(direct.encounter_date, with_direct_sorted[0].encounter_date)
         self.assertEqual(direct.method, with_direct_sorted[0].method)
+
+    def testDayCellSort(self):
+        day1 = [[['unchecked', 'pillbox', '', 0], ['empty', 'pillbox', '', 3]], [['unchecked', 'pillbox', '', 0], ['empty', 'pillbox', '', 3]]]
+        day2 = [[['full', 'pillbox', '', 0], ['unchecked', 'pillbox', '', 3]], [['full', 'self', '', 0], ['unchecked', 'pillbox', '', 3]]]
+
 
 
 

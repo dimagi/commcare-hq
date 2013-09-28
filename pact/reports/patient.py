@@ -1,14 +1,9 @@
 from django.core.urlresolvers import reverse
 from django.http import Http404
-from django.template.context import RequestContext
 import simplejson
 from corehq.apps.api.es import FullXFormES
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
-from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.standard import CustomProjectReport
-from corehq.apps.reports.standard.inspect import ElasticTabularReport
 from dimagi.utils import html
-from dimagi.utils.decorators.memoized import memoized
 from pact.enums import PACT_DOMAIN
 from pact.forms.patient_form import PactPatientForm
 from pact.forms.weekly_schedule_form import ScheduleForm
@@ -101,9 +96,17 @@ class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMix
             ret['patient_form'] = the_form
             self.report_template_path = "pact/patient/pactpatient_edit.html"
         elif view_mode == 'providers':
-
-
             self.report_template_path = "pact/patient/pactpatient_providers.html"
+        elif view_mode == 'careplan':
+            ret.update({
+                'case_hierarchy_options': {
+                    "show_view_buttons": False,
+                    "get_case_url": lambda case_id: reverse(
+                        'case_details', args=[PACT_DOMAIN, case_id])
+                },
+                'case': patient_doc,
+            })
+            self.report_template_path = "pact/patient/pactpatient_careplan.html"
         else:
             raise Http404
         return ret
@@ -163,14 +166,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMix
 
     @property
     def rows(self):
-        """
-            Override this method to create a functional tabular report.
-            Returns 2D list of rows.
-            [['row1'],[row2']]
-        """
         if self.request.GET.has_key('patient_id'):
-            rows = []
-
             def _format_row(row_field_dict):
                 yield html.mark_safe("<a class='ajax_dialog' href='%s'>View</a>" % (
                 reverse('render_form_data', args=[self.domain, row_field_dict['_id']])))

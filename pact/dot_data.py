@@ -1,13 +1,19 @@
 import logging
-import pdb
 import dateutil
 from django.conf import settings
-from datetime import datetime, timedelta
 from pytz import timezone
-from pact.enums import DAY_SLOTS_BY_TIME, DOT_DAYS_INTERVAL, DOT_ART, DOT_NONART, CASE_ART_REGIMEN_PROP, CASE_NONART_REGIMEN_PROP
+from datetime import datetime, timedelta, date
+from pact.enums import DAY_SLOTS_BY_TIME, \
+    DOT_DAYS_INTERVAL, \
+    DOT_ART, \
+    DOT_NONART, \
+    CASE_ART_REGIMEN_PROP, \
+    CASE_NONART_REGIMEN_PROP, \
+    DOT_OBSERVATION_PILLBOX, \
+    DOT_ADHERENCE_UNCHECKED, \
+    DOT_OBSERVATION_DIRECT,\
+    DOT_UNCHECKED_CELL
 
-from datetime import date
-from pact.enums import    DOT_OBSERVATION_DIRECT
 from pact.models import CObservation
 
 
@@ -62,8 +68,7 @@ class DOTDay(object):
         else:
             drug_attr='nonart'
         getattr(self,drug_attr).update_total_doses(obs)
-        if not getattr(self, drug_attr).has_obs(obs):
-            getattr(self, drug_attr).add_obs(obs)
+        getattr(self, drug_attr).add_obs(obs)
 
     @classmethod
     def merge_from_observations(cls, day_observations):
@@ -80,8 +85,6 @@ class DOTDay(object):
 
 
     def to_case_json(self, casedoc, regimen_labels):
-#        pass
-#    def get_day_elements(casedoc, day_data):
         """
         Return the json representation of a single days nonart/art data that is put back into the caseblock, sent to phone, sent back from phone
 
@@ -99,8 +102,7 @@ class DOTDay(object):
                 else:
                     day_note = ''
 
-                return [obs.adherence, obs.method, day_note, day_slot] #todo, add regimen_item
-
+                return [obs.adherence, obs.method, day_note, day_slot]
                 #one and done per array
             else:
                 #return pristine unchecked
@@ -111,7 +113,6 @@ class DOTDay(object):
         for ix, dose_data in enumerate([self.nonart, self.art]):
             drug_arr = []
             labels_arr = regimen_labels[ix]
-            #for dose_num, obs_list in day_data[drug_type]['dose_dict'].items():
             dose_nums = dose_data.dose_dict.keys()
             dose_nums.sort()
             for dose_num in dose_nums:
@@ -138,8 +139,8 @@ class DOTDay(object):
 
 def filter_obs_for_day(this_date, observations):
     assert this_date.__class__ == date
-    #todo, normalize for timezone
     ret = filter(lambda x: x['observed_date'].date() == this_date, observations)
+
     return ret
 
 
@@ -151,7 +152,9 @@ def query_observations(case_id, start_date, end_date):
     """
     startkey = [case_id, 'anchor_date', start_date.year, start_date.month, start_date.day]
     endkey = [case_id, 'anchor_date', end_date.year, end_date.month, end_date.day]
-    observations = CObservation.view('pact/dots_observations', startkey=startkey, endkey=endkey).all()
+    observations = CObservation.view('pact/dots_observations',
+                                     startkey=startkey, endkey=endkey,
+                                     classes={None: CObservation}).all()
     return observations
 
 def query_observations_singledoc(doc_id):
@@ -159,7 +162,8 @@ def query_observations_singledoc(doc_id):
     Hit couch to get the CObservations for a single xform submission
     """
     key = ['doc_id', doc_id]
-    observations = CObservation.view('pact/dots_observations', key=key).all()
+    observations = CObservation.view('pact/dots_observations', key=key,
+                                     classes={None: CObservation}).all()
     return observations
 
 def cmp_observation(x, y):
@@ -180,18 +184,18 @@ def cmp_observation(x, y):
 
     assert x.observed_date.date() == y.observed_date.date()
     #Reconcilation handling
+    #reconciliations always win.
     if (hasattr(x, 'is_reconciliation') and getattr(x, 'is_reconciliation')) and (hasattr(y, 'is_reconciliation') and getattr(y, 'is_reconciliation')):
         #sort by earlier date, so flip x,y
         return cmp(y.submitted_date, x.submitted_date)
-
     elif (hasattr(x, 'is_reconciliation') and getattr(x, 'is_reconciliation')) and (not hasattr(y,'is_reconciliation') or not getattr(y, 'is_reconciliation')):
         # result: x > y
         return 1
     elif (not hasattr(x, 'is_reconciliation') or not getattr(x, 'is_reconciliation')) and (hasattr(y, 'is_reconciliation') and getattr(y, 'is_reconciliation')):
         # result: x < y
         return -1
-
-    if x.method == DOT_OBSERVATION_DIRECT and y.method == DOT_OBSERVATION_DIRECT:
+    elif x.method == DOT_OBSERVATION_DIRECT and y.method == DOT_OBSERVATION_DIRECT:
+        #Direct observations win next
         #sort by earlier date, so flip x,y
         return cmp(y.encounter_date, x.encounter_date)
     elif x.method == DOT_OBSERVATION_DIRECT and y.method != DOT_OBSERVATION_DIRECT:
@@ -200,8 +204,12 @@ def cmp_observation(x, y):
     elif x.method != DOT_OBSERVATION_DIRECT and y.method == DOT_OBSERVATION_DIRECT:
         #result: x < y
         return -1
+    elif (x.adherence, x.method) == DOT_UNCHECKED_CELL and (y.adherence, y.method) != DOT_UNCHECKED_CELL:
+        #unchecked should always lose
+        return -1
+    elif (x.adherence, x.method) != DOT_UNCHECKED_CELL and (y.adherence, y.method) == DOT_UNCHECKED_CELL:
+        return 1
     else:
-        #sort by earlier date, so flip x,y
         return cmp(y.encounter_date, x.encounter_date)
 
 def sort_observations(observations):
@@ -276,7 +284,6 @@ def get_dots_case_json(casedoc, anchor_date=None):
 
     ret['days'] = []
     #dmyung - hack to have query_observations be timezone be relative specific to the eastern seaboard
-    #ret['anchor'] = isodate.strftime(datetime.now(tz=timezone(settings.TIME_ZONE)), "%d %b %Y")
     ret['anchor'] = anchor_date.strftime("%d %b %Y")
 
     observations = query_observations(casedoc._id, enddate-timedelta(days=DOT_DAYS_INTERVAL),enddate)

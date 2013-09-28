@@ -2,9 +2,6 @@ from django.core.urlresolvers import NoReverseMatch, reverse
 from django.http import Http404
 from corehq.apps.api.es import FullCaseES, FullXFormES
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.standard import CustomProjectReport
-from corehq.apps.reports.standard.inspect import ElasticTabularReport
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils import html
 from dimagi.utils.decorators.memoized import memoized
@@ -27,9 +24,6 @@ class PactCHWProfileReport(PactDrilldownReportMixin, PactElasticTabularReportMix
 
     hide_filters = True
     filters = []
-    #    fields = ['corehq.apps.reports.fields.FilterUsersField', 'corehq.apps.reports.fields.DatespanField',]
-    #    hide_filters=False
-
 
     def pact_case_link(self, case_id):
         #stop the madness
@@ -69,7 +63,6 @@ class PactCHWProfileReport(PactDrilldownReportMixin, PactElasticTabularReportMix
             if x['dot_status'] is not None or x['dot_status'] != "":
                 x['dot_url'] = self.pact_dot_link(x['_id'])
         return sorted(assigned_patients, key=lambda x: int(x['pactid']))
-        #return assigned_patients
 
 
     def get_fields(self):
@@ -91,9 +84,13 @@ class PactCHWProfileReport(PactDrilldownReportMixin, PactElasticTabularReportMix
     def report_context(self):
         user_doc = self.get_user()
         self.view_mode = self.request.GET.get('view', 'info')
-        ret = {'user_doc': user_doc}
-        ret['view_mode'] = self.view_mode
-        ret['chw_root_url'] = PactCHWProfileReport.get_url(*[self.request.domain]) + "?chw_id=%s" % self.request.GET['chw_id']
+        self.interval = self.request.GET.get('interval', 7)
+
+        ret = {
+            'user_doc': user_doc,
+            'view_mode': self.view_mode,
+            'chw_root_url': PactCHWProfileReport.get_url(*[self.request.domain]) + "?chw_id=%s" % self.request.GET['chw_id']
+        }
 
         if self.view_mode == 'info':
             self.hide_filters = True
@@ -106,7 +103,7 @@ class PactCHWProfileReport(PactDrilldownReportMixin, PactElasticTabularReportMix
             return tabular_context
         elif self.view_mode == 'schedule':
             scheduled_context = chw_schedule.chw_calendar_submit_report(self.request,
-                                                                        user_doc.raw_username)
+                                                                        user_doc.raw_username, interval=self.interval)
             ret.update(scheduled_context)
             self.report_template_path = "pact/chw/pact_chw_profile_schedule.html"
         else:
@@ -166,4 +163,3 @@ class PactCHWProfileReport(PactDrilldownReportMixin, PactElasticTabularReportMix
             else:
                 for result in res['hits']['hits']:
                     yield list(_format_row(result['fields']))
-
