@@ -8,7 +8,7 @@
     <div class="row-fluid">
         <div id="org-card" class="span3">
             {% if org.logo_filename %}
-                <img src="{% url orgs_logo org.name %}" alt="Logo" />
+                <img src="{% url "orgs_logo" org.name %}" alt="Logo" />
             {% endif %}
             <h2>
                 <div>{{ org.title|capfirst }}</div>
@@ -40,7 +40,7 @@
             {% if snapshots %}
                 <h3>Applications published by the {{ org.title }} organization:</h3>
                 {% for snapshot in snapshots %}
-                    <div><a href="{% url project_info snapshot.name %}">{{ snapshot.title }}</a></div>
+                    <div><a href="{% url "project_info" snapshot.name %}">{{ snapshot.title }}</a></div>
                 {% endfor %}
             {% else %}
                 <h3>The {{ org.title }} organization has no published applications.</h3>

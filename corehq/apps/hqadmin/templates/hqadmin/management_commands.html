@@ -23,7 +23,7 @@
 
             $(document).on("click", "#cmd-btn", function(){
                 var data = {"command": $command_select.val()};
-                $.post("{% url run_management_command %}", data, function(resp) {
+                $.post("{% url "run_management_command" %}", data, function(resp) {
                     var alert_cls = resp.success ? "alert-success" : "alert-error";
                     $("#cmd-resp")
                             .removeClass("alert-success alert-error")

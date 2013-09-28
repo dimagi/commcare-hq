@@ -5,7 +5,7 @@
     <tbody>
     {% for domain in domains %}
         <tr>
-            <td><a href="{% url reports_home domain.name %}">{{ domain.display_name }}</a></td>
+            <td><a href="{% url "reports_home" domain.name %}">{{ domain.display_name }}</a></td>
             <td>{{ domain.active_users }}
                 <span title="{{ domain.active_users }}"></span></td>
             <td>{{ domain.active_cases }}

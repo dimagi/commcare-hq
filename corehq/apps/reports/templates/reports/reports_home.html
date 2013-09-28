@@ -9,7 +9,7 @@
 $(function() {
     $("#saved-reports").reportConfigList({
         items: {{ configs|JSON }},
-        saveUrl: '{% url add_report_config domain %}'
+        saveUrl: '{% url "add_report_config" domain %}'
     });
     $("button.send-stopper").click(function () {
         $(this).text("{% trans 'Saving' %}").prepend('<i class="icon-refresh icon-spin"></i> ').addClass('btn disabled').attr('disabled', 'disabled');
@@ -63,7 +63,7 @@ $(function() {
 
     {% if report.show %}
     <div class="tab-pane" id="scheduled-reports">
-        <p><a class="btn btn-success" href="{% url edit_scheduled_report domain %}"><i class="icon icon-white icon-plus"></i>
+        <p><a class="btn btn-success" href="{% url "edit_scheduled_report" domain %}"><i class="icon icon-white icon-plus"></i>
             {% trans "Create a New Scheduled Report" %}
         </a></p>
         {% if scheduled_reports %}
@@ -109,7 +109,7 @@ $(function() {
                             <div class="btn-group">
                                 <a class="btn btn-info"
                                     {% if report.is_editable %}
-                                    href="{% url edit_scheduled_report domain report.get_id %}"
+                                    href="{% url "edit_scheduled_report" domain report.get_id %}"
                                     {% else %}
                                     disabled
                                     {% endif %}>
@@ -118,11 +118,11 @@ $(function() {
                             </div>
 
                             <div class="btn-group">
-                                <a class="btn btn-info" href="{% url view_scheduled_report domain report.get_id %}">
+                                <a class="btn btn-info" href="{% url "view_scheduled_report" domain report.get_id %}">
                                     <i class="icon icon-white icon-eye-open"></i> {% trans "View" %}
                                 </a>
 
-                                <a class="btn btn-info" href="{% url send_test_scheduled_report domain report.get_id %}">
+                                <a class="btn btn-info" href="{% url "send_test_scheduled_report" domain report.get_id %}">
                                     <i class="icon icon-white icon-envelope"></i> {% trans "Send Test" %}
                                 </a>
                             </div>
@@ -138,7 +138,7 @@ $(function() {
                                         <a class="close" data-dismiss="modal">&times;</a>
                                         <h3>{% trans "Stop sending report?" %}</h3>
                                     </div>
-                                    <form class="form form-horizontal" action="{% url delete_scheduled_report domain report.get_id %}" method="post">
+                                    <form class="form form-horizontal" action="{% url "delete_scheduled_report" domain report.get_id %}" method="post">
                                         <div class="modal-body">
                                             <p>{% trans "Are you sure you want to stop sending this report?" %}</p>
                                         </div>

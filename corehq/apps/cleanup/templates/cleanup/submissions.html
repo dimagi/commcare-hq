@@ -11,7 +11,7 @@
                 var none_selected_str = "<p>(None Selected)</p>";
                 var state = {
                     get_url: function(){
-                        return '{% url corehq.apps.cleanup.views.submissions_json domain %}' +
+                        return '{% url "corehq.apps.cleanup.views.submissions_json" domain %}' +
                                 '?group=' + encodeURIComponent(JSON.stringify(this.get_group())) +
                                 '&userID=' + encodeURIComponent(JSON.stringify(this.get_userID())) +
                                 '&limit=' + encodeURIComponent(this.get_limit()) +
@@ -167,7 +167,7 @@
                     <p>Reassign the following submissions:</p>
                     <div id="selected"></div>
                     <p>to the following user:</p>
-                    <form id="user_reassignment" action="{% url corehq.apps.cleanup.views.relabel_submissions domain %}" method="POST">
+                    <form id="user_reassignment" action="{% url "corehq.apps.cleanup.views.relabel_submissions" domain %}" method="POST">
                         <select name="userID"></select> <br />
                         <input type="hidden" name="data" value="" /> <br />
                         <div id="reassign_submit_wrapper">
