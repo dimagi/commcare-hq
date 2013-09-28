@@ -4,12 +4,12 @@
 {% block title %}Create an Account{% endblock title %}
 {% block step-title %}Create an Account{% endblock %}
 {% block js-inline  %}{{ block.super }}
-    {% url eula_basic as eula_url %}
+    {% url "eula_basic" as eula_url %}
     {% include 'hqstyle/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
 {% endblock %}
 
 {% block registration-content %}
-    <form name="form" class="form-horizontal" method="post" action="{% url register_user domain_type=domain_type %}?">
+    <form name="form" class="form-horizontal" method="post" action="{% url "register_user" domain_type=domain_type %}?">
         {% csrf_token %}
         {% for global_error in form.non_field_errors %}
             <div class="alert alert-error">

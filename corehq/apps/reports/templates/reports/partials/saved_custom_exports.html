@@ -39,13 +39,13 @@
                 <div><p class="help-inline">{{ export.formname }}</p></div>
             </td>
             <td class="cell-vertical-centered">
-                <a class="btn" href='{% url export_custom_data domain export.get_id %}?format=html&{{ get_filter_params.urlencode|safe }}'>
+                <a class="btn" href='{% url "export_custom_data" domain export.get_id %}?format=html&{{ get_filter_params.urlencode|safe }}'>
                     {% trans "HTML Preview" %}
                 </a>
             </td>
             {% if allow_edit %}
                 <td class="cell-vertical-centered">
-                    <a class="btn btn-info" href='{% url edit_custom_export_form domain export.get_id %}'>
+                    <a class="btn btn-info" href='{% url "edit_custom_export_form" domain export.get_id %}'>
                         <i class="icon-pencil icon-white"></i> {% trans "Edit" %}
                     </a>
                 </td>
@@ -56,7 +56,7 @@
                    data-xmlns="{{ export.xmlns }}"
                    data-exportid="{{ export.get_id }}"
                    data-exporttype="form"
-                   data-dlocation='{% url export_custom_data domain export.get_id %}'
+                   data-dlocation='{% url "export_custom_data" domain export.get_id %}'
                    data-bind="click: requestDownload"
                    class="dl-export btn btn-primary"><i class="icon-download-alt icon-white"></i> {% trans "Download" %}</a>
             </td>

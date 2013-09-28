@@ -65,7 +65,7 @@
 <div class="page-header row-fluid" style="border-bottom: 0; margin-bottom: 0;">
     <div class="span2" style="text-align: center;">
         {% if project.image_path %}
-            <img class="app-pic" src="{% url appstore_project_image project.name %}" />
+            <img class="app-pic" src="{% url "appstore_project_image" project.name %}" />
         {% else %}
             <img class="app-pic opacity65" src="{% static 'hqstyle/img/commcarehq-icon-large.png' %}" />
         {% endif %}
@@ -75,7 +75,7 @@
             {{ project.title }}
             <small>{% trans "by" %}
                 {% ifequal project.publisher 'organization' %}
-{#                <a href="{% url orgs_public project.organization %}">#}
+{#                <a href="{% url "orgs_public" project.organization %}">#}
                     {{ project.get_organization.title }}
 {#                </a>#}
                 {% else %}
@@ -181,7 +181,7 @@
     </dd>
     {% if project.multimedia_included and project.has_media %}
         <dd>
-            <a class="btn" style="margin-top: .4em" href="{% url media_files project %}">{% trans "Browse Multimedia" %}</a>
+            <a class="btn" style="margin-top: .4em" href="{% url "media_files" project %}">{% trans "Browse Multimedia" %}</a>
         </dd>
     {% endif %}
 </dl>
@@ -192,7 +192,7 @@
                 <dl class="dl-horizontal">
                     <dd>
                         <h4 style="display: inline-block;">{{ app.name }}</h4>
-                        <a href="{% url emulator project app.id %}?exchange=true" style="margin-left: 1.2em" target="_blank" class="btn btn-primary">
+                        <a href="{% url "emulator" project app.id %}?exchange=true" style="margin-left: 1.2em" target="_blank" class="btn btn-primary">
                             {% trans "Preview this app" %}
                         </a>
                    </dd>
@@ -222,13 +222,13 @@
                         <dt>{% trans 'Attribution notes' %}</dt>
                         <dd>{{ app.attribution_notes }}</dd>
                     {% endif %}
-{#                    <dd><a class="btn" style="margin: .4em 0" href="{% url exchange_app_summary project app.id %}">{% trans "Application Summary" %}</a></dd>#}
+{#                    <dd><a class="btn" style="margin: .4em 0" href="{% url "exchange_app_summary" project app.id %}">{% trans "Application Summary" %}</a></dd>#}
                 </dl>
             </div>
         {% endfor %}
     </div>
     <div>
-        <form id="new-project-form" method="post" class="form-inline" action="{% url domain_copy_snapshot project %}">
+        <form id="new-project-form" method="post" class="form-inline" action="{% url "domain_copy_snapshot" project %}">
             <fieldset>
                 <legend>{% trans "Download" %}</legend>
                 {% if request.couch_user %}
@@ -249,11 +249,11 @@
                     </div>
                     {% endif %}
                 {% else %}
-                    {% trans "Please" %} <a href="{% url login %}">{% trans "sign in" %}</a> {% trans "or" %} <a href="{% url register_user %}">{% trans "register" %}</a> {% trans "to download an app from Exchange" %}
+                    {% trans "Please" %} <a href="{% url "login" %}">{% trans "sign in" %}</a> {% trans "or" %} <a href="{% url "register_user" %}">{% trans "register" %}</a> {% trans "to download an app from Exchange" %}
                 {% endif %}
             </fieldset>
         </form>
-        <form id="import-form" method="post" class="form-inline" action="{% url import_app_from_snapshot project %}">
+        <form id="import-form" method="post" class="form-inline" action="{% url "import_app_from_snapshot" project %}">
             <div class="hide" id="import-app">
                 <select name="project" id="project_select">
                     {% for p in request.couch_user.projects %}
@@ -303,7 +303,7 @@
         <a class="close" data-dismiss="modal">&times;</a>
         <h3>{% trans 'Write a review for ' %}{{ project.title }}</h3>
     </div>
-    <form class="form-horizontal" method="post" action="{% url project_info project %}">
+    <form class="form-horizontal" method="post" action="{% url "project_info" project %}">
         <div class="modal-body">
             <fieldset>
                 <legend>{% trans 'Review This App' %}</legend>
@@ -361,7 +361,7 @@
         {{ project.title }} {% trans 'is licensed under ' %}<a target="_blank" href="http://creativecommons.org/licenses/#licenses">{{ project.get_license_display }}</a>
         {% if project.multimedia_included and project.has_media %}
             <br /><br />
-            {% trans "Please view the" %} <a target="_blank" href="{% url media_files project %}">{% trans "licenses for this app's media files" %}</a>
+            {% trans "Please view the" %} <a target="_blank" href="{% url "media_files" project %}">{% trans "licenses for this app's media files" %}</a>
         {% endif %}
     </div>
     <div class="modal-footer">

@@ -20,7 +20,7 @@
     $(document).ready(function() {
         // this adds clickable links to our form and case elements
         var form_lookup_dict = {{ form_lookups|JSON }};
-        var urlBase = "{% url render_form_data domain 'placeholder-formid' %}";
+        var urlBase = "{% url "render_form_data" domain 'placeholder-formid' %}";
         var link_template = '<a href="placeholder-url">placeholder-text</a>'
         $(".xform_ref").each(function() {
             var formid = $(this).data("formid");
@@ -32,7 +32,7 @@
             }
         });
         
-        var caseUrlBase = "{% url case_details domain 'placeholder-caseid' %}";
+        var caseUrlBase = "{% url "case_details" domain 'placeholder-caseid' %}";
         $(".case_ref").each(function() {
             var caseid = $(this).data("caseid");
             if (caseid) {
@@ -45,8 +45,8 @@
         // Add clickable links for user
         var maybe_username = {{ username|JSON }};
         var user_template = ':username <a href=":case_list_url">(Case List)</a> <a href=":submit_history_url">(Submit History)</a>'
-        var case_list_url = "{% url project_report_dispatcher domain 'case_list' %}";
-        var submit_history_url = "{% url project_report_dispatcher domain 'submit_history' %}";
+        var case_list_url = "{% url "project_report_dispatcher" domain 'case_list' %}";
+        var submit_history_url = "{% url "project_report_dispatcher" domain 'submit_history' %}";
         
         $("[data-field=user_id]").each(function() {
             var user_id = $(this).text().trim();
@@ -74,10 +74,10 @@
 {% block page-title %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% url reports_home domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
+            <a href="{% url "reports_home" domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
         </li>
         <li>
-            <a href="{% url project_report_dispatcher domain 'case_list' %}">Case List</a> <span class="divider">&gt;</span>
+            <a href="{% url "project_report_dispatcher" domain 'case_list' %}">Case List</a> <span class="divider">&gt;</span>
         </li>
         <li class="active">
             <a href="#">{{ report.name }}</a>

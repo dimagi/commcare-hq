@@ -32,22 +32,22 @@
     {% if show_global %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% url default_sms_admin_interface %}"><strong>{% trans "SMS Connectivity" %}</strong></a> <span class="divider">&gt;</span>
+            <a href="{% url "default_sms_admin_interface" %}"><strong>{% trans "SMS Connectivity" %}</strong></a> <span class="divider">&gt;</span>
         </li>
         <li class="active">
             <div id="report-title">
-                <a href="{% url list_backends %}">{% trans "SMS Connections" %}</a>
+                <a href="{% url "list_backends" %}">{% trans "SMS Connections" %}</a>
             </div>
         </li>
     </ul>
     {% else %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% url messaging domain %}"><strong>{% trans "Messaging" %}</strong></a> <span class="divider">&gt;</span>
+            <a href="{% url "messaging" domain %}"><strong>{% trans "Messaging" %}</strong></a> <span class="divider">&gt;</span>
         </li>
         <li class="active">
             <div id="report-title">
-                <a href="{% url list_domain_backends domain %}">{% trans "SMS Connectivity" %}</a>
+                <a href="{% url "list_domain_backends" domain %}">{% trans "SMS Connectivity" %}</a>
             </div>
         </li>
     </ul>
@@ -83,15 +83,15 @@
                 </td>
                 <td>
                     {% if backend.get_id == default_sms_backend_id %}
-                        <a href="{% url unset_default_domain_backend domain backend.get_id %}"><span class="btn btn-primary">{% trans "Remove As Default" %}</span></a>
+                        <a href="{% url "unset_default_domain_backend" domain backend.get_id %}"><span class="btn btn-primary">{% trans "Remove As Default" %}</span></a>
                     {% else %}
-                        <a href="{% url set_default_domain_backend domain backend.get_id %}"><span class="btn btn-primary">{% trans "Set As Default" %}</span></a>
+                        <a href="{% url "set_default_domain_backend" domain backend.get_id %}"><span class="btn btn-primary">{% trans "Set As Default" %}</span></a>
                     {% endif %}
                 </td>
                 {% endif %}
                 <td>
                     {% if backend.get_id in editable_backend_ids %}
-                    <a href="{% if show_global %}{% url edit_backend backend.doc_type backend.get_id %}{% else %}{% url edit_domain_backend domain backend.doc_type backend.get_id %}{% endif %}"><span class="btn btn-primary">{% trans "Edit" %}</span></a>
+                    <a href="{% if show_global %}{% url "edit_backend" backend.doc_type backend.get_id %}{% else %}{% url "edit_domain_backend" domain backend.doc_type backend.get_id %}{% endif %}"><span class="btn btn-primary">{% trans "Edit" %}</span></a>
                     {% endif %}
                 </td>
                 <td>
@@ -102,7 +102,7 @@
                             <a class="close" data-dismiss="modal">&times;</a>
                             <h3>{% trans "Delete SMS Connection?" %}</h3>
                         </div>
-                        <form class="form form-horizontal" name="delete_backend" action="{% if show_global %}{% url delete_backend backend.get_id %}{% else %}{% url delete_domain_backend domain backend.get_id %}{% endif %}" method="post">
+                        <form class="form form-horizontal" name="delete_backend" action="{% if show_global %}{% url "delete_backend" backend.get_id %}{% else %}{% url "delete_domain_backend" domain backend.get_id %}{% endif %}" method="post">
                             <div class="modal-body">
                                 <p>{% trans "Are you sure you want to delete SMS Connection" %} '{{ backend.name }}'?</p>
                             </div>
@@ -126,7 +126,7 @@
         {% endfor %}
         </select>
         {% for name, klass in instantiable_backends %}
-            <a id="id_link_for_{{ name }}" style="display: none;" class="add_backend_links" href="{% if show_global %}{% url add_backend name %}{% else %}{% url add_domain_backend domain name %}{% endif %}"><span class="btn btn-success"><i class="icon icon-white icon-plus"></i> {% trans "Create" %}</span></a>
+            <a id="id_link_for_{{ name }}" style="display: none;" class="add_backend_links" href="{% if show_global %}{% url "add_backend" name %}{% else %}{% url "add_domain_backend" domain name %}{% endif %}"><span class="btn btn-success"><i class="icon icon-white icon-plus"></i> {% trans "Create" %}</span></a>
         {% endfor %}
     </div>
 {% endblock %}

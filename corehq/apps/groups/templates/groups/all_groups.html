@@ -34,7 +34,7 @@
             {% with group as this_group %}
                 {% for group in all_groups %}
                     <li {% if this_group.get_id == group.get_id %}class="active"{% endif %}>
-                        <a href="{% url group_members domain group.get_id %}">{{ group.display_name }}
+                        <a href="{% url "group_members" domain group.get_id %}">{{ group.display_name }}
                             {% if group.reporting %}
                                 <i class="icon-list-alt reporting-group-icon"></i>
                             {% else %}
@@ -51,7 +51,7 @@
             {% endblock %}
         </div>
     </div>
-    <form class="well form-inline" method="post" action="{% url add_group domain %}">
+    <form class="well form-inline" method="post" action="{% url "add_group" domain %}">
         <input type="text" placeholder="Group Name" id="id_group_name" name="group_name" />
         <button class="btn btn-success" type="submit">Create Group</button>
     </form>
