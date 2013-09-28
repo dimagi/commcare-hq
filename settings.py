@@ -223,7 +223,7 @@ HQ_APPS = (
     'corehq.apps.indicators',
     'corehq.couchapps',
     'custom.apps.wisepill',
-    'custom.apps.fri',
+    'custom.fri',
     'fluff',
     'fluff.fluff_filter',
     'soil',
@@ -791,7 +791,7 @@ SMS_LOADED_BACKENDS = [
 # A list of functions that can be called to retrieve custom content in a reminder event.
 # If the function is not listed here, it will not be called.
 ALLOWED_CUSTOM_CONTENT_HANDLERS = [
-    "custom.apps.fri.api.custom_content_handler",
+    "custom.fri.api.custom_content_handler",
 ]
 
 SELENIUM_APP_SETTING_DEFAULTS = {
