@@ -19,7 +19,7 @@
 {% block sidebar %}
     {{ block.super }}
     <hr />
-    {% url admin_report_dispatcher facet_report.slug as search_url %}
+    {% url "admin_report_dispatcher" facet_report.slug as search_url %}
     <ul class="nav">
         {% include 'appstore/partials/search_input.html' with search_name="es_search" search_for=facet_report.search_for %}
     </ul>

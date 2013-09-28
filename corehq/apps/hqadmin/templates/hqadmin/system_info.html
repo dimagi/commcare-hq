@@ -56,7 +56,7 @@
             var self = this;
 
             self.getTasks = function () {
-                $.getJSON("{% url system_ajax %}?api=_active_tasks", function (allData) {
+                $.getJSON("{% url "system_ajax" %}?api=_active_tasks", function (allData) {
                             var mappedTasks = $.map(allData, function (item) {
                                 return new ActiveTaskModel(item)
                             });
@@ -89,7 +89,7 @@
             var self = this;
 
             self.getCeleryTasks = function () {
-                $.getJSON("{% url system_ajax %}?api=flower_poll", function (allData) {
+                $.getJSON("{% url "system_ajax" %}?api=flower_poll", function (allData) {
                             var mappedTasks = $.map(allData, function (item) {
                                 return new CeleryTaskModel(item)
                             });
@@ -117,7 +117,7 @@
             var self = this;
             self.pillows = ko.observableArray();
             self.refresh = function () {
-                $.getJSON("{% url system_ajax %}?api=pillowtop", function (data) {
+                $.getJSON("{% url "system_ajax" %}?api=pillowtop", function (data) {
                     self.pillows(_(_(data).map(function (item) {
                         return new PillowModel(item);
                     })).sortBy(function (pillow) { return pillow.name; }));

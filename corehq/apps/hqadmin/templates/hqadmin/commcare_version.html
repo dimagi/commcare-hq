@@ -28,7 +28,7 @@
                     {% for app in table.apps %}
                         <tr>
                             <td>{{ app.domain }}</td>
-                            <td><a href="{% url view_app app.domain app.id %}">{{ app.name }}</a></td>
+                            <td><a href="{% url "view_app" app.domain app.id %}">{{ app.name }}</a></td>
                         </tr>
                     {% endfor %}
                     </tbody>

@@ -16,7 +16,7 @@
         var customExportManager = new ExportManager( {
             domain: '{{ domain }}',
             exportFilters: '{{ get_filter_params.urlencode|safe }}',
-            bulkDownloadUrl: '{% url export_bulk_download domain %}',
+            bulkDownloadUrl: '{% url "export_bulk_download" domain %}',
             is_custom: true
         } );
         ko.applyBindings(customExportManager, $('#custom-form-export')[0]);
@@ -24,8 +24,8 @@
         var exportManager = new ExportManager( {
             domain: '{{ domain }}',
             exportFilters: '{{ get_filter_params.urlencode|safe }}',
-            bulkDownloadUrl: '{% url export_bulk_download domain %}',
-            downloadUrl: '{% url export_default_data domain %}'
+            bulkDownloadUrl: '{% url "export_bulk_download" domain %}',
+            downloadUrl: '{% url "export_default_data" domain %}'
 
         } );
 
@@ -37,7 +37,7 @@
             domain: '{{ domain }}',
             exportFilters: '{{ get_filter_params.urlencode|safe }}',
             bulkDownloadUrl: 'n',
-            downloadUrl: '{% url corehq.apps.reports.views.export_all_form_metadata_async domain %}'
+            downloadUrl: '{% url "corehq.apps.reports.views.export_all_form_metadata_async" domain %}'
 
         } );
 
@@ -199,7 +199,7 @@
                             {{ form.app.name }}
                             {% if form.app_deleted %}
                                 <span class="label label-info">{% trans "deleted" %}</span>
-                                {% if request.couch_user.can_edit_apps %}(<a href="{% url view_app domain form.app.id %}"
+                                {% if request.couch_user.can_edit_apps %}(<a href="{% url "view_app" domain form.app.id %}"
                                                  target="_blank">{% trans "Restore" %}</a>){% endif %}
                             {% endif %}
                             <!-- Make sure to check whether {{ form.app.id }} changed -->
@@ -228,7 +228,7 @@
                 {% if form.app_copy %}
                     <span class="label label-info">{% trans "Mislabeled" %}</span>
                     {% if request.couch_user.can_edit_data %}
-                        (<a href="{% url change_submissions_app_id domain %}" class="fix-submissions-link"
+                        (<a href="{% url "change_submissions_app_id" domain %}" class="fix-submissions-link"
                            data-app_id="{{ form.current_app.id }}"
                            data-xmlns="{{ form.xmlns }}"
                            data-new_app_id="{{ form.app_copy.id }}"
@@ -259,7 +259,7 @@
                                     {% endif %}
 
                                     {% if request.couch_user.can_edit_data %}
-                                    <a href="{% url change_submissions_app_id domain %}" class="fix-submissions-link"
+                                    <a href="{% url "change_submissions_app_id" domain %}" class="fix-submissions-link"
                                        data-app_id="{{ form.current_app.id }}"
                                        data-xmlns="{{ form.xmlns }}"
                                        data-new_app_id="{{ possibility.app.id }}"
@@ -278,7 +278,7 @@
                 </td>
                 <td class="cell-vertical-centered">
                     {% if form.submissions %}
-                        <a class="btn" href='{% url custom_export_form domain %}?export_tag="{{ form.xmlns }}"{% if form.current_app.id %}&app_id={{ form.current_app.id }}{% endif %}'><i class="icon-star-empty"></i> {% trans "Create Custom Export" %}</a>
+                        <a class="btn" href='{% url "custom_export_form" domain %}?export_tag="{{ form.xmlns }}"{% if form.current_app.id %}&app_id={{ form.current_app.id }}{% endif %}'><i class="icon-star-empty"></i> {% trans "Create Custom Export" %}</a>
                     {% endif %}
                 </td>
                 <td class="cell-vertical-centered">

@@ -1,6 +1,6 @@
 
 <div class="two-columns" class="ui-widget">
-    <form method="POST" action="{% url messaging domain %}#tabs-2">
+    <form method="POST" action="{% url "messaging" domain %}#tabs-2">
         <div class="col-1" >
             <div class="ui-widget-content ui-corner-all">
                 <h2 id="header" class="ui-widget-header ui-corner-top">Recipients</h2>
@@ -19,7 +19,7 @@
                 {% endif %}
                 <div class="footnote">
                     {% if request.couch_user.is_domain_admin %}
-                        <a href="{% url all_groups domain %}">Create a new group.</a>
+                        <a href="{% url "all_groups" domain %}">Create a new group.</a>
                     {% else %}
                         <p>To create a group, please contact your administrator.</p>
                     {% endif %}
