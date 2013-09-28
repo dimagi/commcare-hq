@@ -6,7 +6,7 @@
         <script src="{{ STATIC_URL }}hqstyle/js/jquery/jquery-1.8.2.min.js"></script>
         <script>
             $(function(){
-                $.get('{% url corehq.apps.hqcase.views.open_cases_json domain %}', function(data){
+                $.get('{% url "corehq.apps.hqcase.views.open_cases_json" domain %}', function(data){
                     var report = _.jsonreport(data);
                     $("#case_report").html(report);
                 });

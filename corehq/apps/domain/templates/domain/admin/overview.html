@@ -23,7 +23,7 @@
                     <div class="controls">
                         <ul class="nav nav-pills nav-stacked">
                             {% for app in applications %}
-                                <li><a href="{% url corehq.apps.app_manager.views.view_app domain app.id %}">{{ app.name }}</a></li>
+                                <li><a href="{% url "corehq.apps.app_manager.views.view_app" domain app.id %}">{{ app.name }}</a></li>
                             {% endfor %}
                         </ul>
                     </div>
