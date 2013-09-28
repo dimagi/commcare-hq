@@ -79,7 +79,7 @@ requires imports/proptable.html to be included in the main template
             {% if context_case_id %}
             <p>
                 <a class="btn"
-                    href="{% url render_form_data instance.domain instance.get_id %}">
+                    href="{% url "render_form_data" instance.domain instance.get_id %}">
                     {% trans "View standalone form" %}
                 </a>
             </p>
@@ -87,14 +87,14 @@ requires imports/proptable.html to be included in the main template
 
             <p>
                 {% if not is_archived %}
-                <form action="{% url archive_form domain instance.get_id %}" method="POST">
+                <form action="{% url "archive_form" domain instance.get_id %}" method="POST">
                     <span class="help_popover" data-help-key="{% trans "Archiving Forms" %}">
                         <i class="icon icon-question-sign"></i>
                     </span>
                     <input type="submit" class="btn btn-danger" value="{% trans "Archive this form" %}">
                 </form>
                 {% else %}
-                <form action="{% url unarchive_form domain instance.get_id %}" method="POST">
+                <form action="{% url "unarchive_form" domain instance.get_id %}" method="POST">
                     <span class="help_popover" data-help-key="{% trans "Restoring Forms" %}">
                         <i class="icon icon-question-sign"></i>
                     </span>
@@ -160,7 +160,7 @@ requires imports/proptable.html to be included in the main template
         <ul>
             {% for key, val in instance.attachments.items %}
             <li>
-                <a href="{% url download_attachment domain instance.get_id %}?attachment={{ key }}"
+                <a href="{% url "download_attachment" domain instance.get_id %}?attachment={{ key }}"
                    download="{{ key }}">
                   {{ key }}
                 </a>
@@ -172,7 +172,7 @@ requires imports/proptable.html to be included in the main template
 
     <div class="tab-pane" id="form-xml">
         <p>
-            <a class="btn" href="{% url download_form domain instance.get_id %}" target="_blank">
+            <a class="btn" href="{% url "download_form" domain instance.get_id %}" target="_blank">
                 {% trans "Open XML in New Window" %}
             </a>
         </p>
