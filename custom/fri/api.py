@@ -1,5 +1,7 @@
 import random
-from custom.apps.fri.models import (
+import re
+from casexml.apps.case.models import CommCareCase
+from custom.fri.models import (
     PROFILE_A,
     PROFILE_B,
     PROFILE_C,
@@ -11,8 +13,55 @@ from custom.apps.fri.models import (
     FRIRandomizedMessage,
 )
 
-def get_message_bank(domain, risk_profile):
-    return FRIMessageBankMessage.view("fri/message_bank", key=[domain, risk_profile], include_docs=True).all()
+def letters_only(text):
+    return re.sub(r"[^a-zA-Z]", "", text).upper()
+
+def get_interactive_participants(domain):
+    cases = CommCareCase.view("hqcase/types_by_domain", key=[domain, "participant"], include_docs=True, reduce=False).all()
+    result = []
+    for case in cases:
+        study_arm = case.get_case_property("study_arm")
+        if (not case.closed) and isinstance(study_arm, basestring) and study_arm.upper() == "A":
+            result.append(case)
+    return result
+
+def get_message_bank(domain, risk_profile=None, for_comparing=False):
+    if risk_profile is not None:
+        messages = FRIMessageBankMessage.view("fri/message_bank", key=[domain, risk_profile], include_docs=True).all()
+    else:
+        messages = FRIMessageBankMessage.view("fri/message_bank", startkey=[domain], endkey=[domain, {}], include_docs=True).all()
+
+    if for_comparing:
+        result = []
+        for message in messages:
+            result.append({
+                "message" : message,
+                "compare_string" : letters_only(message.message),
+            })
+        return result
+    else:
+        return messages
+
+def add_metadata(sms, message_bank_messages):
+    """
+    sms - an instance of FRISMSLog
+    message_bank_messages - the result from calling get_message_bank(for_comparing=True)
+    """
+    text = letters_only(sms.text)
+    for entry in message_bank_messages:
+        if entry["compare_string"] in text:
+            sms.message_bank_message_id = entry["message"]._id
+            sms.fri_id = entry["message"].fri_id
+            sms.risk_profile = entry["message"].risk_profile
+            sms.theory_code = entry["message"].theory_code
+            break
+    sms.message_bank_lookup_completed = True
+    try:
+        sms.save()
+    except Exception:
+        # No big deal, we'll just perform the lookup again the next time it's needed, and
+        # try to save it again then.
+        pass
 
 def randomize_messages(case):
     """
@@ -23,22 +72,22 @@ def randomize_messages(case):
 
     # Add messages specific to each risk profile
     if PROFILE_A in risk_profiles:
-        message_list += get_message_bank(case.domain, PROFILE_A)
+        message_list += get_message_bank(case.domain, risk_profile=PROFILE_A)
     if PROFILE_B in risk_profiles:
-        message_list += get_message_bank(case.domain, PROFILE_B)
+        message_list += get_message_bank(case.domain, risk_profile=PROFILE_B)
     if PROFILE_C in risk_profiles:
-        message_list += get_message_bank(case.domain, PROFILE_C)
+        message_list += get_message_bank(case.domain, risk_profile=PROFILE_C)
     if PROFILE_D in risk_profiles:
-        message_list += get_message_bank(case.domain, PROFILE_D)
+        message_list += get_message_bank(case.domain, risk_profile=PROFILE_D)
     if PROFILE_E in risk_profiles:
-        message_list += get_message_bank(case.domain, PROFILE_E)
+        message_list += get_message_bank(case.domain, risk_profile=PROFILE_E)
     if PROFILE_F in risk_profiles:
-        message_list += get_message_bank(case.domain, PROFILE_F)
+        message_list += get_message_bank(case.domain, risk_profile=PROFILE_F)
 
     # Add generic messages to get to 280
     additional_messages_required = 280 - len(message_list)
     if additional_messages_required > 0:
-        generic_messages = get_message_bank(case.domain, PROFILE_G)
+        generic_messages = get_message_bank(case.domain, risk_profile=PROFILE_G)
         random.shuffle(generic_messages)
         for i in range(additional_messages_required):
             message_list.append(generic_messages[i])
