@@ -21,7 +21,8 @@ from couchdbkit.exceptions import ResourceNotFound
 from ..opm_tasks.models import OpmReportSnapshot
 from .beneficiary import Beneficiary
 from .incentive import Worker
-from .constants import DOMAIN
+from .constants import *
+from .filters import BlockFilter, AWCFilter
 
 
 class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
@@ -39,11 +40,30 @@ class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
     model = None
 
     @property
+    def fields(self):
+        return [BlockFilter, AWCFilter] + super(BaseReport, self).fields
+
+    def filter(self, fn, filter_fields=None):
+        """
+        This function is to be called by the row constructer to verify that
+        the row matches the filters
+        ``fn`` should be a callable that accepts a key, and returns the value
+        that should match the filters for a given field.
+
+        I'm not super happy with this implementation, but it beats repeating
+        the same logic in incentive, beneficiary, and snapshot.
+        """
+        if filter_fields is None:
+            filter_fields = [('awc_name', 'awcs'), ('block_name', 'blocks')]
+        for key, field in filter_fields:
+            keys = self.filter_data.get(field, []) 
+            if keys and fn(key) not in keys:
+                raise InvalidRow
+
+    @property
     @memoized
     def snapshot(self):
-        start = self.datespan.startdate_utc
-        return OpmReportSnapshot.by_month(start.month, start.year,
-            self.__class__.__name__)
+        return OpmReportSnapshot.from_view(self)
 
     @property
     def headers(self):
@@ -68,26 +88,35 @@ class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
         return rows
 
     @property
+    def filter_data(self):
+        return dict([
+            (field.slug, field.get_value(self.request, DOMAIN))
+            for field in self.fields
+        ])
+
+    @property
     def row_objects(self):
         """
         Returns a list of objects, each representing a row in the report
         """
-        start = self.datespan.startdate_utc
-        end = self.datespan.enddate_utc
-        now = datetime.datetime.utcnow()
-        if start.year == now.year and start.month == now.month:
-            end = now
         rows = []
         for row in self.get_rows(self.datespan):
             try:
-                rows.append(self.model(
-                    row,
-                    date_range=(start, end),
-                    **self.get_model_kwargs()
-                ))
-            except ResourceNotFound:
+                rows.append(self.model(row, self))
+            except InvalidRow:
                 pass
         return rows
+
+    @property
+    def date_range(self):
+        start = self.datespan.startdate_utc
+        end = self.datespan.enddate_utc
+        now = datetime.datetime.utcnow()
+        # if report is run on current month, date range should be
+        # this month up till now
+        if start.year == now.year and start.month == now.month:
+            end = now
+        return (start, end)
 
     def get_model_kwargs(self):
         """
@@ -103,7 +132,7 @@ class BeneficiaryPaymentReport(BaseReport):
     model = Beneficiary
 
     def get_rows(self, datespan):
-        return CommCareCase.get_all_cases(DOMAIN)
+        return CommCareCase.get_all_cases(DOMAIN, include_docs=True)
 
 
 class IncentivePaymentReport(BaseReport):
@@ -128,7 +157,6 @@ class IncentivePaymentReport(BaseReport):
         return {'last_month_totals': self.last_month_totals}
 
     def get_rows(self, datespan):
-        # return [(row, self.last_month_totals) for row in CommCareUser.by_domain(DOMAIN)]
         return CommCareUser.by_domain(DOMAIN)
 
 
@@ -157,5 +185,9 @@ def get_report(ReportClass, month=None, year=None):
         @property
         def datespan(self):
             return DateSpan.from_month(month, year)
+
+        @property
+        def filter_data(self):
+            return {}
 
     return Report()

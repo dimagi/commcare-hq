@@ -10,6 +10,7 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadReque
 from django.shortcuts import render
 from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_SMS
 from corehq.apps.sms.api import send_sms, incoming, send_sms_with_backend_name, send_sms_to_verified_number
+from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users import models as user_models
 from corehq.apps.sms.models import SMSLog, INCOMING, OUTGOING, ForwardingRule, CommConnectCase
@@ -32,6 +33,15 @@ from dateutil.parser import parse
 @login_and_domain_required
 def default(request, domain):
     return HttpResponseRedirect(reverse(compose_message, args=[domain]))
+
+
+class BaseMessagingSectionView(BaseDomainView):
+    section_name = ugettext_noop("Messaging")
+
+    @property
+    def section_url(self):
+        return reverse("sms_default", args=[self.domain])
+
 
 @login_and_domain_required
 def messaging(request, domain, template="sms/default.html"):

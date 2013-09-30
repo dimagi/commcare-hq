@@ -563,7 +563,10 @@ def record_successful_deploy():
 
 @task
 def hotfix_deploy():
-    """ deploy code to remote host by checking out the latest via git """
+    """ deploy ONLY the code with no extra cleanup or syncing
+
+    for small python-only hotfixes
+    """
     if not console.confirm('Are you sure you want to deploy {env.environment}?'.format(env=env), default=False) or \
        not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False) or \
        not console.confirm('HEY!!!! YOU ARE ONLY DEPLOYING CODE. THIS IS NOT A NORMAL DEPLOY. COOL???', default=False):
@@ -576,12 +579,13 @@ def hotfix_deploy():
         execute(update_code)
     except Exception:
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
+        # hopefully bring the server back to life
+        execute(services_restart)
         raise
     else:
-        execute(record_successful_deploy)
-    finally:
-        # hopefully bring the server back to life if anything goes wrong
         execute(services_restart)
+        execute(record_successful_deploy)
+
 
 @task
 def deploy():
@@ -606,13 +610,12 @@ def deploy():
             execute(flip_es_aliases)
     except Exception:
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
+        # hopefully bring the server back to life
+        execute(services_restart)
         raise
     else:
-        execute(record_successful_deploy)
-    finally:
-        # hopefully bring the server back to life if anything goes wrong
         execute(services_restart)
-
+        execute(record_successful_deploy)
 
 
 @task

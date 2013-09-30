@@ -150,6 +150,7 @@ DEFAULT_APPS = (
     'django.contrib.markup',
     'gunicorn',
     'raven.contrib.django.raven_compat',
+    # 'weasyprint',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
@@ -252,6 +253,7 @@ HQ_APPS = (
     'custom.reports.care_sa',
     'custom.apps.cvsu',
     'custom.reports.mc',
+    'custom.apps.crs_reports',
 )
 
 TEST_APPS = ()
@@ -282,6 +284,8 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'rosetta',
     'soil',
     'south',
+    # 'weasyprint',
+    'custom.apps.crs_reports',
 
     # submodules with tests that run on travis
     'casexml.apps.case',
@@ -379,6 +383,7 @@ FIXTURE_GENERATORS = [
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",
     "corehq.apps.reportfixtures.fixturegenerators.indicators",
+    "custom.bihar.reports.indicators.fixtures.generator",
 ]
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
@@ -706,6 +711,7 @@ COUCHDB_APPS = [
     'couchlog',
     'wisepill',
     'fri',
+    'crs_reports',
 
     # custom reports
     'care_benin',
@@ -852,6 +858,7 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'hsph-betterbirth-pilot-2',
     'commtrack-public-demo',
     'uth-rhd-test',
+    'crs-remind',
 ]
 
 #Custom fully indexed domains for FullXForm index/pillowtop --
@@ -899,6 +906,7 @@ DOMAIN_MODULE_MAP = {
     'opm': 'custom.opm.opm_reports',
     'psi-unicef': 'psi',
     'project': 'custom.apps.care_benin',
+    'crs-remind': 'custom.apps.crs_reports'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

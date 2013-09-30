@@ -17,6 +17,7 @@ Welcome to CommCareHQ's documentation!
    reporting
    ui_helpers
    class_views
+   management_commands
 
 Tips for documenting
 --------------------

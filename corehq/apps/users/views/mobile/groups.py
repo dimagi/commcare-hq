@@ -103,9 +103,11 @@ class EditGroupMembersView(BaseGroupsView):
     @memoized
     def user_selection_form(self):
         def _user_display(user):
-            return '{username}{full_name}'.format(
-                username=user.raw_username,
-                full_name=' (%s)'% user.full_name if user.full_name.strip() else ''
+            full_name = user.full_name
+            username = user.raw_username
+            return u'{username}{full_name}'.format(
+                username=username,
+                full_name=(u' (%s)' % full_name) if full_name else '',
             )
 
         form = MultipleSelectionForm(initial={
