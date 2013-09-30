@@ -27,7 +27,7 @@ from corehq.apps.domain.models import Domain
 from django.utils.translation import ugettext as _, ugettext_noop
 from couchdbkit.resource import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
-from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.parsing import json_format_datetime, string_to_boolean
 from dateutil.parser import parse
 
 @login_and_domain_required
@@ -271,6 +271,7 @@ def api_send_sms(request, domain):
         contact_id = request.POST.get("contact_id", None)
         text = request.POST.get("text", None)
         backend_id = request.POST.get("backend_id", None)
+        chat = request.POST.get("chat", None)
 
         if (phone_number is None and contact_id is None) or (text is None):
             return HttpResponseBadRequest("Not enough arguments.")
@@ -290,12 +291,22 @@ def api_send_sms(request, domain):
             except Exception:
                 return HttpResponseBadRequest("Contact has no phone number.")
 
-        if backend_id is not None:
-            success = send_sms_with_backend_name(domain, phone_number, text, backend_id)
-        elif vn is not None:
-            success = send_sms_to_verified_number(vn, text)
+        try:
+            chat_workflow = string_to_boolean(chat)
+        except Exception:
+            chat_workflow = False
+
+        if chat_workflow:
+            chat_user_id = request.couch_user._id
         else:
-            success = send_sms(domain, None, phone_number, text)
+            chat_user_id = None
+
+        if backend_id is not None:
+            success = send_sms_with_backend_name(domain, phone_number, text, backend_id, chat_user_id=chat_user_id)
+        elif vn is not None:
+            success = send_sms_to_verified_number(vn, text, chat_user_id=chat_user_id)
+        else:
+            success = send_sms(domain, None, phone_number, text, chat_user_id=chat_user_id)
 
         if success:
             return HttpResponse("OK")
