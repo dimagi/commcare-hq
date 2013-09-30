@@ -10,14 +10,38 @@ from django.forms import Field, Widget, Select, TextInput
 from django.utils.datastructures import DotExpandedDict
 from casexml.apps.case.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
-from .models import REPEAT_SCHEDULE_INDEFINITELY, CaseReminderEvent,\
-RECIPIENT_USER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE, RECIPIENT_OWNER,\
-MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE, EVENT_AS_SCHEDULE, EVENT_AS_OFFSET,\
-CaseReminderHandler, FIRE_TIME_DEFAULT, FIRE_TIME_CASE_PROPERTY,\
-METHOD_SMS, METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY,\
-CASE_CRITERIA, QUESTION_RETRY_CHOICES, FORM_TYPE_ONE_BY_ONE,\
-FORM_TYPE_ALL_AT_ONCE, SurveyKeyword, RECIPIENT_PARENT_CASE, RECIPIENT_SUBCASE,\
-FIRE_TIME_RANDOM, ON_DATETIME, SEND_NOW, SEND_LATER, RECIPIENT_USER_GROUP
+from .models import (
+    REPEAT_SCHEDULE_INDEFINITELY,
+    CaseReminderEvent,
+    RECIPIENT_USER,
+    RECIPIENT_CASE,
+    RECIPIENT_SURVEY_SAMPLE,
+    RECIPIENT_OWNER,
+    MATCH_EXACT,
+    MATCH_REGEX,
+    MATCH_ANY_VALUE,
+    EVENT_AS_SCHEDULE,
+    EVENT_AS_OFFSET,
+    CaseReminderHandler,
+    FIRE_TIME_DEFAULT,
+    FIRE_TIME_CASE_PROPERTY,
+    METHOD_SMS,
+    METHOD_SMS_CALLBACK,
+    METHOD_SMS_SURVEY,
+    METHOD_IVR_SURVEY,
+    CASE_CRITERIA,
+    QUESTION_RETRY_CHOICES,
+    FORM_TYPE_ONE_BY_ONE,
+    FORM_TYPE_ALL_AT_ONCE,
+    SurveyKeyword,
+    RECIPIENT_PARENT_CASE,
+    RECIPIENT_SUBCASE,
+    FIRE_TIME_RANDOM,
+    ON_DATETIME,
+    SEND_NOW,
+    SEND_LATER,
+    RECIPIENT_USER_GROUP
+)
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
