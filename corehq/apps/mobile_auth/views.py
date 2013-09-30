@@ -24,7 +24,12 @@ class FetchKeyRecords(object):
     def get_or_create_current_record(self):
         key_record = self.key_for_time(self.now)
         if not key_record:
-            key_record = new_key_record(self.domain, self.user_id, self.now)
+            key_record = new_key_record(
+                domain=self.domain,
+                user_id=self.user_id,
+                now=self.now,
+                valid=self.now - datetime.timedelta(days=30),
+            )
             key_record.save()
         return key_record
 
