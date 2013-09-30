@@ -121,9 +121,9 @@
                                 chat_window_view_model.messages.push(new ChatMessage(data[i].sender, data[i].text, data[i].timestamp));
                                 self.latest_message_utc_timestamp = data[i].utc_timestamp;
                             }
+                            scrollHeight = $("#chat_messages").prop("scrollHeight");
+                            $("#chat_messages").scrollTop(scrollHeight);
                         });
-                        //scrollHeight = $("#chat_messages").prop("scrollHeight");
-                        //$("#chat_messages").scrollTop(scrollHeight);
                     };
                     self.send_message = function() {
                         clearTimeout(self.latest_timeout_handle);
