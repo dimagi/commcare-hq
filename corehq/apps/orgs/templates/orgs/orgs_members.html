@@ -54,7 +54,7 @@
 
 {% if admin %}
     <div class="well well-small">
-        <form class="form-inline" style="margin: 0;" method="post" action="{% url orgs_invite_member org.name %}">
+        <form class="form-inline" style="margin: 0;" method="post" action="{% url "orgs_invite_member" org.name %}">
             <div class="input-append">
                 <input id="id_email" name="email" type="text" placeholder="Member's email address" />
                 <button type="submit" id="invite_member_btn" class="btn btn-info disable-on-submit">
@@ -68,7 +68,7 @@
 
 {% block org-modals %}
 <div id="remove-member-modal" class="modal hide fade">
-    <form class="form-horizontal" method="post" action="{% url orgs_remove_member org.name %}">
+    <form class="form-horizontal" method="post" action="{% url "orgs_remove_member" org.name %}">
         <div class="modal-body">
             <a class="close" data-dismiss="modal">&times;</a>
             <h3>Remove <span id="removing-member"></span> from {{ org.title }}?</h3>
@@ -82,7 +82,7 @@
 </div>
 
 <div id="make-admin-modal" class="modal hide fade">
-    <form class="form-horizontal" method="post" action="{% url orgs_set_admin org.name %}">
+    <form class="form-horizontal" method="post" action="{% url "orgs_set_admin" org.name %}">
         <div class="modal-body">
             <a class="close" data-dismiss="modal">&times;</a>
             <h3>Make <span id="admining-member"></span> an admin of {{ org.title }}?</h3>

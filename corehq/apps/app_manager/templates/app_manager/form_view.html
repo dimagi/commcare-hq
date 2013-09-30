@@ -144,7 +144,7 @@
                     });
                 }({
                     questions: {{ xform_questions|JSON }},
-                    url: "{% url edit_form_attr domain app.id form.get_unique_id 'user_reg_data' %}",
+                    url: "{% url "edit_form_attr" domain app.id form.get_unique_id 'user_reg_data' %}",
                     paths: {{ form.data_paths.values|JSON }}
                 }));
             }
@@ -157,7 +157,7 @@
                 actions: {{ form.actions|JSON }},
                 questions: {{ xform_questions|JSON }},
                 edit: edit,
-                save_url: "{% url corehq.apps.app_manager.views.edit_form_actions app.domain app.id module.id nav_form.id %}",
+                save_url: "{% url "corehq.apps.app_manager.views.edit_form_actions" app.domain app.id module.id nav_form.id %}",
                 requires: form_requires,
                 reserved_words: {{ case_reserved_words_json|JSON }},
                 moduleCaseTypes: {{ module_case_types|JSON }},
@@ -183,7 +183,7 @@
 
             // tag the 'preview in cloudcare' button with the right url
             // unfortunately, has to be done in javascript
-            var cloudCareUrl = getCloudCareUrl("{% url cloudcare_main domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
+            var cloudCareUrl = getCloudCareUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
             $("#cloudcare-preview-url").attr("href", cloudCareUrl);
 
             {% if app.application_version != '1.0' %}
@@ -206,7 +206,7 @@
     </script>
     <script>
         $(function () {
-            var validation_url = '{% url validate_form_for_build domain app.id form.unique_id %}';
+            var validation_url = '{% url "validate_form_for_build" domain app.id form.unique_id %}';
             COMMCAREHQ.app_manager.fetchAndShowFormValidation = function () {
                 $.getJSON(validation_url, function (data) {
                     $('#form_build_errors').html(data.error_html);
@@ -303,7 +303,7 @@
     <div id="form_build_errors"></div>
     {% if edit and not is_user_registration %}
         <div class="delete-me">
-            <form action="{% url delete_form domain app.id module.id form.id %}" method="post">
+            <form action="{% url "delete_form" domain app.id module.id form.id %}" method="post">
                 <button type="submit" class="disable-on-submit btn btn-danger">
                     <i class="icon-trash"></i>
                     {% trans "Delete Form" %}
@@ -365,7 +365,7 @@
         <div class="tab-content">
     {% if nav_form %}
         <div class="tab-pane active" id="form-settings">
-            <form class="form-horizontal save-button-form" action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id 'all' %}">
+            <form class="form-horizontal save-button-form" action="{% url "corehq.apps.app_manager.views.edit_form_attr" domain app.id form.get_unique_id 'all' %}">
                 <div class="save-button-holder clearfix"></div>
                 <div class="control-group">
                     <label class="control-label">{% trans "Form Name" %}</label>
@@ -454,7 +454,7 @@
                         {% trans "Upload" %}
                     </a>
                     <div class="dialog" title="Upload XForm">
-                        <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id 'xform' %}" method="POST" enctype="multipart/form-data">
+                        <form action="{% url "corehq.apps.app_manager.views.edit_form_attr" domain app.id form.get_unique_id 'xform' %}" method="POST" enctype="multipart/form-data">
                             <input type="file" id="xform_file_input" name="xform" />
                             <input type="hidden" name="ajax" value="false" />
                             <input type="submit" id="xform_file_submit" value="Upload" />
@@ -463,9 +463,9 @@
                 </li>
                 <li>
                     <a {% if not form.source %}class="disabled"{% endif %}{% if is_user_registration %}
-                       href="{% url get_user_registration_source domain app.id %}?download=true"
+                       href="{% url "get_user_registration_source" domain app.id %}?download=true"
                     {% else %}
-                       href="{% url get_xform_source domain app.id module.id form.id %}?download=true"
+                       href="{% url "get_xform_source" domain app.id module.id form.id %}?download=true"
                     {% endif %}
                             >
                         <i class="icon-arrow-down"></i>
@@ -475,9 +475,9 @@
                 <li>
                     <a id="xform-source-opener" class="dialog_opener {% if not form.source %}disabled{% endif %}"
                             {% if is_user_registration %}
-                       href="{% url get_user_registration_source domain app.id %}"
+                       href="{% url "get_user_registration_source" domain app.id %}"
                             {% else %}
-                       href="{% url get_xform_source domain app.id module.id form.id %}"
+                       href="{% url "get_xform_source" domain app.id module.id form.id %}"
                             {% endif %}
                             >
                         <i class="icon-search"></i>
@@ -490,7 +490,7 @@
                         </div>
                         <div id="source-edit">
                             {% trans "You can edit your XForm here." %}<br />
-                            <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id 'xform' %}" method="POST">
+                            <form action="{% url "corehq.apps.app_manager.views.edit_form_attr" domain app.id form.get_unique_id 'xform' %}" method="POST">
                                 <textarea name="xform" id="xform-source-edit" style="height:550px;width:90%;font-family:Monospace;">
                                     {% trans "Loading..." %}
                                 </textarea><br />
@@ -502,7 +502,7 @@
                     </div>
                 </li>
             </ul>
-            <form class="form-inline" method='POST' action='{% url copy_form domain app.id module.id form.id %}'>
+            <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id module.id form.id %}'>
                 <p><i class="icon-share"></i> {% trans "Copy form to a different module" %}</p>
                 <select name='to_module_id'>{% for mod in app.get_modules %}
                     <option value={{ mod.id }}>{{ mod.name|html_trans:langs }}</option>

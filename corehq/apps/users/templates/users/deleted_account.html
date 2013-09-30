@@ -11,7 +11,7 @@
         </p>
         <div class="alert alert-info">
             <p>{% blocktrans %}If you think this user was deleted in error: {% endblocktrans %}</p>
-            <p><a href="{% url restore_commcare_user domain couch_user.user_id %}"
+            <p><a href="{% url "restore_commcare_user" domain couch_user.user_id %}"
                class="btn btn-primary post-link">{% trans 'Restore User' %}
             </a></p>
         </div>

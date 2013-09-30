@@ -40,7 +40,7 @@
                 var none_selected_str = "<p>(None Selected)</p>";
                 var state = {
                     get_url: function(){
-                        return '{% url corehq.apps.cleanup.views.cases_json domain %}';
+                        return '{% url "corehq.apps.cleanup.views.cases_json" domain %}';
                     },
                     reload: function(){
                         $("#case_report").html("You have a lot of cases, so this may take a while...");
@@ -146,7 +146,7 @@
         <div class="config" id="form_div">
             <p>Permanently close cases created by the following submissions:</p>
             <div id="selected"></div>
-            <form id="case_cleanup_form" action="{% url corehq.apps.cleanup.views.close_cases domain %}" method="POST">
+            <form id="case_cleanup_form" action="{% url "corehq.apps.cleanup.views.close_cases" domain %}" method="POST">
                 <input type="hidden" name="data" value="" /> <br />
                 <div id="form_submit_wrapper">
                     <input type="submit" value="Close Cases" />

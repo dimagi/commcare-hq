@@ -4,7 +4,7 @@
 
 {% block title %}{% trans "Invitation to join the " %}{{ invite_to }} {{ invite_type }}{% endblock title %}
 {% block js-inline  %}{{ block.super }}
-    {% url eula_basic as eula_url %}
+    {% url "eula_basic" as eula_url %}
     {% include 'hqstyle/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
 {% endblock %}
 {% block login-content %}
@@ -83,7 +83,7 @@
             <div class="span4">
                 <aside class="well">
                     <h3>Already have an account?</h3>
-                    <a href="{% url login %}?next={{ request.path }}" class="btn btn-primary btn-large">Sign In Now</a>
+                    <a href="{% url "login" %}?next={{ request.path }}" class="btn btn-primary btn-large">Sign In Now</a>
                 </aside>
             </div>
         {% endif %}

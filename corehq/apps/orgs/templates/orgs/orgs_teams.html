@@ -18,10 +18,10 @@
 <table data-provides="rowlink" class="table table-striped" style="border-collapse:collapse">
 {% for team in teams %}
     <tr><td style="border-top: none;">
-        <a href="{% url orgs_team_members org.name team.get_id %}"><strong>{{ team.name }}</strong></a>
+        <a href="{% url "orgs_team_members" org.name team.get_id %}"><strong>{{ team.name }}</strong></a>
         {% if admin %}
             <div class="btn-toolbar pull-right" style="margin: 0;">
-                <a href="{% url orgs_team_members org.name team.get_id %}" class="btn">
+                <a href="{% url "orgs_team_members" org.name team.get_id %}" class="btn">
                     <i class="icon icon-pencil"></i> {% trans "Edit Team" %}
                 </a>
                 <a href="#" class="btn btn-danger delete-team-btn" data-team="{{ team.name }}" data-team_id="{{ team.get_id }}">
@@ -34,7 +34,7 @@
 </table>
 
 {% if admin %}
-    <form class="form-horizontal" method="post" action="{% url orgs_add_team org.name %}">
+    <form class="form-horizontal" method="post" action="{% url "orgs_add_team" org.name %}">
         <div class="well well-small">
             <div class="input-append">
                 <input name="team" id="team" type="text" placeholder="New Team Name" />
@@ -56,7 +56,7 @@
         </div>
     </div>
     <div id="delete-team-modal" class="modal hide fade">
-        <form class="form-inline" style="margin: 0;" action="{% url delete_team org.name %}" method="post">
+        <form class="form-inline" style="margin: 0;" action="{% url "delete_team" org.name %}" method="post">
             <div class="modal-body">
                 <a class="close" data-dismiss="modal">&times;</a>
                 <h3>Delete team <em><span id="deleting-team-name"></span></em> from {{ org.title }}?</h3>
