@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 from django.http import HttpResponse
 from django.views.decorators.http import require_GET
 from corehq.apps.domain.decorators import login_or_digest_ex
@@ -12,7 +12,7 @@ class FetchKeyRecords(object):
         self.domain = domain
         self.user_id = user_id
         self.last_issued = last_issued
-        self.now = datetime.utcnow()
+        self.now = datetime.datetime.utcnow()
 
     def key_for_time(self, now):
         return MobileAuthKeyRecord.current_for_user(
