@@ -6,7 +6,8 @@ from django.core.exceptions import ValidationError
 from django.forms.fields import *
 from django.forms.forms import Form
 from django.forms.widgets import CheckboxSelectMultiple
-from django.forms import Field, Widget, Select, TextInput
+from django import forms
+from django.forms import Field, Widget
 from django.utils.datastructures import DotExpandedDict
 from casexml.apps.case.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
@@ -45,7 +46,7 @@ from .models import (
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
-from dimagi.utils.excel import WorkbookJSONReader
+from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
 from openpyxl.shared.exc import InvalidFileException
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.models import Form as CCHQForm
@@ -621,6 +622,258 @@ class ComplexCaseReminderForm(Form):
                         break
         
         return cleaned_data
+
+
+MATCH_TYPE_CHOICES = (
+    (MATCH_ANY_VALUE, "exists."),
+    (MATCH_EXACT, "equals"),
+    (MATCH_REGEX, "matches regular expression"),
+)
+
+
+class SimpleScheduleCaseReminderForm(forms.Form):
+    """
+    This form creates a new CaseReminder. It is the most basic version, no advanced options (like language).
+    """
+    nickname = forms.CharField(
+        error_messages={
+            'required': "Please enter a name for this reminder",
+        }
+    )
+    active = forms.BooleanField(required=False)
+
+    # Fieldset: Send Options
+    # simple has start_condition_type = CASE_CRITERIA by default
+    case_type = forms.CharField(required=False)  # this should be a dropdown of all case types
+    start_reminder_on = forms.ChoiceField(
+        label="Start Reminder",
+        choices=(
+            ('case_date', "on a date specified in the Case"),
+            ('case_property', "when the Case is in the following state"),
+        ),
+        help_text=("Reminders can either start based on a date in a case property "
+                   "or if the case is in a particular state (ex: case property 'high_risk' "
+                   "is equal to 'yes')")  # todo this will be a (?) bubble...can override the crispy Field
+    )
+    ## send options > start_reminder_on = case_date
+    start_property = forms.CharField(required=False)  # todo select2 of case properties
+    start_match_type = forms.ChoiceField(
+        required=False,
+        choices=MATCH_TYPE_CHOICES,
+    )
+    start_value = forms.CharField(required=False)  # only shows up if start_match_type != MATCH_ANY_VALUE
+    # this is a UI control that determines how start_offset is calculated (0 or an integer)
+    start_property_offset_type = forms.ChoiceField(
+        required=False,
+        choices=(
+            ('offset_delay', "Delay By"),
+            ('offset_immediate', "Immediately"),
+        )
+    )
+    ## send options > start_reminder_on = case_property
+    start_date = forms.CharField(
+        required=False,
+    )   # todo select2 of case properties
+    start_date_offset_type = forms.ChoiceField(
+        required=False,
+        choices=(
+            ('offset_before', "Before Date By"),
+            ('offset_after', "After Date By"),
+        )
+    )  # this is a UI control that determines how start_offset is calculated (positive or negative integer)
+    # this is visible for both states of start_reminder_on:
+    start_offset = forms.IntegerField(required=False, initial=0)  # offset by days
+
+    # Fieldset: Recipient
+    recipient = forms.ChoiceField(
+        choices=(
+            (RECIPIENT_CASE, "Case"),
+            (RECIPIENT_OWNER, "Case Owner"),
+            (RECIPIENT_USER, "User Last Modifying Case"),
+            (RECIPIENT_PARENT_CASE, "Case's Parent Case"),
+            (RECIPIENT_SUBCASE, "Case's Child Cases"),
+        ),
+        help_text=("The contact related to the case that reminder should go to.  The Case "
+                   "Owners are any mobile workers for which the case appears on their phone. "
+                   "For cases with child or parent cases, you can also send the message to those "
+                   "contacts. ")  # todo help bubble
+    )
+    ## receipient = RECIPIENT_SUBCASE
+    recipient_case_match_property = forms.CharField(required=False)  # todo: sub-case property select2
+    recipient_case_match_type = forms.ChoiceField(
+        required=False,
+        choices=MATCH_TYPE_CHOICES,
+    )
+    recipient_case_match_value = forms.CharField(required=False)
+
+    # Fieldset: Message Content
+    method = forms.ChoiceField(
+        label="Send",
+        choices=(
+            (METHOD_SMS, "SMS"),
+            (METHOD_SMS_SURVEY, "SMS Survey"),
+        ),
+        help_text=("Send a single SMS message or an interactive SMS survey. "
+                   "SMS surveys are designed in the Surveys or Application "
+                   "section. ") #todo help bubble
+    )
+    ## method == METHOD_SMS or METHOD_SMS_CALLBACK
+    events = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput
+    )  # contains a string-ified JSON object of events
+
+    event_timing = forms.ChoiceField(
+        label="Timing",
+        help_text=("This controls when the message will be sent. The Time in Case "
+                   "option is useful, for example, if the recipient has chosen a "
+                   "specific time to receive the message.") # todo help bubble
+    )
+
+    event_interpretation = forms.ChoiceField(
+        label="Schedule Type",
+        choices=(
+            (EVENT_AS_OFFSET, "Offset-based"),
+            (EVENT_AS_SCHEDULE, "Schedule-based"),
+        ),
+        widget=forms.HiddenInput  # validate as choice, but don't show the widget.
+    )
+
+    # Fieldset: Repeat
+    repeat_type = forms.ChoiceField(
+        label="Repeat Reminder",
+        choices=(
+            ('no_repeat', "No"),  # reminder_type = ONE_TIME
+            ('indefinite', "Indefinitely"),  # reminder_type = DEFAULT, max_iteration_count = -1
+            ('specific', "Specific Number of Times"),
+        )
+    )
+    # shown if repeat_type != 'no_repeat'
+    schedule_length = forms.IntegerField(
+        required=False,
+        label="Repeat Every",
+    )
+    # shown if repeat_type == 'specific' (0 if no_repeat, -1 if indefinite)
+    max_iteration_count = forms.IntegerField(
+        required=False,
+        label="Number of Times",
+    )
+    # shown if repeat_type != 'no_repeat'
+    stop_condition = forms.ChoiceField(
+        required=False,
+        label= "Stop Condition",
+        choices=(
+            ('', '(none)'),
+            ('property', 'On Date in Case'),
+        )
+    )
+    until = forms.CharField(
+        required=False
+    )  # todo select2 of case properties
+
+    # Advanced Toggle
+    submit_partial_forms = forms.BooleanField(
+        required=False,
+        label="Submit Partial Forms",
+    )
+    include_case_side_effects = forms.BooleanField(
+        required=False,
+        label="Include Case Changes for Partial Forms",
+    )
+    languages = forms.ChoiceField(
+        required=False,
+        choices=(
+            ('en', "English (en)"),
+        )
+    )
+    # only show if SMS_SURVEY or IVR_SURVEY is chosen
+    max_question_retries = forms.ChoiceField(
+        required=False,
+    )
+
+    def __init__(self, is_previewer=False, *args, **kwargs):
+        super(SimpleScheduleCaseReminderForm, self).__init__(*args, **kwargs)
+
+        if is_previewer:
+            method_choices = self.fields['method'].choices
+            method_previewer_choices = [
+                (METHOD_IVR_SURVEY, "IVR Survey"),
+                (METHOD_SMS_CALLBACK, "SMS Expecting Callback"),
+            ]
+            method_choices.extend(method_previewer_choices)
+            self.fields['method'].choices = method_choices
+
+        event_timing_choices = (
+            ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT), "Immediately"),
+            ((EVENT_AS_SCHEDULE, FIRE_TIME_DEFAULT), "At a Specific Time"),
+            ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT), "Delay After Start"),
+            ((EVENT_AS_SCHEDULE, FIRE_TIME_CASE_PROPERTY), "Time in Case"),
+            ((EVENT_AS_SCHEDULE, FIRE_TIME_RANDOM), "Random Time"),
+        )
+        event_timing_choices = ['{event_interpretation: "%s", fire_time_type: "%s"}' % (e[0][0], e[0][1])
+                                for e in event_timing_choices]
+        self.fields['event_timing'].choices = event_timing_choices
+
+
+class CaseReminderEventForm(forms.Form):
+    """
+    This form creates or modifies a CaseReminderEvent.
+    """
+    fire_time_type = forms.ChoiceField(
+        choices=(
+            (FIRE_TIME_DEFAULT, "Default"),
+            (FIRE_TIME_CASE_PROPERTY, "Case Property"),  # not valid when method != EVENT_AS_SCHEDULE
+            (FIRE_TIME_RANDOM, "Random"),  # not valid when method != EVENT_AS_SCHEDULE
+        ),
+        widget=forms.HiddenInput,  # don't actually display this widget to the user for now, but validate as choice
+    )
+
+    # EVENT_AS_OFFSET: number of days after last fire
+    # EVENT_AS_SCHEDULE: number of days since the current event cycle began
+    day_num = forms.IntegerField(required=False)
+
+    # EVENT_AS_OFFSET: number of HH:MM:SS after last fire
+    # EVENT_AS_SCHEDULE: time of day
+    fire_time = forms.TimeField(required=False)  # todo time dropdown
+
+    # method must be EVENT_AS_SCHEDULE
+    fire_time_aux = forms.CharField(
+        required=False,
+        label="Case Property",
+    )  # todo select2 of case properties
+
+    time_window_length = forms.IntegerField(
+        required=False
+    )
+
+    # messages is visible when the method of the reminder is METHOD_SMS or METHOD_SMS_CALLBACK
+    # value will be a dict of {language: message}
+    messages = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput,
+    )
+
+    # callback_timeout_intervals is visible when method of reminder is METHOD_SMS_CALLBACK
+    # a list of comma separated integers
+    callback_timeout_intervals = forms.CharField(required=False)
+
+    # form_unique_id is visible when the method of the reminder is SMS_SURVEY or IVR_SURVEY
+    form_unique_id = forms.CharField(required=False)  # todo select2 of forms
+
+
+class CaseReminderEventMessageForm(forms.Form):
+    """
+    This form specifies the UI for messages in CaseReminderEventForm.
+    """
+    language = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput
+    )
+    message = forms.CharField(
+        required=False,
+        widget=forms.Textarea
+    )
+
 
 def clean_selection(value):
     if value == "" or value is None:
