@@ -29,8 +29,7 @@ def get_build_version(xform):
 
     """
     patterns = [
-        r' build (\d+) ',
-        r' #(\d+) '
+        r' #(\d+) ',
     ]
 
     appversion_text = get_meta_appversion_text(xform)
