@@ -721,7 +721,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     @property
     def full_name(self):
-        return ("%s %s" % (self.first_name or '', self.last_name or '')).strip()
+        return (u"%s %s" % (self.first_name or u'', self.last_name or u'')).strip()
 
     @property
     def human_friendly_name(self):
