@@ -1679,8 +1679,20 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
     def get_teams(self, ids_only=False):
         from corehq.apps.orgs.models import Team
         teams = []
+
+        def get_valid_teams(team_ids):
+            team_db = Team.get_db()
+            for t_id in team_ids:
+                if team_db.doc_exist(t_id):
+                    yield Team.get(t_id)
+                else:
+                    logging.info("Note: team %s does not exist for %s" % (t_id, self))
+
         for om in self.org_memberships:
-            teams.extend([Team.get(t_id) for t_id in om.team_ids] if not ids_only else om.team_ids)
+            if not ids_only:
+                teams.extend(list(get_valid_teams(om.team_ids)))
+            else:
+                teams.extend(om.team_ids)
         return teams
 
     def get_domains(self):
