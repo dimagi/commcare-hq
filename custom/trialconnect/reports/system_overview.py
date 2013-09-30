@@ -11,11 +11,7 @@ from dimagi.utils.couch.database import get_db
 WORKFLOWS = [WORKFLOW_KEYWORD, WORKFLOW_REMINDER, WORKFLOW_BROADCAST]
 NA = 'N/A'
 
-class SystemOverviewReport(GenericTabularReport, CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
-    slug = 'system_overview'
-    name = ugettext_noop("System Overview")
-    description = ugettext_noop("Description for System Overview Report")
-    section_name = ugettext_noop("System Overview")
+class BaseSystemOverviewReport(GenericTabularReport, CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
     need_group_ids = True
     is_cacheable = True
     fields = [
@@ -44,6 +40,12 @@ class SystemOverviewReport(GenericTabularReport, CustomProjectReport, ProjectRep
 
         return q
 
+class SystemOverviewReport(BaseSystemOverviewReport):
+    slug = 'system_overview'
+    name = ugettext_noop("System Overview")
+    description = ugettext_noop("Description for System Overview Report")
+    section_name = ugettext_noop("System Overview")
+
     def workflow_query(self, workflow=None, additional_facets=None):
         additional_facets = additional_facets or []
 
@@ -56,12 +58,6 @@ class SystemOverviewReport(GenericTabularReport, CustomProjectReport, ProjectRep
 
         facets = ['couch_recipient_doc_type', 'direction'] + additional_facets
         return es_query(q=q, facets=facets, es_url=ES_URLS['sms'], size=0)
-
-    def active_query(self, recipient_type):
-        q = self.base_query
-        q["query"]["bool"]["must"].append({"term": {"direction": "i"}})
-        q["query"]["bool"]["must"].append({"term": {"couch_recipient_doc_type": recipient_type}})
-        return es_query(q=q, facets=['couch_recipient'], es_url=ES_URLS['sms'], size=0)
 
     @property
     def headers(self):
@@ -124,14 +120,40 @@ class SystemOverviewReport(GenericTabularReport, CustomProjectReport, ProjectRep
 
         self.total_row = [_("Total"), total(1), total(2), total(3), total(4), total(5)]
 
-        def get_actives(recipient_type):
-            # print self.active_query(recipient_type)['facets']
-            return len(self.active_query(recipient_type)['facets']['couch_recipient']['terms'])
+        return rows
 
-        active_users = get_actives('commcareuser')
-        active_cases = get_actives('commcarecase')
+class SystemUsersReport(BaseSystemOverviewReport):
+    slug = 'system_users'
+    name = ugettext_noop("System Users")
+    description = ugettext_noop("Description for System Users Report")
+    section_name = ugettext_noop("System Users")
 
-        def users_with_verified_numbers(owner_type):
+    def active_query(self, recipient_type):
+        q = self.base_query
+        q["query"]["bool"]["must"].append({"term": {"direction": "i"}})
+        q["query"]["bool"]["must"].append({"term": {"couch_recipient_doc_type": recipient_type}})
+        return es_query(q=q, facets=['couch_recipient'], es_url=ES_URLS['sms'], size=0)
+
+    def messages_query(self):
+        q = self.base_query
+        facets = ['couch_recipient_doc_type']
+        return es_query(q=q, facets=facets, es_url=ES_URLS['sms'], size=0)
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn("Users", sortable=False),
+            DataTablesColumn(_("Mobile Workers")),
+            DataTablesColumn(_("Cases")),
+            DataTablesColumn(_("Total")),
+        )
+
+    @property
+    def rows(self):
+        def row(header, mw_val, case_val):
+            return [_(header), mw_val, case_val, mw_val + case_val]
+
+        def verified_numbered_users(owner_type):
             owners = get_db().view('sms/verified_number_by_domain',
                 reduce=True,
                 group=True,
@@ -140,12 +162,31 @@ class SystemOverviewReport(GenericTabularReport, CustomProjectReport, ProjectRep
             ).all()
             return len(owners)
 
-        print "\n===================="
-        print "All Users: %s" % users_with_verified_numbers("CommCareUser")
-        print "All Cases: %s" % users_with_verified_numbers("CommCareCase")
-        print "Active Users: %s" % active_users
-        print "Active Cases: %s" % active_cases
-        print "====================\n"
+        number = row("Number", verified_numbered_users("CommCareUser"), verified_numbered_users("CommCareCase"))
 
-        return rows
+        def get_actives(recipient_type):
+            return len(self.active_query(recipient_type)['facets']['couch_recipient']['terms'])
 
+        def div(num, denom):
+            return num / denom if denom != 0 else 0
+
+        active = row("Active", get_actives("commcareuser"), get_actives("commcarecase"))
+
+        perc_active = [_("% Active"),
+                       div(active[1], number[1]), div(active[2], number[2]), div(active[3], number[3])]
+
+        facets = self.messages_query()['facets']
+        to_users, to_cases = 0, 0
+        for term in facets['couch_recipient_doc_type']['terms']:
+            if term['term'] == 'commcarecase':
+                to_cases = term['count']
+            elif term['term'] == 'couchuser':
+                to_users = term['count']
+        messages = row("Messages", to_users, to_cases)
+
+        avg_per_user = [_("Avg per User"),
+                        div(messages[1], number[1]), div(messages[2], number[2]), div(messages[3], number[3])]
+        avg_per_act_user = [_("Avg per Active User"),
+                            div(messages[1], active[1]), div(messages[2], active[2]), div(messages[3], active[3])]
+
+        return [number, active, perc_active, messages, avg_per_user, avg_per_act_user]
