@@ -798,13 +798,25 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
                         depth += 1
                     feature_type = 'MultiPolygon' if depth == 4 else 'Polygon'
 
+                properties = dict((k, v) for k, v in row.iteritems() if k != geo_col)
+                # handle 'display value / raw value' fields (for backwards compatibility with
+                # existing data sources)
+                # note: this is not ideal for the maps report, as we have no idea how to properly
+                # format legends; it's better to use a formatter function in the maps report config
+                display_props = {}
+                for k, v in properties.iteritems():
+                    if isinstance(v, dict) and set(v.keys()) == set(('html', 'sort_key')):
+                        properties[k] = v['sort_key']
+                        display_props['__disp_%s' % k] = v['html']
+                properties.update(display_props)
+
                 yield {
                     'type': 'Feature',
                     'geometry': {
                         'type': feature_type,
                         'coordinates': geo,
                     },
-                    'properties': dict((k, v) for k, v in row.iteritems() if k != geo_col),
+                    'properties': properties,
                 }
 
         return {

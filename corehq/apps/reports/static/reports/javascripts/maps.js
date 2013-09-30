@@ -875,6 +875,15 @@ function infoContext(feature, config, mode) {
     }
 
     var formatForDisplay = function(col, datum) {
+        // if display value was explicitly provided from server, use it above all else
+        // note: this pattern has drawbacks -- namely the browser doesn't know how to
+        // properly format legend labels -- so should only really be used for
+        // backwards compatibility or prototyping
+        var displayOverrideCol = '__disp_' + col;
+        if (_.has(feature.properties, displayOverrideCol)) {
+            return feature.properties[displayOverrideCol];
+        }
+
         var fallback = {_null: '\u2014'};
         fallback[datum] = formatValue(col, datum, config);
         return getEnumCaption(col, datum, config, fallback);
@@ -974,11 +983,17 @@ function setMetricDefaults(metric, data, config) {
 }
 
 function getAllCols(config, data) {
-    var ignoreCols = [config.name_column];
+    var isIgnored = function(col) {
+        var ignoreCols = [config.name_column];
+        var ignorePrefix = '__disp_';
+        return (ignoreCols.indexOf(col) != -1 ||
+                col.indexOf(ignorePrefix) == 0);
+    };
+
     var _cols = {};
     $.each(data.features, function(i, e) {
         $.each(e.properties, function(k, v) {
-            if (ignoreCols.indexOf(k) == -1) {
+            if (!isIgnored(k)) {
                 _cols[k] = true;
             }
         });
