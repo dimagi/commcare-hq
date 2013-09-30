@@ -44,7 +44,7 @@ class LegacyMixin(object):
         days_used = [day for day in days if day > 0]
         return {
             'days': zip(
-                ['Monday', 'Tuesday', 'Wednesday', 'Thurday', 'Friday'],
+                ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
                 days,
             ),
             'total': sum(days_used),
@@ -67,7 +67,6 @@ class LegacyReportView(LegacyMixin, CustomProjectReport):
         self.user = self.request.GET.get('user') or \
             self.request.user.username.split("@")[0]
         self.report_id = self.request.GET.get('r_id', None)
-        print "*******", self.user, self.report_id
 
         def get_individual(field):
             return self.report.individual.get(self.user).get(field)

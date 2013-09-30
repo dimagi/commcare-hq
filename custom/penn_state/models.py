@@ -17,7 +17,7 @@ class LegacyWeeklyReport(Document):
         site_strategy: [3, -1, 0, 4, 2],
         site_game: [2, 4, 3, 1, 0],
         individual: {
-            '123456': {
+            'mikeo': {
                 'strategy': [2, 4, 0, 1, 3],
                 'game': [1, 2, 4, 1, 0],
             },
@@ -35,17 +35,22 @@ class LegacyWeeklyReport(Document):
 
     @classmethod
     def by_user(cls, user, date=None):
-        if date is None:
-            date = {}
+        # ACTUALLY LOOK UP USER FIRST, at this point user is probably a str
 
-        # is there a better way to do this?
-        group = Group.by_user('{}@{}.commcarehq.org'.format(user, DOMAIN))
+        # Users should only have one group, and it should be a report group
+        groups = Group.by_user('%s@%s.commcarehq.org' % (user, DOMAIN)).all()#.all()
+        if len(groups) != 1 or not groups[0].reporting:
+            return
+
         site = group.name
 
-        # get the most recent saturday (isoweekday==6)
-        days = [6, 7, 1, 2, 3, 4, 5]
-        today = datetime.date.today()
-        date = today - datetime.timedelta(days=days.index(today.isoweekday()))
+        if date is None:
+            # get the most recent saturday (isoweekday==6)
+            days = [6, 7, 1, 2, 3, 4, 5]
+            today = datetime.date.today()
+            date = today - datetime.timedelta(
+                days=days.index(today.isoweekday())
+            )
 
         report = cls.view(
             'penn_state/smiley_weekly_reports',

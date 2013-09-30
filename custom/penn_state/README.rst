@@ -36,6 +36,7 @@ TBD:
         # Index of available reports for a given user (and unique URLs)
     * Display Individual's username in report?
     * Display some results in email?
+    * save dates off in a once off doc referred to by ID
 
 
 week_end_date = datetime.date(2013, 9, 28)
