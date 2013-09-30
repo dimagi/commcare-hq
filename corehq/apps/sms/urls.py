@@ -18,6 +18,9 @@ urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^delete_backend/(?P<backend_id>[\w-]+)/$', 'delete_domain_backend', name='delete_domain_backend'),
     url(r'^set_default_domain_backend/(?P<backend_id>[\w-]+)/$', 'set_default_domain_backend', name='set_default_domain_backend'),
     url(r'^unset_default_domain_backend/(?P<backend_id>[\w-]+)/$', 'unset_default_domain_backend', name='unset_default_domain_backend'),
+    url(r'^chat_contacts/$', 'chat_contacts', name='chat_contacts'),
+    url(r'^chat/(?P<contact_id>[\w-]+)/$', 'chat', name='chat'),
+    url(r'^api/history/$', 'api_history', name='api_history'),
 )
 
 sms_admin_interface_urls = patterns('corehq.apps.sms.views',

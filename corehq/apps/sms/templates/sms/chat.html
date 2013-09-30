@@ -1,0 +1,153 @@
+{% load hq_shared_tags %}{% load i18n %}<!DOCTYPE html>
+<html>
+    <head>
+        <title>Chat</title>
+        <link rel="stylesheet" media="screen" href="{% static 'hqstyle/css/core/hqstyle-core.css' %}"/>
+        <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
+        <script type="text/javascript" src="{% static 'hqwebapp/js/lib/knockout-2.1.0.debug.js' %}"></script>
+        <script type="text/javascript" src="{% static 'hqwebapp/ko/global.handlers.js' %}"></script>
+        <style>
+            html, body {
+                height: 100%;
+                overflow: hidden;
+            }
+            #chat_header {
+                height: 50px;
+            }
+            #chat_messages {
+                height: 200px;
+                overflow-y: auto;
+                border-top: 1px solid #CCC;
+                border-bottom: 1px solid #CCC;
+            }
+            #chat_footer {
+                height: 50px;
+            }
+            .message_content {
+                padding-right: 20px;
+            }
+            .timestamp_content {
+                text-align: right;
+                white-space: nowrap;
+                overflow: hidden;
+            }
+            #header_table {
+                width: 100%;
+            }
+            #message_table {
+                width: 100%;
+            }
+            #footer_table {
+                width: 100%;
+            }
+            #text_box {
+                resize: none;
+                width: 100%;
+            }
+            #send_col {
+                text-align: right;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="chat_header">
+            <table id="header_table">
+                <tbody>
+                    <tr>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div id="chat_messages">
+            <table id="message_table">
+                <tbody data-bind="foreach: messages">
+                    <tr>
+                        <td class="message_content"><strong><span data-bind="text: sender"></span></strong>: <span data-bind="text: text"></span></td>
+                        <td><div class="timestamp_content" data-bind="text: timestamp"></div></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div id="chat_footer">
+            <table id="footer_table">
+                <tbody>
+                    <tr>
+                        <td><textarea id="text_box"></textarea></td>
+                        <td id="send_col"><span class="btn btn-primary" data-bind="click: send_message">Send</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <script>
+            $(function() {
+                function resize_messages() {
+                    body_height = $("body").height();
+                    $("#chat_messages").height(body_height - 110);
+                }
+                resize_messages();
+                
+                function ChatMessage(sender, text, timestamp) {
+                    var self = this;
+                    self.sender = sender;
+                    self.text = text;
+                    self.timestamp = timestamp;
+                }
+                function ChatWindowViewModel() {
+                    var self = this;
+                    self.messages = ko.observableArray([]);
+                    self.latest_message_utc_timestamp = null;
+                    self.latest_timeout_handle = null;
+                    self.update_messages = function() {
+                        payload = {
+                            contact_id : "{{ contact_id }}"
+                        };
+                        if(self.latest_message_utc_timestamp != null) {
+                            payload.start_date = self.latest_message_utc_timestamp;
+                        }
+                        request = $.ajax({
+                            url : "{% url api_history domain %}",
+                            data : payload
+                        });
+                        request.done(function(response, textStatus, jqXHR) {
+                            data = $.parseJSON(response);
+                            for(i = 0; i < data.length; i++) {
+                                chat_window_view_model.messages.push(new ChatMessage(data[i].sender, data[i].text, data[i].timestamp));
+                                self.latest_message_utc_timestamp = data[i].utc_timestamp;
+                            }
+                        });
+                        //scrollHeight = $("#chat_messages").prop("scrollHeight");
+                        //$("#chat_messages").scrollTop(scrollHeight);
+                    }
+                    self.send_message = function() {
+                        clearTimeout(self.latest_timeout_handle);
+                        request = $.ajax({
+                            url : "{% url api_send_sms domain %}",
+                            type : "POST",
+                            data : {
+                                contact_id : "{{ contact_id }}",
+                                text : $("#text_box").val()
+                            }
+                        });
+                        request.done(function(response, textStatus, jqXHR) {
+                            if(response == "OK") {
+                                $("#text_box").val("");
+                            } else {
+                            }
+                        });
+                        request.always(function() {
+                            self.update_messages_timeout();
+                        });
+                    }
+                    self.update_messages_timeout = function() {
+                        self.update_messages();
+                        self.latest_timeout_handle = setTimeout(self.update_messages_timeout, 15000);
+                    }
+                }
+                chat_window_view_model = new ChatWindowViewModel();
+                ko.applyBindings(chat_window_view_model);
+                $(window).resize(resize_messages);
+                chat_window_view_model.update_messages_timeout();
+            });
+        </script>
+    </body>
+</html>

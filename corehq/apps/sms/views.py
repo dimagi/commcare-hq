@@ -1,17 +1,18 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 import re
+import json
 from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.shortcuts import render
 from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_SMS
-from corehq.apps.sms.api import send_sms, incoming, send_sms_with_backend_name
+from corehq.apps.sms.api import send_sms, incoming, send_sms_with_backend_name, send_sms_to_verified_number
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users import models as user_models
-from corehq.apps.sms.models import SMSLog, INCOMING, ForwardingRule
+from corehq.apps.sms.models import SMSLog, INCOMING, OUTGOING, ForwardingRule, CommConnectCase
 from corehq.apps.sms.mixin import MobileBackend, SMSBackend, BackendMapping
 from corehq.apps.sms.forms import ForwardingRuleForm, BackendMapForm
 from corehq.apps.sms.util import get_available_backends
@@ -23,6 +24,10 @@ from corehq.apps.reports import util as report_utils
 from django.views.decorators.csrf import csrf_exempt
 from corehq.apps.domain.models import Domain
 from django.utils.translation import ugettext as _, ugettext_noop
+from couchdbkit.resource import ResourceNotFound
+from casexml.apps.case.models import CommCareCase
+from dimagi.utils.parsing import json_format_datetime
+from dateutil.parser import parse
 
 @login_and_domain_required
 def default(request, domain):
@@ -247,16 +252,42 @@ def api_send_sms(request, domain):
     An API to send SMS.
     Expected post parameters:
         phone_number - the phone number to send to
+        contact_id - the _id of a contact to send to (overrides phone_number)
         text - the text of the message
         backend_id - the name of the MobileBackend to use while sending
     """
     if request.method == "POST":
         phone_number = request.POST.get("phone_number", None)
+        contact_id = request.POST.get("contact_id", None)
         text = request.POST.get("text", None)
         backend_id = request.POST.get("backend_id", None)
-        if (phone_number is None) or (text is None) or (backend_id is None):
+
+        if (phone_number is None and contact_id is None) or (text is None):
             return HttpResponseBadRequest("Not enough arguments.")
-        if send_sms_with_backend_name(domain, phone_number, text, backend_id):
+
+        vn = None
+        if contact_id is not None:
+            try:
+                contact = CommConnectCase.get(contact_id)
+                assert contact.domain == domain
+                assert contact.doc_type == "CommCareCase"
+            except (ResourceNotFound, AssertionError):
+                return HttpResponseBadRequest("Contact not found.")
+            try:
+                vn = contact.get_verified_number()
+                assert vn is not None
+                phone_number = vn.phone_number
+            except Exception:
+                return HttpResponseBadRequest("Contact has no phone number.")
+
+        if backend_id is not None:
+            success = send_sms_with_backend_name(domain, phone_number, text, backend_id)
+        elif vn is not None:
+            success = send_sms_to_verified_number(vn, text)
+        else:
+            success = send_sms(domain, None, phone_number, text)
+
+        if success:
             return HttpResponse("OK")
         else:
             return HttpResponse("ERROR")
@@ -516,4 +547,82 @@ def global_backend_map(request):
         "form" : form,
     }
     return render(request, "sms/backend_map.html", context)
+
+@login_and_domain_required
+def chat_contacts(request, domain):
+    contacts = CommCareCase.view("hqcase/types_by_domain",
+                                 startkey=[domain],
+                                 endkey=[domain, {}],
+                                 include_docs=True,
+                                 reduce=False).all()
+    return render(request, "sms/chat_contacts.html", {"domain" : domain, "contacts" : contacts})
+
+@login_and_domain_required
+def chat(request, domain, contact_id):
+    return render(request, "sms/chat.html", {"domain" : domain, "contact_id" : contact_id})
+
+@login_and_domain_required
+def api_history(request, domain):
+    result = []
+    contact_id = request.GET.get("contact_id", None)
+    start_date = request.GET.get("start_date", None)
+
+    try:
+        assert contact_id is not None
+        doc = CommCareCase.get(contact_id)
+        assert doc.doc_type == "CommCareCase"
+        assert doc.domain == domain
+    except (ResourceNotFound, AssertionError):
+        return HttpResponse("[]")
+
+    query_start_date_str = None
+    if start_date is not None:
+        try:
+            query_start_date = parse(start_date)
+            query_start_date += timedelta(seconds=1)
+            query_start_date_str = json_format_datetime(query_start_date)
+        except Exception:
+            pass
+
+    if query_start_date_str is not None:
+        data = SMSLog.view("sms/by_recipient",
+                           startkey=["CommCareCase", contact_id, "SMSLog", INCOMING, query_start_date_str],
+                           endkey=["CommCareCase", contact_id, "SMSLog", INCOMING, {}],
+                           include_docs=True,
+                           reduce=False).all()
+        data += SMSLog.view("sms/by_recipient",
+                            startkey=["CommCareCase", contact_id, "SMSLog", OUTGOING, query_start_date_str],
+                            endkey=["CommCareCase", contact_id, "SMSLog", OUTGOING, {}],
+                            include_docs=True,
+                            reduce=False).all()
+    else:
+        data = SMSLog.view("sms/by_recipient",
+                           startkey=["CommCareCase", contact_id, "SMSLog"],
+                           endkey=["CommCareCase", contact_id, "SMSLog", {}],
+                           include_docs=True,
+                           reduce=False).all()
+    data.sort(key=lambda x : x.date)
+    username_map = {}
+    for sms in data:
+        if sms.direction == INCOMING:
+            sender = doc.name
+        elif sms.chat_user_id is not None:
+            if sms.chat_user_id in username_map:
+                sender = username_map[sms.chat_user_id]
+            else:
+                try:
+                    user = CouchUser.get_by_user_id(sms.chat_user_id)
+                    sender = user.first_name or user.raw_username
+                except Exception:
+                    sender = _("Unknown")
+                username_map[sms.chat_user_id] = sender
+        else:
+            sender = _("System")
+        result.append({
+            "sender" : sender,
+            "text" : sms.text,
+            "timestamp" : sms.date.strftime("%I:%M%p %m/%d/%y").lower(),
+            "utc_timestamp" : json_format_datetime(sms.date),
+        })
+    return HttpResponse(json.dumps(result))
 
