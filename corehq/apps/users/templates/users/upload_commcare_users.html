@@ -14,7 +14,7 @@
     <p>
         <ol>
             <li>
-                {% trans "Download your current user data: " %}<a href="{% url download_commcare_users domain %}">{% trans "users.xlsx" %}</a>
+                {% trans "Download your current user data: " %}<a href="{% url "download_commcare_users" domain %}">{% trans "users.xlsx" %}</a>
             </li>
             <li>
                 {% trans "Updated it with the changes you want to make" %}
@@ -25,7 +25,7 @@
         </ol>
     </p>
     <form id="bulk-user-upload-form" class="form form-horizontal" action="" method="post" enctype="multipart/form-data">
-        <input type="hidden" name="redirect" value="{% url commcare_users domain %}"/>
+        <input type="hidden" name="redirect" value="{% url "commcare_users" domain %}"/>
         {% if show_secret_settings %}
         <input type="hidden" name="async" value="true"/>
         {% endif %}

@@ -442,11 +442,11 @@
     </li>
     {% if handler_id %}
     <li class="active">
-        <a href="{% url edit_complex domain handler_id %}">{{ form.nickname.value }}</a>
+        <a href="{% url "edit_complex" domain handler_id %}">{{ form.nickname.value }}</a>
     </li>
     {% else %}
     <li class="active">
-        <a href="{% url add_complex_reminder_schedule domain %}">New Reminder Definition</a>
+        <a href="{% url "add_complex_reminder_schedule" domain %}">New Reminder Definition</a>
     </li>
     {% endif %}
 {% endblock %}

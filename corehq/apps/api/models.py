@@ -1,9 +1,12 @@
 from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.ext.django.schema import *
+from django.contrib.auth.hashers import make_password
 
-from django.contrib.auth.models import get_hexdigest, check_password
+from django.contrib.auth.models import check_password
 from django.http import HttpResponse
 from django.conf import settings
+
+import os
 
 PERMISSION_POST_SMS = "POST_SMS"
 PERMISSION_POST_WISEPILL = "POST_WISEPILL"
@@ -20,11 +23,8 @@ class ApiUser(Document):
             raise Exception("ApiUser _id has to be 'ApiUser-' + username")
 
     def set_password(self, raw_password):
-        import random
-        algo = 'sha1'
-        salt = get_hexdigest(algo, str(random.random()), str(random.random()))[:5]
-        hsh = get_hexdigest(algo, salt, raw_password)
-        self.password = '%s$%s$%s' % (algo, salt, hsh)
+        salt = os.urandom(5).encode('hex')
+        self.password = make_password(raw_password, salt=salt)
 
     def check_password(self, raw_password):
         return check_password(raw_password, self.password)

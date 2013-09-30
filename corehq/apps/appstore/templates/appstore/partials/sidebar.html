@@ -4,10 +4,10 @@
 <ul class="nav nav-list">
     {% if display_ua %}
         {% if request.user.is_superuser %}
-            <li{% if not include_unapproved %} class="active"{% endif %}><a href="{% url appstore %}">{% trans "Approved" %}</a></li>
-            <li{% if include_unapproved %} class="active"{% endif %}><a href="{% url appstore %}?is_approved=false">{% trans "Unapproved" %}</a></li>
+            <li{% if not include_unapproved %} class="active"{% endif %}><a href="{% url "appstore" %}">{% trans "Approved" %}</a></li>
+            <li{% if include_unapproved %} class="active"{% endif %}><a href="{% url "appstore" %}?is_approved=false">{% trans "Unapproved" %}</a></li>
         {% else %}
-            <li{% if not include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url appstore %}">{% trans "All" %}</a></li>
+            <li{% if not include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url "appstore" %}">{% trans "All" %}</a></li>
         {% endif %}
     {% endif %}
 

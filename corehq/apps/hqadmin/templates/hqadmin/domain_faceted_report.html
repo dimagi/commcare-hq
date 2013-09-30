@@ -46,7 +46,7 @@
                     chart_name: key,
                     histogram_type: key,
                     xaxis_label: visualizations[key].xaxis_label,
-                    ajax_url: "{% url admin_stats_data %}",
+                    ajax_url: "{% url "admin_stats_data" %}",
                     data: url_params,
                     should_update_url: false,
                     interval: "{{ interval }}"

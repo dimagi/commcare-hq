@@ -1,6 +1,6 @@
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 from django.conf import settings
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, RedirectView
 from corehq.apps.domain.utils import legacy_domain_re
 
 # Uncomment the next two lines to enable the admin:
@@ -57,8 +57,7 @@ domain_specific = patterns('',
 )
 
 urlpatterns = patterns('',
-    (r'^favicon\.ico$', 'django.views.generic.simple.redirect_to',
-       {'url': '%shqwebapp/img/favicon2.png' % settings.STATIC_URL}),
+    (r'^favicon\.ico$', RedirectView.as_view(url='%shqwebapp/img/favicon2.png' % settings.STATIC_URL)),
     (r'^auditcare/', include('auditcare.urls')),
     (r'^admin/', include(admin.site.urls)),
     (r'^register/', include('corehq.apps.registration.urls')),
