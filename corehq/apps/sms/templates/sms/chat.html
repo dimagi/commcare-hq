@@ -57,6 +57,13 @@
                 color: #44F;
                 padding-right: 3px;
             }
+            #message_counter_container {
+                text-align: right;
+            }
+            #message_count {
+                padding: 5px 5px 5px 5px;
+                border: 1px solid black;
+            }
         </style>
     </head>
     <body>
@@ -64,6 +71,7 @@
             <table id="header_table">
                 <tbody>
                     <tr>
+                        <td><div id="message_counter_container"><div><strong><span id="message_count" data-bind="text: message_count"></span></strong></div><div><span class="btn btn-primary" data-bind="click: reset_message_count">Reset</span></div></div></td>
                     </tr>
                 </tbody>
             </table>
@@ -72,7 +80,7 @@
             <table id="message_table">
                 <tbody data-bind="foreach: messages">
                     <tr>
-                        <td class="message_content"><strong><span data-bind="text: sender"></span></strong>: <span data-bind="text: text"></span></td>
+                        <td><div class="message_content"><strong><span data-bind="text: sender"></span></strong>: <span data-bind="text: text"></span></div></td>
                         <td><div class="timestamp_content"><strong><span class="highlight_bullet" data-bind="text: seen_text"></span></strong><span data-bind="text: timestamp"></span></div></td>
                     </tr>
                 </tbody>
@@ -112,6 +120,9 @@
                     self.title_timeout_handle = null;
                     self.title_flag = true;
                     self.is_focused = true;
+                    self.message_count = ko.observable(0);
+                    self.message_count_threshold = {{ message_count_threshold }};
+                    self.first_update = true;
                     self.update_messages = function() {
                         payload = {
                             contact_id : "{{ contact_id }}"
@@ -134,6 +145,14 @@
                             }
                             scrollHeight = $("#chat_messages").prop("scrollHeight");
                             $("#chat_messages").scrollTop(scrollHeight);
+                            if(self.first_update) {
+                                self.first_update = false;
+                            } else {
+                                self.message_count(self.message_count() + data.length);
+                                if(self.message_count() >= self.message_count_threshold) {
+                                    $("#message_count").css("background-color", "#F00");
+                                }
+                            }
                         });
                     };
                     self.send_message = function() {
@@ -203,6 +222,10 @@
                     };
                     self.leave_focus = function() {
                         self.is_focused = false;
+                    };
+                    self.reset_message_count = function() {
+                        self.message_count(0);
+                        $("#message_count").css("background-color", "#FFF");
                     };
                 }
                 chat_window_view_model = new ChatWindowViewModel();

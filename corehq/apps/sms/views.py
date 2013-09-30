@@ -580,7 +580,12 @@ def chat_contacts(request, domain):
 
 @login_and_domain_required
 def chat(request, domain, contact_id):
-    return render(request, "sms/chat.html", {"domain" : domain, "contact_id" : contact_id})
+    context = {
+        "domain" : domain,
+        "contact_id" : contact_id,
+        "message_count_threshold" : 40, # This will soon be replaced by a setting
+    }
+    return render(request, "sms/chat.html", context)
 
 @login_and_domain_required
 def api_history(request, domain):
