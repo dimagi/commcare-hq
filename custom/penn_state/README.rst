@@ -30,8 +30,24 @@ The user clicks on the report, is redirected to a login page, then sent to the r
 TBD:
     * When do we run the celery task?
     * Does each user get a unique url?  How are urls configured?
-    	# unique URL per user per week
-    	# unique URL per user showing latest
-    	# general URL showing latest for current user
-    	# Index of available reports for a given user (and unique URLs)
+        # unique URL per user per week
+        # unique URL per user showing latest
+        # general URL showing latest for current user
+        # Index of available reports for a given user (and unique URLs)
+    * Display Individual's username in report?
     * Display some results in email?
+
+
+week_end_date = datetime.date(2013, 9, 28)
+site_strategy = [3, -1, 0, 4, 2]
+site_game = [2, 4, 3, 1, 0]
+individual = {
+    'ethan': {
+        'strategy': [2, 4, 0, 1, 3],
+        'game': [1, 2, 4, 1, 0],
+    }
+}
+
+r = LegacyWeeklyReport(domain='mikesproject', site='central')
+id:
+0c90e7b7110f2451ec225dad783e2cba

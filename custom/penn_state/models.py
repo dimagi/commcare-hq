@@ -1,7 +1,9 @@
 import datetime
 
 from couchdbkit.ext.django.schema import (Document, StringProperty,
-    StringListProperty, IntegerProperty, ListProperty, DictProperty, DateProperty)
+    ListProperty, DictProperty, DateProperty)
+
+from corehq.apps.groups.models import Group
 
 from .constants import *
 
@@ -33,27 +35,21 @@ class LegacyWeeklyReport(Document):
 
     @classmethod
     def by_user(cls, user, date=None):
-        """
-        Returns a dict of results for a given individual.
-        If a date is not supplied, return latest report.
-        Example output:
-        {
-            'site_strategy': [3, -1, 0, 4, 2],     
-            'site_game': [2, 4, 3, 1, 0],     
-            'individual_strategy': [2, 4, 0, 1, 3],     
-            'individual_game': [1, 2, 4, 1, 0],
-        }
-        """
-        # site = get site from user
+        if date is None:
+            date = {}
 
-        # get the most recent saturday (isoweekly==6)
+        # is there a better way to do this?
+        group = Group.by_user('{}@{}.commcarehq.org'.format(user, DOMAIN))
+        site = group.name
+
+        # get the most recent saturday (isoweekday==6)
         days = [6, 7, 1, 2, 3, 4, 5]
         today = datetime.date.today()
         date = today - datetime.timedelta(days=days.index(today.isoweekday()))
 
         report = cls.view(
             'penn_state/smiley_weekly_reports',
-            key=[DOMAIN, site, date],
+            key=[DOMAIN, site, str(date)],
             reduce=False,
             include_docs=True,
         ).one()
