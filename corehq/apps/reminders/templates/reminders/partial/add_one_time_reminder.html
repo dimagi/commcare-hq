@@ -8,11 +8,11 @@
     </li>
     {% if handler_id %}
     <li class="active">
-        <a href="{% url edit_one_time_reminder domain handler_id %}">{% trans 'Edit Broadcast' %}</a>
+        <a href="{% url "edit_one_time_reminder" domain handler_id %}">{% trans 'Edit Broadcast' %}</a>
     </li>
     {% else %}
     <li class="active">
-        <a href="{% url add_one_time_reminder domain %}">{% trans 'New Broadcast' %}</a>
+        <a href="{% url "add_one_time_reminder" domain %}">{% trans 'New Broadcast' %}</a>
     </li>
     {% endif %}
 {% endblock %}
@@ -77,7 +77,7 @@
 {% block main_column %}
 {% include "hqwebapp/partials/time-notice.html" %}
 <h4>{% trans 'Broadcast Message' %}</h4>
-<form id="one_time_reminder_form" action="{% if handler_id %}{% url edit_one_time_reminder domain handler_id %}{% else %}{% url add_one_time_reminder domain %}{% endif %}" method="post">
+<form id="one_time_reminder_form" action="{% if handler_id %}{% url "edit_one_time_reminder" domain handler_id %}{% else %}{% url "add_one_time_reminder" domain %}{% endif %}" method="post">
     <div class="form-block">
         <table id="main_table">
             <tbody>

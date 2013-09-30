@@ -10,7 +10,7 @@
         var results = {{ results|JSON }},
             webUserID = {{ request.couch_user.user_id|JSON }},
             domain = {{ domain|JSON }},
-            url = '{% url receiver_post domain %}';
+            url = '{% url "receiver_post" domain %}';
         var ReassignmentStub = {
             states: {
                 NONE: 'none',

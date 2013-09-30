@@ -36,12 +36,12 @@
 {% endblock %}
 
 {% block page-subtitle %}
-    <a href="{% url sms_compose_message domain %}">{% trans "Compose SMS Message" %}</a>
+    <a href="{% url "sms_compose_message" domain %}">{% trans "Compose SMS Message" %}</a>
 {% endblock %}
 
 {% block main_column %}
     {% include "hqwebapp/partials/time-notice.html" %}
-    <form class="form form-horizontal" action="{% url corehq.apps.sms.views.send_to_recipients domain %}" method="post">
+    <form class="form form-horizontal" action="{% url "corehq.apps.sms.views.send_to_recipients" domain %}" method="post">
         <fieldset>
             <legend>{% trans "Send SMS Message" %}</legend>
             <div class="control-group">

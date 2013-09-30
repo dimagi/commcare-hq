@@ -21,7 +21,7 @@
             {% for domain in domains %}
                 <tr>
                     <td class="span6">
-                        <a href="{% url domain_homepage domain.name %}">{{ domain.name }}</a>
+                        <a href="{% url "domain_homepage" domain.name %}">{{ domain.name }}</a>
                     </td>
                     <td class="span6">
                         {% if not domain.is_admin %}
@@ -64,6 +64,6 @@
         </table>
     </div>
     <p>
-        <a class="btn btn-success" href="{% url registration_domain %}?referer={{ request.path }}"><i class="icon-plus"></i> {% trans 'Create a New Project' %}</a>
+        <a class="btn btn-success" href="{% url "registration_domain" %}?referer={{ request.path }}"><i class="icon-plus"></i> {% trans 'Create a New Project' %}</a>
     </p>
 {% endblock %}
