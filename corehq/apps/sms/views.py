@@ -4,6 +4,7 @@ import logging
 from datetime import datetime, timedelta
 import re
 import json
+import pytz
 from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, Http404
@@ -22,6 +23,7 @@ from corehq.apps.domain.decorators import login_and_domain_required, login_or_di
 from dimagi.utils.couch.database import get_db
 from django.contrib import messages
 from corehq.apps.reports import util as report_utils
+from dimagi.utils.timezones import utils as tz_utils
 from django.views.decorators.csrf import csrf_exempt
 from corehq.apps.domain.models import Domain
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -592,6 +594,7 @@ def api_history(request, domain):
     result = []
     contact_id = request.GET.get("contact_id", None)
     start_date = request.GET.get("start_date", None)
+    timezone = report_utils.get_timezone(None, domain)
 
     try:
         assert contact_id is not None
@@ -647,7 +650,7 @@ def api_history(request, domain):
         result.append({
             "sender" : sender,
             "text" : sms.text,
-            "timestamp" : sms.date.strftime("%I:%M%p %m/%d/%y").lower(),
+            "timestamp" : tz_utils.adjust_datetime_to_timezone(sms.date, pytz.utc.zone, timezone.zone).strftime("%I:%M%p %m/%d/%y").lower(),
             "utc_timestamp" : json_format_datetime(sms.date),
         })
     return HttpResponse(json.dumps(result))
