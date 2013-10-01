@@ -1,7 +1,11 @@
 {% extends 'reminders/base_template.html' %}
 {% load hq_shared_tags %}
 {% load i18n %}
+{% load crispy_forms_tags %}
 
 {% block main_column %}
-    TBD
+    <form class="form form-horizontal"
+          method="post">
+        {% crispy form %}
+    </form>
 {% endblock %}

@@ -1,5 +1,9 @@
 import json
 import re
+from crispy_forms.bootstrap import InlineField, Accordion, AccordionGroup, FormActions, StrictButton
+from crispy_forms.helper import FormHelper
+from crispy_forms import layout as crispy
+from django.core.urlresolvers import reverse
 import pytz
 from datetime import timedelta, datetime
 from django.core.exceptions import ValidationError
@@ -11,6 +15,7 @@ from django.forms import Field, Widget
 from django.utils.datastructures import DotExpandedDict
 from casexml.apps.case.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
+from corehq.apps.hqwebapp.crispy import BootstrapMultiField
 from .models import (
     REPEAT_SCHEDULE_INDEFINITELY,
     CaseReminderEvent,
@@ -636,17 +641,25 @@ class SimpleScheduleCaseReminderForm(forms.Form):
     This form creates a new CaseReminder. It is the most basic version, no advanced options (like language).
     """
     nickname = forms.CharField(
+        label="Name",
         error_messages={
             'required': "Please enter a name for this reminder",
         }
     )
-    active = forms.BooleanField(required=False)
+    active = forms.BooleanField(
+        required=False,
+        initial=True,
+        label="This reminder is active."
+    )
 
     # Fieldset: Send Options
     # simple has start_condition_type = CASE_CRITERIA by default
-    case_type = forms.CharField(required=False)  # this should be a dropdown of all case types
+    case_type = forms.CharField(
+        required=False,
+    )  # this should be a dropdown of all case types
     start_reminder_on = forms.ChoiceField(
         label="Start Reminder",
+        required=False,
         choices=(
             ('case_date', "on a date specified in the Case"),
             ('case_property', "when the Case is in the following state"),
@@ -656,12 +669,18 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                    "is equal to 'yes')")  # todo this will be a (?) bubble...can override the crispy Field
     )
     ## send options > start_reminder_on = case_date
-    start_property = forms.CharField(required=False)  # todo select2 of case properties
+    start_property = forms.CharField(
+        required=False,
+        label="Property Name"
+    )  # todo select2 of case properties
     start_match_type = forms.ChoiceField(
         required=False,
         choices=MATCH_TYPE_CHOICES,
     )
-    start_value = forms.CharField(required=False)  # only shows up if start_match_type != MATCH_ANY_VALUE
+    start_value = forms.CharField(
+        required=False,
+        label="Value"
+    )  # only shows up if start_match_type != MATCH_ANY_VALUE
     # this is a UI control that determines how start_offset is calculated (0 or an integer)
     start_property_offset_type = forms.ChoiceField(
         required=False,
@@ -670,9 +689,15 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             ('offset_immediate', "Immediately"),
         )
     )
+    # becomes start_offset
+    start_property_offset = forms.IntegerField(
+        required=False,
+        initial=0,
+    )
     ## send options > start_reminder_on = case_property
     start_date = forms.CharField(
         required=False,
+        label="Case Property",
     )   # todo select2 of case properties
     start_date_offset_type = forms.ChoiceField(
         required=False,
@@ -680,9 +705,12 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             ('offset_before', "Before Date By"),
             ('offset_after', "After Date By"),
         )
-    )  # this is a UI control that determines how start_offset is calculated (positive or negative integer)
-    # this is visible for both states of start_reminder_on:
-    start_offset = forms.IntegerField(required=False, initial=0)  # offset by days
+    )
+    # becomes start_offset
+    start_date_offset = forms.IntegerField(
+        required=False,
+        initial=0,
+    )
 
     # Fieldset: Recipient
     recipient = forms.ChoiceField(
@@ -699,12 +727,18 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                    "contacts. ")  # todo help bubble
     )
     ## receipient = RECIPIENT_SUBCASE
-    recipient_case_match_property = forms.CharField(required=False)  # todo: sub-case property select2
+    recipient_case_match_property = forms.CharField(
+        label="Case Property",
+        required=False
+    )  # todo: sub-case property select2
     recipient_case_match_type = forms.ChoiceField(
         required=False,
         choices=MATCH_TYPE_CHOICES,
     )
-    recipient_case_match_value = forms.CharField(required=False)
+    recipient_case_match_value = forms.CharField(
+        label="Value",
+        required=False
+    )
 
     # Fieldset: Message Content
     method = forms.ChoiceField(
@@ -715,7 +749,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         ),
         help_text=("Send a single SMS message or an interactive SMS survey. "
                    "SMS surveys are designed in the Surveys or Application "
-                   "section. ") #todo help bubble
+                   "section. ")  # todo help bubble
     )
     ## method == METHOD_SMS or METHOD_SMS_CALLBACK
     events = forms.CharField(
@@ -727,7 +761,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         label="Timing",
         help_text=("This controls when the message will be sent. The Time in Case "
                    "option is useful, for example, if the recipient has chosen a "
-                   "specific time to receive the message.") # todo help bubble
+                   "specific time to receive the message.")  # todo help bubble
     )
 
     event_interpretation = forms.ChoiceField(
@@ -761,7 +795,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
     # shown if repeat_type != 'no_repeat'
     stop_condition = forms.ChoiceField(
         required=False,
-        label= "Stop Condition",
+        label="",
         choices=(
             ('', '(none)'),
             ('property', 'On Date in Case'),
@@ -791,8 +825,10 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         required=False,
     )
 
-    def __init__(self, is_previewer=False, *args, **kwargs):
-        super(SimpleScheduleCaseReminderForm, self).__init__(*args, **kwargs)
+    def __init__(self, data=None, is_previewer=False, domain=None, *args, **kwargs):
+        super(SimpleScheduleCaseReminderForm, self).__init__(data, *args, **kwargs)
+
+        self.domain = domain
 
         if is_previewer:
             method_choices = self.fields['method'].choices
@@ -810,9 +846,113 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             ((EVENT_AS_SCHEDULE, FIRE_TIME_CASE_PROPERTY), "Time in Case"),
             ((EVENT_AS_SCHEDULE, FIRE_TIME_RANDOM), "Random Time"),
         )
-        event_timing_choices = ['{event_interpretation: "%s", fire_time_type: "%s"}' % (e[0][0], e[0][1])
+        event_timing_choices = [('{event_interpretation: "%s", fire_time_type: "%s"}'% (e[0][0], e[0][1]), e[1])
                                 for e in event_timing_choices]
         self.fields['event_timing'].choices = event_timing_choices
+
+        start_section = crispy.Fieldset(
+            'Start',
+            crispy.Field('case_type', data_bind="{ text: 'foo' }", placeholder="todo: dropdown"),
+            crispy.Field('start_reminder_on'),
+            crispy.Div(
+                BootstrapMultiField(
+                    "When Case Property",
+                    InlineField('start_property', placeholder="todo: dropdown"),
+                    'start_match_type',
+                    InlineField('start_value', style="margin-left: 5px;"),
+                ),
+                BootstrapMultiField(
+                    "",
+                    InlineField('start_property_offset_type'),
+                    crispy.Div(
+                        InlineField(
+                            'start_property_offset',
+                            css_class='input-small',
+
+                        ),
+                        crispy.HTML('<p class="help-inline">days</p>'),
+                        style='display: inline; margin-left: 5px;'
+                    )
+                )
+            ),
+            crispy.Div(
+                crispy.Field('start_date'),
+                BootstrapMultiField(
+                    "",
+                    InlineField('start_date_offset_type'),
+                    crispy.Div(
+                        InlineField(
+                            'start_date_offset',
+                            css_class='input-small',
+
+                        ),
+                        crispy.HTML('<p class="help-inline">days</p>'),
+                        style='display: inline; margin-left: 5px;'
+                    )
+                )
+            )
+        )
+
+        recipient_section = crispy.Fieldset(
+            "Recipient",
+            crispy.Field('recipient'),
+            BootstrapMultiField(
+                "When Case Property",
+                InlineField('recipient_case_match_property', placeholder="todo: dropdown"),
+                'recipient_case_match_type',
+                InlineField('recipient_case_match_value', style="margin-left: 5px;"),
+            ),
+        )
+
+        message_section = crispy.Fieldset(
+            "Message Content",
+            crispy.Field('method'),
+            crispy.Field('event_interpretation'),
+            crispy.Field('events'),
+            crispy.HTML("< insert events here >"),
+            crispy.Field('event_timing'),
+        )
+
+        repeat_section = crispy.Fieldset(
+            "Repeat",
+            crispy.Field('repeat_type'),
+            crispy.Field('schedule_length'),
+            crispy.Field('max_iteration_count'),
+            BootstrapMultiField(
+                "Stop Condition",
+                InlineField('stop_condition'),
+                InlineField('until')
+            )
+        )
+
+        advanced_section = Accordion(
+            AccordionGroup(
+                "Advanced",
+                'submit_partial_forms',
+                'include_case_side_effects',
+                'languages',
+                'max_question_retries',
+            )
+        )
+
+        self.helper = FormHelper()
+        self.helper.layout = crispy.Layout(
+            crispy.Field('nickname'),
+            crispy.Field('active'),
+            start_section,
+            recipient_section,
+            message_section,
+            repeat_section,
+            advanced_section,
+            FormActions(
+                StrictButton(
+                    "Create Reminder",
+                    css_class='btn-primary',
+                    type='submit',
+                ),
+                crispy.HTML('<a href="%s" class="btn">Cancel</a>' % reverse('list_reminders', args=[self.domain]))
+            )
+        )
 
 
 class CaseReminderEventForm(forms.Form):
