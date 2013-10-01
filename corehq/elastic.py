@@ -38,6 +38,7 @@ DATE_FIELDS = {
     "forms": "received_on",
     "cases": "opened_on",
     "users": "created_on",
+    "sms": 'date',
 }
 
 ES_MAX_CLAUSE_COUNT = 1024  #  this is what ES's maxClauseCount is currently set to,
@@ -72,11 +73,11 @@ def get_stats_data(domains, histo_type, datespan, interval="day"):
     }
 
 
-def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None, interval="day"):
-    q = {"query": {"match_all":{}}}
+def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None, interval="day", q=None):
+    q = q or {"query": {"match_all":{}}}
 
     if domains is not None:
-        q["query"] = {"in" : {"domain.exact": domains}}
+        q["query"] = {"bool": {"must": [q["query"], {"in": {"domain.exact": domains}}]}}
 
     date_field = DATE_FIELDS[histo_type]
 
@@ -234,3 +235,15 @@ def fill_mapping_with_facets(facet_mapping, results, params=None):
                 for choice in facet_dict["choices"]:
                     choice["display"] = facet_dict.get('mapping').get(choice["name"], choice["name"])
     return facet_mapping
+
+DAY_VALUE = 86400000
+def format_histo_data(data, name, min_t=None, max_t=None):
+    data = dict([(d["time"], d["count"]) for d in data])
+    times = data.keys()
+    min_t, max_t = min_t or min(times), max_t or max(times)
+    time = min_t
+    values = []
+    while time <= max_t:
+        values.append([time, data.get(time, 0)])
+        time += DAY_VALUE
+    return {"key": name, "values": values}

@@ -3,9 +3,10 @@ from django.utils.translation import ugettext_noop
 from corehq.apps.reminders.models import REMINDER_TYPE_ONE_TIME
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
 from corehq.apps.sms.models import WORKFLOW_KEYWORD, WORKFLOW_REMINDER, WORKFLOW_BROADCAST
-from corehq.elastic import es_query, ES_URLS
+from corehq.elastic import es_query, ES_URLS, es_histogram, format_histo_data
 from dimagi.utils.couch.database import get_db
 
 WORKFLOWS = [WORKFLOW_KEYWORD, WORKFLOW_REMINDER, WORKFLOW_BROADCAST]
@@ -52,9 +53,9 @@ class SystemOverviewReport(BaseSystemOverviewReport):
         q = self.base_query
 
         if workflow:
-            q["filter"] = {"and": [{"term": {"workflow": workflow}}]}
+            q["filter"] = {"and": [{"term": {"workflow": workflow.lower()}}]}
         else:
-            q["filter"] = {"and": [{"not": {"in": {"workflow": WORKFLOWS}}}]}
+            q["filter"] = {"and": [{"not": {"in": {"workflow": [w.lower() for w in WORKFLOWS]}}}]}
 
         facets = ['couch_recipient_doc_type', 'direction'] + additional_facets
         return es_query(q=q, facets=facets, es_url=ES_URLS['sms'], size=0)
@@ -121,6 +122,23 @@ class SystemOverviewReport(BaseSystemOverviewReport):
         self.total_row = [_("Total"), total(1), total(2), total(3), total(4), total(5)]
 
         return rows
+
+    def es_histogram(self, workflow):
+        q = {"query": {"term": {"workflow": workflow.lower()}}}
+        return es_histogram(histo_type="sms", domains=[self.domain], q=q,
+                            startdate=self.datespan.startdate_display, enddate=self.datespan.enddate_display)
+
+    @property
+    def charts(self):
+        chart = LineChart(_("Messages over time"), None, Axis(_('# of Messages'), ',.1d'))
+        chart.data = {
+            _("Keywords"): self.es_histogram(WORKFLOW_KEYWORD),
+            _("Reminders"): self.es_histogram(WORKFLOW_REMINDER),
+            _("Broadcasts"): self.es_histogram(WORKFLOW_BROADCAST),
+        }
+        chart.data_needs_formatting = True
+        chart.x_axis_uses_dates = True
+        return [chart]
 
 class SystemUsersReport(BaseSystemOverviewReport):
     slug = 'system_users'

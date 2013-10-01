@@ -146,6 +146,10 @@ class LineChart(Chart):
         self.reduceXTicks = False
         self.rotateLabels = 0
         self.tooltips = True
+        self.showLegend = True
+        self.data_needs_formatting = False  # this determines whether or not the data should get formatted client side
+                                            # using the data formatting helpers in nvd3_charts_helper.js
+        self.x_axis_uses_dates = False  # determines whether or not we should use a date format for the xaxis
 
     def config_dict(self):
         return dict(margin={'top': self.marginTop,
@@ -154,4 +158,5 @@ class LineChart(Chart):
                             'left': self.marginLeft},
                     reduceXTicks=self.reduceXTicks,
                     rotateLabels=self.rotateLabels,
+                    showLegend=self.showLegend,
                     tooltips=self.tooltips)

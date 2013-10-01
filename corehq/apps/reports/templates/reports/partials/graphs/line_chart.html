@@ -1,8 +1,13 @@
 {% load hq_shared_tags %}
+<script src='{% static 'hqadmin/js/nvd3_charts_helper.js' %}' type='text/javascript'></script>
 <script type="text/javascript">
     nv.addGraph(function() {
         var chart_config = {{ chart.config_dict|JSON }};
-        var chart_data = {{ chart.data|JSON }};
+        {% if chart.data_needs_formatting %}
+            var chart_data = formatDataForLineGraph({{ chart.data|JSON }});
+        {% else %}
+            var chart_data = {{ chart.data|JSON }};
+        {% endif %}
         var chart_id = '#{{ chart_id }}';
 
         $(chart_id).show();
@@ -15,6 +20,10 @@
         chart.xAxis.axisLabel({{ chart.x_axis.label|JSON }});
         {% if chart.x_axis.format %}
             chart.xAxis.tickFormat(d3.format({{ chart.x_axis.format|JSON }}));
+        {% else %}
+            {% if chart.x_axis_uses_dates %}
+                chart.xAxis.tickFormat(function(d){return d3.time.format.utc('%b %d' + linebreak_txt + '%Y')(new Date(d));});
+            {% endif %}
         {% endif %}
 
         chart.yAxis.axisLabel({{ chart.y_axis.label|JSON }});
@@ -31,6 +40,22 @@
                 .transition().duration(500).call(chart);
 
         nv.utils.windowResize(chart.update);
+
+        var updateLineBreaks = function() {
+            d3.selectAll(chart_id + ' g.nv-x.nv-axis g text').each(insertLinebreaks);
+        };
+
+        {% if chart.x_axis_uses_dates %}
+            // hacks for adding line breaks whenever the graphs are redrawn
+            updateLineBreaks();
+            $(document).on('click', chart_id + ' .nv-series', function(){
+                updateLineBreaks();
+            });
+            nv.utils.windowResize(function(e) {
+                chart.update(e);
+                updateLineBreaks();
+            });
+        {% endif %}
 
         return chart;
     });

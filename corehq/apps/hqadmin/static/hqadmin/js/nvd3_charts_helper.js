@@ -88,27 +88,31 @@ function trim_data(data) {
     })
 }
 
-function format_data(data, start, end, interval_val) {
+function format_data(data, start, end, interval_val, no_trim) {
     var ret = [];
     _.each(data, function (vals, name) {
         vals = _.map(vals, function(o) { return swap_prop_names(o, {time: "x", count: "y"})});
         vals = intervalize(vals, start, end, interval_val);
         ret.push({key: name, values: vals});
     });
+
+    if (no_trim) {
+        return ret;
+    }
     return trim_data(ret);
 }
 
-function formatDataForLineGraph(data, init_val) {
+function formatDataForCumGraphs(data, init_val) {
     ret = {"key": data.key, "values": []};
     var total = init_val;
     for (var i = 0; i < data.values.length; i++) {
         total += data.values[i].y;
-        ret.values.push([data.values[i].x, total])
+        ret.values.push([data.values[i].x, total]);
     }
-    return ret
+    return ret;
 }
 
-function loadCharts(chart_name, xname, data, initial_values, starting_time, ending_time, interval) {
+function findEnds(data, starting_time, ending_time) {
     for (var key in data) {
         if (data.hasOwnProperty(key)) {
             if (data[key].length > 0) {
@@ -121,9 +125,18 @@ function loadCharts(chart_name, xname, data, initial_values, starting_time, endi
             }
         }
     }
+    return {
+        start: starting_time,
+        end: ending_time
+    }
+}
+
+function loadCharts(chart_name, xname, data, initial_values, starting_time, ending_time, interval) {
+    ends = findEnds(data, starting_time, ending_time);
+    starting_time = ends.start, ending_time = ends.end;
     var domain_data = format_data(data, starting_time, ending_time, INTERVAL_VALUES[interval]);
     var cum_domain_data = _.map(domain_data, function (domain_datum) {
-        return formatDataForLineGraph(domain_datum, initial_values[domain_datum.key]);
+        return formatDataForCumGraphs(domain_datum, initial_values[domain_datum.key]);
     });
 
     var bar_chart = null;
@@ -177,7 +190,7 @@ function addStackedAreaGraph(selector, xname, data) {
     return chart;
 }
 
-var linebreak_txt = "|||";
+var linebreak_txt = " -- ";
 function formatChart(chart, selector, xname, data, margin_left) {
     chart.xAxis
         .axisLabel('Date')
@@ -210,3 +223,20 @@ var insertLinebreaks = function (d) {
         }
     }
 };
+
+function formatDataForLineGraph(data) {
+    var starting_time = Infinity, ending_time = 0;
+    ends = findEnds(data, starting_time, ending_time);
+    starting_time = ends.start, ending_time = ends.end;
+    if (starting_time === Infinity) {
+        starting_time = undefined, ending_time = undefined;
+    }
+    data = format_data(data, starting_time, ending_time, INTERVAL_VALUES.day, true);
+    return _.map(data, function (datum) {
+        var ret = {"key": datum.key, "values": []};
+        for (var i = 0; i < datum.values.length; i++) {
+            ret.values.push([datum.values[i].x, datum.values[i].y]);
+        }
+        return ret;
+    });
+}
