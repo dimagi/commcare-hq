@@ -1,0 +1,20 @@
+<div {% if multifield.css_id or errors %}id="{{ multifield.css_id }}"{% endif %}
+     class="control-group"
+     {{ multifield.flat_attrs|safe }}>
+    <label class="control-label {% if multifield.label_class %} {{ multifield.label_class }}{% endif %}">
+        {{ multifield.label_html|safe }}
+    </label>
+    <div class="controls{% if multifield.css_class %} {{ multifield.css_class }}{% endif %}">
+        {{ fields_output|safe }}
+
+        {% if form_show_errors %}
+            {% for field in multifield.bound_fields %}
+                {% if field.errors %}
+                    {% for error in field.errors %}
+                        <p id="error_{{ forloop.counter }}_{{ field.auto_id }}" class="text-error">{{ error }}</p>
+                    {% endfor %}
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>
