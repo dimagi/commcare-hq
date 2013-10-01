@@ -676,7 +676,7 @@ class DetailColumn(IndexedSchema):
     Represents a column in case selection screen on the phone. Ex:
         {
             'header': {'en': 'Sex', 'pt': 'Sexo'},
-            'model': 'cc_pf_client',
+            'model': 'case',
             'field': 'sex',
             'format': 'enum',
             'enum': {'en': {'m': 'Male', 'f': 'Female'}, 'pt': {'m': 'Macho', 'f': 'Fêmea'}}
@@ -1869,10 +1869,18 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def new_module(self, name, lang):
         self.modules.append(
             Module(
-                name={lang if lang else "en": name if name else "Untitled Module"},
+                name={(lang or 'en'): name or ugettext("Untitled Module")},
                 forms=[],
                 case_type='',
-                details=[Detail(type=detail_type, columns=[]) for detail_type in DETAIL_TYPES],
+                details=[Detail(
+                    type=detail_type,
+                    columns=[DetailColumn(
+                        format='plain',
+                        header={(lang or 'en'): ugettext("Name")},
+                        field='name',
+                        model='case',
+                    )],
+                ) for detail_type in DETAIL_TYPES],
             )
         )
         return self.get_module(-1)
