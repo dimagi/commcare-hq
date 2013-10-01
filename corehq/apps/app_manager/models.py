@@ -17,9 +17,7 @@ from copy import deepcopy
 from urllib2 import urlopen
 from urlparse import urljoin
 from lxml import etree
-
 import types
-from django.contrib.auth.hashers import make_password
 from django.core.cache import cache
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
@@ -34,6 +32,7 @@ from django.template.loader import render_to_string
 
 from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
+from corehq.util.hash_compat import make_password
 
 from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
