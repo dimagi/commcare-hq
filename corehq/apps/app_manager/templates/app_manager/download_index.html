@@ -6,15 +6,15 @@
     <table>
         <tr>
             <td>CommCare.jad</td>
-            <td>{% url download_jad app.domain app.id as url %}<a href="{{ url }}">{{ url }}</a></td>
+            <td>{% url "download_jad" app.domain app.id as url %}<a href="{{ url }}">{{ url }}</a></td>
         </tr>
         <tr>
             <td>CommCare.jar</td>
-            <td>{% url download_jar app.domain app.id as url %}<a href="{{ url }}">{{ url }}</a></td>
+            <td>{% url "download_jar" app.domain app.id as url %}<a href="{{ url }}">{{ url }}</a></td>
         </tr>
         <tr>
             <td>profile.xml</td>
-            <td>{% url download_profile app.domain app.id as url %}<a href="{{ url }}">{{ url }}</a></td>
+            <td>{% url "download_profile" app.domain app.id as url %}<a href="{{ url }}">{{ url }}</a></td>
         </tr>
     </table>
     <p>Resource Files:</p>
@@ -32,7 +32,7 @@
             <div class="alert alert-info">
                 This build was made before I knew how to save the files for a specific build.
                 To see this view for the current not-yet-built version of this app,
-                <a href="{% url download_index app.domain app.copy_of%}">click here</a>.
+                <a href="{% url "download_index" app.domain app.copy_of%}">click here</a>.
             </div>
         {% endif %}
     </ul>

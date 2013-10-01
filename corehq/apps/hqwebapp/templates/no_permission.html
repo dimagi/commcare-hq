@@ -6,5 +6,5 @@
         </h1>
     </div>
     <p>If you believe this is an error, please
-        <a href="{% url no_permissions %}?switch=true{% if next %}&next={{ next }}{% endif %}">relogin and try again.</a></p>
+        <a href="{% url "no_permissions" %}?switch=true{% if next %}&next={{ next }}{% endif %}">relogin and try again.</a></p>
 {% endblock %}

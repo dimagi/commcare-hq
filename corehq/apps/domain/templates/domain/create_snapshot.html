@@ -13,7 +13,7 @@
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
-{% url cda_basic as cda_url %}
+{% url "cda_basic" as cda_url %}
 {% include 'hqstyle/partials/load_into_modal.html' with modal_id="cda-modal" load_from=cda_url %}
 <script type="text/javascript">
     $(function(){
@@ -55,7 +55,7 @@
 {% endblock %}
 
 {% block main_column %}
-<form id="snapshot-form" class="form-horizontal" enctype="multipart/form-data" method="post" action="{% url domain_create_snapshot domain %}" id="snapshot_form">
+<form id="snapshot-form" class="form-horizontal" enctype="multipart/form-data" method="post" action="{% url "domain_create_snapshot" domain %}" id="snapshot_form">
     <fieldset>
         {% bootstrap_form_errors form %}
         {% bootstrap_fieldset form "Publishing new version of your project to Commcare Exchange" %}
@@ -65,7 +65,7 @@
                 <div class="controls">
                     <input type="checkbox" checked="checked" id="id_old_image" name="old_image" value="true" />
                     <br />
-                    <img src="{% url appstore_project_image request.project.published_snapshot.name %}" style="max-width: 400px; max-height:500px;" />
+                    <img src="{% url "appstore_project_image" request.project.published_snapshot.name %}" style="max-width: 400px; max-height:500px;" />
                     <p class="help-block">
                         If you upload an image, it will automatically erase the current image and use that instead.
                     </p>

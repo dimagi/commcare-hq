@@ -28,7 +28,7 @@
                                         <ol>
                                             <li>
                                                 {% trans "Download your translations" %}:
-                                                <a href="{% url download_translations domain app.get_id %}">translations.xls</a>
+                                                <a href="{% url "download_translations" domain app.get_id %}">translations.xls</a>
                                             </li>
                                             <li>
                                                 {% trans "Update it with new information." %}
@@ -41,7 +41,7 @@
                                     <p class="alert alert-info">
                                         {% trans "Your app's translations will be completely replaced with the translations found in this file." %}
                                     </p>
-                                    <form id="translations-upload-form" class="form form-horizontal" action="{% url upload_translations domain app.get_id %}" method="post" enctype="multipart/form-data">
+                                    <form id="translations-upload-form" class="form form-horizontal" action="{% url "upload_translations" domain app.get_id %}" method="post" enctype="multipart/form-data">
                                         <legend>{% trans "Choose a file for upload" %}</legend>
                                         <div class="form-actions" style="padding-left: 1em;">
                                             <fieldset>
@@ -82,7 +82,7 @@
                     </section>
                 {% endif %}
                 <section id="success-message">
-                    <form class="save-button-form form-horizontal" method="post" action="{% url edit_app_attr domain app.id 'success_message' %}"
+                    <form class="save-button-form form-horizontal" method="post" action="{% url "edit_app_attr" domain app.id 'success_message' %}"
                             data-bind="visible: COMMCAREHQ.appView.settings.enableSuccessMessage()">
                         {% if app.get_doc_type == 'Application'%}
                         <hr/>

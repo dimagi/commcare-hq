@@ -26,12 +26,12 @@
         <tr>
             <td>{{ sample.name }}</td>
             <td>{{ sample.cases|length }}</td>
-            <td><a href="{% url edit_sample domain sample.get_id %}"><span class="btn btn-primary">Edit</span></a></td>
+            <td><a href="{% url "edit_sample" domain sample.get_id %}"><span class="btn btn-primary">Edit</span></a></td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 <br />
-<a href="{% url add_sample domain %}"><span class="btn btn-success"><i class="icon icon-white icon-plus"></i> New Sample</span></a>
+<a href="{% url "add_sample" domain %}"><span class="btn btn-success"><i class="icon icon-white icon-plus"></i> New Sample</span></a>
 
 {% endblock %}

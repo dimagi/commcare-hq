@@ -15,10 +15,10 @@
 {% block page-title %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% url reports_home domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
+            <a href="{% url "reports_home" domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
         </li>
         <li>
-            <a href="{% url project_report_dispatcher domain 'submit_history' %}">Submit History</a> <span class="divider">&gt;</span>
+            <a href="{% url "project_report_dispatcher" domain 'submit_history' %}">Submit History</a> <span class="divider">&gt;</span>
         </li>
         <li class="active">
             <a href="#">
