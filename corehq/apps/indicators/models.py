@@ -181,8 +181,8 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
         key = ["type", namespace, domain, cls.__name__]
         indicators = cls.view(
             cls.indicator_list_view(),
-            reduce = False,
-            include_docs = True,
+            reduce=False,
+            include_docs=True,
             startkey=key,
             endkey=key+[{}]
         ).all()
