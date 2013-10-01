@@ -46,10 +46,6 @@ class CareReport(SqlTabularReport,
         'custom.reports.care_sa.reports.sql.ShowGenderField',
     ]
 
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return user and user.is_previewer()
-
     def selected_province(self):
         fixture = self.request.GET.get('fixture_id', "")
         return fixture.split(':')[1] if fixture else None
