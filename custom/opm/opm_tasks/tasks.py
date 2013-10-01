@@ -36,7 +36,6 @@ def save_report(ReportClass, month=None, year=None):
     return snapshot
 
 
-@task()
 def snapshot():
     for report in [IncentivePaymentReport, BeneficiaryPaymentReport]:
         snapshot = save_report(report)
