@@ -149,8 +149,10 @@
                             if(data.length > 0 && !self.is_focused) {
                                 self.start_new_message_notification();
                             }
-                            scrollHeight = $("#chat_messages").prop("scrollHeight");
-                            $("#chat_messages").scrollTop(scrollHeight);
+                            if(data.length > 0) {
+                                scrollHeight = $("#chat_messages").prop("scrollHeight");
+                                $("#chat_messages").scrollTop(scrollHeight);
+                            }
                             if(self.first_update) {
                                 self.first_update = false;
                             } else {
