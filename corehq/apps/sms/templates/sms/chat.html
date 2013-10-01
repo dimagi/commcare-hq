@@ -11,6 +11,9 @@
                 height: 100%;
                 overflow: hidden;
             }
+            body {
+                background-color: #F0F0F0;
+            }
             #chat_header {
                 height: 50px;
             }
@@ -19,6 +22,7 @@
                 overflow-y: auto;
                 border-top: 1px solid #CCC;
                 border-bottom: 1px solid #CCC;
+                background-color: #FFF;
             }
             #chat_footer {
                 height: 50px;
@@ -52,6 +56,7 @@
                 border: 1px solid black;
                 margin-right: 10px;
                 padding: 5px;
+                background-color: #FFF;
             }
             .highlight_bullet {
                 color: #44F;
@@ -63,6 +68,7 @@
             #message_count {
                 padding: 5px 5px 5px 5px;
                 border: 1px solid black;
+                background-color: #FFF;
             }
         </style>
     </head>
@@ -195,14 +201,14 @@
                     };
                     self.start_new_message_notification = function() {
                         self.stop_new_message_notification();
-                        document.title = "**{% trans 'NEW MESSAGE' %}**";
+                        self.flash_on();
                         self.title_flag = false;
                         self.title_timeout_handle = setInterval(function() {
                             self.title_flag = !self.title_flag;
                             if(self.title_flag) {
-                                document.title = "{% trans 'Chat' %}";
+                                self.flash_off();
                             } else {
-                                document.title = "**{% trans 'NEW MESSAGE' %}**";
+                                self.flash_on();
                             }
                         }, 1000);
                     };
@@ -211,7 +217,15 @@
                             clearTimeout(self.title_timeout_handle);
                             self.title_timeout_handle = null;
                         }
+                        self.flash_off();
+                    };
+                    self.flash_on = function() {
+                        document.title = "{% trans '(New Message)' %}";
+                        $("body").css("background-color", "#6060FF");
+                    };
+                    self.flash_off = function() {
                         document.title = "{% trans 'Chat' %}";
+                        $("body").css("background-color", "#F0F0F0");
                     };
                     self.enter_focus = function() {
                         self.stop_new_message_notification();
