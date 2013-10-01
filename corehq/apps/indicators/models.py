@@ -181,14 +181,15 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
         key = ["type", namespace, domain, cls.__name__]
         indicators = cls.view(
             cls.indicator_list_view(),
-            reduce = False,
-            include_docs = True,
+            reduce=False,
+            include_docs=True,
             startkey=key,
             endkey=key+[{}]
         ).all()
         unique = {}
         for ind in indicators:
-            unique["%s.%s" % (ind.slug, ind.namespace)] = ind
+            specific_doc = ind.case_type if ind.base_doc == "CaseIndicatorDefinition" else ind.xmlns
+            unique["%s.%s.%s" % (ind.slug, ind.namespace, specific_doc)] = ind
         return unique.values()
 
     @classmethod
