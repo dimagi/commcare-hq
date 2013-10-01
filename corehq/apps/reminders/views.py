@@ -8,7 +8,7 @@ from django.shortcuts import render
 
 from django.utils.translation import ugettext as _, ugettext_noop
 
-from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm, SurveySampleForm, EditContactForm, RemindersInErrorForm, KeywordForm, OneTimeReminderForm
+from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm, SurveySampleForm, EditContactForm, RemindersInErrorForm, KeywordForm, OneTimeReminderForm, SimpleScheduleCaseReminderForm
 from corehq.apps.reminders.models import (
     CaseReminderHandler,
     CaseReminderEvent,
@@ -448,7 +448,17 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
 
     @property
     def schedule_form(self):
-        raise NotImplementedError("implement schedule form!")
+        if self.request.method == 'POST':
+            return SimpleScheduleCaseReminderForm(
+                self.request.POST,
+                domain=self.domain,
+                is_previewer=self.is_previewer,
+            )
+        return SimpleScheduleCaseReminderForm(is_previewer=self.is_previewer, domain=self.domain)
+
+    @property
+    def is_previewer(self):
+        return self.request.couch_user.is_previewer
 
     @property
     def parent_pages(self):
@@ -468,6 +478,9 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
     @method_decorator(reminders_permission)
     def dispatch(self, request, *args, **kwargs):
         return super(CreateScheduledReminderView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, *args, **kwargs):
+        return self.get(*args, **kwargs)
 
 
 class EditScheduledReminderView(CreateScheduledReminderView):
