@@ -278,7 +278,7 @@ Note that pie charts require a full case/xform ES index
 
 .. _Fluff:
 
-How pillow/fluff work:
+How pillow/fluff work
 ----------------------
 
 `GitHub <https://github.com/dimagi/fluff>`_
