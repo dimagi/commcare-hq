@@ -42,11 +42,15 @@ class Worker(object):
                 (OpmUserFluff._doc_type, worker._id))
         except ResourceNotFound:
             raise InvalidRow
-        self.name = self.fluff_doc.name
-        self.awc_name = self.fluff_doc.awc_name
-        self.bank_name = self.fluff_doc.bank_name
-        self.account_number = self.fluff_doc.account_number
-        self.block = self.fluff_doc.block
+
+        def fluff_attr(attr):
+            return getattr(self.fluff_doc, attr, '')
+
+        self.name = fluff_attr('name')
+        self.awc_name = fluff_attr('awc_name')
+        self.bank_name = fluff_attr('bank_name')
+        self.account_number = fluff_attr('account_number')
+        self.block = fluff_attr('block')
 
         def get_result(calculator):
             return OpmFormFluff.get_result(
