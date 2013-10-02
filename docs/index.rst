@@ -18,6 +18,7 @@ Welcome to CommCareHQ's documentation!
    :maxdepth: 2
 
    reporting
+   maps
    ui_helpers
    class_views
    management_commands
