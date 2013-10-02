@@ -21,4 +21,9 @@ var ManageRemindersViewModel = function (initial) {
     self.isStartPropertyOffsetVisible = ko.computed(function () {
         return self.start_property_offset_type() !== 'offset_immediate';
     });
+
+    self.recipient = ko.observable(initial.recipient || 'CASE');
+    self.isRecipientSubcase = ko.computed(function () {
+        return self.recipient() === 'SUBCASE';
+    });
 };

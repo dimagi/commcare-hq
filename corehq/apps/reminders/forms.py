@@ -727,7 +727,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                    "For cases with child or parent cases, you can also send the message to those "
                    "contacts. ")  # todo help bubble
     )
-    ## receipient = RECIPIENT_SUBCASE
+    ## recipient = RECIPIENT_SUBCASE
     recipient_case_match_property = forms.CharField(
         label="Case Property",
         required=False
@@ -910,12 +910,16 @@ class SimpleScheduleCaseReminderForm(forms.Form):
 
         recipient_section = crispy.Fieldset(
             "Recipient",
-            crispy.Field('recipient'),
+            crispy.Field(
+                'recipient',
+                data_bind="value: recipient",
+            ),
             BootstrapMultiField(
                 "When Case Property",
                 InlineField('recipient_case_match_property', placeholder="todo: dropdown"),
                 'recipient_case_match_type',
                 InlineField('recipient_case_match_value', style="margin-left: 5px;"),
+                data_bind="visible: isRecipientSubcase",
             ),
         )
 
