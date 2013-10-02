@@ -430,12 +430,15 @@ def datespan_from_beginning(domain, default_days, timezone):
     datespan.is_default = True
     return datespan
 
+
 def get_installed_custom_modules_names():
-    path = os.path.dirname('custom/apps/')
+    path = os.path.dirname(os.path.join(settings.FILEPATH, 'custom', 'apps'))
     installed_custom_module_names = []
 
     for module in os.listdir(path):
-        if os.path.isdir(path + '/' + module) == True and os.path.exists(path + '/' + module + '/urls.py') and 'urlpatterns' in open(path + '/' + module + '/urls.py').read():
+        if (os.path.isdir(os.path.join(path, module)) == True and
+                os.path.exists(os.path.join(path,  module, 'urls.py')) and
+                'urlpatterns' in open(os.path.join(path, module, 'urls.py')).read()):
             installed_custom_module_names.append(module)
     return installed_custom_module_names
 
