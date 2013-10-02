@@ -4,7 +4,7 @@ from corehq.apps.users.models import CommCareUser
 from custom.bihar.reports.indicators.indicators import IndicatorDataProvider, IndicatorConfig, INDICATOR_SETS
 
 # meh
-hard_coded_domain = 'bihar' # note this is just for testing, will change to 'care-bihar' for deploy
+hard_coded_domains = ('care-bihar', 'bihar')
 hard_coded_indicators = 'homevisit'
 hard_coded_group_filter = lambda group: bool(group.metadata.get('awc-code', False))
 hard_coded_fixture_id = 'indicators:bihar-supervisor'
@@ -18,7 +18,7 @@ def generator(user, *args, **kwargs):
     else:
         return []
 
-    if user.domain == hard_coded_domain:
+    if user.domain in hard_coded_domains:
         groups = filter(hard_coded_group_filter, Group.by_user(user))
         if len(groups) == 1:
             data_provider = IndicatorDataProvider(
