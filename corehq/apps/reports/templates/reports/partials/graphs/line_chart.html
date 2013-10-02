@@ -7,14 +7,23 @@
 
         $(chart_id).show();
 
-        var chart = nv.models.lineChart()
-            .x(function(d) { return d[0] })
-            .y(function(d) { return d[1] })
-            .color(d3.scale.category10().range());
+        var chart = nv.models.lineChart();
 
         chart.xAxis.axisLabel({{ chart.x_axis.label|JSON }});
         {% if chart.x_axis.format %}
             chart.xAxis.tickFormat(d3.format({{ chart.x_axis.format|JSON }}));
+        {% endif %}
+
+        //Modify x-values to date-objects and set tickFormat
+        {% if chart.x_axis.dateFormat %}
+            for (i=0 ; i<chart_data.length; i++){
+                single_chart_data = chart_data[i].values;
+                for (j=0; j<single_chart_data.length; j++){
+                    date = single_chart_data[j].x;
+                    single_chart_data[j].x = new Date(date).getTime();
+                }
+            }            
+            chart.xAxis.tickFormat(function(d) {return d3.time.format({{ chart.x_axis.dateFormat|JSON }})(new Date(d)); })
         {% endif %}
 
         chart.yAxis.axisLabel({{ chart.y_axis.label|JSON }});
@@ -22,8 +31,6 @@
             chart.yAxis.tickFormat(d3.format({{ chart.y_axis.format|JSON }}));
         {% endif %}
 
-        chart.showLegend(chart_config.showLegend);
-        chart.tooltips(chart_config.tooltips);
         chart.margin(chart_config.margin);
 
         d3.select(chart_id + ' svg')
