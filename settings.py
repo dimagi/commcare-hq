@@ -238,6 +238,7 @@ HQ_APPS = (
     'a5288',
     'custom.bihar',
     'dca',
+    'custom.apps.gsid',
     'hsph',
     'mvp',
     'mvp_apps',
@@ -714,6 +715,7 @@ COUCHDB_APPS = [
     # custom reports
     'care_benin',
     'dca',
+    'gsid',
     'hsph',
     'mvp',
     'opm_tasks',
@@ -884,6 +886,7 @@ DOMAIN_MODULE_MAP = {
     'cvsulive': 'custom.apps.cvsu',
     'dca-malawi': 'dca',
     'eagles-fahu': 'dca',
+    'gsid': 'custom.apps.gsid',
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
