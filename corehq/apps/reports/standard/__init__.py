@@ -4,6 +4,7 @@ from django.core.cache import cache
 from django.core.urlresolvers import reverse
 import operator
 import pytz
+from casexml.apps.case.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
@@ -177,7 +178,6 @@ class ProjectReportParametersMixin(object):
     @property
     @memoized
     def users_by_group(self):
-        from corehq.apps.groups.models import Group
         user_dict = {}
         for group in self.groups:
             user_dict["%s|%s" % (group.name, group._id)] = self.get_all_users_by_domain(
@@ -269,6 +269,25 @@ class ProjectReportParametersMixin(object):
         from corehq.apps.reports.fields import SelectOpenCloseField
         return self.request_params.get(SelectOpenCloseField.slug, '')
 
+    @property
+    def case_group_ids(self):
+        return filter(None, self.request.GET.getlist('case_group'))
+
+    @property
+    @memoized
+    def case_groups(self):
+        return [CommCareCaseGroup.get(g) for g in self.case_group_ids]
+
+    @property
+    @memoized
+    def cases_by_case_group(self):
+        case_ids = []
+        for group in self.case_groups:
+            case_ids.extend(group.cases)
+        return case_ids
+
+
+
 class CouchCachedReportMixin(object):
     """
         Use this mixin for caching reports as objects in couch.
@@ -329,14 +348,22 @@ class MonthYearMixin(object):
     @property
     def datespan(self):
         if self._datespan is None:
-            if 'month' in self.request_params and 'year' in self.request_params:
-                datespan = DateSpan.from_month(
-                    int(self.request_params['month']),
-                    int(self.request_params['year'])
-                )
-            else:
-                datespan = DateSpan.from_month()
+            datespan = DateSpan.from_month(self.month, self.year)
             self.request.datespan = datespan
             self.context.update(dict(datespan=datespan))
             self._datespan = datespan
         return self._datespan
+
+    @property
+    def month(self):
+        if 'month' in self.request_params:
+            return int(self.request_params['month'])
+        else:
+            return datetime.now().month
+
+    @property
+    def year(self):
+        if 'year' in self.request_params:
+            return int(self.request_params['year'])
+        else:
+            return datetime.now().year

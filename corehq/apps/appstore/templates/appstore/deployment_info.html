@@ -1,4 +1,5 @@
 {% extends "appstore/deployments.html" %}
+{% load url from future %}
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
 {% load i18n %}
@@ -17,7 +18,7 @@
                     {{ domain.name }}
                     <small>by
                         {% if domain.organization %}
-                            <a href="{% url orgs_landing domain.organization %}">{{ domain.get_organization.title }}</a>
+                            <a href="{% url "orgs_landing" domain.organization %}">{{ domain.get_organization.title }}</a>
                         {% else %}
                             {{ domain.author }}
                         {% endif %}

@@ -12,6 +12,8 @@ import pytz
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader
+from corehq.apps.reports.fields import DatespanField
+from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.users.models import CouchUser
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
@@ -401,10 +403,10 @@ class GenericReportView(CacheableRequestMixIn):
         current_config_id = self.request.GET.get('config_id', '')
         default_config = ReportConfig.default()
 
-        has_datespan = any([ds_field in self.fields for ds_field in (
-            'corehq.apps.reports.fields.DatespanField',
-            'corehq.apps.reports.filters.dates.DatespanFilter'
-        )])
+        def is_datespan(field):
+            field_fn = to_function(field) if isinstance(field, basestring) else field
+            return issubclass(field_fn, (DatespanFilter, DatespanField))
+        has_datespan = any([is_datespan(field) for field in self.fields])
 
         self.context.update(
             report=dict(

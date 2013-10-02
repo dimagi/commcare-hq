@@ -1,0 +1,55 @@
+{% extends "reports/base_template.html" %}
+{% load url from future %}
+{% load i18n %}
+{% load case_tags %}
+{% load hq_shared_tags %}
+
+{% block title %}Case: {{ report.name }}{% endblock %}
+
+{% block head %} {{ block.super }}
+    {% include "imports/proptable.html" %}
+    {% include "imports/fancy-code.html" %}
+
+    <style type="text/css">
+        .hq-generic-report {
+            padding: 10px;
+        }
+    </style>
+{% endblock %}
+
+{% block js-inline %}
+    <script type="text/javascript">
+        $("#render_to_pdf").click(function() {
+           $.get("{{ report.slug }}/to_pdf")
+        })
+    </script>
+{% endblock %}
+
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url "reports_home" domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
+        </li>
+        <li>
+            <a href="{% url "custom_project_report_dispatcher" domain report.slug %}">Case List</a> <span class="divider">&gt;</span>
+        </li>
+        <li class="active">
+            <a href="#">{{ report.name }}</a>
+        </li>
+    </ul>
+{% endblock %}
+
+{% block main_column %}
+<div class="hq-generic-report">
+
+    <div>
+        <a href="{{ report.slug }}/to_pdf" >{% trans "Print to PDF" %}</a>
+    </div>
+
+    {% if report.slug == "hbnc_mother_report" %}
+        {% include "crs_reports/partials/mothers_form_reports_template.html"  %}
+    {% else %}
+        {% include "crs_reports/partials/baby_form_reports_template.html"  %}
+    {% endif %}
+</div>
+{% endblock %}

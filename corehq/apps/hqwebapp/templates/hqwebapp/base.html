@@ -1,3 +1,4 @@
+{% load url from future %}
 {% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load cache %}<!DOCTYPE html>
 <html lang="en">
     <head>
@@ -66,7 +67,7 @@
                 <div class="navbar">
                     <div class="navbar-inner">
                         <hgroup class="brand">
-                            <h1><a href="{% url homepage %}"><img src="{{ LOGO_URL }}" alt="{{ SITE_NAME }} Logo" /></a></h1>
+                            <h1><a href="{% url "homepage" %}"><img src="{{ LOGO_URL }}" alt="{{ SITE_NAME }} Logo" /></a></h1>
                         </hgroup>
                     {% if request.user.is_authenticated %}
                         <nav id="hq-navigation-bar">
@@ -80,7 +81,7 @@
                         {% endblock %}
                         <nav>
                             <div class="btn-toolbar pull-right">
-                                <a href="{% url login %}" class="btn btn-primary">{% trans 'Sign In' %}</a>
+                                <a href="{% url "login" %}" class="btn btn-primary">{% trans 'Sign In' %}</a>
                             </div>
                         </nav>
                     {% endif %}
@@ -95,7 +96,7 @@
                 <div class="alert alert-info snapshot-alert">
                     {% trans "This is a snapshot of " %}{{ request.project.copied_from.display_name }}
                     {% if request.project.copied_from.organization %}
-                        by <a href="{% url orgs_landing request.project.copied_from.organization %}">{{ request.project.copied_from.get_organization.title }}</a>
+                        by <a href="{% url "orgs_landing" request.project.copied_from.organization %}">{{ request.project.copied_from.get_organization.title }}</a>
                     {% endif %}
                 </div>
             {% endif %}
@@ -153,7 +154,7 @@
                                 <a href="{% trans 'http://www.commcarehq.org/home' %}">{% trans 'Learn more about CommCare HQ' %}</a>.
                             {% endif %}
                             <br />
-                            <a href="{% url eula %}">{% trans "Read CommCare HQ's End User License Agreement" %}</a>
+                            <a href="{% url "eula" %}">{% trans "Read CommCare HQ's End User License Agreement" %}</a>
                         </p>
                     </div>
                 </div>
@@ -166,7 +167,7 @@
                     <a class="close" data-dismiss="modal">&times;</a>
                     <h3>{% trans "Report an Issue with CommCare HQ" %}</h3>
                 </div>
-                <form id="hqwebapp-bugReportForm" class="form-horizontal" action="{% url bug_report %}" method="post">
+                <form id="hqwebapp-bugReportForm" class="form-horizontal" action="{% url "bug_report" %}" method="post">
                     <input type="hidden" id="bug-report-url" name="url"/>
                     <input type="hidden" id="bug-report-username" name="username" value="{{ user.username }}"/>
                     <input type="hidden" id="bug-report-domain" name="domain" value="{{ domain }}"/>
@@ -217,7 +218,7 @@
                         <div style="text-align: left; line-height: 2em;">
                             To continue using Commcare HQ, please agree to our new End User License Agreement
                         </div>
-                        <form id="eula-agree" action="{% url agree_to_eula %}" method="POST">
+                        <form id="eula-agree" action="{% url "agree_to_eula" %}" method="POST">
                             <input name="next" type="hidden" value="{{ request.path }}" />
                             <button type="submit" class="btn btn-primary">Agree</button>
                             <a href="#" data-dismiss="modal" class="btn">Disagree</a>
@@ -247,7 +248,7 @@
         </script>
 
             {% if request.couch_user and not request.couch_user.is_eula_signed %}
-                {% url eula_basic as eula_url %}
+                {% url "eula_basic" as eula_url %}
                 {% include 'hqstyle/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
                 <script type="text/javascript">
                     $(window).load(function(){

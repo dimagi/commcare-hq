@@ -1,11 +1,9 @@
-import datetime
 import logging
 from custom.bihar import getters
 from custom.bihar.calculations.types import DoneDueCalculator, TotalCalculator
 from custom.bihar.calculations.utils.calculations import get_forms
 from custom.bihar.calculations.utils.filters import is_pregnant_mother,\
     get_add, get_edd, A_MONTH
-from custom.bihar.calculations.utils.home_visit import GRACE_PERIOD
 from custom.bihar.calculations.utils.visits import visit_is, has_visit
 import fluff
 
@@ -42,30 +40,36 @@ class BPCalculator(DoneDueCalculator):
 
 class VisitCalculator(DoneDueCalculator):
 
-    def __init__(self, schedule, visit_type, window=A_MONTH):
-        self.schedule = schedule
+    def __init__(self, form_types, visit_type, get_date_next, window=A_MONTH):
+        self.form_types = form_types
         self.visit_type = visit_type
+        self.get_date_next = get_date_next
         super(VisitCalculator, self).__init__(window)
 
     def filter(self, case):
         return is_pregnant_mother(case) and get_add(case)
 
+    def _numerator_action_filter(self, a):
+        return visit_is(a, self.visit_type)
+
+    def _total_action_filter(self, a):
+        return any(visit_is(a, visit_type)
+                   for visit_type in self.form_types)
+
     @fluff.date_emitter
     def numerator(self, case):
-        n_qualifying_visits = len(
-            filter(lambda a: visit_is(a, self.visit_type), case.actions)
-        )
-        # What's below is true to the original, but I think it should be
-        # self.schedule[:n_qualifying_visits]
-        # to be revisited
-        if n_qualifying_visits != 0:
-            for days in self.schedule[:n_qualifying_visits - 1]:
-                yield case.add + datetime.timedelta(days=days) + GRACE_PERIOD
+        for form in get_forms(case, action_filter=self._numerator_action_filter):
+            date = self.get_date_next(form)
+            days_overdue = getters.days_visit_overdue(form)
+            if date and days_overdue in (-1, 0, 1):
+                yield date
 
     @fluff.date_emitter
     def total(self, case):
-        for days in self.schedule:
-            yield case.add + datetime.timedelta(days=days) + GRACE_PERIOD
+        for form in get_forms(case, action_filter=self._total_action_filter):
+            date = self.get_date_next(form)
+            if date:
+                yield date
 
 
 class DueNextMonth(TotalCalculator):
@@ -104,8 +108,6 @@ class RecentlyOpened(TotalCalculator):
 
     @fluff.date_emitter
     def total(self, case):
-        # if not has_visit(case, 'reg'):
-        #     logging.error('Case has no reg action: %s' % case.get_id)
         for action in case.actions:
             if visit_is(action, 'reg'):
                 if not action.date:

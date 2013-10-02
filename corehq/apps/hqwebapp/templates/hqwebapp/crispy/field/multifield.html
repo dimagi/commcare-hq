@@ -1,0 +1,7 @@
+{% load crispy_forms_field %}
+
+{% if field.is_hidden %}
+    {{ field }}
+{% else %}
+    {% crispy_field field %}
+{% endif %}

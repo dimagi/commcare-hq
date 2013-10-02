@@ -1,7 +1,7 @@
 """
 Celery tasks to save a snapshot of the reports each month
 """
-import datetime
+import datetime, logging
 from celery import task
 from django.http import HttpRequest
 
@@ -33,9 +33,12 @@ def save_report(ReportClass, month=None, year=None):
         rows=report.rows,
     )
     snapshot.save()
+    return snapshot
 
 
 @task()
 def snapshot():
-    save_report(IncentivePaymentReport)
-    save_report(BeneficiaryPaymentReport)
+    for report in [IncentivePaymentReport, BeneficiaryPaymentReport]:
+        snapshot = save_report(report)
+        msg = "Saving {0} to doc {1}".format(report.__name__, snapshot._id)
+        logging.info(msg)

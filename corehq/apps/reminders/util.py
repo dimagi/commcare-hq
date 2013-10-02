@@ -3,6 +3,43 @@ from couchdbkit.resource import ResourceNotFound
 from django.utils.translation import ugettext as _
 from corehq.apps.groups.models import Group
 
+class DotExpandedDict(dict):
+    """
+
+    A special dictionary constructor that takes a dictionary in which the keys
+    may contain dots to specify inner dictionaries. It's confusing, but this
+    example should make sense.
+
+    Taken from last version of the class, removed in Django 1.5
+    https://github.com/django/django/blob/0f57935bcd8cd525d8d661c5af4fb70b79e126ae/django/utils/datastructures.py
+
+    >>> d = DotExpandedDict({'person.1.firstname': ['Simon'], \
+            'person.1.lastname': ['Willison'], \
+            'person.2.firstname': ['Adrian'], \
+            'person.2.lastname': ['Holovaty']})
+    >>> d
+    {'person': {'1': {'lastname': ['Willison'], 'firstname': ['Simon']}, '2': {'lastname': ['Holovaty'], 'firstname': ['Adrian']}}}
+    >>> d['person']
+    {'1': {'lastname': ['Willison'], 'firstname': ['Simon']}, '2': {'lastname': ['Holovaty'], 'firstname': ['Adrian']}}
+    >>> d['person']['1']
+    {'lastname': ['Willison'], 'firstname': ['Simon']}
+
+    # Gotcha: Results are unpredictable if the dots are "uneven":
+    >>> DotExpandedDict({'c.1': 2, 'c.2': 3, 'c': 1})
+    {'c': 1}
+    """
+    def __init__(self, key_to_list_mapping):
+        for k, v in key_to_list_mapping.items():
+            current = self
+            bits = k.split('.')
+            for bit in bits[:-1]:
+                current = current.setdefault(bit, {})
+            # Now assign value to current position
+            try:
+                current[bits[-1]] = v
+            except TypeError: # Special-case if current isn't a dict.
+                current = {bits[-1]: v}
+
 def get_form_list(domain):
     form_list = []
     for app in ApplicationBase.view("app_manager/applications_brief", startkey=[domain], endkey=[domain, {}]):
