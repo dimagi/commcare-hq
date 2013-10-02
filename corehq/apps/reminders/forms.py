@@ -852,8 +852,8 @@ class SimpleScheduleCaseReminderForm(forms.Form):
 
         start_section = crispy.Fieldset(
             'Start',
-            crispy.Field('case_type', data_bind="{ text: 'foo' }", placeholder="todo: dropdown"),
             crispy.Field('start_reminder_on'),
+            crispy.Field('case_type', placeholder="todo: dropdown"),
             crispy.Div(
                 BootstrapMultiField(
                     "When Case Property",
@@ -862,12 +862,12 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                     InlineField('start_value', style="margin-left: 5px;"),
                 ),
                 BootstrapMultiField(
-                    "",
+                    "Begin Sending",
                     InlineField('start_property_offset_type'),
                     crispy.Div(
                         InlineField(
                             'start_property_offset',
-                            css_class='input-small',
+                            css_class='input-mini',
 
                         ),
                         crispy.HTML('<p class="help-inline">days</p>'),
