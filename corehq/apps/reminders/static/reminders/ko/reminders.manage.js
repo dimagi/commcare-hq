@@ -8,7 +8,12 @@ var ManageRemindersViewModel = function (initial) {
     });
     self.isStartReminderCaseDate = ko.computed(function () {
         return self.start_reminder_on() === 'case_date';
-    })
+    });
 
+    self.DEFAULT_MATCH_CHOICE = 'ANY_VALUE';
 
+    self.start_match_type = ko.observable(initial.start_match_type || self.DEFAULT_MATCH_CHOICE);
+    self.isStartMatchValueVisible = ko.computed(function () {
+        return self.start_match_type() !== self.DEFAULT_MATCH_CHOICE;
+    });
 };

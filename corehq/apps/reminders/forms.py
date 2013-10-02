@@ -677,10 +677,11 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         required=False,
         choices=MATCH_TYPE_CHOICES,
     )
+    # only shows up if start_match_type != MATCH_ANY_VALUE
     start_value = forms.CharField(
         required=False,
         label="Value"
-    )  # only shows up if start_match_type != MATCH_ANY_VALUE
+    )
     # this is a UI control that determines how start_offset is calculated (0 or an integer)
     start_property_offset_type = forms.ChoiceField(
         required=False,
@@ -862,8 +863,15 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                 BootstrapMultiField(
                     "When Case Property",
                     InlineField('start_property', placeholder="todo: dropdown"),
-                    'start_match_type',
-                    InlineField('start_value', style="margin-left: 5px;"),
+                    InlineField(
+                        'start_match_type',
+                        data_bind="value: start_match_type",
+                    ),
+                    InlineField(
+                        'start_value',
+                        style="margin-left: 5px;",
+                        data_bind="visible: isStartMatchValueVisible",
+                    ),
                 ),
                 BootstrapMultiField(
                     "Begin Sending",
