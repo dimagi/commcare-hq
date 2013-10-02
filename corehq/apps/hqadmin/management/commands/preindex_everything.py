@@ -58,17 +58,15 @@ class Command(BaseCommand):
 
         gevent.joinall(jobs)
 
-        message = list()
-        message.append("Preindex results:")
-        message.append("\tInitiated by: %s" % username)
-
-        delta = datetime.utcnow() - start
-
-        message.append("Total time: %d seconds" % delta.seconds)
-        message.append("\nYou may now deploy")
-        message.append(commit_info)
+        message = '\n'.join([
+            "We heard a rumor that preindex is complete, "
+            "but it's on you to check that all tasks are complete."
+        ])
 
         if email:
-            mail_admins(" HQAdmin preindex_everything complete", '\n'.join(message))
+            mail_admins(
+                " HQAdmin preindex_everything may or may not be complete",
+                message
+            )
         else:
             print message
