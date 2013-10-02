@@ -188,7 +188,12 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
         ).all()
         unique = {}
         for ind in indicators:
-            specific_doc = ind.case_type if ind.base_doc == "CaseIndicatorDefinition" else ind.xmlns
+            if ind.base_doc == "CaseIndicatorDefinition":
+                specific_doc = ind.case_type
+            elif ind.base_doc == "FormIndicatorDefinition":
+                specific_doc = ind.xmlns
+            else:
+                specific_doc = "couch"
             unique["%s.%s.%s" % (ind.slug, ind.namespace, specific_doc)] = ind
         return unique.values()
 
