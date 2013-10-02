@@ -917,8 +917,15 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             BootstrapMultiField(
                 "When Case Property",
                 InlineField('recipient_case_match_property', placeholder="todo: dropdown"),
-                'recipient_case_match_type',
-                InlineField('recipient_case_match_value', style="margin-left: 5px;"),
+                InlineField(
+                    'recipient_case_match_type',
+                    data_bind="value: recipient_case_match_type",
+                ),
+                InlineField(
+                    'recipient_case_match_value',
+                    style="margin-left: 5px;",
+                    data_bind="visible: isRecipientCaseValueVisible",
+                ),
                 data_bind="visible: isRecipientSubcase",
             ),
         )

@@ -26,4 +26,9 @@ var ManageRemindersViewModel = function (initial) {
     self.isRecipientSubcase = ko.computed(function () {
         return self.recipient() === 'SUBCASE';
     });
+
+    self.recipient_case_match_type = ko.observable(initial.recipient_case_match_type || self.DEFAULT_MATCH_CHOICE);
+    self.isRecipientCaseValueVisible = ko.computed(function () {
+        return self.recipient_case_match_type() !== self.DEFAULT_MATCH_CHOICE;
+    });
 };
