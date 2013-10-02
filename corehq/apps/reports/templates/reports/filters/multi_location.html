@@ -48,7 +48,6 @@
 
 
     function FixtureSelectViewModel() {
-        this.places = ["1","3","5","7"];
         var model = this;
 
         this.root = ko.observable();
@@ -91,13 +90,13 @@
 
         this.selected_child = ko.observable();
         // when a fixture is selected, update the drill-down tree
-        // only if they all fixtures are not laoded already at the start
+        // only if all fixtures are not loaded already at the start
         this.selected_child.subscribe(function(val) {
             if (all_loaded) {
-                if (val!="_all" && val!=null && val.uuid()!="_all")
-                    $("input[name='fixture_id']").val(val.type()+":"+val.uuid());
+                if (val != "_all" && val != null && val.uuid() != "_all")
+                    $("input[name = 'fixture_id']").val(val.type() + ":" + val.uuid());
                 else
-                    $("input[name='fixture_id']").val("");
+                    $("input[name = 'fixture_id']").val("");
 
                 return val;}
             if (val == null || val.depth >= hierarchy.length || val == "_all") { all_loaded = true;
@@ -157,7 +156,7 @@
                 children.splice(0, 0, {fields: {name: '_all'}});
             }
             this.children($.map(children, function(e) {
-                if (e.id==selected){
+                if (e.id == selected){
                     var to_ret = new FixtureModel(e, root, fixt.depth + 1);
                     return to_ret;
                 }
