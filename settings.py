@@ -893,7 +893,7 @@ DOMAIN_MODULE_MAP = {
     'dca-malawi': 'dca',
     'eagles-fahu': 'dca',
     'fri': 'custom.fri.reports',
-    'fri-test': 'custom.fri.reports',
+    'fri-testing': 'custom.fri.reports',
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',

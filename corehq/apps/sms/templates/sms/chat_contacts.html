@@ -8,7 +8,7 @@
             {% for contact in contacts %}
             <tr>
                 <td>{{ contact.name }}</td>
-                <td><span class="btn btn-primary" onClick="window.open('{% url chat domain contact.get_id %}', '_blank', 'location=no,menubar=no,scrollbars=no,status=no,toolbar=no,height=400,width=400');">{% trans "Chat" %}</span></td>
+                <td><span class="btn btn-primary" onClick="window.open('{% url sms_chat domain contact.get_id %}', '_blank', 'location=no,menubar=no,scrollbars=no,status=no,toolbar=no,height=400,width=400');">{% trans "Chat" %}</span></td>
             </tr>
             {% endfor %}
         </tbody>
