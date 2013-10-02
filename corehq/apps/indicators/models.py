@@ -309,6 +309,13 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
 
         if datespan:
             datespan = copy.copy(datespan)
+            now = datetime.datetime.utcnow()
+
+            # make sure we don't go over the current day
+            # remember, there is no timezone support for this yet
+            if datespan.enddate > now:
+                datespan.enddate = now
+
             datespan.enddate = datespan.enddate.replace(hour=23, minute=59, second=59, microsecond=999999)
             if self.fixed_datespan_days:
                 datespan.startdate = datespan.enddate - datetime.timedelta(days=self.fixed_datespan_days,
