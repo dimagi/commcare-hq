@@ -1,13 +1,11 @@
 # coding=utf-8
 from distutils.version import LooseVersion
 import tempfile
-from couchdbkit import ResourceConflict
 import os
 import logging
 import hashlib
 import random
 import json
-from corehq.apps.app_manager.commcare_settings import check_condition
 import types
 import re
 from collections import defaultdict
@@ -16,31 +14,31 @@ from functools import wraps
 from copy import deepcopy
 from urllib2 import urlopen
 from urlparse import urljoin
+
+from couchdbkit import ResourceConflict
 from lxml import etree
-import types
 from django.core.cache import cache
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext
-from corehq.apps.app_manager.const import APP_V1, APP_V2
 from couchdbkit.exceptions import BadValueError
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.template.loader import render_to_string
-
 from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
-from corehq.util.hash_compat import make_password
 
+from corehq.apps.app_manager.commcare_settings import check_condition
+from corehq.apps.app_manager.const import APP_V1, APP_V2
+from corehq.util.hash_compat import make_password
 from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base, parse_int
 from dimagi.utils.couch.database import get_db
 import commcare_translations
-
 from corehq.util import bitly
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig, BuildRecord
@@ -50,12 +48,12 @@ from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property
-
 from corehq.apps.app_manager import current_builds, app_strings, remote_app
 from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings, build_error_utils
 from corehq.apps.app_manager.util import split_path, save_xform
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml
 from .exceptions import AppError, VersioningError, XFormError, XFormValidationError
+
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -2377,4 +2375,3 @@ Module.get_case_list_locale_id = lambda self: "case_lists.m{module.id}".format(m
 Module.get_referral_list_command_id = lambda self: "m{module.id}-referral-list".format(module=self)
 Module.get_referral_list_locale_id = lambda self: "referral_lists.m{module.id}".format(module=self)
 
-import corehq.apps.app_manager.signals
