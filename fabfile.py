@@ -534,6 +534,7 @@ def update_code(preindex=False):
         root_to_use = env.code_root
 
     with cd(root_to_use):
+        sudo('git remote prune origin', user=env.sudo_user)
         sudo('git fetch', user=env.sudo_user)
         sudo("git submodule foreach 'git fetch'", user=env.sudo_user)
         sudo('git checkout %(code_branch)s' % env, user=env.sudo_user)
