@@ -10,7 +10,6 @@ pillow_logging = logging.getLogger("pillowtop")
 
 
 class IndicatorPillowBase(BasicPillow):
-    only_use_fresh_docs = True
     couch_filter = 'fluff_filter/domain_type'
 
     @property
