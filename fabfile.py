@@ -224,7 +224,7 @@ def production():
 
     if env.code_branch != 'master':
         branch_message = (
-            "Woah there bud! You're deploying branch {env.code_branch}. "
+            "Woah there bud! You're using branch {env.code_branch}. "
             "ARE YOU DOING SOMETHING EXCEPTIONAL THAT WARRANTS THIS?"
         ).format(env=env)
         if not console.confirm(branch_message, default=False):
