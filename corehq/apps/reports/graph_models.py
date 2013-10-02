@@ -125,6 +125,10 @@ class LineChart(Chart):
         self.marginBottom = 50
         self.marginLeft = 100
         self.tooltips = True
+        self.showLegend = True
+        self.data_needs_formatting = False  # this determines whether or not the data should get formatted client side
+                                            # using the data formatting helpers in nvd3_charts_helper.js
+        self.x_axis_uses_dates = False  # determines whether or not we should use a date format for the xaxis
 
     def add_dataset(self, key, values, color=None):
         """
@@ -142,6 +146,7 @@ class LineChart(Chart):
                             'right': self.marginRight,
                             'bottom': self.marginBottom,
                             'left': self.marginLeft},
+                    showLegend=self.showLegend,
                     tooltips=self.tooltips)
 
 

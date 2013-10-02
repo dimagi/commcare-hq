@@ -253,6 +253,7 @@ HQ_APPS = (
     'custom.reports.care_sa',
     'custom.apps.cvsu',
     'custom.reports.mc',
+    'custom.trialconnect',
     'custom.apps.crs_reports',
 )
 
@@ -899,6 +900,11 @@ DOMAIN_MODULE_MAP = {
     'opm': 'custom.opm.opm_reports',
     'psi-unicef': 'psi',
     'project': 'custom.apps.care_benin',
+
+    'gc': 'custom.trialconnect',
+    'tc-test': 'custom.trialconnect',
+    'trialconnect': 'custom.trialconnect',
+
     'crs-remind': 'custom.apps.crs_reports'
 }
 
