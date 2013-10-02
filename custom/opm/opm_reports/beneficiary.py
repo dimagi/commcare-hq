@@ -39,6 +39,9 @@ class Beneficiary(object):
     def __init__(self, case, report):
         report.filter(lambda key: case.get_case_property(key))
 
+        if case.closed and case.closed_on <= report.datespan.startdate_utc:
+            raise InvalidRow
+
         try:
             self.fluff_doc = OpmCaseFluff.get("%s-%s" %
                 (OpmCaseFluff._doc_type, case._id))
