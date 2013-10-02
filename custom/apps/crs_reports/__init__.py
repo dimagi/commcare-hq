@@ -10,6 +10,8 @@ CUSTOM_REPORTS = (
     )),
 )
 
+EXTEND_URL_PATTERN = True
+
 QUESTION_TEMPLATES = (
     (HBNCMotherReport.slug, [
         {'case_property': '',
