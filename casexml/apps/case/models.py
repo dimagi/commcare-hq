@@ -1036,7 +1036,7 @@ class CommCareCaseGroup(Document):
             self.save()
 
     @classmethod
-    def get_all(cls, domain, limit=None, skip=None):
+    def get_all(cls, domain, limit=None, skip=None, include_docs=True):
         extra_kwargs = {}
         if limit is not None:
             extra_kwargs['limit'] = limit
@@ -1046,7 +1046,7 @@ class CommCareCaseGroup(Document):
             'case/groups_by_domain',
             startkey=[domain],
             endkey=[domain, {}],
-            include_docs=True,
+            include_docs=include_docs,
             reduce=False,
             **extra_kwargs
         ).all()
