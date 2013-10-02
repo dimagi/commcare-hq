@@ -66,7 +66,7 @@
             </tr>
             {% for question in questions %}
                 <tr>
-                    <td style="border: 1px solid;" colspan="2" rowspan="1">{{forloop.counter}}. {{question.label}}</td>
+                    <td style="border: 1px solid;" colspan="2" rowspan="1">{{forloop.counter}}. {{question.question}}</td>
                     {% for answer in question.answers %}
                         <td style="border: 1px solid;" colspan="1">{{ answer }}</td>
                     {% endfor %}
