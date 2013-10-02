@@ -28,7 +28,7 @@ Pillow==2.0.0
 phonenumbers==5.1b1
 poster==0.8.1
 psycopg2==2.4.1
-pygooglechart==0.3.0
+http://files.dimagi.com/pygooglechart-0.3.0.tar.gz
 python-dateutil==1.5
 python-magic==0.4.2
 python-memcached==1.47
