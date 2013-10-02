@@ -875,16 +875,17 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                 ),
                 BootstrapMultiField(
                     "Begin Sending",
-                    InlineField('start_property_offset_type'),
-                    crispy.Div(
-                        InlineField(
-                            'start_property_offset',
-                            css_class='input-mini',
-
-                        ),
-                        crispy.HTML('<p class="help-inline">days</p>'),
-                        style='display: inline; margin-left: 5px;'
-                    )
+                    InlineField(
+                        'start_property_offset_type',
+                        data_bind="value: start_property_offset_type",
+                    ),
+                    InlineField(
+                        'start_property_offset',
+                        css_class='input-mini',
+                        style="margin-left: 5px;",
+                        data_bind="visible: isStartPropertyOffsetVisible",
+                    ),
+                    crispy.HTML('<p class="help-inline" data-bind="visible: isStartPropertyOffsetVisible">days</p>'),
                 ),
                 data_bind="visible: isStartReminderCaseProperty"
             ),

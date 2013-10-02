@@ -16,4 +16,9 @@ var ManageRemindersViewModel = function (initial) {
     self.isStartMatchValueVisible = ko.computed(function () {
         return self.start_match_type() !== self.DEFAULT_MATCH_CHOICE;
     });
+
+    self.start_property_offset_type = ko.observable(initial.start_property_offset_type || 'offset_delay');
+    self.isStartPropertyOffsetVisible = ko.computed(function () {
+        return self.start_property_offset_type() !== 'offset_immediate';
+    });
 };
