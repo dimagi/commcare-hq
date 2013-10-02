@@ -1,7 +1,14 @@
 class Axis(object):
-    def __init__(self, label=None, format=None):
+    """
+    :param label: Name of the Axis
+    :param format: d3.js axis format
+    :param dateFormat: Modify values to JS Date objects and set d3.time.format 
+                       refer to https://github.com/mbostock/d3/wiki/Time-Formatting
+    """
+    def __init__(self, label=None, format=None, dateFormat=None):
         self.label = label
         self.format = format
+        self.dateFormat = dateFormat
 
 
 class Chart(object):
@@ -27,6 +34,7 @@ class MultiBarChart(Chart):
         reduceXTicks: True to reduce the number of X ticks
         rotateLabels: Degrees to rotate X-Axis labels e.g. -45
         tooltips: True to show tooltips
+        tooltipFormat: Seperator text bw x,y values in tooltipContent e.g." in ", " on  "
         stacked: True to make default view stacked, False for grouped
         staggerLabels: True to stagger the X-Axis labels.
         groupSpacing: Used to adjust amount of space between X-Axis groups. Value between 0 and 1.
@@ -52,6 +60,7 @@ class MultiBarChart(Chart):
         self.reduceXTicks = False
         self.rotateLabels = 0
         self.tooltips = True
+        self.tooltipFormat = ""
         self.stacked = False
         self.translateLabelsX = 0
         self.translateLabelsY = 0
@@ -88,6 +97,57 @@ class MultiBarChart(Chart):
                     staggerLabels=self.staggerLabels,
                     forceY=self.forceY,
                     groupSpacing=self.groupSpacing)
+
+class LineChart(Chart):
+    """
+    :param title: The chart title
+    "param x_axis: Instance of corehq.apps.reports.graph_models.Axis
+    "param y_axis: Instance of corehq.apps.reports.graph_models.Axis
+
+    Class fields:
+        data: see add_dataset function
+        marginTop: Top Margin in pixels
+        marginLeft: Left Margin in pixels
+        marginRight: Right Margin in pixels
+        marginBottom: Bottom Margin in pixels
+
+    """
+    template_partial = 'reports/partials/graphs/line_chart.html'
+
+    def __init__(self, title, x_axis, y_axis):
+        self.title = title
+
+        self.x_axis = x_axis
+        self.y_axis = y_axis
+        self.data = []
+        self.marginTop = 30
+        self.marginRight = 20
+        self.marginBottom = 50
+        self.marginLeft = 100
+        self.tooltips = True
+        self.showLegend = True
+        self.data_needs_formatting = False  # this determines whether or not the data should get formatted client side
+                                            # using the data formatting helpers in nvd3_charts_helper.js
+        self.x_axis_uses_dates = False  # determines whether or not we should use a date format for the xaxis
+
+    def add_dataset(self, key, values, color=None):
+        """
+        :param key: dataset name
+        :param values: List of dictionaries containing x and y values i.e. [{x=1, y=2}, ...]
+        :param color: HTML color value
+        """
+        d = dict(key=key, values=values)
+        if color:
+            d['color'] = color
+        self.data.append(d)
+
+    def config_dict(self):
+        return dict(margin={'top': self.marginTop,
+                            'right': self.marginRight,
+                            'bottom': self.marginBottom,
+                            'left': self.marginLeft},
+                    showLegend=self.showLegend,
+                    tooltips=self.tooltips)
 
 
 class PieChart(Chart):
@@ -127,36 +187,3 @@ class PieChart(Chart):
                     showLabels=self.showLabels,
                     tooltips=self.tooltips,
                     donut=self.donut)
-
-
-class LineChart(Chart):
-    template_partial = 'reports/partials/graphs/line_chart.html'
-
-    def __init__(self, title, x_axis, y_axis):
-        self.title = title
-
-        self.x_axis = x_axis
-        self.y_axis = y_axis
-
-        self.data = []
-        self.marginTop = 30
-        self.marginRight = 20
-        self.marginBottom = 50
-        self.marginLeft = 100
-        self.reduceXTicks = False
-        self.rotateLabels = 0
-        self.tooltips = True
-        self.showLegend = True
-        self.data_needs_formatting = False  # this determines whether or not the data should get formatted client side
-                                            # using the data formatting helpers in nvd3_charts_helper.js
-        self.x_axis_uses_dates = False  # determines whether or not we should use a date format for the xaxis
-
-    def config_dict(self):
-        return dict(margin={'top': self.marginTop,
-                            'right': self.marginRight,
-                            'bottom': self.marginBottom,
-                            'left': self.marginLeft},
-                    reduceXTicks=self.reduceXTicks,
-                    rotateLabels=self.rotateLabels,
-                    showLegend=self.showLegend,
-                    tooltips=self.tooltips)

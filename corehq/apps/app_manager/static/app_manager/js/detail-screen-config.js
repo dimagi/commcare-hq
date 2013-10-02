@@ -348,9 +348,6 @@ var DetailScreenConfig = (function () {
                     that.field.$edit_view.focus();
                 }
             }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.ADD_COLUMN);
-//            this.$copy = $('<i></i>').addClass(COMMCAREHQ.icons.COPY).click(function () {
-//                that.duplicate();
-//            }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.COPY_COLUMN);
             this.$delete = $('<i></i>').addClass(COMMCAREHQ.icons.DELETE).click(function () {
                 $(this).remove();
                 that.screen.fire('delete-column', that);
@@ -483,7 +480,7 @@ var DetailScreenConfig = (function () {
             }
 
             // set up the custom column
-            this.customColumn = Column.init({model: "case", format: "plain"}, this);
+            this.customColumn = Column.init({model: "case", format: "plain", includeInShort: false}, this);
             this.customColumn.field.on('change', function () {
                 that.customColumn.header.val(toTitleCase(this.val()));
                 if (this.val() && !field_val_re.test(this.val())) {
@@ -519,7 +516,8 @@ var DetailScreenConfig = (function () {
                         column = Column.init({
                             model: model,
                             field: property,
-                            header: header
+                            header: header,
+                            includeInShort: false
                         }, this);
                         initColumnAsSuggestion(column);
                         this.suggestedColumns.push(column);
@@ -746,7 +744,6 @@ var DetailScreenConfig = (function () {
                     $('<th/>').addClass('detail-screen-format').text(DetailScreenConfig.message.FORMAT).appendTo($tr);
                     $('<th/>').addClass('detail-screen-extra').appendTo($tr);
 
-//                    $('<th/>').addClass('detail-screen-icon').appendTo($tr);
                     $('<th/>').addClass('detail-screen-icon').appendTo($tr);
 
                     $columns = $('<tbody/>').addClass('detail-screen-columns').appendTo($table);

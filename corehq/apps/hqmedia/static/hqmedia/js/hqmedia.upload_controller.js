@@ -42,10 +42,11 @@ function BaseHQMediaUploadController (uploader_name, marker, options) {
     self.uploadURL = options.uploadURL;
     self.processingURL = options.processingURL;
 
-    // Other
-    self.pollInterval = 2000;
+    // Polling
+    self.pollInterval = 2000;  // 2 sec
+    self.maxPollInterval = 20000;  // 20 seconds
     self.currentPollAttempts = 0;
-    self.maxPollAttempts = 30;
+    self.maxPollAttempts = 20;
 
 
     self.getActiveUploadSelectors = function (file) {
@@ -433,7 +434,13 @@ function HQMediaBulkUploadController (uploader_name, marker, options) {
 
     self.processingError = function (processing_id) {
         return function (data, status) {
-            self.currentPollAttempts += 1;
+            if (self.pollInterval < self.maxPollInterval) {
+                // first try increasing their timeout, maybe the connection is poor
+                self.pollInterval = Math.min(self.pollInterval + 2000, self.maxPollInterval);
+            } else {
+                self.currentPollAttempts += 1;
+            }
+
             if (self.currentPollAttempts > self.maxPollAttempts) {
                 var processingFile = self.processingIdToFile[processing_id];
                 delete self.processingIdToFile[processing_id];

@@ -235,7 +235,7 @@ function formatDataForLineGraph(data) {
     return _.map(data, function (datum) {
         var ret = {"key": datum.key, "values": []};
         for (var i = 0; i < datum.values.length; i++) {
-            ret.values.push([datum.values[i].x, datum.values[i].y]);
+            ret.values.push({x: datum.values[i].x, y: datum.values[i].y});
         }
         return ret;
     });

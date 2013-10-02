@@ -181,14 +181,20 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
         key = ["type", namespace, domain, cls.__name__]
         indicators = cls.view(
             cls.indicator_list_view(),
-            reduce = False,
-            include_docs = True,
+            reduce=False,
+            include_docs=True,
             startkey=key,
             endkey=key+[{}]
         ).all()
         unique = {}
         for ind in indicators:
-            unique["%s.%s" % (ind.slug, ind.namespace)] = ind
+            if ind.base_doc == "CaseIndicatorDefinition":
+                specific_doc = ind.case_type
+            elif ind.base_doc == "FormIndicatorDefinition":
+                specific_doc = ind.xmlns
+            else:
+                specific_doc = "couch"
+            unique["%s.%s.%s" % (ind.slug, ind.namespace, specific_doc)] = ind
         return unique.values()
 
     @classmethod

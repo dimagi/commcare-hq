@@ -179,4 +179,4 @@ class MultiCaseGroupFilter(BaseMultipleOptionFilter):
 
     @property
     def options(self):
-        return [(g["id"], g["key"][1]) for g in CommCareCaseGroup.get_all(self.domain, brief=True)]
+        return [(g["id"], g["key"][1]) for g in CommCareCaseGroup.get_all(self.domain, include_docs=False)]

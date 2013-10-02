@@ -21,14 +21,20 @@ class CareBiharFluff(fluff.IndicatorDocument):
 
     bp2 = homevisit.BPCalculator(days=(94, 187))
     bp3 = homevisit.BPCalculator(days=(0, 94))
-    pnc = homevisit.VisitCalculator(schedule=(1, 3, 6), visit_type='pnc')
+    pnc = homevisit.VisitCalculator(
+        form_types=['del', 'pnc', 'reg'],
+        visit_type='pnc',
+        get_date_next=getters.date_next_pnc,
+    )
     ebf = homevisit.VisitCalculator(
-        schedule=(14, 28, 60, 90, 120, 150),
+        form_types=['del', 'pnc', 'reg', 'eb'],
         visit_type='eb',
+        get_date_next=getters.date_next_eb,
     )
     cf = homevisit.VisitCalculator(
-        schedule=[m * 30 for m in (6, 7, 8, 9, 12, 15, 18)],
+        form_types=['del', 'pnc', 'reg', 'eb', 'cf'],
         visit_type='cf',
+        get_date_next=getters.date_next_cf,
     )
 
     upcoming_deliveries = homevisit.DueNextMonth()
