@@ -360,8 +360,8 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                 yield [
                     self.get_name_or_link(dom, internal_settings=True),
                     dom.get("internal", {}).get('organization_name') or _('No org'),
-                    format_date(dom.get('deployment', {}).get('date'), _('No date')),
-                    dom.get("deployment", {}).get('country') or _('No country'),
+                    format_date((dom.get('deployment') or {}).get('date'), _('No date')),
+                    (dom.get("deployment") or {}).get('country') or _('No country'),
                     dom.get("cp_n_active_cc_users", _("Not yet calculated")),
                     dom.get("cp_n_cc_users", _("Not yet calculated")),
                     dom.get("cp_n_60_day_cases", _("Not yet calculated")),
