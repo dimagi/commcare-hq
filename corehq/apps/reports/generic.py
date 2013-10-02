@@ -404,7 +404,7 @@ class GenericReportView(CacheableRequestMixIn):
         default_config = ReportConfig.default()
 
         def is_datespan(field):
-            field_fn = to_function(field) if type(field) == str else field
+            field_fn = to_function(field) if type(field) == basestring else field
             return issubclass(field_fn, (DatespanFilter, DatespanField))
         has_datespan = any([is_datespan(field) for field in self.fields])
 
