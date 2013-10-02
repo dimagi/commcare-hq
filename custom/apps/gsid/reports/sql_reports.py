@@ -84,12 +84,17 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
         return filters
 
     @property
-    def group_by(self):
+    @memoized
+    def gps_key(self):
         gps_key = "gps"
         agg_at = self.request.GET.get('aggregate_at', None)
         if agg_at and agg_at is not "clinic":
             gps_key = "gps_" + agg_at
-        return self.place_types + [gps_key]
+        return gps_key
+
+    @property
+    def group_by(self):
+        return self.place_types + [self.gps_key]
 
     @property
     def keys(self):
@@ -117,11 +122,7 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
         for place in self.place_types:
             columns.append(DatabaseColumn(place.capitalize(), SimpleColumn(place)))
 
-        gps_key = "gps"
-        agg_at = self.request.GET.get('aggregate_at', None)
-        if agg_at and agg_at is not "clinic":
-            gps_key = "gps_" + agg_at
-        return columns + [DatabaseColumn("gps", SimpleColumn(gps_key))]
+        return columns + [DatabaseColumn("gps", SimpleColumn(self.gps_key))]
 
 
 class GSIDSQLPatientReport(GSIDSQLReport):
@@ -213,7 +214,7 @@ class GSIDSQLPatientReport(GSIDSQLReport):
                 header_group=age_range_group
             ),
             AggregateColumn(
-                "FeMale age range", age_fn,
+                "Female age range", age_fn,
                 [
                     MinColumn("age", alias="female-min", filters=self.filters + [female_filter]),
                     MaxColumn("age", alias="female-max", filters=self.filters + [female_filter])
@@ -267,26 +268,14 @@ class GSIDSQLByDayReport(GSIDSQLReport):
                 DatabaseColumn("Count", CountColumn("age", alias="day_count"))
             ]
 
-    @property
-    def startdate_obj(self):
-        default_filter_values = super(GSIDSQLByDayReport, self).filter_values
-        startdate = datetime.strptime(default_filter_values["startdate"], "%Y-%m-%dT%H:%M:%S")
-        return startdate
-
-    @property
-    def enddate_obj(self):
-        default_filter_values = super(GSIDSQLByDayReport, self).filter_values
-        enddate = datetime.strptime(default_filter_values["enddate"], "%Y-%m-%dT%H:%M:%S")
-        return enddate
-
     def daterange(self, start_date, end_date):
         for n in range(int ((end_date - start_date).days)):
             yield (start_date + timedelta(n)).strftime("%Y-%m-%d")
 
     @property
     def headers(self):
-        startdate = self.startdate_obj
-        enddate = self.enddate_obj
+        startdate = self.datespan.startdate_utc
+        enddate = self.datespan.enddate_utc
 
         column_headers = []
         group_by = self.group_by[:-1]
@@ -316,8 +305,8 @@ class GSIDSQLByDayReport(GSIDSQLReport):
 
     @property
     def rows(self):
-        startdate = self.startdate_obj
-        enddate = self.enddate_obj
+        startdate = self.datespan.startdate_utc
+        enddate = self.datespan.enddate_utc
 
         old_data = self.data
         rows = []
@@ -336,8 +325,8 @@ class GSIDSQLByDayReport(GSIDSQLReport):
     def charts(self):
         rows = self.rows
         date_index = len(self.place_types)
-        startdate = self.startdate_obj
-        enddate = self.enddate_obj
+        startdate = self.datespan.startdate_utc
+        enddate = self.datespan.enddate_utc
         date_axis = Axis(label="Date", dateFormat="%b %d")
         tests_axis = Axis(label="Number of Tests")
         chart = LineChart("Number of Tests Per Day", date_axis, tests_axis)

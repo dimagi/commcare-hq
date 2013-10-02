@@ -3,8 +3,6 @@ from custom.apps.gsid.reports.sql_reports import GSIDSQLPatientReport, GSIDSQLBy
 
 CUSTOM_REPORTS = (
     ('Custom Reports', (
-        # PSIEventsReport,
-        #GSIDReport,
         GSIDSQLPatientReport,
         GSIDSQLByDayReport,
         GSIDSQLTestLotsReport,
