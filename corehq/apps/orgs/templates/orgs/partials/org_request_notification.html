@@ -1,3 +1,4 @@
+{% load url from future %}
 {# Must only be used on the orgs_landing page. It relies on javascript and modals defined on that page #}
 <span>You have a request from {{ requesting_user }} to add the project <strong>{{ org_req.domain}}</strong></span>
 <form class="form-inline" action="{% url "orgs_seen" org.name %}" method="post">

@@ -1,3 +1,4 @@
+{% load url from future %}
 <p>Hi!</p>
 <p>You've received a request from <strong>{{ requestee.username }}</strong> to add the project <strong>{{ dom }}</strong> to the organization <strong>{{ org.title }}</strong>.</p>
 <p>To accept this request, visit <a href="http://{{ url_base }}{% url "orgs_landing" org.name %}">the {{ org.title }} organization's landing page</a>.
