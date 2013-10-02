@@ -403,8 +403,10 @@ class GenericReportView(CacheableRequestMixIn):
         current_config_id = self.request.GET.get('config_id', '')
         default_config = ReportConfig.default()
 
-        has_datespan = any([ issubclass(to_function(field), (DatespanFilter, DatespanField)) 
-                           for field in self.fields])
+        def is_datespan(field):
+            field_fn = to_function(field) if isinstance(field, basestring) else field
+            return issubclass(field_fn, (DatespanFilter, DatespanField))
+        has_datespan = any([is_datespan(field) for field in self.fields])
 
         self.context.update(
             report=dict(
