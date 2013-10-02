@@ -1,4 +1,5 @@
 {% extends "hqadmin/hqadmin_base_report.html" %}
+{% load url from future %}
 {% block js-inline %} {{ block.super }}
     <script>
             ko.applyBindings({file: ko.observable(null)}, 
@@ -14,7 +15,7 @@
 <tbody>
 {% for domain in domains %}
     <tr>
-        <td><a href="{% url reports_home domain.name %}">{{ domain.display_name }}</a></td>
+        <td><a href="{% url "reports_home" domain.name %}">{{ domain.display_name }}</a></td>
 		<td>{{ domain.deployment.city|default:"" }}</td>
 		<td>{{ domain.deployment.country|default:"" }}</td>
 		<td>{{ domain.deployment.region|default:"" }}</td>
@@ -27,7 +28,7 @@
         <td>{{ domain.forms }}<span title="{{ domain.forms }}"></span></td>
 		<td>{{ domain.first_submission }}</td>
 		<td>{{ domain.last_submission }}</td>
-        <td><a href="{% url domain_basic_info domain.name %}">edit</a></td>
+        <td><a href="{% url "domain_basic_info" domain.name %}">edit</a></td>
     </tr>
 {% endfor %}
 </tbody>
@@ -36,7 +37,7 @@
 <p>
     <ol>
         <li>
-            Download the current data: <a href="{% url domain_list_download %}">domains.xlsx</a>.
+            Download the current data: <a href="{% url "domain_list_download" %}">domains.xlsx</a>.
         </li>
         <li>
             Update it with new information.

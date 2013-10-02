@@ -1,4 +1,5 @@
 {% extends "app_manager/apps_base.html" %}
+{% load url from future %}
 {% load xforms_extras %}
 {% load url_extras %}
 {% load hq_shared_tags %}
@@ -125,21 +126,21 @@
 <nav class="app-manager-content hide">
     <ul class="nav nav-list">
         <li {% if release_manager %}class="active"{% endif %}>
-            <a href="{% url release_manager domain app.id %}?edit={{ edit|BOOL }}">
+            <a href="{% url "release_manager" domain app.id %}?edit={{ edit|BOOL }}">
                 <i class="icon-download-alt"></i>
                 {% trans "Deploy" %}
             </a>
         </li>
         <li class="divider"></li>
         <li {% if not module and not form and not release_manager %}class="app-name-div active"{% endif %}>
-            <a href="{% url view_app domain app.id %}?edit={{ edit|BOOL }}#app-settings" data-toggle="tab">
+            <a href="{% url "view_app" domain app.id %}?edit={{ edit|BOOL }}#app-settings" data-toggle="tab">
                 <i class="icon-cog"></i>
                 {% trans "Settings" %}
             </a>
         </li>
         {% if app.get_doc_type == 'Application' %}
         <li>
-            <a href="{% url view_app domain app.id %}multimedia/?edit={{ edit|BOOL }}#multimedia" data-toggle="tab">
+            <a href="{% url "view_app" domain app.id %}multimedia/?edit={{ edit|BOOL }}#multimedia" data-toggle="tab">
                 <i class="icon-picture"></i>
                 {% trans "Multimedia" %}
             </a>
@@ -161,7 +162,7 @@
                     {% endif %}
                 </span>
             {% endif %}
-            <a href="{% url view_app domain app.id %}languages/?edit={{ edit|BOOL }}#languages-and-translations" data-toggle="tab"
+            <a href="{% url "view_app" domain app.id %}languages/?edit={{ edit|BOOL }}#languages-and-translations" data-toggle="tab"
                style="vertical-align: middle;">
                 <i class="icon-globe"></i>
                 {% trans "Languages" %}
@@ -174,17 +175,17 @@
             {% if edit %}
                 <li class="sort-action">
                     <form method="post"
-                          action="{% url corehq.apps.app_manager.views.rearrange domain app.id 'modules' %}">
+                          action="{% url "corehq.apps.app_manager.views.rearrange" domain app.id 'modules' %}">
                     </form>
                 </li>
             {% endif %}
                 <li class="sort-disabled edit-form-li {% if is_user_registration %} active{% endif %}" id="user-registration-nav-link">
-                    <a href="{% url view_user_registration domain app.id %}?edit={{ edit|BOOL }}">
+                    <a href="{% url "view_user_registration" domain app.id %}?edit={{ edit|BOOL }}">
                         <i class="icon-file-alt"></i>
                         {% trans "User Registration" %}
                     </a>
                     <div class="edit-form-pencil">
-                        <a href="{% url user_registration_source domain app.id %}">
+                        <a href="{% url "user_registration_source" domain app.id %}">
                             <span class="icon icon-pencil"></span>
                         </a>
                     </div>
@@ -194,7 +195,7 @@
                     <li class="edit-module-li {% ifequal module.id selected_module.id %}{% if not form %}
                         active{% endif %}{% endifequal %}"
                         data-index="{{ module.id }}">
-                        <a href="{% url view_module domain app.id module.id %}?edit={{ edit|BOOL }}">
+                        <a href="{% url "view_module" domain app.id module.id %}?edit={{ edit|BOOL }}">
                             {% if edit %}
                                 <i class="drag_handle"></i>
                             {% endif %}
@@ -207,7 +208,7 @@
                             {% if edit %}
                                 <li class="sort-action">
                                     <form method="post"
-                                          action="{% url corehq.apps.app_manager.views.rearrange domain app.id 'forms' %}">
+                                          action="{% url "corehq.apps.app_manager.views.rearrange" domain app.id 'forms' %}">
 {#                                        <input type="hidden" name="module_id" value="{{ module.id }}"/>#}
                                     </form>
                                 </li>
@@ -216,7 +217,7 @@
                                 {% for form in module.get_forms %}
                                     <li class="edit-form-li{% ifequal form selected_form %} active{% endifequal %}" data-moduleid="{{ module.id }}" data-index="{{ form.id }}">
                                         <!--[F]-->
-                                        <a href="{% url view_form domain app.id module.id form.id %}?edit={{ edit|BOOL }}">
+                                        <a href="{% url "view_form" domain app.id module.id form.id %}?edit={{ edit|BOOL }}">
                                             {% if edit %}
                                                 <i class="drag_handle"></i>
                                             {% endif %}
@@ -226,7 +227,7 @@
                                         </a>
                                         {% if edit %}
                                             <div class="edit-form-pencil pull-right">
-                                                <a href="{% url form_source domain app.id module.id form.id %}">
+                                                <a href="{% url "form_source" domain app.id module.id form.id %}">
                                                     <i class="icon-pencil" {% ifequal form selected_form %}style="color: white"{% endifequal %}"></i>
                                                 </a>
                                             </div>
@@ -239,7 +240,7 @@
                             {% endif %}
                             {% if edit %}
                                 <li class="sort-disabled">
-                                    <form action="{% url corehq.apps.app_manager.views.new_form domain app.id module.id %}?edit={{ edit|BOOL }}"
+                                    <form action="{% url "corehq.apps.app_manager.views.new_form" domain app.id module.id %}?edit={{ edit|BOOL }}"
                                           method="post" style="display: none">
                                     </form>
                                     <a class="submit_on_click" href="#">
@@ -254,7 +255,7 @@
             {% endwith %}
             {% if edit and app.get_doc_type == "Application" %}
                 <li class="sort-disabled">
-                    <form action="{% url corehq.apps.app_manager.views.new_module domain app.id %}"
+                    <form action="{% url "corehq.apps.app_manager.views.new_module" domain app.id %}"
                           method="post" style="display: none">
                     </form>
                     <a href="#" class="submit_on_click" id="new_module">
@@ -269,13 +270,13 @@
     {% if edit %}
         <li class="nav-header">Actions</li>
         <li>
-            <a href="{% url view_app domain app.id %}copy/?edit={{ edit|BOOL }}#copy" data-toggle="tab">
+            <a href="{% url "view_app" domain app.id %}copy/?edit={{ edit|BOOL }}#copy" data-toggle="tab">
                 <i class="icon-copy"></i>
                 {% trans "Copy Application" %}
             </a>
         </li>
         <li>
-            <a href="{% url view_app domain app.id %}delete/?edit={{ edit|BOOL }}#delete" data-toggle="tab">
+            <a href="{% url "view_app" domain app.id %}delete/?edit={{ edit|BOOL }}#delete" data-toggle="tab">
                 <i class="icon-trash"></i>
                 {% trans "Delete Application" %}
             </a>

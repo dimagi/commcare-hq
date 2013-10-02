@@ -1,4 +1,5 @@
 {% extends "app_manager/managed_app.html" %}
+{% load url from future %}
 {% load xforms_extras %}
 {% load url_extras %}
 {% load timezone_tags %}
@@ -15,17 +16,17 @@
     $(function () {
         // init releases
         var urls = {
-            fetch: '{% url paginate_releases domain app.id %}',
-            delete: '{% url corehq.apps.app_manager.views.delete_copy domain app.id %}',
-            emulator: '{% url emulator domain '___' %}',
-            cloudcare: '{% url cloudcare_get_app domain '___' %}',
-            jad: '{% url corehq.apps.app_manager.views.download_jad domain '___' %}',
-            jar: '{% url corehq.apps.app_manager.views.download_jar domain '___' %}',
-            odk: '{% url corehq.apps.app_manager.views.odk_install domain '___' %}',
-            source: '{% url download_index domain '___' %}',
-            release: '{% url release_build domain app.id '___' %}',
-            newBuild: '{% url corehq.apps.app_manager.views.save_copy domain app.id %}',
-            revertBuild: '{% url corehq.apps.app_manager.views.revert_to_copy domain app.id %}'
+            fetch: '{% url "paginate_releases" domain app.id %}',
+            delete: '{% url "corehq.apps.app_manager.views.delete_copy" domain app.id %}',
+            emulator: '{% url "emulator" domain '___' %}',
+            cloudcare: '{% url "cloudcare_get_app" domain '___' %}',
+            jad: '{% url "corehq.apps.app_manager.views.download_jad" domain '___' %}',
+            jar: '{% url "corehq.apps.app_manager.views.download_jar" domain '___' %}',
+            odk: '{% url "corehq.apps.app_manager.views.odk_install" domain '___' %}',
+            source: '{% url "download_index" domain '___' %}',
+            release: '{% url "release_build" domain app.id '___' %}',
+            newBuild: '{% url "corehq.apps.app_manager.views.save_copy" domain app.id %}',
+            revertBuild: '{% url "corehq.apps.app_manager.views.revert_to_copy" domain app.id %}'
         };
         var o = {
             users_cannot_share: {{ users_cannot_share|JSON }},
@@ -262,14 +263,14 @@
                         The following users cannot use this case sharing app because they have either more or less than one group.
                         To fix this, please 
                         {% endblocktrans %}
-                        <a href="{% url commcare_users domain %}?cannot_share=true&more_columns=true">{% trans "edit their group settings" %}</a>
+                        <a href="{% url "commcare_users" domain %}?cannot_share=true&more_columns=true">{% trans "edit their group settings" %}</a>
                         {% trans "so that they all belong to exactly one group." %}
                     </p>
                     <ul data-bind="foreach: $root.users_cannot_share">
                         <li data-bind="text: username"></li>
                     </ul>
                     <p>
-                        <a href="{% url commcare_users domain %}?cannot_share=true&more_columns=true" class="btn">{% trans "Edit mobile users" %}</a>
+                        <a href="{% url "commcare_users" domain %}?cannot_share=true&more_columns=true" class="btn">{% trans "Edit mobile users" %}</a>
                         <a class="btn" data-bind="click: function () {return $root.deployAnyway[id()](true);}">{% trans "Deploy anyway" %}</a>
                     </p>
                 </div>
@@ -365,7 +366,7 @@
                                         <div class="tab-content" data-bind="foreach: [short_url(), short_odk_url()]">
                                             <div class="tab-pane">
                                                 <div data-bind="visible: $data">
-                                                    <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
+                                                    <form method="post" action="{% url "corehq.apps.sms.views.send_to_recipients" domain %}">
                                                         <label>{% trans "Send to:" %}</label>
                                                         <input type="text" name="recipients" data-bind="multiTypeahead: $root.recipients" value=""/>
                                                         <br />

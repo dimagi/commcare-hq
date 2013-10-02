@@ -1,4 +1,5 @@
 {% extends base_template %}
+{% load url from future %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -26,7 +27,7 @@
                     <ol>
                         <li>
                             {% trans "Download your " %}
-                            <a href="{% url download_fixtures domain %}">{% trans "fixtures file" %}</a>
+                            <a href="{% url "download_fixtures" domain %}">{% trans "fixtures file" %}</a>
                         </li>
                         <li>
                             {% trans "To modify fixture data, edit the document according to these " %}
@@ -40,7 +41,7 @@
                 <p class="alert alert-info">
                     {% trans "Fixtures will be updated according to changes in the uploaded document." %}
                 </p>
-                <form class="form form-horizontal" action="{% url upload_fixtures domain%}" method="post" enctype="multipart/form-data">
+                <form class="form form-horizontal" action="{% url "upload_fixtures" domain%}" method="post" enctype="multipart/form-data">
                     <legend>{% trans "Choose a file for upload" %}</legend>
                     <div class="form-actions" style="padding-left: 1em;">
                         <fieldset>
@@ -61,7 +62,7 @@
                     </div>
                 </form>
             </section>
-            <a href="{% url fixture_view domain %}">{% trans "Go back to Fixtures" %}</a>
+            <a href="{% url "fixture_view" domain %}">{% trans "Go back to Fixtures" %}</a>
         </div>
     </div>
 {% endblock %}
