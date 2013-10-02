@@ -8,7 +8,7 @@
         $(chart_id).show();
 
         var chart = nv.models.lineChart()
-        .color(d3.scale.category10().range());;
+            .color(d3.scale.category10().range());;
 
         chart.xAxis.axisLabel({{ chart.x_axis.label|JSON }});
         {% if chart.x_axis.format %}
