@@ -124,6 +124,7 @@ class LineChart(Chart):
         self.marginRight = 20
         self.marginBottom = 50
         self.marginLeft = 100
+        self.tooltips = True
 
     def add_dataset(self, key, values, color=None):
         """
@@ -140,7 +141,8 @@ class LineChart(Chart):
         return dict(margin={'top': self.marginTop,
                             'right': self.marginRight,
                             'bottom': self.marginBottom,
-                            'left': self.marginLeft})
+                            'left': self.marginLeft},
+                    tooltips=self.tooltips)
 
 
 class PieChart(Chart):

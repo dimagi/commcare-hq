@@ -7,7 +7,8 @@
 
         $(chart_id).show();
 
-        var chart = nv.models.lineChart();
+        var chart = nv.models.lineChart()
+        .color(d3.scale.category10().range());;
 
         chart.xAxis.axisLabel({{ chart.x_axis.label|JSON }});
         {% if chart.x_axis.format %}
@@ -32,6 +33,7 @@
         {% endif %}
 
         chart.margin(chart_config.margin);
+        chart.tooltips(chart_config.tooltips);
 
         d3.select(chart_id + ' svg')
                 .datum(chart_data)
