@@ -137,7 +137,7 @@
                         </div>
                     {% endfor %}
                     <div style="float:right;">
-{#                        <a class="btn" href="javascript:ajax_get_form('{%url ajax_patient_form_get%}', '{{ patient_doc.get_id }}','phone', 'phoneform');"> <i class="icon-plus"></i> Add Phone </a>#}
+{#                        <a class="btn" href="javascript:ajax_get_form('{% url 'ajax_patient_form_get' %}', '{{ patient_doc.get_id }}','phone', 'phoneform');"> <i class="icon-plus"></i> Add Phone </a>#}
                     </div>
                 </td>
             </tr>
