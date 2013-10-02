@@ -794,11 +794,11 @@ SMS_LOADED_BACKENDS = [
     "corehq.apps.sms.backend.test.TestBackend",
 ]
 
-# A list of functions that can be called to retrieve custom content in a reminder event.
-# If the function is not listed here, it will not be called.
-ALLOWED_CUSTOM_CONTENT_HANDLERS = [
-    "custom.fri.api.custom_content_handler",
-]
+# These are functions that can be called to retrieve custom content in a reminder event.
+# If the function is not in here, it will not be called.
+ALLOWED_CUSTOM_CONTENT_HANDLERS = {
+    "FRI_SMS_CONTENT" : "custom.fri.api.custom_content_handler",
+}
 
 SELENIUM_APP_SETTING_DEFAULTS = {
     'cloudcare': {

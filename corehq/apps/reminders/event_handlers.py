@@ -82,7 +82,7 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers, workflow=Non
             if handler.custom_content_handler is not None:
                 if handler.custom_content_handler in settings.ALLOWED_CUSTOM_CONTENT_HANDLERS:
                     try:
-                        content_handler = to_function(handler.custom_content_handler)
+                        content_handler = to_function(settings.ALLOWED_CUSTOM_CONTENT_HANDLERS[handler.custom_content_handler])
                     except Exception:
                         raise_error(reminder, ERROR_FINDING_CUSTOM_CONTENT_HANDLER)
                         return False
