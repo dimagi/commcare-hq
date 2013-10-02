@@ -291,7 +291,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
     def headers(self):
         headers = DataTablesHeader(
             DataTablesColumn("Project", prop_name="name.exact"),
-            DataTablesColumn(_("Organization"), prop_name="internal.organization_name"),
+            DataTablesColumn(_("Organization"), prop_name="internal.organization_name.exact"),
             DataTablesColumn(_("Deployment Date"), prop_name="deployment.date"),
             DataTablesColumn(_("Deployment Country"), prop_name="deployment.country.exact"),
             DataTablesColumn(_("# Active Mobile Workers"), sort_type=DTSortType.NUMERIC,
