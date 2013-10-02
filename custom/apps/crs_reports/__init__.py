@@ -10,47 +10,38 @@ CUSTOM_REPORTS = (
     )),
 )
 
-QUESTION_TEMPLATES = [{
-    HBNCMotherReport.slug: [
+QUESTION_TEMPLATES = (
+    (HBNCMotherReport.slug, [
         {'case_property': '',
         'question': _('In case of death, was information of death given to MOI/c by ASHA within 24 hours or not'),
-        'answers': []
         },
         {'case_property': 'bleeding',
         'question': _('Bleeding/watery discharge: How many times does she change pad in a day.'),
-        'answers': []
         },
         {'case_property': '',
         'question': _('If mother said more than 5 pads were wet and referral made, what was outcome of referral?'),
-        'answers': []
         },
         {'case_property': 'meals',
         'question': _('How many times mother is taking full meals?'),
-        'answers': []
         },
         {'case_property': 'meals_counsel',
         'question': _('If mother is taking food less than 4 times or not taking complete diet, did ASHA counsel her to do so?'),
-        'answers': []
         },
         {'case_property': 'mother_temp',
         'question': _('Measurements of Fever (degrees C or F)'),
-        'answers': []
         },
         {'case_property': '',
         'question': _('Outcome of referrals to the hospital for fever.'),
-        'answers': []
         },
         {'case_property': 'discharge',
         'question': _('Does the mother have foul smeling discharge or pus along with fever above 102 degrees F (38.9 degrees Celsius)?'),
-        'answers': []
         },
         {'case_property': 'maternal_fits',
         'question': _('Sub consciousness/fits/speaking abnormally'),
-        'answers': []
         },
         {'case_property': '',
         'question': _('Any other serious problems?'),
-        'answers': []
         }
-    ]
-}]
+    ]),
+    (HBNCInfantReport.slug, [])
+)
