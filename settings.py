@@ -899,6 +899,9 @@ DOMAIN_MODULE_MAP = {
     'project': 'custom.apps.care_benin',
 
     'gc': 'custom.trialconnect',
+    'tc-test': 'custom.trialconnect',
+    'trialconnect': 'custom.trialconnect',
+
     'crs-remind': 'custom.apps.crs_reports'
 }
 
