@@ -1,5 +1,4 @@
 {% extends 'users/base_template.html' %}
-{% load url from future %}
 {# This is for editing information for a CommCareUser #}
 
 {% load crispy_forms_tags %}
@@ -155,7 +154,7 @@
                   class="form form-horizontal"
                   name="user-data-form"
                   method="post"
-                  action="{% url "update_user_data" domain couch_user.user_id %}">
+                  action="{% url update_user_data domain couch_user.user_id %}">
                 <input name="user-data" id="user-data-input" type="hidden" />
 
                 <fieldset>
@@ -175,7 +174,7 @@
 
         </div>
         <div class="tab-pane" id="groups">
-            <form class="form" action="{% url "update_user_groups" domain couch_user.user_id %}" method='post'>
+            <form class="form" action="{% url update_user_groups domain couch_user.user_id %}" method='post'>
                 <legend>{% trans 'Edit Groups' %}</legend>
                 {% if not are_groups %}
                 <p>{% blocktrans %}
@@ -193,7 +192,7 @@
         {% endif %}
         <div class="tab-pane" id="user-password">
             <form class="form form-horizontal reset-password-form"
-                  action="{% url "change_password" domain couch_user.user_id %}"
+                  action="{% url change_password domain couch_user.user_id %}"
                   method="post">
                 <fieldset>
                     <legend>{% trans 'Reset Password' %}</legend>
@@ -238,7 +237,7 @@
         </div>
         <form class="form form-horizontal"
               style="margin: 0; padding: 0"
-              action="{% url "delete_commcare_user" domain couch_user.user_id %}"
+              action="{% url delete_commcare_user domain couch_user.user_id %}"
               method="post"
               data-bind="submit: submit">
             <div class="modal-body">

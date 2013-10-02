@@ -1,13 +1,12 @@
 {% extends 'reports/base_template.html' %}
-{% load url from future %}
 
 {% block page-title %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% url "reports_home" domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
+            <a href="{% url reports_home domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
         </li>
         <li>
-            <a href="{% url "phonelog_devices" domain=domain %}">Device List</a> <span class="divider">&gt;</span>
+            <a href="{% url phonelog_devices domain=domain %}">Device List</a> <span class="divider">&gt;</span>
         </li>
         <li class="active">
             <div id="report-title"><a href="#">Raw Logs for Device "{{ device }}"</a></div>
@@ -18,7 +17,7 @@
 {% block js-inline %}{{ block.super }}
 <script type="text/javascript">
     $(function() {
-       $('.dataTables_filter').append('<a class="btn btn-primary" style="margin-left:20px;" id="view_formatted" href="{% url "device_log" domain device %}">View Formatted Logs</a>');
+       $('.dataTables_filter').append('<a class="btn btn-primary" style="margin-left:20px;" id="view_formatted" href="{% url device_log domain device %}">View Formatted Logs</a>');
     });
 </script>
 {% endblock %}

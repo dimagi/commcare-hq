@@ -1,4 +1,3 @@
-{% load url from future %}
 {% load hq_shared_tags %}
 {% load i18n %}
 <!DOCTYPE html>
@@ -16,7 +15,7 @@
     <footer>
         <small>{% trans "CommCare HQ Mobile is Copyright" %} &copy; {% now "Y" %} <a href="http://www.dimagi.com/">Dimagi, Inc.</a></small>
         <br>
-        <small><a href="{% url "logout" %}">{% trans "Logout" %}</a></small>
+        <small><a href="{% url logout %}">{% trans "Logout" %}</a></small>
     </footer>
     {% endblock %}
 </div>

@@ -1,5 +1,4 @@
 {% extends base_template %}
-{% load url from future %}
 {% load hq_shared_tags %}
 {% block js %}
     <script src="{% static 'case/js/cheapxml.js' %}"></script>
@@ -11,7 +10,7 @@
         var results = {{ results|JSON }},
             webUserID = {{ request.couch_user.user_id|JSON }},
             domain = {{ domain|JSON }},
-            url = '{% url "receiver_post" domain %}';
+            url = '{% url receiver_post domain %}';
         var ReassignmentStub = {
             states: {
                 NONE: 'none',

@@ -1,5 +1,4 @@
 {% extends 'reports/standard/base_template.html' %}
-{% load url from future %}
 
 {% block sidebar %}
 {% include 'appstore/partials/sidebar.html' %}
@@ -8,7 +7,7 @@
 {#{% block page-title %}#}
 {#<ul class="breadcrumb">#}
 {#    <li>#}
-{#        <strong><a href="{% url "appstore" %}">CommCare Exchange</a></strong>#}
+{#        <strong><a href="{% url appstore %}">CommCare Exchange</a></strong>#}
 {#        <span class="divider">&gt;</span>#}
 {#    </li>#}
 {#    {% block breadcrumb %}#}

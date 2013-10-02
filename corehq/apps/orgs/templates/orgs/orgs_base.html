@@ -1,5 +1,4 @@
 {% extends "hqwebapp/centered.html" %}
-{% load url from future %}
 
 {% block centered-content %}
 
@@ -10,7 +9,7 @@
         {% for org in orgs %}
             <div class="row-fluid">
                 <div class="span1">
-                    <form class="form-inline pull-right" method="POST" action="{% url "verify_org" org.name %}">
+                    <form class="form-inline pull-right" method="POST" action="{% url verify_org org.name %}">
                         {% if org.verified %}
                             <input type="hidden" name="verify" value="false" />
                             <button type="submit" class="btn btn-warning">Unverify</button>
@@ -21,9 +20,9 @@
                     </form>
                 </div>
                 <div class="span11">
-                    <a href="{% url "orgs_landing" org.name %}"> {{ org.name }} ({{ org.title }})</a>
+                    <a href="{% url orgs_landing org.name %}"> {{ org.name }} ({{ org.title }})</a>
                     {% if org.logo_filename %}
-                        <img style="max-width: 8em" src="{% url "orgs_logo" org.name %}" alt="Logo" />
+                        <img style="max-width: 8em" src="{% url orgs_logo org.name %}" alt="Logo" />
                     {% else %}
                         <br/>
                     {% endif %}

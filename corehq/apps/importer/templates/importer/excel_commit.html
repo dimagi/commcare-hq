@@ -1,5 +1,4 @@
 {% extends "hqwebapp/two_column.html" %}
-{% load url from future %}
 {% load report_tags %}
 {% load i18n %}
 
@@ -14,7 +13,7 @@
             var pollDownloader = function () {
                 if ($('#ready_{{ download_id }}').length == 0)
                     {
-                        $.get("{% url "importer_job_poll" domain download_id %}", function(data) {
+                        $.get("{% url importer_job_poll domain download_id %}", function(data) {
                             $("#display_{{ download_id }}").html(data);
                         });
                     } else {

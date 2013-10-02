@@ -1,5 +1,4 @@
 {% extends 'hqwebapp/two_column.html' %}
-{% load url from future %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load timezone_tags %}
@@ -25,18 +24,18 @@
 {% block page-title %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% url "messaging" domain %}"><strong>{% trans "Messaging" %}</strong></a> <span class="divider">&gt;</span>
+            <a href="{% url messaging domain %}"><strong>{% trans "Messaging" %}</strong></a> <span class="divider">&gt;</span>
         </li>
         <li>
-            <a href="{% url "list_forwarding_rules" domain %}"><strong>{% trans "Forwarding Rules" %}</strong></a> <span class="divider">&gt;</span>
+            <a href="{% url list_forwarding_rules domain %}"><strong>{% trans "Forwarding Rules" %}</strong></a> <span class="divider">&gt;</span>
         </li>
         <li class="active">
             <div id="report-title">
             {% block page-subtitle %}
                 {% if forwarding_rule_id %}
-                    <a href="{% url "edit_forwarding_rule" domain forwarding_rule_id %}">{% trans "Edit Forwarding Rule" %}</a>
+                    <a href="{% url edit_forwarding_rule domain forwarding_rule_id %}">{% trans "Edit Forwarding Rule" %}</a>
                 {% else %}
-                    <a href="{% url "add_forwarding_rule" domain %}">{% trans "Add Forwarding Rule" %}</a>
+                    <a href="{% url add_forwarding_rule domain %}">{% trans "Add Forwarding Rule" %}</a>
                 {% endif %}
             {% endblock %}
             </div>

@@ -1,5 +1,4 @@
 {% extends "reminders/reminders_base.html" %}
-{% load url from future %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
@@ -71,11 +70,11 @@
                     <tr>
                         <td style="text-align: center;"><input class="selected_reminders" type="checkbox" name="selected_reminders" value="{{ info.reminder_id }}" /></td>
                         <td>{{ info.next_fire }}</td>
-                        <td><a href="{% url "edit_complex" domain info.handler_id %}">{{ info.handler_name }}</a></td>
+                        <td><a href="{% url edit_complex domain info.handler_id %}">{{ info.handler_name }}</a></td>
                         <td>{{ info.recipient_name }}</td>
                         <td>
                             {% if info.case_id %}
-                            <a href="{% url "case_details" domain info.case_id %}">{{ info.case_name }}</a>
+                            <a href="{% url case_details domain info.case_id %}">{{ info.case_name }}</a>
                             {% else %}
                             -
                             {% endif %}

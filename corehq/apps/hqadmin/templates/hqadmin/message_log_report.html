@@ -1,5 +1,4 @@
 {% extends "hqadmin/hqadmin_base_report.html" %}
-{% load url from future %}
 {% block report-title %}Message Logs Across All Domains{% endblock %}
 {% block reportcontent %}
 <table class="datatable table table-striped">
@@ -9,7 +8,7 @@
 <tbody>
 {% for domain in domains %}
     <tr>
-        <td><a href="{% url "reports_home" domain.name %}">{{ domain.display_name }}</a></td>
+        <td><a href="{% url reports_home domain.name %}">{{ domain.display_name }}</a></td>
         <td>{{ domain.sms_incoming }}
             <span title="{{ domain.sms_incoming }}"></span>
             </td>
