@@ -1,4 +1,5 @@
 {% extends "reminders/reminders_base.html" %}
+{% load url from future %}
 
 {% block head %}{{ block.super }}
 <style type="text/css">
@@ -25,11 +26,11 @@
     </li>
     {% if keyword.get_id %}
     <li class="active">
-        <a href="{% url edit_keyword domain keyword.get_id %}">{{ keyword.keyword }}</a>
+        <a href="{% url "edit_keyword" domain keyword.get_id %}">{{ keyword.keyword }}</a>
     </li>
     {% else %}
     <li class="active">
-        <a href="{% url add_keyword domain %}">New Keyword</a>
+        <a href="{% url "add_keyword" domain %}">New Keyword</a>
     </li>
     {% endif %}
 {% endblock %}

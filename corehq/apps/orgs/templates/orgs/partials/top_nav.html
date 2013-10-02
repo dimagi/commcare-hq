@@ -1,15 +1,16 @@
+{% load url from future %}
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
 {% load i18n %}
 <ul class="nav nav-tabs">
     <li{% ifequal tab "projects" %} class="active"{% endifequal %}>
-        <a href="{% url orgs_landing org.name %}">{% trans "Projects" %} ({{ domains|length }})</a>
+        <a href="{% url "orgs_landing" org.name %}">{% trans "Projects" %} ({{ domains|length }})</a>
     </li>
     <li{% ifequal tab "teams" %} class="active"{% endifequal %}>
-        <a href="{% url orgs_teams org.name %}">{% trans "Teams" %} ({{ teams|length }})</a>
+        <a href="{% url "orgs_teams" org.name %}">{% trans "Teams" %} ({{ teams|length }})</a>
     </li>
     <li{% ifequal tab "members" %} class="active"{% endifequal %}>
-        <a href="{% url orgs_members org.name %}">{% trans "Members" %} ({{ members|length }})</a>
+        <a href="{% url "orgs_members" org.name %}">{% trans "Members" %} ({{ members|length }})</a>
     </li>
     <span class="pull-right">
         {% if admin %}
@@ -23,7 +24,7 @@
             <a class="close" data-dismiss="modal">&times;</a>
             <h3>Update Info For {{ org.title }}</h3>
         </div>
-        <form class="form-horizontal" method="post" action="{% url orgs_update_info org.name %}" enctype="multipart/form-data">
+        <form class="form-horizontal" method="post" action="{% url "orgs_update_info" org.name %}" enctype="multipart/form-data">
             <div class="modal-body">
                 <fieldset>
                     {% bootstrap_form_errors update_form %}

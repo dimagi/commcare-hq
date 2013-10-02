@@ -1,4 +1,5 @@
 {% extends 'reports/async/basic.html' %}
+{% load url from future %}
 {% load report_tags %}
 {% load i18n %}
 
@@ -6,7 +7,7 @@
     {% include 'importer/partials/help_message.html' %}
 
     <form class="form-horizontal form-report"
-          action="{% url corehq.apps.importer.views.excel_config domain %}"
+          action="{% url "corehq.apps.importer.views.excel_config" domain %}"
           method="post"
           enctype="multipart/form-data">
         <fieldset>

@@ -1,4 +1,5 @@
 {% extends "hqwebapp/two_column.html" %}
+{% load url from future %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -30,7 +31,7 @@
 {% block page-title %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% url default_admin_report %}"><strong>{% trans "Admin Reports" %}</strong></a> <span class="divider">&gt;</span>
+            <a href="{% url "default_admin_report" %}"><strong>{% trans "Admin Reports" %}</strong></a> <span class="divider">&gt;</span>
         </li>
         {% if not report_breadcrumbs %}
             <li class="active">

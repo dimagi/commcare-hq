@@ -1,4 +1,5 @@
 {% extends "reminders/survey_base.html" %}
+{% load url from future %}
 
 {% block head %}{{ block.super }}
 
@@ -137,7 +138,7 @@
                         <td>{{ contact.id }}<input type="hidden" name="sample_contact.{{ forloop.counter0 }}.id" value="{{ contact.id }}" /></td>
                         <td>
                             {% if contact.case_id %}
-                            <a href="{% url edit_contact domain sample_id contact.case_id %}">{{ contact.phone_number }}</a>
+                            <a href="{% url "edit_contact" domain sample_id contact.case_id %}">{{ contact.phone_number }}</a>
                             <input name="sample_contact.{{ forloop.counter0 }}.case_id" type="hidden" value="{{ contact.case_id }}" />
                             {% endif %}
                             <input name="sample_contact.{{ forloop.counter0 }}.phone_number" type="{% if contact.case_id %}hidden{% else %}text{% endif %}" value="{{ contact.phone_number }}" />

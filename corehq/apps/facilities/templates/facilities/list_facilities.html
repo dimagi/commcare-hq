@@ -1,10 +1,11 @@
 {% extends 'facilities/base.html' %}
+{% load url from future %}
 {% load i18n %}
 
 {% block main_column %}
     <h2>
     {% if registry %}
-        {% url view_or_update_registry domain registry.get_id as registry_url %}
+        {% url "view_or_update_registry" domain registry.get_id as registry_url %}
         {% blocktrans with registry.name as registry_name %}
         Facilities from <a href="{{ registry_url }}">{{ registry_name }}</a>
         {% endblocktrans %}
@@ -39,7 +40,7 @@
             {% with f=facility.data %}
             <td>
                 <a href="{{ f.href }}">{{ f.name }}</a>
-                (<a href="{% url view_or_update_facility domain facility.get_id %}">{% trans 'edit' %}</a>)
+                (<a href="{% url "view_or_update_facility" domain facility.get_id %}">{% trans 'edit' %}</a>)
             </td>
             <td>{{ f.coordinates }}</td>
             <td>
