@@ -989,6 +989,26 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             )
         )
 
+    def clean(self):
+        cleaned_data = super(SimpleScheduleCaseReminderForm, self).clean()
+
+        # cleaning Start Fieldset
+        start_reminder_on = cleaned_data['start_reminder_on']
+        if start_reminder_on == START_REMINDER_ON_CASE_PROPERTY:
+            cleaned_data['start_date'] = None
+            start_offset = (0 if cleaned_data['start_property_offset_type'] == START_PROPERTY_OFFSET_IMMEDIATE
+                            else abs(cleaned_data.get('start_property_offset', 0)))
+        else:
+            cleaned_data['start_property'] = None
+            cleaned_data['start_value'] = None
+            start_offset = abs(cleaned_data['start_date_offset'])
+            start_date_offset_type = cleaned_data['start_date_offset_type']
+            if start_date_offset_type == START_DATE_OFFSET_BEFORE:
+                start_offset = -start_offset
+        cleaned_data['start_offset'] = start_offset
+
+        return cleaned_data
+
     @classmethod
     def compute_initial(cls, reminder_handler):
         initial = {}
