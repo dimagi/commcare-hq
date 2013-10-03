@@ -1,5 +1,6 @@
 from datetime import timedelta, datetime, time
 import json
+from couchdbkit import ResourceNotFound
 from django.utils.decorators import method_decorator
 import pytz
 from django.core.urlresolvers import reverse
@@ -490,6 +491,29 @@ class EditScheduledReminderView(CreateScheduledReminderView):
     @property
     def handler_id(self):
         return self.kwargs.get('handler_id')
+
+    @property
+    def schedule_form(self):
+        initial = SimpleScheduleCaseReminderForm.compute_initial(self.reminder_handler)
+        if self.request.method == 'POST':
+            return SimpleScheduleCaseReminderForm(
+                self.request.POST,
+                initial=initial,
+                is_previewer=self.is_previewer,
+                domain=self.domain
+            )
+        return SimpleScheduleCaseReminderForm(
+            initial=initial,
+            is_previewer=self.is_previewer,
+            domain=self.domain
+        )
+
+    @property
+    def reminder_handler(self):
+        try:
+            return CaseReminderHandler.get(self.handler_id)
+        except ResourceNotFound:
+            raise Http404()
 
     @property
     def page_context(self):

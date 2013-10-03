@@ -980,6 +980,22 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             )
         )
 
+    @classmethod
+    def compute_initial(cls, reminder_handler):
+        initial = {}
+        fields = cls.__dict__['base_fields'].keys()
+        for field in fields:
+            try:
+                current_val = getattr(reminder_handler, field, Ellipsis)
+                if field == 'events':
+                    current_val = json.dumps([e.to_json() for e in current_val])
+                if current_val is not Ellipsis:
+                    initial[field] = current_val
+            except AttributeError:
+                pass
+
+        return initial
+
 
 class CaseReminderEventForm(forms.Form):
     """
