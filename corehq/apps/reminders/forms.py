@@ -1034,6 +1034,12 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                 start_offset = -start_offset
         cleaned_data['start_offset'] = start_offset
 
+        # clean match values
+        if cleaned_data['start_match_type'] == MATCH_ANY_VALUE:
+            cleaned_data['start_value'] = None
+        if cleaned_data['recipient_case_match_type'] == MATCH_ANY_VALUE:
+            cleaned_data['recipient_case_match_value'] = None
+
         return cleaned_data
 
     @classmethod
