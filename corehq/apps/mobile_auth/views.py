@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 from django.http import HttpResponse
 from django.views.decorators.http import require_GET
 from corehq.apps.domain.decorators import login_or_digest_ex
@@ -12,7 +12,7 @@ class FetchKeyRecords(object):
         self.domain = domain
         self.user_id = user_id
         self.last_issued = last_issued
-        self.now = datetime.utcnow()
+        self.now = datetime.datetime.utcnow()
 
     def key_for_time(self, now):
         return MobileAuthKeyRecord.current_for_user(
@@ -24,7 +24,12 @@ class FetchKeyRecords(object):
     def get_or_create_current_record(self):
         key_record = self.key_for_time(self.now)
         if not key_record:
-            key_record = new_key_record(self.domain, self.user_id, self.now)
+            key_record = new_key_record(
+                domain=self.domain,
+                user_id=self.user_id,
+                now=self.now,
+                valid=self.now - datetime.timedelta(days=30),
+            )
             key_record.save()
         return key_record
 

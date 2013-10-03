@@ -9,8 +9,8 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.management.commands import bootstrap_psi
 from corehq.apps.commtrack.models import Product
 from corehq.apps.commtrack.forms import ProductForm
+from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.models import Location
-from corehq.apps.settings.views import BaseProjectDataView
 from dimagi.utils.decorators.memoized import memoized
 from soil.util import expose_download
 import uuid
@@ -24,8 +24,20 @@ import csv
 from dimagi.utils.couch.database import iter_docs
 import itertools
 
+@domain_admin_required
+def default(request, domain):
+    if not (request.project and request.project.commtrack_enabled):
+        raise Http404()
+    return HttpResponseRedirect(reverse(ProductListView.urlname,
+                                            args=[domain]))
 
-class BaseCommTrackManageView(BaseProjectDataView):
+
+class BaseCommTrackManageView(BaseDomainView):
+    section_name = ugettext_noop("Setup")
+
+    @property
+    def section_url(self):
+        return reverse('default_commtrack_setup', args=[self.domain])
 
     @method_decorator(domain_admin_required)  # TODO: will probably want less restrictive permission?
     def dispatch(self, request, *args, **kwargs):

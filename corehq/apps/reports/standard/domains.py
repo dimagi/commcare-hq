@@ -1,5 +1,5 @@
 from datetime import datetime
-from corehq.elastic import es_query, ADD_TO_ES_FILTER, ES_URLS
+from corehq.elastic import es_query, ADD_TO_ES_FILTER, ES_URLS, ES_MAX_CLAUSE_COUNT
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
@@ -268,9 +268,18 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
         if self.es_params:
             domain_results = es_domain_query(self.es_params, fields=["name"], size=99999, show_stats=False)
             domains = [d["fields"]["name"] for d in domain_results["hits"]["hits"]]
-            ctxt["total_distinct_users"] = total_distinct_users(domains)
-        else:
+            if len(domains) < ES_MAX_CLAUSE_COUNT:
+                ctxt["total_distinct_users"] = total_distinct_users(domains)
+                ctxt["matching_filters"] = True
+        if "total_distinct_users" not in ctxt:
             ctxt["total_distinct_users"] = total_distinct_users()
+
+        ctxt["domain_datefields"] = [
+            {"value": "date_created", "name": _("Date Created")},
+            {"value": "deployment.date", "name": _("Deployment Date")},
+            {"value": "cp_first_form", "name": _("First Form Submitted")},
+            {"value": "cp_last_form", "name": _("Last Form Submitted")},
+        ]
         return ctxt
 
     def es_query(self, params=None, size=None):
@@ -282,7 +291,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
     def headers(self):
         headers = DataTablesHeader(
             DataTablesColumn("Project", prop_name="name.exact"),
-            DataTablesColumn(_("Organization"), prop_name="internal.organization_name"),
+            DataTablesColumn(_("Organization"), prop_name="internal.organization_name.exact"),
             DataTablesColumn(_("Deployment Date"), prop_name="deployment.date"),
             DataTablesColumn(_("Deployment Country"), prop_name="deployment.country.exact"),
             DataTablesColumn(_("# Active Mobile Workers"), sort_type=DTSortType.NUMERIC,
@@ -351,8 +360,8 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                 yield [
                     self.get_name_or_link(dom, internal_settings=True),
                     dom.get("internal", {}).get('organization_name') or _('No org'),
-                    format_date(dom.get('deployment', {}).get('date'), _('No date')),
-                    dom.get("deployment", {}).get('country') or _('No country'),
+                    format_date((dom.get('deployment') or {}).get('date'), _('No date')),
+                    (dom.get("deployment") or {}).get('country') or _('No country'),
                     dom.get("cp_n_active_cc_users", _("Not yet calculated")),
                     dom.get("cp_n_cc_users", _("Not yet calculated")),
                     dom.get("cp_n_60_day_cases", _("Not yet calculated")),

@@ -3,6 +3,7 @@ import rawes
 from django.conf import settings
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
+from corehq.pillows.mappings.sms_mapping import SMS_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 
@@ -20,12 +21,13 @@ ES_URLS = {
     "forms": XFORM_INDEX + '/xform/_search',
     "cases": CASE_INDEX + '/case/_search',
     "users": USER_INDEX + '/user/_search',
-    "domains": DOMAIN_INDEX + '/hqdomain/_search'
+    "domains": DOMAIN_INDEX + '/hqdomain/_search',
+    "sms": SMS_INDEX + '/sms/_search',
 }
 
 ADD_TO_ES_FILTER = {
     "forms": [
-        {"not": {"in": {"doc_type": ["xformduplicate", "xformdeleted"]}}},
+        {"term": {"doc_type": "xforminstance"}},
         {"not": {"missing": {"field": "xmlns"}}},
         {"not": {"missing": {"field": "form.meta.userID"}}},
     ],
@@ -36,7 +38,11 @@ DATE_FIELDS = {
     "forms": "received_on",
     "cases": "opened_on",
     "users": "created_on",
+    "sms": 'date',
 }
+
+ES_MAX_CLAUSE_COUNT = 1024  #  this is what ES's maxClauseCount is currently set to,
+                            #  can change this config value if we want to support querying over more domains
 
 
 def get_stats_data(domains, histo_type, datespan, interval="day"):
@@ -67,11 +73,11 @@ def get_stats_data(domains, histo_type, datespan, interval="day"):
     }
 
 
-def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None, interval="day"):
-    q = {"query": {"match_all":{}}}
+def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None, interval="day", q=None):
+    q = q or {"query": {"match_all":{}}}
 
     if domains is not None:
-        q["query"] = {"in" : {"domain.exact": domains}}
+        q["query"] = {"bool": {"must": [q["query"], {"in": {"domain.exact": domains}}]}}
 
     date_field = DATE_FIELDS[histo_type]
 
@@ -140,7 +146,7 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
         for facet in facets:
             q["facets"][facet] = {"terms": {"field": facet, "size": 9999}}
 
-    if q.get('facets'):
+    if q.get('facets') and q.get("filter", {}).get("and"):
         for facet in q["facets"]:
             if "facet_filter" not in q["facets"][facet]:
                 q["facets"][facet]["facet_filter"] = {"and": []}
@@ -229,3 +235,15 @@ def fill_mapping_with_facets(facet_mapping, results, params=None):
                 for choice in facet_dict["choices"]:
                     choice["display"] = facet_dict.get('mapping').get(choice["name"], choice["name"])
     return facet_mapping
+
+DAY_VALUE = 86400000
+def format_histo_data(data, name, min_t=None, max_t=None):
+    data = dict([(d["time"], d["count"]) for d in data])
+    times = data.keys()
+    min_t, max_t = min_t or min(times), max_t or max(times)
+    time = min_t
+    values = []
+    while time <= max_t:
+        values.append([time, data.get(time, 0)])
+        time += DAY_VALUE
+    return {"key": name, "values": values}

@@ -330,10 +330,10 @@
                                             Install by typing the following URL
                                             into the application install screen:
                                         {% endblocktrans %}
-                                        <a data-bind="
+                                        <code><a data-bind="
                                             attr: {href: get_short_odk_url()},
                                             text: get_short_odk_url()
-                                        "></a>
+                                        "></a></code>
                                     </span>
                                     <span class="text-warning" data-bind="visible: !get_short_odk_url()">
                                         {% trans "No short code available; try making another version." %}

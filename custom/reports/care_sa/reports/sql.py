@@ -18,10 +18,12 @@ class ProvinceField(AsyncDrillableField):
 class ShowAgeField(BooleanField):
     label = "Show Age"
     slug = "show_age_field"
+    template = "care_sa/reports/partials/checkbox.html"
 
 class ShowGenderField(BooleanField):
     label = "Show Gender"
     slug = "show_gender_field"
+    template = "care_sa/reports/partials/checkbox.html"
 
 class CBOField(GroupField):
     name = 'CBO'
@@ -43,10 +45,6 @@ class CareReport(SqlTabularReport,
         'custom.reports.care_sa.reports.sql.ShowAgeField',
         'custom.reports.care_sa.reports.sql.ShowGenderField',
     ]
-
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return user and user.is_previewer()
 
     def selected_province(self):
         fixture = self.request.GET.get('fixture_id', "")
@@ -380,7 +378,14 @@ class CareReport(SqlTabularReport,
         # configured report structure
         rows = self.build_data(stock_rows)
 
+        # set up with for total rows
+        if (not self.show_age() and self.show_gender()):
+            total_width = 1
+        else:
+            total_width = 2
+
         rows_for_table = []
+        overall_total_row = []
         # for every group of data, unpack back to individual rows
         # and set up the information the template needs to render this
         # stuff
@@ -423,18 +428,32 @@ class CareReport(SqlTabularReport,
 
                     total_row = self.add_row_to_total(total_row, row_data)
             else:
+                row_data = rows[user]
                 rows_for_table.append({
                     'username': u,
                     'gender':  'no_grouping',  # magic
-                    'row_data': rows[user]
+                    'row_data': row_data
                 })
+
+            if total_row:
+                overall_total_row = self.add_row_to_total(overall_total_row, total_row)
+            else:
+                # there is no total_row if we aren't grouping by age
+                overall_total_row = self.add_row_to_total(overall_total_row, row_data)
 
             rows_for_table.append({
                 'username': 'TOTAL_ROW',
-                'total_width': 1 + int(self.show_age()),
+                'total_width': total_width,
                 'gender': self.show_gender(),
                 'row_data': total_row,
             })
+
+        rows_for_table.append({
+            'username': 'OVERALL_TOTAL_ROW',
+            'total_width': total_width,
+            'gender': self.show_gender(),
+            'row_data': overall_total_row,
+        })
 
         return rows_for_table
 

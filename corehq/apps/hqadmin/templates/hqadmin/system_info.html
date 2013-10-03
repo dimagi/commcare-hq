@@ -4,7 +4,7 @@
 {% block report-title %}System Info{% endblock %}
 
 {% block js-inline %} {{ block.super }}
-    <script type="text/javascript">
+    <script>
         function format_date(datestring) {
             //parse and format the date timestamps - seconds since epoch into date object
             var date = new Date(datestring * 1000);
@@ -103,13 +103,39 @@
             }
         }
 
+        function PillowModel(pillow) {
+            var self = this;
+            self.name = pillow.name;
+            self.seq = pillow.seq;
+            self.db_seq = pillow.db_seq;
+            self.show_progress = function () {
+                    return (self.seq * 100) / self.db_seq <= 99;
+                }
+        }
+
+        function PillowtopViewModel() {
+            var self = this;
+            self.pillows = ko.observableArray();
+            self.refresh = function () {
+                $.getJSON("{% url system_ajax %}?api=pillowtop", function (data) {
+                    self.pillows(_(_(data).map(function (item) {
+                        return new PillowModel(item);
+                    })).sortBy(function (pillow) { return pillow.name; }));
+                });
+            };
+            self.refresh();
+        }
+
         var celeryViewModel = new CeleryTaskListViewModel();
         var couchViewModel = new ActiveTaskListViewModel();
+        var pillowtopViewModel = new PillowtopViewModel();
         $(function () {
-            ko.applyBindings(celeryViewModel, $("#celeryblock")[0]);
-            ko.applyBindings(couchViewModel, $("#couchblock")[0]);
-            setInterval("celeryViewModel.refresh()", {{ celery_update }});
-            setInterval("couchViewModel.refresh()", {{ couch_update }});
+            ko.applyBindings(celeryViewModel, $("#celeryblock").get(0));
+            ko.applyBindings(couchViewModel, $("#couchblock").get(0));
+            ko.applyBindings(pillowtopViewModel, $('#pillowtop-status').get(0));
+            setInterval(function () { celeryViewModel.refresh(); }, {{ celery_update }});
+            setInterval(function () { couchViewModel.refresh(); }, {{ couch_update }});
+            setInterval(function () { pillowtopViewModel.refresh(); }, {{ couch_update }});
         });
     </script>
 
@@ -185,7 +211,39 @@
             </tr>
             </tbody>
         </table>
-
+    </div>
+    <div class="row-fluid" id="pillowtop-status">
+        <h3>Pillowtop Status</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th title="seq / db_seq">Reindex Progress</th>
+                    <th title="db_seq - seq"># Changes behind</th>
+                    <th title="seq / db_seq">Seq / Total Seq</th>
+                </tr>
+            </thead>
+            <tbody data-bind="foreach: pillows">
+                <tr>
+                    <td><code data-bind="text: name"></code></td>
+                    <td>
+                        <div class="progress progress-striped progress-mini active" data-bind="visible: show_progress()">
+                            <div class="bar" data-bind="style: {width: ((seq * 100)/db_seq) + '%'}"></div>
+                        </div>
+                        <div data-bind="visible: !show_progress()">
+                            <span>All caught up</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span data-bind="text: db_seq - seq"></span>
+                    </td>
+                    <td>
+                        <span data-bind="text: seq"></span>
+                        / <span data-bind="text: db_seq"></span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
     <div class="row-fluid" id="couchblock">
         <h3>Couch Tasks</h3>

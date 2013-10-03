@@ -21,6 +21,7 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
         conf = {
             'name_column': 'name',
             'detail_columns': ['type'],
+            'table_columns': ['type'],
             'column_titles': {
                 'type': 'Supply Point Type',
             },
@@ -47,9 +48,11 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
         for p in products:
             col_id = lambda c: '%s-%s' % (p._id, c)
 
+            product_cols = []
             for c in ('category', 'current_stock', 'months_remaining', 'consumption'):
                 conf['column_titles'][col_id(c)] = titles[c]
-                conf['detail_columns'].append(col_id(c))
+                product_cols.append(col_id(c))
+            conf['detail_columns'].extend(product_cols)
 
             product_metrics = [
                 {
@@ -106,6 +109,10 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
                     'title': p.name,
                     'group': True,
                     'children': product_metrics,
+                })
+            conf['table_columns'].append({
+                    'title': p.name,
+                    'subcolumns': product_cols,
                 })
 
         conf['detail_template'] = render_to_string('reports/partials/commtrack/stockstatus_mapdetail.html', {

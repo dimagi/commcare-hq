@@ -10,6 +10,8 @@ CommCare HQ is a server-side tool to help manage community health workers.
 It seamlessly integrates with CommCare mobile and CommCare ODK, as well as
 providing generic domain management and form data-collection functionality.
 
+More in deapth docs are available on [ReadTheDocs](http://commcare-hq.readthedocs.org/en/latest/)
+
 ### Key Components
 
 + CommCare application builder

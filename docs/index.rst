@@ -1,22 +1,34 @@
-.. CommCareHQ documentation master file, created by
-   sphinx-quickstart on Fri Aug 23 11:23:26 2013.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. This is the main index for HQ's docs.
 
 Welcome to CommCareHQ's documentation!
 ======================================
 
 **Contents:**
 
-.. list rst documents here, and it'll be added to the index,
-.. including any subsections inside those docs (up to the maxdepth).
+..
+	list rst documents here, and it'll be added to the index,
+	including any subsections inside those docs (up to the maxdepth).
+	For reference on generating a toc, check out the sphinx docs on
+	the subject: http://sphinx-doc.org/markup/toctree.html
+	Here's a sample well-organized toc:
+	https://github.com/kennethreitz/python-guide/blob/master/docs/contents.rst.inc
+
 
 .. toctree::
    :maxdepth: 2
 
-   documenting
-   fluff
+   reporting
+   maps
+   ui_helpers
+   class_views
+   management_commands
 
+Tips for documenting
+--------------------
+
+.. toctree::
+
+    documenting
 
 Indices and tables
 ==================

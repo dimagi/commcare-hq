@@ -3,10 +3,10 @@ from django.utils.translation import ugettext as _
 from corehq.apps.commtrack.models import *
 from corehq.apps.commtrack.util import *
 from corehq.apps.locations.util import defined_location_types
-from corehq.apps.reports.filters.base import BaseSingleOptionFilter, BaseMutipleOptionFilter
+from corehq.apps.reports.filters.base import BaseSingleOptionFilter, BaseMultipleOptionFilter
 
 
-class SupplyPointTypeFilter(BaseMutipleOptionFilter):
+class SupplyPointTypeFilter(BaseMultipleOptionFilter):
     slug = 'outlet_type'
     label = ugettext_noop('Outlet Type')
     default_options = ['_all']
@@ -31,7 +31,7 @@ class SupplyPointTypeFilter(BaseMutipleOptionFilter):
         return choices
 
 
-class ProductFilter(BaseMutipleOptionFilter):
+class ProductFilter(BaseMultipleOptionFilter):
     slug = 'product'
     label = ugettext_noop('Product')
     default_options = ['_all']

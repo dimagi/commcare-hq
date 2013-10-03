@@ -231,6 +231,9 @@ def orgs_remove_project(request, org):
         domain = Domain.get_by_name(domain)
         domain.organization = None
         domain.save()
+        for team in Team.get_by_org(org):
+            team.delete_domain_membership(domain.name)
+            team.save()
         messages.success(request, render_to_string('orgs/partials/undo_remove_project.html',
                                                    {"org": org, "dom": domain}), extra_tags="html")
     return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_landing'), args=(org,)))

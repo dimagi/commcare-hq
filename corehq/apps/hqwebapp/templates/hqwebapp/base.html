@@ -1,4 +1,4 @@
-{% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load raven %}{% load cache %}<!DOCTYPE html>
+{% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load cache %}<!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="utf-8"/>
@@ -238,15 +238,7 @@
         <script src="{% static 'hqwebapp/js-custom/hq.helpers.js' %}"></script>
         <script src="{% static 'hqwebapp/js/lib/jquery.cookie.js' %}"></script>
         <script src="{% static 'hqwebapp/js/lib/jquery.timeago.js' %}"></script>
-
-        {% if RAVEN %}
-            <script src="{% static 'hqwebapp/js/lib/raven.min.js' %}"></script>
-        {% endif %}
         {% endblock %}
-
-        {% if RAVEN %}
-            <script>Raven.config('{% sentry_public_dsn "http" %}').install()</script>
-            {% endif %}
 
         {% block js-inline %}
         <script>

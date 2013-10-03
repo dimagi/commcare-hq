@@ -255,7 +255,7 @@ class PtopReindexer(NoArgsCommand):
         print "done in %s seconds" % (end - start).seconds
 
     def process_row(self, row, count):
-        if count > self.start_num:
+        if count >= self.start_num:
             retries = 0
             while retries < MAX_TRIES:
                 try:

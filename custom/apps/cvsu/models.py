@@ -1,5 +1,5 @@
 from casexml.apps.case.models import CommCareCase
-from fluff.filters import ANDFilter, ORFilter, NOTFilter
+from fluff.filters import ANDFilter, ORFilter, NOTFilter, Filter
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.groups.models import Group
 from corehq.fluff.calculators.xform import IN_MULTISELECT, IntegerPropertyReference
@@ -16,23 +16,16 @@ IGA_FORM_XMLNS = 'http://openrosa.org/formdesigner/B4BAF20B-4337-409D-A446-FD4A0
 OUTREACH_FORM_XMLNS = 'http://openrosa.org/formdesigner/B5C415BB-456B-49BE-A7AF-C5E7C9669E34'
 
 
-get_form_user_id = lambda form: form.metadata.userID
-get_case_user_id = lambda case: case.user_id
+get_user_id = lambda form: form.metadata.userID
+
 
 @memoized
-def get_group_id(user_id):
+def get_group_id(form):
+    user_id = get_user_id(form)
     groups = Group.by_user(user_id, wrap=False)
     for g in groups:
         if g != ALL_CVSU_GROUP:
             return g
-
-
-def get_group_id_gen(user_id_getter):
-    def group_id_getter(form):
-        user_id = user_id_getter(form)
-        return get_group_id(user_id)
-
-    return group_id_getter
 
 
 def date_reported(form):
@@ -150,25 +143,21 @@ def filter_abuse(category):
     )
 
 
-class ORCalculator(SimpleCalculator):
-    def __init__(self, date_extractor=None, calculators=None, indicator_calculator=None, window=None):
-        combined_filter = ORFilter([calc._filter for calc in calculators if calc._filter])
-        super(ORCalculator, self).__init__(date_extractor, combined_filter,
-                                           indicator_calculator=indicator_calculator, window=window)
-
 class UnicefMalawiFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
     document_filter = ANDFilter([
         NOTFilter(xcalc.FormPropertyFilter(xmlns='http://openrosa.org/user-registration')),
         NOTFilter(xcalc.FormPropertyFilter(xmlns='http://openrosa.org/user/registration')),
-        NOTFilter(xcalc.FormPropertyFilter(xmlns='http://code.javarosa.org/devicereport'))
+        NOTFilter(xcalc.FormPropertyFilter(xmlns='http://code.javarosa.org/devicereport')),
+        xcalc.CustomFilter(lambda f: get_user_id(f) != 'demo_user'),
+        xcalc.CustomFilter(lambda f: get_group_id(f)),
     ])
 
     domains = ('cvsulive',)
     group_by = (
         'domain',
-        fluff.AttributeGetter('user_id', get_form_user_id),
-        fluff.AttributeGetter('group_id', get_group_id_gen(get_form_user_id)),
+        fluff.AttributeGetter('user_id', get_user_id),
+        fluff.AttributeGetter('group_id', get_group_id),
         fluff.AttributeGetter('age', get_age),
         fluff.AttributeGetter('sex', get_sex),
     )
@@ -261,19 +250,17 @@ class UnicefMalawiFluff(fluff.IndicatorDocument):
         ]),
     )
 
-    resolution_total = ORCalculator(
-        date_extractor=date_reported_provided_mediated,
-        calculators=[
-            resolution_resolved_at_cvsu,
-            resolution_referred_ta,
-            resolution_referral_ta_court,
-            resolution_referral_police,
-            resolution_referral_social_welfare,
-            resolution_referral_ngo,
-            resolution_referral_other,
-            resolution_unresolved,
-            resolution_other
-        ]
+    resolution_total = xcalc.or_calc([
+        resolution_resolved_at_cvsu,
+        resolution_referred_ta,
+        resolution_referral_ta_court,
+        resolution_referral_police,
+        resolution_referral_social_welfare,
+        resolution_referral_ngo,
+        resolution_referral_other,
+        resolution_unresolved,
+        resolution_other],
+        date_provider=date_reported_provided_mediated,
     )
 
     # ---------------------------------------------------------------------
@@ -319,17 +306,15 @@ class UnicefMalawiFluff(fluff.IndicatorDocument):
         filter=ORFilter([filter_action('actions_other'), filter_service('services_other')])
     )
 
-    service_total = ORCalculator(
-        date_extractor=date_reported_mediated,
-        calculators=[
-            service_referral,
-            service_mediation,
-            service_counselling,
-            service_psychosocial_support,
-            service_first_aid,
-            service_shelter,
-            service_other
-        ]
+    service_total = xcalc.or_calc([
+        service_referral,
+        service_mediation,
+        service_counselling,
+        service_psychosocial_support,
+        service_first_aid,
+        service_shelter,
+        service_other],
+        date_provider=date_reported_mediated,
     )
 
     # ---------------------------------------------------------------------
@@ -359,7 +344,7 @@ class UnicefMalawiFluff(fluff.IndicatorDocument):
         date_provider=date_reported,
         filter=xcalc.FormPropertyFilter(xmlns=REPORT_INCIDENT_XMLNS),
         indicator_calculator=IntegerPropertyReference(
-            'form/nr_children_in_family', transform=lambda x: 0 if x == 999 else x)  # unknown value = 999
+            'form/nr_children_in_household', transform=lambda x: 0 if x == 999 else x)  # unknown value = 999
     )
 
     abuse_children_abused = SimpleCalculator(
@@ -399,16 +384,14 @@ class UnicefMalawiFluff(fluff.IndicatorDocument):
         filter=filter_abuse('abuse_other')
     )
 
-    abuse_category_total = ORCalculator(
-        date_extractor=date_reported,
-        calculators=[
-            abuse_category_physical,
-            abuse_category_sexual,
-            abuse_category_psychological,
-            abuse_category_exploitation,
-            abuse_category_neglect,
-            abuse_category_other
-        ]
+    abuse_category_total = xcalc.or_calc([
+        abuse_category_physical,
+        abuse_category_sexual,
+        abuse_category_psychological,
+        abuse_category_exploitation,
+        abuse_category_neglect,
+        abuse_category_other],
+        date_provider=date_reported
     )
 
     class Meta:

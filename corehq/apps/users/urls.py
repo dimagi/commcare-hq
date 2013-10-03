@@ -1,6 +1,6 @@
 #from django.conf.urls.defaults import patterns, url
 from corehq.apps.users.views import DefaultProjectUserSettingsView, EditWebUserView, EditMyAccountDomainView, ListWebUsersView, InviteWebUserView
-from corehq.apps.users.views.mobile.groups import EditGroupsView, EditGroupMembership, EditGroupMembersView
+from corehq.apps.users.views.mobile.groups import EditGroupsView, EditGroupMembersView
 from corehq.apps.users.views.mobile.users import UploadCommCareUsers, EditCommCareUserView, ListCommCareUsersView, AsyncListCommCareUsersView, CreateCommCareUserView
 from django.conf.urls.defaults import *
 from corehq.apps.domain.utils import grandfathered_domain_re
@@ -40,6 +40,7 @@ patterns("corehq.apps.users.views.mobile.users",
     url(r'^commcare/$', ListCommCareUsersView.as_view(), name=ListCommCareUsersView.urlname),
     url(r'^commcare/account/(?P<couch_user_id>[\w-]+)/$', EditCommCareUserView.as_view(), name=EditCommCareUserView.urlname),
     url(r'^commcare/account/(?P<couch_user_id>[\w-]+)/user_data/$', 'update_user_data', name='update_user_data'),
+    url(r'^commcare/account/(?P<couch_user_id>[\w-]+)/groups/$', 'update_user_groups', name='update_user_groups'),
     url(r'^commcare/list/$', AsyncListCommCareUsersView.as_view(), name=AsyncListCommCareUsersView.urlname),
     url(r'^commcare/archive/(?P<user_id>[\w-]+)/$', 'archive_commcare_user', name='archive_commcare_user'),
     url(r'^commcare/unarchive/(?P<user_id>[\w-]+)/$', 'archive_commcare_user', name='unarchive_commcare_user', kwargs={'is_active': True}),
@@ -51,7 +52,6 @@ patterns("corehq.apps.users.views.mobile.users",
     url(r'^commcare/add_commcare_account/$', CreateCommCareUserView.as_view(), name=CreateCommCareUserView.urlname),
 ) +\
 patterns("corehq.apps.users.views.mobile.groups",
-    url(r'^group_memberships/(?P<couch_user_id>[\w-]+)/$', EditGroupMembership.as_view(), name=EditGroupMembership.urlname),
     url(r'^groups/$', EditGroupsView.as_view(), name=EditGroupsView.urlname),
     url(r'^groups/(?P<group_id>[ \w-]+)/$', EditGroupMembersView.as_view(), name=EditGroupMembersView.urlname),
 )

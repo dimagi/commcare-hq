@@ -1,0 +1,150 @@
+{% extends "reminders/reminders_base.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block subsection-title %}
+    <li>
+        <a href="#">{% trans 'Broadcast Message' %}</a> <span class="divider">&gt;</span>
+    </li>
+    {% if handler_id %}
+    <li class="active">
+        <a href="{% url edit_one_time_reminder domain handler_id %}">{% trans 'Edit Broadcast' %}</a>
+    </li>
+    {% else %}
+    <li class="active">
+        <a href="{% url add_one_time_reminder domain %}">{% trans 'New Broadcast' %}</a>
+    </li>
+    {% endif %}
+{% endblock %}
+
+{% block head %}{{ block.super }}
+
+<script language="javascript" type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+<link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}">
+
+<style type="text/css">
+    #main_table {
+        width: auto;
+        margin-left: 0px;
+    }
+</style>
+
+<script type="text/javascript">
+    function send_type_changed() {
+        var value = $("#id_send_type").val();
+        if(value == "NOW") {
+            $(".for_later").hide();
+        } else {
+            $(".for_later").show();
+        }
+    }
+    
+    function content_type_changed() {
+        var value = $("#id_content_type").val();
+        if(value == "sms") {
+            $(".for_sms").show();
+            $(".for_sms_form").hide();
+        } else {
+            $(".for_sms").hide();
+            $(".for_sms_form").show();
+        }
+    }
+    
+    function recipient_type_changed() {
+        var value = $("#id_recipient_type").val();
+        $(".for_user_group").hide();
+        $(".for_case_group").hide();
+        if(value == "USER_GROUP") {
+            $(".for_user_group").show();
+        } else if (value == "SURVEY_SAMPLE") {
+            $(".for_case_group").show();
+        }
+    }
+    
+    $(function() {
+        $("input[name$='date']").datepicker({dateFormat : "yy-mm-dd"});
+        $("#id_send_type").change(send_type_changed);
+        $("#id_content_type").change(content_type_changed);
+        $("#id_recipient_type").change(recipient_type_changed);
+        send_type_changed();
+        content_type_changed();
+        recipient_type_changed();
+    });
+</script>
+
+{% endblock %}
+
+{% block main_column %}
+{% include "hqwebapp/partials/time-notice.html" %}
+<h4>{% trans 'Broadcast Message' %}</h4>
+<form id="one_time_reminder_form" action="{% if handler_id %}{% url edit_one_time_reminder domain handler_id %}{% else %}{% url add_one_time_reminder domain %}{% endif %}" method="post">
+    <div class="form-block">
+        <table id="main_table">
+            <tbody>
+                <tr>
+                    <td>{% trans 'Recipients' %}: </td>
+                    <td>{{ form.recipient_type }}</td>
+                    <td>{{ form.recipient_type.errors }}</td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>
+                        <div class="for_case_group">
+                            <select name="case_group_id">
+                                <option value="">{% trans '---choose---' %}</option>
+                                {% for sample in sample_list %}
+                                <option value="{{ sample.code }}" {% if form.case_group_id.value == sample.code %}selected="selected"{% endif %}>{{ sample.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="for_user_group">
+                            <select name="user_group_id">
+                                <option value="">{% trans '---choose---' %}</option>
+                                {% for group in groups %}
+                                <option value="{{ group.get_id }}" {% if form.user_group_id.value == group.get_id %}selected="selected"{% endif %}>{{ group.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </td>
+                    <td>{{ form.case_group_id.errors }}{{ form.user_group_id.errors }}</td>
+                </tr>
+                <tr>
+                    <td>{% trans 'Timing' %}: </td>
+                    <td>{{ form.send_type }}</td>
+                    <td></td>
+                </tr>
+                <tr class="for_later">
+                    <td></td>
+                    <td>
+                        {% trans 'Date' %}: <input type="text" class="input-small" name="date" id="id_date" value="{{ form.date.value|default:'' }}"/>
+                        {% trans 'Time' %}: <input type="text" class="input-small" name="time" id="id_time" value="{{ form.time.value|default:'' }}"/>
+                    </td>
+                    <td>{{ form.date.errors }}{{ form.time.errors }}{{ form.datetime.errors }}</td>
+                </tr>
+                <tr>
+                    <td>{% trans 'Send' %}: </td>
+                    <td>{{ form.content_type }}</td>
+                    <td></td>
+                </tr>
+                <tr class="for_sms">
+                    <td>{% trans 'Message' %}: </td>
+                    <td><textarea id="id_message" name="message">{{ form.message.value|default:'' }}</textarea></td>
+                    <td>{{ form.message.errors }}</td>
+                </tr>
+                <tr class="for_sms_form">
+                    <td>{% trans 'Form' %}: </td>
+                    <td>
+                        <select name="form_unique_id">
+                            {% for f in form_list %}
+                            <option value="{{ f.code }}" {% if form.form_unique_id.value == f.code %}selected="selected"{% endif %}>{{ f.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>{{ form.form_unique_id.errors }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <input type="submit" class="btn btn-primary" value="Save" />
+</form>
+{% endblock %}

@@ -25,7 +25,7 @@
         {% for sample in samples %}
         <tr>
             <td>{{ sample.name }}</td>
-            <td>{{ sample.contacts|length }}</td>
+            <td>{{ sample.cases|length }}</td>
             <td><a href="{% url edit_sample domain sample.get_id %}"><span class="btn btn-primary">Edit</span></a></td>
         </tr>
         {% endfor %}
