@@ -169,7 +169,7 @@ class CommCareAccountForm(forms.Form):
         if phone_number == '':
             return None
         elif not re.match(r'\d+$', phone_number):
-            raise forms.ValidationError("%s is an invalid phone number." % phone_number)
+            raise forms.ValidationError(_("%s is an invalid phone number." % phone_number))
         return phone_number
 
     def clean_username(self):
