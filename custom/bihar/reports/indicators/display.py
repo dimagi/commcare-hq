@@ -20,6 +20,14 @@ def add(case):
     return _format_date(getattr(case, "add", DEFAULT_EMPTY))
 
 
+def next_visit_date(case):
+    return _format_date(getattr(case, "nextvisitdate", DEFAULT_EMPTY))
+
+
+def days_overdue(case):
+    return getattr(case, 'days_visit_overdue', DEFAULT_EMPTY)
+
+
 def in_numerator(case, context):
     return case.get_id in context['numerator']
 
