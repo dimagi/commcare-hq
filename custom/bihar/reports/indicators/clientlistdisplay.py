@@ -3,6 +3,7 @@ import datetime
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from . import display
+from custom.bihar.reports.indicators.display import next_visit_date, days_overdue
 from custom.bihar.reports.indicators.reports import DEFAULT_EMPTY
 
 
@@ -138,12 +139,9 @@ class DoneDueMixIn(SummaryValueMixIn):
 
     def _get_days_due(self, case, value):
         if value == 'Due':
-            return DEFAULT_EMPTY
+            return next_visit_date(case)
         else:
-            try:
-                return case.days_visit_overdue or DEFAULT_EMPTY
-            except AttributeError:
-                return DEFAULT_EMPTY
+            return days_overdue(case)
 
 
 class PreDeliveryDoneDueCLD(DoneDueMixIn, PreDeliverySummaryCLD):
@@ -160,7 +158,7 @@ class PostDeliveryDoneDueCLD(DoneDueMixIn, PostDeliverySummaryCLD):
     user_hack = None
 
     def get_columns(self):
-        return super(PostDeliveryDoneDueCLD, self).get_columns() + (_('Days Late'),)
+        return super(PostDeliveryDoneDueCLD, self).get_columns() + (_('Days Due'),)
 
     def as_row(self, case, context):
         value = self.summary_value(case, context)
