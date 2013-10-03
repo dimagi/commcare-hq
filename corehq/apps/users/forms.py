@@ -163,11 +163,11 @@ class CommCareAccountForm(forms.Form):
     class Meta:
         app_label = 'users'
 
-    def clean_phonenumber(self):
+    def clean_phone_number(self):
         phone_number = self.cleaned_data['phone_number']
-        phone_number = re.sub('\s', '', phone_number)
+        phone_number = re.sub('\s|\+|\-', '', phone_number)
         if not re.match(r'\d+$', phone_number):
-            raise forms.ValidationError("%s is an invalid phone number." % phonenumber)
+            raise forms.ValidationError("%s is an invalid phone number." % phone_number)
         return phone_number
 
     def clean_username(self):
