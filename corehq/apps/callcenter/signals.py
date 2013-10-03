@@ -4,6 +4,7 @@ import logging
 from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from django.db.models import signals
+from rawes.elastic_exception import ElasticException
 from requests.exceptions import RequestException
 from corehq.apps.callcenter.utils import sync_user_cases, bootstrap_callcenter
 from corehq.apps.domain.models import Domain
@@ -52,7 +53,7 @@ def catch_signal(app, **kwargs):
                 except ResourceNotFound:
                     _log("Couldn't find domain {dom} during call center sync".format(dom=hit['_id']))
 
-        except RequestException:
+        except (RequestException, ElasticException):
             _log('Unable to query ES for call-center domains during syncdb')
 
 signals.post_syncdb.connect(catch_signal)
