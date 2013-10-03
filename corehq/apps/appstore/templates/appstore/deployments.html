@@ -1,11 +1,10 @@
 {% extends "appstore/appstore_base.html" %}
-{% load url from future %}
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
 {% load i18n %}
 
 {% block tabs %}
-    {% url "deployments" as search_url %}
+    {% url deployments as search_url %}
     <ul class="nav">
         {% include 'appstore/partials/search_input.html' with search_name="search" search_for="deployments..." %}
     </ul>
@@ -35,7 +34,7 @@
                 <br/>
                 <p>{{ dom.deployment.description }}</p>
                 <p>Date deployed: {{ dom.deployment.date|date:"N j, Y" }}</p>
-                <a class="btn" href="{% url "deployment_info" dom.name %}">View &raquo;</a>
+                <a class="btn" href="{% url deployment_info dom.name %}">View &raquo;</a>
             </div>
         </div>
     {% empty %}

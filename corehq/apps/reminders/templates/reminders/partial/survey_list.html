@@ -1,5 +1,4 @@
 {% extends "reminders/survey_base.html" %}
-{% load url from future %}
 
 {% block head %}{{ block.super }}
 
@@ -25,12 +24,12 @@
         {% for survey in surveys %}
         <tr>
             <td>{{ survey.name }}</td>
-            <td><a href="{% url "edit_survey" domain survey.get_id %}"><span class="btn btn-primary">Edit</span></a></td>
+            <td><a href="{% url edit_survey domain survey.get_id %}"><span class="btn btn-primary">Edit</span></a></td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 <br />
-<a href="{% url "add_survey" domain %}"><span class="btn btn-success"><i class="icon icon-white icon-plus"></i> New Survey</span></a>
+<a href="{% url add_survey domain %}"><span class="btn btn-success"><i class="icon icon-white icon-plus"></i> New Survey</span></a>
 
 {% endblock %}

@@ -1,5 +1,4 @@
 {% extends 'app_manager/managed_app.html'%}
-{% load url from future %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -48,13 +47,13 @@
             formdesigner.launch({
                 rootElement: $("#formdesigner"),
                 staticPrefix: '/static/formdesigner/',
-                saveUrl: '{% url "edit_form_attr" domain app.id form.get_unique_id "xform" %}',
-                patchUrl: '{% url "patch_xform" domain app.id form.get_unique_id %}',
+                saveUrl: '{% url edit_form_attr domain app.id form.get_unique_id "xform" %}',
+                patchUrl: '{% url patch_xform domain app.id form.get_unique_id %}',
                 multimediaConfig: {
                     uploadUrls: {
-                        image: '{% url "hqmedia_uploader_image" domain app.id %}',
-                        audio: '{% url "hqmedia_uploader_audio" domain app.id %}',
-                        video: '{% url "hqmedia_uploader_video" domain app.id %}'
+                        image: '{% url hqmedia_uploader_image domain app.id %}',
+                        audio: '{% url hqmedia_uploader_audio domain app.id %}',
+                        video: '{% url hqmedia_uploader_video domain app.id %}'
                     },
                     swfURL: '{% static 'hqmedia/yui/assets/flashuploader.swf' %}',
                     objectMap: {{ multimedia_object_map|JSON }},

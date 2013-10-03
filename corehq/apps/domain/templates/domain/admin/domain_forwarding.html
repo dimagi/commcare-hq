@@ -1,5 +1,4 @@
 {% extends "settings/base_template.html" %}
-{% load url from future %}
 {% load i18n %}
 
 {% block main_column %}
@@ -29,7 +28,7 @@
         {% else %}
             <p>{% blocktrans %}You haven't configured any urls to forward to yet.{% endblocktrans %}</p>
         {% endif %}
-        <a class="btn btn-success" href="{% url "add_repeater" domain cls %}"><i class="icon-plus"></i> {% trans 'Add a forwarding location' %}</a>
+        <a class="btn btn-success" href="{% url add_repeater domain cls %}"><i class="icon-plus"></i> {% trans 'Add a forwarding location' %}</a>
     </div>
     {% endfor %}
 {% endblock %}

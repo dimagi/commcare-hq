@@ -1,4 +1,3 @@
-{% load url from future %}
 {% load multimedia_tags %}
 {% load i18n %}
 
@@ -7,9 +6,9 @@
 
     <p>
         {% if multimedia.for_errors or multimedia.missing_refs %}
-            <a class="btn btn-warning" style="color: #ffffff;" href="{% url "download_multimedia_zip" domain app.get_id  %}"><i class="icon icon-white icon-bolt"></i> {% trans 'Download Incomplete ZIP' %}</a>
+            <a class="btn btn-warning" style="color: #ffffff;" href="{% url download_multimedia_zip domain app.get_id  %}"><i class="icon icon-white icon-bolt"></i> {% trans 'Download Incomplete ZIP' %}</a>
         {% else %}
-            <a class="btn btn-primary" style="color: #ffffff;" href="{% url "download_multimedia_zip" domain app.get_id  %}"><i class="icon icon-white icon-download-alt"></i> {% trans 'Download ZIP' %}</a>
+            <a class="btn btn-primary" style="color: #ffffff;" href="{% url download_multimedia_zip domain app.get_id  %}"><i class="icon icon-white icon-download-alt"></i> {% trans 'Download ZIP' %}</a>
         {% endif %}
     </p>
 {% else %}

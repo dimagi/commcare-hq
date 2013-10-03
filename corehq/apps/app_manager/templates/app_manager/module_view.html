@@ -1,5 +1,4 @@
 {% extends "app_manager/managed_app.html" %}
-{% load url from future %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -39,7 +38,7 @@
                 lang: {{ lang|JSON }},
                 langs: {{ app.langs|JSON }},
                 edit: {{ edit|JSON }},
-                saveUrl: "{% url "edit_module_detail_screens" domain app.id module.id %}",
+                saveUrl: "{% url edit_module_detail_screens domain app.id module.id %}",
                 applicationVersion: {{ app.application_version|JSON }},
                 parentModules: {{ parent_modules|JSON }},
                 parentSelect: {{ module.parent_select|JSON }}
@@ -82,7 +81,7 @@
 {% block form-view %}
     {% if edit %}
     <div class="delete-me">
-        <form action="{% url "delete_module" domain app.id module.id %}" method="post">
+        <form action="{% url delete_module domain app.id module.id %}" method="post">
             <button type="submit" class="disable-on-submit btn btn-danger">
                 <i class="icon-trash"></i>
                 {% trans "Delete Module" %}
@@ -108,7 +107,7 @@
 </ul>
 <div class="tab-content">
     <div class="tab-pane active" id="module-settings">
-        <form class="form-horizontal save-button-form" action="{% url "corehq.apps.app_manager.views.edit_module_attr" domain app.id module.id 'all' %}">
+        <form class="form-horizontal save-button-form" action="{% url corehq.apps.app_manager.views.edit_module_attr domain app.id module.id 'all' %}">
             <div class="save-button-holder clearfix"></div>
             <fieldset>
                 <div class="control-group">
@@ -146,7 +145,7 @@
         </form>
     </div>
     <div class="tab-pane" id="case-settings">
-        <form class="form-horizontal save-button-form" action="{% url "corehq.apps.app_manager.views.edit_module_attr" domain app.id module.id 'all' %}">
+        <form class="form-horizontal save-button-form" action="{% url corehq.apps.app_manager.views.edit_module_attr domain app.id module.id 'all' %}">
             <div class="save-button-holder clearfix"></div>
             <fieldset>
                 <legend>{% trans "Basic" %}</legend>

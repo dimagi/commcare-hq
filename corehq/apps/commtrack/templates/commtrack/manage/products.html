@@ -1,5 +1,4 @@
 {% extends "settings/base_template.html" %}
-{% load url from future %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
@@ -30,7 +29,7 @@
                 start_page: {{ product_list.page }},
                 limit: {{ product_list.limit }},
                 show_inactive: {{ show_inactive|yesno:"true,false" }},
-                list_url: '{% url "commtrack_product_fetch" domain %}',
+                list_url: '{% url commtrack_product_fetch domain %}',
             });
         });
     </script>
@@ -56,7 +55,7 @@
     <div class="row-fluid">
         <div class="span12">
             <div class="btn-toolbar">
-                <a class="btn btn-success" href="{% url "commtrack_product_new" domain %}">
+                <a class="btn btn-success" href="{% url commtrack_product_new domain %}">
                     <i class="icon-plus"></i> {% trans 'New Product' %}
                 </a>
             </div>

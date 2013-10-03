@@ -1,4 +1,3 @@
-{% load url from future %}
 {% load i18n %}
 {% load xforms_extras %}{% if build_errors %}
     <div class="alert alert-warning alert-block">
@@ -24,19 +23,19 @@
                         {% endif %}
                         {% if error.type == "no ref detail" %}
                             Module
-                            <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                            <a href="{% url view_module domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                             uses referrals but doesn't have
                             detail screens configured for referrals.
                         {% endif %}
                         {% if error.type == "no case detail" %}
                             Module
-                            <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                            <a href="{% url view_module domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                             uses cases but doesn't have
                             detail screens configured for cases.
                         {% endif %}
                         {% if error.type == "invalid id key" %}
                             Module
-                            <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                            <a href="{% url view_module domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                             has an incorrectly formatted ID key ({{ error.key }}).
                             Make sure your key has only letters and numbers and no spaces.
                         {% endif %}
@@ -45,12 +44,12 @@
                         {% endif %}
                         {% if error.type == "no forms" %}
                             Module
-                            <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                            <a href="{% url view_module domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                             has no forms.
                         {% endif %}
                         {% if error.type == "no case type" %}
                             Module
-                            <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                            <a href="{% url view_module domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                             uses cases but doesn't have a
                             case type defined.
                         {% endif %}
@@ -60,7 +59,7 @@
                             {% else %}
                                 Case List has blank filter in module
                             {% endif %}
-                            <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                            <a href="{% url view_module domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                         {% endif %}
                         {% if error.type == "subcase has no case type" %}
                             Child case specifies no module
@@ -103,7 +102,7 @@
                             Remote Error:
                         {% endif %}
                         {% if error.type == "empty lang" %}
-                            One of your languages is empty. Check your <a href="{% url "view_app" domain app.id %}">app settings</a>.
+                            One of your languages is empty. Check your <a href="{% url view_app domain app.id %}">app settings</a>.
                         {% endif %}
                         {# And then show the optional `message` regardless #}
                         <span>{{ error.message }}</span>

@@ -1,5 +1,4 @@
 {% extends "error_base.html" %}
-{% load url from future %}
 {% block title %}Don't have permission{% endblock %}
 {% block centered-content %}
     <div class="page-header">
@@ -7,5 +6,5 @@
         </h1>
     </div>
     <p>If you believe this is an error, please
-        <a href="{% url "no_permissions" %}?switch=true{% if next %}&next={{ next }}{% endif %}">relogin and try again.</a></p>
+        <a href="{% url no_permissions %}?switch=true{% if next %}&next={{ next }}{% endif %}">relogin and try again.</a></p>
 {% endblock %}

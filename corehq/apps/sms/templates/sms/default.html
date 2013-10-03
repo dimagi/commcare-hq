@@ -1,5 +1,4 @@
 {% extends 'hqwebapp/two_column.html' %}
-{% load url from future %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load timezone_tags %}
@@ -27,10 +26,10 @@
 {% block page-title %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% url "messaging" domain %}"><strong>{% trans "Messaging" %}</strong></a> <span class="divider">&gt;</span>
+            <a href="{% url messaging domain %}"><strong>{% trans "Messaging" %}</strong></a> <span class="divider">&gt;</span>
         </li>
         <li class="active">
-            <div id="report-title">{% block page-subtitle %}<a href="{% url "messaging" domain %}">{% trans "Message History" %}</a>{% endblock %}</div>
+            <div id="report-title">{% block page-subtitle %}<a href="{% url messaging domain %}">{% trans "Message History" %}</a>{% endblock %}</div>
         </li>
     </ul>
 {% endblock %}

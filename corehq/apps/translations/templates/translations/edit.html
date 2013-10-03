@@ -1,5 +1,4 @@
 {% extends base_template %}
-{% load url from future %}
 
 {% block head %}
     <script src="{{ STATIC_URL }}translations/js/translations.js"></script>
@@ -8,7 +7,7 @@
             var $translation_ui = $("#translations_ui");
             mk_translation_ui({
                 translations: {{ translations_json|safe }},
-                url: "{% url "set_translation" %}",
+                url: "{% url set_translation %}",
                 doc_id: "{{ doc_id }}",
                 lang: "{{ lang }}",
                 $home: $translation_ui

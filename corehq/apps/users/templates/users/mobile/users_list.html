@@ -1,5 +1,4 @@
 {% extends "users/base_template.html" %}
-{% load url from future %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
@@ -37,7 +36,7 @@
                 cannot_share: {{ cannot_share|yesno:"true,false" }},
                 show_inactive: {{ show_inactive|yesno:"true,false" }},
                 more_columns: {{ more_columns|yesno:"true,false" }},
-                list_url: '{% url "user_list" domain %}',
+                list_url: '{% url user_list domain %}',
             });
         });
     </script>
@@ -88,9 +87,9 @@
     <div class="row-fluid">
         <div class="span12">
             <div class="btn-toolbar">
-                <a class="btn btn-success" href="{% url "add_commcare_account" domain %}"><i class="icon icon-white icon-plus"></i> New {% commcare_user %}</a>
+                <a class="btn btn-success" href="{% url add_commcare_account domain %}"><i class="icon icon-white icon-plus"></i> New {% commcare_user %}</a>
                 or
-                <a class="btn" href="{% url "upload_commcare_users" domain %}">Bulk Upload</a>
+                <a class="btn" href="{% url upload_commcare_users domain %}">Bulk Upload</a>
             </div>
         </div>
     </div>
