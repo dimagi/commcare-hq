@@ -278,6 +278,13 @@ class Enum(FormattedDetailColumn):
             variables[v_key] = v_val
         return variables
 
+
+@register_format_type('enum-image')
+class EnumImage(Enum):
+    template_form = 'image'
+    template_width = '10%'
+
+
 @register_format_type('late-flag')
 class LateFlag(HideShortHeaderColumn):
 
