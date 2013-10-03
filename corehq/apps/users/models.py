@@ -1201,12 +1201,14 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.user_data              = old_couch_user.default_account.user_data
 
     @classmethod
-    def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):
+    def create(cls, domain, username, password, email=None, uuid='', date='', phone_number=None, **kwargs):
         """
         used to be a function called `create_hq_user_from_commcare_registration_info`
 
         """
         commcare_user = super(CommCareUser, cls).create(domain, username, password, email, uuid, date, **kwargs)
+        if phone_number is not None:
+            commcare_user.add_phone_number(phone_number)
 
         device_id = kwargs.get('device_id', '')
         user_data = kwargs.get('user_data', {})
