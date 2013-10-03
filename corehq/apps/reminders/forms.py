@@ -885,7 +885,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                         style="margin-left: 5px;",
                         data_bind="visible: isStartPropertyOffsetVisible",
                     ),
-                    crispy.HTML('<p class="help-inline" data-bind="visible: isStartPropertyOffsetVisible">days</p>'),
+                    crispy.HTML('<p class="help-inline" data-bind="visible: isStartPropertyOffsetVisible">day(s)</p>'),
                 ),
                 data_bind="visible: isStartReminderCaseProperty"
             ),
@@ -900,7 +900,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                             css_class='input-mini',
 
                         ),
-                        crispy.HTML('<p class="help-inline">days</p>'),
+                        crispy.HTML('<p class="help-inline">day(s)</p>'),
                         style='display: inline; margin-left: 5px;'
                     )
                 ),
