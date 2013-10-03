@@ -13,6 +13,7 @@ from corehq.apps.locations.models import Location
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.app_manager.models import validate_lang
+import re
 
 
 def wrapped_language_validation(value):
@@ -157,9 +158,17 @@ class CommCareAccountForm(forms.Form):
     password = forms.CharField(widget=PasswordInput(), required=True, min_length=1, help_text="Only numbers are allowed in passwords")
     password_2 = forms.CharField(label='Password (reenter)', widget=PasswordInput(), required=True, min_length=1)
     domain = forms.CharField(widget=HiddenInput())
+    phone_number = forms.CharField(max_length=80, required=False)
 
     class Meta:
         app_label = 'users'
+
+    def clean_phonenumber(self):
+        phone_number = self.cleaned_data['phone_number']
+        phone_number = re.sub('\s', '', phone_number)
+        if not re.match(r'\d+$', phone_number):
+            raise forms.ValidationError("%s is an invalid phone number." % phonenumber)
+        return phone_number
 
     def clean_username(self):
         username = self.cleaned_data['username']
