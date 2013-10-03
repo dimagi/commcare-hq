@@ -9,6 +9,7 @@ from tastypie.authentication import Authentication
 from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import xform as casexml_xform
+from custom.hope.case import HOPECase
 
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.app_manager import util as app_manager_util
@@ -181,6 +182,7 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
         serializer = CommCareCaseSerializer()
         ordering = ['server_date_modified', 'date_modified']
 
+
 class GroupResource(JsonResource, DomainSpecificResourceMixin):
     id = fields.CharField(attribute='get_id', unique=True, readonly=True)
     domain = fields.CharField(attribute='domain')
@@ -317,3 +319,48 @@ class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         resource_name = 'application'
+
+class HOPECaseResource(CommCareCaseResource):
+    '''
+    Custom API endpoint for custom case wrapper
+    '''
+
+    # For the curious, the attribute='<exact thing I just typed>' is mandatory,
+    # and refers to a property on the HOPECase object
+    tubal_ligation = fields.CharField(attribute='tubal_ligation', readonly=True, null=True)
+    registration_date = fields.CharField(attribute='registration_date', readonly=True, null=True)
+    all_dpt1_opv1_hb1_doses_given = fields.BooleanField(attribute='all_dpt1_opv1_hb1_doses_given', readonly=True, null=True)
+    all_dpt2_opv2_hb2_doses_given = fields.BooleanField(attribute='all_dpt2_opv2_hb2_doses_given', readonly=True, null=True)
+    all_dpt3_opv3_hb3_doses_given = fields.BooleanField(attribute='all_dpt3_opv3_hb3_doses_given', readonly=True, null=True)
+    ifa1_date = fields.CharField(attribute='ifa1_date', readonly=True, null=True)
+    ifa2_date = fields.CharField(attribute='ifa2_date', readonly=True, null=True)
+    ifa3_date = fields.CharField(attribute='ifa3_date', readonly=True, null=True)
+    admission_date = fields.CharField(attribute='admission_date', readonly=True, null=True)
+    discharge_date = fields.CharField(attribute='discharge_date', readonly=True, null=True)
+    bpl_indicator = fields.BooleanField(attribute='bpl_indicator', readonly=True, null=True)
+    existing_child_count = fields.IntegerField(attribute='existing_child_count', readonly=True, null=True)
+
+    def obj_get_list(self, bundle, domain, **kwargs):
+        '''
+        Overridden to wrap the case JSON from ElasticSearch with the custom.hope.case.HOPECase class
+        '''
+        filters = v0_3.CaseListFilters(bundle.request.GET).filters
+
+        # Since tastypie handles the "from" and "size" via slicing, we have to wipe them out here
+        # since ElasticCaseQuery adds them. I believe other APIs depend on the behavior of ElasticCaseQuery
+        # hence I am not modifying that
+        query = ElasticCaseQuery(domain, filters).get_query()
+        if 'from' in query:
+            del query['from']
+        if 'size' in query:
+            del query['size']
+
+        return ESQuerySet(payload = query,
+                          model = HOPECase,
+                          es_client = self.case_es(domain)).order_by('server_modified_on') # Not that CaseES is used only as an ES client, for `run_query` against the proper index
+
+    class Meta(CommCareCaseResource.Meta):
+        resource_name = 'hope-case'
+
+
+
