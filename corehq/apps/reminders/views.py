@@ -34,6 +34,7 @@ from corehq.apps.reminders.models import (
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CommCareUser, Permissions, CouchUser
+from dimagi.utils.decorators.memoized import memoized
 from .models import UI_SIMPLE_FIXED, UI_COMPLEX
 from .util import get_form_list, get_sample_list, get_recipient_name, get_form_name
 from corehq.apps.sms.mixin import VerifiedNumber
@@ -448,6 +449,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
     template_name = 'reminders/manage_scheduled_reminder.html'
 
     @property
+    @memoized
     def schedule_form(self):
         if self.request.method == 'POST':
             return SimpleScheduleCaseReminderForm(
@@ -493,6 +495,7 @@ class EditScheduledReminderView(CreateScheduledReminderView):
         return self.kwargs.get('handler_id')
 
     @property
+    @memoized
     def schedule_form(self):
         initial = SimpleScheduleCaseReminderForm.compute_initial(self.reminder_handler)
         if self.request.method == 'POST':
@@ -509,6 +512,7 @@ class EditScheduledReminderView(CreateScheduledReminderView):
         )
 
     @property
+    @memoized
     def reminder_handler(self):
         try:
             return CaseReminderHandler.get(self.handler_id)
