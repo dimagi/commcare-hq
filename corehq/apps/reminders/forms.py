@@ -635,6 +635,15 @@ MATCH_TYPE_CHOICES = (
     (MATCH_REGEX, "matches regular expression"),
 )
 
+START_REMINDER_ON_CASE_DATE = 'case_date'
+START_REMINDER_ON_CASE_PROPERTY = 'case_property'
+
+START_DATE_OFFSET_BEFORE = 'offset_before'
+START_DATE_OFFSET_AFTER = 'offset_after'
+
+START_PROPERTY_OFFSET_DELAY = 'offset_delay'
+START_PROPERTY_OFFSET_IMMEDIATE = 'offset_immediate'
+
 
 class SimpleScheduleCaseReminderForm(forms.Form):
     """
@@ -661,8 +670,8 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         label="Start Reminder",
         required=False,
         choices=(
-            ('case_date', "on a date specified in the Case"),
-            ('case_property', "when the Case is in the following state"),
+            (START_REMINDER_ON_CASE_DATE, "on a date specified in the Case"),
+            (START_REMINDER_ON_CASE_PROPERTY, "when the Case is in the following state"),
         ),
         help_text=("Reminders can either start based on a date in a case property "
                    "or if the case is in a particular state (ex: case property 'high_risk' "
@@ -686,14 +695,14 @@ class SimpleScheduleCaseReminderForm(forms.Form):
     start_property_offset_type = forms.ChoiceField(
         required=False,
         choices=(
-            ('offset_delay', "Delay By"),
-            ('offset_immediate', "Immediately"),
+            (START_PROPERTY_OFFSET_DELAY, "Delay By"),
+            (START_PROPERTY_OFFSET_IMMEDIATE, "Immediately"),
         )
     )
     # becomes start_offset
     start_property_offset = forms.IntegerField(
         required=False,
-        initial=0,
+        initial=1,
     )
     ## send options > start_reminder_on = case_property
     start_date = forms.CharField(
@@ -703,8 +712,8 @@ class SimpleScheduleCaseReminderForm(forms.Form):
     start_date_offset_type = forms.ChoiceField(
         required=False,
         choices=(
-            ('offset_before', "Before Date By"),
-            ('offset_after', "After Date By"),
+            (START_DATE_OFFSET_BEFORE, "Before Date By"),
+            (START_DATE_OFFSET_AFTER, "After Date By"),
         )
     )
     # becomes start_offset
@@ -993,6 +1002,24 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                     initial[field] = current_val
             except AttributeError:
                 pass
+
+        if reminder_handler.start_date is None:
+            start_reminder_on = START_REMINDER_ON_CASE_PROPERTY
+            initial['start_property_offset_type'] = (START_PROPERTY_OFFSET_IMMEDIATE
+                                                     if reminder_handler.start_offset == 0
+                                                     else START_PROPERTY_OFFSET_DELAY)
+        else:
+            start_reminder_on = START_REMINDER_ON_CASE_DATE
+            initial['start_date_offset_type'] = (START_DATE_OFFSET_BEFORE if reminder_handler.start_offset <= 0
+                                                 else START_DATE_OFFSET_AFTER)
+
+        start_offset = abs(reminder_handler.start_offset)
+
+        initial.update({
+            'start_reminder_on': start_reminder_on,
+            'start_property_offset': start_offset,
+            'start_date_offset': start_offset,
+        })
 
         return initial
 
