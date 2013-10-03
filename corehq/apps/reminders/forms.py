@@ -989,6 +989,14 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             )
         )
 
+    @property
+    def current_values(self):
+        current_values = {}
+        for field_name in self.fields.keys():
+            current_values[field_name] = self[field_name].value()
+        print "current vals", current_values
+        return current_values
+
     def clean(self):
         cleaned_data = super(SimpleScheduleCaseReminderForm, self).clean()
 

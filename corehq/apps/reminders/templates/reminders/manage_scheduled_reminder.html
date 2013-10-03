@@ -10,7 +10,7 @@
 {% block js-inline %}{{ block.super }}
     <script>
         var manageRemindersModel = new ManageRemindersViewModel(
-            {{ form.initial|JSON }}
+            {{ form.current_values|JSON }},
         );
         ko.applyBindings(manageRemindersModel, $('#manage-reminders-form').get(0));
         manageRemindersModel.init();
