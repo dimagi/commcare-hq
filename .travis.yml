@@ -6,6 +6,7 @@ env:
 branches:
   only:
    - master
+   - django-1.5-build
 install:
  - "uname -a"
  - "lsb_release -a"
