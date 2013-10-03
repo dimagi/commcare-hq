@@ -1,3 +1,5 @@
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
 from django import forms
 from django.core.validators import EmailValidator, email_re
 from django.core.urlresolvers import reverse
@@ -11,6 +13,7 @@ from corehq.apps.locations.models import Location
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.app_manager.models import validate_lang
+import re
 
 
 def wrapped_language_validation(value):
@@ -142,17 +145,30 @@ class RoleForm(forms.Form):
 class Meta:
         app_label = 'users'
 
+
 class CommCareAccountForm(forms.Form):
     """
     Form for CommCareAccounts
     """
-    username = forms.CharField(max_length=15, required=True)
+    # 128 is max length in DB
+    # 25 is domain max length
+    # @{domain}.commcarehq.org adds 16
+    # left over is 87 and 80 just sounds better
+    username = forms.CharField(max_length=80, required=True)
     password = forms.CharField(widget=PasswordInput(), required=True, min_length=1, help_text="Only numbers are allowed in passwords")
     password_2 = forms.CharField(label='Password (reenter)', widget=PasswordInput(), required=True, min_length=1)
     domain = forms.CharField(widget=HiddenInput())
+    phone_number = forms.CharField(max_length=80, required=False)
 
     class Meta:
         app_label = 'users'
+
+    def clean_phone_number(self):
+        phone_number = self.cleaned_data['phone_number']
+        phone_number = re.sub('\s|\+|\-', '', phone_number)
+        if not re.match(r'\d+$', phone_number):
+            raise forms.ValidationError(_("%s is an invalid phone number." % phone_number))
+        return phone_number
 
     def clean_username(self):
         username = self.cleaned_data['username']
@@ -191,13 +207,32 @@ class CommCareAccountForm(forms.Form):
 
 validate_username = EmailValidator(email_re, _(u'Username contains invalid characters.'), 'invalid')
 
+
+class MultipleSelectionForm(forms.Form):
+    """
+    Form for selecting groups (used by the group UI on the user page)
+    """
+    selected_ids = forms.MultipleChoiceField(
+        label="",
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.add_input(Submit('submit', 'Update'))
+        super(MultipleSelectionForm, self).__init__(*args, **kwargs)
+
+
 class SupplyPointSelectWidget(forms.Widget):
-    def __init__(self, attrs=None, domain=None):
+    def __init__(self, attrs=None, domain=None, id='supply-point'):
         super(SupplyPointSelectWidget, self).__init__(attrs)
         self.domain = domain
+        self.id = id
 
     def render(self, name, value, attrs=None):
         return get_template('locations/manage/partials/autocomplete_select_widget.html').render(Context({
+                    'id': self.id,
                     'name': name,
                     'value': value or '',
                     'query_url': reverse('corehq.apps.commtrack.views.api_query_supply_point', args=[self.domain]),

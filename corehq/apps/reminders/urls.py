@@ -1,4 +1,9 @@
 from django.conf.urls.defaults import *
+from corehq.apps.reminders.models import REMINDER_TYPE_ONE_TIME
+from corehq.apps.reminders.views import (
+    CreateScheduledReminderView,
+    EditScheduledReminderView,
+)
 
 urlpatterns = patterns('corehq.apps.reminders.views',
     url(r'^$', 'default', name='reminders_default'),
@@ -9,6 +14,10 @@ urlpatterns = patterns('corehq.apps.reminders.views',
     url(r'^scheduled/', 'scheduled_reminders', name='scheduled_reminders'),
     url(r'^add_complex/', 'add_complex_reminder_schedule', name='add_complex_reminder_schedule'),
     url(r'^edit_complex/(?P<handler_id>[\w-]+)/$', 'add_complex_reminder_schedule', name='edit_complex'),
+    url(r'^schedule/(?P<handler_id>[\w-]+)/$',
+        EditScheduledReminderView.as_view(), name=EditScheduledReminderView.urlname),
+    url(r'^schedule/$',
+        CreateScheduledReminderView.as_view(), name=CreateScheduledReminderView.urlname),
     url(r'^manage_keywords/$', 'manage_keywords', name='manage_keywords'),
     url(r'^add_keyword/$', 'add_keyword', name='add_keyword'),
     url(r'^edit_keyword/(?P<keyword_id>[\w-]+)/$', 'add_keyword', name='edit_keyword'),
@@ -21,4 +30,8 @@ urlpatterns = patterns('corehq.apps.reminders.views',
     url(r'^sample_list/$', 'sample_list', name='sample_list'),
     url(r'^edit_contact/(?P<sample_id>[\w-]+)/(?P<case_id>[\w-]+)/$', 'edit_contact', name='edit_contact'),
     url(r'^reminders_in_error/$', 'reminders_in_error', name='reminders_in_error'),
+    url(r'^one_time_reminders/$', 'list_reminders', name='one_time_reminders', kwargs={"reminder_type" : REMINDER_TYPE_ONE_TIME}),
+    url(r'^one_time_reminders/add/$', 'add_one_time_reminder', name='add_one_time_reminder'),
+    url(r'^one_time_reminders/edit/(?P<handler_id>[\w-]+)/$', 'add_one_time_reminder', name='edit_one_time_reminder'),
+    url(r'^one_time_reminders/copy/(?P<handler_id>[\w-]+)/$', 'copy_one_time_reminder', name='copy_one_time_reminder'),
 )

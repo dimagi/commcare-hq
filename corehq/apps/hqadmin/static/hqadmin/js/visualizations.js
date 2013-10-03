@@ -1,3 +1,14 @@
+function merge_options(obj1, obj2) {
+    var obj3 = {};
+    for (var attrname in obj1) {
+        obj3[attrname] = obj1[attrname];
+    }
+    for (var attrname in obj2) {
+        obj3[attrname] = obj2[attrname];
+    }
+    return obj3;
+}
+
 var HQVisualizations = function (options) {
     var self = this;
     self.chart_name = options.chart_name;
@@ -7,6 +18,7 @@ var HQVisualizations = function (options) {
     self.data = options.data || {};
     self.should_update_url = options.should_update_url === undefined ? true : options.should_update_url;
     self.interval = options.interval || "day";
+    self.datefield = options.datefield;
 
     self.charts = { "bar-chart": null, "cumulative-chart": null, "stacked-cumulative-chart": null };
     self.charts_id = '#' + self.chart_name + '-charts';
@@ -32,15 +44,20 @@ var HQVisualizations = function (options) {
                 var startdate = $this.find('[name="startdate"]').val();
                 var enddate = $this.find('[name="enddate"]').val();
                 var interval = $this.find('[name="interval"]').val();
+                var datefield = $this.find('[name="datefield"]').val();
 
                 if (interval) {
                     self.interval = interval;
                 }
 
+                if (datefield) {
+                    self.datefield = datefield;
+                }
+
                 self.loadChartData(update_active_chart, startdate, enddate);
 
                 if (self.should_update_url) {
-                    var new_url = "?interval=" + self.interval + "&startdate=" + startdate + "&enddate=" + enddate + window.location.hash;
+                    var new_url = "?datefield=" + datefield + "interval=" + self.interval + "&startdate=" + startdate + "&enddate=" + enddate + window.location.hash;
                     History.pushState(null, "Reloaded Chart", new_url);
 
                     // keep the urls for the other data visualizations consistent with this datespan
@@ -69,9 +86,10 @@ var HQVisualizations = function (options) {
         var $loading = $(self.charts_id + ' .loading');
         var $error = $(self.charts_id + ' .error');
         var $charts = $(self.charts_id + ' .nvd3-chart');
+        var data = {};
 
         $(self.charts_id + " .no-data").hide();
-        $error.hide()
+        $error.hide();
         $loading.show();
         var svg_width = $(self.charts_id + " .tab-pane.active").width();
         $charts.each(function(){
@@ -80,15 +98,21 @@ var HQVisualizations = function (options) {
             $(this).hide().html('').append($svg_ele); // create a new svg element to stop update issues
         });
 
-        self.data["histogram_type"] = self.histogram_type;
-        self.data["interval"] = self.interval;
+        data["histogram_type"] = self.histogram_type;
+        data["interval"] = self.interval;
+
+        if (self.datefield) {
+            data["datefield"] = self.datefield;
+        }
 
         if (enddate) {
-            self.data["enddate"] = enddate;
+            data["enddate"] = enddate;
         }
         if (startdate) {
-            self.data["startdate"] = startdate;
+            data["startdate"] = startdate;
         }
+
+        self.data = merge_options(self.data, data);
 
         $.getJSON(self.ajax_url, self.data,
             function(d) {
@@ -119,6 +143,8 @@ var HQVisualizations = function (options) {
                 if (!$interval_field.val()) {
                     $interval_field.val(self.interval);
                 }
+
+                d3.selectAll(self.charts_id + ' g.nv-x.nv-axis g text').each(insertLinebreaks);
 
                 if (callback_fn) {
                     callback_fn();

@@ -33,6 +33,12 @@
                             uses cases but doesn't have
                             detail screens configured for cases.
                         {% endif %}
+                        {% if error.type == "invalid id key" %}
+                            Module
+                            <a href="{% url view_module domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                            has an incorrectly formatted ID key ({{ error.key }}).
+                            Make sure your key has only letters and numbers and no spaces.
+                        {% endif %}
                         {% if error.type == "no modules" %}
                             This application has no modules.
                         {% endif %}
@@ -46,6 +52,14 @@
                             <a href="{% url view_module domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                             uses cases but doesn't have a
                             case type defined.
+                        {% endif %}
+                        {% if error.type == "invalid filter xpath" %}
+                            {% if error.column.filter_xpath %}
+                                Case List has invalid filter xpath <code>{{ error.column.filter_xpath }}</code> in module
+                            {% else %}
+                                Case List has blank filter in module
+                            {% endif %}
+                            <a href="{% url view_module domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                         {% endif %}
                         {% if error.type == "subcase has no case type" %}
                             Child case specifies no module
@@ -77,8 +91,12 @@
                             in form {% include "app_manager/partials/form_error_message.html" %}
                         {% endif %}
                         {% if error.type == "path error" %}
-                            The case configuration in form {% include "app_manager/partials/form_error_message.html" %}
-                            contains the invalid path "{{ error.path }}".
+                            {% if error.path %}
+                                The case configuration in form {% include "app_manager/partials/form_error_message.html" %}
+                                contains the invalid path "{{ error.path }}".
+                            {% else %}
+                                {% trans "You're loading or saving a case property but have not chosen a question from the form. Please choose a question from the dropdown next to the case property." %}
+                            {% endif %}
                         {% endif %}
                         {% if error.type == "remote error" %}
                             Remote Error:

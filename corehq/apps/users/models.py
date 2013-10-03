@@ -261,9 +261,6 @@ class DomainMembership(Membership):
     """
 
     domain = StringProperty()
-    # i don't think the following two lines are ever actually used
-#    last_login = DateTimeProperty()
-#    date_joined = DateTimeProperty()
     timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     override_global_tz = BooleanProperty(default=False)
     role_id = StringProperty()
@@ -443,7 +440,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 domain = self.current_domain
             else:
                 return False # no domain, no admin
-        if self.is_global_admin():
+        if self.is_global_admin() and (domain is None or not Domain.get_by_name(domain).restrict_superusers):
             return True
         dm = self.get_domain_membership(domain)
         if dm:
@@ -695,7 +692,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             return self.username
 
     def html_username(self):
-        username = self.username
+        username = self.raw_username
         if '@' in username:
             html = "<span class='user_username'>%s</span><span class='user_domainname'>@%s</span>" % \
                    tuple(username.split('@'))
@@ -724,7 +721,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     @property
     def full_name(self):
-        return ("%s %s" % (self.first_name or '', self.last_name or '')).strip()
+        return (u"%s %s" % (self.first_name or u'', self.last_name or u'')).strip()
 
     @property
     def human_friendly_name(self):
@@ -855,6 +852,21 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             #stale=None if strict else settings.COUCH_STALE_QUERY,
             **extra_args
         ).all()
+
+
+    @classmethod
+    def ids_by_domain(cls, domain, is_active=True):
+        flag = "active" if is_active else "inactive"
+        if cls.__name__ == "CouchUser":
+            key = [flag, domain]
+        else:
+            key = [flag, domain, cls.__name__]
+        return [r['id'] for r in cls.get_db().view("users/by_domain",
+            startkey=key,
+            endkey=key + [{}],
+            reduce=False,
+            include_docs=False,
+        )]
 
     @classmethod
     def total_by_domain(cls, domain, is_active=True):
@@ -1189,12 +1201,14 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.user_data              = old_couch_user.default_account.user_data
 
     @classmethod
-    def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):
+    def create(cls, domain, username, password, email=None, uuid='', date='', phone_number=None, **kwargs):
         """
         used to be a function called `create_hq_user_from_commcare_registration_info`
 
         """
         commcare_user = super(CommCareUser, cls).create(domain, username, password, email, uuid, date, **kwargs)
+        if phone_number is not None:
+            commcare_user.add_phone_number(phone_number)
 
         device_id = kwargs.get('device_id', '')
         user_data = kwargs.get('user_data', {})
@@ -1480,8 +1494,24 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def get_group_ids(self):
         from corehq.apps.groups.models import Group
-
         return Group.by_user(self, wrap=False)
+
+    def set_groups(self, group_ids):
+        from corehq.apps.groups.models import Group
+        desired = set(group_ids)
+        current = set(self.get_group_ids())
+        touched = []
+        for to_add in desired - current:
+            group = Group.get(to_add)
+            group.add_user(self._id, save=False)
+            touched.append(group)
+        for to_remove in current - desired:
+            group = Group.get(to_remove)
+            group.remove_user(self._id, save=False)
+            touched.append(group)
+
+        Group.bulk_save(touched)
+
 
     def get_time_zone(self):
         try:
@@ -1651,8 +1681,20 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
     def get_teams(self, ids_only=False):
         from corehq.apps.orgs.models import Team
         teams = []
+
+        def get_valid_teams(team_ids):
+            team_db = Team.get_db()
+            for t_id in team_ids:
+                if team_db.doc_exist(t_id):
+                    yield Team.get(t_id)
+                else:
+                    logging.info("Note: team %s does not exist for %s" % (t_id, self))
+
         for om in self.org_memberships:
-            teams.extend([Team.get(t_id) for t_id in om.team_ids] if not ids_only else om.team_ids)
+            if not ids_only:
+                teams.extend(list(get_valid_teams(om.team_ids)))
+            else:
+                teams.extend(om.team_ids)
         return teams
 
     def get_domains(self):
@@ -1667,7 +1709,7 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
     @memoized
     def has_permission(self, domain, permission, data=None):
         # is_admin is the same as having all the permissions set
-        if self.is_global_admin():
+        if (self.is_global_admin() and (domain is None or not Domain.get_by_name(domain).restrict_superusers)):
             return True
         elif self.is_domain_admin(domain):
             return True

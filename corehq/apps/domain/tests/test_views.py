@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.test.client import Client
 
 from corehq.apps.users.models import WebUser
-from corehq.apps.app_manager.models import AppStructureRepeater
+from corehq.apps.receiverwrapper.models import AppStructureRepeater
 from corehq.apps.domain.models import Domain
 
 class TestDomainViews(TestCase):

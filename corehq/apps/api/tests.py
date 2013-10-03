@@ -8,6 +8,7 @@ from django.test import TestCase
 from django.core.urlresolvers import reverse
 from tastypie.resources import Resource
 from tastypie import fields
+from corehq.pillows.reportxform import ReportXFormPillow
 
 from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
@@ -20,6 +21,7 @@ from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, Short
 from corehq.apps.api.resources import v0_1, v0_4
 from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, UseIfRequested, ToManyDictField
 from corehq.apps.api.es import ESQuerySet
+from django.conf import settings
 
 class FakeXFormES(object):
     """
@@ -378,6 +380,7 @@ class TestRepeaterResource(APIResourceTest):
             self.assertEqual(result['url'], repeater.url)
             self.assertEqual(result['domain'], repeater.domain)
             self.assertEqual(result['type'], cls.__name__)
+            repeater.delete()
 
     def test_get_list(self):
         self.client.login(username=self.username, password=self.password)
@@ -435,6 +438,7 @@ class TestRepeaterResource(APIResourceTest):
             self.assertEqual(repeater_json['domain'], repeater_back.domain)
             self.assertEqual(repeater_json['type'], repeater_back.doc_type)
             self.assertEqual(repeater_json['url'], repeater_back.url)
+            repeater_back.delete()
 
 
     def test_update(self):
@@ -457,6 +461,40 @@ class TestRepeaterResource(APIResourceTest):
             self.assertEqual(1, len(cls.by_domain(self.domain.name)))
             modified = cls.get(backend_id)
             self.assertTrue('modified' in modified.url)
+            repeater.delete()
+
+class TestReportPillow(TestCase):
+    def test_xformPillowTransform(self):
+        """
+        Test to make sure report xform and reportxform pillows strip the appVersion dict to match the
+        mappings
+        """
+        pillows = [ReportXFormPillow(online=False),XFormPillow(online=False)]
+        bad_appVersion = {
+            "_id": "foo",
+            "domain": settings.ES_XFORM_FULL_INDEX_DOMAINS[0],
+            "form": {
+                "meta": {
+                    "@xmlns": "http://openrosa.org/jr/xforms",
+                    "username": "someuser",
+                    "instanceID": "foo",
+                    "userID": "some_user_id",
+                    "timeEnd": "2013-09-20T01:33:12Z",
+                    "appVersion": {
+                        "@xmlns": "http://commcarehq.org/xforms",
+                        "#text": "CCODK:\"2.5.1\"(11126). v236 CC2.5b[11126] on April-15-2013"
+                    },
+                    "timeStart": "2013-09-19T01:13:20Z",
+                    "deviceID": "somedevice"
+                }
+            }
+        }
+        for pillow in pillows:
+            cleaned = pillow.change_transform(bad_appVersion)
+            self.assertFalse(isinstance(cleaned['form']['meta']['appVersion'], dict))
+            self.assertTrue(isinstance(cleaned['form']['meta']['appVersion'], str))
+            self.assertTrue(cleaned['form']['meta']['appVersion'], "CCODK:\"2.5.1\"(11126). v236 CC2.5b[11126] on April-15-2013")
+
 
 class TestESQuerySet(TestCase):
     '''

@@ -3,12 +3,12 @@ import calendar
 from django.conf import settings
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
-from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.groups.models import Group
 from corehq.apps.orgs.models import Organization
-from corehq.apps.reports.filters.base import BaseSingleOptionFilter
+from corehq.apps.reports.filters.base import BaseSingleOptionFilter, BaseMultipleOptionFilter
 
 
 class SelectRegionFilter(BaseSingleOptionFilter):
@@ -58,8 +58,7 @@ class SelectOrganizationFilter(BaseSingleOptionFilter):
     def options(self):
         return [(o.name, o.title) for o in  Organization.get_all()]
 
-
-class GroupFilter(BaseSingleOptionFilter):
+class GroupFilterMixin(object):
     slug = "group"
     label = ugettext_noop("Group")
     default_text = ugettext_noop("Everybody")
@@ -68,6 +67,11 @@ class GroupFilter(BaseSingleOptionFilter):
     def options(self):
         return [(group.get_id, group.name) for group in Group.get_reporting_groups(self.domain)]
 
+class GroupFilter(GroupFilterMixin, BaseSingleOptionFilter):
+    placeholder = ugettext_noop('Click to select a group')
+
+class MultiGroupFilter(GroupFilterMixin, BaseMultipleOptionFilter):
+    placeholder = ugettext_noop('Click to select groups')
 
 class YearFilter(BaseSingleOptionFilter):
     slug = "year"
@@ -149,7 +153,6 @@ class SelectOpenCloseFilter(BaseSingleOptionFilter):
             ('closed', _("Only Closed")),
         ]
 
-
 class SelectApplicationFilter(BaseSingleOptionFilter):
     slug = "app"
     label = ugettext_noop("Application")
@@ -166,3 +169,14 @@ class SelectApplicationFilter(BaseSingleOptionFilter):
         return [(app['value']['_id'], _("%(name)s [up to build %(version)s]") % {
             'name': app['value']['name'],
             'version': app['value']['version']}) for app in apps_for_domain]
+
+
+class MultiCaseGroupFilter(BaseMultipleOptionFilter):
+    slug = "case_group"
+    label = ugettext_noop("Case Group")
+    default_text = ugettext_noop("All Case Groups")
+    placeholder = ugettext_noop('Click to select case groups')
+
+    @property
+    def options(self):
+        return [(g["id"], g["key"][1]) for g in CommCareCaseGroup.get_all(self.domain, include_docs=False)]

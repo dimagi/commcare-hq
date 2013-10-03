@@ -1,0 +1,9 @@
+<form>
+    {% for i in inputs %}
+        <div>
+            {{ i.label }}
+        </div>
+        <input type="{{ i.type }}" name="{{ i.name }}"/><br/>
+    {% endfor %}
+    <input type="submit" />
+</form>
