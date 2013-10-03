@@ -761,11 +761,11 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                    "SMS surveys are designed in the Surveys or Application "
                    "section. ")  # todo help bubble
     )
-    ## method == METHOD_SMS or METHOD_SMS_CALLBACK
+    # contains a string-ified JSON object of events
     events = forms.CharField(
         required=False,
         widget=forms.HiddenInput
-    )  # contains a string-ified JSON object of events
+    )
 
     event_timing = forms.ChoiceField(
         label="Timing",
