@@ -995,6 +995,27 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         print "current vals", current_values
         return current_values
 
+    @property
+    def relevant_choices(self):
+        return {
+            'MATCH_ANY_VALUE': MATCH_ANY_VALUE,
+            'START_REMINDER_ON_CASE_PROPERTY': START_REMINDER_ON_CASE_PROPERTY,
+            'START_REMINDER_ON_CASE_DATE': START_REMINDER_ON_CASE_DATE,
+            'RECIPIENT_CASE': RECIPIENT_CASE,
+            'RECIPIENT_SUBCASE': RECIPIENT_SUBCASE,
+            'METHOD_SMS': METHOD_SMS,
+            'METHOD_SMS_CALLBACK': METHOD_SMS_CALLBACK,
+            'METHOD_SMS_SURVEY': METHOD_SMS_SURVEY,
+            'METHOD_IVR_SURVEY': METHOD_IVR_SURVEY,
+            'START_PROPERTY_OFFSET_DELAY': START_PROPERTY_OFFSET_DELAY,
+            'START_PROPERTY_OFFSET_IMMEDIATE': START_PROPERTY_OFFSET_IMMEDIATE,
+            'FIRE_TIME_DEFAULT': FIRE_TIME_DEFAULT,
+            'FIRE_TIME_CASE_PROPERTY': FIRE_TIME_CASE_PROPERTY,
+            'FIRE_TIME_RANDOM': FIRE_TIME_RANDOM,
+            'EVENT_AS_OFFSET': EVENT_AS_OFFSET,
+            'EVENT_AS_SCHEDULE': EVENT_AS_SCHEDULE,
+        }
+
     def clean(self):
         cleaned_data = super(SimpleScheduleCaseReminderForm, self).clean()
 
