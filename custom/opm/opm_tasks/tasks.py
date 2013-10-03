@@ -25,8 +25,8 @@ def save_report(ReportClass, month=None, year=None):
     report = get_report(ReportClass, month, year)
     snapshot = OpmReportSnapshot(
         domain=DOMAIN,
-        month=month,
-        year=year,
+        month=report.month,
+        year=report.year,
         report_class=ReportClass.__name__,
         headers=report.headers,
         slugs=report.slugs,
