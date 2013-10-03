@@ -132,21 +132,6 @@ def setup_dirs():
     sudo('mkdir -p %(services)s/supervisor' % env, user=env.sudo_user)
     #execute(setup_apache_dirs)
 
-@task
-def staging():
-    """ use staging environment on remote host"""
-    env.code_branch = 'develop'
-    env.sudo_user = 'commcare-hq'
-    env.environment = 'staging'
-    env.django_port = '9002'
-    env.server_name = 'noneset'
-    env.hosts = ['192.168.56.1']
-    env.settings = '%(project)s.localsettings' % env
-    env.host_os_map = None
-    _setup_path()
-    env.user = prompt("Username: ", default='dimagivm')
-    env.es_endpoint = 'localhost'
-    env.should_migrate = True
 
 @task
 def india():
@@ -261,7 +246,7 @@ def production():
 
 
 @task
-def realstaging():
+def staging():
     """ Use production data in a safe staging environment on remote host"""
     if not hasattr(env, 'code_branch') or env.code_branch == 'master':
         print "You must specify a code branch (not 'master') with --set code_branch=<branch>"
@@ -298,7 +283,14 @@ def realstaging():
     env.flower_port = 5555
 
     _setup_path()
-    
+
+
+@task
+def realstaging():
+    print "(You know you can just use 'staging' now, right? Doing that for ya.)"
+    staging()
+
+
 @task
 def preview():
     """ Use production data in a safe preview environment on remote host"""
