@@ -1,5 +1,4 @@
 {% extends "hqadmin/hqadmin_base_report.html" %}
-{% load url from future %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block report-title %}CommCare Versions{% endblock %}
@@ -29,7 +28,7 @@
                     {% for app in table.apps %}
                         <tr>
                             <td>{{ app.domain }}</td>
-                            <td><a href="{% url "view_app" app.domain app.id %}">{{ app.name }}</a></td>
+                            <td><a href="{% url view_app app.domain app.id %}">{{ app.name }}</a></td>
                         </tr>
                     {% endfor %}
                     </tbody>

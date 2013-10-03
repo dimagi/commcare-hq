@@ -1,4 +1,3 @@
-{% load url from future %}
 {% load i18n %}
 {% load timezone_tags %}
 {% if group.saved_exports %}
@@ -14,7 +13,7 @@
 {% for config, saved in group.saved_exports %}
     <tr>
     {% if saved and saved.has_file %}
-        <td><a href="{% url "hq_download_saved_export" domain saved.get_id %}">{{ config.name }}</a></td>
+        <td><a href="{% url hq_download_saved_export domain saved.get_id %}">{{ config.name }}</a></td>
         <td>{%  utc_to_timezone saved.last_updated timezone %}</td>
         <td>{{ saved.size|filesizeformat }}</td>
     {% else %}

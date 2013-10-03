@@ -1,5 +1,4 @@
 {% extends "app_manager/apps_base.html" %}
-{% load url from future %}
 {% load i18n %}
 
 {% block js-inline %}{{ block.super }}
@@ -18,7 +17,7 @@
 {% endblock %}
 
 {% block main_column %}
-    <form action="{% url "corehq.apps.app_manager.views.import_app" domain %}" method="post">
+    <form action="{% url corehq.apps.app_manager.views.import_app domain %}" method="post">
 {% if app %}
         <p>Import application <strong>{{ app.name }}</strong> from domain <strong>{{ app.domain }}</strong>?</p>
         <table {% if not is_superuser %}class="hide"{% endif %}>

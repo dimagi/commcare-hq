@@ -1,5 +1,4 @@
 {% extends "hqadmin/hqadmin_base_report.html" %}
-{% load url from future %}
 {% load i18n %}
 
 {% block report-title %}
@@ -15,7 +14,7 @@
     {% for row in rows %}
         <tr>
             <td>
-                <a href="{% url "render_form_data" row.domain row.report_id %}">
+                <a href="{% url render_form_data row.domain row.report_id %}">
                     {% trans "View Form" %}
                 </a>
             </td>

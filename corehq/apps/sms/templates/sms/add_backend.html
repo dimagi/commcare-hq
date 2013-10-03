@@ -1,5 +1,4 @@
 {% extends 'hqwebapp/two_column.html' %}
-{% load url from future %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load timezone_tags %}
@@ -50,17 +49,17 @@
     {% if is_global %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% url "default_sms_admin_interface" %}"><strong>{% trans "SMS Connectivity" %}</strong></a> <span class="divider">&gt;</span>
+            <a href="{% url default_sms_admin_interface %}"><strong>{% trans "SMS Connectivity" %}</strong></a> <span class="divider">&gt;</span>
         </li>
         <li>
-            <a href="{% url "list_backends" %}">{% trans "SMS Connections" %}</a> <span class="divider">&gt;</span>
+            <a href="{% url list_backends %}">{% trans "SMS Connections" %}</a> <span class="divider">&gt;</span>
         </li>
         <li class="active">
             <div id="report-title">
             {% if backend_id %}
-                <a href="{% url "edit_backend" backend_class_name backend_id %}">{% trans "Edit SMS Connection" %}</a>
+                <a href="{% url edit_backend backend_class_name backend_id %}">{% trans "Edit SMS Connection" %}</a>
             {% else %}
-                <a href="{% url "add_backend" backend_class_name %}">{% trans "Add SMS Connection" %}</a>
+                <a href="{% url add_backend backend_class_name %}">{% trans "Add SMS Connection" %}</a>
             {% endif %}
             </div>
         </li>
@@ -68,17 +67,17 @@
     {% else %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% url "messaging" domain %}"><strong>{% trans "Messaging" %}</strong></a> <span class="divider">&gt;</span>
+            <a href="{% url messaging domain %}"><strong>{% trans "Messaging" %}</strong></a> <span class="divider">&gt;</span>
         </li>
         <li>
-            <a href="{% url "list_domain_backends" domain %}">{% trans "SMS Connectivity" %}</a> <span class="divider">&gt;</span>
+            <a href="{% url list_domain_backends domain %}">{% trans "SMS Connectivity" %}</a> <span class="divider">&gt;</span>
         </li>
         <li class="active">
             <div id="report-title">
             {% if backend_id %}
-                <a href="{% url "edit_domain_backend" domain backend_class_name backend_id %}">{% trans "Edit SMS Connection" %}</a>
+                <a href="{% url edit_domain_backend domain backend_class_name backend_id %}">{% trans "Edit SMS Connection" %}</a>
             {% else %}
-                <a href="{% url "add_domain_backend" domain backend_class_name %}">{% trans "Add SMS Connection" %}</a>
+                <a href="{% url add_domain_backend domain backend_class_name %}">{% trans "Add SMS Connection" %}</a>
             {% endif %}
             </div>
         </li>

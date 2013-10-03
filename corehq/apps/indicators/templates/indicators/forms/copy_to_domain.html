@@ -1,5 +1,4 @@
 {% extends 'hqwebapp/centered.html' %}
-{% load url from future %}
 {% load hqstyle_tags %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
@@ -27,8 +26,8 @@
 
 {% block centered-content %}
     <ul class="breadcrumb">
-        <li><a href="{% url "default_indicator_admin" domain %}">{% trans 'Administer Indicators' %}</a> <span class="divider">&gt;</span></li>
-        <li class="active"><a href="{% url "indicator_bulk_copy" domain indicator_type %}">{% trans 'Bulk Copy Indicators:' %} {{ indicator_name }}</a></li>
+        <li><a href="{% url default_indicator_admin domain %}">{% trans 'Administer Indicators' %}</a> <span class="divider">&gt;</span></li>
+        <li class="active"><a href="{% url indicator_bulk_copy domain indicator_type %}">{% trans 'Bulk Copy Indicators:' %} {{ indicator_name }}</a></li>
     </ul>
     <div class="page-header">
         <h1>{% trans 'Bulk Copy Indicators' %}  <small>{{ indicator_name }}</small></h1>
@@ -64,7 +63,7 @@
                         {% endif %}
                         <div class="form-actions text-align-right">
                             <button type="submit" class="btn btn-primary">{% trans 'Copy' %}</button>
-                            <a href="{% url "default_indicator_admin" domain %}" class="btn">{% trans 'Cancel' %}</a>
+                            <a href="{% url default_indicator_admin domain %}" class="btn">{% trans 'Cancel' %}</a>
                         </div>
                     </fieldset>
                 </form>

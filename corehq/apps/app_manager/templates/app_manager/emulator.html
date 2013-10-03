@@ -1,5 +1,4 @@
 {% extends base_template %}
-{% load url from future %}
 {% load i18n %}
 {% block js %}{{ block.super }}
     <script>
@@ -49,7 +48,7 @@
     <div id="main_container">
         {% block emu_top %}
             <div id="emu-back">
-                <a href="{% url "release_manager" domain app.id %}">{% trans "Back to Release Manager" %}</a>
+                <a href="{% url release_manager domain app.id %}">{% trans "Back to Release Manager" %}</a>
             </div>
         <div id="emu-warning">
             <span class="caution">{% trans "Caution" %}</span>: {% trans "Will make" %} <strong>{% trans "real" %}</strong>{% trans " submissions: will modify cases, register users, etc." %}
@@ -61,7 +60,7 @@
             <param name="archive" value="./CommCare.jar" />
             <param name="midlet" value="org.commcare.midlet.CommCareMidlet" />
             <param name="Profile" value="jr://resource/profile.xml" />
-            <param name="FileRootTranslator" value="{{ url_base }}{% url "emulator_root_url" domain app.get_id %}"/>
+            <param name="FileRootTranslator" value="{{ url_base }}{% url emulator_root_url domain app.get_id %}"/>
             {% if app.admin_password %}
                 <param name="JavaRosa-Admin-Password" value="{{ app.admin_password }}" />
             {% endif %}

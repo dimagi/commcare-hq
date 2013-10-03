@@ -1,5 +1,4 @@
 {% extends "hqadmin/hqadmin_base_report.html" %}
-{% load url from future %}
 
 {% block report-title %}Submissions &amp; Error Statistics Per Domain{% endblock %}
 
@@ -11,7 +10,7 @@
         <tbody>
         {% for row in rows %}
             <tr>
-                <td><a href="{% url "project_report_dispatcher" row.domain 'form_errors' %}?startdate={{ request.datespan.startdate_param }}&enddate={{ request.datespan.enddate_param }}">{{ row.domain }}</a></td>
+                <td><a href="{% url project_report_dispatcher row.domain 'form_errors' %}?startdate={{ request.datespan.startdate_param }}&enddate={{ request.datespan.enddate_param }}">{{ row.domain }}</a></td>
                 <td>{{ row.active_users }}
                     <span title="{{ row.active_users }}"></span></td>
                 <td>{{ row.submissions }}

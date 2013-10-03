@@ -12,7 +12,7 @@ from django.forms.forms import Form
 from django.forms.widgets import CheckboxSelectMultiple
 from django import forms
 from django.forms import Field, Widget
-from corehq.apps.reminders.util import DotExpandedDict
+from django.utils.datastructures import DotExpandedDict
 from casexml.apps.case.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.crispy import BootstrapMultiField

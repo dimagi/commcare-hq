@@ -1,5 +1,4 @@
 {% extends "appstore/appstore_base.html" %}
-{% load url from future %}
 
 {% block breadcrumb %}
 <li>Filtering by {{ filter_by }}</li>
@@ -8,7 +7,7 @@
 {% block main_column %}
 <ul>
 {% for choice in choices %}
-    <li><a href="{% url "appstore_filter_snapshots" filter_by choice.0 %}">{{ choice.1 }}</a></li>
+    <li><a href="{% url appstore_filter_snapshots filter_by choice.0 %}">{{ choice.1 }}</a></li>
 {% endfor %}
 </ul>
 {% endblock %}

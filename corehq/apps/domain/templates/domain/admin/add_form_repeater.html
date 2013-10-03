@@ -1,5 +1,4 @@
 {% extends "settings/base_template.html" %}
-{% load url from future %}
 {% load i18n %}
 {% load hqstyle_tags %}
 
@@ -11,7 +10,7 @@
             $testLinkButton.text("{% trans 'Test Link' %}");
             $testLinkButton.click(function () {
                 var url = $("#id_url").val();
-                jQuery.post("{% url "test_repeater" domain %}", {url: url}, function(data){
+                jQuery.post("{% url test_repeater domain %}", {url: url}, function(data){
                     json_res = JSON.parse(data);
                     $testLabel.removeClass("hide label-important label-success");
                     if (json_res.status) {

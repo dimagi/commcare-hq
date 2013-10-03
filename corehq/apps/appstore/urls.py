@@ -1,4 +1,5 @@
-from django.conf.urls.defaults import url, include, patterns
+from django.conf.urls.defaults import *
+from django.views.generic.simple import direct_to_template
 from corehq.apps.appstore.dispatcher import AppstoreDispatcher
 
 store_urls = patterns('corehq.apps.appstore.views',

@@ -1,6 +1,5 @@
+from django.conf.urls.defaults import *
 from django.conf import settings
-from django.conf.urls.defaults import patterns, url, include
-from django.views.generic import TemplateView, RedirectView
 from corehq.apps.domain.utils import legacy_domain_re
 
 # Uncomment the next two lines to enable the admin:
@@ -57,7 +56,8 @@ domain_specific = patterns('',
 )
 
 urlpatterns = patterns('',
-    (r'^favicon\.ico$', RedirectView.as_view(url='%shqwebapp/img/favicon2.png' % settings.STATIC_URL)),
+    (r'^favicon\.ico$', 'django.views.generic.simple.redirect_to',
+       {'url': '%shqwebapp/img/favicon2.png' % settings.STATIC_URL}),
     (r'^auditcare/', include('auditcare.urls')),
     (r'^admin/', include(admin.site.urls)),
     (r'^register/', include('corehq.apps.registration.urls')),
@@ -93,15 +93,15 @@ urlpatterns = patterns('',
     (r'^test/CommCare.jar', 'corehq.apps.app_manager.views.download_test_jar'),
     (r'^translations/', include('corehq.apps.translations.urls')),
     (r'^sqlextract/', include('ctable_view.urls')),
-    (r'^500/$', TemplateView.as_view(template_name='500.html')),
-    (r'^404/$', TemplateView.as_view(template_name='404.html')),
-    url(r'^eula_basic/$', TemplateView.as_view(template_name='eula.html'), name='eula_basic'),
+    (r'^500/$', 'django.views.generic.simple.direct_to_template', {'template': '500.html'}),
+    (r'^404/$', 'django.views.generic.simple.direct_to_template', {'template': '404.html'}),
+    url(r'^eula_basic/$', 'django.views.generic.simple.direct_to_template', {'template': 'eula.html'}, name='eula_basic'),
     url(r'^eula/$', 'corehq.apps.hqwebapp.views.eula', name='eula'),
-    url(r'^apache_license_basic/$', TemplateView.as_view(template_name='apache_license.html'), name='apache_license_basic'),
+    url(r'^apache_license_basic/$', 'django.views.generic.simple.direct_to_template', {'template': 'apache_license.html'}, name='apache_license_basic'),
     url(r'^apache_license/$', 'corehq.apps.hqwebapp.views.apache_license', name='apache_license'),
-    url(r'^bsd_license_basic/$', TemplateView.as_view(template_name='bsd_license.html'), name='bsd_license_basic'),
+    url(r'^bsd_license_basic/$', 'django.views.generic.simple.direct_to_template', {'template': 'bsd_license.html'}, name='bsd_license_basic'),
     url(r'^bsd_license/$', 'corehq.apps.hqwebapp.views.bsd_license', name='bsd_license'),
-    url(r'^exchange/cda_basic/$', TemplateView.as_view(template_name='cda.html'), name='cda_basic'),
+    url(r'^exchange/cda_basic/$', 'django.views.generic.simple.direct_to_template', {'template': 'cda.html'}, name='cda_basic'),
     url(r'^exchange/cda/$', 'corehq.apps.hqwebapp.views.cda', name='cda'),
     url(r'^sms_in/$', 'corehq.apps.sms.views.sms_in', name='sms_in'),
     url(r'^unsubscribe/(?P<user_id>[\w-]+)/', 'corehq.apps.hqwebapp.views.unsubscribe', name='unsubscribe'),
