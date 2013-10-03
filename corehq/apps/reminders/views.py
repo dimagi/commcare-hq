@@ -527,6 +527,10 @@ class EditScheduledReminderView(CreateScheduledReminderView):
         })
         return page_context
 
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.handler_id])
+
 
 @reminders_permission
 def manage_keywords(request, domain):
