@@ -50,8 +50,8 @@ class IndicatorFixtureProvider(object):
                        <done>25</done>
                        <due>22</due>
                        <clients>
-                          <client id="a1029b09c090s9d173"></client>
-                          <client id="bad7a1029b09c090s9"></client>
+                          <client id="a1029b09c090s9d173" status="done"></client>
+                          <client id="bad7a1029b09c090s9" status="due"></client>
                        </clients>
                     </indicator>
                  </indicators>
@@ -74,10 +74,11 @@ class IndicatorFixtureProvider(object):
             ind_el.append(_el('done', done))
             ind_el.append(_el('due', due))
             clients = ElementTree.Element('clients')
-            for case_id in self.data_provider.get_case_ids(indicator):
+            for case_id, data in self.data_provider.get_case_data(indicator).items():
                 client = ElementTree.Element('client',
                     attrib={
                         'id': case_id,
+                        'status': 'done' if data['num'] else 'due',
                     }
 
                 )
