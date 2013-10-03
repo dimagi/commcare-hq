@@ -166,7 +166,9 @@ class CommCareAccountForm(forms.Form):
     def clean_phone_number(self):
         phone_number = self.cleaned_data['phone_number']
         phone_number = re.sub('\s|\+|\-', '', phone_number)
-        if not re.match(r'\d+$', phone_number):
+        if phone_number == '':
+            return None
+        elif not re.match(r'\d+$', phone_number):
             raise forms.ValidationError(_("%s is an invalid phone number." % phone_number))
         return phone_number
 
