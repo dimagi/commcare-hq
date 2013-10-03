@@ -62,7 +62,7 @@ class DomainViewMixin(object):
     @property
     @memoized
     def domain(self):
-        return self.args[0] if len(self.args) > 0 else ""
+        return self.args[0] if len(self.args) > 0 else self.kwargs.get('domain', "")
 
     @property
     @memoized
