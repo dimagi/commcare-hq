@@ -841,13 +841,11 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         self.domain = domain
 
         if is_previewer:
-            method_choices = self.fields['method'].choices
             method_previewer_choices = [
                 (METHOD_IVR_SURVEY, "IVR Survey"),
                 (METHOD_SMS_CALLBACK, "SMS Expecting Callback"),
             ]
-            method_choices.extend(method_previewer_choices)
-            self.fields['method'].choices = method_choices
+            self.fields['method'].choices.extend(method_previewer_choices)
 
         event_timing_choices = (
             ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT), "Immediately"),
