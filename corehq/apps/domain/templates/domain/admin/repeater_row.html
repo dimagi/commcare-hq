@@ -1,3 +1,4 @@
+{% load url from future %}
 {% load i18n %}
 <tr>
     <td>{{ repeater.url }}</td>
@@ -8,7 +9,7 @@
                 <a class="close" data-dismiss="modal">&times;</a>
                 <h3>Stop forwarding to {{ repeater.url }}?</h3>
             </div>
-            <form name="drop_repeater" action="{% url drop_repeater domain repeater.get_id %}" method="post">
+            <form name="drop_repeater" action="{% url "drop_repeater" domain repeater.get_id %}" method="post">
                 <div class="modal-body">
                     <p>Are you sure you want to stop forwarding to: {{ repeater.url }}?</p>
                 </div>
