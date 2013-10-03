@@ -1,4 +1,5 @@
 {% extends "orgs/report_base.html" %}
+{% load url from future %}
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
 {% load i18n %}
@@ -20,7 +21,7 @@
             chart_name: "{{ stat_slug }}",
             histogram_type: "{{ stat_slug }}",
             xaxis_label: "{{ xaxis_label }}",
-            ajax_url: "{% url orgs_stats_data org.name %}",
+            ajax_url: "{% url "orgs_stats_data" org.name %}",
             interval: "{{ interval }}"
         });
         visualizations.init();

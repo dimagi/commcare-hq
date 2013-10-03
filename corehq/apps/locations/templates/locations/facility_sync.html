@@ -1,4 +1,5 @@
 {% extends 'settings/base_template.html' %}
+{% load url from future %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
@@ -9,7 +10,7 @@
 
         $.ajax({
             type: 'POST',
-            url: '{% url sync_facilities_with_locations domain %}',
+            url: '{% url "sync_facilities_with_locations" domain %}',
             success: function() {
                 $("#sync_facilities").html('{% trans "Sync Successful" %}');
             },

@@ -1,4 +1,5 @@
 {% extends "reminders/reminders_base.html" %}
+{% load url from future %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
@@ -83,7 +84,7 @@
                     <td>{{ handler.recipients }}</td>
                     <td>{{ handler.content }}</td>
                     {% endif %}
-                    <td><a href="{%if reminder_type == 'ONE_TIME' %}{% url edit_one_time_reminder domain handler.handler.get_id %}{% else %}{% url edit_complex domain handler.handler.get_id %}{% endif %}"><span class="btn btn-primary">Edit</span></a></td>
+                    <td><a href="{%if reminder_type == 'ONE_TIME' %}{% url "edit_one_time_reminder" domain handler.handler.get_id %}{% else %}{% url "edit_complex" domain handler.handler.get_id %}{% endif %}"><span class="btn btn-primary">Edit</span></a></td>
                     <td>
                         <a class="btn btn-danger" data-toggle="modal" href="#delete_{{ handler.handler.get_id }}"><i class="icon icon-white icon-remove"></i> Delete</a>
                         <div id="delete_{{ handler.handler.get_id }}" class="modal hide fade">
@@ -91,7 +92,7 @@
                                 <a class="close" data-dismiss="modal">&times;</a>
                                 <h3>{% if reminder_type == "ONE_TIME" %}{% trans 'Delete Broadcast Message?' %}{% else %}{% trans 'Delete Reminder Definition?' %}{% endif %}</h3>
                             </div>
-                            <form class="form form-horizontal" name="delete_handler" action="{% url delete_reminder domain handler.handler.get_id %}" method="post">
+                            <form class="form form-horizontal" name="delete_handler" action="{% url "delete_reminder" domain handler.handler.get_id %}" method="post">
                                 <div class="modal-body">
                                     <p>{% if reminder_type == "ONE_TIME" %}{% trans 'Are you sure you want to delete this broadcast message?' %}{% else %}{% trans 'Are you sure you want to delete this reminder definition?' %}{% endif %}</p>
                                 </div>
@@ -107,7 +108,7 @@
             {% endfor %}
         </tbody>
     </table>
-    <a href="{%if reminder_type == 'ONE_TIME' %}{% url add_one_time_reminder domain %}{% else %}{% url add_complex_reminder_schedule domain %}{% endif %}"><span class="btn btn-success"><i class="icon icon-white icon-plus"></i>{%if reminder_type == 'ONE_TIME' %} {% trans 'New Broadcast' %}{% else %} {% trans 'New Reminder Definition' %}{% endif %}</span></a>
+    <a href="{%if reminder_type == 'ONE_TIME' %}{% url "add_one_time_reminder" domain %}{% else %}{% url "add_complex_reminder_schedule" domain %}{% endif %}"><span class="btn btn-success"><i class="icon icon-white icon-plus"></i>{%if reminder_type == 'ONE_TIME' %} {% trans 'New Broadcast' %}{% else %} {% trans 'New Reminder Definition' %}{% endif %}</span></a>
     {% if reminder_type == "ONE_TIME" %}
     <h4 style="padding-top: 20px;">{% trans 'Previously Sent' %}</h4>
     <table id="table_2" class="table table-striped datatable table-bordered">
@@ -126,7 +127,7 @@
                     <td>{{ handler.start_datetime|date:"Y-m-d H:i" }}</td>
                     <td>{{ handler.recipients }}</td>
                     <td>{{ handler.content }}</td>
-                    <td><a href="{% url copy_one_time_reminder domain handler.handler.get_id %}"><span class="btn btn-primary">{% trans 'Copy' %}</span></a></td>
+                    <td><a href="{% url "copy_one_time_reminder" domain handler.handler.get_id %}"><span class="btn btn-primary">{% trans 'Copy' %}</span></a></td>
                 </tr>
                 {% endif %}
             {% endfor %}

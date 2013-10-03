@@ -1,4 +1,5 @@
 {% extends "settings/base_template.html" %}
+{% load url from future %}
 {% load hqstyle_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -23,7 +24,7 @@
                     <div class="controls">
                         <ul class="nav nav-pills nav-stacked">
                             {% for app in applications %}
-                                <li><a href="{% url corehq.apps.app_manager.views.view_app domain app.id %}">{{ app.name }}</a></li>
+                                <li><a href="{% url "corehq.apps.app_manager.views.view_app" domain app.id %}">{{ app.name }}</a></li>
                             {% endfor %}
                         </ul>
                     </div>

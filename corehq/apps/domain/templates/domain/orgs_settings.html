@@ -1,4 +1,5 @@
 {% extends "users/users_base.html" %}
+{% load url from future %}
 {% load hqstyle_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -30,7 +31,7 @@
 {% block user-view %}
     <div>
         {% if project.organization %}
-            <h3>This project is a part of the <a href="{% url orgs_landing project.organization %}">{{ organization.title|capfirst }}</a> organization.</h3>
+            <h3>This project is a part of the <a href="{% url "orgs_landing" project.organization %}">{{ organization.title|capfirst }}</a> organization.</h3>
             <hr />
             <h3>{% hq_web_user %}s from {{ organization.title|capfirst }}</h3>
             {% include 'domain/partials/orgs_user_list.html' with users=org_users remove_included=0 %}
@@ -48,7 +49,7 @@
             <a class="close" data-dismiss="modal">&times;</a>
             <h4>{% trans "Send request to an organization to add this project" %}</h4>
         </div>
-        <form class="form-horizontal" id="org-request-form" action="{% url domain_org_request domain %}" method="POST">
+        <form class="form-horizontal" id="org-request-form" action="{% url "domain_org_request" domain %}" method="POST">
             <div class="modal-body" style="height: 18em;">
                 <fieldset>
                     <div class="control-group">
