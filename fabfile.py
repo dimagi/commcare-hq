@@ -15,17 +15,18 @@ Server layout:
         Each environment has its own subfolder named for its evironment
         (i.e. ~/www/staging/logs and ~/www/demo/logs).
 """
-import uuid
+import sys
+from collections import defaultdict
+
 from fabric.context_managers import settings, cd
+
 from fabric.operations import require, local, prompt
-
-import os, sys
-
+import os
 from fabric.api import run, roles, execute, task, sudo, env, parallel
 from fabric.contrib import files, console
 from fabric import utils
 import posixpath
-from collections import defaultdict
+
 
 if env.ssh_config_path and os.path.isfile(os.path.expanduser(env.ssh_config_path)):
     env.use_ssh_config = True
