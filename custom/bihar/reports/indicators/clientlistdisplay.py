@@ -149,7 +149,7 @@ class DoneDueMixIn(SummaryValueMixIn):
 class PreDeliveryDoneDueCLD(DoneDueMixIn, PreDeliverySummaryCLD):
 
     def get_columns(self):
-        return super(PreDeliveryDoneDueCLD, self).get_columns() + (_('Days Due'),)
+        return super(PreDeliveryDoneDueCLD, self).get_columns() + (_('Days Late'),)
 
     def as_row(self, case, context):
         value = self.summary_value(case, context)
@@ -160,7 +160,7 @@ class PostDeliveryDoneDueCLD(DoneDueMixIn, PostDeliverySummaryCLD):
     user_hack = None
 
     def get_columns(self):
-        return super(PostDeliveryDoneDueCLD, self).get_columns() + (_('Days Due'),)
+        return super(PostDeliveryDoneDueCLD, self).get_columns() + (_('Days Late'),)
 
     def as_row(self, case, context):
         value = self.summary_value(case, context)
