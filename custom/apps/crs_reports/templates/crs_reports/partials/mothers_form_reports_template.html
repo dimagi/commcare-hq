@@ -21,7 +21,7 @@
                     <td style="border: 1px solid;">{% trans "Husband's name:" %} <strong>{{ case.husband_name }}</strong></td>
                     <td style="border: 1px solid;">{% trans "Villages name:" %} <strong>{{ case.hamlet_name }}</strong></td>
                     <td style="border: 1px solid;">{% trans "Name of sub-center:"%} <strong>{{ sub_center }}</strong></td>
-                    <td style="border: 1px solid;">{% trans "District:" %} {{ case.block }}</td>
+                    <td style="border: 1px solid;">{% trans "District:" %} <strong>{% trans "Kaushambi" %}</strong></td>
                 </tr>
                 <tr>
                     <td colspan="3" rowspan="1" style="border: 0">{% trans "Place of delivery: " %}
@@ -66,7 +66,7 @@
             </tr>
             {% for question in questions %}
                 <tr>
-                    <td style="border: 1px solid;" colspan="2" rowspan="1">{{forloop.counter}}. {{question.label}}</td>
+                    <td style="border: 1px solid;" colspan="2" rowspan="1">{{forloop.counter}}. {{question.question}}</td>
                     {% for answer in question.answers %}
                         <td style="border: 1px solid;" colspan="1">{{ answer }}</td>
                     {% endfor %}

@@ -1,3 +1,4 @@
+from django.utils.importlib import import_module
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponseBadRequest
 from django.views.generic.base import View
@@ -6,6 +7,7 @@ from corehq.apps.domain.decorators import login_and_domain_required, cls_to_view
 from dimagi.utils.decorators.datespan import datespan_in_request
 
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.utils import get_domain_module_map
 from corehq.apps.reports.exceptions import BadRequestError
 
 datespan_default = datespan_in_request(
@@ -235,3 +237,31 @@ class AdminReportDispatcher(ReportDispatcher):
 
     def permissions_check(self, report, request, domain=None):
         return hasattr(request, 'couch_user') and request.user.has_perm("is_superuser")
+
+
+class QuestionTemplateDispatcher(ProjectReportDispatcher):
+    prefix = 'question_templates'
+    map_name = 'QUESTION_TEMPLATES'
+
+    def get_question_templates(self, domain, report_slug):
+        question_templates = dict(self.get_reports(domain))
+        return question_templates.get(report_slug, None)
+
+
+class ExtendUrlPatternDispatcher(ProjectReportDispatcher):
+    prefix = 'extend_url'
+    map_name = 'EXTEND_URL_PATTERN'
+
+    def get_modules_name(self):
+        module_list = []
+        domains = get_domain_module_map()
+        for module_name in set(domains.values()):
+            try:
+                module = import_module(module_name)
+                is_module_extend_urls_pattern = getattr(module, self.map_name, ())
+
+                if is_module_extend_urls_pattern:
+                    module_list.append(module.__name__)
+            except ImportError:
+                return None
+        return set(module_list)
