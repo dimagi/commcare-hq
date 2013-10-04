@@ -3,6 +3,7 @@ from django.core.management.base import LabelCommand
 from django.conf import settings
 import sys
 from auditcare.models import AuditEvent
+from corehq.apps.builds.models import CommCareBuild
 from corehq.apps.domain.models import Domain
 from couchforms.models import XFormInstance
 
@@ -52,6 +53,17 @@ class Command(LabelCommand):
         target_server = XFormInstance.get_db().server
         self.do_repl(target_server, params)
 
+    def repl_builds(self):
+        params = {
+            'filter': 'fluff_filter/domain_type',
+            'continuous': True,
+            'query_params': {
+                'doc_type':  'CommCareBuild'
+            }
+        }
+        target_server = CommCareBuild.get_db().server
+        self.do_repl(target_server, params)
+
     def do_repl(self, server, params):
         if self.cancel:
             params['cancel'] = True
@@ -76,7 +88,6 @@ class Command(LabelCommand):
                   "\n\n\tgoodbye."
             sys.exit()
 
-
         if 'cancel' in args:
             self.cancel = True
         else:
@@ -84,6 +95,5 @@ class Command(LabelCommand):
 
         self.repl_domains()
         self.repl_docs()
+        self.repl_builds()
         AuditEvent.audit_command()
-
-
