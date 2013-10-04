@@ -973,11 +973,16 @@ class SimpleScheduleCaseReminderForm(forms.Form):
 
         repeat_section = crispy.Fieldset(
             "Repeat",
-            crispy.Field('schedule_length'),
             crispy.Field('repeat_type', data_bind="value: repeat_type"),
             crispy.Div(
                 crispy.Field('max_iteration_count'),
                 data_bind="visible: isMaxIterationCountVisible",
+            ),
+            BootstrapMultiField(
+                "Repeat Every",
+                InlineField('schedule_length'),
+                crispy.HTML('<p class="help-inline">day(s)</p>'),
+                data_bind="visible: isScheduleLengthVisible",
             ),
             BootstrapMultiField(
                 "Stop Condition",

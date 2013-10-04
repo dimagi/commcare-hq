@@ -44,6 +44,9 @@ var ManageRemindersViewModel = function (initial, choices, ui_type) {
     });
 
     self.repeat_type = ko.observable(initial.repeat_type);
+    self.isScheduleLengthVisible = ko.computed(function () {
+        return self.repeat_type() !== self.choices.REPEAT_TYPE_NO;
+    });
     self.isMaxIterationCountVisible = ko.computed(function () {
         return self.repeat_type() === self.choices.REPEAT_TYPE_SPECIFIC;
     });
