@@ -6,7 +6,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from django.core.urlresolvers import reverse
 import pytz
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, time
 from django.core.exceptions import ValidationError
 from django.forms.fields import *
 from django.forms.forms import Form
@@ -647,6 +647,8 @@ START_DATE_OFFSET_AFTER = 'offset_after'
 START_PROPERTY_OFFSET_DELAY = 'offset_delay'
 START_PROPERTY_OFFSET_IMMEDIATE = 'offset_immediate'
 
+EVENT_TIMING_IMMEDIATE = 'immediate'
+
 
 class SimpleScheduleCaseReminderForm(forms.Form):
     """
@@ -853,13 +855,13 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             self.fields['method'].choices = method_choices
 
         event_timing_choices = (
-            ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT), "Immediately"),
-            ((EVENT_AS_SCHEDULE, FIRE_TIME_DEFAULT), "At a Specific Time"),
-            ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT), "Delay After Start"),
-            ((EVENT_AS_SCHEDULE, FIRE_TIME_CASE_PROPERTY), "Time in Case"),
-            ((EVENT_AS_SCHEDULE, FIRE_TIME_RANDOM), "Random Time"),
+            ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT, EVENT_TIMING_IMMEDIATE), "Immediately"),
+            ((EVENT_AS_SCHEDULE, FIRE_TIME_DEFAULT, None), "At a Specific Time"),
+            ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT, None), "Delay After Start"),
+            ((EVENT_AS_SCHEDULE, FIRE_TIME_CASE_PROPERTY, None), "Time in Case"),
+            ((EVENT_AS_SCHEDULE, FIRE_TIME_RANDOM, None), "Random Time"),
         )
-        event_timing_choices = [(self._format_event_timing_choice(e[0][0], e[0][1]), e[1])
+        event_timing_choices = [(self._format_event_timing_choice(e[0][0], e[0][1], e[0][2]), e[1])
                                 for e in event_timing_choices]
         self.fields['event_timing'].choices = event_timing_choices
 
@@ -1021,13 +1023,15 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             'EVENT_AS_SCHEDULE': EVENT_AS_SCHEDULE,
             'UI_SIMPLE_FIXED': UI_SIMPLE_FIXED,
             'UI_COMPLEX': UI_COMPLEX,
+            'EVENT_TIMING_IMMEDIATE': EVENT_TIMING_IMMEDIATE,
         }
 
     @staticmethod
-    def _format_event_timing_choice(event_interpretation, fire_time_type):
+    def _format_event_timing_choice(event_interpretation, fire_time_type, special=None):
         return json.dumps({
             'event_interpretation': event_interpretation,
             'fire_time_type': fire_time_type,
+            'special': special,
         })
 
     def clean(self):
@@ -1086,6 +1090,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             initial['event_timing'] = cls._format_event_timing_choice(
                 reminder_handler.event_interpretation,
                 reminder_handler.events[0].fire_time_type,
+                EVENT_TIMING_IMMEDIATE if reminder_handler.events[0].fire_time == time() else None,
             )
 
         initial.update({

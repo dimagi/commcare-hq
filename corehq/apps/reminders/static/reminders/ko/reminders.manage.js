@@ -69,6 +69,11 @@ var ReminderEvent = function (eventData, choices, method, event_timing, event_in
         return event_timing.fire_time_type;
     });
 
+    self.isEventImmediate = ko.computed(function () {
+        var event_timing = $.parseJSON(self.event_timing());
+        return event_timing.special === self.choices.EVENT_TIMING_IMMEDIATE;
+    });
+
     self.day_num = ko.observable(eventData.day_num);
     self.fire_time = ko.observable(eventData.fire_time);
     self.fire_time_aux = ko.observable(eventData.fire_time_aux);
