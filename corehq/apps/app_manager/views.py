@@ -106,23 +106,21 @@ class ApplicationViewMixin(DomainViewMixin):
 
 
 @login_and_domain_required
-def back_to_main(req, domain, app_id=None, module_id=None, form_id=None, unique_form_id=None, edit=True, error='', page=None, **kwargs):
+def back_to_main(req, domain, app_id=None, module_id=None, form_id=None,
+                 unique_form_id=None, edit=True):
     """
     returns an HttpResponseRedirect back to the main page for the App Manager app
     with the correct GET parameters.
 
-    This is meant to be used by views that process a POST request, which then redirect to the
-    main page. The idiom for calling back_to_main used in this file is
-        return back_to_main(**locals())
-    which harvests the values for req, domain, app_id, module_id form_id, edit, and error from
-    the local namespace.
+    This is meant to be used by views that process a POST request,
+    which then redirect to the main page.
 
     """
+
+    page = None
     params = {}
     if edit:
         params['edit'] = 'true'
-    if error:
-        params['error'] = error
 
     args = [domain]
 
@@ -233,8 +231,7 @@ def import_app(req, domain, template="app_manager/import_app.html"):
         assert(source is not None)
         app = import_app_util(source, domain, name=name)
 
-        app_id = app._id
-        return back_to_main(**locals())
+        return back_to_main(req, domain, app_id=app._id)
     else:
         app_id = req.GET.get('app')
         redirect_domain = req.GET.get('domain') or None
@@ -276,7 +273,7 @@ def import_factory_app(req, domain):
     app = cls.from_source(source, domain)
     app.save()
     app_id = app._id
-    return back_to_main(**locals())
+    return back_to_main(req, domain, app_id=app_id)
 
 @require_can_edit_apps
 @no_conflict_require_POST
@@ -288,7 +285,7 @@ def import_factory_module(req, domain, app_id):
     source = fmodule.export_json(dump_json=False)
     app.new_module_from_source(source)
     app.save()
-    return back_to_main(**locals())
+    return back_to_main(req, domain, app_id=app_id)
 
 @require_can_edit_apps
 @no_conflict_require_POST
@@ -300,7 +297,7 @@ def import_factory_form(req, domain, app_id, module_id):
     app = get_app(domain, app_id)
     app.new_form_from_source(module_id, source)
     app.save()
-    return back_to_main(**locals())
+    return back_to_main(req, domain, app_id=app_id, module_id=module_id)
 
 def default(req, domain):
     """
@@ -614,8 +611,8 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         ).all()
         if all_applications:
             app_id = all_applications[0].id
-            del edit
-            return back_to_main(**locals())
+            return back_to_main(req, domain, app_id=app_id, module_id=module_id,
+                                form_id=form_id)
     if app and app.copy_of:
         # don't fail hard.
         return HttpResponseRedirect(reverse("corehq.apps.app_manager.views.view_app", args=[domain,app.copy_of]))
@@ -725,7 +722,9 @@ def view_app(req, domain, app_id=None):
     module_id = req.GET.get('m', None)
     form_id = req.GET.get('f', None)
     if module_id or form_id:
-        return back_to_main(**locals())
+        return back_to_main(req, domain, app_id=app_id, module_id=module_id,
+                            form_id=form_id)
+
     return view_generic(req, domain, app_id)
 
 @login_and_domain_required
@@ -783,7 +782,7 @@ def new_app(req, domain):
     _clear_app_cache(req, domain)
     app_id = app.id
 
-    return back_to_main(**locals())
+    return back_to_main(req, domain, app_id=app_id)
 
 @no_conflict_require_POST
 @require_can_edit_apps
@@ -796,7 +795,7 @@ def new_module(req, domain, app_id):
     module_id = module.id
     app.new_form(module_id, "Untitled Form", lang)
     app.save()
-    response = back_to_main(**locals())
+    response = back_to_main(req, domain, app_id=app_id, module_id=module_id)
     response.set_cookie('suppress_build_errors', 'yes')
     return response
 
@@ -811,7 +810,8 @@ def new_form(req, domain, app_id, module_id):
     app.save()
     # add form_id to locals()
     form_id = form.id
-    response = back_to_main(**locals())
+    response = back_to_main(req, domain, app_id=app_id, module_id=module_id,
+                            form_id=form_id)
     response.set_cookie('suppress_build_errors', 'yes')
     return response
 
@@ -827,8 +827,7 @@ def delete_app(req, domain, app_id):
     )
     app.save()
     _clear_app_cache(req, domain)
-    del app_id
-    return back_to_main(**locals())
+    return back_to_main(req, domain)
 
 @no_conflict_require_POST
 @require_can_edit_apps
@@ -856,8 +855,7 @@ def delete_module(req, domain, app_id, module_id):
         extra_tags='html'
     )
     app.save()
-    del module_id
-    return back_to_main(**locals())
+    return back_to_main(req, domain, app_id=app_id)
 
 @no_conflict_require_POST
 @require_can_edit_apps
@@ -879,9 +877,8 @@ def delete_form(req, domain, app_id, module_id, form_id):
         extra_tags='html'
     )
     app.save()
-    del form_id
-    del record
-    return back_to_main(**locals())
+    return back_to_main(req, domain, app_id=app_id, module_id=module_id)
+
 
 @no_conflict_require_POST
 @require_can_edit_apps
@@ -891,7 +888,9 @@ def copy_form(req, domain, app_id, module_id, form_id):
     if app.copy_form(int(module_id), int(form_id), to_module_id) == 'case type conflict':
         messages.warning(req, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
     app.save()
-    return back_to_main(**locals())
+    return back_to_main(req, domain, app_id=app_id, module_id=module_id,
+                        form_id=form_id)
+
 
 @no_conflict_require_POST
 @require_can_edit_apps
@@ -899,7 +898,8 @@ def undo_delete_form(request, domain, record_id):
     record = DeleteFormRecord.get(record_id)
     record.undo()
     messages.success(request, 'Form successfully restored.')
-    return back_to_main(request, domain, app_id=record.app_id, module_id=record.module_id, form_id=record.form_id)
+    return back_to_main(request, domain, app_id=record.app_id,
+                        module_id=record.module_id, form_id=record.form_id)
 
 @no_conflict_require_POST
 @require_can_edit_apps
@@ -1050,7 +1050,8 @@ def edit_module_detail(req, domain, app_id, module_id):
     if(ajax):
         return HttpResponse(json.dumps(resp))
     else:
-        return back_to_main(**locals())
+        return back_to_main(req, domain, app_id=app_id, module_id=module_id)
+
 
 @no_conflict_require_POST
 @require_can_edit_apps
@@ -1067,7 +1068,7 @@ def delete_module_detail(req, domain, app_id, module_id):
     resp = {}
     app.save(resp)
     return HttpResponse(json.dumps(resp))
-    #return back_to_main(**locals())
+
 
 def _handle_media_edits(request, item, should_edit, resp):
     if not resp.has_key('corrections'):
@@ -1201,7 +1202,8 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
     if ajax:
         return HttpResponse(json.dumps(resp))
     else:
-        return back_to_main(**locals())
+        return back_to_main(req, domain, app_id=app_id, unique_form_id=unique_form_id)
+
 
 @no_conflict_require_POST
 @require_can_edit_apps
@@ -1345,7 +1347,8 @@ def edit_app_lang(req, domain, app_id):
         else:
             app.save()
 
-    return back_to_main(**locals())
+    return back_to_main(req, domain, app_id=app_id)
+
 
 @no_conflict_require_POST
 @require_can_edit_apps
@@ -1424,7 +1427,8 @@ def delete_app_lang(req, domain, app_id):
     app = get_app(domain, app_id)
     del app.langs[lang_id]
     app.save()
-    return back_to_main(**locals())
+    return back_to_main(req, domain, app_id=app_id)
+
 
 @no_conflict_require_POST
 @require_can_edit_apps
@@ -1544,6 +1548,7 @@ def rearrange(req, domain, app_id, key):
     ajax = json.loads(req.POST.get('ajax', 'false'))
     i, j = (int(x) for x in (req.POST['to'], req.POST['from']))
     resp = {}
+    module_id = None
 
 
     if   "forms" == key:
@@ -1562,11 +1567,13 @@ def rearrange(req, domain, app_id, key):
     if ajax:
         return HttpResponse(json.dumps(resp))
     else:
-        return back_to_main(**locals())
+        return back_to_main(req, domain, app_id=app_id, module_id=module_id)
+
 
 # The following three functions deal with
 # Saving multiple versions of the same app
 # i.e. "making builds"
+
 
 @no_conflict_require_POST
 @require_can_edit_apps
@@ -1643,7 +1650,7 @@ def revert_to_copy(req, domain, app_id):
     app = app.make_reversion_to_copy(copy)
     app.save()
     messages.success(req, "Successfully reverted to version %s, now at version %s" % (copy.version, app.version))
-    return back_to_main(**locals())
+    return back_to_main(req, domain, app_id=app_id)
 
 @no_conflict_require_POST
 @require_can_edit_apps
@@ -1828,7 +1835,7 @@ def download_jad(req, domain, app_id):
         response = HttpResponse(jad)
     except Exception:
         messages.error(req, BAD_BUILD_MESSAGE)
-        return back_to_main(**locals())
+        return back_to_main(req, domain, app_id=app_id)
     set_file_download(response, "CommCare.jad")
     response["Content-Type"] = "text/vnd.sun.j2me.app-descriptor"
     response["Content-Length"] = len(jad)
@@ -1853,7 +1860,7 @@ def download_jar(req, domain, app_id):
         response.write(jar)
     except Exception:
         messages.error(req, BAD_BUILD_MESSAGE)
-        return back_to_main(**locals())
+        return back_to_main(req, domain, app_id=app_id)
     return response
 
 def download_test_jar(request):
@@ -1894,9 +1901,11 @@ def emulator_page(req, domain, app_id, template):
         'url_base': get_url_base()
     })
 
+
 @login_and_domain_required
 def emulator(req, domain, app_id, template="app_manager/emulator.html"):
     return emulator_page(req, domain, app_id, template)
+
 
 def emulator_handler(req, domain, app_id):
     exchange = req.GET.get("exchange", '')
