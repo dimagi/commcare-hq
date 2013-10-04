@@ -1,3 +1,4 @@
+from django.utils.importlib import import_module
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponseBadRequest
 from django.views.generic.base import View
@@ -251,14 +252,16 @@ class ExtendUrlPatternDispatcher(ProjectReportDispatcher):
     prefix = 'extend_url'
     map_name = 'EXTEND_URL_PATTERN'
 
-    def get_module_name(self):
+    def get_modules_name(self):
         module_list = []
         domains = get_domain_module_map()
-        for domain in domains:
+        for module_name in domains.itervalues():
+            try:
+                module = import_module(module_name) if module_name else None
+                is_module_extend_urls_pattern = getattr(module, self.map_name, ())
 
-            domain_module = Domain.get_module_by_name(domain)
-            is_module_extend_urls_pattern = getattr(domain_module, self.map_name, ())
-
-            if is_module_extend_urls_pattern:
-                module_list.append(domain_module.__name__)
+                if is_module_extend_urls_pattern:
+                    module_list.append(module.__name__)
+            except ImportError:
+                return None
         return set(module_list)

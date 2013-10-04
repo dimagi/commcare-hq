@@ -104,7 +104,7 @@ report_urls = patterns('',
     BasicReportDispatcher.url_pattern(),
 )
 
-for module_name in ExtendUrlPatternDispatcher().get_module_name():
+for module_name in ExtendUrlPatternDispatcher().get_modules_name():
     try:
         custom_report_urls += patterns('',
              (r"^%s/" % module_name, include("%s.urls" % module_name)),
