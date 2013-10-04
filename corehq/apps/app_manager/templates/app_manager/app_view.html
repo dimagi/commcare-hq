@@ -1,4 +1,5 @@
 {% extends "app_manager/managed_app.html" %}
+{% load url from future %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -19,7 +20,7 @@
                 sections: {{ settings_layout|JSON }},
                 values: {{ settings_values|JSON }},
                 urls: {
-                    save: '{% url edit_commcare_settings domain app.id %}'
+                    save: '{% url "edit_commcare_settings" domain app.id %}'
                 },
                 edit: {{ edit|BOOL }},
                 user: {
@@ -51,7 +52,7 @@
         $(function () {
             var langs = {{ app.langs|JSON }};
             var buildLangs = {{ app.build_langs|JSON }};
-            var saveURL = "{% url edit_app_langs domain app.id %}";
+            var saveURL = "{% url "edit_app_langs" domain app.id %}";
             var edit = {{ edit|JSON }};
             var validate = !{{ app.is_remote_app|BOOL }};
             ko.applyBindings(new SupportedLanguages({
@@ -154,7 +155,7 @@
                 var $translation_ui = $("#translations_ui");
                 mk_translation_ui({
                     translations: {{ translations|JSON }},
-                    url: "{% url edit_app_translations domain app.id %}",
+                    url: "{% url "edit_app_translations" domain app.id %}",
                     lang: "{{ lang }}",
                     edit: {{ edit|yesno:"true,false" }},
                     $home: $translation_ui
@@ -239,7 +240,7 @@
                     {% if edit %}
                         <h3 style="text-align: left;">{% trans 'Manage Multimedia' %}</h3>
                         <p>{% blocktrans %}View, upload, and download your application's multimedia{% endblocktrans %}</p>
-                        <p><a target="_blank" class="btn btn-primary" style="color: #ffffff; text-decoration: none;" href="{% url hqmedia_references domain app.get_id %}"><i class="icon icon-check"></i>
+                        <p><a target="_blank" class="btn btn-primary" style="color: #ffffff; text-decoration: none;" href="{% url "hqmedia_references" domain app.get_id %}"><i class="icon icon-check"></i>
                             {% blocktrans %}Multimedia Reference Checker</a> (opens in a new window){% endblocktrans %}</p>
                     {% endif %}
                     <h3 style="margin-top: 1em; text-align: left;">{% trans 'Download Multimedia Zip' %}</h3>
@@ -253,7 +254,7 @@
         <div class="tab-pane" id="copy">
             <h3>{% trans "Copy Application" %}</h3>
             <div>
-                <form class="form form-inline" method="get" action="{% url import_app domain %}">
+                <form class="form form-inline" method="get" action="{% url "import_app" domain %}">
                     <input type="hidden" name="app" value="{{ app.id }}"/>
                     Copy this app to project: <input type="text" name="domain" />
                     <button type="submit" class="btn btn-primary">Copy...</button>
@@ -262,7 +263,7 @@
         </div>
         <div class="tab-pane" id="delete">
             <h3>{% trans "Delete Application" %}</h3>
-            <form action="{% url corehq.apps.app_manager.views.delete_app domain app.id %}" method="POST">
+            <form action="{% url "corehq.apps.app_manager.views.delete_app" domain app.id %}" method="POST">
 
                 <button type="submit" class="btn btn-danger disable-on-submit">
                     <i class="icon-trash"></i>

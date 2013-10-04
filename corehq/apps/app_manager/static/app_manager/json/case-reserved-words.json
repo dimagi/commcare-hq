@@ -20,5 +20,6 @@
     "index",
     "initial_processing_complete",
     "opened_by",
-    "closed_by"
+    "closed_by",
+    "last_modified"
 ]

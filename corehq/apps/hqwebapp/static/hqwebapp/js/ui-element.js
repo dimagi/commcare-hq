@@ -374,7 +374,9 @@ var uiElement;
 
                         }
                         if(map_key) {
-                            this.$noedit_view.html('"'+map_key+'" &rarr; "'+map_val+'"');
+                            this.$noedit_view.html('<strong>' + map_key + '</strong> &rarr; ' + (
+                                map_val ? map_val : '<i class="icon-remove-sign"></i>'
+                            ));
                         }else{
                             this.$noedit_view.text("");
                         }
