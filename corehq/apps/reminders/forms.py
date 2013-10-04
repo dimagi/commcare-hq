@@ -950,8 +950,14 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             crispy.Field('event_interpretation', data_bind="value: event_interpretation"),
             crispy.Field('events'),
             crispy.Div(data_bind="template: {name: 'event-template', foreach: eventObjects}"),
-            crispy.Field('event_timing', data_bind="value: event_timing"),
-            crispy.Div(data_bind="template: {name: 'event-fire-template', foreach: eventObjects}"),
+            BootstrapMultiField(
+                "Timing",
+                InlineField('event_timing', data_bind="value: event_timing"),
+                crispy.Div(
+                    style="display: inline;",
+                    data_bind="template: {name: 'event-fire-template', foreach: eventObjects}"
+                ),
+            ),
         )
 
         repeat_section = crispy.Fieldset(
@@ -1181,14 +1187,14 @@ class CaseReminderEventForm(forms.Form):
             ),
         )
 
-        self.fire_helper = FormHelper()
-        self.fire_helper.form_tag = False
-        self.fire_helper.layout = crispy.Layout(
-            crispy.Field('day_num', data_bind="value: day_num, attr: {id: ''}"),
+        self.helper_fire_time = FormHelper()
+        self.helper_fire_time.form_tag = False
+        self.helper_fire_time.layout = crispy.Layout(
             crispy.Field('fire_time_type', data_bind="value: fire_time_type, attr: {id: ''}"),
             crispy.Field('fire_time', data_bind="value: fire_time, attr: {id: ''}"),
             crispy.Field('fire_time_aux', data_bind="value: fire_time_aux, attr: {id: ''}"),
             crispy.Field('time_window_length', data_bind="value: time_window_length, attr: {id: ''}"),
+            crispy.Field('day_num', data_bind="value: day_num, attr: {id: ''}"),
         )
 
 
