@@ -11,7 +11,6 @@ DEBUG_TRACE = False
 CACHE_DOCS = getattr(settings, 'COUCH_CACHE_DOCS', False)
 CACHE_VIEWS = getattr(settings, 'COUCH_CACHE_VIEWS', False)
 
-
 def rcache():
     return MOCK_REDIS_CACHE or cache.get_cache('redis')
 
@@ -38,13 +37,6 @@ def key_doc_id(doc_id):
     ret = ":".join([CACHED_DOC_PREFIX, doc_id])
     return ret
 
-
-def key_reverse_doc(doc_id, suffix):
-    """
-    a doc_id to tell you if a cached doc is in a view
-    """
-    ret = ":".join([CACHED_VIEW_DOC_REVERSE, doc_id, suffix])
-    return ret
 
 
 def invalidate_doc_generation(doc):
