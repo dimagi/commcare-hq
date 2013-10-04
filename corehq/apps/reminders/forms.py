@@ -796,6 +796,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
 
     # Fieldset: Repeat
     repeat_type = forms.ChoiceField(
+        required=False,
         label="Repeat Reminder",
         choices=(
             (REPEAT_TYPE_NO, "No"),  # reminder_type = ONE_TIME
