@@ -1,3 +1,4 @@
+import copy
 import json
 import re
 from crispy_forms.bootstrap import InlineField, Accordion, AccordionGroup, FormActions, StrictButton
@@ -5,7 +6,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from django.core.urlresolvers import reverse
 import pytz
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, time
 from django.core.exceptions import ValidationError
 from django.forms.fields import *
 from django.forms.forms import Form
@@ -46,7 +47,9 @@ from .models import (
     ON_DATETIME,
     SEND_NOW,
     SEND_LATER,
-    RECIPIENT_USER_GROUP
+    RECIPIENT_USER_GROUP,
+    UI_SIMPLE_FIXED,
+    UI_COMPLEX,
 )
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
@@ -635,6 +638,23 @@ MATCH_TYPE_CHOICES = (
     (MATCH_REGEX, "matches regular expression"),
 )
 
+START_REMINDER_ON_CASE_DATE = 'case_date'
+START_REMINDER_ON_CASE_PROPERTY = 'case_property'
+
+START_DATE_OFFSET_BEFORE = 'offset_before'
+START_DATE_OFFSET_AFTER = 'offset_after'
+
+START_PROPERTY_OFFSET_DELAY = 'offset_delay'
+START_PROPERTY_OFFSET_IMMEDIATE = 'offset_immediate'
+
+EVENT_TIMING_IMMEDIATE = 'immediate'
+
+REPEAT_TYPE_NO = 'no_repeat'
+REPEAT_TYPE_INDEFINITE = 'indefinite'
+REPEAT_TYPE_SPECIFIC = 'specific'
+
+STOP_CONDITION_CASE_PROPERTY = 'case_property'
+
 
 class SimpleScheduleCaseReminderForm(forms.Form):
     """
@@ -661,8 +681,8 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         label="Start Reminder",
         required=False,
         choices=(
-            ('case_date', "on a date specified in the Case"),
-            ('case_property', "when the Case is in the following state"),
+            (START_REMINDER_ON_CASE_DATE, "on a date specified in the Case"),
+            (START_REMINDER_ON_CASE_PROPERTY, "when the Case is in the following state"),
         ),
         help_text=("Reminders can either start based on a date in a case property "
                    "or if the case is in a particular state (ex: case property 'high_risk' "
@@ -677,22 +697,23 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         required=False,
         choices=MATCH_TYPE_CHOICES,
     )
+    # only shows up if start_match_type != MATCH_ANY_VALUE
     start_value = forms.CharField(
         required=False,
         label="Value"
-    )  # only shows up if start_match_type != MATCH_ANY_VALUE
+    )
     # this is a UI control that determines how start_offset is calculated (0 or an integer)
     start_property_offset_type = forms.ChoiceField(
         required=False,
         choices=(
-            ('offset_delay', "Delay By"),
-            ('offset_immediate', "Immediately"),
+            (START_PROPERTY_OFFSET_DELAY, "Delay By"),
+            (START_PROPERTY_OFFSET_IMMEDIATE, "Immediately"),
         )
     )
     # becomes start_offset
     start_property_offset = forms.IntegerField(
         required=False,
-        initial=0,
+        initial=1,
     )
     ## send options > start_reminder_on = case_property
     start_date = forms.CharField(
@@ -702,8 +723,8 @@ class SimpleScheduleCaseReminderForm(forms.Form):
     start_date_offset_type = forms.ChoiceField(
         required=False,
         choices=(
-            ('offset_before', "Before Date By"),
-            ('offset_after', "After Date By"),
+            (START_DATE_OFFSET_BEFORE, "Before Date By"),
+            (START_DATE_OFFSET_AFTER, "After Date By"),
         )
     )
     # becomes start_offset
@@ -726,7 +747,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                    "For cases with child or parent cases, you can also send the message to those "
                    "contacts. ")  # todo help bubble
     )
-    ## receipient = RECIPIENT_SUBCASE
+    ## recipient = RECIPIENT_SUBCASE
     recipient_case_match_property = forms.CharField(
         label="Case Property",
         required=False
@@ -751,11 +772,11 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                    "SMS surveys are designed in the Surveys or Application "
                    "section. ")  # todo help bubble
     )
-    ## method == METHOD_SMS or METHOD_SMS_CALLBACK
+    # contains a string-ified JSON object of events
     events = forms.CharField(
         required=False,
         widget=forms.HiddenInput
-    )  # contains a string-ified JSON object of events
+    )
 
     event_timing = forms.ChoiceField(
         label="Timing",
@@ -775,11 +796,12 @@ class SimpleScheduleCaseReminderForm(forms.Form):
 
     # Fieldset: Repeat
     repeat_type = forms.ChoiceField(
+        required=False,
         label="Repeat Reminder",
         choices=(
-            ('no_repeat', "No"),  # reminder_type = ONE_TIME
-            ('indefinite', "Indefinitely"),  # reminder_type = DEFAULT, max_iteration_count = -1
-            ('specific', "Specific Number of Times"),
+            (REPEAT_TYPE_NO, "No"),  # reminder_type = ONE_TIME
+            (REPEAT_TYPE_INDEFINITE, "Indefinitely"),  # reminder_type = DEFAULT, max_iteration_count = -1
+            (REPEAT_TYPE_SPECIFIC, "Specific Number of Times"),
         )
     )
     # shown if repeat_type != 'no_repeat'
@@ -798,7 +820,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         label="",
         choices=(
             ('', '(none)'),
-            ('property', 'On Date in Case'),
+            (STOP_CONDITION_CASE_PROPERTY, 'On Date in Case'),
         )
     )
     until = forms.CharField(
@@ -825,55 +847,68 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         required=False,
     )
 
-    def __init__(self, data=None, is_previewer=False, domain=None, *args, **kwargs):
+    def __init__(self, data=None, is_previewer=False, domain=None, ui_type=None, *args, **kwargs):
         super(SimpleScheduleCaseReminderForm, self).__init__(data, *args, **kwargs)
 
         self.domain = domain
+        self.ui_type = ui_type
 
         if is_previewer:
-            method_choices = self.fields['method'].choices
-            method_previewer_choices = [
+            method_choices = copy.copy(self.fields['method'].choices)
+            method_choices.extend([
                 (METHOD_IVR_SURVEY, "IVR Survey"),
                 (METHOD_SMS_CALLBACK, "SMS Expecting Callback"),
-            ]
-            method_choices.extend(method_previewer_choices)
+            ])
             self.fields['method'].choices = method_choices
 
         event_timing_choices = (
-            ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT), "Immediately"),
-            ((EVENT_AS_SCHEDULE, FIRE_TIME_DEFAULT), "At a Specific Time"),
-            ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT), "Delay After Start"),
-            ((EVENT_AS_SCHEDULE, FIRE_TIME_CASE_PROPERTY), "Time in Case"),
-            ((EVENT_AS_SCHEDULE, FIRE_TIME_RANDOM), "Random Time"),
+            ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT, EVENT_TIMING_IMMEDIATE), "Immediately"),
+            ((EVENT_AS_SCHEDULE, FIRE_TIME_DEFAULT, None), "At a Specific Time"),
+            ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT, None), "Delay After Start"),
+            ((EVENT_AS_SCHEDULE, FIRE_TIME_CASE_PROPERTY, None), "Time in Case"),
+            ((EVENT_AS_SCHEDULE, FIRE_TIME_RANDOM, None), "Random Time"),
         )
-        event_timing_choices = [('{event_interpretation: "%s", fire_time_type: "%s"}'% (e[0][0], e[0][1]), e[1])
+        event_timing_choices = [(self._format_event_timing_choice(e[0][0], e[0][1], e[0][2]), e[1])
                                 for e in event_timing_choices]
         self.fields['event_timing'].choices = event_timing_choices
 
         start_section = crispy.Fieldset(
             'Start',
-            crispy.Field('case_type', data_bind="{ text: 'foo' }", placeholder="todo: dropdown"),
-            crispy.Field('start_reminder_on'),
+            crispy.Field('case_type', placeholder="todo: dropdown"),
+            crispy.Field(
+                'start_reminder_on',
+                data_bind="value: start_reminder_on",
+                css_class="input-xlarge"
+            ),
             crispy.Div(
                 BootstrapMultiField(
                     "When Case Property",
                     InlineField('start_property', placeholder="todo: dropdown"),
-                    'start_match_type',
-                    InlineField('start_value', style="margin-left: 5px;"),
+                    InlineField(
+                        'start_match_type',
+                        data_bind="value: start_match_type",
+                    ),
+                    InlineField(
+                        'start_value',
+                        style="margin-left: 5px;",
+                        data_bind="visible: isStartMatchValueVisible",
+                    ),
                 ),
                 BootstrapMultiField(
-                    "",
-                    InlineField('start_property_offset_type'),
-                    crispy.Div(
-                        InlineField(
-                            'start_property_offset',
-                            css_class='input-small',
-
-                        ),
-                        crispy.HTML('<p class="help-inline">days</p>'),
-                        style='display: inline; margin-left: 5px;'
-                    )
-                )
+                    "Begin Sending",
+                    InlineField(
+                        'start_property_offset_type',
+                        data_bind="value: start_property_offset_type",
+                    ),
+                    InlineField(
+                        'start_property_offset',
+                        css_class='input-mini',
+                        style="margin-left: 5px;",
+                        data_bind="visible: isStartPropertyOffsetVisible",
+                    ),
+                    crispy.HTML('<p class="help-inline" data-bind="visible: isStartPropertyOffsetVisible">day(s)</p>'),
+                ),
+                data_bind="visible: isStartReminderCaseProperty"
             ),
             crispy.Div(
                 crispy.Field('start_date'),
@@ -883,45 +918,80 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                     crispy.Div(
                         InlineField(
                             'start_date_offset',
-                            css_class='input-small',
+                            css_class='input-mini',
 
                         ),
-                        crispy.HTML('<p class="help-inline">days</p>'),
+                        crispy.HTML('<p class="help-inline">day(s)</p>'),
                         style='display: inline; margin-left: 5px;'
                     )
-                )
+                ),
+                data_bind="visible: isStartReminderCaseDate"
             )
         )
 
         recipient_section = crispy.Fieldset(
             "Recipient",
-            crispy.Field('recipient'),
+            crispy.Field(
+                'recipient',
+                data_bind="value: recipient",
+            ),
             BootstrapMultiField(
                 "When Case Property",
                 InlineField('recipient_case_match_property', placeholder="todo: dropdown"),
-                'recipient_case_match_type',
-                InlineField('recipient_case_match_value', style="margin-left: 5px;"),
+                InlineField(
+                    'recipient_case_match_type',
+                    data_bind="value: recipient_case_match_type",
+                ),
+                InlineField(
+                    'recipient_case_match_value',
+                    style="margin-left: 5px;",
+                    data_bind="visible: isRecipientCaseValueVisible",
+                ),
+                data_bind="visible: isRecipientSubcase",
             ),
         )
 
         message_section = crispy.Fieldset(
             "Message Content",
-            crispy.Field('method'),
-            crispy.Field('event_interpretation'),
+            crispy.Field('method', data_bind="value: method"),
+            crispy.Field('event_interpretation', data_bind="value: event_interpretation"),
             crispy.Field('events'),
-            crispy.HTML("< insert events here >"),
-            crispy.Field('event_timing'),
+            crispy.Div(data_bind="template: {name: 'event-template', foreach: eventObjects}"),
+            BootstrapMultiField(
+                "Timing",
+                InlineField('event_timing', data_bind="value: event_timing"),
+                crispy.Div(
+                    style="display: inline;",
+                    data_bind="template: {name: 'event-fire-template', foreach: eventObjects}"
+                ),
+            ),
+            crispy.Div(
+                style="display: inline;",
+                data_bind="template: {name: 'event-general-template', foreach: eventObjects}"
+            ),
         )
 
         repeat_section = crispy.Fieldset(
             "Repeat",
-            crispy.Field('repeat_type'),
-            crispy.Field('schedule_length'),
-            crispy.Field('max_iteration_count'),
+            crispy.Field('repeat_type', data_bind="value: repeat_type"),
+            crispy.Div(
+                crispy.Field('max_iteration_count'),
+                data_bind="visible: isMaxIterationCountVisible",
+            ),
+            BootstrapMultiField(
+                "Repeat Every",
+                InlineField('schedule_length'),
+                crispy.HTML('<p class="help-inline">day(s)</p>'),
+                data_bind="visible: isScheduleLengthVisible",
+            ),
             BootstrapMultiField(
                 "Stop Condition",
-                InlineField('stop_condition'),
-                InlineField('until')
+                InlineField('stop_condition', data_bind="value: stop_condition"),
+                InlineField(
+                    'until',
+                    style="margin-left: 5px;",
+                    data_bind="visible: isUntilVisible",
+                ),
             )
         )
 
@@ -954,6 +1024,116 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             )
         )
 
+    @property
+    def current_values(self):
+        current_values = {}
+        for field_name in self.fields.keys():
+            current_values[field_name] = self[field_name].value()
+        return current_values
+
+    @property
+    def relevant_choices(self):
+        return {
+            'MATCH_ANY_VALUE': MATCH_ANY_VALUE,
+            'START_REMINDER_ON_CASE_PROPERTY': START_REMINDER_ON_CASE_PROPERTY,
+            'START_REMINDER_ON_CASE_DATE': START_REMINDER_ON_CASE_DATE,
+            'RECIPIENT_CASE': RECIPIENT_CASE,
+            'RECIPIENT_SUBCASE': RECIPIENT_SUBCASE,
+            'METHOD_SMS': METHOD_SMS,
+            'METHOD_SMS_CALLBACK': METHOD_SMS_CALLBACK,
+            'METHOD_SMS_SURVEY': METHOD_SMS_SURVEY,
+            'METHOD_IVR_SURVEY': METHOD_IVR_SURVEY,
+            'START_PROPERTY_OFFSET_DELAY': START_PROPERTY_OFFSET_DELAY,
+            'START_PROPERTY_OFFSET_IMMEDIATE': START_PROPERTY_OFFSET_IMMEDIATE,
+            'FIRE_TIME_DEFAULT': FIRE_TIME_DEFAULT,
+            'FIRE_TIME_CASE_PROPERTY': FIRE_TIME_CASE_PROPERTY,
+            'FIRE_TIME_RANDOM': FIRE_TIME_RANDOM,
+            'EVENT_AS_OFFSET': EVENT_AS_OFFSET,
+            'EVENT_AS_SCHEDULE': EVENT_AS_SCHEDULE,
+            'UI_SIMPLE_FIXED': UI_SIMPLE_FIXED,
+            'UI_COMPLEX': UI_COMPLEX,
+            'EVENT_TIMING_IMMEDIATE': EVENT_TIMING_IMMEDIATE,
+            'REPEAT_TYPE_NO': REPEAT_TYPE_NO,
+            'REPEAT_TYPE_INDEFINITE': REPEAT_TYPE_INDEFINITE,
+            'REPEAT_TYPE_SPECIFIC': REPEAT_TYPE_SPECIFIC,
+            'STOP_CONDITION_CASE_PROPERTY': STOP_CONDITION_CASE_PROPERTY,
+        }
+
+    @staticmethod
+    def _format_event_timing_choice(event_interpretation, fire_time_type, special=None):
+        return json.dumps({
+            'event_interpretation': event_interpretation,
+            'fire_time_type': fire_time_type,
+            'special': special,
+        })
+
+    def clean(self):
+        cleaned_data = super(SimpleScheduleCaseReminderForm, self).clean()
+
+        # cleaning Start Fieldset
+        start_reminder_on = cleaned_data['start_reminder_on']
+        if start_reminder_on == START_REMINDER_ON_CASE_PROPERTY:
+            cleaned_data['start_date'] = None
+            start_offset = (0 if cleaned_data['start_property_offset_type'] == START_PROPERTY_OFFSET_IMMEDIATE
+                            else abs(cleaned_data.get('start_property_offset', 0)))
+        else:
+            cleaned_data['start_property'] = None
+            cleaned_data['start_value'] = None
+            start_offset = abs(cleaned_data['start_date_offset'])
+            start_date_offset_type = cleaned_data['start_date_offset_type']
+            if start_date_offset_type == START_DATE_OFFSET_BEFORE:
+                start_offset = -start_offset
+        cleaned_data['start_offset'] = start_offset
+
+        # clean match values
+        if cleaned_data['start_match_type'] == MATCH_ANY_VALUE:
+            cleaned_data['start_value'] = None
+        if cleaned_data['recipient_case_match_type'] == MATCH_ANY_VALUE:
+            cleaned_data['recipient_case_match_value'] = None
+
+        return cleaned_data
+
+    @classmethod
+    def compute_initial(cls, reminder_handler):
+        initial = {}
+        fields = cls.__dict__['base_fields'].keys()
+        for field in fields:
+            try:
+                current_val = getattr(reminder_handler, field, Ellipsis)
+                if field == 'events':
+                    current_val = json.dumps([e.to_json() for e in current_val])
+                if current_val is not Ellipsis:
+                    initial[field] = current_val
+            except AttributeError:
+                pass
+
+        if reminder_handler.start_date is None:
+            start_reminder_on = START_REMINDER_ON_CASE_PROPERTY
+            initial['start_property_offset_type'] = (START_PROPERTY_OFFSET_IMMEDIATE
+                                                     if reminder_handler.start_offset == 0
+                                                     else START_PROPERTY_OFFSET_DELAY)
+        else:
+            start_reminder_on = START_REMINDER_ON_CASE_DATE
+            initial['start_date_offset_type'] = (START_DATE_OFFSET_BEFORE if reminder_handler.start_offset <= 0
+                                                 else START_DATE_OFFSET_AFTER)
+
+        start_offset = abs(reminder_handler.start_offset)
+
+        if reminder_handler.ui_type == UI_SIMPLE_FIXED and len(reminder_handler.events) > 0:
+            initial['event_timing'] = cls._format_event_timing_choice(
+                reminder_handler.event_interpretation,
+                reminder_handler.events[0].fire_time_type,
+                EVENT_TIMING_IMMEDIATE if reminder_handler.events[0].fire_time == time() else None,
+            )
+
+        initial.update({
+            'start_reminder_on': start_reminder_on,
+            'start_property_offset': start_offset,
+            'start_date_offset': start_offset,
+        })
+
+        return initial
+
 
 class CaseReminderEventForm(forms.Form):
     """
@@ -970,7 +1150,10 @@ class CaseReminderEventForm(forms.Form):
 
     # EVENT_AS_OFFSET: number of days after last fire
     # EVENT_AS_SCHEDULE: number of days since the current event cycle began
-    day_num = forms.IntegerField(required=False)
+    day_num = forms.IntegerField(
+        required=False,
+        widget=forms.HiddenInput,
+    )
 
     # EVENT_AS_OFFSET: number of HH:MM:SS after last fire
     # EVENT_AS_SCHEDULE: time of day
@@ -983,22 +1166,74 @@ class CaseReminderEventForm(forms.Form):
     )  # todo select2 of case properties
 
     time_window_length = forms.IntegerField(
+        label="Window Length (minutes)",
         required=False
     )
 
     # messages is visible when the method of the reminder is METHOD_SMS or METHOD_SMS_CALLBACK
     # value will be a dict of {language: message}
-    messages = forms.CharField(
+    message_data = forms.CharField(
         required=False,
         widget=forms.HiddenInput,
     )
 
     # callback_timeout_intervals is visible when method of reminder is METHOD_SMS_CALLBACK
     # a list of comma separated integers
-    callback_timeout_intervals = forms.CharField(required=False)
+    callback_timeout_intervals = forms.CharField(
+        required=False,
+        label="Timeouts",
+    )
 
     # form_unique_id is visible when the method of the reminder is SMS_SURVEY or IVR_SURVEY
-    form_unique_id = forms.CharField(required=False)  # todo select2 of forms
+    form_unique_id = forms.CharField(
+        required=False,
+        label="Survey",
+    )  # todo select2 of forms
+
+    def __init__(self, ui_type=None, *args, **kwargs):
+        super(CaseReminderEventForm, self).__init__(*args, **kwargs)
+
+        self.ui_type = ui_type
+
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = crispy.Layout(
+            crispy.Field('message_data', data_bind="value: message_data, attr: {id: ''}"),
+            crispy.Div(data_bind="template: {name: 'event-message-template', foreach: messageTranslations}, "
+                                 "visible: isMessageVisible"),
+            crispy.Div(
+                crispy.Field('form_unique_id', data_bind="value: form_unique_id, attr: {id: ''}"),
+                data_bind="visible: isSurveyVisible",
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'callback_timeout_intervals',
+                    data_bind="value: callback_timeout_intervals, attr: {id: ''}",
+                    placeholder="e.g. 30,60,180",
+                ),
+                data_bind="visible: isCallbackTimeoutsVisible",
+            ),
+        )
+
+        self.helper_fire_time = FormHelper()
+        self.helper_fire_time.form_tag = False
+        self.helper_fire_time.layout = crispy.Layout(
+            InlineField('fire_time', data_bind="value: fire_time, attr: {id: ''}, "
+                                               "visible: isFireTimeVisible"),
+            InlineField('fire_time_aux', data_bind="value: fire_time_aux, attr: {id: ''}, "
+                                                   "visible: isFireTimeAuxVisible"),
+        )
+
+        self.helper_general = FormHelper()
+        self.helper_general.form_tag = False
+        self.helper_general.layout = crispy.Layout(
+            crispy.Div(
+                crispy.Field('time_window_length', data_bind="value: time_window_length, attr: {id: ''}"),
+                data_bind="visible: isWindowLengthVisible",
+            ),
+            crispy.Field('fire_time_type', data_bind="value: fire_time_type, attr: {id: ''}"),
+            crispy.Field('day_num', data_bind="value: day_num, attr: {id: ''}"),
+        )
 
 
 class CaseReminderEventMessageForm(forms.Form):
@@ -1013,6 +1248,16 @@ class CaseReminderEventMessageForm(forms.Form):
         required=False,
         widget=forms.Textarea
     )
+
+    def __init__(self, *args, **kwargs):
+        super(CaseReminderEventMessageForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = crispy.Layout(
+            crispy.Field('language', data_bind="value: language"),
+            crispy.Field('message', data_bind="value: message"),
+        )
 
 
 def clean_selection(value):
