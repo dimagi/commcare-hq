@@ -108,6 +108,22 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin):
         extras = get_safe_read_kwargs()
         return db.get(docid, rev=rev, wrapper=cls.wrap, **extras)
 
+    @classmethod
+    def get_forms_by_user(cls, user, start=None, end=None):
+        """
+        Returns all forms submitted by user, from start to end dates,
+        if specified.
+        """
+        if start is not None:
+            startkey = [user.user_id, start.year, start.month, start.day]
+        else:
+            startkey = [user.user_id]
+        if end is not None:
+            endkey = [user.user_id, end.year, end.month, end.day, {}]
+        else:
+            endkey = [user.user_id, {}]
+        return cls.view("couchforms/by_user", startkey=startkey, endkey=endkey, reduce=False).all()
+
     @property
     def _form(self):
         return self[const.TAG_FORM]
