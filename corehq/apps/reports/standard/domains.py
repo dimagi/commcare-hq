@@ -241,7 +241,7 @@ def total_distinct_users(domains=None):
     query = {"in": {"domain.exact": domains}} if domains is not None else {"match_all": {}}
     q = {
         "query": query,
-        "filter": {"and": ADD_TO_ES_FILTER.get("forms", [])},
+        "filter": {"and": ADD_TO_ES_FILTER["forms"][:]},
     }
 
     res = es_query(q=q, facets=["form.meta.userID"], es_url=ES_URLS["forms"], size=0)
