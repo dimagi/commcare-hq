@@ -83,6 +83,10 @@ var ReminderEvent = function (eventData, choices, method, event_timing, event_in
     });
 
     self.fire_time_aux = ko.observable(eventData.fire_time_aux);
+    self.isFireTimeAuxVisible = ko.computed(function () {
+        return self.fire_time_type() === self.choices.FIRE_TIME_CASE_PROPERTY;
+    });
+
     self.time_window_length = ko.observable(eventData.time_window_length);
     self.callback_timeout_intervals = ko.observable(eventData.callback_timeout_intervals);
     self.isCallbackTimeoutsVisible = ko.computed(function () {
