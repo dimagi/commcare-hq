@@ -1039,15 +1039,15 @@ def edit_module_detail(req, domain, app_id, module_id):
     column['enum'] = _enum_to_dict(column['enum'])
     column['header'] = {lang: column['header']}
     column = DetailColumn.wrap(column)
-    detail = app.get_module(module_id).get_detail(detail_type)
+    detail = module.get_detail(detail_type)
 
-    if(column_id == -1):
+    if column_id == -1:
         detail.append_column(column)
     else:
         detail.update_column(column_id, column)
     app.save(resp)
-    column = detail.get_column(column_id)
-    if(ajax):
+
+    if ajax:
         return HttpResponse(json.dumps(resp))
     else:
         return back_to_main(req, domain, app_id=app_id, module_id=module_id)
@@ -1550,8 +1550,7 @@ def rearrange(req, domain, app_id, key):
     resp = {}
     module_id = None
 
-
-    if   "forms" == key:
+    if "forms" == key:
         to_module_id = int(req.POST['to_module_id'])
         from_module_id = int(req.POST['from_module_id'])
         if app.rearrange_forms(to_module_id, from_module_id, i, j) == 'case type conflict':
