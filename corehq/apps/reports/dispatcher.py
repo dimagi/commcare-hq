@@ -3,6 +3,7 @@ from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponseBadRequest
 from django.views.generic.base import View
 from django.utils.translation import ugettext
+import logging
 from corehq.apps.domain.decorators import login_and_domain_required, cls_to_view
 from dimagi.utils.decorators.datespan import datespan_in_request
 
@@ -262,6 +263,7 @@ class ExtendUrlPatternDispatcher(ProjectReportDispatcher):
 
                 if is_module_extend_urls_pattern:
                     module_list.append(module.__name__)
-            except ImportError:
-                return None
+            except ImportError as e:
+                logging.exception("ExtendUrlPatternDispatcher failed to import module: %s" % e)
+                continue
         return set(module_list)
