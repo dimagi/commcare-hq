@@ -1,23 +1,25 @@
 from __future__ import absolute_import
 
-import datetime
+import datetime, hashlib, logging, time
+from copy import copy
+from xml.etree import ElementTree
+
+from django.utils.datastructures import SortedDict
+from couchdbkit.exceptions import PreconditionFailed
 from couchdbkit.ext.django.schema import *
-import couchforms.const as const
+from couchdbkit.resource import ResourceNotFound
+
 from dimagi.utils.indicators import ComputedDocumentMixin
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.database import get_safe_read_kwargs, SafeSaveDocument
-from xml.etree import ElementTree
-from django.utils.datastructures import SortedDict
-from couchdbkit.resource import ResourceNotFound
-import logging
-import hashlib
-from copy import copy
-from couchforms.signals import xform_archived, xform_unarchived
 from dimagi.utils.mixins import UnicodeMixIn
+from dimagi.utils.couch.database import get_db, iter_docs
+
+from couchforms.signals import xform_archived, xform_unarchived
 from couchforms.const import ATTACHMENT_NAME
-from couchdbkit.exceptions import PreconditionFailed
-import time
+from couchforms import const
+
 
 def doc_types():
     """
@@ -73,6 +75,7 @@ class Metadata(DocumentSchema):
     username = StringProperty()
     appVersion = StringProperty()
 
+
 class XFormOperation(DocumentSchema):
     """
     Simple structure to represent something happening to a form.
@@ -82,6 +85,7 @@ class XFormOperation(DocumentSchema):
     user = StringProperty()
     date = DateTimeProperty(default=datetime.datetime.utcnow)
     operation = StringProperty() # e.g. "archived", "unarchived"
+
 
 class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin):
     """An XForms instance."""
@@ -111,18 +115,27 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin):
     @classmethod
     def get_forms_by_user(cls, user, start=None, end=None):
         """
-        Returns all forms submitted by user, from start to end dates,
-        if specified.
+        Returns a generator object of all forms submitted by user,
+        from start to end dates, if specified.
         """
+        # Thew couchforms/by_user view returns a zero-indexed month
+        # correct for this by subtracting 1 from month
         if start is not None:
-            startkey = [user.user_id, start.year, start.month, start.day]
+            startkey = [user.user_id, start.year, start.month - 1, start.day]
         else:
             startkey = [user.user_id]
         if end is not None:
-            endkey = [user.user_id, end.year, end.month, end.day, {}]
+            endkey = [user.user_id, end.year, end.month - 1, end.day, {}]
         else:
             endkey = [user.user_id, {}]
-        return cls.view("couchforms/by_user", startkey=startkey, endkey=endkey, reduce=False).all()
+        results = cls.view(
+            "couchforms/by_user",
+            startkey=startkey,
+            endkey=endkey,
+            reduce=False
+        ).all()
+        docs = iter_docs(cls.get_db(), [r['id'] for r in results])
+        return (cls(doc) for doc in docs)
 
     @property
     def _form(self):
@@ -291,6 +304,7 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin):
         XFormInstance.save(self) # subclasses explicitly set the doc type so force regular save
         xform_unarchived.send(sender="couchforms", xform=self)
 
+
 class XFormError(XFormInstance):
     """
     Instances that have errors go here.
@@ -302,6 +316,7 @@ class XFormError(XFormInstance):
         # XFormInstance we'll force the doc_type to change. 
         self["doc_type"] = "XFormError" 
         super(XFormError, self).save(*args, **kwargs)
+
         
 class XFormDuplicate(XFormError):
     """
@@ -314,6 +329,7 @@ class XFormDuplicate(XFormError):
         self["doc_type"] = "XFormDuplicate" 
         # we can't use super because XFormError also sets the doc type
         XFormInstance.save(self, *args, **kwargs)
+
 
 class XFormDeprecated(XFormError):
     """
@@ -329,6 +345,7 @@ class XFormDeprecated(XFormError):
         XFormInstance.save(self, *args, **kwargs)
         # should raise a signal saying that this thing got deprecated
 
+
 class XFormArchived(XFormError):
     """
     Archived forms don't show up in reports
@@ -338,6 +355,7 @@ class XFormArchived(XFormError):
         # force set the doc type and call the right superclass
         self["doc_type"] = "XFormArchived"
         XFormInstance.save(self, *args, **kwargs)
+
 
 class SubmissionErrorLog(XFormError):
     """
