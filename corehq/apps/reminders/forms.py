@@ -1,3 +1,4 @@
+import copy
 import json
 import re
 from crispy_forms.bootstrap import InlineField, Accordion, AccordionGroup, FormActions, StrictButton
@@ -841,11 +842,12 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         self.domain = domain
 
         if is_previewer:
-            method_previewer_choices = [
+            method_choices = copy.copy(self.fields['method'].choices)
+            method_choices.extend([
                 (METHOD_IVR_SURVEY, "IVR Survey"),
                 (METHOD_SMS_CALLBACK, "SMS Expecting Callback"),
-            ]
-            self.fields['method'].choices.extend(method_previewer_choices)
+            ])
+            self.fields['method'].choices = method_choices
 
         event_timing_choices = (
             ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT), "Immediately"),
