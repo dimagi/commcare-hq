@@ -75,7 +75,13 @@ var ReminderEvent = function (eventData, choices, method, event_timing, event_in
     });
 
     self.day_num = ko.observable(eventData.day_num);
+
     self.fire_time = ko.observable(eventData.fire_time);
+    self.isFireTimeVisible = ko.computed(function () {
+        return ((self.fire_time_type() === self.choices.FIRE_TIME_DEFAULT) && !self.isEventImmediate())
+            || self.fire_time_type() === self.choices.FIRE_TIME_RANDOM;
+    });
+
     self.fire_time_aux = ko.observable(eventData.fire_time_aux);
     self.time_window_length = ko.observable(eventData.time_window_length);
     self.callback_timeout_intervals = ko.observable(eventData.callback_timeout_intervals);

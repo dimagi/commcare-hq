@@ -1190,8 +1190,9 @@ class CaseReminderEventForm(forms.Form):
         self.helper_fire_time = FormHelper()
         self.helper_fire_time.form_tag = False
         self.helper_fire_time.layout = crispy.Layout(
+            InlineField('fire_time', data_bind="value: fire_time, attr: {id: ''}, "
+                                               "visible: isFireTimeVisible"),
             crispy.Field('fire_time_type', data_bind="value: fire_time_type, attr: {id: ''}"),
-            crispy.Field('fire_time', data_bind="value: fire_time, attr: {id: ''}"),
             crispy.Field('fire_time_aux', data_bind="value: fire_time_aux, attr: {id: ''}"),
             crispy.Field('time_window_length', data_bind="value: time_window_length, attr: {id: ''}"),
             crispy.Field('day_num', data_bind="value: day_num, attr: {id: ''}"),
