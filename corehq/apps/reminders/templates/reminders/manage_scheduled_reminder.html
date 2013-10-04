@@ -3,9 +3,42 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 
+{% block js %}{{ block.super }}
+    <script src="{% static 'reminders/ko/reminders.manage.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script>
+        var manageRemindersModel = new ManageRemindersViewModel(
+            {{ form.current_values|JSON }},
+            {{ form.relevant_choices|JSON }},
+            '{{ ui_type }}'
+        );
+        ko.applyBindings(manageRemindersModel, $('#manage-reminders-form').get(0));
+        manageRemindersModel.init();
+    </script>
+{% endblock %}
+
 {% block main_column %}
-    <form class="form form-horizontal"
+    <form id="manage-reminders-form"
+          class="form form-horizontal"
           method="post">
         {% crispy form %}
     </form>
+
+    <script type="text/html" id="event-template">
+        {% crispy event_form %}
+    </script>
+
+    <script type="text/html" id="event-message-template">
+        {% crispy message_form %}
+    </script>
+
+    <script type="text/html" id="event-fire-template">
+        {% crispy event_form event_form.helper_fire_time %}
+    </script>
+
+    <script type="text/html" id="event-general-template">
+        {% crispy event_form event_form.helper_general %}
+    </script>
 {% endblock %}
