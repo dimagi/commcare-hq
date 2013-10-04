@@ -649,6 +649,10 @@ START_PROPERTY_OFFSET_IMMEDIATE = 'offset_immediate'
 
 EVENT_TIMING_IMMEDIATE = 'immediate'
 
+REPEAT_TYPE_NO = 'no_repeat'
+REPEAT_TYPE_INDEFINITE = 'indefinite'
+REPEAT_TYPE_SPECIFIC = 'specific'
+
 
 class SimpleScheduleCaseReminderForm(forms.Form):
     """
@@ -792,9 +796,9 @@ class SimpleScheduleCaseReminderForm(forms.Form):
     repeat_type = forms.ChoiceField(
         label="Repeat Reminder",
         choices=(
-            ('no_repeat', "No"),  # reminder_type = ONE_TIME
-            ('indefinite', "Indefinitely"),  # reminder_type = DEFAULT, max_iteration_count = -1
-            ('specific', "Specific Number of Times"),
+            (REPEAT_TYPE_NO, "No"),  # reminder_type = ONE_TIME
+            (REPEAT_TYPE_INDEFINITE, "Indefinitely"),  # reminder_type = DEFAULT, max_iteration_count = -1
+            (REPEAT_TYPE_SPECIFIC, "Specific Number of Times"),
         )
     )
     # shown if repeat_type != 'no_repeat'
@@ -1034,6 +1038,9 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             'UI_SIMPLE_FIXED': UI_SIMPLE_FIXED,
             'UI_COMPLEX': UI_COMPLEX,
             'EVENT_TIMING_IMMEDIATE': EVENT_TIMING_IMMEDIATE,
+            'REPEAT_TYPE_NO': REPEAT_TYPE_NO,
+            'REPEAT_TYPE_INDEFINITE': REPEAT_TYPE_INDEFINITE,
+            'REPEAT_TYPE_SPECIFIC': REPEAT_TYPE_SPECIFIC,
         }
 
     @staticmethod
