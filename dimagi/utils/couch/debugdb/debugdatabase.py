@@ -215,7 +215,7 @@ class DebugViewResults57(ViewResults):
             'total_rows': len(self._result_cache.get('rows', [])),
             'offset': self._result_cache.get('offset', 0),
             'rows': self._result_cache.get('total_rows', 0),
-            'result_cached': result_cached
+            'result_cached': result_cached,
             'include_docs': self.params.get('include_docs', False)
         })
 
