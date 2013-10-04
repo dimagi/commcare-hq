@@ -175,8 +175,17 @@ def get_report(ReportClass, month=None, year=None):
     class Report(ReportClass):
         snapshot = None
         report_class = ReportClass
+
         def __init__(self, *args, **kwargs):
             self.slugs, self._headers = [list(tup) for tup in zip(*self.model.method_map)]
+
+        @property
+        def month(self):
+            return month
+            
+        @property
+        def year(self):
+            return year
 
         @property
         def headers(self):

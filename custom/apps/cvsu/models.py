@@ -344,7 +344,7 @@ class UnicefMalawiFluff(fluff.IndicatorDocument):
         date_provider=date_reported,
         filter=xcalc.FormPropertyFilter(xmlns=REPORT_INCIDENT_XMLNS),
         indicator_calculator=IntegerPropertyReference(
-            'form/nr_children_in_family', transform=lambda x: 0 if x == 999 else x)  # unknown value = 999
+            'form/nr_children_in_household', transform=lambda x: 0 if x == 999 else x)  # unknown value = 999
     )
 
     abuse_children_abused = SimpleCalculator(

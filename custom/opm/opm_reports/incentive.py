@@ -21,7 +21,7 @@ class Worker(object):
         ('block', "Block Name"),
         ('women_registered', "No. of women registered under BCSP"),
         ('children_registered', "No. of children registered under BCSP"),
-        ('service_forms_count', "Submission of Service Availability form"),
+        ('service_forms_count', "Service Availability Form Submitted"),
         ('growth_monitoring_count', "No. of Growth monitoring Sections Filled for eligible children"),
         ('service_forms_cash', "Payment for Service Availability Form (in Rs.)"),
         ('growth_monitoring_cash', "Payment for Growth Monitoring Forms (in Rs.)"),
@@ -42,11 +42,15 @@ class Worker(object):
                 (OpmUserFluff._doc_type, worker._id))
         except ResourceNotFound:
             raise InvalidRow
-        self.name = self.fluff_doc.name
-        self.awc_name = self.fluff_doc.awc_name
-        self.bank_name = self.fluff_doc.bank_name
-        self.account_number = self.fluff_doc.account_number
-        self.block = self.fluff_doc.block
+
+        def fluff_attr(attr):
+            return getattr(self.fluff_doc, attr, '')
+
+        self.name = fluff_attr('name')
+        self.awc_name = fluff_attr('awc_name')
+        self.bank_name = fluff_attr('bank_name')
+        self.account_number = fluff_attr('account_number')
+        self.block = fluff_attr('block')
 
         def get_result(calculator):
             return OpmFormFluff.get_result(
@@ -66,11 +70,12 @@ class Worker(object):
             [DOMAIN, worker._id],
             report.date_range,
         )['total']
-        self.service_forms_count = get_result('service_forms')
+        self.service_forms_count = 'yes' if get_result('service_forms') else 'no'
         self.growth_monitoring_count = get_result('growth_monitoring')
 
         FIXTURES = get_fixture_data()
-        self.service_forms_cash = self.service_forms_count * FIXTURES['service_form_submitted']
+        self.service_forms_cash = FIXTURES['service_form_submitted'] \
+                if self.service_forms_count == 'yes' else 0
         self.growth_monitoring_cash = self.growth_monitoring_count * FIXTURES['child_growth_monitored']
         self.month_total = self.service_forms_cash + self.growth_monitoring_cash
         if report.last_month_totals is not None:

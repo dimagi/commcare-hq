@@ -8,6 +8,9 @@
     <script src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
     <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
     <script src="{% static 'app_manager/js/lcs-merge.js' %}"></script>
+    <script>
+    window.FEATURE_enable_enum_image = {{ request.couch_user.is_previewer|BOOL }};
+    </script>
     <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
 {% endblock %}
 {% block head %}{{ block.super }}
