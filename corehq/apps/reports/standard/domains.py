@@ -232,10 +232,7 @@ def es_domain_query(params=None, facets=None, domains=None, start_at=None, size=
 
     q["sort"] = sort if sort else [{"name" : {"order": "asc"}},]
 
-    if fields:
-        q["fields"] = fields
-
-    return es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search', start_at, size)
+    return es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search', start_at, size, fields=fields)
 
 def total_distinct_users(domains=None):
     """
