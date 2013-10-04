@@ -63,20 +63,6 @@ var ReminderEvent = function (eventData, choices, method, event_timing) {
     self.method = method;
     self.event_timing = event_timing;
 
-    self.isMessageVisible = ko.computed(function () {
-        return (self.method() === self.choices.METHOD_SMS)
-            || (self.method() === self.choices.METHOD_SMS_CALLBACK);
-    });
-
-    self.isSurveyVisible = ko.computed(function () {
-        return (self.method() === self.choices.METHOD_SMS_SURVEY)
-            || (self.method() === self.choices.METHOD_IVR_SURVEY);
-    });
-
-    self.isCallbackTimeoutsVisible = ko.computed(function () {
-        return self.method() === self.choices.METHOD_SMS_CALLBACK;
-    });
-
     self.fire_time_type = ko.computed(function () {
         var event_timing = $.parseJSON(self.event_timing());
         return event_timing.fire_time_type;
@@ -87,13 +73,24 @@ var ReminderEvent = function (eventData, choices, method, event_timing) {
     self.fire_time_aux = ko.observable(eventData.fire_time_aux);
     self.time_window_length = ko.observable(eventData.time_window_length);
     self.callback_timeout_intervals = ko.observable(eventData.callback_timeout_intervals);
+    self.isCallbackTimeoutsVisible = ko.computed(function () {
+        return self.method() === self.choices.METHOD_SMS_CALLBACK;
+    });
 
     self.form_unique_id = ko.observable(eventData.form_unique_id);
+    self.isSurveyVisible = ko.computed(function () {
+        return (self.method() === self.choices.METHOD_SMS_SURVEY)
+            || (self.method() === self.choices.METHOD_IVR_SURVEY);
+    });
 
     self.message_data = ko.observable();
     self.messageTranslations = ko.observable(_.map(eventData.message, function (message, language) {
         return new ReminderMessage(message, language);
     }));
+    self.isMessageVisible = ko.computed(function () {
+        return (self.method() === self.choices.METHOD_SMS)
+            || (self.method() === self.choices.METHOD_SMS_CALLBACK);
+    });
 };
 
 var ReminderMessage = function (message, language) {
