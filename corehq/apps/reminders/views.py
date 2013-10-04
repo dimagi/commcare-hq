@@ -9,7 +9,7 @@ from django.shortcuts import render
 
 from django.utils.translation import ugettext as _, ugettext_noop
 
-from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm, SurveySampleForm, EditContactForm, RemindersInErrorForm, KeywordForm, OneTimeReminderForm, SimpleScheduleCaseReminderForm
+from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm, SurveySampleForm, EditContactForm, RemindersInErrorForm, KeywordForm, OneTimeReminderForm, SimpleScheduleCaseReminderForm, CaseReminderEventForm, CaseReminderEventMessageForm
 from corehq.apps.reminders.models import (
     CaseReminderHandler,
     CaseReminderEvent,
@@ -447,6 +447,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
     urlname = 'create_reminder_schedule'
     page_title = ugettext_noop("Schedule Reminder")
     template_name = 'reminders/manage_scheduled_reminder.html'
+    ui_type = UI_SIMPLE_FIXED
 
     @property
     @memoized
@@ -456,8 +457,13 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
                 self.request.POST,
                 domain=self.domain,
                 is_previewer=self.is_previewer,
+                ui_type=self.ui_type,
             )
-        return SimpleScheduleCaseReminderForm(is_previewer=self.is_previewer, domain=self.domain)
+        return SimpleScheduleCaseReminderForm(
+            is_previewer=self.is_previewer,
+            domain=self.domain,
+            ui_type=self.ui_type,
+        )
 
     @property
     def is_previewer(self):
@@ -476,6 +482,9 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
     def page_context(self):
         return {
             'form': self.schedule_form,
+            'event_form': CaseReminderEventForm(ui_type=self.ui_type),
+            'message_form': CaseReminderEventMessageForm(),
+            'ui_type': self.ui_type,
         }
 
     @method_decorator(reminders_permission)
@@ -518,6 +527,10 @@ class EditScheduledReminderView(CreateScheduledReminderView):
             return CaseReminderHandler.get(self.handler_id)
         except ResourceNotFound:
             raise Http404()
+
+    @property
+    def ui_type(self):
+        return self.reminder_handler.ui_type
 
     @property
     def page_context(self):

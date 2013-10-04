@@ -47,7 +47,9 @@ from .models import (
     ON_DATETIME,
     SEND_NOW,
     SEND_LATER,
-    RECIPIENT_USER_GROUP
+    RECIPIENT_USER_GROUP,
+    UI_SIMPLE_FIXED,
+    UI_COMPLEX,
 )
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
@@ -836,10 +838,11 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         required=False,
     )
 
-    def __init__(self, data=None, is_previewer=False, domain=None, *args, **kwargs):
+    def __init__(self, data=None, is_previewer=False, domain=None, ui_type=None, *args, **kwargs):
         super(SimpleScheduleCaseReminderForm, self).__init__(data, *args, **kwargs)
 
         self.domain = domain
+        self.ui_type = ui_type
 
         if is_previewer:
             method_choices = copy.copy(self.fields['method'].choices)
@@ -1016,6 +1019,8 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             'FIRE_TIME_RANDOM': FIRE_TIME_RANDOM,
             'EVENT_AS_OFFSET': EVENT_AS_OFFSET,
             'EVENT_AS_SCHEDULE': EVENT_AS_SCHEDULE,
+            'UI_SIMPLE_FIXED': UI_SIMPLE_FIXED,
+            'UI_COMPLEX': UI_COMPLEX,
         }
 
     def clean(self):

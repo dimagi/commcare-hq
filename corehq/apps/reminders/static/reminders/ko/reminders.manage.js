@@ -1,8 +1,9 @@
-var ManageRemindersViewModel = function (initial, choices) {
+var ManageRemindersViewModel = function (initial, choices, ui_type) {
     'use strict';
     var self = this;
 
     self.choices = choices || {};
+    self.ui_type = ui_type;
 
     self.start_reminder_on = ko.observable(initial.start_reminder_on);
     self.isStartReminderCaseProperty = ko.computed(function () {
