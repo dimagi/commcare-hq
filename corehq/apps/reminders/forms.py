@@ -1143,6 +1143,7 @@ class CaseReminderEventForm(forms.Form):
     )  # todo select2 of case properties
 
     time_window_length = forms.IntegerField(
+        label="Window Length (minutes)",
         required=False
     )
 
