@@ -60,7 +60,7 @@ def get_stats_data(domains, histo_type, datespan, interval="day"):
                 ],
             },
         }
-        q["filter"]["and"].extend(ADD_TO_ES_FILTER.get(histo_type, []))
+        q["filter"]["and"].extend(ADD_TO_ES_FILTER.get(histo_type, [])[:])
 
         return es_query(q=q, es_url=ES_URLS[histo_type], size=1)["hits"]["total"]
 
