@@ -257,7 +257,7 @@ class ExtendUrlPatternDispatcher(ProjectReportDispatcher):
         domains = get_domain_module_map()
         for module_name in set(domains.values()):
             try:
-                module = import_module(module_name) if module_name else None
+                module = import_module(module_name)
                 is_module_extend_urls_pattern = getattr(module, self.map_name, ())
 
                 if is_module_extend_urls_pattern:
