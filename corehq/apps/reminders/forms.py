@@ -859,7 +859,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             ((EVENT_AS_SCHEDULE, FIRE_TIME_CASE_PROPERTY), "Time in Case"),
             ((EVENT_AS_SCHEDULE, FIRE_TIME_RANDOM), "Random Time"),
         )
-        event_timing_choices = [('{event_interpretation: "%s", fire_time_type: "%s"}'% (e[0][0], e[0][1]), e[1])
+        event_timing_choices = [(self._format_event_timing_choice(e[0][0], e[0][1]), e[1])
                                 for e in event_timing_choices]
         self.fields['event_timing'].choices = event_timing_choices
 
@@ -944,11 +944,12 @@ class SimpleScheduleCaseReminderForm(forms.Form):
 
         message_section = crispy.Fieldset(
             "Message Content",
-            crispy.Field('method'),
-            crispy.Field('event_interpretation'),
+            crispy.Field('method', data_bind="value: method"),
+            crispy.Field('event_interpretation', data_bind="value: event_interpretation"),
             crispy.Field('events'),
-            crispy.HTML("< insert events here >"),
-            crispy.Field('event_timing'),
+            crispy.Div(data_bind="template: {name: 'event-template', foreach: eventObjects}"),
+            crispy.Field('event_timing', data_bind="value: event_timing"),
+            crispy.Div(data_bind="template: {name: 'event-fire-template', foreach: eventObjects}"),
         )
 
         repeat_section = crispy.Fieldset(
@@ -1023,6 +1024,13 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             'UI_COMPLEX': UI_COMPLEX,
         }
 
+    @staticmethod
+    def _format_event_timing_choice(event_interpretation, fire_time_type):
+        return json.dumps({
+            'event_interpretation': event_interpretation,
+            'fire_time_type': fire_time_type,
+        })
+
     def clean(self):
         cleaned_data = super(SimpleScheduleCaseReminderForm, self).clean()
 
@@ -1075,6 +1083,12 @@ class SimpleScheduleCaseReminderForm(forms.Form):
 
         start_offset = abs(reminder_handler.start_offset)
 
+        if reminder_handler.ui_type == UI_SIMPLE_FIXED and len(reminder_handler.events) > 0:
+            initial['event_timing'] = cls._format_event_timing_choice(
+                reminder_handler.event_interpretation,
+                reminder_handler.events[0].fire_time_type,
+            )
+
         initial.update({
             'start_reminder_on': start_reminder_on,
             'start_property_offset': start_offset,
@@ -1099,7 +1113,10 @@ class CaseReminderEventForm(forms.Form):
 
     # EVENT_AS_OFFSET: number of days after last fire
     # EVENT_AS_SCHEDULE: number of days since the current event cycle began
-    day_num = forms.IntegerField(required=False)
+    day_num = forms.IntegerField(
+        required=False,
+        widget=forms.HiddenInput,
+    )
 
     # EVENT_AS_OFFSET: number of HH:MM:SS after last fire
     # EVENT_AS_SCHEDULE: time of day
@@ -1117,17 +1134,58 @@ class CaseReminderEventForm(forms.Form):
 
     # messages is visible when the method of the reminder is METHOD_SMS or METHOD_SMS_CALLBACK
     # value will be a dict of {language: message}
-    messages = forms.CharField(
+    message_data = forms.CharField(
         required=False,
         widget=forms.HiddenInput,
     )
 
     # callback_timeout_intervals is visible when method of reminder is METHOD_SMS_CALLBACK
     # a list of comma separated integers
-    callback_timeout_intervals = forms.CharField(required=False)
+    callback_timeout_intervals = forms.CharField(
+        required=False,
+        label="Timeouts",
+    )
 
     # form_unique_id is visible when the method of the reminder is SMS_SURVEY or IVR_SURVEY
-    form_unique_id = forms.CharField(required=False)  # todo select2 of forms
+    form_unique_id = forms.CharField(
+        required=False,
+        label="Survey",
+    )  # todo select2 of forms
+
+    def __init__(self, ui_type=None, *args, **kwargs):
+        super(CaseReminderEventForm, self).__init__(*args, **kwargs)
+
+        self.ui_type = ui_type
+
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = crispy.Layout(
+            crispy.Field('message_data', data_bind="value: message_data, attr: {id: ''}"),
+            crispy.Div(data_bind="template: {name: 'event-message-template', foreach: messageTranslations}, "
+                                 "visible: isMessageVisible"),
+            crispy.Div(
+                crispy.Field('form_unique_id', data_bind="value: form_unique_id, attr: {id: ''}"),
+                data_bind="visible: isSurveyVisible",
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'callback_timeout_intervals',
+                    data_bind="value: callback_timeout_intervals, attr: {id: ''}",
+                    placeholder="e.g. 30,60,180",
+                ),
+                data_bind="visible: isCallbackTimeoutsVisible",
+            ),
+        )
+
+        self.fire_helper = FormHelper()
+        self.fire_helper.form_tag = False
+        self.fire_helper.layout = crispy.Layout(
+            crispy.Field('day_num', data_bind="value: day_num, attr: {id: ''}"),
+            crispy.Field('fire_time_type', data_bind="value: fire_time_type, attr: {id: ''}"),
+            crispy.Field('fire_time', data_bind="value: fire_time, attr: {id: ''}"),
+            crispy.Field('fire_time_aux', data_bind="value: fire_time_aux, attr: {id: ''}"),
+            crispy.Field('time_window_length', data_bind="value: time_window_length, attr: {id: ''}"),
+        )
 
 
 class CaseReminderEventMessageForm(forms.Form):
@@ -1142,6 +1200,16 @@ class CaseReminderEventMessageForm(forms.Form):
         required=False,
         widget=forms.Textarea
     )
+
+    def __init__(self, *args, **kwargs):
+        super(CaseReminderEventMessageForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = crispy.Layout(
+            crispy.Field('language', data_bind="value: language"),
+            crispy.Field('message', data_bind="value: message"),
+        )
 
 
 def clean_selection(value):

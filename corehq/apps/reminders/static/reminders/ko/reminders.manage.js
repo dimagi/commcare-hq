@@ -32,4 +32,73 @@ var ManageRemindersViewModel = function (initial, choices, ui_type) {
     self.isRecipientCaseValueVisible = ko.computed(function () {
         return self.recipient_case_match_type() !== self.choices.MATCH_ANY_VALUE;
     });
+
+    self.method = ko.observable(initial.method);
+    self.eventObjects = ko.observable();
+    self.events = ko.observable();
+    self.event_timing = ko.observable(initial.event_timing);
+
+    self.event_interpretation = ko.computed(function () {
+        var event_timing = $.parseJSON(self.event_timing());
+        return event_timing.event_interpretation;
+    });
+
+    self.init = function () {
+        var events = $.parseJSON(initial.events || '[]');
+        if (self.ui_type === self.choices.UI_SIMPLE_FIXED) {
+            // only use the first event in the list
+            events = [events[0]];
+        }
+        self.eventObjects(_.map(events, function (event) {
+            return new ReminderEvent(event, self.choices, self.method, self.event_timing);
+        }));
+    }
+
+};
+
+var ReminderEvent = function (eventData, choices, method, event_timing) {
+    'use strict';
+    var self = this;
+    self.choices = choices;
+    self.method = method;
+    self.event_timing = event_timing;
+
+    self.isMessageVisible = ko.computed(function () {
+        return (self.method() === self.choices.METHOD_SMS)
+            || (self.method() === self.choices.METHOD_SMS_CALLBACK);
+    });
+
+    self.isSurveyVisible = ko.computed(function () {
+        return (self.method() === self.choices.METHOD_SMS_SURVEY)
+            || (self.method() === self.choices.METHOD_IVR_SURVEY);
+    });
+
+    self.isCallbackTimeoutsVisible = ko.computed(function () {
+        return self.method() === self.choices.METHOD_SMS_CALLBACK;
+    });
+
+    self.fire_time_type = ko.computed(function () {
+        var event_timing = $.parseJSON(self.event_timing());
+        return event_timing.fire_time_type;
+    });
+
+    self.day_num = ko.observable(eventData.day_num);
+    self.fire_time = ko.observable(eventData.fire_time);
+    self.fire_time_aux = ko.observable(eventData.fire_time_aux);
+    self.time_window_length = ko.observable(eventData.time_window_length);
+    self.callback_timeout_intervals = ko.observable(eventData.callback_timeout_intervals);
+
+    self.form_unique_id = ko.observable(eventData.form_unique_id);
+
+    self.message_data = ko.observable();
+    self.messageTranslations = ko.observable(_.map(eventData.message, function (message, language) {
+        return new ReminderMessage(message, language);
+    }));
+};
+
+var ReminderMessage = function (message, language) {
+    'use strict';
+    var self = this;
+    self.language = ko.observable(language);
+    self.message = ko.observable(message);
 };

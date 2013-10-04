@@ -25,4 +25,16 @@
           method="post">
         {% crispy form %}
     </form>
+
+    <script type="text/html" id="event-template">
+        {% crispy event_form %}
+    </script>
+
+    <script type="text/html" id="event-message-template">
+        {% crispy message_form %}
+    </script>
+
+    <script type="text/html" id="event-fire-template">
+        {% crispy event_form event_form.fire_helper %}
+    </script>
 {% endblock %}
