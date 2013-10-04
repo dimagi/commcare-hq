@@ -986,8 +986,12 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             ),
             BootstrapMultiField(
                 "Stop Condition",
-                InlineField('stop_condition'),
-                InlineField('until')
+                InlineField('stop_condition', data_bind="value: stop_condition"),
+                InlineField(
+                    'until',
+                    style="margin-left: 5px;",
+                    data_bind="visible: isUntilVisible",
+                ),
             )
         )
 

@@ -50,6 +50,12 @@ var ManageRemindersViewModel = function (initial, choices, ui_type) {
     self.isMaxIterationCountVisible = ko.computed(function () {
         return self.repeat_type() === self.choices.REPEAT_TYPE_SPECIFIC;
     });
+
+    self.stop_condition = ko.observable(initial.stop_condition);
+    self.isUntilVisible = ko.computed(function () {
+        return self.stop_condition() === self.choices.STOP_CONDITION_CASE_PROPERTY;
+    });
+
     self.init = function () {
         var events = $.parseJSON(initial.events || '[]');
         if (self.ui_type === self.choices.UI_SIMPLE_FIXED) {
