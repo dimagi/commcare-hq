@@ -1,9 +1,13 @@
-from corehq.apps.sms.models import SMSLog
+from corehq.apps.reminders.models import CaseReminder
+from corehq.apps.sms.models import SMSLog, WORKFLOW_REMINDER
 from corehq.pillows.mappings.sms_mapping import SMS_MAPPING, SMS_INDEX
+from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.listener import AliasedElasticPillow
 from django.conf import settings
 
+CUSTOM_DOMAINS = [k for k, v in settings.DOMAIN_MODULE_MAP.items() if v == 'custom.trialconnect']
+TC_STUB = 'tc__'  # stub to user for prepending key names in elasticsearch docs for fields needed for trialconnect
 
 class SMSPillow(AliasedElasticPillow):
     """
@@ -66,3 +70,43 @@ class SMSPillow(AliasedElasticPillow):
 
     def get_type_string(self, doc_dict):
         return self.es_type
+
+    def needs_custom_transform(self, doc_dict):
+        return doc_dict.get("workflow") == WORKFLOW_REMINDER and doc_dict["domain"] in CUSTOM_DOMAINS
+
+    def add_case_data(self, doc_dict):
+        reminder_id = doc_dict.get("reminder_id")
+        reminder = get_db().get(reminder_id) if reminder_id else {}
+        case_id = reminder.get('case_id')
+        case = get_db().get(case_id) if case_id else {}
+        doc_dict[TC_STUB + 'case_data'] = {
+            "case_id": case_id,
+            "case_type": case.get("case_type"),
+            "response_state": case.get("response_state") # todo: need to get response_state at time of sms log
+        }
+        return doc_dict
+
+    def add_session_data(self, doc_dict):
+        session_id = doc_dict.get('xforms_session_couch_id')
+        session = get_db().get(session_id) if session_id else {}
+        reminder_id = session.get("reminder_id")
+        reminder = get_db().get(reminder_id) if reminder_id else {}
+        case_id = reminder.get('case_id')
+        case = get_db().get(case_id) if case_id else {}
+        xform_id = session.get('submission_id')
+        doc_dict[TC_STUB + 'session_data'] = {
+            "session_id": session_id,
+            "case_type": case.get("case_type"),
+            "response_state": get_db().get(xform_id).get('_form', {}).get('response_state') if xform_id else None
+        }
+        return doc_dict
+
+    def change_transform(self, doc_dict):
+        doc_dict = super(SMSPillow, self).change_transform(doc_dict)
+        if not self.needs_custom_transform(doc_dict):
+            return doc_dict
+        doc_dict = self.add_case_data(doc_dict)
+        doc_dict = self.add_session_data(doc_dict)
+        return doc_dict
+
+
