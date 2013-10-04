@@ -50,18 +50,19 @@ var ManageRemindersViewModel = function (initial, choices, ui_type) {
             events = [events[0]];
         }
         self.eventObjects(_.map(events, function (event) {
-            return new ReminderEvent(event, self.choices, self.method, self.event_timing);
+            return new ReminderEvent(event, self.choices, self.method, self.event_timing, self.event_interpretation);
         }));
     }
 
 };
 
-var ReminderEvent = function (eventData, choices, method, event_timing) {
+var ReminderEvent = function (eventData, choices, method, event_timing, event_interpretation) {
     'use strict';
     var self = this;
     self.choices = choices;
     self.method = method;
     self.event_timing = event_timing;
+    self.event_interpretation = event_interpretation;
 
     self.fire_time_type = ko.computed(function () {
         var event_timing = $.parseJSON(self.event_timing());
