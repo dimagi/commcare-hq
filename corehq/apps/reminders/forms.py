@@ -653,6 +653,8 @@ REPEAT_TYPE_NO = 'no_repeat'
 REPEAT_TYPE_INDEFINITE = 'indefinite'
 REPEAT_TYPE_SPECIFIC = 'specific'
 
+STOP_CONDITION_CASE_PROPERTY = 'case_property'
+
 
 class SimpleScheduleCaseReminderForm(forms.Form):
     """
@@ -817,7 +819,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         label="",
         choices=(
             ('', '(none)'),
-            ('property', 'On Date in Case'),
+            (STOP_CONDITION_CASE_PROPERTY, 'On Date in Case'),
         )
     )
     until = forms.CharField(
@@ -1041,6 +1043,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             'REPEAT_TYPE_NO': REPEAT_TYPE_NO,
             'REPEAT_TYPE_INDEFINITE': REPEAT_TYPE_INDEFINITE,
             'REPEAT_TYPE_SPECIFIC': REPEAT_TYPE_SPECIFIC,
+            'STOP_CONDITION_CASE_PROPERTY': STOP_CONDITION_CASE_PROPERTY,
         }
 
     @staticmethod
