@@ -9,7 +9,19 @@ from django.shortcuts import render
 
 from django.utils.translation import ugettext as _, ugettext_noop
 
-from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm, SurveySampleForm, EditContactForm, RemindersInErrorForm, KeywordForm, OneTimeReminderForm, SimpleScheduleCaseReminderForm, CaseReminderEventForm, CaseReminderEventMessageForm
+from corehq.apps.reminders.forms import (
+    CaseReminderForm,
+    ComplexCaseReminderForm,
+    SurveyForm,
+    SurveySampleForm,
+    EditContactForm,
+    RemindersInErrorForm,
+    KeywordForm,
+    OneTimeReminderForm,
+    SimpleScheduleCaseReminderForm,
+    CaseReminderEventForm,
+    CaseReminderEventMessageForm,
+)
 from corehq.apps.reminders.models import (
     CaseReminderHandler,
     CaseReminderEvent,
