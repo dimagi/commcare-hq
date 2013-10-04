@@ -118,12 +118,14 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin):
         Returns a generator object of all forms submitted by user,
         from start to end dates, if specified.
         """
+        # Thew couchforms/by_user view returns a zero-indexed month
+        # correct for this by subtracting 1 from month
         if start is not None:
-            startkey = [user.user_id, start.year, start.month, start.day]
+            startkey = [user.user_id, start.year, start.month - 1, start.day]
         else:
             startkey = [user.user_id]
         if end is not None:
-            endkey = [user.user_id, end.year, end.month, end.day, {}]
+            endkey = [user.user_id, end.year, end.month - 1, end.day, {}]
         else:
             endkey = [user.user_id, {}]
         results = cls.view(
