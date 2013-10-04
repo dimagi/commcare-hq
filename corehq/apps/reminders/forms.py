@@ -958,6 +958,10 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                     data_bind="template: {name: 'event-fire-template', foreach: eventObjects}"
                 ),
             ),
+            crispy.Div(
+                style="display: inline;",
+                data_bind="template: {name: 'event-general-template', foreach: eventObjects}"
+            ),
         )
 
         repeat_section = crispy.Fieldset(
@@ -1194,8 +1198,16 @@ class CaseReminderEventForm(forms.Form):
                                                "visible: isFireTimeVisible"),
             InlineField('fire_time_aux', data_bind="value: fire_time_aux, attr: {id: ''}, "
                                                    "visible: isFireTimeAuxVisible"),
+        )
+
+        self.helper_general = FormHelper()
+        self.helper_general.form_tag = False
+        self.helper_general.layout = crispy.Layout(
+            crispy.Div(
+                crispy.Field('time_window_length', data_bind="value: time_window_length, attr: {id: ''}"),
+                data_bind="visible: isWindowLengthVisible",
+            ),
             crispy.Field('fire_time_type', data_bind="value: fire_time_type, attr: {id: ''}"),
-            crispy.Field('time_window_length', data_bind="value: time_window_length, attr: {id: ''}"),
             crispy.Field('day_num', data_bind="value: day_num, attr: {id: ''}"),
         )
 
