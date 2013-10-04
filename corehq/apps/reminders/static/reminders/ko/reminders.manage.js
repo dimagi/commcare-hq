@@ -43,6 +43,10 @@ var ManageRemindersViewModel = function (initial, choices, ui_type) {
         return event_timing.event_interpretation;
     });
 
+    self.repeat_type = ko.observable(initial.repeat_type);
+    self.isMaxIterationCountVisible = ko.computed(function () {
+        return self.repeat_type() === self.choices.REPEAT_TYPE_SPECIFIC;
+    });
     self.init = function () {
         var events = $.parseJSON(initial.events || '[]');
         if (self.ui_type === self.choices.UI_SIMPLE_FIXED) {
