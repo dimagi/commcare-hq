@@ -1174,17 +1174,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         return self
 
     @classmethod
-    def view(cls, view_name, wrapper=None, classes=None, **params):
-        if cls is ApplicationBase and not wrapper:
-            classes = classes or dict((k, cls) for k in str_to_cls.keys())
-        return super(ApplicationBase, cls).view(
-            view_name,
-            wrapper=wrapper,
-            classes=classes,
-            **params
-        )
-
-    @classmethod
     def by_domain(cls, domain):
         return cls.view('app_manager/applications_brief',
                         startkey=[domain],
