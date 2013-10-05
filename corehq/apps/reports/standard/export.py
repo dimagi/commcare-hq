@@ -189,15 +189,23 @@ class ExcelExportReport(FormExportReportBase):
                     else:
                         form['no_suggestions'] = True
 
-        forms = sorted(forms, key=lambda form:\
-        (0 if not form.get('app_deleted') else 1,
-         form['app']['name'],
-         form['app']['id'],
-         form.get('module', {'id': -1 if form.get('is_user_registration') else 1000})['id'], form.get('form', {'id': -1})['id']
-            ) if form['has_app'] else\
-        (2, form['xmlns'], form['app']['id'])
-        )
+        def _sortkey(form):
+            if form['has_app']:
+                return (
+                    0 if not form.get('app_deleted') else 1,
+                    form['app']['name'],
+                    form['app']['id'],
+                    form.get('module', {'id': -1 if form.get('is_user_registration') else 1000})['id'],
+                    form.get('form', {'id': -1})['id'],
+                )
+            else:
+                return (
+                    2,
+                    form['xmlns'],
+                    form['app']['id']
+                )
 
+        forms = sorted(forms, key=_sortkey)
         # if there is a custom group export defined grab it here
         groups = HQGroupExportConfiguration.by_domain(self.domain)
         context = super(ExcelExportReport, self).report_context
