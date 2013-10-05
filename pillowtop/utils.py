@@ -1,3 +1,6 @@
+import warnings
+
+
 class PillowtopConfigurationException(Exception):
     pass
 
@@ -6,7 +9,7 @@ def import_settings():
     try:
         from django.conf import settings
     except Exception, ex:
-        #if we are not in a django context, then import local pillowsettings
+        # if we are not in a django context, then import local pillowsettings
         print "django import"
         print ex
         import pillowsettings as settings
@@ -14,6 +17,13 @@ def import_settings():
 
 
 def import_pillows(instantiate=True):
+    warnings.warn('pillowtop.utils.import_pillows deprecated, '
+                  'please use pillowtop.get_all_pillows instead.',
+                  DeprecationWarning)
+    return get_all_pillows(instantiate=instantiate)
+
+
+def get_all_pillows(instantiate=True):
     settings = import_settings()
 
     pillowtops = []
@@ -22,10 +32,45 @@ def import_pillows(instantiate=True):
             comps = full_str.split('.')
             pillowtop_class_str = comps[-1]
             mod_str = '.'.join(comps[0:-1])
-            mod = __import__(mod_str, {},{},[pillowtop_class_str])
+            mod = __import__(mod_str, {}, {}, [pillowtop_class_str])
             if hasattr(mod, pillowtop_class_str):
-                pillowtop_class  = getattr(mod, pillowtop_class_str)
-                pillowtops.append(pillowtop_class() if instantiate else pillowtop_class)
+                pillowtop_class = getattr(mod, pillowtop_class_str)
+                pillowtops.append(pillowtop_class() if instantiate
+                                  else pillowtop_class)
             else:
-                raise PillowtopConfigurationException("Error, the pillow class %s could not be imported" % full_str)
+                raise PillowtopConfigurationException(
+                    ("Error, the pillow class %s "
+                     "could not be imported") % full_str
+                )
     return pillowtops
+
+
+def get_pillow_by_name(pillow_class_name):
+    all_pillows = get_all_pillows()
+    for pillow in all_pillows:
+        if pillow.__class__.__name__ == pillow_class_name:
+            return pillow
+
+
+def force_seq_int(seq):
+    if seq is None:
+        return None
+    elif isinstance(seq, basestring):
+        return int(seq.split('-')[0])
+    else:
+        assert isinstance(seq, int)
+        return seq
+
+
+def get_all_pillows_json():
+    pillows = get_all_pillows()
+    pillows_json = []
+    for pillow in pillows:
+        checkpoint = pillow.get_checkpoint()
+        pillows_json.append({
+            'name': pillow.__class__.__name__,
+            'seq': force_seq_int(checkpoint.get('seq')),
+            'old_seq': force_seq_int(checkpoint.get('old_seq')) or 0,
+            'db_seq': force_seq_int(pillow.get_db_seq()),
+        })
+    return pillows_json

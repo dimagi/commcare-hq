@@ -3,8 +3,9 @@ from datetime import datetime
 import hashlib
 import os
 import traceback
-from django.core.mail import send_mail
 import math
+
+from django.core.mail import send_mail
 from requests import ConnectionError
 from restkit import RequestFailed
 import simplejson
@@ -12,8 +13,11 @@ from gevent import socket
 import rawes
 import gevent
 from django.conf import settings
-from dimagi.utils.decorators.memoized import memoized
 import couchdbkit
+
+from dimagi.utils.decorators.memoized import memoized
+from .utils import import_settings
+
 
 if couchdbkit.version_info < (0, 6, 0):
     USE_NEW_CHANGES = False
@@ -28,6 +32,7 @@ pillow_logging.setLevel(logging.INFO)
 
 CHECKPOINT_FREQUENCY = 100
 WAIT_HEARTBEAT = 10000
+CHANGES_TIMEOUT = 60000
 RETRY_INTERVAL = 2 #seconds, exponentially increasing
 MAX_RETRIES = 4 #exponential factor threshold for alerts
 
@@ -78,7 +83,6 @@ class autoretry_connection(object):
         return decorated
 
 
-
 class PillowtopIndexingError(Exception):
     pass
 
@@ -111,6 +115,8 @@ class BasicPillow(object):
         if not self.couch_db:
             self.couch_db = self.document_class.get_db() if self.document_class else None
 
+        self.settings = import_settings()
+
     def old_changes(self):
         """
         Couchdbkit < 0.6.0 changes feed listener
@@ -122,7 +128,7 @@ class BasicPillow(object):
         while True:
             try:
                 c.wait(self.parsing_processor, since=self.since, filter=self.couch_filter,
-                       heartbeat=WAIT_HEARTBEAT, include_docs=True, feed='continuous', timeout=30000, **self.extra_args)
+                       heartbeat=WAIT_HEARTBEAT, feed='continuous', timeout=CHANGES_TIMEOUT, **self.extra_args)
             except Exception, ex:
                 pillow_logging.exception("Exception in form listener: %s, sleeping and restarting" % ex)
                 gevent.sleep(RETRY_INTERVAL)
@@ -137,7 +143,7 @@ class BasicPillow(object):
             for c in st:
                 self.processor(c)
 
-    def run(self, since=0):
+    def run(self):
         """
         Couch changes stream creation
         """
@@ -148,16 +154,19 @@ class BasicPillow(object):
         else:
             self.old_changes()
 
-    def _get_os_name(self):
-        os_name = "unknown_os"
-        if hasattr(os, "uname"):
+    def _get_machine_id(self):
+        if hasattr(self.settings, 'PILLOWTOP_MACHINE_ID'):
+            os_name = getattr(self.settings, 'PILLOWTOP_MACHINE_ID')
+        elif hasattr(os, 'uname'):
             os_name = os.uname()[1].replace('.', '_')
+        else:
+            os_name = 'unknown_os'
         return os_name
 
     @memoized
     def get_name(self):
         return "%s.%s.%s" % (
-            self.__module__, self.__class__.__name__, self._get_os_name())
+            self.__module__, self.__class__.__name__, self._get_machine_id())
 
     def get_checkpoint_doc_name(self):
         return "pillowtop_%s" % self.get_name()
@@ -203,6 +212,9 @@ class BasicPillow(object):
         checkpoint['seq'] = change['seq']
         self.couch_db.save_doc(checkpoint)
 
+    def get_db_seq(self):
+        return self.couch_db.info()['update_seq']
+
     def parsing_processor(self, change):
         """
         Processor that also parses the change to json - only for pre 0.6.0 couchdbkit,
@@ -215,6 +227,7 @@ class BasicPillow(object):
         Parent processsor for a pillow class - this should not be overridden.
         This workflow is made for the situation where 1 change yields 1 transport/transaction
         """
+
         self.changes_seen += 1
         if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
             pillow_logging.info(
@@ -228,8 +241,7 @@ class BasicPillow(object):
                 if tr is not None:
                     self.change_transport(tr)
         except Exception, ex:
-            pillow_logging.exception("Error on change: %s, %s" % (change['id'], ex))
-            gevent.sleep(RETRY_INTERVAL)
+            pillow_logging.exception("[%s] Error on change: %s, %s" % (self.get_name(), change['id'], ex))
 
 
     def change_trigger(self, changes_dict):
@@ -395,7 +407,7 @@ class ElasticPillow(BasicPillow):
                                       "_id": tr['_id']}}
                         yield tr
             except Exception, ex:
-                pillow_logging.error("Error on change: %s, %s" % (change['id'], ex))
+                pillow_logging.error("[%s] Error on change: %s, %s" % (self.get_name(), change['id'], ex))
 
     def process_bulk(self, changes):
         self.allow_updates = False
@@ -428,7 +440,7 @@ class ElasticPillow(BasicPillow):
                 if tr is not None:
                     self.change_transport(tr)
         except Exception, ex:
-            pillow_logging.error("Error on change: %s, %s" % (change['id'], ex))
+            pillow_logging.error("[%s] Error on change: %s, %s" % (self.get_name(), change['id'], ex))
 
     def send_robust(self, path, data={}, retries=MAX_RETRIES, except_on_failure=False, update=False):
         """
@@ -636,7 +648,7 @@ class AliasedElasticPillow(ElasticPillow):
         class name and the hashed name representation.
         """
         return "%s.%s.%s.%s" % (
-            self.__module__, self.__class__.__name__, self.calc_meta(), self._get_os_name())
+            self.__module__, self.__class__.__name__, self.calc_meta(), self._get_machine_id())
 
     def get_mapping_from_type(self, doc_dict):
         raise NotImplementedError("This must be implemented in this subclass!")
