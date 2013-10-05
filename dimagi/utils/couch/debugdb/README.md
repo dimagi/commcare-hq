@@ -15,3 +15,5 @@ If you want the full gory details of your couch use/abuse there are additional s
 
 `COUCHDB_DEVSERVER_STACKTRACE=True # shows last line of the stacktrace that calls the code in question`
 
+`COUCHDB_DEVSERVER_STACK_SIZE=1 # integer number to specify lines of stack trace to show for view`
+
