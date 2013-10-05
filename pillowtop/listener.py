@@ -7,7 +7,6 @@ import math
 
 from django.core.mail import send_mail
 from requests import ConnectionError
-from restkit import RequestFailed
 import simplejson
 from gevent import socket
 import rawes
@@ -51,7 +50,7 @@ INDEX_STANDARD_SETTINGS = {"index": {"refresh_interval": "1s",
 
 
 import functools
-import logging
+
 
 class autoretry_connection(object):
     """
