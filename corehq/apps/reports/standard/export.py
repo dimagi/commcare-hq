@@ -192,8 +192,16 @@ class ExcelExportReport(FormExportReportBase):
             if form['has_app']:
                 order = 0 if not form.get('app_deleted') else 1
                 app_name = form['app']['name']
-                module_id = form.get('module', {'id': -1 if form.get('is_user_registration') else 1000})['id']
-                form_id = form.get('form', {'id': -1})['id']
+                module = form.get('module')
+                if module:
+                    module_id = module['id'] if 'id' in module else module.id
+                else:
+                    module_id = -1 if form.get('is_user_registration') else 1000
+                app_form = form.get('form')
+                if app_form:
+                    form_id = app_form['id'] if 'id' in app_form else app_form.id
+                else:
+                    form_id = -1
                 return (order, app_name, app_id, module_id, form_id)
             else:
                 form_xmlns = form['xmlns']
