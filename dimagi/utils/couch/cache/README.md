@@ -42,3 +42,10 @@ Signals
 
 pillow
 
+
+## Debugging
+
+Use the debugdatabase via the devserver plugin to find slow areas of repeated queries.
+
+You can toggle caching behavior by setting the `COUCH_CACHE_DOCS` and `COUCH_CACHE_VIEWS` localsettings flags True or False.
+
