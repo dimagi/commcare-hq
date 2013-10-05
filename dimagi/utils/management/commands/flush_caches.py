@@ -1,5 +1,6 @@
 from django.core.management.base import LabelCommand
 from django.core import cache
+from django.conf import settings
 
 
 class Command(LabelCommand):
@@ -8,15 +9,11 @@ class Command(LabelCommand):
     label = ""
 
     def handle(self, *args, **options):
-        rc = cache.get_cache('redis')
-        rc.clear()
 
-        mc = cache.get_cache('default')
-        mc.clear()
-
-        print "redis and memcached are flushed"
-
-
-
-
+        print "Clearing caches..."
+        for k in settings.CACHES.keys():
+            cache_backend = cache.get_cache(k)
+            cache_backend.clear()
+            print "\tclearing %s..." % k
+        print "all caches are cleared"
 
