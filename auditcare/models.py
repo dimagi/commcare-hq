@@ -49,17 +49,6 @@ class AuditEvent(Document):
     event_date = DateTimeProperty(default=getdate)
     description = StringProperty() #particular instance details of this audit event
 
-    @classmethod
-    def view(cls, view_name, wrapper=None, classes=None, **params):
-        if cls is AuditEvent and not classes:
-            wrapper = wrapper or (lambda row: cls.wrap(row['doc']))
-        return super(AuditEvent, cls).view(
-            view_name,
-            wrapper=wrapper,
-            classes=classes,
-            **params
-        )
-
     @property
     def summary(self):
         try:
