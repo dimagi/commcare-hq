@@ -25,9 +25,8 @@ CACHED_DOC_PROP_PREFIX = '#cached_doc_helper_'
 CACHED_VIEW_DOC_REVERSE = '#reverse_cached_doc_'
 
 
-def key_doc_prop(doc_id, property):
-    key = "%s%s_%s" % (CACHED_DOC_PROP_PREFIX, doc_id, property)
-    return key
+def key_doc_prop(doc_id, prop_name):
+    return ':'.join([CACHED_DOC_PROP_PREFIX, doc_id, prop_name])
 
 
 def key_doc_id(doc_id):
@@ -38,7 +37,6 @@ def key_doc_id(doc_id):
     return ret
 
 
-
 def invalidate_doc_generation(doc):
     doc_type = doc.get('doc_type', None)
     generation_mgr = DocGenCache.doc_type_generation_map()
@@ -46,33 +44,34 @@ def invalidate_doc_generation(doc):
         generation_mgr[doc_type].increment()
 
 
-def invalidate_by_doc_id(doc_id):
+def invalidate_doc(doc, deleted=False):
     """
-    For a given doc_id, delete it and all reverses.
+    For a given doc, delete it and all reverses.
 
     return: tuple of (true|false existed or not, last_version)
     """
     #first by just individual doc
+    doc_id = doc['_id']
     doc_key = key_doc_id(doc_id)
-    exists = rcache().get(doc_key, None)
 
-    if exists:
-        rcache().delete(key_doc_id(doc_id))
-
-        #then all the reverse indices by that doc_id
-        rcache().delete_pattern(key_reverse_doc(doc_id, '*'))
-
-        #then delete all properties
-        rcache().delete_pattern(key_doc_prop(doc_id, '*'))
-        last_version = simplejson.loads(exists)
-        invalidate_doc_generation(last_version)
-        return True, simplejson.loads(exists)
+    #regardless if it exist or not, send it to the generational lookup and increment.
+    prior_ver = rcache().get(doc_key, None)
+    if prior_ver and not doc.get('doc_type', None):
+        invalidate_doc = simplejson.loads(prior_ver)
     else:
-        return False, None
+        invalidate_doc = doc
 
-    #todo:
-    #walk all views that are seen by that doc_id and blow away too?
-    #if the pillow was not running this would def. be the case.
+    invalidate_doc_generation(invalidate_doc)
+    rcache().delete(key_doc_id(doc_id))
+    rcache().delete_pattern(key_doc_prop(doc_id, '*'))
+
+    if not deleted and invalidate_doc.get('doc_id', None) in DocGenCache.doc_type_generation_map():
+        do_cache_doc(doc)
+
+    if prior_ver:
+        return True
+    else:
+        return False
 
 
 def cached_open_doc(db, doc_id, cache_expire=COUCH_CACHE_TIMEOUT, **params):
@@ -88,24 +87,25 @@ def cached_open_doc(db, doc_id, cache_expire=COUCH_CACHE_TIMEOUT, **params):
         return cached_doc
 
 
-def cache_doc_prop(doc_id, property, doc_data, cache_expire=COUCH_CACHE_TIMEOUT, **params):
+def cache_doc_prop(doc_id, prop_name, doc_data, cache_expire=COUCH_CACHE_TIMEOUT, **params):
     """
     Cache Helper
 
     Wrap additional data around a doc_id's properties, and invalidate when the doc gets invalidated
 
     doc_id: doc_id in question
-    property: property name
+    prop_name: prop_name name
     doc_data: json_dict that is to be cached
     """
-    key = key_doc_prop(doc_id, property)
-    rcache().set(key, simplejson.dumps(doc_data), timeout=cache_expire)
+    if CACHE_DOCS:
+        key = key_doc_prop(doc_id, prop_name)
+        rcache().set(key, simplejson.dumps(doc_data), timeout=cache_expire)
 
 
-def get_cached_prop(doc_id, property):
-    key = key_doc_prop(doc_id, property)
+def get_cached_prop(doc_id, prop_name):
+    key = key_doc_prop(doc_id, prop_name)
     retval = rcache().get(key, None)
-    if retval:
+    if retval and CACHE_DOCS:
         return simplejson.loads(retval)
     else:
         return None
@@ -116,14 +116,27 @@ def _get_cached_doc_only(doc_id):
     helper cache retrieval method for open_doc - for use by views in retrieving their docs.
     """
     doc = rcache().get(key_doc_id(doc_id), None)
-    if doc is not None:
+    if doc and CACHE_DOCS:
         return simplejson.loads(doc)
     else:
         return None
 
-
 def do_cache_doc(doc, cache_expire=COUCH_CACHE_TIMEOUT):
-    rcache().set(key_doc_id(doc['_id']), simplejson.dumps(doc), timeout=cache_expire)
+    if CACHE_DOCS:
+        rcache().set(key_doc_id(doc['_id']), simplejson.dumps(doc), timeout=cache_expire)
+
+
+def cached_view(db, view_name, wrapper=None, cache_expire=COUCH_CACHE_TIMEOUT, **params):
+    """
+    Entry point for caching views. See if it's in the generational view system, else juts call normal.
+    """
+    generation_mgr = DocGenCache.view_generation_map()
+    if view_name in generation_mgr:
+        cache_method = generation_mgr[view_name].cached_view
+    else:
+        cache_method = NoGenerationCache.nogen().cached_view
+
+    return cache_method(db, view_name, wrapper=wrapper, cache_expire=cache_expire, **params)
 
 class DocGenCache(object):
     generation_key = None
@@ -134,7 +147,7 @@ class DocGenCache(object):
     def gen_caches():
         if not getattr(DocGenCache, '_generational_caches', None):
             DocGenCache.generate_caches()
-        return getattr(DocGenCache._generational_caches)
+        return getattr(DocGenCache, '_generational_caches')
 
     @staticmethod
     def view_generation_map():
@@ -163,10 +176,10 @@ class DocGenCache(object):
         genret = rcache().get(self.generation_key, None)
         if not genret:
             #never seen key before, start from zero
-            rcache().set(self.generation_key, timeout=0)
-            return 0
+            rcache().set(self.generation_key, 0, timeout=0)
+            return str(0)
         else:
-            return genret
+            return str(genret)
 
     def increment(self):
         """
@@ -181,22 +194,21 @@ class DocGenCache(object):
         if params is dict, then make param_string
         if params is '*' it's a wildcard
         """
+        param_string = ""
         if isinstance(params, dict):
             param_string = http.urlquote('|'.join(["%s::%s" % (k, v) for k, v in params.items()]))
         elif params == '*':
             param_string = params
-        else:
-            param_string = ""
 
         cache_view_key = ':'.join([
             self.get_generation(),
             CACHED_VIEW_PREFIX,
             view_name,
-            param_string
+            param_string,
         ])
         return cache_view_key
 
-    def cache_view_doc(self, doc_or_docid, cache_expire=COUCH_CACHE_TIMEOUT):
+    def cached_view_doc(self, doc_or_docid, cache_expire=COUCH_CACHE_TIMEOUT):
         """
         Cache by doc_id a reverse lookup of views that it is mutually dependent on
         """
@@ -204,7 +216,7 @@ class DocGenCache(object):
             do_cache_doc(doc_or_docid, cache_expire=cache_expire)
 
 
-    def cache_view(self, db, view_name, wrapper=None, cache_expire=COUCH_CACHE_TIMEOUT, **params):
+    def cached_view(self, db, view_name, wrapper=None, cache_expire=COUCH_CACHE_TIMEOUT, **params):
         """
         Call a view and cache the results, return cached if it's a cache hit.
 
@@ -219,7 +231,7 @@ class DocGenCache(object):
         if include_docs:
             #include_docs=True results in couchdbkit remove the 'rows' result and returns just the actual rows in an array
             cached_view = rcache().get(cache_view_key, None)
-            if cached_view:
+            if cached_view and CACHE_VIEWS:
                 results = simplejson.loads(cached_view)
                 final_results = {}
 
@@ -260,7 +272,7 @@ class DocGenCache(object):
                         "value": None,
                         "key": row["key"],
                     }
-                    self.cache_view_doc(row["doc"], cache_view_key, cache_expire=cache_expire)
+                    self.cached_view_doc(row["doc"], cache_expire=cache_expire)
                     row_stubs.append(stub)
 
                 cached_results = {
@@ -280,7 +292,7 @@ class DocGenCache(object):
             ###########################
             # include_docs=False just returns the entire view verbatim
             cached_view = rcache().get(cache_view_key)
-            if cached_view:
+            if cached_view and CACHE_VIEWS:
                 results = simplejson.loads(cached_view)
                 return results
             else:
@@ -291,5 +303,32 @@ class DocGenCache(object):
                     if doc_id:
                         #a non reduce view will have doc_ids on each row, we want to reverse index these
                         #to know when to invalidate
-                        self.cache_view_doc(doc_id)
+                        self.cached_view_doc(doc_id)
                 return view_results
+
+
+class NoGenerationCache(DocGenCache):
+    """
+    Default cache for those not mapped. No generational tracking.
+    """
+    generation_key = None
+    doc_types = [
+    ]
+    views = []
+
+    _instance = None
+
+    def get_generation(self):
+        return "#global#"
+
+    def increment(self):
+        return self.get_generation()
+
+
+    @staticmethod
+    def nogen():
+        if not NoGenerationCache._instance:
+            NoGenerationCache._instance = NoGenerationCache()
+        return NoGenerationCache._instance
+
+
