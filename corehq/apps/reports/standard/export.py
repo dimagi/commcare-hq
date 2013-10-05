@@ -194,11 +194,13 @@ class ExcelExportReport(FormExportReportBase):
                 app_name = form['app']['name']
                 module = form.get('module')
                 if module:
+                    # module is sometimes wrapped json, sometimes a dict!
                     module_id = module['id'] if 'id' in module else module.id
                 else:
                     module_id = -1 if form.get('is_user_registration') else 1000
                 app_form = form.get('form')
                 if app_form:
+                    # app_form is sometimes wrapped json, sometimes a dict!
                     form_id = app_form['id'] if 'id' in app_form else app_form.id
                 else:
                     form_id = -1
