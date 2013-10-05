@@ -128,7 +128,8 @@ class BasicPillow(object):
         while True:
             try:
                 c.wait(self.parsing_processor, since=self.since, filter=self.couch_filter,
-                       heartbeat=WAIT_HEARTBEAT, feed='continuous', timeout=CHANGES_TIMEOUT, **self.extra_args)
+                       heartbeat=WAIT_HEARTBEAT, feed='continuous', timeout=CHANGES_TIMEOUT,
+                       include_docs=True, **self.extra_args)
             except Exception, ex:
                 pillow_logging.exception("Exception in form listener: %s, sleeping and restarting" % ex)
                 gevent.sleep(RETRY_INTERVAL)
@@ -371,7 +372,7 @@ class ElasticPillow(BasicPillow):
                               (self.get_doc_path(changes_dict['id']), ex))
             return None
         else:
-            return self.couch_db.open_doc(changes_dict['id'])
+            return changes_dict['doc']
 
     @autoretry_connection()
     def doc_exists(self, doc_id):
