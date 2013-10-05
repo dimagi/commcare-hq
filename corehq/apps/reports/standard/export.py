@@ -1,21 +1,19 @@
 from collections import defaultdict
 import json
 import logging
-import datetime
+
 from django.utils.translation import ugettext_noop
-from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
-from corehq.apps.data_interfaces.interfaces import DataInterface
-from dimagi.utils.dates import DateSpan
-from django.conf import settings
 from django.http import Http404
+
+from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
+
+from corehq.apps.data_interfaces.interfaces import DataInterface
 from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin
-from corehq.apps.reports.models import FormExportSchema,\
-    HQGroupExportConfiguration
-from corehq.apps.reports.util import make_form_couch_key, datespan_from_beginning
+from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration
+from corehq.apps.reports.util import datespan_from_beginning
 from couchexport.models import SavedExportSchema, Format
 from dimagi.utils.couch.database import get_db
 from corehq.apps.app_manager.models import get_app
-from dimagi.utils.parsing import string_to_datetime
 
 
 class ExportReport(DataInterface, ProjectReportParametersMixin):
