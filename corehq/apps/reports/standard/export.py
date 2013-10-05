@@ -190,20 +190,16 @@ class ExcelExportReport(FormExportReportBase):
                         form['no_suggestions'] = True
 
         def _sortkey(form):
+            app_id = form['app']['id']
             if form['has_app']:
-                return (
-                    0 if not form.get('app_deleted') else 1,
-                    form['app']['name'],
-                    form['app']['id'],
-                    form.get('module', {'id': -1 if form.get('is_user_registration') else 1000})['id'],
-                    form.get('form', {'id': -1})['id'],
-                )
+                order = 0 if not form.get('app_deleted') else 1
+                app_name = form['app']['name']
+                module_id = form.get('module', {'id': -1 if form.get('is_user_registration') else 1000})['id']
+                form_id = form.get('form', {'id': -1})['id']
+                return (order, app_name, app_id, module_id, form_id)
             else:
-                return (
-                    2,
-                    form['xmlns'],
-                    form['app']['id']
-                )
+                form_xmlns = form['xmlns']
+                return (2, form_xmlns, app_id)
 
         forms = sorted(forms, key=_sortkey)
         # if there is a custom group export defined grab it here
