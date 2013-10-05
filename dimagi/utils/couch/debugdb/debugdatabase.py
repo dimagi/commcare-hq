@@ -122,9 +122,13 @@ class DebugViewResults64(ViewResults):
 
     def _debug_fetch_if_needed(self):
         view_args = self._arg.split('/')
-        design_doc = view_args[1]
-        view_name = view_args[3]
-        self.debug_view = '%s/%s' % (design_doc, view_name)
+
+        if len(view_args) == 4:
+            design_doc = view_args[1]
+            view_name = view_args[3]
+            self.debug_view = '%s/%s' % (design_doc, view_name)
+        else:
+            self.debug_view = view_args[0]
 
         start = datetime.now()
 
