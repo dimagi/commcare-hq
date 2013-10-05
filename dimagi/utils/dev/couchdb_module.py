@@ -7,6 +7,7 @@ from dimagi.utils.couch.debugdb import debugdatabase, OPEN_DOC_OUTPUT_HEADERS, V
 
 SHOW_VERBOSE = getattr(settings, 'COUCHDB_DEVSERVER_VERBOSE', False)
 SHOW_STACKTRACE = getattr(settings, 'COUCHDB_DEVSERVER_STACKTRACE', False)
+STACKTRACE_SIZE = getattr(settings, 'COUCHDB_DEVSERVER_STACK_SIZE', 1) - 1
 
 class CouchDBDevModule(DevServerModule):
     """
@@ -31,7 +32,7 @@ class CouchDBDevModule(DevServerModule):
         def output_stacktrace(row, count=1):
             if SHOW_STACKTRACE:
                 filtered_stacktrace = filter(lambda x: 'site-packages' not in x[0], row['stacktrace'])
-                self.logger.debug('\n\t'.join(["%s:%s" % (x[0],x[1]) for x in filtered_stacktrace[-count:]]))
+                self.logger.debug('\n\t'.join(["%s:%s" % (x[0],x[1]) for x in filtered_stacktrace[-count-STACKTRACE_SIZE:]]))
 
         if SHOW_VERBOSE:
             self.logger.debug("GET raw output")
