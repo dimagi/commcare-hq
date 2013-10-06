@@ -54,6 +54,19 @@
     <script type="text/html" id="event-general-template">
         {% crispy event_form event_form.helper_general %}
     </script>
+
+    <script type="text/html" id="event-message-length-template">
+        <span class="alert"
+              data-bind="css: { 'alert-error': isMessageLong, 'alert-info': isSingleMessage }">
+             <span data-bind="text: messageLength"></span>
+            <span data-bind="visible: showPluralChar">characters</span>
+            <span data-bind="visible: showSingularChar">character</span> (160 /message)
+            <strong data-bind="visible: isMessageLong">
+                &mdash; <span data-bind="text: totalMessages"></span>
+                messages will be sent
+            </strong>
+          </span>
+    </script>
 {% endblock %}
 
 {% block modals %}{{ block.super }}

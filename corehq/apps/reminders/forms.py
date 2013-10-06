@@ -1286,10 +1286,14 @@ class CaseReminderEventMessageForm(forms.Form):
                 'Message <span data-bind="text:languageLabel"></span>',
                 InlineField(
                     'message',
-                    data_bind="value: message",
+                    data_bind="value: message, valueUpdate: 'keyup'",
                     css_class="input-xlarge",
                     rows="2",
                 ),
+                crispy.Div(
+                    style="padding-top: 10px",
+                    data_bind="template: { name: 'event-message-length-template' }"
+                )
             ),
         )
 

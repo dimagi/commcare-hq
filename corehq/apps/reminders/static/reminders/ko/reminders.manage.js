@@ -196,6 +196,25 @@ var ReminderMessage = function (message, language, available_languages) {
     self.message = ko.observable(message);
     self.available_languages = available_languages;
 
+    self.messageLength = ko.computed(function () {
+        return self.message().length;
+    });
+    self.totalMessages = ko.computed(function () {
+        return Math.ceil(self.messageLength()/160);
+    });
+    self.isMessageLong = ko.computed(function () {
+        return self.totalMessages() > 1;
+    });
+    self.isSingleMessage = ko.computed(function () {
+        return self.totalMessages() === 1;
+    });
+    self.showSingularChar = ko.computed(function () {
+        return self.messageLength() === 1;
+    });
+    self.showPluralChar = ko.computed(function () {
+        return !self.showSingularChar();
+    });
+
     self.toJSON = ko.computed(function () {
         return {
             language: self.language(),
