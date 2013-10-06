@@ -73,19 +73,27 @@ var ManageRemindersViewModel = function (initial, choices, ui_type, available_la
             events = [events[0]];
         }
         self.eventObjects(_.map(events, function (event) {
-            return new ReminderEvent(event, self.choices, self.method, self.event_timing, self.event_interpretation);
+            return new ReminderEvent(
+                event,
+                self.choices,
+                self.method,
+                self.event_timing,
+                self.event_interpretation,
+                self.available_languages
+            );
         }));
     }
 
 };
 
-var ReminderEvent = function (eventData, choices, method, event_timing, event_interpretation) {
+var ReminderEvent = function (eventData, choices, method, event_timing, event_interpretation, available_languages) {
     'use strict';
     var self = this;
     self.choices = choices;
     self.method = method;
     self.event_timing = event_timing;
     self.event_interpretation = event_interpretation;
+    self.available_languages = available_languages;
 
     self.fire_time_type = ko.computed(function () {
         var event_timing = $.parseJSON(self.event_timing());
@@ -128,8 +136,25 @@ var ReminderEvent = function (eventData, choices, method, event_timing, event_in
 
     self.message_data = ko.observable();
     self.messageTranslations = ko.observable(_.map(eventData.message, function (message, language) {
-        return new ReminderMessage(message, language);
+        return new ReminderMessage(message, language, self.available_languages);
     }));
+    self.messageByLangcode = ko.computed(function () {
+        var translations = {},
+            available_langcodes = _.map(self.available_languages(), function (lang) {
+                return lang.langcode();
+            });
+        _.each(self.messageTranslations(), function (message) {
+            translations[message.language()] = message;
+        });
+        _.each(_.difference(available_langcodes, _(translations).keys()), function(lang) {
+            var existingTranslations = self.messageTranslations(),
+                newMessage = new ReminderMessage("", lang, self.available_languages);
+            existingTranslations.push(newMessage);
+            translations[lang] = newMessage;
+            self.messageTranslations(existingTranslations);
+        });
+        return translations;
+    });
     self.isMessageVisible = ko.computed(function () {
         return (self.method() === self.choices.METHOD_SMS)
             || (self.method() === self.choices.METHOD_SMS_CALLBACK);
@@ -149,12 +174,26 @@ var ReminderEvent = function (eventData, choices, method, event_timing, event_in
     });
 };
 
-var ReminderMessage = function (message, language) {
+var ReminderMessage = function (message, language, available_languages) {
     'use strict';
     var self = this;
     self.language = ko.observable(language);
     self.message = ko.observable(message);
+    self.available_languages = available_languages;
 
+
+    self.languageLabel = ko.computed(function () {
+        if (self.available_languages().length == 1) {
+            return "";
+        }
+        var language_name = self.language();
+        _.each(self.available_languages(), function (lang) {
+            if (lang.langcode() === self.language()) {
+                language_name = lang.name();
+            }
+        });
+        return '(' + language_name + ')';
+    });
 };
 
 var ReminderLanguage = function (langcode, name) {
