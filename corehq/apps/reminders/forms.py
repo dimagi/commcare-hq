@@ -1016,11 +1016,17 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                 "Advanced",
                 'submit_partial_forms',
                 'include_case_side_effects',
-                crispy.Field(
-                    'default_lang',
-                    data_bind="options: available_languages, "
-                              "value: default_lang, "
-                              "optionsText: 'name', optionsValue: 'langcode'",
+                BootstrapMultiField(
+                    "Default Language",
+                    InlineField(
+                        'default_lang',
+                        data_bind="options: available_languages, "
+                                  "value: default_lang, "
+                                  "optionsText: 'name', optionsValue: 'langcode'",
+                    ),
+                    crispy.HTML('<a href="#add-language-modal" '
+                                'class="btn btn-primary" style="margin-left: 5px;" '
+                                'data-toggle="modal">Add Language</a>'),
                 ),
                 'max_question_retries',
             )

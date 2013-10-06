@@ -6,8 +6,7 @@ var ManageRemindersViewModel = function (initial, choices, ui_type, available_la
     self.ui_type = ui_type;
 
     self.available_languages = ko.observable(_.map(available_languages, function (langcode) {
-        console.log(langcode);
-        return new ReminderLanguage(langcode, langcode);
+        return new ReminderLanguage(langcode);
     }));
     self.default_lang = ko.observable(initial.default_lang);
 
@@ -82,7 +81,19 @@ var ManageRemindersViewModel = function (initial, choices, ui_type, available_la
                 self.available_languages
             );
         }));
-    }
+    };
+
+    self.addLanguage = function (langcode) {
+        var currentLangcodes = _.map(self.available_languages(), function (lang) {
+            return lang.langcode();
+        });
+        if (currentLangcodes.indexOf(langcode) === -1) {
+            var availableLangs = self.available_languages();
+            availableLangs.push(new ReminderLanguage(langcode));
+            self.available_languages(availableLangs);
+        }
+        self.default_lang(langcode);
+    };
 
 };
 
@@ -206,9 +217,15 @@ var ReminderMessage = function (message, language, available_languages) {
     });
 };
 
-var ReminderLanguage = function (langcode, name) {
+var ReminderLanguage = function (langcode) {
     'use strict';
     var self = this;
     self.langcode = ko.observable(langcode);
-    self.name = ko.observable(name);
+    self.name = ko.observable(langcode);
+    $.getJSON('/langcodes/langs.json', {term: self.langcode()}, function (res) {
+        var index = _.map(res, function(r) { return r.code; }).indexOf(self.langcode());
+        if (index >= 0) {
+            self.name(res[index].name);
+        }
+    });
 };

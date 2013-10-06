@@ -5,6 +5,12 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static 'reminders/ko/reminders.manage.js' %}"></script>
+    <script src="{% static 'hqwebapp/ko/language_picker.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
+{% endblock %}
+
+{% block head %}{{ block.super }}
+    <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -17,6 +23,12 @@
         );
         ko.applyBindings(manageRemindersModel, $('#manage-reminders-form').get(0));
         manageRemindersModel.init();
+        $(function () {
+            $('#add-language-modal').languagePicker(function (langcode) {
+                manageRemindersModel.addLanguage(langcode);
+                $('#add-language-modal').modal('hide');
+            });
+        });
     </script>
 {% endblock %}
 
@@ -42,4 +54,29 @@
     <script type="text/html" id="event-general-template">
         {% crispy event_form event_form.helper_general %}
     </script>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+    <div class="modal hide fade" id="add-language-modal">
+        <div class="modal-header">
+            <a class="close" data-dismiss="modal">&times;</a>
+            <h4>Add a new language</h4>
+        </div>
+        <div class="modal-body form-horizontal" style="max-height: 20em;">
+            <div class="control-group">
+                <label class="control-label" for="new-language-code">Language Code</label>
+                <div class="controls">
+                    <input type="text"
+                           id="language-picker-input"
+                           class="input-xlarge"
+                           data-bind="value: langcode"  />
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary"
+                    data-bind="event: { click: confirmLanguageChoice }">Add Language</button>
+            <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+        </div>
+    </div>
 {% endblock %}
