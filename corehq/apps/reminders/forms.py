@@ -16,7 +16,7 @@ from django.forms import Field, Widget
 from corehq.apps.reminders.util import DotExpandedDict
 from casexml.apps.case.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
-from corehq.apps.hqwebapp.crispy import BootstrapMultiField
+from corehq.apps.hqwebapp.crispy import BootstrapMultiField, FieldsetAccordionGroup
 from .models import (
     REPEAT_SCHEDULE_INDEFINITELY,
     CaseReminderEvent,
@@ -1011,25 +1011,24 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             )
         )
 
-        advanced_section = Accordion(
-            AccordionGroup(
-                "Advanced",
-                'submit_partial_forms',
-                'include_case_side_effects',
-                BootstrapMultiField(
-                    "Default Language",
-                    InlineField(
-                        'default_lang',
-                        data_bind="options: available_languages, "
-                                  "value: default_lang, "
-                                  "optionsText: 'name', optionsValue: 'langcode'",
-                    ),
-                    crispy.HTML('<a href="#add-language-modal" '
-                                'class="btn btn-primary" style="margin-left: 5px;" '
-                                'data-toggle="modal">Add Language</a>'),
+        advanced_section = FieldsetAccordionGroup(
+            "Advanced Options",
+            BootstrapMultiField(
+                "Default Language",
+                InlineField(
+                    'default_lang',
+                    data_bind="options: available_languages, "
+                              "value: default_lang, "
+                              "optionsText: 'name', optionsValue: 'langcode'",
                 ),
-                'max_question_retries',
-            )
+                crispy.HTML('<a href="#add-language-modal" '
+                            'class="btn btn-primary" style="margin-left: 5px;" '
+                            'data-toggle="modal">Add Language</a>'),
+            ),
+            'max_question_retries',
+            'submit_partial_forms',
+            'include_case_side_effects',
+            active=False,
         )
 
         self.helper = FormHelper()
