@@ -134,7 +134,6 @@ var ReminderEvent = function (eventData, choices, method, event_timing, event_in
             || (self.method() === self.choices.METHOD_IVR_SURVEY);
     });
 
-    self.message_data = ko.observable();
     self.messageTranslations = ko.observable(_.map(eventData.message, function (message, language) {
         return new ReminderMessage(message, language, self.available_languages);
     }));
@@ -154,6 +153,11 @@ var ReminderEvent = function (eventData, choices, method, event_timing, event_in
             self.messageTranslations(existingTranslations);
         });
         return translations;
+    });
+    self.message_data = ko.computed(function () {
+        return _.map(self.messageTranslations(), function (translation) {
+            return translation.toJSON();
+        });
     });
     self.isMessageVisible = ko.computed(function () {
         return (self.method() === self.choices.METHOD_SMS)
@@ -181,6 +185,12 @@ var ReminderMessage = function (message, language, available_languages) {
     self.message = ko.observable(message);
     self.available_languages = available_languages;
 
+    self.toJSON = ko.computed(function () {
+        return {
+            language: self.language(),
+            message: self.message()
+        }
+    });
 
     self.languageLabel = ko.computed(function () {
         if (self.available_languages().length == 1) {
