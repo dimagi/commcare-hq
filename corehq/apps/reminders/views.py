@@ -478,6 +478,10 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
         )
 
     @property
+    def available_languages(self):
+        return ['en']
+
+    @property
     def is_previewer(self):
         return self.request.couch_user.is_previewer
 
@@ -497,6 +501,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
             'event_form': CaseReminderEventForm(ui_type=self.ui_type),
             'message_form': CaseReminderEventMessageForm(),
             'ui_type': self.ui_type,
+            'available_languages': self.available_languages,
         }
 
     @method_decorator(reminders_permission)
@@ -539,6 +544,14 @@ class EditScheduledReminderView(CreateScheduledReminderView):
             return CaseReminderHandler.get(self.handler_id)
         except ResourceNotFound:
             raise Http404()
+
+    @property
+    def available_languages(self):
+        langcodes = []
+        for event in self.reminder_handler.events:
+            langcodes.extend(event.message.keys())
+        return list(set(langcodes))
+
 
     @property
     def ui_type(self):

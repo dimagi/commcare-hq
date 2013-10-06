@@ -838,8 +838,9 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         required=False,
         label="Include Case Changes for Partial Forms",
     )
-    languages = forms.ChoiceField(
+    default_lang = forms.ChoiceField(
         required=False,
+        label="Default Language",
         choices=(
             ('en', "English (en)"),
         )
@@ -1015,7 +1016,12 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                 "Advanced",
                 'submit_partial_forms',
                 'include_case_side_effects',
-                'languages',
+                crispy.Field(
+                    'default_lang',
+                    data_bind="options: available_languages, "
+                              "value: default_lang, "
+                              "optionsText: 'name', optionsValue: 'langcode'",
+                ),
                 'max_question_retries',
             )
         )

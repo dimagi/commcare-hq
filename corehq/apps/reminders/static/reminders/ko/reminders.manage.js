@@ -1,9 +1,15 @@
-var ManageRemindersViewModel = function (initial, choices, ui_type) {
+var ManageRemindersViewModel = function (initial, choices, ui_type, available_languages) {
     'use strict';
     var self = this;
 
     self.choices = choices || {};
     self.ui_type = ui_type;
+
+    self.available_languages = ko.observable(_.map(available_languages, function (langcode) {
+        console.log(langcode);
+        return new ReminderLanguage(langcode, langcode);
+    }));
+    self.default_lang = ko.observable(initial.default_lang);
 
     self.start_reminder_on = ko.observable(initial.start_reminder_on);
     self.isStartReminderCaseProperty = ko.computed(function () {
@@ -148,4 +154,12 @@ var ReminderMessage = function (message, language) {
     var self = this;
     self.language = ko.observable(language);
     self.message = ko.observable(message);
+
+};
+
+var ReminderLanguage = function (langcode, name) {
+    'use strict';
+    var self = this;
+    self.langcode = ko.observable(langcode);
+    self.name = ko.observable(name);
 };

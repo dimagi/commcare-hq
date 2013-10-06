@@ -12,7 +12,8 @@
         var manageRemindersModel = new ManageRemindersViewModel(
             {{ form.current_values|JSON }},
             {{ form.relevant_choices|JSON }},
-            {{ ui_type|JSON }}
+            {{ ui_type|JSON }},
+            {{ available_languages|JSON }}
         );
         ko.applyBindings(manageRemindersModel, $('#manage-reminders-form').get(0));
         manageRemindersModel.init();
