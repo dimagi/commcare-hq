@@ -787,6 +787,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
 
     event_interpretation = forms.ChoiceField(
         label="Schedule Type",
+        initial=EVENT_AS_OFFSET,
         choices=(
             (EVENT_AS_OFFSET, "Offset-based"),
             (EVENT_AS_SCHEDULE, "Schedule-based"),
@@ -798,6 +799,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
     repeat_type = forms.ChoiceField(
         required=False,
         label="Repeat Reminder",
+        initial=REPEAT_TYPE_NO,
         choices=(
             (REPEAT_TYPE_NO, "No"),  # reminder_type = ONE_TIME
             (REPEAT_TYPE_INDEFINITE, "Indefinitely"),  # reminder_type = DEFAULT, max_iteration_count = -1
@@ -848,6 +850,19 @@ class SimpleScheduleCaseReminderForm(forms.Form):
     )
 
     def __init__(self, data=None, is_previewer=False, domain=None, ui_type=None, *args, **kwargs):
+        if 'initial' not in kwargs:
+            kwargs['initial'] = {
+                'event_timing': self._format_event_timing_choice(EVENT_AS_OFFSET,
+                                                                 FIRE_TIME_DEFAULT, EVENT_TIMING_IMMEDIATE),
+                'events': json.dumps([{
+                    'day_num': 0,
+                    'fire_time_type': FIRE_TIME_DEFAULT,
+                    'message': {
+                        'en': "",
+                    },
+                }])
+            }
+
         super(SimpleScheduleCaseReminderForm, self).__init__(data, *args, **kwargs)
 
         self.domain = domain
