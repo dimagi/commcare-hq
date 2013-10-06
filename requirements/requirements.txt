@@ -2,6 +2,7 @@
 Cython==0.17.4
 
 restkit==4.2.0
+couchdbkit==0.5.7
 jsonobject-couchdbkit>=0.6.5.0
 jsonobject>=0.2.7
 celery==3.0.15
