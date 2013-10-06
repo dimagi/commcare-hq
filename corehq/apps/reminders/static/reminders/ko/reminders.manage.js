@@ -35,7 +35,11 @@ var ManageRemindersViewModel = function (initial, choices, ui_type) {
 
     self.method = ko.observable(initial.method);
     self.eventObjects = ko.observable();
-    self.events = ko.observable();
+    self.events = ko.computed(function () {
+        return JSON.stringify(_.map(self.eventObjects(), function (event){
+            return event.asJSON();
+        }));
+    });
     self.event_timing = ko.observable(initial.event_timing);
 
     self.event_interpretation = ko.computed(function () {
@@ -123,6 +127,19 @@ var ReminderEvent = function (eventData, choices, method, event_timing, event_in
     self.isMessageVisible = ko.computed(function () {
         return (self.method() === self.choices.METHOD_SMS)
             || (self.method() === self.choices.METHOD_SMS_CALLBACK);
+    });
+
+    self.asJSON = ko.computed(function () {
+        return {
+            fire_time_type: self.fire_time_type(),
+            fire_time_aux: self.fire_time_aux(),
+            day_num: self.day_num(),
+            fire_time: self.fire_time(),
+            form_unique_id: self.form_unique_id(),
+            message: self.message_data(),
+            callback_timeout_intervals: self.callback_timeout_intervals(),
+            time_window_length: self.time_window_length()
+        }
     });
 };
 

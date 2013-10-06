@@ -955,7 +955,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             "Message Content",
             crispy.Field('method', data_bind="value: method"),
             crispy.Field('event_interpretation', data_bind="value: event_interpretation"),
-            crispy.Field('events'),
+            crispy.Field('events', data_bind="value: events"),
             crispy.Div(data_bind="template: {name: 'event-template', foreach: eventObjects}"),
             BootstrapMultiField(
                 "Timing",
