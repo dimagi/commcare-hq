@@ -1284,7 +1284,12 @@ class CaseReminderEventMessageForm(forms.Form):
             crispy.Field('language', data_bind="value: language"),
             BootstrapMultiField(
                 'Message <span data-bind="text:languageLabel"></span>',
-                InlineField('message', data_bind="value: message"),
+                InlineField(
+                    'message',
+                    data_bind="value: message",
+                    css_class="input-xlarge",
+                    rows="2",
+                ),
             ),
         )
 
