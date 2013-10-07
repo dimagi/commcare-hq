@@ -9,7 +9,6 @@ from couchdbkit.ext.django.schema import (Document, StringProperty, BooleanPrope
                                           StringListProperty, SchemaListProperty)
 from django.utils.safestring import mark_safe
 from corehq.apps.appstore.models import Review, SnapshotMixin
-from corehq.apps.domain.utils import get_domain_module_map
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.logging import notify_exception
@@ -877,7 +876,9 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         """
         import and return the python module corresponding to domain_name, or
         None if it doesn't exist.
+
         """
+        from corehq.apps.domain.utils import get_domain_module_map
         module_name = get_domain_module_map().get(domain_name, domain_name)
 
         try:
