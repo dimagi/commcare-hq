@@ -8,4 +8,4 @@ class BootstrapMultiField(MultiField):
 
 
 class FieldsetAccordionGroup(AccordionGroup):
-    template = "hqwebapp/crispy/layout/fieldset-accordion-group.html"
+    template = "hqwebapp/crispy/layout/fieldset_accordion_group.html"
