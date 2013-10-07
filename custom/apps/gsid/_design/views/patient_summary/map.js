@@ -1,6 +1,6 @@
 function (doc) {
-    if (doc.doc_type === 'CommCareCase' && (doc.domain === 'gsid')) {
-
+    if (doc.doc_type === 'CommCareCase' && (doc.domain === 'gsid' || doc.domain === 'gsid-demo')) {
+        var date = doc.test_date || doc.opened_on;
         emit(
             [doc.domain,
             doc.disease,
@@ -10,7 +10,7 @@ function (doc) {
             doc.district,
             doc.clinic,
             doc.sex,
-            doc.opened_on,
+            date,
             doc.diagnosis,
             parseInt(doc.lot_number, 10),
             doc.gps,
