@@ -1,4 +1,5 @@
 {% extends base_template %}
+{% load url from future %}
 {% load i18n %}
 
 {% block title %}
@@ -13,7 +14,7 @@
         <div class="span-24 last">
             <dl>
             {% for m, v in model_dict.items %}
-                <dt><a href="{% url single_model_history m %}">{{ m }}</a></dt>
+                <dt><a href="{% url 'single_model_history' m %}">{{ m }}</a></dt>
                     <dd>{{ v }}</dd>
             {% endfor %}
             </dl>

@@ -1,4 +1,5 @@
 {% extends base_template %}
+{% load url from future %}
 {% load i18n %}
 
 {% block title %}
@@ -11,7 +12,7 @@
         <h2>Website Usage</h2>
         </div>
 		<div class="toolbar noprint">
-		    <a href="{% url export_all_audits %}" class="add">Export to Excel</a>
+		    <a href="{% url 'export_all_audits' %}" class="add">Export to Excel</a>
 		</div>
         <div class="span-24 last">
 			{% block toolbar %}
