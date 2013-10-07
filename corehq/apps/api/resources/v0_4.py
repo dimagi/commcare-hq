@@ -65,6 +65,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResou
         ordering = ['received_on']
         list_allowed_methods = ['get']
 
+
 class RepeaterResource(JsonResource, DomainSpecificResourceMixin):
 
     id = fields.CharField(attribute='_id', readonly=True, unique=True)
@@ -133,6 +134,7 @@ def group_by_dict(objs, fn):
         key = fn(obj)
         result[key].append(obj)
     return result
+
 
 class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResource, DomainSpecificResourceMixin):
 
@@ -260,6 +262,7 @@ class SingleSignOnResource(JsonResource, DomainSpecificResourceMixin):
         detail_allowed_methods = []
         list_allowed_methods = ['post']
 
+
 class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
 
     name = fields.CharField(attribute='name')
@@ -319,6 +322,7 @@ class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         resource_name = 'application'
+
 
 class HOPECaseResource(CommCareCaseResource):
     '''
