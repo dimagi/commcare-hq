@@ -126,7 +126,8 @@ def do_cache_doc(doc, cache_expire=COUCH_CACHE_TIMEOUT):
         rcache().set(key_doc_id(doc['_id']), simplejson.dumps(doc), timeout=cache_expire)
 
 
-def cached_view(db, view_name, wrapper=None, cache_expire=COUCH_CACHE_TIMEOUT, **params):
+def cached_view(db, view_name, wrapper=None, cache_expire=COUCH_CACHE_TIMEOUT, force_invalidate=False,
+                **params):
     """
     Entry point for caching views. See if it's in the generational view system, else juts call normal.
     """
@@ -136,7 +137,8 @@ def cached_view(db, view_name, wrapper=None, cache_expire=COUCH_CACHE_TIMEOUT, *
     else:
         cache_method = NoGenerationCache.nogen().cached_view
 
-    return cache_method(db, view_name, wrapper=wrapper, cache_expire=cache_expire, **params)
+    return cache_method(db, view_name, wrapper=wrapper, cache_expire=cache_expire, force_invalidate=force_invalidate,
+                        **params)
 
 class DocGenCache(object):
     generation_key = None
@@ -216,15 +218,21 @@ class DocGenCache(object):
             do_cache_doc(doc_or_docid, cache_expire=cache_expire)
 
 
-    def cached_view(self, db, view_name, wrapper=None, cache_expire=COUCH_CACHE_TIMEOUT, **params):
+    def cached_view(self, db, view_name, wrapper=None, cache_expire=COUCH_CACHE_TIMEOUT, force_invalidate=False,
+                    **params):
         """
         Call a view and cache the results, return cached if it's a cache hit.
 
         db: couch database to do query on
         view_name, params: couch view call parameters
+        force_invalidate: extra param to always hit the db and cache on read.
 
         Note, a view call with include_docs=True will not be wrapped, you must wrap it on your own.
         """
+
+        if force_invalidate:
+            self.increment()
+
         include_docs = params.get('include_docs', False)
 
         cache_view_key = self.mk_view_cache_key(view_name, params)
