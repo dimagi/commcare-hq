@@ -485,11 +485,13 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
         if self.new_commcare_user_form.is_valid():
             username = self.new_commcare_user_form.cleaned_data['username']
             password = self.new_commcare_user_form.cleaned_data['password']
+            phone_number = self.new_commcare_user_form.cleaned_data['phone_number']
 
             couch_user = CommCareUser.create(
                 self.domain,
                 username,
                 password,
+                phone_number=phone_number,
                 device_id="Generated from HQ"
             )
             return HttpResponseRedirect(reverse(EditCommCareUserView.urlname,

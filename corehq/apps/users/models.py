@@ -947,15 +947,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return couch_user
 
     @classmethod
-    def view(cls, view_name, classes=None, **params):
-        if cls is CouchUser:
-            classes = classes or {
-                'CommCareUser': CouchUser,
-                'WebUser': CouchUser,
-            }
-        return super(CouchUser, cls).view(view_name, classes=classes, **params)
-
-    @classmethod
     def wrap_correctly(cls, source):
         if source['doc_type'] == 'CouchUser' and \
                 source.has_key('commcare_accounts') and \
@@ -1212,12 +1203,14 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.user_data              = old_couch_user.default_account.user_data
 
     @classmethod
-    def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):
+    def create(cls, domain, username, password, email=None, uuid='', date='', phone_number=None, **kwargs):
         """
         used to be a function called `create_hq_user_from_commcare_registration_info`
 
         """
         commcare_user = super(CommCareUser, cls).create(domain, username, password, email, uuid, date, **kwargs)
+        if phone_number is not None:
+            commcare_user.add_phone_number(phone_number)
 
         device_id = kwargs.get('device_id', '')
         user_data = kwargs.get('user_data', {})

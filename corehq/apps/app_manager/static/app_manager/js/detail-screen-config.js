@@ -314,7 +314,7 @@ var DetailScreenConfig = (function () {
                     that.filter_xpath_extra.ui.remove();
                     that.time_ago_extra.ui.remove();
 
-                    if (this.val() === "enum") {
+                    if (this.val() === "enum" || this.val() === "enum-image") {
                         that.format.ui.parent().append(that.enum_extra.ui);
                     } else if (this.val() === 'late-flag') {
                         that.format.ui.parent().append(that.late_flag_extra.ui);
@@ -889,6 +889,7 @@ var DetailScreenConfig = (function () {
         },
         PHONE_FORMAT: 'Phone Number',
         ENUM_FORMAT: 'ID Mapping',
+        ENUM_IMAGE_FORMAT: 'Icon',
         ENUM_EXTRA_LABEL: 'Mapping: ',
         LATE_FLAG_FORMAT: 'Late Flag',
         LATE_FLAG_EXTRA_LABEL: 'Days late: ',
@@ -923,6 +924,10 @@ var DetailScreenConfig = (function () {
         {value: "address", label: DetailScreenConfig.message.ADDRESS_FORMAT}
     ];
 
+    if (window.FEATURE_enable_enum_image) {
+        DetailScreenConfig.MENU_OPTIONS.push(
+            {value: "enum-image", label: DetailScreenConfig.message.ENUM_IMAGE_FORMAT + ' (Preview!)'}
+        );
+    }
     return DetailScreenConfig;
 }());
-

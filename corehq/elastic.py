@@ -60,7 +60,7 @@ def get_stats_data(domains, histo_type, datespan, interval="day"):
                 ],
             },
         }
-        q["filter"]["and"].extend(ADD_TO_ES_FILTER.get(histo_type, []))
+        q["filter"]["and"].extend(ADD_TO_ES_FILTER.get(histo_type, [])[:])
 
         return es_query(q=q, es_url=ES_URLS[histo_type], size=1)["hits"]["total"]
 
@@ -108,7 +108,7 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff
     return ret_data["facets"]["histo"]["entries"]
 
 
-def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at=None, size=None, dict_only=False):
+def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at=None, size=None, dict_only=False, fields=None):
     """
         Any filters you include in your query should an and filter
         todo: intelligently deal with preexisting filters
@@ -154,6 +154,11 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
 
     if not q['filter']['and']:
         del q["filter"]
+
+
+    if fields:
+        q["fields"] = q.get("fields", [])
+        q["fields"].extend(fields)
 
     if dict_only:
         return q

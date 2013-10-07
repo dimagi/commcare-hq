@@ -455,8 +455,11 @@ class ReportNotification(Document):
         else:
             # create a new ReportConfig object, useful for its methods and
             # calculated properties, but don't save it
-            config = ReportConfig()
-            config.save = lambda self, *args, **kwargs: None
+            class ReadonlyReportConfig(ReportConfig):
+                def save(self, *args, **kwargs):
+                    pass
+
+            config = ReadonlyReportConfig()
             object.__setattr__(config, '_id', 'dummy')
             config.report_type = ProjectReportDispatcher.prefix
             config.report_slug = self.report_slug

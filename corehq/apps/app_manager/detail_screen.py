@@ -84,7 +84,9 @@ class FormattedDetailColumn(object):
 
     @property
     def locale_id(self):
-        return self.id_strings.detail_column_header_locale(self.module, self.detail, self.column)
+        return self.id_strings.detail_column_header_locale(self.module,
+                                                           self.detail,
+                                                           self.column)
 
     @property
     def header(self):
@@ -142,11 +144,10 @@ class FormattedDetailColumn(object):
 
         return sort
 
-    variables = None
-
     @property
     def xpath(self):
-        return get_column_xpath_generator(self.app, self.module, self.detail, self.column).xpath
+        return get_column_xpath_generator(self.app, self.module, self.detail,
+                                          self.column).xpath
 
     XPATH_FUNCTION = u"{xpath}"
 
@@ -207,12 +208,14 @@ class FormattedDetailColumn(object):
                 template=self.template,
             )
 
+
 class HideShortHeaderColumn(FormattedDetailColumn):
 
     @property
     def header_width(self):
         if self.detail.display == 'short':
             return 0
+
 
 class HideShortColumn(HideShortHeaderColumn):
 
@@ -226,13 +229,13 @@ class HideShortColumn(HideShortHeaderColumn):
 class Plain(FormattedDetailColumn):
     pass
 
+
 @register_format_type('date')
 class Date(FormattedDetailColumn):
 
     XPATH_FUNCTION = u"if({xpath} = '', '', format_date(date(if({xpath} = '', 0, {xpath})),'short'))"
 
     SORT_XPATH_FUNCTION = u"{xpath}"
-
 
 
 @register_format_type('time-ago')
@@ -247,6 +250,7 @@ class Phone(FormattedDetailColumn):
         if self.detail.display == 'long':
             return 'phone'
 
+
 @register_format_type('enum')
 class Enum(FormattedDetailColumn):
 
@@ -255,7 +259,8 @@ class Enum(FormattedDetailColumn):
         parts = []
         for key in sorted(self.column.enum.keys()):
             parts.append(
-                u"if({xpath} = '{key}', $k{key}, ".format(key=key, xpath=self.xpath)
+                u"if({xpath} = '{key}', $k{key}, ".format(key=key,
+                                                          xpath=self.xpath)
             )
         parts.append("''")
         parts.append(")" * len(self.column.enum))
@@ -266,9 +271,19 @@ class Enum(FormattedDetailColumn):
         variables = {}
         for key in self.column.enum:
             v_key = u"k{key}".format(key=key)
-            v_val= self.id_strings.detail_column_enum_variable(self.module, self.detail, self.column, key)
+            v_val= self.id_strings.detail_column_enum_variable(self.module,
+                                                               self.detail,
+                                                               self.column,
+                                                               key)
             variables[v_key] = v_val
         return variables
+
+
+@register_format_type('enum-image')
+class EnumImage(Enum):
+    template_form = 'image'
+    template_width = '10%'
+
 
 @register_format_type('late-flag')
 class LateFlag(HideShortHeaderColumn):
@@ -277,9 +292,11 @@ class LateFlag(HideShortHeaderColumn):
 
     XPATH_FUNCTION = u"if({xpath} = '', '*', if(today() - date({xpath}) > {column.late_flag}, '*', ''))"
 
+
 @register_format_type('invisible')
 class Invisible(HideShortColumn):
     pass
+
 
 @register_format_type('filter')
 class Filter(HideShortColumn):
@@ -291,6 +308,7 @@ class Filter(HideShortColumn):
     @property
     def filter_xpath(self):
         return self.column.filter_xpath.replace('.', self.xpath)
+
 
 @register_format_type('address')
 class Address(HideShortColumn):
@@ -320,15 +338,3 @@ class IndicatorXpathGenerator(BaseXpathGenerator):
         indicator_set, indicator = self.column.field_property.split('/', 1)
         instance_id = self.id_strings.indicator_instance(indicator_set)
         return IndicatorXpath(instance_id).indicator(indicator)
-
-
-# todo: These two were never actually supported, and 'advanced' certainly never worked
-# but for some reason have been hanging around in the suite.xml template since September 2010
-#
-#@register_format_type('advanced')
-#class Advanced(HideShortColumn):
-#    pass
-#
-#@register_format_type('enum-image')
-#class EnumImage(HideShortColumn):
-#    template_form = 'image'

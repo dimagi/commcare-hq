@@ -882,7 +882,6 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         """
         import and return the python module corresponding to domain_name, or
         None if it doesn't exist.
-        
         """
         module_name = get_domain_module_map().get(domain_name, domain_name)
 
