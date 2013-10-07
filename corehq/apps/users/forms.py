@@ -1,5 +1,6 @@
+from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit
+from crispy_forms.layout import ButtonHolder, Fieldset, HTML, Layout, Submit
 from django import forms
 from django.core.validators import EmailValidator, email_re
 from django.core.urlresolvers import reverse
@@ -162,6 +163,31 @@ class CommCareAccountForm(forms.Form):
 
     class Meta:
         app_label = 'users'
+
+    def __init__(self, *args, **kwargs):
+        super(forms.Form, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Fieldset(
+                'Create new Mobile Worker account',
+                'username',
+                'password',
+                HTML("{% if only_numeric %}"
+                     "<div class=\"control-group\"><div class=\"controls\">"
+                     "To enable alphanumeric passwords, go to the "
+                     "applications this user will use, go to CommCare "
+                     "Settings, and change Password Format to Alphanumeric."
+                     "</div></div>"
+                     "{% endif %}"),
+                'password_2',
+                'phone_number'
+            ),
+            FormActions(
+                ButtonHolder(
+                    Submit('submit', 'Create Mobile Worker')
+                )
+            )
+        )
 
     def clean_phone_number(self):
         phone_number = self.cleaned_data['phone_number']
