@@ -18,7 +18,7 @@ import logging
 import re
 import os.path
 
-from casexml.apps.case.models import CommCareCaseAction
+from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from corehq.apps.api.es import CaseES
 from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.models import HQUserType
@@ -706,6 +706,8 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
       adapter == 'legacyreport'
       'report': 'fully qualified name of tabular report view class'
       'report_params': optional dict of (static) config parameters for report
+
+      adapter == 'case'
     }
 
     display_config: {
@@ -860,6 +862,55 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
 
         for row in report.rows:
             yield dict(zip(headers, row))
+
+    def _get_data_case(self, params, filters):
+        MAX_RESULTS = 200 # TODO vary by rate plan?
+        # TODO filters and params in query
+        results = CaseES(self.domain).run_query({
+                'query': {
+                    'filtered': {
+#                        'query': query_block
+                        'filter': {'term': {'domain.exact': self.domain}},
+                    }
+                },
+                'size': MAX_RESULTS,
+            })
+
+        if results is None or 'hits' not in results:
+            # TODO error
+            raise RuntimeException('query error')
+        results = results['hits']
+
+        if results['total'] > MAX_RESULTS:
+            # TODO '# of results capped' warning
+            print 'WARN: results limit exceeded'
+            pass
+
+        for case in results['hits']:
+            case = CommCareCase.wrap(case['_source']).get_json()
+            data = dict((k, case[k]) for k in (
+                    'case_id',
+                    'closed',
+                    'date_closed',
+                    'date_modified',
+                    'server_date_opened',
+                    'server_date_modified',
+                ))
+            data['num_forms'] = len(case['xform_ids'])
+            standard_props = (
+                'case_name',
+                'case_type',
+                'date_opened',
+                'external_id',
+                'owner_id',
+            )
+            data.update((k, case['properties'][k]) for k in standard_props)
+            data.update(('prop_%s' % k, v) for k, v in case['properties'].iteritems() if k not in standard_props)
+
+            import random
+            data['prop_geo'] = '%s %s' % (random.uniform(40, 50), random.uniform(-80, -70))
+
+            yield data
 
     def _get_data_csv(self, params, filters):
         import csv
@@ -1175,6 +1226,19 @@ class DemoMapReport2(GenericMapReport):
                         ]}},
         ],
     }
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return user and user.is_previewer()
+
+class DemoMapCaseList(GenericMapReport):
+    name = ugettext_noop("Maps: Case List")
+    slug = "maps_demo_caselist"
+    data_source = {
+        "adapter": "case",
+        "geo_column": "prop_geo",
+    }
+    display_config = {}
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
