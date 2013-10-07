@@ -1,4 +1,4 @@
-import datetime
+import datetime, logging
 
 from celery.task import periodic_task
 from celery.schedules import crontab
@@ -74,11 +74,12 @@ def save_report(date):
             individual=site.individual,
         )
         report.save()
+        msg = "Saving legacy group %s to doc %s" % (group.name, report._id)
+        logging.info(msg)
 
 
-#@periodic_task(run_every=crontab(hour=1, day_of_week=6),
-@periodic_task(run_every=crontab(minute='*/1'),
+@periodic_task(run_every=crontab(hour=1, day_of_week=6),
+#@periodic_task(run_every=crontab(minute="*/1"),
         queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def run_report():
-    print "********* running Smiley report"
     save_report(datetime.date.today())

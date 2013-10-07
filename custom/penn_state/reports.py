@@ -79,7 +79,7 @@ class LegacyReportView(LegacyMixin, CustomProjectReport):
                     raise Http404
             else:
                 #self._user = CommCareUser.from_django_user(self.request.user)
-                self.user = self.request.couch_user
+                self._user = self.request.couch_user
             if self._user is None:
                 raise Http404
         return self._user
