@@ -7,6 +7,7 @@ from django.contrib.auth.models import AnonymousUser
 from couchdbkit.ext.django.schema import (Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
                                           DocumentSchema, SchemaProperty, DictProperty, ListProperty,
                                           StringListProperty, SchemaListProperty)
+from django.core.cache import cache
 from django.utils.safestring import mark_safe
 from corehq.apps.appstore.models import Review, SnapshotMixin
 from dimagi.utils.decorators.memoized import memoized
@@ -464,7 +465,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         return self.name
 
     @classmethod
-    def get_by_name(cls, name, strict=False):
+    def _get_by_name(cls, name, strict):
         if not name:
             # get_by_name should never be called with name as None (or '', etc)
             # I fixed the code in such a way that if I raise a ValueError
@@ -493,6 +494,22 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             return cls.get_by_name(name, strict=True)
 
         return result
+
+    @classmethod
+    def get_by_name(cls, name, strict=False):
+        key = 'Domain.get_by_name:%s' % name
+        if not strict:
+            result = cache.get(key)
+        else:
+            result = None
+
+        if result is None:
+            result = cls._get_by_name(name, strict)
+            cache.set(key, result.to_json(), 5)
+        else:
+            result = cls.wrap(result)
+        return result
+
 
     @classmethod
     def get_by_organization(cls, organization):
