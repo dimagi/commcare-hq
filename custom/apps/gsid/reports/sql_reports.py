@@ -122,7 +122,7 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
         for place in self.place_types:
             columns.append(DatabaseColumn(place.capitalize(), SimpleColumn(place)))
 
-        return columns + [DatabaseColumn("gps", SimpleColumn(self.gps_key))]
+        return columns
 
 
 class GSIDSQLPatientReport(GSIDSQLReport):
@@ -229,6 +229,8 @@ class GSIDSQLPatientReport(GSIDSQLReport):
                 ],
                 header_group=age_range_group
             ),
+
+            DatabaseColumn("gps", SimpleColumn(self.gps_key))
         ]
 
     @property
@@ -278,7 +280,7 @@ class GSIDSQLByDayReport(GSIDSQLReport):
         enddate = self.datespan.enddate_utc
 
         column_headers = []
-        group_by = self.group_by[:-1]
+        group_by = self.group_by[:-2]
         for place in group_by:
             column_headers.append(DataTablesColumn(place))
 
@@ -311,7 +313,7 @@ class GSIDSQLByDayReport(GSIDSQLReport):
         old_data = self.data
         rows = []
         for loc_key in self.keys:
-            row = [x for x in loc_key]
+            row = [x for x in loc_key[:-1]]
             for n, day in enumerate(self.daterange(startdate, enddate)):
                 temp_key = [loc for loc in loc_key]
                 temp_key.append(datetime.strptime(day, "%Y-%m-%d").date())
@@ -334,7 +336,7 @@ class GSIDSQLByDayReport(GSIDSQLReport):
             data_points = []
             for n, day in enumerate(self.daterange(startdate, enddate)):
                 x = day
-                y = 0 if row[date_index + n + 1] == "--" else row[date_index + n + 1]
+                y = 0 if row[date_index + n] == "--" else row[date_index + n]
                 data_points.append({'x': x, 'y': y})
             color = int(hashlib.md5(row[date_index-1]).hexdigest(), 16)
             color = str(hex(color))
@@ -396,7 +398,7 @@ class GSIDSQLTestLotsReport(GSIDSQLReport):
         old_data = self.data
         rows = []
         for loc_key in self.keys:
-            row = [loc for loc in loc_key]
+            row = [loc for loc in loc_key[:-1]]
             for test in selected_tests:
                 test_lots = test_lots_map.get(test, None)
                 if not test_lots:
@@ -416,7 +418,7 @@ class GSIDSQLTestLotsReport(GSIDSQLReport):
 
     @property
     def headers(self):
-        column_headers = [ DataTablesColumn(loc) for loc in self.group_by[:-2]]
+        column_headers = [DataTablesColumn(loc) for loc in self.group_by[:-3]]
         test_lots_map = self.test_lots_map
         for test in self.selected_tests:
             lots_headers = [test]
