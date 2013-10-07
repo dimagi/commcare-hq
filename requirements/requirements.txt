@@ -2,7 +2,6 @@
 Cython==0.17.4
 
 restkit==4.2.0
-couchdbkit==0.5.7
 jsonobject-couchdbkit>=0.6.5.0
 jsonobject>=0.2.7
 celery==3.0.15
@@ -57,11 +56,13 @@ markdown==2.2.1
 amqp==1.0.8
 amqplib==1.0.2
 sqlagg==0.2.0
--e submodules/fluff-src
 django-redis==3.2
 redis==2.7.5
--e submodules/ctable-src
 unittest2
 pycurl==7.19.0
-fakecouch==0.0.4
+fakecouch==0.0.5
 # WeasyPrint==0.19.2
+
+# required by ctable
+SQLAlchemy==0.8.2
+alembic==0.6.0
