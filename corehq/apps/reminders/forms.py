@@ -16,7 +16,7 @@ from django.forms import Field, Widget
 from corehq.apps.reminders.util import DotExpandedDict
 from casexml.apps.case.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
-from corehq.apps.hqwebapp.crispy import BootstrapMultiField
+from corehq.apps.hqwebapp.crispy import BootstrapMultiField, FieldsetAccordionGroup
 from .models import (
     REPEAT_SCHEDULE_INDEFINITELY,
     CaseReminderEvent,
@@ -787,6 +787,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
 
     event_interpretation = forms.ChoiceField(
         label="Schedule Type",
+        initial=EVENT_AS_OFFSET,
         choices=(
             (EVENT_AS_OFFSET, "Offset-based"),
             (EVENT_AS_SCHEDULE, "Schedule-based"),
@@ -798,6 +799,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
     repeat_type = forms.ChoiceField(
         required=False,
         label="Repeat Reminder",
+        initial=REPEAT_TYPE_NO,
         choices=(
             (REPEAT_TYPE_NO, "No"),  # reminder_type = ONE_TIME
             (REPEAT_TYPE_INDEFINITE, "Indefinitely"),  # reminder_type = DEFAULT, max_iteration_count = -1
@@ -836,8 +838,9 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         required=False,
         label="Include Case Changes for Partial Forms",
     )
-    languages = forms.ChoiceField(
+    default_lang = forms.ChoiceField(
         required=False,
+        label="Default Language",
         choices=(
             ('en', "English (en)"),
         )
@@ -848,6 +851,19 @@ class SimpleScheduleCaseReminderForm(forms.Form):
     )
 
     def __init__(self, data=None, is_previewer=False, domain=None, ui_type=None, *args, **kwargs):
+        if 'initial' not in kwargs:
+            kwargs['initial'] = {
+                'event_timing': self._format_event_timing_choice(EVENT_AS_OFFSET,
+                                                                 FIRE_TIME_DEFAULT, EVENT_TIMING_IMMEDIATE),
+                'events': json.dumps([{
+                    'day_num': 0,
+                    'fire_time_type': FIRE_TIME_DEFAULT,
+                    'message': {
+                        'en': "",
+                    },
+                }])
+            }
+
         super(SimpleScheduleCaseReminderForm, self).__init__(data, *args, **kwargs)
 
         self.domain = domain
@@ -955,7 +971,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             "Message Content",
             crispy.Field('method', data_bind="value: method"),
             crispy.Field('event_interpretation', data_bind="value: event_interpretation"),
-            crispy.Field('events'),
+            crispy.Field('events', data_bind="value: events"),
             crispy.Div(data_bind="template: {name: 'event-template', foreach: eventObjects}"),
             BootstrapMultiField(
                 "Timing",
@@ -995,14 +1011,24 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             )
         )
 
-        advanced_section = Accordion(
-            AccordionGroup(
-                "Advanced",
-                'submit_partial_forms',
-                'include_case_side_effects',
-                'languages',
-                'max_question_retries',
-            )
+        advanced_section = FieldsetAccordionGroup(
+            "Advanced Options",
+            BootstrapMultiField(
+                "Default Language",
+                InlineField(
+                    'default_lang',
+                    data_bind="options: available_languages, "
+                              "value: default_lang, "
+                              "optionsText: 'name', optionsValue: 'langcode'",
+                ),
+                crispy.HTML('<a href="#add-language-modal" '
+                            'class="btn btn-primary" style="margin-left: 5px;" '
+                            'data-toggle="modal">Add Language</a>'),
+            ),
+            'max_question_retries',
+            'submit_partial_forms',
+            'include_case_side_effects',
+            active=False,
         )
 
         self.helper = FormHelper()
@@ -1256,7 +1282,19 @@ class CaseReminderEventMessageForm(forms.Form):
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
             crispy.Field('language', data_bind="value: language"),
-            crispy.Field('message', data_bind="value: message"),
+            BootstrapMultiField(
+                'Message <span data-bind="text:languageLabel"></span>',
+                InlineField(
+                    'message',
+                    data_bind="value: message, valueUpdate: 'keyup'",
+                    css_class="input-xlarge",
+                    rows="2",
+                ),
+                crispy.Div(
+                    style="padding-top: 10px",
+                    data_bind="template: { name: 'event-message-length-template' }"
+                )
+            ),
         )
 
 
