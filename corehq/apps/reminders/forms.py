@@ -16,7 +16,7 @@ from django.forms import Field, Widget
 from corehq.apps.reminders.util import DotExpandedDict
 from casexml.apps.case.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
-from corehq.apps.hqwebapp.crispy import BootstrapMultiField, FieldsetAccordionGroup
+from corehq.apps.hqwebapp.crispy import BootstrapMultiField, FieldsetAccordionGroup, HiddenFieldWithErrors
 from .models import (
     REPEAT_SCHEDULE_INDEFINITELY,
     CaseReminderEvent,
@@ -971,7 +971,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             "Message Content",
             crispy.Field('method', data_bind="value: method"),
             crispy.Field('event_interpretation', data_bind="value: event_interpretation"),
-            crispy.Field('events', data_bind="value: events"),
+            HiddenFieldWithErrors('events', data_bind="value: events"),
             crispy.Div(data_bind="template: {name: 'event-template', foreach: eventObjects}"),
             BootstrapMultiField(
                 "Timing",
