@@ -56,7 +56,8 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
         is_active=False,
         date_created=datetime.utcnow(),
         commtrack_enabled=commtrack_enabled,
-        creating_user=current_user.username)
+        creating_user=current_user.username,
+        default_timezone=form.cleaned_data['domain_timezone'])
 
     if org:
         new_domain.organization = org

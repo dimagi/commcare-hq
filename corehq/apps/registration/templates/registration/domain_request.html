@@ -51,7 +51,7 @@
     {% endif %}
     <form class="form-horizontal" method="post" action="{{ request.get_full_path }}">
         <fieldset>
-            <legend>{% if is_new %}Request{% else %}Create{% endif %} a Project Space</legend>
+            <legend>{% if is_new %}{% trans "Request a Project Space" %}{% else %}{% trans "Create a Project Space" %}{% endif %}</legend>
             {% for global_error in form.non_field_errors %}
                 <div class="alert alert-error">
                     {{ global_error }}
@@ -79,7 +79,7 @@
                 {{ hidden }}
             {% endfor %}
         </fieldset>
-        <div class="form-actions"{% if not is_new %} style="margin-top:24px; padding-top:18px;"{% endif %}><button type="submit" class="btn btn-primary btn-large disable-on-submit">{% if is_new %}Request{% else %}Create{% endif %} Project</button></div>
+        <div class="form-actions"{% if not is_new %} style="margin-top:24px; padding-top:18px;"{% endif %}><button type="submit" class="btn btn-primary btn-large disable-on-submit">{% if is_new %}{% trans "Request Project" %}{% else %}{% trans "Create Project" %}{% endif %}</button></div>
     </form>
 </div>
 <div class="span4">

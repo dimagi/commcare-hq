@@ -8,7 +8,10 @@ from django.core.validators import validate_email
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import new_domain_re, new_org_re, website_re
 from corehq.apps.orgs.models import Organization
+from django.utils.encoding import smart_str
 from django.utils.safestring import mark_safe
+from dimagi.utils.timezones.fields import TimeZoneField
+from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from django.utils.translation import ugettext_lazy as _
 
 class NewWebUserRegistrationForm(forms.Form):
@@ -131,6 +134,9 @@ class DomainRegistrationForm(forms.Form):
     org = forms.CharField(widget=forms.HiddenInput(), required=False)
     domain_name = forms.CharField(label='Project Name:', max_length=25)
     domain_type = forms.CharField(widget=forms.HiddenInput(), required=False, initial='commcare')
+    domain_timezone = TimeZoneChoiceField(label="Time Zone:", initial="UTC",
+                                          widget=forms.Select(attrs={'class': 'input-xlarge', 'bindparent': 'visible: override_tz',
+                                                                     'data-bind': 'event: {change: updateForm}'}))
 
     def clean_domain_name(self):
         data = self.cleaned_data['domain_name'].strip().lower()
@@ -145,6 +151,12 @@ class DomainRegistrationForm(forms.Form):
     def clean_domain_type(self):
         data = self.cleaned_data.get('domain_type', '').strip().lower()
         return data if data else 'commcare'
+
+    def clean_domain_timezone(self):
+        data = self.cleaned_data['domain_timezone']
+        timezone_field = TimeZoneField()
+        timezone_field.run_validators(data)
+        return smart_str(data)
 
     def clean(self):
         for field in self.cleaned_data:
