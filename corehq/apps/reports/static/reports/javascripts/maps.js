@@ -371,6 +371,13 @@ function initData(data, config) {
         config.table_columns = config.detail_columns.slice(0);
     }
 
+    // typecast values
+    $.each(data.features, function(i, e) {
+        $.each(e.properties, function(k, v) {
+            e.properties[k] = typecast(v);
+        });
+    });
+
     // pre-cache popup detail
     $.each(data.features, function(i, e) {
         e.popupContent = formatDetailPopup(e, config);
@@ -501,6 +508,25 @@ function initMetrics(map, table, data, config) {
     // set sensible defaults for metric parameters (if omitted)
     forEachMetric(config.metrics, function(metric) {
         setMetricDefaults(metric, data, config);
+    });
+
+    // typecast values
+    $.each(config.metrics, function(i, e) {
+        forEachDimension(e, function(dim, meta) {
+            if (meta.thresholds) {
+                meta.thresholds = _.map(meta.thresholds, typecast);
+            }
+            if (meta.colorstops) {
+                meta.colorstops = _.map(meta.colorstops, function(e) { return [typecast(e[0]), e[1]]; });
+            }
+            if (meta.categories) {
+                var _cat = {};
+                $.each(meta.categories, function(k, v) {
+                    _cat[typecast(k)] = v;
+                });
+                meta.categories = _cat;
+            }
+        });
     });
 
     // necessary closures (TODO make a class?)
@@ -894,7 +920,8 @@ function infoContext(feature, config, mode) {
     $.each(prop_cols, function(i, k) {
         var v = feature.properties[k];
         displayProperties[k] = formatForDisplay(k, v);
-        rawProperties[k] = v;
+        rawProperties[k] = (v instanceof Date ? v.getTime() : v);
+        // can't use iso date as sort key; datatables expects numeric sorting for date columns
     });
 
     var context = {
@@ -1037,6 +1064,7 @@ function _summarizeColumn(meta, data) {
     var max = null;
     var nonnumeric = false;
     var nonpoint = false;
+    var hasDates = false;
 
     var iterate = function(callback) {
         $.each(data.features, function(i, e) {
@@ -1047,17 +1075,25 @@ function _summarizeColumn(meta, data) {
 
             var numeric = isNumeric(val);
             var polygon = e.geometry.type != 'Point';
-            callback(numeric ? +val : val, numeric, polygon);
+            if (numeric && !(val instanceof Date)) {
+                val = +val;
+            }
+            callback(val, numeric, polygon);
         });
     }
 
     iterate(function(val, numeric, polygon) {
         _uniq[val] = true;
         if (numeric) {
+            if (val instanceof Date) {
+                hasDates = true;
+            }
+
             count++;
             sum += val;
-            min = (min == null ? val : Math.min(min, val));
-            max = (max == null ? val : Math.max(max, val));
+            // note: Math.min/max won't preserve dates
+            min = (min == null || val < min ? val : min);
+            max = (max == null || val > max ? val : max);
         } else {
             nonnumeric = true;
         }
@@ -1091,13 +1127,14 @@ function _summarizeColumn(meta, data) {
         max: max,
         nonnumeric: nonnumeric,
         nonpoint: nonpoint,
+        hasDates: hasDates,
     };
 }
 
 // based on the results of summarizeColumn, determine if this column is better
 // represented as a magnitude (0-max) or narrower range (min-max)
 function magnitude_based_field(stats) {
-    if (stats.min < 0) {
+    if (stats.min < 0 || stats.hasDates) {
         return false;
     } else if (stats.stdev != null && stats.stdev > 0) {
         var effective_range = Math.max(stats.max, 0) - Math.min(stats.min, 0);
@@ -1172,8 +1209,9 @@ function formatValue(column, value, config) {
         return null;
     }
 
+    // TODO have some kind of default formatting (nice dates, add commas to numbers, etc.)
     var formatter = config._fmt[column];
-    return (formatter ? formatter(value) : value);
+    return (formatter ? formatter(value) : '' + value);
 }
 
 function getColumnTitle(col, config) {
@@ -1260,6 +1298,8 @@ function colorScaleLegend($e, meta) {
     var max = meta.colorstops.slice(-1)[0][0];
     var range = max - min;
     var step = range / (SCALEBAR_HEIGHT - 1);
+    var dateScale = (min instanceof Date);
+    // TODO smarter tick marks for dates (snap to days, months, hours, etc., instead of 10^n seconds)
 
     var $canvas = make_canvas(SCALEBAR_WIDTH, SCALEBAR_HEIGHT);
     var ctx = $canvas[0].getContext('2d');
@@ -1285,6 +1325,9 @@ function colorScaleLegend($e, meta) {
     }
 
     var ticks = $.map(tickvals, function(e) {
+        if (dateScale) {
+            e = new Date(e);
+        }
         return {label: meta._formatNum(e), coord: (1. - (e - min) / range) * SCALEBAR_HEIGHT};
     });
 
@@ -1308,7 +1351,7 @@ function enumLegend($e, meta, renderValue) {
 }
 
 
-
+// note: Date objects are considered numeric
 function isNumeric(x) {
     return (!isNull(x) && !isNaN(+x));
 }
@@ -1316,6 +1359,26 @@ function isNumeric(x) {
 function isNull(x) {
     return (x === undefined || x === null || x === '');
 }
+
+// convert certain json values to a more suitable type
+function typecast(x) {
+    if (x === true) {
+        return 'y';
+    } else if (x === false) {
+        return 'n';
+    }
+
+    // js date conversion is overzealous (e.g, 'Sample 2' parses as a valid date)
+    // add regex check as a quick fix for now
+    if (!isNumeric(x) && /[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}:[0-9]{2}Z?)?/.test(x)) {
+        var asDate = new Date(x);
+        if (!isNaN(asDate.getTime())) {
+            return asDate;
+        }
+    }
+
+    return x;
+};
 
 
 
