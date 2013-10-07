@@ -166,9 +166,11 @@ var ReminderEvent = function (eventData, choices, method, event_timing, event_in
         return translations;
     });
     self.message_data = ko.computed(function () {
-        return _.map(self.messageTranslations(), function (translation) {
-            return translation.toJSON();
+        var message_data = {};
+        _.each(self.messageTranslations(), function (translation) {
+            message_data[translation.language()] = translation.message();
         });
+        return message_data;
     });
     self.isMessageVisible = ko.computed(function () {
         return (self.method() === self.choices.METHOD_SMS)
@@ -213,13 +215,6 @@ var ReminderMessage = function (message, language, available_languages) {
     });
     self.showPluralChar = ko.computed(function () {
         return !self.showSingularChar();
-    });
-
-    self.toJSON = ko.computed(function () {
-        return {
-            language: self.language(),
-            message: self.message()
-        }
     });
 
     self.languageLabel = ko.computed(function () {
