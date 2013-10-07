@@ -3,12 +3,11 @@ from casexml.apps.case.models import CommCareCase
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.reports.dispatcher import QuestionTemplateDispatcher
 from corehq.apps.reports.views import require_case_view_permission
 from casexml.apps.case.templatetags.case_tags import case_inline_display
-from corehq.apps.app_manager.models import get_app
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
-import re
 from django.template.loader import get_template
 from django.template import Context
 from django.http import HttpResponse
@@ -35,35 +34,26 @@ def render_to_pdf(request, domain, case_id, report_slug):
     context = Context(context_dict)
     html = template.render(context)
     response = HttpResponse(mimetype="application/pdf")
-    weasyprint.HTML(string=html).write_pdf(response)
+    # weasyprint.HTML(string=html).write_pdf(response)
     return response
 
 
-def get_questions_with_answers(forms, domain):
-    questions_with_answers = []
-    needed_forms = []
-    app = get_app(domain, getattr(forms[0], "app_id", None))
+def get_questions_with_answers(forms, domain, report_slug):
+    questions = QuestionTemplateDispatcher().get_question_templates(domain, report_slug)
+    for question in questions:
+        question['answers'] = []
     for form in forms:
-        if 'current_count' in form.get_form and form.get_form['current_count'] and int(form.get_form['current_count']) >= 1:
-            needed_forms.append(form)
-
-    if needed_forms:
-        for question in app.get_questions(needed_forms[0].xmlns):
-            if question['tag'] != "hidden":
-                answer_field = re.search('.*/(.*)', question['value']).group(1)
-                questions_with_answers.append({"label": question["label"],
-                                               "answer_field": answer_field})
-
-        for question in questions_with_answers:
-            question["answers"] = ["", "", "", "", "", "", ""]
-            i = 0
-            for form in needed_forms:
-                if question["answer_field"] in form.get_form:
-                    question['answers'][i] = form.get_form[question["answer_field"]]
-                else:
-                    question['answers'][i] = "---"
-                i += 1
-    return questions_with_answers
+        form_dict = form.get_form
+        for question in questions:
+            if question['case_property'] in form_dict:
+                question['answers'].append(form_dict[question['case_property']])
+    for question in questions:
+        if 'answers' not in question:
+                question['answers'] = []
+        if len(question['answers']) < 7:
+            for i in range(len(question['answers']), 7):
+                question['answers'].append('')
+    return questions
 
 
 def get_dict_to_report(domain, case_id, report_slug):
@@ -78,8 +68,8 @@ def get_dict_to_report(domain, case_id, report_slug):
         owner_name = None
 
     try:
-        owning_group = Group.by_user(case.owner_id)
-        sub_center = ", ".join([ r.name.encode('UTF-8') for r in owning_group])
+        owning_group = Group.get(case.owner_id)
+        sub_center = owning_group.display_name if owning_group.domain == domain else ''
     except Exception:
         sub_center = None
 
@@ -88,7 +78,7 @@ def get_dict_to_report(domain, case_id, report_slug):
     except Exception:
         user = None
 
-    questions = get_questions_with_answers(case.get_forms(), domain)
+    questions = get_questions_with_answers(case.get_forms(), domain, report_slug)
 
     return {
         "domain": domain,

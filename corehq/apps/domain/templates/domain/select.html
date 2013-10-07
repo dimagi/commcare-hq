@@ -1,4 +1,5 @@
 {% extends login_template %}
+{% load url from future %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -22,13 +23,13 @@
     <div class="span4">
         <aside class="well">
             <h3>{% trans "Have a new idea?" %}</h3>
-            <a class="btn btn-primary" href="{% url registration_domain %}">Create a Blank Project</a>
+            <a class="btn btn-primary" href="{% url "registration_domain" %}">Create a Blank Project</a>
             <div>or</div>
-            <a class="btn btn-primary" href="{% url appstore %}">Copy from CommCare Exchange</a>
+            <a class="btn btn-primary" href="{% url "appstore" %}">Copy from CommCare Exchange</a>
         </aside>
         <aside class="well">
             <h3>{% trans "Need ideas?" %}</h3>
-            <p>Check out the <a href="{% url appstore %}">CommCare Exchange</a>.
+            <p>Check out the <a href="{% url "appstore" %}">CommCare Exchange</a>.
             </p>
         </aside>
     </div>

@@ -1,3 +1,4 @@
+{% load url from future %}
 {% load menu_tags %}
 {% load i18n %}
 {% load hq_shared_tags %}
@@ -5,7 +6,7 @@
 <div class="btn-toolbar pull-right">
     <div class="btn-group">
     {% if request.project.organization and request.couch_user.is_web_user %}
-        <a href="{% url orgs_landing request.project.organization %}" class="btn btn-info">{{ request.project.get_organization.title }}</a>
+        <a href="{% url "orgs_landing" request.project.organization %}" class="btn btn-info">{{ request.project.get_organization.title }}</a>
         {% comment %}TODO: Add a drop-down list of organizations the current user is a member of?{% endcomment %}
     {% endif %}
     </div>
@@ -30,7 +31,7 @@
                 </script>
             {% else %}
                 <a class="btn btn-project{% if is_project_settings %} btn-project-active{% endif %}"
-                   href="{% url domain_settings_default domain %}">
+                   href="{% url "domain_settings_default" domain %}">
                     <i class="icon-cog"></i>
                     {% if request.project.is_snapshot %}
                         {% blocktrans with request.project.copied_from.display_name as snap_name %}
@@ -78,12 +79,12 @@
                     {% endif %}
                 {% endwith %}
             </li>
-            <li><a href="{% url my_account_settings %}"><i class="icon-user"></i> {% trans 'My Account Settings' %}</a></li>
+            <li><a href="{% url "my_account_settings" %}"><i class="icon-user"></i> {% trans 'My Account Settings' %}</a></li>
             {% if domain %}
-                <li><a href="{% url domain_settings_default domain %}"><i class="icon-cog"></i> {% trans 'Project Settings' %}</a></li>
+                <li><a href="{% url "domain_settings_default" domain %}"><i class="icon-cog"></i> {% trans 'Project Settings' %}</a></li>
             {% endif %}
             <li class="divider"></li>
-            <li><a href="{% url logout %}"><i class="icon-signout"></i> {% trans 'Sign Out' %}</a></li>
+            <li><a href="{% url "logout" %}"><i class="icon-signout"></i> {% trans 'Sign Out' %}</a></li>
         </ul>
     </div>
 </div>

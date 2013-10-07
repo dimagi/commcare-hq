@@ -118,17 +118,6 @@ class MobileBackend(Document):
         return self.is_global or domain == self.domain or domain in self.authorized_domains
 
     @classmethod
-    def view(cls, view_name, classes=None, wrapper=None, **params):
-        if cls is MobileBackend and not classes:
-            wrapper = wrapper or (lambda row: cls.wrap(row['doc']))
-        return super(MobileBackend, cls).view(
-            view_name,
-            classes=classes,
-            wrapper=wrapper,
-            **params
-        )
-
-    @classmethod
     def auto_load(cls, phone_number, domain=None):
         """
         Get the appropriate outbound SMS backend to send to a

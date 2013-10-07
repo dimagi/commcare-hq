@@ -1,9 +1,10 @@
 from inspect import ismethod
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.html import format_html
 from custom.bihar.calculations.types import DoneDueCalculator, TotalCalculator
 from custom.bihar.models import CareBiharFluff
 from custom.bihar.utils import get_all_owner_ids_from_group
-from custom.bihar.reports.indicators.clientlistdisplay import PreDeliveryDoneDueCLD, PreDeliveryCLD, PreDeliverySummaryCLD, PostDeliverySummaryCLD, ComplicationsCalculator
+from custom.bihar.reports.indicators.clientlistdisplay import PreDeliveryDoneDueCLD, PreDeliveryCLD, PreDeliverySummaryCLD, PostDeliverySummaryCLD, ComplicationsCalculator, PostDeliveryDoneDueCLD
 from django.utils.translation import ugettext_noop as _
 from django.utils.datastructures import SortedDict
 
@@ -32,17 +33,17 @@ INDICATOR_SETS = [
             {
                 "slug": "pnc",
                 "name": _("PNC Visits"),
-                "clientlistdisplay": PreDeliveryDoneDueCLD,
+                "clientlistdisplay": PostDeliveryDoneDueCLD,
             },
             {
                 "slug": "ebf",
                 "name": _("EBF Visits"),
-                "clientlistdisplay": PreDeliveryDoneDueCLD,
+                "clientlistdisplay": PostDeliveryDoneDueCLD,
             },
             {
                 "slug": "cf",
                 "name": _("CF Visits"),
-                "clientlistdisplay": PreDeliveryDoneDueCLD,
+                "clientlistdisplay": PostDeliveryDoneDueCLD,
             },
             {
                 "slug": "upcoming_deliveries",
@@ -321,15 +322,15 @@ class Indicator(object):
 
 class IndicatorDataProvider(object):
 
-    def __init__(self, domain, indicator_set, group):
+    def __init__(self, domain, indicator_set, groups):
         self.domain = domain
         self.indicator_set = indicator_set
-        self.group = group
+        self.groups = groups
 
     @property
     @memoized
     def all_owner_ids(self):
-        return get_all_owner_ids_from_group(self.group)
+        return set([id for group in self.groups for id in get_all_owner_ids_from_group(group)])
 
     @property
     def summary_indicators(self):
@@ -352,12 +353,37 @@ class IndicatorDataProvider(object):
         num, denom = map(sum, zip((0, 0), *pairs()))
         return num, denom
 
+    def get_indicator_value(self, indicator):
+        return "%s/%s" % self.get_indicator_data(indicator)
+
     @memoized
     def get_case_ids(self, indicator):
-        return indicator.fluff_calculator.aggregate_results(
+        return self.get_case_data(indicator).keys()
+
+
+    @memoized
+    def get_case_data(self, indicator):
+        results = indicator.fluff_calculator.aggregate_results(
             ([self.domain, owner_id] for owner_id in self.all_owner_ids),
             reduce=False
-        )[indicator.fluff_calculator.primary]
+        )
+        numerator = results['numerator']
+        denominator = results[indicator.fluff_calculator.primary]
+        return dict((id, {'num': id in numerator, 'denom': id in denominator}) for id in numerator | denominator)
+
+
+    def get_chart(self, indicator):
+        # this is a serious hack for now
+        pie_class = 'sparkpie'
+        num, denom = self.get_indicator_data(indicator)
+        chart_template = (
+            '<span data-numerator="{num}" '
+            'data-denominator="{denom}" class="{pie_class}"></span>'
+        )
+        return format_html(chart_template, num=num,
+                           denom=denom - num,
+                           pie_class=pie_class)
+
 
 def flatten_config():
     props = """

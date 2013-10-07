@@ -90,8 +90,8 @@ SECRET_KEY = ''
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.load_template_source',
-    'django.template.loaders.app_directories.load_template_source',
+    'django.template.loaders.filesystem.Loader',
+    'django.template.loaders.app_directories.Loader',
     'django.template.loaders.eggs.Loader',
     #     'django.template.loaders.eggs.load_template_source',
 )
@@ -239,6 +239,7 @@ HQ_APPS = (
     'custom.bihar',
     'custom.penn_state',
     'dca',
+    'custom.apps.gsid',
     'hsph',
     'mvp',
     'mvp_apps',
@@ -253,6 +254,7 @@ HQ_APPS = (
     'custom.reports.care_sa',
     'custom.apps.cvsu',
     'custom.reports.mc',
+    'custom.trialconnect',
     'custom.apps.crs_reports',
 )
 
@@ -716,6 +718,7 @@ COUCHDB_APPS = [
     'penn_state',
     'care_benin',
     'dca',
+    'gsid',
     'hsph',
     'mvp',
     'opm_tasks',
@@ -886,6 +889,8 @@ DOMAIN_MODULE_MAP = {
     'cvsulive': 'custom.apps.cvsu',
     'dca-malawi': 'dca',
     'eagles-fahu': 'dca',
+    'gsid': 'custom.apps.gsid',
+    'gsid-demo': 'custom.apps.gsid',
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
@@ -899,6 +904,11 @@ DOMAIN_MODULE_MAP = {
     'opm': 'custom.opm.opm_reports',
     'psi-unicef': 'psi',
     'project': 'custom.apps.care_benin',
+
+    'gc': 'custom.trialconnect',
+    'tc-test': 'custom.trialconnect',
+    'trialconnect': 'custom.trialconnect',
+
     'crs-remind': 'custom.apps.crs_reports'
 }
 

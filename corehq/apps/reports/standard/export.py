@@ -1,21 +1,19 @@
 from collections import defaultdict
 import json
 import logging
-import datetime
+
 from django.utils.translation import ugettext_noop
-from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
-from corehq.apps.data_interfaces.interfaces import DataInterface
-from dimagi.utils.dates import DateSpan
-from django.conf import settings
 from django.http import Http404
+
+from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
+
+from corehq.apps.data_interfaces.interfaces import DataInterface
 from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin
-from corehq.apps.reports.models import FormExportSchema,\
-    HQGroupExportConfiguration
-from corehq.apps.reports.util import make_form_couch_key, datespan_from_beginning
+from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration
+from corehq.apps.reports.util import datespan_from_beginning
 from couchexport.models import SavedExportSchema, Format
 from dimagi.utils.couch.database import get_db
 from corehq.apps.app_manager.models import get_app
-from dimagi.utils.parsing import string_to_datetime
 
 
 class ExportReport(DataInterface, ProjectReportParametersMixin):
@@ -189,15 +187,29 @@ class ExcelExportReport(FormExportReportBase):
                     else:
                         form['no_suggestions'] = True
 
-        forms = sorted(forms, key=lambda form:\
-        (0 if not form.get('app_deleted') else 1,
-         form['app']['name'],
-         form['app']['id'],
-         form.get('module', {'id': -1 if form.get('is_user_registration') else 1000})['id'], form.get('form', {'id': -1})['id']
-            ) if form['has_app'] else\
-        (2, form['xmlns'], form['app']['id'])
-        )
+        def _sortkey(form):
+            app_id = form['app']['id']
+            if form['has_app']:
+                order = 0 if not form.get('app_deleted') else 1
+                app_name = form['app']['name']
+                module = form.get('module')
+                if module:
+                    # module is sometimes wrapped json, sometimes a dict!
+                    module_id = module['id'] if 'id' in module else module.id
+                else:
+                    module_id = -1 if form.get('is_user_registration') else 1000
+                app_form = form.get('form')
+                if app_form:
+                    # app_form is sometimes wrapped json, sometimes a dict!
+                    form_id = app_form['id'] if 'id' in app_form else app_form.id
+                else:
+                    form_id = -1
+                return (order, app_name, app_id, module_id, form_id)
+            else:
+                form_xmlns = form['xmlns']
+                return (2, form_xmlns, app_id)
 
+        forms = sorted(forms, key=_sortkey)
         # if there is a custom group export defined grab it here
         groups = HQGroupExportConfiguration.by_domain(self.domain)
         context = super(ExcelExportReport, self).report_context

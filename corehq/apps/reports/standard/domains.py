@@ -232,10 +232,7 @@ def es_domain_query(params=None, facets=None, domains=None, start_at=None, size=
 
     q["sort"] = sort if sort else [{"name" : {"order": "asc"}},]
 
-    if fields:
-        q["fields"] = fields
-
-    return es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search', start_at, size)
+    return es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search', start_at, size, fields=fields)
 
 def total_distinct_users(domains=None):
     """
@@ -244,7 +241,7 @@ def total_distinct_users(domains=None):
     query = {"in": {"domain.exact": domains}} if domains is not None else {"match_all": {}}
     q = {
         "query": query,
-        "filter": {"and": ADD_TO_ES_FILTER.get("forms", [])},
+        "filter": {"and": ADD_TO_ES_FILTER["forms"][:]},
     }
 
     res = es_query(q=q, facets=["form.meta.userID"], es_url=ES_URLS["forms"], size=0)
@@ -291,7 +288,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
     def headers(self):
         headers = DataTablesHeader(
             DataTablesColumn("Project", prop_name="name.exact"),
-            DataTablesColumn(_("Organization"), prop_name="internal.organization_name"),
+            DataTablesColumn(_("Organization"), prop_name="internal.organization_name.exact"),
             DataTablesColumn(_("Deployment Date"), prop_name="deployment.date"),
             DataTablesColumn(_("Deployment Country"), prop_name="deployment.country.exact"),
             DataTablesColumn(_("# Active Mobile Workers"), sort_type=DTSortType.NUMERIC,
@@ -360,8 +357,8 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                 yield [
                     self.get_name_or_link(dom, internal_settings=True),
                     dom.get("internal", {}).get('organization_name') or _('No org'),
-                    format_date(dom.get('deployment', {}).get('date'), _('No date')),
-                    dom.get("deployment", {}).get('country') or _('No country'),
+                    format_date((dom.get('deployment') or {}).get('date'), _('No date')),
+                    (dom.get("deployment") or {}).get('country') or _('No country'),
                     dom.get("cp_n_active_cc_users", _("Not yet calculated")),
                     dom.get("cp_n_cc_users", _("Not yet calculated")),
                     dom.get("cp_n_60_day_cases", _("Not yet calculated")),

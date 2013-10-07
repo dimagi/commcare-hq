@@ -1,13 +1,11 @@
 # coding=utf-8
 from distutils.version import LooseVersion
 import tempfile
-from couchdbkit import ResourceConflict
 import os
 import logging
 import hashlib
 import random
 import json
-from corehq.apps.app_manager.commcare_settings import check_condition
 import types
 import re
 from collections import defaultdict
@@ -16,31 +14,31 @@ from functools import wraps
 from copy import deepcopy
 from urllib2 import urlopen
 from urlparse import urljoin
-from lxml import etree
 
+from couchdbkit import ResourceConflict
+from lxml import etree
 from django.core.cache import cache
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext
-from corehq.apps.app_manager.const import APP_V1, APP_V2
 from couchdbkit.exceptions import BadValueError
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
-from django.contrib.auth.models import get_hexdigest
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.template.loader import render_to_string
-
 from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
 
+from corehq.apps.app_manager.commcare_settings import check_condition
+from corehq.apps.app_manager.const import APP_V1, APP_V2
+from corehq.util.hash_compat import make_password
 from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base, parse_int
 from dimagi.utils.couch.database import get_db
 import commcare_translations
-
 from corehq.util import bitly
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig, BuildRecord
@@ -50,12 +48,12 @@ from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property
-
 from corehq.apps.app_manager import current_builds, app_strings, remote_app
 from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings, build_error_utils
 from corehq.apps.app_manager.util import split_path, save_xform
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml
 from .exceptions import AppError, VersioningError, XFormError, XFormValidationError
+
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -676,7 +674,7 @@ class DetailColumn(IndexedSchema):
     Represents a column in case selection screen on the phone. Ex:
         {
             'header': {'en': 'Sex', 'pt': 'Sexo'},
-            'model': 'cc_pf_client',
+            'model': 'case',
             'field': 'sex',
             'format': 'enum',
             'enum': {'en': {'m': 'Male', 'f': 'Female'}, 'pt': {'m': 'Macho', 'f': 'Fêmea'}}
@@ -1176,17 +1174,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         return self
 
     @classmethod
-    def view(cls, view_name, wrapper=None, classes=None, **params):
-        if cls is ApplicationBase and not wrapper:
-            classes = classes or dict((k, cls) for k in str_to_cls.keys())
-        return super(ApplicationBase, cls).view(
-            view_name,
-            wrapper=wrapper,
-            classes=classes,
-            **params
-        )
-
-    @classmethod
     def by_domain(cls, domain):
         return cls.view('app_manager/applications_brief',
                         startkey=[domain],
@@ -1242,11 +1229,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         return self._latest_saved
 
     def set_admin_password(self, raw_password):
-        import random
-        algo = 'sha1'
-        salt = get_hexdigest(algo, str(random.random()), str(random.random()))[:5]
-        hsh = get_hexdigest(algo, salt, raw_password)
-        self.admin_password = '%s$%s$%s' % (algo, salt, hsh)
+        salt = os.urandom(5).encode('hex')
+        self.admin_password = make_password(raw_password, salt=salt)
 
         if raw_password.isnumeric():
             self.admin_password_charset = 'n'
@@ -1869,10 +1853,18 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def new_module(self, name, lang):
         self.modules.append(
             Module(
-                name={lang if lang else "en": name if name else "Untitled Module"},
+                name={(lang or 'en'): name or ugettext("Untitled Module")},
                 forms=[],
                 case_type='',
-                details=[Detail(type=detail_type, columns=[]) for detail_type in DETAIL_TYPES],
+                details=[Detail(
+                    type=detail_type,
+                    columns=[DetailColumn(
+                        format='plain',
+                        header={(lang or 'en'): ugettext("Name")},
+                        field='name',
+                        model='case',
+                    )],
+                ) for detail_type in DETAIL_TYPES],
             )
         )
         return self.get_module(-1)
@@ -2372,4 +2364,3 @@ Module.get_case_list_locale_id = lambda self: "case_lists.m{module.id}".format(m
 Module.get_referral_list_command_id = lambda self: "m{module.id}-referral-list".format(module=self)
 Module.get_referral_list_locale_id = lambda self: "referral_lists.m{module.id}".format(module=self)
 
-import corehq.apps.app_manager.signals

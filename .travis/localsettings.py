@@ -69,6 +69,8 @@ ELASTICSEARCH_PORT = 9200
 
 AUDIT_ADMIN_VIEWS=False
 
+SECRET_KEY='secrettravis'
+
 # No logging
 LOGGING = {
     'version': 1,

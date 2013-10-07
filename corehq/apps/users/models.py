@@ -692,7 +692,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             return self.username
 
     def html_username(self):
-        username = self.username
+        username = self.raw_username
         if '@' in username:
             html = "<span class='user_username'>%s</span><span class='user_domainname'>@%s</span>" % \
                    tuple(username.split('@'))
@@ -721,7 +721,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     @property
     def full_name(self):
-        return ("%s %s" % (self.first_name or '', self.last_name or '')).strip()
+        return (u"%s %s" % (self.first_name or u'', self.last_name or u'')).strip()
 
     @property
     def human_friendly_name(self):
@@ -945,15 +945,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             couch_user._id = old_couch_user.default_account.login_id
 
         return couch_user
-
-    @classmethod
-    def view(cls, view_name, classes=None, **params):
-        if cls is CouchUser:
-            classes = classes or {
-                'CommCareUser': CouchUser,
-                'WebUser': CouchUser,
-            }
-        return super(CouchUser, cls).view(view_name, classes=classes, **params)
 
     @classmethod
     def wrap_correctly(cls, source):
@@ -1201,12 +1192,14 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.user_data              = old_couch_user.default_account.user_data
 
     @classmethod
-    def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):
+    def create(cls, domain, username, password, email=None, uuid='', date='', phone_number=None, **kwargs):
         """
         used to be a function called `create_hq_user_from_commcare_registration_info`
 
         """
         commcare_user = super(CommCareUser, cls).create(domain, username, password, email, uuid, date, **kwargs)
+        if phone_number is not None:
+            commcare_user.add_phone_number(phone_number)
 
         device_id = kwargs.get('device_id', '')
         user_data = kwargs.get('user_data', {})
@@ -1679,8 +1672,20 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
     def get_teams(self, ids_only=False):
         from corehq.apps.orgs.models import Team
         teams = []
+
+        def get_valid_teams(team_ids):
+            team_db = Team.get_db()
+            for t_id in team_ids:
+                if team_db.doc_exist(t_id):
+                    yield Team.get(t_id)
+                else:
+                    logging.info("Note: team %s does not exist for %s" % (t_id, self))
+
         for om in self.org_memberships:
-            teams.extend([Team.get(t_id) for t_id in om.team_ids] if not ids_only else om.team_ids)
+            if not ids_only:
+                teams.extend(list(get_valid_teams(om.team_ids)))
+            else:
+                teams.extend(om.team_ids)
         return teams
 
     def get_domains(self):
