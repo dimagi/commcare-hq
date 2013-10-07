@@ -1,5 +1,5 @@
 function (doc) {
-    if (doc.doc_type === 'CommCareCase' && (doc.domain === 'gsid')) {
+    if (doc.doc_type === 'CommCareCase' && (doc.domain === 'gsid' || doc.domain === 'gsid-demo')) {
         var date = doc.test_date || doc.opened_on;
         emit(
             [doc.domain,
