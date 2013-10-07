@@ -1127,6 +1127,9 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             try:
                 current_val = getattr(reminder_handler, field, Ellipsis)
                 if field == 'events':
+                    for event in current_val:
+                        if not event.message:
+                            event.message = dict([(reminder_handler.default_lang or 'en', '')])
                     current_val = json.dumps([e.to_json() for e in current_val])
                 if current_val is not Ellipsis:
                     initial[field] = current_val
