@@ -7,6 +7,7 @@ from corehq.apps.groups.models import Group
 
 from .constants import *
 
+
 class LegacyWeeklyReport(Document):
     """
     This doc stores the aggregate weekly results per site.
@@ -35,14 +36,13 @@ class LegacyWeeklyReport(Document):
 
     @classmethod
     def by_user(cls, user, date=None):
-        # ACTUALLY LOOK UP USER FIRST, at this point user is probably a str
-
         # Users should only have one group, and it should be a report group
-        groups = Group.by_user('%s@%s.commcarehq.org' % (user, DOMAIN)).all()#.all()
-        if len(groups) != 1 or not groups[0].reporting:
+        groups = Group.by_user(user).all()
+        # if len(groups) != 1 or not groups[0].reporting:
+        if len(groups) == 0 or not groups[0].reporting:
             return
 
-        site = group.name
+        site = groups[0].name
 
         if date is None:
             # get the most recent saturday (isoweekday==6)
@@ -58,3 +58,4 @@ class LegacyWeeklyReport(Document):
             reduce=False,
             include_docs=True,
         ).one()
+        return report

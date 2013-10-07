@@ -5,17 +5,18 @@ from django.http import HttpResponse, Http404
 
 from couchdbkit.exceptions import ResourceNotFound
 
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.reports.standard import CustomProjectReport
 from dimagi.utils.couch.database import get_db
 
 from .models import LegacyWeeklyReport
 from .constants import *
 
+
 class LegacyMixin(object):
     """
     Contains logic specific to this report.
     """
-    user = None
     report_id = None
     _report = None
 
@@ -30,7 +31,9 @@ class LegacyMixin(object):
                 raise Http404
         else:
             self._report = LegacyWeeklyReport.by_user(self.user)
-        if not self.user in self._report.individual:
+            if self._report is None:
+                raise Http404
+        if not self.user.raw_username in self._report.individual:
             raise Http404
         return self._report
 
@@ -60,16 +63,34 @@ class LegacyReportView(LegacyMixin, CustomProjectReport):
     description = "Legacy Report for Pennsylvania State University"
     base_template = "penn_state/smiley_report.html"
     asynchronous = False
+    _user = None
+
+    @property
+    def user(self):
+        if self._user is None:
+            user_param = self.request.GET.get('user')
+            if user_param:
+                username = '%s@%s.commcarehq.org' % (user_param, DOMAIN)
+                self._user = CommCareUser.get_by_username(username)
+                # Check permissions
+                if not self.request.couch_user.is_domain_admin(DOMAIN) and \
+                        self.request.couch_user.raw_username != user_param:
+                    # This should be a 403
+                    raise Http404
+            else:
+                #self._user = CommCareUser.from_django_user(self.request.user)
+                self.user = self.request.couch_user
+            if self._user is None:
+                raise Http404
+        return self._user
 
     @property
     def report_context(self):
         # import bpdb; bpdb.set_trace()
-        self.user = self.request.GET.get('user') or \
-            self.request.user.username.split("@")[0]
         self.report_id = self.request.GET.get('r_id', None)
 
         def get_individual(field):
-            return self.report.individual.get(self.user).get(field)
+            return self.report.individual.get(self.user.raw_username).get(field)
         return {
             'site_strategy': self.context_for(
                 self.report.site_strategy, 'peace'),

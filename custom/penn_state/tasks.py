@@ -1,5 +1,8 @@
 import datetime
-from celery import task
+
+from celery.task import periodic_task
+from celery.schedules import crontab
+from django.conf import settings
 
 from dimagi.utils.couch.database import get_db
 from corehq.apps.groups.models import Group
@@ -32,7 +35,7 @@ class Site(object):
 
     def process_user(self, user):
         for form in XFormInstance.get_forms_by_user(
-                    user, self.week[0], self.week[-1]):
+                user, self.week[0], self.week[-1]):
             if form.xmlns == DAILY_DATA_XMLNS:
                 try:
                     day = self.week.index(form.form['date_form_completed'])
@@ -73,6 +76,9 @@ def save_report(date):
         report.save()
 
 
-@task()
+#@periodic_task(run_every=crontab(hour=1, day_of_week=6),
+@periodic_task(run_every=crontab(minute='*/1'),
+        queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def run_report():
+    print "********* running Smiley report"
     save_report(datetime.date.today())
