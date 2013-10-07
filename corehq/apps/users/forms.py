@@ -1,6 +1,6 @@
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import ButtonHolder, Fieldset, HTML, Layout, Submit
+from crispy_forms.layout import ButtonHolder, Div, Fieldset, HTML, Layout, Submit
 from django import forms
 from django.core.validators import EmailValidator, email_re
 from django.core.urlresolvers import reverse
@@ -178,9 +178,15 @@ class CommCareAccountForm(forms.Form):
                      "applications this user will use, go to CommCare "
                      "Settings, and change Password Format to Alphanumeric."
                      "</div></div>"
-                     "{% endif %}"),
+                     "{% endif %}"
+                ),
                 'password_2',
-                'phone_number'
+                'phone_number',
+                Div(
+                    Div(HTML("Please enter number, including international code, in digits only."),
+                        css_class="controls"),
+                    css_class="control-group"
+                )
             ),
             FormActions(
                 ButtonHolder(
