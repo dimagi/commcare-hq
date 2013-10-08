@@ -1,4 +1,5 @@
 {% extends "reports/async/tabular.html" %}
+{% load url from future %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
@@ -30,9 +31,6 @@
             <li {% if view_mode == "careplan" %}class="active"{% endif %}>
                 <a href="{{ pt_root_url}}&view=careplan">{% trans "Care Plan" %}</a>
             </li>
-            {#                        <li {% if view_mode == "log" %}class="active"{% endif %}>#}
-            {#                            <a href="{% url view_pactpatient patient_doc.get_id 'log' %}" data-toggle="tab">{% trans "Change Log" %}</a>#}
-            {#                        </li>#}
         {% endblock patient-tab-controller %}
     </ul>
     {{ block.super }}

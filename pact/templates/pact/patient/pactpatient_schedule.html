@@ -1,4 +1,5 @@
 {% extends "pact/patient/pactpatient_base.html" %}
+{% load url from future %}
 {% load i18n %}
 {% block patient-tab-container %}
 
@@ -38,10 +39,6 @@
         <button id="btn_remove_last_schedule" data-bind="click:removeLast">Remove Last</button>
         <hr>
         <form id="new_schedule_form">
-{#            action="{% url pactdata_1 domain=domain %}?case_id={{ patient_doc.get_id }}&method=schedule" method="POST">#}
-{#        <form data-bind="submit:addSchedule">#}
-{#            {% csrf_token %}#}
-{#            {{ csrf_token }}#}
             {{ schedule_form.as_p }}
             <button id="btn_schedule_submit" type="submit">Save</button>
         </form>
@@ -108,7 +105,7 @@
 
             this.deprecated = ko.observable(data.deprecated);
         }
-        var api_url = "{% url pactdata_1 domain=domain %}?case_id={{ patient_doc.get_id }}";
+        var api_url = "{% url 'pactdata_1' domain=domain %}?case_id={{ patient_doc.get_id }}";
         function ScheduleListViewModel() {
             // Data
             var self = this;
