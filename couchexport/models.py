@@ -625,16 +625,16 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
         return ExportConfiguration(index=index, name=self.name,
                                    format=self.default_format)
 
-    class sheet_name(object):
-        """replaces: `sheet_name = StringProperty()`: store in tables[0].display instead"""
+    # replaces `sheet_name = StringProperty()`
 
-        @classmethod
-        def __get__(cls, instance, owner):
-            return instance.tables[0].display
+    def __get_sheet_name(self):
+        return self.tables[0].display
 
-        @classmethod
-        def __set__(cls, instance, value):
-            instance.tables[0].display = value
+    def __set_sheet_name(self, value):
+        self.tables[0].display = value
+
+    sheet_name = property(__get_sheet_name, __set_sheet_name)
+
 
 class ExportConfiguration(DocumentSchema):
     """
