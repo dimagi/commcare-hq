@@ -1,5 +1,6 @@
 from dimagi.utils.logging import log_exception
 try:
+    from .test_bugs import *
     from .test_force_close import *
     from .test_case_sharing import *
     from .test_pillows import *
