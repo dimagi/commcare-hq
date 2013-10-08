@@ -1294,16 +1294,20 @@ SCALEBAR_WIDTH = 20; // TODO seems like we want to tie this to em-height instead
 TICK_SPACING = 40; //px
 MIN_BUFFER = 15; //px
 function colorScaleLegend($e, meta) {
+    var EPOCH2000 = 946684800;
+    var fromDate = function(s) {
+        return s / 1000. - EPOCH2000;
+    }
+    var toDate = function(s) {
+        return new Date((s + EPOCH2000) * 1000.);
+    }
+
     var min = meta.colorstops[0][0];
     var max = meta.colorstops.slice(-1)[0][0];
     var dateScale = (min instanceof Date);
     if (dateScale) {
-        var EPOCH2000 = 946684800;
-        min = min / 1000. - EPOCH2000;
-        max = max / 1000. - EPOCH2000;
-        var toDate = function(s) {
-            return new Date((s + EPOCH2000) * 1000.);
-        }
+        min = fromDate(min);
+        max = fromDate(max);
     }
     var range = max - min;
     var step = range / (SCALEBAR_HEIGHT - 1);
@@ -1313,37 +1317,15 @@ function colorScaleLegend($e, meta) {
     for (var i = 0; i < SCALEBAR_HEIGHT; i++) {
         var k = i / (SCALEBAR_HEIGHT - 1);
         var x = blendLinear(min, max, k);
-        var y = $.Color(matchSpline(toDate(x), meta.colorstops, blendColor)).toRgbaString();
+        var y = $.Color(matchSpline(dateScale ? toDate(x) : x, meta.colorstops, blendColor)).toRgbaString();
         ctx.fillStyle = y;
         ctx.fillRect(0, SCALEBAR_HEIGHT - 1 - i, SCALEBAR_WIDTH, 1);
     }
 
-    var interval = step * TICK_SPACING;
-    if (!dateScale) {
-        interval = niceRoundNumber(interval);
-    } else {
-        var HOUR = 3600;
-        var DAY = 86400;
-        var YEAR_DAYS = 365.2425;
-        var MONTH_DAYS = YEAR_DAYS / 12;
-        var YEAR = YEAR_DAYS * DAY;
-
-        if (interval < 1) {
-            interval = niceRoundNumber(interval);
-        } else if (interval < HOUR) {
-            interval = niceRoundNumber(interval, [1, 2, 5, 10, 30], 60);
-        } else if (interval < DAY) {
-            interval = HOUR * niceRoundNumber(interval / HOUR, [1, 3, 6, 12], 24);
-        } else if (interval < YEAR) {
-            interval = DAY * niceRoundNumber(interval / DAY,
-                         [1, 3, 7, 0.5 * MONTH_DAYS, MONTH_DAYS, 3 * MONTH_DAYS, 6 * MONTH_DAYS], YEAR_DAYS);
-        } else {
-            interval = YEAR * niceRoundNumber(interval / YEAR);
-        }
-        // TODO snap month/year units to start of month/year
-    }
+    var interval = (dateScale ? niceRoundInterval : niceRoundNumber)(step * TICK_SPACING);
     var tickvals = [];
     for (var k = interval * Math.ceil(min / interval); k <= max; k += interval) {
+        // TODO snap date intervals >= 1 month to start of month
         tickvals.push(k);
     }
     var buffer_dist = step * MIN_BUFFER;
@@ -1533,6 +1515,27 @@ function niceRoundNumber(x, stops, orderOfMagnitude) {
     var bucket = matchThresholds(xNorm, $.map(cutoffs, function(co) { return co.cutoff; }), true);
     var multiplier = (bucket == -1 ? cutoffs.slice(-1)[0].mult / orderOfMagnitude : cutoffs[bucket].mult);
     return Math.pow(orderOfMagnitude, exponent) * multiplier;
+}
+
+function niceRoundInterval(seconds) {
+    var HOUR = 3600;
+    var DAY = 86400;
+    var YEAR_DAYS = 365.2425;
+    var MONTH_DAYS = YEAR_DAYS / 12;
+    var YEAR = YEAR_DAYS * DAY;
+
+    if (seconds < 1) {
+        return niceRoundNumber(seconds);
+    } else if (seconds < HOUR) {
+        return niceRoundNumber(seconds, [1, 2, 5, 10, 30], 60);
+    } else if (seconds < DAY) {
+        return HOUR * niceRoundNumber(seconds / HOUR, [1, 3, 6, 12], 24);
+    } else if (seconds < YEAR) {
+        return DAY * niceRoundNumber(seconds / DAY,
+           [1, 3, 7, 0.5 * MONTH_DAYS, MONTH_DAYS, 3 * MONTH_DAYS, 6 * MONTH_DAYS], YEAR_DAYS);
+    } else {
+        return YEAR * niceRoundNumber(seconds / YEAR);
+    }
 }
 
 function testNiceRoundNumber() {
