@@ -60,7 +60,9 @@ def download_saved_export(request, export_id):
     response = HttpResponse(mimetype=attach["content_type"])
     response.write(export.get_payload())
     # ht: http://stackoverflow.com/questions/1207457/convert-unicode-to-string-in-python-containing-extra-symbols
-    normalized_filename = unicodedata.normalize('NFKD', export.configuration.filename).encode('ascii','ignore')
+    normalized_filename = unicodedata.normalize(
+        'NFKD', unicode(export.configuration.filename),
+    ).encode('ascii','ignore')
     response['Content-Disposition'] = 'attachment; filename=%s' % normalized_filename
 
     return response
