@@ -1213,6 +1213,10 @@ class SimpleScheduleCaseReminderForm(forms.Form):
 
         return cleaned_data
 
+    def save(self, reminder_handler):
+        if not isinstance(reminder_handler, CaseReminderHandler):
+            raise ValueError("You must save to a CaseReminderHandler object!")
+
     @classmethod
     def compute_initial(cls, reminder_handler):
         initial = {}
