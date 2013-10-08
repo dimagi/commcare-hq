@@ -48,3 +48,20 @@ def get_unique_combinations(domain, place_types=None, place=None):
                     comb[pt] = None
         combos.append(comb)
     return combos
+
+
+def capitalize_fn(x):
+    """
+        Takes "high_point", returns "High Point".
+        Bad implementation, should have been taken care in keys() method and 
+        above get_unique_combinations() method. Needs too many changes to have
+        same effect now.        
+    """
+    if not x:
+        return x
+
+    x = x.split("_")
+    if len(x) is 1:
+        return x[0].capitalize()
+    x = map(lambda x: x.capitalize(), x)
+    return reduce(lambda x,y: x+" "+y, x)

@@ -10,7 +10,7 @@ from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn, Summ
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.standard.inspect import GenericMapReport
 from dimagi.utils.decorators.memoized import memoized
-from util import get_unique_combinations
+from util import get_unique_combinations,  capitalize_fn
 
 from datetime import datetime, timedelta
 
@@ -120,7 +120,7 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
     def common_columns(self):
         columns = []
         for place in self.place_types:
-            columns.append(DatabaseColumn(place.capitalize(), SimpleColumn(place)))
+            columns.append(DatabaseColumn(place.capitalize(), SimpleColumn(place), format_fn=capitalize_fn))
 
         return columns
 
@@ -313,7 +313,7 @@ class GSIDSQLByDayReport(GSIDSQLReport):
         old_data = self.data
         rows = []
         for loc_key in self.keys:
-            row = [x for x in loc_key[:-1]]
+            row = [capitalize_fn(x) for x in loc_key[:-1]]
             for n, day in enumerate(self.daterange(startdate, enddate)):
                 temp_key = [loc for loc in loc_key]
                 temp_key.append(datetime.strptime(day, "%Y-%m-%d").date())
@@ -338,9 +338,7 @@ class GSIDSQLByDayReport(GSIDSQLReport):
                 x = day
                 y = 0 if row[date_index + n] == "--" else row[date_index + n]
                 data_points.append({'x': x, 'y': y})
-            color = int(hashlib.md5(row[date_index-1]).hexdigest(), 16)
-            color = str(hex(color))
-            chart.add_dataset(row[date_index-1], data_points, color="#" + color[2:8])
+            chart.add_dataset(row[date_index-1], data_points)
         return [chart]
 
 class GSIDSQLTestLotsReport(GSIDSQLReport):
@@ -398,7 +396,7 @@ class GSIDSQLTestLotsReport(GSIDSQLReport):
         old_data = self.data
         rows = []
         for loc_key in self.keys:
-            row = [loc for loc in loc_key[:-1]]
+            row = [capitalize_fn(loc) for loc in loc_key[:-1]]
             for test in selected_tests:
                 test_lots = test_lots_map.get(test, None)
                 if not test_lots:
