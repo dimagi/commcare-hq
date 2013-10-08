@@ -36,7 +36,6 @@ def get_domain_from_url(path):
 
 def get_domain_module_map():
     hardcoded = getattr(settings, 'DOMAIN_MODULE_MAP', {})
-
     try:
         dynamic = cache_core.cached_open_doc(get_db(), 'DOMAIN_MODULE_CONFIG').get('module_map', {})
     except ResourceNotFound:
@@ -48,21 +47,12 @@ def get_domain_module_map():
 
 def get_adm_enabled_domains():
     try:
-
-        #cache_core GET
         domains = cache_core.cached_open_doc(get_db(), 'ADM_ENABLED_DOMAINS').get('domains', {})
-        #domains = get_db().get('ADM_ENABLED_DOMAINS').get('domains', [])
     except ResourceNotFound:
         domains = []
     return domains
 
 
 def domain_restricts_superusers(domain):
-    key = 'domain_restricts_superusers:%s' % domain
-    result = cache.get(key)
-    if result is None:
-        result = Domain.get_by_name(domain).restrict_superusers
-        cache.set(key, json.dumps(result), 5)
-    else:
-        result = json.loads(result)
+    result = Domain.get_by_name(domain).restrict_superusers
     return result
