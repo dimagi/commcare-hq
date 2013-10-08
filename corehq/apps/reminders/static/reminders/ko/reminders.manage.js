@@ -129,7 +129,7 @@ var ReminderEvent = function (eventData, choices, method, event_timing, event_in
         return self.fire_time_type() === self.choices.FIRE_TIME_CASE_PROPERTY;
     });
 
-    self.time_window_length = ko.observable(eventData.time_window_length);
+    self.time_window_length = ko.observable(eventData.time_window_length || "");
     self.isWindowLengthVisible = ko.computed(function () {
         return self.fire_time_type() === self.choices.FIRE_TIME_RANDOM;
     });
