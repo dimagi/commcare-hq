@@ -133,10 +133,13 @@ class DomainRegistrationForm(forms.Form):
     """
     org = forms.CharField(widget=forms.HiddenInput(), required=False)
     domain_name = forms.CharField(label='Project Name:', max_length=25)
-    domain_type = forms.CharField(widget=forms.HiddenInput(), required=False, initial='commcare')
-    domain_timezone = TimeZoneChoiceField(label="Time Zone:", initial="UTC",
-                                          widget=forms.Select(attrs={'class': 'input-xlarge', 'bindparent': 'visible: override_tz',
-                                                                     'data-bind': 'event: {change: updateForm}'}))
+    domain_type = forms.CharField(widget=forms.HiddenInput(), required=False,
+                                  initial='commcare')
+    domain_timezone = TimeZoneChoiceField(
+        label="Time Zone:", initial="UTC",
+        widget=forms.Select(attrs={'class': 'input-xlarge',
+                                   'bindparent': 'visible: override_tz',
+                                   'data-bind': 'event: {change: updateForm}'}))
 
     def clean_domain_name(self):
         data = self.cleaned_data['domain_name'].strip().lower()
