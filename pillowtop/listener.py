@@ -99,7 +99,7 @@ def ms_from_timedelta(td):
 
 class BasicPillow(object):
     couch_filter = None  # string for filter if needed
-    extra_args = {}  # filter args if needed
+    extra_args = {} # filter args if needed
     document_class = None  # couchdbkit Document class
     changes_seen = 0
     couch_db = None
@@ -127,7 +127,8 @@ class BasicPillow(object):
         while True:
             try:
                 c.wait(self.parsing_processor, since=self.since, filter=self.couch_filter,
-                       heartbeat=WAIT_HEARTBEAT, feed='continuous', timeout=CHANGES_TIMEOUT, **self.extra_args)
+                       heartbeat=WAIT_HEARTBEAT, feed='continuous', timeout=CHANGES_TIMEOUT,
+                       include_docs=True, **self.extra_args)
             except Exception, ex:
                 pillow_logging.exception("Exception in form listener: %s, sleeping and restarting" % ex)
                 gevent.sleep(RETRY_INTERVAL)
@@ -138,7 +139,7 @@ class BasicPillow(object):
         http://couchdbkit.org/docs/changes.html
         """
         with ChangesStream(self.couch_db, feed='continuous', heartbeat=True, since=self.since,
-                           filter=self.couch_filter, **self.extra_args) as st:
+                           filter=self.couch_filter, include_docs=True, **self.extra_args) as st:
             for c in st:
                 self.processor(c)
 
@@ -257,7 +258,7 @@ class BasicPillow(object):
         if changes_dict.get('deleted', False):
             #override deleted behavior on consumers that care/deal with deletions
             return None
-        return self.couch_db.open_doc(changes_dict['id'])
+        return changes_dict['doc']
 
     def change_transform(self, doc_dict):
         """
@@ -370,7 +371,7 @@ class ElasticPillow(BasicPillow):
                               (self.get_doc_path(changes_dict['id']), ex))
             return None
         else:
-            return self.couch_db.open_doc(changes_dict['id'])
+            return changes_dict['doc']
 
     @autoretry_connection()
     def doc_exists(self, doc_id):
