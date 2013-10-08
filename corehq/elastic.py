@@ -4,6 +4,7 @@ from django.conf import settings
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX
+from corehq.pillows.mappings.tc_sms_mapping import TCSMS_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 
@@ -23,6 +24,7 @@ ES_URLS = {
     "users": USER_INDEX + '/user/_search',
     "domains": DOMAIN_INDEX + '/hqdomain/_search',
     "sms": SMS_INDEX + '/sms/_search',
+    "tc_sms": TCSMS_INDEX + '/tc_sms/_search',
 }
 
 ADD_TO_ES_FILTER = {
@@ -39,6 +41,7 @@ DATE_FIELDS = {
     "cases": "opened_on",
     "users": "created_on",
     "sms": 'date',
+    "tc_sms": 'date',
 }
 
 ES_MAX_CLAUSE_COUNT = 1024  #  this is what ES's maxClauseCount is currently set to,

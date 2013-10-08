@@ -4,11 +4,10 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.graph_models import LineChart
 from corehq.apps.sms.models import WORKFLOW_REMINDER
 from corehq.elastic import es_query, ES_URLS
-from corehq.pillows.sms import TC_STUB
 from corehq.util.dates import unix_time_millis
 from custom.trialconnect.reports import TrialConnectReport
+from custom.trialconnect.smspillow import TC_STUB
 
-unix_time_millis
 
 class AppointmentsReport(TrialConnectReport):
     slug = 'appointments'
@@ -28,7 +27,7 @@ class AppointmentsReport(TrialConnectReport):
         ]}
         if check_response_state:
             q["filter"]["and"].extend([{"term": {TC_STUB+field_name+'.response_state': 'confirmed'}}])
-        return es_query(q=q, es_url=ES_URLS['sms'], facets=facets, size=0)
+        return es_query(q=q, es_url=ES_URLS['tc_sms'], facets=facets, size=0)
 
     def unique(self, field_name, check_response_state=False, base_query=None):
         base_query = base_query or self.base_query
