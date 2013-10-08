@@ -16,14 +16,15 @@ class User(object):
     find cases and generate the user XML.
     """
     
-    def __init__(self, user_id, username, password, date_joined, 
-                 user_data=None, additional_owner_ids=None):
+    def __init__(self, user_id, username, password, date_joined,
+                 user_data=None, additional_owner_ids=None, domain=None):
         self.user_id = user_id
         self.username = username
         self.password = password
         self.date_joined = date_joined
         self.user_data = user_data or {}
         self.additional_owner_ids = additional_owner_ids or []
+        self.domain = domain
 
     def get_owner_ids(self):
         ret = [self.user_id]
@@ -37,8 +38,8 @@ class User(object):
         
         returns: A CaseSyncOperation object
         """
-        from casexml.apps.phone.caselogic import get_case_updates
-        return get_case_updates(self, last_sync)
+        from casexml.apps.phone.caselogic import CaseSyncOperation
+        return CaseSyncOperation(self, last_sync)
     
     @classmethod
     def from_django_user(cls, django_user):
