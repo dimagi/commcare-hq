@@ -1170,7 +1170,6 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             )
             if not eventForm.is_valid():
                 raise ValidationError("Your event form didn't turn out quite right.")
-                continue
 
             event.update(eventForm.cleaned_data)
 
