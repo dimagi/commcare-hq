@@ -1167,7 +1167,6 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         for event in events:
             eventForm = CaseReminderEventForm(
                 data=event,
-                method=self.cleaned_data['method'],
             )
             if not eventForm.is_valid():
                 raise ValidationError("Your event form didn't turn out quite right.")
