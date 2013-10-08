@@ -505,9 +505,12 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
         if result is None:
             result = cls._get_by_name(name, strict)
-            cache.set(key, result.to_json(), 5)
+            cache.set(key, result.to_json() if result else 'null', 5)
         else:
-            result = cls.wrap(result)
+            if result == 'null':
+                result = None
+            else:
+                result = cls.wrap(result)
         return result
 
 
