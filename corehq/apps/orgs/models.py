@@ -23,7 +23,9 @@ class Organization(Document):
     @classmethod
     def get_by_name(cls, name, strict=False):
         extra_args = {'stale': settings.COUCH_STALE_QUERY} if not strict else {}
-        results = cache_core.cached_view(cls.get_db(), "orgs/by_name", key=name, reduce=False, include_docs=True, wrapper=cls.wrap, **extra_args)
+        results = cache_core.cached_view(cls.get_db(), "orgs/by_name", key=name, reduce=False,
+                                         include_docs=True, wrapper=cls.wrap, force_invalidate=True,
+                                         **extra_args)
 
         if len(results) > 0:
             return list(results)[0]
@@ -74,12 +76,14 @@ class Team(UndoableDocument, MultiMembershipMixin):
                                       endkey=[org_name,{}],
                                       reduce=False,
                                       include_docs=True,
-                                      wrapper=cls.wrap
+                                      wrapper=cls.wrap,
+                                      force_invalidate=True
                                       )
 
     @classmethod
     def get_by_domain(cls, domain):
-        return cache_core.cached_view(cls.get_db(), "orgs/team_by_domain", key=domain, reduce=False, include_docs=True, wrapper=cls.wrap)
+        return cache_core.cached_view(cls.get_db(), "orgs/team_by_domain", key=domain, reduce=False,
+                                      include_docs=True, wrapper=cls.wrap, force_invalidate=True)
 
     def save(self, *args, **kwargs):
         # forcibly replace empty name with '-'
@@ -139,7 +143,8 @@ class OrgRequest(Document):
                                endkey=key + [{}],
                                reduce=False,
                                include_docs=True,
-                               wrapper=cls.wrap
+                               wrapper=cls.wrap,
+                               force_invalidate=True
                                )
 
         if not user_id:
