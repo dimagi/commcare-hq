@@ -36,6 +36,8 @@ class UsersMiddleware(object):
                 #roundabout way to keep doc_id based caching consistent.
                 #get user doc_id from session_id
                 cached_user_doc_id = rcache.get(SESSION_USER_KEY_PREFIX % sessionid, None)
+                # disable session based couch user caching - to be enabled later.
+                cached_user_doc_id = None
                 if cached_user_doc_id:
                     #cache hit
                     couch_user = CouchUser.wrap_correctly(cache_core.cached_open_doc(CouchUser.get_db(), cached_user_doc_id))
@@ -53,7 +55,6 @@ class UsersMiddleware(object):
                         key=domain,
                         reduce=False,
                         include_docs=True,
-                        #stale=settings.COUCH_STALE_QUERY,
                     ).one()
                     if couch_domain and couch_domain.is_public:
                         request.couch_user = PublicUser(domain)
