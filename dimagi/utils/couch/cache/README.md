@@ -27,10 +27,10 @@ To remedy this, we implemented a generational caching system for views, keyed by
 ## Generational Caching of Views
 
 For a given view, the view is dependent on a doc_type being part of its makeup. When a document is altered, its doc_type is noted.
-If it matches a doc_type with known views that depend on it, the generation_id of these views will increment - invalidating all the views
+If it matches a doc_type with known views that depend on it, the generation_id of these views will invalidate_all - invalidating all the views
 associated with that doc_type.
 
-The `DocGenCache` class is a registry for matching doc_types along with views to group them under 1 generational key.
+The `GenerationCache` class is a registry for matching doc_types along with views to group them under 1 generational key.
 
 At runtime, these are bootstrapped and created into a look up table to match doc changes and seeing if they need generation updates.
 

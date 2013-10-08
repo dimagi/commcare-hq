@@ -3,21 +3,21 @@ from . import CACHED_VIEW_PREFIX, rcache, COUCH_CACHE_TIMEOUT, CACHE_VIEWS
 import simplejson
 
 
-class DocGenCache(object):
+class GenerationCache(object):
     generation_key = None
     doc_types = []
     views = []
 
     @staticmethod
-    def gen_caches():
-        if not getattr(DocGenCache, '_generational_caches', None):
-            DocGenCache.generate_caches()
-        return getattr(DocGenCache, '_generational_caches')
+    def _get_generational_caches():
+        if not getattr(GenerationCache, '_generational_caches', None):
+            GenerationCache._generate_caches()
+        return getattr(GenerationCache, '_generational_caches')
 
     @staticmethod
     def view_generation_map():
         view_map = {}
-        for gen_model in DocGenCache.gen_caches():
+        for gen_model in GenerationCache._get_generational_caches():
             for view_name in gen_model.views:
                 view_map[view_name] = gen_model
         return view_map
@@ -25,19 +25,19 @@ class DocGenCache(object):
     @staticmethod
     def doc_type_generation_map():
         doc_type_map = {}
-        for gen_model in DocGenCache.gen_caches():
+        for gen_model in GenerationCache._get_generational_caches():
             for doc_type in gen_model.doc_types:
                 doc_type_map[doc_type] = gen_model
         return doc_type_map
 
     @staticmethod
-    def generate_caches():
+    def _generate_caches():
         generational_caches = []
-        for gen_model in DocGenCache.__subclasses__():
+        for gen_model in GenerationCache.__subclasses__():
             generational_caches.append(gen_model())
-        setattr(DocGenCache, '_generational_caches', generational_caches)
+        setattr(GenerationCache, '_generational_caches', generational_caches)
 
-    def get_generation(self):
+    def _get_generation(self):
         genret = rcache().get(self.generation_key, None)
         if not genret:
             #never seen key before, start from zero
@@ -46,14 +46,14 @@ class DocGenCache(object):
         else:
             return str(genret)
 
-    def increment(self):
+    def invalidate_all(self):
         """
         Invalidate this cache by incrementing the generation
         """
-        current_generation = self.get_generation()
+        current_generation = self._get_generation()
         return rcache().incr(self.generation_key)
 
-    def mk_view_cache_key(self, view_name, params=None):
+    def _mk_view_cache_key(self, view_name, params=None):
         """
         view_name = "design_doc/viewname"
         if params is dict, then make param_string
@@ -66,14 +66,14 @@ class DocGenCache(object):
             param_string = params
 
         cache_view_key = ':'.join([
-            self.get_generation(),
+            self._get_generation(),
             CACHED_VIEW_PREFIX,
             view_name,
             param_string,
         ])
         return cache_view_key
 
-    def cached_view_doc(self, doc_or_docid, cache_expire=COUCH_CACHE_TIMEOUT):
+    def _cached_view_doc(self, doc_or_docid, cache_expire=COUCH_CACHE_TIMEOUT):
         """
         Cache by doc_id a reverse lookup of views that it is mutually dependent on
         """
@@ -96,11 +96,11 @@ class DocGenCache(object):
         from .api import cached_open_doc
 
         if force_invalidate:
-            self.increment()
+            self.invalidate_all()
 
         include_docs = params.get('include_docs', False)
 
-        cache_view_key = self.mk_view_cache_key(view_name, params)
+        cache_view_key = self._mk_view_cache_key(view_name, params)
         if include_docs:
             #include_docs=True results in couchdbkit remove the 'rows' result and returns just the actual rows in an array
             cached_view = rcache().get(cache_view_key, None)
@@ -145,7 +145,7 @@ class DocGenCache(object):
                         "value": None,
                         "key": row["key"],
                     }
-                    self.cached_view_doc(row["doc"], cache_expire=cache_expire)
+                    self._cached_view_doc(row["doc"], cache_expire=cache_expire)
                     row_stubs.append(stub)
 
                 cached_results = {
@@ -176,11 +176,11 @@ class DocGenCache(object):
                     if doc_id:
                         #a non reduce view will have doc_ids on each row, we want to reverse index these
                         #to know when to invalidate
-                        self.cached_view_doc(doc_id)
+                        self._cached_view_doc(doc_id)
                 return view_results
 
 
-class NoGenerationCache(DocGenCache):
+class GlobalCache(GenerationCache):
     """
     Default cache for those not mapped. No generational tracking.
     """
@@ -191,17 +191,17 @@ class NoGenerationCache(DocGenCache):
 
     _instance = None
 
-    def get_generation(self):
+    def _get_generation(self):
         return "#global#"
 
-    def increment(self):
-        return self.get_generation()
+    def invalidate_all(self):
+        raise NotImplementedError("You're trying to call a global cache invalidation - does not support invalidation - please rethink your priorities.")
 
 
     @staticmethod
     def nogen():
-        if not NoGenerationCache._instance:
-            NoGenerationCache._instance = NoGenerationCache()
-        return NoGenerationCache._instance
+        if not GlobalCache._instance:
+            GlobalCache._instance = GlobalCache()
+        return GlobalCache._instance
 
 

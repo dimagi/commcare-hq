@@ -1,6 +1,6 @@
 import simplejson
 from . import COUCH_CACHE_TIMEOUT, CACHE_DOCS, rcache, key_doc_id, key_doc_prop
-from .gen import DocGenCache
+from .gen import GenerationCache
 from .lib import invalidate_doc_generation, _get_cached_doc_only
 
 ################################
@@ -11,12 +11,12 @@ def cached_view(db, view_name, wrapper=None, cache_expire=COUCH_CACHE_TIMEOUT, f
     """
     Entry point for caching views. See if it's in the generational view system, else juts call normal.
     """
-    from dimagi.utils.couch.cache.cache_core.gen import NoGenerationCache, DocGenCache
-    generation_mgr = DocGenCache.view_generation_map()
+    from dimagi.utils.couch.cache.cache_core.gen import GlobalCache, GenerationCache
+    generation_mgr = GenerationCache.view_generation_map()
     if view_name in generation_mgr:
         cache_method = generation_mgr[view_name].cached_view
     else:
-        cache_method = NoGenerationCache.nogen().cached_view
+        cache_method = GlobalCache.nogen().cached_view
 
     return cache_method(db, view_name, wrapper=wrapper, cache_expire=cache_expire, force_invalidate=force_invalidate,
                         **params)
@@ -75,7 +75,7 @@ def invalidate_doc(doc, deleted=False):
     doc_id = doc['_id']
     doc_key = key_doc_id(doc_id)
 
-    # regardless if it exist or not, send it to the generational lookup and increment.
+    # regardless if it exist or not, send it to the generational lookup and invalidate_all.
     prior_ver = rcache().get(doc_key, None)
     if prior_ver and not doc.get('doc_type', None):
         invalidate_doc = simplejson.loads(prior_ver)
@@ -86,7 +86,7 @@ def invalidate_doc(doc, deleted=False):
     rcache().delete(key_doc_id(doc_id))
     rcache().delete_pattern(key_doc_prop(doc_id, '*'))
 
-    if not deleted and invalidate_doc.get('doc_id', None) in DocGenCache.doc_type_generation_map():
+    if not deleted and invalidate_doc.get('doc_id', None) in GenerationCache.doc_type_generation_map():
         do_cache_doc(doc)
 
     if prior_ver:
