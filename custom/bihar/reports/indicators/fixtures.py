@@ -8,7 +8,7 @@ from custom.bihar.reports.indicators.indicators import IndicatorDataProvider, In
 # meh
 hard_coded_domains = ('care-bihar', 'bihar')
 hard_coded_indicators = 'homevisit'
-hard_coded_group_filter = lambda group: bool(group.metadata.get('awc-code', False))
+hard_coded_group_filter = lambda group: bool((group.metadata or {}).get('awc-code', False))
 hard_coded_fixture_id = 'indicators:bihar-supervisor'
 
 def generator(user, *args, **kwargs):
