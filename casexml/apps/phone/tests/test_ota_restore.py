@@ -330,4 +330,3 @@ class OtaRestoreTest(TestCase):
         # ghetto
         self.assertTrue('<dateattr somedate="2012-01-01">' in restore_payload)
         self.assertTrue('<stringattr somestring="i am a string">' in restore_payload)
-        

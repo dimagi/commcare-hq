@@ -10,16 +10,16 @@ from casexml.apps.case import const
 from casexml.apps.case.xform import CaseDbCache
 
 
-def get_footprint(initial_case_list, strip_history=False):
+def get_footprint(initial_case_list, domain, strip_history=False):
     """
     Gets the flat list of the footprint of cases based on a starting list.
     Walks all the referenced indexes recursively.
     """
-
     if not initial_case_list:
         return {}
 
-    case_db = CaseDbCache(domain=list(initial_case_list)[0].domain,
+    # todo: should assert that domain exists here but this breaks tests
+    case_db = CaseDbCache(domain=domain,
                           strip_history=strip_history,
                           deleted_ok=True)
 
@@ -83,7 +83,11 @@ class CaseSyncOperation(object):
             keys = [[owner_id, False] for owner_id in user.get_owner_ids()]
         except AttributeError:
             keys = [[user.user_id, False]]
-        
+
+        def _user_case_domain_match(case):
+            if user.domain:
+                return user.domain == case.domain
+            return True
 
         # the world to sync involves
         # Union(cases on the phone, footprint of those,  
@@ -95,8 +99,9 @@ class CaseSyncOperation(object):
         # but in order to do proper comparisons we use IDs so all of these
         # operations look much more complicated than they should be.
 
-        self.actual_owned_cases = set(CommCareCase.view("case/by_owner_lite", keys=keys).all())
-        self._all_relevant_cases = get_footprint(self.actual_owned_cases)
+        self.actual_owned_cases = set(filter(_user_case_domain_match,
+                                             CommCareCase.view("case/by_owner_lite", keys=keys).all()))
+        self._all_relevant_cases = get_footprint(self.actual_owned_cases, domain=user.domain)
         
         def _to_case_id_set(cases):
             return set([c.case_id for c in cases])
