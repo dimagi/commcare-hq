@@ -77,6 +77,7 @@ VIEW_OUTPUT_HEADERS = [
     'rows',
     'total_rows',
     'result_cached',
+    'include_docs',
     # 'params',
 ]
 
