@@ -10,7 +10,7 @@ from casexml.apps.case import const
 from casexml.apps.case.xform import CaseDbCache
 
 
-def get_footprint(initial_case_list, strip_history=False, domain=None):
+def get_footprint(initial_case_list, domain, strip_history=False):
     """
     Gets the flat list of the footprint of cases based on a starting list.
     Walks all the referenced indexes recursively.
@@ -18,7 +18,7 @@ def get_footprint(initial_case_list, strip_history=False, domain=None):
     if not initial_case_list:
         return {}
 
-    domain = domain or list(initial_case_list)[0].domain
+    # todo: should assert that domain exists here but this breaks tests
     case_db = CaseDbCache(domain=domain,
                           strip_history=strip_history,
                           deleted_ok=True)
