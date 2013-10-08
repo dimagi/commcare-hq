@@ -79,3 +79,14 @@ class TeamGenerationCache(GenerationCache):
         'orgs/team_by_domain',
         'orgs/team_by_org_and_name'
     ]
+
+class ReportGenerationCache(GenerationCache):
+    generation_key = '#gen#reports#'
+    doc_types = ['ReportConfig', 'HQGroupExportConfiguration', 'ReportNotification']
+    views = [
+        'reportconfig/configs_by_domain',
+        'reportconfig/notifications_by_config',
+        "reportconfig/user_notifications",
+        "reportconfig/daily_notifications",
+        'groupexport/by_domain',
+    ]
