@@ -1518,21 +1518,21 @@ function niceRoundNumber(x, stops, orderOfMagnitude) {
 }
 
 function niceRoundInterval(seconds) {
-    var HOUR = 3600;
-    var DAY = 86400;
-    var YEAR_DAYS = 365.2425;
-    var MONTH_DAYS = YEAR_DAYS / 12;
-    var YEAR = YEAR_DAYS * DAY;
+    var HOUR = 60 * 60;
+    var DAY = 24 * HOUR;
+    var YEAR = 365.2425 * DAY;
+    var MONTH = YEAR / 12;
 
     if (seconds < 1) {
         return niceRoundNumber(seconds);
     } else if (seconds < HOUR) {
         return niceRoundNumber(seconds, [1, 2, 5, 10, 30], 60);
-    } else if (seconds < DAY) {
-        return HOUR * niceRoundNumber(seconds / HOUR, [1, 3, 6, 12], 24);
     } else if (seconds < YEAR) {
-        return DAY * niceRoundNumber(seconds / DAY,
-           [1, 3, 7, 0.5 * MONTH_DAYS, MONTH_DAYS, 3 * MONTH_DAYS, 6 * MONTH_DAYS], YEAR_DAYS);
+        return niceRoundNumber(seconds, [1, // needed for wraparound
+            HOUR, 3 * HOUR, 6 * HOUR, 12 * HOUR,
+            DAY, 3 * DAY, 7 * DAY,
+            0.5 * MONTH, MONTH, 3 * MONTH, 6 * MONTH
+        ], YEAR);
     } else {
         return YEAR * niceRoundNumber(seconds / YEAR);
     }
@@ -1553,6 +1553,39 @@ function testNiceRoundNumber() {
     testStops([3, 8], [1, 1.5, 1.6, 3, 4.8, 4.9, 8]);
     testStops([5], [1, 1.5, 1.6, 5]);
     testStops([1], [1, 3.1, 3.2]);
+}
+
+function testNiceRoundInterval() {
+    var M = 60;
+    var H = 60 * M;
+    var D = 24 * H;
+    var Y = 365.2425 * D;
+    var MO = Y / 12;
+
+    var format = function(x) {
+        var units = [1, M, H, D, MO, Y];
+        var labels = ['s', 'm', 'h', 'd', 'mo', 'y'];
+        var i = matchThresholds(x, units, true);
+        if (i < 0) {
+            i = 0;
+        }
+        return (x / units[i]).toFixed(2) + labels[i];
+    }
+    var test = function(x) {
+        var result = niceRoundInterval(x);
+        console.log(format(x), format(result));
+    };
+
+    _.map([
+        0.1, 0.14, 0.15, 0.2, 0.31, 0.32, 0.5, 0.7, 0.71,
+        1, 1.4, 1.5, 2, 3.1, 3.2, 5, 7, 7.1, 10, 17, 18, 30, 42, 43,
+        M, 1.4*M, 1.5*M, 2*M, 3.1*M, 3.2*M, 5*M, 7*M, 7.1*M, 10*M, 17*M, 18*M, 30*M, 42*M, 43*M,
+        H, 1.7*H, 1.8*H, 3*H, 4.2*H, 4.3*H, 6*H, 8.4*H, 8.5*H, 12*H, 16*H, 17*H,
+        D, 1.7*D, 1.8*D, 3*D, 4.5*D, 4.6*D, 7*D, 10*D, 11*D, 0.5*MO, 0.7*MO, 0.71*MO,
+        MO, 1.7*MO, 1.8*MO, 3*MO, 4.2*MO, 4.3*MO, 6*MO, 8.4*MO, 8.5*MO,
+        Y, 1.4*Y, 1.5*Y, 2*Y, 3.1*Y, 3.2*Y, 5*Y, 7*Y, 7.1*Y,
+        10*Y, 14*Y, 15*Y, 20*Y, 31*Y, 32*Y, 50*Y, 70*Y, 71*Y, 100*Y
+    ], test);
 }
 
 // create a (hidden) canvas
