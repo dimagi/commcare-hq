@@ -64,7 +64,7 @@ class SystemOverviewReport(BaseSystemOverviewReport):
             for term in facets['couch_recipient_doc_type']['terms']:
                 if term['term'] == 'commcarecase':
                     to_cases = term['count']
-                elif term['term'] == 'couchuser':
+                elif term['term'] == 'commcareuser':
                     to_users = term['count']
 
             for term in facets['direction']['terms']:
@@ -163,13 +163,14 @@ class SystemUsersReport(BaseSystemOverviewReport):
         def get_actives(recipient_type):
             return len(self.active_query(recipient_type)['facets']['couch_recipient']['terms'])
 
-        def div(num, denom):
-            return num / denom if denom != 0 else 0
+        def div(num, denom, percent=False):
+            floater = 100.0 if percent else 1.0
+            return num * floater / denom if denom != 0 else 0
 
         active = row("Active", get_actives("commcareuser"), get_actives("commcarecase"))
 
         perc_active = [_("% Active"),
-                       div(active[1], number[1]), div(active[2], number[2]), div(active[3], number[3])]
+                       div(active[1], number[1], True), div(active[2], number[2], True), div(active[3], number[3], True)]
 
         facets = self.messages_query()['facets']
         to_users, to_cases = 0, 0
