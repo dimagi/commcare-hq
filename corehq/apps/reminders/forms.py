@@ -1112,6 +1112,14 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             raise ValidationError("Please specify a case type.")
         return case_property
 
+    def clean_start_property(self):
+        if self.cleaned_data['start_reminder_on'] == START_REMINDER_ON_CASE_PROPERTY:
+            start_property = self.cleaned_data['start_property'].strip()
+            if not start_property:
+                raise ValidationError("Please enter a case property for the match criteria.")
+            return start_property
+        return None
+
     def clean_events(self):
         method = self.cleaned_data['method']
         try:
