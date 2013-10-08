@@ -727,6 +727,7 @@ COUCHDB_APPS = [
     'pathindia',
     'pact',
     'psi',
+    'trialconnect',
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
@@ -846,6 +847,8 @@ PILLOWTOPS = [
                  # MVP
                  'corehq.apps.indicators.pillows.FormIndicatorPillow',
                  'corehq.apps.indicators.pillows.CaseIndicatorPillow',
+                 # TrialConnect
+                 'custom.trialconnect.smspillow.TCSMSPillow',
              ] + LOCAL_PILLOWTOPS
 
 #Custom workflow for indexing xform data beyond the standard properties
@@ -896,6 +899,7 @@ DOMAIN_MODULE_MAP = {
     'dca-malawi': 'dca',
     'eagles-fahu': 'dca',
     'gsid': 'custom.apps.gsid',
+    'gsid-demo': 'custom.apps.gsid',
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',

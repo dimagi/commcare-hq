@@ -7,9 +7,9 @@ from django.contrib.auth.models import AnonymousUser
 from couchdbkit.ext.django.schema import (Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
                                           DocumentSchema, SchemaProperty, DictProperty, ListProperty,
                                           StringListProperty, SchemaListProperty)
+from django.core.cache import cache
 from django.utils.safestring import mark_safe
 from corehq.apps.appstore.models import Review, SnapshotMixin
-from corehq.apps.domain.utils import get_domain_module_map
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
@@ -885,6 +885,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         import and return the python module corresponding to domain_name, or
         None if it doesn't exist.
         """
+        from corehq.apps.domain.utils import get_domain_module_map
         module_name = get_domain_module_map().get(domain_name, domain_name)
 
         try:

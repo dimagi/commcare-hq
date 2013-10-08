@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
+{% load crispy_forms_tags %}
 
 {% block js %}{{ block.super }}
     <script src="{% static 'users/js/key_filters.js' %}"></script>
@@ -30,24 +31,7 @@
 
 {% block main_column %}
     <form class="form form-horizontal" method="post" id="add_commcare_account_form">
-        {% bootstrap_form_errors form %}
         <input id="id_domain" name="domain" type="hidden" value="{{ domain }}" />
-        {% bootstrap_fieldset form "Create new Mobile Worker account" %}
-        <div class="control-group" id="enable_all_passwords_control">
-            <div class="controls">
-                <p class="help-block">
-                    {% blocktrans %}
-                        To enable alphanumeric passwords, go to the
-                        applications this user will use, go to CommCare
-                        Settings, and change Password Format to Alphanumeric.
-                    {% endblocktrans %}
-                </p>
-            </div>
-        </div>
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary">
-                {% trans "Create" %} {% commcare_user %}
-            </button>
-        </div>
+        {% crispy form %}
     </form>
 {% endblock %}

@@ -2,44 +2,22 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 from corehq.apps.reminders.models import REMINDER_TYPE_ONE_TIME
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.graph_models import Axis, LineChart
-from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
 from corehq.apps.sms.models import WORKFLOW_KEYWORD, WORKFLOW_REMINDER, WORKFLOW_BROADCAST
-from corehq.elastic import es_query, ES_URLS, es_histogram, format_histo_data
+from corehq.elastic import es_query, ES_URLS, es_histogram
+from custom.trialconnect.reports import TrialConnectReport
 from dimagi.utils.couch.database import get_db
 
 WORKFLOWS = [WORKFLOW_KEYWORD, WORKFLOW_REMINDER, WORKFLOW_BROADCAST]
 NA = 'N/A'
 
-class BaseSystemOverviewReport(GenericTabularReport, CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
+class BaseSystemOverviewReport(TrialConnectReport):
     need_group_ids = True
-    is_cacheable = True
     fields = [
         'corehq.apps.reports.filters.select.MultiGroupFilter',
         'corehq.apps.reports.filters.select.MultiCaseGroupFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
-    emailable = True
-
-    @property
-    def base_query(self):
-        q = {"query": {
-                "bool": {
-                    "must": [
-                        {"match": {"domain.exact": self.domain}},
-                        {"range": {
-                            'date': {
-                                "from": self.datespan.startdate_param,
-                                "to": self.datespan.enddate_param,
-                                "include_upper": True}}}]}}}
-
-        if self.users_by_group:
-            q["query"]["bool"]["must"].append({"in": {"couch_recipient": self.combined_user_ids}})
-        if self.cases_by_case_group:
-            q["query"]["bool"]["must"].append({"in": {"couch_recipient": self.cases_by_case_group}})
-
-        return q
 
 class SystemOverviewReport(BaseSystemOverviewReport):
     slug = 'system_overview'

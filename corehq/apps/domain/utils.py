@@ -1,7 +1,9 @@
+import json
 import re
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 from dimagi.utils.couch.cache import cache_core
+from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.database import get_db
 from django.core.cache import cache
 
@@ -53,3 +55,14 @@ def get_adm_enabled_domains():
     except ResourceNotFound:
         domains = []
     return domains
+
+
+def domain_restricts_superusers(domain):
+    key = 'domain_restricts_superusers:%s' % domain
+    result = cache.get(key)
+    if result is None:
+        result = Domain.get_by_name(domain).restrict_superusers
+        cache.set(key, json.dumps(result), 5)
+    else:
+        result = json.loads(result)
+    return result

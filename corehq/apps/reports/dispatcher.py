@@ -1,3 +1,4 @@
+from dimagi.utils.decorators.memoized import memoized
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponseBadRequest
 from django.views.generic.base import View
