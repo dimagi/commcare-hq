@@ -1,7 +1,9 @@
 from couchdbkit import ResourceNotFound
+from repoze.lru import lru_cache
 from dimagi.utils.couch.database import get_db
 
 
+@lru_cache(1, timeout=30)
 def get_indicator_config():
     try:
         return get_db().get('INDICATOR_CONFIGURATION').get('namespaces', {})
