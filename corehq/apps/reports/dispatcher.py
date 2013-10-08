@@ -1,3 +1,4 @@
+from dimagi.utils.decorators.memoized import memoized
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponseBadRequest
 from django.views.generic.base import View
@@ -235,3 +236,12 @@ class AdminReportDispatcher(ReportDispatcher):
 
     def permissions_check(self, report, request, domain=None):
         return hasattr(request, 'couch_user') and request.user.has_perm("is_superuser")
+
+
+class QuestionTemplateDispatcher(ProjectReportDispatcher):
+    prefix = 'question_templates'
+    map_name = 'QUESTION_TEMPLATES'
+
+    def get_question_templates(self, domain, report_slug):
+        question_templates = dict(self.get_reports(domain))
+        return question_templates.get(report_slug, None)

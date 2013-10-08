@@ -230,7 +230,9 @@ class CouchViewADMColumn(BaseADMColumn):
 
     def __init__(self, _d=None, **kwargs):
         super(CouchViewADMColumn, self).__init__(_d, **kwargs)
-        self.key_kwargs = {u'{}': {}}
+        # _key_kwargs must start with an underscore
+        # or else jsonobject will interpret it as json, which it's not
+        self._key_kwargs = {u'{}': {}}
 
     @property
     @memoized
@@ -239,7 +241,7 @@ class CouchViewADMColumn(BaseADMColumn):
         key_vals = []
         for key in keys:
             key = key.strip()
-            key_vals.append(self.key_kwargs.get(key, key))
+            key_vals.append(self._key_kwargs.get(key, key))
         return key_vals
 
     @property
@@ -265,7 +267,7 @@ class CouchViewADMColumn(BaseADMColumn):
 
     def set_report_values(self, **kwargs):
         super(CouchViewADMColumn, self).set_report_values(**kwargs)
-        self.key_kwargs.update(self._format_keywords_in_kwargs(**kwargs))
+        self._key_kwargs.update(self._format_keywords_in_kwargs(**kwargs))
 
     def get_couch_view_data(self, key, datespan=None):
         data = self.view_results(**standard_start_end_key(key, datespan))

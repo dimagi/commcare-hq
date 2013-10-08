@@ -1,2 +1,0 @@
-jsonobject-couchdbkit>=0.6.5.0
-jsonobject>=0.2.7
