@@ -244,12 +244,12 @@ class GSIDSQLPatientReport(GSIDSQLReport):
         chart.add_dataset(
             "Male Tests", 
             [{'x':row[-11], 'y':row[-9]['html'] if row[-9] != "--" else 0} for row in rows],
-            color="#1f07b4"
+            color="#333399"
         )
         chart.add_dataset(
             "Female Tests", 
             [{'x':row[-11], 'y':row[-8]['html'] if row[-8] != "--" else 0} for row in rows],
-            color="#1077b4"
+            color="#990000"
         )
         return [chart]
 
