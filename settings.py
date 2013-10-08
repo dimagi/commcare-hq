@@ -724,6 +724,7 @@ COUCHDB_APPS = [
     'pathindia',
     'pact',
     'psi',
+    'trialconnect',
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
@@ -838,6 +839,8 @@ PILLOWTOPS = [
                  # MVP
                  'corehq.apps.indicators.pillows.FormIndicatorPillow',
                  'corehq.apps.indicators.pillows.CaseIndicatorPillow',
+                 # TrialConnect
+                 'custom.trialconnect.smspillow.TCSMSPillow',
              ] + LOCAL_PILLOWTOPS
 
 #Custom workflow for indexing xform data beyond the standard properties
