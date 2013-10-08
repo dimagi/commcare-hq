@@ -1275,6 +1275,22 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             for prop, val in event.items():
                 setattr(new_event, prop, val)
         reminder_handler.events = events
+
+        for field in [
+            'nickname',
+            'active',
+            'case_type',
+            'start_property',
+            'start_match_type',
+            'start_value',
+            'start_date'
+        ]:
+            setattr(reminder_handler, field, self.cleaned_data[field])
+
+        start_property_offset = self.cleaned_data['start_property_offset']
+        start_date_offset = self.cleaned_data['start_date_offset']
+        reminder_handler.start_offset = start_property_offset if start_property_offset is None else start_date_offset
+
     @classmethod
     def compute_initial(cls, reminder_handler):
         initial = {}
