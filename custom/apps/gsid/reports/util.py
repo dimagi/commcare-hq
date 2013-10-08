@@ -57,11 +57,4 @@ def capitalize_fn(x):
         above get_unique_combinations() method. Needs too many changes to have
         same effect now.        
     """
-    if not x:
-        return x
-
-    x = x.split("_")
-    if len(x) is 1:
-        return x[0].capitalize()
-    x = map(lambda x: x.capitalize(), x)
-    return reduce(lambda x,y: x+" "+y, x)
+    return x.replace("_", " ").title()
