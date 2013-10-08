@@ -1,7 +1,7 @@
-from dimagi.utils.couch.cache.cache_core import DocGenCache
+from dimagi.utils.couch.cache.cache_core import GenerationCache
 
 
-class DomainGenerationCache(DocGenCache):
+class DomainGenerationCache(GenerationCache):
     generation_key = '#gen#domain#'
     doc_types = ['Domain']
     views = [
@@ -17,7 +17,7 @@ class DomainGenerationCache(DocGenCache):
         "hqbilling/domains_marked_for_billing",
     ]
 
-class UserGenerationCache(DocGenCache):
+class UserGenerationCache(GenerationCache):
     generation_key = '#gen#couch_user#'
     doc_types = ['CommCareUser', 'CouchUser', 'WebUser']
     views = [
@@ -41,7 +41,7 @@ class UserGenerationCache(DocGenCache):
     ]
 
 
-class GroupGenerationCache(DocGenCache):
+class GroupGenerationCache(GenerationCache):
     generation_key = '#gen#group#'
     doc_types = ['Group']
     views = [
@@ -55,7 +55,7 @@ class GroupGenerationCache(DocGenCache):
     ]
 
 
-class UserRoleGenerationCache(DocGenCache):
+class UserRoleGenerationCache(GenerationCache):
     generation_key = '#gen#user_role#'
     doc_types = ['UserRole']
     views = [
@@ -64,7 +64,7 @@ class UserRoleGenerationCache(DocGenCache):
     ]
 
 
-class OrganizationGenerationCache(DocGenCache):
+class OrganizationGenerationCache(GenerationCache):
     generation_key = '#gen#org#'
     doc_types = ['Organization']
     views = [
@@ -72,7 +72,7 @@ class OrganizationGenerationCache(DocGenCache):
     ]
 
 
-class TeamGenerationCache(DocGenCache):
+class TeamGenerationCache(GenerationCache):
     generation_key = '#gen#team#'
     doc_types = ['Team']
     views = [
