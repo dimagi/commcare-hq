@@ -181,6 +181,7 @@ var ReminderEvent = function (eventData, choices, method, event_timing, event_in
         return {
             fire_time_type: self.fire_time_type(),
             fire_time_aux: self.fire_time_aux(),
+            is_immediate: self.isEventImmediate(),
             day_num: self.day_num(),
             fire_time: self.fire_time(),
             form_unique_id: self.form_unique_id(),
