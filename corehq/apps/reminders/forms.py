@@ -1149,6 +1149,14 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             return start_date
         return None
 
+    def clean_start_date_offset(self):
+        if self.cleaned_data['start_reminder_on'] == START_REMINDER_ON_CASE_DATE:
+            start_date_offset = abs(self.cleaned_data['start_date_offset'])
+            if self.cleaned_data['start_date_offset_type'] == START_DATE_OFFSET_BEFORE:
+                return -start_date_offset
+            return start_date_offset
+        return None
+
     def clean_events(self):
         method = self.cleaned_data['method']
         try:
