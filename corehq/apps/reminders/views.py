@@ -877,7 +877,10 @@ def survey_list(request, domain):
 def add_sample(request, domain, sample_id=None):
     sample = None
     if sample_id is not None:
-        sample = CommCareCaseGroup.get(sample_id)
+        try:
+            sample = CommCareCaseGroup.get(sample_id)
+        except ResourceNotFound:
+            raise Http404
     
     if request.method == "POST":
         form = SurveySampleForm(request.POST, request.FILES)
