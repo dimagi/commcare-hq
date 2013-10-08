@@ -341,8 +341,8 @@ class PactPatientCase(CommCareCase):
             },
             "pact_careplan_goal": {
                 'type_name': _("Goal"),
-                'open_sortkeys': (('date_followup', 'asc'),),
-                'closed_sortkeys': (('closed_on', 'desc'),),
+                'open_sortkeys': [['date_followup', 'asc']],
+                'closed_sortkeys': [['closed_on', 'desc']],
 
                 # should get these automatically from xmlns
                 "app_id": PACT_CLOUD_APP_ID,
@@ -359,8 +359,8 @@ class PactPatientCase(CommCareCase):
             },
             "pact_careplan_task": {
                 'type_name': _("Task"),
-                'open_sortkeys': (('date_followup', 'asc'),),
-                'closed_sortkeys': (('closed_on', 'desc'),),
+                'open_sortkeys': [['date_followup', 'asc']],
+                'closed_sortkeys': [['closed_on', 'desc']],
                
                 'app_id': PACT_CLOUD_APP_ID,
                 "edit_module_id": "1",
