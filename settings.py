@@ -106,6 +106,7 @@ MIDDLEWARE_CLASSES = [
     'corehq.apps.users.middleware.UsersMiddleware',
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
     'auditcare.middleware.AuditMiddleware',
+    'corehq.apps.no_exceptions.middleware.NoExceptionsMiddleware',
 ]
 
 ROOT_URLCONF = "urls"
