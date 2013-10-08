@@ -1105,6 +1105,13 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             'special': special,
         })
 
+    def clean_case_type(self):
+        # todo check start_condition type when we get to the complex form
+        case_property = self.cleaned_data['case_type'].strip()
+        if not case_property:
+            raise ValidationError("Please specify a case type.")
+        return case_property
+
     def clean_events(self):
         method = self.cleaned_data['method']
         try:
