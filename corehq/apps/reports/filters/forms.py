@@ -462,7 +462,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                                          startkey=key,
                                          endkey=key + [{}],
                                          limit=1,
-                                         cache_expire=300)
+                                         cache_expire=60)
 
         try:
             data = list(results)[0]
