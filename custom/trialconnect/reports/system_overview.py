@@ -64,7 +64,7 @@ class SystemOverviewReport(BaseSystemOverviewReport):
             for term in facets['couch_recipient_doc_type']['terms']:
                 if term['term'] == 'commcarecase':
                     to_cases = term['count']
-                elif term['term'] == 'couchuser':
+                elif term['term'] == 'commcareuser':
                     to_users = term['count']
 
             for term in facets['direction']['terms']:

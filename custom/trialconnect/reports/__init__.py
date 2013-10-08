@@ -14,9 +14,9 @@ class TrialConnectReport(GenericTabularReport, CustomProjectReport, ProjectRepor
                         {"match": {"domain.exact": self.domain}},
                         {"range": {
                             'date': {
-                                "from": self.datespan.startdate_param,
-                                "to": self.datespan.enddate_param,
-                                "include_upper": True}}}]}}}
+                                "from": self.datespan.startdate_param_utc,
+                                "to": self.datespan.enddate_param_utc,
+                                "include_upper": False}}}]}}}
 
         if self.users_by_group:
             q["query"]["bool"]["must"].append({"in": {"couch_recipient": self.combined_user_ids}})
