@@ -19,8 +19,7 @@ class StateHashTest(TestCase):
         delete_all_sync_logs()
 
         self.user = User(user_id="state_hash", username="state_hash",
-                         password="changeme", date_joined=datetime(2011, 6, 9),
-                         domain='test-state-hash')
+                         password="changeme", date_joined=datetime(2011, 6, 9)) 
         
         # this creates the initial blank sync token in the database
         generate_restore_payload(self.user)
