@@ -1105,6 +1105,88 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             'special': special,
         })
 
+    def clean_events(self):
+        method = self.cleaned_data['method']
+        try:
+            events = json.loads(self.cleaned_data['events'])
+        except ValueError:
+            raise ValidationError("A valid JSON object was not passed in the events input.")
+
+        for event in events:
+            eventForm = CaseReminderEventForm(
+                data=event,
+                method=self.cleaned_data['method'],
+            )
+            if not eventForm.is_valid():
+                raise ValidationError("Your event form didn't turn out quite right.")
+                continue
+
+            event.update(eventForm.cleaned_data)
+
+            # the reason why we clean the following fields here instead of eventForm is so that
+            # we can utilize the ValidationErrors for this field.
+
+            # clean message:
+            if method == METHOD_IVR_SURVEY or method == METHOD_SMS_SURVEY:
+                event['message'] = {}
+            else:
+                translations = event.get('message', {})
+                for lang, msg in translations.items():
+                    if not msg:
+                        del translations[lang]
+                if not translations:
+                    raise ValidationError("You must have at least one message filled in.")
+
+            # clean form_unique_id:
+            if method == METHOD_SMS or method == METHOD_SMS_CALLBACK:
+                event['form_unique_id'] = None
+            else:
+                if not event.get('form_unique_id'):
+                    raise ValidationError("Please create a form for the survey first, and then create "
+                                          "the reminder.")
+
+            fire_time_type = event['fire_time_type']
+
+            # clean fire_time:
+            if event['is_immediate'] or fire_time_type == FIRE_TIME_CASE_PROPERTY:
+                event['fire_time'] = time()
+
+            # clean fire_time_aux:
+            if fire_time_type != FIRE_TIME_CASE_PROPERTY:
+                event['fire_time_aux'] = None
+            elif not event.get('fire_time_aux'):
+                raise ValidationError("Please enter the case property from which to pull the time.")
+
+            # clean time_window_length:
+            time_window_length = event['time_window_length']
+            if fire_time_type != FIRE_TIME_RANDOM:
+                event['time_window_length'] = 0
+            elif not (0 < time_window_length < 1440):
+                raise ValidationError(_("Window Length must be greater than 0 and less than 1440 minutes."))
+
+            # clean day_num:
+            if self.ui_type == UI_SIMPLE_FIXED or event['is_immediate']:
+                event['day_num'] = 0
+
+            # clean callback_timeout_intervals:
+            if method == METHOD_SMS_CALLBACK:
+                timeouts_str = event["callback_timeout_intervals"].split(",")
+                timeouts_int = []
+                for t in timeouts_str:
+                    try:
+                        t = int(t)
+                        assert t > 0
+                        timeouts_int.append(t)
+                    except (ValueError, AssertionError):
+                        raise ValidationError("Timeout intervals must be a list of positive numbers "
+                                              "separated by commas.")
+                event["callback_timeout_intervals"] = timeouts_int
+
+            # delete all data that was just UI based:
+            del event['message_data']  # this is only for storing the stringified version of message
+            del event['is_immediate']
+        return events
+
     def clean(self):
         cleaned_data = super(SimpleScheduleCaseReminderForm, self).clean()
 
