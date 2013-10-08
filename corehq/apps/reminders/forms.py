@@ -1120,6 +1120,11 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             return start_property
         return None
 
+    def clean_start_match_type(self):
+        if self.cleaned_data['start_reminder_on'] == START_REMINDER_ON_CASE_PROPERTY:
+            return self.cleaned_data['start_match_type']
+        return None
+
     def clean_events(self):
         method = self.cleaned_data['method']
         try:
