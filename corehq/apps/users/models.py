@@ -1329,11 +1329,14 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.device_ids = _add_to_list(self.device_ids, device_id, default)
 
     def to_casexml_user(self):
-        user = CaseXMLUser(user_id=self.userID,
-                           username=self.raw_username,
-                           password=self.password,
-                           date_joined=self.date_joined,
-                           user_data=self.user_data)
+        user = CaseXMLUser(
+            user_id=self.userID,
+            username=self.raw_username,
+            password=self.password,
+            date_joined=self.date_joined,
+            user_data=self.user_data,
+            domain=self.domain,
+        )
 
         def get_owner_ids():
             return self.get_owner_ids()
