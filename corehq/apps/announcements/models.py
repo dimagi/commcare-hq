@@ -61,7 +61,6 @@ class Notification(Document):
         raise NotImplementedError
 
     @classmethod
-    # @memoized todo: figure out how to reset cache of class methods
     def get_notification(cls, username):
 
 
