@@ -1,142 +1,6 @@
 from django.utils import http
-from django.core import cache
+from . import CACHED_VIEW_PREFIX, rcache, COUCH_CACHE_TIMEOUT, CACHE_VIEWS
 import simplejson
-from django.conf import settings
-
-COUCH_CACHE_TIMEOUT = 43200
-MOCK_REDIS_CACHE = None
-
-DEBUG_TRACE = False
-
-CACHE_DOCS = getattr(settings, 'COUCH_CACHE_DOCS', False)
-CACHE_VIEWS = getattr(settings, 'COUCH_CACHE_VIEWS', False)
-
-def rcache():
-    return MOCK_REDIS_CACHE or cache.get_cache('redis')
-
-CACHED_VIEW_PREFIX = '#cached_view_'
-
-#the actual payload of the cached_doc
-CACHED_DOC_PREFIX = '#cached_doc_'
-CACHED_DOC_PROP_PREFIX = '#cached_doc_helper_'
-
-#for a given doc_id, a reverse relationship to see which views are touched by this cache
-#value is a list of the cached_view keys
-CACHED_VIEW_DOC_REVERSE = '#reverse_cached_doc_'
-
-
-def key_doc_prop(doc_id, prop_name):
-    return ':'.join([CACHED_DOC_PROP_PREFIX, doc_id, prop_name])
-
-def key_doc_id(doc_id):
-    """
-    Redis cache key for a full couch document by doc_id
-    """
-    ret = ":".join([CACHED_DOC_PREFIX, doc_id])
-    return ret
-
-
-def invalidate_doc_generation(doc):
-    doc_type = doc.get('doc_type', None)
-    generation_mgr = DocGenCache.doc_type_generation_map()
-    if doc_type in generation_mgr:
-        generation_mgr[doc_type].increment()
-
-
-def invalidate_doc(doc, deleted=False):
-    """
-    For a given doc, delete it and all reverses.
-
-    return: (true|false existed or not)
-    """
-    #first by just individual doc
-    doc_id = doc['_id']
-    doc_key = key_doc_id(doc_id)
-
-    # regardless if it exist or not, send it to the generational lookup and increment.
-    prior_ver = rcache().get(doc_key, None)
-    if prior_ver and not doc.get('doc_type', None):
-        invalidate_doc = simplejson.loads(prior_ver)
-    else:
-        invalidate_doc = doc
-
-    invalidate_doc_generation(invalidate_doc)
-    rcache().delete(key_doc_id(doc_id))
-    rcache().delete_pattern(key_doc_prop(doc_id, '*'))
-
-    if not deleted and invalidate_doc.get('doc_id', None) in DocGenCache.doc_type_generation_map():
-        do_cache_doc(doc)
-
-    if prior_ver:
-        return True
-    else:
-        return False
-
-
-def cached_open_doc(db, doc_id, cache_expire=COUCH_CACHE_TIMEOUT, **params):
-    """
-    Main wrapping function to open up a doc. Replace db.open_doc(doc_id)
-    """
-    cached_doc = _get_cached_doc_only(doc_id)
-    if not cached_doc:
-        doc = db.open_doc(doc_id, **params)
-        do_cache_doc(doc, cache_expire=cache_expire)
-        return doc
-    else:
-        return cached_doc
-
-
-def cache_doc_prop(doc_id, prop_name, doc_data, cache_expire=COUCH_CACHE_TIMEOUT, **params):
-    """
-    Cache Helper
-
-    Wrap additional data around a doc_id's properties, and invalidate when the doc gets invalidated
-
-    doc_id: doc_id in question
-    prop_name: prop_name name
-    doc_data: json_dict that is to be cached
-    """
-    if CACHE_DOCS:
-        key = key_doc_prop(doc_id, prop_name)
-        rcache().set(key, simplejson.dumps(doc_data), timeout=cache_expire)
-
-
-def get_cached_prop(doc_id, prop_name):
-    key = key_doc_prop(doc_id, prop_name)
-    retval = rcache().get(key, None)
-    if retval and CACHE_DOCS:
-        return simplejson.loads(retval)
-    else:
-        return None
-
-def _get_cached_doc_only(doc_id):
-    """
-    helper cache retrieval method for open_doc - for use by views in retrieving their docs.
-    """
-    doc = rcache().get(key_doc_id(doc_id), None)
-    if doc and CACHE_DOCS:
-        return simplejson.loads(doc)
-    else:
-        return None
-
-def do_cache_doc(doc, cache_expire=COUCH_CACHE_TIMEOUT):
-    if CACHE_DOCS:
-        rcache().set(key_doc_id(doc['_id']), simplejson.dumps(doc), timeout=cache_expire)
-
-
-def cached_view(db, view_name, wrapper=None, cache_expire=COUCH_CACHE_TIMEOUT, force_invalidate=False,
-                **params):
-    """
-    Entry point for caching views. See if it's in the generational view system, else juts call normal.
-    """
-    generation_mgr = DocGenCache.view_generation_map()
-    if view_name in generation_mgr:
-        cache_method = generation_mgr[view_name].cached_view
-    else:
-        cache_method = NoGenerationCache.nogen().cached_view
-
-    return cache_method(db, view_name, wrapper=wrapper, cache_expire=cache_expire, force_invalidate=force_invalidate,
-                        **params)
 
 
 class DocGenCache(object):
@@ -213,6 +77,7 @@ class DocGenCache(object):
         """
         Cache by doc_id a reverse lookup of views that it is mutually dependent on
         """
+        from .api import do_cache_doc
         if isinstance(doc_or_docid, dict):
             do_cache_doc(doc_or_docid, cache_expire=cache_expire)
 
@@ -228,6 +93,7 @@ class DocGenCache(object):
 
         Note, a view call with include_docs=True will not be wrapped, you must wrap it on your own.
         """
+        from .api import cached_open_doc
 
         if force_invalidate:
             self.increment()
@@ -337,6 +203,5 @@ class NoGenerationCache(DocGenCache):
         if not NoGenerationCache._instance:
             NoGenerationCache._instance = NoGenerationCache()
         return NoGenerationCache._instance
-
 
 
