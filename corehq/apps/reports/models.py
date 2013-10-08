@@ -175,7 +175,8 @@ class ReportConfig(Document):
 
         db = cls.get_db()
         result = cache_core.cached_view(db, "reportconfig/configs_by_domain", reduce=False,
-                                     include_docs=True, startkey=key, endkey=key + [{}], wrapper=cls.wrap, **kwargs)
+                                     include_docs=True, startkey=key, endkey=key + [{}], wrapper=cls.wrap,
+                                     force_invalidate=True, **kwargs)
         return result
 
     @classmethod
@@ -404,7 +405,7 @@ class ReportNotification(Document):
 
         db = cls.get_db()
         result = cache_core.cached_view(db, "reportconfig/user_notifications", reduce=False,
-                                     include_docs=True, startkey=key, endkey=key + [{}], wrapper=cls.wrap, **kwargs)
+                                     include_docs=True, startkey=key, endkey=key + [{}], wrapper=cls.wrap, force_invalidate=True, **kwargs)
         return result
 
     @property
@@ -596,7 +597,7 @@ class HQGroupExportConfiguration(GroupExportConfiguration):
     
     @classmethod
     def by_domain(cls, domain):
-        return cache_core.cached_view(cls.get_db(), "groupexport/by_domain", key=domain, reduce=False, include_docs=True, wrapper=cls.wrap)
+        return cache_core.cached_view(cls.get_db(), "groupexport/by_domain", key=domain, reduce=False, include_docs=True, wrapper=cls.wrap, force_invalidate=True)
 
     @classmethod
     def get_for_domain(cls, domain):
