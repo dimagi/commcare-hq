@@ -1,4 +1,5 @@
 {% extends "layout.html" %}
+{% load url from future %}
 {% block page_imports %}
     {% include "imports/jquery-ui.html" %}
     {% include "imports/datatables.html" %}
@@ -28,7 +29,7 @@
 <tbody>
 {% for row in sync_data %}
     <tr>
-        <td><a href="{% url phone_sync_logs_for_chw row.chw.get_id %}">{{ row.chw.formatted_name }}</a></td>
+        <td><a href="{% url "phone_sync_logs_for_chw" row.chw.get_id %}">{{ row.chw.formatted_name }}</a></td>
         <td>{{ row.chw.current_clinic_display }}</td>
         <td>{{ row.value }}</td>
         <td>{{ row.last_sync.date }}</td>
