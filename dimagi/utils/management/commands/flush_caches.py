@@ -9,7 +9,6 @@ class Command(LabelCommand):
     label = ""
 
     def handle(self, *args, **options):
-
         print "Clearing caches..."
         for k in settings.CACHES.keys():
             cache_backend = cache.get_cache(k)

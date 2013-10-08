@@ -11,7 +11,6 @@ DEBUG_TRACE = False
 CACHE_DOCS = getattr(settings, 'COUCH_CACHE_DOCS', False)
 CACHE_VIEWS = getattr(settings, 'COUCH_CACHE_VIEWS', False)
 
-
 def rcache():
     return MOCK_REDIS_CACHE or cache.get_cache('redis')
 
@@ -119,7 +118,6 @@ def _get_cached_doc_only(doc_id):
         return simplejson.loads(doc)
     else:
         return None
-
 
 def do_cache_doc(doc, cache_expire=COUCH_CACHE_TIMEOUT):
     if CACHE_DOCS:
