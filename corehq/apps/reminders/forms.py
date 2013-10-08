@@ -1217,6 +1217,12 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         if not isinstance(reminder_handler, CaseReminderHandler):
             raise ValueError("You must save to a CaseReminderHandler object!")
 
+        events = self.cleaned_data['events']
+        for event in events:
+            new_event = CaseReminderEvent()
+            for prop, val in event.items():
+                setattr(new_event, prop, val)
+        reminder_handler.events = events
     @classmethod
     def compute_initial(cls, reminder_handler):
         initial = {}
