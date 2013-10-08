@@ -29,6 +29,3 @@ class TestOTARestore(TestCase):
         form = post_xform_to_couch(xml_data)
         process_cases(sender="testharness", xform=form)
         self.assertEqual(4, len(CommCareCase.view("case/by_user", reduce=False).all()))
-        
-        
-        
