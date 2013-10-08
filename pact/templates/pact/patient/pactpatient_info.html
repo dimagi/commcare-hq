@@ -108,14 +108,8 @@
                                 <strong>{{ patient_address.type|title }}</strong><br>
                             {% endif %}
                             {{ patient_address.address }}<br>
-{#                            <a href="javascript:ajax_get_form('{{ patient_doc.get_id }}', 'address', {{ forloop.counter0 }})">Change</a>#}
-{#                            &nbsp;#}
-{#                            <a href="javascript:rm_phone_addr('{{ patient_doc.get_id }}', 'address', {{ forloop.counter0 }})">Remove</a>#}
                         </div>
                     {% endfor %}
-                    <div style="float:right;">
-{#                        <a class="btn" href="javascript:ajax_get_form('{% url 'ajax_patient_form_get' %}', '{{ patient_doc.get_id }}','address', 'addressform');"> <i class="icon-plus"></i> Add Address</a>#}
-                    </div>
                 </td>
             </tr>
 
@@ -131,14 +125,9 @@
                                 <strong>{{ phone.type|title }}</strong> &nbsp;<br>
                             {% endif %}
                             {{ phone.number }}<br>
-{#                            <a href="javascript:ajax_get_form('{% url 'ajax_patient_form_get' %}', '{{ patient_doc.get_id }}', 'phone', 'phoneform', {{ forloop.counter0 }})">Change</a>#}
                             &nbsp;
-{#                            <a href="javascript:rm_phone_addr('{{ patient_doc.get_id }}', 'phone', {{ forloop.counter0 }})">Remove</a>#}
                         </div>
                     {% endfor %}
-                    <div style="float:right;">
-{#                        <a class="btn" href="javascript:ajax_get_form('{% url 'ajax_patient_form_get' %}', '{{ patient_doc.get_id }}','phone', 'phoneform');"> <i class="icon-plus"></i> Add Phone </a>#}
-                    </div>
                 </td>
             </tr>
         </table>
