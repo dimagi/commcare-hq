@@ -1157,6 +1157,14 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             return start_date_offset
         return None
 
+    def clean_recipient_case_match_property(self):
+        if self.cleaned_data['recipient'] == RECIPIENT_SUBCASE:
+            case_property = self.cleaned_data['recipient_case_match_property'].strip()
+            if not case_property:
+                raise ValidationError("You must specify a case property for the case's child case.")
+            return case_property
+        return None
+
     def clean_events(self):
         method = self.cleaned_data['method']
         try:
