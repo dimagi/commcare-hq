@@ -40,7 +40,7 @@ class HQMediaLicense(DocumentSchema):
 
 class CommCareMultimedia(SafeSaveDocument):
     """
-        The base object of all CommCare Multimedia
+    The base object of all CommCare Multimedia
     """
     file_hash = StringProperty()  # use this to search for multimedia in couch
     aux_media = SchemaListProperty(AuxMedia)
@@ -94,37 +94,28 @@ class CommCareMultimedia(SafeSaveDocument):
     def attach_data(self, data, original_filename=None, username=None, attachment_id=None,
                     media_meta=None, replace_attachment=False):
         """
-            This creates the auxmedia attachment with the downloaded data.
+        This creates the auxmedia attachment with the downloaded data.
         """
         self.last_modified = datetime.utcnow()
-        is_update = False
 
         if not attachment_id:
             attachment_id = self.file_hash
 
-        if (attachment_id in self.current_attachments) and replace_attachment:
-            self.delete_attachment(attachment_id)
-            for aux in self.aux_media:
-                if aux.attachment_id == attachment_id:
-                    self.aux_media.remove(aux)
-
-        if not attachment_id in self.current_attachments:
+        if not self._attachments or attachment_id not in self._attachments:
             if not getattr(self, '_id'):
                 self.save()  # let's just make sure an id has been assigned to this guy before we try to put_attachment
             self.put_attachment(data, attachment_id, content_type=self.get_mime_type(data, filename=original_filename))
-            new_media = AuxMedia()
-            new_media.uploaded_date = datetime.utcnow()
-            new_media.attachment_id = attachment_id
-            new_media.uploaded_filename = original_filename
-            new_media.uploaded_by = username
-            new_media.checksum = self.file_hash
-            if media_meta:
-                new_media.media_meta = media_meta
-            self.aux_media.append(new_media)
-            self.save()
-            is_update = True
-
-        return is_update
+        new_media = AuxMedia()
+        new_media.uploaded_date = datetime.utcnow()
+        new_media.attachment_id = attachment_id
+        new_media.uploaded_filename = original_filename
+        new_media.uploaded_by = username
+        new_media.checksum = self.file_hash
+        if media_meta:
+            new_media.media_meta = media_meta
+        self.aux_media.append(new_media)
+        self.save()
+        return True
 
     def add_domain(self, domain, owner=None, **kwargs):
         if len(self.owners) == 0:
