@@ -1,4 +1,5 @@
 from StringIO import StringIO
+import logging
 import mimetypes
 from PIL import Image
 from datetime import datetime
@@ -103,7 +104,13 @@ class CommCareMultimedia(SafeSaveDocument):
 
         if not self._attachments or attachment_id not in self._attachments:
             if not getattr(self, '_id'):
-                self.save()  # let's just make sure an id has been assigned to this guy before we try to put_attachment
+                # put attchment blows away existing data, so make sure an id has been
+                # assigned to this guy before we do it. this is the expected path
+                self.save()
+            else:
+                # this should only be files that had attachments deleted while the bug
+                # was in effect, so hopefully we will stop seeing it after a few days
+                logging.error('someone is uploading a file that should have existed for multimedia %s' % self._id)
             self.put_attachment(data, attachment_id, content_type=self.get_mime_type(data, filename=original_filename))
         new_media = AuxMedia()
         new_media.uploaded_date = datetime.utcnow()
