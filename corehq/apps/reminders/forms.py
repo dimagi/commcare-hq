@@ -835,6 +835,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
     # only show if SMS_SURVEY or IVR_SURVEY is chosen
     max_question_retries = forms.ChoiceField(
         required=False,
+        choices=((n, n) for n in QUESTION_RETRY_CHOICES)
     )
 
     def __init__(self, data=None, is_previewer=False, domain=None, ui_type=None, *args, **kwargs):
