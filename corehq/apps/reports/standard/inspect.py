@@ -779,7 +779,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
                 latlon = [float(k) for k in re.split(' *,? *', raw)[:2]]
                 return [latlon[1], latlon[0]] # geojson is lon, lat
             except ValueError:
-                return [0.0, 0.0]
+                return None
 
         def points():
             for row in data:
@@ -796,6 +796,8 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
                 if depth < 2:
                     if depth == 0:
                         geo = _parse_geopoint(geo)
+                        if geo is None:
+                            continue
                     feature_type = 'Point'
                 else:
                     if depth == 2:
