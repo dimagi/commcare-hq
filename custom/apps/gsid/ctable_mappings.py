@@ -22,7 +22,7 @@ class PatientSummaryMapping(CtableMappingFixture):
             ColumnDef(name="date", data_type="date", value_source="key", value_index=8, date_format="%Y-%m-%d"),
             ColumnDef(name="diagnosis", data_type="string", value_source="key", value_index=9),
             ColumnDef(name="age", data_type="integer", value_source="value", value_attribute="sum"),       
-            ColumnDef(name="lot_number", data_type="integer", value_source="key", value_index=10),
+            ColumnDef(name="lot_number", data_type="string", value_source="key", value_index=10),
             ColumnDef(name="gps", data_type="string", value_source="key", value_index=11),
             ColumnDef(name="gps_country", data_type="string", value_source="key", value_index=12),
             ColumnDef(name="gps_province", data_type="string", value_source="key", value_index=13),
