@@ -79,15 +79,19 @@ class FormPreparationV2Test(FormPrepBase):
 class SubcaseRepeatTest(FormPrepBase):
     file_path = ('data', 'form_preparation_v2')
 
-    def setUp(self):
-        self.app = Application.wrap(self.get_json('subcase-repeat'))
-
     def test_subcase_repeat(self):
+        self.app = Application.wrap(self.get_json('subcase-repeat'))
         self.app.case_sharing = False
         self.assert_xml_equiv(self.app.get_module(0).get_form(0).render_xform(),
                               self.get_xml('subcase-repeat'))
 
     def test_subcase_repeat_sharing(self):
+        self.app = Application.wrap(self.get_json('subcase-repeat'))
         self.app.case_sharing = True
         self.assert_xml_equiv(self.app.get_module(0).get_form(0).render_xform(),
                               self.get_xml('subcase-repeat-sharing'))
+
+    def test_subcase_multiple_repeats(self):
+        self.app = Application.wrap(self.get_json('multiple_subcase_repeat'))
+        self.assert_xml_equiv(self.app.get_module(0).get_form(0).render_xform(),
+                              self.get_xml('multiple_subcase_repeat'))
