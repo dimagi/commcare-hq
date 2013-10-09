@@ -48,7 +48,21 @@ class XFormsSession(Document):
         """
         self.completed = completed
         self.modified_time = self.end_time = datetime.utcnow()
-    
+
+    @classmethod
+    def get_all_open_sms_sessions(cls, domain, contact_id):
+        sessions = cls.view("smsforms/open_sms_sessions_by_connection",
+                            key=[domain, contact_id],
+                            include_docs=True).all()
+        return sessions
+
+    @classmethod
+    def close_all_open_sms_sessions(cls, domain, contact_id):
+        sessions = cls.get_all_open_sms_sessions(domain, contact_id)
+        for session in sessions:
+            session.end(False)
+            session.save()
+
     @classmethod
     def latest_by_session_id(cls, id):
         return XFormsSession.view("smsforms/sessions_by_touchforms_id", 

@@ -24,6 +24,7 @@ METHOD_IVR_SURVEY = "ivr_survey"
 METHOD_EMAIL = "email"
 METHOD_TEST = "test"
 METHOD_SMS_CALLBACK_TEST = "callback_test"
+METHOD_STRUCTURED_SMS = "structured_sms"
 
 METHOD_CHOICES = [
     METHOD_SMS,
@@ -45,6 +46,7 @@ UI_SIMPLE_FIXED = "SIMPLE_FIXED"
 UI_COMPLEX = "COMPLEX"
 UI_CHOICES = [UI_SIMPLE_FIXED, UI_COMPLEX]
 
+RECIPIENT_SENDER = "SENDER"
 RECIPIENT_USER = "USER"
 RECIPIENT_OWNER = "OWNER"
 RECIPIENT_CASE = "CASE"
@@ -53,6 +55,9 @@ RECIPIENT_SUBCASE = "SUBCASE"
 RECIPIENT_SURVEY_SAMPLE = "SURVEY_SAMPLE"
 RECIPIENT_USER_GROUP = "USER_GROUP"
 RECIPIENT_CHOICES = [RECIPIENT_USER, RECIPIENT_OWNER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE, RECIPIENT_PARENT_CASE, RECIPIENT_SUBCASE, RECIPIENT_USER_GROUP]
+
+KEYWORD_RECIPIENT_CHOICES = [RECIPIENT_SENDER, RECIPIENT_OWNER]
+KEYWORD_ACTION_CHOICES = [METHOD_SMS, METHOD_SMS_SURVEY, METHOD_STRUCTURED_SMS]
 
 FIRE_TIME_DEFAULT = "DEFAULT"
 FIRE_TIME_CASE_PROPERTY = "CASE_PROPERTY"
@@ -80,8 +85,9 @@ FORM_TYPE_ALL_AT_ONCE = "ALL_AT_ONCE" # Complete the entire form with just one s
 FORM_TYPE_CHOICES = [FORM_TYPE_ONE_BY_ONE, FORM_TYPE_ALL_AT_ONCE]
 
 REMINDER_TYPE_ONE_TIME = "ONE_TIME"
+REMINDER_TYPE_KEYWORD_INITIATED = "KEYWORD_INITIATED"
 REMINDER_TYPE_DEFAULT = "DEFAULT"
-REMINDER_TYPE_CHOICES = [REMINDER_TYPE_DEFAULT, REMINDER_TYPE_ONE_TIME]
+REMINDER_TYPE_CHOICES = [REMINDER_TYPE_DEFAULT, REMINDER_TYPE_ONE_TIME, REMINDER_TYPE_KEYWORD_INITIATED]
 
 SEND_NOW = "NOW"
 SEND_LATER = "LATER"
@@ -830,7 +836,7 @@ class CaseReminderHandler(Document):
                 
                 reminder.save()
     
-    def datetime_definition_changed(self):
+    def datetime_definition_changed(self, **kwargs):
         """
         This method is used to manage updates to CaseReminderHandler's whose start_condition_type == ON_DATETIME.
         """
@@ -848,6 +854,8 @@ class CaseReminderHandler(Document):
             recipient = Group.get(self.user_group_id)
         elif self.recipient == RECIPIENT_USER:
             recipient = CommCareUser.get(self.user_id)
+        elif self.recipient == RECIPIENT_CASE:
+            recipient = CommCareCase.get(self.case_id)
         else:
             recipient = None
         
@@ -856,14 +864,23 @@ class CaseReminderHandler(Document):
             reminder = None
         
         if reminder is None and self.active:
-            reminder = self.spawn_reminder(None, self.start_datetime, recipient)
+            if self.recipient == RECIPIENT_CASE:
+                case = recipient
+            elif self.case_id is not None:
+                case = CommCareCase.get(self.case_id)
+            else:
+                case = None
+            reminder = self.spawn_reminder(case, self.start_datetime, recipient)
             reminder.start_condition_datetime = self.start_datetime
-            self.set_next_fire(reminder, now) # This will fast-forward to the next event that does not occur in the past
+            fast_forward = kwargs.pop("fast_forward", False)
+            if fast_forward:
+                self.set_next_fire(reminder, now) # This will fast-forward to the next event that does not occur in the past
             reminder.save()
     
     def save(self, **params):
         schedule_changed = params.pop("schedule_changed", False)
         prev_definition = params.pop("prev_definition", None)
+        fast_forward = params.pop("fast_forward", False)
         super(CaseReminderHandler, self).save(**params)
         if not self.deleted():
             if self.start_condition_type == CASE_CRITERIA:
@@ -876,7 +893,7 @@ class CaseReminderHandler(Document):
                 for case in cases:
                     self.case_changed(case, schedule_changed=schedule_changed, prev_definition=prev_definition)
             elif self.start_condition_type == ON_DATETIME:
-                self.datetime_definition_changed()
+                self.datetime_definition_changed(fast_forward=fast_forward)
     
     @classmethod
     def get_handlers(cls, domain, case_type=None):
@@ -1035,17 +1052,28 @@ class CaseReminder(Document, LockableMixIn):
         self.doc_type += "-Deleted"
         self.save()
 
+class SurveyKeywordAction(DocumentSchema):
+    recipient = StringProperty(choices=KEYWORD_RECIPIENT_CHOICES)
+    action = StringProperty(choices=KEYWORD_ACTION_CHOICES)
+
+    # Only used for action == METHOD_SMS
+    message_content = StringProperty()
+
+    # Only used for action in [METHOD_SMS_SURVEY, METHOD_STRUCTURED_SMS]
+    form_unique_id = StringProperty()
+
+    # Only used for action == METHOD_STRUCTURED_SMS
+    use_named_args = BooleanProperty()
+    named_args = DictProperty() # Dictionary of {argument name in the sms (caps) : form question xpath}
+    named_args_separator = StringProperty()
 
 class SurveyKeyword(Document):
     domain = StringProperty()
     keyword = StringProperty()
-    form_type = StringProperty(choices=FORM_TYPE_CHOICES, default=FORM_TYPE_ONE_BY_ONE)
-    form_unique_id = StringProperty()
-    delimiter = StringProperty() # Default is None, in which case the delimiter is any consecutive white space
-    use_named_args = BooleanProperty()
-    named_args = DictProperty() # Dictionary of {argument name in the sms (caps) : form question xpath}
-    named_args_separator = StringProperty()
-    
+    actions = SchemaListProperty(SurveyKeywordAction)
+    delimiter = StringProperty() # Only matters if this is a structured SMS: default is None, in which case the delimiter is any consecutive white space
+    override_open_sessions = BooleanProperty()
+
     def retire(self):
         self.doc_type += "-Deleted"
         self.save()
