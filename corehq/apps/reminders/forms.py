@@ -1306,13 +1306,30 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             'start_property',
             'start_match_type',
             'start_value',
-            'start_date'
+            'start_date',
+            'recipient',
+            'recipient_case_match_property',
+            'recipient_case_match_type',
+            'recipient_case_match_value',
+            'method',
+            'event_interpretation',
+            'repeat_type',
+            'schedule_length',
+            'max_iteration_count',
+            'stop_condition',
+            'until',
+            'submit_partial_forms',
+            'include_case_side_effects',
+            'default_lang',
+            'max_question_retries',
         ]:
             setattr(reminder_handler, field, self.cleaned_data[field])
 
         start_property_offset = self.cleaned_data['start_property_offset']
         start_date_offset = self.cleaned_data['start_date_offset']
         reminder_handler.start_offset = start_property_offset if start_property_offset is None else start_date_offset
+        reminder_handler.ui_type = self.ui_type
+        reminder_handler.save()
 
     @classmethod
     def compute_initial(cls, reminder_handler):
