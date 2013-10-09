@@ -8,6 +8,12 @@ class BootstrapMultiField(MultiField):
     template = "hqwebapp/crispy/layout/multifield.html"
     field_template = "hqwebapp/crispy/field/multifield.html"
 
+    def __init__(self, *args, **kwargs):
+        super(BootstrapMultiField, self).__init__(*args, **kwargs)
+        self.help_bubble_text = None
+        if 'help_bubble_text' in kwargs:
+            self.help_bubble_text = kwargs.pop('help_bubble_text')
+
     def render(self, form, form_style, context, template_pack=TEMPLATE_PACK):
         fields_output = u''
         for field in self.fields:
@@ -25,6 +31,7 @@ class BootstrapMultiField(MultiField):
             'multifield': self,
             'fields_output': fields_output,
             'error_list': errors,
+            'help_bubble_text': self.help_bubble_text,
         })
         return render_to_string(self.template, context)
 
