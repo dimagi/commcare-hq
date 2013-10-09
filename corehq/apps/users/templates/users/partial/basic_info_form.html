@@ -118,6 +118,7 @@
     <div class="form-actions"><button type="submit" class="btn btn-primary">{% trans 'Add Number' %}</button></div>
 </form>
 
+{% block js-inline %}
 <script type="text/javascript">
     $('#id_add_phone_number').on('paste', function (event) {
         var clipboardData = event.clipboardData  ||  event.originalEvent.clipboardData;
@@ -132,3 +133,4 @@
         }
     });
 </script>
+{% endblock %}
