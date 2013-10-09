@@ -11,24 +11,24 @@
 
 <body>
 
-<div class="container smiley-report">
-    <div>
+<article class="container smiley-report">
+    <section>
         <h2>Daily Site PAX GBG Strategy Use</h2>
         <p>
             Every day a PAX GBG Strategy was used by any staff member at your afterschool program is marked by a "Peace" sign.  Any day that a PAX GBG strategy was not used is marked by a "Remember" finger.  The "Weekly Total" is show many days PAX GBG Strategies were used this week.
         </p>
         {% include "penn_state/report_row.html" with report=site_strategy %}
-    </div>
+    </section>
 
-    <div>
+    <section>
         <h2>Daily Site GBG Game Goal</h2>
         <p>
             Every day the GBG game was played by anyone at your afterschool program site is marked by a "Smiley" face.  Any day the GBG Game was not played is marked by a "Remember" finger.  The "Weekly Total" is how many days the game was played.
         </p>
         {% include "penn_state/report_row.html" with report=site_game %}
-    </div>
+    </section>
 
-    <div class="row">
+    <section class="row">
         <div class="span6">
             <h2>Weekly Staff Entry Count</h2>
             <svg id="site-pie-chart" width="400" height="300">
@@ -39,27 +39,27 @@
             <h2>Weekly Site GBG Scores</h2>
             <svg id="site-bar-chart"></svg>
         </div>
-    </div>
-</div>
+    </section>
+</article>
 
-<div class="container smiley-report">
-    <div>
+<article class="container smiley-report">
+    <section>
         <h2>Daily Individual PAX GBG Strategy Use</h2>
         <p>
             Every day you used a PAX GBG Strategy is marked by a "Peace" sign.  Any day that a PAX GBG strategy was not used is marked by a "Remember" finger.  The "Weekly Total" is show many days PAX GBG Strategies you used this week.
         </p>
         {% include "penn_state/report_row.html" with report=individual_strategy %}
-    </div>
+    </section>
 
-    <div>
+    <section>
         <h2>Daily Individual GBG Game Goal</h2>
         <p>
             Every day you played the GBG game is marked by a "Smiley" face.  Any day the GBG Game was not played is marked by a "Remember" finger.  The "Weekly Total" is how many games you played.
         </p>
         {% include "penn_state/report_row.html" with report=individual_game %}
-    </div>
+    </section>
 
-    <div class="row">
+    <section class="row">
         <div class="span6">
             <h2>Weekly Individual Entry Count</h2>
             <svg id="individual-pie-chart" width="400" height="300">
@@ -70,8 +70,8 @@
             <h2>Weekly Individual GBG Scores</h2>
             <svg id="individual-bar-chart"></svg>
         </div>
-    </div>
-</div>
+    </section>
+</article>
 
     <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
     <script src="{% static 'hqstyle/js/core/bootstrap.min.js' %}"></script>
