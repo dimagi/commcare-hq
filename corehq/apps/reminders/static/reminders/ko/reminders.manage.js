@@ -65,6 +65,10 @@ var ManageRemindersViewModel = function (initial, choices, ui_type, available_la
         return self.stop_condition() === self.choices.STOP_CONDITION_CASE_PROPERTY;
     });
 
+    self.isMaxQuestionRetriesVisible = ko.computed(function () {
+        return self.method() === self.choices.METHOD_IVR_SURVEY;
+    });
+
     self.init = function () {
         var events = $.parseJSON(initial.events || '[]');
         if (self.ui_type === self.choices.UI_SIMPLE_FIXED) {

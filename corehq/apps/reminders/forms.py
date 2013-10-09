@@ -1025,7 +1025,10 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                             'class="btn btn-primary" style="margin-left: 5px;" '
                             'data-toggle="modal">Add Language</a>'),
             ),
-            'max_question_retries',
+            crispy.Div(
+                'max_question_retries',
+                data_bind="visible: isMaxQuestionRetriesVisible",
+            ),
             'submit_partial_forms',
             'include_case_side_effects',
             active=False,
