@@ -1127,7 +1127,12 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             try:
                 current_val = getattr(reminder_handler, field, Ellipsis)
                 if field == 'events':
+                    for event in current_val:
+                        if not event.message:
+                            event.message = {(reminder_handler.default_lang or 'en'): ''}
                     current_val = json.dumps([e.to_json() for e in current_val])
+                if field == 'callback_timeout_intervals':
+                    current_val = ",".join(current_val)
                 if current_val is not Ellipsis:
                     initial[field] = current_val
             except AttributeError:
@@ -1143,7 +1148,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             initial['start_date_offset_type'] = (START_DATE_OFFSET_BEFORE if reminder_handler.start_offset <= 0
                                                  else START_DATE_OFFSET_AFTER)
 
-        start_offset = abs(reminder_handler.start_offset)
+        start_offset = abs(reminder_handler.start_offset or 0)
 
         if reminder_handler.ui_type == UI_SIMPLE_FIXED and len(reminder_handler.events) > 0:
             initial['event_timing'] = cls._format_event_timing_choice(
