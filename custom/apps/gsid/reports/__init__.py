@@ -39,7 +39,7 @@ class TestField(BaseDrilldownOptionFilter):
             tests = []
             test_fixtures = FixtureDataItem.by_field_value(
                 self.domain, 
-                FixtureDataType.by_domain_tag(self.domain, "tests").one(),
+                FixtureDataType.by_domain_tag(self.domain, "test").one(),
                 "disease_id",
                 d.fields["disease_id"]
             )
