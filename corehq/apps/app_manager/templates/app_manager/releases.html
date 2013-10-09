@@ -99,9 +99,7 @@
             </small></p>
         </div>
         <button class="btn btn-primary" data-bind="
-            click: makeNewBuild,
-            attr: {disabled: !makeNewBuildEnabled() ? 'disabled' : undefined},
-            css: {disabled: !makeNewBuildEnabled()}
+            click: makeNewBuild
         ">{% trans 'Make New Version' %}</button>
 
         <div id="build-errors-wrapper"></div>
@@ -213,7 +211,7 @@
                         <div data-bind="visible: fetchState() !== 'pending' && !doneFetching(), css: {hide: false}" class="hide">
                             <a href="#" class="btn" data-bind="click: getMoreSavedApps">{% trans "View More" %}</a>
                         </div>
-                        <div data-bind="visible: doneFetching() && makeNewBuildEnabled() && !savedApps().length, css: {hide: false}" class="hide">
+                        <div data-bind="visible: doneFetching() && !savedApps().length, css: {hide: false}" class="hide">
                             <div class="alert alert-info">
                                 {% trans 'Use the <strong>Make New Version</strong> button to create and deploy the latest version of your application' %}
                             </div>
