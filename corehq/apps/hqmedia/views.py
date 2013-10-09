@@ -263,10 +263,6 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
     name = "hqmedia_uploader_bulk"
 
     @property
-    def replace_existing(self):
-        return self.request.POST.get('replace_existing') == 'true'
-
-    @property
     @memoized
     def uploaded_zip(self):
         try:
@@ -297,8 +293,7 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
                                       share_media=self.share_media,
                                       license_name=self.license_used,
                                       author=self.author,
-                                      attribution_notes=self.attribution_notes,
-                                      replace_existing=self.replace_existing)
+                                      attribution_notes=self.attribution_notes)
         return status.get_response()
 
     @classmethod

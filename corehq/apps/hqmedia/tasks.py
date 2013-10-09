@@ -14,7 +14,7 @@ logging = get_task_logger(__name__)
 
 @task
 def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_media=False,
-                            license_name=None, author=None, attribution_notes=None, replace_existing=False):
+                            license_name=None, author=None, attribution_notes=None):
     """
         Responsible for processing the uploaded zip from Bulk Upload.
     """
