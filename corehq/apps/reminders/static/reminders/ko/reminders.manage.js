@@ -129,7 +129,7 @@ var ReminderEvent = function (eventData, choices, method, event_timing, event_in
         return self.fire_time_type() === self.choices.FIRE_TIME_CASE_PROPERTY;
     });
 
-    self.time_window_length = ko.observable(eventData.time_window_length);
+    self.time_window_length = ko.observable(eventData.time_window_length || "");
     self.isWindowLengthVisible = ko.computed(function () {
         return self.fire_time_type() === self.choices.FIRE_TIME_RANDOM;
     });
@@ -166,9 +166,11 @@ var ReminderEvent = function (eventData, choices, method, event_timing, event_in
         return translations;
     });
     self.message_data = ko.computed(function () {
-        return _.map(self.messageTranslations(), function (translation) {
-            return translation.toJSON();
+        var message_data = {};
+        _.each(self.messageTranslations(), function (translation) {
+            message_data[translation.language()] = translation.message();
         });
+        return message_data;
     });
     self.isMessageVisible = ko.computed(function () {
         return (self.method() === self.choices.METHOD_SMS)
@@ -179,6 +181,7 @@ var ReminderEvent = function (eventData, choices, method, event_timing, event_in
         return {
             fire_time_type: self.fire_time_type(),
             fire_time_aux: self.fire_time_aux(),
+            is_immediate: self.isEventImmediate(),
             day_num: self.day_num(),
             fire_time: self.fire_time(),
             form_unique_id: self.form_unique_id(),
@@ -213,13 +216,6 @@ var ReminderMessage = function (message, language, available_languages) {
     });
     self.showPluralChar = ko.computed(function () {
         return !self.showSingularChar();
-    });
-
-    self.toJSON = ko.computed(function () {
-        return {
-            language: self.language(),
-            message: self.message()
-        }
     });
 
     self.languageLabel = ko.computed(function () {
