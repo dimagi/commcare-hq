@@ -9,7 +9,7 @@ from tastypie.authentication import Authentication
 from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import xform as casexml_xform
-from custom.hope.case import HOPECase
+from custom.hope.models import HOPECase
 
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.app_manager import util as app_manager_util

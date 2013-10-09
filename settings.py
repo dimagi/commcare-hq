@@ -256,6 +256,7 @@ HQ_APPS = (
     'custom.reports.mc',
     'custom.trialconnect',
     'custom.apps.crs_reports',
+    'custom.hope',
 )
 
 TEST_APPS = ()
@@ -689,6 +690,7 @@ COUCHDB_APPS = [
     'groups',
     'hqcase',
     'hqmedia',
+    'hope',
     'importer',
     'indicators',
     'locations',
