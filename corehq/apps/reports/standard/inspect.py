@@ -773,8 +773,11 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
 
     def _to_geojson(self, data, geo_col):
         def _parse_geopoint(raw):
-            latlon = [float(k) for k in re.split(' *,? *', raw)[:2]]
-            return [latlon[1], latlon[0]] # geojson is lon, lat
+            try:
+                latlon = [float(k) for k in re.split(' *,? *', raw)[:2]]
+                return [latlon[1], latlon[0]] # geojson is lon, lat
+            except ValueError:
+                return [0.0, 0.0]
 
         def points():
             for row in data:
