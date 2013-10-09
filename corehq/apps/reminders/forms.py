@@ -1291,11 +1291,13 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             raise ValueError("You must save to a CaseReminderHandler object!")
 
         events = self.cleaned_data['events']
+        event_objects = []
         for event in events:
             new_event = CaseReminderEvent()
             for prop, val in event.items():
                 setattr(new_event, prop, val)
-        reminder_handler.events = events
+            event_objects.append(new_event)
+        reminder_handler.events = event_objects
 
         for field in [
             'nickname',
