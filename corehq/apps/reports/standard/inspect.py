@@ -189,15 +189,6 @@ class CaseListFilter(CouchFilter):
             limit=count,
             **self._kwargs).all()
 
-class CaseDataSource(ReportDataSource):
-
-    def slugs(self):
-        return []
-
-    def get_data(self, slugs=None):
-        return []
-
-
 class CaseDisplay(object):
     def __init__(self, report, case):
         """
@@ -447,6 +438,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                 simplejson.dumps(query),
                 simplejson.dumps(query_results)
             ))
+            raise RequestFailed
         return query_results
 
     @property
@@ -500,8 +492,12 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         ))
         return shared_params
 
+class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
 
-class CaseListReport(CaseListMixin, ProjectInspectionReport):
+    # note that this class is not true to the spirit of ReportDataSource; the whole
+    # point is the decouple generating the raw report data from the report view/django
+    # request. but currently these are too tightly bound too decouple
+
     name = ugettext_noop('Case List')
     slug = 'case_list'
 
@@ -519,6 +515,13 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
             }
         return self.name
 
+    def slugs(self):
+        return []
+
+    def get_data(self, slugs=None):
+        for row in self.es_results['hits'].get('hits', []):
+            yield self.get_case(row)
+
     @property
     def headers(self):
         headers = DataTablesHeader(
@@ -534,11 +537,10 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
 
     @property
     def rows(self):
-        def _format_row(row):
-            case = self.get_case(row)
+        for case in self.get_data():
             display = CaseDisplay(self, case)
 
-            return [
+            yield [
                 display.case_type,
                 display.case_link,
                 display.owner_display,
@@ -547,13 +549,6 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
                 display.modified_on,
                 display.closed_display
             ]
-
-        try:
-            #should this fail due to es_results being None or having no 'hits',
-            #return None, which will fail when trying to render rows, to return an error back to the datatables
-            return [_format_row(item) for item in self.es_results['hits'].get('hits', [])]
-        except RequestFailed:
-            pass
 
     def date_to_json(self, date):
         return tz_utils.adjust_datetime_to_timezone\
@@ -717,6 +712,8 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
       'report_params': optional dict of (static) config parameters for report
 
       adapter == 'case'
+      # in the current implementation, the case adapater requires you use the same filters
+      # as on the regular case list report
       'geo_fetch': mapping of case type to directive of how to pull geo data for a case of
           that type. available directives:
           * name of case property
@@ -762,6 +759,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
               'categories': as in 'color', only a url instead of a color
               'thresholds': as in 'color'
             },
+          # for display of date columns, you may use dates instead of numbers in the 'thresholds' and 'colorstops' fields
         }
       ]
     }
@@ -884,30 +882,23 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
             yield dict(zip(headers, row))
 
     def _get_data_case(self, params, filters):
-        MAX_RESULTS = 200 # TODO vary by rate plan?
-        # TODO filters and params in query
-        results = CaseES(self.domain).run_query({
-                'query': {
-                    'filtered': {
-#                        'query': query_block
-                        'filter': {'term': {'domain.exact': self.domain}},
-                    }
-                },
-                'size': MAX_RESULTS,
-            })
+        MAX_RESULTS = 200 # TODO vary by domain (cc-plus gets a higher limit?)
+        # bleh
+        _get = self.request.GET.copy()
+        _get['iDisplayStart'] = '0'
+        _get['iDisplayLength'] = str(MAX_RESULTS)
+        self.request.GET = _get
 
-        if results is None or 'hits' not in results:
-            # TODO error
-            raise RuntimeException('query error')
-        results = results['hits']
+        source = CaseListReport(self.request, domain=self.domain)
 
-        if results['total'] > MAX_RESULTS:
+        total_count = source.es_results['hits']['total']
+        if total_count > MAX_RESULTS:
             # TODO '# of results capped' warning on client
             print 'WARN: results limit exceeded'
             pass
 
-        for case in results['hits']:
-            case = CommCareCase.wrap(case['_source']).get_json()
+        for case in source.get_data():
+            case = CommCareCase.wrap(case).get_json()
             data = dict((k, case[k]) for k in (
                     'case_id',
                     'closed',
@@ -1264,6 +1255,8 @@ class DemoMapReport2(GenericMapReport):
         return user and user.is_previewer()
 
 class GenericCaseListMap(GenericMapReport):
+    fields = CaseListMixin.fields
+
     @property
     def data_source(self):
         return {
