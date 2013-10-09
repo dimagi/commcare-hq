@@ -189,6 +189,15 @@ class CaseListFilter(CouchFilter):
             limit=count,
             **self._kwargs).all()
 
+class CaseDataSource(ReportDataSource):
+
+    def slugs(self):
+        return []
+
+    def get_data(self, slugs=None):
+        return []
+
+
 class CaseDisplay(object):
     def __init__(self, report, case):
         """
@@ -1254,19 +1263,32 @@ class DemoMapReport2(GenericMapReport):
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return user and user.is_previewer()
 
-class DemoMapCaseList(GenericMapReport):
+class GenericCaseListMap(GenericMapReport):
+    @property
+    def data_source(self):
+        return {
+            "adapter": "case",
+            "geo_fetch": self.case_config,
+        }
+
+    display_config = {
+        "name_column": "case_name",
+    }
+
+class DemoMapCaseList(GenericCaseListMap):
     name = ugettext_noop("Maps: Case List")
     slug = "maps_demo_caselist"
-    data_source = {
-        "adapter": "case",
-        "geo_fetch": {
-            "supply-point": "_random",
-            "supply-point-product": "_random",
-        }
+
+    case_config = {
+        "supply-point": "_random",
+        "supply-point-product": "_random",
     }
-    display_config = {
-        "name_column": "case_name", # TODO hard-code this via a subclass?
-    }
+
+    @property
+    def display_config(self):
+        cfg = super(DemoMapCaseList, self).display_config
+        # extend here
+        return cfg
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
