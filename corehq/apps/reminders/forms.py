@@ -16,7 +16,7 @@ from django.forms import Field, Widget
 from corehq.apps.reminders.util import DotExpandedDict
 from casexml.apps.case.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
-from corehq.apps.hqwebapp.crispy import BootstrapMultiField, FieldsetAccordionGroup, HiddenFieldWithErrors
+from corehq.apps.hqwebapp.crispy import BootstrapMultiField, FieldsetAccordionGroup, HiddenFieldWithErrors, FieldWithHelpBubble
 from .models import (
     REPEAT_SCHEDULE_INDEFINITELY,
     CaseReminderEvent,
@@ -684,9 +684,6 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             (START_REMINDER_ON_CASE_DATE, "on a date specified in the Case"),
             (START_REMINDER_ON_CASE_PROPERTY, "when the Case is in the following state"),
         ),
-        help_text=("Reminders can either start based on a date in a case property "
-                   "or if the case is in a particular state (ex: case property 'high_risk' "
-                   "is equal to 'yes')")  # todo this will be a (?) bubble...can override the crispy Field
     )
     ## send options > start_reminder_on = case_date
     start_property = forms.CharField(
@@ -742,10 +739,6 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             (RECIPIENT_PARENT_CASE, "Case's Parent Case"),
             (RECIPIENT_SUBCASE, "Case's Child Cases"),
         ),
-        help_text=("The contact related to the case that reminder should go to.  The Case "
-                   "Owners are any mobile workers for which the case appears on their phone. "
-                   "For cases with child or parent cases, you can also send the message to those "
-                   "contacts. ")  # todo help bubble
     )
     ## recipient = RECIPIENT_SUBCASE
     recipient_case_match_property = forms.CharField(
@@ -768,9 +761,6 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             (METHOD_SMS, "SMS"),
             (METHOD_SMS_SURVEY, "SMS Survey"),
         ),
-        help_text=("Send a single SMS message or an interactive SMS survey. "
-                   "SMS surveys are designed in the Surveys or Application "
-                   "section. ")  # todo help bubble
     )
     # contains a string-ified JSON object of events
     events = forms.CharField(
@@ -780,9 +770,6 @@ class SimpleScheduleCaseReminderForm(forms.Form):
 
     event_timing = forms.ChoiceField(
         label="Timing",
-        help_text=("This controls when the message will be sent. The Time in Case "
-                   "option is useful, for example, if the recipient has chosen a "
-                   "specific time to receive the message.")  # todo help bubble
     )
 
     event_interpretation = forms.ChoiceField(
@@ -891,10 +878,13 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         start_section = crispy.Fieldset(
             'Start',
             crispy.Field('case_type', placeholder="todo: dropdown"),
-            crispy.Field(
+            FieldWithHelpBubble(
                 'start_reminder_on',
                 data_bind="value: start_reminder_on",
-                css_class="input-xlarge"
+                css_class="input-xlarge",
+                help_bubble_text=("Reminders can either start based on a date in a case property "
+                                  "or if the case is in a particular state (ex: case property 'high_risk' "
+                                  "is equal to 'yes')")
             ),
             crispy.Div(
                 BootstrapMultiField(
@@ -950,6 +940,10 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                     style="display: inline;",
                     data_bind="template: {name: 'event-fire-template', foreach: eventObjects}"
                 ),
+                css_id="timing_block",
+                help_bubble_text=("This controls when the message will be sent. The Time in Case "
+                                  "option is useful, for example, if the recipient has chosen a "
+                                  "specific time to receive the message.")
             ),
             crispy.Div(
                 style="display: inline;",
@@ -959,9 +953,13 @@ class SimpleScheduleCaseReminderForm(forms.Form):
 
         recipient_section = crispy.Fieldset(
             "Recipient",
-            crispy.Field(
+            FieldWithHelpBubble(
                 'recipient',
                 data_bind="value: recipient",
+                help_bubble_text=("The contact related to the case that reminder should go to.  The Case "
+                                  "Owners are any mobile workers for which the case appears on their phone. "
+                                  "For cases with child or parent cases, you can also send the message to those "
+                                  "contacts. ")
             ),
             BootstrapMultiField(
                 "When Case Property",
@@ -981,7 +979,13 @@ class SimpleScheduleCaseReminderForm(forms.Form):
 
         message_section = crispy.Fieldset(
             "Message Content",
-            crispy.Field('method', data_bind="value: method"),
+            FieldWithHelpBubble(
+                'method',
+                data_bind="value: method",
+                help_bubble_text=("Send a single SMS message or an interactive SMS survey. "
+                                  "SMS surveys are designed in the Surveys or Application "
+                                  "section. ")
+            ),
             crispy.Field('event_interpretation', data_bind="value: event_interpretation"),
             HiddenFieldWithErrors('events', data_bind="value: events"),
             crispy.Div(data_bind="template: {name: 'event-template', foreach: eventObjects}"),
