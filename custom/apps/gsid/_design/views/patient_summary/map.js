@@ -12,7 +12,7 @@ function (doc) {
             doc.sex,
             date,
             doc.diagnosis,
-            parseInt(doc.lot_number, 10),
+            doc.lot_number,
             doc.gps,
             doc.gps_country,
             doc.gps_province,
