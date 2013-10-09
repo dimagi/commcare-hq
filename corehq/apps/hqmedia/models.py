@@ -3,12 +3,11 @@ import mimetypes
 from PIL import Image
 from datetime import datetime
 import hashlib
-from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
+from couchdbkit.exceptions import ResourceConflict
 from couchdbkit.ext.django.schema import *
 from couchdbkit.schema import LazyDict
 from django.contrib import messages
 from django.core.urlresolvers import reverse
-import logging
 import magic
 from corehq.apps.app_manager.xform import XFormValidationError
 from couchforms.models import XFormError
