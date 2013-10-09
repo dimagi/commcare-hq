@@ -108,7 +108,7 @@
                     <span class="add-on">+</span>
                     <input id="id_add_phone_number" type="text" name="phone_number" value="" maxlength="50" />
                 </div>
-                <p id="phone_number_paste_error" style="display: none; color: red;">* {% trans "You can only paste numbers" %}</p>
+                <p id="phone_number_paste_error" style="display: none; color: red;">* {% trans "Phone numbers must have only digits, we tried convert your phone number." %}</p>
                 <p class="help-block">
                     {% blocktrans %}Please enter number, including international code, in digits only.{% endblocktrans %}
                 </p>
@@ -122,15 +122,15 @@
 <script type="text/javascript">
     $('#id_add_phone_number').on('paste', function (event) {
         var clipboardData = event.clipboardData  ||  event.originalEvent.clipboardData;
-        var pasteText = clipboardData.getData("Text")
-        var patt = /^[0-9]*$/g
-        if (patt.test(pasteText)) {
-            $("#phone_number_paste_error").css("display", "none")
-            return true
+        var pasteText = clipboardData.getData("Text");
+        var text = pasteText.replace(/\+|\-|\(|\)|\s/g, '');
+        if (/^[0-9]*$/.test(text)) {
+            $("#phone_number_paste_error").css("display", "none");
+            $('#id_add_phone_number').val(text);
         } else {
-            $("#phone_number_paste_error").css("display", "inline")
-            return false
+            $("#phone_number_paste_error").css("display", "inline");
         }
+        return false;
     });
 </script>
 {% endblock %}
