@@ -102,13 +102,13 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
 
     @property
     def group_by(self):
-        return self.place_types + [self.gps_key]
+        return self.place_types
 
     @property
     def keys(self):
         combos = get_unique_combinations(self.domain, place_types=self.place_types, place=self.selected_fixture())
         for c in combos:
-            yield [c[pt] for pt in self.place_types] + [c["gps"]]
+            yield [c[pt] for pt in self.place_types]
 
     def selected_fixture(self):
         fixture = self.request.GET.get('fixture_id', "")
@@ -237,11 +237,10 @@ class GSIDSQLPatientReport(GSIDSQLReport):
                 ],
                 header_group=age_range_group
             ),
-
-
         ]
+        
         if self.is_map:
-            columns.append(DatabaseColumn("gps", SimpleColumn(self.gps_key)))
+            columns.append(DatabaseColumn("gps", MaxColumn(self.gps_key)))
 
         return columns
 
@@ -255,12 +254,12 @@ class GSIDSQLPatientReport(GSIDSQLReport):
         chart.tooltipFormat = " in "
         chart.add_dataset(
             "Male Tests", 
-            [{'x':row[-11], 'y':row[-9]['html'] if row[-9] != "--" else 0} for row in rows],
+            [{'x':row[-10], 'y':row[-7]['html'] if row[-7] != "--" else 0} for row in rows],
             color="#0006CE"
         )
         chart.add_dataset(
             "Female Tests", 
-            [{'x':row[-11], 'y':row[-8]['html'] if row[-8] != "--" else 0} for row in rows],
+            [{'x':row[-10], 'y':row[-7]['html'] if row[-7] != "--" else 0} for row in rows],
             color="#70D7FF"
         )
         return [chart]
