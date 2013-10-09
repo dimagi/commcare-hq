@@ -815,17 +815,33 @@ class XForm(WrappedNode):
                 self.add_instance('casedb', src='jr://instance/casedb')
 
         if 'subcases' in actions:
-            for i, subcase in enumerate(actions['subcases']):
+            subcases = actions['subcases']
+            repeat_contexts = defaultdict(int)
+            for subcase in subcases:
                 if subcase.repeat_context:
-                    name = subcase.repeat_context
-                    _xpath = '/{x}'.join(subcase.repeat_context.split('/'))[1:]
-                    subcase_node = self.instance_node.find(_xpath)
+                    repeat_contexts[subcase.repeat_context] += 1
+
+            for i, subcase in enumerate(subcases):
+                if subcase.repeat_context:
+                    base_path = '%s/' % subcase.repeat_context
+                    parent_node = self.instance_node.find(
+                        '/{x}'.join(subcase.repeat_context.split('/'))[1:]
+                    )
+                    nest = repeat_contexts[subcase.repeat_context] > 1
                 else:
+                    base_path = ''
+                    parent_node = self.data_node
+                    nest = True
+
+                if nest:
                     name = 'subcase_%s' % i
                     subcase_node = _make_elem('{x}%s' % name)
-                    self.data_node.append(subcase_node)
+                    parent_node.append(subcase_node)
+                    path = '%s%s/' % (base_path, name)
+                else:
+                    subcase_node = parent_node
+                    path = base_path
 
-                path = '%s/' % name
                 subcase_block = make_case_block(path)
                 subcase_node.insert(0, subcase_block)
                 add_create_block(
@@ -843,7 +859,7 @@ class XForm(WrappedNode):
                     index_node = make_case_elem('index')
                     parent_index = make_case_elem('parent', {'case_type': form.get_case_type()})
                     self.add_bind(
-                        nodeset='%s/case/index/parent' % name,
+                        nodeset='%scase/index/parent' % path,
                         calculate=self.resolve_path("case/@case_id"),
                     )
                     index_node.append(parent_index)
