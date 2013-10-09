@@ -79,7 +79,11 @@
                 {{ hidden }}
             {% endfor %}
         </fieldset>
-        <div class="form-actions"{% if not is_new %} style="margin-top:24px; padding-top:18px;"{% endif %}><button type="submit" class="btn btn-primary btn-large disable-on-submit">{% if is_new %}{% trans "Request Project" %}{% else %}{% trans "Create Project" %}{% endif %}</button></div>
+        <div class="form-actions"{% if not is_new %} style="margin-top:24px; padding-top:18px;"{% endif %}>
+            <button type="submit" class="btn btn-primary btn-large disable-on-submit">
+                {% if is_new %}{% trans "Request Project" %}{% else %}{% trans "Create Project" %}{% endif %}
+            </button>
+        </div>
     </form>
 </div>
 <div class="span4">
