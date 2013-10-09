@@ -1259,6 +1259,17 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             del event['is_immediate']
         return events
 
+    def clean_schedule_length(self):
+        if self.cleaned_data['repeat_type'] == REPEAT_TYPE_NO:
+            return 0
+        value = self.cleaned_data['schedule_length']
+        event_interpretation = self.cleaned_data["event_interpretation"]
+        if event_interpretation == EVENT_AS_OFFSET and value < 0:
+            raise ValidationError("Please enter a non-negative number.")
+        elif event_interpretation == EVENT_AS_SCHEDULE and value <= 0:
+            raise ValidationError("Please enter a positive number.")
+        return value
+
 
 
     def save(self, reminder_handler):
