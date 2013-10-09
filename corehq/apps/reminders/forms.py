@@ -1170,6 +1170,15 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             return self.cleaned_data['recipient_case_match_type']
         return None
 
+    def clean_case_match_value(self):
+        if (self.cleaned_data['recipient'] == RECIPIENT_SUBCASE
+           and self.cleaned_data['recipient_case_match_type'] != MATCH_ANY_VALUE):
+            match_value = self.cleaned_data['case_match_value'].strip()
+            if not match_value:
+                raise ValidationError("You must provide a value.")
+            return match_value
+        return None
+
     def clean_events(self):
         method = self.cleaned_data['method']
         try:
