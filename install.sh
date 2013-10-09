@@ -42,19 +42,7 @@ if [ $? -eq 0 ]; then
     fi
     sudo apt-get update
 
-    sudo apt-get install -y git python-pip python-dev libevent-1.4-2 \
-        libevent-dev python-setuptools  \
-        postgresql memcached \
-        nodejs \
-        gdebi-core \
-        apache2
-
-    sudo apt-get build-dep -y python-psycopg2 python-lxml
-
-    # Dependencies for CouchDB and building it
-    sudo apt-get install -y g++ curl build-essential \
-        erlang-base erlang-dev erlang-eunit erlang-nox \
-        libmozjs185-dev libicu-dev libcurl4-gnutls-dev libtool
+    sudo apt-get install -y requirements/apt-packages.txt
 
 else
     command -v yum > /dev/null 2>&1
@@ -66,14 +54,7 @@ else
     sudo yum update
     sudo yum clean all
 
-    sudo yum install -y git gcc gcc-c++ make libtool zlib-devel openssl-devel \
-        rubygem-rake ruby-rdoc curl-devel openssl-devel libicu-devel \
-        postgresql postgresql-devel postgresql-lib postgresql-server libtool \
-        python-devel yum-utils httpd
-
-    # CouchDB
-    sudo yum install -y erlang libicu-devel openssl-devel curl-devel make \
-        gcc js-devel libtool which
+    cat requirements/yum-packages.txt | xargs sudo yum install -y
 
     sudo yum install htop
     sudo yum remove -y mysql php

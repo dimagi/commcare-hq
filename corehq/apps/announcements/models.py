@@ -2,7 +2,9 @@ from couchdbkit.ext.django.schema import Document, StringProperty, DateTimePrope
 from django.template.loader import render_to_string
 from corehq.apps.announcements.crud import HQAnnouncementCRUDManager
 from corehq.apps.crud.models import AdminCRUDDocumentMixin
+from corehq.util import fix_urls
 from dimagi.utils.decorators.memoized import memoized
+
 
 class HQAnnouncement(Document, AdminCRUDDocumentMixin):
     """
@@ -23,7 +25,7 @@ class HQAnnouncement(Document, AdminCRUDDocumentMixin):
     def as_html(self):
         return render_to_string("announcements/partials/base_announcement.html", {
             'title': self.title,
-            'content': self.summary,
+            'content': fix_urls(self.summary),
             'announcement_id': self._id,
         })
 

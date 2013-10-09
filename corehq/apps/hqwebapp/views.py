@@ -399,16 +399,18 @@ def apache_license(request):
 def bsd_license(request):
     return render_static(request, "bsd_license.html")
 
+
 def unsubscribe(request, user_id):
-    user = CouchUser.get_by_user_id(user_id)
-    domain = user.get_domains()[0]
+    # todo in the future we should not require a user to be logged in to unsubscribe.
     from django.contrib import messages
+    from corehq.apps.settings.views import MyAccountSettingsView
     messages.info(request,
                   _('Check "Opt out of emails about new features '
-                    'and other CommCare updates." below and then '
-                    'click "Update Information" if you do '
-                    'not want to receive future emails from us.'))
-    return HttpResponseRedirect(reverse('commcare_user_account', args=[domain, user_id]))
+                    'and other CommCare updates" in your account '
+                    'settings and then click "Update Information" '
+                    'if you do not want to receive future emails '
+                    'from us.'))
+    return HttpResponseRedirect(reverse(MyAccountSettingsView.urlname))
 
 
 class BasePageView(TemplateView):

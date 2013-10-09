@@ -28,6 +28,7 @@ class XFormsSession(Document):
     survey_incentive = StringProperty()
     session_type = StringProperty(choices=XFORMS_SESSION_TYPES, default=XFORMS_SESSION_SMS)
     workflow = StringProperty() # One of the corehq.apps.sms.models.WORKFLOW_* constants describing what kind of workflow this session was a part of
+    reminder_id = StringProperty() # Points to the _id of an instance of corehq.apps.reminders.models.CaseReminder that this session is tied to
     
     def save(self, *args, **kwargs):
         if is_bigcouch() and "w" not in kwargs:

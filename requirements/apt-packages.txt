@@ -1,10 +1,11 @@
 python-all-dev
 python-setuptools
-libpq-dev
+libcairo2-dev
 libevent-1.4-2
 libevent-core-1.4-2
 libevent-extra-1.4-2
 libevent-dev
+libpq-dev
 memcached
 libjpeg62
 libjpeg62-dev
@@ -22,4 +23,3 @@ subversion
 mercurial
 vim
 ntp
-

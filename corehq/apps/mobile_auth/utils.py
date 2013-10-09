@@ -4,26 +4,30 @@ from datetime import timedelta, datetime
 from corehq.apps.mobile_auth.xml import AuthKeys, KeyRecord, OpenRosaResponse
 from django.utils.translation import ugettext as _
 
+
 def generate_aes_key():
     # get 32 byte key
     bin_key = os.urandom(32)
     return base64.b64encode(bin_key)
 
-def new_key_record(domain, user_id, now=None):
+
+def new_key_record(domain, user_id, now=None, valid=None):
     """
     return initialized but unsaved MobileAuthKeyRecord
 
     """
     from corehq.apps.mobile_auth.models import MobileAuthKeyRecord
     now = now or datetime.utcnow()
+    valid = valid or now
     record = MobileAuthKeyRecord(
         domain=domain,
         user_id=user_id,
-        valid=now,
+        valid=valid,
     )
     bump_expiry(record, now=now)
 
     return record
+
 
 def bump_expiry(record, now=None):
     """

@@ -1,4 +1,5 @@
 {% extends 'hqwebapp/two_column.html' %}
+{% load url from future %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
@@ -57,11 +58,11 @@
 {% block page-title %}
 <ul class="breadcrumb">
     <li>
-        <a href="{% url default_sms_admin_interface %}"><strong>{% trans "SMS Connectivity" %}</strong></a> <span class="divider">&gt;</span>
+        <a href="{% url "default_sms_admin_interface" %}"><strong>{% trans "SMS Connectivity" %}</strong></a> <span class="divider">&gt;</span>
     </li>
     <li class="active">
         <div id="report-title">
-            <a href="{% url global_backend_map %}">{% trans "SMS Country-Connection Map" %}</a>
+            <a href="{% url "global_backend_map" %}">{% trans "SMS Country-Connection Map" %}</a>
         </div>
     </li>
 </ul>

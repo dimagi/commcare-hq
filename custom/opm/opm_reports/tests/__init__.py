@@ -110,7 +110,7 @@ class OPMTestBase(object):
                 snapshot_item = snapshot_row[snapshot_index]
                 report_item = report_row[report_index]
                 if not self.the_same(snapshot_item, report_item):
-                    errors.append('%s %s != %s\t%s' %
+                    errors.append('%s \t"%s" != "%s" \t%s' %
                         (slug, snapshot_item, report_item, report_row[name_index]))
         self.assertEquals(errors, [], "\n\n" + '\n'.join(errors))
 

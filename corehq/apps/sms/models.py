@@ -12,10 +12,12 @@ from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.signals import case_post_save
 from .mixin import CommCareMobileContactMixin, MobileBackend, PhoneNumberInUseException
 from corehq.apps.sms import util as smsutil
+from dimagi.utils.couch.database import SafeSaveDocument
 
 INCOMING = "I"
 OUTGOING = "O"
 
+WORKFLOW_CALLBACK = "CALLBACK"
 WORKFLOW_REMINDER = "REMINDER"
 WORKFLOW_KEYWORD = "KEYWORD"
 WORKFLOW_BROADCAST = "BROADCAST"
@@ -24,7 +26,7 @@ DIRECTION_CHOICES = (
     (INCOMING, "Incoming"),
     (OUTGOING, "Outgoing"))
 
-class MessageLog(Document, UnicodeMixIn):
+class MessageLog(SafeSaveDocument, UnicodeMixIn):
     base_doc                    = "MessageLog"
     couch_recipient_doc_type    = StringProperty() # "CommCareCase" or "CouchUser"
     couch_recipient             = StringProperty() # _id of the contact who this sms was sent to/from

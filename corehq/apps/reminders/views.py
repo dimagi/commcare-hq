@@ -1,11 +1,27 @@
 from datetime import timedelta, datetime, time
 import json
+from couchdbkit import ResourceNotFound
+from django.utils.decorators import method_decorator
 import pytz
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render
 
-from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm, SurveySampleForm, EditContactForm, RemindersInErrorForm, KeywordForm, OneTimeReminderForm
+from django.utils.translation import ugettext as _, ugettext_noop
+
+from corehq.apps.reminders.forms import (
+    CaseReminderForm,
+    ComplexCaseReminderForm,
+    SurveyForm,
+    SurveySampleForm,
+    EditContactForm,
+    RemindersInErrorForm,
+    KeywordForm,
+    OneTimeReminderForm,
+    SimpleScheduleCaseReminderForm,
+    CaseReminderEventForm,
+    CaseReminderEventMessageForm,
+)
 from corehq.apps.reminders.models import (
     CaseReminderHandler,
     CaseReminderEvent,
@@ -27,8 +43,10 @@ from corehq.apps.reminders.models import (
     METHOD_SMS_SURVEY,
     RECIPIENT_USER_GROUP,
 )
+from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CommCareUser, Permissions, CouchUser
+from dimagi.utils.decorators.memoized import memoized
 from .models import UI_SIMPLE_FIXED, UI_COMPLEX
 from .util import get_form_list, get_sample_list, get_recipient_name, get_form_name
 from corehq.apps.sms.mixin import VerifiedNumber
@@ -437,6 +455,121 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
     })
 
 
+class CreateScheduledReminderView(BaseMessagingSectionView):
+    urlname = 'create_reminder_schedule'
+    page_title = ugettext_noop("Schedule Reminder")
+    template_name = 'reminders/manage_scheduled_reminder.html'
+    ui_type = UI_SIMPLE_FIXED
+
+    @property
+    @memoized
+    def schedule_form(self):
+        if self.request.method == 'POST':
+            return SimpleScheduleCaseReminderForm(
+                self.request.POST,
+                domain=self.domain,
+                is_previewer=self.is_previewer,
+                ui_type=self.ui_type,
+            )
+        return SimpleScheduleCaseReminderForm(
+            is_previewer=self.is_previewer,
+            domain=self.domain,
+            ui_type=self.ui_type,
+        )
+
+    @property
+    def available_languages(self):
+        return ['en']
+
+    @property
+    def is_previewer(self):
+        return self.request.couch_user.is_previewer
+
+    @property
+    def parent_pages(self):
+        return [
+            {
+                'title': _("Reminders"),
+                'url': reverse('list_reminders', args=[self.domain]),
+            },
+        ]
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.schedule_form,
+            'event_form': CaseReminderEventForm(ui_type=self.ui_type),
+            'message_form': CaseReminderEventMessageForm(),
+            'ui_type': self.ui_type,
+            'available_languages': self.available_languages,
+        }
+
+    @method_decorator(reminders_permission)
+    def dispatch(self, request, *args, **kwargs):
+        return super(CreateScheduledReminderView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, *args, **kwargs):
+        return self.get(*args, **kwargs)
+
+
+class EditScheduledReminderView(CreateScheduledReminderView):
+    urlname = 'edit_reminder_schedule'
+    page_title = ugettext_noop("Edit Scheduled Reminder")
+
+    @property
+    def handler_id(self):
+        return self.kwargs.get('handler_id')
+
+    @property
+    @memoized
+    def schedule_form(self):
+        initial = SimpleScheduleCaseReminderForm.compute_initial(self.reminder_handler)
+        if self.request.method == 'POST':
+            return SimpleScheduleCaseReminderForm(
+                self.request.POST,
+                initial=initial,
+                is_previewer=self.is_previewer,
+                domain=self.domain
+            )
+        return SimpleScheduleCaseReminderForm(
+            initial=initial,
+            is_previewer=self.is_previewer,
+            domain=self.domain
+        )
+
+    @property
+    @memoized
+    def reminder_handler(self):
+        try:
+            return CaseReminderHandler.get(self.handler_id)
+        except ResourceNotFound:
+            raise Http404()
+
+    @property
+    def available_languages(self):
+        langcodes = []
+        for event in self.reminder_handler.events:
+            langcodes.extend(event.message.keys())
+        return list(set(langcodes))
+
+
+    @property
+    def ui_type(self):
+        return self.reminder_handler.ui_type
+
+    @property
+    def page_context(self):
+        page_context = super(EditScheduledReminderView, self).page_context
+        page_context.update({
+            'handler_id': self.handler_id,
+        })
+        return page_context
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.handler_id])
+
+
 @reminders_permission
 def manage_keywords(request, domain):
     context = {
@@ -744,7 +877,10 @@ def survey_list(request, domain):
 def add_sample(request, domain, sample_id=None):
     sample = None
     if sample_id is not None:
-        sample = CommCareCaseGroup.get(sample_id)
+        try:
+            sample = CommCareCaseGroup.get(sample_id)
+        except ResourceNotFound:
+            raise Http404
     
     if request.method == "POST":
         form = SurveySampleForm(request.POST, request.FILES)

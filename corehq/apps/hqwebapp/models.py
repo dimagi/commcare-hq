@@ -258,7 +258,7 @@ class IndicatorAdminTab(UITab):
 
 class ReportsTab(UITab):
     title = ugettext_noop("Reports")
-    view = "corehq.apps.reports.views.default"
+    view = "corehq.apps.reports.views.saved_reports"
     subtab_classes = (ProjectReportsTab, ADMReportsTab, IndicatorAdminTab)
 
 

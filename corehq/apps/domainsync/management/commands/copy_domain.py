@@ -115,10 +115,10 @@ class Command(BaseCommand):
                 num_since = sourcedb.view("domain/docs", startkey=[domain, doc_type, since],
                                           endkey=[domain, doc_type, {}], reduce=True).all()
                 num = num_since[0]['value'] if num_since else 0
-                print "{:<30}- {:<6} total {}".format(doc_type, num, doc_count[doc_type])
+                print "{0:<30}- {1:<6} total {2}".format(doc_type, num, doc_count[doc_type])
         else:
             for doc_type in sorted(doc_count.iterkeys()):
-                print "{:<30}- {}".format(doc_type, doc_count[doc_type])
+                print "{0:<30}- {1}".format(doc_type, doc_count[doc_type])
 
     def copy_docs(self, sourcedb, domain, simulate, startkey=None, endkey=None, doc_ids=None,
                   type=None, since=None, exclude_types=None):

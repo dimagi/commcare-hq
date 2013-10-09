@@ -1,5 +1,6 @@
+{% load url from future %}
 {% load i18n %}
-<form class="form" action="{% url new_app domain %}" method="post">
+<form class="form" action="{% url "new_app" domain %}" method="post">
     {% if is_remote %}
         <input type="hidden" name="type" value="RemoteApp" />
     {% else %}

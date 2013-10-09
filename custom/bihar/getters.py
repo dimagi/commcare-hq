@@ -19,3 +19,15 @@ def date_modified(form):
 
 def date_next_bp(form):
     return form.xpath('form/case/update/date_next_bp') or None
+
+
+def date_next_pnc(form):
+    return form.xpath('form/case/update/date_next_pnc') or None
+
+
+def date_next_eb(form):
+    return form.xpath('form/case/update/date_next_eb') or None
+
+
+def date_next_cf(form):
+    return form.xpath('form/case/update/date_next_cf') or None

@@ -1,3 +1,14 @@
+function merge_options(obj1, obj2) {
+    var obj3 = {};
+    for (var attrname in obj1) {
+        obj3[attrname] = obj1[attrname];
+    }
+    for (var attrname in obj2) {
+        obj3[attrname] = obj2[attrname];
+    }
+    return obj3;
+}
+
 var HQVisualizations = function (options) {
     var self = this;
     self.chart_name = options.chart_name;
@@ -101,7 +112,7 @@ var HQVisualizations = function (options) {
             data["startdate"] = startdate;
         }
 
-        self.data = data;
+        self.data = merge_options(self.data, data);
 
         $.getJSON(self.ajax_url, self.data,
             function(d) {

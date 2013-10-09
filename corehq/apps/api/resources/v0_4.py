@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from django.core.urlresolvers import NoReverseMatch, reverse
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
 from tastypie import fields
@@ -19,7 +21,7 @@ from corehq.apps.users.models import CouchUser, CommCareUser
 
 from corehq.apps.api.resources import v0_1, v0_3, JsonResource, DomainSpecificResourceMixin, dict_object, SimpleSortableResourceMixin
 from corehq.apps.api.es import XFormES, CaseES, ESQuerySet, es_search
-from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField
+from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField, ToManyListDictField
 from corehq.apps.api.serializers import CommCareCaseSerializer
 
 # By the time a test case is running, the resource is already instantiated,
@@ -118,9 +120,30 @@ class RepeaterResource(JsonResource, DomainSpecificResourceMixin):
         list_allowed_methods = ['get', 'post']
         authorization = v0_1.DomainAdminAuthorization
 
+def group_by_dict(objs, fn):
+    '''
+    Itertools.groupby returns a transient iterator with alien
+    data types in it. This returns a dictionary of lists.
+    Less efficient but clients can write naturally and used
+    only for things that have to fit in memory easily anyhow.
+    '''
+    result = defaultdict(list)
+    for obj in objs:
+        key = fn(obj)
+        result[key].append(obj)
+    return result
+
 class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResource, DomainSpecificResourceMixin):
-    xforms = UseIfRequested(ToManyDocumentsField('corehq.apps.api.resources.v0_4.XFormInstanceResource',
-                                                 attribute=lambda case: case.get_forms()))
+
+    xforms_by_name = UseIfRequested(ToManyListDictField(
+        'corehq.apps.api.resources.v0_4.XFormInstanceResource',
+        attribute=lambda case: group_by_dict(case.get_forms(), lambda form: form.name)
+    ))
+
+    xforms_by_xmlns = UseIfRequested(ToManyListDictField(
+        'corehq.apps.api.resources.v0_4.XFormInstanceResource',
+        attribute=lambda case: group_by_dict(case.get_forms(), lambda form: form.xmlns)
+    ))
 
     child_cases = UseIfRequested(ToManyDictField('corehq.apps.api.resources.v0_4.CommCareCaseResource',
                                                  attribute=lambda case: dict([ (index.identifier, CommCareCase.get(index.referenced_id)) for index in case.indices])))

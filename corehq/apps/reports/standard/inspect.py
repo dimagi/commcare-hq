@@ -93,7 +93,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
                             "from": self.datespan.startdate_param,
                             "to": self.datespan.enddate_param,
                             "include_upper": False}}},
-                "filter": {"and": ADD_TO_ES_FILTER["forms"]}}
+                "filter": {"and": ADD_TO_ES_FILTER["forms"][:]}}
 
             xmlnss = filter(None, [f["xmlns"] for f in self.all_relevant_forms.values()])
             if xmlnss:
@@ -775,8 +775,11 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
 
     def _to_geojson(self, data, geo_col):
         def _parse_geopoint(raw):
-            latlon = [float(k) for k in re.split(' *,? *', raw)[:2]]
-            return [latlon[1], latlon[0]] # geojson is lon, lat
+            try:
+                latlon = [float(k) for k in re.split(' *,? *', raw)[:2]]
+                return [latlon[1], latlon[0]] # geojson is lon, lat
+            except ValueError:
+                return [0.0, 0.0]
 
         def points():
             for row in data:

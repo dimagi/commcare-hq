@@ -20,7 +20,7 @@ logger = logging.getLogger('commtrack.sms')
 class SMSError(RuntimeError):
     pass
 
-def handle(verified_contact, text):
+def handle(verified_contact, text, msg=None):
     """top-level handler for incoming stock report messages"""
     domain = Domain.get_by_name(verified_contact.domain)
     if not domain.commtrack_enabled:

@@ -1,11 +1,12 @@
 {% extends 'facilities/base.html' %}
+{% load url from future %}
 {% load i18n %}
 
 {% block main_column %}
     <h2>{% trans 'Facility Registries' %}</h2>
 
     <p>
-        <a class="btn btn-primary" href="{% url add_registry domain %}">Add New Registry</a>
+        <a class="btn btn-primary" href="{% url "add_registry" domain %}">Add New Registry</a>
     </p>
 
     {% if registries %}
@@ -24,8 +25,8 @@
         <tr>
             <td>
                 {{ registry.name }} 
-                (<a href="{% url view_or_update_registry domain registry.get_id %}">edit</a>)
-                (<a href="{% url list_facilities domain registry.get_id %}">view facilities</a>)
+                (<a href="{% url "view_or_update_registry" domain registry.get_id %}">edit</a>)
+                (<a href="{% url "list_facilities" domain registry.get_id %}">view facilities</a>)
             </td>
             <td>
                 <a href="{{ registry.url }}">{{ registry.url }}</a>
@@ -38,14 +39,14 @@
                 <span class="{% if registry.last_sync_failed %}text-error{% else %}text-success{% endif %}">
                     {{ registry.synced_at|default:"Never" }}
                 </span>
-                <a class="btn btn-warning" href="{% url sync_registry domain registry.get_id 'theirs' %}">
+                <a class="btn btn-warning" href="{% url "sync_registry" domain registry.get_id 'theirs' %}">
                     {% trans 'Sync Now' %}
                 </a>
                 {% endif %}
             </td>
             <td>{{ registry.created_at|default:"" }}</td>
             <td>
-                <a class="btn btn-danger" href="{% url delete_registry domain registry.get_id %}">
+                <a class="btn btn-danger" href="{% url "delete_registry" domain registry.get_id %}">
                     {% trans 'Delete' %}
                 </a>
             </td>

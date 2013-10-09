@@ -1,4 +1,5 @@
 {% extends base_template %}
+{% load url from future %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
@@ -94,14 +95,14 @@
                     commcareCase: commcareCase,
                     user_id: user_id,
                     caseSpec: caseSpec,
-                    receiverUrl: "{% url receiver_post domain %}",
-                    groupsUrl: "{% url cloudcare_get_groups domain request.couch_user.user_id %}",
+                    receiverUrl: "{% url "receiver_post" domain %}",
+                    groupsUrl: "{% url "cloudcare_get_groups" domain request.couch_user.user_id %}",
                     lang: "en"
                 });
 
     //            CaseList.init({
     //                user_id: user_id,
-    //                casesUrl: "{% url cloudcare_get_cases domain %}",
+    //                casesUrl: "{% url "cloudcare_get_cases" domain %}",
     //                home: caseList
     //            });
             }

@@ -1,5 +1,6 @@
+from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit
+from crispy_forms.layout import ButtonHolder, Div, Fieldset, HTML, Layout, Submit
 from django import forms
 from django.core.validators import EmailValidator, email_re
 from django.core.urlresolvers import reverse
@@ -13,6 +14,7 @@ from corehq.apps.locations.models import Location
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.app_manager.models import validate_lang
+import re
 
 
 def wrapped_language_validation(value):
@@ -144,17 +146,63 @@ class RoleForm(forms.Form):
 class Meta:
         app_label = 'users'
 
+
 class CommCareAccountForm(forms.Form):
     """
     Form for CommCareAccounts
     """
-    username = forms.CharField(max_length=15, required=True)
+    # 128 is max length in DB
+    # 25 is domain max length
+    # @{domain}.commcarehq.org adds 16
+    # left over is 87 and 80 just sounds better
+    username = forms.CharField(max_length=80, required=True)
     password = forms.CharField(widget=PasswordInput(), required=True, min_length=1, help_text="Only numbers are allowed in passwords")
     password_2 = forms.CharField(label='Password (reenter)', widget=PasswordInput(), required=True, min_length=1)
     domain = forms.CharField(widget=HiddenInput())
+    phone_number = forms.CharField(max_length=80, required=False)
 
     class Meta:
         app_label = 'users'
+
+    def __init__(self, *args, **kwargs):
+        super(forms.Form, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Fieldset(
+                'Create new Mobile Worker account',
+                'username',
+                'password',
+                HTML("{% if only_numeric %}"
+                     "<div class=\"control-group\"><div class=\"controls\">"
+                     "To enable alphanumeric passwords, go to the "
+                     "applications this user will use, go to CommCare "
+                     "Settings, and change Password Format to Alphanumeric."
+                     "</div></div>"
+                     "{% endif %}"
+                ),
+                'password_2',
+                'phone_number',
+                Div(
+                    Div(HTML("Please enter number, including international code, in digits only."),
+                        css_class="controls"),
+                    css_class="control-group"
+                )
+            ),
+            FormActions(
+                ButtonHolder(
+                    Submit('submit', 'Create Mobile Worker')
+                )
+            )
+        )
+
+    def clean_phone_number(self):
+        phone_number = self.cleaned_data['phone_number']
+        phone_number = re.sub('\s|\+|\-', '', phone_number)
+        if phone_number == '':
+            return None
+        elif not re.match(r'\d+$', phone_number):
+            raise forms.ValidationError(_("%s is an invalid phone number." % phone_number))
+        return phone_number
 
     def clean_username(self):
         username = self.cleaned_data['username']

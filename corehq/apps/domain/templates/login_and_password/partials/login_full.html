@@ -1,3 +1,4 @@
+{% load url from future %}
 <div class="row">
     <div class="span8">
         {% include "login_and_password/partials/login_form.html" %}
@@ -7,7 +8,7 @@
             <h2>Are you new to {{ SITE_NAME }}?<br /><small>Sign up today. It's free!</small></h2>
             <p><a href="{{ PUBLIC_SITE }}/home">Learn more</a> about how {{ SITE_NAME }} can be your {{ CAN_BE_YOUR }}.</p>
             <p>Don't have an account with {{ SITE_NAME }} yet? Sign up and check out our features.</p>
-            <div class="row"><a style="float: right; margin-top: 7px;" class="btn btn-success btn-large" href="{% url register_user DOMAIN_TYPE %}">Sign Up</a></div>
+            <div class="row"><a style="float: right; margin-top: 7px;" class="btn btn-success btn-large" href="{% url "register_user" DOMAIN_TYPE %}">Sign Up</a></div>
         </aside>
     </div>
 </div>

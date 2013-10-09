@@ -7,9 +7,7 @@ from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from dimagi.utils.couch.database import get_db
 
 from custom.opm.opm_reports.tests import test_data_location, test_month_year
-from custom.opm.opm_reports.beneficiary import Beneficiary
 from custom.opm.opm_reports.constants import DOMAIN
-from custom.opm.opm_reports.incentive import Worker
 from custom.opm.opm_reports.reports import (BeneficiaryPaymentReport,
     IncentivePaymentReport, get_report)
 from custom.opm.opm_tasks.models import OpmReportSnapshot

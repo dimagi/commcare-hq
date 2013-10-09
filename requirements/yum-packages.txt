@@ -1,3 +1,4 @@
+cairo-devel
 htop
 postgresql
 postgresql-devel

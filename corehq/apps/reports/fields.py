@@ -615,7 +615,7 @@ class AsyncDrillableField(BaseReportFilter):
             'fdis': json.dumps(root_fdis),
             'hierarchy': self.full_hierarchy
         }
-        
+
 class DeviceLogTagField(ReportField):
     slug = "logtag"
     errors_only_slug = "errors_only"

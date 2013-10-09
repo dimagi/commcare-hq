@@ -4,12 +4,39 @@ Documenting
 .. This is a comment
 Documentation is awesome.  You should write it.  Here's how.
 
+All the CommCareHQ docs are stored in a ``docs/`` folder in the root of the repo.
+To add a new doc, make an appropriately-named rst file in the ``docs/`` directory.
+For the doc to appear in the table of contents, add it to the ``toctree`` list in ``index.rst``.
+
+Sooner or later we'll probably want to organize the docs into sub-directories, that's fine, you can link to specific locations like so: ```Installation <intro/install>```.
+
+For a more complete working set of documentation, check out `Django's docs directory <dj_docs_dir_>`_.  This is used to build `docs.djangoproject.com <dj_docs_>`_.
+
+.. _dj_docs_dir: https://github.com/django/django/tree/master/docs
+.. _dj_docs: https://docs.djangoproject.com
+
 Index
 ------
 
+#. :ref:`sphinx` is used to build the documentation.
 #. :ref:`doc-style` - Some general tips for writing documentation
 #. :ref:`rst` is used for markup.
-#. :ref:`sphinx` is used to build the documentation.
+
+
+.. _sphinx:
+
+Sphinx
+--------
+
+Sphinx builds the documentation and extends the functionality of rst a bit
+for stuff like pointing to other files and modules.
+
+To build a local copy of the docs (useful for testing changes), navigate to the ``docs/`` directory and run ``make html``.
+Open ``<path_to_commcare-hq>/docs/_build/html/index.html`` in your browser and you should have access to the docs for your current version (I bookmarked it on my machine).
+
+* `Sphinx Docs <http://sphinx-doc.org/>`_
+* `Full index <http://sphinx-doc.org/genindex.html>`_
+
 
 .. _doc-style:
 
@@ -45,6 +72,7 @@ reStructuredText is a markup language that is commonly used for Python documenta
 
 
 .. This is a normal comment
+
 .. 
     This is a block comment, none of this will appear in the generated HTML.
 
@@ -129,19 +157,3 @@ JavaScript colored code block:
 .. code-block:: javascript
 
     console.log("Don't use alert()");
-
-
-
-.. _sphinx:
-
-Sphinx
---------
-
-Sphinx builds the documentation and extends the functionality of rst a bit
-for stuff like pointing to other files and modules.
-
-To build a local copy of the docs, navigate to the ``docs/`` directory and run ``make html``.
-Open ``<path_to_commcare-hq>/docs/_build/html/index.html`` in your browser and you should have access to the docs for your current version (I bookmarked it on my machine).
-
-* `Sphinx Docs <http://sphinx-doc.org/>`_
-* `Full index <http://sphinx-doc.org/genindex.html>`_

@@ -1,4 +1,5 @@
 {% extends "reminders/reminders_base.html" %}
+{% load url from future %}
 
 {% block head %}{{ block.super }}
 
@@ -28,7 +29,7 @@
         <tr>
             <td>{{ k.keyword }}</td>
             <td>{{ k.survey_name }}</td>
-            <td><a href="{% url edit_keyword domain k.get_id %}"><span class="btn btn-primary">Edit</span></a></td>
+            <td><a href="{% url "edit_keyword" domain k.get_id %}"><span class="btn btn-primary">Edit</span></a></td>
             <td>
                 <a class="btn btn-danger" data-toggle="modal" href="#delete_{{ k.get_id }}"><i class="icon icon-white icon-remove"></i> Delete</a>
                 <div id="delete_{{ k.get_id }}" class="modal hide fade">
@@ -36,7 +37,7 @@
                         <a class="close" data-dismiss="modal">&times;</a>
                         <h3>Delete Keyword?</h3>
                     </div>
-                    <form class="form form-horizontal" name="delete_keyword" action="{% url delete_keyword domain k.get_id %}" method="post">
+                    <form class="form form-horizontal" name="delete_keyword" action="{% url "delete_keyword" domain k.get_id %}" method="post">
                         <div class="modal-body">
                             <p>Are you sure you want to keyword "{{ k.keyword }}"?</p>
                         </div>
@@ -52,6 +53,6 @@
     </tbody>
 </table>
 <br />
-<a href="{% url add_keyword domain %}"><span class="btn btn-success"><i class="icon icon-white icon-plus"></i> Add Keyword</span></a>
+<a href="{% url "add_keyword" domain %}"><span class="btn btn-success"><i class="icon icon-white icon-plus"></i> Add Keyword</span></a>
 
 {% endblock %}

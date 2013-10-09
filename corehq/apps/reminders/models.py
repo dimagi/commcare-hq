@@ -341,6 +341,7 @@ class CaseReminderHandler(Document):
     ui_frequency = StringProperty(choices=UI_FREQUENCY_CHOICES, default=UI_FREQUENCY_ADVANCED) # This will be used to simplify the scheduling process in the ui
     sample_id = StringProperty()
     user_group_id = StringProperty()
+    user_id = StringProperty()
     reminder_type = StringProperty(choices=REMINDER_TYPE_CHOICES, default=REMINDER_TYPE_DEFAULT)
     
     # Only used when recipient is RECIPIENT_SUBCASE.
@@ -470,7 +471,7 @@ class CaseReminderHandler(Document):
         local_now = CaseReminderHandler.utc_to_local(recipient, now)
         
         case_id = case._id if case is not None else None
-        user_id = case.user_id if case is not None else None
+        user_id = recipient._id if self.recipient == RECIPIENT_USER and recipient is not None else None
         sample_id = recipient._id if self.recipient == RECIPIENT_SURVEY_SAMPLE else None
         
         reminder = CaseReminder(
@@ -845,8 +846,9 @@ class CaseReminderHandler(Document):
             recipient = CommCareCaseGroup.get(self.sample_id)
         elif self.recipient == RECIPIENT_USER_GROUP:
             recipient = Group.get(self.user_group_id)
+        elif self.recipient == RECIPIENT_USER:
+            recipient = CommCareUser.get(self.user_id)
         else:
-            # TODO: Need to support sending directly to users / cases without case criteria being set
             recipient = None
         
         if reminder is not None and (reminder.start_condition_datetime != self.start_datetime or not self.active):

@@ -48,7 +48,7 @@ def _create_custom_app_strings(app, lang):
                 if column.header:
                     sort_elements.pop(column.header.values()[0], None)
 
-                if column.format == 'enum':
+                if column.format in ('enum', 'enum-image'):
                     for key, val in column.enum.items():
                         yield id_strings.detail_column_enum_variable(module, detail, column, key), trans(val)
 

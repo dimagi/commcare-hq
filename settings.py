@@ -90,8 +90,8 @@ SECRET_KEY = ''
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.load_template_source',
-    'django.template.loaders.app_directories.load_template_source',
+    'django.template.loaders.filesystem.Loader',
+    'django.template.loaders.app_directories.Loader',
     'django.template.loaders.eggs.Loader',
     #     'django.template.loaders.eggs.load_template_source',
 )
@@ -106,6 +106,7 @@ MIDDLEWARE_CLASSES = [
     'corehq.apps.users.middleware.UsersMiddleware',
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
     'auditcare.middleware.AuditMiddleware',
+    'no_exceptions.middleware.NoExceptionsMiddleware',
 ]
 
 ROOT_URLCONF = "urls"
@@ -150,6 +151,7 @@ DEFAULT_APPS = (
     'django.contrib.markup',
     'gunicorn',
     'raven.contrib.django.raven_compat',
+    # 'weasyprint',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
@@ -237,6 +239,7 @@ HQ_APPS = (
     'a5288',
     'custom.bihar',
     'dca',
+    'custom.apps.gsid',
     'hsph',
     'mvp',
     'mvp_apps',
@@ -251,6 +254,8 @@ HQ_APPS = (
     'custom.reports.care_sa',
     'custom.apps.cvsu',
     'custom.reports.mc',
+    'custom.trialconnect',
+    'custom.apps.crs_reports',
 )
 
 TEST_APPS = ()
@@ -281,6 +286,8 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'rosetta',
     'soil',
     'south',
+    # 'weasyprint',
+    'custom.apps.crs_reports',
 
     # submodules with tests that run on travis
     'casexml.apps.case',
@@ -378,6 +385,7 @@ FIXTURE_GENERATORS = [
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",
     "corehq.apps.reportfixtures.fixturegenerators.indicators",
+    "custom.bihar.reports.indicators.fixtures.generator",
 ]
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
@@ -704,10 +712,12 @@ COUCHDB_APPS = [
     'hqbilling',
     'couchlog',
     'wisepill',
+    'crs_reports',
 
     # custom reports
     'care_benin',
     'dca',
+    'gsid',
     'hsph',
     'mvp',
     'opm_tasks',
@@ -715,6 +725,7 @@ COUCHDB_APPS = [
     'pathindia',
     'pact',
     'psi',
+    'trialconnect',
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
@@ -829,6 +840,8 @@ PILLOWTOPS = [
                  # MVP
                  'corehq.apps.indicators.pillows.FormIndicatorPillow',
                  'corehq.apps.indicators.pillows.CaseIndicatorPillow',
+                 # TrialConnect
+                 'custom.trialconnect.smspillow.TCSMSPillow',
              ] + LOCAL_PILLOWTOPS
 
 #Custom workflow for indexing xform data beyond the standard properties
@@ -844,6 +857,7 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'hsph-betterbirth-pilot-2',
     'commtrack-public-demo',
     'uth-rhd-test',
+    'crs-remind',
 ]
 
 #Custom fully indexed domains for FullXForm index/pillowtop --
@@ -877,6 +891,8 @@ DOMAIN_MODULE_MAP = {
     'cvsulive': 'custom.apps.cvsu',
     'dca-malawi': 'dca',
     'eagles-fahu': 'dca',
+    'gsid': 'custom.apps.gsid',
+    'gsid-demo': 'custom.apps.gsid',
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
@@ -889,6 +905,12 @@ DOMAIN_MODULE_MAP = {
     'opm': 'custom.opm.opm_reports',
     'psi-unicef': 'psi',
     'project': 'custom.apps.care_benin',
+
+    'gc': 'custom.trialconnect',
+    'tc-test': 'custom.trialconnect',
+    'trialconnect': 'custom.trialconnect',
+
+    'crs-remind': 'custom.apps.crs_reports'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

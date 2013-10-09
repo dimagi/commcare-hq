@@ -3,6 +3,8 @@ import datetime
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from . import display
+from custom.bihar.reports.indicators.display import next_visit_date, days_overdue
+from custom.bihar.reports.indicators.reports import DEFAULT_EMPTY
 
 
 class ClientListDisplay(object):
@@ -52,15 +54,6 @@ class SummaryValueMixIn(ClientListDisplay):
             return _(self.denominator_text)
         else:
             return _(self.neither_text)
-
-
-class DoneDueMixIn(SummaryValueMixIn):
-    summary_header = ugettext_noop("Visit Status")
-    numerator_text = ugettext_noop("Done")
-    denominator_text = ugettext_noop("Due")
-
-    def sortkey(self, case, context):
-        return display.in_numerator(case, context)
 
 
 class PreDeliveryCLD(ClientListDisplay):
@@ -136,12 +129,40 @@ class PostDeliverySummaryCLD(PostDeliveryCLD, SummaryValueMixIn):
         )
 
 
+class DoneDueMixIn(SummaryValueMixIn):
+    summary_header = ugettext_noop("Visit Status")
+    numerator_text = ugettext_noop("Done")
+    denominator_text = ugettext_noop("Due")
+
+    def sortkey(self, case, context):
+        return display.in_numerator(case, context)
+
+    def _get_days_due(self, case, value):
+        if value == 'Due':
+            return next_visit_date(case)
+        else:
+            return days_overdue(case)
+
+
 class PreDeliveryDoneDueCLD(DoneDueMixIn, PreDeliverySummaryCLD):
-    pass
+
+    def get_columns(self):
+        return super(PreDeliveryDoneDueCLD, self).get_columns() + (_('Days Late'),)
+
+    def as_row(self, case, context):
+        value = self.summary_value(case, context)
+        return super(PreDeliveryDoneDueCLD, self).as_row(case, context) + (self._get_days_due(case, value),)
 
 
 class PostDeliveryDoneDueCLD(DoneDueMixIn, PostDeliverySummaryCLD):
-    pass
+    user_hack = None
+
+    def get_columns(self):
+        return super(PostDeliveryDoneDueCLD, self).get_columns() + (_('Days Due'),)
+
+    def as_row(self, case, context):
+        value = self.summary_value(case, context)
+        return super(PostDeliveryDoneDueCLD, self).as_row(case, context) + (self._get_days_due(case, value),)
 
 
 class ComplicationsCalculator(PostDeliverySummaryCLD):

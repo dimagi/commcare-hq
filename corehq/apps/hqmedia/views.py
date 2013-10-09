@@ -165,6 +165,8 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
     @property
     def page_context(self):
         context = super(MultimediaReferencesView, self).page_context
+        if self.app is None:
+            raise Http404(self)
         context.update({
             "references": self.app.get_references(),
             "object_map": self.app.get_object_map(),

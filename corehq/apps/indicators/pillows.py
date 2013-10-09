@@ -10,7 +10,6 @@ pillow_logging = logging.getLogger("pillowtop")
 
 
 class IndicatorPillowBase(BasicPillow):
-    only_use_fresh_docs = True
     couch_filter = 'fluff_filter/domain_type'
 
     @property
@@ -73,7 +72,7 @@ class FormIndicatorPillow(IndicatorPillowBase):
     document_class = XFormInstance
 
     def process_indicators(self, doc_dict, domain, namespaces):
-        if not doc_dict.get('inital_processing_complete', False):
+        if not doc_dict.get('initial_processing_complete', False):
             # Make sure we don't update the indicators before the XFormPillows and CasePillows.
             return
 

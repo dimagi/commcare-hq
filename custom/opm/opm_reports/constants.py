@@ -1,5 +1,6 @@
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.fixtures.models import FixtureDataItem
+from corehq.apps.users.models import CommCareUser, CommCareCase
 
 DOMAIN = 'opm'
 
@@ -16,4 +17,15 @@ def get_fixture_data():
         'condition')
     return dict((k, int(fixture['rs_amount'])) for k, fixture in fixtures.items())
 
-# FIXTURES = get_fixture_data()
+# memoize or cache?
+def get_user_data_set():
+    users = CommCareUser.by_domain(DOMAIN)
+    return {
+        'blocks': sorted(list(set(u.user_data.get('block') for u in users))),
+        'awcs': sorted(list(set(u.user_data.get('awc') for u in users))),
+    }
+
+class InvalidRow(Exception):
+    """
+    Raise this in the row constructor to skip row
+    """

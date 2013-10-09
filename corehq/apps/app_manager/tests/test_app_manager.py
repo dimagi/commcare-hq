@@ -24,10 +24,10 @@ class AppManagerTest(TestCase):
             module = self.app.get_module(i)
             detail = module.get_detail("ref_short")
             detail.append_column(
-                DetailColumn(name={"en": "test"}, model="case", field="test", format="plain", enum={})
+                DetailColumn(header={"en": "test"}, model="case", field="test", format="plain", enum={})
             )
             detail.append_column(
-                DetailColumn(name={"en": "age"}, model="case", field="age", format="years-ago", enum={})
+                DetailColumn(header={"en": "age"}, model="case", field="age", format="years-ago", enum={})
             )
         self.app.save()
 
@@ -75,12 +75,14 @@ class AppManagerTest(TestCase):
     def testSwapDetailColumns(self):
         module = self.app.get_module(0)
         detail = module.get_detail("ref_short")
-        self.assertEqual(len(detail.columns), 2)
-        self.assertEqual(detail.columns[0].name['en'], 'test')
-        self.assertEqual(detail.columns[1].name['en'], 'age')
+        self.assertEqual(len(detail.columns), 3)
+        self.assertEqual(detail.columns[0].header['en'], 'Name')
+        self.assertEqual(detail.columns[1].header['en'], 'test')
+        self.assertEqual(detail.columns[2].header['en'], 'age')
         self.app.rearrange_detail_columns(module.id, "ref_short", 0, 1)
-        self.assertEqual(detail.columns[0].name['en'], 'age')
-        self.assertEqual(detail.columns[1].name['en'], 'test')
+        self.assertEqual(detail.columns[0].header['en'], 'test')
+        self.assertEqual(detail.columns[1].header['en'], 'Name')
+        self.assertEqual(detail.columns[2].header['en'], 'age')
 
     def testSwapModules(self):
         m0 = self.app.modules[0].name['en']

@@ -314,7 +314,7 @@ var DetailScreenConfig = (function () {
                     that.filter_xpath_extra.ui.remove();
                     that.time_ago_extra.ui.remove();
 
-                    if (this.val() === "enum") {
+                    if (this.val() === "enum" || this.val() === "enum-image") {
                         that.format.ui.parent().append(that.enum_extra.ui);
                     } else if (this.val() === 'late-flag') {
                         that.format.ui.parent().append(that.late_flag_extra.ui);
@@ -348,9 +348,6 @@ var DetailScreenConfig = (function () {
                     that.field.$edit_view.focus();
                 }
             }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.ADD_COLUMN);
-//            this.$copy = $('<i></i>').addClass(COMMCAREHQ.icons.COPY).click(function () {
-//                that.duplicate();
-//            }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.COPY_COLUMN);
             this.$delete = $('<i></i>').addClass(COMMCAREHQ.icons.DELETE).click(function () {
                 $(this).remove();
                 that.screen.fire('delete-column', that);
@@ -483,7 +480,7 @@ var DetailScreenConfig = (function () {
             }
 
             // set up the custom column
-            this.customColumn = Column.init({model: "case", format: "plain"}, this);
+            this.customColumn = Column.init({model: "case", format: "plain", includeInShort: false}, this);
             this.customColumn.field.on('change', function () {
                 that.customColumn.header.val(toTitleCase(this.val()));
                 if (this.val() && !field_val_re.test(this.val())) {
@@ -519,7 +516,8 @@ var DetailScreenConfig = (function () {
                         column = Column.init({
                             model: model,
                             field: property,
-                            header: header
+                            header: header,
+                            includeInShort: false
                         }, this);
                         initColumnAsSuggestion(column);
                         this.suggestedColumns.push(column);
@@ -746,7 +744,6 @@ var DetailScreenConfig = (function () {
                     $('<th/>').addClass('detail-screen-format').text(DetailScreenConfig.message.FORMAT).appendTo($tr);
                     $('<th/>').addClass('detail-screen-extra').appendTo($tr);
 
-//                    $('<th/>').addClass('detail-screen-icon').appendTo($tr);
                     $('<th/>').addClass('detail-screen-icon').appendTo($tr);
 
                     $columns = $('<tbody/>').addClass('detail-screen-columns').appendTo($table);
@@ -892,6 +889,7 @@ var DetailScreenConfig = (function () {
         },
         PHONE_FORMAT: 'Phone Number',
         ENUM_FORMAT: 'ID Mapping',
+        ENUM_IMAGE_FORMAT: 'Icon',
         ENUM_EXTRA_LABEL: 'Mapping: ',
         LATE_FLAG_FORMAT: 'Late Flag',
         LATE_FLAG_EXTRA_LABEL: 'Days late: ',
@@ -926,6 +924,10 @@ var DetailScreenConfig = (function () {
         {value: "address", label: DetailScreenConfig.message.ADDRESS_FORMAT}
     ];
 
+    if (window.FEATURE_enable_enum_image) {
+        DetailScreenConfig.MENU_OPTIONS.push(
+            {value: "enum-image", label: DetailScreenConfig.message.ENUM_IMAGE_FORMAT + ' (Preview!)'}
+        );
+    }
     return DetailScreenConfig;
 }());
-

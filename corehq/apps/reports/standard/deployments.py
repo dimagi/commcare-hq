@@ -1,3 +1,4 @@
+from corehq.apps.receiverwrapper.util import get_meta_appversion_text, get_build_version
 from couchdbkit import ResourceNotFound
 from corehq.apps.app_manager.models import get_app
 from corehq.apps.reports import util
@@ -18,6 +19,7 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return not (project.commtrack_enabled or project.commconnect_enabled)
+
 
 class ApplicationStatusReport(DeploymentsReport):
     name = ugettext_noop("Application Status")
@@ -55,24 +57,17 @@ class ApplicationStatusReport(DeploymentsReport):
 
             if data:
                 last_seen = util.format_relative_date(data.received_on)
-
-                if data.version != '1':
-                    build_id = data.version
-                else:
-                    build_id = UNKNOWN
+                build_version = get_build_version(data) or UNKNOWN
 
                 if getattr(data, 'app_id', None):
                     try:
                         app = get_app(self.domain, data.app_id)
-                        app_name = "%s [%s]" % (app.name, build_id)
                     except ResourceNotFound:
                         pass
+                    else:
+                        app_name = "%s [%s]" % (app.name, build_version)
                 else:
-                    try:
-                        form_data = data.get_form
-                        app_name = form_data['meta']['appVersion']['#text']
-                    except KeyError:
-                        pass
+                    app_name = get_meta_appversion_text(data)
                     
                 app_name = app_name or _("Unknown App")
 
