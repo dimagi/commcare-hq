@@ -1,14 +1,14 @@
 from StringIO import StringIO
+import logging
 import mimetypes
 from PIL import Image
 from datetime import datetime
 import hashlib
-from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
+from couchdbkit.exceptions import ResourceConflict
 from couchdbkit.ext.django.schema import *
 from couchdbkit.schema import LazyDict
 from django.contrib import messages
 from django.core.urlresolvers import reverse
-import logging
 import magic
 from corehq.apps.app_manager.xform import XFormValidationError
 from couchforms.models import XFormError
@@ -41,7 +41,7 @@ class HQMediaLicense(DocumentSchema):
 
 class CommCareMultimedia(SafeSaveDocument):
     """
-        The base object of all CommCare Multimedia
+    The base object of all CommCare Multimedia
     """
     file_hash = StringProperty()  # use this to search for multimedia in couch
     aux_media = SchemaListProperty(AuxMedia)
@@ -93,39 +93,36 @@ class CommCareMultimedia(SafeSaveDocument):
         return reverse("hqmedia_download", args=[self.doc_type, self._id])
 
     def attach_data(self, data, original_filename=None, username=None, attachment_id=None,
-                    media_meta=None, replace_attachment=False):
+                    media_meta=None):
         """
-            This creates the auxmedia attachment with the downloaded data.
+        This creates the auxmedia attachment with the downloaded data.
         """
         self.last_modified = datetime.utcnow()
-        is_update = False
 
         if not attachment_id:
             attachment_id = self.file_hash
 
-        if (attachment_id in self.current_attachments) and replace_attachment:
-            self.delete_attachment(attachment_id)
-            for aux in self.aux_media:
-                if aux.attachment_id == attachment_id:
-                    self.aux_media.remove(aux)
-
-        if not attachment_id in self.current_attachments:
+        if not self._attachments or attachment_id not in self._attachments:
             if not getattr(self, '_id'):
-                self.save()  # let's just make sure an id has been assigned to this guy before we try to put_attachment
+                # put attchment blows away existing data, so make sure an id has been
+                # assigned to this guy before we do it. this is the expected path
+                self.save()
+            else:
+                # this should only be files that had attachments deleted while the bug
+                # was in effect, so hopefully we will stop seeing it after a few days
+                logging.error('someone is uploading a file that should have existed for multimedia %s' % self._id)
             self.put_attachment(data, attachment_id, content_type=self.get_mime_type(data, filename=original_filename))
-            new_media = AuxMedia()
-            new_media.uploaded_date = datetime.utcnow()
-            new_media.attachment_id = attachment_id
-            new_media.uploaded_filename = original_filename
-            new_media.uploaded_by = username
-            new_media.checksum = self.file_hash
-            if media_meta:
-                new_media.media_meta = media_meta
-            self.aux_media.append(new_media)
-            self.save()
-            is_update = True
-
-        return is_update
+        new_media = AuxMedia()
+        new_media.uploaded_date = datetime.utcnow()
+        new_media.attachment_id = attachment_id
+        new_media.uploaded_filename = original_filename
+        new_media.uploaded_by = username
+        new_media.checksum = self.file_hash
+        if media_meta:
+            new_media.media_meta = media_meta
+        self.aux_media.append(new_media)
+        self.save()
+        return True
 
     def add_domain(self, domain, owner=None, **kwargs):
         if len(self.owners) == 0:
@@ -154,12 +151,10 @@ class CommCareMultimedia(SafeSaveDocument):
         self.save()
 
     def get_display_file(self, return_type=True):
-        all_ids = self.current_attachments
-        if all_ids:
-            first_id = all_ids[0]
-            data = self.fetch_attachment(first_id, True).read()
+        if self.attachment_id:
+            data = self.fetch_attachment(self.attachment_id, True).read()
             if return_type:
-                content_type = self._attachments[first_id]['content_type']
+                content_type = self._attachments[self.attachment_id]['content_type']
                 return data, content_type
             else:
                 return data
@@ -178,8 +173,12 @@ class CommCareMultimedia(SafeSaveDocument):
         }
 
     @property
-    def current_attachments(self):
-        return [aux.attachment_id for aux in self.aux_media]
+    def attachment_id(self):
+        if not self.aux_media:
+            return None
+        ids = set([aux.attachment_id for aux in self.aux_media])
+        assert len(ids) == 1
+        return ids.pop()
 
     @classmethod
     def get_mime_type(cls, data, filename=None):
@@ -298,8 +297,7 @@ class CommCareImage(CommCareMultimedia):
     class Config(object):
         search_view = 'hqmedia/image_search'
 
-    def attach_data(self, data, original_filename=None, username=None, attachment_id=None, media_meta=None,
-                    replace_attachment=False):
+    def attach_data(self, data, original_filename=None, username=None, attachment_id=None, media_meta=None):
         image = self.get_image_object(data)
         attachment_id = "%dx%d" % image.size
         attachment_id = "%s-%s.%s" % (self.file_hash, attachment_id, image.format)
@@ -310,8 +308,7 @@ class CommCareImage(CommCareMultimedia):
             "height": image.size[1]
         }
         return super(CommCareImage, self).attach_data(data, original_filename=original_filename, username=username,
-                                                      attachment_id=attachment_id, media_meta=media_meta,
-                                                      replace_attachment=replace_attachment)
+                                                      attachment_id=attachment_id, media_meta=media_meta)
 
     @classmethod
     def get_image_object(cls, data):

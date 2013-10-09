@@ -50,12 +50,6 @@ class MultimediaBulkUploadController(BaseMultimediaUploadController):
     details_template = "hqmedia/uploader/details_multi.html"
 
     @property
-    def upload_params(self):
-        return {
-            'replace_existing': False,
-        }
-
-    @property
     def supported_files(self):
         return [
             {
