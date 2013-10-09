@@ -343,8 +343,7 @@ class BaseProcessFileUploadView(BaseProcessUploadedView):
         multimedia = self.media_class.get_by_data(data)
         multimedia.attach_data(data,
                                original_filename=self.uploaded_file.name,
-                               username=self.username,
-                               replace_attachment=True)
+                               username=self.username)
         multimedia.add_domain(self.domain, owner=True)
         if self.share_media:
             multimedia.update_or_add_license(self.domain,

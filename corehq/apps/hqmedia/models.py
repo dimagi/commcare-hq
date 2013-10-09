@@ -93,7 +93,7 @@ class CommCareMultimedia(SafeSaveDocument):
         return reverse("hqmedia_download", args=[self.doc_type, self._id])
 
     def attach_data(self, data, original_filename=None, username=None, attachment_id=None,
-                    media_meta=None, replace_attachment=False):
+                    media_meta=None):
         """
         This creates the auxmedia attachment with the downloaded data.
         """
@@ -295,8 +295,7 @@ class CommCareImage(CommCareMultimedia):
     class Config(object):
         search_view = 'hqmedia/image_search'
 
-    def attach_data(self, data, original_filename=None, username=None, attachment_id=None, media_meta=None,
-                    replace_attachment=False):
+    def attach_data(self, data, original_filename=None, username=None, attachment_id=None, media_meta=None):
         image = self.get_image_object(data)
         attachment_id = "%dx%d" % image.size
         attachment_id = "%s-%s.%s" % (self.file_hash, attachment_id, image.format)
@@ -307,8 +306,7 @@ class CommCareImage(CommCareMultimedia):
             "height": image.size[1]
         }
         return super(CommCareImage, self).attach_data(data, original_filename=original_filename, username=username,
-                                                      attachment_id=attachment_id, media_meta=media_meta,
-                                                      replace_attachment=replace_attachment)
+                                                      attachment_id=attachment_id, media_meta=media_meta)
 
     @classmethod
     def get_image_object(cls, data):
