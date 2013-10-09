@@ -9,6 +9,7 @@ from tastypie.authentication import Authentication
 from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import xform as casexml_xform
+from custom.hope.models import HOPECase
 
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.app_manager import util as app_manager_util
@@ -63,6 +64,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResou
     class Meta(v0_3.XFormInstanceResource.Meta):
         ordering = ['received_on']
         list_allowed_methods = ['get']
+
 
 class RepeaterResource(JsonResource, DomainSpecificResourceMixin):
 
@@ -121,17 +123,18 @@ class RepeaterResource(JsonResource, DomainSpecificResourceMixin):
         authorization = v0_1.DomainAdminAuthorization
 
 def group_by_dict(objs, fn):
-    '''
+    """
     Itertools.groupby returns a transient iterator with alien
     data types in it. This returns a dictionary of lists.
     Less efficient but clients can write naturally and used
     only for things that have to fit in memory easily anyhow.
-    '''
+    """
     result = defaultdict(list)
     for obj in objs:
         key = fn(obj)
         result[key].append(obj)
     return result
+
 
 class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResource, DomainSpecificResourceMixin):
 
@@ -181,6 +184,7 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
         serializer = CommCareCaseSerializer()
         ordering = ['server_date_modified', 'date_modified']
 
+
 class GroupResource(JsonResource, DomainSpecificResourceMixin):
     id = fields.CharField(attribute='get_id', unique=True, readonly=True)
     domain = fields.CharField(attribute='domain')
@@ -208,12 +212,12 @@ class GroupResource(JsonResource, DomainSpecificResourceMixin):
 
     
 class SingleSignOnResource(JsonResource, DomainSpecificResourceMixin):
-    '''
+    """
     This resource does not require "authorization" per se, but
     rather allows a POST of username and password and returns
     just the authenticated user, if the credentials and domain
     are correct.
-    '''
+    """
 
     def post_list(self, request, **kwargs):
         domain = kwargs.get('domain')
@@ -258,19 +262,20 @@ class SingleSignOnResource(JsonResource, DomainSpecificResourceMixin):
         detail_allowed_methods = []
         list_allowed_methods = ['post']
 
+
 class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
 
     name = fields.CharField(attribute='name')
 
     modules = fields.ListField()
     def dehydrate_module(self, app, module, langs):
-        '''
+        """
         Convert a Module object to a JValue representation
         with just the good parts.
 
         NOTE: This is not a tastypie "magic"-name method to
         dehydrate the "module" field; there is no such field.
-        '''
+        """
         dehydrated = {}
 
         dehydrated['case_type'] = module.case_type
@@ -317,3 +322,60 @@ class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         resource_name = 'application'
+
+
+class HOPECaseResource(CommCareCaseResource):
+    """
+    Custom API endpoint for custom case wrapper
+    """
+
+    # For the curious, the attribute='<exact thing I just typed>' is mandatory,
+    # and refers to a property on the HOPECase object
+    admission_date = fields.CharField(attribute='admission_date', readonly=True, null=True)
+    age_of_beneficiary = fields.IntegerField(attribute='age_of_beneficiary', readonly=True, null=True)
+    all_anc_doses_given = fields.BooleanField(attribute='all_anc_doses_given', readonly=True, null=True)
+    all_dpt1_opv1_hb1_doses_given = fields.BooleanField(attribute='all_dpt1_opv1_hb1_doses_given', readonly=True, null=True)
+    all_dpt2_opv2_hb2_doses_given = fields.BooleanField(attribute='all_dpt2_opv2_hb2_doses_given', readonly=True, null=True)
+    all_dpt3_opv3_hb3_doses_given = fields.BooleanField(attribute='all_dpt3_opv3_hb3_doses_given', readonly=True, null=True)
+    all_ifa_doses_given = fields.BooleanField(attribute='all_ifa_doses_given', readonly=True, null=True)
+    all_tt_doses_given = fields.BooleanField(attribute='all_tt_doses_given', readonly=True, null=True)
+    bpl_indicator = fields.BooleanField(attribute='bpl_indicator', readonly=True, null=True)
+    child_age = fields.IntegerField(attribute='child_age', readonly=True, null=True)
+    delivery_time = fields.CharField(attribute='delivery_time', readonly=True, null=True)
+    delivery_type = fields.CharField(attribute='delivery_type', readonly=True, null=True)
+    discharge_date = fields.CharField(attribute='discharge_date', readonly=True, null=True)
+    education = fields.CharField(attribute='education', readonly=True, null=True)
+    existing_child_count = fields.IntegerField(attribute='existing_child_count', readonly=True, null=True)
+    ifa1_date = fields.CharField(attribute='ifa1_date', readonly=True, null=True)
+    ifa2_date = fields.CharField(attribute='ifa2_date', readonly=True, null=True)
+    ifa3_date = fields.CharField(attribute='ifa3_date', readonly=True, null=True)
+    measles_dose_given = fields.BooleanField(attribute='measles_dose_given', readonly=True, null=True)
+    number_of_visits = fields.IntegerField(attribute='number_of_visits', readonly=True, null=True)
+    patient_reg_num = fields.CharField(attribute='patient_reg_num', readonly=True, null=True)
+    registration_date = fields.CharField(attribute='registration_date', readonly=True, null=True)
+    tubal_ligation = fields.CharField(attribute='tubal_ligation', readonly=True, null=True)
+
+    def obj_get_list(self, bundle, domain, **kwargs):
+        """
+        Overridden to wrap the case JSON from ElasticSearch with the custom.hope.case.HOPECase class
+        """
+        filters = v0_3.CaseListFilters(bundle.request.GET).filters
+
+        # Since tastypie handles the "from" and "size" via slicing, we have to wipe them out here
+        # since ElasticCaseQuery adds them. I believe other APIs depend on the behavior of ElasticCaseQuery
+        # hence I am not modifying that
+        query = ElasticCaseQuery(domain, filters).get_query()
+        if 'from' in query:
+            del query['from']
+        if 'size' in query:
+            del query['size']
+
+        return ESQuerySet(payload = query,
+                          model = HOPECase,
+                          es_client = self.case_es(domain)).order_by('server_modified_on') # Not that CaseES is used only as an ES client, for `run_query` against the proper index
+
+    class Meta(CommCareCaseResource.Meta):
+        resource_name = 'hope-case'
+
+
+
