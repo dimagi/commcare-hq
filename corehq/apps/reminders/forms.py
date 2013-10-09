@@ -1270,6 +1270,13 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             raise ValidationError("Please enter a positive number.")
         return value
 
+    def clean_max_iteration_count(self):
+        repeat_type = self.cleaned_data['repeat_type']
+        if repeat_type == REPEAT_TYPE_NO:
+            return 0
+        if repeat_type == REPEAT_TYPE_INDEFINITE:
+            return -1
+        return abs(self.cleaned_data['max_iteration_count'])
 
 
     def save(self, reminder_handler):
