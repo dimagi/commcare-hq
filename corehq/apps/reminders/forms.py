@@ -1287,6 +1287,14 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             return value
         return None
 
+    def clean_max_question_retries(self):
+        value = self.cleaned_data['max_question_retries']
+        try:
+            value = int(value)
+        except ValueError:
+            raise ValidationError("Max question retries must be an integer.")
+        return value
+
     def save(self, reminder_handler):
         if not isinstance(reminder_handler, CaseReminderHandler):
             raise ValueError("You must save to a CaseReminderHandler object!")
