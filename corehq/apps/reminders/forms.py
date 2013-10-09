@@ -1027,6 +1027,10 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                             'data-toggle="modal">Add Language</a>'),
             ),
             crispy.Div(
+                style="display: inline;",
+                data_bind="template: {name: 'event-timeouts-template', foreach: eventObjects}"
+            ),
+            crispy.Div(
                 'max_question_retries',
                 data_bind="visible: isMaxQuestionRetriesVisible",
             ),
@@ -1240,14 +1244,6 @@ class CaseReminderEventForm(forms.Form):
                 crispy.Field('form_unique_id', data_bind="value: form_unique_id, attr: {id: ''}"),
                 data_bind="visible: isSurveyVisible",
             ),
-            crispy.Div(
-                crispy.Field(
-                    'callback_timeout_intervals',
-                    data_bind="value: callback_timeout_intervals, attr: {id: ''}",
-                    placeholder="e.g. 30,60,180",
-                ),
-                data_bind="visible: isCallbackTimeoutsVisible",
-            ),
         )
 
         self.helper_fire_time = FormHelper()
@@ -1268,6 +1264,19 @@ class CaseReminderEventForm(forms.Form):
             ),
             crispy.Field('fire_time_type', data_bind="value: fire_time_type, attr: {id: ''}"),
             crispy.Field('day_num', data_bind="value: day_num, attr: {id: ''}"),
+        )
+
+        self.helper_timeouts = FormHelper()
+        self.helper_timeouts.form_tag = False
+        self.helper_timeouts.layout = crispy.Layout(
+            crispy.Div(
+                crispy.Field(
+                    'callback_timeout_intervals',
+                    data_bind="value: callback_timeout_intervals, attr: {id: ''}",
+                    placeholder="e.g. 30,60,180",
+                ),
+                data_bind="visible: isCallbackTimeoutsVisible",
+            ),
         )
 
 
