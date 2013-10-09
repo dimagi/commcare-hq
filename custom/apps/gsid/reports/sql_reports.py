@@ -44,7 +44,7 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
     def test_types(self):
         test_fixtures = FixtureDataItem.by_data_type(
             self.domain, 
-            FixtureDataType.by_domain_tag(self.domain, "tests").one()
+            FixtureDataType.by_domain_tag(self.domain, "test").one()
         )        
         return [t.fields["test_name"] for t in test_fixtures]
 
@@ -248,12 +248,12 @@ class GSIDSQLPatientReport(GSIDSQLReport):
         chart.add_dataset(
             "Male Tests", 
             [{'x':row[-11], 'y':row[-9]['html'] if row[-9] != "--" else 0} for row in rows],
-            color="#333399"
+            color="#0006CE"
         )
         chart.add_dataset(
             "Female Tests", 
             [{'x':row[-11], 'y':row[-8]['html'] if row[-8] != "--" else 0} for row in rows],
-            color="#990000"
+            color="#70D7FF"
         )
         return [chart]
 
@@ -394,7 +394,7 @@ class GSIDSQLTestLotsReport(GSIDSQLReport):
         elif disease:
             test_fixtures = FixtureDataItem.by_field_value(
                 self.domain, 
-                FixtureDataType.by_domain_tag(self.domain, "tests").one(),
+                FixtureDataType.by_domain_tag(self.domain, "test").one(),
                 "disease_id",
                 disease[0]
             )
