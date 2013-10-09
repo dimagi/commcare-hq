@@ -1336,7 +1336,8 @@ class SimpleScheduleCaseReminderForm(forms.Form):
 
         start_property_offset = self.cleaned_data['start_property_offset']
         start_date_offset = self.cleaned_data['start_date_offset']
-        reminder_handler.start_offset = start_property_offset if start_property_offset is None else start_date_offset
+        reminder_handler.start_offset = (start_property_offset
+                                         if start_property_offset is not None else start_date_offset)
         reminder_handler.ui_type = self.ui_type
         reminder_handler.domain = self.domain
 
