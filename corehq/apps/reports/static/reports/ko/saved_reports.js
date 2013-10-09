@@ -21,7 +21,7 @@ var ReportConfig = function (data) {
             data['report_type'] = standardHQReport.type;
         }
         if ("" != standardHQReport.subReportSlug) {
-        data['subreport_slug'] = standardHQReport.subReportSlug;
+            data['subreport_slug'] = standardHQReport.subReportSlug;
         }
         if(!self.have_date_range()) {
             data["date_range"] = null;
