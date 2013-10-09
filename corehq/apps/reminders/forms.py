@@ -1165,6 +1165,11 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             return case_property
         return None
 
+    def clean_recipient_case_match_type(self):
+        if self.cleaned_data['recipient'] == RECIPIENT_SUBCASE:
+            return self.cleaned_data['recipient_case_match_type']
+        return None
+
     def clean_events(self):
         method = self.cleaned_data['method']
         try:
