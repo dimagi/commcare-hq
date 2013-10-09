@@ -25,5 +25,8 @@ CUSTOM_REPORTS = (
         indicators.IndicatorCharts,
         indicators.MyPerformanceReport,
         indicators.MyPerformanceList,
+        supervisor.MCHRegisterReport,
+        supervisor.MotherMCHRegister,
+        supervisor.ChildMCHRegister
     )),
 )

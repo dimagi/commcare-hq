@@ -848,7 +848,7 @@ XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
 ES_CASE_FULL_INDEX_DOMAINS = [
     'pact',
     'hsph',
-    'care-bihar',
+    'bihar',
     'hsph-dev',
     'hsph-betterbirth-pilot-2',
     'commtrack-public-demo',
@@ -882,7 +882,7 @@ REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 DOMAIN_MODULE_MAP = {
     'a5288-test': 'a5288',
     'a5288-study': 'a5288',
-    'care-bihar': 'custom.bihar',
+    'bihar': 'custom.bihar',
     'care-ihapc-live': 'custom.reports.care_sa',
     'cvsulive': 'custom.apps.cvsu',
     'dca-malawi': 'dca',

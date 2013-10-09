@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
+from corehq.apps.api.es import FullCaseES
 from custom.bihar.utils import (get_team_members, get_all_owner_ids_from_group, SUPERVISOR_ROLES, FLW_ROLES,
     groups_for_user)
 
@@ -12,7 +13,7 @@ from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.generic import GenericTabularReport,\
     SummaryTablularReport, summary_context
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 from dimagi.utils.excel import alphanumeric_sort_key
 from dimagi.utils.html import format_html
@@ -38,7 +39,7 @@ class ConvenientBaseMixIn(object):
 
     base_template_mobile = "bihar/base_template_mobile.html"
     report_template_path = "reports/async/tabular.html"
-    
+
     hide_filters = True
     flush_layout = True
     mobile_enabled = True
@@ -56,7 +57,7 @@ class ConvenientBaseMixIn(object):
     @property
     def render_next(self):
         return None if self.rendered_as == "async" else self.rendered_as
-       
+
     @classmethod
     def show_in_navigation(cls, *args, **kwargs):
         return False
@@ -82,12 +83,12 @@ class ConvenientBaseMixIn(object):
 
 def list_prompt(index, value):
     # e.g. 1. Reports
-    return u"%s. %s" % (_(str(index+1)), _(value)) 
+    return u"%s. %s" % (_(str(index+1)), _(value))
 
 
 class ReportReferenceMixIn(object):
     # allow a report to reference another report
-    
+
     @property
     def next_report_slug(self):
         return self.request_params.get("next_report")
@@ -95,22 +96,22 @@ class ReportReferenceMixIn(object):
     @property
     def next_report_class(self):
         return CustomProjectReportDispatcher().get_report(self.domain, self.next_report_slug)
-    
+
 
 class GroupReferenceMixIn(object):
     # allow a report to reference a group
-    
+
     @property
     def group_id(self):
         return self.request_params["group"]
-    
+
     @property
     @memoized
     def group(self):
         g = Group.get(self.group_id)
         assert g.domain == self.domain, "Group %s isn't in domain %s" % (g.get_id, self.domain)
         return g
-    
+
     @memoized
     def get_team_members(self):
         """
@@ -170,18 +171,18 @@ class BiharSummaryReport(ConvenientBaseMixIn, SummaryTablularReport,
 class BiharNavReport(BiharSummaryReport):
     # this is a bit of a bastardization of the summary report
     # but it is quite DRY
-    
+
     preserve_url_params = False
-    
+
     @property
     def reports(self):
         # override
         raise NotImplementedError("Override this!")
-    
+
     @property
     def _headers(self):
         return [" "] * len(self.reports)
-    
+
     @property
     def data(self):
         return [default_nav_link(self, i, report_cls) for i, report_cls in enumerate(self.reports)]
@@ -193,14 +194,14 @@ class MockEmptyReport(BiharSummaryReport):
     """
     _headers = ["Whoops, this report isn't done! Sorry this is still a prototype."]
     data = [""]
-    
-        
-class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport, 
+
+
+class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
                                CustomProjectReport, ReportReferenceMixIn):
     name = ugettext_noop("Select Subcenter")
     slug = "subcenter"
     description = ugettext_noop("Subcenter selection report")
-    
+
     _headers = {
         'supervisor': [ugettext_noop("Team Name"), ugettext_noop("AWCC")],
         'manager': [ugettext_noop("Subcentre")],
@@ -242,7 +243,7 @@ class MainNavReport(BiharSummaryReport, IndicatorConfigMixIn):
     def additional_reports(cls):
         from custom.bihar.reports.due_list import DueListSelectionReport
         from custom.bihar.reports.indicators.reports import MyPerformanceReport
-        return [WorkerRankSelectionReport, DueListSelectionReport, ToolsNavReport, MyPerformanceReport]
+        return [WorkerRankSelectionReport, DueListSelectionReport, ToolsNavReport, MyPerformanceReport, MCHRegisterReport]
 
     @classmethod
     def show_in_navigation(cls, *args, **kwargs):
@@ -316,7 +317,7 @@ class WorkerRankSelectionReport(SubCenterSelectionReport):
 class ToolsNavReport(BiharSummaryReport):
     name = ugettext_noop("Tools Menu")
     slug = "tools"
-    
+
     _headers = [" ", " ", " "]
 
     @property
@@ -327,11 +328,11 @@ class ToolsNavReport(BiharSummaryReport):
             return format_html(u'<a href="{next}">{val}</a>',
                 val=list_prompt(i, _(ReferralListReport.name)),
                 next=url_and_params(
-                    SubCenterSelectionReport.get_url(self.domain, 
+                    SubCenterSelectionReport.get_url(self.domain,
                                                      render_as=self.render_next),
                     params
             ))
-        return [_referral_link(0), 
+        return [_referral_link(0),
                 default_nav_link(self, 1, EDDCalcReport),
                 default_nav_link(self, 2, BMICalcReport),]
 
@@ -446,7 +447,7 @@ class BMICalcReport(InputReport):
 
 
 def default_nav_link(nav_report, i, report_cls):
-    url = report_cls.get_url(nav_report.domain, 
+    url = report_cls.get_url(nav_report.domain,
                              render_as=nav_report.render_next)
     if getattr(nav_report, 'preserve_url_params', False):
         url = url_and_params(url, nav_report.request_params)
@@ -461,5 +462,75 @@ def get_awcc(group):
 
 def url_and_params(urlbase, params):
     assert "?" not in urlbase
-    return "{url}?{params}".format(url=urlbase, 
+    return "{url}?{params}".format(url=urlbase,
                                    params=urllib.urlencode(params))
+
+
+class MCHRegisterReport(BiharNavReport):
+    slug = "mchregisterreport"
+    name = ugettext_noop('MCH Register Reports')
+
+    @property
+    def reports(self):
+        return [MotherMCHRegister, ChildMCHRegister]
+
+
+class MotherMCHRegister(CustomProjectReport, ConvenientBaseMixIn, SummaryTablularReport):
+    name = "Mother MCH register"
+    slug = "mothermchregister"
+
+    fields = [
+        'corehq.apps.reports.fields.GroupField',
+        'corehq.apps.reports.fields.SelectOpenCloseField',
+    ]
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(DataTablesColumn("Col A"),
+                                    DataTablesColumnGroup(
+                                        "Group 1",
+                                        DataTablesColumn("Col B"),
+                                        DataTablesColumn("Col C")),
+                                    DataTablesColumn("Col D"))
+        return headers
+
+    @property
+    @memoized
+    def case_es(self):
+        return FullCaseES(self.domain)
+
+    @property
+    @memoized
+    def rendered_report_title(self):
+        return self.name
+
+    @property
+    def rows(self):
+        return [['Row 1', 2, 3, 4],
+                ['Row 2', 3, 4, 5]]
+
+
+class ChildMCHRegister(CustomProjectReport, ConvenientBaseMixIn, SummaryTablularReport):
+    name = "Child MCH register"
+    slug = "childmchregister"
+
+    fields = [
+        'corehq.apps.reports.fields.GroupField',
+        'corehq.apps.reports.fields.SelectOpenCloseField',
+    ]
+
+    _headers = ["Whoops, this report isn't done! Sorry this is still a prototype."]
+
+    @property
+    @memoized
+    def case_es(self):
+        return FullCaseES(self.domain)
+
+    @property
+    @memoized
+    def rendered_report_title(self):
+        return self.name
+
+    @property
+    def data(self):
+        return [""]
