@@ -1008,6 +1008,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                     style="margin-left: 5px;",
                     data_bind="visible: isUntilVisible",
                 ),
+                data_bind="visible: isStopConditionVisible",
             )
         )
 
