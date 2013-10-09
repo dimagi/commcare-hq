@@ -1278,6 +1278,13 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             return -1
         return abs(self.cleaned_data['max_iteration_count'])
 
+    def clean_until(self):
+        if self.cleaned_data['stop_condition'] == STOP_CONDITION_CASE_PROPERTY:
+            value = self.cleaned_data['until'].strip()
+            if not value:
+                raise ValidationError("You must specify a case property for the stop condition.")
+            return value
+        return None
 
     def save(self, reminder_handler):
         if not isinstance(reminder_handler, CaseReminderHandler):
