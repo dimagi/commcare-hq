@@ -151,12 +151,10 @@ class CommCareMultimedia(SafeSaveDocument):
         self.save()
 
     def get_display_file(self, return_type=True):
-        all_ids = self.current_attachments
-        if all_ids:
-            first_id = all_ids[0]
-            data = self.fetch_attachment(first_id, True).read()
+        if self.attachment_id:
+            data = self.fetch_attachment(self.attachment_id, True).read()
             if return_type:
-                content_type = self._attachments[first_id]['content_type']
+                content_type = self._attachments[self.attachment_id]['content_type']
                 return data, content_type
             else:
                 return data
@@ -175,8 +173,12 @@ class CommCareMultimedia(SafeSaveDocument):
         }
 
     @property
-    def current_attachments(self):
-        return [aux.attachment_id for aux in self.aux_media]
+    def attachment_id(self):
+        if not self.aux_media:
+            return None
+        ids = set([aux.attachment_id for aux in self.aux_media])
+        assert len(ids) == 1
+        return ids.pop()
 
     @classmethod
     def get_mime_type(cls, data, filename=None):
