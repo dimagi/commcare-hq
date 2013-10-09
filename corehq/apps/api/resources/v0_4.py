@@ -123,12 +123,12 @@ class RepeaterResource(JsonResource, DomainSpecificResourceMixin):
         authorization = v0_1.DomainAdminAuthorization
 
 def group_by_dict(objs, fn):
-    '''
+    """
     Itertools.groupby returns a transient iterator with alien
     data types in it. This returns a dictionary of lists.
     Less efficient but clients can write naturally and used
     only for things that have to fit in memory easily anyhow.
-    '''
+    """
     result = defaultdict(list)
     for obj in objs:
         key = fn(obj)
@@ -212,12 +212,12 @@ class GroupResource(JsonResource, DomainSpecificResourceMixin):
 
     
 class SingleSignOnResource(JsonResource, DomainSpecificResourceMixin):
-    '''
+    """
     This resource does not require "authorization" per se, but
     rather allows a POST of username and password and returns
     just the authenticated user, if the credentials and domain
     are correct.
-    '''
+    """
 
     def post_list(self, request, **kwargs):
         domain = kwargs.get('domain')
@@ -269,13 +269,13 @@ class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
 
     modules = fields.ListField()
     def dehydrate_module(self, app, module, langs):
-        '''
+        """
         Convert a Module object to a JValue representation
         with just the good parts.
 
         NOTE: This is not a tastypie "magic"-name method to
         dehydrate the "module" field; there is no such field.
-        '''
+        """
         dehydrated = {}
 
         dehydrated['case_type'] = module.case_type
@@ -325,9 +325,9 @@ class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
 
 
 class HOPECaseResource(CommCareCaseResource):
-    '''
+    """
     Custom API endpoint for custom case wrapper
-    '''
+    """
 
     # For the curious, the attribute='<exact thing I just typed>' is mandatory,
     # and refers to a property on the HOPECase object
@@ -356,9 +356,9 @@ class HOPECaseResource(CommCareCaseResource):
     tubal_ligation = fields.CharField(attribute='tubal_ligation', readonly=True, null=True)
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        '''
+        """
         Overridden to wrap the case JSON from ElasticSearch with the custom.hope.case.HOPECase class
-        '''
+        """
         filters = v0_3.CaseListFilters(bundle.request.GET).filters
 
         # Since tastypie handles the "from" and "size" via slicing, we have to wipe them out here
