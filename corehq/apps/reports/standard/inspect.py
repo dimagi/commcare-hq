@@ -708,6 +708,11 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
       'report_params': optional dict of (static) config parameters for report
 
       adapter == 'case'
+      'geo_fetch': mapping of case type to directive of how to pull geo data for a case of
+          that type. available directives:
+          * name of case property
+          * (TODO) 'link:xxx' where 'xxx' is the case type of a linked case (the linked
+            case type requires its own entry in 'geo_fetch')
     }
 
     display_config: {
@@ -755,6 +760,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
 
     report_partial_path = "reports/partials/maps.html"
     flush_layout = True
+    #asynchronous = False
 
     def _get_data(self):
         adapter = self.data_source['adapter']
@@ -887,7 +893,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
         results = results['hits']
 
         if results['total'] > MAX_RESULTS:
-            # TODO '# of results capped' warning
+            # TODO '# of results capped' warning on client
             print 'WARN: results limit exceeded'
             pass
 
@@ -912,10 +918,22 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
             data.update((k, case['properties'][k]) for k in standard_props)
             data.update(('prop_%s' % k, v) for k, v in case['properties'].iteritems() if k not in standard_props)
 
-            import random
-            data['prop_geo'] = '%s %s' % (random.uniform(40, 50), random.uniform(-80, -70))
+            geo = None
+            geo_directive = params['geo_fetch'].get(data['case_type'], '')
+            if geo_directive.startswith('link:'):
+                # TODO use linked case
+                pass
+            elif geo_directive == '_random':
+                # for testing
+                import random
+                geo = '%s %s' % (random.uniform(-90, 90), random.uniform(-180, 180))
+            elif geo_directive:
+                # case property
+                geo = data.get('prop_%s' % geo_directive)
 
-            yield data
+            if geo:
+                data['geo'] = geo
+                yield data
 
     def _get_data_csv(self, params, filters):
         import csv
@@ -1241,9 +1259,14 @@ class DemoMapCaseList(GenericMapReport):
     slug = "maps_demo_caselist"
     data_source = {
         "adapter": "case",
-        "geo_column": "prop_geo",
+        "geo_fetch": {
+            "supply-point": "_random",
+            "supply-point-product": "_random",
+        }
     }
-    display_config = {}
+    display_config = {
+        "name_column": "case_name", # TODO hard-code this via a subclass?
+    }
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
