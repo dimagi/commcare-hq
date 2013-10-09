@@ -1,9 +1,10 @@
 import datetime
 
 from django.views.generic import TemplateView
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse
 
 from couchdbkit.exceptions import ResourceNotFound
+from no_exceptions.exceptions import Http403, Http404
 
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.reports.standard import CustomProjectReport
@@ -75,10 +76,8 @@ class LegacyReportView(LegacyMixin, CustomProjectReport):
                 # Check permissions
                 if not self.request.couch_user.is_domain_admin(DOMAIN) and \
                         self.request.couch_user.raw_username != user_param:
-                    # This should be a 403
-                    raise Http404
+                    raise Http403("You can only view your own report.")
             else:
-                #self._user = CommCareUser.from_django_user(self.request.user)
                 self._user = self.request.couch_user
             if self._user is None:
                 raise Http404
@@ -86,7 +85,6 @@ class LegacyReportView(LegacyMixin, CustomProjectReport):
 
     @property
     def report_context(self):
-        # import bpdb; bpdb.set_trace()
         self.report_id = self.request.GET.get('r_id', None)
 
         def get_individual(field):
@@ -101,3 +99,4 @@ class LegacyReportView(LegacyMixin, CustomProjectReport):
             'individual_game': self.context_for(
                 get_individual('game'), 'smiley'),
         }
+
