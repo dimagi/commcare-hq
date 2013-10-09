@@ -1131,6 +1131,8 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                         if not event.message:
                             event.message = dict([(reminder_handler.default_lang or 'en', '')])
                     current_val = json.dumps([e.to_json() for e in current_val])
+                if field == 'callback_timeout_intervals':
+                    current_val = ",".join(current_val)
                 if current_val is not Ellipsis:
                     initial[field] = current_val
             except AttributeError:
