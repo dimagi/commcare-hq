@@ -942,7 +942,19 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                     )
                 ),
                 data_bind="visible: isStartReminderCaseDate"
-            )
+            ),
+            BootstrapMultiField(
+                "Timing",
+                InlineField('event_timing', data_bind="value: event_timing"),
+                crispy.Div(
+                    style="display: inline;",
+                    data_bind="template: {name: 'event-fire-template', foreach: eventObjects}"
+                ),
+            ),
+            crispy.Div(
+                style="display: inline;",
+                data_bind="template: {name: 'event-general-template', foreach: eventObjects}"
+            ),
         )
 
         recipient_section = crispy.Fieldset(
@@ -973,18 +985,6 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             crispy.Field('event_interpretation', data_bind="value: event_interpretation"),
             HiddenFieldWithErrors('events', data_bind="value: events"),
             crispy.Div(data_bind="template: {name: 'event-template', foreach: eventObjects}"),
-            BootstrapMultiField(
-                "Timing",
-                InlineField('event_timing', data_bind="value: event_timing"),
-                crispy.Div(
-                    style="display: inline;",
-                    data_bind="template: {name: 'event-fire-template', foreach: eventObjects}"
-                ),
-            ),
-            crispy.Div(
-                style="display: inline;",
-                data_bind="template: {name: 'event-general-template', foreach: eventObjects}"
-            ),
         )
 
         repeat_section = crispy.Fieldset(
