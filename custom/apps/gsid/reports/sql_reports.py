@@ -28,6 +28,10 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
     table_name = "gsid_patient_summary"
     default_aggregation = "clinic"
 
+    def __init__(self, request, base_context=None, domain=None, **kwargs):
+        self.is_map = kwargs.pop('map', False)
+        super(GSIDSQLReport, self).__init__(request, base_context=base_context, domain=domain, **kwargs)
+
     @property
     @memoized
     def diseases(self):
@@ -157,7 +161,7 @@ class GSIDSQLPatientReport(GSIDSQLReport):
         male_filter = EQ("gender", "male")
         female_filter = EQ("gender", "female")
 
-        return self.common_columns + [
+        columns = self.common_columns + [
             
             DatabaseColumn(
                 "Number of Males ", 
@@ -234,8 +238,12 @@ class GSIDSQLPatientReport(GSIDSQLReport):
                 header_group=age_range_group
             ),
 
-            DatabaseColumn("gps", SimpleColumn(self.gps_key))
+
         ]
+        if self.is_map:
+            columns.append(DatabaseColumn("gps", SimpleColumn(self.gps_key)))
+
+        return columns
 
     @property
     def charts(self):
@@ -548,6 +556,7 @@ class PatientMapReport(GenericMapReport, CustomProjectReport):
         'adapter': 'legacyreport',
         'geo_column': 'gps',
         'report': 'custom.apps.gsid.reports.sql_reports.GSIDSQLPatientReport',
+        'report_params': {'map': True}
     }
 
     display_config = {}
