@@ -25,7 +25,7 @@ from dimagi.utils.modules import to_function
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import User as CaseXMLUser
 from corehq.apps.domain.shortcuts import create_user
-from corehq.apps.domain.utils import normalize_domain_name
+from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers
 from corehq.apps.domain.models import LicenseAgreement
 from corehq.apps.users.util import normalize_username, user_data_from_registration_form, format_username, raw_username
 from corehq.apps.users.xml import group_fixture
@@ -353,7 +353,7 @@ class IsMemberOfMixin(DocumentSchema):
     def _is_member_of(self, domain):
         return domain in self.get_domains() or (
             self.is_global_admin() and
-            not Domain.get_by_name(domain).restrict_superusers
+            not domain_restricts_superusers(domain)
         )
 
     def is_member_of(self, domain_qs):
@@ -440,7 +440,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 domain = self.current_domain
             else:
                 return False # no domain, no admin
-        if self.is_global_admin() and (domain is None or not Domain.get_by_name(domain).restrict_superusers):
+        if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
             return True
         dm = self.get_domain_membership(domain)
         if dm:
@@ -1329,11 +1329,14 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.device_ids = _add_to_list(self.device_ids, device_id, default)
 
     def to_casexml_user(self):
-        user = CaseXMLUser(user_id=self.userID,
-                           username=self.raw_username,
-                           password=self.password,
-                           date_joined=self.date_joined,
-                           user_data=self.user_data)
+        user = CaseXMLUser(
+            user_id=self.userID,
+            username=self.raw_username,
+            password=self.password,
+            date_joined=self.date_joined,
+            user_data=self.user_data,
+            domain=self.domain,
+        )
 
         def get_owner_ids():
             return self.get_owner_ids()
@@ -1700,7 +1703,7 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
     @memoized
     def has_permission(self, domain, permission, data=None):
         # is_admin is the same as having all the permissions set
-        if (self.is_global_admin() and (domain is None or not Domain.get_by_name(domain).restrict_superusers)):
+        if (self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain))):
             return True
         elif self.is_domain_admin(domain):
             return True

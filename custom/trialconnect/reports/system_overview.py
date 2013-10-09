@@ -2,44 +2,22 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 from corehq.apps.reminders.models import REMINDER_TYPE_ONE_TIME
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.graph_models import Axis, LineChart
-from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
 from corehq.apps.sms.models import WORKFLOW_KEYWORD, WORKFLOW_REMINDER, WORKFLOW_BROADCAST
-from corehq.elastic import es_query, ES_URLS, es_histogram, format_histo_data
+from corehq.elastic import es_query, ES_URLS, es_histogram
+from custom.trialconnect.reports import TrialConnectReport
 from dimagi.utils.couch.database import get_db
 
 WORKFLOWS = [WORKFLOW_KEYWORD, WORKFLOW_REMINDER, WORKFLOW_BROADCAST]
 NA = 'N/A'
 
-class BaseSystemOverviewReport(GenericTabularReport, CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
+class BaseSystemOverviewReport(TrialConnectReport):
     need_group_ids = True
-    is_cacheable = True
     fields = [
         'corehq.apps.reports.filters.select.MultiGroupFilter',
         'corehq.apps.reports.filters.select.MultiCaseGroupFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
-    emailable = True
-
-    @property
-    def base_query(self):
-        q = {"query": {
-                "bool": {
-                    "must": [
-                        {"match": {"domain.exact": self.domain}},
-                        {"range": {
-                            'date': {
-                                "from": self.datespan.startdate_param,
-                                "to": self.datespan.enddate_param,
-                                "include_upper": True}}}]}}}
-
-        if self.users_by_group:
-            q["query"]["bool"]["must"].append({"in": {"couch_recipient": self.combined_user_ids}})
-        if self.cases_by_case_group:
-            q["query"]["bool"]["must"].append({"in": {"couch_recipient": self.cases_by_case_group}})
-
-        return q
 
 class SystemOverviewReport(BaseSystemOverviewReport):
     slug = 'system_overview'
@@ -86,7 +64,7 @@ class SystemOverviewReport(BaseSystemOverviewReport):
             for term in facets['couch_recipient_doc_type']['terms']:
                 if term['term'] == 'commcarecase':
                     to_cases = term['count']
-                elif term['term'] == 'couchuser':
+                elif term['term'] == 'commcareuser':
                     to_users = term['count']
 
             for term in facets['direction']['terms']:
@@ -185,13 +163,14 @@ class SystemUsersReport(BaseSystemOverviewReport):
         def get_actives(recipient_type):
             return len(self.active_query(recipient_type)['facets']['couch_recipient']['terms'])
 
-        def div(num, denom):
-            return num / denom if denom != 0 else 0
+        def div(num, denom, percent=False):
+            floater = 100.0 if percent else 1.0
+            return num * floater / denom if denom != 0 else 0
 
         active = row("Active", get_actives("commcareuser"), get_actives("commcarecase"))
 
         perc_active = [_("% Active"),
-                       div(active[1], number[1]), div(active[2], number[2]), div(active[3], number[3])]
+                       div(active[1], number[1], True), div(active[2], number[2], True), div(active[3], number[3], True)]
 
         facets = self.messages_query()['facets']
         to_users, to_cases = 0, 0

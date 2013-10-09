@@ -151,6 +151,7 @@ def create_billable_for_sms(msg, backend_api, delay=True, **kwargs):
     try:
         from hqbilling.tasks import bill_client_for_sms
         from hqbilling.models import API_TO_BILLABLE
+        msg.save()
         billable_class = API_TO_BILLABLE.get(backend_api)
         if delay:
             bill_client_for_sms.delay(billable_class, msg._id, **kwargs)
