@@ -238,6 +238,7 @@ HQ_APPS = (
     # custom reports
     'a5288',
     'custom.bihar',
+    'custom.penn_state',
     'dca',
     'custom.apps.gsid',
     'hsph',
@@ -717,6 +718,7 @@ COUCHDB_APPS = [
     'crs_reports',
 
     # custom reports
+    'penn_state',
     'care_benin',
     'dca',
     'gsid',
@@ -898,6 +900,7 @@ DOMAIN_MODULE_MAP = {
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
+    'mikesproject': 'custom.penn_state',
     'mvp-potou': 'mvp',
     'mvp-sauri': 'mvp',
     'mvp-bonsaaso': 'mvp',
