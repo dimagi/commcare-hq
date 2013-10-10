@@ -391,7 +391,6 @@ class ReportNotification(Document):
         should_save = first_migrate(data)
         self = super(ReportNotification, cls).wrap(data)
         if should_save:
-            print "\n\n\nSAVED\n\n\n"
             self.save()
         return self
 

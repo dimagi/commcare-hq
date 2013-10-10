@@ -9,7 +9,7 @@ WHICH_MIGRATION = "first"  # this should be changed to "second" after the first 
 
 def first_migrate(notification):
     """
-        This adds the interval, day, and hour properties to the doc
+        This adds the interval, day, hour,, and owner_id properties to the doc
     """
     if notification.get("migrated"):  # checks to see if the doc was already migrated.
                                       # Only for use in the lazy migration of new ReportNotifications.
@@ -24,13 +24,16 @@ def first_migrate(notification):
     if "hours" in notification:
         notification["hour"] = notification["hours"]
 
+    if notification.get("user_ids") and not notification.get("owner_id"):
+        notification["owner_id"] = notification["user_ids"][0]
+
     notification["migrated"] = True
 
     return True
 
 def second_migrate(notification):
     """
-        This removes the hours, day_of_week properties from the doc. and changes the doc_type to "ReportNotification"
+        This removes the hours, day_of_week, user_ids properties from the doc. changes the doc_type to "ReportNotification"
     """
     if "hours" in notification:
         del notification["hours"]
@@ -38,6 +41,8 @@ def second_migrate(notification):
         del notification["day_of_week"]
     if "migrated" in notification:
         del notification["migrated"]
+    if "user_ids" in notification:
+        del notification["user_ids"]
     notification["doc_type"] = "ReportNotification"
     return True
 
