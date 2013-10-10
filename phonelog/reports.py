@@ -11,6 +11,7 @@ from corehq.apps.reports.fields import DeviceLogTagField, DeviceLogUsersField, D
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
 
 logger = logging.getLogger(__name__)
@@ -235,7 +236,7 @@ class DeviceLogDetailsReport(PhonelogReport):
             record_desc = '"%s" at %s' % (self.goto_key[2],
                                           tz_utils.string_to_prertty_time(self.goto_key[-1], self.timezone))
             new_title = "Last %s Logs <small>before %s</small>" % (self.limit, record_desc)
-        return new_title
+        return mark_safe(new_title)
 
     def is_filtered_by(self, *args):
         return set(args) == self.filters
