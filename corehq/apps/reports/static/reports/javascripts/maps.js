@@ -371,6 +371,13 @@ function initData(data, config) {
         config.table_columns = config.detail_columns.slice(0);
     }
 
+    // typecast values
+    $.each(data.features, function(i, e) {
+        $.each(e.properties, function(k, v) {
+            e.properties[k] = typecast(v);
+        });
+    });
+
     // pre-cache popup detail
     $.each(data.features, function(i, e) {
         e.popupContent = formatDetailPopup(e, config);
@@ -501,6 +508,25 @@ function initMetrics(map, table, data, config) {
     // set sensible defaults for metric parameters (if omitted)
     forEachMetric(config.metrics, function(metric) {
         setMetricDefaults(metric, data, config);
+    });
+
+    // typecast values
+    $.each(config.metrics, function(i, e) {
+        forEachDimension(e, function(dim, meta) {
+            if (meta.thresholds) {
+                meta.thresholds = _.map(meta.thresholds, typecast);
+            }
+            if (meta.colorstops) {
+                meta.colorstops = _.map(meta.colorstops, function(e) { return [typecast(e[0]), e[1]]; });
+            }
+            if (meta.categories) {
+                var _cat = {};
+                $.each(meta.categories, function(k, v) {
+                    _cat[typecast(k)] = v;
+                });
+                meta.categories = _cat;
+            }
+        });
     });
 
     // necessary closures (TODO make a class?)
@@ -894,7 +920,8 @@ function infoContext(feature, config, mode) {
     $.each(prop_cols, function(i, k) {
         var v = feature.properties[k];
         displayProperties[k] = formatForDisplay(k, v);
-        rawProperties[k] = v;
+        rawProperties[k] = (v instanceof Date ? v.getTime() : v);
+        // can't use iso date as sort key; datatables expects numeric sorting for date columns
     });
 
     var context = {
@@ -1037,6 +1064,7 @@ function _summarizeColumn(meta, data) {
     var max = null;
     var nonnumeric = false;
     var nonpoint = false;
+    var hasDates = false;
 
     var iterate = function(callback) {
         $.each(data.features, function(i, e) {
@@ -1047,17 +1075,25 @@ function _summarizeColumn(meta, data) {
 
             var numeric = isNumeric(val);
             var polygon = e.geometry.type != 'Point';
-            callback(numeric ? +val : val, numeric, polygon);
+            if (numeric && !(val instanceof Date)) {
+                val = +val;
+            }
+            callback(val, numeric, polygon);
         });
     }
 
     iterate(function(val, numeric, polygon) {
         _uniq[val] = true;
         if (numeric) {
+            if (val instanceof Date) {
+                hasDates = true;
+            }
+
             count++;
             sum += val;
-            min = (min == null ? val : Math.min(min, val));
-            max = (max == null ? val : Math.max(max, val));
+            // note: Math.min/max won't preserve dates
+            min = (min == null || val < min ? val : min);
+            max = (max == null || val > max ? val : max);
         } else {
             nonnumeric = true;
         }
@@ -1091,13 +1127,14 @@ function _summarizeColumn(meta, data) {
         max: max,
         nonnumeric: nonnumeric,
         nonpoint: nonpoint,
+        hasDates: hasDates,
     };
 }
 
 // based on the results of summarizeColumn, determine if this column is better
 // represented as a magnitude (0-max) or narrower range (min-max)
 function magnitude_based_field(stats) {
-    if (stats.min < 0) {
+    if (stats.min < 0 || stats.hasDates) {
         return false;
     } else if (stats.stdev != null && stats.stdev > 0) {
         var effective_range = Math.max(stats.max, 0) - Math.min(stats.min, 0);
@@ -1172,8 +1209,9 @@ function formatValue(column, value, config) {
         return null;
     }
 
+    // TODO have some kind of default formatting (nice dates, add commas to numbers, etc.)
     var formatter = config._fmt[column];
-    return (formatter ? formatter(value) : value);
+    return (formatter ? formatter(value) : '' + value);
 }
 
 function getColumnTitle(col, config) {
@@ -1256,8 +1294,21 @@ SCALEBAR_WIDTH = 20; // TODO seems like we want to tie this to em-height instead
 TICK_SPACING = 40; //px
 MIN_BUFFER = 15; //px
 function colorScaleLegend($e, meta) {
+    var EPOCH2000 = 946684800;
+    var fromDate = function(s) {
+        return s / 1000. - EPOCH2000;
+    }
+    var toDate = function(s) {
+        return new Date((s + EPOCH2000) * 1000.);
+    }
+
     var min = meta.colorstops[0][0];
     var max = meta.colorstops.slice(-1)[0][0];
+    var dateScale = (min instanceof Date);
+    if (dateScale) {
+        min = fromDate(min);
+        max = fromDate(max);
+    }
     var range = max - min;
     var step = range / (SCALEBAR_HEIGHT - 1);
 
@@ -1266,14 +1317,15 @@ function colorScaleLegend($e, meta) {
     for (var i = 0; i < SCALEBAR_HEIGHT; i++) {
         var k = i / (SCALEBAR_HEIGHT - 1);
         var x = blendLinear(min, max, k);
-        var y = $.Color(matchSpline(x, meta.colorstops, blendColor)).toRgbaString();
+        var y = $.Color(matchSpline(dateScale ? toDate(x) : x, meta.colorstops, blendColor)).toRgbaString();
         ctx.fillStyle = y;
         ctx.fillRect(0, SCALEBAR_HEIGHT - 1 - i, SCALEBAR_WIDTH, 1);
     }
 
-    var interval = niceRoundNumber(step * TICK_SPACING);
+    var interval = (dateScale ? niceRoundInterval : niceRoundNumber)(step * TICK_SPACING);
     var tickvals = [];
     for (var k = interval * Math.ceil(min / interval); k <= max; k += interval) {
+        // TODO snap date intervals >= 1 month to start of month
         tickvals.push(k);
     }
     var buffer_dist = step * MIN_BUFFER;
@@ -1285,7 +1337,7 @@ function colorScaleLegend($e, meta) {
     }
 
     var ticks = $.map(tickvals, function(e) {
-        return {label: meta._formatNum(e), coord: (1. - (e - min) / range) * SCALEBAR_HEIGHT};
+        return {label: meta._formatNum(dateScale ? toDate(e) : e), coord: (1. - (e - min) / range) * SCALEBAR_HEIGHT};
     });
 
     var $rendered = $(_.template($('#legend_colorscale').text())({ticks: ticks}));
@@ -1308,7 +1360,7 @@ function enumLegend($e, meta, renderValue) {
 }
 
 
-
+// note: Date objects are considered numeric
 function isNumeric(x) {
     return (!isNull(x) && !isNaN(+x));
 }
@@ -1316,6 +1368,26 @@ function isNumeric(x) {
 function isNull(x) {
     return (x === undefined || x === null || x === '');
 }
+
+// convert certain json values to a more suitable type
+function typecast(x) {
+    if (x === true) {
+        return 'y';
+    } else if (x === false) {
+        return 'n';
+    }
+
+    // js date conversion is overzealous (e.g, 'Sample 2' parses as a valid date)
+    // add regex check as a quick fix for now
+    if (!isNumeric(x) && /[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}:[0-9]{2}Z?)?/.test(x)) {
+        var asDate = new Date(x);
+        if (!isNaN(asDate.getTime())) {
+            return asDate;
+        }
+    }
+
+    return x;
+};
 
 
 
@@ -1445,6 +1517,27 @@ function niceRoundNumber(x, stops, orderOfMagnitude) {
     return Math.pow(orderOfMagnitude, exponent) * multiplier;
 }
 
+function niceRoundInterval(seconds) {
+    var HOUR = 60 * 60;
+    var DAY = 24 * HOUR;
+    var YEAR = 365.2425 * DAY;
+    var MONTH = YEAR / 12;
+
+    if (seconds < 1) {
+        return niceRoundNumber(seconds);
+    } else if (seconds < HOUR) {
+        return niceRoundNumber(seconds, [1, 2, 5, 10, 30], 60);
+    } else if (seconds < YEAR) {
+        return niceRoundNumber(seconds, [1, // needed for wraparound
+            HOUR, 3 * HOUR, 6 * HOUR, 12 * HOUR,
+            DAY, 3 * DAY, 7 * DAY,
+            0.5 * MONTH, MONTH, 3 * MONTH, 6 * MONTH
+        ], YEAR);
+    } else {
+        return YEAR * niceRoundNumber(seconds / YEAR);
+    }
+}
+
 function testNiceRoundNumber() {
     var test = function(args) {
         var result = niceRoundNumber.apply(this, args);
@@ -1460,6 +1553,39 @@ function testNiceRoundNumber() {
     testStops([3, 8], [1, 1.5, 1.6, 3, 4.8, 4.9, 8]);
     testStops([5], [1, 1.5, 1.6, 5]);
     testStops([1], [1, 3.1, 3.2]);
+}
+
+function testNiceRoundInterval() {
+    var M = 60;
+    var H = 60 * M;
+    var D = 24 * H;
+    var Y = 365.2425 * D;
+    var MO = Y / 12;
+
+    var format = function(x) {
+        var units = [1, M, H, D, MO, Y];
+        var labels = ['s', 'm', 'h', 'd', 'mo', 'y'];
+        var i = matchThresholds(x, units, true);
+        if (i < 0) {
+            i = 0;
+        }
+        return (x / units[i]).toFixed(2) + labels[i];
+    }
+    var test = function(x) {
+        var result = niceRoundInterval(x);
+        console.log(format(x), format(result));
+    };
+
+    _.map([
+        0.1, 0.14, 0.15, 0.2, 0.31, 0.32, 0.5, 0.7, 0.71,
+        1, 1.4, 1.5, 2, 3.1, 3.2, 5, 7, 7.1, 10, 17, 18, 30, 42, 43,
+        M, 1.4*M, 1.5*M, 2*M, 3.1*M, 3.2*M, 5*M, 7*M, 7.1*M, 10*M, 17*M, 18*M, 30*M, 42*M, 43*M,
+        H, 1.7*H, 1.8*H, 3*H, 4.2*H, 4.3*H, 6*H, 8.4*H, 8.5*H, 12*H, 16*H, 17*H,
+        D, 1.7*D, 1.8*D, 3*D, 4.5*D, 4.6*D, 7*D, 10*D, 11*D, 0.5*MO, 0.7*MO, 0.71*MO,
+        MO, 1.7*MO, 1.8*MO, 3*MO, 4.2*MO, 4.3*MO, 6*MO, 8.4*MO, 8.5*MO,
+        Y, 1.4*Y, 1.5*Y, 2*Y, 3.1*Y, 3.2*Y, 5*Y, 7*Y, 7.1*Y,
+        10*Y, 14*Y, 15*Y, 20*Y, 31*Y, 32*Y, 50*Y, 70*Y, 71*Y, 100*Y
+    ], test);
 }
 
 // create a (hidden) canvas
