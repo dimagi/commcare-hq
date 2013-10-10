@@ -1139,7 +1139,10 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         if self.cleaned_data['start_reminder_on'] == START_REMINDER_ON_CASE_PROPERTY:
             if self.cleaned_data['start_property_offset_type'] == START_PROPERTY_OFFSET_IMMEDIATE:
                 return 0
-            return abs(self.cleaned_data['start_property_offset'])
+            start_property_offset = self.cleaned_data['start_property_offset']
+            if start_property_offset < 0:
+                raise ValidationError("Please enter a positive number.")
+            return start_property_offset
         return None
 
     def clean_start_date(self):
@@ -1152,7 +1155,9 @@ class SimpleScheduleCaseReminderForm(forms.Form):
 
     def clean_start_date_offset(self):
         if self.cleaned_data['start_reminder_on'] == START_REMINDER_ON_CASE_DATE:
-            start_date_offset = abs(self.cleaned_data['start_date_offset'])
+            start_date_offset = self.cleaned_data['start_date_offset']
+            if start_date_offset < 0:
+                raise ValidationError("Please enter a positive number.")
             if self.cleaned_data['start_date_offset_type'] == START_DATE_OFFSET_BEFORE:
                 return -start_date_offset
             return start_date_offset
@@ -1277,7 +1282,10 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             return 0
         if repeat_type == REPEAT_TYPE_INDEFINITE:
             return -1
-        return abs(self.cleaned_data['max_iteration_count'])
+        max_iteration_count = self.cleaned_data['max_iteration_count']
+        if max_iteration_count < 0:
+            raise ValidationError("Please enter a positive number.")
+        return max_iteration_count
 
     def clean_until(self):
         if self.cleaned_data['stop_condition'] == STOP_CONDITION_CASE_PROPERTY:
