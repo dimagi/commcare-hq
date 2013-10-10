@@ -272,7 +272,7 @@ class GSIDSQLByDayReport(GSIDSQLReport):
 
     @property
     def group_by(self):
-        return super(GSIDSQLByDayReport, self).group_by[:-1] + ["date", "disease_name"] 
+        return super(GSIDSQLByDayReport, self).group_by + ["date", "disease_name"] 
 
     @property
     def columns(self):
@@ -330,12 +330,12 @@ class GSIDSQLByDayReport(GSIDSQLReport):
             selected_disease = selected_disease.split(':') if selected_disease else None
             diseases = [selected_disease[0]] if selected_disease else self.diseases["ids"]
             for disease in diseases:
-                row = [capitalize_fn(x) for x in loc_key[:-1]]
+                row = [capitalize_fn(x) for x in loc_key]
                 disease_names = self.diseases["names"]
                 index = diseases.index(disease)
                 row.append(disease_names[index])
                 for n, day in enumerate(self.daterange(startdate, enddate)):
-                    temp_key = [loc for loc in loc_key[:-1]]
+                    temp_key = [loc for loc in loc_key]
                     temp_key.append(datetime.strptime(day, "%Y-%m-%d").date())
                     temp_key.append(disease)
                     keymap = old_data.get(tuple(temp_key), None)
