@@ -880,6 +880,10 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
     'mvp-tiby',
 ]
 
+CUSTOM_MODULES = [
+    'custom.apps.crs_reports',
+]
+
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
 # mapping of domains to modules for those that aren't identical
