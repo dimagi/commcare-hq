@@ -1316,9 +1316,11 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             event_objects.append(new_event)
         reminder_handler.events = event_objects
 
+        # set reminders created by this UI as inactive until we make sure it's bug free
+        reminder_handler.active = False
+
         for field in [
             'nickname',
-            'active',
             'case_type',
             'start_property',
             'start_match_type',
