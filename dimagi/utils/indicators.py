@@ -30,7 +30,7 @@ class ComputedDocumentMixin(DocumentSchema):
             self.computed_[indicator_def.namespace] = updated_indicators
             self.computed_modified_on_ = datetime.datetime.utcnow()
             if logger:
-                logger.debug("[INDICATOR %(namespace)s %(domain)s] Updating %(indicator_type)s:%(indicator_slug)s "
+                logger.info("[INDICATOR %(namespace)s %(domain)s] Updating %(indicator_type)s:%(indicator_slug)s "
                             "in %(document_type)s [%(document_id)s]." % {
                                 'namespace': indicator_def.namespace,
                                 'domain': indicator_def.domain,
@@ -54,7 +54,7 @@ class ComputedDocumentMixin(DocumentSchema):
         if is_update and save_on_update:
             self.save()
             if logger:
-                logger.debug("Saved %s." % self._id)
+                logger.info("Saved %s." % self._id)
 
         return is_update
 
