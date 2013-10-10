@@ -226,7 +226,10 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
             close_open_sessions(reminder.domain, recipient.get_id)
             
             # Start the new session
-            case_id = recipient.get_id if isinstance(recipient, CommCareCase) else reminder.case_id
+            if isinstance(recipient, CommCareCase) and not handler.force_surveys_to_use_triggered_case:
+                case_id = recipient.get_id
+            else:
+                case_id = reminder.case_id
             session, responses = start_session(reminder.domain, recipient, app, module, form, case_id)
             session.survey_incentive = handler.survey_incentive
             session.workflow = message_tags["workflow"]

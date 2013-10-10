@@ -389,6 +389,13 @@ class CaseReminderHandler(Document):
     # stop condition
     until = StringProperty()
 
+    #   If a subcase triggers an SMS survey, but we're sending it to the parent case,
+    # we sometimes want the subcase to be the one on which we execute case actions
+    # during form submission. This option will allow for that.
+    #   Note that this option only makes a difference if a case is filling out the SMS survey,
+    # and if a case other than that case triggered the reminder.
+    force_surveys_to_use_triggered_case = BooleanProperty(default=False)
+
     @property
     def uses_parent_case_property(self):
         events_use_parent_case_property = False

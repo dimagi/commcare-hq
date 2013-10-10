@@ -265,7 +265,10 @@
             "Time Type": "Use 'Default' to specify the time of day to send (hh:mm). Use 'Case Property' to specify the case property that contains the time of day to send.",
             "Question Retries": "An IVR Survey will only allow this many invalid responses to a question before disconnecting the call.",
             "Window Length": "The length, in minutes, of the window in which to choose a random time.",
-            "Child Case Property": "Enter a case property along with the criteria for matching it. Only the child cases whose given case property matches the given criteria will be recipients."
+            "Child Case Property": "Enter a case property along with the criteria for matching it. Only the child cases whose given case property matches the given criteria will be recipients.",
+            "Use Case That Triggered Reminder in Submission": "If a subcase triggers a survey, but you're sending the survey to its parent case, you may want the subcase to be the one on " +
+                " which to execute case actions during form submission. This option will allow for that. Note that this option only makes a difference if a case is filling out the " +
+                " survey, and if a case other than that case triggered the reminder."
         };
 
         function get_language_count(message){
@@ -763,6 +766,10 @@
                             time(s) before hanging up
                             <span class="help_popover" data-help-key="Question Retries"><i class="icon icon-question-sign"></i></span>
                         </td>
+                    </tr>
+                    <tr>
+                        <td>{{ form.force_surveys_to_use_triggered_case }}</td>
+                        <td>When answering suveys, force the form submission to use the case that triggered the reminder. <span class="help_popover" data-help-key="Use Case That Triggered Reminder in Submission"><i class="icon icon-question-sign"></i></span></td>
                     </tr>
                 </tbody>
             </table>
