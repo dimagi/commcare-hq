@@ -545,7 +545,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
 
     # note that this class is not true to the spirit of ReportDataSource; the whole
     # point is the decouple generating the raw report data from the report view/django
-    # request. but currently these are too tightly bound too decouple
+    # request. but currently these are too tightly bound to decouple
 
     name = ugettext_noop('Case List')
     slug = 'case_list'
@@ -607,7 +607,6 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
                 'owner_id': owner[1]['id'],
                 'owner_name': owner[1]['name'],
             })
-            
 
             yield data
 
@@ -808,9 +807,9 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
       # as on the regular case list report
       'geo_fetch': mapping of case type to directive of how to pull geo data for a case of
           that type. available directives:
-          * name of case property
-          * (TODO) 'link:xxx' where 'xxx' is the case type of a linked case (the linked
-            case type requires its own entry in 'geo_fetch')
+          * name of case property containing 'geopoint' data
+          * (TODO) 'link:xxx' where 'xxx' is the case type of a linked case to refer to
+            for geo data (the adapter must also know how to process the linked case type)
     }
 
     display_config: {
