@@ -14,17 +14,14 @@ var ReportConfig = function (data) {
 
     self.unwrap = function () {
         var data = ko.mapping.toJS(self);
-        if (null != standardHQReport.slug) {
+        if (null !== standardHQReport.slug) {
             data['report_slug'] = standardHQReport.slug;
         }
-        if ("" != standardHQReport.type) {
+        if ("" !== standardHQReport.type) {
             data['report_type'] = standardHQReport.type;
         }
-        if ("" != standardHQReport.subReportSlug) {
+        if ("" !== standardHQReport.subReportSlug) {
             data['subreport_slug'] = standardHQReport.subReportSlug;
-        }
-        if(!self.have_date_range()) {
-            data["date_range"] = null;
         }
         return data;
     };
@@ -69,15 +66,6 @@ var ReportConfig = function (data) {
         start_date = dateToParam(start_date);
 
         return "startdate=" + start_date + "&enddate=" + end_date + "&";
-    };
-
-    self.have_date_range = function() {
-        if (null != data['date_range']) {
-            return true;
-        } else {
-            self.date_range = ko.observable(false)
-            return false;
-        }
     };
 
     return self;
