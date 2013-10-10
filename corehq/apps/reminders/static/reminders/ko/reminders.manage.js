@@ -61,8 +61,15 @@ var ManageRemindersViewModel = function (initial, choices, ui_type, available_la
     });
 
     self.stop_condition = ko.observable(initial.stop_condition);
+    self.isStopConditionVisible = ko.computed(function () {
+        return self.repeat_type() !== self.choices.REPEAT_TYPE_NO;
+    });
     self.isUntilVisible = ko.computed(function () {
         return self.stop_condition() === self.choices.STOP_CONDITION_CASE_PROPERTY;
+    });
+
+    self.isMaxQuestionRetriesVisible = ko.computed(function () {
+        return self.method() === self.choices.METHOD_IVR_SURVEY;
     });
 
     self.init = function () {

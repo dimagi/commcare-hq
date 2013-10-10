@@ -8,6 +8,12 @@ class BootstrapMultiField(MultiField):
     template = "hqwebapp/crispy/layout/multifield.html"
     field_template = "hqwebapp/crispy/field/multifield.html"
 
+    def __init__(self, *args, **kwargs):
+        super(BootstrapMultiField, self).__init__(*args, **kwargs)
+        self.help_bubble_text = None
+        if 'help_bubble_text' in kwargs:
+            self.help_bubble_text = kwargs.pop('help_bubble_text')
+
     def render(self, form, form_style, context, template_pack=TEMPLATE_PACK):
         fields_output = u''
         for field in self.fields:
@@ -25,6 +31,7 @@ class BootstrapMultiField(MultiField):
             'multifield': self,
             'fields_output': fields_output,
             'error_list': errors,
+            'help_bubble_text': self.help_bubble_text,
         })
         return render_to_string(self.template, context)
 
@@ -50,3 +57,17 @@ class FieldsetAccordionGroup(AccordionGroup):
 
 class HiddenFieldWithErrors(Field):
     template = "hqwebapp/crispy/field/hidden_with_errors.html"
+
+
+class FieldWithHelpBubble(Field):
+    template = "hqwebapp/crispy/field/field_with_help_bubble.html"
+
+    def __init__(self, *args, **kwargs):
+        super(FieldWithHelpBubble, self).__init__(*args, **kwargs)
+        self.help_bubble_text = kwargs.pop('help_bubble_text')
+
+    def render(self, form, form_style, context, template_pack=TEMPLATE_PACK):
+        context.update({
+            'help_bubble_text': self.help_bubble_text,
+        })
+        return super(FieldWithHelpBubble, self).render(form, form_style, context, template_pack=template_pack)
