@@ -127,7 +127,7 @@
     $('#id_add_phone_number').on('paste', function (event) {
         var clipboardData = event.clipboardData  ||  event.originalEvent.clipboardData;
         var pasteText = clipboardData.getData("Text");
-        var text = pasteText.replace(/\+|\-|\(|\)|\s/g, '');id_add_phone_number
+        var text = pasteText.replace(/\+|\-|\(|\)|\s/g, '');
         if (/^[0-9]*$/.test(text)) {
             $("#phone_number_paste_error").css("display", "none");
             $('#id_add_phone_number').val(text);
