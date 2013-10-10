@@ -621,7 +621,12 @@ LOGGING = {
             'handlers': ['pillowtop', 'sentry'],
             'level': 'ERROR',
             'propagate': False,
-        }
+        },
+        'pillowtop_eval': {
+            'handlers': ['sentry'],
+            'level': 'INFO',
+            'propagate': False,
+        },
     }
 }
 
