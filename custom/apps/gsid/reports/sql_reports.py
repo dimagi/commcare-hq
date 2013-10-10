@@ -359,7 +359,7 @@ class GSIDSQLByDayReport(GSIDSQLReport):
                 x = day
                 y = 0 if row[date_index + n + 1] == "--" else row[date_index + n + 1]
                 data_points.append({'x': x, 'y': y})
-            chart.add_dataset(row[date_index-1], data_points)
+            chart.add_dataset(row[date_index-1] + "(" + row[date_index] + ")", data_points)
         return [chart]
 
 class GSIDSQLTestLotsReport(GSIDSQLReport):
