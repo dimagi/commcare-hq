@@ -210,6 +210,10 @@ class CaseInfo(object):
         return self.case['_id']
 
     @property
+    def external_id(self):
+        return self.case['external_id']
+
+    @property
     def case_detail_url(self):
         try:
             return reverse('case_details', args=[self.report.domain, self.case_id])
@@ -223,7 +227,7 @@ class CaseInfo(object):
     def _dateprop(self, prop, iso=True):
         val = self.report.date_to_json(self.parse_date(self.case[prop]))
         if iso:
-            val = 'T'.join(dt.split(' ')) if dt else None
+            val = 'T'.join(val.split(' ')) if val else None
         return val
 
     @property
@@ -233,6 +237,10 @@ class CaseInfo(object):
     @property
     def modified_on(self):
         return self._dateprop('modified_on')
+
+    @property
+    def closed_on(self):
+        return self._dateprop('closed_on')
 
     @property
     def creating_user(self):
@@ -557,11 +565,51 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
         return self.name
 
     def slugs(self):
-        return []
+        return [
+            '_case',
+            'case_id',
+            'case_name',
+            'case_type',
+            'detail_url',
+            'is_open',
+            'opened_on',
+            'modified_on',
+            'closed_on',
+            'creator_id',
+            'creator_name',
+            'owner_type',
+            'owner_id',
+            'owner_name',
+            'external_id',
+        ]
 
     def get_data(self, slugs=None):
         for row in self.es_results['hits'].get('hits', []):
-            yield self.get_case(row)
+            case = self.get_case(row)
+            ci = CaseInfo(self, case)
+            data = {
+                '_case': case,
+                'detail_url': ci.case_detail_url,
+            }
+            data.update((prop, getattr(ci, prop)) for prop in (
+                    'case_type', 'case_name', 'case_id', 'external_id',
+                    'is_closed', 'opened_on', 'modified_on', 'closed_on',
+                ))
+            
+            creator = ci.creating_user or {}
+            data.update({
+                'creator_id': creator.get('id'),
+                'creator_name': creator.get('name'),
+            })
+            owner = ci.owner
+            data.update({
+                'owner_type': owner[0],
+                'owner_id': owner[1]['id'],
+                'owner_name': owner[1]['name'],
+            })
+            
+
+            yield data
 
     @property
     def headers(self):
@@ -578,8 +626,8 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
 
     @property
     def rows(self):
-        for case in self.get_data():
-            display = CaseDisplay(self, case)
+        for data in self.get_data():
+            display = CaseDisplay(self, data['_case'])
 
             yield [
                 display.case_type,
@@ -941,16 +989,10 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
             print 'WARN: results limit exceeded'
             pass
 
-        for case in source.get_data():
-            case = CommCareCase.wrap(case).get_json()
-            data = dict((k, case[k]) for k in (
-                    'case_id',
-                    'closed',
-                    'date_closed',
-                    'date_modified',
-                    'server_date_opened',
-                    'server_date_modified',
-                ))
+        for data in source.get_data():
+            case = CommCareCase.wrap(data['_case']).get_json()
+            del data['_case']
+
             data['num_forms'] = len(case['xform_ids'])
             standard_props = (
                 'case_name',
@@ -958,8 +1000,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
                 'date_opened',
                 'external_id',
                 'owner_id',
-            )
-            data.update((k, case['properties'][k]) for k in standard_props)
+             )
             data.update(('prop_%s' % k, v) for k, v in case['properties'].iteritems() if k not in standard_props)
 
             geo = None
@@ -970,7 +1011,8 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
             elif geo_directive == '_random':
                 # for testing
                 import random
-                geo = '%s %s' % (random.uniform(-90, 90), random.uniform(-180, 180))
+                import math
+                geo = '%s %s' % (math.degrees(math.asin(random.uniform(-1, 1))), random.uniform(-180, 180))
             elif geo_directive:
                 # case property
                 geo = data.get('prop_%s' % geo_directive)
