@@ -1279,12 +1279,14 @@ class SimpleScheduleCaseReminderForm(forms.Form):
     def clean_max_iteration_count(self):
         repeat_type = self.cleaned_data['repeat_type']
         if repeat_type == REPEAT_TYPE_NO:
-            return 0
+            return 1
         if repeat_type == REPEAT_TYPE_INDEFINITE:
             return -1
         max_iteration_count = self.cleaned_data['max_iteration_count']
         if max_iteration_count < 0:
             raise ValidationError("Please enter a positive number.")
+        if max_iteration_count == 0:
+            raise ValidationError("Please enter a number that is 1 or greater.")
         return max_iteration_count
 
     def clean_until(self):
