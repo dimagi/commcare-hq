@@ -149,16 +149,26 @@ class SystemUsersReport(BaseSystemOverviewReport):
         def row(header, mw_val, case_val):
             return [_(header), mw_val, case_val, mw_val + case_val]
 
-        def verified_numbered_users(owner_type):
-            owners = get_db().view('sms/verified_number_by_domain',
-                reduce=True,
-                group=True,
-                startkey=[self.domain, owner_type],
-                endkey=[self.domain, owner_type, {}],
-            ).all()
-            return len(owners)
+        def verified_numbered_users(owner_type, ids=None):
+            if not ids:
+                data = get_db().view('sms/verified_number_by_domain',
+                    reduce=True,
+                    startkey=[self.domain, owner_type],
+                    endkey=[self.domain, owner_type, {}],
+                ).one()
+                return data["value"]
+            else:
+                owners = get_db().view('sms/verified_number_by_domain',
+                    reduce=False,
+                    startkey=[self.domain, owner_type],
+                    endkey=[self.domain, owner_type, {}],
+                ).all()
+                return len(filter(lambda oid: oid in ids, [o["key"][2] for o in owners]))
 
-        number = row("Number", verified_numbered_users("CommCareUser"), verified_numbered_users("CommCareCase"))
+        owner_ids = self.combined_user_ids if self.users_by_group else []
+        case_ids = self.cases_by_case_group if self.cases_by_case_group else []
+        number = row("Number", verified_numbered_users("CommCareUser", owner_ids),
+                     verified_numbered_users("CommCareCase", case_ids))
 
         def get_actives(recipient_type):
             return len(self.active_query(recipient_type)['facets']['couch_recipient']['terms'])
@@ -177,7 +187,7 @@ class SystemUsersReport(BaseSystemOverviewReport):
         for term in facets['couch_recipient_doc_type']['terms']:
             if term['term'] == 'commcarecase':
                 to_cases = term['count']
-            elif term['term'] == 'couchuser':
+            elif term['term'] == 'commcareuser':
                 to_users = term['count']
         messages = row("Messages", to_users, to_cases)
 

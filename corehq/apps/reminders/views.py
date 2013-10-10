@@ -51,7 +51,7 @@ from .models import UI_SIMPLE_FIXED, UI_COMPLEX
 from .util import get_form_list, get_sample_list, get_recipient_name, get_form_name
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.util import register_sms_contact, update_contact
-from corehq.apps.domain.models import DomainCounter
+from corehq.apps.domain.models import Domain, DomainCounter
 from corehq.apps.groups.models import Group
 from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
 from dateutil.parser import parse
@@ -278,9 +278,11 @@ def delete_reminder(request, domain, handler_id):
 
 @reminders_permission
 def scheduled_reminders(request, domain, template="reminders/partial/scheduled_reminders.html"):
+    timezone = Domain.get_by_name(domain).default_timezone
     reminders = CaseReminderHandler.get_all_reminders(domain)
     dates = []
     now = datetime.utcnow()
+    timezone_now = datetime.now(pytz.timezone(timezone))
     today = now.date()
     if reminders:
         start_date = reminders[0].next_fire.date()
@@ -318,6 +320,8 @@ def scheduled_reminders(request, domain, template="reminders/partial/scheduled_r
         'dates': dates,
         'today': today,
         'now': now,
+        'timezone': timezone,
+        'timezone_now': timezone_now,
     })
 
 def get_events_scheduling_info(events):
@@ -877,7 +881,10 @@ def survey_list(request, domain):
 def add_sample(request, domain, sample_id=None):
     sample = None
     if sample_id is not None:
-        sample = CommCareCaseGroup.get(sample_id)
+        try:
+            sample = CommCareCaseGroup.get(sample_id)
+        except ResourceNotFound:
+            raise Http404
     
     if request.method == "POST":
         form = SurveySampleForm(request.POST, request.FILES)

@@ -433,9 +433,15 @@ def datespan_from_beginning(domain, default_days, timezone):
     return datespan
 
 def get_installed_custom_modules_names():
+    # todo: don't depend on the django process being started from the django
+    # root directory
     path = os.path.dirname('custom/apps/')
+    if not os.path.exists(path):
+        return []
+
     installed_custom_module_names = []
 
+    # todo: don't inspect modules using file structure
     for module in os.listdir(path):
         if os.path.isdir(path + '/' + module) == True and os.path.exists(path + '/' + module + '/urls.py') and 'urlpatterns' in open(path + '/' + module + '/urls.py').read():
             installed_custom_module_names.append(module)

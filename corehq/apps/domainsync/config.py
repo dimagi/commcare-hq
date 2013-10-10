@@ -19,7 +19,7 @@ class DocumentTransform():
         self._attachments = {}
         self.attachments = {}
         self.database = database
-        if "_attachments" in doc:
+        if "_attachments" in doc and doc['_attachments']:
             self._attachments = doc["_attachments"]
             del doc["_attachments"]
             self.attachments = dict((k, self.database.fetch_attachment(doc["_id"], k)) for k in self._attachments)

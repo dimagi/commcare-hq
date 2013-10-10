@@ -106,6 +106,7 @@ MIDDLEWARE_CLASSES = [
     'corehq.apps.users.middleware.UsersMiddleware',
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
     'auditcare.middleware.AuditMiddleware',
+    'no_exceptions.middleware.NoExceptionsMiddleware',
 ]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
@@ -258,6 +259,7 @@ HQ_APPS = (
     'custom.reports.mc',
     'custom.trialconnect',
     'custom.apps.crs_reports',
+    'custom.hope',
 )
 
 TEST_APPS = ()
@@ -691,6 +693,7 @@ COUCHDB_APPS = [
     'groups',
     'hqcase',
     'hqmedia',
+    'hope',
     'importer',
     'indicators',
     'locations',

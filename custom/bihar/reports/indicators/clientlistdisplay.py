@@ -47,13 +47,22 @@ class SummaryValueMixIn(ClientListDisplay):
     def sort_index(self):
         return [self.sort_index_i, self.sort_index_dir]
 
-    def summary_value(self, case, context):
+    def summary_value_raw(self, case, context):
         if display.in_numerator(case, context):
-            return _(self.numerator_text)
+            return 'num'
         elif display.in_denominator(case, context):
-            return _(self.denominator_text)
+            return 'denom'
         else:
-            return _(self.neither_text)
+            return 'neither'
+
+    def summary_value(self, case, context):
+        raw = self.summary_value_raw(case, context)
+        display = {
+            'num': self.numerator_text,
+            'denom': self.denominator_text,
+            'neither': self.neither_text,
+        }[raw]
+        return _(display)
 
 
 class PreDeliveryCLD(ClientListDisplay):
@@ -138,7 +147,7 @@ class DoneDueMixIn(SummaryValueMixIn):
         return display.in_numerator(case, context)
 
     def _get_days_due(self, case, value):
-        if value == 'Due':
+        if value == 'denom':
             return next_visit_date(case)
         else:
             return days_overdue(case)
@@ -161,7 +170,7 @@ class PostDeliveryDoneDueCLD(DoneDueMixIn, PostDeliverySummaryCLD):
         return super(PostDeliveryDoneDueCLD, self).get_columns() + (_('Days Due'),)
 
     def as_row(self, case, context):
-        value = self.summary_value(case, context)
+        value = self.summary_value_raw(case, context)
         return super(PostDeliveryDoneDueCLD, self).as_row(case, context) + (self._get_days_due(case, value),)
 
 

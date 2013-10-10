@@ -71,10 +71,11 @@ class CaseAPIHelper(object):
     """
     Simple config object for querying the APIs
     """
-    def __init__(self, status=CASE_STATUS_OPEN, case_type=None, ids_only=False,
+    def __init__(self, domain, status=CASE_STATUS_OPEN, case_type=None, ids_only=False,
                  footprint=False, strip_history=False, filters=None):
         if status not in [CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN]:
             raise ValueError("invalid case status %s" % status)
+        self.domain = domain
         self.status = status
         self.case_type = case_type
         self.ids_only = ids_only
@@ -121,19 +122,22 @@ class CaseAPIHelper(object):
 
         if self.footprint:
             return [CaseAPIResult(couch_doc=case, id_only=self.ids_only) for case in \
-                    get_footprint([res.couch_doc for res in base_results], 
-                                  strip_history=self.strip_history).values()]
+                    get_footprint(
+                        [res.couch_doc for res in base_results],
+                        strip_history=self.strip_history,
+                        domain=self.domain)
+                    .values()]
         else:
             return base_results
 
-    def get_all(self, domain):
-        view_results = CommCareCase.get_all_cases(domain, case_type=self.case_type, status=self.status)
+    def get_all(self):
+        view_results = CommCareCase.get_all_cases(self.domain, case_type=self.case_type, status=self.status)
         ids = [res["id"] for res in view_results]
         return self._case_results(ids)
 
-    def get_owned(self, domain, user_id):
+    def get_owned(self, user_id):
         try:
-            user = CouchUser.get_by_user_id(user_id, domain)
+            user = CouchUser.get_by_user_id(user_id, self.domain)
         except KeyError:
             user = None
         try:
@@ -146,7 +150,7 @@ class CaseAPIHelper(object):
         def keys():
             for owner_id in owner_ids:
                 for bool in status_to_closed_flags(self.status):
-                    yield [domain, owner_id, bool]
+                    yield [self.domain, owner_id, bool]
 
         view_results = CommCareCase.view('hqcase/by_owner', keys=keys,
                                          include_docs=False, reduce=False)
@@ -179,14 +183,14 @@ def get_filtered_cases(domain, status, user_id=None, case_type=None,
 
     # for now, a filter value of None means don't filter
     filters = dict((k, v) for k, v in (filters or {}).items() if v is not None)
-    helper = CaseAPIHelper(status, case_type=case_type, ids_only=ids_only,
+    helper = CaseAPIHelper(domain, status, case_type=case_type, ids_only=ids_only,
                            footprint=footprint, strip_history=strip_history,
                            filters=filters)
 
     if user_id:
-        return helper.get_owned(domain, user_id)
+        return helper.get_owned(user_id)
     else:
-        return helper.get_all(domain)
+        return helper.get_all()
 
 class ElasticCaseQuery(object):
     # this class is currently pretty customized to serve exactly

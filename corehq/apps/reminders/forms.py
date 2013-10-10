@@ -16,7 +16,7 @@ from django.forms import Field, Widget
 from corehq.apps.reminders.util import DotExpandedDict
 from casexml.apps.case.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
-from corehq.apps.hqwebapp.crispy import BootstrapMultiField, FieldsetAccordionGroup
+from corehq.apps.hqwebapp.crispy import BootstrapMultiField, FieldsetAccordionGroup, HiddenFieldWithErrors, FieldWithHelpBubble
 from .models import (
     REPEAT_SCHEDULE_INDEFINITELY,
     CaseReminderEvent,
@@ -684,9 +684,6 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             (START_REMINDER_ON_CASE_DATE, "on a date specified in the Case"),
             (START_REMINDER_ON_CASE_PROPERTY, "when the Case is in the following state"),
         ),
-        help_text=("Reminders can either start based on a date in a case property "
-                   "or if the case is in a particular state (ex: case property 'high_risk' "
-                   "is equal to 'yes')")  # todo this will be a (?) bubble...can override the crispy Field
     )
     ## send options > start_reminder_on = case_date
     start_property = forms.CharField(
@@ -742,10 +739,6 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             (RECIPIENT_PARENT_CASE, "Case's Parent Case"),
             (RECIPIENT_SUBCASE, "Case's Child Cases"),
         ),
-        help_text=("The contact related to the case that reminder should go to.  The Case "
-                   "Owners are any mobile workers for which the case appears on their phone. "
-                   "For cases with child or parent cases, you can also send the message to those "
-                   "contacts. ")  # todo help bubble
     )
     ## recipient = RECIPIENT_SUBCASE
     recipient_case_match_property = forms.CharField(
@@ -768,9 +761,6 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             (METHOD_SMS, "SMS"),
             (METHOD_SMS_SURVEY, "SMS Survey"),
         ),
-        help_text=("Send a single SMS message or an interactive SMS survey. "
-                   "SMS surveys are designed in the Surveys or Application "
-                   "section. ")  # todo help bubble
     )
     # contains a string-ified JSON object of events
     events = forms.CharField(
@@ -780,9 +770,6 @@ class SimpleScheduleCaseReminderForm(forms.Form):
 
     event_timing = forms.ChoiceField(
         label="Timing",
-        help_text=("This controls when the message will be sent. The Time in Case "
-                   "option is useful, for example, if the recipient has chosen a "
-                   "specific time to receive the message.")  # todo help bubble
     )
 
     event_interpretation = forms.ChoiceField(
@@ -891,10 +878,13 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         start_section = crispy.Fieldset(
             'Start',
             crispy.Field('case_type', placeholder="todo: dropdown"),
-            crispy.Field(
+            FieldWithHelpBubble(
                 'start_reminder_on',
                 data_bind="value: start_reminder_on",
-                css_class="input-xlarge"
+                css_class="input-xlarge",
+                help_bubble_text=("Reminders can either start based on a date in a case property "
+                                  "or if the case is in a particular state (ex: case property 'high_risk' "
+                                  "is equal to 'yes')")
             ),
             crispy.Div(
                 BootstrapMultiField(
@@ -942,14 +932,34 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                     )
                 ),
                 data_bind="visible: isStartReminderCaseDate"
-            )
+            ),
+            BootstrapMultiField(
+                "Timing",
+                InlineField('event_timing', data_bind="value: event_timing"),
+                crispy.Div(
+                    style="display: inline;",
+                    data_bind="template: {name: 'event-fire-template', foreach: eventObjects}"
+                ),
+                css_id="timing_block",
+                help_bubble_text=("This controls when the message will be sent. The Time in Case "
+                                  "option is useful, for example, if the recipient has chosen a "
+                                  "specific time to receive the message.")
+            ),
+            crispy.Div(
+                style="display: inline;",
+                data_bind="template: {name: 'event-general-template', foreach: eventObjects}"
+            ),
         )
 
         recipient_section = crispy.Fieldset(
             "Recipient",
-            crispy.Field(
+            FieldWithHelpBubble(
                 'recipient',
                 data_bind="value: recipient",
+                help_bubble_text=("The contact related to the case that reminder should go to.  The Case "
+                                  "Owners are any mobile workers for which the case appears on their phone. "
+                                  "For cases with child or parent cases, you can also send the message to those "
+                                  "contacts. ")
             ),
             BootstrapMultiField(
                 "When Case Property",
@@ -969,22 +979,16 @@ class SimpleScheduleCaseReminderForm(forms.Form):
 
         message_section = crispy.Fieldset(
             "Message Content",
-            crispy.Field('method', data_bind="value: method"),
+            FieldWithHelpBubble(
+                'method',
+                data_bind="value: method",
+                help_bubble_text=("Send a single SMS message or an interactive SMS survey. "
+                                  "SMS surveys are designed in the Surveys or Application "
+                                  "section. ")
+            ),
             crispy.Field('event_interpretation', data_bind="value: event_interpretation"),
-            crispy.Field('events', data_bind="value: events"),
+            HiddenFieldWithErrors('events', data_bind="value: events"),
             crispy.Div(data_bind="template: {name: 'event-template', foreach: eventObjects}"),
-            BootstrapMultiField(
-                "Timing",
-                InlineField('event_timing', data_bind="value: event_timing"),
-                crispy.Div(
-                    style="display: inline;",
-                    data_bind="template: {name: 'event-fire-template', foreach: eventObjects}"
-                ),
-            ),
-            crispy.Div(
-                style="display: inline;",
-                data_bind="template: {name: 'event-general-template', foreach: eventObjects}"
-            ),
         )
 
         repeat_section = crispy.Fieldset(
@@ -1008,6 +1012,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                     style="margin-left: 5px;",
                     data_bind="visible: isUntilVisible",
                 ),
+                data_bind="visible: isStopConditionVisible",
             )
         )
 
@@ -1025,7 +1030,14 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                             'class="btn btn-primary" style="margin-left: 5px;" '
                             'data-toggle="modal">Add Language</a>'),
             ),
-            'max_question_retries',
+            crispy.Div(
+                style="display: inline;",
+                data_bind="template: {name: 'event-timeouts-template', foreach: eventObjects}"
+            ),
+            crispy.Div(
+                'max_question_retries',
+                data_bind="visible: isMaxQuestionRetriesVisible",
+            ),
             'submit_partial_forms',
             'include_case_side_effects',
             active=False,
@@ -1127,7 +1139,12 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             try:
                 current_val = getattr(reminder_handler, field, Ellipsis)
                 if field == 'events':
+                    for event in current_val:
+                        if not event.message:
+                            event.message = {(reminder_handler.default_lang or 'en'): ''}
                     current_val = json.dumps([e.to_json() for e in current_val])
+                if field == 'callback_timeout_intervals':
+                    current_val = ",".join(current_val)
                 if current_val is not Ellipsis:
                     initial[field] = current_val
             except AttributeError:
@@ -1143,7 +1160,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             initial['start_date_offset_type'] = (START_DATE_OFFSET_BEFORE if reminder_handler.start_offset <= 0
                                                  else START_DATE_OFFSET_AFTER)
 
-        start_offset = abs(reminder_handler.start_offset)
+        start_offset = abs(reminder_handler.start_offset or 0)
 
         if reminder_handler.ui_type == UI_SIMPLE_FIXED and len(reminder_handler.events) > 0:
             initial['event_timing'] = cls._format_event_timing_choice(
@@ -1231,14 +1248,6 @@ class CaseReminderEventForm(forms.Form):
                 crispy.Field('form_unique_id', data_bind="value: form_unique_id, attr: {id: ''}"),
                 data_bind="visible: isSurveyVisible",
             ),
-            crispy.Div(
-                crispy.Field(
-                    'callback_timeout_intervals',
-                    data_bind="value: callback_timeout_intervals, attr: {id: ''}",
-                    placeholder="e.g. 30,60,180",
-                ),
-                data_bind="visible: isCallbackTimeoutsVisible",
-            ),
         )
 
         self.helper_fire_time = FormHelper()
@@ -1259,6 +1268,19 @@ class CaseReminderEventForm(forms.Form):
             ),
             crispy.Field('fire_time_type', data_bind="value: fire_time_type, attr: {id: ''}"),
             crispy.Field('day_num', data_bind="value: day_num, attr: {id: ''}"),
+        )
+
+        self.helper_timeouts = FormHelper()
+        self.helper_timeouts.form_tag = False
+        self.helper_timeouts.layout = crispy.Layout(
+            crispy.Div(
+                crispy.Field(
+                    'callback_timeout_intervals',
+                    data_bind="value: callback_timeout_intervals, attr: {id: ''}",
+                    placeholder="e.g. 30,60,180",
+                ),
+                data_bind="visible: isCallbackTimeoutsVisible",
+            ),
         )
 
 
