@@ -189,7 +189,7 @@ class CaseListFilter(CouchFilter):
             limit=count,
             **self._kwargs).all()
 
-class CaseDisplay(object):
+class CaseInfo(object):
     def __init__(self, report, case):
         """
         case is a dict object of the case doc
@@ -197,15 +197,119 @@ class CaseDisplay(object):
         self.case = case
         self.report = report
 
-    def parse_date(self, date_string):
-        try:
-            date_obj = dateutil.parser.parse(date_string)
-            return date_obj
-        except:
-            return date_string
+    @property
+    def case_type(self):
+        return self.case['type']
 
-    def user_not_found_display(self, user_id):
-        return _("Unknown [%s]") % user_id
+    @property
+    def case_name(self):
+        return self.case['name']
+
+    @property
+    def case_id(self):
+        return self.case['_id']
+
+    @property
+    def case_detail_url(self):
+        try:
+            return reverse('case_details', args=[self.report.domain, self.case_id])
+        except NoReverseMatch:
+            return None
+
+    @property
+    def is_closed(self):
+        return self.case['closed']
+    
+    def _dateprop(self, prop, iso=True):
+        val = self.report.date_to_json(self.parse_date(self.case[prop]))
+        if iso:
+            val = 'T'.join(dt.split(' ')) if dt else None
+        return val
+
+    @property
+    def opened_on(self):
+        return self._dateprop('opened_on')
+
+    @property
+    def modified_on(self):
+        return self._dateprop('modified_on')
+
+    @property
+    def creating_user(self):
+        creator_id = None
+        for action in self.case['actions']:
+            if action['action_type'] == 'create':
+                action_doc = CommCareCaseAction.wrap(action)
+                creator_id = action_doc.get_user_id()
+                break
+        if not creator_id:
+            return None
+        return self._user_meta(creator_id)
+
+    def _user_meta(self, user_id):
+        return {'id': user_id, 'name': self._get_username(user_id)}
+
+    @property
+    def owner(self):
+        if self.owning_group and self.owning_group.name:
+            return ('group', {'id': self.owning_group._id, 'name': self.owning_group.name})
+        else:
+            return ('user', self._user_meta(self.user_id))
+
+    @property
+    def owner_type(self):
+        return self.owner[0]
+
+    @property
+    def user_id(self):
+        return self.report.individual or self.owner_id
+
+    @property
+    def owner_id(self):
+        if 'owner_id' in self.case:
+            return self.case['owner_id']
+        elif 'user_id' in self.case:
+            return self.case['user_id']
+        else:
+            return ''
+
+    @property
+    @memoized
+    def owning_group(self):
+        mc = cache.get_cache('default')
+        cache_key = "%s.%s" % (Group.__class__.__name__, self.owner_id)
+        try:
+            if mc.has_key(cache_key):
+                cached_obj = simplejson.loads(mc.get(cache_key))
+                wrapped = Group.wrap(cached_obj)
+                return wrapped
+            else:
+                group_obj = Group.get(self.owner_id)
+                mc.set(cache_key, simplejson.dumps(group_obj.to_json()))
+                return group_obj
+        except Exception:
+            return None
+
+    @property
+    @memoized
+    def owner_doc(self, wrap=False):
+        doc = None
+        if self.owner_id:
+            try:
+                doc = get_db().get(self.owner_id)
+            except ResourceNotFound:
+                pass
+        if not doc:
+            return None
+
+        if wrap:
+            class_ = {
+                'CommCareUser': CommCareUser,
+                'Group': Group,
+            }.get(doc['doc_type'])
+            return class_.wrap(doc)
+        else:
+            return doc
 
     @memoized
     def _get_username(self, user_id):
@@ -226,124 +330,61 @@ class CaseDisplay(object):
                     cache_payload = simplejson.dumps(user_dict)
                     mc.set(cache_key, cache_payload)
                 if user_dict == {}:
-                    return self.user_not_found_display(user_id)
+                    return None
                 else:
                     user_obj = CouchUser.wrap(user_dict)
                     username = user_obj.username
             except Exception:
-                return self.user_not_found_display(user_id)
+                return None
         return username
 
-    @property
-    def owner_display(self):
-        if self.owning_group and self.owning_group.name:
-            return '<span class="label label-inverse">%s</span>' % self.owning_group.name
-        else:
-            return self._get_username(self.user_id)
+    def parse_date(self, date_string):
+        try:
+            date_obj = dateutil.parser.parse(date_string)
+            return date_obj
+        except:
+            return date_string
 
+class CaseDisplay(CaseInfo):
     @property
     def closed_display(self):
-        return yesno(self.case['closed'], "closed,open")
+        return yesno(self.is_closed, "closed,open")
 
     @property
     def case_link(self):
-        case_id, case_name = self.case['_id'], self.case['name']
-        try:
+        url = self.case_detail_url
+        if url:
             return html.mark_safe("<a class='ajax_dialog' href='%s'>%s</a>" % (
-                html.escape(reverse('case_details', args=[self.report.domain, case_id])),
-                html.escape(case_name),
-            ))
-        except NoReverseMatch:
-            return "%s (bad ID format)" % case_name
-
-    @property
-    def case_type(self):
-        return self.case['type']
+                self.case_detail_url, html.escape(self.case_name)))
+        else:
+            return "%s (bad ID format)" % self.case_name
 
     @property
     def opened_on(self):
-        return self.report.date_to_json(self.parse_date(self.case['opened_on']))
+        return self._dateprop('opened_on', False)
 
     @property
     def modified_on(self):
-        return self.report.date_to_json(self.modified_on_dt)
+        return self._dateprop('modified_on', False)
 
     @property
-    def modified_on_dt(self):
-        return self.parse_date(self.case['modified_on'])
-
-    @property
-    def owner_id(self):
-        if 'owner_id' in self.case:
-            return self.case['owner_id']
-        elif 'user_id' in self.case:
-            return self.case['user_id']
+    def owner_display(self):
+        owner_type, owner = self.owner
+        if owner_type == 'group':
+            return '<span class="label label-inverse">%s</span>' % owner['name']
         else:
-            return ''
+            return owner['name']
 
-    @property
-    @memoized
-    def owner_doc(self):
-        if self.owner_id:
-            try:
-                doc = get_db().get(self.owner_id)
-            except ResourceNotFound:
-                pass
-            else:
-                return {
-                    'CommCareUser': CommCareUser,
-                    'Group': Group,
-                }.get(doc['doc_type']), doc
-        return None, None
-
-    @property
-    def owner_type(self):
-        owner_class, _ = self.owner_doc
-        if owner_class == CommCareUser:
-            return 'user'
-        elif owner_class == Group:
-            return 'group'
-        else:
-            return None
-
-    @property
-    def owner(self):
-        klass, doc = self.owner_doc
-        if klass:
-            return klass.wrap(doc)
-
-    @property
-    def owning_group(self):
-        mc = cache.get_cache('default')
-        cache_key = "%s.%s" % (Group.__class__.__name__, self.owner_id)
-        try:
-            if mc.has_key(cache_key):
-                cached_obj = simplejson.loads(mc.get(cache_key))
-                wrapped = Group.wrap(cached_obj)
-                return wrapped
-            else:
-                group_obj = Group.get(self.owner_id)
-                mc.set(cache_key, simplejson.dumps(group_obj.to_json()))
-                return group_obj
-        except Exception:
-            return None
-
-    @property
-    def user_id(self):
-        return self.report.individual or self.owner_id
+    def user_not_found_display(self, user_id):
+        return _("Unknown [%s]") % user_id
 
     @property
     def creating_user(self):
-        creator_id = None
-        for action in self.case['actions']:
-            if action['action_type'] == 'create':
-                action_doc = CommCareCaseAction.wrap(action)
-                creator_id = action_doc.get_user_id()
-                break
-        if not creator_id:
+        user = super(CaseDisplay, self).creating_user
+        if user is None:
             return _("No data")
-        return self._get_username(creator_id)
-
+        else:
+            return user['name'] or self.user_not_found_display(user['id'])
 
 class CaseSearchFilter(SearchFilter):
     search_help_inline = mark_safe(ugettext_noop("""Search any text, or use a targeted query. For more info see the <a href='https://wiki.commcarehq.org/display/commcarepublic/Advanced+Case+Search' target='_blank'>Case Search</a> help page"""))
@@ -551,9 +592,12 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
             ]
 
     def date_to_json(self, date):
-        return tz_utils.adjust_datetime_to_timezone\
-            (date, pytz.utc.zone, self.timezone.zone).strftime\
-            ('%Y-%m-%d %H:%M:%S') if date else ""
+        if date:
+            return tz_utils.adjust_datetime_to_timezone(
+                date, pytz.utc.zone, self.timezone.zone
+            ).strftime('%Y-%m-%d %H:%M:%S')
+        else:
+            return ''
 
 class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
     """this is a report TEMPLATE to conduct analytics on an arbitrary case property
