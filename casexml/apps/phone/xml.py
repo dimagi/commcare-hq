@@ -82,6 +82,7 @@ def get_case_element(case, updates, version=V1):
         
     return root
 
+
 def get_case_xml(case, updates, version=V1):
     check_version(version)
     return tostring(get_case_element(case, updates, version))
@@ -95,14 +96,16 @@ def get_registration_element(user):
     root.append(safe_element("uuid", user.user_id))
     root.append(safe_element("date", date_to_xml_string(user.date_joined)))
     if user.user_data:
-        root.append(get_user_data_element(user.user_data))
+        root.append(get_data_element('user_data', user.user_data))
     return root
+
 
 def get_registration_xml(user):
     return tostring(get_registration_element(user))
     
-def get_user_data_element(dict):
-    elem = safe_element("user_data")
+
+def get_data_element(name, dict):
+    elem = safe_element(name)
     for k, v in dict.items():
         sub_el = safe_element("data", v)
         sub_el.attrib = {"key": k}
