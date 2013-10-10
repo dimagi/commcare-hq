@@ -42,7 +42,7 @@ class HOPECase(CommCareCase):
     def admission_date(self):
         forms = self.forms_with_xmlns(self.delivery_xmlns)
         if forms:
-            return forms[0].get_form().get('adm_date')
+            return forms[0].get_form.get('adm_date')
         else:
             return None
 
@@ -85,7 +85,7 @@ class HOPECase(CommCareCase):
     def bpl_indicator(self):
         forms = self.forms_with_xmlns(self.registration_xmlns)
         if forms:
-            return forms[0].get_form().get('bpl_indicator')
+            return forms[0].get_form.get('bpl_indicator')
         else:
             return None
 
@@ -108,7 +108,7 @@ class HOPECase(CommCareCase):
     def discharge_date(self):
         forms = self.forms_with_xmlns(self.delivery_xmlns)
         if forms:
-            return forms[0].get_form().get('dis_date')
+            return forms[0].get_form.get('dis_date')
         else:
             return None
 
@@ -116,21 +116,21 @@ class HOPECase(CommCareCase):
     def education(self):
         forms = self.forms_with_xmlns(self.registration_xmlns)
         if forms:
-            return forms[0].get_form().get('education')
+            return forms[0].get_form.get('education')
         else:
             return None
 
     @property
     def existing_child_count(self):
         forms = self.forms_with_xmlns(self.registration_xmlns)
-        num_girls = forms[0].get_form().get('num_girls', 0) if forms else 0
+        num_girls = forms[0].get_form.get('num_girls', 0) if forms else 0
         num_boys = self.properties().get('num_boys', 0)
         return num_girls + num_boys
 
     @property
     def ifa_issue_forms(self):
         return [form for form in self.forms_with_xmlns(self.bp_xmlns)
-                if form.get_form().get('if_tablet_issued')]
+                if form.get_form.get('if_tablet_issued')]
 
     @property
     def ifa_issue_date(self):
@@ -161,7 +161,7 @@ class HOPECase(CommCareCase):
     def patient_reg_num(self):
         forms = self.forms_with_xmlns(self.delivery_xmlns)
         if forms:
-            return forms[0].get_form().get('patient_reg_form')
+            return forms[0].get_form.get('patient_reg_form')
         else:
             return None
 
@@ -173,7 +173,7 @@ class HOPECase(CommCareCase):
             return ''
         else:
             reg_form = forms[0]
-            if reg_form.get_form().get('jsy_beneficiary', False):
+            if reg_form.get_form.get('jsy_beneficiary', False):
                 return self.get_server_modified_date()
             else:
                 return ''
@@ -182,7 +182,7 @@ class HOPECase(CommCareCase):
     def time_of_birth(self):
         forms = self.forms_with_xmlns(self.delivery_xmlns)
         if forms:
-            return forms[0].get_form().get('time_of_birth')
+            return forms[0].get_form.get('time_of_birth')
         else:
             return None
 
