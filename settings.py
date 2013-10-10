@@ -613,12 +613,12 @@ LOGGING = {
             'propagate': True,
         },
         'celery.task': {
-            'handlers': ['console', 'file', 'couchlog'],
+            'handlers': ['console', 'file', 'couchlog', 'sentry'],
             'level': 'INFO',
             'propagate': True
         },
         'pillowtop': {
-            'handlers': ['pillowtop'],
+            'handlers': ['pillowtop', 'sentry'],
             'level': 'ERROR',
             'propagate': False,
         }
