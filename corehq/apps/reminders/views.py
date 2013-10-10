@@ -1,6 +1,7 @@
 from datetime import timedelta, datetime, time
 import json
 from couchdbkit import ResourceNotFound
+from django.contrib import messages
 from django.utils.decorators import method_decorator
 import pytz
 from django.core.urlresolvers import reverse
@@ -513,7 +514,15 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
         return super(CreateScheduledReminderView, self).dispatch(request, *args, **kwargs)
 
     def post(self, *args, **kwargs):
+        if self.schedule_form.is_valid():
+            self.process_schedule_form()
+        else:
+            messages.error(self.request, "There were errors saving your reminder.")
         return self.get(*args, **kwargs)
+
+    def process_schedule_form(self):
+        new_handler = CaseReminderHandler()
+        self.schedule_form.save(new_handler)
 
 
 class EditScheduledReminderView(CreateScheduledReminderView):
@@ -572,6 +581,9 @@ class EditScheduledReminderView(CreateScheduledReminderView):
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.handler_id])
+
+    def process_schedule_form(self):
+        self.schedule_form.save(self.reminder_handler)
 
 
 @reminders_permission
