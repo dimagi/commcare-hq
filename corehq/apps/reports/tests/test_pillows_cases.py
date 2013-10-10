@@ -1,6 +1,7 @@
 from django.utils.unittest.case import TestCase
 import simplejson
 from casexml.apps.case.xform import extract_case_blocks
+from corehq.pillows.base import VALUE_TAG
 from corehq.pillows.case import CasePillow
 from corehq.pillows.reportcase import ReportCasePillow
 from corehq.pillows.reportxform import ReportXFormPillow
@@ -446,7 +447,7 @@ EXAMPLE_CASE = {
 }
 
 
-class testPillowTopProcessing(TestCase):
+class testReportCaseProcessing(TestCase):
     def testXFormMapping(self):
         """
         Verify that a simple case doc will yield the basic mapping
@@ -538,8 +539,11 @@ class testPillowTopProcessing(TestCase):
         self.assertEqual(processed_case['actions'][0]['doc_type'], case['actions'][0]['doc_type'])
 
         #dynamic case properties #valued
-        self.assertEqual(processed_case['last_poop'].get('#value'), case['last_poop'])
-        self.assertEqual(processed_case['diaper_type'].get('#value'), case['diaper_type'])
-        self.assertTrue(isinstance(processed_case['prior_diapers'].get('#value', None), list))
-        self.assertEqual(processed_case['prior_diapers'].get('#value', None), case['prior_diapers'])
+        self.assertEqual(processed_case['last_poop'].get(VALUE_TAG), case['last_poop'])
+        self.assertEqual(processed_case['diaper_type'].get(VALUE_TAG), case['diaper_type'])
+        self.assertTrue(isinstance(processed_case['prior_diapers'], list))
+        for diaper in processed_case['prior_diapers']:
+            self.assertTrue(VALUE_TAG in diaper)
+
+        self.assertEqual(case['prior_diapers'], [x[VALUE_TAG] for x in processed_case['prior_diapers']])
 
