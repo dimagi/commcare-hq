@@ -258,7 +258,10 @@ class BasicPillow(object):
         if changes_dict.get('deleted', False):
             #override deleted behavior on consumers that care/deal with deletions
             return None
-        return changes_dict['doc']
+        if 'doc' in changes_dict:
+            return changes_dict['doc']
+        else:
+            return self.couch_db.open_doc(changes_dict['id'])
 
     def change_transform(self, doc_dict):
         """
