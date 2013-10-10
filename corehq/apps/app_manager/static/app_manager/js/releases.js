@@ -124,14 +124,23 @@ function ReleasesMain(o) {
     self.makeNewBuildEnabled = function () {
         if (self.buildState() === 'pending') {
             return false;
-        } else if (self.lastAppVersion() === undefined) {
+        }
+        self.getMoreSavedApps();
+        if (self.lastAppVersion() === undefined) {
             return self.doneFetching();
         } else {
             return self.lastAppVersion() !== self.appVersion();
         }
     };
     self.makeNewBuild = function () {
-        var comment = window.prompt("Please write a comment about the build you're making to help you remember later:");
+        if (!self.makeNewBuildEnabled()) {
+            window.alert("No new changes to deploy!");
+            return;
+        }
+        var comment = window.prompt(
+            "Please write a comment about the build you're making " +
+            "to help you remember later:"
+        );
         if (comment || comment === "") {
             $(this).find("input[name='comment']").val(comment);
         } else {
@@ -141,14 +150,14 @@ function ReleasesMain(o) {
         $.post(self.url('newBuild'), {
             comment: comment
         }).success(function (data) {
-                $('#build-errors-wrapper').html(data.error_html);
-                if (data.saved_app) {
-                    self.addSavedApp(SavedApp(data.saved_app), true);
-                }
-                self.buildState('');
-            }).error(function () {
-                self.buildState('error');
-            });
+            $('#build-errors-wrapper').html(data.error_html);
+            if (data.saved_app) {
+                self.getMoreSavedApps();
+            }
+            self.buildState('');
+        }).error(function () {
+            self.buildState('error');
+        });
     };
     // init
     setTimeout(function () {
