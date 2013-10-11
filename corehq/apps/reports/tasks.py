@@ -82,8 +82,8 @@ def create_metadata_export(download_id, domain, format, filename, datespan=None,
 @periodic_task(run_every=crontab(hour="*", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def daily_reports():    
     # this should get called every hour by celery
-    reps = ReportNotification.view("reportconfig/daily_notifications",
-                                   key=datetime.utcnow().hour,
+    reps = ReportNotification.view("reportconfig/all_notifications",
+                                   key=["daily", datetime.utcnow().hour, None],
                                    include_docs=True).all()
     for rep in reps:
         send_report.delay(rep._id)
@@ -92,8 +92,17 @@ def daily_reports():
 def weekly_reports():    
     # this should get called every hour by celery
     now = datetime.utcnow()
-    reps = ReportNotification.view("reportconfig/weekly_notifications",
-                                   key=[now.weekday(), now.hour],
+    reps = ReportNotification.view("reportconfig/all_notifications",
+                                   key=["weekly", now.hour, now.weekday()],
+                                   include_docs=True).all()
+    for rep in reps:
+        send_report.delay(rep._id)
+
+@periodic_task(run_every=crontab(hour="*", minute="1", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+def monthly_reports():
+    now = datetime.utcnow()
+    reps = ReportNotification.view("reportconfig/all_notifications",
+                                   key=["monthly", now.hour, now.day],
                                    include_docs=True).all()
     for rep in reps:
         send_report.delay(rep._id)
