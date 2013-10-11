@@ -373,8 +373,10 @@ class ElasticPillow(BasicPillow):
                 pillow_logging.error("ElasticPillow: error deleting route %s - ignoring: %s" % \
                               (self.get_doc_path(changes_dict['id']), ex))
             return None
-        else:
+        if 'doc' in changes_dict:
             return changes_dict['doc']
+        else:
+            return self.couch_db.open_doc(changes_dict['id'])
 
     @autoretry_connection()
     def doc_exists(self, doc_id):
