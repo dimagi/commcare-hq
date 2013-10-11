@@ -10,7 +10,7 @@
     var CASE_DETAILS = {};
 
     CASE_DETAILS.xform_api_url = "/a/{{ case.domain }}/api/v0.1/xform_es/";
-    CASE_DETAILS.xform_ids = {{ case.xform_ids|safe }};
+    CASE_DETAILS.xform_ids = {{ case.xform_ids|JSON }};
     CASE_DETAILS.xform_ajax_url = "/a/{{ case.domain }}/reports/case_data/{{ case.get_id }}/";
 </script>
 
