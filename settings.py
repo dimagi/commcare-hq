@@ -42,6 +42,7 @@ LANGUAGE_CODE = 'en-us'
 LANGUAGES = (
     ('en', 'English'),
     ('fr', 'French'),
+    ('fra', 'French'),  # we need this alias
     ('hin', 'Hindi'),
 )
 
@@ -238,6 +239,7 @@ HQ_APPS = (
     # custom reports
     'a5288',
     'custom.bihar',
+    'custom.penn_state',
     'dca',
     'custom.apps.gsid',
     'hsph',
@@ -613,12 +615,12 @@ LOGGING = {
             'propagate': True,
         },
         'celery.task': {
-            'handlers': ['console', 'file', 'couchlog'],
+            'handlers': ['console', 'file', 'couchlog', 'sentry'],
             'level': 'INFO',
             'propagate': True
         },
         'pillowtop': {
-            'handlers': ['pillowtop'],
+            'handlers': ['pillowtop', 'sentry'],
             'level': 'ERROR',
             'propagate': False,
         }
@@ -717,6 +719,7 @@ COUCHDB_APPS = [
     'crs_reports',
 
     # custom reports
+    'penn_state',
     'care_benin',
     'dca',
     'gsid',
@@ -880,6 +883,10 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
     'mvp-tiby',
 ]
 
+CUSTOM_MODULES = [
+    'custom.apps.crs_reports',
+]
+
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
 # mapping of domains to modules for those that aren't identical
@@ -898,6 +905,7 @@ DOMAIN_MODULE_MAP = {
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
+    'mikesproject': 'custom.penn_state',
     'mvp-potou': 'mvp',
     'mvp-sauri': 'mvp',
     'mvp-bonsaaso': 'mvp',
