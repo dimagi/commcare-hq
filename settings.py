@@ -904,6 +904,7 @@ ES_CASE_FULL_INDEX_DOMAINS = [
 # Adding a domain will not automatically index that domain's existing forms
 ES_XFORM_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
+    'pact',
     'uth-rhd-test',
     'mvp-bonsaaso',
     'mvp-koraro',
