@@ -50,6 +50,14 @@ class Location(Document):
         ).all()]
         return (cls.wrap(l) for l in iter_docs(cls.get_db(), list(relevant_ids)))
 
+    @classmethod
+    def by_domain(cls, domain):
+        relevant_ids = set([r['id'] for r in cls.get_db().view('locations/by_type',
+            reduce=False,
+            startkey=[domain],
+            endkey=[domain, {}],
+        ).all()])
+        return (cls.wrap(l) for l in iter_docs(cls.get_db(), list(relevant_ids)))
 
     @property
     def is_root(self):
