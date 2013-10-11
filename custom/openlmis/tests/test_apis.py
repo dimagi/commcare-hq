@@ -25,7 +25,9 @@ class ApiTest(TestCase):
         self.assertEqual(datetime.strptime('2013-08-19T11:19:09Z', ISO_FORMAT), f1.rss_meta.updated)
         self.assertEqual('FCcode20130819-044859', f1.code)
         self.assertEqual('FCname20130819-044859', f1.name)
-        self.assertEqual('Lvl3 Hospital', f1.metadata['type'])
+        self.assertEqual('Lvl3 Hospital', f1.type)
+        self.assertEqual(-555.5555, f2.latitude)
+        self.assertEqual(444.4444, f2.longitude)
         self.assertEqual('Testing description', f1.metadata['description'])
         self.assertEqual('9711231305', f1.metadata['mainPhone'])
         self.assertEqual('9711231305', f1.metadata['fax'])
@@ -38,8 +40,6 @@ class ApiTest(TestCase):
         self.assertEqual('Address2', f2.metadata['address2'])
         self.assertEqual('virtualgeozone', f2.metadata['geographicZone'])
         self.assertEqual(100, f2.metadata['catchmentPopulation'])
-        self.assertEqual(-555.5555, f2.metadata['latitude'])
-        self.assertEqual(444.4444, f2.metadata['longitude'])
         self.assertEqual(4545.4545, f2.metadata['altitude'])
 
 

@@ -40,6 +40,22 @@ class Facility(RssWrapper):
     def name(self):
         return self.metadata['name']
 
+    @property
+    def type(self):
+        return self.metadata['type']
+
+    @property
+    def latitude(self):
+        return self.metadata['latitude']
+
+    @property
+    def longitude(self):
+        return self.metadata['longitude']
+
+    @property
+    def parent_id(self):
+        return self.metadata.get('ParentfacilityID', None)
+
 
 class FacilityProgramLink(RssWrapper):
     pass
