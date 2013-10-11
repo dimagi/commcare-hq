@@ -125,6 +125,19 @@ class HOPECase(CommCareCase):
         forms = self.forms_with_xmlns(self.registration_xmlns)
         num_girls = forms[0].get_form.get('num_girls', 0) if forms else 0
         num_boys = self.properties().get('num_boys', 0)
+
+        # The form fields are strings; the coercion to int is deliberately
+        # isolated here so unrelated errors do not get caught
+        try:
+            num_girls = int(num_girls)
+        except ValueError:
+            num_girls = 0
+
+        try:
+            num_boys = int(num_boys)
+        except ValueError:
+            num_boys = 0
+
         return num_girls + num_boys
 
     @property
