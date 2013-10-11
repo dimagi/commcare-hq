@@ -394,7 +394,7 @@ def archive_commcare_user(request, domain, user_id, is_active=False):
     return HttpResponse(json.dumps(dict(
         success=True,
         message=_("User '{user}' has successfully been {action}.").format(
-            username=user.raw_username,
+            user=user.raw_username,
             action=_("Un-Archived") if user.is_active else _("Archived"),
         )
     )))
