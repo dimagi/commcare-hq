@@ -81,8 +81,7 @@ class OpenLMISEndpoint(object):
     """
 
     def __init__(self, base_uri):
-        if base_uri.endswith("/"):
-            base_uri = base_uri[:-1]
+        self.base_uri = base_uri.rstrip('/')
         self.base_uri = base_uri
 
     @property
