@@ -660,6 +660,7 @@ def deploy():
         if env.should_migrate:
             execute(migrate)
         execute(_do_collectstatic)
+        execute(do_update_django_locales)
         execute(version_static)
         if env.should_migrate:
             execute(flip_es_aliases)
@@ -978,9 +979,21 @@ def update_apache_conf():
     sudo('a2ensite cchq', user='root')
     sudo('service apache2 reload', user='root')
 
+@task
+def update_django_locales():
+    do_update_django_locales()
+
+
+@roles('django_app', 'django_celery', 'staticfiles', 'django_monolith')
+@parallel
+def do_update_django_locales():
+    with cd(env.code_root):
+        command = '{virtualenv_root}/bin/python manage.py update_django_locales'.format(
+            virtualenv_root=env.virtualenv_root,
+        )
+        sudo(command, user=env.sudo_user)
 
 # tests
-
 
 @task
 def selenium_test():
