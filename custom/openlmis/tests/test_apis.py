@@ -1,12 +1,17 @@
 from datetime import datetime
 import os
 from django.test import TestCase
+from corehq.apps.commtrack.helpers import make_supply_point
+from corehq.apps.commtrack.tests import bootstrap_domain
+from corehq.apps.locations.models import Location
 from custom.openlmis.api import get_recent_facilities, Facility, get_facility_programs, FacilityProgramLink
+from custom.openlmis.commtrack import sync_supply_point_to_openlmis
+from custom.openlmis.tests.mock_api import MockOpenLMISEndpoint
 
 
 ISO_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
-class ApiTest(TestCase):
+class FeedApiTest(TestCase):
 
     def setUp(self):
         self.datapath = os.path.join(os.path.dirname(__file__), 'data')
@@ -48,3 +53,18 @@ class ApiTest(TestCase):
         programs = get_facility_programs((os.path.join(self.datapath, 'facility_programs.rss')))
         for p in programs:
             self.assertEqual(FacilityProgramLink, type(p))
+
+
+class PostApiTest(TestCase):
+
+    def setUp(self):
+        self.domain = 'post-api-test'
+        bootstrap_domain(self.domain)
+        self.api = MockOpenLMISEndpoint("uri://mock/lmis/endpoint")
+
+    def testCreateVirtualFacility(self):
+        loc = Location(site_code='1234', name='beavis', domain=self.domain,
+                       type='chw')
+        loc.save()
+        sp = make_supply_point(self.domain, loc)
+        self.assertTrue(sync_supply_point_to_openlmis(sp, self.api))

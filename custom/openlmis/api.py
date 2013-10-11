@@ -2,6 +2,8 @@ from datetime import datetime
 import json
 import feedparser
 import time
+import requests
+from custom.openlmis.exceptions import OpenLMISAPIException
 
 
 class RssMetadata(object):
@@ -73,3 +75,26 @@ def get_facility_programs(uri_or_text):
         yield FacilityProgramLink(RssMetadata.from_entry(entry))
 
 
+class OpenLMISEndpoint(object):
+    """
+    Endpoint for interfacing with the OpenLMIS APIs
+    """
+
+    def __init__(self, base_uri):
+        if base_uri.endswith("/"):
+            base_uri = base_uri[:-1]
+        self.base_uri = base_uri
+
+    @property
+    def create_virtual_facility_url(self):
+        return '{base}/agent.json'.format(base=self.base_uri)
+
+    def create_virtual_facility(self, facility_data):
+        response = requests.post(self.create_virtual_facility_url,
+                                 data=json.dumps(facility_data))
+        # todo: error handling and such
+        res = response.json()
+        if res['Success']:
+            return True
+        else:
+            raise OpenLMISAPIException(res['error'])

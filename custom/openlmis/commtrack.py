@@ -32,3 +32,30 @@ def sync_facility_to_supply_point(domain, facility):
     else:
         # currently impossible
         raise NotImplemented('updating existing supply points is not yet supported')
+
+
+def supply_point_to_json(supply_point):
+    base = {
+        'agentCode': supply_point.location.site_code,
+        'agentName': supply_point.name,
+        'active': not supply_point.closed,
+    }
+    if supply_point.location.parent:
+        base['parentFacilityCode'] = supply_point.location.parent.external_id
+
+    # todo phone number
+    return base
+
+
+def sync_supply_point_to_openlmis(supply_point, openlmis_endpoint):
+    """
+    https://github.com/OpenLMIS/documents/blob/master/4.1-CreateVirtualFacility%20API.md
+    {
+        "agentCode":"A2",
+        "agentName":"AgentVinod",
+        "parentFacilityCode":"F10",
+        "phoneNumber":"0099887766",
+        "active":"true"
+    }
+    """
+    return openlmis_endpoint.create_virtual_facility(supply_point_to_json(supply_point))
