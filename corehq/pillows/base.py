@@ -10,7 +10,7 @@ def map_types(item, mapping):
         return convert_property_dict(item, mapping)
     elif isinstance(item, list):
         return [map_types(x, mapping) for x in item]
-    elif isinstance:
+    else:
         return {VALUE_TAG: item}
 
 def convert_property_dict(sub_dict, mapping, override_root_keys=None):
@@ -28,7 +28,7 @@ def convert_property_dict(sub_dict, mapping, override_root_keys=None):
     for k, v in sub_dict.items():
         if k in mapping.get('properties', {}) or k in override_root_keys:
             continue
-        dynamic_mapping = mapping.get('dynamic', 'notset')
+        dynamic_mapping = mapping.get('dynamic', True)
         sub_mapping = mapping.get('properties', {}).get(k, {})
         if dynamic_mapping is not False:
             sub_dict[k] = map_types(v, sub_mapping)
@@ -52,7 +52,6 @@ def restore_property_dict(report_dict_item):
             else:
                 restored[k] = restore_property_dict(v)
         else:
-            #not a dict, so it's the "passed over" types
             restored[k] = v
 
     return restored
