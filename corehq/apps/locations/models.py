@@ -1,6 +1,6 @@
 from couchdbkit.ext.django.schema import *
 import itertools
-from dimagi.utils.couch.database import get_db
+from dimagi.utils.couch.database import get_db, iter_docs
 from django import forms
 from django.core.urlresolvers import reverse
 
@@ -43,12 +43,13 @@ class Location(Document):
     @classmethod
     def filter_by_type(cls, domain, loc_type, root_loc=None):
         loc_id = root_loc._id if root_loc else None
-        # todo: could be a lot of locations so should use iter_docs
-        return cls.view('locations/by_type',
-                        reduce=False,
-                        startkey=[domain, loc_type, loc_id],
-                        endkey=[domain, loc_type, loc_id, {}],
-                        include_docs=True).all()
+        relevant_ids = [r['id'] for r in cls.get_db().view('locations/by_type',
+            reduce=False,
+            startkey=[domain, loc_type, loc_id],
+            endkey=[domain, loc_type, loc_id, {}],
+        ).all()]
+        return (cls.wrap(l) for l in iter_docs(cls.get_db(), list(relevant_ids)))
+
 
     @property
     def is_root(self):
