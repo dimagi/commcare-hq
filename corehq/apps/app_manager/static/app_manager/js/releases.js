@@ -152,7 +152,7 @@ function ReleasesMain(o) {
         }).success(function (data) {
             $('#build-errors-wrapper').html(data.error_html);
             if (data.saved_app) {
-                self.getMoreSavedApps();
+                self.addSavedApp(SavedApp(data.saved_app), true);
             }
             self.buildState('');
         }).error(function () {
