@@ -1,19 +1,15 @@
 import os
-from datetime import date
-from django.conf import settings
 from django.test import TestCase
-from dimagi.utils.post import post_authenticated_data
+from couchforms.util import post_from_settings
 from couchforms.models import XFormInstance
+
 
 class TestNamespaces(TestCase):
     
     def testClosed(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "namespaces.xml")
         xml_data = open(file_path, "rb").read()
-        doc_id, errors = post_authenticated_data(xml_data, 
-                                                 settings.XFORMS_POST_URL, 
-                                                 settings.COUCH_USERNAME,
-                                                 settings.COUCH_PASSWORD)
+        doc_id = post_from_settings(xml_data)
         xform = XFormInstance.get(doc_id)
         self.assertEqual("http://commcarehq.org/test/ns", xform.xmlns)
         self.assertEqual("no namespace here", xform.xpath("form/empty"))
@@ -25,4 +21,3 @@ class TestNamespaces(TestCase):
         self.assertEqual("gc", xform.xpath("form/parent/childwithelement/grandchild"))
         self.assertEqual("lcwo", xform.xpath("form/parent/lastchildwithout"))
         self.assertEqual("nothing here either", xform.xpath("form/lastempty"))
-        
