@@ -1,7 +1,7 @@
 import os
 from datetime import date
 from django.test import TestCase
-from couchforms.util import post_from_settings
+from couchforms import create_xform_from_xml
 from couchforms.models import XFormInstance
 
 
@@ -10,7 +10,7 @@ class TestMeta(TestCase):
     def testClosed(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "meta.xml")
         xml_data = open(file_path, "rb").read()
-        doc_id = post_from_settings(xml_data)
+        doc_id = create_xform_from_xml(xml_data)
         xform = XFormInstance.get(doc_id)
         self.assertNotEqual(None, xform.metadata)
         self.assertEqual(date(2010,07,22), xform.metadata.timeStart.date())
@@ -40,7 +40,7 @@ class TestMeta(TestCase):
         
         file_path = os.path.join(os.path.dirname(__file__), "data", "decimalmeta.xml")
         xml_data = open(file_path, "rb").read()
-        doc_id = post_from_settings(xml_data)
+        doc_id = create_xform_from_xml(xml_data)
         xform = XFormInstance.get(doc_id)
         self.assertEqual(xform.metadata.appVersion, '2.0')
         self.assertEqual(xform.metadata.to_json(), {
@@ -59,7 +59,7 @@ class TestMeta(TestCase):
     def testMetaBadUsername(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "meta_bad_username.xml")
         xml_data = open(file_path, "rb").read()
-        doc_id = post_from_settings(xml_data)
+        doc_id = create_xform_from_xml(xml_data)
         xform = XFormInstance.get(doc_id)
         self.assertEqual(xform.metadata.appVersion, '2.0')
 
@@ -79,7 +79,7 @@ class TestMeta(TestCase):
     def testMetaAppVersionDict(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "meta_dict_appversion.xml")
         xml_data = open(file_path, "rb").read()
-        doc_id = post_from_settings(xml_data)
+        doc_id = create_xform_from_xml(xml_data)
         xform = XFormInstance.get(doc_id)
         self.assertEqual(xform.metadata.appVersion, '2.0')
 

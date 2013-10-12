@@ -1,6 +1,6 @@
 import os
 from django.test import TestCase
-from couchforms.util import post_from_settings
+from couchforms import create_xform_from_xml
 from couchforms.models import XFormInstance
 
 
@@ -9,7 +9,7 @@ class TestNamespaces(TestCase):
     def testClosed(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "namespaces.xml")
         xml_data = open(file_path, "rb").read()
-        doc_id = post_from_settings(xml_data)
+        doc_id = create_xform_from_xml(xml_data)
         xform = XFormInstance.get(doc_id)
         self.assertEqual("http://commcarehq.org/test/ns", xform.xmlns)
         self.assertEqual("no namespace here", xform.xpath("form/empty"))

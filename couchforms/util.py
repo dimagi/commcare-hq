@@ -13,7 +13,6 @@ except ImportError:
 from couchforms.models import XFormInstance, XFormDuplicate, XFormError, XFormDeprecated,\
     SubmissionErrorLog, DefaultAuthContext
 import logging
-from couchdbkit.resource import RequestFailed
 from couchforms.signals import xform_saved
 from dimagi.utils.couch import uid
 import re
@@ -34,7 +33,7 @@ class SubmissionError(Exception, UnicodeMixIn):
         return str(self.error_log)
 
 
-def extract_meta_instance_id(form):
+def _extract_meta_instance_id(form):
     """Takes form json (as returned by xml2json)"""
     if form.get('Meta'):
         # bhoma, 0.9 commcare
@@ -55,15 +54,21 @@ def extract_meta_instance_id(form):
         return None
 
 
-def post_from_settings(instance, _id=None):
+def create_xform_from_xml(xml_string, _id=None):
+    """
+    create and save an XFormInstance from an xform payload (xml_string)
+    optionally set the doc _id to a predefined value (_id)
+    return doc _id of the created doc
+
+    """
     import xml2json
-    name, json_form = xml2json.xml2json(instance)
+    name, json_form = xml2json.xml2json(xml_string)
     json_form['#type'] = name
     xform = XFormInstance(
         _attachments={
             "form.xml": {
                 "content_type": "text/xml",
-                "data": instance,
+                "data": xml_string,
             },
         },
         form=json_form,
@@ -71,14 +76,10 @@ def post_from_settings(instance, _id=None):
         received_on=datetime.datetime.utcnow(),
         **{"#export_tag": "xmlns"}
     )
-    _id = _id or extract_meta_instance_id(json_form)
+    _id = _id or _extract_meta_instance_id(json_form)
     if _id:
         xform._id = _id
-    try:
-        xform.save()
-    except ResourceConflict:
-        logging.info(xform._id)
-        raise
+    xform.save()
     return xform.get_id
 
 
@@ -101,7 +102,7 @@ def _post_xform_to_couch(instance, attachments=None):
     """
     attachments = attachments or {}
     try:
-        doc_id = post_from_settings(instance)
+        doc_id = create_xform_from_xml(instance)
         try:
             xform = XFormInstance.get(doc_id)
             for key, value in attachments.items():
@@ -199,7 +200,7 @@ def _handle_id_conflict(instance, attachments):
     else:
         # follow standard dupe handling
         new_doc_id = uid.new()
-        new_form_id = post_from_settings(instance, _id=new_doc_id)
+        new_form_id = create_xform_from_xml(instance, _id=new_doc_id)
 
         # create duplicate doc
         # get and save the duplicate to ensure the doc types are set correctly
