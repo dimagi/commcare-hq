@@ -7,7 +7,7 @@ from custom.openlmis.commtrack import sync_openlmis_program
 
 TEST_DOMAIN = 'openlmis-commtrack-program-test'
 
-class FacilitySyncTest(TestCase):
+class ProgramSyncTest(TestCase):
 
     def setUp(self):
         self.datapath = os.path.join(os.path.dirname(__file__), 'data')
