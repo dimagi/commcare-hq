@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from django.contrib import messages
 import logging
 import math
@@ -9,10 +9,8 @@ from corehq.apps.reports.models import HQUserType, TempCommCareUser
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import user_id_to_username
 from couchexport.util import SerializableFunction
-from couchforms.filters import instances
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
-from dimagi.utils.modules import to_function
 from django.http import Http404
 import pytz
 from corehq.apps.domain.models import Domain
@@ -21,7 +19,7 @@ from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import json_request
 from django.conf import settings
-import os
+from django.utils.importlib import import_module
 
 
 def make_form_couch_key(domain, by_submission_time=True,
@@ -430,12 +428,7 @@ def datespan_from_beginning(domain, default_days, timezone):
     datespan.is_default = True
     return datespan
 
-def get_installed_custom_modules_names():
-    path = os.path.dirname('custom/apps/')
-    installed_custom_module_names = []
+def get_installed_custom_modules():
 
-    for module in os.listdir(path):
-        if os.path.isdir(path + '/' + module) == True and os.path.exists(path + '/' + module + '/urls.py') and 'urlpatterns' in open(path + '/' + module + '/urls.py').read():
-            installed_custom_module_names.append(module)
-    return installed_custom_module_names
+    return [import_module(module) for module in settings.CUSTOM_MODULES]
 

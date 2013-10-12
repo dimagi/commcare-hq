@@ -1,19 +1,23 @@
 from __future__ import absolute_import
 from xml.etree import ElementTree
+from casexml.apps.phone.xml import get_data_element
 
 """
 This module is used to generate xml responses for user registrations.
 Spec: https://bitbucket.org/javarosa/javarosa/wiki/UserRegistrationAPI
 """
-# this should eventually be harmonized with the other responses, but 
+# this should eventually be harmonized with the other responses, but
 # has been implemented quick and dirty
 from casexml.apps.phone import xml as phone_xml
 from receiver import xml as receiver_xml 
 from receiver.xml import ResponseNature
 
+
 def get_response(user, created):
-    if created:   text = "Thanks for registering! Your username is %s" % user.username
-    else:         text = "Thanks for updating your information, %s." % user.username
+    if created:
+        text = "Thanks for registering! Your username is %s" % user.username
+    else:
+        text = "Thanks for updating your information, %s." % user.username
         
     nature = ResponseNature.SUBMIT_USER_REGISTERED if created else \
              ResponseNature.SUBMIT_USER_UPDATED
@@ -31,6 +35,10 @@ def group_fixture(groups, user):
             </group>
             <group id="OUPIZXCVHKAJSDFEWL">
                 <name>Team Disaster</name>
+                <group_data>
+                    <data key="leader">colonel panic</data>
+                    <data key="skills">hatin</data>
+                </group_data>
             </group>
         </groups>
     </fixture>
@@ -42,5 +50,7 @@ def group_fixture(groups, user):
         xGroup = ElementTree.SubElement(xGroups, 'group', attrib={'id': group.get_id})
         xName = ElementTree.SubElement(xGroup, 'name')
         xName.text = group.name
+        if group.metadata:
+            xGroup.append(get_data_element('group_data', group.metadata))
 
     return xFixture

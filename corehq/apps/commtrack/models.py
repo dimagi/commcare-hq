@@ -443,6 +443,7 @@ class SupplyPointCase(CommCareCase):
         id = uuid.uuid4().hex
         user_id = const.get_commtrack_user_id(domain)
         owner_id = owner_id or user_id
+        kwargs = {'external_id': location.external_id} if location.external_id else {}
         caseblock = CaseBlock(
             case_id=id,
             create=True,
@@ -453,12 +454,14 @@ class SupplyPointCase(CommCareCase):
             case_type=const.SUPPLY_POINT_CASE_TYPE,
             update={
                 'location_id': location._id,
-            }
+            },
+            **kwargs
         )
         return cls._from_caseblock(domain, caseblock)
 
     def update_from_location(self, location):
         assert self.domain == location.domain
+        kwargs = {'external_id': location.external_id} if location.external_id else {}
         caseblock = CaseBlock(
             case_id=self._id,
             create=False,
@@ -467,7 +470,8 @@ class SupplyPointCase(CommCareCase):
             user_id=const.get_commtrack_user_id(location.domain),
             update={
                 'location_id': location._id,
-            }
+            },
+            **kwargs
         )
         return SupplyPointCase._from_caseblock(location.domain, caseblock)
 

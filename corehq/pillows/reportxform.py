@@ -1,9 +1,6 @@
-import copy
-
 from django.conf import settings
 
-from casexml.apps.case.xform import extract_case_blocks
-from corehq.pillows.base import convert_properties
+from corehq.pillows.base import convert_property_dict
 from .mappings.reportxform_mapping import REPORT_XFORM_INDEX, REPORT_XFORM_MAPPING
 from .xform import XFormPillow
 
@@ -34,7 +31,7 @@ class ReportXFormPillow(XFormPillow):
                 return None
 
             #after basic transforms for stupid type mistakes are done, walk all properties.
-            convert_properties(doc_ret['form'], self.default_mapping['properties']['form'], override_root_keys=['case'])
+            convert_property_dict(doc_ret['form'], self.default_mapping['properties']['form'], override_root_keys=['case'])
             return doc_ret
         else:
             return None

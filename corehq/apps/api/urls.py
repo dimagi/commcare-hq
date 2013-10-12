@@ -48,6 +48,7 @@ API_LIST = (
         v0_4.XFormInstanceResource,
         v0_4.RepeaterResource,
         v0_4.SingleSignOnResource,
+        v0_4.HOPECaseResource,
         FixtureResource,
         ReportResource,
     ))

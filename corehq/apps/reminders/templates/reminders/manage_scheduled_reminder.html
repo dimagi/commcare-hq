@@ -55,6 +55,10 @@
         {% crispy event_form event_form.helper_general %}
     </script>
 
+    <script type="text/html" id="event-timeouts-template">
+        {% crispy event_form event_form.helper_timeouts %}
+    </script>
+
     <script type="text/html" id="event-message-length-template">
         <span class="alert"
               data-bind="css: { 'alert-error': isMessageLong, 'alert-info': isSingleMessage }">

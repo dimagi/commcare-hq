@@ -115,7 +115,9 @@ class EditLocationView(NewLocationView):
 
     @property
     def page_name(self):
-        return mark_safe(_("Edit %s <small>%s</small>") % (self.location.name, self.location.location_type))
+        return mark_safe(_("Edit {name} <small>{type}</small>").format(
+            name=self.location.name, type=self.location.location_type
+        ))
 
     @property
     def page_url(self):
