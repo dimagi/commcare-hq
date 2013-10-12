@@ -1,4 +1,5 @@
 from corehq.apps.commtrack.helpers import make_supply_point
+from corehq.apps.commtrack.models import Program
 from corehq.apps.locations.models import Location
 
 
@@ -33,6 +34,23 @@ def sync_facility_to_supply_point(domain, facility):
         # currently impossible
         raise NotImplemented('updating existing supply points is not yet supported')
 
+
+def get_program(domain, lmis_program):
+    # todo
+    return None
+
+
+def sync_openlmis_program(domain, lmis_program):
+    program = get_program(domain, lmis_program)
+    if program is None:
+        program = Program(domain=domain)
+    else:
+        # currently impossible
+        raise NotImplemented('updating existing programs is not yet supported')
+    program.name = lmis_program.name
+    program.code = lmis_program.code
+    program.save()
+    return program
 
 def supply_point_to_json(supply_point):
     base = {
