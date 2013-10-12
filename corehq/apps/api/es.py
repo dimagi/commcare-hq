@@ -205,11 +205,23 @@ class CaseES(ESView):
     """
     index = "hqcases"
 
+class ReportCaseES(ESView):
+    index = 'report_cases'
+
+
 class FullCaseES(ESView):
     """
     Fully indexed case index elasticsearch endpoint.
     """
     index = "full_cases"
+
+    def __init__(self, domain):
+        super(FullCaseES, self).__init__(domain)
+        logging.warning("FullCases are on the way out, replace now!")
+
+    def run_query(self, es_query, es_type=None):
+        logging.warning("FullCaseES.run_query are on the way out, replace now!")
+        return super(FullCaseES, self).run_query(es_query)
 
 
 
@@ -317,8 +329,20 @@ class XFormES(ESView):
             query['query']['filtered']['filter']['and'].append({"term": {k.lower(): v.lower()}})
         return query
 
+
+
 class FullXFormES(XFormES):
     index = 'full_xforms'
+
+    def __init__(self, domain):
+        super(FullXFormES, self).__init__(domain)
+        logging.warning("FullXForms are on the way out, replace now!")
+
+
+    def run_query(self, es_query):
+        logging.warning("FullXForms.run_query are on the way out, replace now!")
+        return super(FullXFormES, self).run_query(es_query)
+
 
 def report_term_filter(terms, mapping):
     """convert terms to correct #value term queries based upon the mapping
@@ -341,7 +365,6 @@ def report_term_filter(terms, mapping):
             if is_property and 'properties' in curr_mapping[sub_term]:
                 curr_mapping = curr_mapping[sub_term]['properties']
     return ret_terms
-
 
 class ReportXFormES(XFormES):
     index = 'report_xforms'
