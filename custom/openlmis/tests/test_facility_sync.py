@@ -7,7 +7,7 @@ from custom.openlmis.api import get_recent_facilities, Facility, get_facility_pr
 from custom.openlmis.commtrack import sync_facility_to_supply_point
 
 
-TEST_DOMAIN = 'openlmis-commtrack-test'
+TEST_DOMAIN = 'openlmis-commtrack-facility-test'
 
 class FacilitySyncTest(TestCase):
 
@@ -16,7 +16,6 @@ class FacilitySyncTest(TestCase):
         bootstrap_domain(TEST_DOMAIN)
         delete_all_cases()
         for loc in Location.by_domain(TEST_DOMAIN):
-            print 'deleting %s' % loc
             loc.delete()
 
     def testCreateSupplyPointFromFacility(self):
