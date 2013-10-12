@@ -1,6 +1,6 @@
 from django.core.urlresolvers import NoReverseMatch, reverse
 from django.http import Http404
-from corehq.apps.api.es import FullCaseES, ReportXFormES
+from corehq.apps.api.es import ReportCaseES, ReportXFormES
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils import html
@@ -17,7 +17,7 @@ class PactCHWProfileReport(PactDrilldownReportMixin, PactElasticTabularReportMix
     view_mode = 'info'
     ajax_pagination = True
     xform_es = ReportXFormES(PACT_DOMAIN)
-    case_es = FullCaseES(PACT_DOMAIN)
+    case_es = ReportCaseES(PACT_DOMAIN)
     default_sort = {"received_on": "desc"}
 
     name = "CHW Profile"
@@ -45,17 +45,13 @@ class PactCHWProfileReport(PactDrilldownReportMixin, PactElasticTabularReportMix
 
     def get_assigned_patients(self):
         """get list of patients and their submissions on who this chw is assigned as primary hp"""
-        fields = ["_id", "name", "pactid", "hp_status", "dot_status"]
+        fields = ["_id", "name", "pactid.#value", "hp_status.#value", "dot_status.#value"]
         case_query = self.case_es.base_query(
-            terms={'type': PACT_CASE_TYPE, 'hp': self.get_user().raw_username}, fields=fields,
+            terms={'type': PACT_CASE_TYPE, 'hp.#value': self.get_user().raw_username}, fields=fields,
             size=100)
 
-        case_query['filter']['and'].append({'not': {'term': {'hp_status': 'discharged'}}})
+        case_query['filter']['and'].append({'not': {'term': {'hp_status.#value': 'discharged'}}})
         chw_patients_res = self.case_es.run_query(case_query)
-
-        case_ids = [x['fields']['_id'] for x in chw_patients_res['hits']['hits']]
-        #todo, facet this on num submits?
-
         assigned_patients = [x['fields'] for x in chw_patients_res['hits']['hits']]
 
         for x in assigned_patients:

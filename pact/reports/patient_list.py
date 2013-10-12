@@ -1,7 +1,7 @@
 from django.core.urlresolvers import  NoReverseMatch
 from django.utils import html
 
-from corehq.apps.api.es import FullCaseES, ReportXFormES
+from corehq.apps.api.es import ReportCaseES, ReportXFormES
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.fields import  ReportSelectField
 from corehq.apps.users.models import CommCareUser
@@ -74,14 +74,14 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
         'pact.reports.patient_list.HPStatusField',
         'pact.reports.patient_list.DOTStatus',
     ]
-    case_es = FullCaseES(PACT_DOMAIN)
+    case_es = ReportCaseES(PACT_DOMAIN)
     xform_es = ReportXFormES(PACT_DOMAIN)
 
     def get_pact_cases(self):
         domain = PACT_DOMAIN
         query = self.case_es.base_query(start=0, size=None)
 
-        query['fields'] = ['_id', 'name', 'pactid']
+        query['fields'] = ['_id', 'name', 'pactid.#value']
         results = self.case_es.run_query(query)
         for res in results['hits']['hits']:
             yield res['fields']
@@ -151,12 +151,12 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
         fields = [
             "_id",
             "name",
-            "pactid",
+            "pactid.#value",
             "opened_on",
             "modified_on",
-            "hp_status",
-            "hp",
-            "dot_status",
+            "hp_status.#value",
+            "hp.#value",
+            "dot_status.#value",
             "closed_on",
             "closed"
         ]
@@ -164,7 +164,6 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
                                              start=self.pagination.start,
                                              size=self.pagination.count)
         full_query['sort'] = self.get_sorting_block(),
-
 
         def status_filtering(slug, field, prefix, any_field, default):
             if self.request.GET.get(slug, None) is not None:
@@ -189,13 +188,13 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
                         field_filter = {"prefix": {field: field_status_prefix.lower()}}
                         full_query['filter']['and'].append(field_filter)
 
-        status_filtering(DOTStatus.slug, "dot_status", "DOT", DOTStatus.ANY_DOT, None)
-        status_filtering(HPStatusField.slug, "hp_status", "HP", HPStatusField.ANY_HP, HPStatusField.ANY_HP)
+        status_filtering(DOTStatus.slug, "dot_status.#value", "DOT", DOTStatus.ANY_DOT, None)
+        status_filtering(HPStatusField.slug, "hp_status.#value", "HP", HPStatusField.ANY_HP, HPStatusField.ANY_HP)
 
         #primary_hp filter from the user filter
         if self.request.GET.get(PactPrimaryHPField.slug, "") != "":
             primary_hp_term = self.request.GET[PactPrimaryHPField.slug]
-            primary_hp_filter = {"term": {"hp": primary_hp_term}}
+            primary_hp_filter = {"term": {"hp.#value": primary_hp_term}}
             full_query['filter']['and'].append(primary_hp_filter)
         return self.case_es.run_query(full_query)
 

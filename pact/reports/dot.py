@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import uuid
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.api.es import FullCaseES, ReportXFormES
+from corehq.apps.api.es import ReportCaseES, ReportXFormES
 from corehq.apps.reports.fields import  ReportSelectField
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
@@ -28,15 +28,15 @@ class PactDOTPatientField(ReportSelectField):
     @classmethod
     def get_pact_cases(cls):
         #query couch to get reduce count of all PACT cases
-        case_es = FullCaseES(PACT_DOMAIN)
+        case_es = ReportCaseES(PACT_DOMAIN)
         total_count = CommCareCase.get_db().view('hqcase/types_by_domain',
                                                  key=["pact", PACT_CASE_TYPE]).first().get('value', 100)
-        fields = ['_id', 'name', 'pactid']
+        fields = ['_id', 'name', 'pactid.#value']
         query = case_es.base_query(terms={'type': PACT_CASE_TYPE},
                                    fields=fields,
                                    start=0,
                                    size=total_count)
-        query['filter']['and'].append({"prefix": {"dot_status": "dot"}})
+        query['filter']['and'].append({"prefix": {"dot_status.#value": "dot"}})
 
         results = case_es.run_query(query)
         for res in results['hits']['hits']:
