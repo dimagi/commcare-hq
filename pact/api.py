@@ -14,7 +14,7 @@ from django.http import Http404, HttpResponse
 from django.core.cache import cache
 
 from corehq.apps.api.domainapi import DomainAPI
-from corehq.apps.api.es import FullCaseES, FullXFormES
+from corehq.apps.api.es import FullCaseES, ReportXFormES
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.domain.decorators import login_or_digest
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
@@ -90,7 +90,7 @@ def get_cloudcare_url(case_id, mode):
 
 
 class PactFormAPI(DomainAPI):
-    xform_es = FullXFormES(PACT_DOMAIN)
+    xform_es = ReportXFormES(PACT_DOMAIN)
     case_es = FullCaseES(PACT_DOMAIN)
 
     @classmethod
@@ -111,7 +111,6 @@ class PactFormAPI(DomainAPI):
         """
         Download prior progress note submissions for local access
         """
-
         db = XFormInstance.get_db()
         couch_user = CouchUser.from_django_user(self.request.user)
         username = couch_user.raw_username
@@ -127,15 +126,15 @@ class PactFormAPI(DomainAPI):
                 "filtered": {
                     "filter": {
                         "and": [
-                            { "term": { "domain.exact": "pact" } },
-                            { "term": { "form.#type": "progress_note" } },
-                            { "term": { "form.meta.username": username } }
+                            {"term": {"domain.exact": "pact"}},
+                            {"term": {"form.#type": "progress_note"}},
+                            {"term": {"form.meta.username": username}}
                         ]
                     },
-                    "query": { "match_all": {} }
+                    "query": {"match_all": {}}
                 }
             },
-            "sort": { "received_on": "asc" },
+            "sort": {"received_on": "asc"},
             "size": limit_count,
             "fields": ['_id']
         }

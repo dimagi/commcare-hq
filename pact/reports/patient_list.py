@@ -1,7 +1,7 @@
 from django.core.urlresolvers import  NoReverseMatch
 from django.utils import html
 
-from corehq.apps.api.es import FullCaseES, FullXFormES
+from corehq.apps.api.es import FullCaseES, ReportXFormES
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.fields import  ReportSelectField
 from corehq.apps.users.models import CommCareUser
@@ -75,7 +75,7 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
         'pact.reports.patient_list.DOTStatus',
     ]
     case_es = FullCaseES(PACT_DOMAIN)
-    xform_es = FullXFormES(PACT_DOMAIN)
+    xform_es = ReportXFormES(PACT_DOMAIN)
 
     def get_pact_cases(self):
         domain = PACT_DOMAIN
@@ -102,7 +102,6 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
         return headers
 
     def case_submits_facet_dict(self, limit):
-        case_type = PACT_CASE_TYPE
         query = query_per_case_submissions_facet(self.request.domain, limit=limit)
         results = self.xform_es.run_query(query)
         case_id_count_map = {}
@@ -148,21 +147,22 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
 
 
     @property
-    @memoized
     def es_results(self):
-        fields= [
-                "_id",
-                "name",
-                "pactid",
-                "opened_on",
-                "modified_on",
-                "hp_status",
-                "hp",
-                "dot_status",
-                "closed_on",
-                "closed"
-            ]
-        full_query = self.case_es.base_query(terms={'type': PACT_CASE_TYPE }, fields=fields, start=self.pagination.start, size=self.pagination.count)
+        fields = [
+            "_id",
+            "name",
+            "pactid",
+            "opened_on",
+            "modified_on",
+            "hp_status",
+            "hp",
+            "dot_status",
+            "closed_on",
+            "closed"
+        ]
+        full_query = self.case_es.base_query(terms={'type': PACT_CASE_TYPE}, fields=fields,
+                                             start=self.pagination.start,
+                                             size=self.pagination.count)
         full_query['sort'] = self.get_sorting_block(),
 
 

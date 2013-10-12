@@ -4,7 +4,7 @@ from dateutil.parser import parser
 from django.core.cache import cache
 import simplejson
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.api.es import FullXFormES
+from corehq.apps.api.es import ReportXFormES
 from pact.enums import PACT_DOMAIN
 from pact.lib.quicksect import IntervalNode
 from pact.utils import get_patient_display_cache
@@ -98,22 +98,22 @@ def dots_submissions_by_case(case_id, query_date, username=None):
     Actually run query for username submissions
     todo: do terms for the pact_ids instead of individual term?
     """
-    xform_es = FullXFormES(PACT_DOMAIN)
+    xform_es = ReportXFormES(PACT_DOMAIN)
     script_fields = {
         "doc_id": {"script": "_source._id"},
-        "pact_id": {"script": "_source.form.pact_id", },
-        "encounter_date": {"script": "_source.form.encounter_date", },
+        "pact_id": {"script": "_source.form.pact_id.#value", },
+        "encounter_date": {"script": "_source.form.encounter_date.#value", },
         "username": {"script": "_source.form.meta.username", },
 
-        "visit_type": {"script": "_source.form.visit_type", },
-        "visit_kept": {"script": "_source.form.visit_kept", },
-        "contact_type": {"script": "_source.form.contact_type", },
-        "observed_art": {"script": "_source.form.observed_art", },
-        "observed_non_art": {"script": "_source.form.observed_non_art", },
-        "observer_non_art_dose": {"script": "_source.form.observed_non_art_dose", },
-        "observed_art_dose": {"script": "_source.form.observed_art_dose", },
-        "pillbox_check": {"script": "_source.form.pillbox_check.check"},
-        "scheduled": {"script": "_source.form.scheduled"}
+        "visit_type": {"script": "_source.form.visit_type.#value", },
+        "visit_kept": {"script": "_source.form.visit_kept.#value", },
+        "contact_type": {"script": "_source.form.contact_type.#value", },
+        "observed_art": {"script": "_source.form.observed_art.#value", },
+        "observed_non_art": {"script": "_source.form.observed_non_art.#value", },
+        "observer_non_art_dose": {"script": "_source.form.observed_non_art_dose.#value", },
+        "observed_art_dose": {"script": "_source.form.observed_art_dose.#value", },
+        "pillbox_check": {"script": "_source.form.pillbox_check.check.#value"},
+        "scheduled": {"script": "_source.form.scheduled.#value"}
     }
 
     term_block = {'form.#type': 'dots_form'}

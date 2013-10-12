@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import uuid
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.api.es import FullCaseES, FullXFormES
+from corehq.apps.api.es import FullCaseES, ReportXFormES
 from corehq.apps.reports.fields import  ReportSelectField
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
@@ -15,7 +15,6 @@ class PactDOTPatientField(ReportSelectField):
     slug = "dot_patient"
     name = "DOT Patient"
     default_option = "Select DOT Patient"
-    #    cssId = "case_type_select"
 
     def update_params(self):
         patient_cases = self.get_pact_cases()
@@ -78,7 +77,7 @@ class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportPara
         ret['dot_calendar'] = dcal
 
         unique_visits = dcal.unique_xforms()
-        xform_es = FullXFormES(PACT_DOMAIN)
+        xform_es = ReportXFormES(PACT_DOMAIN)
 
         q = xform_es.base_query(size=len(unique_visits))
         lvisits = list(unique_visits)

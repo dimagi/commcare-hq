@@ -1,7 +1,7 @@
 from django.core.urlresolvers import reverse
 from django.http import Http404
 import simplejson
-from corehq.apps.api.es import FullXFormES
+from corehq.apps.api.es import ReportXFormES
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from dimagi.utils import html
 from pact.enums import PACT_DOMAIN
@@ -27,7 +27,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMix
     hide_filters = True
     filters = []
     ajax_pagination = True
-    xform_es = FullXFormES(PACT_DOMAIN)
+    xform_es = ReportXFormES(PACT_DOMAIN)
 
     default_sort = {
         "received_on": "desc"
@@ -158,8 +158,6 @@ class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMix
             "size": self.pagination.count,
             "from": self.pagination.start
         }
-        print simplejson.dumps(full_query)
-
         full_query['script_fields'] = pact_script_fields()
         return self.xform_es.run_query(full_query)
 
