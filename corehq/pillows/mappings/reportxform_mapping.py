@@ -1,7 +1,6 @@
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
 
-REPORT_XFORM_INDEX="report_xforms_123e537368fd9a53b2f87c7d59df77b4"
-
+REPORT_XFORM_INDEX="report_xforms_407d6db90efd062d401038e645b5dcb5"
 
 REPORT_XFORM_MAPPING = {
     "date_detection": False,
@@ -78,7 +77,7 @@ REPORT_XFORM_MAPPING = {
             'case_block': {
                 "match": "case",
                 "mapping": {
-                    'type': 'object',
+                    'type': 'nested',
                     'dynamic': False,
                     'properties': {
                         'date_modified': {
