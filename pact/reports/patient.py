@@ -50,7 +50,6 @@ class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMix
             has_error = False
         except Exception, ex:
             #eww, but we don't want to make a habit of returning exceptions as return values
-            print ex
             has_error = True
             patient_doc = None
 
@@ -64,13 +63,8 @@ class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMix
 
 
         view_mode = self.request.GET.get('view', 'info')
-        # notabs = True if not self.request.GET.get('notabs', False) else False
-
         ret['patient_doc'] = patient_doc
-        #        ret.update(csrf(self.request))
         ret['pt_root_url'] = patient_doc.get_info_url()
-        # if notabs:
-        #     ret['pt_root_url'] += "&notabs"
         ret['view_mode'] = view_mode
 
         if view_mode == 'info':
@@ -159,6 +153,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMix
             "from": self.pagination.start
         }
         full_query['script_fields'] = pact_script_fields()
+        print simplejson.dumps(full_query, indent=2)
         return self.xform_es.run_query(full_query)
 
 

@@ -31,6 +31,16 @@ def pact_script_fields():
         "script_encounter_date": {
             "script": """if(_source['form']['note'] != null) { _source['form']['note']['encounter_date']['#value']; }
         else { _source['form']['encounter_date']['#value']; }"""
+        },
+        #todo, remove
+        "script_case_id": {
+            "script": """
+            if(_source['form']['case'] != null) {
+              if (_source['form']['case']['@case_id'] != null) {
+                _source['form']['case']['@case_id'];
+              }
+              else { _source['form']['case']['case_id']; }
+            }"""
         }
     }
 
