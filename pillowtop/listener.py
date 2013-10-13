@@ -1,4 +1,5 @@
 import logging
+import pytz
 from datetime import datetime
 import hashlib
 import os
@@ -200,6 +201,7 @@ class BasicPillow(object):
         checkpoint_doc = self.get_checkpoint()
         checkpoint_doc['old_seq'] = checkpoint_doc['seq']
         checkpoint_doc['seq'] = "0"
+        checkpoint_doc['timestamp'] = datetime.now(tz=pytz.UTC).isoformat()
         self.couch_db.save_doc(checkpoint_doc)
 
     @property
@@ -210,6 +212,7 @@ class BasicPillow(object):
     def set_checkpoint(self, change):
         checkpoint = self.get_checkpoint()
         checkpoint['seq'] = change['seq']
+        checkpoint['timestamp'] = datetime.now(tz=pytz.UTC).isoformat()
         self.couch_db.save_doc(checkpoint)
 
     def get_db_seq(self):
