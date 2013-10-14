@@ -4,7 +4,7 @@ from django.test import TestCase
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.tests import bootstrap_domain
 from corehq.apps.locations.models import Location
-from custom.openlmis.api import get_recent_facilities, Facility, get_facility_programs, FacilityProgramLink
+from custom.openlmis.api import get_recent_facilities, Facility, get_facility_programs, FacilityProgramLink, get_programs_and_products, Program
 from custom.openlmis.commtrack import sync_supply_point_to_openlmis
 from custom.openlmis.tests.mock_api import MockOpenLMISEndpoint
 
@@ -47,12 +47,21 @@ class FeedApiTest(TestCase):
         self.assertEqual(100, f2.metadata['catchmentPopulation'])
         self.assertEqual(4545.4545, f2.metadata['altitude'])
 
-
-
     def testParseFacilityPrograms(self):
         programs = get_facility_programs((os.path.join(self.datapath, 'facility_programs.rss')))
         for p in programs:
             self.assertEqual(FacilityProgramLink, type(p))
+
+    def testParseProgramProducts(self):
+        with open(os.path.join(self.datapath, 'program_products.rss')) as f:
+            recent = list(get_programs_and_products(f.read()))
+
+        [program] = recent
+        self.assertEqual(Program, type(program))
+
+        # sanity check some stuff back
+        self.assertEqual('HIV', program.code)
+        self.assertEqual('HIV', program.name)
 
 
 class PostApiTest(TestCase):
