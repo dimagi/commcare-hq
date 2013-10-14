@@ -113,8 +113,8 @@ class ESView(View):
                 querystring = es_query['query']['filtered']['query']['query_string']['query']
                 new_query = es_query
                 new_query['query']['filtered']['query'] = {"match_all": {}}
-                new_results = self.run_query(new_query, es_type)
-                if new_results: 
+                new_results = self.run_query(new_query)
+                if new_results:
                     # the request succeeded without that query string
                     # an error with a blank query will return None
                     raise ESUserError("Error with elasticsearch query: %s" %
@@ -235,10 +235,11 @@ class XFormES(ESView):
         """
 
         new_terms = terms or {}
+        use_fields = fields or []
         if 'doc_type' not in new_terms:
             #let the terms override the kwarg - the query terms trump the magic
             new_terms['doc_type'] = doc_type
-        return super(XFormES, self).base_query(terms=new_terms, fields=fields, start=start, size=size)
+        return super(XFormES, self).base_query(terms=new_terms, fields=use_fields, start=start, size=size)
 
 
     def run_query(self, es_query):
@@ -275,11 +276,9 @@ class XFormES(ESView):
         return es_results
 
 
-
-
-
     @classmethod
-    def by_case_id_query(cls, domain, case_id, terms={}, doc_type='xforminstance', date_field=None, startdate=None, enddate=None, date_format='%Y-%m-%d'):
+    def by_case_id_query(cls, domain, case_id, terms=None, doc_type='xforminstance',
+                         date_field=None, startdate=None, enddate=None, date_format='%Y-%m-%d'):
         """
         Run a case_id query on both case properties (supporting old and new) for xforms.
 
@@ -294,6 +293,8 @@ class XFormES(ESView):
         startdate, enddate: datetime interval values
         date_format: string of the date format to filter based upon, defaults to yyyy-mm-dd
         """
+
+        use_terms = terms or {}
         query = {
             "query": {
                 "filtered": {
@@ -314,18 +315,18 @@ class XFormES(ESView):
         }
         if date_field is not None:
             range_query = {
-                "numeric_range": {
+                "range": {
                     date_field: {}
                 }
             }
 
             if startdate is not None:
-                range_query['numeric_range'][date_field]["gte"] = startdate.strftime(date_format)
+                range_query['range'][date_field]["gte"] = startdate.strftime(date_format)
             if enddate is not None:
-                range_query['numeric_range'][date_field]["lte"] = enddate.strftime(date_format)
+                range_query['range'][date_field]["lte"] = enddate.strftime(date_format)
             query['query']['filtered']['filter']['and'].append(range_query)
 
-        for k, v in terms.items():
+        for k, v in use_terms.items():
             query['query']['filtered']['filter']['and'].append({"term": {k.lower(): v.lower()}})
         return query
 
