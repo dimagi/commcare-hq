@@ -1,6 +1,6 @@
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
+REPORT_XFORM_INDEX="report_xforms_854ab7f0a0103d5c2878c907ac0e0108"
 
-REPORT_XFORM_INDEX="report_xforms_407d6db90efd062d401038e645b5dcb5"
 
 REPORT_XFORM_MAPPING = {
     "date_detection": False,
@@ -67,11 +67,11 @@ REPORT_XFORM_MAPPING = {
                         "username": {"type": "string", "index": "not_analyzed"},
                         "appVersion": {"type": "string", "index": "not_analyzed"},
                         "CommCareVersion": {"type": "string", "index": "not_analyzed"},
-                    }
+                        }
+                },
                 },
             },
         },
-    },
     "dynamic_templates": [
         {
             'case_block': {
@@ -97,6 +97,37 @@ REPORT_XFORM_MAPPING = {
                         "case_id": {"type": "string", "index": "not_analyzed"},
                         "user_id": {"type": "string", "index": "not_analyzed"},
                         "xmlns": {"type": "string", "index": "not_analyzed"},
+                        "create": {
+                            'type': 'object',
+                            'dynamic': True,
+                            'properties:': {
+                                'case_type': {"type": "string", "index": "not_analyzed"},
+                                'owner_id': {"type": "string", "index": "not_analyzed"},
+                                'case_name': {"type": "string", "index": "not_analyzed"},
+                            }
+                        },
+                        "update": {
+                            'type': 'object',
+                            'dynamic': True,
+                            'properties:': {
+                                'case_type': {"type": "string", "index": "not_analyzed"},
+                                'owner_id': {"type": "string", "index": "not_analyzed"},
+                                'case_name': {"type": "string", "index": "not_analyzed"},
+                                'date_opened': {
+                                    "type": "date",
+                                    "format": DATE_FORMATS_STRING
+                                },
+
+                            },
+                        },
+                        "index": {
+                            'type': 'object',
+                            'dynamic': True
+                        },
+                        'attachment': {
+                            'type':'object',
+                            'dynamic': False
+                        }
                     }
                 }
             }
@@ -105,10 +136,9 @@ REPORT_XFORM_MAPPING = {
             "everything_else": {
                 "match": "*",
                 "match_mapping_type": "string",
-                "mapping": {
-                    "{name}": {"type": "string", "index": "not_analyzed"},
-                }
+                "mapping": {"type": "string", "index": "not_analyzed"}
             }
         }
     ]
 }
+
