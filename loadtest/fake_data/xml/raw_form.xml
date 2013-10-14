@@ -1,0 +1,50 @@
+<?xml version='1.0' ?>
+<data uiVersion="1" version="2" name="1. &#2327;&#2352;&#2381;&#2349;&#2357;&#2340;&#2368; &#2330;&#2375;&#2325;&#2354;&#2367;&#2360;&#2381;&#2335;" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/4A49479F-BEBD-498D-A08B-4F0EAAD4DDBB">
+    <show_client_name>OK</show_client_name>
+    <full_name>Ana</full_name>
+    <registration_done>no</registration_done>
+    <tetanus_1>yes</tetanus_1>
+    <tetanus_2>no</tetanus_2>
+    <takes_iron_folic>no</takes_iron_folic>
+    <takes_nutrition>no</takes_nutrition>
+    <prepared_for_cost>yes</prepared_for_cost>
+    <institutional_delivery_plan>no</institutional_delivery_plan>
+    <family_present>yes</family_present>
+    <form_complete>OK</form_complete>
+    <previous_institutional_delivery_plan />
+    <previous_prepared_for_cost />
+    <previous_tetanus_1 />
+    <previous_tetanus_previous />
+    <previous_anc_4 />
+    <previous_anc_3 />
+    <previous_anc_2 />
+    <previous_anc_1 />
+    <previous_early_registration_done />
+    <edd>2013-10-02</edd>
+    <previous_registration_done />
+    <previous_tetanus_2 />
+    <previous_pregnancy />
+    <case_type_m>M</case_type_m>
+    <n0:case case_id="fc3ee7ce-c1be-4e8b-b99c-43a54c27f1ce" user_id="demo_user" date_modified="2013-07-09T11:22:54.060-04" xmlns:n0="http://commcarehq.org/case/transaction/v2">
+        <n0:update>
+            <n0:takes_iron_folic>no</n0:takes_iron_folic>
+            <n0:one_case_type>M</n0:one_case_type>
+            <n0:institutional_delivery_plan>no</n0:institutional_delivery_plan>
+            <n0:tetanus_2>no</n0:tetanus_2>
+            <n0:tetanus_1>yes</n0:tetanus_1>
+            <n0:prepared_for_cost>yes</n0:prepared_for_cost>
+            <n0:registration_done>no</n0:registration_done>
+            <n0:takes_nutrition>no</n0:takes_nutrition>
+            <n0:mother_name>Ana</n0:mother_name>
+        </n0:update>
+    </n0:case>
+    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+        <n1:deviceID>WL2DAFSUZ6Q05WX6GDD19HO2D</n1:deviceID>
+        <n1:timeStart>2013-07-09T11:19:10.804-04</n1:timeStart>
+        <n1:timeEnd>2013-07-09T11:22:54.060-04</n1:timeEnd>
+        <n1:username>demo_user</n1:username>
+        <n1:userID>demo_user</n1:userID>
+        <n1:instanceID>3baec076-3650-4b35-868c-bb8ed100676c</n1:instanceID>
+        <n2:appVersion xmlns:n2="http://commcarehq.org/xforms">v2.3.0 (6dcc56-6c6a74-unvers-2.1.0-Nokia/S40-native-input) build 2 App #2 b:2012-Dec-17 r:2013-Feb-19</n2:appVersion>
+    </n1:meta>
+</data>
