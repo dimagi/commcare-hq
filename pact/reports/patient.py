@@ -126,16 +126,23 @@ class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMix
         full_query = {
             'query': {
                 "filtered": {
-                    "query": {
-                        "query_string": {
-                            "query": "(form.case.case_id:%(case_id)s OR form.case.@case_id:%(case_id)s)" % dict(
-                                case_id=self.request.GET['patient_id'])
-                        }
-                    },
                     "filter": {
                         "and": [
                             {"term": {"domain.exact": self.request.domain}},
-                            {"term": {"doc_type": "xforminstance"}}
+                            {"term": {"doc_type": "xforminstance"}},
+                            {
+                                "nested": {
+                                    "path": "form.case",
+                                    "filter": {
+                                        "or": [
+                                            {"term": {
+                                            "case_id": "%s" % self.request.GET['patient_id']}},
+                                            {"term": {
+                                            "@case_id": "%s" % self.request.GET['patient_id']}}
+                                        ]
+                                    }
+                                }
+                            }
                         ]
                     }
                 }
