@@ -1,4 +1,6 @@
+from importlib import import_module
 import warnings
+from django.utils import importlib
 
 
 class PillowtopConfigurationException(Exception):
@@ -24,18 +26,13 @@ def import_pillows(instantiate=True):
 
 
 def import_pillow_string(full_class_str, instantiate=True):
-    comps = full_class_str.split('.')
-    pillowtop_class_str = comps[-1]
-    mod_str = '.'.join(comps[0:-1])
-    mod = __import__(mod_str, {}, {}, [pillowtop_class_str])
-    if hasattr(mod, pillowtop_class_str):
-        pillowtop_class = getattr(mod, pillowtop_class_str)
+    mod_path, pillow_class_name = full_class_str.rsplit('.', 1)
+    try:
+        mod = importlib.import_module(mod_path)
+        pillowtop_class = getattr(mod, pillow_class_name)
         return pillowtop_class() if instantiate else pillowtop_class
-    else:
-        raise PillowtopConfigurationException(
-            ("Error, the pillow class %s " "could not be imported") % full_class_str
-        )
-
+    except (AttributeError, ImportError):
+        raise ValueError("Could not find pillowtop class '%s'" % full_class_str)
 
 def get_all_pillows(instantiate=True):
     settings = import_settings()

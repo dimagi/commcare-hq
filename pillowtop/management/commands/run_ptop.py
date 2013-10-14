@@ -31,19 +31,17 @@ class Command(NoArgsCommand):
             print "\t%s" % settings.PILLOWTOPS.keys()
             sys.exit()
         elif run_all:
-            run_pillows = []
-            for k, v in settings.PILLOWTOPS.items():
-                run_pillows.extend(v)
-                print run_pillows
+            pillows_to_run = []
+            pillows_to_run = [v for group in settings.PILLOWTOPS for k, v in group.items()]
         else:
             if pillow_key not in settings.PILLOWTOPS:
                 print "\n\tError, key %s is not in settings.PILLOWTOPS, legal keys are: %s" % \
                       (pillow_key, settings.PILLOWTOPS.keys())
                 sys.exit()
             else:
-                run_pillows = settings.PILLOWTOPS[pillow_key]
+                pillows_to_run = settings.PILLOWTOPS[pillow_key]
 
-        start_pillows(pillows=[import_pillow_string(x) for x in run_pillows])
+        start_pillows(pillows=[import_pillow_string(x) for x in pillows_to_run])
 
 
 
