@@ -3,7 +3,7 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.app_manager.util import create_temp_sort_column
 import langcodes
 import commcare_translations
-from corehq.apps.app_manager.suite_xml import IdStrings
+from corehq.apps.app_manager.suite_xml import IdStrings, get_detail_column_infos
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 
 
@@ -38,28 +38,13 @@ def _create_custom_app_strings(app, lang):
                 label = trans(module.referral_label)
             yield id_strings.detail_title_locale(module, detail), label
 
-            sort_elements = dict((s.field, (s, i + 1))
-                                 for i, s in enumerate(detail.sort_elements))
-
-            columns = list(detail.get_columns())
-            for column in columns:
+            detail_column_infos = get_detail_column_infos(detail)
+            for (column, sort_element, order) in detail_column_infos:
                 yield id_strings.detail_column_header_locale(module, detail, column), trans(column.header)
-
-                if column.header:
-                    sort_elements.pop(column.header.values()[0], None)
 
                 if column.format in ('enum', 'enum-image'):
                     for key, val in column.enum.items():
                         yield id_strings.detail_column_enum_variable(module, detail, column, key), trans(val)
-
-            # everything left is a sort only option
-            for sort_element in sort_elements:
-                # create a fake column for it
-                column = create_temp_sort_column(sort_element, len(columns))
-
-                # now mimic the normal translation
-                field_text = {'en': str(column.field)}
-                yield id_strings.detail_column_header_locale(module, detail, column), trans(field_text)
 
         yield id_strings.module_locale(module), trans(module.name)
         if module.case_list.show:

@@ -346,7 +346,7 @@ def get_detail_column_infos(detail):
     from corehq.apps.app_manager.models import SortElement
 
     if detail.type != 'case_short':
-        return [(column, (None, None)) for column in detail.get_columns()]
+        return [(column, None, None) for column in detail.get_columns()]
 
     DetailColumnInfo = namedtuple('DetailColumnInfo',
                                   'column sort_element order')
