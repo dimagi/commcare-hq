@@ -6,7 +6,7 @@ from inspect import isclass
 
 def import_settings():
     class MockSettings(object):
-        PILLOWTOPS = ['pillowtop.tests.FakePillow']
+        PILLOWTOPS = {'test': ['pillowtop.tests.FakePillow']}
 
     return MockSettings()
 

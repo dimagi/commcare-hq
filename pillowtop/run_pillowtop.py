@@ -3,19 +3,15 @@ from restkit.session import set_session; set_session("gevent")
 from pillowtop import get_all_pillows
 
 
-#standalone pillowtop runner
-def start_pillows():
-    #gevent patching: logging doesn't seem to work unless thread is not patched
-
-    pillows = get_all_pillows()
-    pool = Pool(len(pillows))
+def start_pillows(pillows=None):
+    """
+    Actual runner for running pillow processes. Use this to run pillows.
+    """
+    start_pillows = pillows or get_all_pillows()
+    pool = Pool(len(start_pillows))
     while True:
-        for p in pillows:
+        for p in start_pillows:
             pool.spawn(p.run)
         pool.join()
-        print "Pillows all joined and completed - restarting again"
-        #this shouldn't happen
-
-if __name__ == "__main__":
-    start_pillows()
+        # Pillows if they ever finish will need to restart continue forever.
 
