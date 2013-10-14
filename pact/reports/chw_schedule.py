@@ -101,32 +101,33 @@ def dots_submissions_by_case(case_id, query_date, username=None):
     xform_es = ReportXFormES(PACT_DOMAIN)
     script_fields = {
         "doc_id": {"script": "_source._id"},
-        "pact_id": {"script": "_source.form.pact_id.#value", },
-        "encounter_date": {"script": "_source.form.encounter_date.#value", },
+        "pact_id": {"script": "_source['form']['pact_id']['#value']", },
+        "encounter_date": {"script": "_source['form']['encounter_date']['#value']", },
         "username": {"script": "_source.form.meta.username", },
 
-        "visit_type": {"script": "_source.form.visit_type.#value", },
-        "visit_kept": {"script": "_source.form.visit_kept.#value", },
-        "contact_type": {"script": "_source.form.contact_type.#value", },
-        "observed_art": {"script": "_source.form.observed_art.#value", },
-        "observed_non_art": {"script": "_source.form.observed_non_art.#value", },
-        "observer_non_art_dose": {"script": "_source.form.observed_non_art_dose.#value", },
-        "observed_art_dose": {"script": "_source.form.observed_art_dose.#value", },
-        "pillbox_check": {"script": "_source.form.pillbox_check.check.#value"},
-        "scheduled": {"script": "_source.form.scheduled.#value"}
+        "visit_type": {"script": "_source['form']['visit_type']['#value']", },
+        "visit_kept": {"script": "_source.form.visit_kept['#value']", },
+        "contact_type": {"script": "_source.form.contact_type['#value']", },
+        "observed_art": {"script": "_source.form.observed_art['#value']", },
+        "observed_non_art": {"script": "_source.form.observed_non_art['#value']", },
+        "observer_non_art_dose": {"script": "_source.form.observed_non_art_dose['#value']", },
+        "observed_art_dose": {"script": "_source.form.observed_art_dose['#value']", },
+        "pillbox_check": {"script": "_source.form.pillbox_check.check['#value']"},
+        "scheduled": {"script": "_source.form.scheduled['#value']"}
     }
 
     term_block = {'form.#type': 'dots_form'}
     if username is not None:
         term_block['form.meta.username'] = username
     query = xform_es.by_case_id_query(PACT_DOMAIN, case_id, terms=term_block,
-                                      date_field='form.encounter_date', startdate=query_date,
+                                      date_field='form.encounter_date.#value', startdate=query_date,
                                       enddate=query_date)
     query['sort'] = {'received_on': 'asc'}
     query['script_fields'] = script_fields
     query['size'] = 1
     query['from'] = 0
     res = xform_es.run_query(query)
+    print simplejson.dumps(res, indent=2)
     return res
 
 
@@ -144,6 +145,7 @@ def get_schedule_tally(username, total_interval, override_date=None):
     else:
         nowdate = override_date
         chw_schedule = CHWPatientSchedule.get_schedule(username, override_date=nowdate)
+
 
     patient_case_ids = set([x['case_id'] for x in chw_schedule.raw_schedule])
     patient_cache = get_patient_display_cache(list(patient_case_ids))
