@@ -56,9 +56,9 @@ class PactCHWProfileReport(PactDrilldownReportMixin, PactElasticTabularReportMix
 
         for x in assigned_patients:
             x['info_url'] = self.pact_case_link(x['_id'])
-            if x['dot_status'] is not None or x['dot_status'] != "":
+            if x['dot_status.#value'] is not None or x['dot_status.#value'] != "":
                 x['dot_url'] = self.pact_dot_link(x['_id'])
-        return sorted(assigned_patients, key=lambda x: int(x['pactid']))
+        return sorted(assigned_patients, key=lambda x: int(x['pactid.#value']))
 
 
     def get_fields(self):

@@ -22,7 +22,7 @@ class PactDOTPatientField(ReportSelectField):
 
         self.selected = case_type
         self.options = [
-            dict(val=case['_id'], text="(%s) - %s" % (case.get('pactid', '[none]'), case['name']))
+            dict(val=case['_id'], text="(%s) - %s" % (case.get('pactid.#value', '[none]'), case['name']))
             for case in patient_cases]
 
     @classmethod
