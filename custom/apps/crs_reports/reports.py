@@ -1,16 +1,13 @@
-from couchdbkit import RequestFailed
 from django.utils.translation import ugettext_noop
-from corehq.apps.api.es import FullCaseES
-
-from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.standard.inspect import CaseDisplay, CaseListReport
 from django.utils import html
 from django.core.urlresolvers import reverse, NoReverseMatch
-
 import pytz
 from django.utils.translation import ugettext as _
 
+from corehq.apps.api.es import ReportCaseES
+from corehq.apps.reports.standard import CustomProjectReport
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.standard.inspect import CaseDisplay, CaseListReport
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
 
@@ -94,7 +91,7 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
     @property
     @memoized
     def case_es(self):
-        return FullCaseES(self.domain)
+        return ReportCaseES(self.domain)
 
     @property
     def headers(self):
