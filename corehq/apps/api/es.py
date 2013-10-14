@@ -302,13 +302,18 @@ class XFormES(ESView):
                         "and": [
                             {"term": {"domain.exact": domain.lower()}},
                             {"term": {"doc_type": doc_type}},
+                            {
+                                "nested": {
+                                    "path": "form.case",
+                                    "filter": {
+                                        "or": [
+                                            {"term": {"case_id": "%s" % case_id}},
+                                            {"term": {"@case_id": "%s" % case_id}}
+                                        ]
+                                    }
+                                }
+                            }
                         ]
-                    },
-                    "query": {
-                        "query_string": {
-                            "query": "(form.case.case_id:%(case_id)s OR form.case.@case_id:%(case_id)s)" % dict(
-                                case_id=case_id)
-                        }
                     }
                 }
             }
