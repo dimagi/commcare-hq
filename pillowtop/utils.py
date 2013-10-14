@@ -23,25 +23,30 @@ def import_pillows(instantiate=True):
     return get_all_pillows(instantiate=instantiate)
 
 
+def import_pillow_string(full_class_str, instantiate=True):
+    comps = full_class_str.split('.')
+    pillowtop_class_str = comps[-1]
+    mod_str = '.'.join(comps[0:-1])
+    mod = __import__(mod_str, {}, {}, [pillowtop_class_str])
+    if hasattr(mod, pillowtop_class_str):
+        pillowtop_class = getattr(mod, pillowtop_class_str)
+        return pillowtop_class() if instantiate else pillowtop_class
+    else:
+        raise PillowtopConfigurationException(
+            ("Error, the pillow class %s " "could not be imported") % full_class_str
+        )
+
+
 def get_all_pillows(instantiate=True):
     settings = import_settings()
 
     pillowtops = []
     if hasattr(settings, 'PILLOWTOPS'):
-        for full_str in settings.PILLOWTOPS:
-            comps = full_str.split('.')
-            pillowtop_class_str = comps[-1]
-            mod_str = '.'.join(comps[0:-1])
-            mod = __import__(mod_str, {}, {}, [pillowtop_class_str])
-            if hasattr(mod, pillowtop_class_str):
-                pillowtop_class = getattr(mod, pillowtop_class_str)
-                pillowtops.append(pillowtop_class() if instantiate
-                                  else pillowtop_class)
-            else:
-                raise PillowtopConfigurationException(
-                    ("Error, the pillow class %s "
-                     "could not be imported") % full_str
-                )
+        for k, v in settings.PILLOWTOPS.items():
+            for full_str in v:
+                pillowtop_class = import_pillow_string(full_str, instantiate=instantiate)
+                pillowtops.append(pillowtop_class)
+
     return pillowtops
 
 
