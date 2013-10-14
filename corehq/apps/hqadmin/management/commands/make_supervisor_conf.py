@@ -21,10 +21,7 @@ def parse_files(option, opt, value, parser):
 
     setattr(parser.values, option.dest, args_dict)
 
-class Command(BaseCommand):
-    help = "Make a supervisord conf file to deposit into a services path that supervisord knows about"
-    args = ""
-
+class SupervisorConfCommand(BaseCommand):
     option_list = BaseCommand.option_list + (
         make_option('--conf_file', help='Config template file to use', default=False),
         make_option('--conf_destination', help='Rendered supervisor configuration file path destination', default=None),
@@ -37,22 +34,10 @@ class Command(BaseCommand):
                     help='files to upload file1=path1,file2=path2,file3=path3'),
     )
 
-    def render_pillowtop_conf(self, conf_template_string):
-        """
-        Hacky handler to make pillowtop config. Multiple configs within the conf file
-        """
-        configs = []
-        for k in settings.PILLOWTOPS.keys():
-            pillow_params = {
-                'pillow_key': k,
-                'pillow_option': ' --pillow-key %s' % k
-            }
-            pillow_params.update(self.params)
-            pillow_rendering = conf_template_string % pillow_params
-            configs.append(pillow_rendering)
-        return '\n\n'.join(configs)
+    def render_configuration_file(self, conf_template_string):
+        return conf_template_string % self.params
 
-    
+
     def handle(self, *args, **options):
         self.conf_file_template = options['conf_file']
         self.conf_dest = options['conf_destination']
@@ -71,11 +56,7 @@ class Command(BaseCommand):
         with open(conf_template_fullpath, 'r') as fin:
             conf_template_string = fin.read()
         dest_filepath = os.path.join(self.conf_dest, '%s_%s' % (settings.SERVER_ENVIRONMENT, self.conf_file_template))
-
-        if self.conf_file_template == 'supervisor_pillowtop.conf':
-            rendered_conf = self.render_pillowtop_conf(conf_template_string)
-        else:
-            rendered_conf = conf_template_string % self.params
+        rendered_conf = self.render_configuration_file(conf_template_string)
 
         self.write_configuration_file(dest_filepath, rendered_conf)
 
@@ -84,4 +65,14 @@ class Command(BaseCommand):
             fout.write(rendered_configuration)
             print "\t[make_supervisor_conf] Wrote supervisor configuration: %s" % destination_fullpath
 
+
+
+
+
+
+
+
+class Command(SupervisorConfCommand):
+    help = "Make a supervisord conf file to deposit into a services path that supervisord knows about"
+    args = ""
 
