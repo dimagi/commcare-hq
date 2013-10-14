@@ -343,7 +343,7 @@ def get_detail_column_infos(detail):
     This is not intented to be a widely used format
     just a packaging of column info into a form most convenient for rendering
     """
-    from corehq.apps.app_manager.models import DetailColumn, SortElement
+    from corehq.apps.app_manager.models import SortElement
 
     if detail.type != 'case_short':
         return [(column, (None, None)) for column in detail.get_columns()]
