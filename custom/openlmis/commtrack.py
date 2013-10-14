@@ -32,7 +32,7 @@ def sync_facility_to_supply_point(domain, facility):
 
     else:
         # currently impossible
-        raise NotImplemented('updating existing supply points is not yet supported')
+        raise NotImplementedError('updating existing supply points is not yet supported')
 
 
 def get_program(domain, lmis_program):
@@ -46,7 +46,7 @@ def sync_openlmis_program(domain, lmis_program):
         program = Program(domain=domain)
     else:
         # currently impossible
-        raise NotImplemented('updating existing programs is not yet supported')
+        raise NotImplementedError('updating existing programs is not yet supported')
     program.name = lmis_program.name
     program.code = lmis_program.code
     program.save()
