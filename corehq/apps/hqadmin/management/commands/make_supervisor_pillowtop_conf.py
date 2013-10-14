@@ -9,20 +9,8 @@ from corehq.apps.hqadmin.management.commands.make_supervisor_conf import Supervi
 
 
 class Command(SupervisorConfCommand):
-    help = "Make a supervisord conf file to deposit into a services path that supervisord knows about"
+    help = "Make pillowtop supervisord conf - multiple configs per the PILLOWTOPS setting"
     args = ""
-
-    option_list = BaseCommand.option_list + (
-        make_option('--conf_file', help='Config template file to use', default=False),
-        make_option('--conf_destination', help='Rendered supervisor configuration file path destination', default=None),
-        make_option('--params',
-                    type="string",
-                    action='callback',
-                    callback=make_supervisor_conf.parse_files,
-                    dest='params',
-                    default={},
-                    help='files to upload file1=path1,file2=path2,file3=path3'),
-    )
 
     def render_configuration_file(self, conf_template_string):
         """
