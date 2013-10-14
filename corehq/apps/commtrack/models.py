@@ -61,13 +61,28 @@ REQUISITION_ACTION_TYPES = [
     RequisitionActions.RECEIPTS,
 ]
 
+
+class Program(Document):
+    """
+    A program, e.g. "hiv" or "tb"
+    """
+    domain = StringProperty()
+    name = StringProperty()
+    code = StringProperty()
+    description = StringProperty()
+
+
 class Product(Document):
+    """
+    A product, e.g. "coartem" or "tylenol"
+    """
     domain = StringProperty()
     name = StringProperty()
     unit = StringProperty()
     code = StringProperty()
     description = StringProperty()
     category = StringProperty()
+    program_id = StringProperty()
 
     @classmethod
     def get_by_code(cls, domain, code):
