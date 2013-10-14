@@ -1,0 +1,50 @@
+<?xml version='1.0' ?>
+<data uiVersion="1" version="2" name="1. &#2327;&#2352;&#2381;&#2349;&#2357;&#2340;&#2368; &#2330;&#2375;&#2325;&#2354;&#2367;&#2360;&#2381;&#2335;" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/4A49479F-BEBD-498D-A08B-4F0EAAD4DDBB">
+    <show_client_name>OK</show_client_name>
+    <full_name>{{ name }}</full_name>
+    <registration_done>{{ registration }}</registration_done>
+    <tetanus_1>{{ tetanus_1 }}</tetanus_1>
+    <tetanus_2>{{ tetanus_2 }}</tetanus_2>
+    <takes_iron_folic>{{ iron }}</takes_iron_folic>
+    <takes_nutrition>{{ nutrition }}</takes_nutrition>
+    <prepared_for_cost>{{ prepared }}</prepared_for_cost>
+    <institutional_delivery_plan>{{ institutional }}</institutional_delivery_plan>
+    <family_present>{{ family }}</family_present>
+    <form_complete>OK</form_complete>
+    <previous_institutional_delivery_plan />
+    <previous_prepared_for_cost />
+    <previous_tetanus_1 />
+    <previous_tetanus_previous />
+    <previous_anc_4 />
+    <previous_anc_3 />
+    <previous_anc_2 />
+    <previous_anc_1 />
+    <previous_early_registration_done />
+    <edd>{{ edd }}</edd>
+    <previous_registration_done />
+    <previous_tetanus_2 />
+    <previous_pregnancy />
+    <case_type_m>M</case_type_m>
+    <n0:case case_id="{{ case_id }}" user_id="{{ user_id }}" date_modified="{{ date_modified }}" xmlns:n0="http://commcarehq.org/case/transaction/v2">
+        <n0:update>
+            <n0:takes_iron_folic>{{ iron }}</n0:takes_iron_folic>
+            <n0:one_case_type>M</n0:one_case_type>
+            <n0:institutional_delivery_plan>{{ institutional }}</n0:institutional_delivery_plan>
+            <n0:tetanus_2>{{ tetanus_2 }}</n0:tetanus_2>
+            <n0:tetanus_1>{{ tetanus_1 }}</n0:tetanus_1>
+            <n0:prepared_for_cost>{{ prepared }}</n0:prepared_for_cost>
+            <n0:registration_done>{{ registration }}</n0:registration_done>
+            <n0:takes_nutrition>{{ nutrition }}</n0:takes_nutrition>
+            <n0:mother_name>{{ name }}</n0:mother_name>
+        </n0:update>
+    </n0:case>
+    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+        <n1:deviceID>{{ device_id }}</n1:deviceID>
+        <n1:timeStart>{{ time_start }}</n1:timeStart>
+        <n1:timeEnd>{{ time_end }}</n1:timeEnd>
+        <n1:username>{{ username }}</n1:username>
+        <n1:userID>{{ user_id }}</n1:userID>
+        <n1:instanceID>{{ instance_id }}</n1:instanceID>
+        <n2:appVersion xmlns:n2="http://commcarehq.org/xforms">v2.3.0 (6dcc56-6c6a74-unvers-2.1.0-Nokia/S40-native-input) build 2 App #2 b:2012-Dec-17 r:2013-Feb-19</n2:appVersion>
+    </n1:meta>
+</data>

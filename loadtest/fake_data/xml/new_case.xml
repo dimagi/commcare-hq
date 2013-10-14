@@ -1,0 +1,41 @@
+<?xml version='1.0' ?>
+<data uiVersion="1" version="2" name="1. &#2327;&#2352;&#2381;&#2349;&#2357;&#2340;&#2368; &#2346;&#2306;&#2332;&#2368;&#2325;&#2352;&#2339;" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/9f764644eafc0ed0eb40edf1ee07fba13dc3cc13">
+    <mother_name>{{ name }}</mother_name>
+    <age>{{ age }}</age>
+    <number />
+    <husband_name />
+    <hamlet_name />
+    <lmp>{{ lmp }}</lmp>
+    <show_edd>OK</show_edd>
+    <previous_pregnancies />
+    <form_complete>OK</form_complete>
+    <edd>{{ edd }}</edd>
+    <current_count>0</current_count>
+    <n0:case case_id="{{ case_id }}" user_id="{{ user_id }}" date_modified="{{ date_modified }}" xmlns:n0="http://commcarehq.org/case/transaction/v2">
+        <n0:create>
+            <n0:case_name>{{ name }}</n0:case_name>
+            <n0:owner_id>{{ user_id }}</n0:owner_id>
+            <n0:case_type>pregnant_mother</n0:case_type>
+        </n0:create>
+        <n0:update>
+            <n0:current_count>0</n0:current_count>
+            <n0:edd>{{ edd }}</n0:edd>
+            <n0:hamlet_name />
+            <n0:lmp>{{ lmp }}</n0:lmp>
+            <n0:age>{{ 22 }}</n0:age>
+            <n0:number />
+            <n0:husband_name />
+            <n0:previous_pregnancies />
+            <n0:mother_name>{{ name }}</n0:mother_name>
+        </n0:update>
+    </n0:case>
+    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+        <n1:deviceID>{{ device_id }}</n1:deviceID>
+        <n1:timeStart>{{ time_start }}</n1:timeStart>
+        <n1:timeEnd>{{ time_end }}</n1:timeEnd>
+        <n1:username>{{ username }}</n1:username>
+        <n1:userID>{{ user_id }}</n1:userID>
+        <n1:instanceID>{{ instance_id }}</n1:instanceID>
+        <n2:appVersion xmlns:n2="http://commcarehq.org/xforms">v2.3.0 (6dcc56-6c6a74-unvers-2.1.0-Nokia/S40-native-input) build 2 App #2 b:2012-Dec-17 r:2013-Feb-19</n2:appVersion>
+    </n1:meta>
+</data>
