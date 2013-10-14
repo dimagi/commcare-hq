@@ -53,6 +53,23 @@
         </text>
       </sort>
     </field>
+    <field>
+      <header width="0">
+        <text>
+          <locale id="m0.case_short.case_date-opened_3.header"/>
+        </text>
+      </header>
+      <template width="0">
+        <text>
+          <xpath function="date_opened"/>
+        </text>
+      </template>
+      <sort type="string" order="2" direction="ascending">
+        <text>
+          <xpath function="date_opened"/>
+        </text>
+      </sort>
+    </field>
   </detail>
   <detail id="m0_case_long">
     <title>
