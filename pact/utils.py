@@ -26,21 +26,19 @@ def pact_script_fields():
     return {
         "script_pact_id": {
             "script": """if(_source['form']['note'] != null) { _source['form']['note']['pact_id']['#value']; }
-                      else { _source['form']['pact_id']['#value']; }"""
+                      else if (_source['form']['pact_id'] != null) { _source['form']['pact_id']['#value']; }
+                      else {
+                          "unknown";
+                      }
+                      """
         },
         "script_encounter_date": {
             "script": """if(_source['form']['note'] != null) { _source['form']['note']['encounter_date']['#value']; }
-        else { _source['form']['encounter_date']['#value']; }"""
-        },
-        #todo, remove
-        "script_case_id": {
-            "script": """
-            if(_source['form']['case'] != null) {
-              if (_source['form']['case']['@case_id'] != null) {
-                _source['form']['case']['@case_id'];
-              }
-              else { _source['form']['case']['case_id']; }
-            }"""
+        else if (_source['form']['encounter_date'] != null) { _source['form']['encounter_date']['#value']; }
+        else {
+            _source['received_on'];
+        }
+        """
         }
     }
 
