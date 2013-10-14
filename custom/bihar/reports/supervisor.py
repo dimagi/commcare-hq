@@ -243,7 +243,7 @@ class MainNavReport(BiharSummaryReport, IndicatorConfigMixIn):
     def additional_reports(cls):
         from custom.bihar.reports.due_list import DueListSelectionReport
         from custom.bihar.reports.indicators.reports import MyPerformanceReport
-        return [WorkerRankSelectionReport, DueListSelectionReport, ToolsNavReport, MyPerformanceReport, MCHRegisterReport]
+        return [WorkerRankSelectionReport, DueListSelectionReport, ToolsNavReport, MyPerformanceReport]
 
     @classmethod
     def show_in_navigation(cls, *args, **kwargs):
