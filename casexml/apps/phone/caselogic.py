@@ -10,10 +10,12 @@ from casexml.apps.case import const
 from casexml.apps.case.xform import CaseDbCache
 
 
-def get_footprint(initial_case_list, domain, strip_history=False):
+def get_related_cases(initial_case_list, domain, strip_history=False, search_up=True):
     """
-    Gets the flat list of the footprint of cases based on a starting list.
+    Gets the flat list of related cases based on a starting list.
     Walks all the referenced indexes recursively.
+    If search_up is True, all cases and their parent cases are returned.
+    If search_up is False, all cases and their child cases are returned.
     """
     if not initial_case_list:
         return {}
@@ -23,14 +25,14 @@ def get_footprint(initial_case_list, domain, strip_history=False):
                           strip_history=strip_history,
                           deleted_ok=True)
 
-    def children(case_db, case):
-        return [case_db.get(index.referenced_id) for index in case.indices]
+    def related(case_db, case):
+        return [case_db.get(index.referenced_id) for index in (case.indices if search_up else case.reverse_indices)]
 
     relevant_cases = {}
     relevant_deleted_case_ids = []
 
     queue = list(case for case in initial_case_list)
-    directly_referenced_indices = itertools.chain(*[[index.referenced_id for index in case.indices]
+    directly_referenced_indices = itertools.chain(*[[index.referenced_id for index in (case.indices if search_up else case.reverse_indices)]
                                                     for case in initial_case_list])
     case_db.populate(directly_referenced_indices)
     while queue:
@@ -39,7 +41,7 @@ def get_footprint(initial_case_list, domain, strip_history=False):
             relevant_cases[case.case_id] = case
             if case.doc_type == 'CommCareCase-Deleted':
                 relevant_deleted_case_ids.append(case.case_id)
-            queue.extend(children(case_db, case))
+            queue.extend(related(case_db, case))
 
     if relevant_deleted_case_ids:
         logging.error('deleted cases included in footprint (restore): %s' % (
@@ -47,6 +49,8 @@ def get_footprint(initial_case_list, domain, strip_history=False):
         ))
     return relevant_cases
 
+def get_footprint(initial_case_list, domain, strip_history=False):
+    return get_related_cases(initial_case_list, domain, strip_history=strip_history, search_up=True)
 
 class CaseSyncUpdate(object):
     """
