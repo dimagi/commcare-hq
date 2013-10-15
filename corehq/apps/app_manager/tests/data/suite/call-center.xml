@@ -218,6 +218,11 @@
           <xpath function="instance('indicators_call-center')/indicators/case[@id = current()/@case_id]/formsSubmittedInLastWeek"/>
         </text>
       </template>
+      <sort type="int" order="2" direction="ascending">
+        <text>
+          <xpath function="instance('indicators_call-center')/indicators/case[@id = current()/@case_id]/formsSubmittedInLastWeek"/>
+        </text>
+      </sort>
     </field>
     <field>
       <header>
@@ -245,23 +250,6 @@
       <sort type="string" order="1" direction="ascending">
         <text>
           <xpath function="call_back"/>
-        </text>
-      </sort>
-    </field>
-    <field>
-      <header width="0">
-        <text>
-          <locale id="m1.case_short.case_formsSubmittedInLastWeek_5.header"/>
-        </text>
-      </header>
-      <template width="0">
-        <text>
-          <xpath function="formsSubmittedInLastWeek"/>
-        </text>
-      </template>
-      <sort type="int" order="2" direction="ascending">
-        <text>
-          <xpath function="formsSubmittedInLastWeek"/>
         </text>
       </sort>
     </field>
