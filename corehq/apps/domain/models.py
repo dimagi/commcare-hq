@@ -314,6 +314,8 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             del data["slug"]
 
         self = super(Domain, cls).wrap(data)
+        if self.deployment is None:
+            self.deployment = Deployment()
         if self.get_id:
             self.apply_migrations()
         if should_save:

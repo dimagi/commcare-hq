@@ -1,9 +1,11 @@
 from functools import wraps
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponseForbidden
 from django.utils.http import urlquote
+from django.utils.translation import ugettext as _
 
 ########################################################################################################
 from corehq.apps.domain.models import Domain
@@ -41,6 +43,11 @@ def login_and_domain_required(view_func):
         if domain:
             if user.is_authenticated() and user.is_active:
                 if not domain.is_active:
+                    msg = _((
+                        'The domain "{domain}" has been deactivated. '
+                        'Please report an issue if you think this is a mistake.'
+                    ).format(domain=domain_name))
+                    messages.info(req, msg)
                     return HttpResponseRedirect(reverse("domain_select"))
                 if hasattr(req, "couch_user"):
                     couch_user = req.couch_user # set by user middleware

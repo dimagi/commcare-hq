@@ -259,6 +259,7 @@ HQ_APPS = (
     'custom.trialconnect',
     'custom.apps.crs_reports',
     'custom.hope',
+    'custom.openlmis',
 )
 
 TEST_APPS = ()
@@ -494,7 +495,7 @@ TOUCHFORMS_API_PASSWORD = "changeme"
 LOCAL_APPS = ()
 LOCAL_COUCHDB_APPS = ()
 LOCAL_MIDDLEWARE_CLASSES = ()
-LOCAL_PILLOWTOPS = []
+LOCAL_PILLOWTOPS = {}
 
 #If there are existing doc_ids and case_ids you want to check directly - they are refernced
 #in your localsettings for more accurate direct checks, otherwise use view based which can be inaccurate.
@@ -822,32 +823,47 @@ INDICATOR_CONFIG = {
 
 CASE_WRAPPER = 'corehq.apps.hqcase.utils.get_case_wrapper'
 
-PILLOWTOPS = [
-                 'corehq.pillows.case.CasePillow',
-                 'corehq.pillows.fullcase.FullCasePillow',
-                 'corehq.pillows.xform.XFormPillow',
-                 'corehq.pillows.fullxform.FullXFormPillow',
-                 'corehq.pillows.domain.DomainPillow',
-                 'corehq.pillows.user.UserPillow',
-                 'corehq.pillows.application.AppPillow',
-                 'corehq.pillows.sms.SMSPillow',
-                 'corehq.pillows.commtrack.ConsumptionRatePillow',
-                 'corehq.pillows.reportxform.ReportXFormPillow',
-                 'corehq.pillows.reportcase.ReportCasePillow',
-                 # fluff
-                 'custom.bihar.models.CareBiharFluffPillow',
-                 'custom.opm.opm_reports.models.OpmCaseFluffPillow',
-                 'custom.opm.opm_reports.models.OpmUserFluffPillow',
-                 'custom.opm.opm_reports.models.OpmFormFluffPillow',
-                 'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
-                 'custom.reports.care_sa.models.CareSAFluffPillow',
-                 'custom.reports.mc.models.MalariaConsortiumFluffPillow',
-                 # MVP
-                 'corehq.apps.indicators.pillows.FormIndicatorPillow',
-                 'corehq.apps.indicators.pillows.CaseIndicatorPillow',
-                 # TrialConnect
-                 'custom.trialconnect.smspillow.TCSMSPillow',
-             ] + LOCAL_PILLOWTOPS
+PILLOWTOPS = {
+    'core': [
+        'corehq.pillows.case.CasePillow',
+        'corehq.pillows.xform.XFormPillow',
+        'corehq.pillows.domain.DomainPillow',
+        'corehq.pillows.user.UserPillow',
+        'corehq.pillows.application.AppPillow',
+        'corehq.pillows.sms.SMSPillow',
+    ],
+    'core_ext': [
+        'corehq.pillows.fullcase.FullCasePillow',  # to remove
+        'corehq.pillows.fullxform.FullXFormPillow',  # to remove
+
+        'corehq.pillows.reportcase.ReportCasePillow',
+        'corehq.pillows.reportxform.ReportXFormPillow',
+    ],
+    'fluff': [
+        'custom.bihar.models.CareBiharFluffPillow',
+        'custom.opm.opm_reports.models.OpmCaseFluffPillow',
+        'custom.opm.opm_reports.models.OpmUserFluffPillow',
+        'custom.opm.opm_reports.models.OpmFormFluffPillow',
+        'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
+        'custom.reports.care_sa.models.CareSAFluffPillow',
+        'custom.reports.mc.models.MalariaConsortiumFluffPillow',
+    ],
+    'mvp': [
+        'corehq.apps.indicators.pillows.FormIndicatorPillow',
+        'corehq.apps.indicators.pillows.CaseIndicatorPillow',
+    ],
+    'trialconnect': [
+        'custom.trialconnect.smspillow.TCSMSPillow',
+    ],
+    'commtrack': [
+        'corehq.pillows.commtrack.ConsumptionRatePillow',
+    ]
+}
+
+for k, v in  LOCAL_PILLOWTOPS.items():
+    plist = PILLOWTOPS.get(k, [])
+    plist.extend(v)
+    PILLOWTOPS[k] = plist
 
 #Custom workflow for indexing xform data beyond the standard properties
 XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
