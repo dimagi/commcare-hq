@@ -230,7 +230,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
                 case_id = recipient.get_id
             else:
                 case_id = reminder.case_id
-            session, responses = start_session(reminder.domain, recipient, app, module, form, case_id)
+            session, responses = start_session(reminder.domain, recipient, app, module, form, case_id, case_for_case_submission=handler.force_surveys_to_use_triggered_case)
             session.survey_incentive = handler.survey_incentive
             session.workflow = message_tags["workflow"]
             session.reminder_id = reminder._id
