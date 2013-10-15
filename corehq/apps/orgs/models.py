@@ -1,3 +1,4 @@
+from couchdbkit import MultipleResultsFound
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -27,7 +28,10 @@ class Organization(Document):
                                          include_docs=True, wrapper=cls.wrap, force_invalidate=True,
                                          **extra_args)
 
-        if len(results) > 0:
+        length = len(results)
+        if length > 1:
+            raise MultipleResultsFound("Error, Organization.get_by_name returned more than 1 result for %s" % name)
+        elif length == 1:
             return list(results)[0]
         else:
             return None
@@ -71,14 +75,15 @@ class Team(UndoableDocument, MultiMembershipMixin):
 
     @classmethod
     def get_by_org(cls, org_name):
-        return cache_core.cached_view(cls.get_db(), "orgs/team_by_org_and_name",
-                                      startkey = [org_name],
-                                      endkey=[org_name,{}],
-                                      reduce=False,
-                                      include_docs=True,
-                                      wrapper=cls.wrap,
-                                      force_invalidate=True
-                                      )
+        return cache_core.cached_view(
+            cls.get_db(), "orgs/team_by_org_and_name",
+            startkey=[org_name],
+            endkey=[org_name, {}],
+            reduce=False,
+            include_docs=True,
+            wrapper=cls.wrap,
+            force_invalidate=True
+        )
 
     @classmethod
     def get_by_domain(cls, domain):
