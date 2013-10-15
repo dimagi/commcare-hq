@@ -1,9 +1,11 @@
+from couchdbkit import MultipleResultsFound
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from corehq.apps.users.models import WebUser, MultiMembershipMixin, Invitation
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord
 from dimagi.utils.django.email import send_HTML_email
 
@@ -22,13 +24,17 @@ class Organization(Document):
     @classmethod
     def get_by_name(cls, name, strict=False):
         extra_args = {'stale': settings.COUCH_STALE_QUERY} if not strict else {}
-        result = cls.view("orgs/by_name",
-            key=name,
-            reduce=False,
-            include_docs=True,
-            **extra_args
-        ).one()
-        return result
+        results = cache_core.cached_view(cls.get_db(), "orgs/by_name", key=name, reduce=False,
+                                         include_docs=True, wrapper=cls.wrap, force_invalidate=True,
+                                         **extra_args)
+
+        length = len(results)
+        if length > 1:
+            raise MultipleResultsFound("Error, Organization.get_by_name returned more than 1 result for %s" % name)
+        elif length == 1:
+            return list(results)[0]
+        else:
+            return None
 
     @classmethod
     def get_all(cls):
@@ -69,18 +75,20 @@ class Team(UndoableDocument, MultiMembershipMixin):
 
     @classmethod
     def get_by_org(cls, org_name):
-        return cls.view("orgs/team_by_org_and_name",
-            startkey = [org_name],
-            endkey=[org_name,{}],
+        return cache_core.cached_view(
+            cls.get_db(), "orgs/team_by_org_and_name",
+            startkey=[org_name],
+            endkey=[org_name, {}],
             reduce=False,
-            include_docs=True).all()
+            include_docs=True,
+            wrapper=cls.wrap,
+            force_invalidate=True
+        )
 
     @classmethod
     def get_by_domain(cls, domain):
-        return cls.view("orgs/team_by_domain",
-            key=domain,
-            reduce=False,
-            include_docs=True).all()
+        return cache_core.cached_view(cls.get_db(), "orgs/team_by_domain", key=domain, reduce=False,
+                                      include_docs=True, wrapper=cls.wrap, force_invalidate=True)
 
     def save(self, *args, **kwargs):
         # forcibly replace empty name with '-'
@@ -128,10 +136,27 @@ class OrgRequest(Document):
         if user_id:
             key.append(user_id)
 
-        results = cls.view("orgs/org_requests",
+        # todo - forcing invalidating on all requests while we turn these features on slowly
+        results = cache_core.cached_view(
+            cls.get_db(), "orgs/org_requests",
             startkey=key,
             endkey=key + [{}],
             reduce=False,
             include_docs=True,
+            wrapper=cls.wrap,
+            force_invalidate=True
         )
-        return results.all() if not user_id else results.one()
+
+        #return results.all() if not user_id else results.one()
+
+        if not user_id:
+            return results
+        else:
+            try:
+                length = len(results)
+                if length == 1:
+                    return results[0]
+                elif length > 0:
+                    raise MultipleResultsFound("OrgRequests found multiple results for %s" % key)
+            except IndexError:
+                return None

@@ -1,7 +1,13 @@
 from datetime import datetime
-from django.contrib import messages
 import logging
 import math
+
+from django.contrib import messages
+from django.http import Http404
+import pytz
+from django.conf import settings
+from django.utils.importlib import import_module
+
 from corehq.apps.announcements.models import ReportAnnouncement
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.display import xmlns_to_name
@@ -9,17 +15,14 @@ from corehq.apps.reports.models import HQUserType, TempCommCareUser
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import user_id_to_username
 from couchexport.util import SerializableFunction
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
-from django.http import Http404
-import pytz
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import json_request
-from django.conf import settings
-from django.utils.importlib import import_module
 
 
 def make_form_couch_key(domain, by_submission_time=True,
@@ -353,12 +356,12 @@ def friendly_timedelta(td):
 def set_report_announcements_for_user(request, couch_user):
     key = ["type", ReportAnnouncement.__name__]
     now = datetime.utcnow()
-    data = ReportAnnouncement.get_db().view('announcements/all_announcements',
-        reduce=False,
-        startkey=key + [now.isoformat()],
-        endkey=key + [{}],
-        #stale=settings.COUCH_STALE_QUERY,
-    ).all()
+
+    db = ReportAnnouncement.get_db()
+    data = cache_core.cached_view(db, "announcements/all_announcements", reduce=False,
+                                 startkey=key + [now.strftime("%Y-%m-%dT%H:00")], endkey=key + [{}],
+                                 )
+
     announce_ids = [a['id'] for a in data if a['id'] not in couch_user.announcements_seen]
     for announcement_id in announce_ids:
         try:
