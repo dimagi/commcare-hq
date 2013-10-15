@@ -136,27 +136,27 @@ class OrgRequest(Document):
         if user_id:
             key.append(user_id)
 
-        results = cls.view("orgs/org_requests",
+        # todo - forcing invalidating on all requests while we turn these features on slowly
+        results = cache_core.cached_view(
+            cls.get_db(), "orgs/org_requests",
             startkey=key,
             endkey=key + [{}],
             reduce=False,
             include_docs=True,
+            wrapper=cls.wrap,
+            force_invalidate=True
         )
 
-        cache_core.cached_view(cls.get_db(), "orgs/org_requests",
-                               startkey=key,
-                               endkey=key + [{}],
-                               reduce=False,
-                               include_docs=True,
-                               wrapper=cls.wrap,
-                               force_invalidate=True
-                               )
+        #return results.all() if not user_id else results.one()
 
         if not user_id:
             return results
         else:
             try:
-                result = list(results)[0]
-                return result
+                length = len(results)
+                if length == 1:
+                    return results[0]
+                elif length > 0:
+                    raise MultipleResultsFound("OrgRequests found multiple results for %s" % key)
             except IndexError:
                 return None
