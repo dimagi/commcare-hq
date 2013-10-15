@@ -453,15 +453,18 @@ def create_pg_db():
 
 @task
 def bootstrap():
-    """Initialize remote host environment (virtualenv, deploy, update)"""
+    """Initialize remote host environment (virtualenv, deploy, update)
+
+    Use it with a targeted -H <hostname> you want to bootstrap for django worker use.
+    """
     require('root', provided_by=('staging', 'preview', 'production'))
     sudo('mkdir -p %(root)s' % env, shell=False, user=env.sudo_user)
-    execute(clone_repo)
+    clone_repo()
 
     update_code()
-    execute(create_virtualenvs)
-    execute(update_virtualenv)
-    execute(setup_dirs)
+    create_virtualenvs()
+    update_virtualenv()
+    setup_dirs()
 
     # copy localsettings if it doesn't already exist in case any management
     # commands we want to run now would error otherwise
