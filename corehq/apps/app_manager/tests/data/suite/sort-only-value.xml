@@ -38,9 +38,7 @@
     </field>
     <field>
       <header width="0">
-        <text>
-          <locale id="m0.case_short.case_name_2.header"/>
-        </text>
+        <text/>
       </header>
       <template width="0">
         <text>
@@ -55,9 +53,7 @@
     </field>
     <field>
       <header width="0">
-        <text>
-          <locale id="m0.case_short.case_date-opened_3.header"/>
-        </text>
+        <text/>
       </header>
       <template width="0">
         <text>
