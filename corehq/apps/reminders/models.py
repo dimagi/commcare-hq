@@ -389,6 +389,13 @@ class CaseReminderHandler(Document):
     # stop condition
     until = StringProperty()
 
+    #   If a subcase triggers an SMS survey, but we're sending it to the parent case,
+    # we sometimes want the subcase to be the one on which we execute case actions
+    # during form submission. This option will allow for that.
+    #   Note that this option only makes a difference if a case is filling out the SMS survey,
+    # and if a case other than that case triggered the reminder.
+    force_surveys_to_use_triggered_case = BooleanProperty(default=False)
+
     @property
     def uses_parent_case_property(self):
         events_use_parent_case_property = False
@@ -468,6 +475,9 @@ class CaseReminderHandler(Document):
                 recipient = CommCareUser.get_by_user_id(case.user_id)
             elif self.recipient == RECIPIENT_CASE:
                 recipient = CommConnectCase.get(case._id)
+            elif self.recipient == RECIPIENT_PARENT_CASE:
+                if case is not None and case.parent is not None:
+                    recipient = CommConnectCase.wrap_as_commconnect_case(case.parent)
         local_now = CaseReminderHandler.utc_to_local(recipient, now)
         
         case_id = case._id if case is not None else None
@@ -1006,13 +1016,13 @@ class CaseReminder(Document, LockableMixIn):
         elif handler.recipient == RECIPIENT_OWNER:
             return get_wrapped_owner(get_owner_id(self.case))
         elif handler.recipient == RECIPIENT_PARENT_CASE:
-            indices = self.case.indices
-            for index in indices:
-                # TODO: The data model allows for more than one parent.
-                # For now, send to the first parent, but need to decide how to handle multiple ones.
-                if index.identifier == "parent":
-                    return CommConnectCase.get(index.referenced_id)
-            return None
+            parent_case = None
+            case = self.case
+            if case is not None:
+                parent_case = case.parent
+            if parent_case is not None:
+                parent_case = CommConnectCase.wrap_as_commconnect_case(parent_case)
+            return parent_case
         elif handler.recipient == RECIPIENT_SUBCASE:
             indices = self.case.reverse_indices
             recipients = []

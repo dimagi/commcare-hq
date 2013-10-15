@@ -396,6 +396,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
             h.recipient_case_match_property = form.cleaned_data["recipient_case_match_property"]
             h.recipient_case_match_type = form.cleaned_data["recipient_case_match_type"]
             h.recipient_case_match_value = form.cleaned_data["recipient_case_match_value"]
+            h.force_surveys_to_use_triggered_case = form.cleaned_data["force_surveys_to_use_triggered_case"]
             if form.cleaned_data["start_condition_type"] == "ON_DATETIME":
                 dt = parse(form.cleaned_data["start_datetime_date"]).date()
                 tm = parse(form.cleaned_data["start_datetime_time"]).time()
@@ -445,6 +446,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
                 "recipient_case_match_property" : h.recipient_case_match_property,
                 "recipient_case_match_type" : h.recipient_case_match_type,
                 "recipient_case_match_value" : h.recipient_case_match_value,
+                "force_surveys_to_use_triggered_case" : h.force_surveys_to_use_triggered_case,
             }
         else:
             initial = {
