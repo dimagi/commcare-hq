@@ -227,18 +227,19 @@ ko.bindingHandlers.openModal = {
 
 ko.bindingHandlers.openJqm = {
     init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-        var ajaxSrc = valueAccessor(),
-            modal = $('<div></div>').addClass('jqmWindow').appendTo('body'),
+        var modal = $('<div></div>').addClass('jqmWindow').appendTo('body'),
             newValueAccessor = function () {
                 var clickAction = function () {
-                    modal.jqm({ajax: ajaxSrc}).jqmShow();
+                    modal.jqm({ajax: $(element).data('ajaxSource')}).jqmShow();
                 };
                 return clickAction;
-
             };
         ko.bindingHandlers.click.init(element, newValueAccessor, allBindingsAccessor, viewModel, bindingContext);
 //            $('#odk-install-placeholder').jqm({ajax: '@href', trigger: 'a.odk_install',
 //            ajaxText: "Please wait while we load that for you..." });
+    },
+    update: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+        $(element).data('ajaxSource', ko.utils.unwrapObservable(valueAccessor()));
     }
 };
 

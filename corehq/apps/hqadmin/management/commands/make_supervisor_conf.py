@@ -21,13 +21,10 @@ def parse_files(option, opt, value, parser):
 
     setattr(parser.values, option.dest, args_dict)
 
-class Command(BaseCommand):
-    help = "Make a supervisord conf file to deposit into a services path that supervisord knows about"
-    args = ""
-
+class SupervisorConfCommand(BaseCommand):
     option_list = BaseCommand.option_list + (
-        make_option('--conf_file', help='Config file to use', default=False),
-        make_option('--conf_destination', help='Supervisor configuration file path destination', default=None),
+        make_option('--conf_file', help='Config template file to use', default=False),
+        make_option('--conf_destination', help='Rendered supervisor configuration file path destination', default=None),
         make_option('--params',
                     type="string",
                     action='callback',
@@ -36,28 +33,46 @@ class Command(BaseCommand):
                     default={},
                     help='files to upload file1=path1,file2=path2,file3=path3'),
     )
-    
+
+    def render_configuration_file(self, conf_template_string):
+        return conf_template_string % self.params
+
+
     def handle(self, *args, **options):
-        conf_dest = options['conf_destination']
-        conf_file = options['conf_file']
+        self.conf_file_template = options['conf_file']
+        self.conf_dest = options['conf_destination']
+        self.params = options['params']
 
         root_dir = settings.FILEPATH
-        params = options['params']
-        environment = settings.SERVER_ENVIRONMENT
 
-        conf_file_fullpath = os.path.join(root_dir, 'services', 'templates', conf_file)
-        if not os.path.isfile(conf_file_fullpath):
-            sys.exit("[make_supervisor_conf] Error: file %s does not exist as a template to use - you're doing something wrong" % conf_file_fullpath) #needs to be in source control moron!
+        conf_template_fullpath = os.path.join(root_dir, 'services', 'templates', self.conf_file_template)
+        if not os.path.isfile(conf_template_fullpath):
+            sys.exit("[make_supervisor_conf] Error: file %s does not exist as a template to use - you're doing something wrong" % conf_template_fullpath) #needs to be in source control moron!
 
-        if not os.path.exists(conf_dest):
-            sys.exit("[clear_supervisor_confs] Error: the destination path %s is not reachable by this process" % conf_dest)
+        if not os.path.exists(self.conf_dest):
+            sys.exit("[make_supervisor_confs] Error: the destination path %s is not reachable by this process" % self.conf_dest)
 
-        with open(conf_file_fullpath, 'r') as fin:
-            conf_string = fin.read()
-            rendered_conf = conf_string % params
-            dest_filepath = os.path.join(conf_dest, '%s_%s' % (environment, conf_file))
-            with open(dest_filepath, 'w') as fout:
-                fout.write(rendered_conf)
-                print "\t[clear_supervisor_conf] Wrote supervisor configuration: %s" % dest_filepath
+        conf_template_string = None
+        with open(conf_template_fullpath, 'r') as fin:
+            conf_template_string = fin.read()
+        dest_filepath = os.path.join(self.conf_dest, '%s_%s' % (settings.SERVER_ENVIRONMENT, self.conf_file_template))
+        rendered_conf = self.render_configuration_file(conf_template_string)
 
+        self.write_configuration_file(dest_filepath, rendered_conf)
+
+    def write_configuration_file(self, destination_fullpath, rendered_configuration):
+        with open(destination_fullpath, 'w') as fout:
+            fout.write(rendered_configuration)
+            print "\t[make_supervisor_conf] Wrote supervisor configuration: %s" % destination_fullpath
+
+
+
+
+
+
+
+
+class Command(SupervisorConfCommand):
+    help = "Make a supervisord conf file to deposit into a services path that supervisord knows about"
+    args = ""
 

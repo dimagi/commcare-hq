@@ -1,6 +1,7 @@
 from datetime import timedelta, datetime, time
 import json
 from couchdbkit import ResourceNotFound
+from django.contrib import messages
 from django.utils.decorators import method_decorator
 import pytz
 from django.core.urlresolvers import reverse
@@ -283,12 +284,17 @@ def scheduled_reminders(request, domain, template="reminders/partial/scheduled_r
     dates = []
     now = datetime.utcnow()
     timezone_now = datetime.now(pytz.timezone(timezone))
-    today = now.date()
+    today = timezone_now.date()
+
+    def adjust_next_fire_to_timezone(reminder_utc):
+        return tz_utils.adjust_datetime_to_timezone(
+            reminder_utc.next_fire, pytz.utc.zone, timezone)
+
     if reminders:
-        start_date = reminders[0].next_fire.date()
+        start_date = adjust_next_fire_to_timezone(reminders[0]).date()
         if today < start_date:
             start_date = today
-        end_date = reminders[-1].next_fire.date()
+        end_date = adjust_next_fire_to_timezone(reminders[-1]).date()
     else:
         start_date = end_date = today
     # make sure start date is a Monday and enddate is a Sunday
@@ -307,7 +313,7 @@ def scheduled_reminders(request, domain, template="reminders/partial/scheduled_r
         
         reminder_data.append({
             "handler_name" : handler.nickname,
-            "next_fire" : reminder.next_fire,
+            "next_fire" : adjust_next_fire_to_timezone(reminder),
             "recipient_desc" : recipient_desc,
             "recipient_type" : handler.recipient,
             "case_id" : case.get_id if case is not None else None,
@@ -515,7 +521,15 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
         return super(CreateScheduledReminderView, self).dispatch(request, *args, **kwargs)
 
     def post(self, *args, **kwargs):
+        if self.schedule_form.is_valid():
+            self.process_schedule_form()
+        else:
+            messages.error(self.request, "There were errors saving your reminder.")
         return self.get(*args, **kwargs)
+
+    def process_schedule_form(self):
+        new_handler = CaseReminderHandler()
+        self.schedule_form.save(new_handler)
 
 
 class EditScheduledReminderView(CreateScheduledReminderView):
@@ -574,6 +588,9 @@ class EditScheduledReminderView(CreateScheduledReminderView):
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.handler_id])
+
+    def process_schedule_form(self):
+        self.schedule_form.save(self.reminder_handler)
 
 
 @reminders_permission

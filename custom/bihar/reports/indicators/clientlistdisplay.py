@@ -159,7 +159,7 @@ class PreDeliveryDoneDueCLD(DoneDueMixIn, PreDeliverySummaryCLD):
         return super(PreDeliveryDoneDueCLD, self).get_columns() + (_('Days Late'),)
 
     def as_row(self, case, context):
-        value = self.summary_value(case, context)
+        value = self.summary_value_raw(case, context)
         return super(PreDeliveryDoneDueCLD, self).as_row(case, context) + (self._get_days_due(case, value),)
 
 

@@ -385,6 +385,15 @@ class ReportNotification(Document):
     # removed 11/2012, only ever contained the user_id of the owner
     # user_ids = StringListProperty()
 
+    @classmethod
+    def wrap(cls, data):
+        from corehq.apps.reports.management.commands.migrate_report_notifications import first_migrate
+        should_save = first_migrate(data)
+        self = super(ReportNotification, cls).wrap(data)
+        if should_save:
+            self.save()
+        return self
+
     @property
     def is_editable(self):
         try:
@@ -493,12 +502,11 @@ class ReportNotification(Document):
             self.delete()
             return
 
-        title = "Scheduled report from CommCare HQ"
-        body = get_scheduled_report_response(
-            self.owner, self.domain, self._id).content
-
-        for email in self.all_recipient_emails:
-            send_HTML_email(title, email, body, email_from=settings.DEFAULT_FROM_EMAIL)
+        if self.all_recipient_emails:
+            title = "Scheduled report from CommCare HQ"
+            body = get_scheduled_report_response(self.owner, self.domain, self._id).content
+            for email in self.all_recipient_emails:
+                send_HTML_email(title, email, body, email_from=settings.DEFAULT_FROM_EMAIL)
 
 
 class AppNotFound(Exception):
