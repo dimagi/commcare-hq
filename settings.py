@@ -842,9 +842,9 @@ PILLOWTOPS = {
         'corehq.pillows.reportcase.ReportCasePillow',
         'corehq.pillows.reportxform.ReportXFormPillow',
     ],
-	'cache': [
+    'cache': [
         'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
-	],
+    ],
     'fluff': [
         'custom.bihar.models.CareBiharFluffPillow',
         'custom.opm.opm_reports.models.OpmCaseFluffPillow',
