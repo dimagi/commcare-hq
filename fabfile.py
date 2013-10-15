@@ -236,7 +236,8 @@ def production():
         'django_app': [
             'hqdjango0.internal.commcarehq.org',
             'hqdjango1.internal.commcarehq.org',
-            'hqdjango2.internal.commcarehq.org'
+            'hqdjango2.internal.commcarehq.org',
+            'hqdjango3.internal.commcarehq.org',
         ],
         'django_pillowtop': ['hqdb0.internal.commcarehq.org'],
 
