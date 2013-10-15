@@ -22,6 +22,7 @@ Welcome to CommCareHQ's documentation!
    ui_helpers
    class_views
    management_commands
+   commtrack
 
 Tips for documenting
 --------------------
