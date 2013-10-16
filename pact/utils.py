@@ -28,7 +28,7 @@ def pact_script_fields():
             "script": """if(_source['form']['note'] != null) { _source['form']['note']['pact_id']['#value']; }
                       else if (_source['form']['pact_id'] != null) { _source['form']['pact_id']['#value']; }
                       else {
-                          "unknown";
+                          null;
                       }
                       """
         },

@@ -4,7 +4,7 @@ from dateutil.parser import parser
 from django.core.cache import cache
 import simplejson
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.api.es import ReportXFormES
+from corehq.apps.api.es import ReportXFormES, get_report_script_field
 from pact.enums import PACT_DOMAIN
 from pact.lib.quicksect import IntervalNode
 from pact.utils import get_patient_display_cache
@@ -93,6 +93,7 @@ class CHWPatientSchedule(object):
         return cls(chw_username, day_intervaltree, cached_arr)
 
 
+
 def dots_submissions_by_case(case_id, query_date, username=None):
     """
     Actually run query for username submissions
@@ -100,20 +101,19 @@ def dots_submissions_by_case(case_id, query_date, username=None):
     """
     xform_es = ReportXFormES(PACT_DOMAIN)
     script_fields = {
-        "doc_id": {"script": "_source._id"},
-        "pact_id": {"script": "_source['form']['pact_id']['#value']", },
-        "encounter_date": {"script": "_source['form']['encounter_date']['#value']", },
-        "username": {"script": "_source.form.meta.username", },
-
-        "visit_type": {"script": "_source['form']['visit_type']['#value']", },
-        "visit_kept": {"script": "_source.form.visit_kept['#value']", },
-        "contact_type": {"script": "_source.form.contact_type['#value']", },
-        "observed_art": {"script": "_source.form.observed_art['#value']", },
-        "observed_non_art": {"script": "_source.form.observed_non_art['#value']", },
-        "observer_non_art_dose": {"script": "_source.form.observed_non_art_dose['#value']", },
-        "observed_art_dose": {"script": "_source.form.observed_art_dose['#value']", },
-        "pillbox_check": {"script": "_source.form.pillbox_check.check['#value']"},
-        "scheduled": {"script": "_source.form.scheduled['#value']"}
+        "doc_id": get_report_script_field('_id', is_known=True),
+        "pact_id": get_report_script_field("form.pact_id"),
+        "encounter_date": get_report_script_field('form.encounter_date'),
+        "username": get_report_script_field('form.meta.username', is_known=True),
+        "visit_type": get_report_script_field('form.visit_type'),
+        "visit_kept": get_report_script_field('form.visit_kept'),
+        "contact_type": get_report_script_field('form.contact_type'),
+        "observed_art": get_report_script_field('form.observed_art'),
+        "observed_non_art": get_report_script_field('form.observed_non_art'),
+        "observer_non_art_dose": get_report_script_field('form.observed_non_art_dose'),
+        "observed_art_dose": get_report_script_field('form.observed_art_dose'),
+        "pillbox_check": get_report_script_field('form.pillbox_check.check'),
+        "scheduled": get_report_script_field('form.scheduled'),
     }
 
     term_block = {'form.#type': 'dots_form'}
