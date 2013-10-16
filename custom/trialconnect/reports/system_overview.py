@@ -20,10 +20,10 @@ class BaseSystemOverviewReport(TrialConnectReport):
     ]
 
 class SystemOverviewReport(BaseSystemOverviewReport):
-    slug = 'system_overview'
-    name = ugettext_noop("System Overview")
-    description = ugettext_noop("Description for System Overview Report")
-    section_name = ugettext_noop("System Overview")
+    slug = 'overview'
+    name = ugettext_noop("Overview")
+    description = ugettext_noop("Summary of the different types of messages sent and received by the system.")
+    section_name = ugettext_noop("Overview")
 
     def workflow_query(self, workflow=None, additional_facets=None):
         additional_facets = additional_facets or []
@@ -102,8 +102,8 @@ class SystemOverviewReport(BaseSystemOverviewReport):
         return rows
 
     def es_histogram(self, workflow):
-        q = {"query": {"term": {"workflow": workflow.lower()}}}
-        return es_histogram(histo_type="sms", domains=[self.domain], q=q,
+        q = {"query": {"bool": {"must": [{"term": {"workflow": workflow.lower()}}]}}}
+        return es_histogram(histo_type="sms", domains=[self.domain], q=self.add_recipients_to_query(q),
                             startdate=self.datespan.startdate_display, enddate=self.datespan.enddate_display)
 
     @property
@@ -119,10 +119,10 @@ class SystemOverviewReport(BaseSystemOverviewReport):
         return [chart]
 
 class SystemUsersReport(BaseSystemOverviewReport):
-    slug = 'system_users'
-    name = ugettext_noop("System Users")
-    description = ugettext_noop("Description for System Users Report")
-    section_name = ugettext_noop("System Users")
+    slug = 'user_summary'
+    name = ugettext_noop("User Summary")
+    description = ugettext_noop("Summary of recipient information including number of active recipients and  message usage by type of recipient (case vs. mobile worker)")
+    section_name = ugettext_noop("User Summary")
 
     def active_query(self, recipient_type):
         q = self.base_query
@@ -175,7 +175,8 @@ class SystemUsersReport(BaseSystemOverviewReport):
 
         def div(num, denom, percent=False):
             floater = 100.0 if percent else 1.0
-            return num * floater / denom if denom != 0 else 0
+            val = num * floater / denom if denom != 0 else 0
+            return "%.2f" % val + ("%" if percent else "")
 
         active = row("Active", get_actives("commcareuser"), get_actives("commcarecase"))
 
