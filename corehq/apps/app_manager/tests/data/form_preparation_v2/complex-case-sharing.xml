@@ -1,0 +1,88 @@
+<h:html xmlns:h="http://www.w3.org/1999/xhtml"
+        xmlns:orx="http://openrosa.org/jr/xforms"
+        xmlns="http://www.w3.org/2002/xforms"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns:jr="http://openrosa.org/javarosa">
+    <h:head>
+        <h:title>Untitled Form</h:title>
+        <model>
+            <instance>
+                <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+                      xmlns="http://openrosa.org/formdesigner/A1328537-36ED-4FBA-8318-0FE01BA91125"
+                      uiVersion="1" version="1" name="Untitled Form">
+                    <name/>
+                    <owner_id/>
+                    <case xmlns="http://commcarehq.org/case/transaction/v2"
+                          case_id="" date_modified="" user_id="">
+                        <create>
+                            <case_name/>
+                            <owner_id/>
+                            <case_type>case</case_type>
+                        </create>
+                        <update>
+                            <owner_id/>
+                        </update>
+                    </case>
+                    <orx:meta xmlns:cc="http://commcarehq.org/xforms">
+                        <orx:deviceID/>
+                        <orx:timeStart/>
+                        <orx:timeEnd/>
+                        <orx:username/>
+                        <orx:userID/>
+                        <orx:instanceID/>
+                        <cc:appVersion/>
+                    </orx:meta>
+                </data>
+            </instance>
+            <instance id="commcaresession" src="jr://instance/session"/>
+            <instance id="groups" src="jr://fixture/user-groups"/>
+            <bind nodeset="/data/name" type="xsd:string" required="true()"/>
+            <bind nodeset="/data/owner_id" type="xsd:string"/>
+            <itext>
+                <translation lang="en" default="">
+                    <text id="name-label">
+                        <value>Name</value>
+                    </text>
+                    <text id="owner_id-label">
+                        <value>Owner ID</value>
+                    </text>
+                </translation>
+            </itext>
+            <bind calculate="/data/meta/timeEnd"
+                  nodeset="/data/case/@date_modified" type="dateTime"/>
+            <bind calculate="/data/meta/userID" nodeset="/data/case/@user_id"/>
+            <setvalue event="xforms-ready" ref="/data/case/@case_id"
+                      value="uuid()"/>
+            <bind calculate="/data/name" nodeset="/data/case/create/case_name"/>
+            <setvalue event="xforms-ready" ref="/data/case/create/owner_id"
+                      value="instance('groups')/groups/group/@id"/>
+            <bind calculate="/data/owner_id"
+                  nodeset="/data/case/update/owner_id"
+                  relevant="count(/data/owner_id) &gt; 0"/>
+            <setvalue event="xforms-ready" ref="/data/meta/deviceID"
+                      value="instance('commcaresession')/session/context/deviceid"/>
+            <setvalue event="xforms-ready" ref="/data/meta/timeStart"
+                      value="now()"/>
+            <bind nodeset="/data/meta/timeStart" type="xsd:dateTime"/>
+            <setvalue event="xforms-revalidate" ref="/data/meta/timeEnd"
+                      value="now()"/>
+            <bind nodeset="/data/meta/timeEnd" type="xsd:dateTime"/>
+            <setvalue event="xforms-ready" ref="/data/meta/username"
+                      value="instance('commcaresession')/session/context/username"/>
+            <setvalue event="xforms-ready" ref="/data/meta/userID"
+                      value="instance('commcaresession')/session/context/userid"/>
+            <setvalue event="xforms-ready" ref="/data/meta/instanceID"
+                      value="uuid()"/>
+            <setvalue event="xforms-ready" ref="/data/meta/appVersion"
+                      value="instance('commcaresession')/session/context/appversion"/>
+        </model>
+    </h:head>
+    <h:body>
+        <input ref="/data/name">
+            <label ref="jr:itext('name-label')"/>
+        </input>
+        <input ref="/data/owner_id">
+            <label ref="jr:itext('owner_id-label')"/>
+        </input>
+    </h:body>
+</h:html>
