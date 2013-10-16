@@ -357,7 +357,7 @@ def add_config(request, domain=None):
     if 'name' not in POST or not POST['name']:
         return HttpResponseBadRequest()
     
-    user_configs = ReportConfig.by_domain_and_owner(domain, user_id).
+    user_configs = ReportConfig.by_domain_and_owner(domain, user_id)
     if not POST.get('_id') and POST['name'] in [c.name for c in user_configs]:
         return HttpResponseBadRequest()
 
