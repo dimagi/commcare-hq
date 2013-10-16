@@ -48,11 +48,11 @@ class Facility(RssWrapper):
 
     @property
     def latitude(self):
-        return self.metadata['latitude']
+        return self.metadata.get('latitude', None)
 
     @property
     def longitude(self):
-        return self.metadata['longitude']
+        return self.metadata.get('longitude', None)
 
     @property
     def parent_id(self):
@@ -74,7 +74,7 @@ class Program(RssWrapper):
         return self.metadata['programName']
 
 
-def get_recent_facilities(uri_or_text):
+def get_facilities(uri_or_text):
     parsed = feedparser.parse(uri_or_text)
     for entry in parsed.entries:
         yield Facility(RssMetadata.from_entry(entry))
@@ -97,13 +97,36 @@ class OpenLMISEndpoint(object):
     Endpoint for interfacing with the OpenLMIS APIs
     """
 
-    def __init__(self, base_uri):
+    def __init__(self, base_uri, username, password):
         self.base_uri = base_uri.rstrip('/')
-        self.base_uri = base_uri
+        self.username = username
+        self.password = password
 
-    @property
-    def create_virtual_facility_url(self):
-        return '{base}/agent.json'.format(base=self.base_uri)
+        # feeds
+        self._feed_uri = self._urlcombine(self.base_uri, '/feeds')
+        self.facility_master_feed_uri = self._urlcombine(self._feed_uri, '/facility')
+        self.facility_program_feed_uri = self._urlcombine(self._feed_uri, '/programSupported')
+        self.program_catalog_feed_uri = self._urlcombine(self._feed_uri, '/programCatalogChanges')
+
+        # rest apis
+        self._rest_uri = self._urlcombine(self.base_uri, '/rest-api')
+        self.create_virtual_facility_url = self._urlcombine(self._rest_uri, 'agent.json')
+
+    def _urlcombine(self, base, target):
+        return '{base}{target}'.format(base=base, target=target)
+
+    def _page(self, base, page):
+        return '{base}/{page}'.format(base=base, page=page)
+
+    def get_all_facilities(self):
+        results = True
+        page = 1
+        while results:
+            next = self._page(self.facility_master_feed_uri, page)
+            results = list(get_facilities(next))
+            for r in results:
+                yield r
+            page += 1
 
     def create_virtual_facility(self, facility_data):
         response = requests.post(self.create_virtual_facility_url,

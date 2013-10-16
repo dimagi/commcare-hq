@@ -1,11 +1,24 @@
 from corehq.apps.commtrack.helpers import make_supply_point
-from corehq.apps.commtrack.models import Program
+from corehq.apps.commtrack.models import Program, SupplyPointCase
+from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
+from custom.openlmis.api import OpenLMISEndpoint
+
+
+def bootstrap_domain(domain):
+    project = Domain.get_by_name(domain)
+    config = project.commtrack_settings.openlmis_config
+    endpoint = OpenLMISEndpoint(config.url, config.username, config.password)
+    for f in endpoint.get_all_facilities():
+        sync_facility_to_supply_point(domain, f)
 
 
 def get_supply_point(domain, facility):
-    # todo
-    return None
+    return SupplyPointCase.view('hqcase/by_domain_external_id',
+        key=[domain, facility.code],
+        reduce=False,
+        include_docs=True,
+    ).one()
 
 
 def sync_facility_to_supply_point(domain, facility):
@@ -25,14 +38,19 @@ def sync_facility_to_supply_point(domain, facility):
             # parent = get_location_by_external_id()
             # facility_dict['parent'] = parent
             pass
-
         facility_loc = Location(**facility_dict)
         facility_loc.save()
         return make_supply_point(domain, facility_loc)
-
     else:
-        # currently impossible
-        raise NotImplementedError('updating existing supply points is not yet supported')
+        facility_loc = supply_point.location
+        should_save = False
+        for key, value in facility_dict.items():
+            if getattr(facility_loc, key, None) != value:
+                setattr(facility_loc, key, value)
+                should_save = True
+        if should_save:
+            facility_loc.save()
+        return supply_point
 
 
 def get_program(domain, lmis_program):
