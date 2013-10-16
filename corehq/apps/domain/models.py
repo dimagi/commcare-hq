@@ -504,12 +504,13 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
     @classmethod
     def get_by_organization(cls, organization):
-        result = cache_core.cached_view(cls.get_db(), "domain/by_organization",
-                               startkey=[organization],
-                               endkey=[organization, {}],
-                               reduce=False,
-                               include_docs=True,
-                               wrapper=cls.wrap
+        result = cache_core.cached_view(
+            cls.get_db(), "domain/by_organization",
+            startkey=[organization],
+            endkey=[organization, {}],
+            reduce=False,
+            include_docs=True,
+            wrapper=cls.wrap
         )
         return result
 
@@ -523,16 +524,11 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
     @classmethod
     def get_or_create_with_name(cls, name, is_active=False):
-        result = cls.view("domain/domains",
-            key=name,
-            reduce=False,
-            include_docs=True).first()
+        result = cls.view("domain/domains", key=name, reduce=False, include_docs=True).first()
         if result:
             return result
         else:
-            new_domain = Domain(name=name,
-                            is_active=is_active,
-                            date_created=datetime.utcnow())
+            new_domain = Domain(name=name, is_active=is_active, date_created=datetime.utcnow())
             new_domain.save(**get_safe_write_kwargs())
             return new_domain
 
