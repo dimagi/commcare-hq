@@ -44,8 +44,9 @@ class UsersMiddleware(object):
                 else:
                     #cache miss, write to cache
                     couch_user = CouchUser.from_django_user(request.user)
-                    cache_core.do_cache_doc(couch_user.to_json())
-                    rcache.set(SESSION_USER_KEY_PREFIX % sessionid, couch_user.get_id)
+                    if couch_user:
+                        cache_core.do_cache_doc(couch_user.to_json())
+                        rcache.set(SESSION_USER_KEY_PREFIX % sessionid, couch_user.get_id)
                 request.couch_user = couch_user
 
             if 'domain' in view_kwargs:
