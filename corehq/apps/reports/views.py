@@ -342,8 +342,8 @@ def touch_saved_reports_views(user, domain):
     homepage.
 
     """
-    ReportConfig.by_domain_and_owner(domain, user._id, limit=1, stale=False).all()
-    ReportNotification.by_domain_and_owner(domain, user._id, limit=1, stale=False).all()
+    ReportConfig.by_domain_and_owner(domain, user._id, limit=1, stale=False)
+    ReportNotification.by_domain_and_owner(domain, user._id, limit=1, stale=False)
 
 
 @login_and_domain_required
@@ -357,7 +357,7 @@ def add_config(request, domain=None):
     if 'name' not in POST or not POST['name']:
         return HttpResponseBadRequest()
     
-    user_configs = ReportConfig.by_domain_and_owner(domain, user_id).all()
+    user_configs = ReportConfig.by_domain_and_owner(domain, user_id)
     if not POST.get('_id') and POST['name'] in [c.name for c in user_configs]:
         return HttpResponseBadRequest()
 
@@ -486,7 +486,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
     
     user_id = request.couch_user._id
 
-    configs = ReportConfig.by_domain_and_owner(domain, user_id).all()
+    configs = ReportConfig.by_domain_and_owner(domain, user_id)
     config_choices = [(c._id, c.full_name) for c in configs if c.report and c.report.emailable]
 
     if not config_choices:
