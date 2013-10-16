@@ -279,13 +279,14 @@ def is_valid_id(uploaded_id, domain, cache):
     if uploaded_id in cache:
         return cache[uploaded_id]
 
-    # see if it's a user on this domain
-    if CouchUser.get_by_user_id(uploaded_id, domain):
-        return True
-
-    # or if it is a case sharing enabled group
     try:
-        group = Group.get(uploaded_id)
-        return group.case_sharing
-    except ResourceNotFound:
-        return False
+        # see if it's a user on this domain
+        if CouchUser.get_by_user_id(uploaded_id, domain):
+            return True
+    except KeyError:
+        # or if it is a case sharing enabled group
+        try:
+            group = Group.get(uploaded_id)
+            return group.case_sharing
+        except ResourceNotFound:
+            return False
