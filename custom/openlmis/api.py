@@ -115,6 +115,19 @@ class OpenLMISEndpoint(object):
     def _urlcombine(self, base, target):
         return '{base}{target}'.format(base=base, target=target)
 
+    def _page(self, base, page):
+        return '{base}/{page}'.format(base=base, page=page)
+
+    def get_all_facilities(self):
+        results = True
+        page = 1
+        while results:
+            next = self._page(self.facility_master_feed_uri, page)
+            results = list(get_facilities(next))
+            for r in results:
+                yield r
+            page += 1
+
     def create_virtual_facility(self, facility_data):
         response = requests.post(self.create_virtual_facility_url,
                                  data=json.dumps(facility_data))
