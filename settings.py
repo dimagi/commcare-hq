@@ -873,6 +873,7 @@ for k, v in  LOCAL_PILLOWTOPS.items():
 
 COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.DomainGenerationCache',
+    'corehq.apps.cachehq.cachemodels.OrganizationGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserGenerationCache',
     'corehq.apps.cachehq.cachemodels.GroupGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserRoleGenerationCache',
