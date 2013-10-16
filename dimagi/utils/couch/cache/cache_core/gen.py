@@ -1,5 +1,6 @@
-from django.utils import http
+from django.utils import http, importlib
 from . import CACHED_VIEW_PREFIX, rcache, COUCH_CACHE_TIMEOUT, CACHE_VIEWS
+from django.conf import settings
 import simplejson
 
 
@@ -33,7 +34,11 @@ class GenerationCache(object):
     @staticmethod
     def _generate_caches():
         generational_caches = []
-        for gen_model in GenerationCache.__subclasses__():
+
+        for cache_str in settings.COUCH_CACHE_BACKENDS:
+            mod_path, cache_class_name = cache_str.rsplit('.', 1)
+            mod = importlib.import_module(mod_path)
+            gen_model = getattr(mod, cache_class_name)
             generational_caches.append(gen_model())
         setattr(GenerationCache, '_generational_caches', generational_caches)
 
