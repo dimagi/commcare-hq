@@ -97,13 +97,23 @@ class OpenLMISEndpoint(object):
     Endpoint for interfacing with the OpenLMIS APIs
     """
 
-    def __init__(self, base_uri):
+    def __init__(self, base_uri, username, password):
         self.base_uri = base_uri.rstrip('/')
-        self.base_uri = base_uri
+        self.username = username
+        self.password = password
 
-    @property
-    def create_virtual_facility_url(self):
-        return '{base}/agent.json'.format(base=self.base_uri)
+        # feeds
+        self._feed_uri = self._urlcombine(self.base_uri, '/feeds')
+        self.facility_master_feed_uri = self._urlcombine(self._feed_uri, '/facility')
+        self.facility_program_feed_uri = self._urlcombine(self._feed_uri, '/programSupported')
+        self.program_catalog_feed_uri = self._urlcombine(self._feed_uri, '/programCatalogChanges')
+
+        # rest apis
+        self._rest_uri = self._urlcombine(self.base_uri, '/rest-api')
+        self.create_virtual_facility_url = self._urlcombine(self._rest_uri, 'agent.json')
+
+    def _urlcombine(self, base, target):
+        return '{base}{target}'.format(base=base, target=target)
 
     def create_virtual_facility(self, facility_data):
         response = requests.post(self.create_virtual_facility_url,
