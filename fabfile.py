@@ -236,8 +236,8 @@ def production():
         'django_app': [
             'hqdjango0.internal.commcarehq.org',
             'hqdjango1.internal.commcarehq.org',
-            'hqdjango2.internal.commcarehq.org',
             'hqdjango3.internal.commcarehq.org',
+            'hqdjango4.internal.commcarehq.org',
         ],
         'django_pillowtop': ['hqdb0.internal.commcarehq.org'],
 
@@ -260,7 +260,7 @@ def production():
     # Gets auto-populated by what_os()
     # if you don't know what it is or don't want to specify.
     env.host_os_map = None
-    env.roles = ['deploy', ]
+    env.roles = ['deploy']
     env.es_endpoint = 'hqes0.internal.commcarehq.org'''
     env.flower_port = 5555
 
@@ -302,7 +302,7 @@ def staging():
     env.server_name = 'commcare-hq-staging'
     env.settings = '%(project)s.localsettings' % env
     env.host_os_map = None
-    env.roles = ['deploy', ]
+    env.roles = ['deploy']
     env.flower_port = 5555
 
     _setup_path()
@@ -351,7 +351,7 @@ def preview():
     env.server_name = 'commcare-hq-preview'
     env.settings = '%(project)s.localsettings' % env
     env.host_os_map = None
-    env.roles = ['deploy', ]
+    env.roles = ['deploy']
     env.flower_port = 5556
 
     _setup_path()
