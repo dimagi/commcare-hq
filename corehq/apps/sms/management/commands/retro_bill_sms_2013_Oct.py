@@ -1,3 +1,4 @@
+import logging
 from corehq.apps.sms.util import create_billable_for_sms
 from dimagi.utils.couch.database import iter_docs
 from django.core.management.base import LabelCommand
@@ -49,3 +50,4 @@ class Command(LabelCommand):
                         )
                     except Exception as e:
                         print "Retroactive bill was not successful due to error: %s" % e
+                        logging.exception(e)
