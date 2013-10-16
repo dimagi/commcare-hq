@@ -16,7 +16,7 @@
                           case_id="" date_modified="" user_id="">
                         <create>
                             <case_name/>
-                            <owner_id/>
+                            <owner_id>-</owner_id>
                             <case_type>case</case_type>
                         </create>
                         <update>
@@ -35,7 +35,6 @@
                 </data>
             </instance>
             <instance id="commcaresession" src="jr://instance/session"/>
-            <instance id="groups" src="jr://fixture/user-groups"/>
             <bind nodeset="/data/name" type="xsd:string" required="true()"/>
             <bind nodeset="/data/owner_id" type="xsd:string"/>
             <itext>
@@ -54,8 +53,6 @@
             <setvalue event="xforms-ready" ref="/data/case/@case_id"
                       value="uuid()"/>
             <bind calculate="/data/name" nodeset="/data/case/create/case_name"/>
-            <setvalue event="xforms-ready" ref="/data/case/create/owner_id"
-                      value="instance('groups')/groups/group/@id"/>
             <bind calculate="/data/owner_id"
                   nodeset="/data/case/update/owner_id"
                   relevant="count(/data/owner_id) &gt; 0"/>
