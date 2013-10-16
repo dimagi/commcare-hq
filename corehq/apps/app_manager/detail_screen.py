@@ -282,7 +282,7 @@ class Enum(FormattedDetailColumn):
 @register_format_type('enum-image')
 class EnumImage(Enum):
     template_form = 'image'
-    template_width = '10%'
+    template_width = '13%'
 
 
 @register_format_type('late-flag')
