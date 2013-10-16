@@ -4,7 +4,7 @@ from django.test import TestCase
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.tests import bootstrap_domain
 from corehq.apps.locations.models import Location
-from custom.openlmis.api import get_recent_facilities, Facility, get_facility_programs, FacilityProgramLink, get_programs_and_products, Program
+from custom.openlmis.api import get_facilities, Facility, get_facility_programs, FacilityProgramLink, get_programs_and_products, Program
 from custom.openlmis.commtrack import sync_supply_point_to_openlmis
 from custom.openlmis.tests.mock_api import MockOpenLMISEndpoint
 
@@ -18,7 +18,7 @@ class FeedApiTest(TestCase):
 
     def testParseRecentFacilities(self):
         with open(os.path.join(self.datapath, 'recent_facilities.rss')) as f:
-            recent = list(get_recent_facilities(f.read()))
+            recent = list(get_facilities(f.read()))
 
         self.assertEqual(2, len(recent))
         [f1, f2] = recent

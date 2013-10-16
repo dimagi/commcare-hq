@@ -74,7 +74,7 @@ class Program(RssWrapper):
         return self.metadata['programName']
 
 
-def get_recent_facilities(uri_or_text):
+def get_facilities(uri_or_text):
     parsed = feedparser.parse(uri_or_text)
     for entry in parsed.entries:
         yield Facility(RssMetadata.from_entry(entry))
