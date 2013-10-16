@@ -48,11 +48,11 @@ class Facility(RssWrapper):
 
     @property
     def latitude(self):
-        return self.metadata['latitude']
+        return self.metadata.get('latitude', None)
 
     @property
     def longitude(self):
-        return self.metadata['longitude']
+        return self.metadata.get('longitude', None)
 
     @property
     def parent_id(self):
