@@ -22,11 +22,9 @@ class CacheInvalidatePillow(BasicPillow):
         super(CacheInvalidatePillow, self).__init__(**kwargs)
         self.couch_db = Domain.get_db()
 
-        #always set checkpoint to current when initializing
+        self.gen_caches = set(GenerationCache.doc_type_generation_map().values())
         if set_checkpoint:
-            print "settting chekcpoint"
             current_db_seq = self.couch_db.info()['update_seq']
-            self.gen_caches = set(GenerationCache.doc_type_generation_map().values())
             self.set_checkpoint({'seq': current_db_seq})
 
     def get_generations(self):
