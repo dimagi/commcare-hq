@@ -20,10 +20,10 @@ class BaseSystemOverviewReport(TrialConnectReport):
     ]
 
 class SystemOverviewReport(BaseSystemOverviewReport):
-    slug = 'system_overview'
-    name = ugettext_noop("System Overview")
-    description = ugettext_noop("Description for System Overview Report")
-    section_name = ugettext_noop("System Overview")
+    slug = 'overview'
+    name = ugettext_noop("Overview")
+    description = ugettext_noop("Summary of the different types of messages sent and received by the system.")
+    section_name = ugettext_noop("Overview")
 
     def workflow_query(self, workflow=None, additional_facets=None):
         additional_facets = additional_facets or []
@@ -119,10 +119,10 @@ class SystemOverviewReport(BaseSystemOverviewReport):
         return [chart]
 
 class SystemUsersReport(BaseSystemOverviewReport):
-    slug = 'system_users'
-    name = ugettext_noop("System Users")
-    description = ugettext_noop("Description for System Users Report")
-    section_name = ugettext_noop("System Users")
+    slug = 'user_summary'
+    name = ugettext_noop("User Summary")
+    description = ugettext_noop("Summary of recipient information including number of active recipients and  message usage by type of recipient (case vs. mobile worker)")
+    section_name = ugettext_noop("User Summary")
 
     def active_query(self, recipient_type):
         q = self.base_query
