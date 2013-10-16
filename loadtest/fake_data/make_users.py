@@ -22,6 +22,27 @@ from corehq.apps.domain.shortcuts import create_user
 
 from .names import names
 
+def make_user(creator, domain, number):
+    today = datetime.date.today()
+    first = random.choice(names)[0]
+    last = random.choice(names)[2]
+    username = "{0}{1}{2}".format(first, last, number)
+    email = "{0}@{1}.commcarehq.org".format(username, domain)
+    created = today - datetime.timedelta(days=random.randint(0, 60))
+    return creator(domain, username, 'root', email=email, date=created,
+        first_name=first, last_name=last)
+
+
+def make_web_user(domain, number=''):
+    return make_user(WebUser.create, domain, number)
+
+
+def make_cc_user(domain, number=''):
+    return make_user(CommCareUser.create, domain, number)
+
+
+# Below this point is for multiple users at once
+
 def make_users(creator, domain, n, verbosity=None):
     today = datetime.date.today()
     if verbosity is None:
