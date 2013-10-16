@@ -42,6 +42,7 @@ LANGUAGE_CODE = 'en-us'
 LANGUAGES = (
     ('en', 'English'),
     ('fr', 'French'),
+    ('fra', 'French'),  # we need this alias
     ('hin', 'Hindi'),
 )
 
@@ -106,7 +107,10 @@ MIDDLEWARE_CLASSES = [
     'corehq.apps.users.middleware.UsersMiddleware',
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
     'auditcare.middleware.AuditMiddleware',
+    'no_exceptions.middleware.NoExceptionsMiddleware',
 ]
+
+SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 
 ROOT_URLCONF = "urls"
 
@@ -222,6 +226,7 @@ HQ_APPS = (
     'corehq.apps.orgs',
     'corehq.apps.api',
     'corehq.apps.indicators',
+    'corehq.apps.cachehq',
     'corehq.couchapps',
     'custom.apps.wisepill',
     'fluff',
@@ -237,6 +242,7 @@ HQ_APPS = (
     # custom reports
     'a5288',
     'custom.bihar',
+    'custom.penn_state',
     'dca',
     'custom.apps.gsid',
     'hsph',
@@ -255,6 +261,8 @@ HQ_APPS = (
     'custom.reports.mc',
     'custom.trialconnect',
     'custom.apps.crs_reports',
+    'custom.hope',
+    'custom.openlmis',
 )
 
 TEST_APPS = ()
@@ -490,7 +498,7 @@ TOUCHFORMS_API_PASSWORD = "changeme"
 LOCAL_APPS = ()
 LOCAL_COUCHDB_APPS = ()
 LOCAL_MIDDLEWARE_CLASSES = ()
-LOCAL_PILLOWTOPS = []
+LOCAL_PILLOWTOPS = {}
 
 #If there are existing doc_ids and case_ids you want to check directly - they are refernced
 #in your localsettings for more accurate direct checks, otherwise use view based which can be inaccurate.
@@ -611,12 +619,12 @@ LOGGING = {
             'propagate': True,
         },
         'celery.task': {
-            'handlers': ['console', 'file', 'couchlog'],
+            'handlers': ['console', 'file', 'couchlog', 'sentry'],
             'level': 'INFO',
             'propagate': True
         },
         'pillowtop': {
-            'handlers': ['pillowtop'],
+            'handlers': ['pillowtop', 'sentry'],
             'level': 'ERROR',
             'propagate': False,
         }
@@ -688,6 +696,7 @@ COUCHDB_APPS = [
     'groups',
     'hqcase',
     'hqmedia',
+    'hope',
     'importer',
     'indicators',
     'locations',
@@ -714,6 +723,7 @@ COUCHDB_APPS = [
     'crs_reports',
 
     # custom reports
+    'penn_state',
     'care_benin',
     'dca',
     'gsid',
@@ -724,6 +734,7 @@ COUCHDB_APPS = [
     'pathindia',
     'pact',
     'psi',
+    'trialconnect',
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
@@ -815,30 +826,61 @@ INDICATOR_CONFIG = {
 
 CASE_WRAPPER = 'corehq.apps.hqcase.utils.get_case_wrapper'
 
-PILLOWTOPS = [
-                 'corehq.pillows.case.CasePillow',
-                 'corehq.pillows.fullcase.FullCasePillow',
-                 'corehq.pillows.xform.XFormPillow',
-                 'corehq.pillows.fullxform.FullXFormPillow',
-                 'corehq.pillows.domain.DomainPillow',
-                 'corehq.pillows.user.UserPillow',
-                 'corehq.pillows.application.AppPillow',
-                 'corehq.pillows.sms.SMSPillow',
-                 'corehq.pillows.commtrack.ConsumptionRatePillow',
-                 'corehq.pillows.reportxform.ReportXFormPillow',
-                 'corehq.pillows.reportcase.ReportCasePillow',
-                 # fluff
-                 'custom.bihar.models.CareBiharFluffPillow',
-                 'custom.opm.opm_reports.models.OpmCaseFluffPillow',
-                 'custom.opm.opm_reports.models.OpmUserFluffPillow',
-                 'custom.opm.opm_reports.models.OpmFormFluffPillow',
-                 'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
-                 'custom.reports.care_sa.models.CareSAFluffPillow',
-                 'custom.reports.mc.models.MalariaConsortiumFluffPillow',
-                 # MVP
-                 'corehq.apps.indicators.pillows.FormIndicatorPillow',
-                 'corehq.apps.indicators.pillows.CaseIndicatorPillow',
-             ] + LOCAL_PILLOWTOPS
+PILLOWTOPS = {
+    'core': [
+        'corehq.pillows.case.CasePillow',
+        'corehq.pillows.xform.XFormPillow',
+        'corehq.pillows.domain.DomainPillow',
+        'corehq.pillows.user.UserPillow',
+        'corehq.pillows.application.AppPillow',
+        'corehq.pillows.sms.SMSPillow',
+    ],
+    'core_ext': [
+        'corehq.pillows.fullcase.FullCasePillow',  # to remove
+        'corehq.pillows.fullxform.FullXFormPillow',  # to remove
+
+        'corehq.pillows.reportcase.ReportCasePillow',
+        'corehq.pillows.reportxform.ReportXFormPillow',
+    ],
+    'cache': [
+        'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
+    ],
+    'fluff': [
+        'custom.bihar.models.CareBiharFluffPillow',
+        'custom.opm.opm_reports.models.OpmCaseFluffPillow',
+        'custom.opm.opm_reports.models.OpmUserFluffPillow',
+        'custom.opm.opm_reports.models.OpmFormFluffPillow',
+        'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
+        'custom.reports.care_sa.models.CareSAFluffPillow',
+        'custom.reports.mc.models.MalariaConsortiumFluffPillow',
+    ],
+    'mvp': [
+        'corehq.apps.indicators.pillows.FormIndicatorPillow',
+        'corehq.apps.indicators.pillows.CaseIndicatorPillow',
+    ],
+    'trialconnect': [
+        'custom.trialconnect.smspillow.TCSMSPillow',
+    ],
+    'commtrack': [
+        'corehq.pillows.commtrack.ConsumptionRatePillow',
+    ]
+}
+
+for k, v in  LOCAL_PILLOWTOPS.items():
+    plist = PILLOWTOPS.get(k, [])
+    plist.extend(v)
+    PILLOWTOPS[k] = plist
+
+COUCH_CACHE_BACKENDS = [
+    'corehq.apps.cachehq.cachemodels.DomainGenerationCache',
+    'corehq.apps.cachehq.cachemodels.OrganizationGenerationCache',
+    'corehq.apps.cachehq.cachemodels.UserGenerationCache',
+    'corehq.apps.cachehq.cachemodels.GroupGenerationCache',
+    'corehq.apps.cachehq.cachemodels.UserRoleGenerationCache',
+    'corehq.apps.cachehq.cachemodels.TeamGenerationCache',
+    'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
+    'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
+]
 
 #Custom workflow for indexing xform data beyond the standard properties
 XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
@@ -874,6 +916,10 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
     'mvp-tiby',
 ]
 
+CUSTOM_MODULES = [
+    'custom.apps.crs_reports',
+]
+
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
 # mapping of domains to modules for those that aren't identical
@@ -888,9 +934,11 @@ DOMAIN_MODULE_MAP = {
     'dca-malawi': 'dca',
     'eagles-fahu': 'dca',
     'gsid': 'custom.apps.gsid',
+    'gsid-demo': 'custom.apps.gsid',
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
+    'mikesproject': 'custom.penn_state',
     'mvp-potou': 'mvp',
     'mvp-sauri': 'mvp',
     'mvp-bonsaaso': 'mvp',

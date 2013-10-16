@@ -7,6 +7,8 @@ try:
     from corehq.apps.reports.tests.test_form_export import *
     from corehq.apps.reports.tests.test_report_api import *
     from corehq.apps.reports.tests.test_data_sources import *
+    from .test_pillows_xforms import *
+    from .test_pillows_cases import *
 except ImportError, e:
     # for some reason the test harness squashes these so log them here for clarity
     # otherwise debugging is a pain

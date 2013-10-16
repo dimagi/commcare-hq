@@ -236,7 +236,8 @@ def production():
         'django_app': [
             'hqdjango0.internal.commcarehq.org',
             'hqdjango1.internal.commcarehq.org',
-            'hqdjango2.internal.commcarehq.org'
+            'hqdjango2.internal.commcarehq.org',
+            'hqdjango3.internal.commcarehq.org',
         ],
         'django_pillowtop': ['hqdb0.internal.commcarehq.org'],
 
@@ -453,15 +454,18 @@ def create_pg_db():
 
 @task
 def bootstrap():
-    """Initialize remote host environment (virtualenv, deploy, update)"""
+    """Initialize remote host environment (virtualenv, deploy, update)
+
+    Use it with a targeted -H <hostname> you want to bootstrap for django worker use.
+    """
     require('root', provided_by=('staging', 'preview', 'production'))
     sudo('mkdir -p %(root)s' % env, shell=False, user=env.sudo_user)
-    execute(clone_repo)
+    clone_repo()
 
     update_code()
-    execute(create_virtualenvs)
-    execute(update_virtualenv)
-    execute(setup_dirs)
+    create_virtualenvs()
+    update_virtualenv()
+    setup_dirs()
 
     # copy localsettings if it doesn't already exist in case any management
     # commands we want to run now would error otherwise
@@ -660,6 +664,7 @@ def deploy():
         if env.should_migrate:
             execute(migrate)
         execute(_do_collectstatic)
+        execute(do_update_django_locales)
         execute(version_static)
         if env.should_migrate:
             execute(flip_es_aliases)
@@ -897,51 +902,55 @@ def commit_locale_changes():
     local('git pull ssh://%s%s' % (env.host, env.code_root))
 
 
-def _rebuild_supervisor_conf_file(filename):
+def _rebuild_supervisor_conf_file(conf_command, filename):
     with cd(env.code_root):
         sudo((
             '%(virtualenv_root)s/bin/python manage.py '
-            'make_supervisor_conf --conf_file "%(filename)s" '
+            '%(conf_command)s --conf_file "%(filename)s" '
             '--conf_destination "%(destination)s" --params "%(params)s"'
         ) % {
+
+            'conf_command': conf_command,
             'virtualenv_root': env.virtualenv_root,
             'filename': filename,
             'destination': posixpath.join(env.services, 'supervisor'),
             'params': format_env(env)
         }, user=env.sudo_user)
 
+
+
 @roles('django_celery', 'django_monolith')
 def set_celery_supervisorconf():
-    _rebuild_supervisor_conf_file('supervisor_celery_main.conf')
+    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_main.conf')
 
     # hack to not have staging environments send out reminders
     if env.environment not in ['staging', 'preview', 'realstaging']:
-        _rebuild_supervisor_conf_file('supervisor_celery_beat.conf')
-        _rebuild_supervisor_conf_file('supervisor_celery_periodic.conf')
-    _rebuild_supervisor_conf_file('supervisor_celery_flower.conf')
-    _rebuild_supervisor_conf_file('supervisor_couchdb_lucene.conf') #to be deprecated
+        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_beat.conf')
+        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_periodic.conf')
+    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_flower.conf')
+    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_couchdb_lucene.conf') #to be deprecated
 
     # in reality this also should be another machine
     # if the number of listeners gets too high
     if env.environment not in ['preview']:
         # preview environment should not run pillowtop and index stuff
         # just rely on what's on staging
-        _rebuild_supervisor_conf_file('supervisor_pillowtop.conf')
+        _rebuild_supervisor_conf_file('make_supervisor_pillowtop_conf', 'supervisor_pillowtop.conf')
 
 
 @roles('django_app', 'django_monolith')
 def set_djangoapp_supervisorconf():
-    _rebuild_supervisor_conf_file('supervisor_django.conf')
+    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_django.conf')
 
 
 @roles('remote_es')
 def set_elasticsearch_supervisorconf():
-    _rebuild_supervisor_conf_file('supervisor_elasticsearch.conf')
+    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_elasticsearch.conf')
 
 
 @roles('formsplayer', 'django_monolith')
 def set_formsplayer_supervisorconf():
-    _rebuild_supervisor_conf_file('supervisor_formsplayer.conf')
+    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_formsplayer.conf')
 
 
 def set_supervisor_config():
@@ -978,9 +987,21 @@ def update_apache_conf():
     sudo('a2ensite cchq', user='root')
     sudo('service apache2 reload', user='root')
 
+@task
+def update_django_locales():
+    do_update_django_locales()
+
+
+@roles('django_app', 'django_celery', 'staticfiles', 'django_monolith')
+@parallel
+def do_update_django_locales():
+    with cd(env.code_root):
+        command = '{virtualenv_root}/bin/python manage.py update_django_locales'.format(
+            virtualenv_root=env.virtualenv_root,
+        )
+        sudo(command, user=env.sudo_user)
 
 # tests
-
 
 @task
 def selenium_test():

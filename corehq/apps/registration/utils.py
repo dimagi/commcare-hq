@@ -58,6 +58,9 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
         commtrack_enabled=commtrack_enabled,
         creating_user=current_user.username)
 
+    if form.cleaned_data.get('domain_timezone'):
+        new_domain.default_timezone = form.cleaned_data['domain_timezone']
+
     if org:
         new_domain.organization = org
         new_domain.hr_name = request.POST.get('domain_hrname', None) or new_domain.name

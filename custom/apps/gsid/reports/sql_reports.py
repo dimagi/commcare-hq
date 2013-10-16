@@ -10,7 +10,7 @@ from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn, Summ
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.standard.inspect import GenericMapReport
 from dimagi.utils.decorators.memoized import memoized
-from util import get_unique_combinations
+from util import get_unique_combinations,  capitalize_fn
 
 from datetime import datetime, timedelta
 
@@ -28,19 +28,27 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
     table_name = "gsid_patient_summary"
     default_aggregation = "clinic"
 
+    def __init__(self, request, base_context=None, domain=None, **kwargs):
+        self.is_map = kwargs.pop('map', False)
+        super(GSIDSQLReport, self).__init__(request, base_context=base_context, domain=domain, **kwargs)
+
     @property
+    @memoized
     def diseases(self):
         disease_fixtures = FixtureDataItem.by_data_type(
             self.domain, 
             FixtureDataType.by_domain_tag(self.domain, "diseases").one()
         )
-        return [d.fields["disease_id"] for d in disease_fixtures]
+        return {
+            "ids": [d.fields["disease_id"] for d in disease_fixtures],
+            "names": [d.fields["disease_name"] for d in disease_fixtures]
+        }
 
     @property
     def test_types(self):
         test_fixtures = FixtureDataItem.by_data_type(
             self.domain, 
-            FixtureDataType.by_domain_tag(self.domain, "tests").one()
+            FixtureDataType.by_domain_tag(self.domain, "test").one()
         )        
         return [t.fields["test_name"] for t in test_fixtures]
 
@@ -55,7 +63,7 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
             positive="POSITIVE"
         )
 
-        DISEASES = self.diseases
+        DISEASES = self.diseases["ids"]
         TESTS = self.test_types
 
         ret.update(zip(DISEASES, DISEASES))
@@ -94,13 +102,13 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
 
     @property
     def group_by(self):
-        return self.place_types + [self.gps_key]
+        return self.place_types
 
     @property
     def keys(self):
         combos = get_unique_combinations(self.domain, place_types=self.place_types, place=self.selected_fixture())
         for c in combos:
-            yield [c[pt] for pt in self.place_types] + [c["gps"]]
+            yield [c[pt] for pt in self.place_types]
 
     def selected_fixture(self):
         fixture = self.request.GET.get('fixture_id', "")
@@ -120,9 +128,9 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
     def common_columns(self):
         columns = []
         for place in self.place_types:
-            columns.append(DatabaseColumn(place.capitalize(), SimpleColumn(place)))
+            columns.append(DatabaseColumn(place.capitalize(), SimpleColumn(place), format_fn=capitalize_fn))
 
-        return columns + [DatabaseColumn("gps", SimpleColumn(self.gps_key))]
+        return columns
 
 
 class GSIDSQLPatientReport(GSIDSQLReport):
@@ -153,7 +161,7 @@ class GSIDSQLPatientReport(GSIDSQLReport):
         male_filter = EQ("gender", "male")
         female_filter = EQ("gender", "female")
 
-        return self.common_columns + [
+        columns = self.common_columns + [
             
             DatabaseColumn(
                 "Number of Males ", 
@@ -231,6 +239,11 @@ class GSIDSQLPatientReport(GSIDSQLReport):
             ),
         ]
 
+        if self.is_map:
+            columns.append(DatabaseColumn("gps", MaxColumn(self.gps_key), format_fn=lambda x: x))
+
+        return columns
+
     @property
     def charts(self):
         rows = super(GSIDSQLPatientReport, self).rows
@@ -241,13 +254,13 @@ class GSIDSQLPatientReport(GSIDSQLReport):
         chart.tooltipFormat = " in "
         chart.add_dataset(
             "Male Tests", 
-            [{'x':row[-11], 'y':row[-9]['html'] if row[-9] != "--" else 0} for row in rows],
-            color="#1f07b4"
+            [{'x':row[-10], 'y':row[-9]['html'] if row[-9] != "--" else 0} for row in rows],
+            color="#0006CE"
         )
         chart.add_dataset(
             "Female Tests", 
-            [{'x':row[-11], 'y':row[-8]['html'] if row[-8] != "--" else 0} for row in rows],
-            color="#1077b4"
+            [{'x':row[-10], 'y':row[-8]['html'] if row[-8] != "--" else 0} for row in rows],
+            color="#70D7FF"
         )
         return [chart]
 
@@ -259,13 +272,14 @@ class GSIDSQLByDayReport(GSIDSQLReport):
 
     @property
     def group_by(self):
-        return super(GSIDSQLByDayReport, self).group_by + ["date"]
+        return super(GSIDSQLByDayReport, self).group_by + ["date", "disease_name"] 
 
     @property
     def columns(self):
         return self.common_columns + \
             [
-                DatabaseColumn("Count", CountColumn("age", alias="day_count"))
+                DatabaseColumn("Count", CountColumn("age", alias="day_count")),
+                DatabaseColumn("disease", SimpleColumn("disease_name", alias="disease_name"))
             ]
 
     def daterange(self, start_date, end_date):
@@ -278,9 +292,10 @@ class GSIDSQLByDayReport(GSIDSQLReport):
         enddate = self.datespan.enddate_utc
 
         column_headers = []
-        group_by = self.group_by[:-1]
+        group_by = self.group_by[:-2]
         for place in group_by:
-            column_headers.append(DataTablesColumn(place))
+            column_headers.append(DataTablesColumn(place.capitalize()))
+        column_headers.append(DataTablesColumn("Disease"))
 
         prev_month = startdate.month
         month_columns = [startdate.strftime("%B %Y")]
@@ -311,14 +326,22 @@ class GSIDSQLByDayReport(GSIDSQLReport):
         old_data = self.data
         rows = []
         for loc_key in self.keys:
-            row = [x for x in loc_key]
-            for n, day in enumerate(self.daterange(startdate, enddate)):
-                temp_key = [loc for loc in loc_key]
-                temp_key.append(datetime.strptime(day, "%Y-%m-%d").date())
-                keymap = old_data.get(tuple(temp_key), None)
-                day_count = (keymap["day_count"] if keymap else None) or self.no_value
-                row.append(day_count)
-            rows.append(row)
+            selected_disease = self.request.GET.get('test_type_disease', '')
+            selected_disease = selected_disease.split(':') if selected_disease else None
+            diseases = [selected_disease[0]] if selected_disease else self.diseases["ids"]
+            for disease in diseases:
+                row = [capitalize_fn(x) for x in loc_key]
+                disease_names = self.diseases["names"]
+                index = diseases.index(disease)
+                row.append(disease_names[index])
+                for n, day in enumerate(self.daterange(startdate, enddate)):
+                    temp_key = [loc for loc in loc_key]
+                    temp_key.append(datetime.strptime(day, "%Y-%m-%d").date())
+                    temp_key.append(disease)
+                    keymap = old_data.get(tuple(temp_key), None)
+                    day_count = (keymap["day_count"] if keymap else None) or self.no_value
+                    row.append(day_count)
+                rows.append(row)
         return rows
 
     @property
@@ -336,9 +359,7 @@ class GSIDSQLByDayReport(GSIDSQLReport):
                 x = day
                 y = 0 if row[date_index + n + 1] == "--" else row[date_index + n + 1]
                 data_points.append({'x': x, 'y': y})
-            color = int(hashlib.md5(row[date_index-1]).hexdigest(), 16)
-            color = str(hex(color))
-            chart.add_dataset(row[date_index-1], data_points, color="#" + color[2:8])
+            chart.add_dataset(row[date_index-1] + "(" + row[date_index] + ")", data_points)
         return [chart]
 
 class GSIDSQLTestLotsReport(GSIDSQLReport):
@@ -380,7 +401,7 @@ class GSIDSQLTestLotsReport(GSIDSQLReport):
         elif disease:
             test_fixtures = FixtureDataItem.by_field_value(
                 self.domain, 
-                FixtureDataType.by_domain_tag(self.domain, "tests").one(),
+                FixtureDataType.by_domain_tag(self.domain, "test").one(),
                 "disease_id",
                 disease[0]
             )
@@ -396,7 +417,7 @@ class GSIDSQLTestLotsReport(GSIDSQLReport):
         old_data = self.data
         rows = []
         for loc_key in self.keys:
-            row = [loc for loc in loc_key]
+            row = [capitalize_fn(loc) for loc in loc_key]
             for test in selected_tests:
                 test_lots = test_lots_map.get(test, None)
                 if not test_lots:
@@ -416,7 +437,7 @@ class GSIDSQLTestLotsReport(GSIDSQLReport):
 
     @property
     def headers(self):
-        column_headers = [ DataTablesColumn(loc) for loc in self.group_by[:-2]]
+        column_headers = [DataTablesColumn(loc.capitalize()) for loc in self.group_by[:-2]]
         test_lots_map = self.test_lots_map
         for test in self.selected_tests:
             lots_headers = [test]
@@ -534,6 +555,7 @@ class PatientMapReport(GenericMapReport, CustomProjectReport):
         'adapter': 'legacyreport',
         'geo_column': 'gps',
         'report': 'custom.apps.gsid.reports.sql_reports.GSIDSQLPatientReport',
+        'report_params': {'map': True}
     }
 
     display_config = {}

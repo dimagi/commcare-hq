@@ -35,6 +35,7 @@ def REPORTS(project):
         (_("Demos for Previewers"), (
             inspect.DemoMapReport,
             inspect.DemoMapReport2,
+            inspect.DemoMapCaseList,
         )),
     ]
     

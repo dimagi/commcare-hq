@@ -1,9 +1,10 @@
+from couchdbkit import MultipleResultsFound
 from couchdbkit.ext.django.schema import Document, StringProperty, DateTimeProperty, StringListProperty, BooleanProperty
 from django.template.loader import render_to_string
 from corehq.apps.announcements.crud import HQAnnouncementCRUDManager
 from corehq.apps.crud.models import AdminCRUDDocumentMixin
+from dimagi.utils.couch.cache import cache_core
 from corehq.util import fix_urls
-from dimagi.utils.decorators.memoized import memoized
 
 
 class HQAnnouncement(Document, AdminCRUDDocumentMixin):
@@ -61,14 +62,22 @@ class Notification(Document):
         raise NotImplementedError
 
     @classmethod
-    # @memoized todo: figure out how to reset cache of class methods
     def get_notification(cls, username):
-        notification = cls.view("announcements/notifications",
+        notifications = cache_core.cached_view(
+            cls.get_db(),
+            "announcements/notifications",
             reduce=False,
             startkey=[cls._doc_type, username],
             endkey=[cls._doc_type, username, {}],
             include_docs=True,
-        ).one()
+            wrapper=cls.wrap)
+
+        try:
+            if len(notifications) > 1:
+                raise MultipleResultsFound("Multiple results found for announcements.get_notification")
+            notification = notifications[0]
+        except IndexError:
+            notification = None
 
         if not notification:
             notification = cls(user=username)

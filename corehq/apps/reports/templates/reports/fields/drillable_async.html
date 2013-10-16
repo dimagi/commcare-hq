@@ -1,3 +1,4 @@
+{% load hq_shared_tags %}
 <label class="control-label">{{ control_name }}</label>
 <div class="controls">
     <div data-bind="foreach: selected_path" style="display: inline-block;">
@@ -10,7 +11,7 @@
 <script type="text/javascript">
 
     var LOAD_FDIS_URL = '{{ api_root }}';
-    var hierarchy = {{ hierarchy|safe }};
+    var hierarchy = {{ hierarchy|JSON }};
 
     function api_get_children(fdi_uuid, depth, callback) {
         var params = (fdi_uuid ? {parent_id: fdi_uuid} : {});
