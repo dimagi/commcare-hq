@@ -175,7 +175,8 @@ class SystemUsersReport(BaseSystemOverviewReport):
 
         def div(num, denom, percent=False):
             floater = 100.0 if percent else 1.0
-            return num * floater / denom if denom != 0 else 0
+            val = num * floater / denom if denom != 0 else 0
+            return "%.2f" % val + ("%" if percent else "")
 
         active = row("Active", get_actives("commcareuser"), get_actives("commcarecase"))
 
