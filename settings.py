@@ -871,6 +871,16 @@ for k, v in  LOCAL_PILLOWTOPS.items():
     plist.extend(v)
     PILLOWTOPS[k] = plist
 
+COUCH_CACHE_BACKENDS = [
+    'corehq.apps.cachehq.cachemodels.DomainGenerationCache',
+    'corehq.apps.cachehq.cachemodels.UserGenerationCache',
+    'corehq.apps.cachehq.cachemodels.GroupGenerationCache',
+    'corehq.apps.cachehq.cachemodels.UserRoleGenerationCache',
+    'corehq.apps.cachehq.cachemodels.TeamGenerationCache',
+    'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
+    'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
+]
+
 #Custom workflow for indexing xform data beyond the standard properties
 XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
 
