@@ -40,9 +40,12 @@ class Command(LabelCommand):
                         'UNICEL': "",
                     }
                     print "Retroactively billing SMLog %s in domain %s" % (sms_log._id, sms_log.domain)
-                    create_billable_for_sms(
-                        sms_log,
-                        sms_log.backend_api,
-                        delay=False,
-                        response=successful_responses.get(sms_log.backend_api),
-                    )
+                    try:
+                        create_billable_for_sms(
+                            sms_log,
+                            sms_log.backend_api,
+                            delay=False,
+                            response=successful_responses.get(sms_log.backend_api),
+                        )
+                    except Exception as e:
+                        print "Retroactive bill was not successful due to error: %s" % e
