@@ -5,7 +5,15 @@ from django.conf import settings
 
 VALUE_TAG = '#value'
 
-def convert_properties(sub_dict, mapping, override_root_keys=None):
+def map_types(item, mapping):
+    if isinstance(item, dict):
+        return convert_property_dict(item, mapping)
+    elif isinstance(item, list):
+        return [map_types(x, mapping) for x in item]
+    else:
+        return {VALUE_TAG: item}
+
+def convert_property_dict(sub_dict, mapping, override_root_keys=None):
     """
     For mapping out ALL nested properties on cases, convert everything to a dict so as to
     prevent string=>object and object=>string mapping errors.
@@ -20,14 +28,34 @@ def convert_properties(sub_dict, mapping, override_root_keys=None):
     for k, v in sub_dict.items():
         if k in mapping.get('properties', {}) or k in override_root_keys:
             continue
-
-        if isinstance(v, dict):
-            if mapping.get('dynamic', False):
-                #only transmogrify stuff if it's explicitly set to dynamic
-                sub_dict[k] = convert_properties(v, mapping.get('properties', {}).get(k, {}))
-        else:
-            sub_dict[k] = {VALUE_TAG: v}
+        dynamic_mapping = mapping.get('dynamic', True)
+        sub_mapping = mapping.get('properties', {}).get(k, {})
+        if dynamic_mapping is not False:
+            sub_dict[k] = map_types(v, sub_mapping)
     return sub_dict
+
+def restore_property_dict(report_dict_item):
+    """
+    Revert a converted/retrieved document from Report<index> and deconvert all its properties
+    back from {#value: <val>} to just <val>
+    """
+    restored = {}
+    if not isinstance(report_dict_item, dict):
+        return report_dict_item
+
+    for k, v in report_dict_item.items():
+        if isinstance(v, list):
+            restored[k] = [restore_property_dict(x) for x in v]
+        elif isinstance(v, dict):
+            if VALUE_TAG in v:
+                restored[k] = v[VALUE_TAG]
+            else:
+                restored[k] = restore_property_dict(v)
+        else:
+            restored[k] = v
+
+    return restored
+
 
 
 class HQPillow(AliasedElasticPillow):

@@ -284,12 +284,17 @@ def scheduled_reminders(request, domain, template="reminders/partial/scheduled_r
     dates = []
     now = datetime.utcnow()
     timezone_now = datetime.now(pytz.timezone(timezone))
-    today = now.date()
+    today = timezone_now.date()
+
+    def adjust_next_fire_to_timezone(reminder_utc):
+        return tz_utils.adjust_datetime_to_timezone(
+            reminder_utc.next_fire, pytz.utc.zone, timezone)
+
     if reminders:
-        start_date = reminders[0].next_fire.date()
+        start_date = adjust_next_fire_to_timezone(reminders[0]).date()
         if today < start_date:
             start_date = today
-        end_date = reminders[-1].next_fire.date()
+        end_date = adjust_next_fire_to_timezone(reminders[-1]).date()
     else:
         start_date = end_date = today
     # make sure start date is a Monday and enddate is a Sunday
@@ -308,7 +313,7 @@ def scheduled_reminders(request, domain, template="reminders/partial/scheduled_r
         
         reminder_data.append({
             "handler_name" : handler.nickname,
-            "next_fire" : reminder.next_fire,
+            "next_fire" : adjust_next_fire_to_timezone(reminder),
             "recipient_desc" : recipient_desc,
             "recipient_type" : handler.recipient,
             "case_id" : case.get_id if case is not None else None,
@@ -391,6 +396,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
             h.recipient_case_match_property = form.cleaned_data["recipient_case_match_property"]
             h.recipient_case_match_type = form.cleaned_data["recipient_case_match_type"]
             h.recipient_case_match_value = form.cleaned_data["recipient_case_match_value"]
+            h.force_surveys_to_use_triggered_case = form.cleaned_data["force_surveys_to_use_triggered_case"]
             if form.cleaned_data["start_condition_type"] == "ON_DATETIME":
                 dt = parse(form.cleaned_data["start_datetime_date"]).date()
                 tm = parse(form.cleaned_data["start_datetime_time"]).time()
@@ -440,6 +446,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
                 "recipient_case_match_property" : h.recipient_case_match_property,
                 "recipient_case_match_type" : h.recipient_case_match_type,
                 "recipient_case_match_value" : h.recipient_case_match_value,
+                "force_surveys_to_use_triggered_case" : h.force_surveys_to_use_triggered_case,
             }
         else:
             initial = {

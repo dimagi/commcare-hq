@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Event feed</title>
+  <link rel="self" type="application/atom+xml" href="https://uat.221.134.198.28.xip.io/feeds/programSupported/recent" />
+  <link rel="via" type="application/atom+xml" href="https://uat.221.134.198.28.xip.io/feeds/programSupported/1" />
+  <author>
+    <name>Atomfeed</name>
+  </author>
+  <id>+1</id>
+  <generator uri="https://github.com/ICT4H/atomfeed">Atomfeed</generator>
+  <updated>2013-09-13T05:43:13Z</updated>
+  <entry>
+    <title>ProgramSupported</title>
+    <category term="programSupported" />
+    <id>tag:atomfeed.ict4h.org:d5546972-0317-4f92-bd2c-692e44e0d71e</id>
+    <updated>2013-09-13T05:37:05Z</updated>
+    <content type="application/vnd.atomfeed+xml"><![CDATA[{"facilityCode":"F10","programsSupported":[{"code":"TB","name":"TB","active":true,"startDate":1352572200000},{"code":"ESS_MEDS","name":"ESSENTIAL MEDICINES","active":true,"startDate":1352572200000},{"code":"MALARIA","name":"MALARIA","active":true,"startDate":1352572200000},{"code":"VACCINES","name":"VACCINES","active":true,"startDate":1352572200000}]}]]></content>
+  </entry>
+  <entry>
+    <title>ProgramSupported</title>
+    <category term="programSupported" />
+    <id>tag:atomfeed.ict4h.org:5b2b773d-da12-420c-bd84-b69f38e8a632</id>
+    <updated>2013-09-13T05:43:13Z</updated>
+    <content type="application/vnd.atomfeed+xml"><![CDATA[{"facilityCode":"F10","programsSupported":[{"code":"TB","name":"TB","active":true,"startDate":1352572200000},{"code":"ESS_MEDS","name":"ESSENTIAL MEDICINES","active":true,"startDate":1352572200000},{"code":"MALARIA","name":"MALARIA","active":true,"startDate":1352572200000},{"code":"VACCINES","name":"VACCINES","active":true,"startDate":1352572200000}]}]]></content>
+  </entry>
+</feed>
