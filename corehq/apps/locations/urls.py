@@ -7,6 +7,7 @@ settings_urls = patterns('corehq.apps.locations.views',
     url(r'^list/$', LocationsListView.as_view(), name=LocationsListView.urlname),
     url(r'^sync_facilities/$', FacilitySyncView.as_view(), name=FacilitySyncView.urlname),
     url(r'^sync_facilities_async/$', 'sync_facilities', name='sync_facilities_with_locations'),
+    url(r'^sync_openlmis/$', 'sync_openlmis', name='sync_openlmis'),
     url(r'^new/$', NewLocationView.as_view(), name=NewLocationView.urlname),
     url(r'^(?P<loc_id>[\w-]+)/$', EditLocationView.as_view(), name=EditLocationView.urlname),
 )
