@@ -28,12 +28,13 @@
             source: '{% url "download_index" domain '___' %}',
             release: '{% url "release_build" domain app.id '___' %}',
             newBuild: '{% url "corehq.apps.app_manager.views.save_copy" domain app.id %}',
-            revertBuild: '{% url "corehq.apps.app_manager.views.revert_to_copy" domain app.id %}'
+            revertBuild: '{% url "corehq.apps.app_manager.views.revert_to_copy" domain app.id %}',
+            currentVersion: '{% url "corehq.apps.app_manager.views.current_app_version" domain app.id %}',
         };
         var o = {
             users_cannot_share: {{ users_cannot_share|JSON }},
             urls: urls,
-            appVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
+            currentAppVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
             recipient_contacts: {{ sms_contacts|JSON }}
         };
         var el = $('#releases-table');
@@ -185,7 +186,7 @@
                     <td>
                         <button class="btn" data-bind="
                             openModal: 'revert-build-modal-template',
-                            visible: version() !== $root.appVersion()
+                            visible: version() !== $root.currentAppVersion()
                         ">{% trans "Revert" %}</button>
                     </td>
                     {% endif %}

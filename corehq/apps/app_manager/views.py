@@ -1,5 +1,3 @@
-from StringIO import StringIO
-import logging
 import hashlib
 from lxml import etree
 import os
@@ -509,6 +507,7 @@ def get_apps_base_context(request, domain, app):
         'timezone': timezone,
     }
 
+
 @cache_control(no_cache=True, no_store=True)
 @login_and_domain_required
 def paginate_releases(request, domain, app_id):
@@ -527,6 +526,7 @@ def paginate_releases(request, domain, app_id):
         wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
     ).all()
     return json_response(saved_apps)
+
 
 @login_and_domain_required
 def release_manager(request, domain, app_id, template='app_manager/releases.html'):
@@ -554,6 +554,20 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     response = render(request, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
+
+
+@login_and_domain_required
+def current_app_version(request, domain, app_id):
+    """
+    WIP
+    Return current app version.  The client should maybe call getMoreSavedApps()
+    if the latest release is not the current one.  return latest release as well.
+    """
+    app = get_app(domain, app_id)
+    return json_response({
+        'currentVersion': app.version,
+    })
+
 
 @no_conflict_require_POST
 @require_can_edit_apps
