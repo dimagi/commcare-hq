@@ -69,7 +69,7 @@ class PostApiTest(TestCase):
     def setUp(self):
         self.domain = 'post-api-test'
         bootstrap_domain(self.domain)
-        self.api = MockOpenLMISEndpoint("uri://mock/lmis/endpoint")
+        self.api = MockOpenLMISEndpoint("uri://mock/lmis/endpoint", username='ned', password='honor')
 
     def testCreateVirtualFacility(self):
         loc = Location(site_code='1234', name='beavis', domain=self.domain,
