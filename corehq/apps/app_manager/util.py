@@ -180,17 +180,22 @@ def add_odk_profile_after_build(app_build):
     # hack this in for records
     app_build.odk_profile_created_after_build = True
 
+
 def create_temp_sort_column(field, index):
     """
     Used to create a column for the sort only properties to
     add the field to the list of properties and app strings but
     not persist anything to the detail data.
     """
-    from corehq.apps.app_manager.models import DetailColumn
-    return DetailColumn(
+    from corehq.apps.app_manager.models import SortOnlyDetailColumn
+    return SortOnlyDetailColumn(
         model='case',
         field=field,
         format='invisible',
-        # ._i is exposed as .id, which is used in generating locale_ids
-        _i=index
+        header=None,
     )
+
+
+def is_sort_only_column(column):
+    from corehq.apps.app_manager.models import SortOnlyDetailColumn
+    return isinstance(column, SortOnlyDetailColumn)

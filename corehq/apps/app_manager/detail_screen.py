@@ -1,4 +1,5 @@
 from corehq.apps.app_manager import suite_xml as sx
+from corehq.apps.app_manager.util import is_sort_only_column
 from corehq.apps.app_manager.xform import CaseXPath, IndicatorXpath
 
 CASE_PROPERTY_MAP = {
@@ -84,9 +85,12 @@ class FormattedDetailColumn(object):
 
     @property
     def locale_id(self):
-        return self.id_strings.detail_column_header_locale(self.module,
-                                                           self.detail,
-                                                           self.column)
+        if not is_sort_only_column(self.column):
+            return self.id_strings.detail_column_header_locale(
+                self.module, self.detail, self.column,
+            )
+        else:
+            return None
 
     @property
     def header(self):
