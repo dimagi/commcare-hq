@@ -35,7 +35,7 @@ class GenerationCache(object):
     def _generate_caches():
         generational_caches = []
 
-        for cache_str in settings.COUCH_CACHE_BACKENDS:
+        for cache_str in getattr(settings, 'COUCH_CACHE_BACKENDS', []):
             mod_path, cache_class_name = cache_str.rsplit('.', 1)
             mod = importlib.import_module(mod_path)
             gen_model = getattr(mod, cache_class_name)
