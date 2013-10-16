@@ -18,14 +18,30 @@ class CacheInvalidatePillow(BasicPillow):
     """
     couch_filter = "hqadmin/not_case_form"  # string for filter if needed
 
-    def __init__(self, set_checkpoint=True, **kwargs):
+
+
+    def __init__(self, **kwargs):
         super(CacheInvalidatePillow, self).__init__(**kwargs)
         self.couch_db = Domain.get_db()
-
         self.gen_caches = set(GenerationCache.doc_type_generation_map().values())
-        if set_checkpoint:
-            current_db_seq = self.couch_db.info()['update_seq']
-            self.set_checkpoint({'seq': current_db_seq})
+
+    def set_checkpoint(self, change):
+        """
+        Override to do nothing - don't want to cause doc update conflicts with invalidation
+        """
+        pass
+
+    def reset_checkpoint(self):
+        pass
+
+    def get_checkpoint(self):
+        doc_name = self.get_checkpoint_doc_name()
+        current_db_seq = self.couch_db.info()['update_seq']
+        checkpoint_doc = {
+            "_id": doc_name,
+            "seq": current_db_seq
+        }
+        return checkpoint_doc
 
     def get_generations(self):
         return ["%s :: %s" % (gc.generation_key, gc._get_generation()) for gc in self.gen_caches]
