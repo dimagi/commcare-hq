@@ -44,5 +44,5 @@ class Command(LabelCommand):
                         sms_log,
                         sms_log.backend_api,
                         delay=False,
-                        response=successful_responses[sms_log.backend_api]
+                        response=successful_responses.get(sms_log.backend_api),
                     )
