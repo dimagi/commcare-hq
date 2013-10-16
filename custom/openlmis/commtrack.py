@@ -1,11 +1,14 @@
 from corehq.apps.commtrack.helpers import make_supply_point
-from corehq.apps.commtrack.models import Program
+from corehq.apps.commtrack.models import Program, SupplyPointCase
 from corehq.apps.locations.models import Location
 
 
 def get_supply_point(domain, facility):
-    # todo
-    return None
+    return SupplyPointCase.view('hqcase/by_domain_external_id',
+        key=[domain, facility.code],
+        reduce=False,
+        include_docs=True,
+    ).one()
 
 
 def sync_facility_to_supply_point(domain, facility):
