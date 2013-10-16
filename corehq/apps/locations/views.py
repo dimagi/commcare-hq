@@ -180,7 +180,6 @@ def location_edit(request, domain, loc_id=None):
 @domain_admin_required
 @require_POST
 def sync_facilities(request, domain):
-    print '1'
     commtrack_settings = request.project.commtrack_settings
 
     # create Facility Registry and Facility LocationTypes if they don't exist
