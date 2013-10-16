@@ -4,7 +4,7 @@ from corehq.apps.users.signals import couch_user_post_save
 
 from corehq.pillows import cacheinvalidate
 
-cache_pillow = cacheinvalidate.CacheInvalidatePillow()
+cache_pillow = cacheinvalidate.CacheInvalidatePillow(set_checkpoint=False)
 
 
 def invalidate_cached_domain(sender, **kwargs):
