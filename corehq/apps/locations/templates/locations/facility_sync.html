@@ -5,20 +5,21 @@
 
 {% block js-inline %}{{ block.super }}
 <script>
-    $("#sync_facilities").click(function() {
-        $(this).addClass("disabled").html('{% trans "Syncing..." %}');
-
-        $.ajax({
-            type: 'POST',
-            url: '{% url "sync_facilities_with_locations" domain %}',
-            success: function() {
-                $("#sync_facilities").html('{% trans "Sync Successful" %}');
-            },
-            error: function() {
-                $("#sync_facilities").html('{% trans "Error!" %}').addClass("btn-danger");
-
-            }
+    $(function () {
+        $("#sync_facilities").click(function() {
+            $(this).addClass("disabled").html('{% trans "Syncing..." %}');
+            $.ajax({
+                type: 'POST',
+                url: '{% url "sync_facilities_with_locations" domain %}',
+                success: function() {
+                    $("#sync_facilities").html('{% trans "Sync Successful" %}');
+                },
+                error: function() {
+                    $("#sync_facilities").html('{% trans "Error!" %}').addClass("btn-danger");
+                }
+            });
         });
+
     });
 </script>
 {% endblock %}
