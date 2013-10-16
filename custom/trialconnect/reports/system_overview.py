@@ -102,8 +102,8 @@ class SystemOverviewReport(BaseSystemOverviewReport):
         return rows
 
     def es_histogram(self, workflow):
-        q = {"query": {"term": {"workflow": workflow.lower()}}}
-        return es_histogram(histo_type="sms", domains=[self.domain], q=q,
+        q = {"query": {"bool": {"must": [{"term": {"workflow": workflow.lower()}}]}}}
+        return es_histogram(histo_type="sms", domains=[self.domain], q=self.add_recipients_to_query(q),
                             startdate=self.datespan.startdate_display, enddate=self.datespan.enddate_display)
 
     @property
