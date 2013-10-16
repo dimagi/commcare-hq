@@ -37,7 +37,6 @@ class UsersMiddleware(object):
                 #get user doc_id from session_id
                 cached_user_doc_id = rcache.get(SESSION_USER_KEY_PREFIX % sessionid, None)
                 # disable session based couch user caching - to be enabled later.
-                cached_user_doc_id = None
                 if cached_user_doc_id:
                     #cache hit
                     couch_user = CouchUser.wrap_correctly(cache_core.cached_open_doc(CouchUser.get_db(), cached_user_doc_id))
