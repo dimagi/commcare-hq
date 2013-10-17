@@ -63,6 +63,25 @@ class FacilityProgramLink(RssWrapper):
     pass
 
 
+class Product(object):
+
+    def __init__(self, code, name, description, unit, category):
+        self.code = code
+        self.name = name
+        self.description = description
+        self.unit = unit
+        self.category = category
+
+    @classmethod
+    def from_json(cls, json_rep):
+        return cls(
+            code=json_rep['productCode'],
+            name=json_rep['productName'],
+            description=json_rep['description'],
+            unit=json_rep['unit'],
+            category=json_rep['category'],
+        )
+
 class Program(object):
 
     def __init__(self, code, name, products=None):
@@ -74,6 +93,22 @@ class Program(object):
     def from_metadata(cls, metadata):
         ret = cls(metadata['programCode'], metadata['programName'])
         return ret
+
+    @classmethod
+    def from_json(cls, json_rep):
+        product_list = json_rep['programProductList']
+        if not product_list:
+            return None
+
+        name = product_list[0]['programName']
+        code = product_list[0]['programCode']
+        products = []
+        for p in product_list:
+            if p['programName'] != name or p['programCode'] != code:
+                raise OpenLMISAPIException('Product list was inconsistent')
+            products.append(Product.from_json(p))
+
+        return cls(code=code, name=name, products=products)
 
 
 def get_facilities(uri_or_text):
@@ -113,6 +148,7 @@ class OpenLMISEndpoint(object):
         # rest apis
         self._rest_uri = self._urlcombine(self.base_uri, '/rest-api')
         self.create_virtual_facility_url = self._urlcombine(self._rest_uri, 'agent.json')
+        self.program_product_url = self._urlcombine(self._rest_uri, 'programProducts.json')
 
     def _urlcombine(self, base, target):
         return '{base}{target}'.format(base=base, target=target)
@@ -129,6 +165,11 @@ class OpenLMISEndpoint(object):
             for r in results:
                 yield r
             page += 1
+
+    def get_program_products(self, program_code):
+        response = requests.get(self.program_product_url, params={'programCode': program_code})
+        return Program.from_json(response.json())
+
 
     def create_virtual_facility(self, facility_data):
         response = requests.post(self.create_virtual_facility_url,
