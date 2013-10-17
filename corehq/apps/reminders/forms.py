@@ -1,7 +1,7 @@
 import copy
 import json
 import re
-from crispy_forms.bootstrap import InlineField, Accordion, AccordionGroup, FormActions, StrictButton
+from crispy_forms.bootstrap import InlineField, FormActions, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from django.core.urlresolvers import reverse
