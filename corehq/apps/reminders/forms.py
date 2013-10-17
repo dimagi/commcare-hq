@@ -954,7 +954,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                 data_bind="visible: isStartReminderCaseDate"
             ),
             BootstrapMultiField(
-                "Timing",
+                "Time",
                 InlineField('event_timing', data_bind="value: event_timing"),
                 crispy.Div(
                     style="display: inline;",
