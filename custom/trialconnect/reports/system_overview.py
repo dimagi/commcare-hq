@@ -91,7 +91,7 @@ class SystemOverviewReport(BaseSystemOverviewReport):
             row(_("Keywords"), WORKFLOW_KEYWORD),
             row(_("Reminders"), WORKFLOW_REMINDER),
             row(_("Broadcasts"), WORKFLOW_BROADCAST),
-            row(_("Unknown")),
+            row(_("Other")),
         ]
 
         def total(index):
