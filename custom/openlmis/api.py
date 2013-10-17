@@ -44,7 +44,7 @@ class Facility(RssWrapper):
 
     @property
     def type(self):
-        return self.metadata['type']
+        return self.metadata['facilityType']
 
     @property
     def latitude(self):
