@@ -13,9 +13,10 @@ def bootstrap_domain(domain):
         sync_facility_to_supply_point(domain, f)
 
 
-def get_supply_point(domain, facility):
+def get_supply_point(domain, facility_or_code):
+    facility_code = facility_or_code if isinstance(facility_or_code, basestring) else facility_or_code.code
     return SupplyPointCase.view('hqcase/by_domain_external_id',
-        key=[domain, facility.code],
+        key=[domain, facility_code],
         reduce=False,
         include_docs=True,
     ).one()
