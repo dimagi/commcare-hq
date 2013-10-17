@@ -3,8 +3,8 @@ from django.test import TestCase
 from casexml.apps.case.tests import delete_all_cases
 from corehq.apps.commtrack.tests import bootstrap_domain
 from corehq.apps.locations.models import Location
-from custom.openlmis.api import get_recent_facilities
-from custom.openlmis.commtrack import sync_facility_to_supply_point
+from custom.openlmis.api import get_facilities
+from custom.openlmis.commtrack import sync_facility_to_supply_point, get_supply_point
 
 
 TEST_DOMAIN = 'openlmis-commtrack-facility-test'
@@ -18,11 +18,12 @@ class FacilitySyncTest(TestCase):
         for loc in Location.by_domain(TEST_DOMAIN):
             loc.delete()
 
-    def testCreateSupplyPointFromFacility(self):
+    def _get_facilities(self):
         with open(os.path.join(self.datapath, 'recent_facilities.rss')) as f:
-            recent = list(get_recent_facilities(f.read()))
+            return list(get_facilities(f.read()))
 
-        [f1, f2] = recent
+    def testCreateSupplyPointFromFacility(self):
+        [f1, f2] = self._get_facilities()
         self.assertEqual(0, len(list(Location.by_domain(TEST_DOMAIN))))
         sp1 = sync_facility_to_supply_point(TEST_DOMAIN, f1)
         locs = list(Location.by_domain(TEST_DOMAIN))
@@ -36,3 +37,15 @@ class FacilitySyncTest(TestCase):
         self.assertEqual(f1.name, sp1.name)
         self.assertEqual(f1.code, sp1.external_id)
         self.assertEqual(sp1.location._id, loc1._id)
+
+    def testGetSupplyPoint(self):
+        [f1, f2] = self._get_facilities()
+        self.assertTrue(get_supply_point(TEST_DOMAIN, f1) is None)
+        sp1 = sync_facility_to_supply_point(TEST_DOMAIN, f1)
+        spback = get_supply_point(TEST_DOMAIN, f1)
+        self.assertTrue(spback is not None)
+        self.assertEqual(sp1._id, spback._id)
+
+        # test by code
+        spback = get_supply_point(TEST_DOMAIN, f1.code)
+        self.assertEqual(sp1._id, spback._id)

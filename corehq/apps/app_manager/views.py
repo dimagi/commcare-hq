@@ -2135,6 +2135,7 @@ def upload_translations(request, domain, app_id):
         app.save()
         success = True
     except Exception:
+        notify_exception(request, 'Bulk Upload Translations Error')
         messages.error(request, _("Something went wrong! Update failed. We're looking into it"))
 
     if success:

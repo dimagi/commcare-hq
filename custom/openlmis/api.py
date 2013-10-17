@@ -3,6 +3,7 @@ import json
 import feedparser
 import time
 import requests
+from requests.auth import HTTPBasicAuth
 from custom.openlmis.exceptions import OpenLMISAPIException
 
 
@@ -44,37 +45,74 @@ class Facility(RssWrapper):
 
     @property
     def type(self):
-        return self.metadata['type']
+        return self.metadata['facilityType']
 
     @property
     def latitude(self):
-        return self.metadata['latitude']
+        return self.metadata.get('latitude', None)
 
     @property
     def longitude(self):
-        return self.metadata['longitude']
+        return self.metadata.get('longitude', None)
 
     @property
     def parent_id(self):
-        return self.metadata.get('ParentfacilityID', None)
+        return self.metadata.get('parentFacility', None)
 
 
 class FacilityProgramLink(RssWrapper):
     pass
 
 
-class Program(RssWrapper):
+class Product(object):
 
-    @property
-    def code(self):
-        return self.metadata['programCode']
+    def __init__(self, code, name, description, unit, category):
+        self.code = code
+        self.name = name
+        self.description = description
+        self.unit = unit
+        self.category = category
 
-    @property
-    def name(self):
-        return self.metadata['programName']
+    @classmethod
+    def from_json(cls, json_rep):
+        return cls(
+            code=json_rep['productCode'],
+            name=json_rep['productName'],
+            description=json_rep['description'],
+            unit=json_rep['unit'],
+            category=json_rep['category'],
+        )
+
+class Program(object):
+
+    def __init__(self, code, name, products=None):
+        self.code = code
+        self.name = name
+        self.products = products or []
+
+    @classmethod
+    def from_metadata(cls, metadata):
+        ret = cls(metadata['programCode'], metadata['programName'])
+        return ret
+
+    @classmethod
+    def from_json(cls, json_rep):
+        product_list = json_rep['programProductList']
+        if not product_list:
+            return None
+
+        name = product_list[0]['programName']
+        code = product_list[0]['programCode']
+        products = []
+        for p in product_list:
+            if p['programName'] != name or p['programCode'] != code:
+                raise OpenLMISAPIException('Product list was inconsistent')
+            products.append(Product.from_json(p))
+
+        return cls(code=code, name=name, products=products)
 
 
-def get_recent_facilities(uri_or_text):
+def get_facilities(uri_or_text):
     parsed = feedparser.parse(uri_or_text)
     for entry in parsed.entries:
         yield Facility(RssMetadata.from_entry(entry))
@@ -89,7 +127,7 @@ def get_facility_programs(uri_or_text):
 def get_programs_and_products(uri_or_text):
     parsed = feedparser.parse(uri_or_text)
     for entry in parsed.entries:
-        yield Program(RssMetadata.from_entry(entry))
+        yield Program.from_metadata(RssMetadata.from_entry(entry).metadata)
 
 
 class OpenLMISEndpoint(object):
@@ -97,13 +135,56 @@ class OpenLMISEndpoint(object):
     Endpoint for interfacing with the OpenLMIS APIs
     """
 
-    def __init__(self, base_uri):
+    def __init__(self, base_uri, username, password):
         self.base_uri = base_uri.rstrip('/')
-        self.base_uri = base_uri
+        self.username = username
+        self.password = password
 
-    @property
-    def create_virtual_facility_url(self):
-        return '{base}/agent.json'.format(base=self.base_uri)
+        # feeds
+        self._feed_uri = self._urlcombine(self.base_uri, '/feeds')
+        self.facility_master_feed_uri = self._urlcombine(self._feed_uri, '/facility')
+        self.facility_program_feed_uri = self._urlcombine(self._feed_uri, '/programSupported')
+        self.program_catalog_feed_uri = self._urlcombine(self._feed_uri, '/programCatalogChanges')
+
+        # rest apis
+        self._rest_uri = self._urlcombine(self.base_uri, '/rest-api')
+        self.create_virtual_facility_url = self._urlcombine(self._rest_uri, '/agent.json')
+        self.program_product_url = self._urlcombine(self._rest_uri, '/programProducts.json')
+
+    def _urlcombine(self, base, target):
+        return '{base}{target}'.format(base=base, target=target)
+
+    def _page(self, base, page):
+        return '{base}/{page}'.format(base=base, page=page)
+
+    def _iter_feed(self, uri, item_wrapper):
+        results = True
+        page = 1
+        while results:
+            next = self._page(uri, page)
+            results = list(item_wrapper(next))
+            for r in results:
+                yield r
+            page += 1
+
+    def _auth(self):
+        return HTTPBasicAuth(self.username, self.password)
+
+    def get_all_facilities(self):
+        return (fac for fac in self._iter_feed(self.facility_master_feed_uri, get_facilities))
+
+    def get_all_programs(self, include_products=True):
+        programs = (p for p in self._iter_feed(self.program_catalog_feed_uri, get_programs_and_products))
+        if include_products:
+            return (self.get_program_products(p.code) for p in programs)
+        else:
+            return programs
+
+    def get_program_products(self, program_code):
+        response = requests.get(self.program_product_url, params={'programCode': program_code},
+                                auth=self._auth())
+        return Program.from_json(response.json())
+
 
     def create_virtual_facility(self, facility_data):
         response = requests.post(self.create_virtual_facility_url,
