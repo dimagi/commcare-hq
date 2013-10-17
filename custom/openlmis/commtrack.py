@@ -1,9 +1,10 @@
+import logging
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.models import Program, SupplyPointCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
 from custom.openlmis.api import OpenLMISEndpoint
-from custom.openlmis.exceptions import BadParentException
+from custom.openlmis.exceptions import BadParentException, OpenLMISAPIException
 
 
 def bootstrap_domain(domain):
@@ -11,7 +12,10 @@ def bootstrap_domain(domain):
     config = project.commtrack_settings.openlmis_config
     endpoint = OpenLMISEndpoint(config.url, config.username, config.password)
     for f in endpoint.get_all_facilities():
-        sync_facility_to_supply_point(domain, f)
+        try:
+            sync_facility_to_supply_point(domain, f)
+        except OpenLMISAPIException, e:
+            logging.exception('Problem syncing facility %s' % f.code)
 
 
 def get_supply_point(domain, facility_or_code):
