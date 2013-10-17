@@ -149,8 +149,8 @@ class SystemUsersReport(BaseSystemOverviewReport):
         def row(header, mw_val, case_val):
             return [_(header), mw_val, case_val, mw_val + case_val]
 
-        def verified_numbered_users(owner_type, ids=None):
-            if not ids:
+        def verified_numbered_users(owner_type, ids=None, check_filters=False):
+            if not ids and not check_filters:
                 data = get_db().view('sms/verified_number_by_domain',
                     reduce=True,
                     startkey=[self.domain, owner_type],
@@ -167,8 +167,10 @@ class SystemUsersReport(BaseSystemOverviewReport):
 
         owner_ids = self.combined_user_ids if self.users_by_group else []
         case_ids = self.cases_by_case_group if self.cases_by_case_group else []
-        number = row("Number", verified_numbered_users("CommCareUser", owner_ids),
-                     verified_numbered_users("CommCareCase", case_ids))
+
+        check_filters = True if owner_ids or case_ids else False
+        number = row("Number", verified_numbered_users("CommCareUser", owner_ids, check_filters=check_filters),
+                     verified_numbered_users("CommCareCase", case_ids, check_filters=check_filters))
 
         def get_actives(recipient_type):
             return len(self.active_query(recipient_type)['facets']['couch_recipient']['terms'])
