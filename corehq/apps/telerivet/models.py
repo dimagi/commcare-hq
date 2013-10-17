@@ -25,7 +25,7 @@ class TelerivetBackend(SMSBackend):
 
     @classmethod
     def get_generic_name(cls):
-        return "Telerivet"
+        return "Telerivet (Android)"
 
     @classmethod
     def get_template(cls):
