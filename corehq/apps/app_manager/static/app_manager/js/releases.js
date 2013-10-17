@@ -59,7 +59,7 @@ function ReleasesMain(o) {
     self.nextVersionToFetch = null;
     self.fetchLimit = 5;
     self.deployAnyway = {};
-    self.appVersion = ko.observable(self.options.appVersion);
+    self.currentAppVersion = ko.observable(self.options.currentAppVersion);
     self.lastAppVersion = ko.observable();
     self.brokenBuilds = ko.computed(function () {
         var apps = self.savedApps();
@@ -145,6 +145,8 @@ function ReleasesMain(o) {
             });
         }
     };
+    self.reload_message = "Sorry, that didn't go through. " +
+            "Please reload your page and try again"
     self.deleteSavedApp = function (savedApp) {
         savedApp._deleteState('pending');
         $.post(self.url('delete'), {saved_app: savedApp.id()}, function () {
@@ -152,26 +154,45 @@ function ReleasesMain(o) {
             savedApp._deleteState(false);
         }).error(function () {
             savedApp._deleteState('error');
-            alert(
-                "Sorry, that didn't go through. Please reload your page " +
-                "and try again"
-            );
+            alert(self.reload_message);
         });
     };
     self.revertSavedApp = function (savedApp) {
         $.postGo(self.url('revertBuild'), {saved_app: savedApp.id()});
     };
-    self.makeNewBuildEnabled = function () {
+    self.makeNewBuild = function () {
         if (self.buildState() === 'pending') {
             return false;
-        } else if (self.lastAppVersion() === undefined) {
-            return self.doneFetching();
-        } else {
-            return self.lastAppVersion() !== self.appVersion();
         }
+
+        var url = self.url('currentVersion');
+        $.get(
+            self.url('currentVersion')
+        ).success(function (data) {
+            self.currentAppVersion(data.currentVersion);
+            if (data.latestRelease !== self.lastAppVersion()) {
+                window.alert("New version found");
+                self.reloadApps();
+            } else if (self.lastAppVersion() !== self.currentAppVersion()) {
+                self.actuallyMakeBuild();
+            } else {
+                window.alert("No new changes to deploy!");
+            }
+        }).error(function () {
+            self.buildState('error');
+            window.alert(self.reload_message);
+        });
     };
-    self.makeNewBuild = function () {
-        var comment = window.prompt("Please write a comment about the build you're making to help you remember later:");
+    self.reloadApps = function () {
+        self.savedApps([]);
+        self.nextVersionToFetch = null;
+        self.getMoreSavedApps();
+    };
+    self.actuallyMakeBuild = function () {
+        var comment = window.prompt(
+            "Please write a comment about the build you're making " +
+            "to help you remember later:"
+        );
         if (comment || comment === "") {
             $(this).find("input[name='comment']").val(comment);
         } else {
@@ -183,7 +204,8 @@ function ReleasesMain(o) {
         }).success(function (data) {
             $('#build-errors-wrapper').html(data.error_html);
             if (data.saved_app) {
-                self.addSavedApp(SavedApp(data.saved_app, self), true);
+                var app = SavedApp(data.saved_app, self)
+                self.addSavedApp(app, true);
             }
             self.buildState('');
         }).error(function () {
