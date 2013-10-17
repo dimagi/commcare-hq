@@ -9776,7 +9776,7 @@ msgstr "Mortes maternas"
 
 #: custom/reports/mc/reports/definitions.py:67
 msgid "deaths_other"
-msgstr "Outros grupos "
+msgstr "Outros grupos"
 
 #: custom/reports/mc/reports/definitions.py:68
 msgid "deaths_total"
@@ -9937,49 +9937,49 @@ msgstr "Número de casos transferidos"
 msgid ""
 "Congratulations! This APE has visited {number} children this week. Call and "
 "congratulate them! Please help other supervisors learn from your success."
-msgstr ""
+msgstr "Parabéns! Visitou {number} crianças menores de 5 anos nesta semana. Por favor ligue para aqueles APEs para parabeniza-los. Partilhe as suas experiências de sucesso com outros supervisores."
 
 #: custom/reports/mc/reports/definitions.py:198
 msgid ""
 "This APE has treated {number} of patients with the incorrect medicine for "
 "pneumonia.  Please contact him/her and find out why and provide supportive "
 "supervision on use of amoxicillin."
-msgstr ""
+msgstr "Tratou {number} pacientes com o medicamento incorrecto par o tratamento de pneumonia.  Por favor contacte-lhe e procure saber as razões e lhe dê o apoio necessário para o uso correcto da amoxicilina."
 
 #: custom/reports/mc/reports/definitions.py:199
 msgid ""
 "This APE has treated {number} of patients with the incorrect medicine for "
 "diarrhoea.  Please contact them and find out why and provide supportive "
 "supervision on use of zinc and ORS."
-msgstr ""
+msgstr "Tratou {number} pacientes com o medicamento incorrecto par o tratamento de diarreia.  Por favor contacte-o e procure saber as razões e dê-lhe o apoio necessário para o uso correcto do zinco e SRO."
 
 #: custom/reports/mc/reports/definitions.py:200
 msgid ""
 "This APE has treated {number} of patients with the incorrect medicine for "
 "malaria.  Please contact them and find out why and provide supportive "
 "supervision on use of Coartem and Paracetamol."
-msgstr ""
+msgstr "P Tratou {number} pacientes com o medicamento incorrecto par o tratamento de malaria.  Por favor contacte-o e procure saber as razões e dê-lhe o apoio necessário para o uso correcto de Coartem e Paracetamol."
 
 #: custom/reports/mc/reports/definitions.py:201
 msgid ""
 "Congratulations! This APE has correctly referred all children they visited "
 "this week. Call those APEs to congratulate them! Please help other "
 "supervisors learn from your success."
-msgstr ""
+msgstr "Parabéns! Tranfirou todas as crianças menores de 5 anos correctamente nesta semana. Por favor ligar para aqueles APEs para parabeniza-los. Partilhe as suas experiências de sucesso com outros supervisores."
 
 #: custom/reports/mc/reports/definitions.py:202
 msgid ""
-"This APE incorrectly referred <number> patients they visited this week. "
+"This APE incorrectly referred {number} patients they visited this week. "
 "Please contact them and find out why and provide supportive supervision on "
 "correct referral."
-msgstr ""
+msgstr "Tranfirou {number} pacientes incorrectamente nesta semana. Por favor contacte-o e procure saber as razões e dê-lhe o apoio necessário para a transferencia correcta."
 
 #: custom/reports/mc/reports/definitions.py:203
 msgid ""
 "This APE did not perform a RDT on <number> patients with fever this week. "
 "Please contact them and find out why and provide supportive supervision on "
 "when to perform a RDT."
-msgstr ""
+msgstr "Não fez teste rapido a {number} pacientes com febre nesta semana. Por favor contacte-o e procure saber as razões e dê-lhe o apoio necessário sobre quando fazer teste rapido para diagnosticar a malaria."
 
 #: custom/reports/mc/reports/fields.py:11
 #, fuzzy
@@ -10008,7 +10008,7 @@ msgstr "Relatorio Semanal aos Supervisores dos APEs"
 
 #: custom/reports/mc/templates/mc/reports/hf_weekly.html:4
 msgid "mc_msgs_title"
-msgstr ""
+msgstr "Mensagens"
 
 #: custom/trialconnect/reports/appointments.py:14
 #: custom/trialconnect/reports/appointments.py:16

@@ -199,6 +199,6 @@ HF_WEEKLY_MESSAGES = {
     'msg_diarrhoea': _('This APE has treated {number} of patients with the incorrect medicine for diarrhoea.  Please contact them and find out why and provide supportive supervision on use of zinc and ORS.'),
     'msg_malaria': _('This APE has treated {number} of patients with the incorrect medicine for malaria.  Please contact them and find out why and provide supportive supervision on use of Coartem and Paracetamol.'),
     'msg_good_referrals': _('Congratulations! This APE has correctly referred all children they visited this week. Call those APEs to congratulate them! Please help other supervisors learn from your success.'),
-    'msg_bad_referrals': _('This APE incorrectly referred <number> patients they visited this week. Please contact them and find out why and provide supportive supervision on correct referral.'),
-    'msg_rdt': _('This APE did not perform a RDT on <number> patients with fever this week. Please contact them and find out why and provide supportive supervision on when to perform a RDT.'),
+    'msg_bad_referrals': _('This APE incorrectly referred {number} patients they visited this week. Please contact them and find out why and provide supportive supervision on correct referral.'),
+    'msg_rdt': _('This APE did not perform a RDT on {number} patients with fever this week. Please contact them and find out why and provide supportive supervision on when to perform a RDT.'),
 }
