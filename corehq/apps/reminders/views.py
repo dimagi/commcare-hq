@@ -669,8 +669,7 @@ class EditScheduledReminderView(CreateScheduledReminderView):
         langcodes = []
         for event in self.reminder_handler.events:
             langcodes.extend(event.message.keys())
-        return list(set(langcodes))
-
+        return list(set(langcodes)) or ['en']
 
     @property
     def ui_type(self):
