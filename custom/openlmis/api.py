@@ -56,7 +56,7 @@ class Facility(RssWrapper):
 
     @property
     def parent_id(self):
-        return self.metadata.get('ParentfacilityID', None)
+        return self.metadata.get('parentFacility', None)
 
 
 class FacilityProgramLink(RssWrapper):
