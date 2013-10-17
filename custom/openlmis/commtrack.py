@@ -1,8 +1,10 @@
+import logging
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.models import Program, SupplyPointCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
 from custom.openlmis.api import OpenLMISEndpoint
+from custom.openlmis.exceptions import BadParentException, OpenLMISAPIException
 
 
 def bootstrap_domain(domain):
@@ -10,12 +12,16 @@ def bootstrap_domain(domain):
     config = project.commtrack_settings.openlmis_config
     endpoint = OpenLMISEndpoint(config.url, config.username, config.password)
     for f in endpoint.get_all_facilities():
-        sync_facility_to_supply_point(domain, f)
+        try:
+            sync_facility_to_supply_point(domain, f)
+        except OpenLMISAPIException, e:
+            logging.exception('Problem syncing facility %s' % f.code)
 
 
-def get_supply_point(domain, facility):
+def get_supply_point(domain, facility_or_code):
+    facility_code = facility_or_code if isinstance(facility_or_code, basestring) else facility_or_code.code
     return SupplyPointCase.view('hqcase/by_domain_external_id',
-        key=[domain, facility.code],
+        key=[domain, facility_code],
         reduce=False,
         include_docs=True,
     ).one()
@@ -32,12 +38,16 @@ def sync_facility_to_supply_point(domain, facility):
         'latitude': facility.latitude,
         'longitude': facility.longitude,
     }
+    parent_sp = None
+    if facility.parent_id:
+        parent_sp = get_supply_point(domain, facility.parent_id)
+        if not parent_sp:
+            raise BadParentException('No matching supply point with code %s found' % facility.parent_id)
+
     if supply_point is None:
-        if facility.parent_id:
-            # todo, deal with parentage
-            # parent = get_location_by_external_id()
-            # facility_dict['parent'] = parent
-            pass
+        if parent_sp:
+            facility_dict['parent'] = parent_sp.location
+
         facility_loc = Location(**facility_dict)
         facility_loc.save()
         return make_supply_point(domain, facility_loc)
@@ -48,8 +58,12 @@ def sync_facility_to_supply_point(domain, facility):
             if getattr(facility_loc, key, None) != value:
                 setattr(facility_loc, key, value)
                 should_save = True
+        if parent_sp and facility_loc.parent_id != parent_sp.location._id:
+            raise BadParentException('You are trying to move a location. This is currently not supported.')
+
         if should_save:
             facility_loc.save()
+
         return supply_point
 
 
