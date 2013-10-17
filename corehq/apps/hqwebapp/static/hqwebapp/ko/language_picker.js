@@ -28,9 +28,6 @@ var LanguagePickerViewModel = function (onSuccessFn) {
                                 };
                             })
                         };
-                    },
-                    formatSelection: function (selection) {
-                        console.log(selection);
                     }
                 }
           });
