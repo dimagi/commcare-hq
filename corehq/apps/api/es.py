@@ -321,20 +321,6 @@ class XFormES(ESView):
         return query
 
 
-
-class FullXFormES(XFormES):
-    index = 'full_xforms'
-
-    def __init__(self, domain):
-        super(FullXFormES, self).__init__(domain)
-        logging.warning("FullXForms are on the way out, replace now!")
-
-
-    def run_query(self, es_query):
-        logging.warning("FullXForms.run_query are on the way out, replace now!")
-        return super(FullXFormES, self).run_query(es_query)
-
-
 def report_term_filter(terms, mapping):
     """convert terms to correct #value term queries based upon the mapping
     does it match up with pre-defined stuff in the mapping?
