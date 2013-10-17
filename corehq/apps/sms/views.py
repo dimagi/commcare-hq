@@ -564,7 +564,17 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
     @property
     @memoized
     def total(self):
-        return 0
+        domain_backends = SMSBackend.get_db().view(
+            "sms/backend_by_domain",
+            startkey=[self.domain],
+            endkey=[self.domain, {}],
+            reduce=True,
+        ).first() or {}
+        global_backends = SMSBackend.get_db().view(
+            'sms/global_backends',
+            reduce=True,
+        ).first() or {}
+        return domain_backends.get('value', 0) + global_backends.get('value', 0)
 
     @property
     def column_names(self):
@@ -583,11 +593,10 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
 
     @property
     def paginated_list(self):
-        backend_classes = get_available_backends()
         all_backends = []
         all_backends += SMSBackend.view(
             "sms/backend_by_domain",
-            classes=backend_classes,
+            classes=self.backend_classes,
             startkey=[self.domain],
             endkey=[self.domain, {}],
             reduce=False,
@@ -595,7 +604,7 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
         ).all()
         all_backends += SMSBackend.view(
             'sms/global_backends',
-            classes=backend_classes,
+            classes=self.backend_classes,
             reduce=False,
             include_docs=True
         ).all()
@@ -621,6 +630,11 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
                     'itemData': self._fmt_backend_data(backend),
                     'template': 'gateway-template',
                 }
+
+    @property
+    @memoized
+    def backend_classes(self):
+        return get_available_backends()
 
     def _fmt_backend_data(self, backend):
         return {
