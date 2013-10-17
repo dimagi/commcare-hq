@@ -1844,15 +1844,31 @@ class KeywordForm(Form):
     _cchq_domain = None
     _sk_id = None
     keyword = CharField()
-    form_unique_id = CharField(required=False)
-    form_type = ChoiceField(choices=FORM_TYPE_CHOICES)
+    description = CharField()
+    override_open_sessions = BooleanField(required=False)
+    sender_content_type = CharField(required=False)
+    sender_message = CharField(required=False)
+    sender_form_unique_id = CharField(required=False)
+    notify_others = BooleanField(required=False)
+    other_recipient_content_type = CharField(required=False)
+    other_recipient_message = CharField(required=False)
+    other_recipient_form_unique_id = CharField(required=False)
+    process_structured_sms = BooleanField(required=False)
+    structured_sms_form_unique_id = CharField(required=False)
     use_custom_delimiter = BooleanField(required=False)
     delimiter = CharField(required=False)
     use_named_args = BooleanField(required=False)
     use_named_args_separator = BooleanField(required=False)
     named_args = RecordListField(input_name="named_args")
     named_args_separator = CharField(required=False)
-    
+
+    @property
+    def current_values(self):
+        values = {}
+        for field_name in self.fields.keys():
+            values[field_name] = self[field_name].value()
+        return values
+
     def clean_keyword(self):
         value = self.cleaned_data.get("keyword")
         if value is not None:

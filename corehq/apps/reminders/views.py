@@ -646,6 +646,10 @@ def add_keyword(request, domain, keyword_id=None):
         "form_list" : get_form_list(domain),
         "form" : form,
         "keyword" : sk,
+        "content_type_choices" : [
+            {"code" : METHOD_SMS, "desc" : _("SMS Message")},
+            {"code" : METHOD_SMS_SURVEY, "desc" : _("SMS Interactive Survey")},
+        ],
     }
     
     return render(request, "reminders/partial/add_keyword.html", context)

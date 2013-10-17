@@ -11,7 +11,8 @@ from datetime import datetime
 from corehq.apps.smsforms.models import XFormsSession
 from corehq.apps.smsforms.app import _get_responses, start_session
 from corehq.apps.app_manager.models import Form
-from corehq.apps.sms.util import register_sms_contact, strip_plus, create_immediate_reminder
+from corehq.apps.sms.util import register_sms_contact, strip_plus
+from corehq.apps.reminders.util import create_immediate_reminder
 from touchforms.formplayer.api import current_question
 from dateutil.parser import parse
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
