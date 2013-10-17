@@ -20,9 +20,8 @@ class TrialConnectReport(GenericTabularReport, ProjectReport, ProjectReportParam
         return self.add_recipients_to_query(q)
 
     def add_recipients_to_query(self, q):
-        recipients = self.cases_by_case_group
         if self.users_by_group:
-            recipients.extend(self.combined_user_ids)
-        if recipients:
-            q["query"]["bool"]["must"].append({"in": {"couch_recipient": recipients}})
+            q["query"]["bool"]["must"].append({"in": {"couch_recipient": self.combined_user_ids}})
+        if self.cases_by_case_group:
+            q["query"]["bool"]["must"].append({"in": {"couch_recipient": self.cases_by_case_group}})
         return q
