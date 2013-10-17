@@ -33,51 +33,6 @@ class MCHDisplay(CaseDisplay):
 
 
 class MCHMotherDisplay(MCHDisplay):
-    _asha_name = "---"
-    _asha_number = "---"
-    _awc_code_name = "---"
-    _aww_name = "---"
-    _aww_number = "---"
-
-    _caste = "---"
-    _jsy_beneficiary = "---"
-    _home_sba_assist = "---"
-    _delivery_nature = "---"
-    _discharge_date = "---"
-    _jsy_money_date = "---"
-    _delivery_complications = "---"
-    _family_planning_type = "---"
-    _anemia = "---"
-    _complications = "---"
-    _rti_sti = "---"
-    _abortion_type = "---"
-    _blood_pressure_1 = "---"
-    _blood_pressure_2 = "---"
-    _blood_pressure_3 = "---"
-    _blood_pressure_4 = "---"
-    _weight_1 = "---"
-    _weight_2 = "---"
-    _weight_3 = "---"
-    _weight_4 = "---"
-    _hemoglobin = "---"
-    _all_pnc_on_time = "---"
-    _num_children = "---"
-    _case_name_1 = "---"
-    _case_name_2 = "---"
-    _case_name_3 = "---"
-    _case_name_4 = "---"
-    _gender_1 = "---"
-    _gender_2 = "---"
-    _gender_3 = "---"
-    _gender_4 = "---"
-    _first_weight_1 = "---"
-    _first_weight_2 = "---"
-    _first_weight_3 = "---"
-    _first_weight_4 = "---"
-    _breastfed_hour_1 = "---"
-    _breastfed_hour_2 = "---"
-    _breastfed_hour_3 = "---"
-    _breastfed_hour_4 = "---"
 
     def __init__(self, report, case_dict):
         case = CommCareCase.get(case_dict["_id"])
@@ -87,16 +42,16 @@ class MCHMotherDisplay(MCHDisplay):
             form_dict = form.get_form
             form_xmlns = form_dict["@xmlns"]
             if re.search("new$", form_xmlns):
-                self._caste = get_property(form_dict, "caste")
+                setattr(self, "_caste", get_property(form_dict, "caste"))
             elif re.search("del$", form_xmlns):
-                self._jsy_beneficiary = get_property(form_dict, "jsy_beneficiary")
-                self._home_sba_assist = get_property(form_dict, "home_sba_assist")
-                self._delivery_nature = get_property(form_dict, "delivery_nature")
-                self._discharge_date = get_property(form_dict, "discharge_date")
-                self._jsy_money_date = get_property(form_dict, "jsy_money_date")
-                self._delivery_complications = get_property(form_dict, "delivery_complications")
-                self._family_planning_type = get_property(form_dict, "family_planing_type")
-                self._all_pnc_on_time = get_property(form_dict, "all_pnc_on_time")
+                setattr(self, "_jsy_beneficiary", get_property(form_dict, "jsy_beneficiary"))
+                setattr(self, "_home_sba_assist", get_property(form_dict, "home_sba_assist"))
+                setattr(self, "_delivery_nature", get_property(form_dict, "delivery_nature"))
+                setattr(self, "_discharge_date", get_property(form_dict, "discharge_date"))
+                setattr(self, "_jsy_money_date", get_property(form_dict, "jsy_money_date"))
+                setattr(self, "_delivery_complications", get_property(form_dict, "delivery_complications"))
+                setattr(self, "_family_planning_type", get_property(form_dict, "family_planing_type"))
+                setattr(self, "_all_pnc_on_time", get_property(form_dict, "all_pnc_on_time"))
                 children_count = get_property(form_dict, "cast_num_children")
                 child_list = []
 
@@ -127,11 +82,11 @@ class MCHMotherDisplay(MCHDisplay):
                                 setattr(self, "_weight_%s" % i, anc["anc%s_weight" % i])
                             if "anc%s_hemoglobin" % i in anc and i == 1:
                                 setattr(self, "_hemoglobin" % i, anc["anc%s_hemoglobin" % i])
-                self._anemia = get_property(form_dict, "anemia")
-                self._complications = get_property(form_dict, "bp_complications")
-                self._rti_sti = get_property(form_dict, "rti_sti")
+                setattr(self, "_anemia", get_property(form_dict, "anemia"))
+                setattr(self, "_complications", get_property(form_dict, "bp_complications"))
+                setattr(self, "_rti_sti", get_property(form_dict, "rti_sti"))
             elif re.search("mtb_abort$", form_xmlns):
-                self._abortion_type = get_property(form_dict, "abortion_type")
+                setattr(self, "_abortion_type", get_property(form_dict, "abortion_type"))
 
         super(MCHMotherDisplay, self).__init__(report, case_dict)
 
@@ -214,108 +169,108 @@ class MCHMotherDisplay(MCHDisplay):
 
     @property
     def asha_name(self):
-        return self._asha_name
+        return getattr(self, "_asha_name", "---")
 
     @property
     def asha_number(self):
-        return self._asha_number
+        return getattr(self, "_asha_number", "---")
 
     @property
     def awc_code_name(self):
-        return self._awc_code_name
+        return getattr(self, "_awc_code_name", "---")
 
     @property
     def aww_name(self):
-        return self._aww_name
+        return getattr(self, "_aww_name", "---")
 
     @property
     def aww_number(self):
-        return self._aww_number
+        return getattr(self, "_aww_number", "---")
 
 
     @property
     def caste(self):
-        return self._caste
+        return getattr(self, "_caste", "---")
 
     @property
     def jsy_beneficiary(self):
-        return self._jsy_beneficiary
+        return getattr(self, "_jsy_beneficiary", "---")
 
     @property
     def home_sba_assist(self):
-        return self._home_sba_assist
+        return getattr(self, "_home_sba_assist", "---")
 
     @property
     def delivery_nature(self):
-        return self._delivery_nature
+        return getattr(self, "_delivery_nature", "---")
 
     @property
     def discharge_date(self):
-        return self._discharge_date
+        return getattr(self, "_discharge_date", "---")
 
     @property
     def jsy_money_date(self):
-        return self._jsy_money_date
+        return getattr(self, "_jsy_money_date", "---")
 
     @property
     def delivery_complications(self):
-        return self._delivery_complications
+        return getattr(self, "_delivery_complications", "---")
 
     @property
     def family_planning_type(self):
-        return self._family_planning_type
+        return getattr(self, "_family_planning_type", "---")
 
     @property
     def anemia(self):
-        return self._anemia
+        return getattr(self, "_anemia", "---")
 
     @property
     def complications(self):
-        return self._complications
+        return getattr(self, "_complications", "---")
 
     @property
     def rti_sti(self):
-        return self._rti_sti
+        return getattr(self, "_rti_sti", "---")
 
     @property
     def abortion_type(self):
-        return self._abortion_type
+        return getattr(self, "_abortion_type", "---")
 
     @property
     def blood_pressure_1(self):
-        return self._blood_pressure_1
+        return getattr(self, "_blood_pressure_1", "---")
 
     @property
     def blood_pressure_2(self):
-        return self._blood_pressure_2
+        return getattr(self, "_blood_pressure_2", "---")
 
     @property
     def blood_pressure_3(self):
-        return self._blood_pressure_3
+        return getattr(self, "_blood_pressure_3", "---")
 
     @property
     def blood_pressure_4(self):
-        return self._blood_pressure_4
+        return getattr(self, "_blood_pressure_4", "---")
 
     @property
     def weight_1(self):
-        return self._weight_1
+        return getattr(self, "_weight_1", "---")
 
     @property
     def weight_2(self):
-        return self._weight_2
+        return getattr(self, "_weight_2", "---")
 
     @property
     def weight_3(self):
-        return self._weight_3
+        return getattr(self, "_weight_3", "---")
 
     @property
     def weight_4(self):
-        return self._weight_4
+        return getattr(self, "_weight_4", "---")
 
     @property
     def hemoglobin(self):
-        return self._hemoglobin
+        return getattr(self, "_hemoglobin", "---")
 
     @property
     def anc_completed(self):
@@ -328,72 +283,72 @@ class MCHMotherDisplay(MCHDisplay):
 
     @property
     def all_pnc_on_time(self):
-        return self._all_pnc_on_time
+        return getattr(self, "_all_pnc_on_time", "---")
 
     @property
     def num_children(self):
-        return self._num_children
+        return getattr(self, "_num_children", "---")
 
     @property
     def case_name_1(self):
-        return self._case_name_1
+        return getattr(self, "_case_name_1", "---")
 
     @property
     def case_name_2(self):
-        return self._case_name_2
+        return getattr(self, "_case_name_2", "---")
 
     @property
     def case_name_3(self):
-        return self._case_name_3
+        return getattr(self, "_case_name_3", "---")
 
     @property
     def case_name_4(self):
-        return self._case_name_4
+        return getattr(self, "_case_name_4", "---")
 
     @property
     def gender_1(self):
-        return self._gender_1
+        return getattr(self, "_gender_1", "---")
 
     @property
     def gender_2(self):
-        return self._gender_2
+        return getattr(self, "_gender_2", "---")
 
     @property
     def gender_3(self):
-        return self._gender_3
+        return getattr(self, "_gender_3", "---")
 
     @property
     def gender_4(self):
-        return self._gender_4
+        return getattr(self, "_gender_4", "---")
 
     @property
     def first_weight_1(self):
-        return self._first_weight_1
+        return getattr(self, "_first_weight_1", "---")
 
     @property
     def first_weight_2(self):
-        return self._first_weight_2
+        return getattr(self, "_first_weight_2", "---")
 
     @property
     def first_weight_3(self):
-        return self._first_weight_3
+        return getattr(self, "_first_weight_3", "---")
 
     @property
     def first_weight_4(self):
-        return self._first_weight_4
+        return getattr(self, "_first_weight_4", "---")
 
     @property
     def breastfed_hour_1(self):
-        return self._breastfed_hour_1
+        return getattr(self, "_breastfed_hour_1", "---")
 
     @property
     def breastfed_hour_2(self):
-        return self._breastfed_hour_2
+        return getattr(self, "_breastfed_hour_2", "---")
 
     @property
     def breastfed_hour_3(self):
-        return self._breastfed_hour_3
+        return getattr(self, "_breastfed_hour_3", "---")
 
     @property
     def breastfed_hour_4(self):
-        return self._breastfed_hour_4
+        return getattr(self, "_breastfed_hour_4", "---")
