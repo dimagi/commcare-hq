@@ -718,7 +718,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
     start_date = forms.CharField(
         required=False,
         label="Case Property",
-    )   # todo select2 of case properties
+    )
     start_date_offset_type = forms.ChoiceField(
         required=False,
         choices=(
@@ -928,7 +928,11 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                 data_bind="visible: isStartReminderCaseProperty"
             ),
             crispy.Div(
-                crispy.Field('start_date'),
+                crispy.Field(
+                    'start_date',
+                    data_placeholder="Enter a Case Property",
+                    css_class="input-large",
+                ),
                 BootstrapMultiField(
                     "",
                     InlineField('start_date_offset_type'),
@@ -1084,6 +1088,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
     def select2_fields(self):
         case_properties = [
             'start_property',
+            'start_date',
         ]
         subcase_properties = [
         ]
