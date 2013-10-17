@@ -88,7 +88,6 @@ function ReleasesMain(o) {
         self.deployAnyway[savedApp.id()] = ko.observable(false);
     };
     self.getMoreSavedApps = function () {
-        console.log("getting more saved apps");
         self.fetchState('pending');
         $.ajax({
             url: self.url('fetch'),
@@ -151,61 +150,10 @@ function ReleasesMain(o) {
             alert(self.reload_message);
         });
     };
-    // self.updateCurrentVersion = function () {
-        // // gets current app version from the server, use sparingly
-        // var url = self.url('currentVersion');
-        // $.get(
-            // self.url('currentVersion')
-        // ).success(function (data) {
-            // // if (self.lastAppVersion() !== data.latestRelease) {
-                // // console.log('last app version is not the latest release!!');
-                // // console.log(self.lastAppVersion(), data.latestRelease);
-                // // self.nextVersionToFetch = null;
-                // // self.savedApps([]);
-                // // self.getMoreSavedApps();
-                // // return false;
-            // // }
-            // self.currentAppVersion(data.currentVersion);
-        // }).error(function () {
-            // self.buildState('error');
-            // window.alert(self.reload_message);
-        // });
-    // };
     self.revertSavedApp = function (savedApp) {
         $.postGo(self.url('revertBuild'), {saved_app: savedApp.id()});
     };
-    // self.makeNewBuildEnabled = function () {
-        // console.log("last app version:", self.lastAppVersion());
-        // if (self.buildState() === 'pending') {
-            // return false;
-        // }
-
-        // var url = self.url('currentVersion');
-        // $.get(
-            // self.url('currentVersion')
-        // ).success(function (data) {
-            // self.currentAppVersion(data.currentVersion);
-            // console.log(self.lastAppVersion(), self.currentAppVersion());
-            // if (self.lastAppVersion() !== self.currentAppVersion()) {
-                // console.log("make a new build!");
-                // return true;
-            // } else {
-                // window.alert("No new changes to deploy!");
-                // console.log("no new changes");
-                // return false;
-            // }
-        // }).error(function () {
-            // self.buildState('error');
-            // window.alert(self.reload_message);
-            // return false;
-        // });
-    // };
     self.makeNewBuild = function () {
-        // if (!self.makeNewBuildEnabled()) {
-            // console.log("you're SOL");
-            // return;
-        // }
-        console.log("last app version:", self.lastAppVersion());
         if (self.buildState() === 'pending') {
             return false;
         }
@@ -215,13 +163,10 @@ function ReleasesMain(o) {
             self.url('currentVersion')
         ).success(function (data) {
             self.currentAppVersion(data.currentVersion);
-            console.log(self.lastAppVersion(), self.currentAppVersion());
             if (self.lastAppVersion() !== self.currentAppVersion()) {
-                console.log("make a new build!");
                 self.actuallyMakeBuild();
             } else {
                 window.alert("No new changes to deploy!");
-                console.log("no new changes");
             }
         }).error(function () {
             self.buildState('error');
