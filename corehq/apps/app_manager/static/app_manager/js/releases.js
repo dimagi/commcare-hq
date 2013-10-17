@@ -163,7 +163,10 @@ function ReleasesMain(o) {
             self.url('currentVersion')
         ).success(function (data) {
             self.currentAppVersion(data.currentVersion);
-            if (self.lastAppVersion() !== self.currentAppVersion()) {
+            if (data.latestRelease !== self.lastAppVersion()) {
+                window.alert("New version found");
+                self.reloadApps();
+            } else if (self.lastAppVersion() !== self.currentAppVersion()) {
                 self.actuallyMakeBuild();
             } else {
                 window.alert("No new changes to deploy!");
@@ -173,6 +176,11 @@ function ReleasesMain(o) {
             window.alert(self.reload_message);
         });
     };
+    self.reloadApps = function () {
+        self.savedApps([]);
+        self.nextVersionToFetch = null;
+        self.getMoreSavedApps();
+    }
     self.actuallyMakeBuild = function () {
         var comment = window.prompt(
             "Please write a comment about the build you're making " +

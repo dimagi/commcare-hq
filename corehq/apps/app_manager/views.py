@@ -1,3 +1,5 @@
+from StringIO import StringIO
+import logging
 import hashlib
 from lxml import etree
 import os
@@ -559,13 +561,18 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
 @login_and_domain_required
 def current_app_version(request, domain, app_id):
     """
-    WIP
-    Return current app version.  The client should maybe call getMoreSavedApps()
-    if the latest release is not the current one.  return latest release as well.
+    Return current app version and the latest release
     """
     app = get_app(domain, app_id)
+    latest_release = get_db().view('app_manager/saved_app',
+        startkey=[domain, app_id, {}],
+        endkey=[domain, app_id],
+        descending=True,
+        limit=1,
+    ).first()['value']['version']
     return json_response({
         'currentVersion': app.version,
+        'latestRelease': latest_release,
     })
 
 
