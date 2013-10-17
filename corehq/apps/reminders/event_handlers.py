@@ -3,7 +3,7 @@ from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.smsforms.models import XFormsSession
 from corehq.apps.sms.mixin import VerifiedNumber
 from touchforms.formplayer.api import current_question
-from corehq.apps.sms.api import send_sms, send_sms_to_verified_number, close_open_sessions
+from corehq.apps.sms.api import send_sms, send_sms_to_verified_number
 from corehq.apps.smsforms.app import start_session
 from corehq.apps.sms.util import format_message_list
 from corehq.apps.users.models import CouchUser
@@ -225,7 +225,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
                     continue
             
             # Close all currently open sessions
-            close_open_sessions(reminder.domain, recipient.get_id)
+            XFormsSession.close_all_open_sms_sessions(reminder.domain, recipient.get_id)
             
             # Start the new session
             if isinstance(recipient, CommCareCase) and not handler.force_surveys_to_use_triggered_case:

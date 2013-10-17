@@ -563,7 +563,7 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg=No
                 contact = None
         elif survey_keyword_action.recipient == RECIPIENT_USER_GROUP:
             try:
-                contact = Group.get(survey_keyword.recipient_id)
+                contact = Group.get(survey_keyword_action.recipient_id)
                 assert contact.doc_type == "Group"
                 assert contact.domain == verified_number.domain
             except Exception:
@@ -622,7 +622,7 @@ def sms_keyword_handler(v, text, msg=None):
             msg.save()
         return True
     else:
-        for survey_keyword in SurveyKeyword.get_all(domain):
+        for survey_keyword in SurveyKeyword.get_all(v.domain):
             if survey_keyword.delimiter is not None:
                 args = text.split(survey_keyword.delimiter)
             else:
@@ -711,7 +711,10 @@ def forwarding_handler(v, text, msg=None):
     return False
 
 def fallback_handler(v, text, msg=None):
-    send_sms_to_verified_number(v, 'could not understand your message. please check keyword.')
+    # Previously, the form session handler was returning True, which would prevent this message
+    # from going out on unknown keywords received. So for now, going to comment this out, until
+    # we give the domains the option to add this message in.
+    #send_sms_to_verified_number(v, 'could not understand your message. please check keyword.')
     return True
 
 
