@@ -64,6 +64,7 @@ def _to_column(coldef):
             Fraction,
             [_slug_to_raw_column(s) for s in coldef['columns']],
             sortable=False,
+            slug=coldef['slug'],
         )
     return DatabaseColumn(_(coldef), _slug_to_raw_column(coldef), sortable=False)
 
@@ -132,6 +133,7 @@ class FacilityDataFormat(TableDataFormat):
                     user_data = _empty_row(len(self.columns))
                 data = _combine_rows(data, user_data)
             yield data
+
 
 class Section(object):
     """
@@ -235,6 +237,11 @@ class McSqlData(SqlData):
 
     def get_headers(self):
         return self.format.get_headers()
+
+    @memoized
+    def get_data(self, slugs=None):
+        # only overridden to memoize
+        return super(McSqlData, self).get_data(slugs)
 
     @memoized
     def get_users(self):
@@ -406,7 +413,62 @@ class DistrictWeekly(MCBase):
     SECTIONS = DISTRICT_WEEKLY_REPORT
     format_class = FacilityDataFormat
 
+def _int(str):
+    try:
+        return int(str or 0)
+    except ValueError:
+        return 0
+
+
+def _missing(fraction):
+    return fraction.denom - fraction.num
+
+
+def _messages(hf_user_data):
+    if hf_user_data is not None:
+        visits = _int(hf_user_data['home_visits_children_total'])
+        if visits > 26:
+            yield _(HF_WEEKLY_MESSAGES['msg_children']).format(number=visits)
+
+        pneumonia = _missing(hf_user_data['patients_given_pneumonia_meds'])
+        if pneumonia > 0:
+            yield _(HF_WEEKLY_MESSAGES['msg_pneumonia']).format(number=pneumonia)
+
+        diarrhoea = _missing(hf_user_data['patients_given_diarrhoea_meds'])
+        if diarrhoea > 0:
+            yield _(HF_WEEKLY_MESSAGES['msg_diarrhoea']).format(number=diarrhoea)
+
+        malaria = _missing(hf_user_data['patients_given_malaria_meds'])
+        if malaria > 0:
+            yield _(HF_WEEKLY_MESSAGES['msg_malaria']).format(number=malaria)
+
+        missing_ref = _missing(hf_user_data['patients_correctly_referred'])
+        if missing_ref == 0:
+            yield _(HF_WEEKLY_MESSAGES['msg_good_referrals'])
+        else:
+            yield _(HF_WEEKLY_MESSAGES['msg_bad_referrals']).format(number=missing_ref)
+
+        rdt = _int(hf_user_data['cases_rdt_not_done_total'])
+        if rdt > 0:
+            yield _(HF_WEEKLY_MESSAGES['msg_rdt']).format(number=rdt)
+
+
+def hf_message_content(report):
+    data_by_user = dict((d['user_id'], d) for d in report.data_provider.sqldata.get_data())
+    def _user_section(user):
+        user_data = data_by_user.get(user._id, None)
+        return {
+            'username': raw_username(u.username),
+            'msgs': list(_messages(user_data)),
+        }
+    return {
+        'hf_messages': [_user_section(u) for u in report.data_provider.sqldata.get_users()]
+    }
+
+
 class HealthFacilityWeekly(MCBase):
+    report_template_path = "mc/reports/hf_weekly.html"
+    extra_context_providers = [section_context, hf_message_content]
     fields = [
         'corehq.apps.reports.fields.DatespanField',
         'custom.reports.mc.reports.fields.HealthFacilityField',
