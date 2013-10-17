@@ -677,7 +677,8 @@ class SimpleScheduleCaseReminderForm(forms.Form):
     # simple has start_condition_type = CASE_CRITERIA by default
     case_type = forms.CharField(
         required=False,
-    )  # this should be a dropdown of all case types
+        label="Case Type",
+    )
     start_reminder_on = forms.ChoiceField(
         label="Start Reminder",
         required=False,
@@ -879,7 +880,12 @@ class SimpleScheduleCaseReminderForm(forms.Form):
 
         start_section = crispy.Fieldset(
             'Start',
-            crispy.Field('case_type', placeholder="todo: dropdown"),
+            crispy.Field(
+                'case_type',
+                css_class="input-large",
+                data_bind="value: case_type",
+                data_placeholder="Enter a Case Type"
+            ),
             FieldWithHelpBubble(
                 'start_reminder_on',
                 data_bind="value: start_reminder_on",
@@ -1070,6 +1076,18 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         for field_name in self.fields.keys():
             current_values[field_name] = self[field_name].value()
         return current_values
+
+    @property
+    def select2_fields(self):
+        case_properties = [
+        ]
+        subcase_properties = [
+        ]
+
+        _fmt_field = lambda name, action: {'name': name, 'action': action}
+        return ([_fmt_field('case_type', 'search_case_type')] +
+                [_fmt_field(cp, 'search_case_property') for cp in case_properties] +
+                [_fmt_field(sp, 'search_subcase_property') for sp in subcase_properties])
 
     @property
     def relevant_choices(self):

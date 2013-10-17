@@ -516,11 +516,42 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
             'available_languages': self.available_languages,
         }
 
+    @property
+    def available_case_types(self):
+        case_types = []
+        for app_doc in iter_docs(Application.get_db(), self.app_ids):
+            app = Application.wrap(app_doc)
+            case_types.extend([m.case_type for m in app.modules])
+        return case_types
+
+    @property
+    def action(self):
+        return self.request.POST.get('action')
+
+    @property
+    def search_term(self):
+        return self.request.POST.get('term')
+
+    @property
+    def search_case_type_response(self):
+        filtered_case_types = self._filter_by_term(self.available_case_types)
+        return self._format_response(filtered_case_types)
+
+    def _filter_by_term(self, filter_list):
+        return [f for f in filter_list if self.search_term in f]
+
+    def _format_response(self, resp_list):
+        return [{'text': r, 'id': r} for r in resp_list]
+
     @method_decorator(reminders_permission)
     def dispatch(self, request, *args, **kwargs):
         return super(CreateScheduledReminderView, self).dispatch(request, *args, **kwargs)
 
     def post(self, *args, **kwargs):
+        if self.action in [
+            'search_case_type',
+        ]:
+            return HttpResponse(json.dumps(getattr(self, '%s_response' % self.action)))
         if self.schedule_form.is_valid():
             self.process_schedule_form()
         else:
