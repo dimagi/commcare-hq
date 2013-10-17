@@ -786,30 +786,6 @@ class Detail(IndexedSchema):
     def get_column(self, i):
         return self.columns[i].with_id(i%len(self.columns), self)
 
-    def append_column(self, column):
-        self.columns.append(column)
-
-    def update_column(self, column_id, column):
-        my_column = self.columns[column_id]
-
-        my_column.model = column.model
-        my_column.field = column.field
-        my_column.format = column.format
-        my_column.late_flag = column.late_flag
-        my_column.advanced = column.advanced
-
-        for lang in column.header:
-            my_column.header[lang] = column.header[lang]
-
-        for key in column.enum:
-            for lang in column.enum[key]:
-                if key not in my_column.enum:
-                    my_column.enum[key] = {}
-                my_column.enum[key][lang] = column.enum[key][lang]
-
-    def delete_column(self, column_id):
-        del self.columns[column_id]
-
     def rename_lang(self, old_lang, new_lang):
         for column in self.columns:
             column.rename_lang(old_lang, new_lang)
