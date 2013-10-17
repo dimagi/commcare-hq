@@ -581,6 +581,27 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
         subcase_properties = self._filter_by_term(set(subcase_properties))
         return self._format_response(subcase_properties)
 
+    @property
+    def search_forms_response(self):
+        forms = []
+        for app_doc in iter_docs(Application.get_db(), self.app_ids):
+            app = Application.wrap(app_doc)
+            for module in app.get_modules():
+                for form in module.get_forms():
+                    forms.append({
+                        'text': form.full_path_name,
+                        'id': form.unique_id,
+                    })
+        if not self.search_term:
+            return forms
+        final_forms = []
+        search_terms = self.search_term.split(" ")
+        for form in forms:
+            matches = [t for t in search_terms if t in form['text']]
+            if len(matches) == len(search_terms):
+                final_forms.append(form)
+        return final_forms
+
     def _filter_by_term(self, filter_list):
         return [f for f in filter_list if self.search_term in f]
 
@@ -596,6 +617,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
             'search_case_type',
             'search_case_property',
             'search_subcase_property',
+            'search_forms',
         ]:
             return HttpResponse(json.dumps(getattr(self, '%s_response' % self.action)))
         if self.schedule_form.is_valid():
