@@ -14,7 +14,7 @@ from django.http import Http404, HttpResponse
 from django.core.cache import cache
 
 from corehq.apps.api.domainapi import DomainAPI
-from corehq.apps.api.es import FullCaseES, ReportXFormES
+from corehq.apps.api.es import ReportXFormES
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.domain.decorators import login_or_digest
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
@@ -91,7 +91,6 @@ def get_cloudcare_url(case_id, mode):
 
 class PactFormAPI(DomainAPI):
     xform_es = ReportXFormES(PACT_DOMAIN)
-    case_es = FullCaseES(PACT_DOMAIN)
 
     @classmethod
     def allowed_domain(self, domain):
