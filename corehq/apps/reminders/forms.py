@@ -1408,6 +1408,12 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                     for event in current_val:
                         if not event.message:
                             event.message = {(reminder_handler.default_lang or 'en'): ''}
+                        if event.form_unique_id:
+                            form = CCHQForm.get_form(event.form_unique_id)
+                            event.form_unique_id = json.dumps({
+                                'text': form.full_path_name,
+                                'id': event.form_unique_id,
+                            })
                     current_val = json.dumps([e.to_json() for e in current_val])
                 if field == 'callback_timeout_intervals':
                     current_val = ",".join(current_val)
@@ -1500,7 +1506,7 @@ class CaseReminderEventForm(forms.Form):
     form_unique_id = forms.CharField(
         required=False,
         label="Survey",
-    )  # todo select2 of forms
+    )
 
     def __init__(self, ui_type=None, *args, **kwargs):
         super(CaseReminderEventForm, self).__init__(*args, **kwargs)
@@ -1514,7 +1520,11 @@ class CaseReminderEventForm(forms.Form):
             crispy.Div(data_bind="template: {name: 'event-message-template', foreach: messageTranslations}, "
                                  "visible: isMessageVisible"),
             crispy.Div(
-                crispy.Field('form_unique_id', data_bind="value: form_unique_id, attr: {id: ''}"),
+                crispy.Field(
+                    'form_unique_id',
+                    data_bind="value: form_unique_id, attr: {id: ''}",
+                    css_class="input-xxlarge",
+                ),
                 data_bind="visible: isSurveyVisible",
             ),
         )
