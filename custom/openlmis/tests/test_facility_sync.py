@@ -45,3 +45,7 @@ class FacilitySyncTest(TestCase):
         spback = get_supply_point(TEST_DOMAIN, f1)
         self.assertTrue(spback is not None)
         self.assertEqual(sp1._id, spback._id)
+
+        # test by code
+        spback = get_supply_point(TEST_DOMAIN, f1.code)
+        self.assertEqual(sp1._id, spback._id)
