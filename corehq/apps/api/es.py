@@ -149,6 +149,7 @@ class ESView(View):
         start = where to start the results from
         size = default size in ES is 10, also explicitly set here.
         """
+        fields = fields or []
         query = {
             "filter": {
                 "and": [
@@ -371,6 +372,32 @@ def report_term_filter(terms, mapping):
             if is_property and 'properties' in curr_mapping[sub_term]:
                 curr_mapping = curr_mapping[sub_term]['properties']
     return ret_terms
+
+
+
+def get_report_script_field(field_path, is_known=False):
+    """
+    Generate a script field string for easier querying.
+    field_path: is the path.to.property.name in the _source
+    is_known: if true, then query as is, if false, then it's a dynamically mapped item,
+    so put on the #value property at the end.
+    """
+    property_split = field_path.split('.')
+    property_path = '_source%s' % ''.join("['%s']" % x for x in property_split)
+    if is_known:
+        script_string = property_path
+    else:
+        full_script_path = "%s['#value']" % property_path
+        script_string = """if (%(prop_path)s != null) { %(value_path)s; }
+        else { null; }""" % {
+            'prop_path': property_path,
+            'value_path': full_script_path
+        }
+
+    ret = {"script": script_string}
+    return ret
+
+
 
 class ReportXFormES(XFormES):
     index = 'report_xforms'
