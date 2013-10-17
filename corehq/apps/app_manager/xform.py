@@ -609,16 +609,16 @@ class XForm(WrappedNode):
                 return 'false()'
 
         def add_create_block(case_block, action, case_name, case_type, path='',
-                             delay_case_id=False):
+                             delay_case_id=False, autoset_owner_id=True):
             create_block = make_case_elem('create')
             case_block.append(create_block)
             case_type_node = make_case_elem('case_type')
+            owner_id_node = make_case_elem('owner_id')
             case_type_node.text = case_type
-            create_block.extend([
-                make_case_elem('case_name'),
-                make_case_elem('owner_id'),
-                case_type_node,
-            ])
+
+            create_block.append(make_case_elem('case_name'))
+            create_block.append(owner_id_node)
+            create_block.append(case_type_node)
 
             def add_setvalue_or_bind(ref, value):
                 if not delay_case_id:
@@ -639,17 +639,20 @@ class XForm(WrappedNode):
                 calculate=self.resolve_path(case_name),
             )
 
-            if form.get_app().case_sharing:
-                self.add_instance('groups', src='jr://fixture/user-groups')
-                add_setvalue_or_bind(
-                    ref="%scase/create/owner_id" % path,
-                    value="instance('groups')/groups/group/@id"
-                )
+            if autoset_owner_id:
+                if form.get_app().case_sharing:
+                    self.add_instance('groups', src='jr://fixture/user-groups')
+                    add_setvalue_or_bind(
+                        ref="%scase/create/owner_id" % path,
+                        value="instance('groups')/groups/group/@id"
+                    )
+                else:
+                    self.add_bind(
+                        nodeset="%scase/create/owner_id" % path,
+                        calculate=self.resolve_path("meta/userID"),
+                    )
             else:
-                self.add_bind(
-                    nodeset="%scase/create/owner_id" % path,
-                    calculate=self.resolve_path("meta/userID"),
-                )
+                owner_id_node.text = '-'
 
             if not case_name:
                 raise CaseError("Please set 'Name according to question'. "
@@ -726,13 +729,22 @@ class XForm(WrappedNode):
                     outer_block.append(delegation_case_block)
                     return outer_block
 
-
                 if form.get_module().task_list.show:
                     delegation_case_block = make_delegation_stub_case_block()
 
             if 'open_case' in actions:
                 open_case_action = actions['open_case']
-                add_create_block(case_block, open_case_action, case_name=open_case_action.name_path, case_type=form.get_case_type())
+                add_create_block(
+                    case_block=case_block,
+                    action=open_case_action,
+                    case_name=open_case_action.name_path,
+                    case_type=form.get_case_type(),
+                    path='',
+                    autoset_owner_id=not (
+                        'update_case' in actions and
+                        'owner_id' in actions['update_case'].update
+                    ),
+                )
                 if 'external_id' in actions['open_case'] and actions['open_case'].external_id:
                     extra_updates['external_id'] = actions['open_case'].external_id
             else:
@@ -845,12 +857,13 @@ class XForm(WrappedNode):
                 subcase_block = make_case_block(path)
                 subcase_node.insert(0, subcase_block)
                 add_create_block(
-                    subcase_block,
-                    subcase,
+                    case_block=subcase_block,
+                    action=subcase,
                     case_name=subcase.case_name,
                     case_type=subcase.case_type,
                     path=path,
                     delay_case_id=bool(subcase.repeat_context),
+                    autoset_owner_id='owner_id' not in subcase.case_properties,
                 )
 
                 add_update_block(subcase_block, subcase.case_properties, path=path)
