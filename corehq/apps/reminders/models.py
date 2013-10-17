@@ -1081,10 +1081,19 @@ class SurveyKeywordAction(DocumentSchema):
 class SurveyKeyword(Document):
     domain = StringProperty()
     keyword = StringProperty()
+    description = StringProperty()
     actions = SchemaListProperty(SurveyKeywordAction)
     delimiter = StringProperty() # Only matters if this is a structured SMS: default is None, in which case the delimiter is any consecutive white space
     override_open_sessions = BooleanProperty()
     initiator_doc_type_filter = ListProperty(StringProperty) # List of doc types representing the only types of contacts who should be able to invoke this keyword. Empty list means anyone can invoke.
+
+    # Properties needed for migration and then can be removed
+    form_type = StringProperty(choices=FORM_TYPE_CHOICES, default=FORM_TYPE_ONE_BY_ONE)
+    form_unique_id = StringProperty()
+    use_named_args = BooleanProperty()
+    named_args = DictProperty()
+    named_args_separator = StringProperty()
+    oct13_migration_timestamp = DateTimeProperty()
 
     def retire(self):
         self.doc_type += "-Deleted"
