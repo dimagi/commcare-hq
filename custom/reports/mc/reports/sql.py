@@ -64,6 +64,7 @@ def _to_column(coldef):
             Fraction,
             [_slug_to_raw_column(s) for s in coldef['columns']],
             sortable=False,
+            slug=coldef['slug'],
         )
     return DatabaseColumn(_(coldef), _slug_to_raw_column(coldef), sortable=False)
 
