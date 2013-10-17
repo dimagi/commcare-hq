@@ -1,6 +1,12 @@
 import re
+from crispy_forms.bootstrap import StrictButton, InlineField
+from crispy_forms.helper import FormHelper
+from django import forms
 from django.forms.forms import Form
 from django.forms.fields import *
+from crispy_forms import layout as crispy
+from django.utils.safestring import mark_safe
+from corehq.apps.hqwebapp.crispy import BootstrapMultiField
 from corehq.apps.sms.models import ForwardingRule, FORWARD_ALL, FORWARD_BY_KEYWORD
 from django.core.exceptions import ValidationError
 from corehq.apps.sms.mixin import SMSBackend
@@ -104,3 +110,42 @@ class BackendMapForm(Form):
         else:
             return value
 
+
+class InitiateAddSMSBackendForm(Form):
+    action = CharField(
+        initial='new_backend',
+        widget=forms.HiddenInput(),
+    )
+    backend_type = ChoiceField(
+        required=False,
+        label="Connection Type",
+    )
+
+    def __init__(self, is_superuser=False, *args, **kwargs):
+        super(InitiateAddSMSBackendForm, self).__init__(*args, **kwargs)
+        backend_classes = get_available_backends()
+        backend_choices = []
+        for name, klass in backend_classes.items():
+            if is_superuser or name == "TelerivetBackend":
+                try:
+                    friendly_name = klass.get_generic_name()
+                except NotImplementedError:
+                    friendly_name = name
+                backend_choices.append((name, friendly_name))
+        self.fields['backend_type'].choices = backend_choices
+
+        self.helper = FormHelper()
+        self.helper.form_class = "form form-horizontal"
+        self.helper.layout = crispy.Layout(
+            BootstrapMultiField(
+                _("Create Another Connection"),
+                InlineField('action'),
+                InlineField('backend_type'),
+                StrictButton(
+                    mark_safe('<i class="icon-plus"></i> %s' % "Add Another Gateway"),
+                    css_class='btn-success',
+                    type='submit',
+                    style="margin-left:5px;"
+                ),
+            ),
+        )
