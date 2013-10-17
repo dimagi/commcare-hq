@@ -9,8 +9,6 @@ class ReportXFormPillow(XFormPillow):
     """
     an extension to XFormPillow that provides for indexing of arbitrary data fields
     within the xform
-
-    NOTE: supersedes FullXFormPillow
     """
     es_index_prefix = "report_xforms"
     es_alias = "report_xforms"
