@@ -1,8 +1,8 @@
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.standard import DatespanMixin, ProjectReportParametersMixin, CustomProjectReport
+from corehq.apps.reports.standard import DatespanMixin, ProjectReportParametersMixin, ProjectReport
 
 
-class TrialConnectReport(GenericTabularReport, CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
+class TrialConnectReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin, DatespanMixin):
     is_cacheable = True
     emailable = True
 
