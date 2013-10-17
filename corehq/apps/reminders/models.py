@@ -56,7 +56,7 @@ RECIPIENT_SURVEY_SAMPLE = "SURVEY_SAMPLE"
 RECIPIENT_USER_GROUP = "USER_GROUP"
 RECIPIENT_CHOICES = [RECIPIENT_USER, RECIPIENT_OWNER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE, RECIPIENT_PARENT_CASE, RECIPIENT_SUBCASE, RECIPIENT_USER_GROUP]
 
-KEYWORD_RECIPIENT_CHOICES = [RECIPIENT_SENDER, RECIPIENT_OWNER]
+KEYWORD_RECIPIENT_CHOICES = [RECIPIENT_SENDER, RECIPIENT_OWNER, RECIPIENT_USER_GROUP]
 KEYWORD_ACTION_CHOICES = [METHOD_SMS, METHOD_SMS_SURVEY, METHOD_STRUCTURED_SMS]
 
 FIRE_TIME_DEFAULT = "DEFAULT"
@@ -1064,6 +1064,7 @@ class CaseReminder(Document, LockableMixIn):
 
 class SurveyKeywordAction(DocumentSchema):
     recipient = StringProperty(choices=KEYWORD_RECIPIENT_CHOICES)
+    recipient_id = StringProperty()
     action = StringProperty(choices=KEYWORD_ACTION_CHOICES)
 
     # Only used for action == METHOD_SMS
@@ -1083,6 +1084,7 @@ class SurveyKeyword(Document):
     actions = SchemaListProperty(SurveyKeywordAction)
     delimiter = StringProperty() # Only matters if this is a structured SMS: default is None, in which case the delimiter is any consecutive white space
     override_open_sessions = BooleanProperty()
+    initiator_doc_type_filter = ListProperty(StringProperty) # List of doc types representing the only types of contacts who should be able to invoke this keyword. Empty list means anyone can invoke.
 
     def retire(self):
         self.doc_type += "-Deleted"

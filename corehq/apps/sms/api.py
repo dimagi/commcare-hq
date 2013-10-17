@@ -16,6 +16,7 @@ from corehq.apps.reminders.util import create_immediate_reminder
 from touchforms.formplayer.api import current_question
 from dateutil.parser import parse
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
+from corehq.apps.groups.models import Group
 
 # A list of all keywords which allow registration via sms.
 # Meant to allow support for multiple languages.
@@ -541,6 +542,7 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg=No
     from corehq.apps.reminders.models import (
         RECIPIENT_SENDER,
         RECIPIENT_OWNER,
+        RECIPIENT_USER_GROUP,
         METHOD_SMS,
         METHOD_SMS_SURVEY,
         METHOD_STRUCTURED_SMS,
@@ -558,6 +560,13 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg=No
             if sender.doc_type == "CommCareCase":
                 contact = get_wrapped_owner(get_owner_id(sender))
             else:
+                contact = None
+        elif survey_keyword_action.recipient == RECIPIENT_USER_GROUP:
+            try:
+                contact = Group.get(survey_keyword.recipient_id)
+                assert contact.doc_type == "Group"
+                assert contact.domain == verified_number.domain
+            except Exception:
                 contact = None
         else:
             contact = None
@@ -589,6 +598,9 @@ def sms_keyword_handler(v, text, msg=None):
             if len(text_words) > 1:
                 sk = SurveyKeyword.get_keyword(v.domain, text_words[1])
                 if sk is not None:
+                    if len(sk.initiator_doc_type_filter) > 0 and v.owner_doc_type not in sk.initiator_doc_type_filter:
+                        # The contact type is not allowed to invoke this keyword
+                        return False
                     process_survey_keyword_actions(v, sk, text[6:].strip(), msg=msg)
                 else:
                     send_sms_to_verified_number(v, "Keyword not found: '%s'." % text_words[1], workflow=WORKFLOW_KEYWORD)
@@ -620,6 +632,9 @@ def sms_keyword_handler(v, text, msg=None):
             if keyword == survey_keyword.keyword.upper():
                 if any_session_open and not survey_keyword.override_open_sessions:
                     # We don't want to override any open sessions, so just pass and let the form session handler handle the message
+                    return False
+                elif len(survey_keyword.initiator_doc_type_filter) > 0 and v.owner_doc_type not in survey_keyword.initiator_doc_type_filter:
+                    # The contact type is not allowed to invoke this keyword
                     return False
                 else:
                     process_survey_keyword_actions(v, survey_keyword, text, msg=msg)

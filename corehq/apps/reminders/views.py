@@ -23,6 +23,7 @@ from corehq.apps.reminders.forms import (
     CaseReminderEventForm,
     CaseReminderEventMessageForm,
     KEYWORD_CONTENT_CHOICES,
+    KEYWORD_RECIPIENT_CHOICES,
 )
 from corehq.apps.reminders.models import (
     CaseReminderHandler,
@@ -625,6 +626,12 @@ def add_keyword(request, domain, keyword_id=None):
             sk.description = form.cleaned_data.get("description")
             sk.delimiter = form.cleaned_data.get("delimiter")
             sk.override_open_sessions = form.cleaned_data.get("override_open_sessions")
+            sk.initiator_doc_type_filter = []
+            if form.cleaned_data.get("restrict_keyword_initiation"):
+                if form.cleaned_data.get("allow_initiation_by_case"):
+                    sk.initiator_doc_type_filter.append("CommCareCase")
+                if form.cleaned_data.get("allow_initiation_by_mobile_worker"):
+                    sk.initiator_doc_type_filter.append("CommCareUser")
             sk.actions = [SurveyKeywordAction(
                 recipient = RECIPIENT_SENDER,
                 action = form.cleaned_data.get("sender_content_type"),
@@ -642,7 +649,8 @@ def add_keyword(request, domain, keyword_id=None):
                 ))
             if form.cleaned_data.get("notify_others"):
                 sk.actions.append(SurveyKeywordAction(
-                    recipient = RECIPIENT_OWNER,
+                    recipient = form.cleaned_data.get("other_recipient_type"),
+                    recipient_id = form.cleaned_data.get("other_recipient_id"),
                     action = form.cleaned_data.get("other_recipient_content_type"),
                     message_content = form.cleaned_data.get("other_recipient_message"),
                     form_unique_id = form.cleaned_data.get("other_recipient_form_unique_id"),
@@ -658,6 +666,8 @@ def add_keyword(request, domain, keyword_id=None):
             "sender_message" : None,
             "sender_form_unique_id" : None,
             "notify_others" : False,
+            "other_recipient_type" : None,
+            "other_recipient_id" : None,
             "other_recipient_content_type" : None,
             "other_recipient_message" : None,
             "other_recipient_form_unique_id" : None,
@@ -669,12 +679,18 @@ def add_keyword(request, domain, keyword_id=None):
             "use_named_args" : False,
             "named_args_separator" : None,
             "named_args" : [],
+            "restrict_keyword_initiation" : False,
+            "allow_initiation_by_case" : False,
+            "allow_initiation_by_mobile_worker" : False,
         }
         if sk is not None:
             initial["keyword"] = sk.keyword
             initial["description"] = sk.description
             initial["delimiter"] = sk.delimiter
             initial["override_open_sessions"] = sk.override_open_sessions
+            initial["restrict_keyword_initiation"] = len(sk.initiator_doc_type_filter) > 0
+            initial["allow_initiation_by_case"] = "CommCareCase" in sk.initiator_doc_type_filter
+            initial["allow_initiation_by_mobile_worker"] = "CommCareUser" in sk.initiator_doc_type_filter
             for action in sk.actions:
                 if action.action == METHOD_STRUCTURED_SMS:
                     initial["process_structured_sms"] = True
@@ -690,6 +706,8 @@ def add_keyword(request, domain, keyword_id=None):
                     initial["sender_form_unique_id"] = action.form_unique_id
                 else:
                     initial["notify_others"] = True
+                    initial["other_recipient_type"] = action.recipient
+                    initial["other_recipient_id"] = action.recipient_id
                     initial["other_recipient_content_type"] = action.action
                     initial["other_recipient_message"] = action.message_content
                     initial["other_recipient_form_unique_id"] = action.form_unique_id
@@ -701,6 +719,8 @@ def add_keyword(request, domain, keyword_id=None):
         "form" : form,
         "keyword" : sk,
         "content_type_choices" : [{"code" : a[0], "desc" : a[1]} for a in KEYWORD_CONTENT_CHOICES],
+        "recipient_type_choices" : [{"code" : a[0], "desc" : a[1]} for a in KEYWORD_RECIPIENT_CHOICES],
+        "groups" : [{"code" : g._id, "desc" : g.name} for g in Group.by_domain(domain)],
     }
     
     return render(request, "reminders/partial/add_keyword.html", context)

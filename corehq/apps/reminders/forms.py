@@ -82,6 +82,11 @@ KEYWORD_CONTENT_CHOICES = (
     (METHOD_SMS_SURVEY, _("SMS Interactive Survey")),
 )
 
+KEYWORD_RECIPIENT_CHOICES = (
+    (RECIPIENT_USER_GROUP, _("User Group")),
+    (RECIPIENT_OWNER, _("The case's owner")),
+)
+
 ONE_TIME_RECIPIENT_CHOICES = (
     ("", _("---choose---")),
     (RECIPIENT_SURVEY_SAMPLE, _("Case Group")),
@@ -1851,10 +1856,15 @@ class KeywordForm(Form):
     keyword = CharField()
     description = TrimmedCharField()
     override_open_sessions = BooleanField(required=False)
+    restrict_keyword_initiation = BooleanField(required=False)
+    allow_initiation_by_case = BooleanField(required=False)
+    allow_initiation_by_mobile_worker = BooleanField(required=False)
     sender_content_type = CharField()
     sender_message = TrimmedCharField(required=False)
     sender_form_unique_id = CharField(required=False)
     notify_others = BooleanField(required=False)
+    other_recipient_type = CharField(required=False)
+    other_recipient_id = CharField(required=False)
     other_recipient_content_type = CharField(required=False)
     other_recipient_message = TrimmedCharField(required=False)
     other_recipient_form_unique_id = CharField(required=False)
@@ -1988,6 +1998,32 @@ class KeywordForm(Form):
                 raise ValidationError(_("This field is required."))
             if value == self.cleaned_data.get("delimiter"):
                 raise ValidationError(_("Delimiter and joining character cannot be the same."))
+            return value
+        else:
+            return None
+
+    def clean_other_recipient_type(self):
+        value = self.cleaned_data.get("other_recipient_type", None)
+        valid_values = [a[0] for a in KEYWORD_RECIPIENT_CHOICES]
+        if value not in valid_values:
+            raise ValidationError(_("Invalid choice."))
+        if value == RECIPIENT_OWNER:
+            if not (self.cleaned_data.get("restrict_keyword_initiation") and 
+                    self.cleaned_data.get("allow_initiation_by_case") and 
+                    not self.cleaned_data.get("allow_initiation_by_mobile_worker")):
+                raise ValidationError(_("In order to send to the case's owner you must restrict keyword initiation only to cases."))
+        return value
+
+    def clean_other_recipient_id(self):
+        value = self.cleaned_data.get("other_recipient_id", None)
+        recipient_type = self.cleaned_data.get("other_recipient_type", None)
+        if recipient_type == RECIPIENT_USER_GROUP:
+            try:
+                g = Group.get(value)
+                assert g.doc_type == "Group"
+                assert g.domain == self._cchq_domain
+            except Exception:
+                raise ValidationError("Invalid Group.")
             return value
         else:
             return None

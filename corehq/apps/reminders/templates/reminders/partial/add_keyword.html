@@ -45,6 +45,8 @@
         self.sender_message = ko.observable(initial_values.sender_message);
         self.sender_form_unique_id = ko.observable(initial_values.sender_form_unique_id);
         self.notify_others = ko.observable(initial_values.notify_others);
+        self.other_recipient_type = ko.observable(initial_values.other_recipient_type);
+        self.other_recipient_id = ko.observable(initial_values.other_recipient_id);
         self.other_recipient_content_type = ko.observable(initial_values.other_recipient_content_type);
         self.other_recipient_message = ko.observable(initial_values.other_recipient_message);
         self.other_recipient_form_unique_id = ko.observable(initial_values.other_recipient_form_unique_id);
@@ -56,9 +58,15 @@
         self.use_named_args_separator = ko.observable(initial_values.use_named_args_separator);
         self.named_args = ko.observableArray((initial_values.named_args.length > 0) ? initial_values.named_args : [{"name" : "", "xpath" : ""}]);
         self.named_args_separator = ko.observable(initial_values.named_args_separator);
+        self.restrict_keyword_initiation = ko.observable(initial_values.restrict_keyword_initiation);
+        self.allow_initiation_by_case = ko.observable(initial_values.allow_initiation_by_case);
+        self.allow_initiation_by_mobile_worker = ko.observable(initial_values.allow_initiation_by_mobile_worker);
         self.example_structured_sms = ko.observable("");
         self.available_forms = {{ form_list|JSON }};
         self.content_type_choices = {{ content_type_choices|JSON }};
+        self.recipient_type_choices = {{ recipient_type_choices|JSON }};
+        self.recipient_id_choices = ko.observableArray();
+        self.groups = {{ groups|JSON }};
         self.addNamedArg = function() {
             self.named_args.push({"name" : "", "xpath" : ""});
             self.updateExampleStructuredSMS();
@@ -96,7 +104,16 @@
             self.example_structured_sms(example);
             return true;
         };
+        self.updateRecipientIdChoices = function() {
+            self.recipient_id_choices([]);
+            if(self.other_recipient_type() == "USER_GROUP") {
+                for(var i = 0; i < self.groups.length; i++) {
+                    self.recipient_id_choices.push(self.groups[i]);
+                }
+            }
+        };
         self.updateExampleStructuredSMS();
+        self.updateRecipientIdChoices();
     }
     
     $(function(){
@@ -125,10 +142,23 @@
         </table>
     </div>
     <div>
-        <input type="checkbox" name="override_open_sessions" data-bind="checked: override_open_sessions" /> Override Open Survey Interactions
+        <input type="checkbox" name="override_open_sessions" data-bind="checked: override_open_sessions" /> Override open survey interactions
     </div>
     <div>
-        <input type="checkbox" checked="checked" disabled="disabled" /> Interact with Sender
+        <input type="checkbox" name="restrict_keyword_initiation" data-bind="checked: restrict_keyword_initiation" /> Restrict keyword initiation
+        <table class="parameter_table" data-bind="visible: restrict_keyword_initiation">
+            <tbody>
+                <tr>
+                    <td><input type="checkbox" name="allow_initiation_by_case" data-bind="checked: allow_initiation_by_case" /> Allow cases to initiate</td>
+                </tr>
+                <tr>
+                    <td><input type="checkbox" name="allow_initiation_by_mobile_worker" data-bind="checked: allow_initiation_by_mobile_worker" /> Allow mobile workers to initiate</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div>
+        <input type="checkbox" checked="checked" disabled="disabled" /> Interact with sender
     </div>
     <div>
         <table class="parameter_table">
@@ -152,11 +182,21 @@
         </table>
     </div>
     <div>
-        <input type="checkbox" name="notify_others" data-bind="checked: notify_others" /> Notify Another Person
+        <input type="checkbox" name="notify_others" data-bind="checked: notify_others" /> Notify another person
     </div>
     <div data-bind="visible: notify_others">
         <table class="parameter_table">
             <tbody>
+                <tr>
+                    <td>Recipient</td>
+                    <td><select name="other_recipient_type" data-bind="options: recipient_type_choices, optionsText: 'desc', optionsValue: 'code', value: other_recipient_type, event: {change: updateRecipientIdChoices}"></select></td>
+                    <td>{{ form.other_recipient_type.errors }}</td>
+                </tr>
+                <tr data-bind="visible: other_recipient_type() == 'USER_GROUP'">
+                    <td></td>
+                    <td><select name="other_recipient_id" data-bind="options: recipient_id_choices, optionsText: 'desc', optionsValue: 'code', value: other_recipient_id"></select></td>
+                    <td>{{ form.other_recipient_id.errors }}</td>
+                </tr>
                 <tr>
                     <td>Send</td>
                     <td><select name="other_recipient_content_type" data-bind="options: content_type_choices, optionsText: 'desc', optionsValue: 'code', value: other_recipient_content_type"></select></td>
