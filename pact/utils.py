@@ -111,8 +111,8 @@ def get_patient_display_cache(case_ids):
     query = {
         "fields": [
             "_id",
-            "last_name",
-            "first_name",
+            "last_name.#value",
+            "first_name.#value",
             "name",
             "pactid.#value",
         ],
