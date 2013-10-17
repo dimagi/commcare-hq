@@ -815,8 +815,9 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         )
     )
     until = forms.CharField(
-        required=False
-    )  # todo select2 of case properties
+        required=False,
+        label="Enter a Case Property",
+    )
 
     # Advanced Toggle
     submit_partial_forms = forms.BooleanField(
@@ -1022,9 +1023,12 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             BootstrapMultiField(
                 "Stop Condition",
                 InlineField('stop_condition', data_bind="value: stop_condition"),
-                InlineField(
-                    'until',
-                    style="margin-left: 5px;",
+                crispy.Div(
+                    InlineField(
+                        'until',
+                        css_class="input-large",
+                    ),
+                    css_class="help-inline",
                     data_bind="visible: isUntilVisible",
                 ),
                 data_bind="visible: isStopConditionVisible",
@@ -1089,6 +1093,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         case_properties = [
             'start_property',
             'start_date',
+            'until',
         ]
         subcase_properties = [
         ]
