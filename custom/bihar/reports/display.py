@@ -4,6 +4,7 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.standard.inspect import CaseDisplay
 from casexml.apps.case.models import CommCareCase
 from django.utils.translation import ugettext as _
+from corehq.apps.users.models import CouchUser, CommCareUser
 
 
 def get_property(dict_obj, name):
@@ -15,9 +16,18 @@ def get_property(dict_obj, name):
 
 class MCHDisplay(CaseDisplay):
 
+    def __init__(self, report, case):
+        user = CommCareUser.get_by_user_id(self.user_id)
+        #TODO get partner name in _asha_name, _asha_number, etc...
+        setattr(self, "_asha_name", user.full_name)
+        setattr(self, "_asha_number", user.phone_numbers[0] if len(user.phone_numbers) > 0 else "---")
+        setattr(self, "_village", get_property(user.user_data, "village"))
+        setattr(self, "_awc_code_name", "%s, %s" % (get_property(user.user_data, "awc-code"), get_property(user.user_data, "village")))
+        super(MCHDisplay, self).__init__(report, case)
+
     @property
     def village(self):
-        return get_property(self.case, "village")
+        return getattr(self, "_village", "---")
 
     @property
     def asha_name(self):
@@ -75,7 +85,7 @@ class MCHMotherDisplay(MCHDisplay):
                 children_count = get_property(form_dict, "cast_num_children")
                 child_list = []
 
-                if(get_property(form_dict, "cast_num_children") == '---'):
+                if children_count == '---':
                     children_count = 0
 
                 if int(children_count) == 1 and "child_info" in form_dict:
