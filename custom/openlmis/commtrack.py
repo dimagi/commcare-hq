@@ -1,10 +1,21 @@
 import logging
 from corehq.apps.commtrack.helpers import make_supply_point
-from corehq.apps.commtrack.models import Program, SupplyPointCase
+from corehq.apps.commtrack.models import Program, SupplyPointCase, Product
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
 from custom.openlmis.api import OpenLMISEndpoint
 from custom.openlmis.exceptions import BadParentException, OpenLMISAPIException
+
+
+def _apply_updates(doc, update_dict):
+    # updates the doc with items from the dict
+    # returns whether or not any updates were made
+    should_save = False
+    for key, value in update_dict.items():
+        if getattr(doc, key, None) != value:
+            setattr(doc, key, value)
+            should_save = True
+    return should_save
 
 
 def bootstrap_domain(domain):
@@ -16,6 +27,10 @@ def bootstrap_domain(domain):
             sync_facility_to_supply_point(domain, f)
         except OpenLMISAPIException, e:
             logging.exception('Problem syncing facility %s' % f.code)
+
+    for program in endpoint.get_all_programs(include_products=True):
+        sync_openlmis_program(domain, program)
+
 
 
 def get_supply_point(domain, facility_or_code):
@@ -53,18 +68,18 @@ def sync_facility_to_supply_point(domain, facility):
         return make_supply_point(domain, facility_loc)
     else:
         facility_loc = supply_point.location
-        should_save = False
-        for key, value in facility_dict.items():
-            if getattr(facility_loc, key, None) != value:
-                setattr(facility_loc, key, value)
-                should_save = True
         if parent_sp and facility_loc.parent_id != parent_sp.location._id:
             raise BadParentException('You are trying to move a location. This is currently not supported.')
 
+        should_save = _apply_updates(facility_loc, facility_dict)
         if should_save:
             facility_loc.save()
 
         return supply_point
+
+
+def get_product(domain, lmis_product):
+    return Product.get_by_code(domain, lmis_product.code)
 
 
 def get_program(domain, lmis_program):
@@ -82,7 +97,32 @@ def sync_openlmis_program(domain, lmis_program):
     program.name = lmis_program.name
     program.code = lmis_program.code
     program.save()
+    if lmis_program.products:
+        for lmis_product in lmis_program.products:
+            sync_openlmis_product(domain, program, lmis_product)
     return program
+
+
+def sync_openlmis_product(domain, program, lmis_product):
+    product = get_product(domain, lmis_product)
+    product_dict = {
+        'domain': domain,
+        'name': lmis_product.name,
+        'code': lmis_product.code,
+        'unit': str(lmis_product.unit),
+        'description': lmis_product.description,
+        'category': lmis_product.category,
+        'program_id': program._id,
+
+    }
+    if product is None:
+        product = Product(**product_dict)
+        product.save()
+    else:
+        if _apply_updates(product, product_dict):
+            product.save()
+    return product
+
 
 def supply_point_to_json(supply_point):
     base = {
