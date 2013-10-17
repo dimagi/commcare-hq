@@ -1,3 +1,4 @@
+from corehq.apps.domain.utils import get_domain_module_map
 from corehq.apps.hqadmin.reports import AdminUserReport, AdminAppReport
 from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
@@ -10,7 +11,6 @@ import hashlib
 from dimagi.utils.modules import to_function
 from custom.trialconnect.reports import system_overview
 from custom.trialconnect.reports import appointments
-from django.conf import settings
 
 from django.utils.translation import ugettext_noop as _
 
@@ -64,7 +64,7 @@ def REPORTS(project):
         ivr.ExpectedCallbackReport,
     )
 
-    if settings.DOMAIN_MODULE_MAP.get(project.name) == 'custom.trialconnect':
+    if get_domain_module_map().get(project.name) == 'custom.trialconnect':
         messaging_reports += (
             system_overview.SystemOverviewReport,
             system_overview.SystemUsersReport,
