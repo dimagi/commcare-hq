@@ -19,10 +19,12 @@
             {{ form.current_values|JSON }},
             {{ form.relevant_choices|JSON }},
             {{ ui_type|JSON }},
-            {{ available_languages|JSON }}
+            {{ available_languages|JSON }},
+            {{ form.select2_fields|JSON }}
         );
         ko.applyBindings(manageRemindersModel, $('#manage-reminders-form').get(0));
         manageRemindersModel.init();
+
         $(function () {
             $('#add-language-modal').languagePicker(function (langcode) {
                 manageRemindersModel.addLanguage(langcode);

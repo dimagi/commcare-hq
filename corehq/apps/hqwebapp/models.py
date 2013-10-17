@@ -330,7 +330,7 @@ class CommTrackSetupTab(UITab):
                 'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
             },
         ]
-        items.append([_("Locations (Advanced)"), advanced_locations_section])
+        items.append([_("Integration (Advanced)"), advanced_locations_section])
 
         return items
 

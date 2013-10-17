@@ -90,13 +90,14 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
     if not (request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports()):
         raise Http404
 
-    configs = ReportConfig.by_domain_and_owner(domain, user._id).all()
+    configs = ReportConfig.by_domain_and_owner(domain, user._id)
+
     def _is_valid(rn):
         # the _id check is for weird bugs we've seen in the wild that look like
         # oddities in couch.
         return hasattr(rn, "_id") and rn._id and (not hasattr(rn, 'report_slug') or rn.report_slug != 'admin_domains')
 
-    scheduled_reports = [rn for rn in ReportNotification.by_domain_and_owner(domain, user._id).all() if _is_valid(rn)]
+    scheduled_reports = [rn for rn in ReportNotification.by_domain_and_owner(domain, user._id) if _is_valid(rn)]
 
     context = dict(
         couch_user=request.couch_user,
@@ -341,8 +342,8 @@ def touch_saved_reports_views(user, domain):
     homepage.
 
     """
-    ReportConfig.by_domain_and_owner(domain, user._id, limit=1, stale=False).all()
-    ReportNotification.by_domain_and_owner(domain, user._id, limit=1, stale=False).all()
+    ReportConfig.by_domain_and_owner(domain, user._id, limit=1, stale=False)
+    ReportNotification.by_domain_and_owner(domain, user._id, limit=1, stale=False)
 
 
 @login_and_domain_required
@@ -356,7 +357,7 @@ def add_config(request, domain=None):
     if 'name' not in POST or not POST['name']:
         return HttpResponseBadRequest()
     
-    user_configs = ReportConfig.by_domain_and_owner(domain, user_id).all()
+    user_configs = ReportConfig.by_domain_and_owner(domain, user_id)
     if not POST.get('_id') and POST['name'] in [c.name for c in user_configs]:
         return HttpResponseBadRequest()
 
@@ -485,7 +486,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
     
     user_id = request.couch_user._id
 
-    configs = ReportConfig.by_domain_and_owner(domain, user_id).all()
+    configs = ReportConfig.by_domain_and_owner(domain, user_id)
     config_choices = [(c._id, c.full_name) for c in configs if c.report and c.report.emailable]
 
     if not config_choices:

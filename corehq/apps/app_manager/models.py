@@ -623,6 +623,13 @@ class FormBase(DocumentSchema):
     def default_name(self):
         return self.name[self.get_app().default_language]
 
+    @property
+    def full_path_name(self):
+        return "%(app_name)s > %(module_name)s > %(form_name)s" % {
+            'app_name': self.get_app().name,
+            'module_name': self.get_module().name[self.get_app().default_language],
+            'form_name': self.default_name()
+        }
 
 class JRResourceProperty(StringProperty):
 
@@ -745,6 +752,19 @@ class SortElement(IndexedSchema):
         }
 
         return values
+
+
+class SortOnlyDetailColumn(DetailColumn):
+    """This is a mock type, not intended to be part of a document"""
+
+    @property
+    def _i(self):
+        """
+        assert that SortOnlyDetailColumn never has ._i or .id called
+        since it should never be in an app document
+
+        """
+        raise NotImplementedError()
 
 
 class Detail(IndexedSchema):

@@ -64,11 +64,15 @@ class Location(Document):
         return not self.lineage
 
     @property
-    def parent(self):
+    def parent_id(self):
         if self.is_root:
             return None
-        else:
-            return Location.get(self.lineage[0])
+        return self.lineage[0]
+
+    @property
+    def parent(self):
+        parent_id = self.parent_id
+        return Location.get(parent_id) if parent_id else None
 
     def siblings(self, parent=None):
         if not parent:
@@ -128,10 +132,7 @@ def location_tree(domain):
     for loc in locs:
         loc._children = []
 
-        try:
-            parent_id = loc.lineage[0]
-        except IndexError:
-            parent_id = None
+        parent_id = loc.parent_id
 
         if parent_id:
             parent_loc = locs_by_id[parent_id]

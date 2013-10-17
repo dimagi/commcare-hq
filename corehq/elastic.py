@@ -154,10 +154,11 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
             if "facet_filter" not in q["facets"][facet]:
                 q["facets"][facet]["facet_filter"] = {"and": []}
             q["facets"][facet]["facet_filter"]["and"].extend(facet_filter(facet))
+            if not q["facets"][facet]["facet_filter"]["and"]:
+                del q["facets"][facet]["facet_filter"]["and"]
 
     if not q['filter']['and']:
         del q["filter"]
-
 
     if fields:
         q["fields"] = q.get("fields", [])

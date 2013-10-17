@@ -110,6 +110,8 @@ MIDDLEWARE_CLASSES = [
     'no_exceptions.middleware.NoExceptionsMiddleware',
 ]
 
+SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+
 ROOT_URLCONF = "urls"
 
 TEMPLATE_CONTEXT_PROCESSORS = [
@@ -224,6 +226,7 @@ HQ_APPS = (
     'corehq.apps.orgs',
     'corehq.apps.api',
     'corehq.apps.indicators',
+    'corehq.apps.cachehq',
     'corehq.couchapps',
     'custom.apps.wisepill',
     'fluff',
@@ -839,6 +842,9 @@ PILLOWTOPS = {
         'corehq.pillows.reportcase.ReportCasePillow',
         'corehq.pillows.reportxform.ReportXFormPillow',
     ],
+    'cache': [
+        'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
+    ],
     'fluff': [
         'custom.bihar.models.CareBiharFluffPillow',
         'custom.opm.opm_reports.models.OpmCaseFluffPillow',
@@ -864,6 +870,17 @@ for k, v in  LOCAL_PILLOWTOPS.items():
     plist = PILLOWTOPS.get(k, [])
     plist.extend(v)
     PILLOWTOPS[k] = plist
+
+COUCH_CACHE_BACKENDS = [
+    'corehq.apps.cachehq.cachemodels.DomainGenerationCache',
+    'corehq.apps.cachehq.cachemodels.OrganizationGenerationCache',
+    'corehq.apps.cachehq.cachemodels.UserGenerationCache',
+    'corehq.apps.cachehq.cachemodels.GroupGenerationCache',
+    'corehq.apps.cachehq.cachemodels.UserRoleGenerationCache',
+    'corehq.apps.cachehq.cachemodels.TeamGenerationCache',
+    'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
+    'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
+]
 
 #Custom workflow for indexing xform data beyond the standard properties
 XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]

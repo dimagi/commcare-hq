@@ -5,10 +5,12 @@ from django.contrib import messages
 from django.utils.decorators import method_decorator
 import pytz
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render
 
 from django.utils.translation import ugettext as _, ugettext_noop
+from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.util import get_case_properties
 
 from corehq.apps.reminders.forms import (
     CaseReminderForm,
@@ -59,7 +61,7 @@ from dateutil.parser import parse
 from corehq.apps.sms.util import close_task
 from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.reports import util as report_utils
-from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count
+from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count, iter_docs
 
 reminders_permission = require_permission(Permissions.edit_data)
 
@@ -396,6 +398,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
             h.recipient_case_match_property = form.cleaned_data["recipient_case_match_property"]
             h.recipient_case_match_type = form.cleaned_data["recipient_case_match_type"]
             h.recipient_case_match_value = form.cleaned_data["recipient_case_match_value"]
+            h.force_surveys_to_use_triggered_case = form.cleaned_data["force_surveys_to_use_triggered_case"]
             if form.cleaned_data["start_condition_type"] == "ON_DATETIME":
                 dt = parse(form.cleaned_data["start_datetime_date"]).date()
                 tm = parse(form.cleaned_data["start_datetime_time"]).time()
@@ -445,6 +448,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
                 "recipient_case_match_property" : h.recipient_case_match_property,
                 "recipient_case_match_type" : h.recipient_case_match_type,
                 "recipient_case_match_value" : h.recipient_case_match_value,
+                "force_surveys_to_use_triggered_case" : h.force_surveys_to_use_triggered_case,
             }
         else:
             initial = {
@@ -514,11 +518,108 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
             'available_languages': self.available_languages,
         }
 
+    @property
+    def available_case_types(self):
+        case_types = []
+        for app_doc in iter_docs(Application.get_db(), self.app_ids):
+            app = Application.wrap(app_doc)
+            case_types.extend([m.case_type for m in app.modules])
+        return case_types
+
+    @property
+    def action(self):
+        return self.request.POST.get('action')
+
+    @property
+    def case_type(self):
+        return self.request.POST.get('caseType')
+
+    @property
+    def app_ids(self):
+        data = Application.get_db().view(
+            'app_manager/applications_brief',
+            reduce=False,
+            startkey=[self.domain],
+            endkey=[self.domain, {}],
+        ).all()
+        return [d['id'] for d in data]
+
+    @property
+    def search_term(self):
+        return self.request.POST.get('term')
+
+    @property
+    def search_case_type_response(self):
+        filtered_case_types = self._filter_by_term(self.available_case_types)
+        return self._format_response(filtered_case_types)
+
+    @property
+    def search_case_property_response(self):
+        if not self.case_type:
+            return []
+        case_properties = ['name']
+        for app_doc in iter_docs(Application.get_db(), self.app_ids):
+            app = Application.wrap(app_doc)
+            for properties in get_case_properties(app, [self.case_type]).values():
+                case_properties.extend(properties)
+        case_properties = self._filter_by_term(set(case_properties))
+        return self._format_response(case_properties)
+
+    @property
+    def search_subcase_property_response(self):
+        if not self.case_type:
+            return []
+        subcase_properties = ['name']
+        for app_doc in iter_docs(Application.get_db(), self.app_ids):
+            app = Application.wrap(app_doc)
+            for module in app.get_modules():
+                if not module.case_type == self.case_type:
+                    continue
+                for form in module.get_forms():
+                    for subcase in form.actions.subcases:
+                        subcase_properties.extend(subcase.case_properties.keys())
+        subcase_properties = self._filter_by_term(set(subcase_properties))
+        return self._format_response(subcase_properties)
+
+    @property
+    def search_forms_response(self):
+        forms = []
+        for app_doc in iter_docs(Application.get_db(), self.app_ids):
+            app = Application.wrap(app_doc)
+            for module in app.get_modules():
+                for form in module.get_forms():
+                    forms.append({
+                        'text': form.full_path_name,
+                        'id': form.unique_id,
+                    })
+        if not self.search_term:
+            return forms
+        final_forms = []
+        search_terms = self.search_term.split(" ")
+        for form in forms:
+            matches = [t for t in search_terms if t in form['text']]
+            if len(matches) == len(search_terms):
+                final_forms.append(form)
+        return final_forms
+
+    def _filter_by_term(self, filter_list):
+        return [f for f in filter_list if self.search_term in f]
+
+    def _format_response(self, resp_list):
+        return [{'text': r, 'id': r} for r in resp_list]
+
     @method_decorator(reminders_permission)
     def dispatch(self, request, *args, **kwargs):
         return super(CreateScheduledReminderView, self).dispatch(request, *args, **kwargs)
 
     def post(self, *args, **kwargs):
+        if self.action in [
+            'search_case_type',
+            'search_case_property',
+            'search_subcase_property',
+            'search_forms',
+        ]:
+            return HttpResponse(json.dumps(getattr(self, '%s_response' % self.action)))
         if self.schedule_form.is_valid():
             self.process_schedule_form()
         else:
@@ -568,8 +669,7 @@ class EditScheduledReminderView(CreateScheduledReminderView):
         langcodes = []
         for event in self.reminder_handler.events:
             langcodes.extend(event.message.keys())
-        return list(set(langcodes))
-
+        return list(set(langcodes)) or ['en']
 
     @property
     def ui_type(self):
