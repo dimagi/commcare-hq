@@ -1094,6 +1094,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             'start_property',
             'start_date',
             'until',
+            'fire_time_aux',
         ]
         subcase_properties = [
         ]
@@ -1462,8 +1463,8 @@ class CaseReminderEventForm(forms.Form):
     # method must be EVENT_AS_SCHEDULE
     fire_time_aux = forms.CharField(
         required=False,
-        label="Case Property",
-    )  # todo select2 of case properties
+        label="Enter a Case Property",
+    )
 
     time_window_length = forms.IntegerField(
         label="Window Length (minutes)",
@@ -1512,8 +1513,16 @@ class CaseReminderEventForm(forms.Form):
         self.helper_fire_time.layout = crispy.Layout(
             InlineField('fire_time', data_bind="value: fire_time, attr: {id: ''}, "
                                                "visible: isFireTimeVisible"),
-            InlineField('fire_time_aux', data_bind="value: fire_time_aux, attr: {id: ''}, "
-                                                   "visible: isFireTimeAuxVisible"),
+            crispy.Div(
+                InlineField(
+                    'fire_time_aux',
+                    data_bind="value: fire_time_aux, attr: {id: ''}",
+                    css_class="input-large",
+                ),
+                css_class="help-inline",
+                data_bind="visible: isFireTimeAuxVisible",
+                style="margin-left: 5px;",
+            ),
         )
 
         self.helper_general = FormHelper()
