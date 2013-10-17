@@ -106,22 +106,24 @@ def bulk_import_async(import_id, config, domain, excel_id):
         external_id = fields_to_update.pop('external_id', None)
         parent_id = fields_to_update.pop('parent_id', None)
         parent_external_id = fields_to_update.pop('parent_external_id', None)
+        parent_type = fields_to_update.pop('parent_type', config.case_type)
+        parent_ref = fields_to_update.pop('parent_ref', 'parent')
 
         extras = {}
         if parent_id:
             extras['index'] = {
-                'parent': (config.case_type, parent_id)
+                parent_ref: (parent_type, parent_id)
             }
         elif parent_external_id:
             parent_case, error = importer_util.lookup_case(
                 'external_id',
                 parent_external_id,
                 domain,
-                config.case_type
+                parent_type
             )
             if parent_case:
                 extras['index'] = {
-                    'parent': (config.case_type, parent_case._id)
+                    parent_ref: (parent_type, parent_case._id)
                 }
 
         if not case:
