@@ -26,7 +26,7 @@ class Fraction(object):
         self.denom = denom or 0
 
     def is_empty(self):
-        return not (bool(self.num) and bool(self.denom))
+        return not (bool(self.num) or bool(self.denom))
 
     def pct(self):
         return (float(self.num) / float(self.denom)) * 100
