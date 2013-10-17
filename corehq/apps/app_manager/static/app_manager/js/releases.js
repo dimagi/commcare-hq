@@ -164,23 +164,14 @@ function ReleasesMain(o) {
     self.makeNewBuildEnabled = function () {
         if (self.buildState() === 'pending') {
             return false;
-        }
-        self.getMoreSavedApps();
-        if (self.lastAppVersion() === undefined) {
+        } else if (self.lastAppVersion() === undefined) {
             return self.doneFetching();
         } else {
             return self.lastAppVersion() !== self.appVersion();
         }
     };
     self.makeNewBuild = function () {
-        if (!self.makeNewBuildEnabled()) {
-            window.alert("No new changes to deploy!");
-            return;
-        }
-        var comment = window.prompt(
-            "Please write a comment about the build you're making " +
-            "to help you remember later:"
-        );
+        var comment = window.prompt("Please write a comment about the build you're making to help you remember later:");
         if (comment || comment === "") {
             $(this).find("input[name='comment']").val(comment);
         } else {
