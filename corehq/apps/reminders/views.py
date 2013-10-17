@@ -5,10 +5,12 @@ from django.contrib import messages
 from django.utils.decorators import method_decorator
 import pytz
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render
 
 from django.utils.translation import ugettext as _, ugettext_noop
+from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.util import get_case_properties
 
 from corehq.apps.reminders.forms import (
     CaseReminderForm,
@@ -59,7 +61,7 @@ from dateutil.parser import parse
 from corehq.apps.sms.util import close_task
 from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.reports import util as report_utils
-from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count
+from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count, iter_docs
 
 reminders_permission = require_permission(Permissions.edit_data)
 
@@ -529,6 +531,20 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
         return self.request.POST.get('action')
 
     @property
+    def case_type(self):
+        return self.request.POST.get('caseType')
+
+    @property
+    def app_ids(self):
+        data = Application.get_db().view(
+            'app_manager/applications_brief',
+            reduce=False,
+            startkey=[self.domain],
+            endkey=[self.domain, {}],
+        ).all()
+        return [d['id'] for d in data]
+
+    @property
     def search_term(self):
         return self.request.POST.get('term')
 
@@ -536,6 +552,18 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
     def search_case_type_response(self):
         filtered_case_types = self._filter_by_term(self.available_case_types)
         return self._format_response(filtered_case_types)
+
+    @property
+    def search_case_property_response(self):
+        if not self.case_type:
+            return []
+        case_properties = ['name']
+        for app_doc in iter_docs(Application.get_db(), self.app_ids):
+            app = Application.wrap(app_doc)
+            for properties in get_case_properties(app, [self.case_type]).values():
+                case_properties.extend(properties)
+        case_properties = self._filter_by_term(set(case_properties))
+        return self._format_response(case_properties)
 
     def _filter_by_term(self, filter_list):
         return [f for f in filter_list if self.search_term in f]
@@ -550,6 +578,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
     def post(self, *args, **kwargs):
         if self.action in [
             'search_case_type',
+            'search_case_property',
         ]:
             return HttpResponse(json.dumps(getattr(self, '%s_response' % self.action)))
         if self.schedule_form.is_valid():
