@@ -6,7 +6,7 @@ from corehq.apps.reports.standard.inspect import CaseListReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from dimagi.utils.decorators.memoized import memoized
-from custom.bihar.reports.display import MCHMotherDisplay
+from custom.bihar.reports.display import MCHMotherDisplay, MCHChildDisplay
 
 
 class MotherMCHRegister(CustomProjectReport, CaseListReport):
@@ -227,6 +227,117 @@ class ChildMCHRegister(CustomProjectReport, CaseListReport):
     ]
 
     @property
+    def user_filter(self):
+        return super(ChildMCHRegister, self).user_filter
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(DataTablesColumn(_("CHW Name")),
+                                   DataTablesColumnGroup(
+                                       _("Beneficiary Information"),
+                                       DataTablesColumn(_("Child Name")),
+                                       DataTablesColumn(_("Father an Mother Name")),
+                                       DataTablesColumn(_("Mother's MCTS ID")),
+                                       DataTablesColumn(_("Gender")),
+                                       DataTablesColumn(_("City/ward/village")),
+                                       DataTablesColumn(_("Address")),
+                                       DataTablesColumn(_("Mobile number")),
+                                       DataTablesColumn(_("Whose Mobile Number")),
+                                       DataTablesColumn(_("DOB / AGE")),
+                                       DataTablesColumn(_("Place of delivery (home - SBA/Non-SBA) (Hospital -  public/private)")),
+                                       DataTablesColumn(_("Caste"))),
+                                   DataTablesColumnGroup(
+                                       _("Provider Information"),
+                                       DataTablesColumn(_("ASHA Name")),
+                                       DataTablesColumn(_("Asha phone")),
+                                       DataTablesColumn(_("AWC Code , AWC name")),
+                                       DataTablesColumn(_("AWW name")),
+                                       DataTablesColumn(_("AWW phone number"))),
+                                   DataTablesColumnGroup(
+                                       _("At Birth"),
+                                       DataTablesColumn(_("BCG")),
+                                       DataTablesColumn(_("OPV0")),
+                                       DataTablesColumn(_("Hepatitis-Birth dose "))),
+                                   DataTablesColumnGroup(
+                                       _("At 6 Weeks"),
+                                       DataTablesColumn(_("DPT1")),
+                                       DataTablesColumn(_("OPV1")),
+                                       DataTablesColumn(_("Hepatitis-B1"))),
+                                   DataTablesColumnGroup(
+                                       _("At 10 Weeks"),
+                                       DataTablesColumn(_("DPT2")),
+                                       DataTablesColumn(_("OPV2")),
+                                       DataTablesColumn(_("Hepatitis-B2"))),
+                                   DataTablesColumnGroup(
+                                       _("At 14 Weeks"),
+                                       DataTablesColumn(_("DPT3")),
+                                       DataTablesColumn(_("OPV3")),
+                                       DataTablesColumn(_("Hepatitis-B3"))),
+                                   DataTablesColumnGroup(
+                                       _("Between 9-12 Months"),
+                                       DataTablesColumn(_("Measles (1st  dose)"))),
+                                   DataTablesColumnGroup(
+                                       _("Between 16-24 Months"),
+                                       DataTablesColumn(
+                                           _("Vitamin A dose-1 ")),
+                                       DataTablesColumn(_("Measles (2nd dose)/ MR Vaccine"))),
+                                   DataTablesColumnGroup(
+                                       _("After 2 Years"),
+                                       DataTablesColumn(_("DPT Booster")),
+                                       DataTablesColumn(_("OPV Booster")),
+                                       DataTablesColumn(_("Vitamin A dose-2")),
+                                       DataTablesColumn(_("Vitamin A dose-3")),
+                                       DataTablesColumn(_("JE Vaccine")))
+        )
+        return headers
+
+    @property
+    def rows(self):
+        case_displays = (MCHChildDisplay(self, self.get_case(case))
+                         for case in self.es_results['hits'].get('hits', []))
+
+        for disp in case_displays:
+            yield [
+                disp.chw_name,
+                disp.child_name,
+                disp.father_mother_name,
+                disp.mcts_id,
+                disp.gender,
+                disp.ward_number,
+                disp.village,
+                disp.mobile_number,
+                disp.mobile_number_whose,
+                disp.dob_age,
+                disp.home_sba_assist,
+                disp.caste,
+                disp.asha_name,
+                disp.asha_number,
+                disp.awc_code_name,
+                disp.aww_name,
+                disp.aww_number,
+                disp.bcg_date,
+                disp.opv_0_date,
+                disp.hep_b_0_date,
+                disp.dpt_1_date,
+                disp.opv_1_date,
+                disp.hep_b_1_date,
+                disp.dpt_2_date,
+                disp.opv_2_date,
+                disp.hep_b_2_date,
+                disp.dpt_3_date,
+                disp.opv_3_date,
+                disp.hep_b_3_date,
+                disp.measles_date,
+                disp.vit_a_1_date,
+                disp.date_measles_booster,
+                disp.dpt_booster_date,
+                disp.opv_booster_date,
+                disp.vit_a_2_date,
+                disp.vit_a_3_date,
+                disp.date_je
+            ]
+
+    @property
     @memoized
     def case_es(self):
         return FullCaseES(self.domain)
@@ -235,7 +346,3 @@ class ChildMCHRegister(CustomProjectReport, CaseListReport):
     @memoized
     def rendered_report_title(self):
         return self.name
-
-    @property
-    def data(self):
-        return [""]

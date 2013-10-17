@@ -16,20 +16,40 @@ def get_property(dict_obj, name):
 class MCHDisplay(CaseDisplay):
 
     @property
-    def mother_name(self):
-        return get_property(self.case, "mother_name")
-
-    @property
-    def husband_name(self):
-        return get_property(self.case, "husband_name")
-
-    @property
-    def ward_number(self):
-        return get_property(self.case, "ward_number")
-
-    @property
     def village(self):
         return get_property(self.case, "village")
+
+    @property
+    def asha_name(self):
+        return getattr(self, "_asha_name", "---")
+
+    @property
+    def asha_number(self):
+        return getattr(self, "_asha_number", "---")
+
+    @property
+    def awc_code_name(self):
+        return getattr(self, "_awc_code_name", "---")
+
+    @property
+    def aww_name(self):
+        return getattr(self, "_aww_name", "---")
+
+    @property
+    def aww_number(self):
+        return getattr(self, "_aww_number", "---")
+
+    @property
+    def chw_name(self):
+        return self.owner_display
+
+    @property
+    def home_sba_assist(self):
+        return getattr(self, "_home_sba_assist", "---")
+
+    @property
+    def caste(self):
+        return getattr(self, "_caste", "---")
 
 
 class MCHMotherDisplay(MCHDisplay):
@@ -54,6 +74,9 @@ class MCHMotherDisplay(MCHDisplay):
                 setattr(self, "_all_pnc_on_time", get_property(form_dict, "all_pnc_on_time"))
                 children_count = get_property(form_dict, "cast_num_children")
                 child_list = []
+
+                if(get_property(form_dict, "cast_num_children") == '---'):
+                    children_count = 0
 
                 if int(children_count) == 1 and "child_info" in form_dict:
                     child_list.append(form_dict["child_info"])
@@ -90,13 +113,18 @@ class MCHMotherDisplay(MCHDisplay):
 
         super(MCHMotherDisplay, self).__init__(report, case_dict)
 
-    @property
-    def chw_name(self):
-        return self.owner_display
 
     @property
-    def mcts_id(self):
-        return get_property(self.case, "mcts_id")
+    def mother_name(self):
+        return get_property(self.case, "mother_name")
+
+    @property
+    def husband_name(self):
+        return get_property(self.case, "husband_name")
+
+    @property
+    def ward_number(self):
+        return get_property(self.case, "ward_number")
 
     @property
     def mobile_number(self):
@@ -105,6 +133,10 @@ class MCHMotherDisplay(MCHDisplay):
     @property
     def mobile_number_whose(self):
         return get_property(self.case, "mobile_number_whose")
+
+    @property
+    def mcts_id(self):
+        return get_property(self.case, "mcts_id")
 
     @property
     def dob_age(self):
@@ -168,37 +200,8 @@ class MCHMotherDisplay(MCHDisplay):
         return get_property(self.case, "status")
 
     @property
-    def asha_name(self):
-        return getattr(self, "_asha_name", "---")
-
-    @property
-    def asha_number(self):
-        return getattr(self, "_asha_number", "---")
-
-    @property
-    def awc_code_name(self):
-        return getattr(self, "_awc_code_name", "---")
-
-    @property
-    def aww_name(self):
-        return getattr(self, "_aww_name", "---")
-
-    @property
-    def aww_number(self):
-        return getattr(self, "_aww_number", "---")
-
-
-    @property
-    def caste(self):
-        return getattr(self, "_caste", "---")
-
-    @property
     def jsy_beneficiary(self):
         return getattr(self, "_jsy_beneficiary", "---")
-
-    @property
-    def home_sba_assist(self):
-        return getattr(self, "_home_sba_assist", "---")
 
     @property
     def delivery_nature(self):
@@ -352,3 +355,151 @@ class MCHMotherDisplay(MCHDisplay):
     @property
     def breastfed_hour_4(self):
         return getattr(self, "_breastfed_hour_4", "---")
+
+
+class MCHChildDisplay(MCHDisplay):
+    def __init__(self, report, case_dict):
+
+        # get mother case
+        parent_case = CommCareCase.get(case_dict["indices"][0]["referenced_id"])
+        forms = parent_case.get_forms()
+
+        parent_json = parent_case.case_properties()
+
+        setattr(self, "_father_mother_name", "%s, %s" %(get_property(parent_json,"husband_name"), get_property(parent_json, "mother_name")))
+        setattr(self, "_mcts_id", get_property(parent_json, "mcts_id"))
+        setattr(self, "_ward_number", get_property(parent_json, "ward_number"))
+        setattr(self, "_mobile_number", get_property(parent_json, "mobile_number"))
+        setattr(self, "_mobile_number_whose", get_property(parent_json, "mobile_number_whose"))
+
+        for form in forms:
+            form_dict = form.get_form
+            form_xmlns = form_dict["@xmlns"]
+
+            if re.search("new$", form_xmlns):
+                setattr(self, "_caste", get_property(form_dict, "caste"))
+            elif re.search("del$", form_xmlns):
+                setattr(self, "_home_sba_assist", get_property(form_dict, "home_sba_assist"))
+
+        super(MCHChildDisplay, self).__init__(report, case_dict)
+
+    @property
+    def child_name(self):
+        return get_property(self.case, "name")
+
+    @property
+    def father_mother_name(self):
+        return getattr(self, "_father_mother_name", "---")
+
+    @property
+    def mcts_id(self):
+        return getattr(self, "_mcts_id", "---")
+
+    @property
+    def ward_number(self):
+        return getattr(self, "_ward_number", "---")
+
+    @property
+    def gender(self):
+        return get_property(self.case, "gender")
+
+    @property
+    def mobile_number(self):
+        return get_property(self.case, "_mobile_number")
+
+    @property
+    def mobile_number_whose(self):
+        return get_property(self.case, "_mobile_number_whose")
+
+    @property
+    def gender(self):
+        return get_property(self.case, "caste")
+
+    @property
+    def bcg_date(self):
+        return get_property(self.case, "bcg_date")
+
+    @property
+    def opv_0_date(self):
+        return get_property(self.case, "opv_0_date")
+
+    @property
+    def hep_b_0_date(self):
+        return get_property(self.case, "hep_b_0_date")
+
+    @property
+    def dpt_1_date(self):
+        return get_property(self.case, "dpt_1_date")
+
+    @property
+    def opv_1_date(self):
+        return get_property(self.case, "opv_1_date")
+
+    @property
+    def hep_b_1_date(self):
+        return get_property(self.case, "hep_b_1_date")
+
+    @property
+    def dpt_2_date(self):
+        return get_property(self.case, "dpt_2_date")
+
+    @property
+    def opv_2_date(self):
+        return get_property(self.case, "opv_2_date")
+
+    @property
+    def hep_b_2_date(self):
+        return get_property(self.case, "hep_b_2_date")
+
+    @property
+    def dpt_3_date(self):
+        return get_property(self.case, "dpt_3_date")
+
+    @property
+    def opv_3_date(self):
+        return get_property(self.case, "opv_3_date")
+
+    @property
+    def hep_b_3_date(self):
+        return get_property(self.case, "hep_b_3_date")
+
+    @property
+    def measles_date(self):
+        return get_property(self.case, "measles_date")
+
+    @property
+    def vit_a_1_date(self):
+        return get_property(self.case, "vit_a_1_date")
+
+    @property
+    def date_measles_booster(self):
+        return get_property(self.case, "date_measles_booster")
+
+    @property
+    def dpt_booster_date(self):
+        return get_property(self.case, "dpt_booster_date")
+
+    @property
+    def opv_booster_date(self):
+        return get_property(self.case, "opv_booster_date")
+
+    @property
+    def vit_a_2_date(self):
+        return get_property(self.case, "vit_a_2_date")
+
+    @property
+    def vit_a_3_date(self):
+        return get_property(self.case, "vit_a_3_date")
+
+    @property
+    def date_je(self):
+        return get_property(self.case, "date_je")
+
+    @property
+    def dob_age(self):
+        if "dob" in self.case and self.case["dob"]:
+            dob = self.case["dob"]
+            days = (date.today() - self.parse_date(dob).date()).days
+            return "%s, %s" % (dob, days/365)
+        else:
+            return "---"
