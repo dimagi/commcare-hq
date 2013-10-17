@@ -3,6 +3,7 @@ import json
 import feedparser
 import time
 import requests
+from requests.auth import HTTPBasicAuth
 from custom.openlmis.exceptions import OpenLMISAPIException
 
 
@@ -147,8 +148,8 @@ class OpenLMISEndpoint(object):
 
         # rest apis
         self._rest_uri = self._urlcombine(self.base_uri, '/rest-api')
-        self.create_virtual_facility_url = self._urlcombine(self._rest_uri, 'agent.json')
-        self.program_product_url = self._urlcombine(self._rest_uri, 'programProducts.json')
+        self.create_virtual_facility_url = self._urlcombine(self._rest_uri, '/agent.json')
+        self.program_product_url = self._urlcombine(self._rest_uri, '/programProducts.json')
 
     def _urlcombine(self, base, target):
         return '{base}{target}'.format(base=base, target=target)
@@ -156,18 +157,32 @@ class OpenLMISEndpoint(object):
     def _page(self, base, page):
         return '{base}/{page}'.format(base=base, page=page)
 
-    def get_all_facilities(self):
+    def _iter_feed(self, uri, item_wrapper):
         results = True
         page = 1
         while results:
-            next = self._page(self.facility_master_feed_uri, page)
-            results = list(get_facilities(next))
+            next = self._page(uri, page)
+            results = list(item_wrapper(next))
             for r in results:
                 yield r
             page += 1
 
+    def _auth(self):
+        return HTTPBasicAuth(self.username, self.password)
+
+    def get_all_facilities(self):
+        return (fac for fac in self._iter_feed(self.facility_master_feed_uri, get_facilities))
+
+    def get_all_programs(self, include_products=True):
+        programs = (p for p in self._iter_feed(self.program_catalog_feed_uri, get_programs_and_products))
+        if include_products:
+            return (self.get_program_products(p.code) for p in programs)
+        else:
+            return programs
+
     def get_program_products(self, program_code):
-        response = requests.get(self.program_product_url, params={'programCode': program_code})
+        response = requests.get(self.program_product_url, params={'programCode': program_code},
+                                auth=self._auth())
         return Program.from_json(response.json())
 
 
