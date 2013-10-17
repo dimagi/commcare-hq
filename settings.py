@@ -836,9 +836,6 @@ PILLOWTOPS = {
         'corehq.pillows.sms.SMSPillow',
     ],
     'core_ext': [
-        'corehq.pillows.fullcase.FullCasePillow',  # to remove
-        'corehq.pillows.fullxform.FullXFormPillow',  # to remove
-
         'corehq.pillows.reportcase.ReportCasePillow',
         'corehq.pillows.reportxform.ReportXFormPillow',
     ],
@@ -885,7 +882,7 @@ COUCH_CACHE_BACKENDS = [
 #Custom workflow for indexing xform data beyond the standard properties
 XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
 
-#Custom fully indexed domains for FullCase index/pillowtop
+#Custom fully indexed domains for ReportCase index/pillowtop
 # Adding a domain will not automatically index that domain's existing cases
 ES_CASE_FULL_INDEX_DOMAINS = [
     'pact',
