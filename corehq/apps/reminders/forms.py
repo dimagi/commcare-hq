@@ -1289,6 +1289,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                 event['day_num'] = 0
 
             # clean callback_timeout_intervals:
+            event["callback_timeout_intervals"] = []
             if method == METHOD_SMS_CALLBACK:
                 timeouts_str = event["callback_timeout_intervals"].split(",")
                 timeouts_int = []
