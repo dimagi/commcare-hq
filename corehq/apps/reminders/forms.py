@@ -746,7 +746,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
     recipient_case_match_property = forms.CharField(
         label="Case Property",
         required=False
-    )  # todo: sub-case property select2
+    )
     recipient_case_match_type = forms.ChoiceField(
         required=False,
         choices=MATCH_TYPE_CHOICES,
@@ -979,7 +979,11 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             ),
             BootstrapMultiField(
                 "When Case Property",
-                InlineField('recipient_case_match_property', placeholder="todo: dropdown"),
+                InlineField(
+                    'recipient_case_match_property',
+                    placeholder="Enter a Case Property",
+                    css_class="input-large",
+                ),
                 InlineField(
                     'recipient_case_match_type',
                     data_bind="value: recipient_case_match_type",
@@ -1097,6 +1101,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             'fire_time_aux',
         ]
         subcase_properties = [
+            'recipient_case_match_property',
         ]
 
         _fmt_field = lambda name, action: {'name': name, 'action': action}
