@@ -1434,7 +1434,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
 
         start_offset = abs(reminder_handler.start_offset or 0)
 
-        if reminder_handler.ui_type == UI_SIMPLE_FIXED and len(reminder_handler.events) > 0:
+        if len(reminder_handler.events) > 0:
             initial['event_timing'] = cls._format_event_timing_choice(
                 reminder_handler.event_interpretation,
                 reminder_handler.events[0].fire_time_type,
