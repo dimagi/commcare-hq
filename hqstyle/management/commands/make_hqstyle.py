@@ -35,6 +35,7 @@ class Command(BaseCommand):
         "multi-typeahead",
         "hoverdropdown",
         "popout",
+        "timepicker",
     ]
 
     hq_bootstrap_src = "submodules/hqstyle-src/hq-bootstrap"
