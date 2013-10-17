@@ -8,6 +8,9 @@ from corehq.apps.reports.commtrack import standard as commtrack_reports
 from corehq.apps.reports.commtrack import maps as commtrack_maps
 import hashlib
 from dimagi.utils.modules import to_function
+from custom.trialconnect.reports import system_overview
+from custom.trialconnect.reports import appointments
+from django.conf import settings
 
 from django.utils.translation import ugettext_noop as _
 
@@ -53,13 +56,24 @@ def REPORTS(project):
             commtrack_maps.ReportingStatusMapReport,
         )))
 
-    messaging = (lambda project, user: (
-        _("Logs") if project.commtrack_enabled else _("Messaging")), (
+
+    messaging_reports = (
         sms.MessagesReport,
         sms.MessageLogReport,
         ivr.CallLogReport,
         ivr.ExpectedCallbackReport,
-    ))
+    )
+
+    if settings.DOMAIN_MODULE_MAP.get(project.name) == 'custom.trialconnect':
+        messaging_reports += (
+            system_overview.SystemOverviewReport,
+            system_overview.SystemUsersReport,
+            appointments.AppointmentsReport,
+        )
+
+    messaging = (lambda project, user: (
+        _("Logs") if project.commtrack_enabled else _("Messaging")), messaging_reports)
+
     if project.commconnect_enabled:
         reports.insert(0, messaging)
     else:

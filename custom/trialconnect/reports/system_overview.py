@@ -20,7 +20,7 @@ class BaseSystemOverviewReport(TrialConnectReport):
     ]
 
 class SystemOverviewReport(BaseSystemOverviewReport):
-    slug = 'overview'
+    slug = 'system_overview'
     name = ugettext_noop("Overview")
     description = ugettext_noop("Summary of the different types of messages sent and received by the system.")
     section_name = ugettext_noop("Overview")
