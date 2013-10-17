@@ -45,7 +45,7 @@ individual project sites when necessary.
 + PostgreSQL >= 8.4 - (install from OS package manager or [here][postgres])
 + [elasticsearch][elasticsearch] (including Java 7)
 + memcached
-+ redis >= 2.2.12
++ redis >= 2.2.12 ([installation notes](https://gist.github.com/mwhite/c0381c5236855993572c))
 + [Jython][jython] 2.5.2 (optional, only needed for CloudCare)
 + For additional requirements necessary only if you want to modify the default
   JavaScript or CSS styling, see [CommCare HQ Style](https://github.com/dimagi/hqstyle-src).
