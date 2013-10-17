@@ -3,6 +3,7 @@ from corehq.apps.commtrack.models import Program, SupplyPointCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
 from custom.openlmis.api import OpenLMISEndpoint
+from custom.openlmis.exceptions import BadParentException
 
 
 def bootstrap_domain(domain):
@@ -33,12 +34,16 @@ def sync_facility_to_supply_point(domain, facility):
         'latitude': facility.latitude,
         'longitude': facility.longitude,
     }
+    parent_sp = None
+    if facility.parent_id:
+        parent_sp = get_supply_point(domain, facility.parent_id)
+        if not parent_sp:
+            raise BadParentException('No matching supply point with code %s found' % facility.parent_id)
+
     if supply_point is None:
-        if facility.parent_id:
-            # todo, deal with parentage
-            # parent = get_location_by_external_id()
-            # facility_dict['parent'] = parent
-            pass
+        if parent_sp:
+            facility_dict['parent'] = parent_sp.location
+
         facility_loc = Location(**facility_dict)
         facility_loc.save()
         return make_supply_point(domain, facility_loc)
@@ -49,8 +54,12 @@ def sync_facility_to_supply_point(domain, facility):
             if getattr(facility_loc, key, None) != value:
                 setattr(facility_loc, key, value)
                 should_save = True
+        if parent_sp and facility_loc.parent_id != parent_sp.location._id:
+            raise BadParentException('You are trying to move a location. This is currently not supported.')
+
         if should_save:
             facility_loc.save()
+
         return supply_point
 
 
