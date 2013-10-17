@@ -264,7 +264,8 @@ class ComplexCaseReminderForm(Form):
     recipient_case_match_property = CharField(required=False)
     recipient_case_match_type = ChoiceField(choices=MATCH_TYPE_DISPLAY_CHOICES,required=False)
     recipient_case_match_value = CharField(required=False)
-    
+    force_surveys_to_use_triggered_case = BooleanField(required=False)
+
     def __init__(self, *args, **kwargs):
         super(ComplexCaseReminderForm, self).__init__(*args, **kwargs)
         if "initial" in kwargs:

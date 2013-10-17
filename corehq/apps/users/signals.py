@@ -29,6 +29,7 @@ def django_user_post_save_signal(sender, instance, created, **kwargs):
 post_save.connect(django_user_post_save_signal, User)
 
 commcare_user_post_save = Signal(providing_args=["couch_user"])
+couch_user_post_save = Signal(providing_args=["couch_user"])
 
 """
 This section automatically creates Couch users whenever a registration xform is received

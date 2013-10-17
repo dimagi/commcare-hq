@@ -1,8 +1,6 @@
 import os.path
 from django.http import HttpResponseRedirect, HttpResponseServerError
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.phone.xml import get_case_xml
-from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.importer import base
 from corehq.apps.importer.util import ExcelFile, ImporterConfig
 import corehq.apps.importer.util as importer_util
@@ -13,7 +11,6 @@ from corehq.apps.users.models import Permissions
 from corehq.apps.app_manager.models import ApplicationBase
 from soil.util import expose_download
 from soil import DownloadBase
-from soil import views as soil_views
 from soil.heartbeat import heartbeat_enabled, is_alive
 from django.template.context import RequestContext
 
