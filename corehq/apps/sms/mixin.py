@@ -166,10 +166,15 @@ class MobileBackend(Document):
         backend = cls.view("sms/backend_by_owner_domain", key=[domain, name], include_docs=True).one()
         if backend is None:
             # Look for a backend with that name that this domain was granted access to
-            backend = cls.view("sms/backend_by_domain", key=[domain, name], include_docs=True).first()
+            backend = cls.view("sms/backend_by_domain", key=[domain, name], include_docs=True, reduce=False).first()
             if backend is None:
                 # Look for a global backend with that name
-                backend = cls.view("sms/global_backends", key=[name], include_docs=True).one()
+                backend = cls.view(
+                    "sms/global_backends",
+                    key=[name],
+                    include_docs=True,
+                    reduce=False
+                ).one()
         if backend is not None:
             return cls.load(backend._id)
         else:

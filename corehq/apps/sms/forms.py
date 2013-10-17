@@ -54,7 +54,13 @@ class BackendForm(Form):
         backend_classes = get_available_backends()
         if self._cchq_domain is None:
             # Ensure name is not duplicated among other global backends
-            backend = SMSBackend.view("sms/global_backends", classes=backend_classes, key=[value], include_docs=True).one()
+            backend = SMSBackend.view(
+                "sms/global_backends",
+                classes=backend_classes,
+                key=[value],
+                include_docs=True,
+                reduce=False
+            ).one()
         else:
             # Ensure name is not duplicated among other backends owned by this domain
             backend = SMSBackend.view("sms/backend_by_owner_domain", classes=backend_classes, key=[self._cchq_domain, value], include_docs=True).one()
