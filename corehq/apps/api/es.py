@@ -210,22 +210,6 @@ class ReportCaseES(ESView):
     index = 'report_cases'
 
 
-class FullCaseES(ESView):
-    """
-    Fully indexed case index elasticsearch endpoint.
-    """
-    index = "full_cases"
-
-    def __init__(self, domain):
-        super(FullCaseES, self).__init__(domain)
-        logging.warning("FullCases are on the way out, replace now!")
-
-    def run_query(self, es_query, es_type=None):
-        logging.warning("FullCaseES.run_query are on the way out, replace now!")
-        return super(FullCaseES, self).run_query(es_query)
-
-
-
 class XFormES(ESView):
     index = "xforms"
 
