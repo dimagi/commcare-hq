@@ -100,6 +100,13 @@ var ManageRemindersViewModel = function (
         _.each(self.select2_fields, function (field) {
             self.initCasePropertyChoices(field);
         });
+        $('[data-timeset="true"]').each(function () {
+            $(this).timepicker({
+                showMeridian: false,
+                showSeconds: true,
+                defaultTime: $(this).val() || false
+            });
+        });
     };
 
     self.addLanguage = function (langcode) {

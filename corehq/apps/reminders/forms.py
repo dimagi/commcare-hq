@@ -1466,7 +1466,10 @@ class CaseReminderEventForm(forms.Form):
 
     # EVENT_AS_OFFSET: number of HH:MM:SS after last fire
     # EVENT_AS_SCHEDULE: time of day
-    fire_time = forms.TimeField(required=False)  # todo time dropdown
+    fire_time = forms.TimeField(
+        required=False,
+        label="HH:MM:SS",
+    )
 
     # method must be EVENT_AS_SCHEDULE
     fire_time_aux = forms.CharField(
@@ -1519,8 +1522,14 @@ class CaseReminderEventForm(forms.Form):
         self.helper_fire_time = FormHelper()
         self.helper_fire_time.form_tag = False
         self.helper_fire_time.layout = crispy.Layout(
-            InlineField('fire_time', data_bind="value: fire_time, attr: {id: ''}, "
-                                               "visible: isFireTimeVisible"),
+            crispy.Div(
+                crispy.HTML('<input type="text" data-bind="value: fire_time" '
+                            'data-timeset="true" class="input-small" />'),
+                crispy.HTML('<span class="add-on"><i class="icon-time"></i>'),
+                css_class="input-append bootstrap-timepicker",
+                style="margin-left:5px;",
+                data_bind="visible: isFireTimeVisible",
+            ),
             crispy.Div(
                 InlineField(
                     'fire_time_aux',
