@@ -1,6 +1,4 @@
 import StringIO
-import urllib2
-from corehq.apps.app_manager.views import download_app_strings
 from dimagi.utils.django.cached_object import CachedObject
 from django.core.servers.basehttp import FileWrapper
 from django.http import HttpResponse
@@ -13,7 +11,9 @@ class RedisAssetsAPI(View):
         obj = CachedObject(filename)
 
         if not obj.is_cached():
-            text = "AAA"
+            f = open('/Users/Nick/commcare-hq/corehq/apps/api/data/' + filename, 'r')
+            text = f.read()
+            f.close()
             buffer = StringIO.StringIO(text)
             metadata = {'content_type': 'text/plain'}
             obj.cache_put(buffer, metadata)
