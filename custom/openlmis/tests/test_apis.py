@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 import os
 from django.test import TestCase
 from corehq.apps.commtrack.helpers import make_supply_point
@@ -62,6 +63,21 @@ class FeedApiTest(TestCase):
         # sanity check some stuff back
         self.assertEqual('HIV', program.code)
         self.assertEqual('HIV', program.name)
+
+    def testParseProgramJson(self):
+        with open(os.path.join(self.datapath, 'sample_program.json')) as f:
+            program = Program.from_json(json.loads(f.read()))
+
+        self.assertEqual('ESS_MEDS', program.code)
+        self.assertEqual('ESSENTIAL MEDICINES', program.name)
+        self.assertEqual(35, len(program.products))
+        p = program.products[0]
+        self.assertEqual('P75', p.code)
+        self.assertEqual('Malaria Rapid Diagnostics Tests', p.name)
+        self.assertEqual('P75', p.code)
+        self.assertEqual('TDF/FTC/EFV', p.description)
+        self.assertEqual(10, p.unit)
+        self.assertEqual('Analgesics', p.category)
 
 
 class PostApiTest(TestCase):
