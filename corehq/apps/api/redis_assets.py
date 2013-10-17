@@ -11,7 +11,7 @@ class RedisAssetsAPI(View):
         obj = CachedObject(filename)
 
         if not obj.is_cached():
-            f = open('/Users/Nick/commcare-hq/corehq/apps/api/data/' + filename, 'r')
+            f = open('corehq/apps/api/data/' + filename, 'r')
             text = f.read()
             f.close()
             buffer = StringIO.StringIO(text)
