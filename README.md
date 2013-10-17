@@ -50,13 +50,17 @@ presented itself.
 Running pillowtop
 =================
 
-    python manage.py run_ptop
+    python manage.py run_ptop --all
 
 This will fire off 1 gevent worker per pillow in your PILLOWTOPS array listening continuously on
 the changes feed of their interest.
 
 This process does not pool right now the changes listeners, so be careful,
 or suggest an improvement :)
+
+You can also run this for only a single pillow in your PILLOWTOPS array with:
+
+    python manage.py run_ptop --pillow-key=KEY
 
 Pillowtop also will keep checkpoints in couch so as to not keep going over changes when the
 process is restarted - all BasicPillows will keep a document unique to its class name in the DB
