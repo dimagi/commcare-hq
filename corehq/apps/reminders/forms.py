@@ -77,6 +77,11 @@ CONTENT_CHOICES = (
     (METHOD_SMS_SURVEY, _("SMS Form Interaction")),
 )
 
+KEYWORD_CONTENT_CHOICES = (
+    (METHOD_SMS, _("SMS Message")),
+    (METHOD_SMS_SURVEY, _("SMS Interactive Survey")),
+)
+
 ONE_TIME_RECIPIENT_CHOICES = (
     ("", _("---choose---")),
     (RECIPIENT_SURVEY_SAMPLE, _("Case Group")),
@@ -1844,23 +1849,29 @@ class KeywordForm(Form):
     _cchq_domain = None
     _sk_id = None
     keyword = CharField()
-    description = CharField()
+    description = TrimmedCharField()
     override_open_sessions = BooleanField(required=False)
-    sender_content_type = CharField(required=False)
-    sender_message = CharField(required=False)
+    sender_content_type = CharField()
+    sender_message = TrimmedCharField(required=False)
     sender_form_unique_id = CharField(required=False)
     notify_others = BooleanField(required=False)
     other_recipient_content_type = CharField(required=False)
-    other_recipient_message = CharField(required=False)
+    other_recipient_message = TrimmedCharField(required=False)
     other_recipient_form_unique_id = CharField(required=False)
     process_structured_sms = BooleanField(required=False)
     structured_sms_form_unique_id = CharField(required=False)
     use_custom_delimiter = BooleanField(required=False)
-    delimiter = CharField(required=False)
-    use_named_args = BooleanField(required=False)
+    delimiter = TrimmedCharField(required=False)
     use_named_args_separator = BooleanField(required=False)
+    use_named_args = BooleanField(required=False)
+    named_args_separator = TrimmedCharField(required=False)
     named_args = RecordListField(input_name="named_args")
-    named_args_separator = CharField(required=False)
+
+    def _check_content_type(self, value):
+        content_types = [a[0] for a in KEYWORD_CONTENT_CHOICES]
+        if value not in content_types:
+            raise ValidationError(_("Invalid content type."))
+        return value
 
     @property
     def current_values(self):
@@ -1881,27 +1892,75 @@ class KeywordForm(Form):
         if duplicate is not None and duplicate._id != self._sk_id:
             raise ValidationError(_("Keyword already exists."))
         return value
-    
-    def clean_form_unique_id(self):
-        value = self.cleaned_data.get("form_unique_id")
-        if value is None:
-            raise ValidationError(_("Please create a form first, and then add a keyword for it."))
-        validate_form_unique_id(value, self._cchq_domain)
-        return value
-    
-    def clean_delimiter(self):
-        value = self.cleaned_data.get("delimiter", None)
-        if self.cleaned_data.get("form_type") == FORM_TYPE_ALL_AT_ONCE and self.cleaned_data.get("use_custom_delimiter", False):
-            if value is not None:
-                value = value.strip()
+
+    def clean_sender_content_type(self):
+        return self._check_content_type(self.cleaned_data.get("sender_content_type"))
+
+    def clean_sender_message(self):
+        value = self.cleaned_data.get("sender_message")
+        if self.cleaned_data.get("sender_content_type") == METHOD_SMS:
             if value is None or value == "":
                 raise ValidationError(_("This field is required."))
             return value
         else:
             return None
-    
+
+    def clean_sender_form_unique_id(self):
+        value = self.cleaned_data.get("sender_form_unique_id")
+        if self.cleaned_data.get("sender_content_type") == METHOD_SMS_SURVEY:
+            if value is None:
+                raise ValidationError(_("Please create a form first, and then add a keyword for it."))
+            validate_form_unique_id(value, self._cchq_domain)
+            return value
+        else:
+            return None
+
+    def clean_other_recipient_content_type(self):
+        if self.cleaned_data.get("notify_others", False):
+            return self._check_content_type(self.cleaned_data.get("other_recipient_content_type"))
+        else:
+            return None
+
+    def clean_other_recipient_message(self):
+        value = self.cleaned_data.get("other_recipient_message")
+        if self.cleaned_data.get("notify_others", False) and self.cleaned_data.get("other_recipient_content_type") == METHOD_SMS:
+            if value is None or value == "":
+                raise ValidationError(_("This field is required."))
+            return value
+        else:
+            return None
+
+    def clean_other_recipient_form_unique_id(self):
+        value = self.cleaned_data.get("other_recipient_form_unique_id")
+        if self.cleaned_data.get("notify_others", False) and self.cleaned_data.get("other_recipient_content_type") == METHOD_SMS_SURVEY:
+            if value is None:
+                raise ValidationError(_("Please create a form first, and then add a keyword for it."))
+            validate_form_unique_id(value, self._cchq_domain)
+            return value
+        else:
+            return None
+
+    def clean_structured_sms_form_unique_id(self):
+        value = self.cleaned_data.get("structured_sms_form_unique_id")
+        if self.cleaned_data.get("process_structured_sms", False):
+            if value is None:
+                raise ValidationError(_("Please create a form first, and then add a keyword for it."))
+            validate_form_unique_id(value, self._cchq_domain)
+            return value
+        else:
+            return None
+
+    def clean_delimiter(self):
+        value = self.cleaned_data.get("delimiter", None)
+        if self.cleaned_data.get("process_structured_sms", False) and self.cleaned_data.get("use_custom_delimiter", False):
+            if value is None or value == "":
+                raise ValidationError(_("This field is required."))
+            return value
+        else:
+            return None
+
     def clean_named_args(self):
-        if self.cleaned_data.get("form_type") == FORM_TYPE_ALL_AT_ONCE and self.cleaned_data.get("use_named_args", False):
+        if self.cleaned_data.get("process_structured_sms", False) and self.cleaned_data.get("use_named_args", False):
             use_named_args_separator = self.cleaned_data.get("use_named_args_separator", False)
             value = self.cleaned_data.get("named_args")
             data_dict = {}
@@ -1924,9 +1983,7 @@ class KeywordForm(Form):
     
     def clean_named_args_separator(self):
         value = self.cleaned_data.get("named_args_separator", None)
-        if self.cleaned_data.get("form_type") == FORM_TYPE_ALL_AT_ONCE and self.cleaned_data.get("use_named_args", False) and self.cleaned_data.get("use_named_args_separator", False):
-            if value is not None:
-                value = value.strip()
+        if self.cleaned_data.get("process_structured_sms", False) and self.cleaned_data.get("use_named_args", False) and self.cleaned_data.get("use_named_args_separator", False):
             if value is None or value == "":
                 raise ValidationError(_("This field is required."))
             if value == self.cleaned_data.get("delimiter"):

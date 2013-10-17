@@ -1075,7 +1075,7 @@ class SurveyKeywordAction(DocumentSchema):
     # Only used for action == METHOD_STRUCTURED_SMS
     use_named_args = BooleanProperty()
     named_args = DictProperty() # Dictionary of {argument name in the sms (caps) : form question xpath}
-    named_args_separator = StringProperty()
+    named_args_separator = StringProperty() # Can be None in which case there is no separator (i.e., a100 b200)
 
 class SurveyKeyword(Document):
     domain = StringProperty()

@@ -47,7 +47,7 @@
         self.notify_others = ko.observable(initial_values.notify_others);
         self.other_recipient_content_type = ko.observable(initial_values.other_recipient_content_type);
         self.other_recipient_message = ko.observable(initial_values.other_recipient_message);
-        self.other_recipient_form_unique_id = ko.observable(initial_values.sender_form_unique_id);
+        self.other_recipient_form_unique_id = ko.observable(initial_values.other_recipient_form_unique_id);
         self.process_structured_sms = ko.observable(initial_values.process_structured_sms);
         self.structured_sms_form_unique_id = ko.observable(initial_values.structured_sms_form_unique_id);
         self.use_custom_delimiter = ko.observable(initial_values.use_custom_delimiter);
@@ -87,7 +87,7 @@
                 for(var i = 0; i < self.named_args().length; i++) {
                     toggle = !toggle;
                     var arg_name = self.named_args()[i].name;
-                    arg_name = (arg_name == null) ? "" : arg_name.trim();
+                    arg_name = (arg_name == null) ? "" : arg_name.trim().toLowerCase();
                     example += delimiter + arg_name + named_args_separator + (toggle ? "123" : "456");
                 }
             } else {
@@ -96,12 +96,12 @@
             self.example_structured_sms(example);
             return true;
         };
+        self.updateExampleStructuredSMS();
     }
     
     $(function(){
         kvm = KeywordActionsViewModel({{ form.current_values|JSON }});
         ko.applyBindings(kvm);
-        kvm.updateExampleStructuredSMS();
     });
 </script>
 {% endblock %}

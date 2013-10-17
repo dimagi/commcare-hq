@@ -22,6 +22,7 @@ from corehq.apps.reminders.forms import (
     SimpleScheduleCaseReminderForm,
     CaseReminderEventForm,
     CaseReminderEventMessageForm,
+    KEYWORD_CONTENT_CHOICES,
 )
 from corehq.apps.reminders.models import (
     CaseReminderHandler,
@@ -31,6 +32,7 @@ from corehq.apps.reminders.models import (
     EVENT_AS_OFFSET,
     EVENT_AS_SCHEDULE,
     SurveyKeyword,
+    SurveyKeywordAction,
     Survey,
     SURVEY_METHOD_LIST,
     SurveyWave,
@@ -42,7 +44,10 @@ from corehq.apps.reminders.models import (
     SEND_NOW, SEND_LATER,
     METHOD_SMS,
     METHOD_SMS_SURVEY,
+    METHOD_STRUCTURED_SMS,
     RECIPIENT_USER_GROUP,
+    RECIPIENT_SENDER,
+    RECIPIENT_OWNER,
 )
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.users.decorators import require_permission
@@ -617,28 +622,77 @@ def add_keyword(request, domain, keyword_id=None):
             if sk is None:
                 sk = SurveyKeyword(domain=domain)
             sk.keyword = form.cleaned_data.get("keyword")
-            sk.form_type = form.cleaned_data.get("form_type")
-            sk.form_unique_id = form.cleaned_data.get("form_unique_id")
+            sk.description = form.cleaned_data.get("description")
             sk.delimiter = form.cleaned_data.get("delimiter")
-            sk.use_named_args = form.cleaned_data.get("use_named_args", False)
-            sk.named_args = form.cleaned_data.get("named_args")
-            sk.named_args_separator = form.cleaned_data.get("named_args_separator")
+            sk.override_open_sessions = form.cleaned_data.get("override_open_sessions")
+            sk.actions = [SurveyKeywordAction(
+                recipient = RECIPIENT_SENDER,
+                action = form.cleaned_data.get("sender_content_type"),
+                message_content = form.cleaned_data.get("sender_message"),
+                form_unique_id = form.cleaned_data.get("sender_form_unique_id"),
+            )]
+            if form.cleaned_data.get("process_structured_sms"):
+                sk.actions.append(SurveyKeywordAction(
+                    recipient = RECIPIENT_SENDER,
+                    action = METHOD_STRUCTURED_SMS,
+                    form_unique_id = form.cleaned_data.get("structured_sms_form_unique_id"),
+                    use_named_args = form.cleaned_data.get("use_named_args"),
+                    named_args = form.cleaned_data.get("named_args"),
+                    named_args_separator = form.cleaned_data.get("named_args_separator"),
+                ))
+            if form.cleaned_data.get("notify_others"):
+                sk.actions.append(SurveyKeywordAction(
+                    recipient = RECIPIENT_OWNER,
+                    action = form.cleaned_data.get("other_recipient_content_type"),
+                    message_content = form.cleaned_data.get("other_recipient_message"),
+                    form_unique_id = form.cleaned_data.get("other_recipient_form_unique_id"),
+                ))
             sk.save()
             return HttpResponseRedirect(reverse("manage_keywords", args=[domain]))
     else:
-        initial = {}
+        initial = {
+            "keyword" : None,
+            "description" : None,
+            "override_open_sessions" : False,
+            "sender_content_type" : None,
+            "sender_message" : None,
+            "sender_form_unique_id" : None,
+            "notify_others" : False,
+            "other_recipient_content_type" : None,
+            "other_recipient_message" : None,
+            "other_recipient_form_unique_id" : None,
+            "process_structured_sms" : False,
+            "structured_sms_form_unique_id" : None,
+            "use_custom_delimiter" : False,
+            "delimiter" : None,
+            "use_named_args_separator" : False,
+            "use_named_args" : False,
+            "named_args_separator" : None,
+            "named_args" : [],
+        }
         if sk is not None:
-            initial = {
-                "keyword" : sk.keyword,
-                "form_unique_id" : sk.form_unique_id,
-                "form_type" : sk.form_type,
-                "use_custom_delimiter" : sk.delimiter is not None,
-                "delimiter" : sk.delimiter,
-                "use_named_args" : sk.use_named_args,
-                "use_named_args_separator" : sk.named_args_separator is not None,
-                "named_args" : [{"name" : k, "xpath" : v} for k, v in sk.named_args.items()],
-                "named_args_separator" : sk.named_args_separator,
-            }
+            initial["keyword"] = sk.keyword
+            initial["description"] = sk.description
+            initial["delimiter"] = sk.delimiter
+            initial["override_open_sessions"] = sk.override_open_sessions
+            for action in sk.actions:
+                if action.action == METHOD_STRUCTURED_SMS:
+                    initial["process_structured_sms"] = True
+                    initial["structured_sms_form_unique_id"] = action.form_unique_id
+                    initial["use_custom_delimiter"] = sk.delimiter is not None
+                    initial["use_named_args_separator"] = action.named_args_separator is not None
+                    initial["use_named_args"] = action.use_named_args
+                    initial["named_args_separator"] = action.named_args_separator
+                    initial["named_args"] = [{"name" : k, "xpath" : v} for k, v in action.named_args.items()]
+                elif action.recipient == RECIPIENT_SENDER:
+                    initial["sender_content_type"] = action.action
+                    initial["sender_message"] = action.message_content
+                    initial["sender_form_unique_id"] = action.form_unique_id
+                else:
+                    initial["notify_others"] = True
+                    initial["other_recipient_content_type"] = action.action
+                    initial["other_recipient_message"] = action.message_content
+                    initial["other_recipient_form_unique_id"] = action.form_unique_id
         form = KeywordForm(initial=initial)
     
     context = {
@@ -646,10 +700,7 @@ def add_keyword(request, domain, keyword_id=None):
         "form_list" : get_form_list(domain),
         "form" : form,
         "keyword" : sk,
-        "content_type_choices" : [
-            {"code" : METHOD_SMS, "desc" : _("SMS Message")},
-            {"code" : METHOD_SMS_SURVEY, "desc" : _("SMS Interactive Survey")},
-        ],
+        "content_type_choices" : [{"code" : a[0], "desc" : a[1]} for a in KEYWORD_CONTENT_CHOICES],
     }
     
     return render(request, "reminders/partial/add_keyword.html", context)
