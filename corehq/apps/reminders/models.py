@@ -1091,10 +1091,6 @@ class SurveyKeyword(Document):
         self.save()
     
     @property
-    def survey_name(self):
-        return get_form_name(self.form_unique_id)
-    
-    @property
     def get_id(self):
         return self._id
     

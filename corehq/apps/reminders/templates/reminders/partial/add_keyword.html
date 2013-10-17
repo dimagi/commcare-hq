@@ -21,7 +21,7 @@
 
 {% block subsection-title %}
     <li>
-        <a href="#">Keywords</a> <span class="divider">&gt;</span>
+        <a href="{% url "manage_keywords" domain %}">Keywords</a> <span class="divider">&gt;</span>
     </li>
     {% if keyword.get_id %}
     <li class="active">
@@ -263,12 +263,12 @@
                     </td>
                     <td>{{ form.named_args.errors }}</td>
                 </tr>
-                <tr>
+                <tr data-bind="visible: use_named_args">
                     <td>Use Joining Character</td>
                     <td><input type="checkbox" name="use_named_args_separator" data-bind="checked: use_named_args_separator, click: updateExampleStructuredSMS" /></td>
                     <td>{{ form.use_named_args_separator.errors }}</td>
                 </tr>
-                <tr data-bind="visible: use_named_args_separator">
+                <tr data-bind="visible: use_named_args() && use_named_args_separator()">
                     <td></td>
                     <td><input type="text" name="named_args_separator" data-bind="value: named_args_separator, valueUpdate: 'afterkeydown', event: {keyup : updateExampleStructuredSMS}" /></td>
                     <td>{{ form.named_args_separator.errors }}</td>
