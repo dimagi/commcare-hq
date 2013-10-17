@@ -27,8 +27,11 @@ class Command(NoArgsCommand):
         pillow_key = options['pillow_key']
 
         if not run_all and not pillow_key:
-            print "\n\tError, not running all. Please specify a key from settings.PILLOWTOPS:"
-            print "\t%s" % settings.PILLOWTOPS.keys()
+            print "\nInvalid usage. Please specify a key from settings.PILLOWTOPS."
+            print "\nOptions:"
+            print "{0:20} {1}".format("  --pillow-key=KEY", "Run for a single key")
+            print "{0:20} {1}".format("  --all", "Run for all keys")
+            print "\nAvailable key options are: %s\n" % ', '.join(settings.PILLOWTOPS.keys())
             sys.exit()
         elif run_all:
             pillows_to_run = [pillow for group_key, items in settings.PILLOWTOPS.items() for pillow in items]
