@@ -63,15 +63,17 @@ class FacilityProgramLink(RssWrapper):
     pass
 
 
-class Program(RssWrapper):
+class Program(object):
 
-    @property
-    def code(self):
-        return self.metadata['programCode']
+    def __init__(self, code, name, products=None):
+        self.code = code
+        self.name = name
+        self.products = products or []
 
-    @property
-    def name(self):
-        return self.metadata['programName']
+    @classmethod
+    def from_metadata(cls, metadata):
+        ret = cls(metadata['programCode'], metadata['programName'])
+        return ret
 
 
 def get_facilities(uri_or_text):
@@ -89,7 +91,7 @@ def get_facility_programs(uri_or_text):
 def get_programs_and_products(uri_or_text):
     parsed = feedparser.parse(uri_or_text)
     for entry in parsed.entries:
-        yield Program(RssMetadata.from_entry(entry))
+        yield Program.from_metadata(RssMetadata.from_entry(entry).metadata)
 
 
 class OpenLMISEndpoint(object):
