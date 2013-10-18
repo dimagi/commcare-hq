@@ -1075,6 +1075,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             active=False,
         )
 
+        from corehq.apps.reminders.views import RemindersListView
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Field('nickname'),
@@ -1089,7 +1090,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                     css_class='btn-primary',
                     type='submit',
                 ),
-                crispy.HTML('<a href="%s" class="btn">Cancel</a>' % reverse('list_reminders', args=[self.domain]))
+                crispy.HTML('<a href="%s" class="btn">Cancel</a>' % reverse(RemindersListView.urlname, args=[self.domain]))
             )
         )
 
