@@ -677,11 +677,6 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             'required': "Please enter a name for this reminder",
         }
     )
-    active = forms.BooleanField(
-        required=False,
-        initial=True,
-        label="This reminder is active."
-    )
 
     # Fieldset: Send Options
     # simple has start_condition_type = CASE_CRITERIA by default
@@ -1082,7 +1077,6 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Field('nickname'),
-            crispy.Field('active'),
             start_section,
             recipient_section,
             message_section,
