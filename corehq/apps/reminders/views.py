@@ -628,6 +628,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
             return HttpResponse(json.dumps(getattr(self, '%s_response' % self.action)))
         if self.schedule_form.is_valid():
             self.process_schedule_form()
+            return HttpResponseRedirect(reverse(RemindersListView.urlname, args=[self.domain]))
         else:
             messages.error(self.request, "There were errors saving your reminder.")
         return self.get(*args, **kwargs)
