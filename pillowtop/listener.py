@@ -183,6 +183,9 @@ class BasicPillow(object):
 
     def set_checkpoint(self, change):
         checkpoint = self.get_checkpoint()
+        pillow_logging.info(
+            "(%s) setting checkpoint: %s" % (checkpoint['_id'], change['seq'])
+        )
         checkpoint['seq'] = change['seq']
         checkpoint['timestamp'] = datetime.now(tz=pytz.UTC).isoformat()
         self.couch_db.save_doc(checkpoint)
@@ -205,8 +208,6 @@ class BasicPillow(object):
 
         self.changes_seen += 1
         if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
-            pillow_logging.info(
-                "(%s) setting checkpoint: %s" % (self.get_checkpoint_doc_name(), change['seq']))
             self.set_checkpoint(change)
 
         try:
@@ -409,8 +410,6 @@ class ElasticPillow(BasicPillow):
         """
         self.changes_seen += 1
         if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
-            pillow_logging.info(
-                "(%s) setting checkpoint: %s" % (self.get_checkpoint_doc_name(), change['seq']))
             self.set_checkpoint(change)
 
         try:
