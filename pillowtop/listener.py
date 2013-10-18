@@ -15,6 +15,7 @@ import gevent
 from django.conf import settings
 
 from dimagi.utils.decorators.memoized import memoized
+from pillowtop.couchdb import CachedCouchDB
 from .utils import import_settings
 
 from couchdbkit.changes import ChangesStream
@@ -255,6 +256,61 @@ class BasicPillow(object):
         """
         raise NotImplementedError(
             "Error, this pillowtop subclass has not been configured to do anything!")
+
+
+class PythonPillow(BasicPillow):
+    """
+    A pillow that does filtering in python instead of couch.
+
+    Useful because it will actually set checkpoints throughout even if there
+    are no matched docs.
+
+    In initial profiling this was also 2-3x faster than the couch-filtered
+    version.
+
+    Subclasses should override the python_filter function to perform python
+    filtering.
+    """
+    CHUNK_SIZE = 250
+    PILLOW_CHECKPOINT_FREQUENCY = CHECKPOINT_FREQUENCY * 10
+
+    def __init__(self, document_class=None):
+        super(PythonPillow, self).__init__(document_class=document_class)
+
+        if self.document_class:
+            self.couch_db = CachedCouchDB(self.document_class.get_db().uri, readonly=False)
+
+    def python_filter(self, doc):
+        """
+        Should return True if the doc is to be processed by your pillow
+        """
+        return True
+
+    def process_chunk(self):
+        self.couch_db.bulk_load([change['id'] for change in self.change_queue],
+                                    purge_existing=True)
+
+        while len(self.change_queue) > 0:
+            change = self.change_queue.pop()
+            doc = self.couch_db.open_doc(change['id'], check_main=False)
+            if doc and self.python_filter(doc):
+                try:
+                    self.process_change(change)
+                except Exception:
+                    logging.exception('something went wrong processing change %s (%s)' % (change['seq'], change['id']))
+
+
+    def processor(self, change, do_set_checkpoint=True):
+        self.changes_seen += 1
+        self.change_queue.append(change)
+        if self.changes_seen % self.PILLOW_CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
+            self.set_checkpoint(change)
+        if len(self.change_queue) > self.CHUNK_SIZE:
+            self.process_chunk()
+
+    def run(self):
+        self.change_queue = []
+        super(PythonPillow, self).run()
 
 
 class ElasticPillow(BasicPillow):
