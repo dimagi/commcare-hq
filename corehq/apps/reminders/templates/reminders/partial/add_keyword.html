@@ -1,28 +1,27 @@
 {% extends "reminders/reminders_base.html" %}
+{% load hq_shared_tags %}
 {% load url from future %}
 
 {% block head %}{{ block.super }}
 <style type="text/css">
-    #new_keyword_table {
-        width: auto;
-        margin-left: 0px;
-        min-width: 50%;
-    }
     .parameter_table {
         width: auto;
-        margin-left: 0px;
+        margin-left: 50px;
     }
     .parameter_table tbody tr td {
         padding-right: 10px;
         padding-bottom: 5px;
         vertical-align: top;
     }
+    #id_save_button {
+        margin-top: 20px;
+    }
 </style>
 {% endblock %}
 
 {% block subsection-title %}
     <li>
-        <a href="#">Keywords</a> <span class="divider">&gt;</span>
+        <a href="{% url "manage_keywords" domain %}">Keywords</a> <span class="divider">&gt;</span>
     </li>
     {% if keyword.get_id %}
     <li class="active">
@@ -37,211 +36,251 @@
 
 {% block js-inline %}{{ block.super }}
 <script>
-    next_named_args_id = {% if form.named_args.value %}{{ form.named_args.value|length }}{% else %}1{% endif %};
-    
-    function toggle_structured_sms_options() {
-        use_structured_sms = $("#id_form_type").val() == "ALL_AT_ONCE";
-        use_custom_delimiter = $("#id_use_custom_delimiter").is(":checked");
-        use_named_args = $("#id_use_named_args").is(":checked");
-        use_named_args_separator = $("#id_use_named_args_separator").is(":checked");
-        if(use_structured_sms) {
-            $(".for_structured_sms").show();
-            if(use_custom_delimiter) {
-                $(".for_custom_delimiter").show();
+    function KeywordActionsViewModel(initial_values) {
+        var self = this;
+        self.keyword = ko.observable(initial_values.keyword);
+        self.description = ko.observable(initial_values.description);
+        self.override_open_sessions = ko.observable(initial_values.override_open_sessions);
+        self.sender_content_type = ko.observable(initial_values.sender_content_type);
+        self.sender_message = ko.observable(initial_values.sender_message);
+        self.sender_form_unique_id = ko.observable(initial_values.sender_form_unique_id);
+        self.notify_others = ko.observable(initial_values.notify_others);
+        self.other_recipient_type = ko.observable(initial_values.other_recipient_type);
+        self.other_recipient_id = ko.observable(initial_values.other_recipient_id);
+        self.other_recipient_content_type = ko.observable(initial_values.other_recipient_content_type);
+        self.other_recipient_message = ko.observable(initial_values.other_recipient_message);
+        self.other_recipient_form_unique_id = ko.observable(initial_values.other_recipient_form_unique_id);
+        self.process_structured_sms = ko.observable(initial_values.process_structured_sms);
+        self.structured_sms_form_unique_id = ko.observable(initial_values.structured_sms_form_unique_id);
+        self.use_custom_delimiter = ko.observable(initial_values.use_custom_delimiter);
+        self.delimiter = ko.observable(initial_values.delimiter);
+        self.use_named_args = ko.observable(initial_values.use_named_args);
+        self.use_named_args_separator = ko.observable(initial_values.use_named_args_separator);
+        self.named_args = ko.observableArray((initial_values.named_args.length > 0) ? initial_values.named_args : [{"name" : "", "xpath" : ""}]);
+        self.named_args_separator = ko.observable(initial_values.named_args_separator);
+        self.restrict_keyword_initiation = ko.observable(initial_values.restrict_keyword_initiation);
+        self.allow_initiation_by_case = ko.observable(initial_values.allow_initiation_by_case);
+        self.allow_initiation_by_mobile_worker = ko.observable(initial_values.allow_initiation_by_mobile_worker);
+        self.example_structured_sms = ko.observable("");
+        self.available_forms = {{ form_list|JSON }};
+        self.content_type_choices = {{ content_type_choices|JSON }};
+        self.recipient_type_choices = {{ recipient_type_choices|JSON }};
+        self.recipient_id_choices = ko.observableArray();
+        self.groups = {{ groups|JSON }};
+        self.addNamedArg = function() {
+            self.named_args.push({"name" : "", "xpath" : ""});
+            self.updateExampleStructuredSMS();
+        };
+        self.removeNamedArg = function() {
+            if(self.named_args().length == 1) {
+                alert("You must have at least one named answer.");
             } else {
-                $(".for_custom_delimiter").hide();
+                self.named_args.remove(this);
             }
-            if(use_named_args) {
-                $(".for_named_args").show();
-                if(use_named_args_separator) {
-                    $(".for_named_args_separator").show();
-                } else {
-                    $(".for_named_args_separator").hide();
+            self.updateExampleStructuredSMS();
+        };
+        self.updateExampleStructuredSMS = function() {
+            var named_args_separator = "";
+            if(self.use_named_args_separator() && self.named_args_separator() != null) {
+                named_args_separator = self.named_args_separator().toString().trim();
+            }
+            var delimiter = " ";
+            if(self.use_custom_delimiter() && self.delimiter() != null) {
+                delimiter = self.delimiter().toString().trim();
+            }
+            var keyword = (self.keyword() == null) ? "" : self.keyword().toString().trim();
+            var example = keyword.toLowerCase();
+            if(self.use_named_args()) {
+                var toggle = false;
+                for(var i = 0; i < self.named_args().length; i++) {
+                    toggle = !toggle;
+                    var arg_name = self.named_args()[i].name;
+                    arg_name = (arg_name == null) ? "" : arg_name.trim().toLowerCase();
+                    example += delimiter + arg_name + named_args_separator + (toggle ? "123" : "456");
                 }
             } else {
-                $(".for_named_args").hide();
+                example += delimiter + "123" + delimiter + "456" + delimiter + "...";
             }
-        } else {
-            $(".for_structured_sms").hide();
-        }
-    }
-    
-    function set_example_structured_sms() {
-        use_custom_delimiter = $("#id_use_custom_delimiter").is(":checked");
-        use_named_args = $("#id_use_named_args").is(":checked");
-        use_named_args_separator = $("#id_use_named_args_separator").is(":checked");
-        named_args_separator = "";
-        if(use_named_args_separator) {
-            named_args_separator = $("#id_named_args_separator").val().trim();
-        }
-        delimiter = " ";
-        if(use_custom_delimiter) {
-            delimiter = $("#id_delimiter").val().trim();
-        }
-        keyword = $("#id_keyword").val().trim();
-        example = keyword.toLowerCase();
-        if(use_named_args) {
-            toggle = false;
-            $(".named_arg_name").each(function(){
-                toggle = !toggle;
-                example += delimiter + $(this).val().toLowerCase().trim() + named_args_separator + (toggle ? "123" : "456");
-            });
-        } else {
-            example += delimiter + "123" + delimiter + "456" + delimiter + "...";
-        }
-        $("#id_structured_sms_example").text(example);
+            self.example_structured_sms(example);
+            return true;
+        };
+        self.updateRecipientIdChoices = function() {
+            self.recipient_id_choices([]);
+            if(self.other_recipient_type() == "USER_GROUP") {
+                for(var i = 0; i < self.groups.length; i++) {
+                    self.recipient_id_choices.push(self.groups[i]);
+                }
+            }
+        };
+        self.updateExampleStructuredSMS();
+        self.updateRecipientIdChoices();
     }
     
     $(function(){
-        $("#id_keyword").keyup(function() {
-            set_example_structured_sms();
-        });
-        $("#id_form_type").change(function() {
-            toggle_structured_sms_options();
-        });
-        $("#id_delimiter").keyup(function() {
-            set_example_structured_sms();
-        });
-        $("#id_use_named_args").click(function() {
-            toggle_structured_sms_options();
-            set_example_structured_sms();
-        });
-        $(".named_arg_name").keyup(function() {
-            set_example_structured_sms();
-        });
-        $("#id_use_named_args_separator").click(function() {
-            toggle_structured_sms_options();
-            set_example_structured_sms();
-        });
-        $("#id_use_custom_delimiter").click(function() {
-            toggle_structured_sms_options();
-            set_example_structured_sms();
-        });
-        $("#id_named_args_separator").keyup(function() {
-            set_example_structured_sms();
-        });
-        $(".remove_named_arg").click(function() {
-            if($(this).parent().parent().parent().children("tr").length <= 1) {
-                alert("You must have at least one named answer.");
-            } else {
-                $(this).parent().parent().remove();
-            }
-            set_example_structured_sms();
-        });
-        $(".add_named_arg").click(function() {
-            $("#id_named_arg_table").children("tbody").children("tr").last().clone(true).appendTo($("#id_named_arg_table").children("tbody"));
-            row_added = $("#id_named_arg_table").children("tbody").children("tr").last();
-            row_added.find(".named_arg_name").attr("name","named_args." + next_named_args_id + ".name");
-            row_added.find(".named_arg_name").attr("value","");
-            row_added.find(".named_arg_xpath").attr("name","named_args." + next_named_args_id + ".xpath");
-            row_added.find(".named_arg_xpath").attr("value","");
-            next_named_args_id += 1;
-            set_example_structured_sms();
-        });
-        
-        toggle_structured_sms_options();
-        set_example_structured_sms();
+        kvm = KeywordActionsViewModel({{ form.current_values|JSON }});
+        ko.applyBindings(kvm);
     });
 </script>
 {% endblock %}
 
 {% block main_column %}
 <form action="" method="post">
-    <h4>Keyword</h4>
-    <div class="form-block">
+    <div>
         <table class="parameter_table">
             <tbody>
                 <tr>
                     <td>Keyword</td>
-                    <td>{{ form.keyword }}</td>
+                    <td><input type="text" name="keyword" data-bind="value: keyword, valueUpdate: 'afterkeydown', event: {keyup : updateExampleStructuredSMS}" /></td>
                     <td>{{ form.keyword.errors }}</td>
                 </tr>
                 <tr>
-                    <td>Form</td>
-                    <td>
-                        <select name="form_unique_id">
-                        {% for f in form_list %}
-                            <option value="{{ f.code }}" {% if f.code == form.form_unique_id.value %}selected="selected"{% endif %}>{{ f.name }}</option>
-                        {% endfor %}
-                        </select>
-                    </td>
-                    <td>{{ form.form_unique_id.errors }}</td>
-                </tr>
-                <tr>
-                    <td>Answer Method</td>
-                    <td>{{ form.form_type }}</td>
-                    <td>{{ form.form_type.errors }}</td>
+                    <td>Description</td>
+                    <td><textarea name="description" data-bind="text: description"></textarea></td>
+                    <td>{{ form.description.errors }}</td>
                 </tr>
             </tbody>
         </table>
     </div>
-    <h4 class="for_structured_sms">Structured SMS Options</h4>
-    <div class="form-block for_structured_sms">
+    <div>
+        <input type="checkbox" name="override_open_sessions" data-bind="checked: override_open_sessions" /> Override open survey interactions
+    </div>
+    <div>
+        <input type="checkbox" name="restrict_keyword_initiation" data-bind="checked: restrict_keyword_initiation" /> Restrict keyword initiation
+        <table class="parameter_table" data-bind="visible: restrict_keyword_initiation">
+            <tbody>
+                <tr>
+                    <td><input type="checkbox" name="allow_initiation_by_case" data-bind="checked: allow_initiation_by_case" /> Allow cases to initiate</td>
+                </tr>
+                <tr>
+                    <td><input type="checkbox" name="allow_initiation_by_mobile_worker" data-bind="checked: allow_initiation_by_mobile_worker" /> Allow mobile workers to initiate</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div>
+        <input type="checkbox" checked="checked" disabled="disabled" /> Interact with sender
+    </div>
+    <div>
         <table class="parameter_table">
             <tbody>
                 <tr>
+                    <td>Send</td>
+                    <td><select name="sender_content_type" data-bind="options: content_type_choices, optionsText: 'desc', optionsValue: 'code', value: sender_content_type"></select></td>
+                    <td>{{ form.sender_content_type.errors }}</td>
+                </tr>
+                <tr data-bind="visible: sender_content_type() == 'sms'">
+                    <td>Message</td>
+                    <td><textarea name="sender_message" data-bind="text: sender_message"></textarea></td>
+                    <td>{{ form.sender_message.errors }}</td>
+                </tr>
+                <tr data-bind="visible: sender_content_type() == 'survey'">
+                    <td>Survey</td>
+                    <td><select name="sender_form_unique_id" data-bind="options: available_forms, optionsText: 'name', optionsValue: 'code', value: sender_form_unique_id"></select></td>
+                    <td>{{ form.sender_form_unique_id.errors }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div>
+        <input type="checkbox" name="notify_others" data-bind="checked: notify_others" /> Notify another person
+    </div>
+    <div data-bind="visible: notify_others">
+        <table class="parameter_table">
+            <tbody>
+                <tr>
+                    <td>Recipient</td>
+                    <td><select name="other_recipient_type" data-bind="options: recipient_type_choices, optionsText: 'desc', optionsValue: 'code', value: other_recipient_type, event: {change: updateRecipientIdChoices}"></select></td>
+                    <td>{{ form.other_recipient_type.errors }}</td>
+                </tr>
+                <tr data-bind="visible: other_recipient_type() == 'USER_GROUP'">
+                    <td></td>
+                    <td><select name="other_recipient_id" data-bind="options: recipient_id_choices, optionsText: 'desc', optionsValue: 'code', value: other_recipient_id"></select></td>
+                    <td>{{ form.other_recipient_id.errors }}</td>
+                </tr>
+                <tr>
+                    <td>Send</td>
+                    <td><select name="other_recipient_content_type" data-bind="options: content_type_choices, optionsText: 'desc', optionsValue: 'code', value: other_recipient_content_type"></select></td>
+                    <td>{{ form.other_recipient_content_type.errors }}</td>
+                </tr>
+                <tr data-bind="visible: other_recipient_content_type() == 'sms'">
+                    <td>Message</td>
+                    <td><textarea name="other_recipient_message" data-bind="text: other_recipient_message"></textarea></td>
+                    <td>{{ form.other_recipient_message.errors }}</td>
+                </tr>
+                <tr data-bind="visible: other_recipient_content_type() == 'survey'">
+                    <td>Survey</td>
+                    <td><select name="other_recipient_form_unique_id" data-bind="options: available_forms, optionsText: 'name', optionsValue: 'code', value: other_recipient_form_unique_id"></select></td>
+                    <td>{{ form.other_recipient_form_unique_id.errors }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div>
+        <input type="checkbox" name="process_structured_sms" data-bind="checked: process_structured_sms, click: updateExampleStructuredSMS" /> Process Structured SMS
+    </div>
+    <div data-bind="visible: process_structured_sms">
+        <table class="parameter_table">
+            <tbody>
+                <tr>
+                    <td>Survey</td>
+                    <td><select name="structured_sms_form_unique_id" data-bind="options: available_forms, optionsText: 'name', optionsValue: 'code', value: structured_sms_form_unique_id"></select></td>
+                    <td>{{ form.structured_sms_form_unique_id.errors }}</td>
+                </tr>
+                <tr>
                     <td>Use Custom Delimiter</td>
-                    <td>{{ form.use_custom_delimiter }}</td>
+                    <td><input type="checkbox" name="use_custom_delimiter" data-bind="checked: use_custom_delimiter, click: updateExampleStructuredSMS" /></td>
                     <td>{{ form.use_custom_delimiter.errors }}</td>
                 </tr>
-                <tr class="for_custom_delimiter">
+                <tr data-bind="visible: use_custom_delimiter">
                     <td></td>
-                    <td>{{ form.delimiter }}</td>
+                    <td><input type="text" name="delimiter" data-bind="value: delimiter, valueUpdate: 'afterkeydown', event: {keyup : updateExampleStructuredSMS}" /></td>
                     <td>{{ form.delimiter.errors }}</td>
                 </tr>
                 <tr>
                     <td>Use Named Answers</td>
-                    <td>{{ form.use_named_args }}</td>
+                    <td><input type="checkbox" name="use_named_args" data-bind="checked: use_named_args, click: updateExampleStructuredSMS" /></td>
                     <td>{{ form.use_named_args.errors }}</td>
                 </tr>
-                <tr class="for_named_args">
+                <tr data-bind="visible: use_named_args">
                     <td></td>
                     <td>
-                        <table id="id_named_arg_table">
+                        <table>
                             <thead>
                                 <tr>
                                     <th>Name</th>
                                     <th>XPath</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                            {% for named_arg in form.named_args.value %}
+                            <tbody data-bind="foreach: named_args">
                                 <tr>
-                                    <td><input class="named_arg_name" name="named_args.{{ forloop.counter0 }}.name" type="text" value="{{ named_arg.name }}" /></td>
-                                    <td><input class="named_arg_xpath" name="named_args.{{ forloop.counter0 }}.xpath" type="text" value="{{ named_arg.xpath }}" /></td>
-                                    <td><span class="btn btn-danger remove_named_arg"><i class="icon icon-white icon-remove"></i> Remove</span></td>
+                                    <td><input type="text" data-bind="value: name, attr: {name : ('named_args.' + $index() + '.name')}, valueUpdate: 'afterkeydown', event: {keyup : updateExampleStructuredSMS}" /></td>
+                                    <td><input type="text" data-bind="value: xpath, attr: {name : ('named_args.' + $index() + '.xpath')}" /></td>
+                                    <td><span class="btn btn-danger" data-bind="click: removeNamedArg"><i class="icon icon-white icon-remove"></i> Remove</span></td>
                                 </tr>
-                            {% empty %}
-                                <tr>
-                                    <td><input class="named_arg_name" name="named_args.0.name" type="text" /></td>
-                                    <td><input class="named_arg_xpath" name="named_args.0.xpath" type="text" /></td>
-                                    <td><span class="btn btn-danger remove_named_arg"><i class="icon icon-white icon-remove"></i> Remove</span></td>
-                                </tr>
-                            {% endfor %}
                             </tbody>
                         </table>
-                        <span class="btn btn-success add_named_arg"><i class="icon icon-white icon-plus"></i> Add Named Answer</span>
+                        <span class="btn btn-success" data-bind="click: addNamedArg"><i class="icon icon-white icon-plus"></i> Add Named Answer</span>
                     </td>
                     <td>{{ form.named_args.errors }}</td>
                 </tr>
-                <tr class="for_named_args">
+                <tr data-bind="visible: use_named_args">
                     <td>Use Joining Character</td>
-                    <td>{{ form.use_named_args_separator }}</td>
+                    <td><input type="checkbox" name="use_named_args_separator" data-bind="checked: use_named_args_separator, click: updateExampleStructuredSMS" /></td>
                     <td>{{ form.use_named_args_separator.errors }}</td>
                 </tr>
-                <tr class="for_named_args for_named_args_separator">
+                <tr data-bind="visible: use_named_args() && use_named_args_separator()">
                     <td></td>
-                    <td>{{ form.named_args_separator }}</td>
+                    <td><input type="text" name="named_args_separator" data-bind="value: named_args_separator, valueUpdate: 'afterkeydown', event: {keyup : updateExampleStructuredSMS}" /></td>
                     <td>{{ form.named_args_separator.errors }}</td>
                 </tr>
             </tbody>
         </table>
     </div>
-    <h4 class="for_structured_sms">Example Structured SMS</h4>
-    <div class="form-block for_structured_sms">
-        <span id="id_structured_sms_example"></span>
+    <h4 data-bind="visible: process_structured_sms">Example Structured SMS</h4>
+    <div class="form-block" data-bind="visible: process_structured_sms">
+        <span data-bind="text: example_structured_sms"></span>
     </div>
-    <input type="submit" class="btn btn-primary" value="Save" />
+    <input id="id_save_button" type="submit" class="btn btn-primary" value="Save" />
 </form>
 
 {% endblock %}

@@ -3,14 +3,30 @@
 
 {% block head %}{{ block.super }}
 
-<style type="text/css">
-    #keyword_list_table {
-        width: auto;
-        margin-left: 0px;
-        min-width: 50%;
-    }
-</style>
+{% include "imports/datatables.html" %}
 
+{% endblock %}
+
+{% block subsection-title %}
+<li class="active">
+    <a href="#">Keywords</a>
+</li>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script type="text/javascript">
+        $(function(){
+            $("#keyword_list_table").dataTable({
+                "sPaginationType" : "bootstrap",
+                "bLengthChange" : false,
+                "bFilter" : true,
+                "oLanguage" : {"sEmptyTable": "No data available to display", "sInfoEmpty" : ""},
+                "bSort" : true,
+                "aaSorting" : [[0, "asc"]],
+                "iDisplayLength" : 10
+            });
+        });
+    </script>
 {% endblock %}
 
 {% block main_column %}
@@ -19,16 +35,16 @@
     <thead>
         <tr>
             <th>Keyword</th>
-            <th>Form</th>
+            <th>Description</th>
             <th></th>
             <th></th>
         </tr>
     </thead>
-    {% for k in keywords %}
     <tbody>
+        {% for k in keywords %}
         <tr>
             <td>{{ k.keyword }}</td>
-            <td>{{ k.survey_name }}</td>
+            <td>{{ k.description }}</td>
             <td><a href="{% url "edit_keyword" domain k.get_id %}"><span class="btn btn-primary">Edit</span></a></td>
             <td>
                 <a class="btn btn-danger" data-toggle="modal" href="#delete_{{ k.get_id }}"><i class="icon icon-white icon-remove"></i> Delete</a>
