@@ -454,6 +454,8 @@ def _messages(hf_user_data):
 
 
 def hf_message_content(report):
+    if report.needs_filters:
+        return {}
     data_by_user = dict((d['user_id'], d) for d in report.data_provider.sqldata.get_data())
     def _user_section(user):
         user_data = data_by_user.get(user._id, None)
