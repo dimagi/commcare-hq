@@ -636,6 +636,13 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
 
     sheet_name = property(__get_sheet_name, __set_sheet_name)
 
+    @classmethod
+    def wrap(cls, data):
+        # since this is a property now, trying to wrap it will fail hard
+        if 'sheet_name' in data:
+            del data['sheet_name']
+        return super(SavedExportSchema, cls).wrap(data)
+
 
 class ExportConfiguration(DocumentSchema):
     """
