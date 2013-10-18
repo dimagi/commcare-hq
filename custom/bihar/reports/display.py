@@ -1,20 +1,40 @@
-from datetime import date, timedelta, datetime
+from datetime import date, timedelta
 import re
-from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.standard.inspect import CaseDisplay
 from casexml.apps.case.models import CommCareCase
 from django.utils.translation import ugettext as _
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.models import CommCareUser
 
 
 def get_property(dict_obj, name, default=None):
     if name in dict_obj:
         return dict_obj[name]
     else:
-        return "---" if default else default
+        return default if default else "---"
 
 
 class MCHDisplay(CaseDisplay):
+
+    def __init__(self, report, case):
+        user = CommCareUser.get_by_user_id(case["user_id"])
+        if user:
+            setattr(self, "_village", get_property(user.user_data, "village"))
+            setattr(self, "_asha_name", user.full_name if user.user_data["role"].upper() is "ASHA" else get_property(user.user_data, "partner_name"))
+
+            if user.user_data["role"].upper() is "ASHA":
+                setattr(self, "_asha_number", user.phone_numbers[0] if len(user.phone_numbers) > 0 else "---")
+            else:
+                setattr(self, "_asha_number", get_property(user.user_data, "partner_phone"))
+
+            setattr(self, "_awc_code_name", "%s, %s" % (get_property(user.user_data, "awc-code"), get_property(user.user_data, "village")))
+            setattr(self, "_aww_name", get_property(user.user_data, "name") if user.user_data["role"].upper() is "AWW" else get_property(user.user_data, "partner_name"))
+
+            if user.user_data["role"].upper() is "AWW":
+                setattr(self, "_aww_number", user.phone_numbers[0] if len(user.phone_numbers) > 0 else "---")
+            else:
+                setattr(self, "_aww_number", get_property(user.user_data, "partner_phone"))
+
+        super(MCHDisplay, self).__init__(report, case)
 
     @property
     def village(self):
@@ -73,10 +93,9 @@ class MCHMotherDisplay(MCHDisplay):
                 setattr(self, "_delivery_complications", get_property(form_dict, "delivery_complications"))
                 setattr(self, "_family_planning_type", get_property(form_dict, "family_planing_type"))
                 setattr(self, "_all_pnc_on_time", get_property(form_dict, "all_pnc_on_time"))
-                children_count = get_property(form_dict, "cast_num_children", 0)
+                children_count = int(get_property(form_dict, "cast_num_children", 0))
                 child_list = []
-
-                if int(children_count) == 1 and "child_info" in form_dict:
+                if children_count == 1 and "child_info" in form_dict:
                     child_list.append(form_dict["child_info"])
                 elif children_count > 1 and "child_info" in form_dict:
                     child_list = form_dict["child_info"]
@@ -110,7 +129,6 @@ class MCHMotherDisplay(MCHDisplay):
                 setattr(self, "_abortion_type", get_property(form_dict, "abortion_type"))
 
         super(MCHMotherDisplay, self).__init__(report, case_dict)
-
 
     @property
     def mother_name(self):
