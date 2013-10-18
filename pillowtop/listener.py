@@ -26,8 +26,8 @@ pillow_logging.setLevel(logging.INFO)
 CHECKPOINT_FREQUENCY = 100
 WAIT_HEARTBEAT = 10000
 CHANGES_TIMEOUT = 60000
-RETRY_INTERVAL = 2 #seconds, exponentially increasing
-MAX_RETRIES = 4 #exponential factor threshold for alerts
+RETRY_INTERVAL = 2  # seconds, exponentially increasing
+MAX_RETRIES = 4  # exponential factor threshold for alerts
 
 INDEX_REINDEX_SETTINGS = {"index": {"refresh_interval": "900s",
                                     "merge.policy.merge_factor": 20,
@@ -150,8 +150,8 @@ class BasicPillow(object):
         if self.couch_db.doc_exist(doc_name):
             checkpoint_doc = self.couch_db.open_doc(doc_name)
         else:
-            #legacy check
-            #split doc and see if non_hostname setup exists.
+            # legacy check
+            # split doc and see if non_hostname setup exists.
             legacy_name = '.'.join(doc_name.split('.')[0:-1])
             starting_seq = "0"
             if self.couch_db.doc_exist(legacy_name):
@@ -721,4 +721,3 @@ class LogstashMonitoringPillow(NetworkPillow):
             return {}
         else:
             return super(NetworkPillow, self).processor(change)
-
