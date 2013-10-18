@@ -16,6 +16,12 @@
     #id_save_button {
         margin-top: 20px;
     }
+    .structured_example {
+        margin-left: 50px;
+        background-color: #EEE;
+        border: 1px solid #CCC;
+        padding: 5px 5px 5px 5px;
+    }
 </style>
 {% endblock %}
 
@@ -142,23 +148,7 @@
         </table>
     </div>
     <div>
-        <input type="checkbox" name="override_open_sessions" data-bind="checked: override_open_sessions" /> Override open survey interactions
-    </div>
-    <div>
-        <input type="checkbox" name="restrict_keyword_initiation" data-bind="checked: restrict_keyword_initiation" /> Restrict keyword initiation
-        <table class="parameter_table" data-bind="visible: restrict_keyword_initiation">
-            <tbody>
-                <tr>
-                    <td><input type="checkbox" name="allow_initiation_by_case" data-bind="checked: allow_initiation_by_case" /> Allow cases to initiate</td>
-                </tr>
-                <tr>
-                    <td><input type="checkbox" name="allow_initiation_by_mobile_worker" data-bind="checked: allow_initiation_by_mobile_worker" /> Allow mobile workers to initiate</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    <div>
-        <input type="checkbox" checked="checked" disabled="disabled" /> Interact with sender
+        <h4>Respond to Sender:</h4>
     </div>
     <div>
         <table class="parameter_table">
@@ -182,41 +172,7 @@
         </table>
     </div>
     <div>
-        <input type="checkbox" name="notify_others" data-bind="checked: notify_others" /> Notify another person
-    </div>
-    <div data-bind="visible: notify_others">
-        <table class="parameter_table">
-            <tbody>
-                <tr>
-                    <td>Recipient</td>
-                    <td><select name="other_recipient_type" data-bind="options: recipient_type_choices, optionsText: 'desc', optionsValue: 'code', value: other_recipient_type, event: {change: updateRecipientIdChoices}"></select></td>
-                    <td>{{ form.other_recipient_type.errors }}</td>
-                </tr>
-                <tr data-bind="visible: other_recipient_type() == 'USER_GROUP'">
-                    <td></td>
-                    <td><select name="other_recipient_id" data-bind="options: recipient_id_choices, optionsText: 'desc', optionsValue: 'code', value: other_recipient_id"></select></td>
-                    <td>{{ form.other_recipient_id.errors }}</td>
-                </tr>
-                <tr>
-                    <td>Send</td>
-                    <td><select name="other_recipient_content_type" data-bind="options: content_type_choices, optionsText: 'desc', optionsValue: 'code', value: other_recipient_content_type"></select></td>
-                    <td>{{ form.other_recipient_content_type.errors }}</td>
-                </tr>
-                <tr data-bind="visible: other_recipient_content_type() == 'sms'">
-                    <td>Message</td>
-                    <td><textarea name="other_recipient_message" data-bind="text: other_recipient_message"></textarea></td>
-                    <td>{{ form.other_recipient_message.errors }}</td>
-                </tr>
-                <tr data-bind="visible: other_recipient_content_type() == 'survey'">
-                    <td>Survey</td>
-                    <td><select name="other_recipient_form_unique_id" data-bind="options: available_forms, optionsText: 'name', optionsValue: 'code', value: other_recipient_form_unique_id"></select></td>
-                    <td>{{ form.other_recipient_form_unique_id.errors }}</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    <div>
-        <input type="checkbox" name="process_structured_sms" data-bind="checked: process_structured_sms, click: updateExampleStructuredSMS" /> Process Structured SMS
+        <input type="checkbox" name="process_structured_sms" data-bind="checked: process_structured_sms, click: updateExampleStructuredSMS" /> Process incoming keyword as a Structured Message
     </div>
     <div data-bind="visible: process_structured_sms">
         <table class="parameter_table">
@@ -276,9 +232,62 @@
             </tbody>
         </table>
     </div>
-    <h4 data-bind="visible: process_structured_sms">Example Structured SMS</h4>
-    <div class="form-block" data-bind="visible: process_structured_sms">
-        <span data-bind="text: example_structured_sms"></span>
+    <div class="structured_example" data-bind="visible: process_structured_sms">
+        <span><strong>Example Structured Message:</strong></span> <span data-bind="text: example_structured_sms"></span>
+    </div>
+    <div>
+        <input type="checkbox" name="notify_others" data-bind="checked: notify_others" /> Notify another person
+    </div>
+    <div data-bind="visible: notify_others">
+        <table class="parameter_table">
+            <tbody>
+                <tr>
+                    <td>Recipient</td>
+                    <td><select name="other_recipient_type" data-bind="options: recipient_type_choices, optionsText: 'desc', optionsValue: 'code', value: other_recipient_type, event: {change: updateRecipientIdChoices}"></select></td>
+                    <td>{{ form.other_recipient_type.errors }}</td>
+                </tr>
+                <tr data-bind="visible: other_recipient_type() == 'USER_GROUP'">
+                    <td></td>
+                    <td><select name="other_recipient_id" data-bind="options: recipient_id_choices, optionsText: 'desc', optionsValue: 'code', value: other_recipient_id"></select></td>
+                    <td>{{ form.other_recipient_id.errors }}</td>
+                </tr>
+                <tr>
+                    <td>Send</td>
+                    <td><select name="other_recipient_content_type" data-bind="options: content_type_choices, optionsText: 'desc', optionsValue: 'code', value: other_recipient_content_type"></select></td>
+                    <td>{{ form.other_recipient_content_type.errors }}</td>
+                </tr>
+                <tr data-bind="visible: other_recipient_content_type() == 'sms'">
+                    <td>Message</td>
+                    <td><textarea name="other_recipient_message" data-bind="text: other_recipient_message"></textarea></td>
+                    <td>{{ form.other_recipient_message.errors }}</td>
+                </tr>
+                <tr data-bind="visible: other_recipient_content_type() == 'survey'">
+                    <td>Survey</td>
+                    <td><select name="other_recipient_form_unique_id" data-bind="options: available_forms, optionsText: 'name', optionsValue: 'code', value: other_recipient_form_unique_id"></select></td>
+                    <td>{{ form.other_recipient_form_unique_id.errors }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div>
+        <h4>Advanced Options</h4>
+    </div>
+    <div>
+        <input type="checkbox" name="override_open_sessions" data-bind="checked: override_open_sessions" /> Override open SMS surveys
+    </div>
+    <div>
+        <input type="checkbox" name="restrict_keyword_initiation" data-bind="checked: restrict_keyword_initiation" /> Restrict keyword initiation
+        <span data-bind="visible: restrict_keyword_initiation">{{ form.restrict_keyword_initiation.errors }}</span>
+        <table class="parameter_table" data-bind="visible: restrict_keyword_initiation">
+            <tbody>
+                <tr>
+                    <td><input type="checkbox" name="allow_initiation_by_case" data-bind="checked: allow_initiation_by_case" /> Allow cases to initiate</td>
+                </tr>
+                <tr>
+                    <td><input type="checkbox" name="allow_initiation_by_mobile_worker" data-bind="checked: allow_initiation_by_mobile_worker" /> Allow mobile workers to initiate</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
     <input id="id_save_button" type="submit" class="btn btn-primary" value="Save" />
 </form>
