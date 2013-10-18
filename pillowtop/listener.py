@@ -200,6 +200,16 @@ class BasicPillow(object):
         """
         self.processor(simplejson.loads(change))
 
+    def process_change(self, change):
+        try:
+            t = self.change_trigger(change)
+            if t is not None:
+                tr = self.change_transform(t)
+                if tr is not None:
+                    self.change_transport(tr)
+        except Exception, ex:
+            pillow_logging.exception("[%s] Error on change: %s, %s" % (self.get_name(), change['id'], ex))
+
     def processor(self, change, do_set_checkpoint=True):
         """
         Parent processsor for a pillow class - this should not be overridden.
@@ -210,15 +220,7 @@ class BasicPillow(object):
         if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
             self.set_checkpoint(change)
 
-        try:
-            t = self.change_trigger(change)
-            if t is not None:
-                tr = self.change_transform(t)
-                if tr is not None:
-                    self.change_transport(tr)
-        except Exception, ex:
-            pillow_logging.exception("[%s] Error on change: %s, %s" % (self.get_name(), change['id'], ex))
-
+        self.process_change(change)
 
     def change_trigger(self, changes_dict):
         """
@@ -412,14 +414,7 @@ class ElasticPillow(BasicPillow):
         if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
             self.set_checkpoint(change)
 
-        try:
-            t = self.change_trigger(change)
-            if t is not None:
-                tr = self.change_transform(t)
-                if tr is not None:
-                    self.change_transport(tr)
-        except Exception, ex:
-            pillow_logging.error("[%s] Error on change: %s, %s" % (self.get_name(), change['id'], ex))
+        self.process_change(change)
 
     def send_robust(self, path, data={}, retries=MAX_RETRIES, except_on_failure=False, update=False):
         """
