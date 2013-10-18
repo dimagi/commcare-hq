@@ -13,18 +13,11 @@ from gevent import socket
 import rawes
 import gevent
 from django.conf import settings
-import couchdbkit
 
 from dimagi.utils.decorators.memoized import memoized
 from .utils import import_settings
 
-
-if couchdbkit.version_info < (0, 6, 0):
-    USE_NEW_CHANGES = False
-else:
-    from couchdbkit.changes import ChangesStream
-
-    USE_NEW_CHANGES = True
+from couchdbkit.changes import ChangesStream
 
 
 pillow_logging = logging.getLogger("pillowtop")
@@ -117,23 +110,6 @@ class BasicPillow(object):
 
         self.settings = import_settings()
 
-    def old_changes(self):
-        """
-        Couchdbkit < 0.6.0 changes feed listener
-        http://couchdbkit.org/docs/changes_consumer.html
-        """
-        from couchdbkit import Consumer
-
-        c = Consumer(self.couch_db, backend='gevent')
-        while True:
-            try:
-                c.wait(self.parsing_processor, since=self.since, filter=self.couch_filter,
-                       heartbeat=WAIT_HEARTBEAT, feed='continuous', timeout=CHANGES_TIMEOUT,
-                       include_docs=True, **self.extra_args)
-            except Exception, ex:
-                pillow_logging.exception("Exception in form listener: %s, sleeping and restarting" % ex)
-                gevent.sleep(RETRY_INTERVAL)
-
     def new_changes(self):
         """
         Couchdbkit > 0.6.0 changes feed listener handler (api changes after this)
@@ -149,11 +125,7 @@ class BasicPillow(object):
         Couch changes stream creation
         """
         pillow_logging.info("Starting pillow %s" % self.__class__)
-
-        if USE_NEW_CHANGES:
-            self.new_changes()
-        else:
-            self.old_changes()
+        self.new_changes()
 
     def _get_machine_id(self):
         if hasattr(self.settings, 'PILLOWTOP_MACHINE_ID'):
