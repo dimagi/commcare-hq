@@ -238,6 +238,7 @@ def production():
             'hqdjango1.internal.commcarehq.org',
             'hqdjango3.internal.commcarehq.org',
             'hqdjango4.internal.commcarehq.org',
+            'hqdjango5.internal.commcarehq.org',
         ],
         'django_pillowtop': ['hqdb0.internal.commcarehq.org'],
 
