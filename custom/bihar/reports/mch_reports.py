@@ -9,20 +9,26 @@ from dimagi.utils.decorators.memoized import memoized
 from custom.bihar.reports.display import MCHMotherDisplay, MCHChildDisplay
 
 
-class MotherMCHRegister(CustomProjectReport, CaseListReport):
-    name = "Mother MCH register"
-    slug = "mother_mch_register"
-    default_case_type = "cc_bihar_pregnancy"
+class MCHBaseReport(CustomProjectReport, CaseListReport):
     ajax_pagination = True
     asynchronous = True
-    # is_cacheable = True
-    # exportable = True
+    exportable = True
     emailable = False
 
     fields = [
         'corehq.apps.reports.fields.GroupField',
         'corehq.apps.reports.fields.SelectOpenCloseField',
     ]
+
+    @property
+    def case_filter(self):
+        group = self.request_params.get('group', '')
+        filters = []
+
+        if group:
+            filters.append({'term': {'owner_id': group}})
+
+        return {'and': filters} if filters else {}
 
     @property
     @memoized
@@ -34,106 +40,109 @@ class MotherMCHRegister(CustomProjectReport, CaseListReport):
     def rendered_report_title(self):
         return self.name
 
-    @property
-    def user_filter(self):
-        return super(MotherMCHRegister, self).user_filter
+
+
+class MotherMCHRegister(MCHBaseReport):
+    name = "Mother MCH register"
+    slug = "mother_mch_register"
+    default_case_type = "cc_bihar_pregnancy"
 
     @property
     def headers(self):
         headers = DataTablesHeader(DataTablesColumn(_("CHW Name")),
                                    DataTablesColumnGroup(
                                        _("Beneficiary Information"),
-                                       DataTablesColumn(_("Mother Name")),
-                                       DataTablesColumn(_("Husband Name")),
-                                       DataTablesColumn(_("City/ward/village")),
-                                       DataTablesColumn(_("Full address")),
-                                       DataTablesColumn(_("MCTS ID")),
-                                       DataTablesColumn(_("Mobile number")),
-                                       DataTablesColumn(_("Whose Mobile Number")),
-                                       DataTablesColumn(_("Mother DOB / AGE")),
-                                       DataTablesColumn(_("JSY beneficiary")),
-                                       DataTablesColumn(_("Caste"))),
+                                       DataTablesColumn(_("Mother Name"), sortable=False),
+                                       DataTablesColumn(_("Husband Name"), sortable=False),
+                                       DataTablesColumn(_("City/ward/village"), sortable=False),
+                                       DataTablesColumn(_("Full address"), sortable=False),
+                                       DataTablesColumn(_("MCTS ID"), sortable=False),
+                                       DataTablesColumn(_("Mobile number"), sortable=False),
+                                       DataTablesColumn(_("Whose Mobile Number"), sortable=False),
+                                       DataTablesColumn(_("Mother DOB / AGE"), sortable=False),
+                                       DataTablesColumn(_("JSY beneficiary"), sortable=False),
+                                       DataTablesColumn(_("Caste"), sortable=False)),
                                    DataTablesColumnGroup(
                                        _("Provider Information"),
-                                       DataTablesColumn(_("ASHA Name")),
-                                       DataTablesColumn(_("Asha phone")),
-                                       DataTablesColumn(_("AWC Code , AWC name")),
-                                       DataTablesColumn(_("AWW name")),
-                                       DataTablesColumn(_("AWW phone number")),
-                                       DataTablesColumn(_("LMP")),
-                                       DataTablesColumn(_("EDD"))),
+                                       DataTablesColumn(_("ASHA Name"), sortable=False),
+                                       DataTablesColumn(_("Asha phone"), sortable=False),
+                                       DataTablesColumn(_("AWC Code , AWC name"), sortable=False),
+                                       DataTablesColumn(_("AWW name"), sortable=False),
+                                       DataTablesColumn(_("AWW phone number"), sortable=False),
+                                       DataTablesColumn(_("LMP"), sortable=False),
+                                       DataTablesColumn(_("EDD"), sortable=False)),
                                    DataTablesColumnGroup(
                                        _("First ANC (within 12 weeks)"),
-                                       DataTablesColumn(_("ANC 1 Date")),
-                                       DataTablesColumn(_("ANC 1 Blood Pressure")),
-                                       DataTablesColumn(_("ANC 1 Weight")),
-                                       DataTablesColumn(_("ANC  Hb")),
-                                       DataTablesColumn(_("ANC1 completed within 12 weeks? "))),
+                                       DataTablesColumn(_("ANC 1 Date"), sortable=False),
+                                       DataTablesColumn(_("ANC 1 Blood Pressure"), sortable=False),
+                                       DataTablesColumn(_("ANC 1 Weight"), sortable=False),
+                                       DataTablesColumn(_("ANC  Hb"), sortable=False),
+                                       DataTablesColumn(_("ANC1 completed within 12 weeks? "), sortable=False)),
                                    DataTablesColumnGroup(
                                        _("Second ANC (14-26 weeks)"),
-                                       DataTablesColumn(_("ANC 2 Date")),
-                                       DataTablesColumn(_("ANC 2 Blood Pressure")),
-                                       DataTablesColumn(_("ANC 2 Weight"))),
+                                       DataTablesColumn(_("ANC 2 Date"), sortable=False),
+                                       DataTablesColumn(_("ANC 2 Blood Pressure"), sortable=False),
+                                       DataTablesColumn(_("ANC 2 Weight"), sortable=False)),
                                    DataTablesColumnGroup(
                                        _("Third ANC (28-34 weeks)"),
-                                       DataTablesColumn(_("ANC 3 Date")),
-                                       DataTablesColumn(_("ANC 3 Blood Pressure")),
-                                       DataTablesColumn(_("ANC 3 Weight"))),
+                                       DataTablesColumn(_("ANC 3 Date"), sortable=False),
+                                       DataTablesColumn(_("ANC 3 Blood Pressure"), sortable=False),
+                                       DataTablesColumn(_("ANC 3 Weight"), sortable=False)),
                                    DataTablesColumnGroup(
                                        _("Fourth ANC (34 weeks to Delivery)"),
-                                       DataTablesColumn(_("ANC 4 Date")),
-                                       DataTablesColumn(_("ANC 4 Blood Pressure")),
-                                       DataTablesColumn(_("ANC 4 Weight")),
-                                       DataTablesColumn(_("TT1 date")),
-                                       DataTablesColumn(_("TT2 date")),
-                                       DataTablesColumn(_("TT Booster")),
-                                       DataTablesColumn(_("Received  date of 100 IFA tablets ")),
-                                       DataTablesColumn(_("Anemia")),
-                                       DataTablesColumn(_("Any complications")),
-                                       DataTablesColumn(_("RTI /STI <yes/no>"))),
+                                       DataTablesColumn(_("ANC 4 Date"), sortable=False),
+                                       DataTablesColumn(_("ANC 4 Blood Pressure"), sortable=False),
+                                       DataTablesColumn(_("ANC 4 Weight"), sortable=False),
+                                       DataTablesColumn(_("TT1 date"), sortable=False),
+                                       DataTablesColumn(_("TT2 date"), sortable=False),
+                                       DataTablesColumn(_("TT Booster"), sortable=False),
+                                       DataTablesColumn(_("Received  date of 100 IFA tablets "), sortable=False),
+                                       DataTablesColumn(_("Anemia"), sortable=False),
+                                       DataTablesColumn(_("Any complications"), sortable=False),
+                                       DataTablesColumn(_("RTI /STI <yes/no>"), sortable=False)),
                                    DataTablesColumnGroup(
                                        _("Pregnancy Outcome"),
-                                       DataTablesColumn(_("Date of delivery")),
+                                       DataTablesColumn(_("Date of delivery"), sortable=False),
                                        DataTablesColumn(
-                                           _("Place of delivery (home - SBA/Non-SBA) (Hospital - public/private)")),
-                                       DataTablesColumn(_("Nature of delivery")),
-                                       DataTablesColumn(_("Complications")),
-                                       DataTablesColumn(_("Discharge date")),
-                                       DataTablesColumn(_("Received date of JSY benefits")),
-                                       DataTablesColumn(_("Abortion type"))),
+                                           _("Place of delivery (home - SBA/Non-SBA) (Hospital - public/private)"), sortable=False),
+                                       DataTablesColumn(_("Nature of delivery"), sortable=False),
+                                       DataTablesColumn(_("Complications"), sortable=False),
+                                       DataTablesColumn(_("Discharge date"), sortable=False),
+                                       DataTablesColumn(_("Received date of JSY benefits"), sortable=False),
+                                       DataTablesColumn(_("Abortion type"), sortable=False)),
                                    DataTablesColumnGroup(
                                        _("Post Delivery Details"),
                                        DataTablesColumn(
-                                           _("First PNC visit (within 48 hours / within 7 days/ after 7 days)")),
-                                       DataTablesColumn(_("Complications after delivery")),
-                                       DataTablesColumn(_("Type of family planning adopted after delivery")),
-                                       DataTablesColumn(_("Checked mother and infant immediate after delivery?")),
-                                       DataTablesColumn(_("Infant outcome number code"))),
+                                           _("First PNC visit (within 48 hours / within 7 days/ after 7 days)"), sortable=False),
+                                       DataTablesColumn(_("Complications after delivery"), sortable=False),
+                                       DataTablesColumn(_("Type of family planning adopted after delivery"), sortable=False),
+                                       DataTablesColumn(_("Checked mother and infant immediate after delivery?"), sortable=False),
+                                       DataTablesColumn(_("Infant outcome number code"), sortable=False)),
                                    DataTablesColumnGroup(
                                        _("Child 1 Details"),
-                                       DataTablesColumn(_("Name of the child")),
-                                       DataTablesColumn(_("Gender")),
-                                       DataTablesColumn(_("First weight at birth")),
-                                       DataTablesColumn(_("Breastfed within an hour?"))),
+                                       DataTablesColumn(_("Name of the child"), sortable=False),
+                                       DataTablesColumn(_("Gender"), sortable=False),
+                                       DataTablesColumn(_("First weight at birth"), sortable=False),
+                                       DataTablesColumn(_("Breastfed within an hour?"), sortable=False)),
                                    DataTablesColumnGroup(
                                        _("Child 2 Details"),
-                                       DataTablesColumn(_("Name of the child")),
-                                       DataTablesColumn(_("Gender")),
-                                       DataTablesColumn(_("First weight at birth")),
-                                       DataTablesColumn(_("Breastfed within an hour?"))),
+                                       DataTablesColumn(_("Name of the child"), sortable=False),
+                                       DataTablesColumn(_("Gender"), sortable=False),
+                                       DataTablesColumn(_("First weight at birth"), sortable=False),
+                                       DataTablesColumn(_("Breastfed within an hour?"), sortable=False)),
                                    DataTablesColumnGroup(
                                        _("Child 3 Details"),
-                                       DataTablesColumn(_("Name of the child")),
-                                       DataTablesColumn(_("Gender")),
-                                       DataTablesColumn(_("First weight at birth")),
-                                       DataTablesColumn(_("Breastfed within an hour?"))),
+                                       DataTablesColumn(_("Name of the child"), sortable=False),
+                                       DataTablesColumn(_("Gender"), sortable=False),
+                                       DataTablesColumn(_("First weight at birth"), sortable=False),
+                                       DataTablesColumn(_("Breastfed within an hour?"), sortable=False)),
                                    DataTablesColumnGroup(
                                        _("Child 4 Details"),
-                                       DataTablesColumn(_("Name of the child")),
-                                       DataTablesColumn(_("Gender")),
-                                       DataTablesColumn(_("First weight at birth")),
-                                       DataTablesColumn(_("Breastfed within an hour?")),
-                                       DataTablesColumn(_("Migrate status ")))
+                                       DataTablesColumn(_("Name of the child"), sortable=False),
+                                       DataTablesColumn(_("Gender"), sortable=False),
+                                       DataTablesColumn(_("First weight at birth"), sortable=False),
+                                       DataTablesColumn(_("Breastfed within an hour?"), sortable=False),
+                                       DataTablesColumn(_("Migrate status "), sortable=False))
         )
         return headers
 
@@ -215,79 +224,69 @@ class MotherMCHRegister(CustomProjectReport, CaseListReport):
             ]
 
 
-class ChildMCHRegister(CustomProjectReport, CaseListReport):
+class ChildMCHRegister(MCHBaseReport):
     name = "Child MCH register"
     slug = "child_mch_register"
     default_case_type = "cc_bihar_newborn"
-    # exportable = True
-
-    fields = [
-        'corehq.apps.reports.fields.GroupField',
-        'corehq.apps.reports.fields.SelectOpenCloseField',
-    ]
-
-    @property
-    def user_filter(self):
-        return super(ChildMCHRegister, self).user_filter
 
     @property
     def headers(self):
         headers = DataTablesHeader(DataTablesColumn(_("CHW Name")),
                                    DataTablesColumnGroup(
                                        _("Beneficiary Information"),
-                                       DataTablesColumn(_("Child Name")),
-                                       DataTablesColumn(_("Father an Mother Name")),
-                                       DataTablesColumn(_("Mother's MCTS ID")),
-                                       DataTablesColumn(_("Gender")),
-                                       DataTablesColumn(_("City/ward/village")),
-                                       DataTablesColumn(_("Address")),
-                                       DataTablesColumn(_("Mobile number")),
-                                       DataTablesColumn(_("Whose Mobile Number")),
-                                       DataTablesColumn(_("DOB / AGE")),
-                                       DataTablesColumn(_("Place of delivery (home - SBA/Non-SBA) (Hospital -  public/private)")),
-                                       DataTablesColumn(_("Caste"))),
+                                       DataTablesColumn(_("Child Name"), sortable=False),
+                                       DataTablesColumn(_("Father an Mother Name"), sortable=False),
+                                       DataTablesColumn(_("Mother's MCTS ID"), sortable=False),
+                                       DataTablesColumn(_("Gender"), sortable=False),
+                                       DataTablesColumn(_("City/ward/village"), sortable=False),
+                                       DataTablesColumn(_("Address"), sortable=False),
+                                       DataTablesColumn(_("Mobile number"), sortable=False),
+                                       DataTablesColumn(_("Whose Mobile Number"), sortable=False),
+                                       DataTablesColumn(_("DOB / AGE"), sortable=False),
+                                       DataTablesColumn(_("Place of delivery (home - SBA/Non-SBA) (Hospital -  public/private)"), sortable=False),
+                                       DataTablesColumn(_("Caste"), sortable=False)),
                                    DataTablesColumnGroup(
                                        _("Provider Information"),
-                                       DataTablesColumn(_("ASHA Name")),
-                                       DataTablesColumn(_("Asha phone")),
-                                       DataTablesColumn(_("AWC Code , AWC name")),
-                                       DataTablesColumn(_("AWW name")),
-                                       DataTablesColumn(_("AWW phone number"))),
+                                       DataTablesColumn(_("ASHA Name"), sortable=False),
+                                       DataTablesColumn(_("Asha phone"), sortable=False),
+                                       DataTablesColumn(_("AWC Code , AWC name"), sortable=False),
+                                       DataTablesColumn(_("AWW name"), sortable=False),
+                                       DataTablesColumn(_("AWW phone number"), sortable=False)),
                                    DataTablesColumnGroup(
                                        _("At Birth"),
-                                       DataTablesColumn(_("BCG")),
-                                       DataTablesColumn(_("OPV0")),
-                                       DataTablesColumn(_("Hepatitis-Birth dose "))),
+                                       DataTablesColumn(_("BCG"), sortable=False),
+                                       DataTablesColumn(_("OPV0"), sortable=False),
+                                       DataTablesColumn(_("Hepatitis-Birth dose "), sortable=False)),
                                    DataTablesColumnGroup(
                                        _("At 6 Weeks"),
-                                       DataTablesColumn(_("DPT1")),
-                                       DataTablesColumn(_("OPV1")),
-                                       DataTablesColumn(_("Hepatitis-B1"))),
+                                       DataTablesColumn(_("DPT1"), sortable=False),
+                                       DataTablesColumn(_("OPV1"), sortable=False),
+                                       DataTablesColumn(_("Hepatitis-B1"), sortable=False)),
                                    DataTablesColumnGroup(
                                        _("At 10 Weeks"),
-                                       DataTablesColumn(_("DPT2")),
-                                       DataTablesColumn(_("OPV2")),
-                                       DataTablesColumn(_("Hepatitis-B2"))),
+                                       DataTablesColumn(_("DPT2"), sortable=False),
+                                       DataTablesColumn(_("OPV2"), sortable=False),
+                                       DataTablesColumn(_("Hepatitis-B2"), sortable=False)),
                                    DataTablesColumnGroup(
                                        _("At 14 Weeks"),
-                                       DataTablesColumn(_("DPT3")),
-                                       DataTablesColumn(_("OPV3")),
-                                       DataTablesColumn(_("Hepatitis-B3"))),
+                                       DataTablesColumn(_("DPT3"), sortable=False),
+                                       DataTablesColumn(_("OPV3"), sortable=False),
+                                       DataTablesColumn(_("Hepatitis-B3"), sortable=False)),
                                    DataTablesColumnGroup(
                                        _("Between 9-12 Months"),
-                                       DataTablesColumn(_("Measles (1st  dose)"))),
+                                       DataTablesColumn(_("Measles (1st  dose)"), sortable=False)),
                                    DataTablesColumnGroup(
                                        _("Between 16-24 Months"),
                                        DataTablesColumn(
-                                           _("Vitamin A dose-1 ")),
+                                           _("Vitamin A dose-1 "), sortable=False),
                                        DataTablesColumn(_("Measles (2nd dose)/ MR Vaccine"))),
                                    DataTablesColumnGroup(
                                        _("After 2 Years"),
-                                       DataTablesColumn(_("DPT Booster")),
-                                       DataTablesColumn(_("OPV Booster")),
-                                       DataTablesColumn(_("Vitamin A dose-2")),
-                                       DataTablesColumn(_("Vitamin A dose-3")),
-                                       DataTablesColumn(_("JE Vaccine")))
+                                       DataTablesColumn(_("DPT Booster"), sortable=False),
+                                       DataTablesColumn(_("OPV Booster"), sortable=False),
+                                       DataTablesColumn(_("Vitamin A dose-2"), sortable=False),
+                                       DataTablesColumn(_("Vitamin A dose-3"), sortable=False),
+                                       DataTablesColumn(_("JE Vaccine"), sortable=False))
         )
         return headers
 
@@ -336,13 +335,3 @@ class ChildMCHRegister(CustomProjectReport, CaseListReport):
                 disp.vit_a_3_date,
                 disp.date_je
             ]
-
-    @property
-    @memoized
-    def case_es(self):
-        return FullCaseES(self.domain)
-
-    @property
-    @memoized
-    def rendered_report_title(self):
-        return self.name
