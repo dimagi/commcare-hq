@@ -546,6 +546,12 @@ FLUFF_PILLOW_TYPES_TO_SQL = {
     'CareSAFluff': 'SQL',
 }
 
+EXTRA_LOGGING = {
+    'formatters': {},
+    'handlers': {},
+    'loggers': {}
+}
+
 try:
     #try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
@@ -630,6 +636,10 @@ LOGGING = {
         }
     }
 }
+
+for k in ['formatters', 'handlers', 'loggers']:
+    if EXTRA_LOGGING[k]:
+        LOGGING[k].update(EXTRA_LOGGING[k])
 
 if DEBUG:
     try:

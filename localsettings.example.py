@@ -302,3 +302,12 @@ INTERNAL_DATA = {
                 "United Arab Emirates", "United Kingdom", "United States", "Uruguay", "Uzbekistan", "Vanuatu",
                 "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"]
 }
+
+
+# For deployment and other environment logging extensions
+EXTRA_LOGGING = {
+    'formatters': {},
+    'handlers': {},
+    'loggers': {}
+}
+
