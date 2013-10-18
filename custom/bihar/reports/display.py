@@ -7,23 +7,14 @@ from django.utils.translation import ugettext as _
 from corehq.apps.users.models import CouchUser, CommCareUser
 
 
-def get_property(dict_obj, name):
+def get_property(dict_obj, name, default=None):
     if name in dict_obj:
         return dict_obj[name]
     else:
-        return "---"
+        return "---" if default else default
 
 
 class MCHDisplay(CaseDisplay):
-
-    def __init__(self, report, case):
-        user = CommCareUser.get_by_user_id(self.user_id)
-        #TODO get partner name in _asha_name, _asha_number, etc...
-        setattr(self, "_asha_name", user.full_name)
-        setattr(self, "_asha_number", user.phone_numbers[0] if len(user.phone_numbers) > 0 else "---")
-        setattr(self, "_village", get_property(user.user_data, "village"))
-        setattr(self, "_awc_code_name", "%s, %s" % (get_property(user.user_data, "awc-code"), get_property(user.user_data, "village")))
-        super(MCHDisplay, self).__init__(report, case)
 
     @property
     def village(self):
@@ -82,11 +73,8 @@ class MCHMotherDisplay(MCHDisplay):
                 setattr(self, "_delivery_complications", get_property(form_dict, "delivery_complications"))
                 setattr(self, "_family_planning_type", get_property(form_dict, "family_planing_type"))
                 setattr(self, "_all_pnc_on_time", get_property(form_dict, "all_pnc_on_time"))
-                children_count = get_property(form_dict, "cast_num_children")
+                children_count = get_property(form_dict, "cast_num_children", 0)
                 child_list = []
-
-                if children_count == '---':
-                    children_count = 0
 
                 if int(children_count) == 1 and "child_info" in form_dict:
                     child_list.append(form_dict["child_info"])
