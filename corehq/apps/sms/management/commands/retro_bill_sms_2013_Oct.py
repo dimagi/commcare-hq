@@ -38,7 +38,7 @@ class Command(LabelCommand):
                     successful_responses = {
                         'MACH': "MACH RESPONSE +OK 01 message queued (dest=%s)" % sms_log.phone_number,
                         'TROPO': "<success>true</success>",
-                        'UNICEL': "",
+                        'UNICEL': "success",
                     }
                     print "Retroactively billing SMLog %s in domain %s" % (sms_log._id, sms_log.domain)
                     try:
