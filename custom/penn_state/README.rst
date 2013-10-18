@@ -41,3 +41,5 @@ Next Steps:
     * Display some results in email?
     * save dates to be skipped in a once-off doc referred to by ID
 
+Add to total games played everytime the user checks off something about special games
+
