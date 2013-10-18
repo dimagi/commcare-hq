@@ -1921,9 +1921,9 @@ class KeywordForm(Form):
     keyword = CharField()
     description = TrimmedCharField()
     override_open_sessions = BooleanField(required=False)
-    restrict_keyword_initiation = BooleanField(required=False)
     allow_initiation_by_case = BooleanField(required=False)
     allow_initiation_by_mobile_worker = BooleanField(required=False)
+    restrict_keyword_initiation = BooleanField(required=False)
     sender_content_type = CharField()
     sender_message = TrimmedCharField(required=False)
     sender_form_unique_id = CharField(required=False)
@@ -1967,6 +1967,14 @@ class KeywordForm(Form):
         if duplicate is not None and duplicate._id != self._sk_id:
             raise ValidationError(_("Keyword already exists."))
         return value
+
+    def clean_restrict_keyword_initiation(self):
+        restrict_keyword_initiation = self.cleaned_data.get("restrict_keyword_initiation", False)
+        allow_initiation_by_case = self.cleaned_data.get("allow_initiation_by_case", False)
+        allow_initiation_by_mobile_worker = self.cleaned_data.get("allow_initiation_by_mobile_worker", False)
+        if restrict_keyword_initiation and not (allow_initiation_by_case or allow_initiation_by_mobile_worker):
+            raise ValidationError(_("If you are restricting access, please choose at least one type of initiator."))
+        return restrict_keyword_initiation
 
     def clean_sender_content_type(self):
         return self._check_content_type(self.cleaned_data.get("sender_content_type"))
@@ -2068,6 +2076,8 @@ class KeywordForm(Form):
             return None
 
     def clean_other_recipient_type(self):
+        if not self.cleaned_data.get("notify_others", False):
+            return None
         value = self.cleaned_data.get("other_recipient_type", None)
         valid_values = [a[0] for a in KEYWORD_RECIPIENT_CHOICES]
         if value not in valid_values:
@@ -2080,6 +2090,8 @@ class KeywordForm(Form):
         return value
 
     def clean_other_recipient_id(self):
+        if not self.cleaned_data.get("notify_others", False):
+            return None
         value = self.cleaned_data.get("other_recipient_id", None)
         recipient_type = self.cleaned_data.get("other_recipient_type", None)
         if recipient_type == RECIPIENT_USER_GROUP:
