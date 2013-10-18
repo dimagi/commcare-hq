@@ -498,7 +498,11 @@ class MessagingTab(UITab):
         def keyword_subtitle(keyword=None, **context):
             return keyword.keyword
 
-        if self.couch_user.is_previewer:
+        if self.couch_user.username in [
+            'rhartford@dimagi.com',
+            'sshah@dimagi.com',
+            'biyeun@dimagi.com',
+        ]:
             from corehq.apps.sms.views import DomainSmsGatewayListView
             from corehq.apps.reminders.views import (
                 EditScheduledReminderView,
