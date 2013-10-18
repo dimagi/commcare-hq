@@ -3,11 +3,13 @@ from corehq.apps.reminders.models import REMINDER_TYPE_ONE_TIME
 from corehq.apps.reminders.views import (
     CreateScheduledReminderView,
     EditScheduledReminderView,
+    RemindersListView,
 )
 
 urlpatterns = patterns('corehq.apps.reminders.views',
     url(r'^$', 'default', name='reminders_default'),
     url(r'^all/$', 'list_reminders', name='list_reminders'),
+    url(r'^list/$', RemindersListView.as_view(), name=RemindersListView.urlname),
     url(r'^add_fixed/$', 'add_reminder', name='add_reminder'),
     url(r'^edit_fixed/(?P<handler_id>[\w-]+)/$', 'add_reminder', name='edit_reminder'),
     url(r'^delete/(?P<handler_id>[\w-]+)/$', 'delete_reminder', name='delete_reminder'),

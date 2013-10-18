@@ -628,6 +628,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
             return HttpResponse(json.dumps(getattr(self, '%s_response' % self.action)))
         if self.schedule_form.is_valid():
             self.process_schedule_form()
+            return HttpResponseRedirect(reverse(RemindersListView.urlname, args=[self.domain]))
         else:
             messages.error(self.request, "There were errors saving your reminder.")
         return self.get(*args, **kwargs)
@@ -654,12 +655,14 @@ class EditScheduledReminderView(CreateScheduledReminderView):
                 self.request.POST,
                 initial=initial,
                 is_previewer=self.is_previewer,
-                domain=self.domain
+                domain=self.domain,
+                is_edit=True,
             )
         return SimpleScheduleCaseReminderForm(
             initial=initial,
             is_previewer=self.is_previewer,
-            domain=self.domain
+            domain=self.domain,
+            is_edit=True,
         )
 
     @property
@@ -1258,3 +1261,65 @@ def reminders_in_error(request, domain):
     }
     return render(request, "reminders/partial/reminders_in_error.html", context)
 
+
+class RemindersListView(BaseMessagingSectionView):
+    template_name = 'reminders/reminders_list.html'
+    urlname = "list_reminders_new"
+    page_title = ugettext_noop("Reminder Definitions")
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+    @property
+    def reminders(self):
+        all_handlers = CaseReminderHandler.get_handlers(domain=self.domain).all()
+        all_handlers = filter(lambda x : x.reminder_type == REMINDER_TYPE_DEFAULT, all_handlers)
+        for handler in all_handlers:
+            yield self._fmt_reminder_data(handler)
+
+    @property
+    def page_context(self):
+        return {
+            'reminders': list(self.reminders),
+        }
+
+    @property
+    def reminder_id(self):
+        return self.request.POST['reminderId']
+
+    @property
+    @memoized
+    def reminder(self):
+        return CaseReminderHandler.get(self.reminder_id)
+
+    def _fmt_reminder_data(self, reminder):
+        return {
+            'id': reminder._id,
+            'isActive': reminder.active,
+            'caseType': reminder.case_type,
+            'name': reminder.nickname,
+            'url': reverse(EditScheduledReminderView.urlname, args=[self.domain, reminder._id]),
+        }
+
+    def get_action_response(self, active):
+        try:
+            self.reminder.active = active
+            self.reminder.save()
+            return {
+                'success': True,
+                'reminder': self._fmt_reminder_data(self.reminder),
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': e,
+            }
+
+    def post(self, *args, **kwargs):
+        action = self.request.POST.get('action')
+        if action in ['activate', 'deactivate']:
+            return HttpResponse(json.dumps(self.get_action_response(action == 'activate')))
+        raise {
+            'success': False,
+        }

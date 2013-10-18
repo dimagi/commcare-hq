@@ -677,11 +677,6 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             'required': "Please enter a name for this reminder",
         }
     )
-    active = forms.BooleanField(
-        required=False,
-        initial=True,
-        label="This reminder is active."
-    )
 
     # Fieldset: Send Options
     # simple has start_condition_type = CASE_CRITERIA by default
@@ -851,7 +846,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         choices=((n, n) for n in QUESTION_RETRY_CHOICES)
     )
 
-    def __init__(self, data=None, is_previewer=False, domain=None, ui_type=None, *args, **kwargs):
+    def __init__(self, data=None, is_previewer=False, domain=None, ui_type=None, is_edit=False, *args, **kwargs):
         if 'initial' not in kwargs:
             kwargs['initial'] = {
                 'event_timing': self._format_event_timing_choice(EVENT_AS_OFFSET,
@@ -869,6 +864,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
 
         self.domain = domain
         self.ui_type = ui_type
+        self.is_edit = is_edit
 
         if is_previewer:
             method_choices = copy.copy(self.fields['method'].choices)
@@ -1079,10 +1075,10 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             active=False,
         )
 
+        from corehq.apps.reminders.views import RemindersListView
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Field('nickname'),
-            crispy.Field('active'),
             start_section,
             recipient_section,
             message_section,
@@ -1090,11 +1086,11 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             advanced_section,
             FormActions(
                 StrictButton(
-                    "Create Reminder",
+                    _("Edit Reminder") if is_edit else _("Create Reminder"),
                     css_class='btn-primary',
                     type='submit',
                 ),
-                crispy.HTML('<a href="%s" class="btn">Cancel</a>' % reverse('list_reminders', args=[self.domain]))
+                crispy.HTML('<a href="%s" class="btn">Cancel</a>' % reverse(RemindersListView.urlname, args=[self.domain]))
             )
         )
 
