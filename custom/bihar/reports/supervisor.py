@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
-from corehq.apps.api.es import FullCaseES
 from custom.bihar.utils import (get_team_members, get_all_owner_ids_from_group, SUPERVISOR_ROLES, FLW_ROLES,
     groups_for_user)
 
@@ -13,7 +12,7 @@ from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.generic import GenericTabularReport,\
     SummaryTablularReport, summary_context
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 from dimagi.utils.excel import alphanumeric_sort_key
 from dimagi.utils.html import format_html
@@ -464,73 +463,3 @@ def url_and_params(urlbase, params):
     assert "?" not in urlbase
     return "{url}?{params}".format(url=urlbase,
                                    params=urllib.urlencode(params))
-
-
-class MCHRegisterReport(BiharNavReport):
-    slug = "mchregisterreport"
-    name = ugettext_noop('MCH Register Reports')
-
-    @property
-    def reports(self):
-        return [MotherMCHRegister, ChildMCHRegister]
-
-
-class MotherMCHRegister(CustomProjectReport, ConvenientBaseMixIn, SummaryTablularReport):
-    name = "Mother MCH register"
-    slug = "mothermchregister"
-
-    fields = [
-        'corehq.apps.reports.fields.GroupField',
-        'corehq.apps.reports.fields.SelectOpenCloseField',
-    ]
-
-    @property
-    def headers(self):
-        headers = DataTablesHeader(DataTablesColumn("Col A"),
-                                    DataTablesColumnGroup(
-                                        "Group 1",
-                                        DataTablesColumn("Col B"),
-                                        DataTablesColumn("Col C")),
-                                    DataTablesColumn("Col D"))
-        return headers
-
-    @property
-    @memoized
-    def case_es(self):
-        return FullCaseES(self.domain)
-
-    @property
-    @memoized
-    def rendered_report_title(self):
-        return self.name
-
-    @property
-    def rows(self):
-        return [['Row 1', 2, 3, 4],
-                ['Row 2', 3, 4, 5]]
-
-
-class ChildMCHRegister(CustomProjectReport, ConvenientBaseMixIn, SummaryTablularReport):
-    name = "Child MCH register"
-    slug = "childmchregister"
-
-    fields = [
-        'corehq.apps.reports.fields.GroupField',
-        'corehq.apps.reports.fields.SelectOpenCloseField',
-    ]
-
-    _headers = ["Whoops, this report isn't done! Sorry this is still a prototype."]
-
-    @property
-    @memoized
-    def case_es(self):
-        return FullCaseES(self.domain)
-
-    @property
-    @memoized
-    def rendered_report_title(self):
-        return self.name
-
-    @property
-    def data(self):
-        return [""]
