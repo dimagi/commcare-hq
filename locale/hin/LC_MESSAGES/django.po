@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-10-15 08:02+0000\n"
+"POT-Creation-Date: 2013-10-18 13:48+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2443,12 +2443,12 @@ msgstr "टीम का नाम"
 msgid "Close"
 msgstr ""
 
-#: corehq/apps/domain/calculations.py:179
+#: corehq/apps/domain/calculations.py:179 custom/bihar/reports/display.py:305
 #, fuzzy
 msgid "yes"
 msgstr "हॉ"
 
-#: corehq/apps/domain/calculations.py:181
+#: corehq/apps/domain/calculations.py:181 custom/bihar/reports/display.py:305
 msgid "no"
 msgstr ""
 
@@ -9132,7 +9132,8 @@ msgid "On Time"
 msgstr ""
 
 #: custom/apps/crs_reports/reports.py:104
-#: custom/bihar/reports/mch_reports.py:24
+#: custom/bihar/reports/mch_reports.py:52
+#: custom/bihar/reports/mch_reports.py:234
 #, fuzzy
 msgid "CHW Name"
 msgstr "नाम"
@@ -9371,12 +9372,13 @@ msgstr "घर पर हुए मृत जन्म"
 msgid "Age"
 msgstr ""
 
-#: custom/apps/cvsu/filters.py:25 custom/bihar/reports/mch_reports.py:112
-#: custom/bihar/reports/mch_reports.py:120
-#: custom/bihar/reports/mch_reports.py:128
+#: custom/apps/cvsu/filters.py:25 custom/bihar/reports/mch_reports.py:124
+#: custom/bihar/reports/mch_reports.py:130
 #: custom/bihar/reports/mch_reports.py:136
+#: custom/bihar/reports/mch_reports.py:142
+#: custom/bihar/reports/mch_reports.py:240
 msgid "Gender"
-msgstr "लिंग"
+msgstr "बच्चे का लिंग"
 
 #: custom/apps/cvsu/filters.py:33 custom/reports/mc/reports/fields.py:6
 #: submodules/hsph-reports/hsph/reports/field_management.py:547
@@ -9545,6 +9547,15 @@ msgstr "लाभार्थी भ्रमण"
 msgid "Inactive Clients"
 msgstr "निष्क्रिय लाभार्थी"
 
+#: custom/bihar/reports/display.py:68
+msgid "Unknown user"
+msgstr ""
+
+#: custom/bihar/reports/display.py:168
+#, fuzzy
+msgid "Bad date format!"
+msgstr "गृह भ्रमण की जानकारी"
+
 #: custom/bihar/reports/due_list.py:24
 #: submodules/bihar-reports/bihar/reports/due_list.py:24
 msgid "ANC"
@@ -9555,7 +9566,7 @@ msgstr ""
 msgid "TT"
 msgstr ""
 
-#: custom/bihar/reports/due_list.py:43
+#: custom/bihar/reports/due_list.py:43 custom/bihar/reports/mch_reports.py:257
 #: submodules/bihar-reports/bihar/reports/due_list.py:43
 msgid "BCG"
 msgstr ""
@@ -9659,87 +9670,98 @@ msgstr ""
 msgid "Care Due In 3 Days"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:26
+#: custom/bihar/reports/mch_reports.py:54
+#: custom/bihar/reports/mch_reports.py:236
 #, fuzzy
 msgid "Beneficiary Information"
-msgstr "गृह भ्रमण की जानकारी"
+msgstr "लाभार्थी के पहचान हेतु आवश्यक जानकारी"
 
-#: custom/bihar/reports/mch_reports.py:27
+#: custom/bihar/reports/mch_reports.py:55
 #, fuzzy
 msgid "Mother Name"
 msgstr "टीम का नाम"
 
-#: custom/bihar/reports/mch_reports.py:28
+#: custom/bihar/reports/mch_reports.py:56
 #, fuzzy
 msgid "Husband Name"
 msgstr "पति का नाम"
 
-#: custom/bihar/reports/mch_reports.py:29
+#: custom/bihar/reports/mch_reports.py:57
+#: custom/bihar/reports/mch_reports.py:241
 msgid "City/ward/village"
 msgstr "शहर/वार्ड/ग्राम पंचायत"
 
-#: custom/bihar/reports/mch_reports.py:30
+#: custom/bihar/reports/mch_reports.py:58
 msgid "Full address"
 msgstr "संपूर्ण पता"
 
-#: custom/bihar/reports/mch_reports.py:31
+#: custom/bihar/reports/mch_reports.py:59
 msgid "MCTS ID"
 msgstr "पहचान संख्या"
 
-#: custom/bihar/reports/mch_reports.py:32
+#: custom/bihar/reports/mch_reports.py:60
+#: custom/bihar/reports/mch_reports.py:243
 #, fuzzy
 msgid "Mobile number"
 msgstr "दूरभाष/मोबाईल नं0"
 
-#: custom/bihar/reports/mch_reports.py:33
+#: custom/bihar/reports/mch_reports.py:61
+#: custom/bihar/reports/mch_reports.py:244
 #, fuzzy
 msgid "Whose Mobile Number"
 msgstr "किसका दूरभाष/मो. सं॰"
 
-#: custom/bihar/reports/mch_reports.py:35
+#: custom/bihar/reports/mch_reports.py:62
 msgid "Mother DOB / AGE"
 msgstr "जन्म तिथि/उम्र"
 
-#: custom/bihar/reports/mch_reports.py:36
+#: custom/bihar/reports/mch_reports.py:63
 msgid "JSY beneficiary"
 msgstr "क्या जननी एवं बाल सुरक्षा योजना के लाभार्थी है"
 
-#: custom/bihar/reports/mch_reports.py:37
+#: custom/bihar/reports/mch_reports.py:64
+#: custom/bihar/reports/mch_reports.py:247
 msgid "Caste"
-msgstr "जाति "
+msgstr "जाति (अनुसूचित जाति/ जनजाति /अन्य) "
 
-#: custom/bihar/reports/mch_reports.py:39
+#: custom/bihar/reports/mch_reports.py:66
+#: custom/bihar/reports/mch_reports.py:249
 #, fuzzy
 msgid "Provider Information"
-msgstr "गृह भ्रमण की जानकारी"
+msgstr "सेवा प्रदाता का विवरण"
 
-#: custom/bihar/reports/mch_reports.py:40
+#: custom/bihar/reports/mch_reports.py:67
+#: custom/bihar/reports/mch_reports.py:250
 #, fuzzy
 msgid "ASHA Name"
 msgstr "संबंधित आशा का नाम"
 
-#: custom/bihar/reports/mch_reports.py:41
+#: custom/bihar/reports/mch_reports.py:68
+#: custom/bihar/reports/mch_reports.py:251
 msgid "Asha phone"
 msgstr "आशा का दूरभाष सं0"
 
-#: custom/bihar/reports/mch_reports.py:42
+#: custom/bihar/reports/mch_reports.py:69
+#: custom/bihar/reports/mch_reports.py:252
 msgid "AWC Code , AWC name"
 msgstr "आँगनवाड़ी केन्द्र का कोड, संख्या एवं नाम"
 
-#: custom/bihar/reports/mch_reports.py:44
+#: custom/bihar/reports/mch_reports.py:70
+#: custom/bihar/reports/mch_reports.py:253
 #, fuzzy
 msgid "AWW name"
 msgstr "आँगनवाड़ी सेविका का नाम"
 
-#: custom/bihar/reports/mch_reports.py:45
+#: custom/bihar/reports/mch_reports.py:71
+#: custom/bihar/reports/mch_reports.py:254
 msgid "AWW phone number"
 msgstr "आँगनवाड़ी सेविका की दूरभाष संख्या"
 
-#: custom/bihar/reports/mch_reports.py:46
+#: custom/bihar/reports/mch_reports.py:72
 msgid "LMP"
 msgstr "अन्तिम माहवारी की तिथि"
 
-#: custom/bihar/reports/mch_reports.py:47
+#: custom/bihar/reports/mch_reports.py:73
 #: custom/bihar/reports/indicators/clientlistdisplay.py:68
 #: custom/bihar/reports/indicators/clientlistdisplay.py:86
 #: submodules/bihar-reports/bihar/reports/indicators/clientlistdisplay.py:75
@@ -9747,212 +9769,347 @@ msgstr "अन्तिम माहवारी की तिथि"
 msgid "EDD"
 msgstr "प्रसव की संभावित तिथि"
 
-#: custom/bihar/reports/mch_reports.py:49
+#: custom/bihar/reports/mch_reports.py:75
 msgid "First ANC (within 12 weeks)"
-msgstr ""
+msgstr "पहला प्रसव पूर्व जाँच  (12 सप्ताह के अन्दर)"
 
-#: custom/bihar/reports/mch_reports.py:50
+#: custom/bihar/reports/mch_reports.py:76
 msgid "ANC 1 Date"
 msgstr "दिनांक"
 
-#: custom/bihar/reports/mch_reports.py:51
+#: custom/bihar/reports/mch_reports.py:77
 msgid "ANC 1 Blood Pressure"
 msgstr "रक्त चाप"
 
-#: custom/bihar/reports/mch_reports.py:53
+#: custom/bihar/reports/mch_reports.py:78
 msgid "ANC 1 Weight"
 msgstr "वजन"
 
-#: custom/bihar/reports/mch_reports.py:54
+#: custom/bihar/reports/mch_reports.py:79
 msgid "ANC  Hb"
 msgstr "हिमोग्लोबिन"
 
-#: custom/bihar/reports/mch_reports.py:55
+#: custom/bihar/reports/mch_reports.py:80
 msgid "ANC1 completed within 12 weeks? "
 msgstr "क्या पहला प्रसव पूर्व जाँच प्रथम तिमाही 12 सप्ताह पूर्व हुआ हैं"
 
-#: custom/bihar/reports/mch_reports.py:58
+#: custom/bihar/reports/mch_reports.py:82
 msgid "Second ANC (14-26 weeks)"
-msgstr ""
+msgstr "पहला प्रसव पूर्व जाँच  (14 से 26 सप्ताह के अन्दर)"
 
-#: custom/bihar/reports/mch_reports.py:59
+#: custom/bihar/reports/mch_reports.py:83
 msgid "ANC 2 Date"
 msgstr "दिनांक"
 
-#: custom/bihar/reports/mch_reports.py:60
+#: custom/bihar/reports/mch_reports.py:84
 msgid "ANC 2 Blood Pressure"
 msgstr "रक्त चाप"
 
-#: custom/bihar/reports/mch_reports.py:62
+#: custom/bihar/reports/mch_reports.py:85
 msgid "ANC 2 Weight"
 msgstr "वजन"
 
-#: custom/bihar/reports/mch_reports.py:64
+#: custom/bihar/reports/mch_reports.py:87
 msgid "Third ANC (28-34 weeks)"
-msgstr ""
+msgstr "पहला प्रसव पूर्व जाँच  (28 से 34 सप्ताह के अन्दर)"
 
-#: custom/bihar/reports/mch_reports.py:65
+#: custom/bihar/reports/mch_reports.py:88
 msgid "ANC 3 Date"
 msgstr "दिनांक"
 
-#: custom/bihar/reports/mch_reports.py:66
+#: custom/bihar/reports/mch_reports.py:89
 msgid "ANC 3 Blood Pressure"
 msgstr "रक्त चाप"
 
-#: custom/bihar/reports/mch_reports.py:68
+#: custom/bihar/reports/mch_reports.py:90
 msgid "ANC 3 Weight"
 msgstr "वजन"
 
-#: custom/bihar/reports/mch_reports.py:70
+#: custom/bihar/reports/mch_reports.py:92
 msgid "Fourth ANC (34 weeks to Delivery)"
-msgstr ""
+msgstr "पहला प्रसव पूर्व जाँच  (36 सप्ताह से प्रसव तक)"
 
-#: custom/bihar/reports/mch_reports.py:71
+#: custom/bihar/reports/mch_reports.py:93
 msgid "ANC 4 Date"
 msgstr "दिनांक"
 
-#: custom/bihar/reports/mch_reports.py:72
+#: custom/bihar/reports/mch_reports.py:94
 msgid "ANC 4 Blood Pressure"
 msgstr "रक्त चाप"
 
-#: custom/bihar/reports/mch_reports.py:74
+#: custom/bihar/reports/mch_reports.py:95
 msgid "ANC 4 Weight"
 msgstr "वजन"
 
-#: custom/bihar/reports/mch_reports.py:75
+#: custom/bihar/reports/mch_reports.py:96
 msgid "TT1 date"
 msgstr "TT1 (गर्भ का पता चलने के तुरन्त बाद)"
 
-#: custom/bihar/reports/mch_reports.py:76
+#: custom/bihar/reports/mch_reports.py:97
 msgid "TT2 date"
 msgstr "TT2 ( TT1 लगने के 1 महीने के बाद)"
 
-#: custom/bihar/reports/mch_reports.py:77
+#: custom/bihar/reports/mch_reports.py:98
 msgid "TT Booster"
 msgstr "TT Booster"
 
-#: custom/bihar/reports/mch_reports.py:78
+#: custom/bihar/reports/mch_reports.py:99
 msgid "Received  date of 100 IFA tablets "
 msgstr "IFA टैबलेट दिया गया (100 IFA टैबलेट पूरा होने की तिथि)"
 
-#: custom/bihar/reports/mch_reports.py:80
+#: custom/bihar/reports/mch_reports.py:100
 msgid "Anemia"
 msgstr "एनिमिया (Normal/Moderate <11 /Severe <7)"
 
-#: custom/bihar/reports/mch_reports.py:81
+#: custom/bihar/reports/mch_reports.py:101
 #, fuzzy
 msgid "Any complications"
 msgstr "कोई जटिल परिस्थिति (Hypertensive / Diabetics /APH /Malaria /None)"
 
-#: custom/bihar/reports/mch_reports.py:82
+#: custom/bihar/reports/mch_reports.py:102
 msgid "RTI /STI <yes/no>"
 msgstr "प्रजनन /यौन संचालित रोग का संक्रमण RTI/ STI"
 
-#: custom/bihar/reports/mch_reports.py:84
+#: custom/bihar/reports/mch_reports.py:104
 #, fuzzy
 msgid "Pregnancy Outcome"
-msgstr "प्रसव परिणाम"
+msgstr "गर्भावस्था का परिणाम"
 
-#: custom/bihar/reports/mch_reports.py:85
+#: custom/bihar/reports/mch_reports.py:105
 #, fuzzy
 msgid "Date of delivery"
 msgstr "प्रसव की तिथि"
 
-#: custom/bihar/reports/mch_reports.py:87
+#: custom/bihar/reports/mch_reports.py:107
 msgid "Place of delivery (home - SBA/Non-SBA) (Hospital - public/private)"
 msgstr "प्रसव का स्थान (घर में- SBA/Non-SBA द्वाराए संस्था में- सरकारी/गैर सरकारी)"
 
-#: custom/bihar/reports/mch_reports.py:89
+#: custom/bihar/reports/mch_reports.py:108
 msgid "Nature of delivery"
 msgstr "प्रसव का प्रकार (Normal/CS/Instrumental)"
 
-#: custom/bihar/reports/mch_reports.py:91
+#: custom/bihar/reports/mch_reports.py:109
 #, fuzzy
 msgid "Complications"
 msgstr "प्रसव के दौरान कोई अन्य जटिलता Complication"
 
-#: custom/bihar/reports/mch_reports.py:92
+#: custom/bihar/reports/mch_reports.py:110
 msgid "Discharge date"
 msgstr "प्रसव के बाद संस्था से छुटने की तिथि"
 
-#: custom/bihar/reports/mch_reports.py:93
+#: custom/bihar/reports/mch_reports.py:111
 msgid "Received date of JSY benefits"
 msgstr "जननी एवं बाल सुरक्षा योजना की सुविधाओं का भुगतान की तिथि"
 
-#: custom/bihar/reports/mch_reports.py:95
+#: custom/bihar/reports/mch_reports.py:112
 #, fuzzy
 msgid "Abortion type"
 msgstr "यदि गर्भपात हो तो "
 
-#: custom/bihar/reports/mch_reports.py:97
+#: custom/bihar/reports/mch_reports.py:114
 msgid "Post Delivery Details"
-msgstr ""
+msgstr "प्रसव के बाद की जानकारी"
 
-#: custom/bihar/reports/mch_reports.py:99
+#: custom/bihar/reports/mch_reports.py:116
 msgid "First PNC visit (within 48 hours / within 7 days/ after 7 days)"
-msgstr "प्रसव के बाद स्वास्थ्य कर्मियों द्वारा गृह भ्रमण कब किया गया (48 घंटे के भीतर /7 दिनों  में/7 दिनों के बाद)"
+msgstr ""
+"प्रसव के बाद स्वास्थ्य कर्मियों द्वारा गृह भ्रमण कब किया गया (48 घंटे के भीतर /7 दिनों  "
+"में/7 दिनों के बाद)"
 
-#: custom/bihar/reports/mch_reports.py:101
+#: custom/bihar/reports/mch_reports.py:117
 msgid "Complications after delivery"
 msgstr "प्रसव के बाद कोई  जटिलता (PPH/Sepsis/Death/Others/None)"
 
-#: custom/bihar/reports/mch_reports.py:103
+#: custom/bihar/reports/mch_reports.py:118
 msgid "Type of family planning adopted after delivery"
 msgstr "प्रसव के बाद गर्भनिरोध का  साधन"
 
-#: custom/bihar/reports/mch_reports.py:105
+#: custom/bihar/reports/mch_reports.py:119
 msgid "Checked mother and infant immediate after delivery?"
 msgstr "प्रसव के बाद जच्चा- बच्चा का जाँच किया गया (हाँ/नहीं)"
 
-#: custom/bihar/reports/mch_reports.py:107
+#: custom/bihar/reports/mch_reports.py:120
 msgid "Infant outcome number code"
 msgstr "परिणाम संख्या Outcome Numbers (0/1/2/3/4/5)  0=Still Birth"
 
-#: custom/bihar/reports/mch_reports.py:110
-#, fuzzy
+#: custom/bihar/reports/mch_reports.py:122
 msgid "Child 1 Details"
-msgstr ""
+msgstr "नवजात शिशु की जानकारी 1"
 
-#: custom/bihar/reports/mch_reports.py:111
-#: custom/bihar/reports/mch_reports.py:119
-#: custom/bihar/reports/mch_reports.py:127
+#: custom/bihar/reports/mch_reports.py:123
+#: custom/bihar/reports/mch_reports.py:129
 #: custom/bihar/reports/mch_reports.py:135
+#: custom/bihar/reports/mch_reports.py:141
 msgid "Name of the child"
 msgstr "बच्चे का नाम"
 
-#: custom/bihar/reports/mch_reports.py:113
-#: custom/bihar/reports/mch_reports.py:121
-#: custom/bihar/reports/mch_reports.py:129
+#: custom/bihar/reports/mch_reports.py:125
+#: custom/bihar/reports/mch_reports.py:131
 #: custom/bihar/reports/mch_reports.py:137
+#: custom/bihar/reports/mch_reports.py:143
 msgid "First weight at birth"
 msgstr "जन्म के समय बच्चे का वजन (KG)"
 
-#: custom/bihar/reports/mch_reports.py:115
-#: custom/bihar/reports/mch_reports.py:123
-#: custom/bihar/reports/mch_reports.py:131
-#: custom/bihar/reports/mch_reports.py:139
+#: custom/bihar/reports/mch_reports.py:126
+#: custom/bihar/reports/mch_reports.py:132
+#: custom/bihar/reports/mch_reports.py:138
+#: custom/bihar/reports/mch_reports.py:144
 msgid "Breastfed within an hour?"
 msgstr "जन्म के 1 घन्टे में माँ का दूध पिलाया गया (हाँ/नहीं)"
 
-#: custom/bihar/reports/mch_reports.py:118
-#, fuzzy
+#: custom/bihar/reports/mch_reports.py:128
 msgid "Child 2 Details"
-msgstr ""
-
-#: custom/bihar/reports/mch_reports.py:126
-#, fuzzy
-msgid "Child 3 Details"
-msgstr ""
+msgstr "नवजात शिशु की जानकारी 2"
 
 #: custom/bihar/reports/mch_reports.py:134
-#, fuzzy
-msgid "Child 4 Details"
-msgstr ""
+msgid "Child 3 Details"
+msgstr "नवजात शिशु की जानकारी 3"
 
-#: custom/bihar/reports/mch_reports.py:141
+#: custom/bihar/reports/mch_reports.py:140
+msgid "Child 4 Details"
+msgstr "नवजात शिशु की जानकारी 4"
+
+#: custom/bihar/reports/mch_reports.py:145
 #, fuzzy
 msgid "Migrate status "
 msgstr "Migrate  Status (out/in)"
+
+#: custom/bihar/reports/mch_reports.py:237
+#, fuzzy
+msgid "Child Name"
+msgstr "बच्चे का नाम"
+
+#: custom/bihar/reports/mch_reports.py:238
+#, fuzzy
+msgid "Father an Mother Name"
+msgstr "माता एवं पिता का नाम"
+
+#: custom/bihar/reports/mch_reports.py:239
+#, fuzzy
+msgid "Mother's MCTS ID"
+msgstr "माता की पहचान संख्या "
+
+#: custom/bihar/reports/mch_reports.py:242
+#, fuzzy
+msgid "Address"
+msgstr "संपूर्ण पता"
+
+#: custom/bihar/reports/mch_reports.py:245
+#, fuzzy
+msgid "DOB / AGE"
+msgstr "जन्म की तिथि (DD/MM/YYYY)"
+
+#: custom/bihar/reports/mch_reports.py:246
+#, fuzzy
+msgid "Place of delivery (home - SBA/Non-SBA) (Hospital -  public/private)"
+msgstr "प्रसव का स्थान (घर में, सरकारी/ गैर सरकारी स्वास्थ्य संसथान में))"
+
+#: custom/bihar/reports/mch_reports.py:256
+#, fuzzy
+msgid "At Birth"
+msgstr "जन्म के समय"
+
+#: custom/bihar/reports/mch_reports.py:258
+msgid "OPV0"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:259
+msgid "Hepatitis-Birth dose "
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:261
+msgid "At 6 Weeks"
+msgstr "जन्म के 6 सप्ताह पर"
+
+#: custom/bihar/reports/mch_reports.py:262
+msgid "DPT1"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:263
+msgid "OPV1"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:264
+msgid "Hepatitis-B1"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:266
+msgid "At 10 Weeks"
+msgstr "जन्म के 10 सप्ताह पर"
+
+#: custom/bihar/reports/mch_reports.py:267
+msgid "DPT2"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:268
+msgid "OPV2"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:269
+msgid "Hepatitis-B2"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:271
+msgid "At 14 Weeks"
+msgstr "जन्म के 14 सप्ताह पर"
+
+#: custom/bihar/reports/mch_reports.py:272
+msgid "DPT3"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:273
+msgid "OPV3"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:274
+msgid "Hepatitis-B3"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:276
+msgid "Between 9-12 Months"
+msgstr "जन्म के 9-12 महीने तक"
+
+#: custom/bihar/reports/mch_reports.py:277
+msgid "Measles (1st  dose)"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:279
+msgid "Between 16-24 Months"
+msgstr "जन्म के 16- 24 महीने तक"
+
+#: custom/bihar/reports/mch_reports.py:281
+msgid "Vitamin A dose-1 "
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:282
+msgid "Measles (2nd dose)/ MR Vaccine"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:284
+msgid "After 2 Years"
+msgstr "2 या 2 वर्ष के बाद"
+
+#: custom/bihar/reports/mch_reports.py:285
+#, fuzzy
+msgid "DPT Booster"
+msgstr "TT Booster"
+
+#: custom/bihar/reports/mch_reports.py:286
+#, fuzzy
+msgid "OPV Booster"
+msgstr "TT Booster"
+
+#: custom/bihar/reports/mch_reports.py:287
+msgid "Vitamin A dose-2"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:288
+msgid "Vitamin A dose-3"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:289
+msgid "JE Vaccine"
+msgstr ""
 
 #: custom/bihar/reports/supervisor.py:201
 #: submodules/bihar-reports/bihar/reports/supervisor.py:172

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-10-15 08:03+0000\n"
+"POT-Creation-Date: 2013-10-18 13:50+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2363,11 +2363,11 @@ msgstr ""
 msgid "Close"
 msgstr ""
 
-#: corehq/apps/domain/calculations.py:179
+#: corehq/apps/domain/calculations.py:179 custom/bihar/reports/display.py:305
 msgid "yes"
 msgstr ""
 
-#: corehq/apps/domain/calculations.py:181
+#: corehq/apps/domain/calculations.py:181 custom/bihar/reports/display.py:305
 msgid "no"
 msgstr ""
 
@@ -8818,7 +8818,8 @@ msgid "On Time"
 msgstr ""
 
 #: custom/apps/crs_reports/reports.py:104
-#: custom/bihar/reports/mch_reports.py:24
+#: custom/bihar/reports/mch_reports.py:52
+#: custom/bihar/reports/mch_reports.py:234
 msgid "CHW Name"
 msgstr ""
 
@@ -9047,10 +9048,11 @@ msgstr ""
 msgid "Age"
 msgstr ""
 
-#: custom/apps/cvsu/filters.py:25 custom/bihar/reports/mch_reports.py:112
-#: custom/bihar/reports/mch_reports.py:120
-#: custom/bihar/reports/mch_reports.py:128
+#: custom/apps/cvsu/filters.py:25 custom/bihar/reports/mch_reports.py:124
+#: custom/bihar/reports/mch_reports.py:130
 #: custom/bihar/reports/mch_reports.py:136
+#: custom/bihar/reports/mch_reports.py:142
+#: custom/bihar/reports/mch_reports.py:240
 msgid "Gender"
 msgstr ""
 
@@ -9215,6 +9217,14 @@ msgstr ""
 msgid "Inactive Clients"
 msgstr ""
 
+#: custom/bihar/reports/display.py:68
+msgid "Unknown user"
+msgstr ""
+
+#: custom/bihar/reports/display.py:168
+msgid "Bad date format!"
+msgstr ""
+
 #: custom/bihar/reports/due_list.py:24
 #: submodules/bihar-reports/bihar/reports/due_list.py:24
 msgid "ANC"
@@ -9225,7 +9235,7 @@ msgstr ""
 msgid "TT"
 msgstr ""
 
-#: custom/bihar/reports/due_list.py:43
+#: custom/bihar/reports/due_list.py:43 custom/bihar/reports/mch_reports.py:257
 #: submodules/bihar-reports/bihar/reports/due_list.py:43
 msgid "BCG"
 msgstr ""
@@ -9324,79 +9334,90 @@ msgstr ""
 msgid "Care Due In 3 Days"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:26
+#: custom/bihar/reports/mch_reports.py:54
+#: custom/bihar/reports/mch_reports.py:236
 msgid "Beneficiary Information"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:27
+#: custom/bihar/reports/mch_reports.py:55
 msgid "Mother Name"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:28
+#: custom/bihar/reports/mch_reports.py:56
 msgid "Husband Name"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:29
+#: custom/bihar/reports/mch_reports.py:57
+#: custom/bihar/reports/mch_reports.py:241
 msgid "City/ward/village"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:30
+#: custom/bihar/reports/mch_reports.py:58
 msgid "Full address"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:31
+#: custom/bihar/reports/mch_reports.py:59
 msgid "MCTS ID"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:32
+#: custom/bihar/reports/mch_reports.py:60
+#: custom/bihar/reports/mch_reports.py:243
 msgid "Mobile number"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:33
+#: custom/bihar/reports/mch_reports.py:61
+#: custom/bihar/reports/mch_reports.py:244
 msgid "Whose Mobile Number"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:35
+#: custom/bihar/reports/mch_reports.py:62
 msgid "Mother DOB / AGE"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:36
+#: custom/bihar/reports/mch_reports.py:63
 msgid "JSY beneficiary"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:37
+#: custom/bihar/reports/mch_reports.py:64
+#: custom/bihar/reports/mch_reports.py:247
 msgid "Caste"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:39
+#: custom/bihar/reports/mch_reports.py:66
+#: custom/bihar/reports/mch_reports.py:249
 msgid "Provider Information"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:40
+#: custom/bihar/reports/mch_reports.py:67
+#: custom/bihar/reports/mch_reports.py:250
 msgid "ASHA Name"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:41
+#: custom/bihar/reports/mch_reports.py:68
+#: custom/bihar/reports/mch_reports.py:251
 msgid "Asha phone"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:42
+#: custom/bihar/reports/mch_reports.py:69
+#: custom/bihar/reports/mch_reports.py:252
 msgid "AWC Code , AWC name"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:44
+#: custom/bihar/reports/mch_reports.py:70
+#: custom/bihar/reports/mch_reports.py:253
 msgid "AWW name"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:45
+#: custom/bihar/reports/mch_reports.py:71
+#: custom/bihar/reports/mch_reports.py:254
 msgid "AWW phone number"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:46
+#: custom/bihar/reports/mch_reports.py:72
 msgid "LMP"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:47
+#: custom/bihar/reports/mch_reports.py:73
 #: custom/bihar/reports/indicators/clientlistdisplay.py:68
 #: custom/bihar/reports/indicators/clientlistdisplay.py:86
 #: submodules/bihar-reports/bihar/reports/indicators/clientlistdisplay.py:75
@@ -9404,201 +9425,329 @@ msgstr ""
 msgid "EDD"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:49
+#: custom/bihar/reports/mch_reports.py:75
 msgid "First ANC (within 12 weeks)"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:50
+#: custom/bihar/reports/mch_reports.py:76
 msgid "ANC 1 Date"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:51
+#: custom/bihar/reports/mch_reports.py:77
 msgid "ANC 1 Blood Pressure"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:53
+#: custom/bihar/reports/mch_reports.py:78
 msgid "ANC 1 Weight"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:54
+#: custom/bihar/reports/mch_reports.py:79
 msgid "ANC  Hb"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:55
+#: custom/bihar/reports/mch_reports.py:80
 msgid "ANC1 completed within 12 weeks? "
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:58
+#: custom/bihar/reports/mch_reports.py:82
 msgid "Second ANC (14-26 weeks)"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:59
+#: custom/bihar/reports/mch_reports.py:83
 msgid "ANC 2 Date"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:60
+#: custom/bihar/reports/mch_reports.py:84
 msgid "ANC 2 Blood Pressure"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:62
+#: custom/bihar/reports/mch_reports.py:85
 msgid "ANC 2 Weight"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:64
+#: custom/bihar/reports/mch_reports.py:87
 msgid "Third ANC (28-34 weeks)"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:65
+#: custom/bihar/reports/mch_reports.py:88
 msgid "ANC 3 Date"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:66
+#: custom/bihar/reports/mch_reports.py:89
 msgid "ANC 3 Blood Pressure"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:68
+#: custom/bihar/reports/mch_reports.py:90
 msgid "ANC 3 Weight"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:70
+#: custom/bihar/reports/mch_reports.py:92
 msgid "Fourth ANC (34 weeks to Delivery)"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:71
+#: custom/bihar/reports/mch_reports.py:93
 msgid "ANC 4 Date"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:72
+#: custom/bihar/reports/mch_reports.py:94
 msgid "ANC 4 Blood Pressure"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:74
+#: custom/bihar/reports/mch_reports.py:95
 msgid "ANC 4 Weight"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:75
+#: custom/bihar/reports/mch_reports.py:96
 msgid "TT1 date"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:76
+#: custom/bihar/reports/mch_reports.py:97
 msgid "TT2 date"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:77
+#: custom/bihar/reports/mch_reports.py:98
 msgid "TT Booster"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:78
+#: custom/bihar/reports/mch_reports.py:99
 msgid "Received  date of 100 IFA tablets "
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:80
+#: custom/bihar/reports/mch_reports.py:100
 msgid "Anemia"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:81
+#: custom/bihar/reports/mch_reports.py:101
 msgid "Any complications"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:82
+#: custom/bihar/reports/mch_reports.py:102
 msgid "RTI /STI <yes/no>"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:84
+#: custom/bihar/reports/mch_reports.py:104
 msgid "Pregnancy Outcome"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:85
+#: custom/bihar/reports/mch_reports.py:105
 msgid "Date of delivery"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:87
+#: custom/bihar/reports/mch_reports.py:107
 msgid "Place of delivery (home - SBA/Non-SBA) (Hospital - public/private)"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:89
+#: custom/bihar/reports/mch_reports.py:108
 msgid "Nature of delivery"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:91
+#: custom/bihar/reports/mch_reports.py:109
 msgid "Complications"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:92
+#: custom/bihar/reports/mch_reports.py:110
 msgid "Discharge date"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:93
+#: custom/bihar/reports/mch_reports.py:111
 msgid "Received date of JSY benefits"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:95
+#: custom/bihar/reports/mch_reports.py:112
 msgid "Abortion type"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:97
+#: custom/bihar/reports/mch_reports.py:114
 msgid "Post Delivery Details"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:99
+#: custom/bihar/reports/mch_reports.py:116
 msgid "First PNC visit (within 48 hours / within 7 days/ after 7 days)"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:101
+#: custom/bihar/reports/mch_reports.py:117
 msgid "Complications after delivery"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:103
+#: custom/bihar/reports/mch_reports.py:118
 msgid "Type of family planning adopted after delivery"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:105
+#: custom/bihar/reports/mch_reports.py:119
 msgid "Checked mother and infant immediate after delivery?"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:107
+#: custom/bihar/reports/mch_reports.py:120
 msgid "Infant outcome number code"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:110
+#: custom/bihar/reports/mch_reports.py:122
 msgid "Child 1 Details"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:111
-#: custom/bihar/reports/mch_reports.py:119
-#: custom/bihar/reports/mch_reports.py:127
+#: custom/bihar/reports/mch_reports.py:123
+#: custom/bihar/reports/mch_reports.py:129
 #: custom/bihar/reports/mch_reports.py:135
+#: custom/bihar/reports/mch_reports.py:141
 msgid "Name of the child"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:113
-#: custom/bihar/reports/mch_reports.py:121
-#: custom/bihar/reports/mch_reports.py:129
+#: custom/bihar/reports/mch_reports.py:125
+#: custom/bihar/reports/mch_reports.py:131
 #: custom/bihar/reports/mch_reports.py:137
+#: custom/bihar/reports/mch_reports.py:143
 msgid "First weight at birth"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:115
-#: custom/bihar/reports/mch_reports.py:123
-#: custom/bihar/reports/mch_reports.py:131
-#: custom/bihar/reports/mch_reports.py:139
+#: custom/bihar/reports/mch_reports.py:126
+#: custom/bihar/reports/mch_reports.py:132
+#: custom/bihar/reports/mch_reports.py:138
+#: custom/bihar/reports/mch_reports.py:144
 msgid "Breastfed within an hour?"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:118
+#: custom/bihar/reports/mch_reports.py:128
 msgid "Child 2 Details"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:126
+#: custom/bihar/reports/mch_reports.py:134
 msgid "Child 3 Details"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:134
+#: custom/bihar/reports/mch_reports.py:140
 msgid "Child 4 Details"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:141
+#: custom/bihar/reports/mch_reports.py:145
 msgid "Migrate status "
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:237
+msgid "Child Name"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:238
+msgid "Father an Mother Name"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:239
+msgid "Mother's MCTS ID"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:242
+msgid "Address"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:245
+msgid "DOB / AGE"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:246
+msgid "Place of delivery (home - SBA/Non-SBA) (Hospital -  public/private)"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:256
+msgid "At Birth"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:258
+msgid "OPV0"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:259
+msgid "Hepatitis-Birth dose "
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:261
+msgid "At 6 Weeks"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:262
+msgid "DPT1"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:263
+msgid "OPV1"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:264
+msgid "Hepatitis-B1"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:266
+msgid "At 10 Weeks"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:267
+msgid "DPT2"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:268
+msgid "OPV2"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:269
+msgid "Hepatitis-B2"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:271
+msgid "At 14 Weeks"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:272
+msgid "DPT3"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:273
+msgid "OPV3"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:274
+msgid "Hepatitis-B3"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:276
+msgid "Between 9-12 Months"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:277
+msgid "Measles (1st  dose)"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:279
+msgid "Between 16-24 Months"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:281
+msgid "Vitamin A dose-1 "
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:282
+msgid "Measles (2nd dose)/ MR Vaccine"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:284
+msgid "After 2 Years"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:285
+msgid "DPT Booster"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:286
+msgid "OPV Booster"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:287
+msgid "Vitamin A dose-2"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:288
+msgid "Vitamin A dose-3"
+msgstr ""
+
+#: custom/bihar/reports/mch_reports.py:289
+msgid "JE Vaccine"
 msgstr ""
 
 #: custom/bihar/reports/supervisor.py:201
