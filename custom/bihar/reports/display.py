@@ -10,29 +10,29 @@ def get_property(dict_obj, name, default=None):
     if name in dict_obj:
         return dict_obj[name]
     else:
-        return default if default else "---"
+        return default if default is not None else "---"
 
 
 class MCHDisplay(CaseDisplay):
 
     def __init__(self, report, case):
-        user = CommCareUser.get_by_user_id(case["user_id"])
-        if user:
-            setattr(self, "_village", get_property(user.user_data, "village"))
-            setattr(self, "_asha_name", user.full_name if user.user_data["role"].upper() is "ASHA" else get_property(user.user_data, "partner_name"))
+        self.user = CommCareUser.get_by_user_id(case["user_id"])
+        if self.user:
+            setattr(self, "_village", get_property(self.user.user_data, "village"))
+            setattr(self, "_asha_name", self.user.full_name if self.user.user_data["role"].upper() is "ASHA" else get_property(self.user.user_data, "partner_name"))
 
-            if user.user_data["role"].upper() is "ASHA":
-                setattr(self, "_asha_number", user.phone_numbers[0] if len(user.phone_numbers) > 0 else "---")
+            if self.user.user_data["role"].upper() is "ASHA":
+                setattr(self, "_asha_number", self.user.phone_numbers[0] if len(self.user.phone_numbers) > 0 else "---")
             else:
-                setattr(self, "_asha_number", get_property(user.user_data, "partner_phone"))
+                setattr(self, "_asha_number", get_property(self.user.user_data, "partner_phone"))
 
-            setattr(self, "_awc_code_name", "%s, %s" % (get_property(user.user_data, "awc-code"), get_property(user.user_data, "village")))
-            setattr(self, "_aww_name", get_property(user.user_data, "name") if user.user_data["role"].upper() is "AWW" else get_property(user.user_data, "partner_name"))
+            setattr(self, "_awc_code_name", "%s, %s" % (get_property(self.user.user_data, "awc-code"), get_property(self.user.user_data, "village")))
+            setattr(self, "_aww_name", get_property(self.user.user_data, "name") if self.user.user_data["role"].upper() is "AWW" else get_property(self.user.user_data, "partner_name"))
 
-            if user.user_data["role"].upper() is "AWW":
-                setattr(self, "_aww_number", user.phone_numbers[0] if len(user.phone_numbers) > 0 else "---")
+            if self.user.user_data["role"].upper() is "AWW":
+                setattr(self, "_aww_number", self.user.phone_numbers[0] if len(self.user.phone_numbers) > 0 else "---")
             else:
-                setattr(self, "_aww_number", get_property(user.user_data, "partner_phone"))
+                setattr(self, "_aww_number", get_property(self.user.user_data, "partner_phone"))
 
         super(MCHDisplay, self).__init__(report, case)
 
@@ -62,7 +62,10 @@ class MCHDisplay(CaseDisplay):
 
     @property
     def chw_name(self):
-        return self.owner_display
+        if self.user:
+            return "%s, \"%s\"" % (self.user.username, self.user.full_name)
+        else:
+            return _("Unknown user")
 
     @property
     def home_sba_assist(self):
@@ -157,9 +160,12 @@ class MCHMotherDisplay(MCHDisplay):
     @property
     def dob_age(self):
         if "mother_dob" in self.case and self.case["mother_dob"]:
-            mother_dob = self.case["mother_dob"]
-            days = (date.today() - self.parse_date(mother_dob).date()).days
-            return "%s, %s" % (mother_dob, days/365)
+            try:
+                mother_dob = self.case["mother_dob"]
+                days = (date.today() - self.parse_date(mother_dob).date()).days
+                return "%s, %s" % (mother_dob, days/365)
+            except:
+                return _("Bad date format!")
         else:
             return "---"
 
