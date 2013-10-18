@@ -41,9 +41,12 @@ class AppointmentsReport(TrialConnectReport):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn(_("Total Appointments Sent")),
-            DataTablesColumn(_("% Appointments Confirmed")),
-            DataTablesColumn(_("% Reminders Confirmed")),
+            DataTablesColumn(_("Total Appointments Sent"),
+                help_text=_("# of Appointment Cases with at least one CommConnect reminder sent out within date range")),
+            DataTablesColumn(_("% Appointments Confirmed"),
+                help_text=_("# of Appointment Cases that had a message sent out within the time period with the case property with a state of confirmed")),
+            DataTablesColumn(_("% Reminders Confirmed"),
+                help_text=_("# of forms sent out over SMS for appointment cases that are completed over the date period and not partial submissions")),
             DataTablesColumn(_("Avg Reminders Per Appointment")),
             DataTablesColumn(_("Avg Confirmations Per Appointment")),
         )

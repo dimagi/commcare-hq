@@ -1,7 +1,7 @@
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 from corehq.apps.reminders.models import REMINDER_TYPE_ONE_TIME
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.sms.models import WORKFLOW_KEYWORD, WORKFLOW_REMINDER, WORKFLOW_BROADCAST
 from corehq.elastic import es_query, ES_URLS, es_histogram
@@ -40,14 +40,19 @@ class SystemOverviewReport(BaseSystemOverviewReport):
 
     @property
     def headers(self):
-        return DataTablesHeader(
+        columns = [
             DataTablesColumn("", sortable=False),
-            DataTablesColumn(_("Number")),
-            DataTablesColumn(_("Mobile Worker Messages")),
-            DataTablesColumn(_("Case Messages")),
-            DataTablesColumn(_("Incoming")),
-            DataTablesColumn(_("Outgoing")),
-        )
+            DataTablesColumn(_("Number"), help_text=_("Number of individual items")),
+        ]
+        columns.append(DataTablesColumnGroup("",
+            DataTablesColumn(_("Mobile Worker Messages"),
+                             help_text=_("SMS Messages to or from mobile workers' phones, incoming and outgoing")),
+            DataTablesColumn(_("Case Messages"),
+                             help_text=_("SMS Messages to or from a phone number in a case, incoming and outgoing"))))
+        columns.append(DataTablesColumnGroup("",
+            DataTablesColumn(_("Incoming"), help_text=_("Total incoming SMS")),
+            DataTablesColumn(_("Outgoing"), help_text=_("Total outgoing SMS"))))
+        return DataTablesHeader(*columns)
 
     @property
     def rows(self):
@@ -139,9 +144,9 @@ class SystemUsersReport(BaseSystemOverviewReport):
     def headers(self):
         return DataTablesHeader(
             DataTablesColumn("Users", sortable=False),
-            DataTablesColumn(_("Mobile Workers")),
-            DataTablesColumn(_("Cases")),
-            DataTablesColumn(_("Total")),
+            DataTablesColumn(_("Mobile Workers"), help_text=_("SMS Messaging Statistics for Mobile Workers")),
+            DataTablesColumn(_("Cases"), help_text=_("SMS Messaging Statistics for Cases")),
+            DataTablesColumn(_("Total"), help_text=_("SMS Messaging Statistics for Mobile Workers and Cases")),
         )
 
     @property
@@ -180,7 +185,7 @@ class SystemUsersReport(BaseSystemOverviewReport):
             val = num * floater / denom if denom != 0 else 0
             return "%.2f" % val + ("%" if percent else "")
 
-        active = row("Active", get_actives("commcareuser"), get_actives("commcarecase"))
+        active = row(_("Number Active"), get_actives("commcareuser"), get_actives("commcarecase"))
 
         perc_active = [_("% Active"),
                        div(active[1], number[1], True), div(active[2], number[2], True), div(active[3], number[3], True)]
@@ -192,11 +197,11 @@ class SystemUsersReport(BaseSystemOverviewReport):
                 to_cases = term['count']
             elif term['term'] == 'commcareuser':
                 to_users = term['count']
-        messages = row("Messages", to_users, to_cases)
+        messages = row(_("Number of SMS Messages, incoming and outgoing"), to_users, to_cases)
 
-        avg_per_user = [_("Avg per User"),
+        avg_per_user = [_("Avg SMS Messages per User"),
                         div(messages[1], number[1]), div(messages[2], number[2]), div(messages[3], number[3])]
-        avg_per_act_user = [_("Avg per Active User"),
+        avg_per_act_user = [_("Avg SMS Messages per Active User"),
                             div(messages[1], active[1]), div(messages[2], active[2]), div(messages[3], active[3])]
 
         return [number, active, perc_active, messages, avg_per_user, avg_per_act_user]
