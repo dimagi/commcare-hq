@@ -12,6 +12,6 @@
             </label>
         </div>
     {% else %}
-        {% crispy_field field 'placeholder' field.label %}
+        <div class="help-inline">{% crispy_field field 'placeholder' field.label %}</div>
     {% endif %}
 {% endif %}

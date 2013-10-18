@@ -199,6 +199,25 @@ var CRUDPaginatedListModel = function (
             }
         });
     };
+
+    self.refreshList = function (paginatedItem) {
+        $.ajax({
+            url: '',
+            type: 'post',
+            dataType: 'json',
+            data: {
+                action: 'refresh',
+                itemId: paginatedItem.itemId,
+                page: 1,
+                limit: self.pageLimit(),
+                sortBy: self.sortBy
+            },
+            statusCode: self.handleStatusCode,
+            success: function (data) {
+                self.utils.reloadList(data);
+            }
+        })
+    };
 };
 
 var PaginatedItem = function (itemSpec) {
@@ -264,6 +283,13 @@ var PaginatedItem = function (itemSpec) {
             $deleteButton.click(function () {
                 $(this).button('loading');
                 self.getItemRow().trigger('deleteItem');
+            });
+        }
+        var $refreshButton = $(elems).find('.refresh-list-confirm');
+        if ($refreshButton) {
+            $refreshButton.click(function () {
+                $(this).button('loading');
+                self.getItemRow().trigger('refreshList');
             });
         }
     };

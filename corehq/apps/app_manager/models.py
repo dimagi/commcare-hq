@@ -623,6 +623,13 @@ class FormBase(DocumentSchema):
     def default_name(self):
         return self.name[self.get_app().default_language]
 
+    @property
+    def full_path_name(self):
+        return "%(app_name)s > %(module_name)s > %(form_name)s" % {
+            'app_name': self.get_app().name,
+            'module_name': self.get_module().name[self.get_app().default_language],
+            'form_name': self.default_name()
+        }
 
 class JRResourceProperty(StringProperty):
 
@@ -673,11 +680,14 @@ class DetailColumn(IndexedSchema):
     """
     Represents a column in case selection screen on the phone. Ex:
         {
-            'header': {'en': 'Sex', 'pt': 'Sexo'},
+            'header': {'en': 'Sex', 'por': 'Sexo'},
             'model': 'case',
             'field': 'sex',
             'format': 'enum',
-            'enum': {'en': {'m': 'Male', 'f': 'Female'}, 'pt': {'m': 'Macho', 'f': 'Fêmea'}}
+            'enum': {
+                'm': {'en': 'Male', 'por': 'Macho'},
+                'f': {'en': 'Female', 'por': 'Fêmea'},
+            },
         }
 
     """

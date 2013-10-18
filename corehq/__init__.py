@@ -1,3 +1,4 @@
+from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.reports import AdminUserReport, AdminAppReport
 from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
@@ -53,13 +54,18 @@ def REPORTS(project):
             commtrack_maps.ReportingStatusMapReport,
         )))
 
-    messaging = (lambda project, user: (
-        _("Logs") if project.commtrack_enabled else _("Messaging")), (
+    messaging_reports = (
         sms.MessagesReport,
         sms.MessageLogReport,
         ivr.CallLogReport,
         ivr.ExpectedCallbackReport,
-    ))
+    )
+
+    messaging_reports += getattr(Domain.get_module_by_name(project.name), 'MESSAGING_REPORTS', ())
+
+    messaging = (lambda project, user: (
+        _("Logs") if project.commtrack_enabled else _("Messaging")), messaging_reports)
+
     if project.commconnect_enabled:
         reports.insert(0, messaging)
     else:

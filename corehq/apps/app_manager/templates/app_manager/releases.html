@@ -101,7 +101,9 @@
             </small></p>
         </div>
         <button class="btn btn-primary" data-bind="
-            click: makeNewBuild
+            click: makeNewBuild,
+            attr: {disabled: !makeNewBuildEnabled() ? 'disabled' : undefined},
+            css: {disabled: !makeNewBuildEnabled()}
         ">{% trans 'Make New Version' %}</button>
 
         <div id="build-errors-wrapper"></div>
@@ -213,7 +215,7 @@
                         <div data-bind="visible: fetchState() !== 'pending' && !doneFetching(), css: {hide: false}" class="hide">
                             <a href="#" class="btn" data-bind="click: getMoreSavedApps">{% trans "View More" %}</a>
                         </div>
-                        <div data-bind="visible: doneFetching() && !savedApps().length, css: {hide: false}" class="hide">
+                        <div data-bind="visible: doneFetching() && makeNewBuildEnabled() && !savedApps().length, css: {hide: false}" class="hide">
                             <div class="alert alert-info">
                                 {% trans 'Use the <strong>Make New Version</strong> button to create and deploy the latest version of your application' %}
                             </div>
@@ -320,8 +322,11 @@
                         <div class="accordion-body collapse">
                             <div class="accordion-inner">
                                 <label class="checkbox">
-                                    <input type="checkbox" data-bind="checked: include_media">
+                                    <input type="checkbox" data-bind="checked: include_media, enable: mm_supported()">
                                     {% trans "Include Multimedia" %}
+                                    <span data-bind="visible: !mm_supported()" class="label">
+                                        {% trans "Only supported for builds made after 2013-10-15" %}
+                                    </span>
                                 </label>
                                 <p>
                                     <span data-bind="visible: get_short_odk_url()">
@@ -371,8 +376,11 @@
                                             <div class="tab-pane">
                                                 <div data-bind="visible: $data">
                                                     <label class="checkbox" data-bind="visible: $parent.short_odk_media_url && $index() === 1">
-                                                        <input type="checkbox" data-bind="checked: $parent.include_media">
+                                                        <input type="checkbox" data-bind="checked: $parent.include_media, enable: $parent.mm_supported()">
                                                         {% trans "Include Multimedia" %}
+                                                        <span data-bind="visible: !$parent.mm_supported()" class="label">
+                                                            {% trans "Only supported for builds made after 2013-10-15" %}
+                                                        </span>
                                                     </label>
                                                     <form method="post" action="{% url "corehq.apps.sms.views.send_to_recipients" domain %}">
                                                         <label>{% trans "Send to:" %}</label>

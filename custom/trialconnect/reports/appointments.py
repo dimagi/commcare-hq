@@ -10,10 +10,10 @@ from custom.trialconnect.smspillow import TC_STUB
 
 
 class AppointmentsReport(TrialConnectReport):
-    slug = 'appointments'
-    name = ugettext_noop("Appointments")
-    description = ugettext_noop("Description for Appointments Report")
-    section_name = ugettext_noop("Appointments")
+    slug = 'appointment_performance'
+    name = ugettext_noop("Appointment Performance")
+    description = ugettext_noop("Appointment confirmation and response rates")
+    section_name = ugettext_noop("Appointment Performance")
     fields = [
         'corehq.apps.reports.filters.select.MultiCaseGroupFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter',

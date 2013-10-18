@@ -1,7 +1,7 @@
 import copy
 import json
 import re
-from crispy_forms.bootstrap import InlineField, Accordion, AccordionGroup, FormActions, StrictButton
+from crispy_forms.bootstrap import InlineField, FormActions, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from django.core.urlresolvers import reverse
@@ -687,7 +687,8 @@ class SimpleScheduleCaseReminderForm(forms.Form):
     # simple has start_condition_type = CASE_CRITERIA by default
     case_type = forms.CharField(
         required=False,
-    )  # this should be a dropdown of all case types
+        label="Case Type",
+    )
     start_reminder_on = forms.ChoiceField(
         label="Start Reminder",
         required=False,
@@ -699,8 +700,8 @@ class SimpleScheduleCaseReminderForm(forms.Form):
     ## send options > start_reminder_on = case_date
     start_property = forms.CharField(
         required=False,
-        label="Property Name"
-    )  # todo select2 of case properties
+        label="Enter a Case Property",
+    )
     start_match_type = forms.ChoiceField(
         required=False,
         choices=MATCH_TYPE_CHOICES,
@@ -727,7 +728,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
     start_date = forms.CharField(
         required=False,
         label="Case Property",
-    )   # todo select2 of case properties
+    )
     start_date_offset_type = forms.ChoiceField(
         required=False,
         choices=(
@@ -755,7 +756,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
     recipient_case_match_property = forms.CharField(
         label="Case Property",
         required=False
-    )  # todo: sub-case property select2
+    )
     recipient_case_match_type = forms.ChoiceField(
         required=False,
         choices=MATCH_TYPE_CHOICES,
@@ -824,8 +825,9 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         )
     )
     until = forms.CharField(
-        required=False
-    )  # todo select2 of case properties
+        required=False,
+        label="Enter a Case Property",
+    )
 
     # Advanced Toggle
     submit_partial_forms = forms.BooleanField(
@@ -889,7 +891,12 @@ class SimpleScheduleCaseReminderForm(forms.Form):
 
         start_section = crispy.Fieldset(
             'Start',
-            crispy.Field('case_type', placeholder="todo: dropdown"),
+            crispy.Field(
+                'case_type',
+                css_class="input-large",
+                data_bind="value: case_type",
+                data_placeholder="Enter a Case Type"
+            ),
             FieldWithHelpBubble(
                 'start_reminder_on',
                 data_bind="value: start_reminder_on",
@@ -901,7 +908,10 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             crispy.Div(
                 BootstrapMultiField(
                     "When Case Property",
-                    InlineField('start_property', placeholder="todo: dropdown"),
+                    InlineField(
+                        'start_property',
+                        css_class="input-large",
+                    ),
                     InlineField(
                         'start_match_type',
                         data_bind="value: start_match_type",
@@ -924,12 +934,20 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                         style="margin-left: 5px;",
                         data_bind="visible: isStartPropertyOffsetVisible",
                     ),
-                    crispy.HTML('<p class="help-inline" data-bind="visible: isStartPropertyOffsetVisible">day(s)</p>'),
+                    crispy.Div(
+                        crispy.HTML('day(s)'),
+                        css_class="help-inline",
+                        data_bind="visible: isStartPropertyOffsetVisible",
+                    ),
                 ),
                 data_bind="visible: isStartReminderCaseProperty"
             ),
             crispy.Div(
-                crispy.Field('start_date'),
+                crispy.Field(
+                    'start_date',
+                    data_placeholder="Enter a Case Property",
+                    css_class="input-large",
+                ),
                 BootstrapMultiField(
                     "",
                     InlineField('start_date_offset_type'),
@@ -946,7 +964,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                 data_bind="visible: isStartReminderCaseDate"
             ),
             BootstrapMultiField(
-                "Timing",
+                "Time",
                 InlineField('event_timing', data_bind="value: event_timing"),
                 crispy.Div(
                     style="display: inline;",
@@ -975,14 +993,17 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             ),
             BootstrapMultiField(
                 "When Case Property",
-                InlineField('recipient_case_match_property', placeholder="todo: dropdown"),
+                InlineField(
+                    'recipient_case_match_property',
+                    placeholder="Enter a Case Property",
+                    css_class="input-large",
+                ),
                 InlineField(
                     'recipient_case_match_type',
                     data_bind="value: recipient_case_match_type",
                 ),
                 InlineField(
                     'recipient_case_match_value',
-                    style="margin-left: 5px;",
                     data_bind="visible: isRecipientCaseValueVisible",
                 ),
                 data_bind="visible: isRecipientSubcase",
@@ -1019,9 +1040,12 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             BootstrapMultiField(
                 "Stop Condition",
                 InlineField('stop_condition', data_bind="value: stop_condition"),
-                InlineField(
-                    'until',
-                    style="margin-left: 5px;",
+                crispy.Div(
+                    InlineField(
+                        'until',
+                        css_class="input-large",
+                    ),
+                    css_class="help-inline",
                     data_bind="visible: isUntilVisible",
                 ),
                 data_bind="visible: isStopConditionVisible",
@@ -1080,6 +1104,23 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         for field_name in self.fields.keys():
             current_values[field_name] = self[field_name].value()
         return current_values
+
+    @property
+    def select2_fields(self):
+        case_properties = [
+            'start_property',
+            'start_date',
+            'until',
+            'fire_time_aux',
+        ]
+        subcase_properties = [
+            'recipient_case_match_property',
+        ]
+
+        _fmt_field = lambda name, action: {'name': name, 'action': action}
+        return ([_fmt_field('case_type', 'search_case_type')] +
+                [_fmt_field(cp, 'search_case_property') for cp in case_properties] +
+                [_fmt_field(sp, 'search_subcase_property') for sp in subcase_properties])
 
     @property
     def relevant_choices(self):
@@ -1258,6 +1299,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                 event['day_num'] = 0
 
             # clean callback_timeout_intervals:
+            event["callback_timeout_intervals"] = []
             if method == METHOD_SMS_CALLBACK:
                 timeouts_str = event["callback_timeout_intervals"].split(",")
                 timeouts_int = []
@@ -1377,6 +1419,12 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                     for event in current_val:
                         if not event.message:
                             event.message = {(reminder_handler.default_lang or 'en'): ''}
+                        if event.form_unique_id:
+                            form = CCHQForm.get_form(event.form_unique_id)
+                            event.form_unique_id = json.dumps({
+                                'text': form.full_path_name,
+                                'id': event.form_unique_id,
+                            })
                     current_val = json.dumps([e.to_json() for e in current_val])
                 if field == 'callback_timeout_intervals':
                     current_val = ",".join(current_val)
@@ -1397,7 +1445,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
 
         start_offset = abs(reminder_handler.start_offset or 0)
 
-        if reminder_handler.ui_type == UI_SIMPLE_FIXED and len(reminder_handler.events) > 0:
+        if len(reminder_handler.events) > 0:
             initial['event_timing'] = cls._format_event_timing_choice(
                 reminder_handler.event_interpretation,
                 reminder_handler.events[0].fire_time_type,
@@ -1435,13 +1483,16 @@ class CaseReminderEventForm(forms.Form):
 
     # EVENT_AS_OFFSET: number of HH:MM:SS after last fire
     # EVENT_AS_SCHEDULE: time of day
-    fire_time = forms.TimeField(required=False)  # todo time dropdown
+    fire_time = forms.TimeField(
+        required=False,
+        label="HH:MM:SS",
+    )
 
     # method must be EVENT_AS_SCHEDULE
     fire_time_aux = forms.CharField(
         required=False,
-        label="Case Property",
-    )  # todo select2 of case properties
+        label="Enter a Case Property",
+    )
 
     time_window_length = forms.IntegerField(
         label="Window Length (minutes)",
@@ -1466,7 +1517,7 @@ class CaseReminderEventForm(forms.Form):
     form_unique_id = forms.CharField(
         required=False,
         label="Survey",
-    )  # todo select2 of forms
+    )
 
     def __init__(self, ui_type=None, *args, **kwargs):
         super(CaseReminderEventForm, self).__init__(*args, **kwargs)
@@ -1480,7 +1531,11 @@ class CaseReminderEventForm(forms.Form):
             crispy.Div(data_bind="template: {name: 'event-message-template', foreach: messageTranslations}, "
                                  "visible: isMessageVisible"),
             crispy.Div(
-                crispy.Field('form_unique_id', data_bind="value: form_unique_id, attr: {id: ''}"),
+                crispy.Field(
+                    'form_unique_id',
+                    data_bind="value: form_unique_id, attr: {id: ''}",
+                    css_class="input-xxlarge",
+                ),
                 data_bind="visible: isSurveyVisible",
             ),
         )
@@ -1488,10 +1543,24 @@ class CaseReminderEventForm(forms.Form):
         self.helper_fire_time = FormHelper()
         self.helper_fire_time.form_tag = False
         self.helper_fire_time.layout = crispy.Layout(
-            InlineField('fire_time', data_bind="value: fire_time, attr: {id: ''}, "
-                                               "visible: isFireTimeVisible"),
-            InlineField('fire_time_aux', data_bind="value: fire_time_aux, attr: {id: ''}, "
-                                                   "visible: isFireTimeAuxVisible"),
+            crispy.Div(
+                crispy.HTML('<input type="text" data-bind="value: fire_time" '
+                            'data-timeset="true" class="input-small" />'),
+                crispy.HTML('<span class="add-on"><i class="icon-time"></i>'),
+                css_class="input-append bootstrap-timepicker",
+                style="margin-left:5px;",
+                data_bind="visible: isFireTimeVisible",
+            ),
+            crispy.Div(
+                InlineField(
+                    'fire_time_aux',
+                    data_bind="value: fire_time_aux, attr: {id: ''}",
+                    css_class="input-large",
+                ),
+                css_class="help-inline",
+                data_bind="visible: isFireTimeAuxVisible",
+                style="margin-left: 5px;",
+            ),
         )
 
         self.helper_general = FormHelper()
