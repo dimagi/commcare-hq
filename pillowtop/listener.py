@@ -26,8 +26,8 @@ pillow_logging.setLevel(logging.INFO)
 CHECKPOINT_FREQUENCY = 100
 WAIT_HEARTBEAT = 10000
 CHANGES_TIMEOUT = 60000
-RETRY_INTERVAL = 2 #seconds, exponentially increasing
-MAX_RETRIES = 4 #exponential factor threshold for alerts
+RETRY_INTERVAL = 2  # seconds, exponentially increasing
+MAX_RETRIES = 4  # exponential factor threshold for alerts
 
 INDEX_REINDEX_SETTINGS = {"index": {"refresh_interval": "900s",
                                     "merge.policy.merge_factor": 20,
@@ -150,8 +150,8 @@ class BasicPillow(object):
         if self.couch_db.doc_exist(doc_name):
             checkpoint_doc = self.couch_db.open_doc(doc_name)
         else:
-            #legacy check
-            #split doc and see if non_hostname setup exists.
+            # legacy check
+            # split doc and see if non_hostname setup exists.
             legacy_name = '.'.join(doc_name.split('.')[0:-1])
             starting_seq = "0"
             if self.couch_db.doc_exist(legacy_name):
@@ -183,6 +183,9 @@ class BasicPillow(object):
 
     def set_checkpoint(self, change):
         checkpoint = self.get_checkpoint()
+        pillow_logging.info(
+            "(%s) setting checkpoint: %s" % (checkpoint['_id'], change['seq'])
+        )
         checkpoint['seq'] = change['seq']
         checkpoint['timestamp'] = datetime.now(tz=pytz.UTC).isoformat()
         self.couch_db.save_doc(checkpoint)
@@ -197,18 +200,7 @@ class BasicPillow(object):
         """
         self.processor(simplejson.loads(change))
 
-    def processor(self, change, do_set_checkpoint=True):
-        """
-        Parent processsor for a pillow class - this should not be overridden.
-        This workflow is made for the situation where 1 change yields 1 transport/transaction
-        """
-
-        self.changes_seen += 1
-        if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
-            pillow_logging.info(
-                "(%s) setting checkpoint: %s" % (self.get_checkpoint_doc_name(), change['seq']))
-            self.set_checkpoint(change)
-
+    def process_change(self, change):
         try:
             t = self.change_trigger(change)
             if t is not None:
@@ -218,6 +210,17 @@ class BasicPillow(object):
         except Exception, ex:
             pillow_logging.exception("[%s] Error on change: %s, %s" % (self.get_name(), change['id'], ex))
 
+    def processor(self, change, do_set_checkpoint=True):
+        """
+        Parent processsor for a pillow class - this should not be overridden.
+        This workflow is made for the situation where 1 change yields 1 transport/transaction
+        """
+
+        self.changes_seen += 1
+        if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
+            self.set_checkpoint(change)
+
+        self.process_change(change)
 
     def change_trigger(self, changes_dict):
         """
@@ -409,18 +412,9 @@ class ElasticPillow(BasicPillow):
         """
         self.changes_seen += 1
         if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
-            pillow_logging.info(
-                "(%s) setting checkpoint: %s" % (self.get_checkpoint_doc_name(), change['seq']))
             self.set_checkpoint(change)
 
-        try:
-            t = self.change_trigger(change)
-            if t is not None:
-                tr = self.change_transform(t)
-                if tr is not None:
-                    self.change_transport(tr)
-        except Exception, ex:
-            pillow_logging.error("[%s] Error on change: %s, %s" % (self.get_name(), change['id'], ex))
+        self.process_change(change)
 
     def send_robust(self, path, data={}, retries=MAX_RETRIES, except_on_failure=False, update=False):
         """
@@ -721,4 +715,3 @@ class LogstashMonitoringPillow(NetworkPillow):
             return {}
         else:
             return super(NetworkPillow, self).processor(change)
-
