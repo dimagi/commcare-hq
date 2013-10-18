@@ -502,6 +502,7 @@ class MessagingTab(UITab):
             'rhartford@dimagi.com',
             'sshah@dimagi.com',
             'biyeun@dimagi.com',
+            'rhartford+15@dimagi.com',
         ]:
             from corehq.apps.sms.views import DomainSmsGatewayListView
             from corehq.apps.reminders.views import (
