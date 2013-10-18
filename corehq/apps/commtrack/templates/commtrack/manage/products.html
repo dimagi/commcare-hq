@@ -13,7 +13,7 @@
         $(function(){
             var help_text = {
                 "Archive Product": "",
-                "Delete Product": "",
+                "Delete Product": ""
             };
 
             $('.help_popover').popover({
@@ -30,7 +30,7 @@
                 start_page: {{ product_list.page }},
                 limit: {{ product_list.limit }},
                 show_inactive: {{ show_inactive|yesno:"true,false" }},
-                list_url: '{% url "commtrack_product_fetch" domain %}',
+                list_url: '{% url "commtrack_product_fetch" domain %}'
             });
         });
     </script>

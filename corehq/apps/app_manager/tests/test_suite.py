@@ -31,8 +31,10 @@ class SuiteTest(XmlTest, TestFileMixin):
         app_strings = commcare_translations.loads(strings)
 
         for string in locale_strings:
-            if string not in app_strings.keys():
+            if string not in app_strings:
                 raise AssertionError("App strings did not contain %s" % string)
+            if not app_strings.get(string, '').strip():
+                raise AssertionError("App strings has blank entry for %s" % string)
 
     def _test_generic_suite(self, app_tag, suite_tag=None):
         suite_tag = suite_tag or app_tag

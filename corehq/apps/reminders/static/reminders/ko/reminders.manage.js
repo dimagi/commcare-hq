@@ -1,9 +1,18 @@
-var ManageRemindersViewModel = function (initial, choices, ui_type, available_languages) {
+var ManageRemindersViewModel = function (
+    initial,
+    choices,
+    ui_type,
+    available_languages,
+    select2_fields
+) {
     'use strict';
     var self = this;
 
     self.choices = choices || {};
     self.ui_type = ui_type;
+    self.select2_fields = select2_fields;
+
+    self.case_type = ko.observable(initial.case_type);
 
     self.available_languages = ko.observable(_.map(available_languages, function (langcode) {
         return new ReminderLanguage(langcode);
@@ -61,8 +70,15 @@ var ManageRemindersViewModel = function (initial, choices, ui_type, available_la
     });
 
     self.stop_condition = ko.observable(initial.stop_condition);
+    self.isStopConditionVisible = ko.computed(function () {
+        return self.repeat_type() !== self.choices.REPEAT_TYPE_NO;
+    });
     self.isUntilVisible = ko.computed(function () {
         return self.stop_condition() === self.choices.STOP_CONDITION_CASE_PROPERTY;
+    });
+
+    self.isMaxQuestionRetriesVisible = ko.computed(function () {
+        return self.method() === self.choices.METHOD_IVR_SURVEY;
     });
 
     self.init = function () {
@@ -81,6 +97,50 @@ var ManageRemindersViewModel = function (initial, choices, ui_type, available_la
                 self.available_languages
             );
         }));
+        _.each(self.select2_fields, function (field) {
+            self.initCasePropertyChoices(field);
+        });
+        $('[data-timeset="true"]').each(function () {
+            $(this).timepicker({
+                showMeridian: false,
+                showSeconds: true,
+                defaultTime: $(this).val() || false
+            });
+        });
+        $('[name="form_unique_id"]').select2({
+            minimumInputLength: 0,
+            allowClear: true,
+            ajax: {
+                quietMillis: 150,
+                url: '',
+                dataType: 'json',
+                type: 'post',
+                data: function (term) {
+                    return {
+                        action: 'search_forms',
+                        term: term
+                    };
+                },
+                results: function (data) {
+                    return {
+                        results: data
+                    };
+                }
+            },
+            initSelection : function (element, callback) {
+                if (element.val()) {
+                    try {
+                        var data = $.parseJSON(element.val());
+                        callback(data);
+                    } catch (e) {
+                        // pass
+                    }
+                }
+            },
+            formatNoMatches: function (term) {
+                return "Please create a survey first.";
+            }
+        });
     };
 
     self.addLanguage = function (langcode) {
@@ -95,6 +155,63 @@ var ManageRemindersViewModel = function (initial, choices, ui_type, available_la
         self.default_lang(langcode);
     };
 
+    self.initCasePropertyChoices = function (field) {
+        var fieldInput = $('[name="' + field.name + '"]');
+        fieldInput.select2({
+            minimumInputLength: 0,
+            allowClear: true,
+            ajax: {
+                quietMillis: 150,
+                url: '',
+                dataType: 'json',
+                type: 'post',
+                data: function (term) {
+                    return {
+                        action: field.action,
+                        caseType: self.case_type(),
+                        term: term
+                    };
+                },
+                results: function (data) {
+                    return {
+                        results: data
+                    };
+                }
+            },
+            createSearchChoice: function (term, data) {
+                if (!self.case_type() && field.name !== 'case_type'){
+                    return false;
+                }
+                var matching_choices = _(data).map(function (item) {
+                    return item.id;
+                });
+                if (matching_choices.indexOf(term) === -1 && term) {
+                    var cleaned_term = term.split(' ').join('_');
+                    return {id: cleaned_term, text: cleaned_term, isNew: true}
+                }
+            },
+            formatResult: function (res) {
+                if (res.isError) {
+                    return '<span class="label label-important">Error</span> ' + res.errorText;
+                }
+                if (res.isNew) {
+                    return '<span class="label label-success">New</span> ' + res.text;
+                }
+                return res.text;
+            },
+            formatNoMatches: function (term) {
+                if (!self.case_type() && field.name !== 'case_type') {
+                    return "Please specify a Case Type";
+                }
+            },
+            initSelection : function (element, callback) {
+                if (element.val()) {
+                    var data = {id: element.val(), text: element.val()};
+                    callback(data);
+                }
+            }
+        });
+    };
 };
 
 var ReminderEvent = function (eventData, choices, method, event_timing, event_interpretation, available_languages) {

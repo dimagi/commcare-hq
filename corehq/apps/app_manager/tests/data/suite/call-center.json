@@ -549,7 +549,7 @@
                         {
                             "direction": "ascending",
                             "doc_type": "SortElement",
-                            "field": "formsSubmittedInLastWeek",
+                            "field": "indicator:call-center/formsSubmittedInLastWeek",
                             "type": "int"
                         }
                     ],

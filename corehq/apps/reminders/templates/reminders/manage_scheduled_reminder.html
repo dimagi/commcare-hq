@@ -19,10 +19,12 @@
             {{ form.current_values|JSON }},
             {{ form.relevant_choices|JSON }},
             {{ ui_type|JSON }},
-            {{ available_languages|JSON }}
+            {{ available_languages|JSON }},
+            {{ form.select2_fields|JSON }}
         );
         ko.applyBindings(manageRemindersModel, $('#manage-reminders-form').get(0));
         manageRemindersModel.init();
+
         $(function () {
             $('#add-language-modal').languagePicker(function (langcode) {
                 manageRemindersModel.addLanguage(langcode);
@@ -53,6 +55,10 @@
 
     <script type="text/html" id="event-general-template">
         {% crispy event_form event_form.helper_general %}
+    </script>
+
+    <script type="text/html" id="event-timeouts-template">
+        {% crispy event_form event_form.helper_timeouts %}
     </script>
 
     <script type="text/html" id="event-message-length-template">

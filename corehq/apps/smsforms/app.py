@@ -16,13 +16,18 @@ COMMCONNECT_DEVICE_ID = "commconnect"
 AUTH = DigestAuth(settings.TOUCHFORMS_API_USER, 
                   settings.TOUCHFORMS_API_PASSWORD)
 
-# If yield_responses is True, the list of xforms responses is returned, otherwise the text prompt for each is returned
-def start_session(domain, contact, app, module, form, case_id=None, yield_responses=False, session_type=XFORMS_SESSION_SMS):
+def start_session(domain, contact, app, module, form, case_id=None, yield_responses=False, session_type=XFORMS_SESSION_SMS, case_for_case_submission=False):
     """
     Starts a session in touchforms and saves the record in the database.
     
     Returns a tuple containing the session object and the (text-only) 
     list of generated questions/responses based on the form.
+    
+    Special params:
+    yield_responses - If True, the list of xforms responses is returned, otherwise the text prompt for each is returned
+    session_type - XFORMS_SESSION_SMS or XFORMS_SESSION_IVR
+    case_for_case_submission - True if this is a submission that a case is making to alter another related case. For example, if a parent case is filling out
+        an SMS survey which will update its child case, this should be True.
     """
     # NOTE: this call assumes that "contact" will expose three
     # properties: .raw_username, .get_id, and .get_language_code
@@ -31,7 +36,11 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
     # since the API user is a superuser, force touchforms to query only
     # the contact's cases by specifying it as an additional filterp
     if contact.doc_type == "CommCareCase":
-        session_data["additional_filters"] = { "case_id": contact.get_id, "footprint" : "True" }
+        session_data["additional_filters"] = {
+            "case_id": contact.get_id,
+            "footprint" : "True",
+            "include_children" : "True" if case_for_case_submission else "False",
+        }
     else:
         session_data["additional_filters"] = { "user_id": contact.get_id }
     

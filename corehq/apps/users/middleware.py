@@ -1,9 +1,16 @@
 from django.conf import settings
+from django.core import cache
 import django.core.exceptions
+from django.utils import simplejson
+from dimagi.utils.couch.cache import cache_core
+
+rcache = cache.get_cache('redis')
 
 ############################################################################################################
 from corehq.apps.users.models import CouchUser, PublicUser, InvalidUser
 from corehq.apps.domain.models import Domain
+
+SESSION_USER_KEY_PREFIX = "session_user_doc_%s"
 
 class UsersMiddleware(object):
     def __init__(self):        
@@ -24,7 +31,23 @@ class UsersMiddleware(object):
         if 'org' in view_kwargs:
             request.org = view_kwargs['org']
         if request.user and hasattr(request.user, 'get_profile'):
-            request.couch_user = CouchUser.from_django_user(request.user)
+            sessionid = request.COOKIES.get('sessionid', None)
+            if sessionid:
+                #roundabout way to keep doc_id based caching consistent.
+                #get user doc_id from session_id
+                cached_user_doc_id = rcache.get(SESSION_USER_KEY_PREFIX % sessionid, None)
+                # disable session based couch user caching - to be enabled later.
+                if cached_user_doc_id:
+                    #cache hit
+                    couch_user = CouchUser.wrap_correctly(cache_core.cached_open_doc(CouchUser.get_db(), cached_user_doc_id))
+                else:
+                    #cache miss, write to cache
+                    couch_user = CouchUser.from_django_user(request.user)
+                    if couch_user:
+                        cache_core.do_cache_doc(couch_user.to_json())
+                        rcache.set(SESSION_USER_KEY_PREFIX % sessionid, couch_user.get_id)
+                request.couch_user = couch_user
+
             if 'domain' in view_kwargs:
                 domain = request.domain
                 if not request.couch_user:
@@ -32,7 +55,6 @@ class UsersMiddleware(object):
                         key=domain,
                         reduce=False,
                         include_docs=True,
-                        #stale=settings.COUCH_STALE_QUERY,
                     ).one()
                     if couch_domain and couch_domain.is_public:
                         request.couch_user = PublicUser(domain)

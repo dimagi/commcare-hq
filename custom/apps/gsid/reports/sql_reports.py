@@ -359,7 +359,7 @@ class GSIDSQLByDayReport(GSIDSQLReport):
                 x = day
                 y = 0 if row[date_index + n + 1] == "--" else row[date_index + n + 1]
                 data_points.append({'x': x, 'y': y})
-            chart.add_dataset(row[date_index-1], data_points)
+            chart.add_dataset(row[date_index-1] + "(" + row[date_index] + ")", data_points)
         return [chart]
 
 class GSIDSQLTestLotsReport(GSIDSQLReport):
@@ -417,7 +417,7 @@ class GSIDSQLTestLotsReport(GSIDSQLReport):
         old_data = self.data
         rows = []
         for loc_key in self.keys:
-            row = [capitalize_fn(loc) for loc in loc_key[:-1]]
+            row = [capitalize_fn(loc) for loc in loc_key]
             for test in selected_tests:
                 test_lots = test_lots_map.get(test, None)
                 if not test_lots:
@@ -437,7 +437,7 @@ class GSIDSQLTestLotsReport(GSIDSQLReport):
 
     @property
     def headers(self):
-        column_headers = [DataTablesColumn(loc.capitalize()) for loc in self.group_by[:-3]]
+        column_headers = [DataTablesColumn(loc.capitalize()) for loc in self.group_by[:-2]]
         test_lots_map = self.test_lots_map
         for test in self.selected_tests:
             lots_headers = [test]

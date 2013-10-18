@@ -354,4 +354,33 @@ You should add the following to your `base-puppy-template` knockout template:
         </td>
     </script>
 
+
+Refreshing The Whole List Base on Update
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you want to do something that affects an item's position in the list (generally, moving it to the top), this is
+the feature you want.
+
+You implement the following method (note that a return is not expected):
+
+.. code-block:: python
+
+    class PuppiesCRUDView(BaseSectionView, CRUDPaginatedMixin):
+        ...
+
+        def refresh_item(self, item_id):
+            # refresh the item here
+            puppy = Puppy.get(item_id)
+            puppy.make_default()
+            puppy.save()
+
+Add a button like this to your template:
+
+.. code-block:: html
+    <button type="button"
+            class="btn refresh-list-confirm"
+            data-loading-text="Making Default...">
+        Make Default Puppy
+    </button>
+
 Now go on and make some CRUD paginated views!
