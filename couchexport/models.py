@@ -1,5 +1,6 @@
 import hashlib
 from itertools import islice
+from urllib2 import URLError
 from couchdbkit.ext.django.schema import Document, IntegerProperty, DictProperty,\
     DocumentSchema, StringProperty, SchemaListProperty, ListProperty,\
     StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty
@@ -59,7 +60,7 @@ class Format(object):
     def from_format(cls, format):
         format = format.lower()
         if format not in cls.VALID_FORMATS:
-            raise ValueError("Unsupported export format: %s!" % format)
+            raise URLError("Unsupported export format: %s!" % format)
         return cls(format, **cls.FORMAT_DICT[format])
 
 class ExportSchema(Document, UnicodeMixIn):
