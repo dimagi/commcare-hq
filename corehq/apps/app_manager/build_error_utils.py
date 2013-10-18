@@ -27,7 +27,8 @@ def get_case_errors(module, needs_case_type, needs_case_detail,
         columns = module.get_detail('case_short').columns + module.get_detail('case_long').columns
         for column in columns:
             if column.format in ('enum', 'enum-image'):
-                for key in column.enum.keys():
+                for item in column.enum:
+                    key = item.key
                     if not re.match('^([\w_-]*)$', key):
                         yield {
                             'type': 'invalid id key',

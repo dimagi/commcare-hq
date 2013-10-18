@@ -261,24 +261,24 @@ class Enum(FormattedDetailColumn):
     @property
     def xpath_function(self):
         parts = []
-        for key in sorted(self.column.enum.keys()):
+        for item in self.column.enum:
             parts.append(
-                u"if({xpath} = '{key}', $k{key}, ".format(key=key,
+                u"if({xpath} = '{key}', $k{key}, ".format(key=item.key,
                                                           xpath=self.xpath)
             )
-        parts.append("''")
-        parts.append(")" * len(self.column.enum))
+        parts.append(u"''")
+        parts.append(u")" * len(self.column.enum))
         return ''.join(parts)
 
     @property
     def variables(self):
         variables = {}
-        for key in self.column.enum:
-            v_key = u"k{key}".format(key=key)
+        for item in self.column.enum:
+            v_key = u"k{key}".format(key=item.key)
             v_val= self.id_strings.detail_column_enum_variable(self.module,
                                                                self.detail,
                                                                self.column,
-                                                               key)
+                                                               item.key)
             variables[v_key] = v_val
         return variables
 

@@ -44,8 +44,8 @@ def _create_custom_app_strings(app, lang):
                     yield id_strings.detail_column_header_locale(module, detail, column), trans(column.header)
 
                 if column.format in ('enum', 'enum-image'):
-                    for key, val in column.enum.items():
-                        yield id_strings.detail_column_enum_variable(module, detail, column, key), trans(val)
+                    for item in column.enum:
+                        yield id_strings.detail_column_enum_variable(module, detail, column, item.key), trans(item.value)
 
         yield id_strings.module_locale(module), trans(module.name)
         if module.case_list.show:
