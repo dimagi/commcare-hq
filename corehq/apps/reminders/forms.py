@@ -846,7 +846,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         choices=((n, n) for n in QUESTION_RETRY_CHOICES)
     )
 
-    def __init__(self, data=None, is_previewer=False, domain=None, ui_type=None, *args, **kwargs):
+    def __init__(self, data=None, is_previewer=False, domain=None, ui_type=None, is_edit=False, *args, **kwargs):
         if 'initial' not in kwargs:
             kwargs['initial'] = {
                 'event_timing': self._format_event_timing_choice(EVENT_AS_OFFSET,
@@ -864,6 +864,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
 
         self.domain = domain
         self.ui_type = ui_type
+        self.is_edit = is_edit
 
         if is_previewer:
             method_choices = copy.copy(self.fields['method'].choices)
@@ -1084,7 +1085,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             advanced_section,
             FormActions(
                 StrictButton(
-                    "Create Reminder",
+                    _("Edit Reminder") if is_edit else _("Create Reminder"),
                     css_class='btn-primary',
                     type='submit',
                 ),

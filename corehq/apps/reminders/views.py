@@ -655,12 +655,14 @@ class EditScheduledReminderView(CreateScheduledReminderView):
                 self.request.POST,
                 initial=initial,
                 is_previewer=self.is_previewer,
-                domain=self.domain
+                domain=self.domain,
+                is_edit=True,
             )
         return SimpleScheduleCaseReminderForm(
             initial=initial,
             is_previewer=self.is_previewer,
-            domain=self.domain
+            domain=self.domain,
+            is_edit=True,
         )
 
     @property
