@@ -170,8 +170,10 @@ function ReleasesMain(o) {
             self.url('currentVersion')
         ).success(function (data) {
             self.currentAppVersion(data.currentVersion);
-            if (data.latestRelease !== self.lastAppVersion()) {
-                window.alert("New version found");
+            if (!data.latestRelease) {
+                self.actuallyMakeBuild();
+            } else if (data.latestRelease !== self.lastAppVersion()) {
+                window.alert("The releases list has changed since you loaded the page.");
                 self.reloadApps();
             } else if (self.lastAppVersion() !== self.currentAppVersion()) {
                 self.actuallyMakeBuild();
