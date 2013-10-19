@@ -2,7 +2,7 @@ import copy
 from corehq.pillows.case import CasePillow
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_MAPPING, REPORT_CASE_INDEX
 from django.conf import settings
-from .base import convert_properties
+from .base import convert_property_dict
 
 
 class ReportCasePillow(CasePillow):
@@ -23,5 +23,5 @@ class ReportCasePillow(CasePillow):
             #full indexing is only enabled for select domains on an opt-in basis
             return None
         doc_ret = copy.deepcopy(doc_dict)
-        convert_properties(doc_ret, self.default_mapping, override_root_keys=['_id', 'doc_type', '_rev', '#export_tag'])
+        convert_property_dict(doc_ret, self.default_mapping, override_root_keys=['_id', 'doc_type', '_rev', '#export_tag'])
         return doc_ret

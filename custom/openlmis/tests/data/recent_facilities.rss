@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Event feed</title>
+  <link rel="self" type="application/atom+xml" href="https://uat.221.134.198.28.xip.io/feeds/facility/recent" />
+  <link rel="via" type="application/atom+xml" href="https://uat.221.134.198.28.xip.io/feeds/facility/3" />
+  <link rel="prev-archive" type="application/atom+xml" href="https://uat.221.134.198.28.xip.io/feeds/facility/2" />
+  <author>
+    <name>Atomfeed</name>
+  </author>
+  <id>+3</id>
+  <generator uri="https://github.com/ICT4H/atomfeed">Atomfeed</generator>
+  <updated>2013-08-26T11:05:57Z</updated>
+  <entry>
+    <title>Facility</title>
+    <category term="facility" />
+    <id>tag:atomfeed.ict4h.org:c992599f-6d91-4f53-b74d-6bb72c7817ee</id>
+    <updated>2013-08-19T11:19:09Z</updated>
+    <content type="application/vnd.atomfeed+xml"><![CDATA[{"code":"FCcode20130819-044859","name":"FCname20130819-044859","facilityType":"Lvl3 Hospital","description":"Testing description","mainPhone":"9711231305","fax":"9711231305","address1":"Address1","address2":"Address2","geographicZone":"Ngorongoro","catchmentPopulation":100,"latitude":-555.5555,"longitude":444.4444,"altitude":4545.4545,"operatedBy":"MoH","coldStorageGrossCapacity":3434.3434,"coldStorageNetCapacity":3535.3535,"suppliesOthers":true,"sdp":true,"hasElectricity":true,"online":true,"hasElectronicSCC":true,"hasElectronicDAR":true,"active":true,"goLiveDate":1377369000000,"goDownDate":1377455400000,"virtualFacility":false,"comments":"Comments","dataReportable":true,"gln":"Testing Gln"}]]></content>
+  </entry>
+  <entry>
+    <title>Facility</title>
+    <category term="facility" />
+    <id>tag:atomfeed.ict4h.org:e8f2c9ab-1bf5-4ea5-a4f6-476fecb34625</id>
+    <updated>2013-08-26T11:05:57Z</updated>
+    <content type="application/vnd.atomfeed+xml"><![CDATA[{"code":"facilityf10","name":"facilityf10 Village Dispensary","facilityType":"Lvl3 Hospital","description":"IT department","mainPhone":"9711231305","fax":"9711231305","address1":"Address1","address2":"Address2","geographicZone":"virtualgeozone","catchmentPopulation":100,"latitude":-555.5555,"longitude":444.4444,"altitude":4545.4545,"operatedBy":"MoH","coldStorageGrossCapacity":3434.3434,"coldStorageNetCapacity":3535.3535,"suppliesOthers":false,"sdp":true,"hasElectricity":true,"online":false,"hasElectronicSCC":true,"hasElectronicDAR":false,"active":true,"goLiveDate":1353436200000,"goDownDate":-2592106200000,"satelliteFacility":true,"virtualFacility":false,"comments":"facility","dataReportable":true,"gln":"G7645"}]]></content>
+  </entry>
+</feed>
+

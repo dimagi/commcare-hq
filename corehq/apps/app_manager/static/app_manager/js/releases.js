@@ -1,8 +1,48 @@
-function SavedApp(o) {
+function SavedApp(o, r) {
+    var $root = r;
     var self = ko.mapping.fromJS(o);
     $.each(['comment_user_name', '_deleteState'], function (i, attr) {
         self[attr] = self[attr] || ko.observable();
     });
+    self.include_media = ko.observable(false);
+
+    self.get_short_odk_url = ko.computed(function() {
+        if (self.include_media()) {
+           if (self.short_odk_media_url) {
+               return self.short_odk_media_url();
+           }
+        } else {
+            if (self.short_odk_url) {
+                return self.short_odk_url();
+            }
+        }
+        return false;
+    });
+
+    self.mm_supported = function() {
+        // This is added to fix legacy issues with incorrectly formatted media_profile.ccpr files.
+        // Files that were generated prior to 10/16/2013 are affected, so don't support remote mm for build made before then.
+        var supported_date = new Date(2013, 9, 16);
+        var date_built = new Date(self.built_on());
+        return date_built.getTime() > supported_date.getTime();
+    };
+
+    self.get_odk_install_url = ko.computed(function() {
+        var slug = self.include_media() ? 'odk_media' : 'odk';
+        return $root.url(slug, self.id());
+    });
+
+    self.sms_url = function(index) {
+        if (index === 0) { // sending to sms
+            return self.short_url()
+        } else { // sending to odk
+            if (self.include_media() && self.short_odk_media_url()) {
+                return self.short_odk_media_url();
+            } else {
+                return self.short_odk_url();
+            }
+        }
+    };
     return self;
 }
 
@@ -66,7 +106,7 @@ function ReleasesMain(o) {
         }).success(function (savedApps) {
             var i, savedApp;
             for (i = 0; i < savedApps.length; i++) {
-                savedApp = SavedApp(savedApps[i]);
+                savedApp = SavedApp(savedApps[i], self);
                 self.addSavedApp(savedApp);
             }
             if (i) {
@@ -124,23 +164,14 @@ function ReleasesMain(o) {
     self.makeNewBuildEnabled = function () {
         if (self.buildState() === 'pending') {
             return false;
-        }
-        self.getMoreSavedApps();
-        if (self.lastAppVersion() === undefined) {
+        } else if (self.lastAppVersion() === undefined) {
             return self.doneFetching();
         } else {
             return self.lastAppVersion() !== self.appVersion();
         }
     };
     self.makeNewBuild = function () {
-        if (!self.makeNewBuildEnabled()) {
-            window.alert("No new changes to deploy!");
-            return;
-        }
-        var comment = window.prompt(
-            "Please write a comment about the build you're making " +
-            "to help you remember later:"
-        );
+        var comment = window.prompt("Please write a comment about the build you're making to help you remember later:");
         if (comment || comment === "") {
             $(this).find("input[name='comment']").val(comment);
         } else {
@@ -152,7 +183,7 @@ function ReleasesMain(o) {
         }).success(function (data) {
             $('#build-errors-wrapper').html(data.error_html);
             if (data.saved_app) {
-                self.getMoreSavedApps();
+                self.addSavedApp(SavedApp(data.saved_app, self), true);
             }
             self.buildState('');
         }).error(function () {

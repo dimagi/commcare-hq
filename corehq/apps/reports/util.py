@@ -1,7 +1,13 @@
-from datetime import datetime, timedelta
-from django.contrib import messages
+from datetime import datetime
 import logging
 import math
+
+from django.contrib import messages
+from django.http import Http404
+import pytz
+from django.conf import settings
+from django.utils.importlib import import_module
+
 from corehq.apps.announcements.models import ReportAnnouncement
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.display import xmlns_to_name
@@ -9,19 +15,14 @@ from corehq.apps.reports.models import HQUserType, TempCommCareUser
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import user_id_to_username
 from couchexport.util import SerializableFunction
-from couchforms.filters import instances
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
-from dimagi.utils.modules import to_function
-from django.http import Http404
-import pytz
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import json_request
-from django.conf import settings
-import os
 
 
 def make_form_couch_key(domain, by_submission_time=True,
@@ -355,12 +356,12 @@ def friendly_timedelta(td):
 def set_report_announcements_for_user(request, couch_user):
     key = ["type", ReportAnnouncement.__name__]
     now = datetime.utcnow()
-    data = ReportAnnouncement.get_db().view('announcements/all_announcements',
-        reduce=False,
-        startkey=key + [now.isoformat()],
-        endkey=key + [{}],
-        #stale=settings.COUCH_STALE_QUERY,
-    ).all()
+
+    db = ReportAnnouncement.get_db()
+    data = cache_core.cached_view(db, "announcements/all_announcements", reduce=False,
+                                 startkey=key + [now.strftime("%Y-%m-%dT%H:00")], endkey=key + [{}],
+                                 )
+
     announce_ids = [a['id'] for a in data if a['id'] not in couch_user.announcements_seen]
     for announcement_id in announce_ids:
         try:
@@ -430,18 +431,7 @@ def datespan_from_beginning(domain, default_days, timezone):
     datespan.is_default = True
     return datespan
 
-def get_installed_custom_modules_names():
-    # todo: don't depend on the django process being started from the django
-    # root directory
-    path = os.path.dirname('custom/apps/')
-    if not os.path.exists(path):
-        return []
+def get_installed_custom_modules():
 
-    installed_custom_module_names = []
-
-    # todo: don't inspect modules using file structure
-    for module in os.listdir(path):
-        if os.path.isdir(path + '/' + module) == True and os.path.exists(path + '/' + module + '/urls.py') and 'urlpatterns' in open(path + '/' + module + '/urls.py').read():
-            installed_custom_module_names.append(module)
-    return installed_custom_module_names
+    return [import_module(module) for module in settings.CUSTOM_MODULES]
 

@@ -21,9 +21,9 @@ class BaseSystemOverviewReport(TrialConnectReport):
 
 class SystemOverviewReport(BaseSystemOverviewReport):
     slug = 'system_overview'
-    name = ugettext_noop("System Overview")
-    description = ugettext_noop("Description for System Overview Report")
-    section_name = ugettext_noop("System Overview")
+    name = ugettext_noop("Overview")
+    description = ugettext_noop("Summary of the different types of messages sent and received by the system.")
+    section_name = ugettext_noop("Overview")
 
     def workflow_query(self, workflow=None, additional_facets=None):
         additional_facets = additional_facets or []
@@ -91,7 +91,7 @@ class SystemOverviewReport(BaseSystemOverviewReport):
             row(_("Keywords"), WORKFLOW_KEYWORD),
             row(_("Reminders"), WORKFLOW_REMINDER),
             row(_("Broadcasts"), WORKFLOW_BROADCAST),
-            row(_("Unknown")),
+            row(_("Other")),
         ]
 
         def total(index):
@@ -102,8 +102,8 @@ class SystemOverviewReport(BaseSystemOverviewReport):
         return rows
 
     def es_histogram(self, workflow):
-        q = {"query": {"term": {"workflow": workflow.lower()}}}
-        return es_histogram(histo_type="sms", domains=[self.domain], q=q,
+        q = {"query": {"bool": {"must": [{"term": {"workflow": workflow.lower()}}]}}}
+        return es_histogram(histo_type="sms", domains=[self.domain], q=self.add_recipients_to_query(q),
                             startdate=self.datespan.startdate_display, enddate=self.datespan.enddate_display)
 
     @property
@@ -119,10 +119,10 @@ class SystemOverviewReport(BaseSystemOverviewReport):
         return [chart]
 
 class SystemUsersReport(BaseSystemOverviewReport):
-    slug = 'system_users'
-    name = ugettext_noop("System Users")
-    description = ugettext_noop("Description for System Users Report")
-    section_name = ugettext_noop("System Users")
+    slug = 'user_summary'
+    name = ugettext_noop("User Summary")
+    description = ugettext_noop("Summary of recipient information including number of active recipients and  message usage by type of recipient (case vs. mobile worker)")
+    section_name = ugettext_noop("User Summary")
 
     def active_query(self, recipient_type):
         q = self.base_query
@@ -149,8 +149,8 @@ class SystemUsersReport(BaseSystemOverviewReport):
         def row(header, mw_val, case_val):
             return [_(header), mw_val, case_val, mw_val + case_val]
 
-        def verified_numbered_users(owner_type, ids=None):
-            if not ids:
+        def verified_numbered_users(owner_type, ids=None, check_filters=False):
+            if not ids and not check_filters:
                 data = get_db().view('sms/verified_number_by_domain',
                     reduce=True,
                     startkey=[self.domain, owner_type],
@@ -167,15 +167,18 @@ class SystemUsersReport(BaseSystemOverviewReport):
 
         owner_ids = self.combined_user_ids if self.users_by_group else []
         case_ids = self.cases_by_case_group if self.cases_by_case_group else []
-        number = row("Number", verified_numbered_users("CommCareUser", owner_ids),
-                     verified_numbered_users("CommCareCase", case_ids))
+
+        check_filters = True if owner_ids or case_ids else False
+        number = row("Number", verified_numbered_users("CommCareUser", owner_ids, check_filters=check_filters),
+                     verified_numbered_users("CommCareCase", case_ids, check_filters=check_filters))
 
         def get_actives(recipient_type):
             return len(self.active_query(recipient_type)['facets']['couch_recipient']['terms'])
 
         def div(num, denom, percent=False):
             floater = 100.0 if percent else 1.0
-            return num * floater / denom if denom != 0 else 0
+            val = num * floater / denom if denom != 0 else 0
+            return "%.2f" % val + ("%" if percent else "")
 
         active = row("Active", get_actives("commcareuser"), get_actives("commcarecase"))
 

@@ -343,10 +343,10 @@ def get_detail_column_infos(detail):
     This is not intented to be a widely used format
     just a packaging of column info into a form most convenient for rendering
     """
-    from corehq.apps.app_manager.models import DetailColumn, SortElement
+    from corehq.apps.app_manager.models import SortElement
 
     if detail.type != 'case_short':
-        return [(column, (None, None)) for column in detail.get_columns()]
+        return [(column, None, None) for column in detail.get_columns()]
 
     DetailColumnInfo = namedtuple('DetailColumnInfo',
                                   'column sort_element order')
@@ -372,7 +372,10 @@ def get_detail_column_infos(detail):
 
     # sort elements is now populated with only what's not in any column
     # add invisible columns for these
-    for field, (sort_element, order) in sort_elements.items():
+    sort_only = sorted(sort_elements.items(),
+                       key=lambda (field, (sort_element, order)): order)
+
+    for field, (sort_element, order) in sort_only:
         column = create_temp_sort_column(field, len(columns))
         columns.append(DetailColumnInfo(column, sort_element, order))
     return columns

@@ -85,8 +85,8 @@ class FormType(object):
             form = get_db().view('exports_forms/by_xmlns', key=[domain, app_id, xmlns], group=True).one()
             if form:
                 form = form['value']
-            # only cache for 10 seconds
-            cache.set(cache_key, json.dumps(form), 10)
+            # cache doc a short interval for the life of someone viewing the page
+            cache.set(cache_key, json.dumps(form), 30)
         return form
 
 def xmlns_to_name(domain, xmlns, app_id, html=False):
