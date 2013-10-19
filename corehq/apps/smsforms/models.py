@@ -49,6 +49,13 @@ class XFormsSession(Document):
         self.completed = completed
         self.modified_time = self.end_time = datetime.utcnow()
 
+    @property
+    def is_open(self):
+        """
+        True if this session is still open, False otherwise.
+        """
+        return self.end_time is None
+
     @classmethod
     def get_all_open_sms_sessions(cls, domain, contact_id):
         sessions = cls.view("smsforms/open_sms_sessions_by_connection",
@@ -69,6 +76,17 @@ class XFormsSession(Document):
                                   startkey=[id],
                                   endkey=[id, {}],
                                   include_docs=True).one()
-    
-        
+
+    @classmethod
+    def get_open_sms_session(cls, domain, contact_id):
+        """
+        Looks up the open sms survey session for the given domain and contact_id.
+        Only one session is expected to be open at a time.
+        Raises MultipleResultsFound if more than one session is open.
+        """
+        session = cls.view("smsforms/open_sms_sessions_by_connection",
+                           key=[domain, contact_id],
+                           include_docs=True).one()
+        return session
+
 from . import signals
