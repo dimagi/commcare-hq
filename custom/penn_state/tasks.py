@@ -19,13 +19,13 @@ class Site(object):
     def __init__(self, group, date):
         self.name = group.name
         self.week = self.get_m_to_f(date)
+        self.str_week = [str(d) for d in self.week]
         self.strategy = [0] * 5
         self.game = [0] * 5
         self.individual = {}
         self.emails = []
         for user in group.get_users():
             self.process_user(user)
-            self.emails.append(user.email)
 
     def get_m_to_f(self, date):
         """
@@ -42,25 +42,54 @@ class Site(object):
         for form in XFormInstance.get_forms_by_user(
                 user, self.week[0], self.week[-1]):
             if form.xmlns == DAILY_DATA_XMLNS:
-                try:
-                    day = self.week.index(form.form['date_form_completed'])
-                except ValueError:
-                    continue
-                strategies = len(form.form.get('strategies_used').split())
-                raw_games = form.form['game_questions']['how_many_games']
-                games = int(raw_games) if raw_games else 0
-
-                self.strategy[day] += strategies
-                self.game[day] += games
-
                 username = form.metadata.username
-                if not self.individual.get(username, False):
+                if username not in self.individual:
+                    self.emails.append(user.email)
                     self.individual[username] = {
                         'strategy': [0] * 5,
                         'game': [0] * 5,
                     }
-                self.individual[username]['strategy'][day] += strategies
-                self.individual[username]['game'][day] += games
+                self.process_form(form, username)
+                # try:
+                    # self.process_form(form, username)
+                # except (KeyError, ValueError):
+                    # pass
+
+    def process_form(self, form, username):
+
+        def get_or_0(obj, *args):
+            val = obj
+            for arg in args:
+                try:
+                    val = val[arg]
+                except KeyError:
+                    return 0
+            return int(val)
+
+        day = self.week.index(form.form['date_form_completed'])
+
+        # test this out
+        strategies = len(form.form.get('strategies_used').split())
+
+        self.strategy[day] += strategies
+        self.individual[username]['strategy'][day] += strategies
+
+        games = get_or_0(form.form, 'game_questions', 'how_man_games')
+
+        self.individual[username]['game'][day] += games
+        self.game[day] += games
+
+    # def process_form(self, form, username):
+        # day = self.week.index(form.form['date_form_completed'])
+
+        # strategies = len(form.form.get('strategies_used').split())
+        # self.strategy[day] += strategies
+        # self.individual[username]['strategy'][day] += strategies
+
+        # raw_games = form.form['game_questions']['how_many_games']
+        # games = int(raw_games) if raw_games else 0
+        # self.individual[username]['game'][day] += games
+        # self.game[day] += games
 
 
 def save_report(date=None):
@@ -90,7 +119,7 @@ def save_report(date=None):
             "This week's Legacy report is available",
             "You can view your report here:\n{link}".format(link=report_link),
             settings.SERVER_EMAIL,
-            [site.emails]
+            site.emails
         )
 
 def email():
@@ -103,7 +132,7 @@ def email():
         ['ethan@example.com']
     )
 
-# @periodic_task(run_every=crontab(hour=1, day_of_week=6),
-        # queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(run_every=crontab(hour=1, day_of_week=6),
+        queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def run_report():
     save_report()

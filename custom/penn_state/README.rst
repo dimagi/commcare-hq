@@ -8,8 +8,8 @@ General Overview
 ~~~~~~~~~~~~~~~~
 This report measures use of GBG Strategies and Games on a per-week basis.
 The report comes in two parts, *Site* and *Individual*.
-The *Site* report will display aggregate results for a project site, represented as a user group.
-The *Individual* report will show the performance of a particular user.
+The *Site* report displays aggregate results for a project site, represented as a user group.
+The *Individual* report shows the performance of a particular user.
 
 
 URLs and Permissions
@@ -42,4 +42,6 @@ Next Steps:
     * save dates to be skipped in a once-off doc referred to by ID
 
 Add to total games played everytime the user checks off something about special games
-
+Account for days off
+submit a few example forms. (Log in and use cloudcare?)
+use psy.py
