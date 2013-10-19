@@ -23,6 +23,12 @@ def get_per_domain_context(project):
         site_name = "CommTrack"
         public_site = "http://www.commtrack.org"
         can_be_your = "mobile logistics solution"
+    elif project and project.commconnect_enabled:
+        domain_type = 'commconnect'
+        logo_url = static('hqstyle/img/commconnect-logo.png')
+        site_name = "CommConnect"
+        public_site = "http://www.commcarehq.org"
+        can_be_your = "mobile health solution"
     else:
         domain_type = 'commcare'
         logo_url = static('hqstyle/img/commcare-logo.png')
