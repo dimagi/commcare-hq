@@ -685,11 +685,11 @@ def form_session_handler(v, text, msg=None):
                     send_sms_to_verified_number(v, response_text, workflow=session.workflow, reminder_id=session.reminder_id, xforms_session_couch_id=session._id)
             else:
                 send_sms_to_verified_number(v, error_msg + event.text_prompt, workflow=session.workflow, reminder_id=session.reminder_id, xforms_session_couch_id=session._id)
-        except Exception as e:
+        except Exception:
             # Catch any touchforms errors
             msg_id = msg._id if msg is not None else ""
-            send_sms_to_verified_number(v, "An error has occurred. Please try again later. If the problem persists, try restarting the survey.")
             logging.exception("Exception in form_session_handler for message id %s." % msg_id)
+            send_sms_to_verified_number(v, "An error has occurred. Please try again later. If the problem persists, try restarting the survey.")
         return True
     else:
         return False
