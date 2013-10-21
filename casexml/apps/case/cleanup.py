@@ -1,7 +1,6 @@
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import get_case_xform_ids
-from casexml.apps.case.xform import extract_case_blocks
-from casexml.apps.case.xml.parser import case_update_from_block
+from casexml.apps.case.xform import get_case_updates
 from couchforms.models import get as get_form
 
 def rebuild_case(case_id):
@@ -27,8 +26,7 @@ def rebuild_case(case_id):
     sorted_forms = sorted(filtered_forms, key=lambda f: f.received_on)
     for form in sorted_forms:
         assert form.domain == case.domain
-        case_blocks = extract_case_blocks(form)
-        case_updates = [case_update_from_block(case_block) for case_block in case_blocks]
+        case_updates = get_case_updates(form)
         filtered_updates = [u for u in case_updates if u.id == case_id]
         for u in filtered_updates:
             case.update_from_case_update(u, form)

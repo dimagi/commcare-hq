@@ -194,9 +194,13 @@ def _extract_case_blocks(data):
         return
 
 
+def get_case_updates(xform):
+    return [case_update_from_block(cb) for cb in extract_case_blocks(xform)]
+
+
 def get_case_ids_from_form(xform):
-    case_updates = [case_update_from_block(cb) for cb in extract_case_blocks(xform)]
-    return set(cu.id for cu in case_updates)
+    return set(cu.id for cu in get_case_updates(xform))
+
 
 def cases_referenced_by_xform(xform):
     """

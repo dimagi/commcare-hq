@@ -13,6 +13,7 @@ NS_VERSION_MAP = {
 
 NS_REVERSE_LOOKUP_MAP = dict((v, k) for k, v in NS_VERSION_MAP.items())
 
+
 def check_version(version):
     if not version in LEGAL_VERSIONS:
         raise BadVersionException(
