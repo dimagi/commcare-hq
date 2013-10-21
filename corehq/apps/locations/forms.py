@@ -154,10 +154,6 @@ class LocationForm(forms.Form):
             location.flag_post_move = True
             location.previous_parents.append(orig_parent_id)
 
-        # HACK
-        # not sure where this is getting set, but it shouldn't be in the doc
-        del location._doc['parent_id']
-
         if commit:
             location.save()
 
