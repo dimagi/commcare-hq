@@ -20,8 +20,7 @@ def _apply_updates(doc, update_dict):
 
 def bootstrap_domain(domain):
     project = Domain.get_by_name(domain)
-    config = project.commtrack_settings.openlmis_config
-    endpoint = OpenLMISEndpoint(config.url, config.username, config.password)
+    endpoint = OpenLMISEndpoint.from_config(project.commtrack_settings.openlmis_config)
     for f in endpoint.get_all_facilities():
         try:
             sync_facility_to_supply_point(domain, f)
@@ -137,7 +136,7 @@ def supply_point_to_json(supply_point):
     return base
 
 
-def sync_supply_point_to_openlmis(supply_point, openlmis_endpoint):
+def sync_supply_point_to_openlmis(supply_point, openlmis_endpoint, create=True):
     """
     https://github.com/OpenLMIS/documents/blob/master/4.1-CreateVirtualFacility%20API.md
     {
@@ -148,4 +147,8 @@ def sync_supply_point_to_openlmis(supply_point, openlmis_endpoint):
         "active":"true"
     }
     """
-    return openlmis_endpoint.create_virtual_facility(supply_point_to_json(supply_point))
+    json_sp = supply_point_to_json(supply_point)
+    if create:
+        return openlmis_endpoint.create_virtual_facility(json_sp)
+    else:
+        return openlmis_endpoint.update_virtual_facility(supply_point.external_id, json_sp)
