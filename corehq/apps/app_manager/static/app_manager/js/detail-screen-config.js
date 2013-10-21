@@ -126,67 +126,69 @@ var DetailScreenConfig = (function () {
     "use strict";
     var DetailScreenConfig, Screen, Column, sortRows;
 
-    function formatEnum(obj, lang, langs) {
+    function formatEnum(list, lang, langs) {
         var key,
             translated_pairs = {},
             actual_pairs = {},
             translatedValue,
             actualValue,
             i;
-        for (key in obj) {
-            if (obj.hasOwnProperty(key)) {
-                translatedValue = "";
-                actualValue = "";
-                if (obj[key][lang]) {
-                    translatedValue = { value: obj[key][lang],
-                                        lang: lang };
-                    actualValue = obj[key][lang];
-                } else {
-                    // separate value for a different language
-                    for (i = 0; i < langs.length; i += 1) {
-                        if (obj[key][langs[i]]) {
-                            translatedValue = { value: obj[key][langs[i]],
-                                                lang: langs[i] };
-                        }
+        _(list).each(function (item) {
+            var key = item.key;
+            var value = item.value;
+            translatedValue = "";
+            actualValue = "";
+            if (value[lang]) {
+                translatedValue = { value: value[lang],
+                                    lang: lang };
+                actualValue = value[lang];
+            } else {
+                // separate value for a different language
+                for (i = 0; i < langs.length; i += 1) {
+                    if (value[langs[i]]) {
+                        translatedValue = { value: value[langs[i]],
+                                            lang: langs[i] };
                     }
                 }
-                actual_pairs[key] = actualValue;
-                translated_pairs[key] = translatedValue;
             }
-        }
+            actual_pairs[key] = actualValue;
+            translated_pairs[key] = translatedValue;
+        });
         return {
             cleaned: actual_pairs,
             translations: translated_pairs
         };
     }
     function unformatEnum(text, lang, original) {
-        var json, mapping, key,
-            orig = JSON.parse(JSON.stringify(original));
+        var json, enumItems = [], key,
+            // make a copy of the original
+            orig = JSON.parse(JSON.stringify(original)),
+            origMapping = {};
+
+        _(orig).each(function (item) {
+            origMapping[item.key] = item.value;
+        });
 
         if (text) {
-            mapping = JSON.parse(text);
-        } else {
-            mapping = {};
+            text = JSON.parse(text);
+            // text starts out as a dict
+            _(text).each(function (value, key) {
+                enumItems.push({value: value, key: key});
+            });
         }
-        for (key in mapping) {
-            if (mapping.hasOwnProperty(key)) {
-                if (!orig.hasOwnProperty(key)) {
-                    orig[key] = {};
-                }
-                orig[key][lang] = mapping[key] || "";
+        // update origMapping
+        _(enumItems).each(function (item) {
+            var key = item.key;
+            if (!origMapping.hasOwnProperty(key)) {
+                origMapping[key] = {};
             }
-        }
-        for (key in orig) {
-            if (orig.hasOwnProperty(key)) {
-                if (!mapping.hasOwnProperty(key)) {
-                    delete orig[key][lang];
-                }
-                if (_.isEmpty(orig[key])) {
-                    delete orig[key];
-                }
-            }
-        }
-        return orig;
+            origMapping[key][lang] = item.value || "";
+        });
+        // make enumItems value go from single string localization mapping
+        _(enumItems).each(function (item) {
+            item.value = origMapping[item.key];
+        });
+        return enumItems;
     }
     var word = '[a-zA-Z][\\w_-]*';
     var field_val_re = RegExp('^('+word+':)?'+word+'(\\/'+word+')*$');
@@ -214,7 +216,7 @@ var DetailScreenConfig = (function () {
             this.original.field = this.original.field || "";
             this.original.header = this.original.header || {};
             this.original.format = this.original.format || "plain";
-            this.original['enum'] = this.original['enum'] || {};
+            this.original['enum'] = this.original['enum'] || [];
             this.original.late_flag = this.original.late_flag || 30;
             this.original.filter_xpath = this.original.filter_xpath || "";
             this.original.time_ago_interval = this.original.time_ago_interval || DetailScreenConfig.TIME_AGO.year;

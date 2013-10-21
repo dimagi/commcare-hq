@@ -7,14 +7,16 @@ from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
 from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_SMS
 from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.sms.api import send_sms, incoming, send_sms_with_backend_name
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users import models as user_models
 from corehq.apps.sms.models import SMSLog, INCOMING, ForwardingRule
 from corehq.apps.sms.mixin import MobileBackend, SMSBackend, BackendMapping
-from corehq.apps.sms.forms import ForwardingRuleForm, BackendMapForm
+from corehq.apps.sms.forms import ForwardingRuleForm, BackendMapForm, InitiateAddSMSBackendForm
 from corehq.apps.sms.util import get_available_backends
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest, domain_admin_required, require_superuser
@@ -24,6 +26,8 @@ from corehq.apps.reports import util as report_utils
 from django.views.decorators.csrf import csrf_exempt
 from corehq.apps.domain.models import Domain
 from django.utils.translation import ugettext as _, ugettext_noop
+from dimagi.utils.decorators.memoized import memoized
+
 
 @login_and_domain_required
 def default(request, domain):
@@ -397,11 +401,22 @@ def _list_backends(request, show_global=False, domain=None):
         domain_obj = Domain.get_by_name(domain, strict=True)
     raw_backends = []
     if not show_global:
-        raw_backends += SMSBackend.view("sms/backend_by_domain", classes=backend_classes,
-                                        startkey=[domain], endkey=[domain, {}], include_docs=True).all()
+        raw_backends += SMSBackend.view(
+            "sms/backend_by_domain",
+            reduce=False,
+            classes=backend_classes,
+            startkey=[domain],
+            endkey=[domain, {}],
+            include_docs=True
+        ).all()
         if len(raw_backends) > 0 and domain_obj.default_sms_backend_id in [None, ""]:
             messages.error(request, _("WARNING: You have not specified a default SMS connection. By default, the system will automatically select one of the SMS connections owned by the system when sending sms."))
-    raw_backends += SMSBackend.view("sms/global_backends", classes=backend_classes, include_docs=True).all()
+    raw_backends += SMSBackend.view(
+        "sms/global_backends",
+        classes=backend_classes,
+        include_docs=True,
+        reduce=False
+    ).all()
     for backend in raw_backends:
         backends.append(backend_classes[backend.doc_type].wrap(backend.to_json()))
         if show_global or (not backend.is_global and backend.domain == domain):
@@ -480,7 +495,12 @@ def unset_default_domain_backend(request, domain, backend_id):
 @require_superuser
 def global_backend_map(request):
     backend_classes = get_available_backends()
-    global_backends = SMSBackend.view("sms/global_backends", classes=backend_classes, include_docs=True).all()
+    global_backends = SMSBackend.view(
+        "sms/global_backends",
+        classes=backend_classes,
+        include_docs=True,
+        reduce=False
+    ).all()
     current_map = {}
     catchall_entry = None
     for entry in BackendMapping.view("sms/backend_map", startkey=["*"], endkey=["*", {}], include_docs=True).all():
@@ -527,3 +547,123 @@ def global_backend_map(request):
     }
     return render(request, "sms/backend_map.html", context)
 
+
+class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView):
+    template_name = "sms/gateway_list.html"
+    urlname = 'list_domain_backends_new'
+    page_title = ugettext_noop("SMS Connectivity")
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+    @property
+    def parameters(self):
+        return self.request.POST if self.request.method == 'POST' else self.request.GET
+
+    @property
+    @memoized
+    def total(self):
+        domain_backends = SMSBackend.get_db().view(
+            "sms/backend_by_domain",
+            startkey=[self.domain],
+            endkey=[self.domain, {}],
+            reduce=True,
+        ).first() or {}
+        global_backends = SMSBackend.get_db().view(
+            'sms/global_backends',
+            reduce=True,
+        ).first() or {}
+        return domain_backends.get('value', 0) + global_backends.get('value', 0)
+
+    @property
+    def column_names(self):
+        return [
+            _("Connection"),
+            _("Default"),
+        ]
+
+    @property
+    def page_context(self):
+        context = self.pagination_context
+        context.update({
+            'initiate_new_form': InitiateAddSMSBackendForm(is_superuser=self.request.couch_user.is_superuser),
+        })
+        return context
+
+    @property
+    def paginated_list(self):
+        all_backends = []
+        all_backends += SMSBackend.view(
+            "sms/backend_by_domain",
+            classes=self.backend_classes,
+            startkey=[self.domain],
+            endkey=[self.domain, {}],
+            reduce=False,
+            include_docs=True
+        ).all()
+        all_backends += SMSBackend.view(
+            'sms/global_backends',
+            classes=self.backend_classes,
+            reduce=False,
+            include_docs=True
+        ).all()
+
+        if len(all_backends) > 0 and not self.domain_object.default_sms_backend_id:
+            yield {
+                'itemData': {
+                    'id': 'nodefault',
+                    'name': "Automatic Choose",
+                    'status': 'DEFAULT',
+                },
+                'template': 'gateway-automatic-template',
+            }
+        elif self.domain_object.default_sms_backend_id:
+            default_backend = SMSBackend.get(self.domain_object.default_sms_backend_id)
+            yield {
+                'itemData': self._fmt_backend_data(default_backend),
+                'template': 'gateway-default-template',
+            }
+        for backend in all_backends:
+            if not backend._id == self.domain_object.default_sms_backend_id:
+                yield {
+                    'itemData': self._fmt_backend_data(backend),
+                    'template': 'gateway-template',
+                }
+
+    @property
+    @memoized
+    def backend_classes(self):
+        return get_available_backends()
+
+    def _fmt_backend_data(self, backend):
+        return {
+            'id': backend._id,
+            'name': backend.name,
+            'editUrl': reverse(
+                'edit_domain_backend',
+                args=[self.domain, backend.__class__.__name__, backend._id]
+            ) if not backend.is_global else "",
+        }
+
+    def refresh_item(self, item_id):
+        if self.domain_object.default_sms_backend_id == item_id:
+            self.domain_object.default_sms_backend_id = None
+        else:
+            self.domain_object.default_sms_backend_id = item_id
+        self.domain_object.save()
+
+    @property
+    def allowed_actions(self):
+        actions = super(DomainSmsGatewayListView, self).allowed_actions
+        return actions + ['new_backend']
+
+    def post(self, request, *args, **kwargs):
+        if self.action == 'new_backend':
+            backend_type = request.POST['backend_type']
+            return HttpResponseRedirect(reverse('add_domain_backend', args=[self.domain, backend_type]))
+        return self.paginate_crud_response
+
+    @method_decorator(domain_admin_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(DomainSmsGatewayListView, self).dispatch(request, *args, **kwargs)

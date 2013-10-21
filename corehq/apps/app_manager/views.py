@@ -1005,71 +1005,6 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     app.save(resp)
     return json_response(resp)
 
-@no_conflict_require_POST
-@require_can_edit_apps
-def edit_module_detail(req, domain, app_id, module_id):
-    """
-    Called to add a new module detail column or edit an existing one
-
-    """
-    column_id = int(req.POST.get('index', -1))
-    detail_type = req.POST.get('detail_type', '')
-    assert(detail_type in DETAIL_TYPES)
-
-    column = dict((key, req.POST.get(key)) for key in (
-        'header', 'model', 'field', 'format',
-        'enum', 'late_flag', 'advanced'
-        ))
-    app = get_app(domain, app_id)
-    module = app.get_module(module_id)
-    lang = req.COOKIES.get('lang', app.langs[0])
-    ajax = (column_id != -1) # edits are ajax, adds are not
-
-    resp = {}
-
-    def _enum_to_dict(enum):
-        if not enum:
-            return {}
-        answ = {}
-        for s in enum.split(','):
-            key, val = (x.strip() for x in s.strip().split('='))
-            answ[key] = {}
-            answ[key][lang] = val
-        return answ
-
-    column['enum'] = _enum_to_dict(column['enum'])
-    column['header'] = {lang: column['header']}
-    column = DetailColumn.wrap(column)
-    detail = module.get_detail(detail_type)
-
-    if column_id == -1:
-        detail.append_column(column)
-    else:
-        detail.update_column(column_id, column)
-    app.save(resp)
-
-    if ajax:
-        return HttpResponse(json.dumps(resp))
-    else:
-        return back_to_main(req, domain, app_id=app_id, module_id=module_id)
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
-def delete_module_detail(req, domain, app_id, module_id):
-    """
-    Called when a module detail column is to be deleted
-
-    """
-    column_id = int(req.POST['index'])
-    detail_type = req.POST['detail_type']
-    app = get_app(domain, app_id)
-    module = app.get_module(module_id)
-    module.get_detail(detail_type).delete_column(column_id)
-    resp = {}
-    app.save(resp)
-    return HttpResponse(json.dumps(resp))
-
 
 def _handle_media_edits(request, item, should_edit, resp):
     if not resp.has_key('corrections'):
@@ -1749,12 +1684,29 @@ def download_profile(req, domain, app_id):
         req.app.create_profile()
     )
 
-def odk_install(req, domain, app_id):
-    return render(req, "app_manager/odk_install.html",
-            {"domain": domain, "app": get_app(domain, app_id)})
+@safe_download
+def download_media_profile(req, domain, app_id):
+    return HttpResponse(
+        req.app.create_profile(with_media=True)
+    )
+
+def odk_install(req, domain, app_id, with_media=False):
+    app = get_app(domain, app_id)
+    qr_code_view = "odk_qr_code" if not with_media else "odk_media_qr_code"
+    context = {
+        "domain": domain,
+        "app": app,
+        "qr_code": reverse("corehq.apps.app_manager.views.%s" % qr_code_view, args=[domain, app_id]),
+        "profile_url": app.odk_profile_display_url if not with_media else app.odk_media_profile_display_url,
+    }
+    return render(req, "app_manager/odk_install.html", context)
 
 def odk_qr_code(req, domain, app_id):
     qr_code = get_app(domain, app_id).get_odk_qr_code()
+    return HttpResponse(qr_code, mimetype="image/png")
+
+def odk_media_qr_code(req, domain, app_id):
+    qr_code = get_app(domain, app_id).get_odk_qr_code(with_media=True)
     return HttpResponse(qr_code, mimetype="image/png")
 
 @safe_download
@@ -1765,6 +1717,13 @@ def download_odk_profile(req, domain, app_id):
     """
     return HttpResponse(
         req.app.create_profile(is_odk=True),
+        mimetype="commcare/profile"
+    )
+
+@safe_download
+def download_odk_media_profile(req, domain, app_id):
+    return HttpResponse(
+        req.app.create_profile(is_odk=True, with_media=True),
         mimetype="commcare/profile"
     )
 
@@ -2090,6 +2049,7 @@ def upload_translations(request, domain, app_id):
         app.save()
         success = True
     except Exception:
+        notify_exception(request, 'Bulk Upload Translations Error')
         messages.error(request, _("Something went wrong! Update failed. We're looking into it"))
 
     if success:

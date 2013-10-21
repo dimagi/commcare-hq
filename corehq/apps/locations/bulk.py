@@ -24,7 +24,7 @@ class LocationCache(object):
     def get_by_name(self, loc_name, loc_type, parent):
         key = (loc_type, parent._id if parent else None)
         if key not in self._existing_by_type:
-            existing = Location.filter_by_type(self.domain, loc_type, parent)
+            existing = list(Location.filter_by_type(self.domain, loc_type, parent))
             self._existing_by_type[key] = dict((l.name, l) for l in existing)
             self._existing_by_id.update(dict((l._id, l) for l in existing))
         return self._existing_by_type[key].get(loc_name, None)

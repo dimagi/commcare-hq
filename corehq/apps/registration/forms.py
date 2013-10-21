@@ -136,7 +136,7 @@ class DomainRegistrationForm(forms.Form):
     domain_type = forms.CharField(widget=forms.HiddenInput(), required=False,
                                   initial='commcare')
     domain_timezone = TimeZoneChoiceField(
-        label="Time Zone:", initial="UTC",
+        label="Time Zone:", initial="UTC", required=False,
         widget=forms.Select(attrs={'class': 'input-xlarge',
                                    'bindparent': 'visible: override_tz',
                                    'data-bind': 'event: {change: updateForm}'}))

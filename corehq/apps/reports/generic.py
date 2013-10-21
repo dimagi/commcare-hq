@@ -399,7 +399,7 @@ class GenericReportView(CacheableRequestMixIn):
             Intention: Don't override.
         """
         report_configs = ReportConfig.by_domain_and_owner(self.domain,
-            self.request.couch_user._id, report_slug=self.slug).all()
+            self.request.couch_user._id, report_slug=self.slug)
         current_config_id = self.request.GET.get('config_id', '')
         default_config = ReportConfig.default()
 
@@ -822,6 +822,14 @@ class GenericTabularReport(GenericReportView):
 
     @property
     def export_table(self):
+        """
+        Exports the report as excel.
+
+        When rendering a complex cell, it will assign a value in the following order:
+        1. cell['raw']
+        2. cell['sort_key']
+        3. str(cell)
+        """
         try:
             import xlwt
         except ImportError:
@@ -832,7 +840,12 @@ class GenericTabularReport(GenericReportView):
         formatted_rows = self.rows
 
         def _unformat_row(row):
-            return [col.get("sort_key", col) if isinstance(col, dict) else col for col in row]
+            def _unformat_val(val):
+                if isinstance(val, dict):
+                    return val.get('raw', val.get('sort_key', val))
+                return val
+
+            return [_unformat_val(val) for val in row]
 
         table = headers.as_table
         rows = [_unformat_row(row) for row in formatted_rows]

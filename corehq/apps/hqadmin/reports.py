@@ -164,7 +164,7 @@ class AdminUserReport(AdminFacetedReport):
 
 def create_mapping_from_list(l, name="", expand_outer=False, expand_inner=False, name_change_fn=None):
     name_change_fn = name_change_fn or (lambda x: x)
-    facets = [{"facet": item, "name": name_change_fn(item), "expanded": expand_inner } for item in l]
+    facets = [{"facet": item, "name": name_change_fn(item), "expanded": expand_inner } for item in sorted(l)]
     return (name, expand_outer, facets)
 
 class AdminAppReport(AdminFacetedReport):
@@ -175,7 +175,7 @@ class AdminAppReport(AdminFacetedReport):
     default_sort = {'name.exact': 'asc'}
     es_url = APP_INDEX + '/app/_search'
 
-    profile_list = ["profile.%s.%s" % (c['type'], c['id']) for c in CC_SETTINGS]
+    profile_list = ["profile.%s.%s" % (c['type'], c['id']) for c in CC_SETTINGS if c['type'] != 'hq']
 
     @property
     def es_facet_list(self):

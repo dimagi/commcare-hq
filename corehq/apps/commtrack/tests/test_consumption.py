@@ -1,5 +1,5 @@
 from corehq.apps.commtrack.tests.util import CommTrackTest
-from corehq.pillows.commtrack import _compute_consumption
+from corehq.pillows.commtrack.consumption_calc import compute_consumption
 from dimagi.utils import parsing as dateparse
 from datetime import datetime, timedelta
 import collections
@@ -14,7 +14,7 @@ def consumption(txdata, window, params={}):
     def ago(days):
         return now - timedelta(days=days)
     
-    return _compute_consumption(
+    return compute_consumption(
         [MockTransaction(tx.action, tx.value, ago(tx.age)) for tx in txdata],
         ago(window),
         lambda action: action,

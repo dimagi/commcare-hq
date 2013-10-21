@@ -118,7 +118,7 @@ def redirect_to_default(req, domain=None):
             domains = [Domain.get_by_name(domain)]
         else:
             domains = Domain.active_for_user(req.user)
-        if   0 == len(domains) and not req.user.is_superuser:
+        if 0 == len(domains) and not req.user.is_superuser:
             return redirect('registration_domain')
         elif 1 == len(domains):
             if domains[0]:
@@ -593,6 +593,7 @@ class CRUDPaginatedViewMixin(object):
             'update',
             'delete',
             'paginate',
+            'refresh',
         ]
 
     @property
@@ -627,13 +628,23 @@ class CRUDPaginatedViewMixin(object):
         }
 
     @property
+    def refresh_response(self):
+        try:
+            self.refresh_item(self.item_id)
+        except PaginatedItemException as e:
+            return {
+                'error': _("<strong>Problem Refreshing List:</strong> %s") % e,
+            }
+        return {
+            'success': True,
+            'currentPage': self.page,
+            'paginatedList': list(self.paginated_list),
+        }
+
+    @property
     def delete_response(self):
         try:
-            try:
-                item_id = self.parameters['itemId']
-            except KeyError:
-                raise PaginatedItemException(_("The item's ID was not passed to the server."))
-            response = self.get_deleted_item_data(item_id)
+            response = self.get_deleted_item_data(self.item_id)
             return {
                 'deletedItem': response
             }
@@ -641,6 +652,13 @@ class CRUDPaginatedViewMixin(object):
             return {
                 'error': _("<strong>Problem Deleting:</strong> %s") % e,
             }
+
+    @property
+    def item_id(self):
+        try:
+            return self.parameters['itemId']
+        except KeyError:
+            raise PaginatedItemException(_("The item's ID was not passed to the server."))
 
     @property
     def paginate_response(self):
@@ -689,6 +707,12 @@ class CRUDPaginatedViewMixin(object):
                 'form': update_form
             }
         )
+
+    def refresh_item(self, item_id):
+        """
+        Process the item that triggered a list refresh here.
+        """
+        raise NotImplementedError("You must implement refresh_item")
 
     def get_create_item_data(self, create_form):
         """

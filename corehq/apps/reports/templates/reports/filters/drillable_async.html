@@ -1,4 +1,5 @@
 {# todo: clean this up to properly inherit from filters/base.html #}
+{% load hq_shared_tags %}
 
 <label class="control-label">{{ control_name }}</label> {# this is wrong, this should be inheriting the structure from filters/base.html, see base/drilldown_options #}
 <div class="controls">
@@ -12,7 +13,7 @@
 <script type="text/javascript">
 
     var LOAD_FDIS_URL = '{{ api_root }}';
-    var hierarchy = {{ hierarchy|safe }};
+    var hierarchy = {{ hierarchy|JSON }};
 
     function api_get_children(fdi_uuid, depth, callback) {
         var params = (fdi_uuid ? {parent_id: fdi_uuid} : {});

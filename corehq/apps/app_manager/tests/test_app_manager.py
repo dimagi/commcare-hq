@@ -23,11 +23,11 @@ class AppManagerTest(TestCase):
                 self.app.new_form(module.id, name="Form%s-%s" % (i,j), attachment=self.xform_str, lang="en")
             module = self.app.get_module(i)
             detail = module.get_detail("ref_short")
-            detail.append_column(
-                DetailColumn(header={"en": "test"}, model="case", field="test", format="plain", enum={})
+            detail.columns.append(
+                DetailColumn(header={"en": "test"}, model="case", field="test", format="plain")
             )
-            detail.append_column(
-                DetailColumn(header={"en": "age"}, model="case", field="age", format="years-ago", enum={})
+            detail.columns.append(
+                DetailColumn(header={"en": "age"}, model="case", field="age", format="years-ago")
             )
         self.app.save()
 

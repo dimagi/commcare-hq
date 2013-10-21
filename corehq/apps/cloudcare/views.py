@@ -185,7 +185,8 @@ def get_cases(request, domain):
     ids_only = string_to_boolean(request.REQUEST.get("ids_only", "false"))
     case_id = request.REQUEST.get("case_id", "")
     footprint = string_to_boolean(request.REQUEST.get("footprint", "false"))
-    if case_id and not footprint:
+    include_children = string_to_boolean(request.REQUEST.get("include_children", "false"))
+    if case_id and not footprint and not include_children:
         # short circuit everything else and just return the case
         # NOTE: this allows any user in the domain to access any case given
         # they know its ID, which is slightly different from the previous
@@ -202,7 +203,7 @@ def get_cases(request, domain):
         cases = get_filtered_cases(domain, status=status, case_type=case_type,
                                    user_id=user_id, filters=filters,
                                    footprint=footprint, ids_only=ids_only,
-                                   strip_history=True)
+                                   strip_history=True, include_children=include_children)
     return json_response(cases)
 
 @cloudcare_api
