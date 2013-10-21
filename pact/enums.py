@@ -4,7 +4,7 @@ import itertools
 PACT_DOMAIN = "pact"
 PACT_HP_GROUPNAME = "PACT-HPS"
 PACT_HP_GROUP_ID = getattr(settings, 'PACT_HP_GROUP_ID', "")
-PACT_CASE_TYPE = 'cc_path_client' # WRONG is cc_path_type
+PACT_CASE_TYPE = 'cc_path_client'
 PACT_SCHEDULES_NAMESPACE = 'pact_weekly_schedule'
 
 PACT_DOTS_DATA_PROPERTY = "pact_dots_data_"

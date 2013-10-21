@@ -1,7 +1,7 @@
 from django.core.urlresolvers import reverse
 from django.http import Http404
 import simplejson
-from corehq.apps.api.es import FullXFormES
+from corehq.apps.api.es import ReportXFormES
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from dimagi.utils import html
 from pact.enums import PACT_DOMAIN
@@ -27,7 +27,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMix
     hide_filters = True
     filters = []
     ajax_pagination = True
-    xform_es = FullXFormES(PACT_DOMAIN)
+    xform_es = ReportXFormES(PACT_DOMAIN)
 
     default_sort = {
         "received_on": "desc"
@@ -50,7 +50,6 @@ class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMix
             has_error = False
         except Exception, ex:
             #eww, but we don't want to make a habit of returning exceptions as return values
-            print ex
             has_error = True
             patient_doc = None
 
@@ -64,13 +63,8 @@ class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMix
 
 
         view_mode = self.request.GET.get('view', 'info')
-        # notabs = True if not self.request.GET.get('notabs', False) else False
-
         ret['patient_doc'] = patient_doc
-        #        ret.update(csrf(self.request))
         ret['pt_root_url'] = patient_doc.get_info_url()
-        # if notabs:
-        #     ret['pt_root_url'] += "&notabs"
         ret['view_mode'] = view_mode
 
         if view_mode == 'info':
@@ -129,19 +123,35 @@ class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMix
             return None
 
         #a fuller query doing filtered+query vs simpler base_query filter
+
         full_query = {
             'query': {
                 "filtered": {
-                    "query": {
-                        "query_string": {
-                            "query": "(form.case.case_id:%(case_id)s OR form.case.@case_id:%(case_id)s)" % dict(
-                                case_id=self.request.GET['patient_id'])
-                        }
-                    },
                     "filter": {
                         "and": [
                             {"term": {"domain.exact": self.request.domain}},
-                            {"term": {"doc_type": "xforminstance"}}
+                            {"term": {"doc_type": "xforminstance"}},
+                            {
+                                "nested": {
+                                    "path": "form.case",
+                                    "filter": {
+                                        "or": [
+                                            {
+                                                "term": {
+                                                    "@case_id": "%s" % self.request.GET[
+                                                        'patient_id']
+                                                }
+                                            },
+                                            {
+                                                "term": {
+                                                    "case_id": "%s" % self.request.GET['patient_id']
+                                                }
+                                            },
+
+                                        ]
+                                    }
+                                }
+                            }
                         ]
                     }
                 }
@@ -158,10 +168,9 @@ class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMix
             "size": self.pagination.count,
             "from": self.pagination.start
         }
-        print simplejson.dumps(full_query)
-
         full_query['script_fields'] = pact_script_fields()
-        return self.xform_es.run_query(full_query)
+        res = self.xform_es.run_query(full_query)
+        return res
 
 
     @property
@@ -178,7 +187,6 @@ class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMix
                     yield "---"
                 yield row_field_dict["form.#type"].replace('_', ' ').title()
                 yield row_field_dict.get("form.meta.username", "")
-
 
             res = self.es_results
             if res.has_key('error'):

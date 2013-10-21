@@ -1,7 +1,7 @@
 from django.core.urlresolvers import  NoReverseMatch
 from django.utils import html
 
-from corehq.apps.api.es import FullCaseES, FullXFormES
+from corehq.apps.api.es import ReportCaseES, ReportXFormES
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.fields import  ReportSelectField
 from corehq.apps.users.models import CommCareUser
@@ -74,14 +74,14 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
         'pact.reports.patient_list.HPStatusField',
         'pact.reports.patient_list.DOTStatus',
     ]
-    case_es = FullCaseES(PACT_DOMAIN)
-    xform_es = FullXFormES(PACT_DOMAIN)
+    case_es = ReportCaseES(PACT_DOMAIN)
+    xform_es = ReportXFormES(PACT_DOMAIN)
 
     def get_pact_cases(self):
         domain = PACT_DOMAIN
         query = self.case_es.base_query(start=0, size=None)
 
-        query['fields'] = ['_id', 'name', 'pactid']
+        query['fields'] = ['_id', 'name', 'pactid.#value']
         results = self.case_es.run_query(query)
         for res in results['hits']['hits']:
             yield res['fields']
@@ -89,20 +89,19 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
     @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn("PACT ID", prop_name="pactid"),
+            DataTablesColumn("PACT ID", prop_name="pactid.#value"),
             DataTablesColumn("Name", prop_name="name", sortable=False, span=3),
-            DataTablesColumn("Primary HP", prop_name="hp"),
+            DataTablesColumn("Primary HP", prop_name="hp.#value"),
             DataTablesColumn("Opened On", prop_name="opened_on"),
             DataTablesColumn("Last Modified", prop_name="modified_on"),
-            DataTablesColumn("HP Status", prop_name="hp_status"),
-            DataTablesColumn("DOT Status", prop_name='dot_status'),
+            DataTablesColumn("HP Status", prop_name="hp_status.#value"),
+            DataTablesColumn("DOT Status", prop_name='dot_status.#value'),
             DataTablesColumn("Status", prop_name="closed"),
             DataTablesColumn("Submissions", sortable=False),
         )
         return headers
 
     def case_submits_facet_dict(self, limit):
-        case_type = PACT_CASE_TYPE
         query = query_per_case_submissions_facet(self.request.domain, limit=limit)
         results = self.xform_es.run_query(query)
         case_id_count_map = {}
@@ -121,13 +120,13 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
         rows = []
 
         def _format_row(row_field_dict):
-            yield row_field_dict.get("pactid", '---').replace('_', ' ').title()
+            yield row_field_dict.get("pactid.#value", '---').replace('_', ' ').title()
             yield self.pact_case_link(row_field_dict['_id'], row_field_dict.get("name", "---")),
-            yield row_field_dict.get("hp", "---")
+            yield row_field_dict.get("hp.#value", "---")
             yield self.format_date(row_field_dict.get("opened_on"))
             yield self.format_date(row_field_dict.get("modified_on"))
-            yield self.render_hp_status(row_field_dict.get("hp_status"))
-            yield self.pact_dot_link(row_field_dict['_id'], row_field_dict.get("dot_status"))
+            yield self.render_hp_status(row_field_dict.get("hp_status.#value"))
+            yield self.pact_dot_link(row_field_dict['_id'], row_field_dict.get("dot_status.#value"))
             #for closed on, do two checks:
             if row_field_dict.get('closed', False):
                 #it's closed
@@ -148,23 +147,23 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
 
 
     @property
-    @memoized
     def es_results(self):
-        fields= [
-                "_id",
-                "name",
-                "pactid",
-                "opened_on",
-                "modified_on",
-                "hp_status",
-                "hp",
-                "dot_status",
-                "closed_on",
-                "closed"
-            ]
-        full_query = self.case_es.base_query(terms={'type': PACT_CASE_TYPE }, fields=fields, start=self.pagination.start, size=self.pagination.count)
-        full_query['sort'] = self.get_sorting_block(),
-
+        fields = [
+            "_id",
+            "name",
+            "pactid.#value",
+            "opened_on",
+            "modified_on",
+            "hp_status.#value",
+            "hp.#value",
+            "dot_status.#value",
+            "closed_on",
+            "closed"
+        ]
+        full_query = self.case_es.base_query(terms={'type': PACT_CASE_TYPE}, fields=fields,
+                                             start=self.pagination.start,
+                                             size=self.pagination.count)
+        full_query['sort'] = self.get_sorting_block()
 
         def status_filtering(slug, field, prefix, any_field, default):
             if self.request.GET.get(slug, None) is not None:
@@ -189,16 +188,15 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
                         field_filter = {"prefix": {field: field_status_prefix.lower()}}
                         full_query['filter']['and'].append(field_filter)
 
-        status_filtering(DOTStatus.slug, "dot_status", "DOT", DOTStatus.ANY_DOT, None)
-        status_filtering(HPStatusField.slug, "hp_status", "HP", HPStatusField.ANY_HP, HPStatusField.ANY_HP)
+        status_filtering(DOTStatus.slug, "dot_status.#value", "DOT", DOTStatus.ANY_DOT, None)
+        status_filtering(HPStatusField.slug, "hp_status.#value", "HP", HPStatusField.ANY_HP, HPStatusField.ANY_HP)
 
         #primary_hp filter from the user filter
         if self.request.GET.get(PactPrimaryHPField.slug, "") != "":
             primary_hp_term = self.request.GET[PactPrimaryHPField.slug]
-            primary_hp_filter = {"term": {"hp": primary_hp_term}}
+            primary_hp_filter = {"term": {"hp.#value": primary_hp_term}}
             full_query['filter']['and'].append(primary_hp_filter)
         return self.case_es.run_query(full_query)
-
 
 
     def pact_case_link(self, case_id, name):

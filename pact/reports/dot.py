@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import uuid
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.api.es import FullCaseES, FullXFormES
+from corehq.apps.api.es import ReportCaseES, ReportXFormES
 from corehq.apps.reports.fields import  ReportSelectField
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
@@ -15,7 +15,6 @@ class PactDOTPatientField(ReportSelectField):
     slug = "dot_patient"
     name = "DOT Patient"
     default_option = "Select DOT Patient"
-    #    cssId = "case_type_select"
 
     def update_params(self):
         patient_cases = self.get_pact_cases()
@@ -23,21 +22,21 @@ class PactDOTPatientField(ReportSelectField):
 
         self.selected = case_type
         self.options = [
-            dict(val=case['_id'], text="(%s) - %s" % (case.get('pactid', '[none]'), case['name']))
+            dict(val=case['_id'], text="(%s) - %s" % (case.get('pactid.#value', '[none]'), case['name']))
             for case in patient_cases]
 
     @classmethod
     def get_pact_cases(cls):
         #query couch to get reduce count of all PACT cases
-        case_es = FullCaseES(PACT_DOMAIN)
+        case_es = ReportCaseES(PACT_DOMAIN)
         total_count = CommCareCase.get_db().view('hqcase/types_by_domain',
                                                  key=["pact", PACT_CASE_TYPE]).first().get('value', 100)
-        fields = ['_id', 'name', 'pactid']
+        fields = ['_id', 'name', 'pactid.#value']
         query = case_es.base_query(terms={'type': PACT_CASE_TYPE},
                                    fields=fields,
                                    start=0,
                                    size=total_count)
-        query['filter']['and'].append({"prefix": {"dot_status": "dot"}})
+        query['filter']['and'].append({"prefix": {"dot_status.#value": "dot"}})
 
         results = case_es.run_query(query)
         for res in results['hits']['hits']:
@@ -78,7 +77,7 @@ class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportPara
         ret['dot_calendar'] = dcal
 
         unique_visits = dcal.unique_xforms()
-        xform_es = FullXFormES(PACT_DOMAIN)
+        xform_es = ReportXFormES(PACT_DOMAIN)
 
         q = xform_es.base_query(size=len(unique_visits))
         lvisits = list(unique_visits)

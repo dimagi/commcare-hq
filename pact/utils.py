@@ -1,11 +1,8 @@
-from corehq.apps.api.es import  FullCaseES
+from corehq.apps.api.es import ReportCaseES
 from pact.enums import PACT_DOTS_DATA_PROPERTY, PACT_DOMAIN
 from StringIO import StringIO
 from django.test.client import RequestFactory
 from corehq.apps.receiverwrapper import views as rcv_views
-
-
-
 
 
 def submit_xform(url_path, domain, submission_xml_string, extra_meta=None):
@@ -21,18 +18,27 @@ def submit_xform(url_path, domain, submission_xml_string, extra_meta=None):
         req.META.update(extra_meta)
     return rcv_views.post(req, domain)
 
+
 def pact_script_fields():
     """
     This is a hack of the query to allow for the encounter date and pact_ids to show up as first class properties
     """
     return {
         "script_pact_id": {
-            "script": """if(_source['form']['note'] != null) { _source['form']['note']['pact_id']; }
-                      else { _source['form']['pact_id']; }"""
+            "script": """if(_source['form']['note'] != null) { _source['form']['note']['pact_id']['#value']; }
+                      else if (_source['form']['pact_id'] != null) { _source['form']['pact_id']['#value']; }
+                      else {
+                          null;
+                      }
+                      """
         },
         "script_encounter_date": {
-            "script": """if(_source['form']['note'] != null) { _source['form']['note']['encounter_date']; }
-        else { _source['form']['encounter_date']; }"""
+            "script": """if(_source['form']['note'] != null) { _source['form']['note']['encounter_date']['#value']; }
+        else if (_source['form']['encounter_date'] != null) { _source['form']['encounter_date']['#value']; }
+        else {
+            _source['received_on'];
+        }
+        """
         }
     }
 
@@ -63,7 +69,6 @@ def query_per_case_submissions_facet(domain, username=None, limit=100):
         "facets": {
             "case_submissions": {
                 "terms": {
-                    #                    "field": "form.case.case_id",
                     "script_field": case_script_field()['script_case_id']['script'],
                     "size": limit
                 },
@@ -82,8 +87,10 @@ def query_per_case_submissions_facet(domain, username=None, limit=100):
     }
 
     if username is not None:
-        query['facets']['case_submissions']['facet_filter']['and'].append({ "term": { "form.meta.username": username } })
+        query['facets']['case_submissions']['facet_filter']['and'].append(
+            {"term": {"form.meta.username": username}})
     return query
+
 
 def get_case_id(xform):
     if xform['form'].has_key('case'):
@@ -100,14 +107,14 @@ def get_patient_display_cache(case_ids):
     """
     if len(case_ids) == 0:
         return {}
-    case_es = FullCaseES(PACT_DOMAIN)
+    case_es = ReportCaseES(PACT_DOMAIN)
     query = {
         "fields": [
             "_id",
-            "last_name",
-            "first_name",
+            "last_name.#value",
+            "first_name.#value",
             "name",
-            "pactid",
+            "pactid.#value",
         ],
         "script_fields": {
             "case_id": {
@@ -124,8 +131,6 @@ def get_patient_display_cache(case_ids):
                 {
                     "ids": {
                         "values": case_ids,
-                        #                        "execution": "or",
-                        #                        "_cache": True
                     }
                 }
             ]
@@ -137,13 +142,11 @@ def get_patient_display_cache(case_ids):
     ret = {}
     if res is not None:
         for entry in res['hits']['hits']:
-        #            entry['fields']['case_id'] = entry['fields']['_id']
-        #            del(entry['fields']['_id'])
             ret[entry['fields']['case_id']] = entry['fields']
     return ret
 
 
-MISSING_DOTS_QUERY = {
+REPORT_XFORM_MISSING_DOTS_QUERY = {
     "query": {
         "filtered": {
             "query": {
@@ -163,7 +166,7 @@ MISSING_DOTS_QUERY = {
                     },
                     {
                         "missing": {
-                            "field": "%s.processed" % PACT_DOTS_DATA_PROPERTY,
+                            "field": "%s.processed.#type" % PACT_DOTS_DATA_PROPERTY,
                         }
                     }
                 ]

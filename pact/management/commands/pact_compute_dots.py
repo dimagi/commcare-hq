@@ -1,10 +1,8 @@
 from django.core.management.base import NoArgsCommand
 
-from corehq.apps.api.es import FullXFormES
-from couchforms.models import XFormInstance
+from corehq.apps.api.es import ReportXFormES
 from pact.enums import PACT_DOMAIN
-from pact.signals import process_dots_submission
-from pact.utils import MISSING_DOTS_QUERY
+from pact.utils import REPORT_XFORM_MISSING_DOTS_QUERY
 
 
 CHUNK_SIZE=100
@@ -17,10 +15,10 @@ class Command(NoArgsCommand):
     seen_doc_ids = {}
 
     def handle_noargs(self, **options):
-        xform_es = FullXFormES(PACT_DOMAIN)
+        xform_es = ReportXFormES(PACT_DOMAIN)
         offset = 0
 
-        q = MISSING_DOTS_QUERY
+        q = REPORT_XFORM_MISSING_DOTS_QUERY
         q['size'] = CHUNK_SIZE
 
         while True:
@@ -37,17 +35,6 @@ class Command(NoArgsCommand):
                         continue
                     else:
                         self.seen_doc_ids[doc_id ] =1
-
-                    xfdoc = XFormInstance.get(doc_id)
-
-                    #quick sanity check
-                    if hasattr(xfdoc, 'pact_dots_data'):
-                        delattr(xfdoc, 'pact_dots_data')
-                        xfdoc.save()
-                        print "deleting property"
-
-                    process_dots_submission(None, xfdoc, blocking=True)
-                    #print "getting doc_id: %s" % doc_id
             offset += CHUNK_SIZE
 
 

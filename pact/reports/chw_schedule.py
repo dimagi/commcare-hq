@@ -4,7 +4,7 @@ from dateutil.parser import parser
 from django.core.cache import cache
 import simplejson
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.api.es import FullXFormES
+from corehq.apps.api.es import ReportXFormES, get_report_script_field
 from pact.enums import PACT_DOMAIN
 from pact.lib.quicksect import IntervalNode
 from pact.utils import get_patient_display_cache
@@ -93,40 +93,41 @@ class CHWPatientSchedule(object):
         return cls(chw_username, day_intervaltree, cached_arr)
 
 
+
 def dots_submissions_by_case(case_id, query_date, username=None):
     """
     Actually run query for username submissions
     todo: do terms for the pact_ids instead of individual term?
     """
-    xform_es = FullXFormES(PACT_DOMAIN)
+    xform_es = ReportXFormES(PACT_DOMAIN)
     script_fields = {
-        "doc_id": {"script": "_source._id"},
-        "pact_id": {"script": "_source.form.pact_id", },
-        "encounter_date": {"script": "_source.form.encounter_date", },
-        "username": {"script": "_source.form.meta.username", },
-
-        "visit_type": {"script": "_source.form.visit_type", },
-        "visit_kept": {"script": "_source.form.visit_kept", },
-        "contact_type": {"script": "_source.form.contact_type", },
-        "observed_art": {"script": "_source.form.observed_art", },
-        "observed_non_art": {"script": "_source.form.observed_non_art", },
-        "observer_non_art_dose": {"script": "_source.form.observed_non_art_dose", },
-        "observed_art_dose": {"script": "_source.form.observed_art_dose", },
-        "pillbox_check": {"script": "_source.form.pillbox_check.check"},
-        "scheduled": {"script": "_source.form.scheduled"}
+        "doc_id": get_report_script_field('_id', is_known=True),
+        "pact_id": get_report_script_field("form.pact_id"),
+        "encounter_date": get_report_script_field('form.encounter_date'),
+        "username": get_report_script_field('form.meta.username', is_known=True),
+        "visit_type": get_report_script_field('form.visit_type'),
+        "visit_kept": get_report_script_field('form.visit_kept'),
+        "contact_type": get_report_script_field('form.contact_type'),
+        "observed_art": get_report_script_field('form.observed_art'),
+        "observed_non_art": get_report_script_field('form.observed_non_art'),
+        "observer_non_art_dose": get_report_script_field('form.observed_non_art_dose'),
+        "observed_art_dose": get_report_script_field('form.observed_art_dose'),
+        "pillbox_check": get_report_script_field('form.pillbox_check.check'),
+        "scheduled": get_report_script_field('form.scheduled'),
     }
 
     term_block = {'form.#type': 'dots_form'}
     if username is not None:
         term_block['form.meta.username'] = username
     query = xform_es.by_case_id_query(PACT_DOMAIN, case_id, terms=term_block,
-                                      date_field='form.encounter_date', startdate=query_date,
+                                      date_field='form.encounter_date.#value', startdate=query_date,
                                       enddate=query_date)
     query['sort'] = {'received_on': 'asc'}
     query['script_fields'] = script_fields
     query['size'] = 1
     query['from'] = 0
     res = xform_es.run_query(query)
+    print simplejson.dumps(res, indent=2)
     return res
 
 
@@ -144,6 +145,7 @@ def get_schedule_tally(username, total_interval, override_date=None):
     else:
         nowdate = override_date
         chw_schedule = CHWPatientSchedule.get_schedule(username, override_date=nowdate)
+
 
     patient_case_ids = set([x['case_id'] for x in chw_schedule.raw_schedule])
     patient_cache = get_patient_display_cache(list(patient_case_ids))
