@@ -107,7 +107,7 @@ class ESView(View):
         es_results = es_base.get('_search', data=es_query)
 
         if 'error' in es_results:
-            if es_query['query']['filtered']['query'].get('query_string'):
+            if 'query_string' in es_query.get('query', {}).get('filtered', {}).get('query', {}):
                 # the error may have been caused by a bad query string
                 # re-run with no query string to check
                 querystring = es_query['query']['filtered']['query']['query_string']['query']
@@ -226,8 +226,7 @@ class XFormES(ESView):
             new_terms['doc_type'] = doc_type
         return super(XFormES, self).base_query(terms=new_terms, fields=use_fields, start=start, size=size)
 
-
-    def run_query(self, es_query):
+    def run_query(self, es_query, **kwargs):
         es_results = super(XFormES, self).run_query(es_query)
         #hack, walk the results again, and if we have xmlns, populate human readable names
         # Note that `get_unknown_form_name` does not require the request, which is also
@@ -261,64 +260,6 @@ class XFormES(ESView):
         return es_results
 
 
-    @classmethod
-    def by_case_id_query(cls, domain, case_id, terms=None, doc_type='xforminstance',
-                         date_field=None, startdate=None, enddate=None, date_format='%Y-%m-%d'):
-        """
-        Run a case_id query on both case properties (supporting old and new) for xforms.
-
-        datetime options onsubmission ranges possible too by passing datetime startdate or enddate
-
-        args:
-        domain: string domain, required exact
-        case_id: string
-        terms: k,v of additional filters to apply as terms and block of filter
-        doc_type: explicit xforminstance doc_type term query (only search active, legit items)
-        date_field: string property of the xform submission you want to do date filtering, be sure to make sure that the field in question is indexed as a datetime
-        startdate, enddate: datetime interval values
-        date_format: string of the date format to filter based upon, defaults to yyyy-mm-dd
-        """
-
-        use_terms = terms or {}
-        query = {
-            "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {"term": {"domain.exact": domain.lower()}},
-                            {"term": {"doc_type": doc_type}},
-                            {
-                                "nested": {
-                                    "path": "form.case",
-                                    "filter": {
-                                        "or": [
-                                            {"term": {"case_id": "%s" % case_id}},
-                                            {"term": {"@case_id": "%s" % case_id}}
-                                        ]
-                                    }
-                                }
-                            }
-                        ]
-                    }
-                }
-            }
-        }
-        if date_field is not None:
-            range_query = {
-                "range": {
-                    date_field: {}
-                }
-            }
-
-            if startdate is not None:
-                range_query['range'][date_field]["gte"] = startdate.strftime(date_format)
-            if enddate is not None:
-                range_query['range'][date_field]["lte"] = enddate.strftime(date_format)
-            query['query']['filtered']['filter']['and'].append(range_query)
-
-        for k, v in use_terms.items():
-            query['query']['filtered']['filter']['and'].append({"term": {k.lower(): v.lower()}})
-        return query
 
 
 def report_term_filter(terms, mapping):
@@ -423,6 +364,65 @@ class ReportXFormES(XFormES):
 
                     res['_source']['es_readable_name'] = name
         return es_results
+
+    @classmethod
+    def by_case_id_query(cls, domain, case_id, terms=None, doc_type='xforminstance',
+                         date_field=None, startdate=None, enddate=None, date_format='%Y-%m-%d'):
+        """
+        Run a case_id query on both case properties (supporting old and new) for xforms.
+
+        datetime options onsubmission ranges possible too by passing datetime startdate or enddate
+
+        args:
+        domain: string domain, required exact
+        case_id: string
+        terms: k,v of additional filters to apply as terms and block of filter
+        doc_type: explicit xforminstance doc_type term query (only search active, legit items)
+        date_field: string property of the xform submission you want to do date filtering, be sure to make sure that the field in question is indexed as a datetime
+        startdate, enddate: datetime interval values
+        date_format: string of the date format to filter based upon, defaults to yyyy-mm-dd
+        """
+
+        use_terms = terms or {}
+        query = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {"term": {"domain.exact": domain.lower()}},
+                            {"term": {"doc_type": doc_type}},
+                            {
+                                "nested": {
+                                    "path": "form.case",
+                                    "filter": {
+                                        "or": [
+                                            {"term": {"@case_id": "%s" % case_id}},
+                                            {"term": {"case_id": "%s" % case_id}}
+                                        ]
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+        if date_field is not None:
+            range_query = {
+                "range": {
+                    date_field: {}
+                }
+            }
+
+            if startdate is not None:
+                range_query['range'][date_field]["gte"] = startdate.strftime(date_format)
+            if enddate is not None:
+                range_query['range'][date_field]["lte"] = enddate.strftime(date_format)
+            query['query']['filtered']['filter']['and'].append(range_query)
+
+        for k, v in use_terms.items():
+            query['query']['filtered']['filter']['and'].append({"term": {k.lower(): v.lower()}})
+        return query
 
 
 class ESQuerySet(object):
