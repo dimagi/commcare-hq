@@ -20,8 +20,7 @@ def _apply_updates(doc, update_dict):
 
 def bootstrap_domain(domain):
     project = Domain.get_by_name(domain)
-    config = project.commtrack_settings.openlmis_config
-    endpoint = OpenLMISEndpoint(config.url, config.username, config.password)
+    endpoint = OpenLMISEndpoint.from_config(project.commtrack_settings.openlmis_config)
     for f in endpoint.get_all_facilities():
         try:
             sync_facility_to_supply_point(domain, f)
@@ -132,7 +131,6 @@ def supply_point_to_json(supply_point):
     }
     if supply_point.location.parent:
         base['parentFacilityCode'] = supply_point.location.parent.external_id
-
     # todo phone number
     return base
 

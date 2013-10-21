@@ -198,3 +198,7 @@ class OpenLMISEndpoint(object):
             return True
         else:
             raise OpenLMISAPIException(res['error'])
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(config.url, config.username, config.password)
