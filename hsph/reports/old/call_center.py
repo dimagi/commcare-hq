@@ -1,12 +1,13 @@
 import datetime
 from casexml.apps.case.models import CommCareCaseAction
-from corehq.apps.api.es import FullCaseES
+from corehq.apps.api.es import ReportCaseES
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.basic import BasicTabularReport, Column
 from corehq.apps.reports.standard import (DatespanMixin,
     ProjectReportParametersMixin, CustomProjectReport)
 from corehq.apps.reports.standard.inspect import CaseDisplay, CaseListReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.pillows.base import restore_property_dict
 from hsph.reports import HSPHSiteDataMixin
 from hsph.fields import NameOfCATIField, AllocatedToFilter
 from corehq.apps.reports.fields import FilterUsersField, DatespanField
@@ -225,7 +226,7 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin,
     @property
     @memoized
     def case_es(self):
-        return FullCaseES(self.domain)
+        return ReportCaseES(self.domain)
 
     @property
     def headers(self):
@@ -266,11 +267,11 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin,
             #filters.append({'term': {'allocated_to': allocated_to}})
 
         if site_num:
-            filters.append({'term': {'site_number': site_num.lower()}})
+            filters.append({'term': {'site_number.#value': site_num.lower()}})
         if district_id:
-            filters.append({'term': {'district_id': district_id.lower()}})
+            filters.append({'term': {'district_id.#value': district_id.lower()}})
         if region_id:
-            filters.append({'term': {'region_id': region_id.lower()}})
+            filters.append({'term': {'region_id.#value': region_id.lower()}})
         
         return {'and': filters} if filters else {}
 
@@ -324,7 +325,7 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin,
 
     @property
     def rows(self):
-        case_displays = (HSPHCaseDisplay(self, self.get_case(case))
+        case_displays = (HSPHCaseDisplay(self, restore_property_dict(self.get_case(case)))
                          for case in self.es_results['hits'].get('hits', []))
 
         for disp in case_displays:
