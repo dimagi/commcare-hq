@@ -146,7 +146,9 @@ class CallLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularR
     def _fmt_submission_link(self, submission_id):
         url = reverse("render_form_data", args=[self.domain, submission_id])
         display_text = _("View Submission")
-        return self.table_cell(display_text, '<a href="%s">%s</a>' % (url, display_text))
+        ret = self.table_cell(display_text, '<a href="%s">%s</a>' % (url, display_text))
+        ret['raw'] = submission_id
+        return ret
 
 class ExpectedCallbackReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
     """
