@@ -121,7 +121,7 @@
             </td>
 
             {% for column in case.columns %}
-            <td>{{ column.value }}</td>
+            <td>{{ column.value|safe }}</td>
             {% endfor %}
         </tr>
 
