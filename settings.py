@@ -422,6 +422,7 @@ TEST_RUNNER = 'testrunner.HqTestSuiteRunner'
 HQ_ACCOUNT_ROOT = "commcarehq.org" # this is what gets appended to @domain after your accounts
 
 XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
+OFFLINE_TOUCHFORMS_PORT = 4444
 
 ####### Couchlog config ######
 
