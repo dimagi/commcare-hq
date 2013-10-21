@@ -151,4 +151,4 @@ def sync_supply_point_to_openlmis(supply_point, openlmis_endpoint, create=True):
     if create:
         return openlmis_endpoint.create_virtual_facility(json_sp)
     else:
-        return openlmis_endpoint.update_virtual_facility(json_sp)
+        return openlmis_endpoint.update_virtual_facility(supply_point.external_id, json_sp)
