@@ -1,11 +1,11 @@
 from datetime import datetime
 from optparse import make_option
 from django.core.mail import mail_admins
+from pillowtop import get_all_pillows
 from gevent import monkey;monkey.patch_all()
 import gevent
 from pillowtop.listener import AliasedElasticPillow
 from pillowtop.management.pillowstate import get_pillow_states
-from pillowtop import get_all_pillows
 from django.core.management.base import NoArgsCommand, BaseCommand
 from django.core.management import call_command
 from django.conf import settings
@@ -49,7 +49,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         runs = []
-        pillow_classes = get_all_pillow(instantiate=False)
+        pillow_classes = get_all_pillows(instantiate=False)
         aliased_classes = filter(lambda x: issubclass(x, AliasedElasticPillow), pillow_classes)
         aliasable_pillows = [p(create_index=False) for p in aliased_classes]
 
