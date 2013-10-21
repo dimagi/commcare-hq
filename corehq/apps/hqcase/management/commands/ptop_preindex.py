@@ -15,9 +15,7 @@ def get_reindex_command(pillow_class_name):
     pillow_command_map = {
         'DomainPillow': 'ptop_fast_reindex_domains',
         'CasePillow': 'ptop_fast_reindex_cases',
-        'FullCasePillow': 'ptop_fast_reindex_fullcases',
         'XFormPillow': 'ptop_fast_reindex_xforms',
-        'FullXFormPillow': 'ptop_fast_reindex_fullxforms',
         'UserPillow': 'ptop_fast_reindex_users',
         'AppPillow': 'ptop_fast_reindex_apps',
         'SMSPillow': 'ptop_fast_reindex_smslogs',

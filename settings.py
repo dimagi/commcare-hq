@@ -836,9 +836,6 @@ PILLOWTOPS = {
         'corehq.pillows.sms.SMSPillow',
     ],
     'core_ext': [
-        'corehq.pillows.fullcase.FullCasePillow',  # to remove
-        'corehq.pillows.fullxform.FullXFormPillow',  # to remove
-
         'corehq.pillows.reportcase.ReportCasePillow',
         'corehq.pillows.reportxform.ReportXFormPillow',
     ],
@@ -882,10 +879,7 @@ COUCH_CACHE_BACKENDS = [
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]
 
-#Custom workflow for indexing xform data beyond the standard properties
-XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
-
-#Custom fully indexed domains for FullCase index/pillowtop
+#Custom fully indexed domains for ReportCase index/pillowtop
 # Adding a domain will not automatically index that domain's existing cases
 ES_CASE_FULL_INDEX_DOMAINS = [
     'pact',
@@ -898,12 +892,13 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'crs-remind',
 ]
 
-#Custom fully indexed domains for FullXForm index/pillowtop --
+#Custom fully indexed domains for ReportXForm index/pillowtop --
 # only those domains that don't require custom pre-processing before indexing,
 # otherwise list in XFORM_PILLOW_HANDLERS
 # Adding a domain will not automatically index that domain's existing forms
 ES_XFORM_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
+    'pact',
     'uth-rhd-test',
     'mvp-bonsaaso',
     'mvp-koraro',
