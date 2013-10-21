@@ -395,14 +395,10 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact, verifi
 
     error_occurred = False
     error_msg = None
+    form_complete = False
+    session = None
 
     try:
-        form_complete = False
-        session = None
-
-        # Close any open sessions
-        XFormsSession.close_all_open_sms_sessions(domain, contact_id)
-
         # Start the session
         form = Form.get_form(survey_keyword_action.form_unique_id)
         app = form.get_app()
@@ -477,9 +473,9 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact, verifi
                         valid, answer, _error_msg = validate_answer(current_question.event, xpath_answer[xpath])
                         if not valid:
                             raise StructuredSMSException(response_text=_error_msg)
-                        responses = _get_responses(domain, contact_id, answer, yield_responses=True)
+                        responses = _get_responses(domain, contact_id, answer, yield_responses=True, session_id=session.session_id, update_timestamp=False)
                     else:
-                        responses = _get_responses(domain, contact_id, "", yield_responses=True)
+                        responses = _get_responses(domain, contact_id, "", yield_responses=True, session_id=session.session_id, update_timestamp=False)
 
                     current_question = responses[-1]
                     if is_form_complete(current_question):
@@ -498,13 +494,13 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact, verifi
                     if not valid:
                         raise StructuredSMSException(response_text=_error_msg)
 
-                    responses = _get_responses(domain, contact_id, answer, yield_responses=True)
+                    responses = _get_responses(domain, contact_id, answer, yield_responses=True, session_id=session.session_id, update_timestamp=False)
                     current_question = responses[-1]
                     form_complete = is_form_complete(current_question)
 
                 # If the form isn't finished yet but we're out of arguments, try to leave each remaining question blank and continue
                 while not form_complete:
-                    responses = _get_responses(domain, contact_id, "", yield_responses=True)
+                    responses = _get_responses(domain, contact_id, "", yield_responses=True, session_id=session.session_id, update_timestamp=False)
                     current_question = responses[-1]
 
                     if current_question.is_error:
@@ -520,6 +516,12 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact, verifi
         error_occurred = True
         error_msg = "ERROR: Internal server error"
 
+    if session is not None:
+        session = XFormsSession.get(session._id)
+        if session.is_open:
+            session.end(False)
+            session.save()
+
     message_tags = {
         "workflow" : WORKFLOW_KEYWORD,
         "xforms_session_couch_id" : session._id if session is not None else None,
@@ -532,11 +534,6 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact, verifi
 
     if error_occurred and verified_number is not None and send_response:
         send_sms_to_verified_number(verified_number, error_msg, **message_tags)
-
-    if session is not None and (error_occurred or not form_complete):
-        session = XFormsSession.get(session._id)
-        session.end(False)
-        session.save()
 
 def process_survey_keyword_actions(verified_number, survey_keyword, text, msg=None):
     from corehq.apps.reminders.models import (
