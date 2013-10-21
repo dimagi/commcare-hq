@@ -163,7 +163,7 @@ class ESView(View):
         use_terms = terms or {}
 
         if len(fields) > 0:
-            query['fields'] = fields or []
+            query['fields'] = fields
         for k, v in use_terms.items():
             query['filter']['and'].append({"term": {k: v}})
         return query
