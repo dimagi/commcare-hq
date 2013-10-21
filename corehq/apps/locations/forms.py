@@ -35,7 +35,7 @@ class LocationForm(forms.Form):
 
         kwargs['prefix'] = 'main'
         # seed form data from couch doc
-        kwargs['initial'] = self.location._doc
+        kwargs['initial'] = dict(self.location._doc)
         kwargs['initial']['parent_id'] = self.cur_parent_id
         lat, lon = (getattr(self.location, k, None) for k in ('latitude', 'longitude'))
         kwargs['initial']['coordinates'] = '%s, %s' % (lat, lon) if lat is not None else ''
