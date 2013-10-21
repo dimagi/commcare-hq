@@ -139,6 +139,12 @@ class SessionDatum(IdNode, OrderedXmlObject):
     detail_confirm = StringField('@detail-confirm')
 
 
+class Assertion(XmlObject):
+    ROOT_NAME = 'assert'
+
+    test = StringField('@test')
+    text = NodeListField('text', Text)
+
 class Entry(XmlObject):
     ROOT_NAME = 'entry'
 
@@ -149,6 +155,8 @@ class Entry(XmlObject):
 
     datums = NodeListField('session/datum', SessionDatum)
     datum = NodeField('session/datum', SessionDatum)
+
+    assertions = NodeListField('assertions/assert', Assertion)
 
 
 class Menu(DisplayNode, IdNode):
@@ -604,6 +612,13 @@ class SuiteGenerator(object):
                     )
                 ))
 
+        def add_case_sharing_assertion(e):
+            if self.app.case_sharing:
+                e.instances.append(Instance(id='groups', src='jr://fixture/user-groups'))
+                assertion = Assertion(test="count(instance('groups')/groups/group) = 1")
+                assertion.text.append(Text(locale_id='case_sharing.exactly_one_group'))
+                e.assertions.append(assertion)
+
         for module in self.modules:
             for form in module.get_forms():
                 e = Entry()
@@ -616,6 +631,7 @@ class SuiteGenerator(object):
                 )
                 if form.requires == "case":
                     add_case_stuff(module, e, use_filter=True)
+                add_case_sharing_assertion(e)
                 yield e
             if module.case_list.show:
                 e = Entry(
@@ -625,6 +641,7 @@ class SuiteGenerator(object):
                     )
                 )
                 add_case_stuff(module, e, use_filter=False)
+                add_case_sharing_assertion(e)
                 yield e
 
     @property
