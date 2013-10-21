@@ -131,11 +131,12 @@ def supply_point_to_json(supply_point):
     }
     if supply_point.location.parent:
         base['parentFacilityCode'] = supply_point.location.parent.external_id
+
     # todo phone number
     return base
 
 
-def sync_supply_point_to_openlmis(supply_point, openlmis_endpoint):
+def sync_supply_point_to_openlmis(supply_point, openlmis_endpoint, create=True):
     """
     https://github.com/OpenLMIS/documents/blob/master/4.1-CreateVirtualFacility%20API.md
     {
@@ -146,4 +147,8 @@ def sync_supply_point_to_openlmis(supply_point, openlmis_endpoint):
         "active":"true"
     }
     """
-    return openlmis_endpoint.create_virtual_facility(supply_point_to_json(supply_point))
+    json_sp = supply_point_to_json(supply_point)
+    if create:
+        return openlmis_endpoint.create_virtual_facility(json_sp)
+    else:
+        return openlmis_endpoint.update_virtual_facility(json_sp)
