@@ -258,6 +258,9 @@ class BasicPillow(object):
             "Error, this pillowtop subclass has not been configured to do anything!")
 
 
+PYTHONPILLOW_CHUNK_SIZE = 250
+PYTHONPILLOW_CHECKPOINT_FREQUENCY = CHECKPOINT_FREQUENCY * 10
+
 class PythonPillow(BasicPillow):
     """
     A pillow that does filtering in python instead of couch.
@@ -271,14 +274,22 @@ class PythonPillow(BasicPillow):
     Subclasses should override the python_filter function to perform python
     filtering.
     """
-    CHUNK_SIZE = 250
-    PILLOW_CHECKPOINT_FREQUENCY = CHECKPOINT_FREQUENCY * 10
 
-    def __init__(self, document_class=None):
+    def __init__(self, document_class=None, chunk_size=PYTHONPILLOW_CHUNK_SIZE,
+                 checkpoint_frequency=PYTHONPILLOW_CHECKPOINT_FREQUENCY):
+        """
+        Use chunk_size = 0 to disable chunking
+        """
         super(PythonPillow, self).__init__(document_class=document_class)
-
+        self.change_queue=[]
+        self.chunk_size = chunk_size
+        self.use_chunking = chunk_size > 0
+        self.checkpoint_frequency = checkpoint_frequency
         if self.document_class:
-            self.couch_db = CachedCouchDB(self.document_class.get_db().uri, readonly=False)
+            if self.use_chunking:
+                self.couch_db = CachedCouchDB(self.document_class.get_db().uri, readonly=False)
+            else:
+                self.couch_db = self.document_class.get_db()
 
     def python_filter(self, doc):
         """
@@ -288,7 +299,7 @@ class PythonPillow(BasicPillow):
 
     def process_chunk(self):
         self.couch_db.bulk_load([change['id'] for change in self.change_queue],
-                                    purge_existing=True)
+                                purge_existing=True)
 
         while len(self.change_queue) > 0:
             change = self.change_queue.pop()
@@ -303,10 +314,13 @@ class PythonPillow(BasicPillow):
     def processor(self, change, do_set_checkpoint=True):
         self.changes_seen += 1
         self.change_queue.append(change)
-        if self.changes_seen % self.PILLOW_CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
+        if self.use_chunking:
+            if len(self.change_queue) > self.chunk_size:
+                self.process_chunk()
+        else:
+            self.process_change(change)
+        if self.changes_seen % self.checkpoint_frequency == 0 and do_set_checkpoint:
             self.set_checkpoint(change)
-        if len(self.change_queue) > self.CHUNK_SIZE:
-            self.process_chunk()
 
     def run(self):
         self.change_queue = []
