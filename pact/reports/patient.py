@@ -123,6 +123,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMix
             return None
 
         #a fuller query doing filtered+query vs simpler base_query filter
+
         full_query = {
             'query': {
                 "filtered": {
@@ -135,10 +136,18 @@ class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMix
                                     "path": "form.case",
                                     "filter": {
                                         "or": [
-                                            {"term": {
-                                            "case_id": "%s" % self.request.GET['patient_id']}},
-                                            {"term": {
-                                            "@case_id": "%s" % self.request.GET['patient_id']}}
+                                            {
+                                                "term": {
+                                                    "@case_id": "%s" % self.request.GET[
+                                                        'patient_id']
+                                                }
+                                            },
+                                            {
+                                                "term": {
+                                                    "case_id": "%s" % self.request.GET['patient_id']
+                                                }
+                                            },
+
                                         ]
                                     }
                                 }
@@ -160,8 +169,8 @@ class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMix
             "from": self.pagination.start
         }
         full_query['script_fields'] = pact_script_fields()
-        print simplejson.dumps(full_query, indent=2)
-        return self.xform_es.run_query(full_query)
+        res = self.xform_es.run_query(full_query)
+        return res
 
 
     @property
@@ -178,7 +187,6 @@ class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMix
                     yield "---"
                 yield row_field_dict["form.#type"].replace('_', ' ').title()
                 yield row_field_dict.get("form.meta.username", "")
-
 
             res = self.es_results
             if res.has_key('error'):
