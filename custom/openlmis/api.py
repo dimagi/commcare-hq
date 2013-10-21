@@ -189,10 +189,12 @@ class OpenLMISEndpoint(object):
     def create_virtual_facility(self, facility_data):
         response = requests.post(self.create_virtual_facility_url,
                                  data=json.dumps(facility_data),
+                                 headers={'content-type': 'application/json'},
                                  auth=self._auth())
+
         # todo: error handling and such
         res = response.json()
-        if res['Success']:
+        if res.get('Success', False):
             return True
         else:
             raise OpenLMISAPIException(res['error'])
