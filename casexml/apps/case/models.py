@@ -3,7 +3,7 @@ from StringIO import StringIO
 import re
 from datetime import datetime
 import logging
-from copy import copy
+from copy import copy, deepcopy
 
 from django.core.cache import cache
 from django.conf import settings
@@ -908,12 +908,18 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
 
         If strict is True, this will enforce that the first action must be a create.
         """
+        actions = deepcopy(self.actions)
         if strict:
-            assert self.actions[0].action_type == const.CASE_ACTION_CREATE, (
+            assert actions[0].action_type == const.CASE_ACTION_CREATE, (
                 'first case action should be a create but was %s' % self.actions[0].action_type
             )
-        for i in range(1, len(self.actions)):
-            self._apply_action(self.actions[i])
+            actions.pop(0)
+        else:
+            actions = [a for a in actions if a.action_type != const.CASE_ACTION_CREATE]
+
+        for a in actions:
+            self._apply_action(a)
+
         self.xform_ids = []
         for a in self.actions:
             if a.xform_id not in self.xform_ids:
