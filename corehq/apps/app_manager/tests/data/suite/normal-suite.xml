@@ -99,6 +99,16 @@
                 <locale id="m0.case_short.case_enum_5.header"/>
             </text>
         </header>
+        <template width="0">
+            <text>
+                <xpath function="if(enum = 'a', 0, if(enum = 'b', 1, ''))"/>
+            </text>
+        </template>
+    </field>
+    <field>
+        <header width="0">
+            <text/>
+        </header>
         <template>
             <text>
                 <xpath function="if(enum = 'a', $ka, if(enum = 'b', $kb, ''))">

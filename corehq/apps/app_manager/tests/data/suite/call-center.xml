@@ -69,6 +69,11 @@
           </xpath>
         </text>
       </template>
+      <sort type="string">
+        <text>
+          <xpath function="if(debug_level = 'admin', 0, if(debug_level = 'call_center', 1, if(debug_level = 'ict_coord', 2, '')))"/>
+        </text>
+      </sort>
     </field>
     <field>
       <header width="0">
