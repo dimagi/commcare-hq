@@ -14,7 +14,7 @@ def send_verification(domain, user, phone_number):
         'name': user.username.split('@')[0],
         'replyto': ' to %s' % util.clean_phone_number(reply_phone) if reply_phone else '',
     }
-    send_sms(domain, user._id, phone_number, message)
+    send_sms(domain, user, phone_number, message)
 
 def process_verification(phone_number, msg, backend_id=None):
     v = VerifiedNumber.by_phone(phone_number, True)

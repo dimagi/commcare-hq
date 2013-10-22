@@ -107,7 +107,7 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers, workflow=Non
                     else:
                         raise_warning() # ERROR_NO_OTHER_NUMBERS
                 else:
-                    result = send_sms(reminder.domain, recipient.get_id, phone_number, message, **message_tags)
+                    result = send_sms(reminder.domain, recipient, phone_number, message, **message_tags)
                     if not result:
                         raise_warning() # Could not send SMS
             else:
