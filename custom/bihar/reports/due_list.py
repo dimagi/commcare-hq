@@ -13,7 +13,7 @@ from corehq.apps.reports.generic import summary_context
 from corehq.apps.api.es import ReportCaseES
 from datetime import datetime, timedelta
 
-BIHAR_DOMAIN = 'care-bihar' # TODO: where should this go?
+BIHAR_DOMAIN = 'bihar' # TODO: where should this go?
 BIHAR_CHILD_CASE_TYPE = 'cc_bihar_newborn'
 MAX_ES_RESULTS = 1000000
 DATE_FORMAT = '%Y-%m-%d'
