@@ -853,12 +853,6 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
             for a in self.actions:
                 assert a.server_date is not None and a.xform_id is not None
 
-        def _type_sort(action_type):
-            """
-            Consistent ordering for action types
-            """
-            return const.CASE_ACTIONS.index(action_type)
-
         _check_preconditions()
 
         # this would normally work except we only recently started using the
@@ -1118,3 +1112,10 @@ class CommCareCaseGroup(Document):
             reduce=True
         ).first()
         return data['value'] if data else 0
+
+
+def _type_sort(action_type):
+    """
+    Consistent ordering for action types
+    """
+    return const.CASE_ACTIONS.index(action_type)
