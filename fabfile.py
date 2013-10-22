@@ -234,8 +234,6 @@ def production():
         'rabbitmq': ['hqdb0.internal.commcarehq.org'],
         'django_celery': ['hqdb0.internal.commcarehq.org'],
         'django_app': [
-            'hqdjango0.internal.commcarehq.org',
-            'hqdjango1.internal.commcarehq.org',
             'hqdjango3.internal.commcarehq.org',
             'hqdjango4.internal.commcarehq.org',
             'hqdjango5.internal.commcarehq.org',
