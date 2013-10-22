@@ -14,11 +14,11 @@ var ManageRemindersViewModel = function (
 
     self.case_type = ko.observable(initial.case_type);
 
-    self.available_languages = ko.observable(_.map(available_languages, function (langcode) {
-        return new ReminderLanguage(langcode);
-    }));
     self.default_lang = ko.observable(initial.default_lang);
     self.language_modal_selector = language_modal_selector;
+    self.available_languages = ko.observableArray(_.map(available_languages, function (langcode) {
+        return new ReminderLanguage(langcode, self.default_lang);
+    }));
 
     self.start_reminder_on = ko.observable(initial.start_reminder_on);
     self.isStartReminderCaseProperty = ko.computed(function () {
@@ -357,11 +357,21 @@ var ReminderMessage = function (message, langcode, available_languages) {
     });
 };
 
-var ReminderLanguage = function (langcode) {
+var ReminderLanguage = function (langcode, default_lang) {
     'use strict';
     var self = this;
+
     self.langcode = ko.observable(langcode);
     self.name = ko.observable(langcode);
+    self.default_lang = default_lang;
+
+    self.isDefaultLang = ko.computed(function () {
+        return self.langcode() === self.default_lang();
+    });
+    self.isNotDefaultLang = ko.computed(function () {
+        return !self.isDefaultLang();
+    });
+
     $.getJSON('/langcodes/langs.json', {term: self.langcode()}, function (res) {
         var index = _.map(res, function(r) { return r.code; }).indexOf(self.langcode());
         if (index >= 0) {
