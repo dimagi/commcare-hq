@@ -846,6 +846,11 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         choices=((n, n) for n in QUESTION_RETRY_CHOICES)
     )
 
+    force_surveys_to_use_triggered_case = forms.BooleanField(
+        required=False,
+        label=_("For Surveys, force answers to affect case sending the survey."),
+    )
+
     def __init__(self, data=None, is_previewer=False, domain=None, ui_type=None, is_edit=False, *args, **kwargs):
         if 'initial' not in kwargs:
             kwargs['initial'] = {
@@ -1077,6 +1082,10 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             ),
             'submit_partial_forms',
             'include_case_side_effects',
+            crispy.Div(
+                'force_surveys_to_use_triggered_case',
+                data_bind="visible: isForceSurveysToUsedTriggeredCaseVisible",
+            ),
             active=False,
         )
 
@@ -1359,6 +1368,12 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             raise ValidationError("Max question retries must be an integer.")
         return value
 
+    def clean_force_surveys_to_use_triggered_case(self):
+        method = self.cleaned_data['method']
+        if method == METHOD_SMS or method == METHOD_SMS_CALLBACK:
+            return False
+        return self.cleaned_data['force_surveys_to_use_triggered_case']
+
     def save(self, reminder_handler):
         if not isinstance(reminder_handler, CaseReminderHandler):
             raise ValueError("You must save to a CaseReminderHandler object!")
@@ -1397,6 +1412,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             'include_case_side_effects',
             'default_lang',
             'max_question_retries',
+            'force_surveys_to_use_triggered_case',
         ]:
             setattr(reminder_handler, field, self.cleaned_data[field])
 
