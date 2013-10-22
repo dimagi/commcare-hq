@@ -87,7 +87,7 @@ DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ADMIN_MEDIA_PREFIX = '/static/admin/'
 
 # Make this unique, and don't share it with anybody - put into localsettings.py
-SECRET_KEY = ''
+SECRET_KEY = 'you should really change this'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
