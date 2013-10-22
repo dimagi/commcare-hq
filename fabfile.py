@@ -145,6 +145,7 @@ def setup_dirs():
     sudo('mkdir -p %(services)s/supervisor' % env, user=env.sudo_user)
 
 
+
 @task
 def india():
     """Our production server in India."""
@@ -354,6 +355,37 @@ def preview():
     env.flower_port = 5556
 
     _setup_path()
+
+
+
+
+@task
+def development():
+    """A development monolith target - must specify a host either by command line or prompt"""
+    env.sudo_user = 'cchq'
+    env.environment = 'development'
+    env.django_port = '9010'
+    env.should_migrate = True
+
+    _setup_path()
+
+    env.roledefs = {
+        'couch': [],
+        'pg': [],
+        'rabbitmq': [],
+        'django_celery': [],
+        'django_app': [],
+        'django_pillowtop': [],
+        'formsplayer': [],
+        'staticfiles': [],
+        'lb': [],
+        'deploy': [],
+
+        'django_monolith': env.hosts
+    }
+    env.roles = ['django_monolith']
+    env.es_endpoint = 'localhost'
+    env.flower_port = 5555
 
 @task
 @roles('django_app','django_celery','staticfiles')
