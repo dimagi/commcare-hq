@@ -81,6 +81,11 @@ var ManageRemindersViewModel = function (
         return self.method() === self.choices.METHOD_IVR_SURVEY;
     });
 
+    self.isForceSurveysToUsedTriggeredCaseVisible = ko.computed(function () {
+        return (self.method() === self.choices.METHOD_IVR_SURVEY ||
+                self.method() === self.choices.METHOD_SMS_SURVEY);
+    });
+
     self.init = function () {
         var events = $.parseJSON(initial.events || '[]');
         if (self.ui_type === self.choices.UI_SIMPLE_FIXED) {
