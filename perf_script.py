@@ -13,13 +13,7 @@ for d in submodules_list:
 
 sys.path.append(os.path.join(filedir,'submodules'))
 
-import settings, datetime, bpython
+import settings
 setup_environ(settings)
-
-from corehq.apps.users.models import CommCareUser, CommCareCase
-from couchforms.models import XFormInstance
-from corehq.apps.users import models
-from dimagi.utils.couch.database import get_db
-db = get_db()
 
 from loadtest.fake_data import fake_it
