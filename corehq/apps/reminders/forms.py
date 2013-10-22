@@ -1517,7 +1517,7 @@ class CaseReminderEventForm(forms.Form):
     )
 
     # messages is visible when the method of the reminder is METHOD_SMS or METHOD_SMS_CALLBACK
-    # value will be a dict of {language: message}
+    # value will be a dict of {langcode: message}
     message_data = forms.CharField(
         required=False,
         widget=forms.HiddenInput,
@@ -1609,7 +1609,7 @@ class CaseReminderEventMessageForm(forms.Form):
     """
     This form specifies the UI for messages in CaseReminderEventForm.
     """
-    language = forms.CharField(
+    langcode = forms.CharField(
         required=False,
         widget=forms.HiddenInput
     )
@@ -1624,7 +1624,7 @@ class CaseReminderEventMessageForm(forms.Form):
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
-            crispy.Field('language', data_bind="value: language"),
+            crispy.Field('langcode', data_bind="value: langcode"),
             BootstrapMultiField(
                 'Message <span data-bind="text:languageLabel"></span>',
                 InlineField(

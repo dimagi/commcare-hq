@@ -272,8 +272,8 @@ var ReminderEvent = function (eventData, choices, method, event_timing, event_in
             || (self.method() === self.choices.METHOD_IVR_SURVEY);
     });
 
-    self.messageTranslations = ko.observable(_.map(eventData.message, function (message, language) {
-        return new ReminderMessage(message, language, self.available_languages);
+    self.messageTranslations = ko.observableArray(_(eventData.message).map(function (message, langcode) {
+        return new ReminderMessage(message, langcode, self.available_languages);
     }));
     self.messageByLangcode = ko.computed(function () {
         var translations = {},
@@ -281,7 +281,6 @@ var ReminderEvent = function (eventData, choices, method, event_timing, event_in
                 return lang.langcode();
             });
         _.each(self.messageTranslations(), function (message) {
-            translations[message.language()] = message;
         });
         _.each(_.difference(available_langcodes, _(translations).keys()), function(lang) {
             var existingTranslations = self.messageTranslations(),
@@ -289,13 +288,14 @@ var ReminderEvent = function (eventData, choices, method, event_timing, event_in
             existingTranslations.push(newMessage);
             translations[lang] = newMessage;
             self.messageTranslations(existingTranslations);
+            translations[message.langcode()] = message;
         });
         return translations;
     });
     self.message_data = ko.computed(function () {
         var message_data = {};
         _.each(self.messageTranslations(), function (translation) {
-            message_data[translation.language()] = translation.message();
+            message_data[translation.langcode()] = translation.message();
         });
         return message_data;
     });
@@ -319,10 +319,10 @@ var ReminderEvent = function (eventData, choices, method, event_timing, event_in
     });
 };
 
-var ReminderMessage = function (message, language, available_languages) {
+var ReminderMessage = function (message, langcode, available_languages) {
     'use strict';
     var self = this;
-    self.language = ko.observable(language);
+    self.langcode = ko.observable(langcode);
     self.message = ko.observable(message);
     self.available_languages = available_languages;
 
@@ -349,13 +349,13 @@ var ReminderMessage = function (message, language, available_languages) {
         if (self.available_languages().length == 1) {
             return "";
         }
-        var language_name = self.language();
+        var languageName = self.langcode();
         _.each(self.available_languages(), function (lang) {
-            if (lang.langcode() === self.language()) {
-                language_name = lang.name();
+            if (lang.langcode() === self.langcode()) {
+                languageName = lang.name();
             }
         });
-        return '(' + language_name + ')';
+        return '(' + languageName + ')';
     });
 };
 
