@@ -95,6 +95,8 @@ class CaseRebuildTest(TestCase):
 
         original_actions = [deepcopy(a) for a in case.actions]
         original_form_ids = [id for id in case.xform_ids]
+        self.assertEqual(3, original_actions)
+        self.assertEqual(3, len(original_form_ids))
         self._assertListEqual(original_actions, case.actions)
 
         # test reordering
