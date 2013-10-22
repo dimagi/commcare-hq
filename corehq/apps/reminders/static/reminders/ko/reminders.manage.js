@@ -15,7 +15,6 @@ var ManageRemindersViewModel = function (
     self.case_type = ko.observable(initial.case_type);
 
     self.default_lang = ko.observable(initial.default_lang);
-    self.language_modal_selector = language_modal_selector;
     self.available_languages = ko.observableArray(_.map(available_languages, function (langcode) {
         return new ReminderLanguage(langcode, self.default_lang);
     }));
@@ -49,7 +48,7 @@ var ManageRemindersViewModel = function (
     });
 
     self.method = ko.observable(initial.method);
-    self.eventObjects = ko.observable();
+    self.eventObjects = ko.observableArray();
     self.events = ko.computed(function () {
         return JSON.stringify(_.map(self.eventObjects(), function (event){
             return event.asJSON();
