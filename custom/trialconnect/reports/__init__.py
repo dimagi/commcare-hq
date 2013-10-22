@@ -1,6 +1,10 @@
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import DatespanMixin, ProjectReportParametersMixin, ProjectReport
 
+def div(num, denom, percent=False):
+    floater = 100.0 if percent else 1.0
+    val = num * floater / denom if denom != 0 else 0
+    return "%.2f" % val + ("%" if percent else "")
 
 class TrialConnectReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin, DatespanMixin):
     is_cacheable = True
