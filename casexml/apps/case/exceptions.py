@@ -19,6 +19,10 @@ class NoDomainProvided(Exception):
     pass
 
 
+class MissingServerDate(Exception):
+    pass
+
+
 class RestoreException(ValueError):
     """
     For stuff that goes wrong during restore

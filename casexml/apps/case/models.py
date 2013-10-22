@@ -4,6 +4,7 @@ import re
 from datetime import datetime
 import logging
 from copy import copy, deepcopy
+from dimagi.utils.parsing import json_format_date, json_format_datetime
 
 from django.core.cache import cache
 from django.conf import settings
@@ -13,6 +14,7 @@ from django.utils.translation import ugettext as _
 from couchdbkit.ext.django.schema import *
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from PIL import Image
+from casexml.apps.case.exceptions import MissingServerDate
 from dimagi.utils.django.cached_object import CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage, IMAGE_SIZE_ORDERING
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
@@ -653,7 +655,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
 
         if self.modified_on is None or mod_date > self.modified_on:
             self.modified_on = mod_date
-    
+
 
         if case_update.creates_case():
             self.apply_create_block(case_update.get_create_action(), xformdoc, mod_date, case_update.user_id)
@@ -904,6 +906,14 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
 
         If strict is True, this will enforce that the first action must be a create.
         """
+        # try to re-sort actions if necessary
+        try:
+            self.actions = sorted(self.actions, key=_action_cmp)
+        except MissingServerDate:
+            # only worry date reconciliation if in strict mode
+            if strict:
+                raise
+
         actions = deepcopy(self.actions)
         if strict:
             assert actions[0].action_type == const.CASE_ACTION_CREATE, (
@@ -1114,6 +1124,16 @@ class CommCareCaseGroup(Document):
             reduce=True
         ).first()
         return data['value'] if data else 0
+
+
+def _action_cmp(action):
+    if not action.server_date or not action.date:
+        raise MissingServerDate()
+    return '{server_date} {phone_date} {type}'.format(
+        server_date=json_format_date(action.server_date),
+        phone_date=json_format_datetime(action.date),
+        type=_type_sort(action.action_type),
+    )
 
 
 def _type_sort(action_type):
