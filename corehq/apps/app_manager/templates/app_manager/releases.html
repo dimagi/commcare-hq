@@ -103,8 +103,8 @@
         </div>
         <button class="btn btn-primary" data-bind="
             click: makeNewBuild,
-            attr: {disabled: (buildState()=='pending') ? 'disabled' : undefined},
-            css: {disabled: (buildState()=='pending')}
+            attr: {disabled: !buildButtonEnabled() ? 'disabled' : undefined},
+            css: {disabled: !buildButtonEnabled()}
         ">{% trans 'Make New Version' %}</button>
 
         <div id="build-errors-wrapper"></div>

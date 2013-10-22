@@ -564,12 +564,13 @@ def current_app_version(request, domain, app_id):
     Return current app version and the latest release
     """
     app = get_app(domain, app_id)
-    latest_release = get_db().view('app_manager/saved_app',
+    latest = get_db().view('app_manager/saved_app',
         startkey=[domain, app_id, {}],
         endkey=[domain, app_id],
         descending=True,
         limit=1,
-    ).first()['value']['version']
+    ).first()
+    latest_release = latest['value']['version'] if latest else None
     return json_response({
         'currentVersion': app.version,
         'latestRelease': latest_release,

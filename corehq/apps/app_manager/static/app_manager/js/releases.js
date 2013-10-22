@@ -61,6 +61,13 @@ function ReleasesMain(o) {
     self.deployAnyway = {};
     self.currentAppVersion = ko.observable(self.options.currentAppVersion);
     self.lastAppVersion = ko.observable();
+    self.buildButtonEnabled = ko.computed(function () {
+        if (self.buildState() === 'pending' || self.fetchState() === 'pending') {
+            return false;
+        } else {
+            return true;
+        }
+    });
     self.brokenBuilds = ko.computed(function () {
         var apps = self.savedApps();
         return _.some(apps, function (app) {
@@ -166,12 +173,16 @@ function ReleasesMain(o) {
         }
 
         var url = self.url('currentVersion');
+        self.fetchState('pending');
         $.get(
             self.url('currentVersion')
         ).success(function (data) {
+            self.fetchState('');
             self.currentAppVersion(data.currentVersion);
-            if (data.latestRelease !== self.lastAppVersion()) {
-                window.alert("New version found");
+            if (!data.latestRelease) {
+                self.actuallyMakeBuild();
+            } else if (data.latestRelease !== self.lastAppVersion()) {
+                window.alert("The releases list has changed since you loaded the page.");
                 self.reloadApps();
             } else if (self.lastAppVersion() !== self.currentAppVersion()) {
                 self.actuallyMakeBuild();
@@ -179,7 +190,7 @@ function ReleasesMain(o) {
                 window.alert("No new changes to deploy!");
             }
         }).error(function () {
-            self.buildState('error');
+            self.fetchState('error');
             window.alert(self.reload_message);
         });
     };
