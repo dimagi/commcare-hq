@@ -46,16 +46,6 @@ CASE_STATUS_ALL = 'all'
 INDEX_ID_PARENT = 'parent'
 
 
-# python 2.6 hack: http://bugs.python.org/issue1515
-import types
-
-# Copy instance methods
-def _deepcopy_method(x, memo):
-    return type(x)(x.im_func, copy.deepcopy(x.im_self, memo), x.im_class)
-
-copy._deepcopy_dispatch[types.MethodType] = _deepcopy_method
-
-
 class CaseBase(SafeSaveDocument):
     """
     Base class for cases and referrals.
@@ -918,7 +908,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
             if strict:
                 raise
 
-        actions = copy.deepcopy(self.actions)
+        actions = copy.deepcopy(list(self.actions))
         if strict:
             assert actions[0].action_type == const.CASE_ACTION_CREATE, (
                 'first case action should be a create but was %s' % self.actions[0].action_type
