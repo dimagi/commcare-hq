@@ -17,7 +17,6 @@ import urllib
 
 from django.utils.translation import ugettext as _, ugettext_noop
 from dimagi.utils.decorators.memoized import memoized
-from custom.openlmis.commtrack import bootstrap_domain
 from custom.openlmis.tasks import bootstrap_domain_task
 
 

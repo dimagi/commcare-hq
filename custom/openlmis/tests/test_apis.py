@@ -93,3 +93,4 @@ class PostApiTest(TestCase):
         loc.save()
         sp = make_supply_point(self.domain, loc)
         self.assertTrue(sync_supply_point_to_openlmis(sp, self.api))
+        self.assertTrue(sync_supply_point_to_openlmis(sp, self.api, False))

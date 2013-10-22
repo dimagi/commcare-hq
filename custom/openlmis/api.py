@@ -149,6 +149,7 @@ class OpenLMISEndpoint(object):
         # rest apis
         self._rest_uri = self._urlcombine(self.base_uri, '/rest-api')
         self.create_virtual_facility_url = self._urlcombine(self._rest_uri, '/agent.json')
+        self.update_virtual_facility_base_url = self._urlcombine(self._rest_uri, '/agent')
         self.program_product_url = self._urlcombine(self._rest_uri, '/programProducts.json')
 
     def _urlcombine(self, base, target):
@@ -170,6 +171,14 @@ class OpenLMISEndpoint(object):
     def _auth(self):
         return HTTPBasicAuth(self.username, self.password)
 
+    def _response(self, response):
+        # todo: error handling and such
+        res = response.json()
+        if res.get('Success', False):
+            return True
+        else:
+            raise OpenLMISAPIException(res['error'])
+
     def get_all_facilities(self):
         return (fac for fac in self._iter_feed(self.facility_master_feed_uri, get_facilities))
 
@@ -188,10 +197,24 @@ class OpenLMISEndpoint(object):
 
     def create_virtual_facility(self, facility_data):
         response = requests.post(self.create_virtual_facility_url,
-                                 data=json.dumps(facility_data))
-        # todo: error handling and such
-        res = response.json()
-        if res['Success']:
-            return True
-        else:
-            raise OpenLMISAPIException(res['error'])
+                                 data=json.dumps(facility_data),
+                                 headers={'content-type': 'application/json'},
+                                 auth=self._auth())
+        return self._response(response)
+
+
+    def update_virtual_facility_url(self, id):
+        return self._urlcombine(self.update_virtual_facility_base_url, '/{id}.json'.format(id=id))
+
+    def update_virtual_facility(self, id, facility_data):
+        facility_data['agentCode'] = id
+        response = requests.put(self.update_virtual_facility_url(id),
+                                data=json.dumps(facility_data),
+                                headers={'content-type': 'application/json'},
+                                auth=self._auth())
+        return self._response(response)
+
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(config.url, config.username, config.password)
