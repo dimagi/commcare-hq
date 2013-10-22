@@ -739,7 +739,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
                 case_action = CommCareCaseAction.from_parsed_action(
                     mod_date, case_update.user_id, xformdoc, action,
                 )
-                self._insert_action(case_action)
+                self.actions.append(case_action)
 
         self.rebuild(strict=False)
 
@@ -761,12 +761,6 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
             self.user_id = case_update.user_id
         if case_update.version:
             self.version = case_update.version
-
-
-    def _insert_action(self, action):
-        # todo: better logic
-        self.actions.append(action)
-
 
     def _apply_action(self, action):
         if action.action_type == const.CASE_ACTION_UPDATE:
