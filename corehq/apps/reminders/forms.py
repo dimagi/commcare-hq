@@ -1070,7 +1070,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                 ),
                 crispy.HTML('<a href="#add-language-modal" '
                             'class="btn btn-primary" style="margin-left: 5px;" '
-                            'data-toggle="modal">Add Language</a>'),
+                            'data-toggle="modal">Manage Languages</a>'),
             ),
             crispy.Div(
                 style="display: inline;",
@@ -1100,7 +1100,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
             advanced_section,
             FormActions(
                 StrictButton(
-                    _("Edit Reminder") if is_edit else _("Create Reminder"),
+                    _("Update Reminder") if is_edit else _("Create Reminder"),
                     css_class='btn-primary',
                     type='submit',
                 ),
