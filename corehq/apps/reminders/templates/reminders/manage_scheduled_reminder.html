@@ -42,20 +42,22 @@
             </div>
             <div class="modal-body form-horizontal" style="max-height: 20em;">
                 <div class="control-group" data-bind="with: languagePicker">
-                    <label class="control-label" for="new-language-code">{% trans 'Language Code' %}</label>
-                    <div class="controls">
+                    <label class="control-label" for="new-language-code">{% trans 'New Language' %}</label>
+                    <div class="controls controls-row">
                         <input type="text"
                                id="language-picker-input"
-                               class="input-xlarge"
-                               data-bind="value: langcode"  />
+                               class="span9"
+                               data-bind="value: langcode" />
+                        <button type="button"
+                                class="btn btn-success span3"
+                            data-bind="event: { click: confirmLanguageChoice }">
+                            <i class="icon-plus"></i> {% trans 'Add' %}
+                        </button>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer" data-bind="with: languagePicker">
-                <button type="button" class="btn btn-primary"
-                        data-bind="event: { click: confirmLanguageChoice }">
-                    {% trans 'Add Language' %}</button>
-                <a href="#" data-dismiss="modal" class="btn">{% trans 'Cancel' %}</a>
+            <div class="modal-footer">
+                <a href="#" data-dismiss="modal" class="btn">{% trans 'Done' %}</a>
             </div>
         </div>
     </div>
