@@ -16,8 +16,9 @@ function (doc) {
             doc.gps,
             doc.gps_country,
             doc.gps_province,
-            doc.gps_district],
-            parseInt(doc.age, 10)
+            doc.gps_district,
+            parseInt(doc.age, 10)],
+            1
         );
     }
 }

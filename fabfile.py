@@ -189,7 +189,7 @@ def zambia():
     env.code_branch = 'master'
     env.should_migrate = True
 
-    env.hosts = ['44.222.19.153']  # LIKELY THAT THIS WILL CHANGE
+    env.hosts = ['41.222.19.153']  # LIKELY THAT THIS WILL CHANGE
 
     _setup_path()
 
@@ -205,7 +205,7 @@ def zambia():
         'lb': [],
         'deploy': [],
 
-        'django_monolith': ['44.222.19.153'],
+        'django_monolith': ['41.222.19.153'],
     }
     env.roles = ['django_monolith']
     env.es_endpoint = 'localhost'
@@ -234,10 +234,9 @@ def production():
         'rabbitmq': ['hqdb0.internal.commcarehq.org'],
         'django_celery': ['hqdb0.internal.commcarehq.org'],
         'django_app': [
-            'hqdjango0.internal.commcarehq.org',
-            'hqdjango1.internal.commcarehq.org',
-            'hqdjango2.internal.commcarehq.org',
             'hqdjango3.internal.commcarehq.org',
+            'hqdjango4.internal.commcarehq.org',
+            'hqdjango5.internal.commcarehq.org',
         ],
         'django_pillowtop': ['hqdb0.internal.commcarehq.org'],
 
@@ -245,7 +244,7 @@ def production():
         # will remove hqdjango0 once we verify it works well on hqdb0
         'formsplayer': ['hqdb0.internal.commcarehq.org'],
         'lb': [],
-        'staticfiles': ['hqproxy0.internal.commcarehq.org'],
+        'staticfiles': ['hqproxy0.internal.commcarehq.org', 'hqproxy1.internal.commcarehq.org'],
         # having deploy here makes it so that
         # we don't get prompted for a host or run deploy too many times
         'deploy': ['hqdb0.internal.commcarehq.org'],
@@ -260,7 +259,7 @@ def production():
     # Gets auto-populated by what_os()
     # if you don't know what it is or don't want to specify.
     env.host_os_map = None
-    env.roles = ['deploy', ]
+    env.roles = ['deploy']
     env.es_endpoint = 'hqes0.internal.commcarehq.org'''
     env.flower_port = 5555
 
@@ -291,7 +290,7 @@ def staging():
 
         'formsplayer': ['hqdjango1-staging.internal.commcarehq.org'],
         'lb': [],
-        'staticfiles': ['hqproxy0.internal.commcarehq.org'],
+        'staticfiles': ['hqproxy0.internal.commcarehq.org', 'hqproxy1.internal.commcarehq.org'],
         'deploy': ['hqdb0-staging.internal.commcarehq.org'],
         # fab complains if this doesn't exist
         'django_monolith': [],
@@ -302,7 +301,7 @@ def staging():
     env.server_name = 'commcare-hq-staging'
     env.settings = '%(project)s.localsettings' % env
     env.host_os_map = None
-    env.roles = ['deploy', ]
+    env.roles = ['deploy']
     env.flower_port = 5555
 
     _setup_path()
@@ -341,7 +340,7 @@ def preview():
 
         'formsplayer': ['hqdjango0-preview.internal.commcarehq.org'],
         'lb': [],
-        'staticfiles': ['hqproxy0.internal.commcarehq.org'],
+        'staticfiles': ['hqproxy0.internal.commcarehq.org', 'hqproxy1.internal.commcarehq.org'],
         'deploy': ['hqdb0-preview.internal.commcarehq.org'],
         'django_monolith': [],
     }
@@ -351,7 +350,7 @@ def preview():
     env.server_name = 'commcare-hq-preview'
     env.settings = '%(project)s.localsettings' % env
     env.host_os_map = None
-    env.roles = ['deploy', ]
+    env.roles = ['deploy']
     env.flower_port = 5556
 
     _setup_path()
@@ -833,6 +832,7 @@ def flip_es_aliases():
         sudo('%(virtualenv_root)s/bin/python manage.py ptop_es_manage --flip_all_aliases' % env, user=env.sudo_user)
 
 
+@parallel
 @roles('staticfiles', 'django_monolith')
 def _do_collectstatic():
     """Collect static after a code update"""

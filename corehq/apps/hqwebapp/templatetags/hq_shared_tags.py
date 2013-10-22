@@ -154,7 +154,6 @@ def list_my_domains(request):
     if cached_val:
         return cached_val.get('list_my_domains', "")
 
-
     domain_list = Domain.active_for_user(request.user)
     lst = list()
     lst.append('<ul class="nav nav-pills nav-stacked">')

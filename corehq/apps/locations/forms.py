@@ -35,7 +35,7 @@ class LocationForm(forms.Form):
 
         kwargs['prefix'] = 'main'
         # seed form data from couch doc
-        kwargs['initial'] = self.location._doc
+        kwargs['initial'] = dict(self.location._doc)
         kwargs['initial']['parent_id'] = self.cur_parent_id
         lat, lon = (getattr(self.location, k, None) for k in ('latitude', 'longitude'))
         kwargs['initial']['coordinates'] = '%s, %s' % (lat, lon) if lat is not None else ''
@@ -153,10 +153,6 @@ class LocationForm(forms.Form):
         if reparented:
             location.flag_post_move = True
             location.previous_parents.append(orig_parent_id)
-
-        # HACK
-        # not sure where this is getting set, but it shouldn't be in the doc
-        del location._doc['parent_id']
 
         if commit:
             location.save()

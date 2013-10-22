@@ -623,6 +623,13 @@ class FormBase(DocumentSchema):
     def default_name(self):
         return self.name[self.get_app().default_language]
 
+    @property
+    def full_path_name(self):
+        return "%(app_name)s > %(module_name)s > %(form_name)s" % {
+            'app_name': self.get_app().name,
+            'module_name': self.get_module().name[self.get_app().default_language],
+            'form_name': self.default_name()
+        }
 
 class JRResourceProperty(StringProperty):
 
@@ -669,15 +676,24 @@ class UserRegistrationForm(FormBase):
         xform.add_user_registration(self.username_path, self.password_path, self.data_paths)
 
 
+class MappingItem(DocumentSchema):
+    key = StringProperty()
+    # lang => localized string
+    value = DictProperty()
+
+
 class DetailColumn(IndexedSchema):
     """
     Represents a column in case selection screen on the phone. Ex:
         {
-            'header': {'en': 'Sex', 'pt': 'Sexo'},
+            'header': {'en': 'Sex', 'por': 'Sexo'},
             'model': 'case',
             'field': 'sex',
             'format': 'enum',
-            'enum': {'en': {'m': 'Male', 'f': 'Female'}, 'pt': {'m': 'Macho', 'f': 'Fêmea'}}
+            'enum': [
+                {'key': 'm', 'value': {'en': 'Male', 'por': 'Macho'},
+                {'key': 'f', 'value': {'en': 'Female', 'por': 'Fêmea'},
+            ],
         }
 
     """
@@ -686,14 +702,23 @@ class DetailColumn(IndexedSchema):
     field = StringProperty()
     format = StringProperty()
 
-    enum = DictProperty()
+    enum = SchemaListProperty(MappingItem)
+
     late_flag = IntegerProperty(default=30)
     advanced = StringProperty(default="")
     filter_xpath = StringProperty(default="")
     time_ago_interval = FloatProperty(default=365.25)
 
+    @property
+    def enum_dict(self):
+        """for backwards compatibility with building 1.0 apps"""
+        import warnings
+        warnings.warn('You should not use enum_dict. Use enum instead',
+                      DeprecationWarning)
+        return dict((item.key, item.value) for item in self.enum)
+
     def rename_lang(self, old_lang, new_lang):
-        for dct in (self.header, self.enum):
+        for dct in [self.header] + [item.value for item in self.enum]:
             _rename_key(dct, old_lang, new_lang)
 
     @property
@@ -729,6 +754,12 @@ class DetailColumn(IndexedSchema):
         if data.get('format') in ('months-ago', 'years-ago'):
             data['time_ago_interval'] = cls.TimeAgoInterval.get_from_old_format(data['format'])
             data['format'] = 'time-ago'
+
+        # Lazy migration: enum used to be a dict, now is a list
+        if isinstance(data.get('enum'), dict):
+            data['enum'] = sorted({'key': key, 'value': value}
+                                  for key, value in data['enum'].items())
+
         return super(DetailColumn, cls).wrap(data)
 
 
@@ -775,30 +806,6 @@ class Detail(IndexedSchema):
     @parse_int([1])
     def get_column(self, i):
         return self.columns[i].with_id(i%len(self.columns), self)
-
-    def append_column(self, column):
-        self.columns.append(column)
-
-    def update_column(self, column_id, column):
-        my_column = self.columns[column_id]
-
-        my_column.model = column.model
-        my_column.field = column.field
-        my_column.format = column.format
-        my_column.late_flag = column.late_flag
-        my_column.advanced = column.advanced
-
-        for lang in column.header:
-            my_column.header[lang] = column.header[lang]
-
-        for key in column.enum:
-            for lang in column.enum[key]:
-                if key not in my_column.enum:
-                    my_column.enum[key] = {}
-                my_column.enum[key][lang] = column.enum[key][lang]
-
-    def delete_column(self, column_id):
-        del self.columns[column_id]
 
     def rename_lang(self, old_lang, new_lang):
         for column in self.columns:

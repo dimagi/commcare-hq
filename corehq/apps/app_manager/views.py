@@ -1005,71 +1005,6 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     app.save(resp)
     return json_response(resp)
 
-@no_conflict_require_POST
-@require_can_edit_apps
-def edit_module_detail(req, domain, app_id, module_id):
-    """
-    Called to add a new module detail column or edit an existing one
-
-    """
-    column_id = int(req.POST.get('index', -1))
-    detail_type = req.POST.get('detail_type', '')
-    assert(detail_type in DETAIL_TYPES)
-
-    column = dict((key, req.POST.get(key)) for key in (
-        'header', 'model', 'field', 'format',
-        'enum', 'late_flag', 'advanced'
-        ))
-    app = get_app(domain, app_id)
-    module = app.get_module(module_id)
-    lang = req.COOKIES.get('lang', app.langs[0])
-    ajax = (column_id != -1) # edits are ajax, adds are not
-
-    resp = {}
-
-    def _enum_to_dict(enum):
-        if not enum:
-            return {}
-        answ = {}
-        for s in enum.split(','):
-            key, val = (x.strip() for x in s.strip().split('='))
-            answ[key] = {}
-            answ[key][lang] = val
-        return answ
-
-    column['enum'] = _enum_to_dict(column['enum'])
-    column['header'] = {lang: column['header']}
-    column = DetailColumn.wrap(column)
-    detail = module.get_detail(detail_type)
-
-    if column_id == -1:
-        detail.append_column(column)
-    else:
-        detail.update_column(column_id, column)
-    app.save(resp)
-
-    if ajax:
-        return HttpResponse(json.dumps(resp))
-    else:
-        return back_to_main(req, domain, app_id=app_id, module_id=module_id)
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
-def delete_module_detail(req, domain, app_id, module_id):
-    """
-    Called when a module detail column is to be deleted
-
-    """
-    column_id = int(req.POST['index'])
-    detail_type = req.POST['detail_type']
-    app = get_app(domain, app_id)
-    module = app.get_module(module_id)
-    module.get_detail(detail_type).delete_column(column_id)
-    resp = {}
-    app.save(resp)
-    return HttpResponse(json.dumps(resp))
-
 
 def _handle_media_edits(request, item, should_edit, resp):
     if not resp.has_key('corrections'):
@@ -2114,6 +2049,7 @@ def upload_translations(request, domain, app_id):
         app.save()
         success = True
     except Exception:
+        notify_exception(request, 'Bulk Upload Translations Error')
         messages.error(request, _("Something went wrong! Update failed. We're looking into it"))
 
     if success:

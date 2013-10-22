@@ -32,7 +32,7 @@ def base_context(request, organization, update_form=None):
     return {
         "org": organization,
         "teams": Team.get_by_org(organization.name),
-        "domains": sorted(Domain.get_by_organization(organization.name).all(), key=lambda x: x.name),
+        "domains": sorted(Domain.get_by_organization(organization.name), key=lambda x: x.name),
         "members": organization.get_members(),
         "admin": request.couch_user.is_org_admin(organization.name) or request.couch_user.is_superuser,
         "update_form_empty": not update_form,
@@ -578,7 +578,7 @@ def stats(request, org, stat_slug, template='orgs/stats.html'):
 @org_member_required
 @datespan_in_request(from_param="startdate", to_param="enddate")
 def stats_data(request, org):
-    domains = [{"names": [d.name], "display_name": d.hr_name} for d in Domain.get_by_organization(org).all()]
+    domains = [{"names": [d.name], "display_name": d.hr_name} for d in Domain.get_by_organization(org)]
     histo_type = request.GET.get('histogram_type')
     stats_data = get_stats_data(domains, histo_type, request.datespan)
     return json_response(stats_data)

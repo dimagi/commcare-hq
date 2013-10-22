@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, date
 import json
 import tempfile
 import re
+from urllib2 import URLError
 from django.conf import settings
 from django.core.cache import cache
 from django.core.servers.basehttp import FileWrapper
@@ -722,7 +723,10 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
 @require_GET
 def download_cases(request, domain):
     include_closed = json.loads(request.GET.get('include_closed', 'false'))
-    format = Format.from_format(request.GET.get('format') or Format.XLS_2007)
+    try:
+        format = Format.from_format(request.GET.get('format') or Format.XLS_2007)
+    except URLError as e:
+        return HttpResponseBadRequest(e.reason)
     group = request.GET.get('group', None)
     user_filter, _ = FilterUsersField.get_user_filter(request)
 

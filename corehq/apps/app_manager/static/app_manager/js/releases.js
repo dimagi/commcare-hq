@@ -19,13 +19,20 @@ function SavedApp(o, r) {
         return false;
     });
 
+    self.mm_supported = function() {
+        // This is added to fix legacy issues with incorrectly formatted media_profile.ccpr files.
+        // Files that were generated prior to 10/16/2013 are affected, so don't support remote mm for build made before then.
+        var supported_date = new Date(2013, 9, 16);
+        var date_built = new Date(self.built_on());
+        return date_built.getTime() > supported_date.getTime();
+    };
+
     self.get_odk_install_url = ko.computed(function() {
         var slug = self.include_media() ? 'odk_media' : 'odk';
         return $root.url(slug, self.id());
     });
 
     self.sms_url = function(index) {
-        console.log(index)
         if (index === 0) { // sending to sms
             return self.short_url()
         } else { // sending to odk
@@ -157,23 +164,14 @@ function ReleasesMain(o) {
     self.makeNewBuildEnabled = function () {
         if (self.buildState() === 'pending') {
             return false;
-        }
-        self.getMoreSavedApps();
-        if (self.lastAppVersion() === undefined) {
+        } else if (self.lastAppVersion() === undefined) {
             return self.doneFetching();
         } else {
             return self.lastAppVersion() !== self.appVersion();
         }
     };
     self.makeNewBuild = function () {
-        if (!self.makeNewBuildEnabled()) {
-            window.alert("No new changes to deploy!");
-            return;
-        }
-        var comment = window.prompt(
-            "Please write a comment about the build you're making " +
-            "to help you remember later:"
-        );
+        var comment = window.prompt("Please write a comment about the build you're making to help you remember later:");
         if (comment || comment === "") {
             $(this).find("input[name='comment']").val(comment);
         } else {

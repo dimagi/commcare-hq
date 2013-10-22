@@ -17,6 +17,7 @@ import urllib
 
 from django.utils.translation import ugettext as _, ugettext_noop
 from dimagi.utils.decorators.memoized import memoized
+from custom.openlmis.tasks import bootstrap_domain_task
 
 
 @domain_admin_required
@@ -126,13 +127,12 @@ class EditLocationView(NewLocationView):
 
 class FacilitySyncView(BaseLocationView):
     urlname = 'sync_facilities'
-    page_title = ugettext_noop("Sync with Facility Registry")
+    page_title = ugettext_noop("Sync with External Systems")
     template_name = 'locations/facility_sync.html'
 
     @property
     def page_context(self):
-        return {}
-
+        return {'lmis_config': self.domain_object.commtrack_settings.openlmis_config}
 
 class EditLocationHierarchy(BaseLocationView):
     urlname = 'location_hierarchy'
@@ -232,3 +232,10 @@ def sync_facilities(request, domain):
 
     return HttpResponse('OK')
 
+
+@domain_admin_required
+@require_POST
+def sync_openlmis(request, domain):
+    # todo: error handling, if we care.
+    bootstrap_domain_task.delay(domain)
+    return HttpResponse('OK')

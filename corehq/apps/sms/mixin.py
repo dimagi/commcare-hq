@@ -166,10 +166,15 @@ class MobileBackend(Document):
         backend = cls.view("sms/backend_by_owner_domain", key=[domain, name], include_docs=True).one()
         if backend is None:
             # Look for a backend with that name that this domain was granted access to
-            backend = cls.view("sms/backend_by_domain", key=[domain, name], include_docs=True).first()
+            backend = cls.view("sms/backend_by_domain", key=[domain, name], include_docs=True, reduce=False).first()
             if backend is None:
                 # Look for a global backend with that name
-                backend = cls.view("sms/global_backends", key=[name], include_docs=True).one()
+                backend = cls.view(
+                    "sms/global_backends",
+                    key=[name],
+                    include_docs=True,
+                    reduce=False
+                ).one()
         if backend is not None:
             return cls.load(backend._id)
         else:
@@ -307,7 +312,7 @@ class CommCareMobileContactMixin(object):
         """
         Saves the given phone number as this contact's verified phone number.
 
-        return  void
+        return  The VerifiedNumber
         raises  InvalidFormatException if the phone number format is invalid
         raises  PhoneNumberInUseException if the phone number is already in use by another contact
         """
@@ -328,6 +333,7 @@ class CommCareMobileContactMixin(object):
         v.backend_id = backend_id
         v.ivr_backend_id = ivr_backend_id
         v.save(**get_safe_write_kwargs())
+        return v
 
     def delete_verified_number(self, phone_number=None):
         """

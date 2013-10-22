@@ -203,7 +203,8 @@ def _report_user_dict(user):
 
 
 def format_datatables_data(text, sort_key):
-    # used below
+    # todo: this is redundant with report.table_cell()
+    # should remove/refactor one of them away
     data = {"html": text,
             "sort_key": sort_key}
     return data

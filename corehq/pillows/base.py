@@ -5,9 +5,9 @@ from django.conf import settings
 
 VALUE_TAG = '#value'
 
-def map_types(item, mapping):
+def map_types(item, mapping, override_root_keys=None):
     if isinstance(item, dict):
-        return convert_property_dict(item, mapping)
+        return convert_property_dict(item, mapping, override_root_keys=override_root_keys)
     elif isinstance(item, list):
         return [map_types(x, mapping) for x in item]
     else:
@@ -31,7 +31,7 @@ def convert_property_dict(sub_dict, mapping, override_root_keys=None):
         dynamic_mapping = mapping.get('dynamic', True)
         sub_mapping = mapping.get('properties', {}).get(k, {})
         if dynamic_mapping is not False:
-            sub_dict[k] = map_types(v, sub_mapping)
+            sub_dict[k] = map_types(v, sub_mapping, override_root_keys=override_root_keys)
     return sub_dict
 
 def restore_property_dict(report_dict_item):

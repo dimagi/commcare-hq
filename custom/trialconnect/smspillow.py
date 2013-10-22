@@ -28,7 +28,7 @@ class TCSMSPillow(SMSPillow):
         case = get_db().get(case_id) if case_id else {}
         doc_dict[TC_STUB + 'case_data'] = {
             "case_id": case_id,
-            "case_type": case.get("case_type"),
+            "case_type": case.get("type"),
             "response_state": case.get("response_state") # todo: need to get response_state at time of sms log
         }
         return doc_dict
@@ -43,7 +43,7 @@ class TCSMSPillow(SMSPillow):
         xform_id = session.get('submission_id')
         doc_dict[TC_STUB + 'session_data'] = {
             "session_id": session_id,
-            "case_type": case.get("case_type"),
+            "case_type": case.get("type"),
             "response_state": get_db().get(xform_id).get('_form', {}).get('response_state') if xform_id else None
         }
         return doc_dict

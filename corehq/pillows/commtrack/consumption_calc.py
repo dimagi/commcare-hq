@@ -77,9 +77,11 @@ def compute_consumption(product_case, window_end, get_base_action):
     transactions = list(StockTransaction.by_product(product_case, to_ts(overshoot_start), to_ts(window_end)))
     transactions.sort(key=lambda tx: (tx.received_on, tx.processing_order))
 
-    return _compute_consumption(transactions, window_start, get_base_action, {'min_periods': MIN_PERIODS, 'min_window': MIN_WINDOW})
+    return compute_consumption(transactions, window_start, get_base_action, {'min_periods': MIN_PERIODS, 'min_window': MIN_WINDOW})
 
-def _compute_consumption(transactions, window_start, get_base_action, params={}):
+def compute_consumption(transactions, window_start, get_base_action, params=None):
+    params = params or {}
+
     class ConsumptionPeriod(object):
         def __init__(self, tx):
             self.start = from_ts(tx.received_on)

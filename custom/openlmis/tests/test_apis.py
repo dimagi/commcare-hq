@@ -1,10 +1,11 @@
 from datetime import datetime
+import json
 import os
 from django.test import TestCase
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.tests import bootstrap_domain
 from corehq.apps.locations.models import Location
-from custom.openlmis.api import get_recent_facilities, Facility, get_facility_programs, FacilityProgramLink, get_programs_and_products, Program
+from custom.openlmis.api import get_facilities, Facility, get_facility_programs, FacilityProgramLink, get_programs_and_products, Program
 from custom.openlmis.commtrack import sync_supply_point_to_openlmis
 from custom.openlmis.tests.mock_api import MockOpenLMISEndpoint
 
@@ -18,7 +19,7 @@ class FeedApiTest(TestCase):
 
     def testParseRecentFacilities(self):
         with open(os.path.join(self.datapath, 'recent_facilities.rss')) as f:
-            recent = list(get_recent_facilities(f.read()))
+            recent = list(get_facilities(f.read()))
 
         self.assertEqual(2, len(recent))
         [f1, f2] = recent
@@ -63,13 +64,28 @@ class FeedApiTest(TestCase):
         self.assertEqual('HIV', program.code)
         self.assertEqual('HIV', program.name)
 
+    def testParseProgramJson(self):
+        with open(os.path.join(self.datapath, 'sample_program.json')) as f:
+            program = Program.from_json(json.loads(f.read()))
+
+        self.assertEqual('ESS_MEDS', program.code)
+        self.assertEqual('ESSENTIAL MEDICINES', program.name)
+        self.assertEqual(35, len(program.products))
+        p = program.products[0]
+        self.assertEqual('P75', p.code)
+        self.assertEqual('Malaria Rapid Diagnostics Tests', p.name)
+        self.assertEqual('P75', p.code)
+        self.assertEqual('TDF/FTC/EFV', p.description)
+        self.assertEqual(10, p.unit)
+        self.assertEqual('Analgesics', p.category)
+
 
 class PostApiTest(TestCase):
 
     def setUp(self):
         self.domain = 'post-api-test'
         bootstrap_domain(self.domain)
-        self.api = MockOpenLMISEndpoint("uri://mock/lmis/endpoint")
+        self.api = MockOpenLMISEndpoint("uri://mock/lmis/endpoint", username='ned', password='honor')
 
     def testCreateVirtualFacility(self):
         loc = Location(site_code='1234', name='beavis', domain=self.domain,
@@ -77,3 +93,4 @@ class PostApiTest(TestCase):
         loc.save()
         sp = make_supply_point(self.domain, loc)
         self.assertTrue(sync_supply_point_to_openlmis(sp, self.api))
+        self.assertTrue(sync_supply_point_to_openlmis(sp, self.api, False))

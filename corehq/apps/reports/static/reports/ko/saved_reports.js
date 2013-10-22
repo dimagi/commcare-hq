@@ -14,10 +14,15 @@ var ReportConfig = function (data) {
 
     self.unwrap = function () {
         var data = ko.mapping.toJS(self);
-        data['report_slug'] = standardHQReport.slug;
-        data['report_type'] = standardHQReport.type;
-        data['subreport_slug'] = standardHQReport.subReportSlug;
-
+        if (null !== standardHQReport.slug) {
+            data['report_slug'] = standardHQReport.slug;
+        }
+        if ("" !== standardHQReport.type) {
+            data['report_type'] = standardHQReport.type;
+        }
+        if ("" !== standardHQReport.subReportSlug) {
+            data['subreport_slug'] = standardHQReport.subReportSlug;
+        }
         return data;
     };
 
@@ -144,32 +149,37 @@ var ReportConfigsViewModel = function (options) {
     };
 
     // edit the config currently being viewed
-    self.setConfigBeingEdited = function () {
+    self.setConfigBeingEdited = function (config) {
+
         var filters = {},
             excludeFilters = ['startdate', 'enddate'];
+        if (self.filterForm) {
+            self.filterForm.find(":input").each(function () {
+                var el = $(this),
+                    name = el.prop('name'),
+                    val = el.val(),
+                    type = el.prop('type');
 
-        self.filterForm.find(":input").each(function () {
-            var el = $(this),
-                name = el.prop('name'),
-                val = el.val(),
-                type = el.prop('type');
+                if (type === 'checkbox') {
+                    if (el.prop('checked') === true) {
+                        if (!filters.hasOwnProperty(name)) {
+                            filters[name] = [];
+                        }
 
-            if (type === 'checkbox') {
-                if (el.prop('checked') === true) {
-                    if (!filters.hasOwnProperty(name)) {
-                        filters[name] = [];
+                        filters[name].push(val);
                     }
-
-                    filters[name].push(val);
-                }
-            } else if (type === 'radio') {
-                if (el.prop('checked') === true) {
+                } else if (type === 'radio') {
+                    if (el.prop('checked') === true) {
+                        filters[name] = val;
+                    }
+                } else if (name && excludeFilters.indexOf(name) === -1) {
                     filters[name] = val;
                 }
-            } else if (name && excludeFilters.indexOf(name) === -1) {
-                filters[name] = val;
-            }
-        });
+            });
+        } else {
+            self.configBeingViewed(config);
+            filters = config.filters;
+        }
 
         self.configBeingViewed().filters = filters;
         self.configBeingEdited(self.configBeingViewed());

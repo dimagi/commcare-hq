@@ -1,3 +1,4 @@
+import logging
 from corehq.apps.sms.util import create_billable_for_sms
 from dimagi.utils.couch.database import iter_docs
 from django.core.management.base import LabelCommand
@@ -31,18 +32,26 @@ class Command(LabelCommand):
             sms_ids = [d['id'] for d in data]
             for doc in iter_docs(db, sms_ids):
                 sms_log = SMSLog.wrap(doc)
-                if not sms_log.billed:
+                if not sms_log.billed and sms_log.backend_api in [
+                    'MACH',
+                    'TROPO',
+                    'UNICEL',
+                ]:
                     # we're going to assume the SMS messages were sent successfully
                     # at the time they were actually sent
                     successful_responses = {
                         'MACH': "MACH RESPONSE +OK 01 message queued (dest=%s)" % sms_log.phone_number,
                         'TROPO': "<success>true</success>",
-                        'UNICEL': "",
+                        'UNICEL': "success",
                     }
                     print "Retroactively billing SMLog %s in domain %s" % (sms_log._id, sms_log.domain)
-                    create_billable_for_sms(
-                        sms_log,
-                        sms_log.backend_api,
-                        delay=False,
-                        response=successful_responses[sms_log.backend_api]
-                    )
+                    try:
+                        create_billable_for_sms(
+                            sms_log,
+                            sms_log.backend_api,
+                            delay=False,
+                            response=successful_responses[sms_log.backend_api],
+                        )
+                    except Exception as e:
+                        print "Retroactive bill was not successful due to error: %s" % e
+                        logging.exception(e)
