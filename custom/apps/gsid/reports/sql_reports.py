@@ -143,10 +143,10 @@ class GSIDSQLPatientReport(GSIDSQLReport):
     def columns(self):
         age_fn = lambda x, y: str(x or "-") + "-" + str(y or "-")
         sum_fn = lambda x, y: int(x or 0) + int(y or 0)
-        percent_agg_fn = lambda x, m, f: "%(x)s (%(p)s%%)" % \
+        percent_agg_fn = lambda x, t: "%(x)s (%(p)s%%)" % \
             {
                 "x": x or 0,
-                "p": (100 * int(x or 0) / (sum_fn(m, f) or 1))
+                "p": (100 * int(x or 0) / (t or 1))
             }
         total_percent_agg_fn = lambda x, y, m, f: "%(x)s (%(p)s%%)" % \
             {
@@ -187,7 +187,7 @@ class GSIDSQLPatientReport(GSIDSQLReport):
                         alias="male-positive", 
                         filters=self.filters + [AND([male_filter, EQ("diagnosis", "positive")])]
                     ), 
-                    AliasColumn("male-total"), AliasColumn("female-total")
+                    AliasColumn("male-total")
                 ],
                 header_group=positive_group
             ),
@@ -199,7 +199,7 @@ class GSIDSQLPatientReport(GSIDSQLReport):
                         alias="female-positive", 
                         filters=self.filters + [AND([female_filter, EQ("diagnosis", "positive")])]
                     ), 
-                    AliasColumn("male-total"), AliasColumn("female-total")
+                    AliasColumn("female-total")
                 ],
                 header_group=positive_group
             ),
