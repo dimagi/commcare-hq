@@ -15,6 +15,7 @@ WebUser
 CommCareUser:
     def create(cls, domain, username, password, email=None, uuid='', date='', phone_number=None, **kwargs):
 """
+
 import datetime, random
 
 from corehq.apps.users.models import CommCareUser, WebUser
