@@ -141,7 +141,7 @@ class GSIDSQLPatientReport(GSIDSQLReport):
     
     @property
     def columns(self):
-        age_fn = lambda x, y: str(x or "-") + "-" + str(y or "-")
+        age_fn = lambda x, y: str(x if x is not None else "-") + " - " + str(y if y is not None else "-")
         sum_fn = lambda x, y: int(x or 0) + int(y or 0)
         percent_agg_fn = lambda x, m, f: "%(x)s (%(p)s%%)" % \
             {
@@ -165,12 +165,12 @@ class GSIDSQLPatientReport(GSIDSQLReport):
             
             DatabaseColumn(
                 "Number of Males ", 
-                CountColumn('gender', alias="male-total", filters=self.filters + [male_filter]),
+                SumColumn('cases', alias="male-total", filters=self.filters + [male_filter]),
                 header_group=patient_number_group
             ),
             DatabaseColumn(
                 "Number of Females ", 
-                CountColumn('gender', alias="female-total", filters=self.filters + [female_filter]),
+                SumColumn('cases', alias="female-total", filters=self.filters + [female_filter]),
                 header_group=patient_number_group
             ),
             AggregateColumn(
@@ -182,8 +182,8 @@ class GSIDSQLPatientReport(GSIDSQLReport):
             AggregateColumn(
                 "Male +ve Percent", percent_agg_fn,
                 [
-                    CountColumn(
-                        "diagnosis", 
+                    SumColumn(
+                        'cases',
                         alias="male-positive", 
                         filters=self.filters + [AND([male_filter, EQ("diagnosis", "positive")])]
                     ), 
@@ -194,8 +194,7 @@ class GSIDSQLPatientReport(GSIDSQLReport):
             AggregateColumn(
                 "Female +ve Percent", percent_agg_fn,
                 [
-                    CountColumn(
-                        "diagnosis", 
+                    SumColumn('cases',
                         alias="female-positive", 
                         filters=self.filters + [AND([female_filter, EQ("diagnosis", "positive")])]
                     ), 
@@ -278,12 +277,12 @@ class GSIDSQLByDayReport(GSIDSQLReport):
     def columns(self):
         return self.common_columns + \
             [
-                DatabaseColumn("Count", CountColumn("age", alias="day_count")),
+                DatabaseColumn("Count", SumColumn("cases", alias="day_count")),
                 DatabaseColumn("disease", SimpleColumn("disease_name", alias="disease_name"))
             ]
 
     def daterange(self, start_date, end_date):
-        for n in range(int ((end_date - start_date).days)):
+        for n in range(int((end_date - start_date).days) + 1):
             yield (start_date + timedelta(n)).strftime("%Y-%m-%d")
 
     @property
@@ -374,7 +373,7 @@ class GSIDSQLTestLotsReport(GSIDSQLReport):
     @property
     def columns(self):
         return self.common_columns + [
-            DatabaseColumn("Test", CountColumn("gender", alias="lot_count"))
+            DatabaseColumn("Test", SumColumn('cases', alias="lot_count"))
         ]
 
     @property
@@ -489,13 +488,13 @@ class GSIDSQLByAgeReport(GSIDSQLReport):
                 AggregateColumn(
                     "0-10", percent_fn,
                     [   
-                        CountColumn(
-                            "age", 
+                        SumColumn(
+                            'cases',
                             alias="zero_ten_" + gender, 
                             filters=self.filters + age_range_filter(gender, "zero", "ten")
                         ),
-                        CountColumn(
-                            "age", 
+                        SumColumn(
+                            'cases',
                             alias=gender + "_total", 
                             filters=self.filters + [EQ("gender", gender)]
                         )
@@ -505,8 +504,8 @@ class GSIDSQLByAgeReport(GSIDSQLReport):
                 AggregateColumn(
                     "10-20", percent_fn, 
                     [
-                        CountColumn(
-                            "age", 
+                        SumColumn(
+                            'cases',
                             alias="ten_twenty_" + gender, 
                             filters=self.filters + age_range_filter(gender, "ten_plus", "twenty")
                         ),
@@ -517,8 +516,8 @@ class GSIDSQLByAgeReport(GSIDSQLReport):
                 AggregateColumn(
                     "20-50", percent_fn,
                     [
-                        CountColumn(
-                            "age", 
+                        SumColumn(
+                            'cases',
                             alias="twenty_fifty_" + gender, 
                             filters= self.filters + age_range_filter(gender, "twenty_plus", "fifty")
                         ),
@@ -529,8 +528,8 @@ class GSIDSQLByAgeReport(GSIDSQLReport):
                 AggregateColumn(
                     "50+", percent_fn,
                     [
-                        CountColumn(
-                            "age", 
+                        SumColumn(
+                            'cases',
                             alias="fifty_" + gender, 
                             filters=self.filters + [AND([EQ("gender", gender), EQ("diagnosis", "positive"), GT("age", "fifty")])]),
                         AliasColumn(gender + "_total")
