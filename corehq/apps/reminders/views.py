@@ -530,7 +530,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
         for app_doc in iter_docs(Application.get_db(), self.app_ids):
             app = Application.wrap(app_doc)
             case_types.extend([m.case_type for m in app.modules])
-        return case_types
+        return set(case_types)
 
     @property
     def action(self):
