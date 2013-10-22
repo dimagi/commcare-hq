@@ -3,7 +3,7 @@ from StringIO import StringIO
 import re
 from datetime import datetime
 import logging
-from copy import copy, deepcopy
+import copy
 from dimagi.utils.parsing import json_format_date, json_format_datetime
 
 from django.core.cache import cache
@@ -44,6 +44,16 @@ CASE_STATUS_CLOSED = 'closed'
 CASE_STATUS_ALL = 'all'
 
 INDEX_ID_PARENT = 'parent'
+
+
+# python 2.6 hack: http://bugs.python.org/issue1515
+import types
+
+# Copy instance methods
+def _deepcopy_method(x, memo):
+    return type(x)(x.im_func, copy.deepcopy(x.im_self, memo), x.im_class)
+
+copy._deepcopy_dispatch[types.MethodType] = _deepcopy_method
 
 
 class CaseBase(SafeSaveDocument):
@@ -427,7 +437,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
         """
         Gets the case as a dictionary for use in touchforms preloader framework
         """
-        ret = copy(self._doc)
+        ret = copy.copy(self._doc)
         ret["case-id"] = self.get_id
         return ret
 
@@ -863,8 +873,8 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
                 # this will allow for multiple case blocks to be submitted
                 # against the same case in the same form so long as they
                 # are different
-                a1doc = copy(a1._doc)
-                a2doc = copy(a2._doc)
+                a1doc = copy.copy(a1._doc)
+                a2doc = copy.copy(a2._doc)
                 a2doc['server_date'] = a1doc['server_date']
                 a2doc['date'] = a1doc['date']
                 return a1doc == a2doc
@@ -908,7 +918,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
             if strict:
                 raise
 
-        actions = deepcopy(self.actions)
+        actions = copy.deepcopy(self.actions)
         if strict:
             assert actions[0].action_type == const.CASE_ACTION_CREATE, (
                 'first case action should be a create but was %s' % self.actions[0].action_type
@@ -1137,12 +1147,4 @@ def _type_sort(action_type):
     return const.CASE_ACTIONS.index(action_type)
 
 
-# python 2.6 hack: http://bugs.python.org/issue1515
-import copy as copy_module
-import types
 
-# Copy instance methods
-def _deepcopy_method(x, memo):
-    return type(x)(x.im_func, deepcopy(x.im_self, memo), x.im_class)
-
-copy_module._deepcopy_dispatch[types.MethodType] = _deepcopy_method
