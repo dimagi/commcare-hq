@@ -73,6 +73,7 @@ env.roledefs = {
     'deploy': [],
 }
 
+env.django_bind = '127.0.0.1'
 
 def format_env(current_env):
     """
@@ -96,6 +97,7 @@ def format_env(current_env):
         'jython_home',
         'virtualenv_root',
         'django_port',
+        'django_bind',
         'flower_port',
     ]
 
@@ -218,6 +220,7 @@ def production():
     """www.commcarehq.org"""
     env.sudo_user = 'cchq'
     env.environment = 'production'
+    env.django_bind = '0.0.0.0'
     env.django_port = '9010'
     env.should_migrate = True
 
@@ -277,6 +280,7 @@ def staging():
 
     env.sudo_user = 'cchq'
     env.environment = 'staging'
+    env.django_bind = '0.0.0.0'
     env.django_port = '9010'
 
     env.should_migrate = True
@@ -325,6 +329,7 @@ def preview():
     env.code_branch = 'master'
     env.sudo_user = 'cchq'
     env.environment = 'preview'
+    env.django_bind = '0.0.0.0'
     env.django_port = '7999'
     env.should_migrate = False
 
@@ -364,6 +369,7 @@ def development():
     """A development monolith target - must specify a host either by command line or prompt"""
     env.sudo_user = 'cchq'
     env.environment = 'development'
+    env.django_bind = '0.0.0.0'
     env.django_port = '9010'
     env.should_migrate = True
 
@@ -985,6 +991,7 @@ def set_formsplayer_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_formsplayer.conf')
 
 
+@task
 def set_supervisor_config():
     """Upload and link Supervisor configuration from the template."""
     require('environment', provided_by=('staging', 'preview', 'production', 'india'))
