@@ -1141,3 +1141,14 @@ def _type_sort(action_type):
     Consistent ordering for action types
     """
     return const.CASE_ACTIONS.index(action_type)
+
+
+# python 2.6 hack: http://bugs.python.org/issue1515
+import copy as copy_module
+import types
+
+# Copy instance methods
+def _deepcopy_method(x, memo):
+    return type(x)(x.im_func, deepcopy(x.im_self, memo), x.im_class)
+
+copy_module._deepcopy_dispatch[types.MethodType] = _deepcopy_method
