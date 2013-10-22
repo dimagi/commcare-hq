@@ -54,5 +54,7 @@ def get_adm_enabled_domains():
 
 
 def domain_restricts_superusers(domain):
-    result = Domain.get_by_name(domain).restrict_superusers
-    return result
+    domain = Domain.get_by_name(domain)
+    if not domain:
+        return False
+    return domain.restrict_superusers
