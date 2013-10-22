@@ -24,6 +24,7 @@ def process_verification(phone_number, msg, backend_id=None):
     if not verification_response_ok(msg.text):
         return
 
+    msg.domain = v.domain
     msg.couch_recipient_doc_type = v.owner_doc_type
     msg.couch_recipient = v.owner_id
     msg.save()
