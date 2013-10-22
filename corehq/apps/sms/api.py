@@ -711,10 +711,9 @@ def forwarding_handler(v, text, msg=None):
     return False
 
 def fallback_handler(v, text, msg=None):
-    # Previously, the form session handler was returning True, which would prevent this message
-    # from going out on unknown keywords received. So for now, going to comment this out, until
-    # we give the domains the option to add this message in.
-    #send_sms_to_verified_number(v, 'could not understand your message. please check keyword.')
+    domain_obj = Domain.get_by_name(v.domain, strict=True)
+    if domain_obj.use_default_sms_response and domain_obj.default_sms_response:
+        send_sms_to_verified_number(v, domain_obj.default_sms_response)
     return True
 
 

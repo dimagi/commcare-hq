@@ -16,7 +16,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users import models as user_models
 from corehq.apps.sms.models import SMSLog, INCOMING, ForwardingRule
 from corehq.apps.sms.mixin import MobileBackend, SMSBackend, BackendMapping
-from corehq.apps.sms.forms import ForwardingRuleForm, BackendMapForm, InitiateAddSMSBackendForm
+from corehq.apps.sms.forms import ForwardingRuleForm, BackendMapForm, InitiateAddSMSBackendForm, SMSSettingsForm
 from corehq.apps.sms.util import get_available_backends
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest, domain_admin_required, require_superuser
@@ -667,3 +667,27 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         return super(DomainSmsGatewayListView, self).dispatch(request, *args, **kwargs)
+
+@domain_admin_required
+def sms_settings(request, domain):
+    domain_obj = Domain.get_by_name(domain, strict=True)
+    if request.method == "POST":
+        form = SMSSettingsForm(request.POST)
+        if form.is_valid():
+            domain_obj.use_default_sms_response = form.cleaned_data["use_default_sms_response"]
+            domain_obj.default_sms_response = form.cleaned_data["default_sms_response"]
+            domain_obj.save()
+            messages.success(request, _("Changes Saved."))
+    else:
+        initial = {
+            "use_default_sms_response" : domain_obj.use_default_sms_response,
+            "default_sms_response" : domain_obj.default_sms_response,
+        }
+        form = SMSSettingsForm(initial=initial)
+
+    context = {
+        "domain" : domain,
+        "form" : form,
+    }
+    return render(request, "sms/settings.html", context)
+

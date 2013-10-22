@@ -1,0 +1,41 @@
+{% extends 'hqwebapp/two_column.html' %}
+{% load url from future %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block title %}
+    {% trans "Messaging Settings" %}
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+{% endblock %}
+
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url "messaging" domain %}"><strong>{% trans "Messaging" %}</strong></a> <span class="divider">&gt;</span>
+        </li>
+        <li class="active">
+            <a href="{% url "sms_settings" domain %}"><strong>{% trans "Settings" %}</strong></a>
+        </li>
+    </ul>
+{% endblock %}
+
+{% block main_column %}
+    <h4>{% trans "Settings" %}</h4>
+    <form action="" method="post">
+        <table>
+            <tr>
+                <td>{% trans "Use Default SMS Response" %}</td>
+                <td><input type="checkbox" name="use_default_sms_response" /></td>
+                <td>{{ form.use_default_sms_response.errors }}</td>
+            </tr>
+            <tr>
+                <td>{% trans "Default SMS Response" %}</td>
+                <td><textarea name="default_sms_response"></textarea></td>
+                <td>{{ form.default_sms_response.errors }}</td>
+            </tr>
+        </table>
+        <input type="submit" class="btn btn-primary" value="Save" />
+    </form>
+{% endblock %}
