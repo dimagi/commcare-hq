@@ -10,7 +10,7 @@ setup(
     url='http://www.dimagi.com/',
     install_requires = [
         'celery',    
-        'couchdbkit',
+        'jsonobject-couchdbkit>=0.6.5.2',
         'couchforms==1.0.1',
         'couchexport',
         'decorator',
