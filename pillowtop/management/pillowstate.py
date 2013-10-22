@@ -7,6 +7,7 @@ def get_pillow_states(pillows):
     #make tuples of (index, alias)
     #this maybe problematic in the future if we have multiple pillows pointing to the same alias or indices
     master_aliases = dict((x.es_index, x.es_alias) for x in aliased_pillows)
+    print master_aliases
 
     es = get_es()
     system_status = es.get('_status')
@@ -19,6 +20,7 @@ def get_pillow_states(pillows):
 
     active_aliases = es.get('_aliases')
 
+    unseen_masters = master_aliases.keys()
     mapped_masters = []
     unmapped_masters = []
     stale_indices = []
@@ -28,6 +30,8 @@ def get_pillow_states(pillows):
         is_master = False
         if idx in master_aliases:
             is_master = True
+
+            unseen_masters.remove(idx)
 
         if is_master:
             if master_aliases[idx] in alias_dict['aliases']:
@@ -41,5 +45,6 @@ def get_pillow_states(pillows):
             #not a master index
             stale_tuple = (idx, alias_dict['aliases'].keys())
             stale_indices.append(stale_tuple)
+    unmapped_masters.extend([(x, master_aliases[x]) for x in unseen_masters])
 
     return mapped_masters, unmapped_masters, stale_indices
