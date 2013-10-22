@@ -118,14 +118,16 @@ def make_forms(domain, app_id, user, cases, avg_updates=None):
     """
     client = Client()
     url_path = '/a/%s/receiver/%s/' % (domain, app_id)
-    global last
-    last = datetime.datetime.utcnow()
+
+    # This `last` and `now` business is to print the length each query takes
+    # global last
+    # last = datetime.datetime.utcnow()
 
     def submit_form(form):
-        global last
-        now = datetime.datetime.utcnow()
-        print "elapsed: %s" % (now-last)
-        last = now
+        # global last
+        # now = datetime.datetime.utcnow()
+        # print "elapsed: %s" % (now-last)
+        # last = now
         f = StringIO(form.render().encode('utf-8'))
         f.name = "tempfile.xml"
         kwargs = dict(HTTP_X_SUBMIT_TIME=json_format_datetime(form.submitted))
