@@ -38,7 +38,8 @@ def case_update_from_block(case_block):
 
 
 class CaseActionBase(object):
-    
+    action_type_slug = None
+
     def __init__(self, block, type=None, name=None, external_id=None,
                  user_id=None, owner_id=None, opened_on=None, 
                  dynamic_properties=None, indices=None, attachments=None):
@@ -104,22 +105,19 @@ class CaseActionBase(object):
         
 
 class CaseCreateAction(CaseActionBase):
-    # Right now this doesn't do anything other than the default
-    pass
-
+    action_type_slug = const.CASE_ACTION_CREATE
         
 class CaseUpdateAction(CaseActionBase):
-    # Right now this doesn't do anything other than the default
-    pass
+    action_type_slug = const.CASE_ACTION_UPDATE
 
 class CaseCloseAction(CaseActionBase):
-    # Right now this doesn't do anything other than the default
-    pass
+    action_type_slug = const.CASE_ACTION_CLOSE
 
 class CaseAttachment(object):
     """
     A class that wraps an attachment to a case
     """
+
     def __init__(self, identifier, attachment_src, attachment_from, attachment_name):
         """
         identifier: the tag name
@@ -134,7 +132,7 @@ class CaseAttachment(object):
 
 
 class CaseAttachmentAction(CaseActionBase):
-    # Right now this doesn't do anything other than the default
+    action_type_slug = const.CASE_ACTION_ATTACHMENT
 
     def __init__(self, block, attachments):
         super(CaseAttachmentAction, self).__init__(block, attachments=attachments)
@@ -179,6 +177,7 @@ class CaseIndexAction(CaseActionBase):
     """
     Action describing updates to the case indices
     """
+    action_type_slug = const.CASE_ACTION_INDEX
     
     def __init__(self, block, indices):
         super(CaseIndexAction, self).__init__(block, indices=indices)

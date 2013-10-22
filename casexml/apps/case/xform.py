@@ -104,7 +104,10 @@ def get_or_update_cases(xform):
     for case_block in case_blocks:
         case_doc = _get_or_update_model(case_block, xform, case_db)
         if case_doc:
-            case_doc.xform_ids.append(xform.get_id)
+            # todo: legacy behavior, should remove after new case processing
+            # is fully enabled.
+            if xform._id not in case_doc.xform_ids:
+                case_doc.xform_ids.append(xform.get_id)
             case_db.set(case_doc.case_id, case_doc)
         else:
             logging.error(

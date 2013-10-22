@@ -2,6 +2,12 @@
 
 SECRET_KEY = 'this is not a secret key'
 
+try:
+    import sys
+    UNIT_TESTING = 'test' == sys.argv[1]
+except IndexError:
+    UNIT_TESTING = False
+
 INSTALLED_APPS = (
     'django.contrib.sites',
     'casexml.apps.case',
