@@ -3,7 +3,8 @@ var ManageRemindersViewModel = function (
     choices,
     ui_type,
     available_languages,
-    select2_fields
+    select2_fields,
+    language_modal_selector
 ) {
     'use strict';
     var self = this;
@@ -18,6 +19,7 @@ var ManageRemindersViewModel = function (
         return new ReminderLanguage(langcode);
     }));
     self.default_lang = ko.observable(initial.default_lang);
+    self.language_modal_selector = language_modal_selector;
 
     self.start_reminder_on = ko.observable(initial.start_reminder_on);
     self.isStartReminderCaseProperty = ko.computed(function () {
@@ -146,6 +148,7 @@ var ManageRemindersViewModel = function (
                 return "Please create a survey first.";
             }
         });
+        self.languagePicker.init();
     };
 
     self.addLanguage = function (langcode) {
@@ -158,7 +161,9 @@ var ManageRemindersViewModel = function (
             self.available_languages(availableLangs);
         }
         self.default_lang(langcode);
+        $(self.language_modal_selector).modal('hide');
     };
+    self.languagePicker = new LanguagePickerViewModel(self.addLanguage);
 
     self.initCasePropertyChoices = function (field) {
         var fieldInput = $('[name="' + field.name + '"]');
