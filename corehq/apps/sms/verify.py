@@ -1,4 +1,4 @@
-from corehq.apps.sms import api
+from corehq.apps.sms.api import send_sms, send_sms_to_verified_number
 from corehq.apps.sms.mixin import VerifiedNumber, CommCareMobileContactMixin, MobileBackend
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms import util
@@ -14,16 +14,20 @@ def send_verification(domain, user, phone_number):
         'name': user.username.split('@')[0],
         'replyto': ' to %s' % util.clean_phone_number(reply_phone) if reply_phone else '',
     }
-    api.send_sms(domain, user._id, phone_number, message)
+    send_sms(domain, user._id, phone_number, message)
 
-def process_verification(phone_number, text, backend_id=None):
+def process_verification(phone_number, msg, backend_id=None):
     v = VerifiedNumber.by_phone(phone_number, True)
     if not v:
         return
 
-    if not verification_response_ok(text):
+    if not verification_response_ok(msg.text):
         return
-    
+
+    msg.couch_recipient_doc_type = v.owner_doc_type
+    msg.couch_recipient = v.owner_id
+    msg.save()
+
     if backend_id:
         backend = MobileBackend.load(backend_id)
     else:
@@ -34,9 +38,9 @@ def process_verification(phone_number, text, backend_id=None):
     assert v.owner_doc_type == 'CommCareUser'
     owner = CommCareUser.get(v.owner_id)
 
-    owner.save_verified_number(v.domain, phone_number, True, backend.name)
+    v = owner.save_verified_number(v.domain, phone_number, True, backend.name)
 
-    api.send_sms(v.domain, owner._id, phone_number, CONFIRM)
+    send_sms_to_verified_number(v, CONFIRM)
 
 def verification_response_ok(text):
     return text == '123'

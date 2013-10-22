@@ -259,7 +259,7 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None,
     else:
         if not process_sms_registration(msg):
             import verify
-            verify.process_verification(phone_number, text)
+            verify.process_verification(phone_number, msg)
 
     return msg
 
