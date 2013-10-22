@@ -41,6 +41,40 @@
                 <h4>Add a new language</h4>
             </div>
             <div class="modal-body form-horizontal" style="max-height: 20em;">
+                <div class="control-group">
+                    <label class="control-label">{% trans 'Current Languages' %}</label>
+                    <div class="controls controls-row">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 200px;">{% trans 'Language' %}</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody data-bind="foreach: available_languages">
+                                <tr>
+                                    <td>
+                                        <span data-bind="text: name"></span> (<span data-bind="text: langcode"></span>)
+                                    </td>
+                                    <td>
+                                        <button type="button"
+                                                class="btn btn-danger"
+                                                data-bind="
+                                                    event: { click: $parent.removeLanguage },
+                                                    visible: isNotDefaultLang
+                                                ">
+                                            <i class="icon-remove"></i> {% trans 'Remove' %}
+                                        </button>
+                                        <p class="text-muted"
+                                           data-bind="visible: isDefaultLang">
+                                            {% trans 'Default' %}
+                                        </p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
                 <div class="control-group" data-bind="with: languagePicker">
                     <label class="control-label" for="new-language-code">{% trans 'New Language' %}</label>
                     <div class="controls controls-row">
