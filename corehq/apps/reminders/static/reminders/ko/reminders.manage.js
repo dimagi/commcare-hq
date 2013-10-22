@@ -3,8 +3,7 @@ var ManageRemindersViewModel = function (
     choices,
     ui_type,
     available_languages,
-    select2_fields,
-    language_modal_selector
+    select2_fields
 ) {
     'use strict';
     var self = this;
@@ -161,7 +160,6 @@ var ManageRemindersViewModel = function (
             self.available_languages(availableLangs);
         }
         self.default_lang(langcode);
-        $(self.language_modal_selector).modal('hide');
     };
     self.languagePicker = new LanguagePickerViewModel(self.addLanguage);
 
