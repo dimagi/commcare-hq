@@ -153,7 +153,8 @@ class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMix
                                 }
                             }
                         ]
-                    }
+                    },
+                    "query": {"match_all": {}}
                 }
             },
             "fields": [
