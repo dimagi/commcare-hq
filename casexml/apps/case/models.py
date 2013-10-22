@@ -641,7 +641,8 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
     def update_from_case_update(self, case_update, xformdoc):
         def _use_new_case_processing():
             # feature flags ftw
-            return not case_update.has_referrals() and (settings.UNIT_TESTING or xformdoc.domain == 'ekjut')
+            return (not case_update.has_referrals()
+                    and (getattr(settings,'UNIT_TESTING', False) or xformdoc.domain == 'ekjut'))
 
         if _use_new_case_processing():
             return self._new_update_from_case_update(case_update, xformdoc)
