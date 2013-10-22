@@ -86,11 +86,11 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
     attachments = SchemaDictProperty(CommCareCaseAttachment)
 
     @classmethod
-    def from_parsed_action(cls, action_type, date, user_id, xformdoc, action):
-        if not action_type in const.CASE_ACTIONS:
+    def from_parsed_action(cls, date, user_id, xformdoc, action):
+        if not action.action_type_slug in const.CASE_ACTIONS:
             raise ValueError("%s not a valid case action!")
         
-        ret = CommCareCaseAction(action_type=action_type, date=date, user_id=user_id)
+        ret = CommCareCaseAction(action_type=action.action_type_slug, date=date, user_id=user_id)
         
         def _couchify(d):
             return dict((k, couchable_property(v)) for k, v in d.items())
@@ -633,8 +633,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
         _safe_replace_and_force_to_string(self, "external_id", create_action.external_id)
         _safe_replace_and_force_to_string(self, "user_id", create_action.user_id)
         _safe_replace_and_force_to_string(self, "owner_id", create_action.owner_id)
-        create_action = CommCareCaseAction.from_parsed_action(const.CASE_ACTION_CREATE,
-                                                              modified_on,
+        create_action = CommCareCaseAction.from_parsed_action(modified_on,
                                                               user_id,
                                                               xformdoc,
                                                               create_action)
@@ -642,11 +641,12 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
     
     def update_from_case_update(self, case_update, xformdoc):
         mod_date = parsing.string_to_datetime(case_update.modified_on_str) \
-                    if   case_update.modified_on_str else datetime.utcnow()
-        
+            if case_update.modified_on_str else datetime.utcnow()
+
         if self.modified_on is None or mod_date > self.modified_on:
             self.modified_on = mod_date
     
+
         if case_update.creates_case():
             self.apply_create_block(case_update.get_create_action(), xformdoc, mod_date, case_update.user_id)
             # case_update.get_create_action() seems to sometimes return an action with all properties set to none,
@@ -658,8 +658,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
 
 
         if case_update.updates_case():
-            update_action = CommCareCaseAction.from_parsed_action(const.CASE_ACTION_UPDATE, 
-                                                                  mod_date,
+            update_action = CommCareCaseAction.from_parsed_action(mod_date,
                                                                   case_update.user_id,
                                                                   xformdoc,
                                                                   case_update.get_update_action())
@@ -667,8 +666,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
             self.actions.append(update_action)
         
         if case_update.closes_case():
-            close_action = CommCareCaseAction.from_parsed_action(const.CASE_ACTION_CLOSE, 
-                                                                 mod_date,
+            close_action = CommCareCaseAction.from_parsed_action(mod_date,
                                                                  case_update.user_id,
                                                                  xformdoc,
                                                                  case_update.get_close_action())
@@ -698,8 +696,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
                                     self.case_id))
         
         if case_update.has_indices():
-            index_action = CommCareCaseAction.from_parsed_action(const.CASE_ACTION_INDEX, 
-                                                                 mod_date,
+            index_action = CommCareCaseAction.from_parsed_action(mod_date,
                                                                  case_update.user_id,
                                                                  xformdoc,
                                                                  case_update.get_index_action())
@@ -707,8 +704,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
             self._apply_action(index_action)
 
         if case_update.has_attachments():
-            attachment_action = CommCareCaseAction.from_parsed_action(const.CASE_ACTION_ATTACHMENT,
-                                                                      mod_date,
+            attachment_action = CommCareCaseAction.from_parsed_action(mod_date,
                                                                       case_update.user_id,
                                                                       xformdoc,
                                                                       case_update.get_attachment_action())
@@ -817,7 +813,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
         _check_preconditions()
 
         # this would normally work except we only recently started using the
-        # form timestamp as the modificaiton date so we have to do something
+        # form timestamp as the modification date so we have to do something
         # fancier to deal with old data
         deduplicated_actions = list(set(self.actions))
         def further_deduplicate(action_list):
