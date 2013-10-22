@@ -33,7 +33,8 @@ class Command(BaseCommand):
                             msg.couch_recipient_doc_type = user.doc_type
                             msg.save()
                 else:
-                    if msg.couch_recipient_doc_type:
+                    if msg.couch_recipient_doc_type is not None or msg.couch_recipient is not None:
+                        msg.couch_recipient = None
                         msg.couch_recipient_doc_type = None
                         msg.save()
 
