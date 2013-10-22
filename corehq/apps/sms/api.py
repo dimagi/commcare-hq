@@ -32,7 +32,7 @@ def add_msg_tags(msg, *args, **kwargs):
     msg.xforms_session_couch_id = kwargs.get("xforms_session_couch_id", None)
     msg.reminder_id = kwargs.get("reminder_id", None)
 
-def send_sms(domain, id, phone_number, text, **kwargs):
+def send_sms(domain, contact, phone_number, text, **kwargs):
     """
     Sends an outbound SMS. Returns false if it fails.
     """
@@ -44,13 +44,14 @@ def send_sms(domain, id, phone_number, text, **kwargs):
 
     msg = SMSLog(
         domain=domain,
-        couch_recipient=id, 
-        couch_recipient_doc_type="CouchUser",
         phone_number=phone_number,
         direction=OUTGOING,
         date = datetime.utcnow(),
         text = text
     )
+    if contact:
+        msg.couch_recipient = contact._id
+        msg.couch_recipient_doc_type = contact.doc_type
     add_msg_tags(msg, **kwargs)
     
     def onerror():
@@ -259,7 +260,7 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None,
     else:
         if not process_sms_registration(msg):
             import verify
-            verify.process_verification(phone_number, text)
+            verify.process_verification(phone_number, msg)
 
     return msg
 
