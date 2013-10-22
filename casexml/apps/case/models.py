@@ -323,7 +323,6 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
     def server_opened_on(self):
         try:
             open_action = self.actions[0]
-            #assert open_action.action_type == const.CASE_ACTION_CREATE
             return open_action.server_date
         except Exception:
             pass
@@ -640,6 +639,13 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
         self.actions.append(create_action)
     
     def update_from_case_update(self, case_update, xformdoc):
+        def _use_new_case_processing():
+            # feature flags ftw
+            return not case_update.has_referrals() and (settings.UNIT_TESTING or xformdoc.domain == 'ekjut')
+
+        if _use_new_case_processing():
+            return self._new_update_from_case_update(case_update, xformdoc)
+
         mod_date = parsing.string_to_datetime(case_update.modified_on_str) \
             if case_update.modified_on_str else datetime.utcnow()
 
@@ -714,6 +720,49 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
         # finally override any explicit properties from the update
         if case_update.user_id:     self.user_id = case_update.user_id
         if case_update.version:     self.version = case_update.version
+
+    def _new_update_from_case_update(self, case_update, xformdoc):
+        assert not case_update.has_referrals()
+
+        mod_date = parsing.string_to_datetime(case_update.modified_on_str) \
+            if case_update.modified_on_str else datetime.utcnow()
+
+        # get actions and apply them
+        for action in case_update.actions:
+            if action.action_type_slug == const.CASE_ACTION_CREATE:
+                self.apply_create_block(action, xformdoc, mod_date, case_update.user_id)
+            else:
+                case_action = CommCareCaseAction.from_parsed_action(
+                    mod_date, case_update.user_id, xformdoc, action,
+                )
+                self._insert_action(case_action)
+
+        self.rebuild(strict=False)
+
+        # override any explicit properties from the update
+        if self.modified_on is None or mod_date > self.modified_on:
+            self.modified_on = mod_date
+
+        if case_update.creates_case():
+            # case_update.get_create_action() seems to sometimes return an action with all properties set to none,
+            # so set opened_by and opened_on here
+            if not self.opened_on:
+                self.opened_on = mod_date
+            if not self.opened_by:
+                self.opened_by = case_update.user_id
+
+        if case_update.closes_case():
+            self.closed_by = case_update.user_id
+        if case_update.user_id:
+            self.user_id = case_update.user_id
+        if case_update.version:
+            self.version = case_update.version
+
+
+    def _insert_action(self, action):
+        # todo: better logic
+        self.actions.append(action)
+
 
     def _apply_action(self, action):
         if action.action_type == const.CASE_ACTION_UPDATE:
@@ -853,15 +902,22 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
         if rebuild:
             self.rebuild()
 
-    def rebuild(self):
+    def rebuild(self, strict=True):
         """
-        Rebuilds the case state from its actions
+        Rebuilds the case state from its actions.
+
+        If strict is True, this will enforce that the first action must be a create.
         """
-        assert self.actions[0].action_type == const.CASE_ACTION_CREATE, (
-            'first case action should be a create but was %s' % self.actions[0].action_type)
+        if strict:
+            assert self.actions[0].action_type == const.CASE_ACTION_CREATE, (
+                'first case action should be a create but was %s' % self.actions[0].action_type
+            )
         for i in range(1, len(self.actions)):
             self._apply_action(self.actions[i])
-        self.xform_ids = list(set([a.xform_id for a in self.actions]))
+        self.xform_ids = []
+        for a in self.actions:
+            if a.xform_id not in self.xform_ids:
+                self.xform_ids.append(a.xform_id)
 
     def force_close_referral(self, submit_url, referral):
         if not referral.closed:
