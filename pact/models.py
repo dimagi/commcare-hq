@@ -197,7 +197,7 @@ class PactPatientCase(CommCareCase):
         if computed.has_key(PACT_SCHEDULES_NAMESPACE):
             ret = [x for x in computed[PACT_SCHEDULES_NAMESPACE]]
             if not raw_json:
-                ret = [CDotWeeklySchedule.wrap(x) for x in ret]
+                ret = [CDotWeeklySchedule.wrap(dict(x)) for x in ret]
             if reversed:
                 ret.reverse()
             return ret
