@@ -91,12 +91,18 @@ var ManageRemindersViewModel = function (
                 self.method() === self.choices.METHOD_SMS_SURVEY);
     });
 
+    self.global_timeouts = ko.observable();
+    self.isGlobalTimeoutsVisible = ko.computed(function () {
+        return self.method() === self.choices.METHOD_SMS_CALLBACK;
+    });
+
     self.init = function () {
         var events = $.parseJSON(initial.events || '[]');
         if (self.ui_type === self.choices.UI_SIMPLE_FIXED) {
             // only use the first event in the list
             events = [events[0]];
         }
+        self.global_timeouts(events[0].callback_timeout_intervals);
         self.eventObjects(_.map(events, function (event) {
             return new ReminderEvent(
                 event,
@@ -292,11 +298,6 @@ var ReminderEvent = function (eventData, choices, method, event_timing, event_in
         return self.fire_time_type() === self.choices.FIRE_TIME_RANDOM;
     });
 
-    self.callback_timeout_intervals = ko.observable(eventData.callback_timeout_intervals);
-    self.isCallbackTimeoutsVisible = ko.computed(function () {
-        return self.method() === self.choices.METHOD_SMS_CALLBACK;
-    });
-
     self.form_unique_id = ko.observable(eventData.form_unique_id);
     self.isSurveyVisible = ko.computed(function () {
         return (self.method() === self.choices.METHOD_SMS_SURVEY)
@@ -339,7 +340,6 @@ var ReminderEvent = function (eventData, choices, method, event_timing, event_in
             fire_time: self.fire_time(),
             form_unique_id: self.form_unique_id(),
             message: self.message_data(),
-            callback_timeout_intervals: self.callback_timeout_intervals(),
             time_window_length: self.time_window_length()
         }
     });

@@ -769,6 +769,12 @@ class BaseScheduleCaseReminderForm(forms.Form):
             (METHOD_SMS_SURVEY, "SMS Survey"),
         ),
     )
+
+    global_timeouts = forms.CharField(
+        label="Timeouts",
+        required=False,
+    )
+
     # contains a string-ified JSON object of events
     events = forms.CharField(
         required=False,
@@ -1112,8 +1118,12 @@ class BaseScheduleCaseReminderForm(forms.Form):
                             'data-toggle="modal">Manage Languages</a>'),
             ),
             crispy.Div(
-                style="display: inline;",
-                data_bind="template: {name: 'event-timeouts-template', foreach: eventObjects}"
+                crispy.Field(
+                    'global_timeouts',
+                    data_bind="value: global_timeouts",
+                    placeholder="e.g. 30,60,180",
+                ),
+                data_bind="visible: isGlobalTimeoutsVisible",
             ),
             crispy.Div(
                 'max_question_retries',
@@ -1329,19 +1339,20 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 event['day_num'] = 0
 
             # clean callback_timeout_intervals:
-            event["callback_timeout_intervals"] = []
+            event['callback_timeout_intervals'] = []
             if method == METHOD_SMS_CALLBACK:
-                timeouts_str = event["callback_timeout_intervals"].split(",")
+                global_timeouts = self.cleaned_data['global_timeouts']
+                timeouts_str = global_timeouts.split(",")
                 timeouts_int = []
                 for t in timeouts_str:
                     try:
-                        t = int(t)
+                        t = int(t.strip())
                         assert t > 0
                         timeouts_int.append(t)
                     except (ValueError, AssertionError):
                         raise ValidationError("Timeout intervals must be a list of positive numbers "
                                               "separated by commas.")
-                event["callback_timeout_intervals"] = timeouts_int
+                event['callback_timeout_intervals'] = timeouts_int
 
             # delete all data that was just UI based:
             del event['message_data']  # this is only for storing the stringified version of message
@@ -1642,13 +1653,6 @@ class CaseReminderEventForm(forms.Form):
         widget=forms.HiddenInput,
     )
 
-    # callback_timeout_intervals is visible when method of reminder is METHOD_SMS_CALLBACK
-    # a list of comma separated integers
-    callback_timeout_intervals = forms.CharField(
-        required=False,
-        label="Timeouts",
-    )
-
     # form_unique_id is visible when the method of the reminder is SMS_SURVEY or IVR_SURVEY
     form_unique_id = forms.CharField(
         required=False,
@@ -1704,19 +1708,6 @@ class CaseReminderEventForm(forms.Form):
             ),
             crispy.Field('fire_time_type', data_bind="value: fire_time_type, attr: {id: ''}"),
             crispy.Field('day_num', data_bind="value: day_num, attr: {id: ''}"),
-        )
-
-        self.helper_timeouts = FormHelper()
-        self.helper_timeouts.form_tag = False
-        self.helper_timeouts.layout = crispy.Layout(
-            crispy.Div(
-                crispy.Field(
-                    'callback_timeout_intervals',
-                    data_bind="value: callback_timeout_intervals, attr: {id: ''}",
-                    placeholder="e.g. 30,60,180",
-                ),
-                data_bind="visible: isCallbackTimeoutsVisible",
-            ),
         )
 
 
