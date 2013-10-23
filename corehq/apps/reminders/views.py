@@ -662,7 +662,7 @@ class EditScheduledReminderView(CreateScheduledReminderView):
     def schedule_form(self):
         initial = self.reminder_form_class.compute_initial(self.reminder_handler)
         if self.request.method == 'POST':
-            return SimpleScheduleCaseReminderForm(
+            return self.reminder_form_class(
                 self.request.POST,
                 initial=initial,
                 is_previewer=self.is_previewer,
