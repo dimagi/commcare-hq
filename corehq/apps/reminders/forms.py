@@ -1678,12 +1678,7 @@ class CaseReminderEventForm(forms.Form):
         self.helper_fire_time.form_tag = False
         self.helper_fire_time.layout = crispy.Layout(
             crispy.Div(
-                crispy.HTML('<input type="text" data-bind="value: fire_time" '
-                            'data-timeset="true" class="input-small" />'),
-                crispy.HTML('<span class="add-on"><i class="icon-time"></i>'),
-                css_class="input-append bootstrap-timepicker",
-                style="margin-left:5px;",
-                data_bind="visible: isFireTimeVisible",
+                template="reminders/partial/fire_time_field.html",
             ),
             crispy.Div(
                 InlineField(
