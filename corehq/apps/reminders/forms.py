@@ -1017,6 +1017,12 @@ class BaseScheduleCaseReminderForm(forms.Form):
     def section_message(self):
         return crispy.Fieldset(
             "Message Content",
+            *self.section_message_fields
+        )
+
+    @property
+    def section_message_fields(self):
+        return [
             FieldWithHelpBubble(
                 'method',
                 data_bind="value: method",
@@ -1027,7 +1033,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
             crispy.Field('event_interpretation', data_bind="value: event_interpretation"),
             HiddenFieldWithErrors('events', data_bind="value: events"),
             crispy.Div(data_bind="template: {name: 'event-template', foreach: eventObjects}"),
-        )
+        ]
 
     @property
     def timing_fields(self):
@@ -1525,6 +1531,11 @@ class ComplexScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
         event_timing_choices = [(self._format_event_timing_choice(e[0][0], e[0][1], e[0][2]), e[1])
                                 for e in event_timing_choices]
         self.fields['event_timing'].choices = event_timing_choices
+
+    @property
+    def section_message_fields(self):
+        fields = super(ComplexScheduleCaseReminderForm, self).section_message_fields
+        return fields[:1] + self.timing_fields + fields[1:]
 
 
 class CaseReminderEventForm(forms.Form):
