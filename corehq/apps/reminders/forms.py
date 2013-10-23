@@ -1658,22 +1658,6 @@ class CaseReminderEventForm(forms.Form):
 
         self.ui_type = ui_type
 
-        self.helper = FormHelper()
-        self.helper.form_tag = False
-        self.helper.layout = crispy.Layout(
-            crispy.Field('message_data', data_bind="value: message_data, attr: {id: ''}"),
-            crispy.Div(data_bind="template: {name: 'event-message-template', foreach: messageTranslations}, "
-                                 "visible: isMessageVisible"),
-            crispy.Div(
-                crispy.Field(
-                    'form_unique_id',
-                    data_bind="value: form_unique_id, attr: {id: ''}",
-                    css_class="input-xxlarge",
-                ),
-                data_bind="visible: isSurveyVisible",
-            ),
-        )
-
         self.helper_fire_time = FormHelper()
         self.helper_fire_time.form_tag = False
         self.helper_fire_time.layout = crispy.Layout(
@@ -1689,6 +1673,24 @@ class CaseReminderEventForm(forms.Form):
                 css_class="help-inline",
                 data_bind="visible: isFireTimeAuxVisible",
                 style="margin-left: 5px;",
+            ),
+        )
+
+        # Note the following is only used for the Simple UI.
+        # The Complex UI goes off the template: reminders/partial/complex_message_table.html
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = crispy.Layout(
+            crispy.Field('message_data', data_bind="value: message_data, attr: {id: ''}"),
+            crispy.Div(data_bind="template: {name: 'event-message-template', foreach: messageTranslations}, "
+                                 "visible: isMessageVisible"),
+            crispy.Div(
+                crispy.Field(
+                    'form_unique_id',
+                    data_bind="value: form_unique_id, attr: {id: ''}",
+                    css_class="input-xxlarge",
+                ),
+                data_bind="visible: isSurveyVisible",
             ),
         )
 
