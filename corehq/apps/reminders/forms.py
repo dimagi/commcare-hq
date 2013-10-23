@@ -822,7 +822,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
         label="",
         choices=(
             ('', '(none)'),
-            (STOP_CONDITION_CASE_PROPERTY, 'On Date in Case'),
+            (STOP_CONDITION_CASE_PROPERTY, 'Based on Case Property'),
         )
     )
     until = forms.CharField(
