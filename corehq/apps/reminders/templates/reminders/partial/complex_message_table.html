@@ -40,7 +40,7 @@
         <th class="span5" data-bind="visible: isMessageVisible">{% trans 'Message' %}</th>
         <th class="span1" data-bind="visible: $parent.isEventDeleteButtonVisible"></th>
     </thead>
-    <tbody data-bind="foreach: eventObjects">
+    <tbody data-bind="foreach: { data: eventObjects, afterAdd: refreshEventsListUI }">
         <td>
             <input type="hidden" data-bind="value: fire_time_type" />
             <input type="text" class="input-mini" data-bind="value: day_num" />

@@ -113,15 +113,10 @@ var ManageRemindersViewModel = function (
                 self.available_languages
             );
         }));
+        self.refreshEventsListUI();
+
         _.each(self.select2_fields, function (field) {
             self.initCasePropertyChoices(field);
-        });
-        $('[data-timeset="true"]').each(function () {
-            $(this).timepicker({
-                showMeridian: false,
-                showSeconds: true,
-                defaultTime: $(this).val() || false
-            });
         });
         $('[name="form_unique_id"]').select2({
             minimumInputLength: 0,
@@ -258,6 +253,16 @@ var ManageRemindersViewModel = function (
 
     self.removeEvent = function (event) {
         self.eventObjects.remove(event);
+    };
+
+    self.refreshEventsListUI = function () {
+        $('[data-timeset="true"]').each(function () {
+            $(this).timepicker({
+                showMeridian: false,
+                showSeconds: true,
+                defaultTime: $(this).val() || false
+            });
+        });
     };
 };
 
