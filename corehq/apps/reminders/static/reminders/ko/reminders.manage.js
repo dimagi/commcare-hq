@@ -321,7 +321,7 @@ var ReminderEvent = function (eventData, choices, method, event_timing, event_in
     });
 
     self.addTranslation = function (langcode) {
-        var messagesToAdd = _(self.removedMessageTranslations()).each(function (message) {
+        var messagesToAdd = _(self.removedMessageTranslations()).map(function (message) {
             return message.langcode() === langcode;
         });
         if (messagesToAdd.length === 0) {
