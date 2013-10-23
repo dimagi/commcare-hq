@@ -93,7 +93,9 @@ var ManageRemindersViewModel = function (
 
     self.global_timeouts = ko.observable();
     self.isGlobalTimeoutsVisible = ko.computed(function () {
-        return self.method() === self.choices.METHOD_SMS_CALLBACK;
+        return (self.method() === self.choices.METHOD_SMS_CALLBACK ||
+                self.method() === self.choices.METHOD_IVR_SURVEY ||
+                self.method() === self.choices.METHOD_SMS_SURVEY);
     });
 
     self.init = function () {

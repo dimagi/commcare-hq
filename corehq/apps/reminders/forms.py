@@ -1340,7 +1340,9 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
             # clean callback_timeout_intervals:
             event['callback_timeout_intervals'] = []
-            if method == METHOD_SMS_CALLBACK:
+            if (method == METHOD_SMS_CALLBACK
+                or method == METHOD_IVR_SURVEY
+                or method == METHOD_SMS_SURVEY):
                 global_timeouts = self.cleaned_data['global_timeouts']
                 timeouts_str = global_timeouts.split(",")
                 timeouts_int = []
