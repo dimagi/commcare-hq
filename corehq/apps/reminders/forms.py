@@ -1568,6 +1568,21 @@ class ComplexScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
     def section_message_fields(self):
         fields = super(ComplexScheduleCaseReminderForm, self).section_message_fields
         return fields[:1] + self.timing_fields + fields[1:]
+    @property
+    def timing_fields(self):
+        return [
+            BootstrapMultiField(
+                _("Time"),
+                InlineField(
+                    'event_timing',
+                    data_bind="value: event_timing",
+                ),
+                css_id="timing_block",
+                help_bubble_text=_("This controls when the message will be sent. The Time in Case "
+                                   "option is useful, for example, if the recipient has chosen a "
+                                   "specific time to receive the message.")
+            ),
+        ]
 
 
 class CaseReminderEventForm(forms.Form):
