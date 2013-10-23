@@ -667,7 +667,7 @@ REPEAT_TYPE_SPECIFIC = 'specific'
 STOP_CONDITION_CASE_PROPERTY = 'case_property'
 
 
-class SimpleScheduleCaseReminderForm(forms.Form):
+class BaseScheduleCaseReminderForm(forms.Form):
     """
     This form creates a new CaseReminder. It is the most basic version, no advanced options (like language).
     """
@@ -865,7 +865,7 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                 }])
             }
 
-        super(SimpleScheduleCaseReminderForm, self).__init__(data, *args, **kwargs)
+        super(BaseScheduleCaseReminderForm, self).__init__(data, *args, **kwargs)
 
         self.domain = domain
         self.ui_type = ui_type
@@ -878,17 +878,6 @@ class SimpleScheduleCaseReminderForm(forms.Form):
                 (METHOD_SMS_CALLBACK, "SMS Expecting Callback"),
             ])
             self.fields['method'].choices = method_choices
-
-        event_timing_choices = (
-            ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT, EVENT_TIMING_IMMEDIATE), "Immediately"),
-            ((EVENT_AS_SCHEDULE, FIRE_TIME_DEFAULT, None), "At a Specific Time"),
-            ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT, None), "Delay After Start"),
-            ((EVENT_AS_SCHEDULE, FIRE_TIME_CASE_PROPERTY, None), "Time in Case"),
-            ((EVENT_AS_SCHEDULE, FIRE_TIME_RANDOM, None), "Random Time"),
-        )
-        event_timing_choices = [(self._format_event_timing_choice(e[0][0], e[0][1], e[0][2]), e[1])
-                                for e in event_timing_choices]
-        self.fields['event_timing'].choices = event_timing_choices
 
         start_section = crispy.Fieldset(
             'Start',
@@ -1476,6 +1465,39 @@ class SimpleScheduleCaseReminderForm(forms.Form):
         })
 
         return initial
+
+
+class SimpleScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
+
+    def __init__(self, *args, **kwargs):
+        super(SimpleScheduleCaseReminderForm, self).__init__(*args, **kwargs)
+
+        event_timing_choices = (
+            ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT, EVENT_TIMING_IMMEDIATE), "Immediately"),
+            ((EVENT_AS_SCHEDULE, FIRE_TIME_DEFAULT, None), "At a Specific Time"),
+            ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT, None), "Delay After Start"),
+            ((EVENT_AS_SCHEDULE, FIRE_TIME_CASE_PROPERTY, None), "Time in Case"),
+            ((EVENT_AS_SCHEDULE, FIRE_TIME_RANDOM, None), "Random Time"),
+        )
+        event_timing_choices = [(self._format_event_timing_choice(e[0][0], e[0][1], e[0][2]), e[1])
+                                for e in event_timing_choices]
+        self.fields['event_timing'].choices = event_timing_choices
+
+
+class ComplexScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
+
+    def __init__(self, *args, **kwargs):
+        super(ComplexScheduleCaseReminderForm, self).__init__(*args, **kwargs)
+
+        event_timing_choices = (
+            ((EVENT_AS_SCHEDULE, FIRE_TIME_DEFAULT, None), "At a Specific Time"),
+            ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT, None), "Delay After Start"),
+            ((EVENT_AS_SCHEDULE, FIRE_TIME_CASE_PROPERTY, None), "Time in Case"),
+            ((EVENT_AS_SCHEDULE, FIRE_TIME_RANDOM, None), "Random Time"),
+        )
+        event_timing_choices = [(self._format_event_timing_choice(e[0][0], e[0][1], e[0][2]), e[1])
+                                for e in event_timing_choices]
+        self.fields['event_timing'].choices = event_timing_choices
 
 
 class CaseReminderEventForm(forms.Form):

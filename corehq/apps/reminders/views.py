@@ -26,7 +26,7 @@ from corehq.apps.reminders.forms import (
     CaseReminderEventMessageForm,
     KEYWORD_CONTENT_CHOICES,
     KEYWORD_RECIPIENT_CHOICES,
-)
+    ComplexScheduleCaseReminderForm)
 from corehq.apps.reminders.models import (
     CaseReminderHandler,
     CaseReminderEvent,
@@ -482,16 +482,23 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
     ui_type = UI_SIMPLE_FIXED
 
     @property
+    def reminder_form_class(self):
+        return {
+            UI_COMPLEX: ComplexScheduleCaseReminderForm,
+            UI_SIMPLE_FIXED: SimpleScheduleCaseReminderForm,
+        }[self.ui_type]
+
+    @property
     @memoized
     def schedule_form(self):
         if self.request.method == 'POST':
-            return SimpleScheduleCaseReminderForm(
+            return self.reminder_form_class(
                 self.request.POST,
                 domain=self.domain,
                 is_previewer=self.is_previewer,
                 ui_type=self.ui_type,
             )
-        return SimpleScheduleCaseReminderForm(
+        return self.reminder_form_class(
             is_previewer=self.is_previewer,
             domain=self.domain,
             ui_type=self.ui_type,
@@ -655,7 +662,7 @@ class EditScheduledReminderView(CreateScheduledReminderView):
     @property
     @memoized
     def schedule_form(self):
-        initial = SimpleScheduleCaseReminderForm.compute_initial(self.reminder_handler)
+        initial = self.reminder_form_class.compute_initial(self.reminder_handler)
         if self.request.method == 'POST':
             return SimpleScheduleCaseReminderForm(
                 self.request.POST,
@@ -664,7 +671,7 @@ class EditScheduledReminderView(CreateScheduledReminderView):
                 domain=self.domain,
                 is_edit=True,
             )
-        return SimpleScheduleCaseReminderForm(
+        return self.reminder_form_class(
             initial=initial,
             is_previewer=self.is_previewer,
             domain=self.domain,
