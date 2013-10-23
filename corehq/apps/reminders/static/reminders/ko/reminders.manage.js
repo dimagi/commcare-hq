@@ -249,6 +249,10 @@ var ManageRemindersViewModel = function (
             self.available_languages
         ));
     };
+
+    self.removeEvent = function (event) {
+        self.eventObjects.remove(event);
+    };
 };
 
 var ReminderEvent = function (eventData, choices, method, event_timing, event_interpretation, available_languages) {
