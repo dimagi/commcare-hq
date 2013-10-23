@@ -879,13 +879,40 @@ class BaseScheduleCaseReminderForm(forms.Form):
             ])
             self.fields['method'].choices = method_choices
 
-        start_section = crispy.Fieldset(
+        from corehq.apps.reminders.views import RemindersListView
+        self.helper = FormHelper()
+        self.helper.layout = crispy.Layout(
+            crispy.Field('nickname'),
+            self.section_start,
+            self.section_recipient,
+            self.section_message,
+            self.section_repeat,
+            self.section_advanced,
+            FormActions(
+                StrictButton(
+                    _("Update Reminder") if is_edit else _("Create Reminder"),
+                    css_class='btn-primary',
+                    type='submit',
+                ),
+                crispy.HTML('<a href="%s" class="btn">Cancel</a>' % reverse(RemindersListView.urlname, args=[self.domain]))
+            )
+        )
+
+    @property
+    def section_start(self):
+        return crispy.Fieldset(
             'Start',
+            *self.section_start_fields
+        )
+
+    @property
+    def section_start_fields(self):
+        return [
             crispy.Field(
                 'case_type',
                 css_class="input-large",
                 data_bind="value: case_type",
-                data_placeholder="Enter a Case Type"
+                data_placeholder=_("Enter a Case Type")
             ),
             FieldWithHelpBubble(
                 'start_reminder_on',
@@ -953,25 +980,11 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 ),
                 data_bind="visible: isStartReminderCaseDate"
             ),
-            BootstrapMultiField(
-                "Time",
-                InlineField('event_timing', data_bind="value: event_timing"),
-                crispy.Div(
-                    style="display: inline;",
-                    data_bind="template: {name: 'event-fire-template', foreach: eventObjects}"
-                ),
-                css_id="timing_block",
-                help_bubble_text=("This controls when the message will be sent. The Time in Case "
-                                  "option is useful, for example, if the recipient has chosen a "
-                                  "specific time to receive the message.")
-            ),
-            crispy.Div(
-                style="display: inline;",
-                data_bind="template: {name: 'event-general-template', foreach: eventObjects}"
-            ),
-        )
+        ]
 
-        recipient_section = crispy.Fieldset(
+    @property
+    def section_recipient(self):
+        return crispy.Fieldset(
             "Recipient",
             FieldWithHelpBubble(
                 'recipient',
@@ -1000,7 +1013,9 @@ class BaseScheduleCaseReminderForm(forms.Form):
             ),
         )
 
-        message_section = crispy.Fieldset(
+    @property
+    def section_message(self):
+        return crispy.Fieldset(
             "Message Content",
             FieldWithHelpBubble(
                 'method',
@@ -1014,7 +1029,30 @@ class BaseScheduleCaseReminderForm(forms.Form):
             crispy.Div(data_bind="template: {name: 'event-template', foreach: eventObjects}"),
         )
 
-        repeat_section = crispy.Fieldset(
+    @property
+    def timing_fields(self):
+        return [
+            BootstrapMultiField(
+                "Time",
+                InlineField('event_timing', data_bind="value: event_timing"),
+                crispy.Div(
+                    style="display: inline;",
+                    data_bind="template: {name: 'event-fire-template', foreach: eventObjects}"
+                ),
+                css_id="timing_block",
+                help_bubble_text=("This controls when the message will be sent. The Time in Case "
+                                  "option is useful, for example, if the recipient has chosen a "
+                                  "specific time to receive the message.")
+            ),
+            crispy.Div(
+                style="display: inline;",
+                data_bind="template: {name: 'event-general-template', foreach: eventObjects}"
+            )
+        ]
+
+    @property
+    def section_repeat(self):
+        return crispy.Fieldset(
             "Repeat",
             crispy.Field('repeat_type', data_bind="value: repeat_type"),
             crispy.Div(
@@ -1047,7 +1085,9 @@ class BaseScheduleCaseReminderForm(forms.Form):
             )
         )
 
-        advanced_section = FieldsetAccordionGroup(
+    @property
+    def section_advanced(self):
+        return FieldsetAccordionGroup(
             "Advanced Options",
             BootstrapMultiField(
                 "Default Language",
@@ -1076,25 +1116,6 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 data_bind="visible: isForceSurveysToUsedTriggeredCaseVisible",
             ),
             active=False,
-        )
-
-        from corehq.apps.reminders.views import RemindersListView
-        self.helper = FormHelper()
-        self.helper.layout = crispy.Layout(
-            crispy.Field('nickname'),
-            start_section,
-            recipient_section,
-            message_section,
-            repeat_section,
-            advanced_section,
-            FormActions(
-                StrictButton(
-                    _("Update Reminder") if is_edit else _("Create Reminder"),
-                    css_class='btn-primary',
-                    type='submit',
-                ),
-                crispy.HTML('<a href="%s" class="btn">Cancel</a>' % reverse(RemindersListView.urlname, args=[self.domain]))
-            )
         )
 
     @property
@@ -1482,6 +1503,12 @@ class SimpleScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
         event_timing_choices = [(self._format_event_timing_choice(e[0][0], e[0][1], e[0][2]), e[1])
                                 for e in event_timing_choices]
         self.fields['event_timing'].choices = event_timing_choices
+
+    @property
+    def section_start_fields(self):
+        start_fields = super(SimpleScheduleCaseReminderForm, self).section_start_fields
+        start_fields.extend(self.timing_fields)
+        return start_fields
 
 
 class ComplexScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
