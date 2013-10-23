@@ -13,15 +13,16 @@ class ScheduledReportForm(forms.Form):
         help_text='Note: not all built-in reports support email delivery, so'
                   ' some of your saved reports may not appear in this list')
 
-    day_of_week = forms.TypedChoiceField(
-        label='Day',
-        coerce=int,
-        choices=(('Daily',
-                        ((-1, 'Every Day'),)),
-                 ('Once a week on...',
-                        ReportNotification.day_choices())))
+    interval = forms.TypedChoiceField(
+        label='Interval',
+        choices=[("daily", "Daily"), ("weekly", "Weekly"), ("monthly", "Monthly")])
 
-    hours = forms.TypedChoiceField(
+    day = forms.TypedChoiceField(
+        label="Day",
+        coerce=int,
+        choices=[(i, i) for i in range(1, 32)])
+
+    hour = forms.TypedChoiceField(
         label='Time',
         coerce=int,
         choices=ReportNotification.hour_choices(),

@@ -503,7 +503,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
             raise HttpResponseBadRequest()
     else:
         instance = ReportNotification(owner_id=user_id, domain=domain,
-                                      config_ids=[], day_of_week=-1, hours=8,
+                                      config_ids=[], hour=8,
                                       send_to_owner=True, recipient_emails=[])
 
     is_new = instance.new_document
@@ -531,6 +531,9 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
         return HttpResponseRedirect(reverse('reports_home', args=(domain,)))
 
     context['form'] = form
+    context['day_value'] = getattr(instance, "day", 1)
+    context['weekly_day_options'] = ReportNotification.day_choices()
+    context['monthly_day_options'] = [(i, i) for i in range(1, 32)]
     if is_new:
         context['form_action'] = "Create a new"
         context['report']['title'] = "New Scheduled Report"
