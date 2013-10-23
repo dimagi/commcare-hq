@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.core.validators import ValidationError
 from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404, HttpResponse
+from django.template.defaultfilters import yesno
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
@@ -226,9 +227,9 @@ def download_item_lists(request, domain):
         return ["" for x in range(0, length)]
 
 
-    #Fills sheets' schemas and data
+    # Fills sheets' schemas and data
     for data_type in data_types:
-        type_schema = [str(_id_from_doc(data_type)), "N", data_type.name, data_type.tag]
+        type_schema = [str(_id_from_doc(data_type)), "N", data_type.name, data_type.tag, yesno(data_type.is_global)]
         fields = [field for field in data_type.fields]
         type_id = data_type.get_id
         data_table_of_type = []
@@ -254,7 +255,7 @@ def download_item_lists(request, domain):
         max_users = 0
         max_groups = 0
 
-    type_headers = ["UID", DELETE_HEADER, "name", "tag"] + ["field %d" % x for x in range(1, max_fields - 3)]
+    type_headers = ["UID", DELETE_HEADER, "name", "tag", 'is_global?'] + ["field %d" % x for x in range(1, max_fields - 3)]
     type_headers = ("types", tuple(type_headers))
     table_headers = [type_headers]    
     for type_schema in data_type_schemas:
