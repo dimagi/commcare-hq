@@ -212,11 +212,19 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
             num_cases = DataTablesColumn(_("# Modified or Closed"), sort_type=DTSortType.NUMERIC,
                 help_text=_("The number of cases that have been modified between %d days ago and today." % landmark.days)
             )
+            num_active = DataTablesColumn(_("# Active"), sort_type=DTSortType.NUMERIC,
+                help_text=_("The number of active cases.")
+            )
+            num_closed = DataTablesColumn(_("# Closed"), sort_type=DTSortType.NUMERIC,
+                help_text=_("The number of cases that have been closed between %d days ago and today." % landmark.days)
+            )
             proportion = DataTablesColumn(_("Proportion"), sort_type=DTSortType.NUMERIC,
                 help_text=_("The number of modified cases / (#active + #closed cases in the last %d days)." % landmark.days)
             )
             columns.append(DataTablesColumnGroup(_("Cases in Last %s Days") % landmark.days if landmark else _("Ever"),
                 num_cases,
+                num_active,
+                num_closed,
                 proportion
             ))
         columns.append(DataTablesColumn(_("# Active Cases"),
@@ -246,7 +254,9 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
 
             for landmark in self.landmarks:
                 value = row.modified_count(self.utc_now - landmark)
-                total = row.active_count() + row.closed_count(self.utc_now - landmark)
+                active = row.active_count()
+                closed = row.closed_count(self.utc_now - landmark)
+                total = active + closed
 
                 try:
                     p_val = float(value) * 100. / float(total)
@@ -255,6 +265,8 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
                     p_val = None
                     proportion = '--'
                 add_numeric_cell(value, value)
+                add_numeric_cell(active, active)
+                add_numeric_cell(closed, closed)
                 add_numeric_cell(proportion, p_val)
 
             add_numeric_cell(row.active_count())
