@@ -55,6 +55,9 @@ var ManageRemindersViewModel = function (
         }));
     });
     self.event_timing = ko.observable(initial.event_timing);
+    self.isEventDeleteButtonVisible = ko.computed(function () {
+        return self.eventObjects().length > 1;
+    });
 
     self.event_interpretation = ko.computed(function () {
         var event_timing = $.parseJSON(self.event_timing());
