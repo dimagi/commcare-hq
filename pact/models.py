@@ -143,8 +143,6 @@ class PactPatientCase(CommCareCase):
         regimen_string = regimen_string_from_doc(DOT_ART, self.to_json())
         if regimen_string is None:
             return "No regimen"
-#        elif regimen_string.startswith('Error,'):
-#            return "[%s] %s" % (self.artregimen, regimen_string)
         else:
             return "[%s] %s" % (REGIMEN_CHOICES[int(self.art_properties()[enums.CASE_ART_REGIMEN_PROP])], PACT_REGIMEN_CHOICES_FLAT_DICT[regimen_string])
 
@@ -194,17 +192,18 @@ class PactPatientCase(CommCareCase):
         if raw_json:
             obj = self.to_json()
         else:
-            obj=self
+            obj = self
         computed = obj['computed_']
         if computed.has_key(PACT_SCHEDULES_NAMESPACE):
             ret = [x for x in computed[PACT_SCHEDULES_NAMESPACE]]
             if not raw_json:
-                ret = [CDotWeeklySchedule.wrap(x) for x in ret]
+                ret = [CDotWeeklySchedule.wrap(dict(x)) for x in ret]
             if reversed:
                 ret.reverse()
             return ret
         else:
             return []
+
     def rm_schedule(self):
         """
         Remove the tail from the schedule - does not save doc
@@ -232,7 +231,7 @@ class PactPatientCase(CommCareCase):
                 if curr_sched.ended <= next_sched.started:
                     #ok, good
                     pass
-        self['computed_'][PACT_SCHEDULES_NAMESPACE] = [dict(x.to_json()) for x in schedules]
+        self['computed_'][PACT_SCHEDULES_NAMESPACE] = [x.to_json() for x in schedules]
 
     def set_schedule(self, new_schedule):
         """set the schedule as head of the schedule by accepting a cdotweeklychedule, does not save doc"""
