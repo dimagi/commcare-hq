@@ -1125,7 +1125,11 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 data_bind="visible: isGlobalTimeoutsVisible",
             ),
             crispy.Div(
-                'max_question_retries',
+                FieldWithHelpBubble(
+                    'max_question_retries',
+                    help_bubble_text=_("For IVR surveys, the number of times a person can provide an invalid "
+                                       "answer before the call will hang up. ")
+                ),
                 data_bind="visible: isMaxQuestionRetriesVisible",
             ),
             FieldWithHelpBubble(
