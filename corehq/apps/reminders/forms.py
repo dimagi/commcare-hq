@@ -1035,7 +1035,6 @@ class BaseScheduleCaseReminderForm(forms.Form):
             ),
             crispy.Field('event_interpretation', data_bind="value: event_interpretation"),
             HiddenFieldWithErrors('events', data_bind="value: events"),
-            crispy.Div(data_bind="template: {name: 'event-template', foreach: eventObjects}"),
         ]
 
     @property
@@ -1524,6 +1523,14 @@ class SimpleScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
         return start_fields
 
     @property
+    def section_message_fields(self):
+        message_fields = super(SimpleScheduleCaseReminderForm, self).section_message_fields
+        message_fields.append(
+            crispy.Div(data_bind="template: {name: 'event-template', foreach: eventObjects}")
+        )
+        return message_fields
+
+    @property
     def timing_fields(self):
         return [
             BootstrapMultiField(
@@ -1567,7 +1574,10 @@ class ComplexScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
     @property
     def section_message_fields(self):
         fields = super(ComplexScheduleCaseReminderForm, self).section_message_fields
-        return fields[:1] + self.timing_fields + fields[1:]
+        fields = fields[:1] + self.timing_fields + fields[1:]
+        fields.append(crispy.Div(template='reminders/partial/complex_message_table.html'))
+        return fields
+
     @property
     def timing_fields(self):
         return [
