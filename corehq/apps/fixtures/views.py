@@ -427,6 +427,7 @@ def run_upload(request, domain, workbook):
 
             new_data_type = FixtureDataType(
                     domain=domain,
+                    is_global=dt.get('is_global', False),
                     name=_get_or_raise(dt, 'name'),
                     tag=_get_or_raise(dt, 'tag'),
                     fields=type_definition_fields,
