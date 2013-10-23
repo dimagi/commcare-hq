@@ -266,7 +266,14 @@ var ManageRemindersViewModel = function (
     };
 };
 
-var ReminderEvent = function (eventData, choices, method, event_timing, event_interpretation, available_languages) {
+var ReminderEvent = function (
+    eventData,
+    choices,
+    method,
+    event_timing,
+    event_interpretation,
+    available_languages
+) {
     'use strict';
     var self = this;
     self.choices = choices;
