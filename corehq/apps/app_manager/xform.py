@@ -870,7 +870,8 @@ class XForm(WrappedNode):
 
                 if case_block is not None and subcase.case_type != form.get_case_type():
                     index_node = make_case_elem('index')
-                    parent_index = make_case_elem('parent', {'case_type': form.get_case_type()})
+                    reference_id = subcase.reference_id or 'parent'
+                    parent_index = make_case_elem(reference_id, {'case_type': form.get_case_type()})
                     self.add_bind(
                         nodeset='%scase/index/parent' % path,
                         calculate=self.resolve_path("case/@case_id"),
