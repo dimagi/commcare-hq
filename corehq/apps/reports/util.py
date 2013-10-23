@@ -202,11 +202,12 @@ def _report_user_dict(user):
     return dict([(attr, getattr(user, attr)) for attr in user_report_attrs])
 
 
-def format_datatables_data(text, sort_key):
+def format_datatables_data(text, sort_key, raw=None):
     # todo: this is redundant with report.table_cell()
     # should remove/refactor one of them away
-    data = {"html": text,
-            "sort_key": sort_key}
+    data = {"html": text, "sort_key": sort_key}
+    if raw is not None:
+        data['raw'] = raw
     return data
 
 def app_export_filter(doc, app_id):
