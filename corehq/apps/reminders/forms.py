@@ -1019,7 +1019,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
     @property
     def section_message(self):
         return crispy.Fieldset(
-            "Message Content",
+            _("Message Content") if self.ui_type == UI_SIMPLE_FIXED else _("Schedule"),
             *self.section_message_fields
         )
 
