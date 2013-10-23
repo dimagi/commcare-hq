@@ -553,6 +553,8 @@ class MessagingTab(UITab):
                       'urlname': edit_reminder_urlname},
                      {'title': _("Schedule Reminder"),
                       'urlname': new_reminder_urlname},
+                     {'title': _("Schedule Multi Event Reminder"),
+                      'urlname': 'create_complex_reminder_schedule'},
                  ]},
                 {'title': _("Reminder Calendar"),
                  'url': reverse('scheduled_reminders', args=[self.domain])},

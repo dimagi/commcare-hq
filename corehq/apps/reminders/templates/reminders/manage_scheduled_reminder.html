@@ -21,7 +21,7 @@
             {{ ui_type|JSON }},
             {{ available_languages|JSON }},
             {{ form.select2_fields|JSON }},
-            '#add-language-modal'
+            {{ form.initial_event|JSON }}
         );
         ko.applyBindings(manageRemindersModel, $('#manage-reminders-form').get(0));
         manageRemindersModel.init();
@@ -110,10 +110,6 @@
 
     <script type="text/html" id="event-general-template">
         {% crispy event_form event_form.helper_general %}
-    </script>
-
-    <script type="text/html" id="event-timeouts-template">
-        {% crispy event_form event_form.helper_timeouts %}
     </script>
 
     <script type="text/html" id="event-message-length-template">

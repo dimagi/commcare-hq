@@ -3,7 +3,8 @@ var ManageRemindersViewModel = function (
     choices,
     ui_type,
     available_languages,
-    select2_fields
+    select2_fields,
+    initial_event_template
 ) {
     'use strict';
     var self = this;
@@ -11,6 +12,7 @@ var ManageRemindersViewModel = function (
     self.choices = choices || {};
     self.ui_type = ui_type;
     self.select2_fields = select2_fields;
+    self.initial_event_template = initial_event_template;
 
     self.case_type = ko.observable(initial.case_type);
 
@@ -55,6 +57,9 @@ var ManageRemindersViewModel = function (
         }));
     });
     self.event_timing = ko.observable(initial.event_timing);
+    self.isEventDeleteButtonVisible = ko.computed(function () {
+        return self.eventObjects().length > 1;
+    });
 
     self.event_interpretation = ko.computed(function () {
         var event_timing = $.parseJSON(self.event_timing());
@@ -86,12 +91,20 @@ var ManageRemindersViewModel = function (
                 self.method() === self.choices.METHOD_SMS_SURVEY);
     });
 
+    self.global_timeouts = ko.observable();
+    self.isGlobalTimeoutsVisible = ko.computed(function () {
+        return (self.method() === self.choices.METHOD_SMS_CALLBACK ||
+                self.method() === self.choices.METHOD_IVR_SURVEY ||
+                self.method() === self.choices.METHOD_SMS_SURVEY);
+    });
+
     self.init = function () {
         var events = $.parseJSON(initial.events || '[]');
         if (self.ui_type === self.choices.UI_SIMPLE_FIXED) {
             // only use the first event in the list
             events = [events[0]];
         }
+        self.global_timeouts(events[0].callback_timeout_intervals);
         self.eventObjects(_.map(events, function (event) {
             return new ReminderEvent(
                 event,
@@ -102,50 +115,12 @@ var ManageRemindersViewModel = function (
                 self.available_languages
             );
         }));
+        self.refreshEventsListUI();
+
         _.each(self.select2_fields, function (field) {
             self.initCasePropertyChoices(field);
         });
-        $('[data-timeset="true"]').each(function () {
-            $(this).timepicker({
-                showMeridian: false,
-                showSeconds: true,
-                defaultTime: $(this).val() || false
-            });
-        });
-        $('[name="form_unique_id"]').select2({
-            minimumInputLength: 0,
-            allowClear: true,
-            ajax: {
-                quietMillis: 150,
-                url: '',
-                dataType: 'json',
-                type: 'post',
-                data: function (term) {
-                    return {
-                        action: 'search_forms',
-                        term: term
-                    };
-                },
-                results: function (data) {
-                    return {
-                        results: data
-                    };
-                }
-            },
-            initSelection : function (element, callback) {
-                if (element.val()) {
-                    try {
-                        var data = $.parseJSON(element.val());
-                        callback(data);
-                    } catch (e) {
-                        // pass
-                    }
-                }
-            },
-            formatNoMatches: function (term) {
-                return "Please create a survey first.";
-            }
-        });
+
         self.languagePicker.init();
     };
 
@@ -229,9 +204,79 @@ var ManageRemindersViewModel = function (
             }
         });
     };
+
+    self.addEvent = function () {
+        var newEventTemplate = self.initial_event_template;
+        _(self.available_languages()).each(function (language) {
+            newEventTemplate.message[language.langcode()] = "";
+        });
+        self.eventObjects.push(new ReminderEvent(
+            newEventTemplate,
+            self.choices,
+            self.method,
+            self.event_timing,
+            self.event_interpretation,
+            self.available_languages
+        ));
+    };
+
+    self.removeEvent = function (event) {
+        self.eventObjects.remove(event);
+    };
+
+    self.refreshEventsListUI = function () {
+        $('[data-timeset="true"]').each(function () {
+            $(this).timepicker({
+                showMeridian: false,
+                showSeconds: true,
+                defaultTime: $(this).val() || false
+            });
+        });
+        $('[name="form_unique_id"]').select2({
+            minimumInputLength: 0,
+            allowClear: true,
+            ajax: {
+                quietMillis: 150,
+                url: '',
+                dataType: 'json',
+                type: 'post',
+                data: function (term) {
+                    return {
+                        action: 'search_forms',
+                        term: term
+                    };
+                },
+                results: function (data) {
+                    return {
+                        results: data
+                    };
+                }
+            },
+            initSelection : function (element, callback) {
+                if (element.val()) {
+                    try {
+                        var data = $.parseJSON(element.val());
+                        callback(data);
+                    } catch (e) {
+                        // pass
+                    }
+                }
+            },
+            formatNoMatches: function (term) {
+                return "Please create a survey first.";
+            }
+        });
+    };
 };
 
-var ReminderEvent = function (eventData, choices, method, event_timing, event_interpretation, available_languages) {
+var ReminderEvent = function (
+    eventData,
+    choices,
+    method,
+    event_timing,
+    event_interpretation,
+    available_languages
+) {
     'use strict';
     var self = this;
     self.choices = choices;
@@ -266,11 +311,6 @@ var ReminderEvent = function (eventData, choices, method, event_timing, event_in
     self.time_window_length = ko.observable(eventData.time_window_length || "");
     self.isWindowLengthVisible = ko.computed(function () {
         return self.fire_time_type() === self.choices.FIRE_TIME_RANDOM;
-    });
-
-    self.callback_timeout_intervals = ko.observable(eventData.callback_timeout_intervals);
-    self.isCallbackTimeoutsVisible = ko.computed(function () {
-        return self.method() === self.choices.METHOD_SMS_CALLBACK;
     });
 
     self.form_unique_id = ko.observable(eventData.form_unique_id);
@@ -315,13 +355,12 @@ var ReminderEvent = function (eventData, choices, method, event_timing, event_in
             fire_time: self.fire_time(),
             form_unique_id: self.form_unique_id(),
             message: self.message_data(),
-            callback_timeout_intervals: self.callback_timeout_intervals(),
             time_window_length: self.time_window_length()
         }
     });
 
     self.addTranslation = function (langcode) {
-        var messagesToAdd = _(self.removedMessageTranslations()).each(function (message) {
+        var messagesToAdd = _(self.removedMessageTranslations()).map(function (message) {
             return message.langcode() === langcode;
         });
         if (messagesToAdd.length === 0) {
@@ -381,7 +420,7 @@ var ReminderMessage = function (message, langcode, available_languages) {
                 languageName = lang.name();
             }
         });
-        return '(' + languageName + ')';
+        return languageName;
     });
 };
 
