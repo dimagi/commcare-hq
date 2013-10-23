@@ -190,6 +190,7 @@ class OpenSubCaseAction(FormAction):
 
     case_type = StringProperty()
     case_name = StringProperty()
+    reference_id = StringProperty()
     case_properties = DictProperty()
     repeat_context = StringProperty()
 
