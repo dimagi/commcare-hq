@@ -119,7 +119,7 @@ class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
             'id': case_group._id,
             'name': case_group.name,
             'numCases': len(case_group.cases),
-            'manageUrl': reverse(CaseGroupCaseManagementView.urlname, args=[self.domain, case_group._id])
+            'editUrl': reverse(CaseGroupCaseManagementView.urlname, args=[self.domain, case_group._id])
         }
 
     def post(self, *args, **kwargs):
