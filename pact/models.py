@@ -231,7 +231,7 @@ class PactPatientCase(CommCareCase):
                 if curr_sched.ended <= next_sched.started:
                     #ok, good
                     pass
-        self['computed_'][PACT_SCHEDULES_NAMESPACE] = [dict(x.to_json()) for x in schedules]
+        self['computed_'][PACT_SCHEDULES_NAMESPACE] = [x.to_json() for x in schedules]
 
     def set_schedule(self, new_schedule):
         """set the schedule as head of the schedule by accepting a cdotweeklychedule, does not save doc"""
