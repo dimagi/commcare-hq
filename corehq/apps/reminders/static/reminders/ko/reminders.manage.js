@@ -3,7 +3,8 @@ var ManageRemindersViewModel = function (
     choices,
     ui_type,
     available_languages,
-    select2_fields
+    select2_fields,
+    initial_event_template
 ) {
     'use strict';
     var self = this;
@@ -11,6 +12,7 @@ var ManageRemindersViewModel = function (
     self.choices = choices || {};
     self.ui_type = ui_type;
     self.select2_fields = select2_fields;
+    self.initial_event_template = initial_event_template;
 
     self.case_type = ko.observable(initial.case_type);
 
@@ -231,6 +233,21 @@ var ManageRemindersViewModel = function (
                 }
             }
         });
+    };
+
+    self.addEvent = function () {
+        var newEventTemplate = self.initial_event_template;
+        _(self.available_languages()).each(function (language) {
+            newEventTemplate.message[language.langcode()] = "";
+        });
+        self.eventObjects.push(new ReminderEvent(
+            newEventTemplate,
+            self.choices,
+            self.method,
+            self.event_timing,
+            self.event_interpretation,
+            self.available_languages
+        ));
     };
 };
 

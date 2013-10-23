@@ -47,5 +47,8 @@
 </table>
 
 <p style="padding-top: 0;">
-    <button type="button" class="btn btn-success"><i class="icon-plus"></i> {% trans 'Event' %}</button>
+    <button type="button"
+            class="btn btn-success"
+            data-bind="event: { click: addEvent }">
+        <i class="icon-plus"></i> {% trans 'Event' %}</button>
 </p>

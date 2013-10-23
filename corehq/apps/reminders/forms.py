@@ -852,17 +852,19 @@ class BaseScheduleCaseReminderForm(forms.Form):
     )
 
     def __init__(self, data=None, is_previewer=False, domain=None, is_edit=False, *args, **kwargs):
+        self.initial_event = {
+            'day_num': 0,
+            'fire_time_type': FIRE_TIME_DEFAULT,
+            'message': {
+                'en': "",
+            },
+        }
+
         if 'initial' not in kwargs:
             kwargs['initial'] = {
                 'event_timing': self._format_event_timing_choice(EVENT_AS_OFFSET,
                                                                  FIRE_TIME_DEFAULT, EVENT_TIMING_IMMEDIATE),
-                'events': json.dumps([{
-                    'day_num': 0,
-                    'fire_time_type': FIRE_TIME_DEFAULT,
-                    'message': {
-                        'en': "",
-                    },
-                }])
+                'events': json.dumps([self.initial_event])
             }
 
         super(BaseScheduleCaseReminderForm, self).__init__(data, *args, **kwargs)
