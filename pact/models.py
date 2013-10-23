@@ -143,8 +143,6 @@ class PactPatientCase(CommCareCase):
         regimen_string = regimen_string_from_doc(DOT_ART, self.to_json())
         if regimen_string is None:
             return "No regimen"
-#        elif regimen_string.startswith('Error,'):
-#            return "[%s] %s" % (self.artregimen, regimen_string)
         else:
             return "[%s] %s" % (REGIMEN_CHOICES[int(self.art_properties()[enums.CASE_ART_REGIMEN_PROP])], PACT_REGIMEN_CHOICES_FLAT_DICT[regimen_string])
 
@@ -194,7 +192,7 @@ class PactPatientCase(CommCareCase):
         if raw_json:
             obj = self.to_json()
         else:
-            obj=self
+            obj = self
         computed = obj['computed_']
         if computed.has_key(PACT_SCHEDULES_NAMESPACE):
             ret = [x for x in computed[PACT_SCHEDULES_NAMESPACE]]
@@ -205,6 +203,7 @@ class PactPatientCase(CommCareCase):
             return ret
         else:
             return []
+
     def rm_schedule(self):
         """
         Remove the tail from the schedule - does not save doc
