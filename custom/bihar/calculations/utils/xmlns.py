@@ -12,3 +12,5 @@ REGISTRATION = 'http://bihar.commcarehq.org/pregnancy/registration'
 EBF = 'http://bihar.commcarehq.org/pregnancy/ebf'
 CF = 'http://bihar.commcarehq.org/pregnancy/cf'
 BP = 'http://bihar.commcarehq.org/pregnancy/bp'
+NEW = "http://bihar.commcarehq.org/pregnancy/new"
+MTB_ABORT = "http://bihar.commcarehq.org/pregnancy/mtp_abort"

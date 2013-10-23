@@ -4,9 +4,11 @@ from corehq.apps.reports.standard.inspect import CaseDisplay
 from casexml.apps.case.models import CommCareCase
 from django.utils.translation import ugettext as _
 import logging
+from custom.bihar.calculations.utils.xmlns import BP, NEW, MTB_ABORT, DELIVERY
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.users.models import CommCareUser
 
+EMPTY_FIELD = "---"
 
 def get_property(dict_obj, name, default=None):
     if name in dict_obj:
@@ -14,7 +16,7 @@ def get_property(dict_obj, name, default=None):
             return dict_obj[name]["#value"]
         return dict_obj[name]
     else:
-        return default if default is not None else "---"
+        return default if default is not None else EMPTY_FIELD
 
 
 class MCHDisplay(CaseDisplay):
@@ -27,7 +29,7 @@ class MCHDisplay(CaseDisplay):
             setattr(self, "_asha_name", self.user.full_name if get_property(self.user.user_data, "role").upper() is "ASHA" else get_property(self.user.user_data, "partner_name"))
 
             if get_property(self.user.user_data, "role").upper() is "ASHA":
-                setattr(self, "_asha_number", self.user.phone_numbers[0] if len(self.user.phone_numbers) > 0 else "---")
+                setattr(self, "_asha_number", self.user.phone_numbers[0] if len(self.user.phone_numbers) > 0 else EMPTY_FIELD)
             else:
                 setattr(self, "_asha_number", get_property(self.user.user_data, "partner_phone"))
 
@@ -35,7 +37,7 @@ class MCHDisplay(CaseDisplay):
             setattr(self, "_aww_name", get_property(self.user.user_data, "name") if get_property(self.user.user_data, "role").upper() is "AWW" else get_property(self.user.user_data, "partner_name"))
 
             if get_property(self.user.user_data, "role").upper() is "AWW":
-                setattr(self, "_aww_number", self.user.phone_numbers[0] if len(self.user.phone_numbers) > 0 else "---")
+                setattr(self, "_aww_number", self.user.phone_numbers[0] if len(self.user.phone_numbers) > 0 else EMPTY_FIELD)
             else:
                 setattr(self, "_aww_number", get_property(self.user.user_data, "partner_phone"))
 
@@ -43,27 +45,27 @@ class MCHDisplay(CaseDisplay):
 
     @property
     def village(self):
-        return getattr(self, "_village", "---")
+        return getattr(self, "_village", EMPTY_FIELD)
 
     @property
     def asha_name(self):
-        return getattr(self, "_asha_name", "---")
+        return getattr(self, "_asha_name", EMPTY_FIELD)
 
     @property
     def asha_number(self):
-        return getattr(self, "_asha_number", "---")
+        return getattr(self, "_asha_number", EMPTY_FIELD)
 
     @property
     def awc_code_name(self):
-        return getattr(self, "_awc_code_name", "---")
+        return getattr(self, "_awc_code_name", EMPTY_FIELD)
 
     @property
     def aww_name(self):
-        return getattr(self, "_aww_name", "---")
+        return getattr(self, "_aww_name", EMPTY_FIELD)
 
     @property
     def aww_number(self):
-        return getattr(self, "_aww_number", "---")
+        return getattr(self, "_aww_number", EMPTY_FIELD)
 
     @property
     def chw_name(self):
@@ -74,11 +76,11 @@ class MCHDisplay(CaseDisplay):
 
     @property
     def home_sba_assist(self):
-        return getattr(self, "_home_sba_assist", "---")
+        return getattr(self, "_home_sba_assist", EMPTY_FIELD)
 
     @property
     def caste(self):
-        return getattr(self, "_caste", "---")
+        return getattr(self, "_caste", EMPTY_FIELD)
 
 
 class MCHMotherDisplay(MCHDisplay):
@@ -90,9 +92,10 @@ class MCHMotherDisplay(MCHDisplay):
         for form in forms:
             form_dict = form.get_form
             form_xmlns = form_dict["@xmlns"]
-            if re.search("new$", form_xmlns):
+
+            if NEW in form_xmlns:
                 setattr(self, "_caste", get_property(form_dict, "caste"))
-            elif re.search("del$", form_xmlns):
+            elif DELIVERY in form_xmlns:
                 setattr(self, "_jsy_beneficiary", get_property(form_dict, "jsy_beneficiary"))
                 setattr(self, "_home_sba_assist", get_property(form_dict, "home_sba_assist"))
                 setattr(self, "_delivery_nature", get_property(form_dict, "delivery_nature"))
@@ -118,7 +121,7 @@ class MCHMotherDisplay(MCHDisplay):
                         setattr(self, "_case_name_%s" % (idx+1), get_property(case_child, "name"))
                         setattr(self, " _gender_%s" % (idx+1), get_property(case_child, "gender"))
 
-            elif re.search("bp$", form_xmlns):
+            elif BP in form_xmlns:
                 if "bp1" in form_dict:
                     bp = form_dict["bp1"]
                     for i in range(1, 5):
@@ -133,7 +136,7 @@ class MCHMotherDisplay(MCHDisplay):
                 setattr(self, "_anemia", get_property(form_dict, "anemia"))
                 setattr(self, "_complications", get_property(form_dict, "bp_complications"))
                 setattr(self, "_rti_sti", get_property(form_dict, "rti_sti"))
-            elif re.search("mtb_abort$", form_xmlns):
+            elif MTB_ABORT in form_xmlns:
                 setattr(self, "_abortion_type", get_property(form_dict, "abortion_type"))
 
         super(MCHMotherDisplay, self).__init__(report, case_dict)
@@ -176,7 +179,7 @@ class MCHMotherDisplay(MCHDisplay):
             except:
                 return _("Bad date format!")
         else:
-            return "---"
+            return EMPTY_FIELD
 
     @property
     def lmp(self):
@@ -232,160 +235,160 @@ class MCHMotherDisplay(MCHDisplay):
 
     @property
     def jsy_beneficiary(self):
-        return getattr(self, "_jsy_beneficiary", "---")
+        return getattr(self, "_jsy_beneficiary", EMPTY_FIELD)
 
     @property
     def delivery_nature(self):
-        return getattr(self, "_delivery_nature", "---")
+        return getattr(self, "_delivery_nature", EMPTY_FIELD)
 
     @property
     def discharge_date(self):
-        return getattr(self, "_discharge_date", "---")
+        return getattr(self, "_discharge_date", EMPTY_FIELD)
 
     @property
     def jsy_money_date(self):
-        return getattr(self, "_jsy_money_date", "---")
+        return getattr(self, "_jsy_money_date", EMPTY_FIELD)
 
     @property
     def delivery_complications(self):
-        return getattr(self, "_delivery_complications", "---")
+        return getattr(self, "_delivery_complications", EMPTY_FIELD)
 
     @property
     def family_planning_type(self):
-        return getattr(self, "_family_planning_type", "---")
+        return getattr(self, "_family_planning_type", EMPTY_FIELD)
 
     @property
     def anemia(self):
-        return getattr(self, "_anemia", "---")
+        return getattr(self, "_anemia", EMPTY_FIELD)
 
     @property
     def complications(self):
-        return getattr(self, "_complications", "---")
+        return getattr(self, "_complications", EMPTY_FIELD)
 
     @property
     def rti_sti(self):
-        return getattr(self, "_rti_sti", "---")
+        return getattr(self, "_rti_sti", EMPTY_FIELD)
 
     @property
     def abortion_type(self):
-        return getattr(self, "_abortion_type", "---")
+        return getattr(self, "_abortion_type", EMPTY_FIELD)
 
     @property
     def blood_pressure_1(self):
-        return getattr(self, "_blood_pressure_1", "---")
+        return getattr(self, "_blood_pressure_1", EMPTY_FIELD)
 
     @property
     def blood_pressure_2(self):
-        return getattr(self, "_blood_pressure_2", "---")
+        return getattr(self, "_blood_pressure_2", EMPTY_FIELD)
 
     @property
     def blood_pressure_3(self):
-        return getattr(self, "_blood_pressure_3", "---")
+        return getattr(self, "_blood_pressure_3", EMPTY_FIELD)
 
     @property
     def blood_pressure_4(self):
-        return getattr(self, "_blood_pressure_4", "---")
+        return getattr(self, "_blood_pressure_4", EMPTY_FIELD)
 
     @property
     def weight_1(self):
-        return getattr(self, "_weight_1", "---")
+        return getattr(self, "_weight_1", EMPTY_FIELD)
 
     @property
     def weight_2(self):
-        return getattr(self, "_weight_2", "---")
+        return getattr(self, "_weight_2", EMPTY_FIELD)
 
     @property
     def weight_3(self):
-        return getattr(self, "_weight_3", "---")
+        return getattr(self, "_weight_3", EMPTY_FIELD)
 
     @property
     def weight_4(self):
-        return getattr(self, "_weight_4", "---")
+        return getattr(self, "_weight_4", EMPTY_FIELD)
 
     @property
     def hemoglobin(self):
-        return getattr(self, "_hemoglobin", "---")
+        return getattr(self, "_hemoglobin", EMPTY_FIELD)
 
     @property
     def anc_completed(self):
         lmp = self.lmp
         anc_date_1 = self.anc_date_1
-        if lmp != "---" and anc_date_1 != "---":
+        if lmp != EMPTY_FIELD and anc_date_1 != EMPTY_FIELD:
             return _("yes") if self.parse_date(self.anc_date_1) < (self.parse_date(self.lmp) + timedelta(days=12*7)) else _("no")
         else:
-            return "---"
+            return EMPTY_FIELD
 
     @property
     def all_pnc_on_time(self):
-        return getattr(self, "_all_pnc_on_time", "---")
+        return getattr(self, "_all_pnc_on_time", EMPTY_FIELD)
 
     @property
     def num_children(self):
-        return getattr(self, "_num_children", "---")
+        return getattr(self, "_num_children", EMPTY_FIELD)
 
     @property
     def case_name_1(self):
-        return getattr(self, "_case_name_1", "---")
+        return getattr(self, "_case_name_1", EMPTY_FIELD)
 
     @property
     def case_name_2(self):
-        return getattr(self, "_case_name_2", "---")
+        return getattr(self, "_case_name_2", EMPTY_FIELD)
 
     @property
     def case_name_3(self):
-        return getattr(self, "_case_name_3", "---")
+        return getattr(self, "_case_name_3", EMPTY_FIELD)
 
     @property
     def case_name_4(self):
-        return getattr(self, "_case_name_4", "---")
+        return getattr(self, "_case_name_4", EMPTY_FIELD)
 
     @property
     def gender_1(self):
-        return getattr(self, "_gender_1", "---")
+        return getattr(self, "_gender_1", EMPTY_FIELD)
 
     @property
     def gender_2(self):
-        return getattr(self, "_gender_2", "---")
+        return getattr(self, "_gender_2", EMPTY_FIELD)
 
     @property
     def gender_3(self):
-        return getattr(self, "_gender_3", "---")
+        return getattr(self, "_gender_3", EMPTY_FIELD)
 
     @property
     def gender_4(self):
-        return getattr(self, "_gender_4", "---")
+        return getattr(self, "_gender_4", EMPTY_FIELD)
 
     @property
     def first_weight_1(self):
-        return getattr(self, "_first_weight_1", "---")
+        return getattr(self, "_first_weight_1", EMPTY_FIELD)
 
     @property
     def first_weight_2(self):
-        return getattr(self, "_first_weight_2", "---")
+        return getattr(self, "_first_weight_2", EMPTY_FIELD)
 
     @property
     def first_weight_3(self):
-        return getattr(self, "_first_weight_3", "---")
+        return getattr(self, "_first_weight_3", EMPTY_FIELD)
 
     @property
     def first_weight_4(self):
-        return getattr(self, "_first_weight_4", "---")
+        return getattr(self, "_first_weight_4", EMPTY_FIELD)
 
     @property
     def breastfed_hour_1(self):
-        return getattr(self, "_breastfed_hour_1", "---")
+        return getattr(self, "_breastfed_hour_1", EMPTY_FIELD)
 
     @property
     def breastfed_hour_2(self):
-        return getattr(self, "_breastfed_hour_2", "---")
+        return getattr(self, "_breastfed_hour_2", EMPTY_FIELD)
 
     @property
     def breastfed_hour_3(self):
-        return getattr(self, "_breastfed_hour_3", "---")
+        return getattr(self, "_breastfed_hour_3", EMPTY_FIELD)
 
     @property
     def breastfed_hour_4(self):
-        return getattr(self, "_breastfed_hour_4", "---")
+        return getattr(self, "_breastfed_hour_4", EMPTY_FIELD)
 
 
 class MCHChildDisplay(MCHDisplay):
@@ -409,9 +412,9 @@ class MCHChildDisplay(MCHDisplay):
                     form_dict = form.get_form
                     form_xmlns = form_dict["@xmlns"]
 
-                    if re.search("new$", form_xmlns):
+                    if NEW in form_xmlns:
                         setattr(self, "_caste", get_property(form_dict, "caste"))
-                    elif re.search("del$", form_xmlns):
+                    elif DELIVERY in form_xmlns:
                         setattr(self, "_home_sba_assist", get_property(form_dict, "home_sba_assist"))
 
             except ResourceNotFound:
@@ -425,15 +428,15 @@ class MCHChildDisplay(MCHDisplay):
 
     @property
     def father_mother_name(self):
-        return getattr(self, "_father_mother_name", "---")
+        return getattr(self, "_father_mother_name", EMPTY_FIELD)
 
     @property
     def mcts_id(self):
-        return getattr(self, "_mcts_id", "---")
+        return getattr(self, "_mcts_id", EMPTY_FIELD)
 
     @property
     def ward_number(self):
-        return getattr(self, "_ward_number", "---")
+        return getattr(self, "_ward_number", EMPTY_FIELD)
 
     @property
     def gender(self):
@@ -545,4 +548,4 @@ class MCHChildDisplay(MCHDisplay):
             except:
                 return _("Bad date format!")
         else:
-            return "---"
+            return EMPTY_FIELD
