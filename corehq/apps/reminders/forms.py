@@ -1133,7 +1133,12 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 help_bubble_text=_("For surveys, this will let forms be saved even if the survey has not "
                                    "been completed and the user is not responding.")
             ),
-            'include_case_side_effects',
+            FieldWithHelpBubble(
+                'include_case_side_effects',
+                help_bubble_text=_("When submitting a partial survey, this controls whether the corresponding "
+                                   "case should be created, updated or closed.  This is may not be safe to do if "
+                                   "the form has not been completed. ")
+            ),
             crispy.Div(
                 'force_surveys_to_use_triggered_case',
                 data_bind="visible: isForceSurveysToUsedTriggeredCaseVisible",
