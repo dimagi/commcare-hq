@@ -1,9 +1,41 @@
 {% load i18n %}
 <table class="table table-bordered">
     <thead data-bind="with: eventObjects()[0]">
-        <th class="span2">{% trans 'Day' %}</th>
-        <th class="span2">{% trans 'Time' %}</th>
-        <th class="span2" data-bind="visible: isWindowLengthVisible">{% trans 'Window' %}</th>
+        <th class="span2">
+            {% trans 'Day' %}
+            <a href="#" class="hq-help no-click event-help-text" style="font-weight: normal;">
+                <i class="icon-question-sign"
+                   data-title="{% trans 'Day' %}"
+                   data-content="{% blocktrans %}
+                       The day to which to send each event in the reminder.
+                       Day 1 indicates the day that the reminder was triggered.
+                       {% endblocktrans %}"
+                   data-trigger="hover"></i>
+            </a>
+        </th>
+        <th class="span2">
+            {% trans 'Time' %}
+            <a href="#" class="hq-help no-click event-help-text" style="font-weight: normal;">
+                <i class="icon-question-sign"
+                   data-title="{% trans 'Time' %}"
+                   data-content="{% blocktrans %}
+                       Specify the time at which the specific message will be sent out.
+                       If Delay After Start is chosen, this is the number of
+                       minutes after which the reminder will go out.
+                       {% endblocktrans %}"
+                   data-trigger="hover"></i>
+            </a>
+        </th>
+        <th class="span2" data-bind="visible: isWindowLengthVisible">
+            {% trans 'Window' %}
+            <a href="#" class="hq-help no-click event-help-text" style="font-weight: normal;">
+                <i class="icon-question-sign"
+                   data-title="{% trans 'Window' %}"
+                   data-content="{% blocktrans %}
+                       The number of minutes after the start within which to randomly send the message.
+                       {% endblocktrans %}"
+                   data-trigger="hover"></i>
+        </th>
         <th class="span5" data-bind="visible: isSurveyVisible">{% trans 'Survey' %}</th>
         <th class="span5" data-bind="visible: isMessageVisible">{% trans 'Message' %}</th>
         <th class="span1" data-bind="visible: $parent.isEventDeleteButtonVisible"></th>
@@ -55,3 +87,9 @@
             data-bind="event: { click: addEvent }">
         <i class="icon-plus"></i> {% trans 'Event' %}</button>
 </p>
+
+<script>
+    $(function () {
+        $('.event-help-text').hqHelp();
+    });
+</script>
