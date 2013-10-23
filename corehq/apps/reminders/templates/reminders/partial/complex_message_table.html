@@ -1,12 +1,12 @@
 {% load i18n %}
 <table class="table table-bordered">
-    <thead>
+    <thead data-bind="with: eventObjects()[0]">
         <th class="span2">{% trans 'Day' %}</th>
         <th class="span2">{% trans 'Time' %}</th>
-        <th class="span2">{% trans 'Window' %}</th>
-        <th class="span5">{% trans 'Survey' %}</th>
-        <th class="span5">{% trans 'Message' %}</th>
-        <th class="span1"></th>
+        <th class="span2" data-bind="visible: isWindowLengthVisible">{% trans 'Window' %}</th>
+        <th class="span5" data-bind="visible: isSurveyVisible">{% trans 'Survey' %}</th>
+        <th class="span5" data-bind="visible: isMessageVisible">{% trans 'Message' %}</th>
+        <th class="span1" data-bind="visible: $parent.isEventDeleteButtonVisible"></th>
     </thead>
     <tbody data-bind="foreach: eventObjects">
         <td>
@@ -15,19 +15,19 @@
         <td>
             <div data-bind="template: { name: 'event-fire-template', data: $data }"></div>
         </td>
-        <td>
+        <td data-bind="visible: isWindowLengthVisible">
             <input type="text"
                    name="time_window_legnth"
                    class="input-mini"
                    data-bind="value: time_window_length" /> {% trans 'minute(s)' %}
         </td>
-        <td>
+        <td data-bind="visible: isSurveyVisible">
             <input type="text"
                    name="form_unique_id"
                    data-bind="value: form_unique_id, visible: isSurveyVisible"
                    class="input-xxlarge" />
         </td>
-        <td>
+        <td data-bind="visible: isMessageVisible">
             <div data-bind="foreach: messageTranslations">
                 <label><strong data-bind="text: languageLabel"></strong></label>
                 <textarea rows="2"
@@ -37,8 +37,8 @@
                 <hr data-bind="visible: $parent.messageTranslations().length > 1" />
             </div>
         </td>
-        <td>
             <button type="button" class="btn btn-danger"><i class="icon-remove"></i></button>
+        <td data-bind="visible: $parent.isEventDeleteButtonVisible">
         </td>
     </tbody>
 </table>
