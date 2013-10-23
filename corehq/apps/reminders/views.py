@@ -658,6 +658,12 @@ class EditScheduledReminderView(CreateScheduledReminderView):
         return self.kwargs.get('handler_id')
 
     @property
+    def page_name(self):
+        if self.ui_type == UI_COMPLEX:
+            return _("Edit Scheduled Multi Event Reminder")
+        return self.page_title
+
+    @property
     @memoized
     def schedule_form(self):
         initial = self.reminder_form_class.compute_initial(self.reminder_handler)
