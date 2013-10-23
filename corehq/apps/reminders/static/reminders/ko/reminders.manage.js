@@ -220,9 +220,11 @@ var ManageRemindersViewModel = function (
 
     self.removeEvent = function (event) {
         self.eventObjects.remove(event);
+        self.refreshEventsListUI();
     };
 
     self.refreshEventsListUI = function () {
+        $('.event-help-text').hqHelp();
         $('[data-timeset="true"]').each(function () {
             $(this).timepicker({
                 showMeridian: false,
