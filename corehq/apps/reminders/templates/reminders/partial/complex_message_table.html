@@ -37,12 +37,15 @@
                 <hr data-bind="visible: $parent.messageTranslations().length > 1" />
             </div>
         </td>
-            <button type="button" class="btn btn-danger"><i class="icon-remove"></i></button>
         <td data-bind="visible: $parent.isEventDeleteButtonVisible">
+            <button type="button"
+                    class="btn btn-danger">
+                <i class="icon-remove"></i>
+            </button>
         </td>
     </tbody>
 </table>
 
-<p style="margin-top: 0;">
+<p style="padding-top: 0;">
     <button type="button" class="btn btn-success"><i class="icon-plus"></i> {% trans 'Event' %}</button>
 </p>
