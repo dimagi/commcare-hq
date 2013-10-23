@@ -405,7 +405,7 @@ var ReminderMessage = function (message, langcode, available_languages) {
                 languageName = lang.name();
             }
         });
-        return '(' + languageName + ')';
+        return languageName;
     });
 };
 

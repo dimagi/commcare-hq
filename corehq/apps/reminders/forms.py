@@ -1741,7 +1741,8 @@ class CaseReminderEventMessageForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Field('langcode', data_bind="value: langcode"),
             BootstrapMultiField(
-                'Message <span data-bind="text:languageLabel"></span>',
+                'Message <span data-bind="visible: languageLabel()">'
+                '(<span data-bind="text:languageLabel"></span>)</span>',
                 InlineField(
                     'message',
                     data_bind="value: message, valueUpdate: 'keyup'",
