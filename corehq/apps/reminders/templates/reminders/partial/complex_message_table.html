@@ -10,6 +10,7 @@
     </thead>
     <tbody data-bind="foreach: eventObjects">
         <td>
+            <input type="hidden" data-bind="value: fire_time_type" />
             <input type="text" class="input-mini" data-bind="value: day_num" />
         </td>
         <td>
