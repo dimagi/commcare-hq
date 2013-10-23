@@ -1092,7 +1092,6 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     css_class="help-inline",
                     data_bind="visible: isUntilVisible",
                 ),
-                data_bind="visible: isStopConditionVisible",
                 help_bubble_text=_("Reminders can be stopped after a date set in the case, or if a particular "
                                    "case property is set to OK.  Choose either a case property that is a date or "
                                    "a case property that is going to be set to Ok.  Reminders will always stop if "
