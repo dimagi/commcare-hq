@@ -1523,6 +1523,27 @@ class SimpleScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
         start_fields.extend(self.timing_fields)
         return start_fields
 
+    @property
+    def timing_fields(self):
+        return [
+            BootstrapMultiField(
+                _("Time"),
+                InlineField('event_timing', data_bind="value: event_timing"),
+                crispy.Div(
+                    style="display: inline;",
+                    data_bind="template: {name: 'event-fire-template', foreach: eventObjects}"
+                ),
+                css_id="timing_block",
+                help_bubble_text=_("This controls when the message will be sent. The Time in Case "
+                                   "option is useful, for example, if the recipient has chosen a "
+                                   "specific time to receive the message.")
+            ),
+            crispy.Div(
+                style="display: inline;",
+                data_bind="template: {name: 'event-general-template', foreach: eventObjects}"
+            )
+        ]
+
 
 class ComplexScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
 
