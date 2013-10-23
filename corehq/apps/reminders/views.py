@@ -638,6 +638,12 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
         self.schedule_form.save(new_handler)
 
 
+class CreateComplexScheduledReminderView(CreateScheduledReminderView):
+    urlname = 'create_complex_reminder_schedule'
+    page_title = ugettext_noop("Schedule Multi Event Reminder")
+    ui_type = UI_COMPLEX
+
+
 class EditScheduledReminderView(CreateScheduledReminderView):
     urlname = 'edit_reminder_schedule'
     page_title = ugettext_noop("Edit Scheduled Reminder")
