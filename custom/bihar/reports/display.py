@@ -3,11 +3,15 @@ import re
 from corehq.apps.reports.standard.inspect import CaseDisplay
 from casexml.apps.case.models import CommCareCase
 from django.utils.translation import ugettext as _
+import logging
+from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.users.models import CommCareUser
 
 
 def get_property(dict_obj, name, default=None):
     if name in dict_obj:
+        if type(dict_obj[name]) is dict:
+            return dict_obj[name]["#value"]
         return dict_obj[name]
     else:
         return default if default is not None else "---"
@@ -16,20 +20,21 @@ def get_property(dict_obj, name, default=None):
 class MCHDisplay(CaseDisplay):
 
     def __init__(self, report, case):
+
         self.user = CommCareUser.get_by_user_id(case["user_id"])
         if self.user:
             setattr(self, "_village", get_property(self.user.user_data, "village"))
-            setattr(self, "_asha_name", self.user.full_name if self.user.user_data["role"].upper() is "ASHA" else get_property(self.user.user_data, "partner_name"))
+            setattr(self, "_asha_name", self.user.full_name if get_property(self.user.user_data, "role").upper() is "ASHA" else get_property(self.user.user_data, "partner_name"))
 
-            if self.user.user_data["role"].upper() is "ASHA":
+            if get_property(self.user.user_data, "role").upper() is "ASHA":
                 setattr(self, "_asha_number", self.user.phone_numbers[0] if len(self.user.phone_numbers) > 0 else "---")
             else:
                 setattr(self, "_asha_number", get_property(self.user.user_data, "partner_phone"))
 
             setattr(self, "_awc_code_name", "%s, %s" % (get_property(self.user.user_data, "awc-code"), get_property(self.user.user_data, "village")))
-            setattr(self, "_aww_name", get_property(self.user.user_data, "name") if self.user.user_data["role"].upper() is "AWW" else get_property(self.user.user_data, "partner_name"))
+            setattr(self, "_aww_name", get_property(self.user.user_data, "name") if get_property(self.user.user_data, "role").upper() is "AWW" else get_property(self.user.user_data, "partner_name"))
 
-            if self.user.user_data["role"].upper() is "AWW":
+            if get_property(self.user.user_data, "role").upper() is "AWW":
                 setattr(self, "_aww_number", self.user.phone_numbers[0] if len(self.user.phone_numbers) > 0 else "---")
             else:
                 setattr(self, "_aww_number", get_property(self.user.user_data, "partner_phone"))
@@ -162,6 +167,10 @@ class MCHMotherDisplay(MCHDisplay):
         if "mother_dob" in self.case and self.case["mother_dob"]:
             try:
                 mother_dob = self.case["mother_dob"]
+
+                if type(mother_dob) is dict:
+                    mother_dob =  mother_dob["#value"]
+
                 days = (date.today() - self.parse_date(mother_dob).date()).days
                 return "%s, %s" % (mother_dob, days/365)
             except:
@@ -383,25 +392,30 @@ class MCHChildDisplay(MCHDisplay):
     def __init__(self, report, case_dict):
 
         # get mother case
-        parent_case = CommCareCase.get(case_dict["indices"][0]["referenced_id"])
-        forms = parent_case.get_forms()
+        if len(case_dict["indices"]) >0:
+            try:
+                parent_case = CommCareCase.get(case_dict["indices"][0]["referenced_id"])
+                forms = parent_case.get_forms()
 
-        parent_json = parent_case.case_properties()
+                parent_json = parent_case.case_properties()
 
-        setattr(self, "_father_mother_name", "%s, %s" %(get_property(parent_json,"husband_name"), get_property(parent_json, "mother_name")))
-        setattr(self, "_mcts_id", get_property(parent_json, "mcts_id"))
-        setattr(self, "_ward_number", get_property(parent_json, "ward_number"))
-        setattr(self, "_mobile_number", get_property(parent_json, "mobile_number"))
-        setattr(self, "_mobile_number_whose", get_property(parent_json, "mobile_number_whose"))
+                setattr(self, "_father_mother_name", "%s, %s" %(get_property(parent_json,"husband_name"), get_property(parent_json, "mother_name")))
+                setattr(self, "_mcts_id", get_property(parent_json, "mcts_id"))
+                setattr(self, "_ward_number", get_property(parent_json, "ward_number"))
+                setattr(self, "_mobile_number", get_property(parent_json, "mobile_number"))
+                setattr(self, "_mobile_number_whose", get_property(parent_json, "mobile_number_whose"))
 
-        for form in forms:
-            form_dict = form.get_form
-            form_xmlns = form_dict["@xmlns"]
+                for form in forms:
+                    form_dict = form.get_form
+                    form_xmlns = form_dict["@xmlns"]
 
-            if re.search("new$", form_xmlns):
-                setattr(self, "_caste", get_property(form_dict, "caste"))
-            elif re.search("del$", form_xmlns):
-                setattr(self, "_home_sba_assist", get_property(form_dict, "home_sba_assist"))
+                    if re.search("new$", form_xmlns):
+                        setattr(self, "_caste", get_property(form_dict, "caste"))
+                    elif re.search("del$", form_xmlns):
+                        setattr(self, "_home_sba_assist", get_property(form_dict, "home_sba_assist"))
+
+            except ResourceNotFound:
+                logging.error("ResourceNotFound: " + case_dict["indices"][0]["referenced_id"])
 
         super(MCHChildDisplay, self).__init__(report, case_dict)
 
@@ -520,8 +534,15 @@ class MCHChildDisplay(MCHDisplay):
     @property
     def dob_age(self):
         if "dob" in self.case and self.case["dob"]:
-            dob = self.case["dob"]
-            days = (date.today() - self.parse_date(dob).date()).days
-            return "%s, %s" % (dob, days/365)
+            try:
+                dob = self.case["dob"]
+
+                if type(dob) is dict:
+                    dob =  dob["#value"]
+
+                days = (date.today() - self.parse_date(dob).date()).days
+                return "%s, %s" % (dob, days/365)
+            except:
+                return _("Bad date format!")
         else:
             return "---"

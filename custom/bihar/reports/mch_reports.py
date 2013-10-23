@@ -1,5 +1,5 @@
 from django.utils.translation import ugettext as _
-from corehq.apps.api.es import FullCaseES
+from corehq.apps.api.es import ReportCaseES
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard.inspect import CaseListReport
 
@@ -33,7 +33,7 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
     @property
     @memoized
     def case_es(self):
-        return FullCaseES(self.domain)
+        return ReportCaseES(self.domain)
 
     @property
     @memoized
