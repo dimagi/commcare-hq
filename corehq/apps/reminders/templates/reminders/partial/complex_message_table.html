@@ -34,7 +34,7 @@
                           class="input-xxlarge"
                           data-bind="value: message, valueUpdate: 'keyup'"></textarea>
                 <div data-bind="template: { name: 'event-message-length-template' }" style="margin-top: 5px;"></div>
-                <hr data-bind="visible: $parent.messageTranslations().length > 1" />
+                <hr data-bind="visible: $parent.messageTranslations().length > 1 && $index() + 1 !== $parent.messageTranslations().length" />
             </div>
         </td>
         <td data-bind="visible: $parent.isEventDeleteButtonVisible">
