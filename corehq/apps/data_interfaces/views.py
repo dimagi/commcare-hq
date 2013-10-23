@@ -223,7 +223,6 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
             _("Case Name"),
             _("Phone Number"),
             _("External ID"),
-            _("Case Details"),
             _("Action"),
         ]
 

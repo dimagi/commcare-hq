@@ -80,15 +80,11 @@
 
 {% block pagination_templates %}
     <script type="text/html" id="existing-case-template">
-        <td class="span3" data-bind="text: name"></td>
+        <td class="span5">
+            <a data-bind="attr: { href: detailsUrl }, text: name" target="_blank"></a>
+        </td>
         <td class="span2" data-bind="text: phoneNumber"></td>
         <td class="span3" data-bind="text: externalId"></td>
-        <td class="span2">
-            <a data-bind="attr: { href: detailsUrl }"
-               class="btn">
-                {% trans 'View Details' %}
-           </a>
-        </td>
         <td class="span2">
             <button type="button"
                     class="btn btn-danger delete-item-confirm"
@@ -99,15 +95,11 @@
     </script>
 
     <script type="text/html" id="new-case-template">
-        <td data-bind="text: name"></td>
+        <td>
+            <a data-bind="attr: { href: detailsUrl }, text: name" target="_blank"></a>
+        </td>
         <td data-bind="text: phoneNumber"></td>
         <td data-bind="text: externalId"></td>
-        <td>
-            <a data-bind="attr: { href: detailsUrl }"
-               class="btn">
-                {% trans 'View Details' %}
-           </a>
-        </td>
         <td data-bind="html: message"></td>
     </script>
 
@@ -122,15 +114,11 @@
     </script>
 
     <script type="text/html" id="removed-case-template">
-        <td data-bind="text: name"></td>
+        <td>
+            <a data-bind="attr: { href: detailsUrl }, text: name" target="_blank"></a>
+        </td>
         <td data-bind="text: phoneNumber"></td>
         <td data-bind="text: externalId"></td>
-        <td>
-            <a data-bind="attr: { href: detailsUrl }"
-               class="btn">
-                {% trans 'View Details' %}
-           </a>
-        </td>
         <td>
             <span class="label label-important">{% trans 'Case Removed' %}</span>
         </td>
