@@ -1672,7 +1672,6 @@ class CaseReminderEventForm(forms.Form):
                 ),
                 css_class="help-inline",
                 data_bind="visible: isFireTimeAuxVisible",
-                style="margin-left: 5px;",
             ),
         )
 
