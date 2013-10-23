@@ -120,40 +120,7 @@ var ManageRemindersViewModel = function (
         _.each(self.select2_fields, function (field) {
             self.initCasePropertyChoices(field);
         });
-        $('[name="form_unique_id"]').select2({
-            minimumInputLength: 0,
-            allowClear: true,
-            ajax: {
-                quietMillis: 150,
-                url: '',
-                dataType: 'json',
-                type: 'post',
-                data: function (term) {
-                    return {
-                        action: 'search_forms',
-                        term: term
-                    };
-                },
-                results: function (data) {
-                    return {
-                        results: data
-                    };
-                }
-            },
-            initSelection : function (element, callback) {
-                if (element.val()) {
-                    try {
-                        var data = $.parseJSON(element.val());
-                        callback(data);
-                    } catch (e) {
-                        // pass
-                    }
-                }
-            },
-            formatNoMatches: function (term) {
-                return "Please create a survey first.";
-            }
-        });
+
         self.languagePicker.init();
     };
 
@@ -264,6 +231,40 @@ var ManageRemindersViewModel = function (
                 showSeconds: true,
                 defaultTime: $(this).val() || false
             });
+        });
+        $('[name="form_unique_id"]').select2({
+            minimumInputLength: 0,
+            allowClear: true,
+            ajax: {
+                quietMillis: 150,
+                url: '',
+                dataType: 'json',
+                type: 'post',
+                data: function (term) {
+                    return {
+                        action: 'search_forms',
+                        term: term
+                    };
+                },
+                results: function (data) {
+                    return {
+                        results: data
+                    };
+                }
+            },
+            initSelection : function (element, callback) {
+                if (element.val()) {
+                    try {
+                        var data = $.parseJSON(element.val());
+                        callback(data);
+                    } catch (e) {
+                        // pass
+                    }
+                }
+            },
+            formatNoMatches: function (term) {
+                return "Please create a survey first.";
+            }
         });
     };
 };
