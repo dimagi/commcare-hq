@@ -14,7 +14,9 @@ from .models import LegacyWeeklyReport
 from .reports import LegacyReportView
 from .constants import *
 
-
+# multiple forms per day - additive
+# game total + secret game, also additive
+# fix Thursday
 class Site(object):
     def __init__(self, group, date):
         self.name = group.name
@@ -50,10 +52,7 @@ class Site(object):
                         'game': [0] * 5,
                     }
                 self.process_form(form, username)
-                # try:
-                    # self.process_form(form, username)
-                # except (KeyError, ValueError):
-                    # pass
+
 
     def process_form(self, form, username):
 
@@ -68,7 +67,6 @@ class Site(object):
 
         day = self.week.index(form.form['date_form_completed'])
 
-        # test this out
         strategies = len(form.form.get('strategies_used').split())
 
         self.strategy[day] += strategies
@@ -78,18 +76,6 @@ class Site(object):
 
         self.individual[username]['game'][day] += games
         self.game[day] += games
-
-    # def process_form(self, form, username):
-        # day = self.week.index(form.form['date_form_completed'])
-
-        # strategies = len(form.form.get('strategies_used').split())
-        # self.strategy[day] += strategies
-        # self.individual[username]['strategy'][day] += strategies
-
-        # raw_games = form.form['game_questions']['how_many_games']
-        # games = int(raw_games) if raw_games else 0
-        # self.individual[username]['game'][day] += games
-        # self.game[day] += games
 
 
 def save_report(date=None):
@@ -122,15 +108,6 @@ def save_report(date=None):
             site.emails
         )
 
-def email():
-    # send an email to each site
-    report_link = get_url_base() + LegacyReportView.get_url(DOMAIN)
-    send_mail(
-        "This week's Legacy report is available",
-        "You can view your report here:\n{link}".format(link=report_link),
-        settings.SERVER_EMAIL,
-        ['ethan@example.com']
-    )
 
 @periodic_task(run_every=crontab(hour=1, day_of_week=6),
         queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))

@@ -8,8 +8,8 @@ General Overview
 ~~~~~~~~~~~~~~~~
 This report measures use of GBG Strategies and Games on a per-week basis.
 The report comes in two parts, *Site* and *Individual*.
-The *Site* report displays aggregate results for a project site, represented as a user group.
-The *Individual* report shows the performance of a particular user.
+The *Site* report will display aggregate results for a project site, represented as a user group.
+The *Individual* report will show the performance of a particular user.
 
 
 URLs and Permissions
@@ -34,12 +34,12 @@ it stores weekly totals for the site, as well as results for each user in that s
 Once the reports have been stored, an email is sent out to each user with a link to their individual report.
 The user clicks on the report, is redirected to a login page, then sent to the report.
 
-
 Next Steps:
     * Email users.
     * Display Individual's username in report?
     * Display some results in email?
     * save dates to be skipped in a once-off doc referred to by ID
+
 
 Add to total games played everytime the user checks off something about special games
 Account for days off
