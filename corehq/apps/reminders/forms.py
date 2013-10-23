@@ -859,7 +859,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
     def __init__(self, data=None, is_previewer=False, domain=None, is_edit=False, *args, **kwargs):
         self.initial_event = {
-            'day_num': 0,
+            'day_num': 1,
             'fire_time_type': FIRE_TIME_DEFAULT,
             'message': {
                 'en': "",
