@@ -496,12 +496,10 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
                 self.request.POST,
                 domain=self.domain,
                 is_previewer=self.is_previewer,
-                ui_type=self.ui_type,
             )
         return self.reminder_form_class(
             is_previewer=self.is_previewer,
             domain=self.domain,
-            ui_type=self.ui_type,
         )
 
     @property

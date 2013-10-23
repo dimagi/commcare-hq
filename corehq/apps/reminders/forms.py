@@ -851,7 +851,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
         label=_("For Surveys, force answers to affect case sending the survey."),
     )
 
-    def __init__(self, data=None, is_previewer=False, domain=None, ui_type=None, is_edit=False, *args, **kwargs):
+    def __init__(self, data=None, is_previewer=False, domain=None, is_edit=False, *args, **kwargs):
         if 'initial' not in kwargs:
             kwargs['initial'] = {
                 'event_timing': self._format_event_timing_choice(EVENT_AS_OFFSET,
@@ -868,7 +868,6 @@ class BaseScheduleCaseReminderForm(forms.Form):
         super(BaseScheduleCaseReminderForm, self).__init__(data, *args, **kwargs)
 
         self.domain = domain
-        self.ui_type = ui_type
         self.is_edit = is_edit
 
         if is_previewer:
@@ -897,6 +896,10 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 crispy.HTML('<a href="%s" class="btn">Cancel</a>' % reverse(RemindersListView.urlname, args=[self.domain]))
             )
         )
+
+    @property
+    def ui_type(self):
+        raise NotImplementedError("You must specify a ui_type for the reminder")
 
     @property
     def section_start(self):
@@ -1511,6 +1514,10 @@ class SimpleScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
         self.fields['event_timing'].choices = event_timing_choices
 
     @property
+    def ui_type(self):
+        return UI_SIMPLE_FIXED
+
+    @property
     def section_start_fields(self):
         start_fields = super(SimpleScheduleCaseReminderForm, self).section_start_fields
         start_fields.extend(self.timing_fields)
@@ -1531,6 +1538,10 @@ class ComplexScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
         event_timing_choices = [(self._format_event_timing_choice(e[0][0], e[0][1], e[0][2]), e[1])
                                 for e in event_timing_choices]
         self.fields['event_timing'].choices = event_timing_choices
+
+    @property
+    def ui_type(self):
+        return UI_COMPLEX
 
     @property
     def section_message_fields(self):
