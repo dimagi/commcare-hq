@@ -35,13 +35,6 @@ Once the reports have been stored, an email is sent out to each user with a link
 The user clicks on the report, is redirected to a login page, then sent to the report.
 
 Next Steps:
-    * Email users.
     * Display Individual's username in report?
     * Display some results in email?
     * save dates to be skipped in a once-off doc referred to by ID
-
-
-Add to total games played everytime the user checks off something about special games
-Account for days off
-submit a few example forms. (Log in and use cloudcare?)
-use psy.py
