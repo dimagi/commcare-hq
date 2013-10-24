@@ -2,6 +2,7 @@ from collections import namedtuple
 from django.core.urlresolvers import reverse
 from lxml import etree
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField
+from corehq.apps.hqmedia.models import HQMediaMapItem
 from .exceptions import MediaResourceError, ParentModuleReferenceError, SuiteValidationError
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column
 from corehq.apps.app_manager.xform import SESSION_CASE_ID
@@ -429,6 +430,7 @@ class SuiteGenerator(object):
         # before iterating through multimedia_map
         self.app.remove_unused_mappings()
         for path, m in self.app.multimedia_map.items():
+            unchanged_path = path
             if path.startswith(PREFIX):
                 path = path[len(PREFIX):]
             else:
@@ -439,15 +441,19 @@ class SuiteGenerator(object):
             # so we need to replace 'jr://file/' with '../../'
             # (this is a hack)
             path = '../../' + path
-            multimedia_id = m.multimedia_id
+
+            if not getattr(m, 'unique_id', None):
+                # lazy migration for adding unique_id to map_item
+                m.unique_id = HQMediaMapItem.gen_unique_id(m.multimedia_id, unchanged_path)
+
             yield MediaResource(
-                id=self.id_strings.media_resource(multimedia_id, name),
+                id=self.id_strings.media_resource(m.unique_id, name),
                 path=path,
                 version=m.version,
                 local=None,
                 remote=get_url_base() + reverse(
                     'hqmedia_download',
-                    args=[m.media_type, multimedia_id]
+                    args=[m.media_type, m.multimedia_id]
                 ) + name
             )
 
