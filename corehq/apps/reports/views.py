@@ -618,7 +618,9 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "DNS_name": get_url_base(),
         "owner_name": couch_user.full_name or couch_user.get_email(),
         "email": email,
-        "notes": notes
+        "notes": notes,
+        "startdate": config.start_date,
+        "enddate": config.end_date,
     })
 
 @login_and_domain_required
