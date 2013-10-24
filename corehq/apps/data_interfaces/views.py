@@ -142,15 +142,6 @@ class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
             'template': 'new-group-template',
         }
 
-    def get_updated_item_data(self, update_form):
-        case_group = update_form.update_group()
-        item_data = self._get_item_data(case_group)
-        item_data['updateForm'] = self.get_update_form_response(update_form)
-        return {
-            'itemData': item_data,
-            'template': 'existing-group-template',
-        }
-
     def get_deleted_item_data(self, item_id):
         case_group = CommCareCaseGroup.get(item_id)
         item_data = self._get_item_data(case_group)
@@ -205,8 +196,21 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
         context.update({
             'bulk_upload_from': UploadBulkCaseGroupForm(),
             'bulk_upload_id': self.bulk_upload_id,
+            'update_case_group_form': self.update_case_group_form,
+            'group_name': self.case_group.name,
         })
         return context
+
+    @property
+    @memoized
+    def update_case_group_form(self):
+        initial = {
+            'name': self.case_group.name,
+            'item_id': self.case_group._id,
+        }
+        if self.is_case_group_update:
+            return UpdateCaseGroupForm(self.request.POST, initial=initial)
+        return UpdateCaseGroupForm(initial=initial)
 
     @property
     def parameters(self):
@@ -247,6 +251,10 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
     @property
     def is_bulk_upload(self):
         return self.request.method == 'POST' and self.request.POST.get('action') == 'bulk_upload'
+
+    @property
+    def is_case_group_update(self):
+        return self.request.method == 'POST' and self.request.POST.get('action') == 'update_case_group'
 
     @property
     def bulk_upload_id(self):
@@ -339,6 +347,9 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
         }
 
     def post(self, request, *args, **kwargs):
-        if self.is_bulk_upload:
+        if self.is_bulk_upload or self.is_case_group_update:
+            if self.is_case_group_update and self.update_case_group_form.is_valid():
+                self.update_case_group_form.update_group()
+                return HttpResponseRedirect(self.page_url)
             return self.get(request, *args, **kwargs)
         return self.paginate_crud_response

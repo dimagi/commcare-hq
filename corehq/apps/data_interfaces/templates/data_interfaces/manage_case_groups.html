@@ -43,9 +43,27 @@
             });
         </script>
     {% endif %}
+    <script>
+        $(function () {
+            var $editGroupName = $('#edit-group-name');
+            $('#toggle-group-name').click(function (e) {
+                $editGroupName.toggle();
+                e.preventDefault();
+            });
+        });
+    </script>
 {% endblock %}
 
 {% block pagination_header %}
+    <h3>
+        {% blocktrans %}
+            Cases in Group
+            <a href="#" id="toggle-group-name">{{ group_name }} <small><i class="icon-edit"> Edit</i></small></a>
+        {% endblocktrans %}
+    </h3>
+    <div id="edit-group-name" class="hide">
+        {% crispy update_case_group_form %}
+    </div>
     {% if bulk_upload_id %}
     <script type="template/html" id="template-bulk-status">
         <% if (success.length > 0) { %>
@@ -126,6 +144,7 @@
 {% endblock %}
 
 {% block pagination_footer %}
+
     <div class="accordion-group">
         <div class="accordion-heading">
             <a class="accordion-toggle" data-toggle="collapse" href="#bulk-upload-accordion">

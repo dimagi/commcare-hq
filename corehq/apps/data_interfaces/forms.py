@@ -1,5 +1,5 @@
 from couchdbkit import ResourceNotFound
-from crispy_forms.bootstrap import StrictButton, InlineField, FormActions
+from crispy_forms.bootstrap import StrictButton, InlineField, FormActions, FieldWithButtons
 from django import forms
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Field, HTML, Div, Fieldset
@@ -36,27 +36,27 @@ class AddCaseGroupForm(forms.Form):
 
 class UpdateCaseGroupForm(AddCaseGroupForm):
     item_id = forms.CharField(widget=forms.HiddenInput())
+    action = forms.CharField(widget=forms.HiddenInput(), initial="update_case_group")
 
     def __init__(self, *args, **kwargs):
         super(UpdateCaseGroupForm, self).__init__(*args, **kwargs)
-        self.helper.form_style = 'default'
+
+        self.fields['name'].label = ""
+
+        self.helper.form_style = 'inline'
+        self.helper.form_method = 'post'
         self.helper.form_show_labels = True
         self.helper.layout = Layout(
-            Div(
-                Field('item_id'),
-                Field('name'),
-                css_class='modal-body'
-            ),
-            FormActions(
+            'item_id',
+            'action',
+            FieldWithButtons(
+                Field('name', placeholder="Group Name"),
                 StrictButton(
-                    _("Update Group"),
+                    _("Update Group Name"),
                     css_class='btn-primary',
                     type="submit",
-
-                ),
-                HTML('<button type="button" class="btn" data-dismiss="modal">Cancel</button>'),
-                css_class='modal-footer'
-            )
+                )
+            ),
         )
 
     def clean(self):
