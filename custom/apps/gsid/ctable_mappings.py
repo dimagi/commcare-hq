@@ -30,4 +30,7 @@ class PatientSummaryMapping(CtableMappingFixture):
             ColumnDef(name="cases", data_type="integer", value_source="value", value_attribute="sum"),
         ]
 
-        return columns      
+        return columns
+
+    def customize(self, mapping):
+        mapping.couch_view_params = {'stale': 'ok'}
