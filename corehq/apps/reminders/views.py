@@ -11,7 +11,6 @@ from django.shortcuts import render
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_case_properties
-from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 
 from corehq.apps.reminders.forms import (
     CaseReminderForm,
@@ -1341,64 +1340,3 @@ class RemindersListView(BaseMessagingSectionView):
         raise {
             'success': False,
         }
-
-
-class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
-    template_name = 'reminders/keyword_list.html'
-    urlname = 'keyword_list'
-    page_title = ugettext_noop("Keywords")
-
-    limit_text = ugettext_noop("keywords per page")
-    empty_notification = ugettext_noop("You have no keywords. Please add one!")
-    loading_message = ugettext_noop("Loading keywords...")
-
-    @property
-    def page_url(self):
-        return reverse(self.urlname, args=[self.domain])
-
-    @property
-    def parameters(self):
-        return self.request.POST if self.request.method == 'POST' else self.request.GET
-
-    @property
-    @memoized
-    def total(self):
-        data = CommCareCaseGroup.get_db().view(
-            'reminders/survey_keywords',
-            reduce=True,
-            startkey=[self.domain],
-            endkey=[self.domain, {}],
-        ).first()
-        return data['value'] if data else 0
-
-    @property
-    def column_names(self):
-        return [
-            _("Keyword"),
-            _("Description"),
-        ]
-
-    @property
-    def page_context(self):
-        return self.pagination_context
-
-    @property
-    def paginated_list(self):
-        for keyword in SurveyKeyword.get_by_domain(
-            self.domain,
-            limit=self.limit,
-            skip=self.skip,
-        ):
-            yield {
-                'itemData': {
-                    'id': keyword._id,
-                    'keyword': keyword.keyword,
-                    'description': keyword.description,
-                    'editUrl': reverse('edit_keyword', args=[self.domain, keyword._id]),
-                },
-                'template': 'keyword-row-template',
-            }
-
-    def post(self, *args, **kwargs):
-        return self.paginate_crud_response
-

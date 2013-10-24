@@ -1128,23 +1128,6 @@ class SurveyKeyword(Document):
             include_docs=True
         ).one()
 
-    @classmethod
-    def get_by_domain(cls, domain, limit=None, skip=None, include_docs=True):
-        extra_kwargs = {}
-        if limit is not None:
-            extra_kwargs['limit'] = limit
-        if skip is not None:
-            extra_kwargs['skip'] = skip
-        return cls.view(
-            'reminders/survey_keywords',
-            startkey=[domain],
-            endkey=[domain, {}],
-            include_docs=include_docs,
-            reduce=False,
-            **extra_kwargs
-        ).all()
-
-
 class SurveySample(Document):
     domain = StringProperty()
     name = StringProperty()
