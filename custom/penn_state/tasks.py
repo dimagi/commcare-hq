@@ -14,9 +14,7 @@ from .models import LegacyWeeklyReport
 from .reports import LegacyReportView
 from .constants import *
 
-# multiple forms per day - additive
-# game total + secret game, also additive
-# fix Thursday
+
 class Site(object):
     def __init__(self, group, date):
         self.name = group.name
@@ -56,14 +54,14 @@ class Site(object):
 
     def process_form(self, form, username):
 
-        def get_or_0(obj, *args):
+        def get_or_None(obj, *args):
             val = obj
             for arg in args:
                 try:
                     val = val[arg]
                 except KeyError:
-                    return 0
-            return int(val)
+                    return None
+            return val
 
         day = self.week.index(form.form['date_form_completed'])
 
@@ -72,7 +70,9 @@ class Site(object):
         self.strategy[day] += strategies
         self.individual[username]['strategy'][day] += strategies
 
-        games = get_or_0(form.form, 'game_questions', 'how_man_games')
+        games = int(get_or_None(form.form, 'game_questions', 'how_many_games') or 0)
+        secret_game = get_or_None(form.form, 'game_questions', 'secret_game')
+        games += 1 if secret_game == "yes" else 0
 
         self.individual[username]['game'][day] += games
         self.game[day] += games
