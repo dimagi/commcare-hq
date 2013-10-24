@@ -403,6 +403,9 @@ class ReportXFormES(XFormES):
                                 }
                             }
                         ]
+                    },
+                    "query": {
+                        "match_all": {}
                     }
                 }
             }
