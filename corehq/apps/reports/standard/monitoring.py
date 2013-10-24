@@ -210,16 +210,16 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
         columns = [DataTablesColumn(_("Users"))]
         for landmark in self.landmarks:
             num_cases = DataTablesColumn(_("# Modified or Closed"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The number of cases that have been modified between %d days ago and today." % landmark.days)
+                help_text=_("The number of cases that have been modified between %d days ago and today.") % landmark.days
             )
             num_active = DataTablesColumn(_("# Active"), sort_type=DTSortType.NUMERIC,
                 help_text=_("The number of active cases.")
             )
             num_closed = DataTablesColumn(_("# Closed"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The number of cases that have been closed between %d days ago and today." % landmark.days)
+                help_text=_("The number of cases that have been closed between %d days ago and today.") % landmark.days
             )
             proportion = DataTablesColumn(_("Proportion"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The number of modified cases / (#active + #closed cases in the last %d days)." % landmark.days)
+                help_text=_("The number of modified cases / (#active + #closed cases in the last %d days).") % landmark.days
             )
             columns.append(DataTablesColumnGroup(_("Cases in Last %s Days") % landmark.days if landmark else _("Ever"),
                 num_cases,
