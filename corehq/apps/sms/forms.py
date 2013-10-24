@@ -24,6 +24,15 @@ class SMSSettingsForm(Form):
     use_default_sms_response = BooleanField(required=False)
     default_sms_response = TrimmedCharField(required=False)
 
+    def clean_default_sms_response(self):
+        if self.cleaned_data.get("use_default_sms_response"):
+            value = self.cleaned_data.get("default_sms_response", "")
+            if value == "":
+                raise ValidationError(_("This field is required."))
+            return value
+        else:
+            return None
+
 class ForwardingRuleForm(Form):
     forward_type = ChoiceField(choices=FORWARDING_CHOICES)
     keyword = CharField(required=False)
