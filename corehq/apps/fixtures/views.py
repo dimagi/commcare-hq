@@ -440,6 +440,7 @@ def run_upload(request, domain, workbook):
                     data_type = new_data_type
                     pass
                 data_type.fields = type_definition_fields
+                data_type.is_global = dt.get('is_global', False)
                 assert data_type.doc_type == FixtureDataType._doc_type
                 if data_type.domain != domain:
                     data_type = new_data_type
