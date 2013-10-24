@@ -125,6 +125,7 @@ fi
 ## Install couchdb ##
 # from http://onabai.wordpress.com/2012/05/10/installing-couchdb-1-2-in-ubuntu-12-04/
 if [ ! -f /etc/init.d/couchdb ]; then
+    sudo apt-get install -y libmozjs185-dev libicu-dev libcurl4-gnutls-dev libtool erlang-base erlang-dev erlang-nox erlang-eunit build-essential
     if [ ! -f apache-couchdb-1.2.1.tar.gz ]; then
         wget http://mirrors.ibiblio.org/apache/couchdb/source/1.3.1/apache-couchdb-1.3.1.tar.gz
     fi
