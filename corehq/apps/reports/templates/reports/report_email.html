@@ -20,6 +20,9 @@ td.null-entry {
     <p>
         This is a scheduled report from <a href="{{ DNS_name }}">CommCareHQ</a> for the project '{{ domain }}'.
     </p>
+    <p>
+        Date range: {{ startdate|date:"Y-m-d" }} - {{ enddate|date:"Y-m-d" }}
+    </p>
     {% endif %}
 
     {% if notes %}
