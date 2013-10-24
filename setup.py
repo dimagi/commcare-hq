@@ -5,7 +5,7 @@ import sys
 
 setup(
     name='pillowfluff',
-    version='0.0.2',
+    version='0.0.3',
     description='Map over CouchDB changes feed built to run on Pillowtop',
     author='Dimagi',
     author_email='information@dimagi.com',
@@ -15,7 +15,7 @@ setup(
     test_suite='tests',
     test_loader='unittest2:TestLoader',
     install_requires=[
-        'couchdbkit==0.5.7',
+        'jsonobject-couchdbkit>=0.6.5.2',
         'pillowtop>=0.1.2',
         'dimagi-utils>=1.0.2',
         'pytz',
