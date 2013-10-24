@@ -1118,16 +1118,14 @@ class SurveyKeyword(Document):
         return cls.view("reminders/survey_keywords",
             startkey=[domain],
             endkey=[domain, {}],
-            include_docs=True,
-            reduce=False,
+            include_docs=True
         ).all()
     
     @classmethod
     def get_keyword(cls, domain, keyword):
         return cls.view("reminders/survey_keywords",
             key = [domain, keyword.upper()],
-            include_docs=True,
-            reduce=False,
+            include_docs=True
         ).one()
 
     @classmethod
