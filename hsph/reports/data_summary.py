@@ -194,11 +194,10 @@ class SecondaryOutcomeReport(DataSummaryReport):
 
         return data
 
-
 class FADAObservationsReport(DataSummaryReport):
     """
     BetterBirth Shared Dropbox/Updated ICT package/Reporting Specs/FADA
-    Observations - 2 _v6_ms.xls
+    Observations - 2 _v7_ss.xls
     """
     name = "FADA Observations"
     slug = "fada_observations"
@@ -228,6 +227,12 @@ class FADAObservationsReport(DataSummaryReport):
                       ["user", user_id, enddate])
                      for user_id in user_ids])
 
+        values = defaultdict(int)
+        # this is unnecessary/not particularly helpful duplication of
+        # information and could be DRYer by letting the defaultdict handle
+        # everything, but that would require passing definitions of the
+        # different percentage calculations to the constructor.  See
+        # http://manage.dimagi.com/default.asp?80439
         data_keys = [
             "total_forms",
             "pp1_observed",
@@ -264,8 +269,9 @@ class FADAObservationsReport(DataSummaryReport):
 
             "pp2_soap_and_water"
         ]
+        for k in data_keys:
+            values[k] = 0
 
-        values = dict((k, 0) for k in data_keys)
         db = get_db()
 
         all_results = []
@@ -300,6 +306,21 @@ class FADAObservationsReport(DataSummaryReport):
                     values[k + '_pct'] = round(float(v) * 100 / values[pp], 1)
                 else:
                     values[k + '_pct'] = '---'
+
+        checklist_options = [
+            "picked_up_during_care",
+            "looked_at_poster",
+            "filled_out_after_care",
+        ]
+        for pp in ("1", "2", "4"):
+            checklist_used = values["pp%s_scc_used_pp%s" % (pp, pp)]
+            for option in checklist_options:
+                key = "pp%s_scc_usage_%s" % (pp, option)
+                if checklist_used:
+                    values[key + '_pct'] = round(
+                        100 * float(values.get(key, 0)) / checklist_used, 1)
+                else:
+                    values[key + '_pct'] = '---'
 
         # used by secondary outcome report
         if values['pp3_baby_apneic']:
