@@ -1,4 +1,5 @@
 {% extends 'reminders/base_template.html' %}
+{% load url from future %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -16,17 +17,17 @@
 
 {% block main_column %}
     <div class="btn-group">
-        <a href="{% url create_reminder_schedule domain %}" class="btn btn-success">
+        <a href="{% url "create_reminder_schedule" domain %}" class="btn btn-success">
             <i class="icon-plus"></i>
             {% trans 'Add Reminder' %}</a>
         <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown">
             <span class="caret"></span>
         </button>
         <ul class="dropdown-menu">
-            <li><a href="{% url create_reminder_schedule domain %}">
+            <li><a href="{% url "create_reminder_schedule" domain %}">
                 {% trans 'Add Reminder' %}
             </a></li>
-            <li><a href="{% url create_complex_reminder_schedule domain %}">
+            <li><a href="{% url "create_complex_reminder_schedule" domain %}">
                 {% trans 'Add Multi Event Reminder' %}</a></li>
         </ul>
     </div>
