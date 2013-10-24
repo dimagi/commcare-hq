@@ -5,7 +5,7 @@ import sys
 
 setup(
     name='pillowfluff',
-    version='0.0.1',
+    version='0.0.2',
     description='Map over CouchDB changes feed built to run on Pillowtop',
     author='Dimagi',
     author_email='information@dimagi.com',
