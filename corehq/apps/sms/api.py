@@ -396,7 +396,6 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact, verifi
 
     error_occurred = False
     error_msg = None
-    form_complete = False
     session = None
 
     try:
@@ -525,7 +524,7 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact, verifi
 
     message_tags = {
         "workflow" : WORKFLOW_KEYWORD,
-        "xforms_session_couch_id" : session._id if session is not None else None,
+        "xforms_session_couch_id": session._id if session is not None else None,
     }
 
     if msg is not None:
