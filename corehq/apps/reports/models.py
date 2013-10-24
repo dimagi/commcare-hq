@@ -368,17 +368,33 @@ class UnsupportedScheduledReportError(Exception):
 
 
 class ReportNotification(Document):
+    # 11/12: removed WeeklyNotification and DailyNotification subclasses
+
     domain = StringProperty()
     owner_id = StringProperty()
 
     recipient_emails = StringListProperty()
-    config_ids = StringListProperty()
-    send_to_owner = BooleanProperty()
+    config_ids = StringListProperty()  # added 11/2012
+    send_to_owner = BooleanProperty()  # added 11/2012
 
-    hour = IntegerProperty(default=8)
-    day = IntegerProperty(default=1)
-    interval = StringProperty(choices=["daily", "weekly", "monthly"])
+    # should be named hour, actually.  moved from subclasses
+    hours = IntegerProperty(default=8)
+    # moved from WeeklyNotification subclass.  Will now be -1 for daily
+    # notifications
+    day_of_week = IntegerProperty(default=-1)
 
+    # report_slug = StringProperty()  # removed 11/2012
+    # removed 11/2012, only ever contained the user_id of the owner
+    # user_ids = StringListProperty()
+
+    @classmethod
+    def wrap(cls, data):
+        from corehq.apps.reports.management.commands.migrate_report_notifications import first_migrate
+        should_save = first_migrate(data)
+        self = super(ReportNotification, cls).wrap(data)
+        if should_save:
+            self.save()
+        return self
 
     @property
     def is_editable(self):
@@ -423,7 +439,7 @@ class ReportNotification(Document):
     @property
     @memoized
     def owner(self):
-        id = self.owner_id
+        id = self.owner_id if self.owner_id else self.user_ids[0]
         try:
             return WebUser.get_by_user_id(id)
         except CouchUser.AccountTypeError:
@@ -457,19 +473,17 @@ class ReportNotification(Document):
             config.report_type = ProjectReportDispatcher.prefix
             config.report_slug = self.report_slug
             config.domain = self.domain
-            config.owner_id = self.owner_id
+            config.owner_id = self.user_ids[0]
             configs = [config]
 
         return configs
 
     @property
     def day_name(self):
-        if self.interval == 'weekly':
-            return calendar.day_name[self.day]
-        return {
-            "daily": _("Every day"),
-            "monthly": _("Day %s of every month" % self.day),
-        }[self.interval]
+        if self.day_of_week != -1:
+            return calendar.day_name[self.day_of_week]
+        else:
+            return "Every day"
 
     @classmethod
     def day_choices(cls):
