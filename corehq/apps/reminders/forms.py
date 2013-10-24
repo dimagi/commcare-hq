@@ -822,7 +822,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
         label="",
         choices=(
             ('', '(none)'),
-            (STOP_CONDITION_CASE_PROPERTY, 'On Date in Case'),
+            (STOP_CONDITION_CASE_PROPERTY, 'Based on Case Property'),
         )
     )
     until = forms.CharField(
@@ -859,7 +859,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
     def __init__(self, data=None, is_previewer=False, domain=None, is_edit=False, *args, **kwargs):
         self.initial_event = {
-            'day_num': 0,
+            'day_num': 1,
             'fire_time_type': FIRE_TIME_DEFAULT,
             'message': {
                 'en': "",
@@ -1092,7 +1092,6 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     css_class="help-inline",
                     data_bind="visible: isUntilVisible",
                 ),
-                data_bind="visible: isStopConditionVisible",
                 help_bubble_text=_("Reminders can be stopped after a date set in the case, or if a particular "
                                    "case property is set to OK.  Choose either a case property that is a date or "
                                    "a case property that is going to be set to Ok.  Reminders will always stop if "
@@ -1126,11 +1125,24 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 data_bind="visible: isGlobalTimeoutsVisible",
             ),
             crispy.Div(
-                'max_question_retries',
+                FieldWithHelpBubble(
+                    'max_question_retries',
+                    help_bubble_text=_("For IVR surveys, the number of times a person can provide an invalid "
+                                       "answer before the call will hang up. ")
+                ),
                 data_bind="visible: isMaxQuestionRetriesVisible",
             ),
-            'submit_partial_forms',
-            'include_case_side_effects',
+            FieldWithHelpBubble(
+                'submit_partial_forms',
+                help_bubble_text=_("For surveys, this will let forms be saved even if the survey has not "
+                                   "been completed and the user is not responding.")
+            ),
+            FieldWithHelpBubble(
+                'include_case_side_effects',
+                help_bubble_text=_("When submitting a partial survey, this controls whether the corresponding "
+                                   "case should be created, updated or closed.  This is may not be safe to do if "
+                                   "the form has not been completed. ")
+            ),
             crispy.Div(
                 'force_surveys_to_use_triggered_case',
                 data_bind="visible: isForceSurveysToUsedTriggeredCaseVisible",
