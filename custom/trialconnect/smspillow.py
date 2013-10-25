@@ -44,7 +44,7 @@ class TCSMSPillow(SMSPillow):
         doc_dict[TC_STUB + 'session_data'] = {
             "session_id": session_id,
             "case_type": case.get("type"),
-            "response_state": get_db().get(xform_id).get('_form', {}).get('response_state') if xform_id else None
+            "response_state": get_db().get(xform_id).get('form', {}).get('response_state') if xform_id else None
         }
         return doc_dict
 
