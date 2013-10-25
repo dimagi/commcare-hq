@@ -557,5 +557,45 @@ class PatientMapReport(GenericMapReport, CustomProjectReport):
         'report_params': {'map': True}
     }
 
-    display_config = {}
+    @property
+    def display_config(self):
+        return {
+            'name_column': self.agg_level,
+            'column_titles': {
+                'Positive Tests::Female +ve Percent': 'Positive tests: Female',
+                'Positive Tests::Male +ve Percent': 'Positive tests: Male',
+                'Positive Tests::Total +ve Percent': 'Positive tests: Total',
+                'Tests::Number of Females ': 'Total tests: Female',
+                'Tests::Number of Males ': 'Total tests: Male',
+                'Tests::Total': 'Total tests',
+                'Age Range::All age range': 'Age range: All',
+                'Age Range::Female age range': 'Age range: Female',
+                'Age Range::Male age range': 'Age range: Male',
+            },
+            'detail_columns': [
+                'Country',
+                'Positive Tests::Female +ve Percent',
+                'Positive Tests::Male +ve Percent',
+                'Positive Tests::Total +ve Percent',
+                'Tests::Number of Females ',
+                'Tests::Number of Males ',
+                'Tests::Total',
+            ],
+            'table_columns': [
+                'Age Range::All age range',
+                'Age Range::Female age range',
+                'Age Range::Male age range',
+                'Positive Tests::Female +ve Percent',
+                'Positive Tests::Male +ve Percent',
+                'Positive Tests::Total +ve Percent',
+                'Tests::Number of Females ',
+                'Tests::Number of Males ',
+                'Tests::Total',
+            ]
+        }
 
+    @property
+    def agg_level(self):
+        opts = ['country', 'province', 'district', 'clinic']
+        agg_at = self.request.GET.get('aggregate_at', None)
+        return agg_at.title() if agg_at else 'Clinic'
