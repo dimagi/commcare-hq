@@ -493,11 +493,7 @@ class GSIDSQLByAgeReport(GSIDSQLReport):
                             alias="zero_ten_" + gender, 
                             filters=self.filters + age_range_filter(gender, "zero", "ten")
                         ),
-                        SumColumn(
-                            'cases',
-                            alias=gender + "_total", 
-                            filters=self.filters + [EQ("gender", gender)]
-                        )
+                        AliasColumn(gender + "_total")
                     ],
                     header_group=age_range_group
                 ),
@@ -534,6 +530,14 @@ class GSIDSQLByAgeReport(GSIDSQLReport):
                             filters=self.filters + [AND([EQ("gender", gender), EQ("diagnosis", "positive"), GT("age", "fifty")])]),
                         AliasColumn(gender + "_total")
                     ],
+                    header_group=age_range_group
+                ),
+                DatabaseColumn(
+                    'Total',
+                    SumColumn(
+                        'cases',
+                        alias=gender + "_total",
+                        filters=self.filters + [EQ("gender", gender)]),
                     header_group=age_range_group
                 ),
             ]
