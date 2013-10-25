@@ -29,15 +29,15 @@ def device_data(request):
     # This view lookup is an implicit assert that either one device exists
     # with the given device_id, or no devices exist with this device_id.
     case = CommConnectCase.view("wisepill/device",
-                             key=[device_id],
-                             include_docs=True).one()
+                                key=[device_id],
+                                include_docs=True).one()
     
     event = WisePillDeviceEvent(
-        domain = case.domain if case is not None else None,
-        data = data,
-        received_on = datetime.utcnow(),
-        case_id = case._id if case is not None else None,
-        processed = False,
+        domain=case.domain if case is not None else None,
+        data=data,
+        received_on=datetime.utcnow(),
+        case_id=case._id if case is not None else None,
+        processed=False,
     )
     event.save()
     

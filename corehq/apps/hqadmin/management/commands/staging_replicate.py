@@ -3,9 +3,10 @@ from django.core.management.base import LabelCommand
 from django.conf import settings
 import sys
 from auditcare.models import AuditEvent
-from corehq.apps.builds.models import CommCareBuild
 from corehq.apps.domain.models import Domain
 from couchforms.models import XFormInstance
+from dimagi.utils.couch.database import get_db
+
 
 def get_prod_db(source_uri):
     """
@@ -53,15 +54,15 @@ class Command(LabelCommand):
         target_server = XFormInstance.get_db().server
         self.do_repl(target_server, params)
 
-    def repl_builds(self):
+    def repl_docs_of_type(self, doc_type):
         params = {
             'filter': 'fluff_filter/domain_type',
             'continuous': True,
             'query_params': {
-                'doc_type':  'CommCareBuild'
+                'doc_type':  doc_type
             }
         }
-        target_server = CommCareBuild.get_db().server
+        target_server = get_db().server
         self.do_repl(target_server, params)
 
     def do_repl(self, server, params):
@@ -95,5 +96,6 @@ class Command(LabelCommand):
 
         self.repl_domains()
         self.repl_docs()
-        self.repl_builds()
+        self.repl_docs_of_type('CommCareBuild')
+        self.repl_docs_of_type('CommCareBuildConfig')
         AuditEvent.audit_command()

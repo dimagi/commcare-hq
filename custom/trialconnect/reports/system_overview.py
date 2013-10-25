@@ -5,7 +5,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.sms.models import WORKFLOW_KEYWORD, WORKFLOW_REMINDER, WORKFLOW_BROADCAST
 from corehq.elastic import es_query, ES_URLS, es_histogram
-from custom.trialconnect.reports import TrialConnectReport
+from custom.trialconnect.reports import TrialConnectReport, div
 from dimagi.utils.couch.database import get_db
 
 WORKFLOWS = [WORKFLOW_KEYWORD, WORKFLOW_REMINDER, WORKFLOW_BROADCAST]
@@ -179,11 +179,6 @@ class SystemUsersReport(BaseSystemOverviewReport):
 
         def get_actives(recipient_type):
             return len(self.active_query(recipient_type)['facets']['couch_recipient']['terms'])
-
-        def div(num, denom, percent=False):
-            floater = 100.0 if percent else 1.0
-            val = num * floater / denom if denom != 0 else 0
-            return "%.2f" % val + ("%" if percent else "")
 
         active = row(_("Number Active"), get_actives("commcareuser"), get_actives("commcarecase"))
 

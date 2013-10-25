@@ -230,6 +230,10 @@
                         edit: $root.edit"
                     ></select>
                     <span class="help-inline" data-bind="visible: !case_type()">{% trans "Required" %}</span>
+                    {% if app.is_remote_app %}
+                        <label>{% trans "Override reference id: " %}</label>
+                        <input type="text" data-bind="value: reference_id, edit: $root.edit"/>
+                    {% endif %}
                 </span>
                 <a href="#" data-bind="openModal: 'remove-subcase-modal-template', visible: $root.edit" class="pull-right">
                     <i class="icon-trash"></i>

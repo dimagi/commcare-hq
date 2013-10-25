@@ -26,7 +26,7 @@ from corehq.apps.reminders.forms import (
     CaseReminderEventMessageForm,
     KEYWORD_CONTENT_CHOICES,
     KEYWORD_RECIPIENT_CHOICES,
-)
+    ComplexScheduleCaseReminderForm)
 from corehq.apps.reminders.models import (
     CaseReminderHandler,
     CaseReminderEvent,
@@ -482,19 +482,24 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
     ui_type = UI_SIMPLE_FIXED
 
     @property
+    def reminder_form_class(self):
+        return {
+            UI_COMPLEX: ComplexScheduleCaseReminderForm,
+            UI_SIMPLE_FIXED: SimpleScheduleCaseReminderForm,
+        }[self.ui_type]
+
+    @property
     @memoized
     def schedule_form(self):
         if self.request.method == 'POST':
-            return SimpleScheduleCaseReminderForm(
+            return self.reminder_form_class(
                 self.request.POST,
                 domain=self.domain,
                 is_previewer=self.is_previewer,
-                ui_type=self.ui_type,
             )
-        return SimpleScheduleCaseReminderForm(
+        return self.reminder_form_class(
             is_previewer=self.is_previewer,
             domain=self.domain,
-            ui_type=self.ui_type,
         )
 
     @property
@@ -530,7 +535,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
         for app_doc in iter_docs(Application.get_db(), self.app_ids):
             app = Application.wrap(app_doc)
             case_types.extend([m.case_type for m in app.modules])
-        return case_types
+        return set(case_types)
 
     @property
     def action(self):
@@ -638,6 +643,12 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
         self.schedule_form.save(new_handler)
 
 
+class CreateComplexScheduledReminderView(CreateScheduledReminderView):
+    urlname = 'create_complex_reminder_schedule'
+    page_title = ugettext_noop("Schedule Multi Event Reminder")
+    ui_type = UI_COMPLEX
+
+
 class EditScheduledReminderView(CreateScheduledReminderView):
     urlname = 'edit_reminder_schedule'
     page_title = ugettext_noop("Edit Scheduled Reminder")
@@ -647,18 +658,24 @@ class EditScheduledReminderView(CreateScheduledReminderView):
         return self.kwargs.get('handler_id')
 
     @property
+    def page_name(self):
+        if self.ui_type == UI_COMPLEX:
+            return _("Edit Scheduled Multi Event Reminder")
+        return self.page_title
+
+    @property
     @memoized
     def schedule_form(self):
-        initial = SimpleScheduleCaseReminderForm.compute_initial(self.reminder_handler)
+        initial = self.reminder_form_class.compute_initial(self.reminder_handler)
         if self.request.method == 'POST':
-            return SimpleScheduleCaseReminderForm(
+            return self.reminder_form_class(
                 self.request.POST,
                 initial=initial,
                 is_previewer=self.is_previewer,
                 domain=self.domain,
                 is_edit=True,
             )
-        return SimpleScheduleCaseReminderForm(
+        return self.reminder_form_class(
             initial=initial,
             is_previewer=self.is_previewer,
             domain=self.domain,

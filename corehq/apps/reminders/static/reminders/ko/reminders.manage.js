@@ -3,7 +3,8 @@ var ManageRemindersViewModel = function (
     choices,
     ui_type,
     available_languages,
-    select2_fields
+    select2_fields,
+    initial_event_template
 ) {
     'use strict';
     var self = this;
@@ -11,13 +12,14 @@ var ManageRemindersViewModel = function (
     self.choices = choices || {};
     self.ui_type = ui_type;
     self.select2_fields = select2_fields;
+    self.initial_event_template = initial_event_template;
 
     self.case_type = ko.observable(initial.case_type);
 
-    self.available_languages = ko.observable(_.map(available_languages, function (langcode) {
-        return new ReminderLanguage(langcode);
-    }));
     self.default_lang = ko.observable(initial.default_lang);
+    self.available_languages = ko.observableArray(_.map(available_languages, function (langcode) {
+        return new ReminderLanguage(langcode, self.default_lang);
+    }));
 
     self.start_reminder_on = ko.observable(initial.start_reminder_on);
     self.isStartReminderCaseProperty = ko.computed(function () {
@@ -48,13 +50,16 @@ var ManageRemindersViewModel = function (
     });
 
     self.method = ko.observable(initial.method);
-    self.eventObjects = ko.observable();
+    self.eventObjects = ko.observableArray();
     self.events = ko.computed(function () {
         return JSON.stringify(_.map(self.eventObjects(), function (event){
             return event.asJSON();
         }));
     });
     self.event_timing = ko.observable(initial.event_timing);
+    self.isEventDeleteButtonVisible = ko.computed(function () {
+        return self.eventObjects().length > 1;
+    });
 
     self.event_interpretation = ko.computed(function () {
         var event_timing = $.parseJSON(self.event_timing());
@@ -70,9 +75,7 @@ var ManageRemindersViewModel = function (
     });
 
     self.stop_condition = ko.observable(initial.stop_condition);
-    self.isStopConditionVisible = ko.computed(function () {
-        return self.repeat_type() !== self.choices.REPEAT_TYPE_NO;
-    });
+    
     self.isUntilVisible = ko.computed(function () {
         return self.stop_condition() === self.choices.STOP_CONDITION_CASE_PROPERTY;
     });
@@ -81,12 +84,25 @@ var ManageRemindersViewModel = function (
         return self.method() === self.choices.METHOD_IVR_SURVEY;
     });
 
+    self.isForceSurveysToUsedTriggeredCaseVisible = ko.computed(function () {
+        return (self.method() === self.choices.METHOD_IVR_SURVEY ||
+                self.method() === self.choices.METHOD_SMS_SURVEY);
+    });
+
+    self.global_timeouts = ko.observable();
+    self.isGlobalTimeoutsVisible = ko.computed(function () {
+        return (self.method() === self.choices.METHOD_SMS_CALLBACK ||
+                self.method() === self.choices.METHOD_IVR_SURVEY ||
+                self.method() === self.choices.METHOD_SMS_SURVEY);
+    });
+
     self.init = function () {
         var events = $.parseJSON(initial.events || '[]');
         if (self.ui_type === self.choices.UI_SIMPLE_FIXED) {
             // only use the first event in the list
             events = [events[0]];
         }
+        self.global_timeouts(events[0].callback_timeout_intervals);
         self.eventObjects(_.map(events, function (event) {
             return new ReminderEvent(
                 event,
@@ -97,50 +113,13 @@ var ManageRemindersViewModel = function (
                 self.available_languages
             );
         }));
+        self.refreshEventsListUI();
+
         _.each(self.select2_fields, function (field) {
             self.initCasePropertyChoices(field);
         });
-        $('[data-timeset="true"]').each(function () {
-            $(this).timepicker({
-                showMeridian: false,
-                showSeconds: true,
-                defaultTime: $(this).val() || false
-            });
-        });
-        $('[name="form_unique_id"]').select2({
-            minimumInputLength: 0,
-            allowClear: true,
-            ajax: {
-                quietMillis: 150,
-                url: '',
-                dataType: 'json',
-                type: 'post',
-                data: function (term) {
-                    return {
-                        action: 'search_forms',
-                        term: term
-                    };
-                },
-                results: function (data) {
-                    return {
-                        results: data
-                    };
-                }
-            },
-            initSelection : function (element, callback) {
-                if (element.val()) {
-                    try {
-                        var data = $.parseJSON(element.val());
-                        callback(data);
-                    } catch (e) {
-                        // pass
-                    }
-                }
-            },
-            formatNoMatches: function (term) {
-                return "Please create a survey first.";
-            }
-        });
+
+        self.languagePicker.init();
     };
 
     self.addLanguage = function (langcode) {
@@ -148,12 +127,23 @@ var ManageRemindersViewModel = function (
             return lang.langcode();
         });
         if (currentLangcodes.indexOf(langcode) === -1) {
-            var availableLangs = self.available_languages();
-            availableLangs.push(new ReminderLanguage(langcode));
-            self.available_languages(availableLangs);
+            var newLanguage = new ReminderLanguage(langcode, self.default_lang);
+            self.available_languages.push(newLanguage);
+             _(self.eventObjects()).each(function (event) {
+                event.addTranslation(newLanguage.langcode());
+            });
         }
         self.default_lang(langcode);
     };
+
+    self.removeLanguage = function (reminderLang) {
+        self.available_languages.remove(reminderLang);
+        _(self.eventObjects()).each(function (event) {
+            event.removeTranslation(reminderLang.langcode());
+        });
+    };
+
+    self.languagePicker = new LanguagePickerViewModel(self.addLanguage);
 
     self.initCasePropertyChoices = function (field) {
         var fieldInput = $('[name="' + field.name + '"]');
@@ -212,9 +202,81 @@ var ManageRemindersViewModel = function (
             }
         });
     };
+
+    self.addEvent = function () {
+        var newEventTemplate = self.initial_event_template;
+        _(self.available_languages()).each(function (language) {
+            newEventTemplate.message[language.langcode()] = "";
+        });
+        self.eventObjects.push(new ReminderEvent(
+            newEventTemplate,
+            self.choices,
+            self.method,
+            self.event_timing,
+            self.event_interpretation,
+            self.available_languages
+        ));
+    };
+
+    self.removeEvent = function (event) {
+        self.eventObjects.remove(event);
+        self.refreshEventsListUI();
+    };
+
+    self.refreshEventsListUI = function () {
+        $('.event-help-text').hqHelp();
+        $('[data-timeset="true"]').each(function () {
+            $(this).timepicker({
+                showMeridian: false,
+                showSeconds: true,
+                defaultTime: $(this).val() || false
+            });
+        });
+        $('[name="form_unique_id"]').select2({
+            minimumInputLength: 0,
+            allowClear: true,
+            ajax: {
+                quietMillis: 150,
+                url: '',
+                dataType: 'json',
+                type: 'post',
+                data: function (term) {
+                    return {
+                        action: 'search_forms',
+                        term: term
+                    };
+                },
+                results: function (data) {
+                    return {
+                        results: data
+                    };
+                }
+            },
+            initSelection : function (element, callback) {
+                if (element.val()) {
+                    try {
+                        var data = $.parseJSON(element.val());
+                        callback(data);
+                    } catch (e) {
+                        // pass
+                    }
+                }
+            },
+            formatNoMatches: function (term) {
+                return "Please create a survey first.";
+            }
+        });
+    };
 };
 
-var ReminderEvent = function (eventData, choices, method, event_timing, event_interpretation, available_languages) {
+var ReminderEvent = function (
+    eventData,
+    choices,
+    method,
+    event_timing,
+    event_interpretation,
+    available_languages
+) {
     'use strict';
     var self = this;
     self.choices = choices;
@@ -251,41 +313,31 @@ var ReminderEvent = function (eventData, choices, method, event_timing, event_in
         return self.fire_time_type() === self.choices.FIRE_TIME_RANDOM;
     });
 
-    self.callback_timeout_intervals = ko.observable(eventData.callback_timeout_intervals);
-    self.isCallbackTimeoutsVisible = ko.computed(function () {
-        return self.method() === self.choices.METHOD_SMS_CALLBACK;
-    });
-
     self.form_unique_id = ko.observable(eventData.form_unique_id);
     self.isSurveyVisible = ko.computed(function () {
         return (self.method() === self.choices.METHOD_SMS_SURVEY)
             || (self.method() === self.choices.METHOD_IVR_SURVEY);
     });
 
-    self.messageTranslations = ko.observable(_.map(eventData.message, function (message, language) {
-        return new ReminderMessage(message, language, self.available_languages);
+    self.messageTranslations = ko.observableArray(_(eventData.message).map(function (message, langcode) {
+        return new ReminderMessage(message, langcode, self.available_languages);
     }));
+
+    // To make sure we don't lose any user-entered text by surprise
+    self.removedMessageTranslations = ko.observableArray();
+
     self.messageByLangcode = ko.computed(function () {
-        var translations = {},
-            available_langcodes = _.map(self.available_languages(), function (lang) {
-                return lang.langcode();
-            });
+        var translations = {};
         _.each(self.messageTranslations(), function (message) {
-            translations[message.language()] = message;
-        });
-        _.each(_.difference(available_langcodes, _(translations).keys()), function(lang) {
-            var existingTranslations = self.messageTranslations(),
-                newMessage = new ReminderMessage("", lang, self.available_languages);
-            existingTranslations.push(newMessage);
-            translations[lang] = newMessage;
-            self.messageTranslations(existingTranslations);
+            translations[message.langcode()] = message;
         });
         return translations;
     });
+
     self.message_data = ko.computed(function () {
         var message_data = {};
         _.each(self.messageTranslations(), function (translation) {
-            message_data[translation.language()] = translation.message();
+            message_data[translation.langcode()] = translation.message();
         });
         return message_data;
     });
@@ -303,16 +355,39 @@ var ReminderEvent = function (eventData, choices, method, event_timing, event_in
             fire_time: self.fire_time(),
             form_unique_id: self.form_unique_id(),
             message: self.message_data(),
-            callback_timeout_intervals: self.callback_timeout_intervals(),
             time_window_length: self.time_window_length()
         }
     });
+
+    self.addTranslation = function (langcode) {
+        var messagesToAdd = _(self.removedMessageTranslations()).map(function (message) {
+            return message.langcode() === langcode;
+        });
+        if (messagesToAdd.length === 0) {
+            self.messageTranslations.push(new ReminderMessage("", langcode, self.available_languages));
+        } else {
+            _(messagesToAdd).each(function (message) {
+                self.removedMessageTranslations.remove(message);
+                self.messageTranslations.push(message);
+            });
+        }
+    };
+
+    self.removeTranslation = function (langcode) {
+        var messagesToRemove = _(self.messageTranslations()).filter(function (message) {
+            return message.langcode() === langcode;
+        });
+        _(messagesToRemove).each(function (message) {
+            self.messageTranslations.remove(message);
+            self.removedMessageTranslations.push(message);
+        });
+    };
 };
 
-var ReminderMessage = function (message, language, available_languages) {
+var ReminderMessage = function (message, langcode, available_languages) {
     'use strict';
     var self = this;
-    self.language = ko.observable(language);
+    self.langcode = ko.observable(langcode);
     self.message = ko.observable(message);
     self.available_languages = available_languages;
 
@@ -339,21 +414,31 @@ var ReminderMessage = function (message, language, available_languages) {
         if (self.available_languages().length == 1) {
             return "";
         }
-        var language_name = self.language();
+        var languageName = self.langcode();
         _.each(self.available_languages(), function (lang) {
-            if (lang.langcode() === self.language()) {
-                language_name = lang.name();
+            if (lang.langcode() === self.langcode()) {
+                languageName = lang.name();
             }
         });
-        return '(' + language_name + ')';
+        return languageName;
     });
 };
 
-var ReminderLanguage = function (langcode) {
+var ReminderLanguage = function (langcode, default_lang) {
     'use strict';
     var self = this;
+
     self.langcode = ko.observable(langcode);
     self.name = ko.observable(langcode);
+    self.default_lang = default_lang;
+
+    self.isDefaultLang = ko.computed(function () {
+        return self.langcode() === self.default_lang();
+    });
+    self.isNotDefaultLang = ko.computed(function () {
+        return !self.isDefaultLang();
+    });
+
     $.getJSON('/langcodes/langs.json', {term: self.langcode()}, function (res) {
         var index = _.map(res, function(r) { return r.code; }).indexOf(self.langcode());
         if (index >= 0) {

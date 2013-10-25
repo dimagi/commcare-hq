@@ -603,7 +603,6 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         return bail(req, domain, app_id)
 
     base_context = get_apps_base_context(req, domain, app)
-    edit = base_context['edit']
     if not app:
         all_applications = ApplicationBase.view('app_manager/applications_brief',
             startkey=[domain],

@@ -5,6 +5,7 @@ import sys
 
 from django.core.management.base import NoArgsCommand
 import simplejson
+from pillowtop.couchdb import CachedCouchDB
 
 CHUNK_SIZE = 500
 POOL_SIZE = 15
@@ -15,28 +16,6 @@ RETRY_TIME_DELAY_FACTOR = 15
 
 
 
-class FakeCouchDBLoader(object):
-    """
-    For the bulk fast reindexing - replace the traditional one couch GET per update
-    and just do a bulk get of a cluster of ids. Rather than altering the pillow pipeline,
-    just preload all docs of relevance into a dictionary and override the single couch.get_doc call.
-
-    This needs to be patched after the initial bootstrap of the pillow which still needs to do
-    couchy stuff.
-    """
-    docs = {}
-
-    def open_doc(self, doc_id):
-        return self.docs.get(doc_id, None)
-
-    def save_doc(self):
-        raise NotImplementedError("Wtf, this is a loader class")
-
-    def fake_set_docs(self, doc_dict_by_id):
-        """
-        A non overriding method - fake set the docs in a dict so open_doc will get it like a regular couch database.
-        """
-        self.docs = doc_dict_by_id
 
 class PtopReindexer(NoArgsCommand):
     help = "View based elastic reindexer"
@@ -81,7 +60,6 @@ class PtopReindexer(NoArgsCommand):
     couch_key = None
     pillow_class = None
     file_prefix = "ptop_fast_reindex_"
-
 
 
     def custom_filter(self, view_row):
@@ -283,7 +261,8 @@ class PtopReindexer(NoArgsCommand):
         json_iter = self.view_data_file_iter()
 
         bulk_slice = []
-        self.pillow.couch_db = FakeCouchDBLoader()
+        self.pillow.couch_db = CachedCouchDB(self.pillow.document_class.get_db().uri,
+                                             readonly=True)
 
         for curr_counter, json_doc in enumerate(json_iter):
             if curr_counter < start:
@@ -299,18 +278,16 @@ class PtopReindexer(NoArgsCommand):
         self.send_bulk(bulk_slice, start, end)
 
     def send_bulk(self, slice, start, end):
-        doc_couch_db = self.pillow.document_class.get_db()
         doc_ids = [x['id'] for x in slice]
-        slice_docs = doc_couch_db.all_docs(keys=doc_ids, include_docs=True)
-        slice_docs = filter(self.custom_filter, slice_docs)
-        raw_doc_dict = dict((x['id'], x['doc']) for x in slice_docs)
-        self.pillow.couch_db.fake_set_docs(raw_doc_dict) # update the fake couch instance's set of bulk loaded docs
+        self.pillow.couch_db.bulk_load(doc_ids, purge_existing=True)
+        filtered_ids = set([d['_id'] for d in filter(self.custom_filter, self.pillow.couch_db.get_all())])
+        filtered_slice = filter(lambda change: change['id'] in filtered_ids, slice)
 
         retries = 0
         bulk_start = datetime.utcnow()
         while retries < MAX_TRIES:
             try:
-                self.pillow.process_bulk(slice)
+                self.pillow.process_bulk(filtered_slice)
                 break
             except Exception, ex:
                 retries += 1
@@ -319,9 +296,3 @@ class PtopReindexer(NoArgsCommand):
                 time.sleep(retry_time)
                 print "\t%s: Retrying again %d:%d..." % (datetime.now().isoformat(), start, end)
                 bulk_start = datetime.utcnow() #reset timestamp when looping again
-
-
-
-
-
-

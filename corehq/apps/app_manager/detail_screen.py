@@ -258,17 +258,34 @@ class Phone(FormattedDetailColumn):
 @register_format_type('enum')
 class Enum(FormattedDetailColumn):
 
-    @property
-    def xpath_function(self):
+    def _make_xpath(self, type):
+        if type == 'sort':
+            xpath_fragment_template = u"if({xpath} = '{key}', {i}, "
+        elif type == 'display':
+            xpath_fragment_template = u"if({xpath} = '{key}', $k{key}, "
+        else:
+            raise ValueError('type must be in sort, display')
+
         parts = []
-        for item in self.column.enum:
+        for i, item in enumerate(self.column.enum):
             parts.append(
-                u"if({xpath} = '{key}', $k{key}, ".format(key=item.key,
-                                                          xpath=self.xpath)
+                xpath_fragment_template.format(
+                    key=item.key,
+                    xpath=self.xpath,
+                    i=i,
+                )
             )
         parts.append(u"''")
         parts.append(u")" * len(self.column.enum))
         return ''.join(parts)
+
+    @property
+    def xpath_function(self):
+        return self._make_xpath(type='display')
+
+    @property
+    def sort_xpath_function(self):
+        return self._make_xpath(type='sort')
 
     @property
     def variables(self):

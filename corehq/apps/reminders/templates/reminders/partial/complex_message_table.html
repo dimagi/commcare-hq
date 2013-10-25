@@ -1,0 +1,89 @@
+{% load i18n %}
+<table class="table table-bordered">
+    <thead data-bind="with: eventObjects()[0]">
+        <th class="span2">
+            {% trans 'Day' %}
+            <a href="#" class="hq-help no-click event-help-text" style="font-weight: normal;">
+                <i class="icon-question-sign"
+                   data-title="{% trans 'Day' %}"
+                   data-content="{% blocktrans %}
+                       The day to which to send each event in the reminder.
+                       Day 1 indicates the day that the reminder was triggered.
+                       {% endblocktrans %}"
+                   data-trigger="hover"></i>
+            </a>
+        </th>
+        <th class="span2">
+            {% trans 'Time' %}
+            <a href="#" class="hq-help no-click event-help-text" style="font-weight: normal;">
+                <i class="icon-question-sign"
+                   data-title="{% trans 'Time' %}"
+                   data-content="{% blocktrans %}
+                       Specify the time at which the specific message will be sent out.
+                       If Delay After Start is chosen, this is the number of
+                       minutes after which the reminder will go out.
+                       {% endblocktrans %}"
+                   data-trigger="hover"></i>
+            </a>
+        </th>
+        <th class="span2" data-bind="visible: isWindowLengthVisible">
+            {% trans 'Window' %}
+            <a href="#" class="hq-help no-click event-help-text" style="font-weight: normal;">
+                <i class="icon-question-sign"
+                   data-title="{% trans 'Window' %}"
+                   data-content="{% blocktrans %}
+                       The number of minutes after the start within which to randomly send the message.
+                       {% endblocktrans %}"
+                   data-trigger="hover"></i>
+        </th>
+        <th class="span5" data-bind="visible: isSurveyVisible">{% trans 'Survey' %}</th>
+        <th class="span5" data-bind="visible: isMessageVisible">{% trans 'Message' %}</th>
+        <th class="span1" data-bind="visible: $parent.isEventDeleteButtonVisible"></th>
+    </thead>
+    <tbody data-bind="foreach: { data: eventObjects, afterAdd: refreshEventsListUI }">
+        <td>
+            <input type="hidden" data-bind="value: fire_time_type" />
+            <input type="text" class="input-mini" data-bind="value: day_num" />
+        </td>
+        <td>
+            <div data-bind="template: { name: 'event-fire-template', data: $data }"></div>
+        </td>
+        <td data-bind="visible: isWindowLengthVisible">
+            <input type="text"
+                   name="time_window_legnth"
+                   class="input-mini"
+                   data-bind="value: time_window_length" /> {% trans 'minute(s)' %}
+        </td>
+        <td data-bind="visible: isSurveyVisible">
+            <input type="text"
+                   name="form_unique_id"
+                   data-bind="value: form_unique_id, visible: isSurveyVisible"
+                   class="input-xxlarge" />
+        </td>
+        <td data-bind="visible: isMessageVisible">
+            <div data-bind="foreach: messageTranslations">
+                <label><strong data-bind="text: languageLabel"></strong></label>
+                <textarea rows="2"
+                          class="input-xxlarge"
+                          data-bind="value: message, valueUpdate: 'keyup'"></textarea>
+                <div data-bind="template: { name: 'event-message-length-template' }" style="margin-top: 5px;"></div>
+                <hr data-bind="visible: $parent.messageTranslations().length > 1
+                               && $index() + 1 !== $parent.messageTranslations().length" />
+            </div>
+        </td>
+        <td data-bind="visible: $parent.isEventDeleteButtonVisible">
+            <button type="button"
+                    class="btn btn-danger"
+                    data-bind="event: { click: $parent.removeEvent }">
+                <i class="icon-remove"></i>
+            </button>
+        </td>
+    </tbody>
+</table>
+
+<p style="padding-top: 0;">
+    <button type="button"
+            class="btn btn-success"
+            data-bind="event: { click: addEvent }">
+        <i class="icon-plus"></i> {% trans 'Event' %}</button>
+</p>
