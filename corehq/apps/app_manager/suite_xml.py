@@ -5,7 +5,7 @@ from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, N
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from .exceptions import MediaResourceError, ParentModuleReferenceError, SuiteValidationError
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column
-from corehq.apps.app_manager.xform import SESSION_CASE_ID
+from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, autoset_owner_id_for_subcase
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
 from .xpath import dot_interpolate
@@ -612,12 +612,20 @@ class SuiteGenerator(object):
                     )
                 ))
 
+        def case_sharing_requires_assertion(form):
+            actions = form.active_actions()
+            if 'open_case' in actions and autoset_owner_id_for_open_case(actions):
+                return True
+            for subcase in actions['subcases']:
+                if autoset_owner_id_for_subcase(subcase):
+                    return True
+            return False
+
         def add_case_sharing_assertion(e):
-            if self.app.case_sharing:
-                e.instances.append(Instance(id='groups', src='jr://fixture/user-groups'))
-                assertion = Assertion(test="count(instance('groups')/groups/group) = 1")
-                assertion.text.append(Text(locale_id='case_sharing.exactly_one_group'))
-                e.assertions.append(assertion)
+            e.instances.append(Instance(id='groups', src='jr://fixture/user-groups'))
+            assertion = Assertion(test="count(instance('groups')/groups/group) = 1")
+            assertion.text.append(Text(locale_id='case_sharing.exactly_one_group'))
+            e.assertions.append(assertion)
 
         for module in self.modules:
             for form in module.get_forms():
@@ -631,7 +639,8 @@ class SuiteGenerator(object):
                 )
                 if form.requires == "case":
                     add_case_stuff(module, e, use_filter=True)
-                add_case_sharing_assertion(e)
+                if self.app.case_sharing and case_sharing_requires_assertion(form):
+                    add_case_sharing_assertion(e)
                 yield e
             if module.case_list.show:
                 e = Entry(
@@ -641,7 +650,6 @@ class SuiteGenerator(object):
                     )
                 )
                 add_case_stuff(module, e, use_filter=False)
-                add_case_sharing_assertion(e)
                 yield e
 
     @property
