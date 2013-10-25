@@ -873,7 +873,7 @@ class XForm(WrappedNode):
                     reference_id = subcase.reference_id or 'parent'
                     parent_index = make_case_elem(reference_id, {'case_type': form.get_case_type()})
                     self.add_bind(
-                        nodeset='%scase/index/parent' % path,
+                        nodeset='{path}case/index/{ref}'.format(path=path, ref=reference_id),
                         calculate=self.resolve_path("case/@case_id"),
                     )
                     index_node.append(parent_index)
