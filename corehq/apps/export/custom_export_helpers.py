@@ -1,9 +1,8 @@
-from django.shortcuts import render
 import json
 from corehq.apps.reports.standard import export
 from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration
 from corehq.apps.reports.standard.export import DeidExportReport
-from couchexport.models import SavedExportSchema, ExportTable, ExportSchema
+from couchexport.models import SavedExportSchema, ExportTable, ExportSchema, ExportColumn
 from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.memoized import memoized
 
@@ -169,6 +168,36 @@ class FormCustomExportHelper(CustomExportHelper):
     def default_order(self):
         return self.custom_export.get_default_order()
 
+    def update_table_conf_with_questions(self, table_conf):
+        column_conf = table_conf[0].get("column_configuration", {})
+        current_questions = set(self.custom_export.question_order)
+        remaining_questions = current_questions.copy()
+
+        def is_special_type(q):
+            return any([q.startswith('form.#'), q.startswith('form.@'), q.startswith('form.case.'), q.startswith('form.meta.')])
+
+        for col in column_conf:
+            question = col["index"]
+            remaining_questions.discard(question)
+            if question.startswith("form.") and not is_special_type(question) and question not in current_questions:
+                col["tag"] = "deleted"
+
+        column_conf.extend([
+            ExportColumn(
+                index=q,
+                display='',
+                tag='no data',
+            ).to_config_format(selected=False)
+            for q in remaining_questions
+        ])
+
+        table_conf[0]["column_configuration"] = column_conf
+        return table_conf
+
+    def get_context(self):
+        ctxt = super(FormCustomExportHelper, self).get_context()
+        self.update_table_conf_with_questions(ctxt["table_configuration"])
+        return ctxt
 
 class CaseCustomExportHelper(CustomExportHelper):
 

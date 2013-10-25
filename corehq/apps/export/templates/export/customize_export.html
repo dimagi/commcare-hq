@@ -48,7 +48,8 @@
                             }[stripped] || stripped;
                         }
                     },
-                    parseField: function (field, index) {
+                    parseField: function (field, index, field_tag) {
+                        var tags = field_tag ? [field_tag] : [];
                         var stripped;
                         field = ko.utils.unwrapObservable(field);
                         index = ko.utils.unwrapObservable(index);
@@ -59,9 +60,9 @@
                             '-deletion_id': 0
                         };
                         if (field in server) {
-                            return {tag: 'server', field: field};
+                            return {tags: ['server'].concat(tags), field: field};
                         } else if (field === 'id') {
-                            return {tag: 'row', field: field};
+                            return {tags: ['row'].concat(tags), field: field};
                         }
 
                         if (self.custom_export.type() === 'form' && index === '#') {
@@ -75,10 +76,10 @@
                                 pattern = patterns[i];
                                 stripped = field.replace(pattern.regex, '$1');
                                 if (field !== stripped) {
-                                    return {tag: pattern.tag, field: stripped};
+                                    return {tags: [pattern.tag].concat(tags), field: stripped};
                                 }
                             }
-                            return {tag: 'server', field: field};
+                            return {tags: ['server'].concat(tags), field: field};
                         } else if (self.custom_export.type() === 'case') {
                             if (index === '#') {
                                 var meta = {
@@ -95,7 +96,7 @@
                                     version: 0
                                 };
                                 if (meta.hasOwnProperty(field)) {
-                                    return {tag: 'meta', field: field};
+                                    return {tags: ['meta'].concat(tags), field: field};
                                 }
                             } else if (/#\.indices\.#$/.exec(index)) {
                                 var rename = {
@@ -104,7 +105,7 @@
                                     'referenced_type': 'case_type'
                                 };
                                 if (rename.hasOwnProperty(field)) {
-                                    return {tag: '', field: rename[field]};
+                                    return {tags: [''].concat(tags), field: rename[field]};
                                 }
                             } else if (index === '#.actions.#') {
                                 stripped = field.replace(
@@ -112,12 +113,12 @@
                                     '$1'
                                 );
                                 if (stripped !== field) {
-                                    return {tag: 'update', field: stripped};
+                                    return {tags: ['update'].concat(tags), field: stripped};
                                 }
                             }
 
                         }
-                        return {tag: '', field: field};
+                        return {tags: [''].concat(tags), field: field};
                     },
                     showTable: function (table) {
                         var index = table.index();
@@ -164,7 +165,7 @@
                             if (order_index.hasOwnProperty(column.index())) {
                                 key = [0, order_index[column.index()]];
                             } else {
-                                key = [1, tag_order[column._niceField.tag], column._niceField.field];
+                                key = [1, tag_order[column._niceField.tags[0]], column._niceField.field];
                             }
                             return key;
                         });
@@ -189,8 +190,11 @@
                     var unselected;
                     var columns = table.column_configuration();
 
+                    table.show_deleted = ko.observable(true);
                     _(columns).each(function (column) {
-                        column._niceField = self.utils.parseField(column.index, table.index);
+                        column._niceField = self.utils.parseField(column.index, table.index, column.tag());
+                        column.deleted = $.inArray("deleted", column._niceField.tags) >= 0
+                        column.show_deleted = table.show_deleted;
                     });
 
                     for (var i = 0; i < columns.length; i++) {
@@ -299,8 +303,8 @@
                             if (!column.display()) {
                                 var parsed = column._niceField;
                                 var display = parsed.field;
-                                if (parsed.tag) {
-                                    display = parsed.tag + '.' + parsed.field;
+                                if (parsed.tags[0]) {
+                                    display = parsed.tags[0] + '.' + parsed.field;
                                 }
                                 column.display(display);
                             }
@@ -402,19 +406,26 @@
                             <th>{% trans "Include this Field?" %}<br>
                                 <a href="#" class="btn btn-mini" data-bind="click: $root.selectAll">{% trans "Select All" %}</a>
                                 <a href="#" class="btn btn-mini btn-inverse" data-bind="click: $root.selectNone">{% trans "Select None" %}</a></th>
-                            <th>{% trans "Field" %}</th>
+                            <th>
+                                {% trans "Field" %}
+                                <div class="pull-right">
+                                    <input type="checkbox" data-bind="checked: show_deleted" /> Show Deleted
+                                </div>
+                            </th>
                             <th>{% trans "Display" %}</th>
                             <th class="deid-column" data-bind="visible: $root.showDeidColumn()">{% trans "Sensitivity" %}</th>
                         </tr>
                         </thead>
                         <tbody data-bind="sortable: column_configuration">
-                            <tr>
+                            <tr data-bind="visible: !deleted || show_deleted">
                                 <td class="sortable-handle">
                                     <i class="icon-resize-vertical"></i>
                                 </td>
                                 <td><input type="checkbox" class="field-include" data-bind="checked: selected" /></td>
                                 <td>
-                                    <span class="label" data-bind="text: _niceField.tag, visible: _niceField.tag"></span>
+                                    <span data-bind="foreach: _niceField.tags">
+                                        <span class="label" data-bind="text: $data, visible: $data"></span>
+                                    </span>
                                     <code data-bind="text: _niceField.field"></code>
 
                                 </td>
