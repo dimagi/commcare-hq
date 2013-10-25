@@ -16,7 +16,7 @@ from couchexport.models import SavedExportSchema
 from couchexport.schema import build_latest_schema
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
-from dimagi.utils.web import json_request, json_response
+from dimagi.utils.web import json_response
 
 require_form_export_permission = require_permission(
     Permissions.view_report,
