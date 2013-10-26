@@ -232,6 +232,7 @@ HQ_APPS = (
     'fluff',
     'fluff.fluff_filter',
     'soil',
+    'toggle',
     'touchforms.formplayer',
     'hqbilling',
     'phonelog',
@@ -710,6 +711,7 @@ COUCHDB_APPS = [
     'sms',
     'smsforms',
     'telerivet',
+    'toggle',
     'translations',
     'users',
     'utils',  # dimagi-utils
