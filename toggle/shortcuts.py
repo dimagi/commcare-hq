@@ -7,7 +7,7 @@ def toggle_enabled(slug, username, check_cache=True):
     """
     Given a toggle and a username, whether the toggle is enabled for that user
     """
-    cache_key = 'toggle-{slug}:{username}'
+    cache_key = 'toggle-{slug}:{username}'.format(slug=slug, username=username)
     if check_cache:
         from_cache = cache.get(cache_key)
         if from_cache is not None:
