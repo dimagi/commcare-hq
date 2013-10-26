@@ -48,6 +48,8 @@ var CommCareUsersViewModel = function (o) {
         return 7;
     });
 
+    self.search_string = ko.observable();
+    self.from_search = ko.observable();
     self.init = function () {
         $(function () {
             self.change_page(self.current_page);
@@ -68,6 +70,8 @@ var CommCareUsersViewModel = function (o) {
 
     self.change_page = function (page, next_or_last) {
         page = ko.utils.unwrapObservable(page);
+        self.from_search(page === -1);
+        page = page === -1 ? 1 : page;
 
         if (page) {
             $.ajax({
@@ -127,11 +131,17 @@ var CommCareUsersViewModel = function (o) {
             if (!page) {
                 return "#";
             }
-            return self.list_url +'?page=' + page +
+            var ret_url = self.list_url +'?page=' + page +
                 "&limit=" + self.page_limit() +
                 "&cannot_share=" + self.cannot_share +
                 "&show_inactive=" + self.show_inactive +
                 "&more_columns=" + self.more_columns();
+
+            if (self.search_string()) {
+                ret_url += "&query=" + self.search_string();
+            }
+
+            return ret_url
         },
         successful_archive_action = function (button, index) {
             return function (data) {
