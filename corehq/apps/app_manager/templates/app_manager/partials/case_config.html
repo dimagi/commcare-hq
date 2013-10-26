@@ -230,7 +230,7 @@
                         edit: $root.edit"
                     ></select>
                     <span class="help-inline" data-bind="visible: !case_type()">{% trans "Required" %}</span>
-                    {% if app.is_remote_app %}
+                    {% if show_custom_ref %}
                         <label>{% trans "Override reference id: " %}</label>
                         <input type="text" data-bind="value: reference_id, edit: $root.edit"/>
                     {% endif %}

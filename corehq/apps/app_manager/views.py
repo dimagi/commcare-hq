@@ -13,7 +13,7 @@ from django.core.cache import cache
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import cache_control
-from corehq import ApplicationsTab
+from corehq import ApplicationsTab, toggles
 from corehq.apps.app_manager import commcare_settings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.sms.views import get_sms_autocomplete_context
@@ -61,6 +61,7 @@ from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_ap
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST
 from django.contrib import messages
+from toggle import toggle_enabled
 
 require_can_edit_apps = require_permission(Permissions.edit_apps)
 
@@ -397,6 +398,7 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         'module_case_types': module_case_types,
         'form_errors': form_errors,
         'xform_validation_errored': xform_validation_errored,
+        'show_custom_ref': toggle_enabled(toggles.APP_BUILDER_CUSTOM_PARENT_REF, request.user.username),
     }
 
 
