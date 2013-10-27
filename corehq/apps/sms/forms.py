@@ -13,11 +13,25 @@ from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.reminders.forms import RecordListField
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.sms.util import get_available_backends
+from dimagi.utils.django.fields import TrimmedCharField
 
 FORWARDING_CHOICES = (
     (FORWARD_ALL, ugettext_noop("All messages")),
     (FORWARD_BY_KEYWORD, ugettext_noop("All messages starting with a keyword")),
 )
+
+class SMSSettingsForm(Form):
+    use_default_sms_response = BooleanField(required=False)
+    default_sms_response = TrimmedCharField(required=False)
+
+    def clean_default_sms_response(self):
+        if self.cleaned_data.get("use_default_sms_response"):
+            value = self.cleaned_data.get("default_sms_response", "")
+            if value == "":
+                raise ValidationError(_("This field is required."))
+            return value
+        else:
+            return None
 
 class ForwardingRuleForm(Form):
     forward_type = ChoiceField(choices=FORWARDING_CHOICES)
