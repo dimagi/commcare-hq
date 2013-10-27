@@ -1,4 +1,4 @@
-from corehq.apps.api.es import ReportCaseES
+from corehq.apps.api.es import ReportCaseES, get_report_script_field
 from pact.enums import PACT_DOTS_DATA_PROPERTY, PACT_DOMAIN
 from StringIO import StringIO
 from django.test.client import RequestFactory
@@ -111,15 +111,15 @@ def get_patient_display_cache(case_ids):
     query = {
         "fields": [
             "_id",
-            "last_name.#value",
-            "first_name.#value",
             "name",
-            "pactid.#value",
         ],
         "script_fields": {
             "case_id": {
                 "script": "_source._id"
-            }
+            },
+            "pactid": get_report_script_field("pactid"),
+            "first_name": get_report_script_field("first_name"),
+            "last_name": get_report_script_field("last_name"),
         },
         "filter": {
             "and": [
@@ -139,10 +139,13 @@ def get_patient_display_cache(case_ids):
     }
     res = case_es.run_query(query)
 
+    from pact.reports.patient import PactPatientInfoReport
     ret = {}
     if res is not None:
         for entry in res['hits']['hits']:
-            ret[entry['fields']['case_id']] = entry['fields']
+            case_id = entry['fields']['case_id']
+            ret[case_id] = entry['fields']
+            ret[case_id]['url'] = PactPatientInfoReport.get_url(*['pact']) + "?patient_id=%s" % case_id
     return ret
 
 

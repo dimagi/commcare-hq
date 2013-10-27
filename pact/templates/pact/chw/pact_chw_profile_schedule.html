@@ -44,8 +44,9 @@
                     <div class="span3">
                         <div class="alert alert-success">
                             <h4>
-{#                                <a href="{% url 'view_pactpatient' cpatient.get_id '' %}">{{ cpatient.first_name }} {{ cpatient.last_name }} ({{ cpatient.pact_id }})</a> #}
-                                <a href="#">({{ cpatient.pactid }}) {{ cpatient.name }}</a>
+                                <a href="{{ cpatient.url }}">
+                                ({{ cpatient.pactid }}) {{ cpatient.name }}
+                                </a>
                             </h4>
                         </div>
                     </div>
