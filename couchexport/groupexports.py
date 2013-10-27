@@ -7,12 +7,16 @@ from couchexport.tasks import Temp, rebuild_schemas
 from couchexport.export import SchemaMismatchException
 from dimagi.utils.logging import notify_exception
 
-def export_for_group(export_id, output_dir):
-    try:
-        config = GroupExportConfiguration.get(export_id)
-    except ResourceNotFound:
-        raise Exception("Couldn't find an export with id %s" % export_id)
-    
+
+def export_for_group(export_id_or_group, output_dir):
+    if isinstance(export_id_or_group, basestring):
+        try:
+            config = GroupExportConfiguration.get(export_id_or_group)
+        except ResourceNotFound:
+            raise Exception("Couldn't find an export with id %s" % export_id_or_group)
+    else:
+        config = export_id_or_group
+
     for config, schema in config.all_exports:
         try:
             tmp, _ = schema.get_export_files(format=config.format)
