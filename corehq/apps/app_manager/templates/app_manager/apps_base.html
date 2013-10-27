@@ -27,6 +27,8 @@
     <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
     <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/keymaster.min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/keyboard_navigator.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -43,6 +45,14 @@
     $(function () {
        $('.app-manager-content').removeClass('hide');
     });
+    </script>
+    <script>
+        var sidebar_navigator = new KeyboardNavigator();
+        sidebar_navigator.init({
+            nav_key: 'option',
+            action_key: 'enter',
+            element_list: []
+        });
     </script>
 {% endblock %}
 
