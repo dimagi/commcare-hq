@@ -28,7 +28,7 @@ DIRECTION_CHOICES = (
 
 class MessageLog(SafeSaveDocument, UnicodeMixIn):
     base_doc                    = "MessageLog"
-    couch_recipient_doc_type    = StringProperty() # "CommCareCase" or "CouchUser"
+    couch_recipient_doc_type    = StringProperty() # "CommCareCase", "CommCareUser", "WebUser"
     couch_recipient             = StringProperty() # _id of the contact who this sms was sent to/from
     phone_number                = StringProperty()
     direction                   = StringProperty()

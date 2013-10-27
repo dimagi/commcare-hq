@@ -66,7 +66,7 @@ def export_cases_and_referrals(domain, cases, workbook, users=None, groups=None,
                 if key == 'username':
                     try:
                         case_row[key] = by_user_id[matching_owner].raw_username
-                    except TypeError:
+                    except (TypeError, KeyError):
                         case_row[key] = ''
                 elif key == 'owner_name':
                     if users and case.owner_id in by_user_id:

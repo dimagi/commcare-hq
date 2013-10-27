@@ -97,6 +97,15 @@ class SubcaseRepeatTest(FormPrepBase):
                               self.get_xml('multiple_subcase_repeat'))
 
 
+class SubcaseParentRefTeset(FormPrepBase):
+    file_path = ('data', 'form_preparation_v2')
+
+    def test_parent_ref(self):
+        self.app = Application.wrap(self.get_json('subcase-parent-ref'))
+        self.assert_xml_equiv(self.app.get_module(1).get_form(0).render_xform(),
+                              self.get_xml('subcase-parent-ref'))
+
+
 class CaseSharingFormPrepTest(FormPrepBase):
     file_path = ('data', 'form_preparation_v2')
 

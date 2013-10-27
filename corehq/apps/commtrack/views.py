@@ -29,7 +29,7 @@ def default(request, domain):
     if not (request.project and request.project.commtrack_enabled):
         raise Http404()
     return HttpResponseRedirect(reverse(ProductListView.urlname,
-                                            args=[domain]))
+                                        args=[domain]))
 
 
 class BaseCommTrackManageView(BaseDomainView):

@@ -1,7 +1,9 @@
 from django.utils.unittest.case import TestCase
 from django.conf import settings
 import simplejson
-from corehq.pillows.base import restore_property_dict
+from corehq.apps.api.es import report_term_filter
+from corehq.pillows.base import restore_property_dict, VALUE_TAG
+from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_MAPPING
 
 from corehq.pillows.reportxform import ReportXFormPillow
 
@@ -144,6 +146,137 @@ class testReportXFormProcessing(TestCase):
 
         self.assertEqual(orig, restored)
 
+    def testSubCaseForm(self):
+        """
+        Ensure that the dict format converter never touches any sub property that has a key of 'case'
+
+        this is our way of handling case blocks. The properties in the case block ought not to be touched
+
+        this current form only captures
+        """
+        pillow = ReportXFormPillow(online=False)
+        orig = {
+            '_id': 'nested_case_blocks',
+            'form': {
+                'case': {
+                    "@xmlns": "http://commcarehq.org/case/transaction/v2",
+                    "@date_modified": "2013-10-14T10:59:44Z",
+                    "@user_id": "someuser",
+                    "@case_id": "mycase",
+                    "update": ""
+                },
+                'subcase_0': {
+                    'case': {
+                        "@xmlns": "http://commcarehq.org/case/transaction/v2",
+                        "index": {
+                            "parent": {
+                                "@case_type": "household",
+                                "#text": "some_parent"
+                            }
+                        },
+                        "@date_modified": "2013-10-12T11:59:41Z",
+                        "create": {
+                            "case_type": "child",
+                            "owner_id": "some_owner",
+                            "case_name": "hello there"
+                        },
+                        "@user_id": "someuser",
+                        "update": {
+                            "first_name": "asdlfjkasdf",
+                            "surname": "askljvlajskdlrwe",
+                            "dob": "2011-03-21",
+                            "sex": "male",
+                            "weight_date": "never",
+                            "household_head_health_id": "",
+                            "dob_known": "yes",
+                            "health_id": "",
+                            "length_date": "never",
+                            "dob_calc": "2011-03-21"
+                        },
+                        "@case_id": "subcaseid"
+                    }
+                },
+                'really': {
+                    'nested': {
+                        'case': {
+                        "@xmlns": "http://commcarehq.org/case/transaction/v2",
+                        "index": {
+                            "parent": {
+                                "@case_type": "household",
+                                "#text": "some_parent"
+                            }
+                        },
+                        "@date_modified": "2013-10-12T11:59:41Z",
+                        "create": {
+                            "case_type": "child",
+                            "owner_id": "some_owner",
+                            "case_name": "hello there"
+                        },
+                        "@user_id": "someuser",
+                        "update": {
+                            "first_name": "asdlfjkasdf",
+                            "surname": "askljvlajskdlrwe",
+                            "dob": "2011-03-21",
+                            "sex": "male",
+                            "weight_date": "never",
+                            "household_head_health_id": "",
+                            "dob_known": "yes",
+                            "health_id": "",
+                            "length_date": "never",
+                            "dob_calc": "2011-03-21"
+                        },
+                        "@case_id": "subcaseid2"
+                        }
+                    }
+                },
+                'array_cases': [
+                    {'case': {'foo': 'bar'}},
+                    {'case': {'boo': 'bar'}},
+                    {'case': {'poo': 'bar'}},
+                ]
+            }
+        }
+        orig['domain'] = settings.ES_XFORM_FULL_INDEX_DOMAINS[0]
+        for_indexing = pillow.change_transform(orig)
+
+        self.assertEqual(orig['form']['case'], for_indexing['form']['case'])
+        self.assertEqual(orig['form']['subcase_0']['case'], for_indexing['form']['subcase_0']['case'])
+        self.assertEqual(orig['form']['really']['nested']['case'], for_indexing['form']['really']['nested']['case'])
+
+
+
+
+
+    def testReporXFormtQuery(self):
+
+        unknown_terms = ['form.num_using_fp.#text', 'form.num_using_fp.@concept_id',
+                         'form.counseling.sanitation_counseling.handwashing_importance',
+                         'form.counseling.bednet_counseling.wash_bednet',
+                         'form.prev_location_code',
+                         'member_available.#text',
+                         'location_code_1']
+        unknown_terms_query = report_term_filter(unknown_terms, REPORT_XFORM_MAPPING)
+
+        manually_set = ['%s.%s' % (x, VALUE_TAG) for x in unknown_terms]
+        self.assertEqual(manually_set, unknown_terms_query)
+
+        known_terms = [
+            'initial_processing_complete',
+            'doc_type',
+            'app_id',
+            'xmlns',
+            '@uiVersion',
+            '@version',
+            'form.#type',
+            'form.@name',
+            'form.meta.timeStart',
+            'form.meta.timeEnd',
+            'form.meta.appVersion',
+            ]
+
+        # shoot, TODO, cases are difficult to escape the VALUE_TAG term due to dynamic templates
+        known_terms_query = report_term_filter(known_terms, REPORT_XFORM_MAPPING)
+        self.assertEqual(known_terms_query, known_terms)
 
     def testConceptReportConversion(self):
         pillow = ReportXFormPillow(online=False)
@@ -192,14 +325,3 @@ class testReportXFormProcessing(TestCase):
                              }
                          ]
         )
-
-
-
-
-
-
-
-
-
-
-

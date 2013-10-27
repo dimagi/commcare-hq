@@ -389,7 +389,10 @@ def calculate_total_row(rows):
         num_cols = len(rows[0])
         for i in range(num_cols):
             colrows = [cr[i] for cr in rows if isinstance(cr[i], dict)]
-            colnums = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), (int, long))]
-            total_row.append(reduce(lambda x, y: x + y, colnums, 0))
+            columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), (int, long))]
+            if len(columns):
+                total_row.append(reduce(lambda x, y: x + y, columns, 0))
+            else:
+                total_row.append('')
 
     return total_row

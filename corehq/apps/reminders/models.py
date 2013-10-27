@@ -846,9 +846,10 @@ class CaseReminderHandler(Document):
                 
                 reminder.save()
     
-    def datetime_definition_changed(self, **kwargs):
+    def datetime_definition_changed(self, send_immediately=False):
         """
         This method is used to manage updates to CaseReminderHandler's whose start_condition_type == ON_DATETIME.
+        Set send_immediately to True to send the first event right away, regardless of whether it may occur in the past.
         """
         reminder = CaseReminder.view('reminders/by_domain_handler_case',
             startkey=[self.domain, self._id],
@@ -882,15 +883,24 @@ class CaseReminderHandler(Document):
                 case = None
             reminder = self.spawn_reminder(case, self.start_datetime, recipient)
             reminder.start_condition_datetime = self.start_datetime
-            fast_forward = kwargs.pop("fast_forward", False)
-            if fast_forward:
+            sent = False
+            if send_immediately:
+                try:
+                    self.fire(reminder)
+                    sent = True
+                except Exception:
+                    # An exception could happen here, for example, if touchforms is down.
+                    # So just pass, and let the reminder be saved below so that the framework
+                    # will pick it up and try again.
+                    pass
+            if sent or not send_immediately:
                 self.set_next_fire(reminder, now) # This will fast-forward to the next event that does not occur in the past
             reminder.save()
     
     def save(self, **params):
         schedule_changed = params.pop("schedule_changed", False)
         prev_definition = params.pop("prev_definition", None)
-        fast_forward = params.pop("fast_forward", False)
+        send_immediately = params.pop("send_immediately", False)
         super(CaseReminderHandler, self).save(**params)
         if not self.deleted():
             if self.start_condition_type == CASE_CRITERIA:
@@ -903,7 +913,7 @@ class CaseReminderHandler(Document):
                 for case in cases:
                     self.case_changed(case, schedule_changed=schedule_changed, prev_definition=prev_definition)
             elif self.start_condition_type == ON_DATETIME:
-                self.datetime_definition_changed(fast_forward=fast_forward)
+                self.datetime_definition_changed(send_immediately=send_immediately)
     
     @classmethod
     def get_handlers(cls, domain, case_type=None):

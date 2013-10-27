@@ -4,6 +4,7 @@ from corehq.apps.reminders.views import (
     CreateScheduledReminderView,
     EditScheduledReminderView,
     RemindersListView,
+    CreateComplexScheduledReminderView,
 )
 
 urlpatterns = patterns('corehq.apps.reminders.views',
@@ -16,6 +17,8 @@ urlpatterns = patterns('corehq.apps.reminders.views',
     url(r'^scheduled/', 'scheduled_reminders', name='scheduled_reminders'),
     url(r'^add_complex/', 'add_complex_reminder_schedule', name='add_complex_reminder_schedule'),
     url(r'^edit_complex/(?P<handler_id>[\w-]+)/$', 'add_complex_reminder_schedule', name='edit_complex'),
+    url(r'^schedule/complex/$',
+        CreateComplexScheduledReminderView.as_view(), name=CreateComplexScheduledReminderView.urlname),
     url(r'^schedule/(?P<handler_id>[\w-]+)/$',
         EditScheduledReminderView.as_view(), name=EditScheduledReminderView.urlname),
     url(r'^schedule/$',

@@ -15,6 +15,14 @@
             {% include 'bootstrap/layout/checkboxselectmultiple.html' %}
         {% endif %}
 
+        {% if field|is_checkbox and help_bubble_text %}
+            <label class="control-label">
+                <div class="pull-right" style="width: 20px;">
+                    {% include 'hqwebapp/crispy/layout/help_bubble.html' %}
+                </div>
+            </label>
+        {% endif %}
+
         {% if field|is_radioselect %}
             {% include 'bootstrap/layout/radioselect.html' %}
         {% endif %}
@@ -23,7 +31,6 @@
             <div class="controls">
                 {% if field|is_checkbox and form_show_labels %}
                     <label for="{{ field.id_for_label }}" class="checkbox {% if field.field.required %}requiredField{% endif %}">
-                        {% include 'hqwebapp/crispy/layout/help_bubble.html' %}
                         {% crispy_field field %}
                         {{ field.label|safe }}
                         {% include 'bootstrap/layout/help_text_and_errors.html' %}

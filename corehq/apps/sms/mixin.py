@@ -312,7 +312,7 @@ class CommCareMobileContactMixin(object):
         """
         Saves the given phone number as this contact's verified phone number.
 
-        return  void
+        return  The VerifiedNumber
         raises  InvalidFormatException if the phone number format is invalid
         raises  PhoneNumberInUseException if the phone number is already in use by another contact
         """
@@ -333,6 +333,7 @@ class CommCareMobileContactMixin(object):
         v.backend_id = backend_id
         v.ivr_backend_id = ivr_backend_id
         v.save(**get_safe_write_kwargs())
+        return v
 
     def delete_verified_number(self, phone_number=None):
         """
