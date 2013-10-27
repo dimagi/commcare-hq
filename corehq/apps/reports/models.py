@@ -601,7 +601,24 @@ class HQGroupExportConfiguration(GroupExportConfiguration):
     HQ's version of a group export, tagged with a domain
     """
     domain = StringProperty()
-    
+
+    def get_custom_exports(self):
+
+        def _rewrap(export):
+            print 'rewrap'
+            # custom wrap if relevant
+            try:
+                return {
+                    'form': FormExportSchema,
+                }[export.type].wrap(export._doc)
+            except KeyError:
+                return export
+
+        for custom in list(self.custom_export_ids):
+            custom_export = self._get_custom(custom)
+            if custom_export:
+                yield _rewrap(custom_export)
+
     @classmethod
     def by_domain(cls, domain):
         return cache_core.cached_view(cls.get_db(), "groupexport/by_domain", key=domain, reduce=False, include_docs=True, wrapper=cls.wrap)

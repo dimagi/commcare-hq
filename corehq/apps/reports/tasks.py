@@ -100,8 +100,9 @@ def weekly_reports():
 
 @periodic_task(run_every=crontab(hour=[0,12], minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def saved_exports():    
-    for row in HQGroupExportConfiguration.view("groupexport/by_domain", reduce=False).all():
-        export_for_group(row["id"], "couch")
+    for group_config in HQGroupExportConfiguration.view("groupexport/by_domain", reduce=False,
+                                                        include_docs=True).all():
+        export_for_group(group_config, "couch")
 
 @periodic_task(run_every=crontab(hour="12, 22", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def update_calculated_properties():
