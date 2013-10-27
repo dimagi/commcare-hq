@@ -1,5 +1,8 @@
 import random
 import re
+import pytz
+from dateutil.parser import parse
+from datetime import datetime, timedelta
 from casexml.apps.case.models import CommCareCase
 from custom.fri.models import (
     PROFILE_A,
@@ -12,6 +15,7 @@ from custom.fri.models import (
     FRIMessageBankMessage,
     FRIRandomizedMessage,
 )
+from corehq.apps.reports import util as report_utils
 
 def letters_only(text):
     return re.sub(r"[^a-zA-Z]", "", text).upper()
@@ -19,10 +23,16 @@ def letters_only(text):
 def get_interactive_participants(domain):
     cases = CommCareCase.view("hqcase/types_by_domain", key=[domain, "participant"], include_docs=True, reduce=False).all()
     result = []
+    timezone = report_utils.get_timezone(None, domain) # Use project timezone only
+    current_date = datetime.now(tz=timezone).date()
     for case in cases:
         study_arm = case.get_case_property("study_arm")
-        if (not case.closed) and isinstance(study_arm, basestring) and study_arm.upper() == "A":
-            result.append(case)
+        if isinstance(study_arm, basestring) and study_arm.upper() == "A" and not case.closed:
+            start_date = case.get_case_property("start_date")
+            start_date = parse(start_date).date()
+            end_date = start_date + timedelta(days=55)
+            if current_date >= start_date and current_date <= end_date:
+                result.append(case)
     return result
 
 def get_message_bank(domain, risk_profile=None, for_comparing=False):
