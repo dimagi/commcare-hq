@@ -1,4 +1,5 @@
 {% extends "hqwebapp/two_column.html" %}
+{% load url from future %}
 {% load report_tags %}
 {% load i18n %}
 
@@ -31,7 +32,7 @@
     {% include 'importer/partials/help_message.html' %}
 
     <form class="form-horizontal form-report"
-          action="{% url corehq.apps.importer.views.excel_fields domain %}"
+          action="{% url "corehq.apps.importer.views.excel_fields" domain %}"
           method="post">
         <input type="hidden" name="named_columns" value="{{named_columns}}" />
 

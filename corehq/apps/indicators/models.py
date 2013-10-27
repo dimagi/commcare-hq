@@ -181,14 +181,20 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
         key = ["type", namespace, domain, cls.__name__]
         indicators = cls.view(
             cls.indicator_list_view(),
-            reduce = False,
-            include_docs = True,
+            reduce=False,
+            include_docs=True,
             startkey=key,
             endkey=key+[{}]
         ).all()
         unique = {}
         for ind in indicators:
-            unique["%s.%s" % (ind.slug, ind.namespace)] = ind
+            if ind.base_doc == "CaseIndicatorDefinition":
+                specific_doc = ind.case_type
+            elif ind.base_doc == "FormIndicatorDefinition":
+                specific_doc = ind.xmlns
+            else:
+                specific_doc = "couch"
+            unique["%s.%s.%s" % (ind.slug, ind.namespace, specific_doc)] = ind
         return unique.values()
 
     @classmethod
@@ -303,6 +309,13 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
 
         if datespan:
             datespan = copy.copy(datespan)
+            now = datetime.datetime.utcnow()
+
+            # make sure we don't go over the current day
+            # remember, there is no timezone support for this yet
+            if datespan.enddate > now:
+                datespan.enddate = now
+
             datespan.enddate = datespan.enddate.replace(hour=23, minute=59, second=59, microsecond=999999)
             if self.fixed_datespan_days:
                 datespan.startdate = datespan.enddate - datetime.timedelta(days=self.fixed_datespan_days,

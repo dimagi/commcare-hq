@@ -39,20 +39,27 @@ class Beneficiary(object):
     def __init__(self, case, report):
         report.filter(lambda key: case.get_case_property(key))
 
+        if case.closed and case.closed_on <= report.datespan.startdate_utc:
+            raise InvalidRow
+
         try:
             self.fluff_doc = OpmCaseFluff.get("%s-%s" %
                 (OpmCaseFluff._doc_type, case._id))
         except ResourceNotFound:
             raise InvalidRow
-        self.name = self.fluff_doc.name
-        self.husband_name = self.fluff_doc.husband_name
-        self.awc_name = self.fluff_doc.awc_name
-        self.bank_name = self.fluff_doc.bank_name
-        self.bank_branch_name = self.fluff_doc.bank_branch_name
-        self.bank_branch_code = self.fluff_doc.bank_branch_code
-        self.account_number = self.fluff_doc.account_number
-        self.block = self.fluff_doc.block
-        self.village = self.fluff_doc.village
+
+        def fluff_attr(attr):
+            return getattr(self.fluff_doc, attr, '')
+
+        self.name = fluff_attr('name')
+        self.husband_name = fluff_attr('husband_name')
+        self.awc_name = fluff_attr('awc_name')
+        self.bank_name = fluff_attr('bank_name')
+        self.bank_branch_name = fluff_attr('bank_branch_name')
+        self.bank_branch_code = fluff_attr('bank_branch_code')
+        self.account_number = fluff_attr('account_number')
+        self.block = fluff_attr('block')
+        self.village = fluff_attr('village')
 
         def get_result(calculator):
             return OpmFormFluff.get_result(
@@ -62,10 +69,13 @@ class Beneficiary(object):
             )['total']
 
         FIXTURES = get_fixture_data() 
-        self.bp1_cash = get_result('bp1_cash') * FIXTURES['window_completed']
-        self.bp2_cash = get_result('bp2_cash') * FIXTURES['window_completed']
+        self.bp1_cash = (FIXTURES['window_completed']
+                            if get_result('bp1_cash') else 0)
+        self.bp2_cash = (FIXTURES['window_completed']
+                            if get_result('bp2_cash') else 0)
         self.delivery_cash = get_result('delivery') * FIXTURES['delivery_lump_sums']
-        self.child_cash = get_result('child_followup') * FIXTURES['window_completed']
+        self.child_cash = (FIXTURES['window_completed'] 
+                            if get_result('child_followup') else 0)
         self.spacing_cash = OpmFormFluff.get_result('child_spacing',
             [DOMAIN, self.account_number], date_range=report.date_range)
         self.total = sum([self.bp1_cash, self.bp2_cash,

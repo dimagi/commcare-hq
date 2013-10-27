@@ -1,4 +1,5 @@
 {% extends "app_manager/managed_app.html" %}
+{% load url from future %}
 {% load xforms_extras %}
 {% load url_extras %}
 {% load timezone_tags %}
@@ -14,18 +15,20 @@
 <script>
     $(function () {
         // init releases
+        {# The '___' in these urls will later be replaced by an app's _id ReleasesMain's url function #}
         var urls = {
-            fetch: '{% url paginate_releases domain app.id %}',
-            delete: '{% url corehq.apps.app_manager.views.delete_copy domain app.id %}',
-            emulator: '{% url emulator domain '___' %}',
-            cloudcare: '{% url cloudcare_get_app domain '___' %}',
-            jad: '{% url corehq.apps.app_manager.views.download_jad domain '___' %}',
-            jar: '{% url corehq.apps.app_manager.views.download_jar domain '___' %}',
-            odk: '{% url corehq.apps.app_manager.views.odk_install domain '___' %}',
-            source: '{% url download_index domain '___' %}',
-            release: '{% url release_build domain app.id '___' %}',
-            newBuild: '{% url corehq.apps.app_manager.views.save_copy domain app.id %}',
-            revertBuild: '{% url corehq.apps.app_manager.views.revert_to_copy domain app.id %}'
+            fetch: '{% url "paginate_releases" domain app.id %}',
+            delete: '{% url "corehq.apps.app_manager.views.delete_copy" domain app.id %}',
+            emulator: '{% url "emulator" domain '___' %}',
+            cloudcare: '{% url "cloudcare_get_app" domain '___' %}',
+            jad: '{% url "corehq.apps.app_manager.views.download_jad" domain '___' %}',
+            jar: '{% url "corehq.apps.app_manager.views.download_jar" domain '___' %}',
+            odk: '{% url "odk_install" domain '___' %}',
+            odk_media: '{% url "odk_media_install" domain '___' %}',
+            source: '{% url "download_index" domain '___' %}',
+            release: '{% url "release_build" domain app.id '___' %}',
+            newBuild: '{% url "corehq.apps.app_manager.views.save_copy" domain app.id %}',
+            revertBuild: '{% url "corehq.apps.app_manager.views.revert_to_copy" domain app.id %}'
         };
         var o = {
             users_cannot_share: {{ users_cannot_share|JSON }},
@@ -262,14 +265,14 @@
                         The following users cannot use this case sharing app because they have either more or less than one group.
                         To fix this, please 
                         {% endblocktrans %}
-                        <a href="{% url commcare_users domain %}?cannot_share=true&more_columns=true">{% trans "edit their group settings" %}</a>
+                        <a href="{% url "commcare_users" domain %}?cannot_share=true&more_columns=true">{% trans "edit their group settings" %}</a>
                         {% trans "so that they all belong to exactly one group." %}
                     </p>
                     <ul data-bind="foreach: $root.users_cannot_share">
                         <li data-bind="text: username"></li>
                     </ul>
                     <p>
-                        <a href="{% url commcare_users domain %}?cannot_share=true&more_columns=true" class="btn">{% trans "Edit mobile users" %}</a>
+                        <a href="{% url "commcare_users" domain %}?cannot_share=true&more_columns=true" class="btn">{% trans "Edit mobile users" %}</a>
                         <a class="btn" data-bind="click: function () {return $root.deployAnyway[id()](true);}">{% trans "Deploy anyway" %}</a>
                     </p>
                 </div>
@@ -318,24 +321,31 @@
                         </div>
                         <div class="accordion-body collapse">
                             <div class="accordion-inner">
+                                <label class="checkbox">
+                                    <input type="checkbox" data-bind="checked: include_media, enable: mm_supported()">
+                                    {% trans "Include Multimedia" %}
+                                    <span data-bind="visible: !mm_supported()" class="label">
+                                        {% trans "Only supported for builds made after 2013-10-15" %}
+                                    </span>
+                                </label>
                                 <p>
-                                    <span data-bind="visible: short_odk_url()">
+                                    <span data-bind="visible: get_short_odk_url()">
                                         {% blocktrans %}
                                             Install by typing the following URL
                                             into the application install screen:
                                         {% endblocktrans %}
                                         <code><a data-bind="
-                                            attr: {href: short_odk_url()},
-                                            text: short_odk_url()
+                                            attr: {href: get_short_odk_url()},
+                                            text: get_short_odk_url()
                                         "></a></code>
                                     </span>
-                                    <span class="text-warning" data-bind="visible: !short_odk_url()">
+                                    <span class="text-warning" data-bind="visible: !get_short_odk_url()">
                                         {% trans "No short code available; try making another version." %}
                                     </span>
                                 </p>
                                 <p>
                                     {% trans "Or" %}
-                                    <a href="#" data-bind="openJqm: $root.url('odk', id)">
+                                    <a href="#" data-bind="openJqm: get_odk_install_url">
                                     {% trans "scan the bar code" %}
                                     </a>
                                 </p>
@@ -365,12 +375,19 @@
                                         <div class="tab-content" data-bind="foreach: [short_url(), short_odk_url()]">
                                             <div class="tab-pane">
                                                 <div data-bind="visible: $data">
-                                                    <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
+                                                    <label class="checkbox" data-bind="visible: $parent.short_odk_media_url && $index() === 1">
+                                                        <input type="checkbox" data-bind="checked: $parent.include_media, enable: $parent.mm_supported()">
+                                                        {% trans "Include Multimedia" %}
+                                                        <span data-bind="visible: !$parent.mm_supported()" class="label">
+                                                            {% trans "Only supported for builds made after 2013-10-15" %}
+                                                        </span>
+                                                    </label>
+                                                    <form method="post" action="{% url "corehq.apps.sms.views.send_to_recipients" domain %}">
                                                         <label>{% trans "Send to:" %}</label>
                                                         <input type="text" name="recipients" data-bind="multiTypeahead: $root.recipients" value=""/>
                                                         <br />
                                                         <textarea name="message" data-bind="text: 'Update to CommCare: ' +
-                                                            $data + ' (&quot;' + $parent.short_name() + '&quot; v. ' + $parent.version() + ')'"></textarea>
+                                                            $parent.sms_url($index()) + ' (&quot;' + $parent.short_name() + '&quot; v. ' + $parent.version() + ')'"></textarea>
                                                         <br />
                                                         <input type="submit" class="btn" value="Send"/>
                                                     </form>

@@ -1,22 +1,35 @@
 {% extends 'settings/base_template.html' %}
+{% load url from future %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
 {% block js-inline %}{{ block.super }}
 <script>
-    $("#sync_facilities").click(function() {
-        $(this).addClass("disabled").html('{% trans "Syncing..." %}');
-
-        $.ajax({
-            type: 'POST',
-            url: '{% url sync_facilities_with_locations domain %}',
-            success: function() {
-                $("#sync_facilities").html('{% trans "Sync Successful" %}');
-            },
-            error: function() {
-                $("#sync_facilities").html('{% trans "Error!" %}').addClass("btn-danger");
-
-            }
+    $(function () {
+        var _post = function (elem, url, options) {
+            var options = options || {};
+            var success = options.success || '{% trans "Sync Successful" %}';
+            var error = options.error || '{% trans "Error!" %}';
+            $(elem).addClass("disabled").html('{% trans "Syncing..." %}');
+            $.ajax({
+                type: 'POST',
+                url: url,
+                success: function() {
+                    $(elem).html(success);
+                },
+                error: function() {
+                    $(elem).html(error).addClass("btn-danger");
+                }
+            });
+        };
+        $("#sync_facilities").click(function() {
+            var url = '{% url "sync_facilities_with_locations" domain %}';
+            _post(this, url);
+        });
+        $("#sync_lmis").click(function() {
+            var url = '{% url "sync_openlmis" domain %}';
+            var successMessage = '{% trans "Sync started" %}';
+            _post(this, url, {success: successMessage});
         });
     });
 </script>
@@ -26,7 +39,7 @@
 <header>
     <div class="row-fluid">
         <div class="span8">
-            <h2>{% trans "Sync with Facility Registry" %}</h2>
+            <h2>{% trans "Sync Locations with Facility Registry" %}</h2>
         </div>
     </div>
 </header>
@@ -36,11 +49,25 @@
             <a class="btn" id="sync_facilities">
                 {% trans "Sync Now" %}
             </a>
-          <!-- not supported yet!
-            <a class="btn" href="#">Bulk Import</a>
-            <a class="btn" href="#">Bulk Export</a>
-            -->
         </div>
     </div>
 </div>
+{% if lmis_config %}
+<header>
+    <div class="row-fluid">
+        <div class="span8">
+            <h2>{% trans "Sync with OpenLMIS" %}</h2>
+        </div>
+    </div>
+</header>
+<div class="row-fluid">
+    <div class="span12">
+        <div class="btn-toolbar">
+            <a class="btn" id="sync_lmis">
+                {% trans "Sync Now" %}
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}

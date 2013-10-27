@@ -258,7 +258,7 @@ class IndicatorAdminTab(UITab):
 
 class ReportsTab(UITab):
     title = ugettext_noop("Reports")
-    view = "corehq.apps.reports.views.default"
+    view = "corehq.apps.reports.views.saved_reports"
     subtab_classes = (ProjectReportsTab, ADMReportsTab, IndicatorAdminTab)
 
 
@@ -330,7 +330,7 @@ class CommTrackSetupTab(UITab):
                 'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
             },
         ]
-        items.append([_("Locations (Advanced)"), advanced_locations_section])
+        items.append([_("Integration (Advanced)"), advanced_locations_section])
 
         return items
 
@@ -498,6 +498,28 @@ class MessagingTab(UITab):
         def keyword_subtitle(keyword=None, **context):
             return keyword.keyword
 
+        if self.couch_user.username in [
+            'rhartford@dimagi.com',
+            'sshah@dimagi.com',
+            'biyeun@dimagi.com',
+            'rhartford+15@dimagi.com',
+        ]:
+            from corehq.apps.sms.views import DomainSmsGatewayListView
+            from corehq.apps.reminders.views import (
+                EditScheduledReminderView,
+                CreateScheduledReminderView,
+                RemindersListView,
+            )
+            sms_connectivity_url = reverse(DomainSmsGatewayListView.urlname, args=[self.domain])
+            reminders_list_url = reverse(RemindersListView.urlname, args=[self.domain])
+            edit_reminder_urlname = EditScheduledReminderView.urlname
+            new_reminder_urlname = CreateScheduledReminderView.urlname
+        else:
+            sms_connectivity_url = reverse('list_domain_backends', args=[self.domain])
+            reminders_list_url = reverse('list_reminders', args=[self.domain])
+            edit_reminder_urlname = 'edit_complex'
+            new_reminder_urlname = 'add_complex_reminder_schedule'
+
         items = [
             (_("Messages"), [
                 {'title': _('Compose SMS Message'),
@@ -515,7 +537,7 @@ class MessagingTab(UITab):
                 {'title': _('Message Log'),
                  'url': MessageLogReport.get_url(domain=self.domain)},
                 {'title': _('SMS Connectivity'),
-                 'url': reverse('list_domain_backends', args=[self.domain]),
+                 'url': sms_connectivity_url,
                  'subpages': [
                      {'title': _('Add Connection'),
                       'urlname': 'add_domain_backend'},
@@ -525,12 +547,14 @@ class MessagingTab(UITab):
             ]),
             (_("Data Collection and Reminders"), [
                 {'title': _("Reminders"),
-                 'url': reverse('list_reminders', args=[self.domain]),
+                 'url': reminders_list_url,
                  'subpages': [
                      {'title': reminder_subtitle,
-                      'urlname': 'edit_complex'},
-                     {'title': _("New Reminder Definition"),
-                      'urlname': 'add_complex_reminder_schedule'},
+                      'urlname': edit_reminder_urlname},
+                     {'title': _("Schedule Reminder"),
+                      'urlname': new_reminder_urlname},
+                     {'title': _("Schedule Multi Event Reminder"),
+                      'urlname': 'create_complex_reminder_schedule'},
                  ]},
                 {'title': _("Reminder Calendar"),
                  'url': reverse('scheduled_reminders', args=[self.domain])},
@@ -575,6 +599,14 @@ class MessagingTab(UITab):
                          {'title': _("New Survey"),
                           'urlname': 'add_survey'},
                      ]},
+                ])
+            )
+
+        if self.couch_user.is_superuser or self.couch_user.is_domain_admin(self.domain):
+            items.append(
+                (_("Settings"), [
+                    {'title': _("General Settings"),
+                     'url': reverse('sms_settings', args=[self.domain])},
                 ])
             )
 

@@ -1,9 +1,9 @@
 import functools
 from dimagi.utils.decorators.memoized import memoized
-from corehq.apps.app_manager.util import create_temp_sort_column
+from corehq.apps.app_manager.util import is_sort_only_column
 import langcodes
 import commcare_translations
-from corehq.apps.app_manager.suite_xml import IdStrings
+from corehq.apps.app_manager.suite_xml import IdStrings, get_detail_column_infos
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 
 
@@ -15,6 +15,12 @@ def _create_custom_app_strings(app, lang):
 
     def trans(d):
         return clean_trans(d, langs)
+    def numfirst(text):
+        if float(app.build_spec.minor_release()) >= 2.8:
+            numeric_nav_on = app.profile.get('properties', {}).get('cc-entry-mode') == 'cc-entry-review'
+            if app.profile.get('features', {}).get('sense') == 'true' or numeric_nav_on:
+                text = "${0} %s" % (text,) if not (text and text[0].isdigit()) else text
+        return text
 
     id_strings = IdStrings()
     langs = [lang] + app.langs
@@ -38,36 +44,23 @@ def _create_custom_app_strings(app, lang):
                 label = trans(module.referral_label)
             yield id_strings.detail_title_locale(module, detail), label
 
-            sort_elements = dict((s.field, (s, i + 1))
-                                 for i, s in enumerate(detail.sort_elements))
+            detail_column_infos = get_detail_column_infos(detail)
+            for (column, sort_element, order) in detail_column_infos:
+                if not is_sort_only_column(column):
+                    yield id_strings.detail_column_header_locale(module, detail, column), trans(column.header)
 
-            columns = list(detail.get_columns())
-            for column in columns:
-                yield id_strings.detail_column_header_locale(module, detail, column), trans(column.header)
+                if column.format in ('enum', 'enum-image'):
+                    for item in column.enum:
+                        yield id_strings.detail_column_enum_variable(module, detail, column, item.key), trans(item.value)
 
-                if column.header:
-                    sort_elements.pop(column.header.values()[0], None)
-
-                if column.format == 'enum':
-                    for key, val in column.enum.items():
-                        yield id_strings.detail_column_enum_variable(module, detail, column, key), trans(val)
-
-            # everything left is a sort only option
-            for sort_element in sort_elements:
-                # create a fake column for it
-                column = create_temp_sort_column(sort_element, len(columns))
-
-                # now mimic the normal translation
-                field_text = {'en': str(column.field)}
-                yield id_strings.detail_column_header_locale(module, detail, column), trans(field_text)
-
-        yield id_strings.module_locale(module), trans(module.name)
+        yield id_strings.module_locale(module), numfirst(trans(module.name))
         if module.case_list.show:
             yield id_strings.case_list_locale(module), trans(module.case_list.label) or "Case List"
         if module.referral_list.show:
             yield id_strings.referral_list_locale(module), trans(module.referral_list.label)
         for form in module.get_forms():
-            yield id_strings.form_locale(form), trans(form.name) + ('${0}' if form.show_count else '')
+            form_name = trans(form.name) + ('${0}' if form.show_count else '')
+            yield id_strings.form_locale(form), numfirst(form_name)
 
 
 class AppStringsBase(object):

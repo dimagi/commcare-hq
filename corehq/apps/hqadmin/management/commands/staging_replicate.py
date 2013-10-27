@@ -5,6 +5,8 @@ import sys
 from auditcare.models import AuditEvent
 from corehq.apps.domain.models import Domain
 from couchforms.models import XFormInstance
+from dimagi.utils.couch.database import get_db
+
 
 def get_prod_db(source_uri):
     """
@@ -52,6 +54,17 @@ class Command(LabelCommand):
         target_server = XFormInstance.get_db().server
         self.do_repl(target_server, params)
 
+    def repl_docs_of_type(self, doc_type):
+        params = {
+            'filter': 'fluff_filter/domain_type',
+            'continuous': True,
+            'query_params': {
+                'doc_type':  doc_type
+            }
+        }
+        target_server = get_db().server
+        self.do_repl(target_server, params)
+
     def do_repl(self, server, params):
         if self.cancel:
             params['cancel'] = True
@@ -76,7 +89,6 @@ class Command(LabelCommand):
                   "\n\n\tgoodbye."
             sys.exit()
 
-
         if 'cancel' in args:
             self.cancel = True
         else:
@@ -84,6 +96,6 @@ class Command(LabelCommand):
 
         self.repl_domains()
         self.repl_docs()
+        self.repl_docs_of_type('CommCareBuild')
+        self.repl_docs_of_type('CommCareBuildConfig')
         AuditEvent.audit_command()
-
-

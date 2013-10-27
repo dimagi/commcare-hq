@@ -16,13 +16,18 @@ COMMCONNECT_DEVICE_ID = "commconnect"
 AUTH = DigestAuth(settings.TOUCHFORMS_API_USER, 
                   settings.TOUCHFORMS_API_PASSWORD)
 
-# If yield_responses is True, the list of xforms responses is returned, otherwise the text prompt for each is returned
-def start_session(domain, contact, app, module, form, case_id=None, yield_responses=False, session_type=XFORMS_SESSION_SMS):
+def start_session(domain, contact, app, module, form, case_id=None, yield_responses=False, session_type=XFORMS_SESSION_SMS, case_for_case_submission=False):
     """
     Starts a session in touchforms and saves the record in the database.
     
     Returns a tuple containing the session object and the (text-only) 
     list of generated questions/responses based on the form.
+    
+    Special params:
+    yield_responses - If True, the list of xforms responses is returned, otherwise the text prompt for each is returned
+    session_type - XFORMS_SESSION_SMS or XFORMS_SESSION_IVR
+    case_for_case_submission - True if this is a submission that a case is making to alter another related case. For example, if a parent case is filling out
+        an SMS survey which will update its child case, this should be True.
     """
     # NOTE: this call assumes that "contact" will expose three
     # properties: .raw_username, .get_id, and .get_language_code
@@ -31,7 +36,11 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
     # since the API user is a superuser, force touchforms to query only
     # the contact's cases by specifying it as an additional filterp
     if contact.doc_type == "CommCareCase":
-        session_data["additional_filters"] = { "case_id": contact.get_id, "footprint" : "True" }
+        session_data["additional_filters"] = {
+            "case_id": contact.get_id,
+            "footprint" : "True",
+            "include_children" : "True" if case_for_case_submission else "False",
+        }
     else:
         session_data["additional_filters"] = { "user_id": contact.get_id }
     
@@ -66,29 +75,34 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
 def get_responses(msg):
     return _get_responses(msg.domain, msg.couch_recipient, msg.text)
 
-def _get_responses(domain, recipient, text, yield_responses=False, session_id=None):
+def _get_responses(domain, recipient, text, yield_responses=False, session_id=None, update_timestamp=True):
     """
     Try to process this message like a session-based submission against
     an xform.
     
     Returns a list of responses if there are any.
     """
-        # assumes couch_recipient is the connection_id
+    session = None
     if session_id is not None:
-        session = XFormsSession.latest_by_session_id(session_id)
+        if update_timestamp:
+            # The IVR workflow passes the session id
+            session = XFormsSession.latest_by_session_id(session_id)
     else:
-        # The IVR workflow passes the session id, the SMS workflow grabs the open sms session
-        session = XFormsSession.view("smsforms/open_sms_sessions_by_connection", 
-                                     key=[domain, recipient],
-                                     include_docs=True).one()
-    if session:
+        # The SMS workflow grabs the open sms session
+        session = XFormsSession.get_open_sms_session(domain, recipient)
+        if session is not None:
+            session_id = session.session_id
+
+    if update_timestamp and session is not None:
         session.modified_time = datetime.utcnow()
         session.save()
+
+    if session_id is not None:
         # TODO auth
         if yield_responses:
-            return list(tfsms.next_responses(session.session_id, text, auth=None))
+            return list(tfsms.next_responses(session_id, text, auth=None))
         else:
-            return _responses_to_text(tfsms.next_responses(session.session_id, text, auth=None))
+            return _responses_to_text(tfsms.next_responses(session_id, text, auth=None))
 
 def _responses_to_text(responses):
     return [r.text_prompt for r in responses if r.text_prompt]

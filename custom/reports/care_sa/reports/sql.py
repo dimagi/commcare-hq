@@ -46,10 +46,6 @@ class CareReport(SqlTabularReport,
         'custom.reports.care_sa.reports.sql.ShowGenderField',
     ]
 
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return user and user.is_previewer()
-
     def selected_province(self):
         fixture = self.request.GET.get('fixture_id', "")
         return fixture.split(':')[1] if fixture else None
@@ -390,6 +386,8 @@ class CareReport(SqlTabularReport,
 
         rows_for_table = []
         overall_total_row = []
+        age_group_totals = {'0': [], '1': [], '2': [], '3': []}
+
         # for every group of data, unpack back to individual rows
         # and set up the information the template needs to render this
         # stuff
@@ -410,6 +408,11 @@ class CareReport(SqlTabularReport,
                         'row_data': row_data
                     })
 
+                    age_group_totals[age_group] = self.add_row_to_total(
+                        age_group_totals[age_group],
+                        row_data
+                    )
+
                     total_row = self.add_row_to_total(total_row, row_data)
             elif not self.show_age() and self.show_gender():
                 row_data = self.merge_gender_data(rows[user])
@@ -429,6 +432,11 @@ class CareReport(SqlTabularReport,
                         'age_display': self.age_group_text(age_group),
                         'row_data': row_data
                     })
+
+                    age_group_totals[age_group] = self.add_row_to_total(
+                        age_group_totals[age_group],
+                        row_data
+                    )
 
                     total_row = self.add_row_to_total(total_row, row_data)
             else:
@@ -451,6 +459,16 @@ class CareReport(SqlTabularReport,
                 'gender': self.show_gender(),
                 'row_data': total_row,
             })
+
+        if self.show_age():
+            for group in ['0', '1', '2', '3']:
+                rows_for_table.append({
+                    'username': 'AGE_TOTAL_ROW',
+                    'total_width': total_width,
+                    'age_display': self.age_group_text(group),
+                    'gender': self.show_gender(),
+                    'row_data': age_group_totals[group]
+                })
 
         rows_for_table.append({
             'username': 'OVERALL_TOTAL_ROW',

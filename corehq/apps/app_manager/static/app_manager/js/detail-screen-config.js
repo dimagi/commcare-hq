@@ -125,69 +125,6 @@ function ParentSelect(init) {
 var DetailScreenConfig = (function () {
     "use strict";
     var DetailScreenConfig, Screen, Column, sortRows;
-
-    function formatEnum(obj, lang, langs) {
-        var key,
-            translated_pairs = {},
-            actual_pairs = {},
-            translatedValue,
-            actualValue,
-            i;
-        for (key in obj) {
-            if (obj.hasOwnProperty(key)) {
-                translatedValue = "";
-                actualValue = "";
-                if (obj[key][lang]) {
-                    translatedValue = { value: obj[key][lang],
-                                        lang: lang };
-                    actualValue = obj[key][lang];
-                } else {
-                    // separate value for a different language
-                    for (i = 0; i < langs.length; i += 1) {
-                        if (obj[key][langs[i]]) {
-                            translatedValue = { value: obj[key][langs[i]],
-                                                lang: langs[i] };
-                        }
-                    }
-                }
-                actual_pairs[key] = actualValue;
-                translated_pairs[key] = translatedValue;
-            }
-        }
-        return {
-            cleaned: actual_pairs,
-            translations: translated_pairs
-        };
-    }
-    function unformatEnum(text, lang, original) {
-        var json, mapping, key,
-            orig = JSON.parse(JSON.stringify(original));
-
-        if (text) {
-            mapping = JSON.parse(text);
-        } else {
-            mapping = {};
-        }
-        for (key in mapping) {
-            if (mapping.hasOwnProperty(key)) {
-                if (!orig.hasOwnProperty(key)) {
-                    orig[key] = {};
-                }
-                orig[key][lang] = mapping[key] || "";
-            }
-        }
-        for (key in orig) {
-            if (orig.hasOwnProperty(key)) {
-                if (!mapping.hasOwnProperty(key)) {
-                    delete orig[key][lang];
-                }
-                if (_.isEmpty(orig[key])) {
-                    delete orig[key];
-                }
-            }
-        }
-        return orig;
-    }
     var word = '[a-zA-Z][\\w_-]*';
     var field_val_re = RegExp('^('+word+':)?'+word+'(\\/'+word+')*$');
     var field_format_warning = $('<span/>').addClass('help-inline')
@@ -214,7 +151,7 @@ var DetailScreenConfig = (function () {
             this.original.field = this.original.field || "";
             this.original.header = this.original.header || {};
             this.original.format = this.original.format || "plain";
-            this.original['enum'] = this.original['enum'] || {};
+            this.original['enum'] = this.original['enum'] || [];
             this.original.late_flag = this.original.late_flag || 30;
             this.original.filter_xpath = this.original.filter_xpath || "";
             this.original.time_ago_interval = this.original.time_ago_interval || DetailScreenConfig.TIME_AGO.year;
@@ -252,17 +189,13 @@ var DetailScreenConfig = (function () {
             this.format = uiElement.select(DetailScreenConfig.MENU_OPTIONS).val(this.original.format || null);
 
             (function () {
-                var f = formatEnum(that.original['enum'], that.lang, that.screen.langs);
-                that.enum_extra = uiElement.map_list(guidGenerator(), that.original.field);
-                that.enum_extra.val(f.cleaned, f.translations);
-                var div = that.enum_extra.ui.find('div');
-                if (div.is(':empty')) {
-                    div.css('display', 'inline-block')
-                       .css('margin-right', '10px')
-                       .prepend($("<h4/>")
-                       .text(DetailScreenConfig.message.ENUM_EXTRA_LABEL));
-                }
-                that.enum_extra.ui.find('.enum-edit').css({ display: 'inline-block' });
+                var o = {
+                    lang: that.lang,
+                    langs: that.screen.langs,
+                    items: that.original['enum'],
+                    modalTitle: 'Editing mapping for ' + that.original.field
+                };
+                that.enum_extra = uiElement.key_value_mapping(o);
             }());
             this.late_flag_extra = uiElement.input().val(this.original.late_flag.toString());
             this.late_flag_extra.ui.find('input').css('width', 'auto');
@@ -309,12 +242,12 @@ var DetailScreenConfig = (function () {
             this.format.on('change', function () {
                 // Prevent this from running on page load before init
                 if (that.format.ui.parent().length > 0) {
-                    that.enum_extra.ui.remove();
-                    that.late_flag_extra.ui.remove();
-                    that.filter_xpath_extra.ui.remove();
-                    that.time_ago_extra.ui.remove();
+                    that.enum_extra.ui.detach();
+                    that.late_flag_extra.ui.detach();
+                    that.filter_xpath_extra.ui.detach();
+                    that.time_ago_extra.ui.detach();
 
-                    if (this.val() === "enum") {
+                    if (this.val() === "enum" || this.val() === "enum-image") {
                         that.format.ui.parent().append(that.enum_extra.ui);
                     } else if (this.val() === 'late-flag') {
                         that.format.ui.parent().append(that.late_flag_extra.ui);
@@ -348,9 +281,6 @@ var DetailScreenConfig = (function () {
                     that.field.$edit_view.focus();
                 }
             }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.ADD_COLUMN);
-//            this.$copy = $('<i></i>').addClass(COMMCAREHQ.icons.COPY).click(function () {
-//                that.duplicate();
-//            }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.COPY_COLUMN);
             this.$delete = $('<i></i>').addClass(COMMCAREHQ.icons.DELETE).click(function () {
                 $(this).remove();
                 that.screen.fire('delete-column', that);
@@ -376,7 +306,7 @@ var DetailScreenConfig = (function () {
                 column.field = this.field.val();
                 column.header[this.lang] = this.header.val();
                 column.format = this.format.val();
-                column['enum'] = unformatEnum(this.enum_extra.$formatted_view.val(), this.lang, column['enum']);
+                column['enum'] = this.enum_extra.getItems();
                 column.late_flag = parseInt(this.late_flag_extra.val(), 10);
                 column.time_ago_interval = parseFloat(this.time_ago_extra.val());
                 column.filter_xpath = this.filter_xpath_extra.val();
@@ -483,7 +413,7 @@ var DetailScreenConfig = (function () {
             }
 
             // set up the custom column
-            this.customColumn = Column.init({model: "case", format: "plain"}, this);
+            this.customColumn = Column.init({model: "case", format: "plain", includeInShort: false}, this);
             this.customColumn.field.on('change', function () {
                 that.customColumn.header.val(toTitleCase(this.val()));
                 if (this.val() && !field_val_re.test(this.val())) {
@@ -519,7 +449,8 @@ var DetailScreenConfig = (function () {
                         column = Column.init({
                             model: model,
                             field: property,
-                            header: header
+                            header: header,
+                            includeInShort: false
                         }, this);
                         initColumnAsSuggestion(column);
                         this.suggestedColumns.push(column);
@@ -746,7 +677,6 @@ var DetailScreenConfig = (function () {
                     $('<th/>').addClass('detail-screen-format').text(DetailScreenConfig.message.FORMAT).appendTo($tr);
                     $('<th/>').addClass('detail-screen-extra').appendTo($tr);
 
-//                    $('<th/>').addClass('detail-screen-icon').appendTo($tr);
                     $('<th/>').addClass('detail-screen-icon').appendTo($tr);
 
                     $columns = $('<tbody/>').addClass('detail-screen-columns').appendTo($table);
@@ -892,6 +822,7 @@ var DetailScreenConfig = (function () {
         },
         PHONE_FORMAT: 'Phone Number',
         ENUM_FORMAT: 'ID Mapping',
+        ENUM_IMAGE_FORMAT: 'Icon',
         ENUM_EXTRA_LABEL: 'Mapping: ',
         LATE_FLAG_FORMAT: 'Late Flag',
         LATE_FLAG_EXTRA_LABEL: 'Days late: ',
@@ -926,6 +857,10 @@ var DetailScreenConfig = (function () {
         {value: "address", label: DetailScreenConfig.message.ADDRESS_FORMAT}
     ];
 
+    if (window.FEATURE_enable_enum_image) {
+        DetailScreenConfig.MENU_OPTIONS.push(
+            {value: "enum-image", label: DetailScreenConfig.message.ENUM_IMAGE_FORMAT + ' (Preview!)'}
+        );
+    }
     return DetailScreenConfig;
 }());
-

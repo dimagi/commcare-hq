@@ -5,25 +5,11 @@
 
 {% block pagination_templates %}
     <script type="text/html" id="existing-group-template">
-        <td class="span5" data-bind="text: name"></td>
-        <td class="span3" data-bind="text: numCases"></td>
-        <td class="span4">
-            <a class="btn btn-primary"
-               data-bind="attr: {
-                    href: manageUrl
-               }">
-                {% trans "Manage Cases" %}
-            </a>
-            <button type="button"
-                data-toggle="modal"
-                data-bind="
-                        attr: {
-                            'data-target': '#update-group-' + id
-                        }
-                    "
-                    class="btn">
-                <i class="icon-edit"></i> {% trans "Edit Info" %}
-            </button>
+        <td class="span6">
+            <a data-bind="attr: { href: editUrl }, text: name"></a>
+        </td>
+        <td class="span4" data-bind="text: numCases"></td>
+        <td class="span2">
             <button type="button"
                 data-toggle="modal"
                 data-bind="
@@ -31,10 +17,9 @@
                         'data-target': '#delete-group-' + id
                     }
                 "
-                class="btn btn-danger pull-right">
+                class="btn btn-danger">
                 <i class="icon-remove"></i> {% trans "Delete" %}
             </button>
-
 
             <div class="modal hide fade"
                  data-bind="
@@ -70,23 +55,6 @@
                     </button>
                 </div>
             </div>
-
-            <div class="modal hide fade"
-                 data-bind="
-                    attr: {
-                        id: 'update-group-' + id
-                    }
-                 ">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h3>
-                       {% blocktrans %}
-                           Update case group <strong data-bind="text: name"></strong>:
-                       {% endblocktrans %}
-                    </h3>
-                </div>
-                <div data-bind="html: updateForm"></div>
-            </div>
         </td>
     </script>
 
@@ -99,13 +67,13 @@
     <script type="text/html" id="new-group-template">
         <td>
             <span class="label label-success">{% trans 'New' %}</span>
-            <span data-bind="text: name"></span>
+            <a data-bind="attr: { href: editUrl }, text: name"></a>
         </td>
         <td data-bind="text: numCases"></td>
         <td>
             <a class="btn btn-primary"
                data-bind="attr: {
-                    href: manageUrl
+                    href: editUrl
                }">
                 {% trans "Manage Cases" %}
             </a>

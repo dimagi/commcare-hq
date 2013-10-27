@@ -1,7 +1,13 @@
-from datetime import datetime, timedelta
-from django.contrib import messages
+from datetime import datetime
 import logging
 import math
+
+from django.contrib import messages
+from django.http import Http404
+import pytz
+from django.conf import settings
+from django.utils.importlib import import_module
+
 from corehq.apps.announcements.models import ReportAnnouncement
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.display import xmlns_to_name
@@ -9,19 +15,14 @@ from corehq.apps.reports.models import HQUserType, TempCommCareUser
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import user_id_to_username
 from couchexport.util import SerializableFunction
-from couchforms.filters import instances
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
-from dimagi.utils.modules import to_function
-from django.http import Http404
-import pytz
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import json_request
-from django.conf import settings
-import os
 
 
 def make_form_couch_key(domain, by_submission_time=True,
@@ -201,10 +202,12 @@ def _report_user_dict(user):
     return dict([(attr, getattr(user, attr)) for attr in user_report_attrs])
 
 
-def format_datatables_data(text, sort_key):
-    # used below
-    data = {"html": text,
-            "sort_key": sort_key}
+def format_datatables_data(text, sort_key, raw=None):
+    # todo: this is redundant with report.table_cell()
+    # should remove/refactor one of them away
+    data = {"html": text, "sort_key": sort_key}
+    if raw is not None:
+        data['raw'] = raw
     return data
 
 def app_export_filter(doc, app_id):
@@ -355,12 +358,12 @@ def friendly_timedelta(td):
 def set_report_announcements_for_user(request, couch_user):
     key = ["type", ReportAnnouncement.__name__]
     now = datetime.utcnow()
-    data = ReportAnnouncement.get_db().view('announcements/all_announcements',
-        reduce=False,
-        startkey=key + [now.isoformat()],
-        endkey=key + [{}],
-        #stale=settings.COUCH_STALE_QUERY,
-    ).all()
+
+    db = ReportAnnouncement.get_db()
+    data = cache_core.cached_view(db, "announcements/all_announcements", reduce=False,
+                                 startkey=key + [now.strftime("%Y-%m-%dT%H:00")], endkey=key + [{}],
+                                 )
+
     announce_ids = [a['id'] for a in data if a['id'] not in couch_user.announcements_seen]
     for announcement_id in announce_ids:
         try:
@@ -430,12 +433,7 @@ def datespan_from_beginning(domain, default_days, timezone):
     datespan.is_default = True
     return datespan
 
-def get_installed_custom_modules_names():
-    path = os.path.dirname('custom/apps/')
-    installed_custom_module_names = []
+def get_installed_custom_modules():
 
-    for module in os.listdir(path):
-        if os.path.isdir(path + '/' + module) == True and os.path.exists(path + '/' + module + '/urls.py') and 'urlpatterns' in open(path + '/' + module + '/urls.py').read():
-            installed_custom_module_names.append(module)
-    return installed_custom_module_names
+    return [import_module(module) for module in settings.CUSTOM_MODULES]
 

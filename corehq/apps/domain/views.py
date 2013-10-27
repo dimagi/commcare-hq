@@ -62,7 +62,7 @@ class DomainViewMixin(object):
     @property
     @memoized
     def domain(self):
-        return self.args[0] if len(self.args) > 0 else ""
+        return self.args[0] if len(self.args) > 0 else self.kwargs.get('domain', "")
 
     @property
     @memoized
@@ -602,7 +602,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                     application.user_type = request.POST["%s-user_type" % original_id]
 
                     if not new_domain.multimedia_included:
-                        application.multimedia_map = None
+                        application.multimedia_map = {}
                     application.save()
                 else:
                     application.delete()

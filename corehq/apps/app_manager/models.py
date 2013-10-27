@@ -1,13 +1,11 @@
 # coding=utf-8
 from distutils.version import LooseVersion
 import tempfile
-from couchdbkit import ResourceConflict
 import os
 import logging
 import hashlib
 import random
 import json
-from corehq.apps.app_manager.commcare_settings import check_condition
 import types
 import re
 from collections import defaultdict
@@ -16,31 +14,31 @@ from functools import wraps
 from copy import deepcopy
 from urllib2 import urlopen
 from urlparse import urljoin
-from lxml import etree
 
+from couchdbkit import ResourceConflict
+from lxml import etree
 from django.core.cache import cache
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext
-from corehq.apps.app_manager.const import APP_V1, APP_V2
 from couchdbkit.exceptions import BadValueError
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
-from django.contrib.auth.models import get_hexdigest
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.template.loader import render_to_string
-
 from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
 
+from corehq.apps.app_manager.commcare_settings import check_condition
+from corehq.apps.app_manager.const import APP_V1, APP_V2
+from corehq.util.hash_compat import make_password
 from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base, parse_int
 from dimagi.utils.couch.database import get_db
 import commcare_translations
-
 from corehq.util import bitly
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig, BuildRecord
@@ -50,12 +48,12 @@ from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property
-
 from corehq.apps.app_manager import current_builds, app_strings, remote_app
 from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings, build_error_utils
 from corehq.apps.app_manager.util import split_path, save_xform
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml
 from .exceptions import AppError, VersioningError, XFormError, XFormValidationError
+
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -192,6 +190,7 @@ class OpenSubCaseAction(FormAction):
 
     case_type = StringProperty()
     case_name = StringProperty()
+    reference_id = StringProperty()
     case_properties = DictProperty()
     repeat_context = StringProperty()
 
@@ -625,6 +624,13 @@ class FormBase(DocumentSchema):
     def default_name(self):
         return self.name[self.get_app().default_language]
 
+    @property
+    def full_path_name(self):
+        return "%(app_name)s > %(module_name)s > %(form_name)s" % {
+            'app_name': self.get_app().name,
+            'module_name': self.get_module().name[self.get_app().default_language],
+            'form_name': self.default_name()
+        }
 
 class JRResourceProperty(StringProperty):
 
@@ -671,15 +677,24 @@ class UserRegistrationForm(FormBase):
         xform.add_user_registration(self.username_path, self.password_path, self.data_paths)
 
 
+class MappingItem(DocumentSchema):
+    key = StringProperty()
+    # lang => localized string
+    value = DictProperty()
+
+
 class DetailColumn(IndexedSchema):
     """
     Represents a column in case selection screen on the phone. Ex:
         {
-            'header': {'en': 'Sex', 'pt': 'Sexo'},
-            'model': 'cc_pf_client',
+            'header': {'en': 'Sex', 'por': 'Sexo'},
+            'model': 'case',
             'field': 'sex',
             'format': 'enum',
-            'enum': {'en': {'m': 'Male', 'f': 'Female'}, 'pt': {'m': 'Macho', 'f': 'Fêmea'}}
+            'enum': [
+                {'key': 'm', 'value': {'en': 'Male', 'por': 'Macho'},
+                {'key': 'f', 'value': {'en': 'Female', 'por': 'Fêmea'},
+            ],
         }
 
     """
@@ -688,14 +703,23 @@ class DetailColumn(IndexedSchema):
     field = StringProperty()
     format = StringProperty()
 
-    enum = DictProperty()
+    enum = SchemaListProperty(MappingItem)
+
     late_flag = IntegerProperty(default=30)
     advanced = StringProperty(default="")
     filter_xpath = StringProperty(default="")
     time_ago_interval = FloatProperty(default=365.25)
 
+    @property
+    def enum_dict(self):
+        """for backwards compatibility with building 1.0 apps"""
+        import warnings
+        warnings.warn('You should not use enum_dict. Use enum instead',
+                      DeprecationWarning)
+        return dict((item.key, item.value) for item in self.enum)
+
     def rename_lang(self, old_lang, new_lang):
-        for dct in (self.header, self.enum):
+        for dct in [self.header] + [item.value for item in self.enum]:
             _rename_key(dct, old_lang, new_lang)
 
     @property
@@ -731,6 +755,12 @@ class DetailColumn(IndexedSchema):
         if data.get('format') in ('months-ago', 'years-ago'):
             data['time_ago_interval'] = cls.TimeAgoInterval.get_from_old_format(data['format'])
             data['format'] = 'time-ago'
+
+        # Lazy migration: enum used to be a dict, now is a list
+        if isinstance(data.get('enum'), dict):
+            data['enum'] = sorted({'key': key, 'value': value}
+                                  for key, value in data['enum'].items())
+
         return super(DetailColumn, cls).wrap(data)
 
 
@@ -749,6 +779,19 @@ class SortElement(IndexedSchema):
         return values
 
 
+class SortOnlyDetailColumn(DetailColumn):
+    """This is a mock type, not intended to be part of a document"""
+
+    @property
+    def _i(self):
+        """
+        assert that SortOnlyDetailColumn never has ._i or .id called
+        since it should never be in an app document
+
+        """
+        raise NotImplementedError()
+
+
 class Detail(IndexedSchema):
     """
     Full configuration for a case selection screen
@@ -764,30 +807,6 @@ class Detail(IndexedSchema):
     @parse_int([1])
     def get_column(self, i):
         return self.columns[i].with_id(i%len(self.columns), self)
-
-    def append_column(self, column):
-        self.columns.append(column)
-
-    def update_column(self, column_id, column):
-        my_column = self.columns[column_id]
-
-        my_column.model = column.model
-        my_column.field = column.field
-        my_column.format = column.format
-        my_column.late_flag = column.late_flag
-        my_column.advanced = column.advanced
-
-        for lang in column.header:
-            my_column.header[lang] = column.header[lang]
-
-        for key in column.enum:
-            for lang in column.enum[key]:
-                if key not in my_column.enum:
-                    my_column.enum[key] = {}
-                my_column.enum[key][lang] = column.enum[key][lang]
-
-    def delete_column(self, column_id):
-        del self.columns[column_id]
 
     def rename_lang(self, old_lang, new_lang):
         for column in self.columns:
@@ -943,8 +962,9 @@ class VersionedDoc(LazyAttachmentDoc):
     version = IntegerProperty()
     short_url = StringProperty()
     short_odk_url = StringProperty()
+    short_odk_media_url = StringProperty()
 
-    _meta_fields = ['_id', '_rev', 'domain', 'copy_of', 'version', 'short_url', 'short_odk_url']
+    _meta_fields = ['_id', '_rev', 'domain', 'copy_of', 'version', 'short_url', 'short_odk_url', 'short_odk_media_url']
 
     @property
     def id(self):
@@ -971,7 +991,7 @@ class VersionedDoc(LazyAttachmentDoc):
         else:
             copy = deepcopy(self.to_json())
             bad_keys = ('_id', '_rev', '_attachments',
-                        'short_url', 'short_odk_url', 'recipients')
+                        'short_url', 'short_odk_url', 'short_odk_media_url', 'recipients')
 
             for bad_key in bad_keys:
                 if bad_key in copy:
@@ -1176,17 +1196,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         return self
 
     @classmethod
-    def view(cls, view_name, wrapper=None, classes=None, **params):
-        if cls is ApplicationBase and not wrapper:
-            classes = classes or dict((k, cls) for k in str_to_cls.keys())
-        return super(ApplicationBase, cls).view(
-            view_name,
-            wrapper=wrapper,
-            classes=classes,
-            **params
-        )
-
-    @classmethod
     def by_domain(cls, domain):
         return cls.view('app_manager/applications_brief',
                         startkey=[domain],
@@ -1242,11 +1251,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         return self._latest_saved
 
     def set_admin_password(self, raw_password):
-        import random
-        algo = 'sha1'
-        salt = get_hexdigest(algo, str(random.random()), str(random.random()))[:5]
-        hsh = get_hexdigest(algo, salt, raw_password)
-        self.admin_password = '%s$%s$%s' % (algo, salt, hsh)
+        salt = os.urandom(5).encode('hex')
+        self.admin_password = make_password(raw_password, salt=salt)
 
         if raw_password.isnumeric():
             self.admin_password_charset = 'n'
@@ -1324,6 +1330,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     def hq_profile_url(self):
         return "%s?latest=true" % (
             reverse('download_profile', args=[self.domain, self._id])
+        )
+
+    @absolute_url_property
+    def hq_media_profile_url(self):
+        return "%s?latest=true" % (
+            reverse('download_media_profile', args=[self.domain, self._id])
         )
 
     @property
@@ -1442,11 +1454,19 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     def odk_profile_url(self):
         return reverse('corehq.apps.app_manager.views.download_odk_profile', args=[self.domain, self._id])
 
+    @absolute_url_property
+    def odk_media_profile_url(self):
+        return reverse('corehq.apps.app_manager.views.download_odk_media_profile', args=[self.domain, self._id])
+
     @property
     def odk_profile_display_url(self):
         return self.short_odk_url or self.odk_profile_url
 
-    def get_odk_qr_code(self):
+    @property
+    def odk_media_profile_display_url(self):
+        return self.short_odk_media_url or self.odk_media_profile_url
+
+    def get_odk_qr_code(self, with_media=False):
         """Returns a QR code, as a PNG to install on CC-ODK"""
         try:
             return self.lazy_fetch_attachment("qrcode.png")
@@ -1463,7 +1483,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
                 )
             HEIGHT = WIDTH = 250
             code = QRChart(HEIGHT, WIDTH)
-            code.add_data(self.odk_profile_url)
+            code.add_data(self.odk_profile_url if not with_media else self.odk_media_profile_url)
 
             # "Level L" error correction with a 0 pixel margin
             code.set_ec('L', 0)
@@ -1507,6 +1527,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
             copy.short_odk_url = bitly.shorten(
                 get_url_base() + reverse('corehq.apps.app_manager.views.download_odk_profile', args=[copy.domain, copy._id])
             )
+            copy.short_odk_media_url = bitly.shorten(
+                get_url_base() + reverse('corehq.apps.app_manager.views.download_odk_media_profile', args=[copy.domain, copy._id])
+            )
         except AssertionError:
             raise
         except Exception:  # URLError, BitlyError
@@ -1514,6 +1537,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
             logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
             copy.short_url = None
             copy.short_odk_url = None
+            copy.short_odk_media_url = None
 
         copy.build_comment = comment
         copy.comment_from = user_id
@@ -1620,6 +1644,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @property
     def profile_url(self):
         return self.hq_profile_url
+
+    @property
+    def media_profile_url(self):
+        return self.hq_media_profile_url
 
     @property
     def url_base(self):
@@ -1750,10 +1778,15 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if self.case_sharing:
             app_profile['properties']['server-tether'] = 'sync'
 
+        if with_media:
+            profile_url = self.media_profile_url if not is_odk else (self.odk_media_profile_url + '?latest=true')
+        else:
+            profile_url = self.profile_url if not is_odk else (self.odk_profile_url + '?latest=true')
+
         return render_to_string(template, {
             'is_odk': is_odk,
             'app': self,
-            'profile_url': self.profile_url if not is_odk else (self.odk_profile_url + '?latest=true'),
+            'profile_url': profile_url,
             'app_profile': app_profile,
             'suite_url': self.suite_url,
             'suite_loc': self.suite_loc,
@@ -1869,10 +1902,18 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def new_module(self, name, lang):
         self.modules.append(
             Module(
-                name={lang if lang else "en": name if name else "Untitled Module"},
+                name={(lang or 'en'): name or ugettext("Untitled Module")},
                 forms=[],
                 case_type='',
-                details=[Detail(type=detail_type, columns=[]) for detail_type in DETAIL_TYPES],
+                details=[Detail(
+                    type=detail_type,
+                    columns=[DetailColumn(
+                        format='plain',
+                        header={(lang or 'en'): ugettext("Name")},
+                        field='name',
+                        model='case',
+                    )],
+                ) for detail_type in DETAIL_TYPES],
             )
         )
         return self.get_module(-1)
@@ -2372,4 +2413,3 @@ Module.get_case_list_locale_id = lambda self: "case_lists.m{module.id}".format(m
 Module.get_referral_list_command_id = lambda self: "m{module.id}-referral-list".format(module=self)
 Module.get_referral_list_locale_id = lambda self: "referral_lists.m{module.id}".format(module=self)
 
-import corehq.apps.app_manager.signals

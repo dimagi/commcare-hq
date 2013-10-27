@@ -59,7 +59,7 @@ CACHES = {
     },
     'redis': {
         'BACKEND': 'redis_cache.cache.RedisCache',
-        'LOCATION': 'localhost:6379',
+        'LOCATION': 'localhost:6379:0',
         'OPTIONS': {},
     }
 }
@@ -68,6 +68,8 @@ ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
 
 AUDIT_ADMIN_VIEWS=False
+
+SECRET_KEY='secrettravis'
 
 # No logging
 LOGGING = {

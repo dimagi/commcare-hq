@@ -43,9 +43,27 @@
             });
         </script>
     {% endif %}
+    <script>
+        $(function () {
+            var $editGroupName = $('#edit-group-name');
+            $('#toggle-group-name').click(function (e) {
+                $editGroupName.toggle();
+                e.preventDefault();
+            });
+        });
+    </script>
 {% endblock %}
 
 {% block pagination_header %}
+    <h3>
+        {% blocktrans %}
+            Cases in Group
+            <a href="#" id="toggle-group-name">{{ group_name }} <small><i class="icon-edit"> Edit</i></small></a>
+        {% endblocktrans %}
+    </h3>
+    <div id="edit-group-name" class="hide">
+        {% crispy update_case_group_form %}
+    </div>
     {% if bulk_upload_id %}
     <script type="template/html" id="template-bulk-status">
         <% if (success.length > 0) { %>
@@ -80,15 +98,11 @@
 
 {% block pagination_templates %}
     <script type="text/html" id="existing-case-template">
-        <td class="span3" data-bind="text: name"></td>
+        <td class="span5">
+            <a data-bind="attr: { href: detailsUrl }, text: name" target="_blank"></a>
+        </td>
         <td class="span2" data-bind="text: phoneNumber"></td>
         <td class="span3" data-bind="text: externalId"></td>
-        <td class="span2">
-            <a data-bind="attr: { href: detailsUrl }"
-               class="btn">
-                {% trans 'View Details' %}
-           </a>
-        </td>
         <td class="span2">
             <button type="button"
                     class="btn btn-danger delete-item-confirm"
@@ -99,15 +113,11 @@
     </script>
 
     <script type="text/html" id="new-case-template">
-        <td data-bind="text: name"></td>
+        <td>
+            <a data-bind="attr: { href: detailsUrl }, text: name" target="_blank"></a>
+        </td>
         <td data-bind="text: phoneNumber"></td>
         <td data-bind="text: externalId"></td>
-        <td>
-            <a data-bind="attr: { href: detailsUrl }"
-               class="btn">
-                {% trans 'View Details' %}
-           </a>
-        </td>
         <td data-bind="html: message"></td>
     </script>
 
@@ -122,15 +132,11 @@
     </script>
 
     <script type="text/html" id="removed-case-template">
-        <td data-bind="text: name"></td>
+        <td>
+            <a data-bind="attr: { href: detailsUrl }, text: name" target="_blank"></a>
+        </td>
         <td data-bind="text: phoneNumber"></td>
         <td data-bind="text: externalId"></td>
-        <td>
-            <a data-bind="attr: { href: detailsUrl }"
-               class="btn">
-                {% trans 'View Details' %}
-           </a>
-        </td>
         <td>
             <span class="label label-important">{% trans 'Case Removed' %}</span>
         </td>
@@ -138,38 +144,45 @@
 {% endblock %}
 
 {% block pagination_footer %}
-    <div class="row-fluid">
-        <div class="span12">
-            <h3>{% trans 'Bulk upload cases to group' %}</h3>
-            <div class="well">
-                <h4>{% trans 'Steps' %}</h4>
-                <ol>
-                    <li>
-                        {% blocktrans %}
-                            Download this example file:
-                        {% endblocktrans %}
-                        <a href="{% static 'data_interfaces/files/cases_bulk_example.xlsx' %}">
-                            cases_bulk_example.xlsx
-                        </a>
-                    </li>
-                    <li>
-                        {% blocktrans %}
-                            Add your case identifiers to the case_identifier column.
-                            This can be either a Phone Number, External ID, or Case ID.
-                        {% endblocktrans %}
-                    </li>
-                    <li>
-                        {% blocktrans %}
-                            Upload your file below.
-                        {% endblocktrans %}
-                    </li>
-                </ol>
+
+    <div class="accordion-group" style="margin-top:5px;">
+        <div class="accordion-heading">
+            <a class="accordion-toggle" data-toggle="collapse" href="#bulk-upload-accordion">
+                {% trans 'Bulk upload cases to group' %}
+            </a>
+        </div>
+        <div id="bulk-upload-accordion" class="accordion-body collapse">
+            <div class="accordion-inner">
+                <div class="well">
+                    <h4>{% trans 'Steps' %}</h4>
+                    <ol>
+                        <li>
+                            {% blocktrans %}
+                                Download this example file:
+                            {% endblocktrans %}
+                            <a href="{% static 'data_interfaces/files/cases_bulk_example.xlsx' %}">
+                                cases_bulk_example.xlsx
+                            </a>
+                        </li>
+                        <li>
+                            {% blocktrans %}
+                                Add your case identifiers to the case_identifier column.
+                                This can be either a Phone Number, External ID, or Case ID.
+                            {% endblocktrans %}
+                        </li>
+                        <li>
+                            {% blocktrans %}
+                                Upload your file below.
+                            {% endblocktrans %}
+                        </li>
+                    </ol>
+                </div>
+                <form class="form form-horizontal"
+                      enctype="multipart/form-data"
+                      method="post">
+                    {% crispy bulk_upload_from %}
+                </form>
             </div>
-            <form class="form form-horizontal"
-                  enctype="multipart/form-data"
-                  method="post">
-                {% crispy bulk_upload_from %}
-            </form>
         </div>
     </div>
 {% endblock %}

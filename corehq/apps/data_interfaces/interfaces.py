@@ -61,7 +61,7 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
                 display.case_link,
                 display.case_type,
                 display.owner_display,
-                util.format_relative_date(display.modified_on_dt)['html'],
+                util.format_relative_date(display.parse_date(display.case['modified_on']))['html'],
             ]
 
     @property

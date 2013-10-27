@@ -7,9 +7,10 @@ from django.contrib.auth.models import AnonymousUser
 from couchdbkit.ext.django.schema import (Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
                                           DocumentSchema, SchemaProperty, DictProperty, ListProperty,
                                           StringListProperty, SchemaListProperty)
+from django.core.cache import cache
 from django.utils.safestring import mark_safe
 from corehq.apps.appstore.models import Review, SnapshotMixin
-from corehq.apps.domain.utils import get_domain_module_map
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.logging import notify_exception
@@ -239,6 +240,8 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     sms_case_registration_user_id = StringProperty() # Submitting user to apply to cases registered via sms
     sms_mobile_worker_registration_enabled = BooleanProperty(default=False) # Whether or not a mobile worker can register via sms
     default_sms_backend_id = StringProperty()
+    use_default_sms_response = BooleanProperty(default=False)
+    default_sms_response = StringProperty()
 
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)
@@ -314,6 +317,8 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             del data["slug"]
 
         self = super(Domain, cls).wrap(data)
+        if self.deployment is None:
+            self.deployment = Deployment()
         if self.get_id:
             self.apply_migrations()
         if should_save:
@@ -331,12 +336,12 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             couch_user = CouchUser.from_django_user(user)
         if couch_user:
             domain_names = couch_user.get_domains()
-            return Domain.view("domain/by_status",
-                keys=[[is_active, d] for d in domain_names],
-                reduce=False,
-                include_docs=True,
-                #stale=settings.COUCH_STALE_QUERY,
-            ).all()
+            return cache_core.cached_view(Domain.get_db(), "domain/by_status",
+                                          keys=[[is_active, d] for d in domain_names],
+                                          reduce=False,
+                                          include_docs=True,
+                                          wrapper=Domain.wrap
+            )
         else:
             return []
 
@@ -482,12 +487,16 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
                     notify_exception(None, '%r is not a valid domain name' % name)
                     return None
         extra_args = {'stale': settings.COUCH_STALE_QUERY} if not strict else {}
-        result = cls.view("domain/domains",
-            key=name,
-            reduce=False,
-            include_docs=True,
-            **extra_args
-        ).first()
+
+        db = cls.get_db()
+        res = cache_core.cached_view(db, "domain/domains", key=name, reduce=False,
+                                     include_docs=True, wrapper=cls.wrap, force_invalidate=strict,
+                                     **extra_args)
+
+        if len(res) > 0:
+            result = res[0]
+        else:
+            result = None
 
         if result is None and not strict:
             # on the off chance this is a brand new domain, try with strict
@@ -497,11 +506,14 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
     @classmethod
     def get_by_organization(cls, organization):
-        result = cls.view("domain/by_organization",
+        result = cache_core.cached_view(
+            cls.get_db(), "domain/by_organization",
             startkey=[organization],
             endkey=[organization, {}],
             reduce=False,
-            include_docs=True)
+            include_docs=True,
+            wrapper=cls.wrap
+        )
         return result
 
     @classmethod
@@ -514,16 +526,11 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
     @classmethod
     def get_or_create_with_name(cls, name, is_active=False):
-        result = cls.view("domain/domains",
-            key=name,
-            reduce=False,
-            include_docs=True).first()
+        result = cls.view("domain/domains", key=name, reduce=False, include_docs=True).first()
         if result:
             return result
         else:
-            new_domain = Domain(name=name,
-                            is_active=is_active,
-                            date_created=datetime.utcnow())
+            new_domain = Domain(name=name, is_active=is_active, date_created=datetime.utcnow())
             new_domain.save(**get_safe_write_kwargs())
             return new_domain
 
@@ -877,8 +884,8 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         """
         import and return the python module corresponding to domain_name, or
         None if it doesn't exist.
-        
         """
+        from corehq.apps.domain.utils import get_domain_module_map
         module_name = get_domain_module_map().get(domain_name, domain_name)
 
         try:

@@ -77,6 +77,12 @@
                             "doc_type": "SortElement",
                             "field": "name",
                             "type": "plain"
+                        },
+                        {
+                            "direction": "ascending",
+                            "doc_type": "SortElement",
+                            "field": "date-opened",
+                            "type": "date"
                         }
                     ],
                     "type": "case_short"

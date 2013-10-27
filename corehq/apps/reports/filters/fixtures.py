@@ -113,3 +113,6 @@ class AsyncLocationFilter(BaseReportFilter):
             'locations': json.dumps(load_locs_json(self.domain, selected_loc_id)),
             'hierarchy': location_hierarchy_config(self.domain),
         }
+
+class MultiLocationFilter(AsyncDrillableFilter):
+    template = "reports/filters/multi_location.html"

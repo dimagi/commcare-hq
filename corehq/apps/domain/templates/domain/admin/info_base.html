@@ -1,4 +1,5 @@
 {% extends "settings/base_template.html" %}
+{% load url from future %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -9,7 +10,7 @@
             $("#id_{{ field }}").focus(function() {
                 if (!$("#id_{{ field }}").data('loaded')) {
                     $("#id_{{ field }}").data('loaded', 'true');
-                    $.getJSON('{% url domain_autocomplete_fields field %}', function(results) {
+                    $.getJSON('{% url "domain_autocomplete_fields" field %}', function(results) {
                         $("#id_{{ field }}").typeahead({ source: results,
                             items: 8
                         }).attr("autocomplete", "off");

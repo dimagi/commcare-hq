@@ -5,13 +5,12 @@ from corehq.apps.locations.models import Location
 from corehq.apps.app_manager.models import ApplicationBase, Application
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.decorators import inline
-from casexml.apps.phone.caselogic import get_footprint
+from casexml.apps.phone.caselogic import get_footprint, get_related_cases
 from datetime import datetime
 from corehq.elastic import get_es
 import urllib
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.chunked import chunked
-
 
 def api_closed_to_status(closed_string):
     # legacy api support
@@ -71,16 +70,18 @@ class CaseAPIHelper(object):
     """
     Simple config object for querying the APIs
     """
-    def __init__(self, status=CASE_STATUS_OPEN, case_type=None, ids_only=False,
-                 footprint=False, strip_history=False, filters=None):
+    def __init__(self, domain, status=CASE_STATUS_OPEN, case_type=None, ids_only=False,
+                 footprint=False, strip_history=False, filters=None, include_children=False):
         if status not in [CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN]:
             raise ValueError("invalid case status %s" % status)
+        self.domain = domain
         self.status = status
         self.case_type = case_type
         self.ids_only = ids_only
         self.footprint = footprint
         self.strip_history = strip_history
         self.filters = filters
+        self.include_children = include_children
 
     def iter_cases(self, ids):
         database = CommCareCase.get_db()
@@ -119,21 +120,35 @@ class CaseAPIHelper(object):
 
         link_locations(base_results)
 
-        if self.footprint:
-            return [CaseAPIResult(couch_doc=case, id_only=self.ids_only) for case in \
-                    get_footprint([res.couch_doc for res in base_results], 
-                                  strip_history=self.strip_history).values()]
-        else:
+        if not self.footprint and not self.include_children:
             return base_results
 
-    def get_all(self, domain):
-        view_results = CommCareCase.get_all_cases(domain, case_type=self.case_type, status=self.status)
+        case_list = [res.couch_doc for res in base_results]
+        if self.footprint:
+            case_list = get_footprint(
+                            case_list,
+                            self.domain,
+                            strip_history=self.strip_history,
+                        ).values()
+
+        if self.include_children:
+            case_list = get_related_cases(
+                            case_list,
+                            self.domain,
+                            strip_history=self.strip_history,
+                            search_up=False,
+                        ).values()
+
+        return [CaseAPIResult(couch_doc=case, id_only=self.ids_only) for case in case_list]
+
+    def get_all(self):
+        view_results = CommCareCase.get_all_cases(self.domain, case_type=self.case_type, status=self.status)
         ids = [res["id"] for res in view_results]
         return self._case_results(ids)
 
-    def get_owned(self, domain, user_id):
+    def get_owned(self, user_id):
         try:
-            user = CouchUser.get_by_user_id(user_id, domain)
+            user = CouchUser.get_by_user_id(user_id, self.domain)
         except KeyError:
             user = None
         try:
@@ -146,7 +161,7 @@ class CaseAPIHelper(object):
         def keys():
             for owner_id in owner_ids:
                 for bool in status_to_closed_flags(self.status):
-                    yield [domain, owner_id, bool]
+                    yield [self.domain, owner_id, bool]
 
         view_results = CommCareCase.view('hqcase/by_owner', keys=keys,
                                          include_docs=False, reduce=False)
@@ -175,18 +190,18 @@ def link_locations(base_results):
 
 def get_filtered_cases(domain, status, user_id=None, case_type=None,
                        filters=None, footprint=False, ids_only=False,
-                       strip_history=True):
+                       strip_history=True, include_children=False):
 
     # for now, a filter value of None means don't filter
     filters = dict((k, v) for k, v in (filters or {}).items() if v is not None)
-    helper = CaseAPIHelper(status, case_type=case_type, ids_only=ids_only,
+    helper = CaseAPIHelper(domain, status, case_type=case_type, ids_only=ids_only,
                            footprint=footprint, strip_history=strip_history,
-                           filters=filters)
+                           filters=filters, include_children=include_children)
 
     if user_id:
-        return helper.get_owned(domain, user_id)
+        return helper.get_owned(user_id)
     else:
-        return helper.get_all(domain)
+        return helper.get_all()
 
 class ElasticCaseQuery(object):
     # this class is currently pretty customized to serve exactly
@@ -314,7 +329,7 @@ def get_filters_from_request(request, limit_top_level=None):
         filters = dict([(key, val) for key, val in filters.items() if '/' in key or key in limit_top_level])
 
     for system_property in ['user_id', 'closed', 'format', 'footprint',
-                            'ids_only']:
+                            'ids_only', 'include_children']:
         if system_property in filters:
             del filters[system_property]
     return filters

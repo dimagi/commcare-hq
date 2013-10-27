@@ -25,7 +25,7 @@ from dimagi.utils.modules import to_function
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import User as CaseXMLUser
 from corehq.apps.domain.shortcuts import create_user
-from corehq.apps.domain.utils import normalize_domain_name
+from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers
 from corehq.apps.domain.models import LicenseAgreement
 from corehq.apps.users.util import normalize_username, user_data_from_registration_form, format_username, raw_username
 from corehq.apps.users.xml import group_fixture
@@ -353,7 +353,7 @@ class IsMemberOfMixin(DocumentSchema):
     def _is_member_of(self, domain):
         return domain in self.get_domains() or (
             self.is_global_admin() and
-            not Domain.get_by_name(domain).restrict_superusers
+            not domain_restricts_superusers(domain)
         )
 
     def is_member_of(self, domain_qs):
@@ -440,7 +440,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 domain = self.current_domain
             else:
                 return False # no domain, no admin
-        if self.is_global_admin() and (domain is None or not Domain.get_by_name(domain).restrict_superusers):
+        if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
             return True
         dm = self.get_domain_membership(domain)
         if dm:
@@ -742,6 +742,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         except User.DoesNotExist:
             pass
         super(CouchUser, self).delete() # Call the "real" delete() method.
+        couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
 
     def delete_phone_number(self, phone_number):
         for i in range(0,len(self.phone_numbers)):
@@ -947,15 +948,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return couch_user
 
     @classmethod
-    def view(cls, view_name, classes=None, **params):
-        if cls is CouchUser:
-            classes = classes or {
-                'CommCareUser': CouchUser,
-                'WebUser': CouchUser,
-            }
-        return super(CouchUser, cls).view(view_name, classes=classes, **params)
-
-    @classmethod
     def wrap_correctly(cls, source):
         if source['doc_type'] == 'CouchUser' and \
                 source.has_key('commcare_accounts') and \
@@ -1078,6 +1070,18 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
         super(CouchUser, self).save(**params)
 
+        results = couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
+        for result in results:
+            # Second argument is None if there was no error
+            if result[1]:
+                notify_exception(
+                    None,
+                    message="Error occured while syncing user %s: %s" %
+                            (self.username, str(result[1]))
+                )
+
+
+
     @classmethod
     def django_user_post_save_signal(cls, sender, django_user, created, max_tries=3):
         if hasattr(django_user, 'DO_NOT_SAVE_COUCH_USER'):
@@ -1179,8 +1183,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         super(CommCareUser, self).save(**params)
 
         from corehq.apps.users.signals import commcare_user_post_save
-        results = commcare_user_post_save.send_robust(sender='couch_user',
-                                                     couch_user=self)
+        results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self)
         for result in results:
             # Second argument is None if there was no error
             if result[1]:
@@ -1201,12 +1204,14 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.user_data              = old_couch_user.default_account.user_data
 
     @classmethod
-    def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):
+    def create(cls, domain, username, password, email=None, uuid='', date='', phone_number=None, **kwargs):
         """
         used to be a function called `create_hq_user_from_commcare_registration_info`
 
         """
         commcare_user = super(CommCareUser, cls).create(domain, username, password, email, uuid, date, **kwargs)
+        if phone_number is not None:
+            commcare_user.add_phone_number(phone_number)
 
         device_id = kwargs.get('device_id', '')
         user_data = kwargs.get('user_data', {})
@@ -1336,11 +1341,14 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.device_ids = _add_to_list(self.device_ids, device_id, default)
 
     def to_casexml_user(self):
-        user = CaseXMLUser(user_id=self.userID,
-                           username=self.raw_username,
-                           password=self.password,
-                           date_joined=self.date_joined,
-                           user_data=self.user_data)
+        user = CaseXMLUser(
+            user_id=self.userID,
+            username=self.raw_username,
+            password=self.password,
+            date_joined=self.date_joined,
+            user_data=self.user_data,
+            domain=self.domain,
+        )
 
         def get_owner_ids():
             return self.get_owner_ids()
@@ -1679,8 +1687,20 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
     def get_teams(self, ids_only=False):
         from corehq.apps.orgs.models import Team
         teams = []
+
+        def get_valid_teams(team_ids):
+            team_db = Team.get_db()
+            for t_id in team_ids:
+                if team_db.doc_exist(t_id):
+                    yield Team.get(t_id)
+                else:
+                    logging.info("Note: team %s does not exist for %s" % (t_id, self))
+
         for om in self.org_memberships:
-            teams.extend([Team.get(t_id) for t_id in om.team_ids] if not ids_only else om.team_ids)
+            if not ids_only:
+                teams.extend(list(get_valid_teams(om.team_ids)))
+            else:
+                teams.extend(om.team_ids)
         return teams
 
     def get_domains(self):
@@ -1695,7 +1715,7 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
     @memoized
     def has_permission(self, domain, permission, data=None):
         # is_admin is the same as having all the permissions set
-        if (self.is_global_admin() and (domain is None or not Domain.get_by_name(domain).restrict_superusers)):
+        if (self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain))):
             return True
         elif self.is_domain_admin(domain):
             return True

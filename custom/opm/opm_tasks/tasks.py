@@ -25,8 +25,8 @@ def save_report(ReportClass, month=None, year=None):
     report = get_report(ReportClass, month, year)
     snapshot = OpmReportSnapshot(
         domain=DOMAIN,
-        month=month,
-        year=year,
+        month=report.month,
+        year=report.year,
         report_class=ReportClass.__name__,
         headers=report.headers,
         slugs=report.slugs,
@@ -40,5 +40,5 @@ def save_report(ReportClass, month=None, year=None):
 def snapshot():
     for report in [IncentivePaymentReport, BeneficiaryPaymentReport]:
         snapshot = save_report(report)
-        msg = "Saving {} to doc {}".format(report.__name__, snapshot._id)
+        msg = "Saving {0} to doc {1}".format(report.__name__, snapshot._id)
         logging.info(msg)

@@ -12,6 +12,8 @@ import pytz
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader
+from corehq.apps.reports.fields import DatespanField
+from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.users.models import CouchUser
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
@@ -397,14 +399,14 @@ class GenericReportView(CacheableRequestMixIn):
             Intention: Don't override.
         """
         report_configs = ReportConfig.by_domain_and_owner(self.domain,
-            self.request.couch_user._id, report_slug=self.slug).all()
+            self.request.couch_user._id, report_slug=self.slug)
         current_config_id = self.request.GET.get('config_id', '')
         default_config = ReportConfig.default()
 
-        has_datespan = any([ds_field in self.fields for ds_field in (
-            'corehq.apps.reports.fields.DatespanField',
-            'corehq.apps.reports.filters.dates.DatespanFilter'
-        )])
+        def is_datespan(field):
+            field_fn = to_function(field) if isinstance(field, basestring) else field
+            return issubclass(field_fn, (DatespanFilter, DatespanField))
+        has_datespan = any([is_datespan(field) for field in self.fields])
 
         self.context.update(
             report=dict(
@@ -820,6 +822,14 @@ class GenericTabularReport(GenericReportView):
 
     @property
     def export_table(self):
+        """
+        Exports the report as excel.
+
+        When rendering a complex cell, it will assign a value in the following order:
+        1. cell['raw']
+        2. cell['sort_key']
+        3. str(cell)
+        """
         try:
             import xlwt
         except ImportError:
@@ -830,7 +840,12 @@ class GenericTabularReport(GenericReportView):
         formatted_rows = self.rows
 
         def _unformat_row(row):
-            return [col.get("sort_key", col) if isinstance(col, dict) else col for col in row]
+            def _unformat_val(val):
+                if isinstance(val, dict):
+                    return val.get('raw', val.get('sort_key', val))
+                return val
+
+            return [_unformat_val(val) for val in row]
 
         table = headers.as_table
         rows = [_unformat_row(row) for row in formatted_rows]

@@ -24,6 +24,10 @@
         chart.reduceXTicks(chart_config.reduceXTicks);
         chart.rotateLabels(chart_config.rotateLabels);
         chart.tooltips(chart_config.tooltips);
+        // Customize tooltip message
+        {% if chart.tooltipFormat %}
+            chart.tooltipContent(function(key, y, e, graph) { return e+ '{{ chart.tooltipFormat }}' +y });
+        {% endif %}
         chart.stacked(chart_config.stacked);
         chart.margin(chart_config.margin);
         chart.staggerLabels(chart_config.staggerLabels);

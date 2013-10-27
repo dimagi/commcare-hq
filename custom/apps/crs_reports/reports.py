@@ -1,16 +1,14 @@
-from couchdbkit import RequestFailed
 from django.utils.translation import ugettext_noop
-from corehq.apps.api.es import FullCaseES
-
-from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.standard.inspect import CaseDisplay, CaseListReport
 from django.utils import html
 from django.core.urlresolvers import reverse, NoReverseMatch
-
 import pytz
 from django.utils.translation import ugettext as _
 
+from corehq.apps.api.es import ReportCaseES
+from corehq.apps.reports.standard import CustomProjectReport
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.standard.inspect import CaseDisplay, CaseListReport
+from corehq.pillows.base import restore_property_dict
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
 
@@ -89,13 +87,12 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        #return user and user.is_previewer()
-        return False
+        return user and (user.is_previewer() or 'soldevelo' in user.username)
 
     @property
     @memoized
     def case_es(self):
-        return FullCaseES(self.domain)
+        return ReportCaseES(self.domain)
 
     @property
     def headers(self):
@@ -112,7 +109,7 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
 
     @property
     def rows(self):
-        case_displays = (HNBCReportDisplay(self, self.get_case(case))
+        case_displays = (HNBCReportDisplay(self, restore_property_dict(self.get_case(case)))
                          for case in self.es_results['hits'].get('hits', []))
 
         for disp in case_displays:
@@ -142,7 +139,7 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
         filters = []
 
         if block:
-            filters.append({'term': {'block': block}})
+            filters.append({'term': {'block.#value': block}})
 
         return filters
 
@@ -162,7 +159,7 @@ class HBNCMotherReport(BaseHNBCReport):
     @property
     def case_filter(self):
         filters = BaseHNBCReport.base_filters(self)
-        filters.append({'term': {'pp_case_filter': "1"}})
+        filters.append({'term': {'pp_case_filter.#value': "1"}})
 
         status = self.request_params.get('PNC_status', '')
 
@@ -171,10 +168,10 @@ class HBNCMotherReport(BaseHNBCReport):
         if status:
             if status == 'On Time':
                 for i in range(1, 8):
-                    filters.append({'term': {'case_pp_%s_done' % i: 'yes'}})
+                    filters.append({'term': {'case_pp_%s_done.#value' % i: 'yes'}})
             else:
                 for i in range(1, 8):
-                    or_stmt.append({"not": {'term': {'case_pp_%s_done' % i: 'yes'}}})
+                    or_stmt.append({"not": {'term': {'case_pp_%s_done.#value' % i: 'yes'}}})
                 or_stmt = {'or': or_stmt}
                 filters.append(or_stmt)
 
@@ -202,10 +199,10 @@ class HBNCInfantReport(BaseHNBCReport):
         if status:
             if status == 'On Time':
                 for i in range(1, 8):
-                    filters.append({'term': {'baby_case_pp_%s_done' % i: 'yes'}})
+                    filters.append({'term': {'baby_case_pp_%s_done.#value' % i: 'yes'}})
             else:
                 for i in range(1, 8):
-                    or_stmt.append( {"not": {'term': {'baby_case_pp_%s_done' % i: 'yes'}}})
+                    or_stmt.append( {"not": {'term': {'baby_case_pp_%s_done.#value' % i: 'yes'}}})
                 or_stmt = {'or': or_stmt}
                 filters.append(or_stmt)
 

@@ -5,6 +5,9 @@ var CaseConfig = (function () {
 
 
     var utils = {
+        getDisplay: function (question, MAXLEN) {
+            return utils.getLabel(question, MAXLEN) + " (" + question.value + ")";
+        },
         getLabel: function (question, MAXLEN) {
             return utils.truncateLabel((question.repeat ? '- ' : '') + question.label, question.tag == 'hidden' ? ' (Hidden)' : '', MAXLEN);
         },
@@ -49,14 +52,14 @@ var CaseConfig = (function () {
                     placeholder: 'Select a Question',
                     data: {
                         results: _(optionObjects).map(function (o) {
-                            return {id: o.value, text: o.label, question: o};
+                            return {id: o.value, text: utils.getDisplay(o), question: o};
                         })
                     },
                     formatSelection: function (o) {
-                        return utils.getLabel(o.question);
+                        return utils.getDisplay(o.question);
                     },
                     formatResult: function (o) {
-                        return utils.getLabel(o.question, 90);
+                        return utils.getDisplay(o.question, 90);
                     },
                     dropdownCssClass: 'bigdrop'
                 });
@@ -257,6 +260,7 @@ var CaseConfig = (function () {
             return {
                 include: [
                     'case_type',
+                    'reference_id',
                     'condition',
                     'case_properties',
                     'case_preload',
@@ -569,6 +573,7 @@ var CaseConfig = (function () {
             );
             var x = CaseTransaction.wrap({
                 case_type: null, // will get overridden by the default
+                reference_id: null, // not used in normal case config
                 case_properties: case_properties,
                 case_preload: case_preload,
                 condition: self.open_case.condition,
@@ -649,6 +654,7 @@ var CaseConfig = (function () {
             var self = {};
             self.case_type = o.case_type || null;
             self.case_name = o.case_name || null;
+            self.reference_id = o.reference_id || null;
             self.case_properties = o.case_properties || {};
             self.condition = o.condition || DEFAULT_CONDITION;
             self.repeat_context = o.repeat_context;
@@ -665,6 +671,7 @@ var CaseConfig = (function () {
 
             return CaseTransaction.wrap({
                 case_type: self.case_type,
+                reference_id: self.reference_id,
                 case_properties: case_properties,
                 condition: self.condition,
                 suggestedProperties: function () {
@@ -705,6 +712,7 @@ var CaseConfig = (function () {
                 case_name: case_name,
                 case_type: o.case_type,
                 case_properties: case_properties,
+                reference_id: o.reference_id,
                 condition: o.condition,
                 repeat_context: case_transaction.repeat_context()
             };

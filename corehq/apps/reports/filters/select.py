@@ -3,7 +3,7 @@ import calendar
 from django.conf import settings
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
-from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.groups.models import Group
@@ -169,3 +169,14 @@ class SelectApplicationFilter(BaseSingleOptionFilter):
         return [(app['value']['_id'], _("%(name)s [up to build %(version)s]") % {
             'name': app['value']['name'],
             'version': app['value']['version']}) for app in apps_for_domain]
+
+
+class MultiCaseGroupFilter(BaseMultipleOptionFilter):
+    slug = "case_group"
+    label = ugettext_noop("Case Group")
+    default_text = ugettext_noop("All Case Groups")
+    placeholder = ugettext_noop('Click to select case groups')
+
+    @property
+    def options(self):
+        return [(g["id"], g["key"][1]) for g in CommCareCaseGroup.get_all(self.domain, include_docs=False)]

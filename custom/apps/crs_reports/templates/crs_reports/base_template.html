@@ -1,4 +1,5 @@
 {% extends "reports/base_template.html" %}
+{% load url from future %}
 {% load i18n %}
 {% load case_tags %}
 {% load hq_shared_tags %}
@@ -27,10 +28,10 @@
 {% block page-title %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% url reports_home domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
+            <a href="{% url "reports_home" domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
         </li>
         <li>
-            <a href="{% url custom_project_report_dispatcher domain report.slug %}">Case List</a> <span class="divider">&gt;</span>
+            <a href="{% url "custom_project_report_dispatcher" domain report.slug %}">Case List</a> <span class="divider">&gt;</span>
         </li>
         <li class="active">
             <a href="#">{{ report.name }}</a>

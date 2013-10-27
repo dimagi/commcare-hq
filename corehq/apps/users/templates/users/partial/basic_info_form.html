@@ -1,3 +1,4 @@
+{% load url from future %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -47,7 +48,7 @@
                 <div class="controls">
                     {% ifequal phone.status "unverified" %}
                         <form method="post"
-                              action="{% url verify_phone_number domain couch_user.couch_id %}?phone_number={{phone.number|urlencode}}"
+                              action="{% url "verify_phone_number" domain couch_user.couch_id %}?phone_number={{phone.number|urlencode}}"
                               style="display: inline;">
                             <button type="submit"
                                     data-title="{% trans 'Send a verification SMS to this phone. When the user replies to this SMS, the phone number will be verified.' %}"
@@ -80,7 +81,7 @@
                     {% if not forloop.first %}
                         <form class="input-inline input-append"
                               name="make_phone_number_default"
-                              action="{% url make_phone_number_default domain couch_user.couch_id %}"
+                              action="{% url "make_phone_number_default" domain couch_user.couch_id %}"
                               method="POST">
                             <input type="hidden" name="phone_number" value="{{ phone.number }}"/>
                             <button type="submit" class="btn">
@@ -107,6 +108,11 @@
                     <span class="add-on">+</span>
                     <input id="id_add_phone_number" type="text" name="phone_number" value="" maxlength="50" />
                 </div>
+                <span id="phone_number_paste_error" class="help-inline" style="display: none;">
+                    <strong>
+                        {% trans "Phone numbers can only contain digits and we were unable to convert yours automatically." %}
+                    </strong>
+                </span>
                 <p class="help-block">
                     {% blocktrans %}Please enter number, including international code, in digits only.{% endblocktrans %}
                 </p>
@@ -115,3 +121,20 @@
     </fieldset>
     <div class="form-actions"><button type="submit" class="btn btn-primary">{% trans 'Add Number' %}</button></div>
 </form>
+
+{% block js-inline %}
+<script type="text/javascript">
+    $('#id_add_phone_number').on('paste', function (event) {
+        var clipboardData = event.clipboardData  ||  event.originalEvent.clipboardData;
+        var pasteText = clipboardData.getData("Text");
+        var text = pasteText.replace(/\+|\-|\(|\)|\s/g, '');
+        if (/^[0-9]*$/.test(text)) {
+            $("#phone_number_paste_error").css("display", "none");
+            $('#id_add_phone_number').val(text);
+        } else {
+            $("#phone_number_paste_error").css("display", "inline");
+        }
+        return false;
+    });
+</script>
+{% endblock %}
