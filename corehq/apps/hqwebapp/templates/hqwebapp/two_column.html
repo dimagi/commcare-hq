@@ -1,5 +1,6 @@
 {% extends 'hqwebapp/base.html' %}
 {% load menu_tags %}
+{% load hq_shared_tags %}
 
 {# stuff to override old styles -- remove when everything is migrated over #}
 {% block oldstyle_tag %}{% endblock %}
@@ -8,6 +9,28 @@
 {% block oldstyle_hack_end %}{% endblock %}
 
 {% block layout_style %}hq-double-col{% endblock %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/lib/keymaster.min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/keyboard_navigator.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+   <script>
+        function gen_sidebar_elements() {
+            return $('.sidebar .nav-list a');
+        }
+        var sidebar_navigator = new KeyboardNavigator();
+        sidebar_navigator.init({
+            nav_key: 'option',
+            action_key: 'enter',
+            forward_key: 'down',
+            back_key: 'up',
+            element_list_generator: gen_sidebar_elements,
+            reset_index: false
+        });
+    </script>
+{% endblock %}
 
 {% block content %}
     <div class="row-fluid">
