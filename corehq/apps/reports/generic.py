@@ -100,8 +100,10 @@ class GenericReportView(CacheableRequestMixIn):
     is_admin_report = False
     special_notice = None
     override_permissions_check = False # whether to ignore the permissions check that's done when rendering the report
-    
-    
+
+    report_title = None
+    report_subtitles = []
+
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
             raise NotImplementedError("Missing a required parameter: (name: %(name)s, section_name: %(section_name)s,"
@@ -429,6 +431,8 @@ class GenericReportView(CacheableRequestMixIn):
                 is_printable=self.printable,
                 is_admin=self.is_admin_report,   # todo is this necessary???
                 special_notice=self.special_notice,
+                report_title=self.report_title or self.rendered_report_title,
+                report_subtitles=self.report_subtitles,
             ),
             current_config_id=current_config_id,
             default_config=default_config,
