@@ -1,7 +1,7 @@
 {% load hq_shared_tags %}{% load i18n %}<!DOCTYPE html>
 <html>
     <head>
-        <title>Chat</title>
+        <title>{% block title %}Chat{% endblock %}</title>
         <link rel="stylesheet" media="screen" href="{% static 'hqstyle/css/core/hqstyle-core.css' %}"/>
         <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'hqwebapp/js/lib/knockout-2.1.0.debug.js' %}"></script>
@@ -15,7 +15,7 @@
                 background-color: #F0F0F0;
             }
             #chat_header {
-                height: 50px;
+                height: auto;
             }
             #chat_messages {
                 height: 200px;
@@ -25,7 +25,7 @@
                 background-color: #FFF;
             }
             #chat_footer {
-                height: 50px;
+                height: auto;
             }
             .timestamp_content {
                 text-align: right;
@@ -38,6 +38,9 @@
             }
             #header_table {
                 width: 100%;
+            }
+            #header_table td {
+                vertical-align: top;
             }
             #message_table {
                 width: 100%;
@@ -77,6 +80,7 @@
             <table id="header_table">
                 <tbody>
                     <tr>
+                        <td>{% block chat_header %}{% endblock %}</td>
                         <td><div id="message_counter_container"><div><strong><span id="message_count" data-bind="text: message_count"></span></strong></div><div><span class="btn btn-primary" data-bind="click: reset_message_count">Reset</span></div></div></td>
                     </tr>
                 </tbody>
@@ -106,7 +110,9 @@
             $(function() {
                 function resize_messages() {
                     body_height = $("body").height();
-                    $("#chat_messages").height(body_height - 110);
+                    chat_header_height = $("#chat_header").height();
+                    chat_footer_height = $("#chat_footer").height();
+                    $("#chat_messages").height(body_height - chat_header_height - chat_footer_height);
                 }
                 resize_messages();
                 
@@ -119,6 +125,7 @@
                 }
                 function ChatWindowViewModel() {
                     var self = this;
+                    self.original_title = document.title;
                     self.message_length = ko.observable("0 / 160");
                     self.messages = ko.observableArray([]);
                     self.latest_message_utc_timestamp = null;
@@ -222,11 +229,11 @@
                         self.flash_off();
                     };
                     self.flash_on = function() {
-                        document.title = "{% trans '(New Message)' %}";
+                        document.title = "{% trans '(New Message)' %} - " + self.original_title;
                         $("body").css("background-color", "#6060FF");
                     };
                     self.flash_off = function() {
-                        document.title = "{% trans 'Chat' %}";
+                        document.title = self.original_title;
                         $("body").css("background-color", "#F0F0F0");
                     };
                     self.enter_focus = function() {

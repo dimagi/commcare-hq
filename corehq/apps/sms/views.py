@@ -19,7 +19,7 @@ from corehq.apps.users import models as user_models
 from corehq.apps.sms.models import SMSLog, INCOMING, OUTGOING, ForwardingRule, CommConnectCase
 from corehq.apps.sms.mixin import MobileBackend, SMSBackend, BackendMapping
 from corehq.apps.sms.forms import ForwardingRuleForm, BackendMapForm, InitiateAddSMSBackendForm, SMSSettingsForm
-from corehq.apps.sms.util import get_available_backends
+from corehq.apps.sms.util import get_available_backends, get_contact
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest, domain_admin_required, require_superuser
 from dimagi.utils.couch.database import get_db
@@ -34,6 +34,12 @@ from casexml.apps.case.models import CommCareCase
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean
 from dateutil.parser import parse
 from dimagi.utils.decorators.memoized import memoized
+
+DEFAULT_MESSAGE_COUNT_THRESHOLD = 50
+
+CUSTOM_CHAT_TEMPLATES = {
+    "FRI" : "fri/chat.html",
+}
 
 @login_and_domain_required
 def default(request, domain):
@@ -601,12 +607,15 @@ def chat_contacts(request, domain):
 
 @login_and_domain_required
 def chat(request, domain, contact_id):
+    domain_obj = Domain.get_by_name(domain, strict=True)
     context = {
         "domain" : domain,
         "contact_id" : contact_id,
-        "message_count_threshold" : 40, # This will soon be replaced by a setting
+        "contact" : get_contact(contact_id),
+        "message_count_threshold" : domain_obj.chat_message_count_threshold or DEFAULT_MESSAGE_COUNT_THRESHOLD,
     }
-    return render(request, "sms/chat.html", context)
+    template = CUSTOM_CHAT_TEMPLATES.get(domain_obj.custom_chat_template) or "sms/chat.html"
+    return render(request, template, context)
 
 @login_and_domain_required
 def api_history(request, domain):
@@ -614,6 +623,7 @@ def api_history(request, domain):
     contact_id = request.GET.get("contact_id", None)
     start_date = request.GET.get("start_date", None)
     timezone = report_utils.get_timezone(None, domain)
+    domain_obj = Domain.get_by_name(domain, strict=True)
 
     try:
         assert contact_id is not None
@@ -653,7 +663,10 @@ def api_history(request, domain):
     username_map = {}
     for sms in data:
         if sms.direction == INCOMING:
-            sender = doc.name
+            if domain_obj.chat_case_username:
+                sender = doc.get_case_property(domain_obj.chat_case_username)
+            else:
+                sender = doc.name
         elif sms.chat_user_id is not None:
             if sms.chat_user_id in username_map:
                 sender = username_map[sms.chat_user_id]

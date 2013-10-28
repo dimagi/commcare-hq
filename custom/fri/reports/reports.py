@@ -150,7 +150,8 @@ class MessageReport(FRIReport, DatespanMixin):
                     if message.couch_recipient_doc_type == "CommCareCase":
                         username = CommCareCase.get(recipient_id).get_case_property("pid")
                     else:
-                        username = CouchUser.get_by_user_id(recipient_id).raw_username
+                        user = CouchUser.get_by_user_id(recipient_id)
+                        username = user.first_name or user.raw_username
                 except Exception:
                     pass
                 username_map[recipient_id] = username
@@ -165,7 +166,8 @@ class MessageReport(FRIReport, DatespanMixin):
                         sender = username_map[message.chat_user_id]
                     else:
                         try:
-                            sender = CouchUser.get_by_user_id(message.chat_user_id).raw_username
+                            user = CouchUser.get_by_user_id(message.chat_user_id)
+                            sender = user.first_name or user.raw_username
                         except Exception:
                             pass
                         username_map[message.chat_user_id] = sender
