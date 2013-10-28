@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.core.urlresolvers import resolve, reverse
-from django.http import Http404
+from django.http import Http404, get_host
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 
@@ -16,7 +16,7 @@ def base_template(request):
     }
 
 
-def get_per_domain_context(project):
+def get_per_domain_context(project, request=None):
     if project and project.commtrack_enabled:
         domain_type = 'commtrack'
         logo_url = static('hqstyle/img/commtrack-logo.png')
@@ -36,6 +36,9 @@ def get_per_domain_context(project):
         public_site = "http://www.commcarehq.org"
         can_be_your = "mobile health solution"
 
+    if request and 'commtrack.org' in get_host(request):
+        logo_url = static('hqstyle/img/commtrack-logo.png')
+
     if project and project.has_custom_logo:
         logo_url = reverse('logo', args=[project.name])
 
@@ -52,7 +55,7 @@ def domain(request):
     """Global per-domain context variables"""
 
     project = getattr(request, 'project', None)
-    return get_per_domain_context(project)
+    return get_per_domain_context(project, request=request)
 
 
 def current_url_name(request):
