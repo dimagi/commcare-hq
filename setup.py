@@ -14,7 +14,7 @@ setup(
     test_loader='unittest2:TestLoader',
     install_requires=[
         "restkit",
-        "couchdbkit",
+        "jsonobject-couchdbkit>=0.6.5.2",
         "simplejson",
         "requests",
         "gevent",
