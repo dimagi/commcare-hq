@@ -26,7 +26,7 @@ class FRIMessageBankMessage(Document):
     domain = StringProperty()
     risk_profile = StringProperty(choices=PROFILES)
     message = StringProperty()
-    fri_id = IntegerProperty()
+    fri_id = StringProperty()
     theory_code = StringProperty()
 
 class FRIRandomizedMessage(Document):
@@ -42,7 +42,7 @@ class FRIRandomizedMessage(Document):
 class FRISMSLog(SMSLog):
     message_bank_lookup_completed = BooleanProperty(default=False)
     message_bank_message_id = StringProperty()
-    fri_id = IntegerProperty()
+    fri_id = StringProperty()
     risk_profile = StringProperty(choices=PROFILES)
     theory_code = StringProperty()
 

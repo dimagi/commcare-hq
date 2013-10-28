@@ -1,4 +1,5 @@
 import pytz
+import logging
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
@@ -23,67 +24,72 @@ class MessageBankReport(CustomProjectReport, GenericTabularReport):
     description = ugettext_noop("Displays usage of the message bank for a given participant.")
     emailable = False
     fields = (
-        "custom.fri.reports.filters.InteractiveParticipantFilter",
         "custom.fri.reports.filters.RiskProfileFilter",
     )
+    _interactive_participants = None
+
+    @property
+    def interactive_participants(self):
+        if self._interactive_participants is None:
+            self._interactive_participants = get_interactive_participants(self.domain)
+        return self._interactive_participants
 
     @property
     def risk_profile(self):
         return RiskProfileFilter.get_value(self.request, self.domain)
 
     @property
-    def case_id(self):
-        return InteractiveParticipantFilter.get_value(self.request, self.domain)
-
-    @property
     def headers(self):
-        return DataTablesHeader(
+        cols = [
             DataTablesColumn(_("Message Text")),
-            DataTablesColumn(_("Count")),
-            DataTablesColumn(_("Risk Profile")),
-        )
+            DataTablesColumn(_("Message ID")),
+        ]
+        for case in self.interactive_participants:
+            header = case.get_case_property("name_and_pid")
+            cols.append(DataTablesColumn(header))
+        return DataTablesHeader(*cols)
 
     @property
     def rows(self):
-        case_id = self.case_id
-        case = CommCareCase.get(case_id)
-        if case.domain != self.domain:
-            return []
         risk_profile = self.risk_profile
-        if case_id:
-            intermediate_result = {}
-            message_bank_messages = get_message_bank(self.domain, for_comparing=True)
-            for entry in message_bank_messages:
-                intermediate_result[entry["message"]._id] = {
-                    "message" : entry["message"].message,
-                    "count" : 0,
-                    "risk_profile_code" : entry["message"].risk_profile,
-                    "risk_profile_desc" : PROFILE_DESC.get(entry["message"].risk_profile, ""),
-                }
+        result = []
+        message_bank_messages = get_message_bank(self.domain, for_comparing=True)
+        data = {}
+        for case in self.interactive_participants:
+            data[case._id] = self.get_participant_message_counts(message_bank_messages, case)
 
-            participant_messages = FRISMSLog.view("sms/by_recipient",
-                                                  startkey=["CommCareCase", case_id, "SMSLog", OUTGOING],
-                                                  endkey=["CommCareCase", case_id, "SMSLog", OUTGOING, {}],
-                                                  reduce=False,
-                                                  include_docs=True).all()
-            for sms in participant_messages:
-                if sms.chat_user_id is not None:
-                    if not sms.message_bank_lookup_completed:
-                        add_metadata(sms, message_bank_messages)
-                    if sms.message_bank_message_id in intermediate_result:
-                        intermediate_result[sms.message_bank_message_id]["count"] += 1
-            result = []
-            for key, value in intermediate_result.items():
-                if risk_profile and (risk_profile != value["risk_profile_code"]):
-                    continue
-                result.append([
-                    self._fmt(value["message"]),
-                    self._fmt(value["count"]),
-                    self._fmt(value["risk_profile_desc"]),
-                ])
-            return result
-        else:
-            return []
+        for entry in message_bank_messages:
+            if risk_profile and risk_profile != entry["message"].risk_profile:
+                continue
+            row = [
+                self._fmt(entry["message"].message),
+                self._fmt(entry["message"].fri_id or "-"),
+            ]
+            for case in self.interactive_participants:
+                row.append(self._fmt(data[case._id][entry["message"]._id]))
+            result.append(row)
+        return result
+
+    def get_participant_messages(self, case):
+        result = FRISMSLog.view("sms/by_recipient",
+                                startkey=["CommCareCase", case._id, "SMSLog", OUTGOING],
+                                endkey=["CommCareCase", case._id, "SMSLog", OUTGOING, {}],
+                                reduce=False,
+                                include_docs=True).all()
+        return result
+
+    def get_participant_message_counts(self, message_bank_messages, case):
+        result = {}
+        for entry in message_bank_messages:
+            result[entry["message"]._id] = 0
+        participant_messages = self.get_participant_messages(case)
+        for sms in participant_messages:
+            if sms.chat_user_id is not None:
+                if not sms.message_bank_lookup_completed:
+                    add_metadata(sms, message_bank_messages)
+                if sms.message_bank_message_id in result:
+                    result[sms.message_bank_message_id] += 1
+        return result
 
     def _fmt(self, val):
         return format_datatables_data(val, val)

@@ -2,7 +2,7 @@ import random
 import re
 import pytz
 from dateutil.parser import parse
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from casexml.apps.case.models import CommCareCase
 from custom.fri.models import (
     PROFILE_A,
@@ -29,7 +29,8 @@ def get_interactive_participants(domain):
         study_arm = case.get_case_property("study_arm")
         if isinstance(study_arm, basestring) and study_arm.upper() == "A" and not case.closed:
             start_date = case.get_case_property("start_date")
-            start_date = parse(start_date).date()
+            if not isinstance(start_date, date):
+                start_date = parse(start_date).date()
             end_date = start_date + timedelta(days=55)
             if current_date >= start_date and current_date <= end_date:
                 result.append(case)
