@@ -19,6 +19,16 @@ from datetime import datetime, timedelta
 import hashlib
 
 
+class StaticColumn(AliasColumn):
+    column_key = None
+
+    def __init__(self, key, value):
+        super(StaticColumn, self).__init__(key)
+        self.value = value
+
+    def get_value(self, row):
+        return self.value
+
 class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin):
     fields = ['custom.apps.gsid.reports.TestField', 
               'custom.apps.gsid.reports.RelativeDatespanField', 
@@ -293,6 +303,8 @@ class GSIDSQLPatientReport(GSIDSQLReport):
 
         if self.is_map:
             columns.append(DatabaseColumn("gps", MaxColumn(self.gps_key), format_fn=lambda x: x))
+            disease = FixtureDataItem.get(self.disease[1]).fields['disease_name'] if self.disease else 'All diseases'
+            columns.append(DatabaseColumn('disease', StaticColumn('disease', disease)))
 
         return columns
 
@@ -302,14 +314,14 @@ class GSIDSQLPatientReport(GSIDSQLReport):
         self.total_row[0] = 'Total'
 
         # total age ranges
-        col_start = -4 if self.is_map else -3
+        col_start = -5 if self.is_map else -3
         self.total_row[col_start] = self.format_age_range(self.age_range_map['male'][0], self.age_range_map['male'][1])
         self.total_row[col_start+1] = self.format_age_range(self.age_range_map['female'][0], self.age_range_map['female'][1])
         self.total_row[col_start+2] = self.format_age_range(self.age_range_map['total'][0], self.age_range_map['total'][1])
 
         # formatted percent totals
-        pos_col_start = -7 if self.is_map else -6
-        tot_col_start = -10 if self.is_map else -9
+        pos_col_start = -8 if self.is_map else -6
+        tot_col_start = -11 if self.is_map else -9
         m_tot = self.total_row[tot_col_start]
         f_tot = self.total_row[tot_col_start+1]
         tot = self.total_row[tot_col_start+2]
@@ -689,9 +701,11 @@ class PatientMapReport(GenericMapReport, CustomProjectReport):
                 'Age Range::All age range': 'Age range: All',
                 'Age Range::Female age range': 'Age range: Female',
                 'Age Range::Male age range': 'Age range: Male',
+                'disease': 'Disease',
             },
             'detail_columns': [
                 'Country',
+                'disease',
                 'Positive Tests::Female +ve Percent',
                 'Positive Tests::Male +ve Percent',
                 'Positive Tests::Total +ve Percent',
@@ -700,15 +714,15 @@ class PatientMapReport(GenericMapReport, CustomProjectReport):
                 'Tests::Total',
             ],
             'table_columns': [
-                'Age Range::All age range',
-                'Age Range::Female age range',
-                'Age Range::Male age range',
-                'Positive Tests::Female +ve Percent',
-                'Positive Tests::Male +ve Percent',
-                'Positive Tests::Total +ve Percent',
                 'Tests::Number of Females ',
                 'Tests::Number of Males ',
                 'Tests::Total',
+                'Positive Tests::Female +ve Percent',
+                'Positive Tests::Male +ve Percent',
+                'Positive Tests::Total +ve Percent',
+                'Age Range::All age range',
+                'Age Range::Female age range',
+                'Age Range::Male age range',
             ]
         }
 
