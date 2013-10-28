@@ -24,7 +24,7 @@ from corehq.apps.users.models import CommCareUser, WebUser, CommCareCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.models import Domain
 
-from .make_users import make_web_user, make_cc_user
+from .make_users import make_web_user, make_cc_user, make_cc_users
 from .submit_forms import make_forms
 
 db = get_db()
@@ -85,13 +85,18 @@ def user_and_forms():
 
 
 
-pool = Pool(10)
-
 # Make sure you're using the correct db!
-num_users = 10000
-for i in range(num_users):
-    # control verbosity
-    if i%100 == 0:
-        print "%d / %d users created (%s%%)" % (
-                i, num_users, float(i)/num_users)
-    pool.spawn(user_and_forms)
+# pool = Pool(10)
+# num_users = 10000
+# for i in range(num_users):
+    # # control verbosity
+    # if i%100 == 0:
+        # print "%d / %d users created (%s%%)" % (
+                # i, num_users, float(i)/num_users)
+    # pool.spawn(user_and_forms)
+
+
+make_cc_users(domain_name, 10000)
+
+# Estimate 2 hrs to get to 10k users with no cases or forms
+
