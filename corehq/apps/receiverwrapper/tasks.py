@@ -13,8 +13,7 @@ CHECK_REPEATERS_INTERVAL = timedelta(minutes=1)
 def check_repeaters():
     start = datetime.utcnow()
     LIMIT = 100
-    DELETED = '-Deleted'
-    progress_report = {'success': [], 'fail': [], 'locked': [], 'deleted': [], 'number_locked': 0}
+    progress_report = new_progress_report()
 
     def loop():
         # take LIMIT records off the top
@@ -27,36 +26,12 @@ def check_repeaters():
             due_before=start,
             limit=LIMIT + number_locked
         )
-        if repeat_records.count() <= number_locked:
-            # don't keep spinning if there's nothing left to fetch
-            return False
-
-        for repeat_record in repeat_records:
-            now = datetime.utcnow()
-
-            # abort if taking too long, so the next task can take over
-            if now - start > CHECK_REPEATERS_INTERVAL:
-                return False
-
-            if repeat_record.acquire_lock(start):
-                if repeat_record.repeater.doc_type.endswith(DELETED):
-                    if not repeat_record.doc_type.endswith(DELETED):
-                        repeat_record.doc_type += DELETED
-                    progress_report['deleted'].append(repeat_record.get_id)
-                else:
-                    repeat_record.fire()
-                    if repeat_record.succeeded:
-                        progress_report['success'].append(repeat_record.get_id)
-                    else:
-                        progress_report['fail'].append(repeat_record.get_id)
-                repeat_record.save()
-                repeat_record.release_lock()
-            else:
-                progress_report['locked'].append(repeat_record.get_id)
-                number_locked += 1
-
-        progress_report['number_locked'] = number_locked
-        return True
+        return process_repeater_list(
+            repeat_records,
+            start=start,
+            cutoff=start + CHECK_REPEATERS_INTERVAL,
+            progress_report=progress_report
+        )
 
     while loop():
         pass
@@ -65,3 +40,47 @@ def check_repeaters():
     progress_report['timedelta'] = unicode(now - start)
     progress_report['time'] = unicode(now)
     logging.info(json.dumps(progress_report))
+
+
+def new_progress_report():
+    return {'success': [], 'fail': [], 'locked': [], 'deleted': [], 'number_locked': 0}
+
+
+def process_repeater_list(repeat_records, start=None, cutoff=datetime.max, progress_report=None):
+    """
+    Attempts to process a list of repeat records, with a bunch of optional arguments that are
+    used by the periodic task.
+    """
+    start = start or datetime.utcnow()
+    progress_report = progress_report or new_progress_report()
+    DELETED = '-Deleted'
+
+    if repeat_records.count() <= progress_report['number_locked']:
+        # don't keep spinning if there's nothing left to fetch
+        return False
+
+    for repeat_record in repeat_records:
+        now = datetime.utcnow()
+
+        # abort if taking too long, so the next task can take over
+        if now > cutoff:
+            return False
+
+        if repeat_record.acquire_lock(start):
+            if repeat_record.repeater.doc_type.endswith(DELETED):
+                if not repeat_record.doc_type.endswith(DELETED):
+                    repeat_record.doc_type += DELETED
+                progress_report['deleted'].append(repeat_record.get_id)
+            else:
+                repeat_record.fire()
+                if repeat_record.succeeded:
+                    progress_report['success'].append(repeat_record.get_id)
+                else:
+                    progress_report['fail'].append(repeat_record.get_id)
+            repeat_record.save()
+            repeat_record.release_lock()
+        else:
+            progress_report['locked'].append(repeat_record.get_id)
+            progress_report['number_locked'] += 1
+
+    return progress_report
