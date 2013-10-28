@@ -148,7 +148,7 @@ class MessageReport(CustomProjectReport, GenericTabularReport, DatespanMixin):
                     if message.couch_recipient_doc_type == "CommCareCase":
                         username = CommCareCase.get(recipient_id).get_case_property("pid")
                     else:
-                        username = CouchUser.get_by_user_id(recipient_id).username
+                        username = CouchUser.get_by_user_id(recipient_id).raw_username
                 except Exception:
                     pass
                 username_map[recipient_id] = username
@@ -163,7 +163,7 @@ class MessageReport(CustomProjectReport, GenericTabularReport, DatespanMixin):
                         sender = username_map[message.chat_user_id]
                     else:
                         try:
-                            sender = CouchUser.get_by_user_id(message.chat_user_id).username
+                            sender = CouchUser.get_by_user_id(message.chat_user_id).raw_username
                         except Exception:
                             pass
                         username_map[message.chat_user_id] = sender
