@@ -45,7 +45,7 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
         super(GSIDSQLReport, self).__init__(request, base_context=base_context, domain=domain, **kwargs)
 
     @property
-    def daterange(self):
+    def daterange_display(self):
         format = "%d %b %Y"
         st = self.datespan.startdate.strftime(format)
         en = self.datespan.enddate.strftime(format)
@@ -56,7 +56,7 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
         if self.needs_filters:
             return []
 
-        subtitles = ["Date range: %s" % self.daterange]
+        subtitles = ["Date range: %s" % self.daterange_display]
         if self.selected_fixture():
             tag, id = self.selected_fixture()
             location = FixtureDataItem.get(id).fields['%s_name' % tag]
@@ -569,12 +569,13 @@ class GSIDSQLByAgeReport(GSIDSQLReport):
         default_filter_values.update(age_filters)
         return default_filter_values
 
-    @property
-    def columns(self):
-        percent_fn = lambda x, y: dict(
+    def percent_fn(self, x, y):
+        return dict(
             sort_key=x or 0,
             html="%(x)s (%(p)s%%)" % {"x": int(x or 0), "p": 100*(x or 0) / (y or 1)})
-        
+
+    @property
+    def columns(self):
         female_range_group = DataTablesColumnGroup("Female Positive Tests (% positive)")
         male_range_group = DataTablesColumnGroup("Male Positive Tests (% positive)")
 
@@ -585,7 +586,7 @@ class GSIDSQLByAgeReport(GSIDSQLReport):
             age_range_group = male_range_group if gender is "male" else female_range_group
             return [
                 AggregateColumn(
-                    "0-10", percent_fn,
+                    "0-10", self.percent_fn,
                     [   
                         SumColumn(
                             'cases',
@@ -597,7 +598,7 @@ class GSIDSQLByAgeReport(GSIDSQLReport):
                     header_group=age_range_group, sort_type=DTSortType.NUMERIC
                 ),
                 AggregateColumn(
-                    "10-20", percent_fn, 
+                    "10-20", self.percent_fn,
                     [
                         SumColumn(
                             'cases',
@@ -609,7 +610,7 @@ class GSIDSQLByAgeReport(GSIDSQLReport):
                     header_group=age_range_group, sort_type=DTSortType.NUMERIC
                 ),
                 AggregateColumn(
-                    "20-50", percent_fn,
+                    "20-50", self.percent_fn,
                     [
                         SumColumn(
                             'cases',
@@ -621,7 +622,7 @@ class GSIDSQLByAgeReport(GSIDSQLReport):
                     header_group=age_range_group, sort_type=DTSortType.NUMERIC
                 ),
                 AggregateColumn(
-                    "50+", percent_fn,
+                    "50+", self.percent_fn,
                     [
                         SumColumn(
                             'cases',
@@ -631,13 +632,19 @@ class GSIDSQLByAgeReport(GSIDSQLReport):
                     ],
                     header_group=age_range_group, sort_type=DTSortType.NUMERIC
                 ),
-                DatabaseColumn(
-                    'Total',
-                    SumColumn(
-                        'cases',
-                        alias=gender + "_total",
-                        filters=self.filters + [EQ("gender", gender)]),
-                    header_group=age_range_group
+                AggregateColumn(
+                    "Total", self.percent_fn,
+                    [
+                        SumColumn(
+                            'cases',
+                            alias="positive_total_" + gender,
+                            filters=self.filters + [AND([EQ("gender", gender), EQ("diagnosis", "positive")])]),
+                        SumColumn(
+                            'cases',
+                            alias=gender + "_total",
+                            filters=self.filters + [EQ("gender", gender)]),
+                    ],
+                    header_group=age_range_group, sort_type=DTSortType.NUMERIC
                 ),
             ]
         
@@ -668,6 +675,25 @@ class GSIDSQLByAgeReport(GSIDSQLReport):
     def rows(self):
         rows = super(GSIDSQLByAgeReport, self).rows
         self.total_row[0] = 'Total'
+
+        # custom total row formatting
+        tot_col_start = -13
+        m_tot = self.total_row[tot_col_start]
+        f_tot = self.total_row[tot_col_start+1]
+
+        m_pos_start = -10
+        self.total_row[m_pos_start] = self.percent_fn(self.total_row[m_pos_start], m_tot)
+        self.total_row[m_pos_start+1] = self.percent_fn(self.total_row[m_pos_start+1], m_tot)
+        self.total_row[m_pos_start+2] = self.percent_fn(self.total_row[m_pos_start+2], m_tot)
+        self.total_row[m_pos_start+3] = self.percent_fn(self.total_row[m_pos_start+3], m_tot)
+        self.total_row[m_pos_start+4] = self.percent_fn(self.total_row[m_pos_start+4], m_tot)
+
+        f_pos_start = -5
+        self.total_row[f_pos_start] = self.percent_fn(self.total_row[f_pos_start], f_tot)
+        self.total_row[f_pos_start+1] = self.percent_fn(self.total_row[f_pos_start+1], f_tot)
+        self.total_row[f_pos_start+2] = self.percent_fn(self.total_row[f_pos_start+2], f_tot)
+        self.total_row[f_pos_start+3] = self.percent_fn(self.total_row[f_pos_start+3], f_tot)
+        self.total_row[f_pos_start+4] = self.percent_fn(self.total_row[f_pos_start+4], f_tot)
         return rows
 
 
