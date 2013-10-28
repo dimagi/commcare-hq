@@ -373,7 +373,7 @@ class GSIDSQLByDayReport(GSIDSQLReport):
             for disease in diseases:
                 row = [capitalize_fn(x) for x in loc_key]
                 disease_names = self.diseases["names"]
-                index = diseases.index(disease)
+                index = self.diseases['ids'].index(disease)
                 row.append(disease_names[index])
                 for n, day in enumerate(self.daterange(startdate, enddate)):
                     temp_key = [loc for loc in loc_key]
@@ -402,7 +402,7 @@ class GSIDSQLByDayReport(GSIDSQLReport):
             for n, day in enumerate(self.daterange(startdate, enddate)):
                 x = day
                 y = 0 if row[date_index + n + 1] == "--" else row[date_index + n + 1]
-                data_points.append({'x': x, 'y': y})
+                data_points.append({'x': x, 'y': y['sort_key']})
             chart.add_dataset(row[date_index-1] + "(" + row[date_index] + ")", data_points)
         return [chart]
 
