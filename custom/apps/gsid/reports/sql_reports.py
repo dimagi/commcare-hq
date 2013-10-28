@@ -555,8 +555,29 @@ class GSIDSQLByAgeReport(GSIDSQLReport):
                     header_group=age_range_group
                 ),
             ]
+        
+        totals_group = DataTablesColumnGroup("Total tests")
+        male_filter = EQ("gender", "male")
+        female_filter = EQ("gender", "female")
+        sum_fn = lambda x, y: int(x or 0) + int(y or 0)
 
-        return self.common_columns + generate_columns("male") + generate_columns("female")
+        return self.common_columns + [
+            DatabaseColumn(
+                "Males ",
+                SumColumn('cases', alias="male-total", filters=self.filters + [male_filter]),
+                header_group=totals_group
+            ),
+            DatabaseColumn(
+                "Females ",
+                SumColumn('cases', alias="female-total", filters=self.filters + [female_filter]),
+                header_group=totals_group
+            ),
+            AggregateColumn(
+                "Total", sum_fn,
+                [AliasColumn("male-total"), AliasColumn("female-total")],
+                header_group=totals_group
+            ),
+        ] + generate_columns("male") + generate_columns("female")
 
     @property
     def rows(self):
