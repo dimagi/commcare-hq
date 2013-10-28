@@ -123,7 +123,7 @@ class Test(TestCase):
                                             owner_id="test_owner")
         for cls in [MockIndicators, MockIndicatorsWithGetters]:
             classname = cls.__name__
-            pillow = cls.pillow()()
+            pillow = cls.pillow()(chunk_size=0)
             pillow.processor({'changes': [], 'id': '123', 'seq': 1})
             indicator = self.fakedb.mock_docs.get("%s-123" % classname, None)
             self.assertIsNotNone(indicator)

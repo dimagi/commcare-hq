@@ -6,7 +6,7 @@ import datetime
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.read_only import ReadOnlyObject
 from fluff import exceptions
-from pillowtop.listener import BasicPillow
+from pillowtop.listener import PythonPillow
 from .signals import indicator_document_updated
 import fluff.sync_couchdb
 
@@ -528,12 +528,13 @@ class IndicatorDocument(schema.Document):
 
         document_filter = cls.document_filter
         return type(FluffPillow)(cls.__name__ + 'Pillow', (FluffPillow,), {
-            'couch_filter': 'fluff_filter/domain_type',
             'extra_args': extra_args,
             'document_class': cls.document_class,
             'wrapper': wrapper,
             'indicator_class': cls,
             'document_filter': document_filter,
+            'domains': cls.domains,
+            'doc_type': doc_type,
         })
 
     @classmethod
@@ -557,11 +558,18 @@ class IndicatorDocument(schema.Document):
     class Meta:
         app_label = 'fluff'
 
-
-class FluffPillow(BasicPillow):
+class FluffPillow(PythonPillow):
     document_filter = None
     wrapper = None
     indicator_class = IndicatorDocument
+    domains = None
+    doc_type = None
+
+    def python_filter(self, doc):
+        assert self.domains
+        assert None not in self.domains
+        assert self.doc_type is not None
+        return doc.get('domain', None) in self.domains and doc.get('doc_type', None) == self.doc_type
 
     def change_transform(self, doc_dict):
         doc = self.wrapper.wrap(doc_dict)
