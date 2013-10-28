@@ -98,7 +98,7 @@ def weekly_reports():
     for rep in reps:
         send_report.delay(rep._id)
 
-@periodic_task(run_every=crontab(hour=[0,12], minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(run_every=crontab(hour=[22], minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def saved_exports():    
     for group_config in HQGroupExportConfiguration.view("groupexport/by_domain", reduce=False,
                                                         include_docs=True).all():
