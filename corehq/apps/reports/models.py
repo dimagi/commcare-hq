@@ -632,7 +632,7 @@ class HQGroupExportConfiguration(GroupExportConfiguration):
         groups = cls.by_domain(domain)
         if groups:
             if len(groups) > 1:
-                notify_exception("Domain %s has more than one group export config! This is weird." % domain)
+                logging.error("Domain %s has more than one group export config! This is weird." % domain)
             return groups[0]
         return HQGroupExportConfiguration(domain=domain)
 
