@@ -127,6 +127,8 @@ def _get_latest_doc_from_index(es_index, sort_field):
 
 def _get_latest_doc_id(db, doc_type, skip=0, limit=100, skipfunc=None):
     """
+    Get the most recent doc_id from the relevant views emitting over time.
+
     'CommCareCase' | 'XFormInstance'
     hqadmin/cases_over_time or hqadmin/forms_over_time
 
