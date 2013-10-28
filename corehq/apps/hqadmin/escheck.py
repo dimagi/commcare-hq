@@ -41,7 +41,7 @@ def check_index_by_doc(es_index, db, doc_id):
     except ResourceNotFound:
         pass
 
-    time.sleep(2)  # could be less, but just in case
+    time.sleep(3)  # could be less, but just in case
     return _check_es_rev(es_index, doc_id, target_rev)
 
 
