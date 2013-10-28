@@ -1,3 +1,4 @@
+import functools
 from sqlagg.columns import *
 from sqlagg.base import AliasColumn
 from sqlagg.filters import *
@@ -139,20 +140,36 @@ class GSIDSQLPatientReport(GSIDSQLReport):
     name = "Patient Summary Report"
     slug = "patient_summary_sql"
     section_name = "patient summary"
-    
-    @property
-    def columns(self):
-        age_fn = lambda x, y: str(x if x is not None else "-") + " - " + str(y if y is not None else "-")
-        sum_fn = lambda x, y: int(x or 0) + int(y or 0)
-        percent_agg_fn = lambda x, t: dict(sort_key=x or 0, html="%(x)s (%(p)s%%)" % \
+
+    age_range_map = {'male': [None, None], 'female': [None, None], 'total': [None, None]}
+
+    def age_fn(self, key, min, max):
+        age_range = self.age_range_map[key]
+        if min is not None and (age_range[0] is None or min < age_range[0]):
+            self.age_range_map[key][0] = min
+        if max is not None and (age_range[1] is None or max > age_range[1]):
+            self.age_range_map[key][1] = max
+
+        return self.format_age_range(min, max)
+
+    def format_age_range(self, min, max):
+        return str(min if min is not None else "-") + " - " + str(max if max is not None else "-")
+
+    def percent_agg_fn(self, x, t):
+        return dict(sort_key=x or 0, html="%(x)s (%(p)s%%)" % \
             {
                 "x": x or 0,
                 "p": (100 * int(x or 0) / (t or 1))
             })
-        total_percent_agg_fn = lambda x, y, m, f: dict(sort_key=sum_fn(x, y), html="%(x)s (%(p)s%%)" % \
+
+    @property
+    def columns(self):
+        sum_fn = lambda x, y: int(x or 0) + int(y or 0)
+
+        total_percent_agg_fn = lambda f_pos, m_pos, f_tot, m_tot: dict(sort_key=sum_fn(f_pos, m_pos), html="%(x)s (%(p)s%%)" % \
             {
-                "x": sum_fn(x, y),
-                "p": (100 * sum_fn(x, y) / (sum_fn(m, f) or 1))
+                "x": sum_fn(f_pos, m_pos),
+                "p": (100 * sum_fn(f_pos, m_pos) / (sum_fn(m_tot, f_tot) or 1))
             })
 
         patient_number_group = DataTablesColumnGroup("Tests")
@@ -175,13 +192,13 @@ class GSIDSQLPatientReport(GSIDSQLReport):
                 header_group=patient_number_group
             ),
             AggregateColumn(
-                "Total", sum_fn, 
+                "Total", sum_fn,
                 [AliasColumn("male-total"), AliasColumn("female-total")],
                 header_group=patient_number_group
             ),
 
             AggregateColumn(
-                "Male +ve Percent", percent_agg_fn,
+                "Male +ve Percent", self.percent_agg_fn,
                 [
                     SumColumn(
                         'cases',
@@ -193,7 +210,7 @@ class GSIDSQLPatientReport(GSIDSQLReport):
                 header_group=positive_group, sort_type=DTSortType.NUMERIC
             ),
             AggregateColumn(
-                "Female +ve Percent", percent_agg_fn,
+                "Female +ve Percent", self.percent_agg_fn,
                 [
                     SumColumn('cases',
                         alias="female-positive", 
@@ -208,13 +225,13 @@ class GSIDSQLPatientReport(GSIDSQLReport):
                 [
                     AliasColumn("female-positive"), 
                     AliasColumn("male-positive"),
-                    AliasColumn("male-total"), AliasColumn("female-total")
+                    AliasColumn("female-total"), AliasColumn("male-total")
                 ],
                 header_group=positive_group, sort_type=DTSortType.NUMERIC
             ),
 
             AggregateColumn(
-                "Male age range", age_fn,
+                "Male age range", functools.partial(self.age_fn, 'male'),
                 [
                     MinColumn("age", alias="male-min", filters=self.filters + [male_filter]),
                     MaxColumn("age", alias="male-max", filters=self.filters + [male_filter])
@@ -222,7 +239,7 @@ class GSIDSQLPatientReport(GSIDSQLReport):
                 header_group=age_range_group
             ),
             AggregateColumn(
-                "Female age range", age_fn,
+                "Female age range", functools.partial(self.age_fn, 'female'),
                 [
                     MinColumn("age", alias="female-min", filters=self.filters + [female_filter]),
                     MaxColumn("age", alias="female-max", filters=self.filters + [female_filter])
@@ -230,7 +247,7 @@ class GSIDSQLPatientReport(GSIDSQLReport):
                 header_group=age_range_group
             ),
             AggregateColumn(
-                "All age range", age_fn,
+                "All age range", functools.partial(self.age_fn, 'total'),
                 [
                     MinColumn("age", alias="age-min", filters=self.filters + [OR([female_filter, male_filter])]),
                     MaxColumn("age", alias="age-max", filters=self.filters + [OR([female_filter, male_filter])])
@@ -248,6 +265,27 @@ class GSIDSQLPatientReport(GSIDSQLReport):
     def rows(self):
         rows = super(GSIDSQLPatientReport, self).rows
         self.total_row[0] = 'Total'
+
+        # total age ranges
+        col_start = -4 if self.is_map else -3
+        self.total_row[col_start] = self.format_age_range(self.age_range_map['male'][0], self.age_range_map['male'][1])
+        self.total_row[col_start+1] = self.format_age_range(self.age_range_map['female'][0], self.age_range_map['female'][1])
+        self.total_row[col_start+2] = self.format_age_range(self.age_range_map['total'][0], self.age_range_map['total'][1])
+
+        # formatted percent totals
+        pos_col_start = -7 if self.is_map else -6
+        tot_col_start = -10 if self.is_map else -9
+        m_tot = self.total_row[tot_col_start]
+        f_tot = self.total_row[tot_col_start+1]
+        tot = self.total_row[tot_col_start+2]
+
+        m_pos = self.total_row[pos_col_start]
+        f_pos = self.total_row[pos_col_start+1]
+        tot_pos = self.total_row[pos_col_start+2]
+
+        self.total_row[pos_col_start] = self.percent_agg_fn(m_pos, m_tot)
+        self.total_row[pos_col_start+1] = self.percent_agg_fn(f_pos, f_tot)
+        self.total_row[pos_col_start+2] = self.percent_agg_fn(tot_pos, tot)
         return rows
 
     @property
