@@ -69,6 +69,24 @@ class IndicatorXpath(XPath):
         return XPath(u"instance('%s')/indicators/case[@id = current()/@case_id]" % self).slash(indicator_name)
 
 
+class WrappedAttribs(object):
+    def __init__(self, attrib, namespaces=namespaces):
+        self.attrib = attrib
+        self.namespaces = namespaces
+
+    def __getattr__(self, name):
+        return getattr(self.attrib, name)
+
+    def __contains__(self, item):
+        return item.format(**self.namespaces) in self.attrib
+
+    def __setitem__(self, item, value):
+        self.attrib[item.format(**self.namespaces)] = value
+
+    def __getitem__(self, item):
+        return self.attrib[item.format(**self.namespaces)]
+
+
 class WrappedNode(object):
     def __init__(self, xml, namespaces=namespaces):
         if isinstance(xml, basestring):
@@ -77,26 +95,36 @@ class WrappedNode(object):
             self.xml = xml
         self.namespaces=namespaces
 
-    def __getattr__(self, name):
-        if name in ('find', 'findall', 'findtext'):
-            wrap = {
-                'find': WrappedNode,
-                'findall': lambda list: map(WrappedNode, list),
-                'findtext': lambda text: text
-            }[name]
-            none = {
-                'find': lambda: WrappedNode(None),
-                'findall': list,
-                'findtext': lambda: None
-            }[name]
-            def _fn(xpath, *args, **kwargs):
-                if self.xml is not None:
-                    return wrap(getattr(self.xml, name)(xpath.format(**self.namespaces), *args, **kwargs))
-                else:
-                    return none()
-            return _fn
+        if self.xml:
+            self.attrib = WrappedAttribs(
+                    self.xml.attrib, namespaces=namespaces)
+
+    def find(self, xpath, *args, **kwargs):
+        if self.xml:
+            return WrappedNode(self.xml.find(
+                xpath.format(**self.namespaces), *args, **kwargs))
         else:
-            return getattr(self.xml, name)
+            return WrappedNode(None)
+
+    def findall(self, xpath, *args, **kwargs):
+        if self.xml:
+            return [WrappedNode(n) for n in self.xml.findall(
+                    xpath.format(**self.namespaces), *args, **kwargs)]
+        else:
+            return []
+
+    def findtext(self, xpath, *args, **kwargs):
+        if self.xml:
+            return self.xml.findtext(
+                    xpath.format(**self.namespaces), *args, **kwargs)
+        else:
+            return None
+
+    def __getattr__(self, attr):
+        return getattr(self.xml, attr)
+
+    def __nonzero__(self):
+        return self.xml is not None
 
     @property
     def tag_xmlns(self):
@@ -292,6 +320,59 @@ class XForm(WrappedNode):
             langs.append(translation.attrib['lang'])
         return langs
 
+    def get_path(self, node):
+        # TODO: add safety tests so that when something fails it fails with a good error
+        path = None
+        if 'ref' in node.attrib:
+            path = node.attrib['ref']
+        elif 'bind' in node.attrib:
+            bind_id = node.attrib['bind']
+            bind = self.model_node.find('{f}bind[@id="%s"]' % bind_id)
+            path = bind.attrib['nodeset']
+        elif node.tag_name == "group":
+            path = ""
+        elif node.tag_name == "repeat":
+            path = node.attrib['nodeset']
+        else:
+            raise XFormError("Node <%s> has no 'ref' or 'bind'" % node.tag_name)
+        return path
+
+    def for_each_leaf_control_node(self, leaf_callback, all_callback=None):
+        if not self.exists():
+            return
+
+        def for_each_control_node(group, path_context="", repeat_context=""):
+            for node in group.findall('*'):
+                if node.tag_xmlns == namespaces['f'][1:-1]:
+                    path = self.resolve_path(self.get_path(node), path_context)
+                    if node.tag_name == "group":
+                        for_each_control_node(node, path_context=path, repeat_context=repeat_context)
+                    elif node.tag_name == "repeat":
+                        for_each_control_node(node, path_context=path, repeat_context=path)
+                    else:
+                        if node.tag_name in ("select1", "select"):
+                            items = node.findall('{f}item')
+                        else:
+                            items = None
+                        leaf_callback(node, path, repeat_context, items)
+                    if all_callback:
+                        all_callback(node, path, repeat_context, None)
+
+        for_each_control_node(self.find('{h}body'))
+
+    def for_each_leaf_data_node(self, callback):
+        if not self.exists():
+            return
+        
+        def for_each_data_node(parent, path_context=""):
+            for child in parent.findall('*'):
+                path = self.resolve_path(child.tag_name, path_context)
+                for_each_data_node(child, path_context=path)
+            if not parent.findall('*'):
+                callback(parent, path_context)
+
+        for_each_data_node(self.data_node)
+ 
     def get_questions(self, langs):
         """
         parses out the questions from the xform, into the format:
@@ -304,82 +385,62 @@ class XForm(WrappedNode):
         if not self.exists():
             return []
 
-        def get_path(prompt):
-            # TODO: add safety tests so that when something fails it fails with a good error
-            path = None
-            if 'ref' in prompt.attrib:
-                path = prompt.attrib['ref']
-            elif 'bind' in prompt.attrib:
-                bind_id = prompt.attrib['bind']
-                bind = self.model_node.find('{f}bind[@id="%s"]' % bind_id)
-                path = bind.attrib['nodeset']
-            elif prompt.tag_name == "group":
-                path = ""
-            elif prompt.tag_name == "repeat":
-                path = prompt.attrib['nodeset']
-            else:
-                raise XFormError("Node <%s> has no 'ref' or 'bind'" % prompt.tag_name)
-            return path
-
         questions = []
-        excluded_paths = set()
         repeat_contexts = set([''])
 
-        def build_questions(group, path_context="", repeat_context="", exclude=False):
-            repeat_contexts.add(repeat_context)
-            for prompt in group.findall('*'):
-                if prompt.tag_xmlns == namespaces['f'][1:-1] and prompt.tag_name != "label":
-                    path = self.resolve_path(get_path(prompt), path_context)
-                    excluded_paths.add(path)
-                    if prompt.tag_name == "group":
-                        build_questions(prompt, path_context=path, repeat_context=repeat_context)
-                    elif prompt.tag_name == "repeat":
-                        build_questions(prompt, path_context=path, repeat_context=path)
-                    elif prompt.tag_name not in ("trigger", "label"):
-                        if not exclude:
-                            question = {
-                                "label": self.get_label_text(prompt, langs),
-                                "tag": prompt.tag_name,
-                                "value": path,
-                                "repeat": repeat_context,
-                            }
+        excluded_paths = set()
 
-                            if question['tag'] == "select1":
-                                options = []
-                                for item in prompt.findall('{f}item'):
-                                    translation = self.get_label_text(item, langs)
-                                    try:
-                                        value = item.findtext('{f}value').strip()
-                                    except AttributeError:
-                                        raise XFormError("<item> (%r) has no <value>" % translation)
-                                    options.append({
-                                        'label': translation,
-                                        'value': value
-                                    })
-                                question.update({'options': options})
-                            questions.append(question)
-        build_questions(self.find('{h}body'))
-        repeat_contexts = sorted(repeat_contexts, reverse=True)
+        def for_each_node(node, path, repeat_context, items):
+            excluded_paths.add(path)
 
-        def build_non_question_paths(parent, path_context=""):
-            for child in parent.findall('*'):
-                path = self.resolve_path(child.tag_name, path_context)
-                build_non_question_paths(child, path_context=path)
-            if not parent.findall('*'):
-                path = path_context
-                if path not in excluded_paths:
-                    matching_repeat_context = (
-                        repeat_context for repeat_context in repeat_contexts
-                        if repeat_context in path
-                    ).next()
-                    questions.append({
-                        "label": path,
-                        "tag": "hidden",
-                        "value": path,
-                        "repeat": matching_repeat_context,
-                    })
-        build_non_question_paths(self.data_node)
+        def for_each_leaf_control_node(node, path, repeat_context, items):
+            if node.tag_name in ("trigger", "label"):
+                return
+
+            question = {
+                "label": self.get_label_text(node, langs),
+                "tag": node.tag_name,
+                "value": path,
+                "repeat": repeat_context,
+            }
+
+            if items:
+                options = []
+                for item in items:
+                    translation = self.get_label_text(item, langs)
+                    try:
+                        value = item.findtext('{f}value').strip()
+                    except AttributeError:
+                        raise XFormError("<item> (%r) has no <value>" % translation)
+                    options.append({
+                        'label': translation,
+                        'value': value
+                     })
+                question['options'] = options
+            questions.append(question)
+
+        self.for_each_leaf_control_node(
+                for_each_leaf_control_node, for_each_node)
+        excluded_paths.update([q['value'] for q in questions])
+        repeat_contexts = sorted(
+                set(q['repeat'] for q in questions), reverse=True)
+        
+        def for_each_data_node(data_node, path):
+            if path not in excluded_paths:
+                matching_repeat_context = (
+                    repeat_context for repeat_context in repeat_contexts
+                    if repeat_context in path
+                ).next()
+                questions.append({
+                    "label": path,
+                    "tag": "hidden",
+                    "value": path,
+                    "repeat": matching_repeat_context,
+                })
+        self.for_each_leaf_data_node(for_each_data_node)
+
         return questions
+
 
     def add_case_and_meta(self, form):
         if form.get_app().application_version == APP_V1:
