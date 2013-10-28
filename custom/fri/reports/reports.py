@@ -18,14 +18,7 @@ from custom.fri.api import get_interactive_participants
 from django.core.urlresolvers import reverse
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 
-class MessageBankReport(CustomProjectReport, GenericTabularReport):
-    name = ugettext_noop("Message Bank")
-    slug = "fri_message_bank"
-    description = ugettext_noop("Displays usage of the message bank for a given participant.")
-    emailable = False
-    fields = (
-        "custom.fri.reports.filters.RiskProfileFilter",
-    )
+class FRIReport(CustomProjectReport, GenericTabularReport):
     _interactive_participants = None
 
     @property
@@ -33,6 +26,15 @@ class MessageBankReport(CustomProjectReport, GenericTabularReport):
         if self._interactive_participants is None:
             self._interactive_participants = get_interactive_participants(self.domain)
         return self._interactive_participants
+
+class MessageBankReport(FRIReport):
+    name = ugettext_noop("Message Bank")
+    slug = "fri_message_bank"
+    description = ugettext_noop("Displays the message bank.")
+    emailable = False
+    fields = (
+        "custom.fri.reports.filters.RiskProfileFilter",
+    )
 
     @property
     def risk_profile(self):
@@ -94,7 +96,7 @@ class MessageBankReport(CustomProjectReport, GenericTabularReport):
     def _fmt(self, val):
         return format_datatables_data(val, val)
 
-class MessageReport(CustomProjectReport, GenericTabularReport, DatespanMixin):
+class MessageReport(FRIReport, DatespanMixin):
     name = ugettext_noop('Message Report')
     slug = 'fri_message_report'
     fields = [DatespanMixin.datespan_field]
@@ -111,7 +113,7 @@ class MessageReport(CustomProjectReport, GenericTabularReport, DatespanMixin):
             DataTablesColumn(_("Originator")),
             DataTablesColumn(_("Direction")),
         )
-        header.custom_sort = [[0, "desc"]]
+        header.custom_sort = [[2, "desc"]]
         return header
 
     @property
@@ -190,30 +192,38 @@ class MessageReport(CustomProjectReport, GenericTabularReport, DatespanMixin):
             timestamp.strftime("%Y-%m-%d %H:%M:%S"),
         )
 
-class PHEDashboardReport(CustomProjectReport, GenericTabularReport):
+class PHEDashboardReport(FRIReport):
     name = ugettext_noop("PHE Dashboard")
     slug = "fri_phe_dashboard"
     description = ugettext_noop("Displays a list of active, arm A, participants.")
     emailable = False
     exportable = False
+    report_template_path = "fri/phe_dashboard.html"
+    hide_filters = True
+
+    @property
+    def template_context(self):
+        result = {
+            "fri_message_bank_url" : reverse(CustomProjectReportDispatcher.name(), args=[self.domain, MessageBankReport.slug]),
+            "fri_chat_actions" : [self._open_chat_action(case._id) for case in self.interactive_participants],
+        }
+        return result
 
     @property
     def headers(self):
         return DataTablesHeader(
             DataTablesColumn(_("Participant")),
             DataTablesColumn(_("Open Chat Window")),
-            DataTablesColumn(_("Open Message Bank")),
         )
 
     @property
     def rows(self):
         result = []
-        cases = get_interactive_participants(self.domain)
+        cases = self.interactive_participants
         for case in cases:
             result.append([
-                self._fmt(case.name),
+                self._fmt(case.get_case_property("name_and_pid")),
                 self._fmt_chat_link(case.get_id),
-                self._fmt_message_bank_link(case.get_id),
             ])
         return result
 
@@ -221,17 +231,12 @@ class PHEDashboardReport(CustomProjectReport, GenericTabularReport):
         return format_datatables_data(val, val)
 
     def _fmt_chat_link(self, case_id):
-        url = reverse("sms_chat", args=[self.domain, case_id])
         return self.table_cell(
             case_id,
-            """<span class="btn btn-primary" onClick="window.open('%s', '_blank', 'location=no,menubar=no,scrollbars=no,status=no,toolbar=no,height=400,width=400');">%s</span>""" % (url, _("Open Chat Window")),
+            """<span class="btn btn-primary" onClick="%s">%s</span>""" % (self._open_chat_action(case_id), _("Open Chat Window")),
         )
 
-    def _fmt_message_bank_link(self, case_id):
-        url = reverse(CustomProjectReportDispatcher.name(), args=[self.domain, MessageBankReport.slug])
-        url = "%s?participant=%s" % (url, case_id)
-        return self.table_cell(
-            case_id,
-            """<span class="btn btn-primary" onClick="window.open('%s', '_blank');">%s</span>""" % (url, _("Open Message Bank")),
-        )
+    def _open_chat_action(self, case_id):
+        url = reverse("sms_chat", args=[self.domain, case_id])
+        return "window.open('%s', '_blank', 'location=no,menubar=no,scrollbars=no,status=no,toolbar=no,height=400,width=400');" % url
 
