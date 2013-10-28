@@ -104,15 +104,12 @@ class MessageReport(CustomProjectReport, GenericTabularReport, DatespanMixin):
     @property
     def headers(self):
         header = DataTablesHeader(
+            DataTablesColumn(_("Message Text")),
+            DataTablesColumn(_("Message ID")),
             DataTablesColumn(_("Timestamp")),
-            DataTablesColumn(_("Counterparty")),
-            DataTablesColumn(_("Phone Number")),
-            DataTablesColumn(_("Sender")),
+            DataTablesColumn(_("Participant ID")),
+            DataTablesColumn(_("Originator")),
             DataTablesColumn(_("Direction")),
-            DataTablesColumn(_("Message")),
-            DataTablesColumn(_("Message Unique ID")),
-            DataTablesColumn(_("Risk Profile")),
-            DataTablesColumn(_("Theoretical Construct")),
         )
         header.custom_sort = [[0, "desc"]]
         return header
@@ -149,7 +146,7 @@ class MessageReport(CustomProjectReport, GenericTabularReport, DatespanMixin):
                 username = "-"
                 try:
                     if message.couch_recipient_doc_type == "CommCareCase":
-                        username = CommCareCase.get(recipient_id).name
+                        username = CommCareCase.get(recipient_id).get_case_property("pid")
                     else:
                         username = CouchUser.get_by_user_id(recipient_id).username
                 except Exception:
@@ -175,15 +172,12 @@ class MessageReport(CustomProjectReport, GenericTabularReport, DatespanMixin):
 
             timestamp = tz_utils.adjust_datetime_to_timezone(message.date, pytz.utc.zone, self.timezone.zone)
             result.append([
-                self._fmt_timestamp(timestamp),
-                self._fmt(username),
-                self._fmt(message.phone_number),
-                self._fmt(sender),
-                self._fmt(direction_map.get(message.direction,"-")),
                 self._fmt(message.text),
                 self._fmt(message.fri_id or "-"),
-                self._fmt(message.risk_profile or "-"),
-                self._fmt(message.theory_code or "-"),
+                self._fmt_timestamp(timestamp),
+                self._fmt(username),
+                self._fmt(sender if message.direction == OUTGOING else username),
+                self._fmt(direction_map.get(message.direction,"-")),
             ])
         return result
 
