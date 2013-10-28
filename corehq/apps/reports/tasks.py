@@ -16,7 +16,7 @@ from django.conf import settings
 
 logging = get_task_logger(__name__)
 
-@periodic_task(run_every=crontab(hour=[8,14], minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(run_every=crontab(hour="*/6", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def check_es_index():
     """
     Verify that the Case and soon to be added XForm Elastic indices are up to date with what's in couch
