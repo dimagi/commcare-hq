@@ -252,7 +252,7 @@ class GSIDSQLPatientReport(GSIDSQLReport):
 
     @property
     def charts(self):
-        rows = super(GSIDSQLPatientReport, self).rows
+        rows = self.rows
         loc_axis = Axis(label="Location")
         tests_axis = Axis(label="Number of Tests", format=",.1d")
         chart = MultiBarChart("Number of Tests Per Location", loc_axis, tests_axis)
