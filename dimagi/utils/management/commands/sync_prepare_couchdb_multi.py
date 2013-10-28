@@ -84,7 +84,7 @@ class Command(BaseCommand):
         else:
             mvp_sync(get_db(), temp="tmp")
 
-        # same hack above for MVP
+        # same hack above for fluff
         try:
             from fluff.sync_couchdb import sync_design_docs as fluff_sync
         except ImportError:
