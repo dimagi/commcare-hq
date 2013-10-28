@@ -14,7 +14,7 @@ setup(
     test_loader='unittest2:TestLoader',
     install_requires=[
         'jsonobject-couchdbkit>=0.6.5.2',
-        'pillowtop>=0.1.2',
+        'pillowtop>=0.1.4',
         'dimagi-utils>=1.0.2',
         'pytz',
     ],
