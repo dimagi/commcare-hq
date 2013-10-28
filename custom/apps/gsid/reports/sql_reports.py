@@ -34,6 +34,34 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
         super(GSIDSQLReport, self).__init__(request, base_context=base_context, domain=domain, **kwargs)
 
     @property
+    def daterange(self):
+        format = "%d %b %Y"
+        st = self.datespan.startdate.strftime(format)
+        en = self.datespan.enddate.strftime(format)
+        return "%s to %s" % (st, en)
+
+    @property
+    def report_subtitles(self):
+        if self.needs_filters:
+            return []
+
+        subtitles = ["Date range: %s" % self.daterange]
+        if self.selected_fixture():
+            tag, id = self.selected_fixture()
+            location = FixtureDataItem.get(id).fields['%s_name' % tag]
+            subtitles.append('Location: %s' % location)
+
+        if self.disease:
+            location = FixtureDataItem.get(self.disease[1]).fields['disease_name']
+            subtitles.append('Disease: %s' % location)
+
+        if self.test_version:
+            test_version = FixtureDataItem.get(self.test_version[1]).fields['visible_test_name']
+            subtitles.append('Test Version: %s' % test_version)
+
+        return subtitles
+
+    @property
     @memoized
     def diseases(self):
         disease_fixtures = FixtureDataItem.by_data_type(
@@ -50,7 +78,7 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
         test_fixtures = FixtureDataItem.by_data_type(
             self.domain, 
             FixtureDataType.by_domain_tag(self.domain, "test").one()
-        )        
+        )
         return [t.fields["test_name"] for t in test_fixtures]
 
     @property
@@ -77,12 +105,19 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
         return [EQ("domain", "domain"), BETWEEN("date", "startdate", "enddate")] + self.disease_filters
 
     @property
-    def disease_filters(self):
+    def disease(self):
         disease = self.request.GET.get('test_type_disease', '')
+        return disease.split(':') if disease else None
+
+    @property
+    def test_version(self):
         test = self.request.GET.get('test_type_test', '')
-        
-        disease = disease.split(':') if disease else None
-        test = test.split(':') if test else None
+        return test.split(':') if test else None
+
+    @property
+    def disease_filters(self):
+        disease = self.disease
+        test = self.test_version
         
         filters = []
         if test:
