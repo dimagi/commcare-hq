@@ -39,16 +39,16 @@ class Site(object):
                 for days in range(4, -1, -1)]
 
     def process_user(self, user):
+        username = user.raw_username
+        if username not in self.individual:
+            self.emails.append(user.email)
+            self.individual[username] = {
+                'strategy': [0] * 5,
+                'game': [0] * 5,
+            }
         for form in XFormInstance.get_forms_by_user(
                 user, self.week[0], self.week[-1]):
             if form.xmlns == DAILY_DATA_XMLNS:
-                username = form.metadata.username
-                if username not in self.individual:
-                    self.emails.append(user.email)
-                    self.individual[username] = {
-                        'strategy': [0] * 5,
-                        'game': [0] * 5,
-                    }
                 self.process_form(form, username)
 
 
