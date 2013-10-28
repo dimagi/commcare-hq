@@ -246,7 +246,7 @@ class Test(TestCase):
                           date_value=[],
                           null_value=[[None, 3]]
                       ))
-            another = doc.clone()
+            another = cls(doc.to_json())
             diff = doc.diff(another)
             self.assertIsNone(diff)
 
