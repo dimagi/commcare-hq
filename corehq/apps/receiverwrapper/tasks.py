@@ -1,10 +1,7 @@
-from functools import wraps
-
 from datetime import datetime, timedelta
 import json
 from celery.task import periodic_task
 from celery.utils.log import get_task_logger
-from django.core.cache import cache
 from django.conf import settings
 
 from corehq.apps.receiverwrapper.models import RepeatRecord
@@ -17,15 +14,15 @@ def check_repeaters():
     start = datetime.utcnow()
     LIMIT = 100
     DELETED = '-Deleted'
-    progress_report = {'success': [], 'fail': [], 'locked': [], 'deleted': []}
+    progress_report = {'success': [], 'fail': [], 'locked': [], 'deleted': [], 'number_locked': 0}
 
     def loop():
-        number_locked = 0
         # take LIMIT records off the top
         # the assumption is that they all get 'popped' in the for loop
         # the only exception I can see is if there's a problem with the
         # locking, a large number of locked tasks could pile up at the top,
         # so make a provision for that worst case
+        number_locked = progress_report['number_locked']
         repeat_records = RepeatRecord.all(
             due_before=start,
             limit=LIMIT + number_locked
@@ -57,6 +54,8 @@ def check_repeaters():
             else:
                 progress_report['locked'].append(repeat_record.get_id)
                 number_locked += 1
+
+        progress_report['number_locked'] = number_locked
         return True
 
     while loop():
