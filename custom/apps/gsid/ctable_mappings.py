@@ -31,6 +31,3 @@ class PatientSummaryMapping(CtableMappingFixture):
         ]
 
         return columns
-
-    def customize(self, mapping):
-        mapping.couch_view_params = {'stale': 'ok'}
