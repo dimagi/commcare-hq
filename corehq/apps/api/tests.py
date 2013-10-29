@@ -267,6 +267,49 @@ class TestCommCareCaseResource(APIResourceTest):
 
         backend_case.delete()
 
+class TestHOPECaseResource(APIResourceTest):
+    """
+    Tests the HOPECaseREsource, currently only v0_4, just to make sure
+    it does not crash right away
+    """
+    resource = v0_4.HOPECaseResource
+
+    def test_get_list(self):
+        """
+        Any case in the appropriate domain should be in the list from the API.
+        """
+
+        # The actual infrastructure involves saving to CouchDB, having PillowTop
+        # read the changes and write it to ElasticSearch.
+
+        #the pillow is set to offline mode - elasticsearch not needed to validate
+        pillow = CasePillow(online=False)
+        fake_case_es = FakeXFormES()
+        v0_4.MOCK_CASE_ES = fake_case_es
+
+        modify_date = datetime.utcnow()
+
+        backend_case = CommCareCase(server_modified_on=modify_date, domain=self.domain.name)
+        backend_case.save()
+
+        translated_doc = pillow.change_transform(backend_case.to_json())
+
+        fake_case_es.add_doc(translated_doc['_id'], translated_doc)
+
+        self.client.login(username=self.username, password=self.password)
+
+        response = self.client.get(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+
+        api_cases = simplejson.loads(response.content)['objects']
+        self.assertEqual(len(api_cases), 1)
+
+        api_case = api_cases[0]
+        self.assertEqual(dateutil.parser.parse(api_case['server_date_modified']), backend_case.server_modified_on)
+
+        backend_case.delete()
+
+
 class TestCommCareUserResource(APIResourceTest):
     """
     Basic sanity checking of v0_1.CommCareUserResource
