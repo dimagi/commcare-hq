@@ -744,9 +744,9 @@ class PatientMapReport(GenericMapReport, CustomProjectReport):
                 'Positive Tests::Female +ve Percent',
                 'Positive Tests::Male +ve Percent',
                 'Positive Tests::Total +ve Percent',
-                'Age Range::All age range',
                 'Age Range::Female age range',
                 'Age Range::Male age range',
+                'Age Range::All age range',
             ]
         }
 
