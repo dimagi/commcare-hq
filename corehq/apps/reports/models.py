@@ -605,7 +605,6 @@ class HQGroupExportConfiguration(GroupExportConfiguration):
     def get_custom_exports(self):
 
         def _rewrap(export):
-            print 'rewrap'
             # custom wrap if relevant
             try:
                 return {
