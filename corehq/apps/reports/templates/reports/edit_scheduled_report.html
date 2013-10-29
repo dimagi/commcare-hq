@@ -5,12 +5,21 @@
 {% block reports-js %}
 <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
 <script src="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
+<script src="{% static 'reports/javascripts/scheduled_report_form.js' %}"></script>
 {% endblock %}
 
 
 {% block reports-js-inline %}
 <script>
     $("#id_config_ids").width(600).height(200).multiselect();
+</script>
+<script type="text/javascript">
+    var scheduled_report_form_helper = new ScheduledReportFormHelper({
+        weekly_options: {{ weekly_day_options|JSON }},
+        monthly_options: {{ monthly_day_options|JSON }},
+        day_value: {{ day_value }}
+    });
+    scheduled_report_form_helper.init();
 </script>
 {% endblock %}
 
