@@ -42,6 +42,8 @@ class FluffPtopReindexer(PtopReindexer):
                 return
 
         self._bootstrap(options)
+        # override this to avoid any checkpointing issues
+        self.pillow = self.pillow_class(chunk_size=0)
         start = datetime.utcnow()
 
         print "Starting fast tracked reindexing"
