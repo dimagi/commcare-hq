@@ -182,7 +182,7 @@ function ReleasesMain(o) {
             if (!data.latestRelease) {
                 self.actuallyMakeBuild();
             } else if (data.latestRelease !== self.lastAppVersion()) {
-                window.alert("The releases list has changed since you loaded the page.");
+                window.alert("The versions list has changed since you loaded the page.");
                 self.reloadApps();
             } else if (self.lastAppVersion() !== self.currentAppVersion()) {
                 self.actuallyMakeBuild();
