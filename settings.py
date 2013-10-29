@@ -147,6 +147,7 @@ DEFAULT_APPS = (
     'south',
     'djcelery', # pip install django-celery
     'djtables', # pip install djtables
+    'django_prbac',
     #'ghettoq',     # pip install ghettoq
     'djkombu', # pip install django-kombu
     'couchdbkit.ext.django',
