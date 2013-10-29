@@ -127,12 +127,15 @@ def convert_custom_fields_to_struct(config):
 
     field_map = {}
     for i, field in enumerate(excel_fields):
-        if field and (case_fields[i] or custom_fields[i]):
+        if field:
             field_map[field] = {
-                'case': case_fields[i],
-                'custom': custom_fields[i],
                 'type_field': type_fields[i]
             }
+
+            if case_fields[i]:
+                field_map[field]['case'] = case_fields[i]
+            else:
+                field_map[field]['custom'] = custom_fields[i] or field
 
     return field_map
 
@@ -254,7 +257,7 @@ def populate_updated_fields(config, columns, row):
         except:
             continue
 
-        if field_map[key]['custom']:
+        if 'custom' in field_map[key]:
             # custom (new) field was entered
             update_field_name = field_map[key]['custom']
         else:
