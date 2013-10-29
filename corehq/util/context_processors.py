@@ -36,8 +36,12 @@ def get_per_domain_context(project, request=None):
         public_site = "http://www.commcarehq.org"
         can_be_your = "mobile health solution"
 
-    if request and 'commtrack.org' in get_host(request):
-        logo_url = static('hqstyle/img/commtrack-logo.png')
+    try:
+        if 'commtrack.org' in get_host(request):
+            logo_url = static('hqstyle/img/commtrack-logo.png')
+    except Exception:
+        # get_host might fail for bad requests, e.g. scheduled reports
+        pass
 
     if project and project.has_custom_logo:
         logo_url = reverse('logo', args=[project.name])
