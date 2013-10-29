@@ -14,7 +14,7 @@ A_DAY = datetime.timedelta(days=1)
 class CareBiharFluff(fluff.IndicatorDocument):
     document_class = CommCareCase
 
-    domains = ('care-bihar',)
+    domains = ('care-bihar', 'bihar',)
     group_by = ['domain', 'owner_id']
 
     # home visit
@@ -122,7 +122,7 @@ class CareBiharFormPillow(BasicPillow):
     """
     couch_filter = 'fluff_filter/domain_type'
     extra_args = {
-        'domains': 'care-bihar',
+        'domains': ['care-bihar', 'bihar'],
         'doc_type': 'XFormInstance'
     }
     document_class = XFormInstance
