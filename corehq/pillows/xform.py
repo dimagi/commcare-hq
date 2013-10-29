@@ -52,12 +52,16 @@ class XFormPillow(HQPillow):
                 if isinstance(doc_ret['form']['meta'].get('appVersion'), dict):
                     doc_ret['form']['meta']['appVersion'] = doc_ret['form']['meta']['appVersion'].get('#text')
 
-            #see:  extract_case_blocks(doc_dict)
             case_blocks = extract_case_blocks(doc_ret)
             for case_dict in case_blocks:
                 for date_modified_key in ['date_modified', '@date_modified']:
                     if case_dict.get(date_modified_key, None) == "":
                         case_dict[date_modified_key] = None
+
+                # convert all mapped dict properties to nulls if they are empty strings
+                for object_key in ['index', 'attachment', 'create', 'update']:
+                    if case_dict.get(object_key, None) == "":
+                        case_dict[object_key] = None
             return doc_ret
 
 
