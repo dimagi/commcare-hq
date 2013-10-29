@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.core.urlresolvers import resolve, reverse
-from django.http import Http404, get_host
+from django.http import Http404
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 
@@ -37,7 +37,7 @@ def get_per_domain_context(project, request=None):
         can_be_your = "mobile health solution"
 
     try:
-        if 'commtrack.org' in get_host(request):
+        if 'commtrack.org' in request.get_host():
             logo_url = static('hqstyle/img/commtrack-logo.png')
     except Exception:
         # get_host might fail for bad requests, e.g. scheduled reports
