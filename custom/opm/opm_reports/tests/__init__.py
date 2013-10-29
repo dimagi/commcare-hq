@@ -48,7 +48,7 @@ class OPMTestBase(object):
         flufftop.runfile = None
         flufftop.start_num = 0
         flufftop.chunk_size = 500
-        flufftop.pillow = flufftop.pillow_class()
+        flufftop.pillow = flufftop.pillow_class(chunk_size=0)
         for i, row in enumerate(flufftop.full_couch_view_iter()):
             print "\tProcessing item %s (%d)" % (row['id'], i)
             flufftop.process_row(row, i)
