@@ -1003,7 +1003,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
             data.update(('prop_%s' % k, v) for k, v in case['properties'].iteritems() if k not in standard_props)
 
             geo = None
-            geo_directive = params['geo_fetch'].get(data['case_type'], '')
+            geo_directive = params['geo_fetch'].get(data['case_type'], 'gps')
             if geo_directive.startswith('link:'):
                 # TODO use linked case
                 pass
