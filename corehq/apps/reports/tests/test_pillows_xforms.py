@@ -1,3 +1,4 @@
+import copy
 from django.utils.unittest.case import TestCase
 from django.conf import settings
 import simplejson
@@ -163,7 +164,6 @@ class testReportXFormProcessing(TestCase):
                     "@date_modified": "2013-10-14T10:59:44Z",
                     "@user_id": "someuser",
                     "@case_id": "mycase",
-                    "update": ""
                 },
                 'subcase_0': {
                     'case': {
@@ -242,6 +242,45 @@ class testReportXFormProcessing(TestCase):
         self.assertEqual(orig['form']['case'], for_indexing['form']['case'])
         self.assertEqual(orig['form']['subcase_0']['case'], for_indexing['form']['subcase_0']['case'])
         self.assertEqual(orig['form']['really']['nested']['case'], for_indexing['form']['really']['nested']['case'])
+
+
+    def testBlanktoNulls(self):
+        orig = {
+            '_id': 'blank_strings',
+            'form': {
+                'case': {
+                    "@xmlns": "http://commcarehq.org/case/transaction/v2",
+                    "@date_modified": "2013-10-14T10:59:44Z",
+                    "@user_id": "someuser",
+                    "@case_id": "mycase",
+                    "index": "",
+                    "attachment": "",
+                    "create": "",
+                    "update": "",
+                }
+            }
+        }
+
+        dict_props = ['index', 'attachment', 'create', 'update']
+
+        pillow = ReportXFormPillow(online=False)
+        all_blank = copy.deepcopy(orig)
+        all_blank['domain'] = settings.ES_XFORM_FULL_INDEX_DOMAINS[0]
+        for_indexing = pillow.change_transform(all_blank)
+
+        for prop in dict_props:
+            self.assertIsNone(for_indexing['form']['case'][prop])
+
+        all_dicts = copy.deepcopy(orig)
+        all_dicts['domain'] = settings.ES_XFORM_FULL_INDEX_DOMAINS[0]
+        for prop in dict_props:
+            all_dicts['form']['case'][prop] = {}
+
+        for_index2 = pillow.change_transform(all_dicts)
+        for prop in dict_props:
+            self.assertIsNotNone(for_index2['form']['case'][prop])
+
+
 
 
 
