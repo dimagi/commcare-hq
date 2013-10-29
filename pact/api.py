@@ -29,9 +29,6 @@ from pact.forms.weekly_schedule_form import ScheduleForm, DAYS_OF_WEEK
 from pact.utils import pact_script_fields, case_script_field, submit_xform, query_per_case_submissions_facet
 
 
-
-#address edit
-#registration = Patient Registration
 PACT_CLOUD_APPNAME = "PACT Cloud"
 PACT_CLOUDCARE_MODULE = "PACT Cloudcare"
 
@@ -39,7 +36,6 @@ FORM_PROGRESS_NOTE = "Progress Note"
 FORM_DOT = "DOT Form"
 FORM_BLOODWORK = "Bloodwork"
 FORM_ADDRESS = "Address and Phone Update"
-#CLOUDCARE_FORMS = { PATI}
 
 
 def get_cloudcare_app():
@@ -68,8 +64,6 @@ def get_cloudcare_app():
     forms = pact_cloudcare[0]['forms']
     ret = dict((f['name']['en'], ix) for (ix, f) in enumerate(forms))
 
-    #url_root = reverse('cloudcare_get_app', kwargs={'app_id': app_id, "domain": PACT_DOMAIN})
-    #/a/pact/cloudcare/apps/view/0ff529f53c26f44e1fa020e79afe0b1b/0/1/case/%(case_id)s/enter/
     url_root = '/a/%(domain)s/cloudcare/apps/view/%(build_id)s/%(module_id)s/%(form_id)s/case/%(case_id)s/enter/'
     ret['url_root'] = url_root
     ret['domain'] = PACT_DOMAIN

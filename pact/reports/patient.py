@@ -12,15 +12,7 @@ from pact.reports import PactDrilldownReportMixin, PactElasticTabularReportMixin
 from pact.utils import pact_script_fields
 
 
-#cloudcare urls:
-
-#pn:     /a/pact/cloudcare/apps/view/0ff529f53c26f44e1fa020e79afe0b1b/0/1/case/%(case_id)s/enter/
-#dot:     /a/pact/cloudcare/apps/view/0ff529f53c26f44e1fa020e79afe0b1b/0/2/case/%(case_id)s/enter/
-#bw:     /a/pact/cloudcare/apps/view/0ff529f53c26f44e1fa020e79afe0b1b/0/3/case/%(case_id)s/enter/
-#address: /a/pact/cloudcare/apps/view/0ff529f53c26f44e1fa020e79afe0b1b/0/4/case/%(case_id)s/enter/
-
-
-class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMixin):
+class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMixin):
     slug = "patient"
     description = "some patient"
 
@@ -61,7 +53,6 @@ class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMix
                 ret['error_message'] = "No patient selected"
             return ret
 
-
         view_mode = self.request.GET.get('view', 'info')
         ret['patient_doc'] = patient_doc
         ret['pt_root_url'] = patient_doc.get_info_url()
@@ -80,7 +71,6 @@ class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMix
             self.report_template_path = "pact/patient/pactpatient_submissions.html"
             return tabular_context
         elif view_mode == 'schedule':
-        #            ret.update(patient_doc.schedules)
             the_form = ScheduleForm()
             ret['schedule_form'] = the_form
             ret['schedule_fields'] = simplejson.dumps(the_form.fields.keys())

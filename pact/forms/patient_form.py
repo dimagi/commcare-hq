@@ -2,13 +2,11 @@ from django import forms
 
 #from the models, we have this, (couchmodels.py)
 #flipping to tuple
-from django.core.exceptions import ValidationError
 from django.forms import Form
-import simplejson
 from corehq.apps.api.es import ReportCaseES
-from pact.enums import PACT_HP_CHOICES, PACT_DOT_CHOICES, PACT_REGIMEN_CHOICES, GENDER_CHOICES, PACT_RACE_CHOICES, PACT_HIV_CLINIC_CHOICES, PACT_LANGUAGE_CHOICES, CASE_NONART_REGIMEN_PROP, CASE_ART_REGIMEN_PROP, DOT_ART, DOT_NONART, PACT_DOMAIN
+from pact.enums import PACT_HP_CHOICES, PACT_DOT_CHOICES, PACT_REGIMEN_CHOICES, GENDER_CHOICES, PACT_RACE_CHOICES, PACT_HIV_CLINIC_CHOICES, PACT_LANGUAGE_CHOICES, CASE_NONART_REGIMEN_PROP, CASE_ART_REGIMEN_PROP, DOT_ART, DOT_NONART
 from django.forms import widgets
-from pact.regimen import regimen_string_from_doc, regimen_dict_from_choice
+from pact.regimen import regimen_dict_from_choice
 
 def get_hp_choices():
     from pact.reports.patient_list import PactPrimaryHPField
@@ -79,6 +77,25 @@ class PactPatientForm(Form):
             else:
                 if getattr(self.casedoc, name, '') != value:
                     ret[name] = value
+
+
+        # hack, if any of the names, change remake the name
+        name_changed = False
+        if 'first_name' in ret.keys():
+            name_changed = True
+            first_name = ret['first_name']
+        else:
+            first_name = self.casedoc.first_name
+
+        if 'last_name' in ret.keys():
+            name_changed = True
+            last_name = ret['last_name']
+        else:
+            last_name = self.casedoc.last_name
+
+        if name_changed:
+            ret['name'] = '%s %s' % (first_name, last_name)
+
         return ret
 
     def clean_dob(self):
@@ -92,11 +109,4 @@ class PactPatientForm(Form):
             return self.cleaned_data['mass_health_expiration'].strftime('%Y-%m-%d')
         else:
             return None
-
-
-    def clean_pact_id(self):
-        if not PactPatient.check_pact_id(self.cleaned_data['pact_id']):
-            raise ValidationError("Error, pact id must be unique")
-        else:
-            return self.cleaned_data['pact_id']
 
