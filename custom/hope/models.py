@@ -29,8 +29,8 @@ class HOPECase(CommCareCase):
         return bool(self.properties().get(dpt)) and bool(self.properties().get(opv)) and bool(self.properties().get(hb))
 
     def nth_ifa_issue_date(self, n):
-        if len(self.ifa_issue_dates) > n:
-            return self.ifa_issue_dates[n]
+        if len(self._HOPE_ifa_issue_dates) > n:
+            return self._HOPE_ifa_issue_dates[n]
         else:
             return None
 
@@ -146,7 +146,7 @@ class HOPECase(CommCareCase):
                 if form.get_form.get('if_tablet_issued')]
 
     @property
-    def _HOPE_ifa_issue_date(self):
+    def _HOPE_ifa_issue_dates(self):
         return [form.date_modified for form in self._HOPE_ifa_issue_forms]
 
     @property
@@ -167,7 +167,7 @@ class HOPECase(CommCareCase):
 
     @property
     def _HOPE_num_visits(self):
-        visit_dates = [self.properties().get('visit_%d_date') % (n+1) for n in range(0,7)]
+        visit_dates = [self.properties().get('visit_%d_date' % (n+1)) for n in range(0,7)]
         return len([date for date in visit_dates if date])
 
     @property
