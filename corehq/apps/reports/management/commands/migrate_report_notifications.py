@@ -4,7 +4,7 @@ from dimagi.utils.couch.database import iter_docs
 
 
 
-WHICH_MIGRATION = "second"  # this should be changed to "second" after the first migration has ran.
+WHICH_MIGRATION = "first"  # this should be changed to "second" after the first migration has ran.
                            # This should happen in the PR that introduces the schedule report refactor
 
 def first_migrate(notification):
