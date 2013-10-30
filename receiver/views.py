@@ -96,15 +96,16 @@ class SubmissionPost(couchforms_util.SubmissionPost):
         errors = []
         for func, resp in feedback:
             if resp and isinstance(resp, Exception):
-                # hack: get stack traces and types and such through this process
+                error_message = unicode(resp)
+                # hack to log exception type (no valuable stacktrace though)
                 try:
                     raise resp
                 except Exception:
                     logging.exception((
-                        "Receiver app: problem sending "
-                        "post-save signal %s for xform %s: %s"
-                    ) % (func, doc._id, str(resp)))
-                errors.append(str(resp))
+                        u"Receiver app: problem sending "
+                        u"post-save signal %s for xform %s: %s"
+                    ) % (func, doc._id, error_message))
+                errors.append(error_message)
             elif resp and isinstance(resp, ReceiverResult):
                 responses.append(resp)
 
