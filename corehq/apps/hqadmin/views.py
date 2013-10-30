@@ -626,7 +626,9 @@ def system_ajax(request):
                 # it's an array of arrays - looping through [<id>, {task_info_dict}]
                 if 'name' in traw:
                     traw['name'] = '.'.join(traw['name'].split('.')[-2:])
-                    ret.append(traw)
+                else:
+                    traw['name'] = None
+                ret.append(traw)
             ret = sorted(ret, key=lambda x: x['succeeded'], reverse=True)
             return HttpResponse(json.dumps(ret), mimetype = 'application/json')
     return HttpResponse('{}', mimetype='application/json')
