@@ -436,7 +436,7 @@ class FormattedRow(object):
         return ret
 
 def format_tables(tables, id_label='id', separator='.', include_headers=True,
-                      include_data=True):
+                  include_data=True):
     """
     tables nested dict structure from create_intermediate_tables
     return [

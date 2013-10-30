@@ -1,14 +1,15 @@
 import hashlib
 from itertools import islice
 from urllib2 import URLError
-from couchdbkit.ext.django.schema import Document, IntegerProperty, DictProperty,\
+from couchdbkit.ext.django.schema import Document, DictProperty,\
     DocumentSchema, StringProperty, SchemaListProperty, ListProperty,\
     StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty
 import json
 from StringIO import StringIO
 import couchexport
+from couchexport.transforms import identity
 from couchexport.util import SerializableFunctionProperty,\
-    get_schema_index_view_keys, force_tag_to_list, clear_attachments
+    get_schema_index_view_keys, force_tag_to_list
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch.database import get_db, iter_docs
@@ -244,7 +245,6 @@ class ExportTable(DocumentSchema):
     display = StringProperty()
     columns = SchemaListProperty(ExportColumn)
     order = ListProperty()
-    
 
     @classmethod
     def wrap(cls, data):
@@ -309,7 +309,7 @@ class ExportTable(DocumentSchema):
             val = row_data[i]
             yield column, val
 
-    def trim(self, data, doc, apply_transforms):
+    def trim(self, data, doc, apply_transforms, global_transform):
         from couchexport.export import FormattedRow, Constant, transform_error_constant
         if not hasattr(self, '_headers'):
             self._headers = tuple(data[0].get_data())
@@ -322,11 +322,16 @@ class ExportTable(DocumentSchema):
             cells = []
             for column, val in self.get_items_in_order(row):
                 # DEID TRANSFORM BABY!
-                if apply_transforms and column.transform and not isinstance(val, Constant):
-                    try:
-                        val = column.transform(val, doc)
-                    except Exception:
-                        val = transform_error_constant
+                if apply_transforms:
+                    if column.transform and not isinstance(val, Constant):
+                        try:
+                            val = column.transform(val, doc)
+                        except Exception:
+                            val = transform_error_constant
+                    elif global_transform:
+                        val = global_transform(val, doc)
+
+
                 if column.index == 'id':
                     id = val
                 else:
@@ -468,6 +473,11 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
         return doc
 
     @property
+    def global_transform_function(self):
+        # will be called on every value in the doc during export
+        return identity
+
+    @property
     @memoized
     def schema(self):
         return ExportSchema.get(self.schema_id)
@@ -542,7 +552,10 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
         for table_index, data in document_table:
             if self.tables_by_index.has_key(table_index):
                 # todo: currently (index, rows) instead of (display, rows); where best to convert to display?
-                yield (table_index, self.tables_by_index[table_index].trim(data, doc, apply_transforms))
+                yield (table_index, self.tables_by_index[table_index].trim(
+                    data, doc, apply_transforms, self.global_transform_function
+                ))
+
 
     def get_export_components(self, previous_export_id=None, filter=None):
         from couchexport.export import ExportConfiguration
@@ -558,7 +571,8 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
         export_schema_checkpoint = config.create_new_checkpoint()
         return config, updated_schema, export_schema_checkpoint
 
-    def get_export_files(self, format=None, previous_export=None, filter=None, process=None, max_column_size=None, apply_transforms=True, **kwargs):
+    def get_export_files(self, format=None, previous_export=None, filter=None, process=None, max_column_size=None,
+                         apply_transforms=True, **kwargs):
         from couchexport.export import get_writer, format_tables, create_intermediate_tables
 
         if not format:
