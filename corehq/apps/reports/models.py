@@ -10,6 +10,7 @@ from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
 from couchexport.models import SavedExportSchema, GroupExportConfiguration
+from couchexport.transforms import couch_to_excel_datetime, identity
 from couchexport.util import SerializableFunction
 import couchforms
 from dimagi.utils.couch.cache import cache_core
@@ -516,10 +517,23 @@ class AppNotFound(Exception):
     pass
 
 
-class FormExportSchema(SavedExportSchema):
+class HQExportSchema(SavedExportSchema):
+    doc_type = 'SavedExportSchema'
+    transform_dates = BooleanProperty(default=False)
+
+    @property
+    def global_transform_function(self):
+        if self.transform_dates:
+            return couch_to_excel_datetime
+        else:
+            return identity
+
+
+class FormExportSchema(HQExportSchema):
     doc_type = 'SavedExportSchema'
     app_id = StringProperty()
     include_errors = BooleanProperty(default=False)
+
 
     @property
     @memoized

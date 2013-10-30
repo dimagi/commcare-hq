@@ -61,8 +61,6 @@ class BulkExport(object):
         writer.open(headers, file)
 
         # now that the headers are set, lets build the rows
-
-
         for i, config in enumerate(configs):
             for doc in config.get_docs():
                 if self.export_objects[i].transform:
