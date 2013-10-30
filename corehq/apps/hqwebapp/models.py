@@ -342,7 +342,7 @@ class ProjectDataTab(UITab):
     @property
     @memoized
     def can_edit_commcare_data(self):
-        return self.couch_user.can_edit_data() and not (self.project and self.project.commtrack_enabled)
+        return self.couch_user.can_edit_data()
 
     @property
     @memoized
