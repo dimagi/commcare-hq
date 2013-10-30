@@ -619,14 +619,14 @@ def system_ajax(request):
                 t = cresource.get("api/tasks", params_dict={'limit': task_limit}).body_string()
                 all_tasks = json.loads(t)
             except Exception, ex:
-                all_tasks = []
-                t = {}
+                all_tasks = {}
                 logging.error("Error with getting from celery_flower: %s" % ex)
 
             for task_id, traw in all_tasks.items():
                 # it's an array of arrays - looping through [<id>, {task_info_dict}]
-                traw['name'] = '.'.join(traw['name'].split('.')[-2:])
-                ret.append(traw)
+                if 'name' in traw:
+                    traw['name'] = '.'.join(traw['name'].split('.')[-2:])
+                    ret.append(traw)
             ret = sorted(ret, key=lambda x: x['succeeded'], reverse=True)
             return HttpResponse(json.dumps(ret), mimetype = 'application/json')
     return HttpResponse('{}', mimetype='application/json')
