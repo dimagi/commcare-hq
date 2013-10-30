@@ -245,7 +245,9 @@ def total_distinct_users(domains=None):
     }
 
     res = es_query(q=q, facets=["form.meta.userID"], es_url=ES_URLS["forms"], size=0)
-    return len(res["facets"]["form.meta.userID"]["terms"])
+    excluded_ids = ['commtrack-system', 'demo_user']
+    terms = [t.get('term') for t in res["facets"]["form.meta.userID"]["terms"]]
+    return len(filter(lambda t: t and t not in excluded_ids, terms))
 
 ES_PREFIX = "es_"
 class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
