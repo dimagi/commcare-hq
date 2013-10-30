@@ -27,6 +27,9 @@ def active_mobile_users(domain, *args):
     """
     Returns the number of mobile users who have submitted a form in the last 30 days
     """
+    key = ['active', domain]
+    user_ids = [r['id'] for r in get_db().view('users/by_domain', reduce=False, startkey=key, endkey=key+[{}]).all()]
+
     now = datetime.now()
     then = (now - timedelta(days=30)).strftime(DATE_FORMAT)
     now = now.strftime(DATE_FORMAT)
@@ -36,11 +39,10 @@ def active_mobile_users(domain, *args):
                 "form.meta.timeEnd": {
                     "from": then,
                     "to": now}}}}
-    facets = ['userID']
+    facets = ['form.meta.userID']
     data = es_query(params={"domain.exact": domain}, q=q, facets=facets, es_url=XFORM_INDEX + '/xform/_search', size=1)
-    excluded_ids = ['commtrack-system']
-    terms = [t.get('term') for t in data["facets"]["userID"]["terms"]]
-    terms = filter(lambda t: t and t not in excluded_ids, terms)
+    terms = [t.get('term') for t in data["facets"]["form.meta.userID"]["terms"]]
+    terms = filter(lambda t: t and t in user_ids, terms)
     return len(terms)
 
 def cases(domain, *args):
