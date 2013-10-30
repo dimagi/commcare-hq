@@ -960,7 +960,10 @@ def stats_data(request):
         elif len(domains) < ES_MAX_CLAUSE_COUNT:
             domain_info = [{"names": [d for d in domains], "display_name": _("Domains Matching Filter")}]
         else:
-            domain_info = [{"names": None, "display_name": _("All Domains (NOT applying filters. > 500 projects)")}]
+            domain_info = [{
+                "names": None,
+                "display_name": _("All Domains (NOT applying filters. > %s projects)" % ES_MAX_CLAUSE_COUNT)
+            }]
     else:
         domain_info = [{"names": None, "display_name": _("All Domains")}]
 

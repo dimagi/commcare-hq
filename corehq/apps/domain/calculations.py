@@ -4,6 +4,7 @@ from django.template.loader import render_to_string
 from corehq.apps.domain.models import Domain
 from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.reports.util import make_form_couch_key
+from corehq.apps.users.models import CouchUser
 from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
@@ -27,9 +28,6 @@ def active_mobile_users(domain, *args):
     """
     Returns the number of mobile users who have submitted a form in the last 30 days
     """
-    key = ['active', domain]
-    user_ids = [r['id'] for r in get_db().view('users/by_domain', reduce=False, startkey=key, endkey=key+[{}]).all()]
-
     now = datetime.now()
     then = (now - timedelta(days=30)).strftime(DATE_FORMAT)
     now = now.strftime(DATE_FORMAT)
@@ -44,8 +42,8 @@ def active_mobile_users(domain, *args):
     facets = ['form.meta.userID']
     data = es_query(params={"domain.exact": domain}, q=q, facets=facets, es_url=XFORM_INDEX + '/xform/_search', size=1)
     terms = [t.get('term') for t in data["facets"]["form.meta.userID"]["terms"]]
-    terms = filter(lambda t: t and t in user_ids, terms)
-    return len(terms)
+    user_ids = CouchUser.ids_by_domain(domain)
+    return len(filter(lambda t: t and t in user_ids, terms))
 
 def cases(domain, *args):
     row = get_db().view("hqcase/types_by_domain", startkey=[domain], endkey=[domain, {}]).one()
