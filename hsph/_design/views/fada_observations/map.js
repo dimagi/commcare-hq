@@ -5,6 +5,45 @@ function (doc) {
         return;
     }
 
+    // If you're trying to write an efficient report query in CouchDB with
+    // map-reduce you might think that you could emit hashes of scalar values
+    // from your map function and then sum the hashes into one hash in your
+    // reduce function.  Unfortunately, CouchDB returns reduce_limit errors if
+    // your reduce output is too big in the absolute, even if it's growing at an
+    // acceptable rate / there's some requirement that the reduce output has to
+    // be *smaller* than the input values.
+    //
+    // In order to avoid the prospect of having to split every value in the hash
+    // into its own emitted value with a separate key, which would make querying
+    // the report data slow as molasses, we just have this utility function that
+    // splits the keys into n groups and emits n hashes.
+    //
+    // Note: this means that you have to explicitly set every key in each map
+    // output, or else the splits won't work/be useful.  Oh wait, no it doesn't,
+    // and that's awesome!
+    Object.prototype.keys = function () {
+        var keys = [];
+        for (var k in this) {
+            if (this.hasOwnProperty(k)) {
+                keys.push(k);
+            }
+        }
+        return keys;
+    };
+    function split_emit(key, data, n) {
+        n = n || 2;
+        var keys = data.keys(),
+            interval = Math.ceil(keys.length / n);
+        keys.sort();
+        for (var i = 0; i < n; i++) {
+            var split_data = {};
+            for (var j = i*interval; j < (i+1)*interval && j < keys.length; j++) {
+                split_data[keys[j]] = data[keys[j]];
+            }
+            emit(["split_" + i].concat(key), split_data);
+        } 
+    }
+
     var form = doc.form,
         fields = {
             1: [
@@ -126,7 +165,7 @@ function (doc) {
     data.site_id = form.site_id;
     data.user_id = form.meta.userID;
 
-    emit([doc.domain, "user", form.meta.userID, form.process_date_admission, form.process_sbr_no], data);
-    emit([doc.domain, "site", form.site_id, form.process_date_admission, form.process_sbr_no], data);
+    split_emit([doc.domain, "user", form.meta.userID, form.process_date_admission, form.process_sbr_no], data, 2);
+    split_emit([doc.domain, "site", form.site_id, form.process_date_admission, form.process_sbr_no], data, 2);
 
 }
