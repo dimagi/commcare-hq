@@ -1,13 +1,8 @@
 from StringIO import StringIO
 from datetime import date
-import logging
 import os
 import tempfile
 import uuid
-from django.core.urlresolvers import reverse
-from django.http import HttpResponse
-import json
-import zipfile
 from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.models import FormExportSchema
@@ -17,7 +12,6 @@ import couchexport
 from couchexport.export import get_headers, get_writer, format_tables, create_intermediate_tables, export_raw
 from couchexport.models import FakeSavedExportSchema, Format, SavedExportSchema
 
-# couchexport is a mess. Sorry. Sorry. This is gross, too.
 from soil import DownloadBase
 
 class BulkExport(object):
