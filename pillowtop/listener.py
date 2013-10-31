@@ -5,13 +5,12 @@ import hashlib
 import os
 import traceback
 import math
+import time
 
 from django.core.mail import send_mail
 from requests import ConnectionError
 import simplejson
-from gevent import socket
 import rawes
-import gevent
 from django.conf import settings
 
 from dimagi.utils.decorators.memoized import memoized
@@ -67,7 +66,7 @@ class autoretry_connection(object):
                         msg=str(e),
                         delay=next_delay
                     ))
-                    gevent.sleep(next_delay)
+                    time.sleep(next_delay)
                     current_tries += 1
                     if current_tries % MAX_RETRIES == 0:
                         pillow_logging.error("Pillowtop error, connectivity issues for %s. %s tries with %s second interval" % (fn.__name__, current_tries, RETRY_INTERVAL))
@@ -502,7 +501,7 @@ class ElasticPillow(BasicPillow):
                 current_tries += 1
                 pillow_logging.error("[%s] put_robust error %s attempt %d/%d" % (
                     self.get_name(), ex, current_tries, retries))
-                gevent.sleep(math.pow(RETRY_INTERVAL, current_tries))
+                time.sleep(math.pow(RETRY_INTERVAL, current_tries))
 
                 if current_tries == retries:
                     message = "[%s] Max retry error on %s" % (self.get_name(), path)

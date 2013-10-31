@@ -1,10 +1,10 @@
-from gevent import monkey; monkey.patch_all()
+from pillowtop.run_pillowtop import start_pillows, start_pillow
+
 from optparse import make_option
 import sys
 from django.conf import settings
 from pillowtop.utils import import_pillow_string
 from django.core.management.base import NoArgsCommand
-from pillowtop.run_pillowtop import start_pillows
 
 
 class Command(NoArgsCommand):
@@ -15,33 +15,65 @@ class Command(NoArgsCommand):
                     dest='run_all',
                     default=False,
                     help="Run all pillows from settings - use for local dev"),
-
+        make_option('--list',
+                    action='store_true',
+                    dest='list_all',
+                    default=False,
+                    help="List pillowtop names"),
         make_option('--pillow-key',
                     action='store',
                     dest='pillow_key',
                     default=None,
-                    help="Run a specific key's pillows from the PILLOWS dict"),
+                    help="Run a specific key of a group of pillows from settings.PILLOWTOPS list"),
+        make_option('--pillow-name',
+                    action='store',
+                    dest='pillow_name',
+                    default=None,
+                    help="Run a single specific pillow name from settings.PILLOWTOPS list"),
     )
     def handle_noargs(self, **options):
         run_all = options['run_all']
+        list_all = options['list_all']
+        pillow_name = options['pillow_name']
         pillow_key = options['pillow_key']
+        all_pillows = [pillow for group_key, items in settings.PILLOWTOPS.items() for pillow in items]
+        pillows_to_run = []
 
-        if not run_all and not pillow_key:
-            print "\nInvalid usage. Please specify a key from settings.PILLOWTOPS."
-            print "\nOptions:"
-            print "{0:20} {1}".format("  --pillow-key=KEY", "Run for a single key")
-            print "{0:20} {1}".format("  --all", "Run for all keys")
-            print "\nAvailable key options are: %s\n" % ', '.join(settings.PILLOWTOPS.keys())
+        if list_all:
+            print "\nPillows registered in system:"
+            for k,v in settings.PILLOWTOPS.items():
+                print "\tKey: %s" % k
+                for p in v:
+                    print "\t\t%s" % p.split('.')[-1]
+            print "\n\tRun with --pillow-name <name> to run a pillow"
+            print "\n\tRun with --pillow-key <key> to run a group of pillows together (for local dev convenience purposes)\n"
             sys.exit()
-        elif run_all:
-            pillows_to_run = [pillow for group_key, items in settings.PILLOWTOPS.items() for pillow in items]
-        else:
+
+        if run_all:
+            pillows_to_run = all_pillows
+        elif not run_all and not pillow_name and pillow_key:
+            # get pillows from key
+
             if pillow_key not in settings.PILLOWTOPS:
                 print "\n\tError, key %s is not in settings.PILLOWTOPS, legal keys are: %s" % \
                       (pillow_key, settings.PILLOWTOPS.keys())
                 sys.exit()
             else:
                 pillows_to_run = settings.PILLOWTOPS[pillow_key]
+
+        elif not run_all and not pillow_key and pillow_name:
+            abbreviated_pillows = [x.split('.')[-1] for x in all_pillows]
+            if pillow_name not in abbreviated_pillows:
+                print "\n\tError, key %s is not in settings.PILLOWTOPS, legal keys are: %s" % \
+                      (pillow_name, settings.PILLOWTOPS.keys())
+                sys.exit()
+            else:
+                pillow_idx = abbreviated_pillows.index(pillow_name)
+                start_pillow(import_pillow_string(all_pillows[pillow_idx]))
+            sys.exit()
+        else:
+            print "\nNo command set, please see --help for runtime instructions"
+            sys.exit()
 
         start_pillows(pillows=[import_pillow_string(x) for x in pillows_to_run])
 
