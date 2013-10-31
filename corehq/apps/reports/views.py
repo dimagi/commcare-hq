@@ -145,8 +145,8 @@ def export_data(req, domain):
     user_filter, _ = FilterUsersField.get_user_filter(req)
 
     if user_filter:
-        users_matching_filter = map(lambda x: x.get('user_id'), get_all_users_by_domain(domain,
-            user_filter=user_filter, simplified=True))
+        users_matching_filter = map(lambda x: x.get('user_id'),
+                                    get_all_users_by_domain(domain, user_filter=user_filter, simplified=True))
         def _ufilter(user):
             try:
                 return user['form']['meta']['userID'] in users_matching_filter
