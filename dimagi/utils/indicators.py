@@ -1,3 +1,4 @@
+from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import DocumentSchema, DictProperty, DateTimeProperty, BooleanProperty
 import datetime
 
@@ -63,9 +64,17 @@ class ComputedDocumentMixin(DocumentSchema):
                                  })
 
         if is_update and save_on_update:
-            self.save()
-            if logger:
-                logger.info("Saved %s." % self._id)
+            try:
+                self.save()
+                if logger:
+                    logger.info("Saved %s." % self._id)
+            except ResourceConflict:
+                logger.error("[INDICATOR %(domain)s] Resource conflict failed to save document indicators for "
+                             "%(document_type)s [%(document_id)s]." % {
+                                 'domain': self.domain,
+                                 'document_type': self.__class__.__name__,
+                                 'document_id': self._id,
+                             })
 
         return is_update
 
