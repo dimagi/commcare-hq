@@ -48,8 +48,19 @@ class ComputedDocumentMixin(DocumentSchema):
     def update_indicators_in_bulk(self, indicators, save_on_update=True, logger=None):
         is_update = False
         for indicator in indicators:
-            if self.update_indicator(indicator, save_on_update=False, logger=logger):
-                is_update = True
+            try:
+                if self.update_indicator(indicator, save_on_update=False, logger=logger):
+                    is_update = True
+            except Exception:
+                logger.exception("[INDICATOR %(namespace)s %(domain)s] Failed to update %(indicator_type)s: "
+                                 "%(indicator_slug)s in %(document_type)s [%(document_id)s]." % {
+                                     'namespace': indicator.namespace,
+                                     'domain': indicator.domain,
+                                     'indicator_type': indicator.__class__.__name__,
+                                     'indicator_slug': indicator.slug,
+                                     'document_type': self.__class__.__name__,
+                                     'document_id': self._id,
+                                 })
 
         if is_update and save_on_update:
             self.save()
