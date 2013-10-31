@@ -96,8 +96,8 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
     def filter_values(self):
         ret = dict(
             domain=self.domain,
-            startdate=self.datespan.startdate_param_utc,
-            enddate=self.datespan.enddate_param_utc,
+            startdate=self.datespan.startdate_param,
+            enddate=self.datespan.enddate_param,
             male="male",
             female="female",
             positive="POSITIVE"
@@ -379,8 +379,8 @@ class GSIDSQLByDayReport(GSIDSQLReport):
 
     @property
     def headers(self):
-        startdate = self.datespan.startdate_utc
-        enddate = self.datespan.enddate_utc
+        startdate = self.datespan.startdate
+        enddate = self.datespan.enddate
 
         column_headers = []
         group_by = self.group_by[:-2]
@@ -411,8 +411,8 @@ class GSIDSQLByDayReport(GSIDSQLReport):
 
     @property
     def rows(self):
-        startdate = self.datespan.startdate_utc
-        enddate = self.datespan.enddate_utc
+        startdate = self.datespan.startdate
+        enddate = self.datespan.enddate
 
         old_data = self.data
         rows = []
@@ -442,8 +442,8 @@ class GSIDSQLByDayReport(GSIDSQLReport):
     def charts(self):
         rows = self.rows
         date_index = len(self.place_types)
-        startdate = self.datespan.startdate_utc
-        enddate = self.datespan.enddate_utc
+        startdate = self.datespan.startdate
+        enddate = self.datespan.enddate
         date_axis = Axis(label="Date", dateFormat="%b %d")
         tests_axis = Axis(label="Number of Tests")
         chart = LineChart("Number of Tests Per Day", date_axis, tests_axis)
