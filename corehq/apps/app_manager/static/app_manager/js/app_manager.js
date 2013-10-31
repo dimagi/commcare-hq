@@ -202,15 +202,6 @@
         $("#ic_file").button();
         $("#error").dialog();
 
-        $("#new_app").addClass("dialog_opener");
-        $("#new_app_dialog").addClass("dialog");
-        $("#new_module").addClass("dialog_opener");
-        $("#new_module_dialog").addClass("dialog");
-
-
-
-
-
         $(".dialog_opener").each(function () {
             this.my_dialog = $(this).next('.dialog').get();
             this.my_dialog.my_opener = this;
