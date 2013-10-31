@@ -88,7 +88,7 @@ def save_report(date=None):
     # for group in [g for g in Group.by_domain(DOMAIN) if g not in exclude]:
 
     # This is a temporary fix while the app is on the mikesproject domain
-    for group in [g for g in Group.by_domain(DOMAIN) if "Afterschool" in group.name]:
+    for group in [g for g in Group.by_domain(DOMAIN) if "Afterschool" in g.name]:
         site = Site(group, date)
         report = LegacyWeeklyReport(
             domain=DOMAIN,
