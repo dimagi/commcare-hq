@@ -506,6 +506,7 @@ class AppNotFound(Exception):
 
 class HQExportSchema(SavedExportSchema):
     doc_type = 'SavedExportSchema'
+    domain = StringProperty()
     transform_dates = BooleanProperty(default=False)
 
     @property
@@ -515,7 +516,14 @@ class HQExportSchema(SavedExportSchema):
         else:
             return identity
 
-    
+    @classmethod
+    def wrap(cls, data):
+        self = super(HQExportSchema, cls).wrap(data)
+        if not self.domain:
+            self.domain = self.index[0]
+        return self
+
+
 class FormExportSchema(HQExportSchema):
     doc_type = 'SavedExportSchema'
     app_id = StringProperty()
