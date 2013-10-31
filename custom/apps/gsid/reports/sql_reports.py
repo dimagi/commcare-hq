@@ -714,7 +714,6 @@ class PatientMapReport(GenericMapReport, CustomProjectReport):
     @property
     def display_config(self):
         return {
-            'name_column': self.agg_level,
             'column_titles': {
                 'Positive Tests::Female +ve Percent': 'Positive tests: Female',
                 'Positive Tests::Male +ve Percent': 'Positive tests: Male',
@@ -727,9 +726,9 @@ class PatientMapReport(GenericMapReport, CustomProjectReport):
                 'Age Range::Male age range': 'Age range: Male',
                 'disease': 'Disease',
             },
-            'detail_columns': [
-                'Country',
+            'detail_columns': self.place_types + [
                 'disease',
+                '__space__',
                 'Positive Tests::Female +ve Percent',
                 'Positive Tests::Male +ve Percent',
                 'Positive Tests::Total +ve Percent',
@@ -737,7 +736,7 @@ class PatientMapReport(GenericMapReport, CustomProjectReport):
                 'Tests::Number of Males ',
                 'Tests::Total',
             ],
-            'table_columns': [
+            'table_columns': self.place_types + [
                 'Tests::Number of Females ',
                 'Tests::Number of Males ',
                 'Tests::Total',
@@ -747,11 +746,32 @@ class PatientMapReport(GenericMapReport, CustomProjectReport):
                 'Age Range::Female age range',
                 'Age Range::Male age range',
                 'Age Range::All age range',
-            ]
+            ],
+            'detail_template': """<div class="default-popup">
+                  <table>
+                    <% _.each(info, function(field) { %>
+                    <tr class="data data-<%= field.slug %>">
+                      <% if (field.slug === '__space__') { %>
+                        <td>&nbsp;</td><td>&nbsp;</td>
+                      <% } else { %>
+                        <td><%= field.label %></td>
+                        <td class="detail_data">
+                          <%= field.value %>
+                        </td>
+                      <% } %>
+                    </tr>
+                    <% }); %>
+                  </table>
+                </div>"""
         }
 
     @property
     def agg_level(self):
-        opts = ['country', 'province', 'district', 'clinic']
         agg_at = self.request.GET.get('aggregate_at', None)
-        return agg_at.title() if agg_at else 'Clinic'
+        return agg_at if agg_at else 'clinic'
+
+    @property
+    def place_types(self):
+        opts = ['country', 'province', 'district', 'clinic']
+        agg_at = self.agg_level
+        return [o.title() for o in opts[:opts.index(agg_at) + 1]]
