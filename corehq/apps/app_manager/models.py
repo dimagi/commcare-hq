@@ -1859,10 +1859,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         form = self.user_registration
         form._app = self
         if not form.source:
-            form.source = load_default_user_registration().format(user_registration_xmlns="%s%s" % (
-                get_url_base(),
-                reverse('view_user_registration', args=[self.domain, self.id]),
-            ))
+            form.source = load_default_user_registration()
         return form
 
     def get_forms(self, bare=True):
