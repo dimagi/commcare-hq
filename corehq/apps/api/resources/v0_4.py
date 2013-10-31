@@ -196,7 +196,7 @@ class GroupResource(JsonResource, DomainSpecificResourceMixin):
     case_sharing = fields.BooleanField(attribute='case_sharing', default=False)
     reporting = fields.BooleanField(default=True, attribute='reporting')
 
-    metadata = fields.DictField(attribute='metadata')
+    metadata = fields.DictField(attribute='metadata', null=True, blank=True)
 
     def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(Group, kwargs['pk'], kwargs['domain'])
