@@ -115,7 +115,6 @@
                                     return {tag: 'update', field: stripped};
                                 }
                             }
-
                         }
                         return {tag: '', field: field};
                     },
@@ -188,9 +187,13 @@
                     // assumes unselected
                     var unselected;
                     var columns = table.column_configuration();
-
                     _(columns).each(function (column) {
-                        column._niceField = self.utils.parseField(column.index, table.index);
+                        var niceField = self.utils.parseField(column.index, table.index);
+                        var special = ko.utils.unwrapObservable(column.special);
+                        if (special) {
+                            niceField['field'] = special;
+                        }
+                        column._niceField = niceField;
                     });
 
                     for (var i = 0; i < columns.length; i++) {
@@ -209,7 +212,7 @@
                 self.showDeidColumn = ko.observable(function () {
                     return _(self.table_configuration()).some(function (table) {
                         return table.selected() && _(table.column_configuration()).some(function (column) {
-                            return column.selected() && column.transform();
+                            return column.selected() && column.transform() && !ko.utils.unwrapObservable(column.special);
                         });
                     });
                 }());
@@ -273,7 +276,7 @@
                 self.output = ko.computed(function () {
                     var output = ko.mapping.toJS({
                         custom_export: self.custom_export,
-                        presave: self.presave,
+                        presave: self.presave
                     });
                     output.custom_export.tables = self.make_tables();
                     return JSON.stringify(output);
