@@ -1,5 +1,7 @@
+from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import DocumentSchema, DictProperty, DateTimeProperty, BooleanProperty
 import datetime
+from dimagi.utils.couch.database import get_safe_write_kwargs
 
 
 class ComputedDocumentMixin(DocumentSchema):
@@ -40,7 +42,7 @@ class ComputedDocumentMixin(DocumentSchema):
                                 'document_id': self._id,
                             })
             if save_on_update:
-                self.save()
+                self.save(**get_safe_write_kwargs())
                 if logger:
                     logger.debug("Saved %s." % self._id)
         return is_update
@@ -48,13 +50,32 @@ class ComputedDocumentMixin(DocumentSchema):
     def update_indicators_in_bulk(self, indicators, save_on_update=True, logger=None):
         is_update = False
         for indicator in indicators:
-            if self.update_indicator(indicator, save_on_update=False, logger=logger):
-                is_update = True
+            try:
+                if self.update_indicator(indicator, save_on_update=False, logger=logger):
+                    is_update = True
+            except Exception:
+                logger.exception("[INDICATOR %(namespace)s %(domain)s] Failed to update %(indicator_type)s: "
+                                 "%(indicator_slug)s in %(document_type)s [%(document_id)s]." % {
+                                     'namespace': indicator.namespace,
+                                     'domain': indicator.domain,
+                                     'indicator_type': indicator.__class__.__name__,
+                                     'indicator_slug': indicator.slug,
+                                     'document_type': self.__class__.__name__,
+                                     'document_id': self._id,
+                                 })
 
         if is_update and save_on_update:
-            self.save()
-            if logger:
-                logger.info("Saved %s." % self._id)
+            try:
+                self.save(**get_safe_write_kwargs())
+                if logger:
+                    logger.info("Saved %s." % self._id)
+            except ResourceConflict:
+                logger.error("[INDICATOR %(domain)s] Resource conflict failed to save document indicators for "
+                             "%(document_type)s [%(document_id)s]." % {
+                                 'domain': self.domain,
+                                 'document_type': self.__class__.__name__,
+                                 'document_id': self._id,
+                             })
 
         return is_update
 
