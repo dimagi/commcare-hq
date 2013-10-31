@@ -25,11 +25,11 @@ class PactPatientForm(Form):
 
     gender = forms.ChoiceField(label="Sex", choices=GENDER_CHOICES)
     #source: http://stackoverflow.com/questions/1513502/django-how-to-format-a-datefields-date-representation
-    dob = forms.DateField(required=False, label='dob', input_formats=['%m/%d/%Y'], widget=forms.DateInput(format = '%m/%d/%Y', attrs={'class': 'jqui-dtpk'}))
+    dob = forms.DateField(required=False, label='DOB (m/d/y)', input_formats=['%m/%d/%Y'], widget=forms.DateInput(format = '%m/%d/%Y', attrs={'class': 'jqui-dtpk'}))
     race = forms.ChoiceField(choices=PACT_RACE_CHOICES)
     preferred_language = forms.ChoiceField(choices=PACT_LANGUAGE_CHOICES)
 
-    mass_health_expiration = forms.DateField(label = "Mass Health expiration date", input_formats=['%m/%d/%Y',''], widget=forms.DateInput(format = '%m/%d/%Y'), required=False)
+    mass_health_expiration = forms.DateField(label = "Mass Health expiration date (m/d/y)", input_formats=['%m/%d/%Y',''], widget=forms.DateInput(format = '%m/%d/%Y'), required=False)
     ssn = forms.CharField(label="Social Security Number", required=False)
 
     hp = forms.ChoiceField(label="Primary health promoter", choices=())
