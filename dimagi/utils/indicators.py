@@ -1,6 +1,7 @@
 from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import DocumentSchema, DictProperty, DateTimeProperty, BooleanProperty
 import datetime
+from dimagi.utils.couch.database import get_safe_write_kwargs
 
 
 class ComputedDocumentMixin(DocumentSchema):
@@ -41,7 +42,7 @@ class ComputedDocumentMixin(DocumentSchema):
                                 'document_id': self._id,
                             })
             if save_on_update:
-                self.save()
+                self.save(**get_safe_write_kwargs())
                 if logger:
                     logger.debug("Saved %s." % self._id)
         return is_update
@@ -65,7 +66,7 @@ class ComputedDocumentMixin(DocumentSchema):
 
         if is_update and save_on_update:
             try:
-                self.save()
+                self.save(**get_safe_write_kwargs())
                 if logger:
                     logger.info("Saved %s." % self._id)
             except ResourceConflict:
