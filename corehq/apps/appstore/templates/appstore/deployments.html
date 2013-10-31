@@ -4,12 +4,6 @@
 {% load hqstyle_tags %}
 {% load i18n %}
 
-{% block tabs %}
-    {% url "deployments" as search_url %}
-    <ul class="nav">
-        {% include 'appstore/partials/search_input.html' with search_name="search" search_for="deployments..." %}
-    </ul>
-{% endblock %}
 
 {% block store-header %}
     Deployments
