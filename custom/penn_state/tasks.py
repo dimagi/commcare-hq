@@ -112,7 +112,9 @@ def save_report(date=None):
         )
 
 
-@periodic_task(run_every=crontab(hour=10, day_of_week=6),
-        queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(
+    run_every=crontab(hour=10, minute=1, day_of_week=6),
+    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery')
+)
 def run_report():
     save_report()
