@@ -60,7 +60,7 @@ class XFormPillow(HQPillow):
 
                 # convert all mapped dict properties to nulls if they are empty strings
                 for object_key in ['index', 'attachment', 'create', 'update']:
-                    if not isinstance(case_dict.get(object_key, None), dict):
+                    if object_key in case_dict and not isinstance(case_dict[object_key], dict):
                         case_dict[object_key] = None
             return doc_ret
 
