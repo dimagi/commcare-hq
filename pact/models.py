@@ -58,7 +58,7 @@ class DOTSubmission(XFormInstance):
 
 class PactPatientCase(CommCareCase):
     class Meta:
-        app_label='pact'
+        app_label = 'pact'
 
     @memoized
     def get_user_map(self):
@@ -82,6 +82,13 @@ class PactPatientCase(CommCareCase):
     def dot_status_display(self):
         return self._get_display_string(
             'dot_status', enums.PACT_DOT_CHOICES_DICT)
+
+    @property
+    def hiv_care_clinic_display(self):
+        return self._get_display_string(
+            'hiv_care_clinic', enums.PACT_HIV_CLINIC_CHOICES_DICT
+        )
+
 
     def update_providers(self, cc_user, provider_ids):
         from pact.api import submit_case_update_form
