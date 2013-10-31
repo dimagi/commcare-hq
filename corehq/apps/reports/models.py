@@ -515,16 +515,11 @@ class HQExportSchema(SavedExportSchema):
         else:
             return identity
 
-    @property
-    def filter(self):
-        return SerializableFunction(form_matches_users, users=set(CouchUser.ids_by_domain(self.domain)))
-
-
+    
 class FormExportSchema(HQExportSchema):
     doc_type = 'SavedExportSchema'
     app_id = StringProperty()
     include_errors = BooleanProperty(default=False)
-
 
     @property
     @memoized
@@ -553,7 +548,7 @@ class FormExportSchema(HQExportSchema):
 
     @property
     def filter(self):
-        f = super(FormExportSchema, self).filter
+        f = SerializableFunction(form_matches_users, users=set(CouchUser.ids_by_domain(self.domain)))
         if self.app_id is not None:
             f.add(reports.util.app_export_filter, app_id=self.app_id)
         if not self.include_errors:
