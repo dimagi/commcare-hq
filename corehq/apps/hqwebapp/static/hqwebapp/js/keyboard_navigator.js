@@ -110,6 +110,7 @@ var KeyboardNavigator = function() {
         self.focus_in_fn = function($ele) {
             $ele.addClass('hovered');
             $ele.trigger('mouseenter');
+            $ele.focus();
         };
 
         self.handle_focus_in = function() {
@@ -123,6 +124,7 @@ var KeyboardNavigator = function() {
             if ($ele) {
                 $ele.removeClass('hovered');
                 $ele.trigger('mouseleave');
+                $ele.blur();
             }
         };
 
