@@ -14,6 +14,12 @@ from . import case_calcs, user_calcs
 from .constants import DOMAIN
 
 
+def flat_field(fn):
+    def getter(item):
+        return unicode(fn(item) or "")
+    return fluff.FlatField(getter)
+
+
 # OpmCaseFluff and OpmUserFluff are unusual in that they store only
 # flat information about a specific case or user - no aggregation will
 # be performed
@@ -22,13 +28,13 @@ class OpmCaseFluff(fluff.IndicatorDocument):
         """
         returns a flat field with a callable looking for `property` on the case
         """
-        return fluff.FlatField(lambda case: case.get_case_property(property) or "")
+        return flat_field(lambda case: case.get_case_property(property))
 
     document_class = CommCareCase
     domains = ('opm',)
     group_by = ('domain', )
 
-    name = fluff.FlatField(lambda case: case.name)
+    name = flat_field(lambda case: case.name)
     husband_name = case_property('husband_name')
     awc_name = case_property('awc_name')
     bank_name = case_property('bank_name')
@@ -47,13 +53,13 @@ class OpmUserFluff(fluff.IndicatorDocument):
         """
         returns a flat field with a callable looking for `property` on the user
         """
-        return fluff.FlatField(lambda user: user.user_data.get(property) or "")
+        return flat_field(lambda user: user.user_data.get(property))
     
     document_class = CommCareUser
     domains = ('opm',)
     group_by = ('domain', )
 
-    name = fluff.FlatField(lambda user: user.name)
+    name = flat_field(lambda user: user.name)
     awc_name = user_data('awc')
     bank_name = user_data('bank_name')
     account_number = user_data('account_number')
@@ -69,7 +75,7 @@ class OpmFormFluff(fluff.IndicatorDocument):
     domains = ('opm',)
     # group_by = ('domain', )
 
-    name = fluff.FlatField(lambda form: form.name)
+    name = flat_field(lambda form: form.name)
 
     # per case
     bp1_cash = case_calcs.BirthPreparedness(
