@@ -267,7 +267,9 @@ class FlatField(schema.StringProperty):
         super(FlatField, self).__init__(*args, **kwargs)
 
     def calculate(self, item):
-        return self.fn(item)
+        result = self.fn(item)
+        assert isinstance(result, basestring)
+        return result
 
 
 class AttributeGetter(object):
