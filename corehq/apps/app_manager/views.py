@@ -813,7 +813,6 @@ def new_form(req, domain, app_id, module_id):
     form_id = form.id
     response = back_to_main(req, domain, app_id=app_id, module_id=module_id,
                             form_id=form_id)
-    response.set_cookie('suppress_build_errors', 'yes')
     return response
 
 @no_conflict_require_POST
