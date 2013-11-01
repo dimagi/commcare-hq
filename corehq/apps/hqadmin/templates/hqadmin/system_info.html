@@ -191,22 +191,20 @@
                                 <span class="label label-important">Bad</span>
                             {% endif %}
                         </dd>
-                    <dt>Case Index</dt>
-                        <dd>{% if hqcases_status %}
-                            <span class="label label-success">OK</span>
-                            {% else %}
-                            <span class="label label-important">Bad</span>
-                            {% endif %}
-                            {{ hqcases_message }}
-                        </dd>
-                    <dt>XForm Index</dt>
-                        <dd>{% if xforms_status %}
-                            <span class="label label-success">OK</span>
-                            {% else %}
-                            <span class="label label-important">Bad</span>
-                            {% endif %}
-                            {{ xforms_message }}
-                        </dd>
+
+                    {% for es_status in es_index_status %}
+                        {% for k, v in es_status.items %}
+                            <dt>{{ k }}</dt>
+                            <dd>
+                                {% if v.status %}
+                                    <span class="label label-success">OK</span>
+                                {% else %}
+                                    <span class="label label-important">Bad</span>
+                                {% endif %}
+                                {{ v.message }}
+                            </dd>
+                        {% endfor %}
+                    {% endfor %}
                     </dl>
                 </td>
             </tr>

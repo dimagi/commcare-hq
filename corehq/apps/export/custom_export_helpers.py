@@ -1,11 +1,12 @@
-from django.shortcuts import render
 import json
 from corehq.apps.reports.standard import export
-from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration
+from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration, HQExportSchema
 from corehq.apps.reports.standard.export import DeidExportReport
 from couchexport.models import SavedExportSchema, ExportTable, ExportSchema
 from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.memoized import memoized
+from couchexport.transforms import couch_to_excel_datetime
+from couchexport.util import SerializableFunction
 
 
 class AbstractProperty(object):
@@ -51,6 +52,7 @@ class CustomExportHelper(object):
         self.request = request
         self.domain = domain
         self.presave = False
+        self.transform_dates = False
 
         if export_id:
             self.custom_export = self.ExportSchemaClass.get(export_id)
@@ -82,8 +84,7 @@ class CustomExportHelper(object):
 
         custom_export_json = post_data['custom_export']
 
-        SAFE_KEYS = ('default_format', 'is_safe', 'name', 'schema_id')
-
+        SAFE_KEYS = ('default_format', 'is_safe', 'name', 'schema_id', 'transform_dates')
         for key in SAFE_KEYS:
             self.custom_export[key] = custom_export_json[key]
 
@@ -113,7 +114,6 @@ class CustomExportHelper(object):
                 )
 
         self.update_custom_params()
-
         self.custom_export.save()
 
         if self.presave:
@@ -172,7 +172,7 @@ class FormCustomExportHelper(CustomExportHelper):
 
 class CaseCustomExportHelper(CustomExportHelper):
 
-    ExportSchemaClass = SavedExportSchema
+    ExportSchemaClass = HQExportSchema
     ExportReport = export.CaseExportReport
 
     export_type = 'case'

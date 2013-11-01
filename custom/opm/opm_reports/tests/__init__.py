@@ -48,7 +48,7 @@ class OPMTestBase(object):
         flufftop.runfile = None
         flufftop.start_num = 0
         flufftop.chunk_size = 500
-        flufftop.pillow = flufftop.pillow_class()
+        flufftop.pillow = flufftop.pillow_class(chunk_size=0)
         for i, row in enumerate(flufftop.full_couch_view_iter()):
             print "\tProcessing item %s (%d)" % (row['id'], i)
             flufftop.process_row(row, i)
@@ -84,7 +84,6 @@ class OPMTestBase(object):
         # saved report snapshot
         snapshot = OpmReportSnapshot.by_month(month, year,
             self.ReportClass.__name__)
-        # sort rows?
         errors = []
         total = len(snapshot.rows)
 
@@ -92,6 +91,7 @@ class OPMTestBase(object):
         def stringify(row):
             string_row = []
             for element in row:
+                element = element or ""
                 try:
                     str(element)
                 except:
@@ -107,8 +107,8 @@ class OPMTestBase(object):
             report_row = report_rows[i]
             for snapshot_index, slug in enumerate(snapshot.slugs):
                 report_index = report.slugs.index(slug)
-                snapshot_item = snapshot_row[snapshot_index]
-                report_item = report_row[report_index]
+                snapshot_item = snapshot_row[snapshot_index] or ""
+                report_item = report_row[report_index] or ""
                 if not self.the_same(snapshot_item, report_item):
                     errors.append('%s \t"%s" != "%s" \t%s' %
                         (slug, snapshot_item, report_item, report_row[name_index]))

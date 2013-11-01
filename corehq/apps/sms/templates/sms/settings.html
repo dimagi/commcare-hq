@@ -1,0 +1,56 @@
+{% extends 'hqwebapp/two_column.html' %}
+{% load url from future %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block title %}
+    {% trans "Messaging Settings" %}
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+<script>
+    function SettingsViewModel(initial_values) {
+        var self = this;
+        self.use_default_sms_response = ko.observable(initial_values.use_default_sms_response);
+        self.default_sms_response = ko.observable(initial_values.default_sms_response);
+    }
+    
+    $(function(){
+        svm = SettingsViewModel({
+            "use_default_sms_response" : {{ form.use_default_sms_response.value|JSON }},
+            "default_sms_response" : {{ form.default_sms_response.value|JSON }},
+        });
+        ko.applyBindings(svm);
+    });
+</script>
+{% endblock %}
+
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url "messaging" domain %}"><strong>{% trans "Messaging" %}</strong></a> <span class="divider">&gt;</span>
+        </li>
+        <li class="active">
+            <a href="{% url "sms_settings" domain %}"><strong>{% trans "Settings" %}</strong></a>
+        </li>
+    </ul>
+{% endblock %}
+
+{% block main_column %}
+    <h4>{% trans "Settings" %}</h4>
+    <form action="" method="post">
+        <table>
+            <tr>
+                <td>{% trans "Use Default SMS Response" %}</td>
+                <td><input type="checkbox" name="use_default_sms_response" data-bind="checked: use_default_sms_response" /></td>
+                <td>{{ form.use_default_sms_response.errors }}</td>
+            </tr>
+            <tr data-bind="visible: use_default_sms_response">
+                <td>{% trans "Default SMS Response" %}</td>
+                <td><textarea name="default_sms_response" data-bind="text: default_sms_response"></textarea></td>
+                <td>{{ form.default_sms_response.errors }}</td>
+            </tr>
+        </table>
+        <input type="submit" class="btn btn-primary" value="Save" />
+    </form>
+{% endblock %}

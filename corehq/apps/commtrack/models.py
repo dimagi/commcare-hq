@@ -83,6 +83,7 @@ class Product(Document):
     description = StringProperty()
     category = StringProperty()
     program_id = StringProperty()
+    cost = DecimalProperty()
 
     @classmethod
     def get_by_code(cls, domain, code):

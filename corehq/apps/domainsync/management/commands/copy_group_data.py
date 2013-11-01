@@ -135,7 +135,7 @@ class Command(LabelCommand):
         ).all()
 
         role_ids = set([])
-        for user in users:
+        for user in filter(lambda u: u is not None, users):
             # if we use bulk save, django user doesn't get sync'd
             if user.get_domain_membership(domain.name).role_id:
                 role_ids.add(user.domain_membership.role_id)

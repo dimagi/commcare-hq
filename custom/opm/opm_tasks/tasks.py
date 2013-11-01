@@ -21,7 +21,7 @@ def save_report(ReportClass, month=None, year=None):
     """
     existing = OpmReportSnapshot.by_month(month, year, ReportClass.__name__)
     assert existing is None, \
-        "Existing report found for %d/%d at %s" % (month, year, existing._id)
+        "Existing report found for %s/%s at %s" % (month, year, existing._id)
     report = get_report(ReportClass, month, year)
     snapshot = OpmReportSnapshot(
         domain=DOMAIN,

@@ -147,6 +147,7 @@ DEFAULT_APPS = (
     'south',
     'djcelery', # pip install django-celery
     'djtables', # pip install djtables
+    'django_prbac',
     #'ghettoq',     # pip install ghettoq
     'djkombu', # pip install django-kombu
     'couchdbkit.ext.django',
@@ -239,6 +240,7 @@ HQ_APPS = (
     'hutch',
     'pillowtop',
     'hqstyle',
+    'corehq.apps.grapevine',
 
     # custom reports
     'a5288',
@@ -723,6 +725,7 @@ COUCHDB_APPS = [
     'couchlog',
     'wisepill',
     'crs_reports',
+    'grapevine',
 
     # custom reports
     'penn_state',
@@ -806,6 +809,7 @@ SMS_LOADED_BACKENDS = [
     "corehq.apps.telerivet.models.TelerivetBackend",
     "corehq.apps.sms.test_backend.TestSMSBackend",
     "corehq.apps.sms.backend.test.TestBackend",
+    "corehq.apps.grapevine.api.GrapevineBackend",
 ]
 
 SELENIUM_APP_SETTING_DEFAULTS = {
@@ -887,6 +891,7 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'pact',
     'hsph',
     'care-bihar',
+    'bihar',
     'hsph-dev',
     'hsph-betterbirth-pilot-2',
     'commtrack-public-demo',
@@ -926,6 +931,7 @@ DOMAIN_MODULE_MAP = {
     'a5288-test': 'a5288',
     'a5288-study': 'a5288',
     'care-bihar': 'custom.bihar',
+    'bihar': 'custom.bihar',
     'care-ihapc-live': 'custom.reports.care_sa',
     'cvsulive': 'custom.apps.cvsu',
     'dca-malawi': 'dca',

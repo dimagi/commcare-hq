@@ -342,7 +342,7 @@ class ProjectDataTab(UITab):
     @property
     @memoized
     def can_edit_commcare_data(self):
-        return self.couch_user.can_edit_data() and not (self.project and self.project.commtrack_enabled)
+        return self.couch_user.can_edit_data()
 
     @property
     @memoized
@@ -599,6 +599,14 @@ class MessagingTab(UITab):
                          {'title': _("New Survey"),
                           'urlname': 'add_survey'},
                      ]},
+                ])
+            )
+
+        if self.couch_user.is_superuser or self.couch_user.is_domain_admin(self.domain):
+            items.append(
+                (_("Settings"), [
+                    {'title': _("General Settings"),
+                     'url': reverse('sms_settings', args=[self.domain])},
                 ])
             )
 

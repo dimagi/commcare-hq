@@ -13,6 +13,13 @@
 
 {% block reportcontent %}
 {% block pretable %}
+    {% if not report.needs_filters %}
+    <h4 class="media-heading">{{ report.report_title }}
+        {% for subtitle in report.report_subtitles %}
+        <br/><small>{{ subtitle }}</small>
+        {% endfor %}
+    </h4>
+    {% endif %}
     {% if charts %}
     <div class="row">
         {% for chart in charts %}
