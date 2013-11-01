@@ -621,6 +621,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
             DataTablesColumn(_("Modified Date"), prop_name="modified_on"),
             DataTablesColumn(_("Status"), prop_name="get_status_display", sortable=False)
         )
+        headers.custom_sort = [[5, 'desc']]
         return headers
 
     @property
