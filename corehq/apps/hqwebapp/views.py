@@ -23,8 +23,11 @@ from corehq.apps.domain.decorators import require_superuser,\
     login_and_domain_required
 from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
+from corehq.apps.receiverwrapper.models import Repeater
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
+from couchdbkit import ResourceNotFound
+from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -40,8 +43,6 @@ from soil import heartbeat
 from soil import views as soil_views
 import os
 import re
-
-from django.utils.http import urlencode
 
 
 def pg_check():
@@ -752,3 +753,70 @@ class CRUDPaginatedViewMixin(object):
         }
         """
         raise NotImplementedError("You must implement get_deleted_item_data")
+
+
+def quick_find(request):
+    query = request.GET.get('q')
+    redirect = request.GET.get('redirect') != 'false'
+
+    def _deal_with_couch_doc(doc):
+        domain = doc.get('domain')
+        doc_type = doc.get('doc_type')
+        doc_id = doc.get('_id')
+        simple = {
+            '_id': doc_id,
+            'domain': domain,
+            'doc_type': doc_type
+        }
+        if request.couch_user.is_superuser or (domain and request.couch_user.is_domain_admin(domain)):
+            if not redirect:
+                return simple
+
+            if doc_type in ('Application', 'RemoteApp'):
+                if doc.get('copy_of'):
+                    return _('Application Build'), reverse(
+                        'corehq.apps.app_manager.views.download_index',
+                        args=[domain, doc_id],
+                    )
+                else:
+                    return _('Application'), reverse(
+                        'corehq.apps.app_manager.views.view_app',
+                        args=[domain, doc_id],
+                    )
+            if doc_type in ('CommCareCase',):
+                return _('Case'), reverse(
+                    'case_details',
+                    args=[domain, doc_id],
+                )
+            if doc_type in ('XFormInstance',):
+                return _('Form'), reverse(
+                    'render_form_data',
+                    args=[domain, doc_id],
+                )
+            return simple
+        raise Http404()
+
+    def deal_with_couch_doc(doc):
+        x = _deal_with_couch_doc(doc)
+        try:
+            type_text, url = x
+        except ValueError:
+            return json_response(x)
+        messages.info(request, _("We've redirected you to the %s matching your query") % type_text)
+        return HttpResponseRedirect(url)
+
+    try:
+        doc = get_db().get(query)
+    except ResourceNotFound:
+        pass
+    else:
+        return deal_with_couch_doc(doc)
+
+    try:
+        doc = Repeater.get_db().get(query)
+    except ResourceNotFound:
+        pass
+    else:
+        return deal_with_couch_doc(doc)
+
+    raise Http404()
