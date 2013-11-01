@@ -240,6 +240,7 @@ HQ_APPS = (
     'hutch',
     'pillowtop',
     'hqstyle',
+    'corehq.apps.grapevine',
 
     # custom reports
     'a5288',
@@ -724,6 +725,7 @@ COUCHDB_APPS = [
     'couchlog',
     'wisepill',
     'crs_reports',
+    'grapevine',
 
     # custom reports
     'penn_state',
@@ -807,6 +809,7 @@ SMS_LOADED_BACKENDS = [
     "corehq.apps.telerivet.models.TelerivetBackend",
     "corehq.apps.sms.test_backend.TestSMSBackend",
     "corehq.apps.sms.backend.test.TestBackend",
+    "corehq.apps.grapevine.api.GrapevineBackend",
 ]
 
 SELENIUM_APP_SETTING_DEFAULTS = {
