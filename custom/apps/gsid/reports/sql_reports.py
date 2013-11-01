@@ -461,6 +461,10 @@ class GSIDSQLTestLotsReport(GSIDSQLReport):
     slug = "test_lots_sql"
     section_name = "test lots"
 
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return user and user.is_previewer()
+
     @property
     def group_by(self):
         return super(GSIDSQLTestLotsReport, self).group_by + ["test_version", "lot_number"]
