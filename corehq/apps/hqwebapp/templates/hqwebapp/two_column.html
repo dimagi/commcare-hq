@@ -16,12 +16,14 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
+    {% block keyboard_nav_config %}
    <script>
         function gen_sidebar_elements() {
             return $('.sidebar .nav-list a');
         }
         var sidebar_navigator = new KeyboardNavigator();
         sidebar_navigator.init({
+            name: 'sidebar',
             nav_key: 'option',
             action_key: 'enter',
             forward_key: 'down',
@@ -29,7 +31,20 @@
             element_list_generator: gen_sidebar_elements,
             reset_index: false
         });
-    </script>
+
+        function gen_tab_elements() {
+            return $("[data-toggle='tab']");
+        }
+        var tab_navigator = new KeyboardNavigator();
+        tab_navigator.init({
+            name: 'tabs',
+            nav_key: 'option',
+            action_key: 'enter',
+            element_list_generator: gen_tab_elements,
+            reset_index: false
+        });
+   </script>
+   {% endblock %}
 {% endblock %}
 
 {% block content %}

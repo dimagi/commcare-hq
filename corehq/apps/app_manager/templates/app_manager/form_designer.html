@@ -91,6 +91,79 @@
     </script>
 {% endblock %}
 
+{% block keyboard_nav_config %}
+
+    <script>
+        key.filter = function(event) {
+            return true;
+        };
+
+        function gen_question_tree_elements() {
+            return $('.jstree-leaf a, .jstree-open a');
+        }
+        var question_tree_navigator = new KeyboardNavigator();
+        question_tree_navigator.init({
+            name: 'question tree',
+            ready_scope: 'qt-ready',
+            nav_key: 'option',
+            action_key: 'enter',
+            forward_key: 'down',
+            back_key: 'up',
+            element_list_generator: gen_question_tree_elements,
+            focus_in_fn: function($ele) { $ele.addClass('jstree-hovered') },
+            focus_out_fn: function($ele) { $ele.removeClass('jstree-hovered') },
+            reset_index: true,
+            regen_list_on_leave: true
+        });
+
+        function gen_sidebar_elements() {
+            return $('.sidebar .nav-list a:not(a:has(.icon-pencil))');
+        }
+        var sidebar_navigator = new KeyboardNavigator();
+        sidebar_navigator.init({
+            name: 'sidebar',
+            nav_key: 'option',
+            action_key: 'enter',
+            forward_key: 'down',
+            back_key: 'up',
+            element_list_generator: gen_sidebar_elements,
+            reset_index: false
+        });
+
+        function gen_click_fn(selector) {
+            var $ele = null;
+            return function() {
+                $ele = $ele || $(selector);
+                $ele.click();
+                return false;
+            }
+        }
+
+        function handle_properties_shortcut() {
+            $('#fd-props-content').find('input[type="text"]').first().focus();
+            return false;
+        }
+
+        var keyboard_shortcuts = [
+            {
+                shortcut: "option+s, ctrl+s, command+s",
+                handler: gen_click_fn("#settings-save-btn .btn, #fd-save-button .btn")
+            },
+            {
+                shortcut: "option+q, ctrl+q, command+q",
+                handler: question_tree_navigator.activate
+            },
+            {
+                shortcut: "option+w, ctrl+w, command+w",
+                handler: handle_properties_shortcut
+            }
+        ];
+        $(function() {
+            _(keyboard_shortcuts).each(function(s) { key(s.shortcut, s.handler); });
+        });
+    </script>
+{% endblock %}
+
 {% block head %}
     {{ block.super }}
 

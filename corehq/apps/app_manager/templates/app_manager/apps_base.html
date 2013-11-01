@@ -48,6 +48,53 @@
     </script>
 {% endblock %}
 
+{% block keyboard_nav_config %}
+    <script>
+        function gen_click_fn(selector) {
+            var $ele = null;
+            return function() {
+                $ele = $ele || $(selector);
+                $ele.click();
+                return false;
+            }
+        }
+        var keyboard_shortcuts = [
+            {
+                shortcut: "option+s, ctrl+s, command+s",
+                handler: gen_click_fn("#settings-save-btn .btn, #fd-save-button .btn")
+            }
+        ];
+        $(function() {
+            _(keyboard_shortcuts).each(function(s) { key(s.shortcut, s.handler); });
+        });
+
+        function gen_sidebar_elements() {
+            return $('.sidebar .nav-list a:not(a:has(.icon-pencil))');
+        }
+        var sidebar_navigator = new KeyboardNavigator();
+        sidebar_navigator.init({
+            nav_key: 'option',
+            action_key: 'enter',
+            forward_key: 'down',
+            back_key: 'up',
+            element_list_generator: gen_sidebar_elements,
+            reset_index: false
+        });
+
+        function gen_tab_elements() {
+            return $("[data-toggle='tab']:not(.sidebar .nav-list a)");
+        }
+        var tab_navigator = new KeyboardNavigator();
+        tab_navigator.init({
+            name: 'tabs',
+            nav_key: 'option',
+            action_key: 'enter',
+            element_list_generator: gen_tab_elements,
+            reset_index: false
+        });
+    </script>
+{% endblock %}
+
 {% block sidebar %}
 {% endblock %}
 
