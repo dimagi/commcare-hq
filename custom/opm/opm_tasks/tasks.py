@@ -2,14 +2,17 @@
 Celery tasks to save a snapshot of the reports each month
 """
 import datetime, logging
-from celery import task
+
+from celery.task import periodic_task
+from celery.schedules import crontab
 from django.http import HttpRequest
+from django.conf import settings
 
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.couch.database import get_db
 
 from ..opm_reports.reports import (BeneficiaryPaymentReport,
-    IncentivePaymentReport, get_report)
+    IncentivePaymentReport, get_report, last_if_none)
 from ..opm_reports.constants import DOMAIN
 from .models import OpmReportSnapshot
 
@@ -19,6 +22,7 @@ def save_report(ReportClass, month=None, year=None):
     Save a snapshot of the report.
     Pass a month and year to save an arbitrary month.
     """
+    month, year = last_if_none(month, year)
     existing = OpmReportSnapshot.by_month(month, year, ReportClass.__name__)
     assert existing is None, \
         "Existing report found for %s/%s at %s" % (month, year, existing._id)
@@ -36,7 +40,10 @@ def save_report(ReportClass, month=None, year=None):
     return snapshot
 
 
-@task()
+@periodic_task(
+    run_every=crontab(hour=10, minute=1, day_of_month=1),
+    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
+)
 def snapshot():
     for report in [IncentivePaymentReport, BeneficiaryPaymentReport]:
         snapshot = save_report(report)

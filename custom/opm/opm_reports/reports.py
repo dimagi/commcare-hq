@@ -160,18 +160,21 @@ class IncentivePaymentReport(BaseReport):
         return CommCareUser.by_domain(DOMAIN)
 
 
+def last_if_none(month, year):
+    if month is not None:
+        assert year is not None, \
+            "You must pass either nothing or a month AND a year"
+        return month, year
+    else:
+        last_month = datetime.datetime.now() - datetime.timedelta(days=27)
+        return last_month.month, last_month.year
+
+
 def get_report(ReportClass, month=None, year=None):
     """
     Utility method to run a report for an arbitrary month without a request
     """
-    if month is not None:
-        assert year is not None, \
-            "You must pass either nothing or a month AND a year"
-    else:
-        last_month = datetime.datetime.now() - datetime.timedelta(days=4)
-        month = last_month.month
-        year = last_month.year
-
+    month, year = last_if_none(month, year)
     class Report(ReportClass):
         snapshot = None
         report_class = ReportClass
