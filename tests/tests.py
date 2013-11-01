@@ -385,6 +385,16 @@ class Test(TestCase):
                             ])
             self.assertEqual(expected, diff)
 
+    def test_flat_field_types(self):
+        str_field = fluff.FlatField(lambda case: "hello")
+        self.assertEquals(str_field.calculate('bar'), "hello")
+
+        unicode_field = fluff.FlatField(lambda case: u"unicode!!")
+        self.assertEquals(unicode_field.calculate('bar'), u"unicode!!")
+
+        num_field = fluff.FlatField(lambda case: 432123141)
+        self.assertRaises(AssertionError, num_field.calculate, 'bar')
+
 
 class MockDoc(Document):
     _doc_type = "Mock"
