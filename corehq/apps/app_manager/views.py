@@ -693,8 +693,6 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'app': app,
         'module': module,
         'form': form,
-
-        'show_secret_settings': req.GET.get('secret', False)
     })
     context.update(base_context)
     if app and not module and hasattr(app, 'translations'):

@@ -82,6 +82,7 @@ def daily_reports():
     # this should get called every hour by celery
     reps = ReportNotification.view("reportconfig/all_notifications",
                                    key=["daily", datetime.utcnow().hour, None],
+                                   reduce=False,
                                    include_docs=True).all()
     for rep in reps:
         send_report.delay(rep._id)
@@ -92,6 +93,7 @@ def weekly_reports():
     now = datetime.utcnow()
     reps = ReportNotification.view("reportconfig/all_notifications",
                                    key=["weekly", now.hour, now.weekday()],
+                                   reduce=False,
                                    include_docs=True).all()
     for rep in reps:
         send_report.delay(rep._id)
@@ -101,6 +103,7 @@ def monthly_reports():
     now = datetime.utcnow()
     reps = ReportNotification.view("reportconfig/all_notifications",
                                    key=["monthly", now.hour, now.day],
+                                   reduce=False,
                                    include_docs=True).all()
     for rep in reps:
         send_report.delay(rep._id)

@@ -266,7 +266,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
 
         if self.es_params:
             domain_results = es_domain_query(self.es_params, fields=["name"], size=99999, show_stats=False)
-            domains = [d["fields"]["name"] for d in domain_results["hits"]["hits"]]
+            domains = filter(None, [d.get("fields", {}).get("name") for d in domain_results["hits"]["hits"]])
             if len(domains) < ES_MAX_CLAUSE_COUNT:
                 ctxt["total_distinct_users"] = total_distinct_users(domains)
                 ctxt["matching_filters"] = True

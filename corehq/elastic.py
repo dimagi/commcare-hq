@@ -33,7 +33,10 @@ ADD_TO_ES_FILTER = {
         {"not": {"missing": {"field": "xmlns"}}},
         {"not": {"missing": {"field": "form.meta.userID"}}},
     ],
-    "users": [{"term": {"doc_type": "CommCareUser"}}],
+    "users": [
+        {"term": {"doc_type": "CommCareUser"}},
+        {"term": {"is_active": True}},
+    ],
 }
 
 DATE_FIELDS = {
@@ -65,7 +68,7 @@ def get_stats_data(domains, histo_type, datespan, interval="day"):
         }
         q["filter"]["and"].extend(ADD_TO_ES_FILTER.get(histo_type, [])[:])
 
-        return es_query(q=q, es_url=ES_URLS[histo_type], size=1)["hits"]["total"]
+        return es_query(q=q, es_url=ES_URLS[histo_type], size=0)["hits"]["total"]
 
     return {
         'histo_data': histo_data,
