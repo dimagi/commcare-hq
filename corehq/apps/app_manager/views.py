@@ -1560,7 +1560,7 @@ def validate_form_for_build(request, domain, app_id, unique_form_id):
         raise Http404()
     errors = form.validate_for_build()
     lang, langs = get_langs(request, app)
-    if form.source == '':
+    if "blank form" in [error.get('type') for error in errors]:
         return json_response({
             "error_html": render_to_string('app_manager/partials/create_form_prompt.html')
         })
