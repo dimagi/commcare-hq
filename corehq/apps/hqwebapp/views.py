@@ -820,3 +820,9 @@ def quick_find(request):
         return deal_with_couch_doc(doc)
 
     raise Http404()
+
+
+def osdd(request, template='osdd.xml'):
+    response = render(request, template, {'url_base': get_url_base()})
+    response['Content-Type'] = 'application/xml'
+    return response

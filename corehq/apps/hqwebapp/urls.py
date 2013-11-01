@@ -17,6 +17,7 @@ urlpatterns = patterns('corehq.apps.hqwebapp.views',
     url(r'^debug/notify/$', 'debug_notify', name='debug_notify'),
     url(r'^notifications/dismiss/$', 'dismiss_notification', name="dismiss_notification"),
     url(r'^search/$', 'quick_find', name="global_quick_find"),
+    url(r'^searchDescription.xml$', 'osdd', name="osdd"),
 )
 
 urlpatterns += patterns('corehq.apps.orgs.views', url(r'^search_orgs/', 'search_orgs', name='search_orgs'))
