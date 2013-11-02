@@ -64,7 +64,6 @@ def add_metadata(sms, message_bank_messages):
             sms.message_bank_message_id = entry["message"]._id
             sms.fri_id = entry["message"].fri_id
             sms.risk_profile = entry["message"].risk_profile
-            sms.theory_code = entry["message"].theory_code
             break
     sms.message_bank_lookup_completed = True
     try:

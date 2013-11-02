@@ -8,15 +8,17 @@ PROFILE_D = "D"
 PROFILE_E = "E"
 PROFILE_F = "F"
 PROFILE_G = "G"
-PROFILES = [PROFILE_A, PROFILE_B, PROFILE_C, PROFILE_D, PROFILE_E, PROFILE_F, PROFILE_G]
+PROFILE_H = "H"
+PROFILES = [PROFILE_A, PROFILE_B, PROFILE_C, PROFILE_D, PROFILE_E, PROFILE_F, PROFILE_G, PROFILE_H]
 PROFILE_DESC = {
-    PROFILE_A : "A - HIV Positive",
-    PROFILE_B : "B - Treatment Non-Adherent",
+    PROFILE_A : "A - HIV+",
+    PROFILE_B : "B - ART non",
     PROFILE_C : "C - IDU",
     PROFILE_D : "D - PSE/CSV",
     PROFILE_E : "E - Top",
     PROFILE_F : "F - Bottom",
     PROFILE_G : "G - General",
+    PROFILE_H : "H - Other",
 }
 
 class FRIMessageBankMessage(Document):
@@ -27,11 +29,10 @@ class FRIMessageBankMessage(Document):
     risk_profile = StringProperty(choices=PROFILES)
     message = StringProperty()
     fri_id = StringProperty()
-    theory_code = StringProperty()
 
 class FRIRandomizedMessage(Document):
     """
-    Links a CommCareCase (study participant) to a MessageBankMessage, assigning the order in
+    Links a CommCareCase (study participant) to an FRIMessageBankMessage, assigning the order in
     which the message must be sent.
     """
     domain = StringProperty()
@@ -44,5 +45,4 @@ class FRISMSLog(SMSLog):
     message_bank_message_id = StringProperty()
     fri_id = StringProperty()
     risk_profile = StringProperty(choices=PROFILES)
-    theory_code = StringProperty()
 

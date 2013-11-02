@@ -6,7 +6,7 @@ from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.util import format_datatables_data
-from custom.fri.models import PROFILE_A, PROFILE_B, PROFILE_C, PROFILE_D, PROFILE_E, PROFILE_F, PROFILE_G, PROFILE_DESC, FRISMSLog
+from custom.fri.models import FRISMSLog
 from custom.fri.reports.filters import InteractiveParticipantFilter, RiskProfileFilter
 from custom.fri.api import get_message_bank, add_metadata
 from corehq.apps.sms.models import INCOMING, OUTGOING
@@ -35,6 +35,14 @@ class MessageBankReport(FRIReport):
     fields = (
         "custom.fri.reports.filters.RiskProfileFilter",
     )
+    report_template_path = "fri/message_bank.html"
+
+    @property
+    def template_context(self):
+        result = {
+            "is_previewer" : self.request.couch_user.is_previewer(),
+        }
+        return result
 
     @property
     def risk_profile(self):

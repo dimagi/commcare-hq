@@ -1,6 +1,6 @@
 from django.utils.translation import ugettext as _
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
-from custom.fri.models import PROFILE_A, PROFILE_B, PROFILE_C, PROFILE_D, PROFILE_E, PROFILE_F, PROFILE_G, PROFILE_DESC
+from custom.fri.models import PROFILE_A, PROFILE_B, PROFILE_C, PROFILE_D, PROFILE_E, PROFILE_F, PROFILE_G, PROFILE_H, PROFILE_DESC
 from custom.fri.api import get_interactive_participants
 
 class InteractiveParticipantFilter(BaseSingleOptionFilter):
@@ -27,5 +27,6 @@ class RiskProfileFilter(BaseSingleOptionFilter):
             (PROFILE_E, PROFILE_DESC[PROFILE_E]),
             (PROFILE_F, PROFILE_DESC[PROFILE_F]),
             (PROFILE_G, PROFILE_DESC[PROFILE_G]),
+            (PROFILE_H, PROFILE_DESC[PROFILE_H]),
         ]
 
