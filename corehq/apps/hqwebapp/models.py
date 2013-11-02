@@ -573,6 +573,11 @@ class MessagingTab(UITab):
                  'url': reverse('reminders_in_error', args=[self.domain])},
             ])
         ]
+        if self.couch_user.is_previewer():
+            items[0][1].append(
+                {'title': _('Chat'),
+                 'url': reverse('chat_contacts', args=[self.domain])}
+            )
 
         if self.project.survey_management_enabled:
             def sample_title(form=None, **context):

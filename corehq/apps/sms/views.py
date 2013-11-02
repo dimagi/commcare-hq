@@ -16,8 +16,9 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users import models as user_models
+from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from corehq.apps.sms.models import SMSLog, INCOMING, OUTGOING, ForwardingRule, CommConnectCase
-from corehq.apps.sms.mixin import MobileBackend, SMSBackend, BackendMapping
+from corehq.apps.sms.mixin import MobileBackend, SMSBackend, BackendMapping, VerifiedNumber
 from corehq.apps.sms.forms import ForwardingRuleForm, BackendMapForm, InitiateAddSMSBackendForm, SMSSettingsForm
 from corehq.apps.sms.util import get_available_backends, get_contact
 from corehq.apps.groups.models import Group
@@ -290,10 +291,10 @@ def api_send_sms(request, domain):
         vn = None
         if contact_id is not None:
             try:
-                contact = CommConnectCase.get(contact_id)
+                contact = get_contact(contact_id)
+                assert contact is not None
                 assert contact.domain == domain
-                assert contact.doc_type == "CommCareCase"
-            except (ResourceNotFound, AssertionError):
+            except Exception:
                 return HttpResponseBadRequest("Contact not found.")
             try:
                 vn = contact.get_verified_number()
@@ -598,12 +599,32 @@ def global_backend_map(request):
 
 @login_and_domain_required
 def chat_contacts(request, domain):
-    contacts = CommCareCase.view("hqcase/types_by_domain",
-                                 startkey=[domain],
-                                 endkey=[domain, {}],
-                                 include_docs=True,
-                                 reduce=False).all()
-    return render(request, "sms/chat_contacts.html", {"domain" : domain, "contacts" : contacts})
+    domain_obj = Domain.get_by_name(domain, strict=True)
+    verified_numbers = VerifiedNumber.by_domain(domain)
+    contacts = []
+    for vn in verified_numbers:
+        owner = vn.owner
+        if owner is not None and owner.doc_type in ('CommCareCase','CommCareUser'):
+            if owner.doc_type == "CommCareUser":
+                url = reverse(EditCommCareUserView.urlname, args=[domain, owner._id])
+                name = owner.raw_username
+            else:
+                url = reverse("case_details", args=[domain, owner._id])
+                if domain_obj.chat_case_username:
+                    name = owner.get_case_property(domain_obj.chat_case_username) or _("(unknown)")
+                else:
+                    name = owner.name
+            contacts.append({
+                "id" : owner._id,
+                "doc_type" : owner.doc_type,
+                "url" : url,
+                "name" : name,
+            })
+    context = {
+        "domain" : domain,
+        "contacts" : contacts,
+    }
+    return render(request, "sms/chat_contacts.html", context)
 
 @login_and_domain_required
 def chat(request, domain, contact_id):
@@ -627,10 +648,10 @@ def api_history(request, domain):
 
     try:
         assert contact_id is not None
-        doc = CommCareCase.get(contact_id)
-        assert doc.doc_type == "CommCareCase"
+        doc = get_contact(contact_id)
+        assert doc is not None
         assert doc.domain == domain
-    except (ResourceNotFound, AssertionError):
+    except Exception:
         return HttpResponse("[]")
 
     query_start_date_str = None
@@ -644,29 +665,31 @@ def api_history(request, domain):
 
     if query_start_date_str is not None:
         data = SMSLog.view("sms/by_recipient",
-                           startkey=["CommCareCase", contact_id, "SMSLog", INCOMING, query_start_date_str],
-                           endkey=["CommCareCase", contact_id, "SMSLog", INCOMING, {}],
+                           startkey=[doc.doc_type, contact_id, "SMSLog", INCOMING, query_start_date_str],
+                           endkey=[doc.doc_type, contact_id, "SMSLog", INCOMING, {}],
                            include_docs=True,
                            reduce=False).all()
         data += SMSLog.view("sms/by_recipient",
-                            startkey=["CommCareCase", contact_id, "SMSLog", OUTGOING, query_start_date_str],
-                            endkey=["CommCareCase", contact_id, "SMSLog", OUTGOING, {}],
+                            startkey=[doc.doc_type, contact_id, "SMSLog", OUTGOING, query_start_date_str],
+                            endkey=[doc.doc_type, contact_id, "SMSLog", OUTGOING, {}],
                             include_docs=True,
                             reduce=False).all()
     else:
         data = SMSLog.view("sms/by_recipient",
-                           startkey=["CommCareCase", contact_id, "SMSLog"],
-                           endkey=["CommCareCase", contact_id, "SMSLog", {}],
+                           startkey=[doc.doc_type, contact_id, "SMSLog"],
+                           endkey=[doc.doc_type, contact_id, "SMSLog", {}],
                            include_docs=True,
                            reduce=False).all()
     data.sort(key=lambda x : x.date)
     username_map = {}
     for sms in data:
         if sms.direction == INCOMING:
-            if domain_obj.chat_case_username:
+            if doc.doc_type == "CommCareCase" and domain_obj.chat_case_username:
                 sender = doc.get_case_property(domain_obj.chat_case_username)
-            else:
+            elif doc.doc_type == "CommCareCase":
                 sender = doc.name
+            else:
+                sender = doc.first_name or doc.raw_username
         elif sms.chat_user_id is not None:
             if sms.chat_user_id in username_map:
                 sender = username_map[sms.chat_user_id]
