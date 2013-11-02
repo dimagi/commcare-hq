@@ -229,18 +229,18 @@
             <div class="modal hide fade" id="keyboard-shortcuts-config">
                 <div class="modal-header">
                     <a class="close" data-dismiss="modal">&times;</a>
-                    <h4>Keyboard Shortcuts Config</h4>
+                    <h4>Keyboard Shortcuts Configuration</h4>
                 </div>
                 <div class="modal-body">
                     <form id="keyboard-shortcuts-config-form" class="form-horizontal" method="POST" action="{% url "keyboard_config" %}?next={{ request.get_full_path|urlencode }}">
                         <div class="control-group">
                             <div class="controls">
                                 <label class="checkbox">
-                                    <input {% if request.couch_user.keyboard_shortcuts.enabled %}checked {% endif %}name="enable" type="checkbox"> Enable Keyboard Shortcuts
+                                    <input data-bind="checked: enabled" name="enable" type="checkbox"> Enable Keyboard Shortcuts
                                 </label>
                             </div>
                         </div>
-                        <div class="control-group">
+                        <div data-bind="visible: enabled" class="control-group">
                             <label class="control-label" for="main-key">Choose Shortcut Key</label>
                             <div class="controls">
                                 <select name="main-key">
@@ -315,6 +315,10 @@
                 }
             ];
 
+            function KBConfigFormModel() {
+                this.enabled = ko.observable({{ request.couch_user.keyboard_shortcuts.enabled|JSON }});
+            }
+
             $(function() {
                 var $lookup = $('#keyboard-shortcuts-lookup');
                 _(KEYBOARD_SHORTCUTS).each(function(s) {
@@ -322,6 +326,7 @@
                     var $shortcut = $('<li>').append($('<span>').text(s.desc), ': ', $('<code>').text(s.shortcut));
                     $lookup.append($shortcut);
                 });
+                ko.applyBindings(new KBConfigFormModel(), $('#keyboard-shortcuts-config-form').get(0));
             });
         </script>
 
