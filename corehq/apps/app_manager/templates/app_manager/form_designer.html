@@ -91,9 +91,9 @@
     </script>
 {% endblock %}
 
-{% block keyboard_nav_config %}
-
+{% block keyboard_shortcuts %}
     <script>
+        var nav_key = {{ request.couch_user.keyboard_shortcuts.main_key|JSON }};
         key.filter = function(event) {
             return true;
         };
@@ -105,7 +105,7 @@
         question_tree_navigator.init({
             name: 'question tree',
             ready_scope: 'qt-ready',
-            nav_key: 'option',
+            nav_key: nav_key,
             action_key: 'enter',
             forward_key: 'down',
             back_key: 'up',
@@ -122,7 +122,7 @@
         var sidebar_navigator = new KeyboardNavigator();
         sidebar_navigator.init({
             name: 'sidebar',
-            nav_key: 'option',
+            nav_key: nav_key,
             action_key: 'enter',
             forward_key: 'down',
             back_key: 'up',
@@ -130,37 +130,28 @@
             reset_index: false
         });
 
-        function gen_click_fn(selector) {
-            var $ele = null;
-            return function() {
-                $ele = $ele || $(selector);
-                $ele.click();
-                return false;
-            }
-        }
-
         function handle_properties_shortcut() {
             $('#fd-props-content').find('input[type="text"]').first().focus();
             return false;
         }
 
-        var keyboard_shortcuts = [
+        KEYBOARD_SHORTCUTS = KEYBOARD_SHORTCUTS.concat([
             {
-                shortcut: "option+s, ctrl+s, command+s",
-                handler: gen_click_fn("#settings-save-btn .btn, #fd-save-button .btn")
+                shortcut: nav_key + "+s",
+                handler: KS.gen_click_fn("#settings-save-btn .btn, #fd-save-button .btn"),
+                desc: "Save form"
             },
             {
-                shortcut: "option+q, ctrl+q, command+q",
-                handler: question_tree_navigator.activate
+                shortcut: nav_key + "+q",
+                handler: question_tree_navigator.activate,
+                desc: "Create new question"
             },
             {
-                shortcut: "option+w, ctrl+w, command+w",
-                handler: handle_properties_shortcut
+                shortcut: nav_key + "+w",
+                handler: handle_properties_shortcut,
+                desc: "Select question from question tree"
             }
-        ];
-        $(function() {
-            _(keyboard_shortcuts).each(function(s) { key(s.shortcut, s.handler); });
-        });
+        ]);
     </script>
 {% endblock %}
 

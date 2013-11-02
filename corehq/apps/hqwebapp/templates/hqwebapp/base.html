@@ -226,6 +226,39 @@
                     </div>
                 </div>
             {% endif %}
+            <div class="modal hide fade" id="keyboard-shortcuts-config">
+                <div class="modal-header">
+                    <a class="close" data-dismiss="modal">&times;</a>
+                    <h4>Keyboard Shortcuts Config</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="keyboard-shortcuts-config-form" class="form-horizontal" method="POST" action="{% url "keyboard_config" %}?next={{ request.get_full_path|urlencode }}">
+                        <div class="control-group">
+                            <div class="controls">
+                                <label class="checkbox">
+                                    <input {% if request.couch_user.keyboard_shortcuts.enabled %}checked {% endif %}name="enable" type="checkbox"> Enable Keyboard Shortcuts
+                                </label>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label" for="main-key">Choose Shortcut Key</label>
+                            <div class="controls">
+                                <select name="main-key">
+                                    <option {% if request.couch_user.keyboard_shortcuts.main_key == 'option' %} selected{% endif %}>option</option>
+                                    <option {% if request.couch_user.keyboard_shortcuts.main_key == 'ctrl' %} selected{% endif %}>ctrl</option>
+                                    <option {% if request.couch_user.keyboard_shortcuts.main_key == 'command' %} selected{% endif %}>command</option>
+                                    <option {% if request.couch_user.keyboard_shortcuts.main_key == 'shift' %} selected{% endif %}>shift</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <div class="controls"><button class="btn btn-primary" type="submit">Update</button></div>
+                        </div>
+                    </form>
+                    <hr />
+                    <ul class="unstyled" id="keyboard-shortcuts-lookup"></ul>
+                </div>
+            </div>
         {% endblock %}
         </div>
         <!--Begin javascript -->
@@ -237,6 +270,7 @@
         <script src="{% static 'hqwebapp/js-custom/hq.helpers.js' %}"></script>
         <script src="{% static 'hqwebapp/js/lib/jquery.cookie.js' %}"></script>
         <script src="{% static 'hqwebapp/js/lib/jquery.timeago.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/lib/keymaster.min.js' %}"></script>
         {% endblock %}
 
         {% block js-inline %}
@@ -256,6 +290,42 @@
                     });
                 </script>
             {% endif %}
+
+        <script>
+            var KS = {
+                gen_click_fn: function(selector) {
+                    var $ele = null;
+                    return function() {
+                        $ele = $ele || $(selector);
+                        $ele.click();
+                        return false;
+                    };
+                }
+            };
+
+            function configure_keyboard_shortcuts() {
+                $('#keyboard-shortcuts-config').modal('show');
+            }
+
+            var KEYBOARD_SHORTCUTS = [
+                {
+                    shortcut: "option+k, ctrl+k, command+k",
+                    handler: configure_keyboard_shortcuts,
+                    desc: "Open Keyboard Configuration",
+                }
+            ];
+
+            $(function() {
+                var $lookup = $('#keyboard-shortcuts-lookup');
+                _(KEYBOARD_SHORTCUTS).each(function(s) {
+                    key(s.shortcut, s.handler);
+                    var $shortcut = $('<li>').append($('<span>').text(s.desc), ': ', $('<code>').text(s.shortcut));
+                    $lookup.append($shortcut);
+                });
+            });
+        </script>
+
+
         {% endblock %}
 
         <script>

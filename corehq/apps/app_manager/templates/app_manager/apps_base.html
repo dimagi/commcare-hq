@@ -47,25 +47,13 @@
     });
     </script>
 {% endblock %}
-
-{% block keyboard_nav_config %}
+{% block keyboard_shortcuts %}
     <script>
-        function gen_click_fn(selector) {
-            var $ele = null;
-            return function() {
-                $ele = $ele || $(selector);
-                $ele.click();
-                return false;
-            }
-        }
-        var keyboard_shortcuts = [
-            {
-                shortcut: "option+s, ctrl+s, command+s",
-                handler: gen_click_fn("#settings-save-btn .btn, #fd-save-button .btn")
-            }
-        ];
-        $(function() {
-            _(keyboard_shortcuts).each(function(s) { key(s.shortcut, s.handler); });
+        var nav_key = {{ request.couch_user.keyboard_shortcuts.main_key|JSON }};
+        KEYBOARD_SHORTCUTS.push({
+            shortcut: nav_key + "+s",
+            handler: KS.gen_click_fn("#settings-save-btn .btn, #fd-save-button .btn"),
+            desc: "Save application"
         });
 
         function gen_sidebar_elements() {

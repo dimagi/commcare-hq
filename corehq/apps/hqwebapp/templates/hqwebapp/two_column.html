@@ -11,20 +11,23 @@
 {% block layout_style %}hq-double-col{% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/lib/keymaster.min.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/keyboard_navigator.js' %}"></script>
+    {% if request.couch_user.keyboard_shortcuts.enabled %}
+        <script src="{% static 'hqwebapp/js/keyboard_navigator.js' %}"></script>
+    {% endif %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    {% block keyboard_nav_config %}
-   <script>
+    {% if request.couch_user.keyboard_shortcuts.enabled %}
+    {% block keyboard_shortcuts %}
+    <script>
+        var nav_key = {{ request.couch_user.keyboard_shortcuts.main_key|JSON }};
         function gen_sidebar_elements() {
             return $('.sidebar .nav-list a');
         }
         var sidebar_navigator = new KeyboardNavigator();
         sidebar_navigator.init({
             name: 'sidebar',
-            nav_key: 'option',
+            nav_key: nav_key,
             action_key: 'enter',
             forward_key: 'down',
             back_key: 'up',
@@ -38,13 +41,14 @@
         var tab_navigator = new KeyboardNavigator();
         tab_navigator.init({
             name: 'tabs',
-            nav_key: 'option',
+            nav_key: nav_key,
             action_key: 'enter',
             element_list_generator: gen_tab_elements,
             reset_index: false
         });
-   </script>
-   {% endblock %}
+    </script>
+    {% endblock %}
+    {% endif %}
 {% endblock %}
 
 {% block content %}
