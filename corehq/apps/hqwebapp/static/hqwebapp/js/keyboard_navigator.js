@@ -12,6 +12,8 @@ var KeyboardNavigator = function() {
             self.focus_in_fn = options.focus_in_fn || self.focus_in_fn;
             self.focus_out_fn = options.focus_out_fn || self.focus_out_fn;
             self.action_fn = options.action_fn || self.action_fn;
+            self.start_fn = options.start_fn;
+            self.stop_fn = options.stop_fn;
             self.leave_context = options.leave_context_fn || self.leave_context;
             self.gen_elements = options.element_list_generator;
             self.reset_index = options.reset_index !== false;
@@ -71,6 +73,10 @@ var KeyboardNavigator = function() {
                 self.set_index(0);
             }
 
+            if (self.start_fn) {
+                self.start_fn();
+            }
+
             if (self.reset_index) {
                 self.set_index(0);
             }
@@ -80,11 +86,16 @@ var KeyboardNavigator = function() {
         };
 
         self.leave_nav = function() {
-            console.log(key.getScope())
             console.log('Leaving navigation');
+
             self.handle_focus_out();
             key.setScope(self.ready_scope);
             self.navigating = false;
+
+            if (self.stop_fn) {
+                self.stop_fn();
+            }
+
             if (self.prior_scope) {
                 key.setScope(self.prior_scope);
                 self.prior_scope = false;

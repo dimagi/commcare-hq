@@ -94,9 +94,25 @@
 {% block keyboard_shortcuts %}
     <script>
         var nav_key = {{ request.couch_user.keyboard_shortcuts.main_key|JSON }};
+
+        // overrides default behavior and allows for shortcuts in inputs
         key.filter = function(event) {
             return true;
         };
+
+        function gen_sidebar_elements() {
+            return $('.sidebar .nav-list a:not(a:has(.icon-pencil))');
+        }
+        var sidebar_navigator = new KeyboardNavigator();
+        sidebar_navigator.init({
+            name: 'sidebar',
+            nav_key: nav_key,
+            action_key: 'enter',
+            forward_key: 'down',
+            back_key: 'up',
+            element_list_generator: gen_sidebar_elements,
+            reset_index: false
+        });
 
         function gen_question_tree_elements() {
             return $('.jstree-leaf a, .jstree-open a');
@@ -116,18 +132,22 @@
             regen_list_on_leave: true
         });
 
-        function gen_sidebar_elements() {
-            return $('.sidebar .nav-list a:not(a:has(.icon-pencil))');
+        function gen_change_question_elements() {
+            return $('.change-question');
         }
-        var sidebar_navigator = new KeyboardNavigator();
-        sidebar_navigator.init({
-            name: 'sidebar',
+        var change_question_navigator = new KeyboardNavigator();
+        change_question_navigator.init({
+            name: 'change question',
+            ready_scope: 'cq-ready',
             nav_key: nav_key,
             action_key: 'enter',
             forward_key: 'down',
             back_key: 'up',
-            element_list_generator: gen_sidebar_elements,
-            reset_index: false
+            element_list_generator: gen_change_question_elements,
+            start_fn: function() { $('#fd-question-changer').addClass('open') },
+            stop_fn: function() { $('#fd-question-changer').removeClass('open') },
+            reset_index: true,
+            regen_list_on_leave: true
         });
 
         function handle_properties_shortcut() {
@@ -147,9 +167,19 @@
                 desc: "Create new question"
             },
             {
+                shortcut: nav_key + "+d",
+                handler: change_question_navigator.activate,
+                desc: "Change current question"
+            },
+            {
                 shortcut: nav_key + "+w",
                 handler: handle_properties_shortcut,
                 desc: "Select question from question tree"
+            },
+            {
+                shortcut: nav_key + "+c",
+                handler: KS.gen_click_fn("#fd-button-copy"),
+                desc: "Make copy of selected node"
             }
         ]);
     </script>

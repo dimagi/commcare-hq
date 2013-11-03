@@ -48,6 +48,12 @@
 {% block keyboard_shortcuts %}
     <script>
         var nav_key = {{ request.couch_user.keyboard_shortcuts.main_key|JSON }};
+
+        // overrides default behavior and allows for shortcuts in inputs
+        key.filter = function(event) {
+            return true;
+        };
+
         KEYBOARD_SHORTCUTS.push({
             shortcut: nav_key + "+s",
             handler: KS.gen_click_fn("#settings-save-btn .btn, #fd-save-button .btn"),

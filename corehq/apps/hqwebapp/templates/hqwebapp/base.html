@@ -294,10 +294,8 @@
         <script>
             var KS = {
                 gen_click_fn: function(selector) {
-                    var $ele = null;
                     return function() {
-                        $ele = $ele || $(selector);
-                        $ele.click();
+                        $(selector).click();
                         return false;
                     };
                 }
