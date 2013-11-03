@@ -7,7 +7,7 @@ class Command(BaseCommand):
     help = "Migrate keywords."
 
     def handle(self, *args, **options):
-        keywords = SurveyKeyword.view("reminders/survey_keywords", include_docs=True).all()
+        keywords = SurveyKeyword.view("reminders/survey_keywords", reduce=False, include_docs=True).all()
         for keyword in keywords:
             if keyword.oct13_migration_timestamp is None:
                 print "Processing keyword %s, %s" % (keyword.domain, keyword._id)
