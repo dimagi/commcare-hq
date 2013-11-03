@@ -169,6 +169,7 @@ var KeyboardNavigator = function() {
             self.prior_scope = key.getScope();
             key.setScope(self.ready_scope);
             self.enter_nav();
+            self.handle_focus_in();
             return false;
         }
     };

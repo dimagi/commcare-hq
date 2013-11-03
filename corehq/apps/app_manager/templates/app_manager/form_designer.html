@@ -150,6 +150,24 @@
             regen_list_on_leave: true
         });
 
+        function gen_tools_elements() {
+            return $('#fd-form-actions li a');
+        }
+        var tools_navigator = new KeyboardNavigator();
+        tools_navigator.init({
+            name: 'tools',
+            ready_scope: 'tools-ready',
+            nav_key: nav_key,
+            action_key: 'enter',
+            forward_key: 'down',
+            back_key: 'up',
+            element_list_generator: gen_tools_elements,
+            start_fn: function() { $('#fd-form-actions .btn-group').addClass('open') },
+            stop_fn: function() { $('#fd-form-actions .btn-group').removeClass('open') },
+            reset_index: true,
+            regen_list_on_leave: true
+        });
+
         function handle_properties_shortcut() {
             $('#fd-props-content').find('input[type="text"]').first().focus();
             return false;
@@ -170,6 +188,11 @@
                 shortcut: nav_key + "+d",
                 handler: change_question_navigator.activate,
                 desc: "Change current question"
+            },
+            {
+                shortcut: nav_key + "+t",
+                handler: tools_navigator.activate,
+                desc: "Access tools menu"
             },
             {
                 shortcut: nav_key + "+w",
