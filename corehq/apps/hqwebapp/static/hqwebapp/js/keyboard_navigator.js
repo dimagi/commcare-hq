@@ -16,6 +16,7 @@ var keyboard_navigator_utils = {
 };
 
 var KeyboardNavigator = function() {
+    key.setScope('ready');
     var last_mover = '';
     var KeyboardNavigator = function() {
         var self = this;
@@ -59,7 +60,6 @@ var KeyboardNavigator = function() {
                     }
                 });
 
-                key.setScope(self.ready_scope);
                 key(self.nav_key, self.ready_scope, self.enter_nav);
                 key(self.nav_key + '+' + self.forward_key, self.ready_scope, self.gen_handle_nav(self.forward_key));
                 key(self.nav_key + '+' + self.back_key, self.ready_scope, self.gen_handle_nav(self.back_key));
