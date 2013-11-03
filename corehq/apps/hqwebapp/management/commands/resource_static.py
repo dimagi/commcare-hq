@@ -51,7 +51,7 @@ class Command(LabelCommand):
                 pool.spawn(self.generate_output, url, parts)
         pool.join()
         resource_str = simplejson.dumps(self.resources, indent=2)
-        rcache.set(RESOURCE_PREFIX % current_sha, resource_str, 3600)
+        rcache.set(RESOURCE_PREFIX % current_sha, resource_str, 86400)
         self.output_resources(resource_str)
 
     def generate_output(self, url, parts, dir_version=False):
