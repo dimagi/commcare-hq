@@ -6,7 +6,7 @@
         <title>{% block title %}{% endblock %} - {{ SITE_NAME }}</title>
         <meta name="application-name" content="{{ SITE_NAME }}">
         <meta http-equiv="content-language" content="en">
-
+        <link type="application/opensearchdescription+xml" rel="search" href="{% url 'osdd' %}" title="CommCare HQ"/>
         <link rel="shortcut icon" href="{% static 'hqwebapp/img/favicon2.png' %}" />
 
         <link rel="stylesheet" media="screen" href="{% static 'hqstyle/css/core/hqstyle-core.css' %}"/>

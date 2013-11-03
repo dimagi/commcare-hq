@@ -342,7 +342,7 @@ class ProjectDataTab(UITab):
     @property
     @memoized
     def can_edit_commcare_data(self):
-        return self.couch_user.can_edit_data() and not (self.project and self.project.commtrack_enabled)
+        return self.couch_user.can_edit_data()
 
     @property
     @memoized
@@ -509,16 +509,19 @@ class MessagingTab(UITab):
                 EditScheduledReminderView,
                 CreateScheduledReminderView,
                 RemindersListView,
+                KeywordsListView,
             )
             sms_connectivity_url = reverse(DomainSmsGatewayListView.urlname, args=[self.domain])
             reminders_list_url = reverse(RemindersListView.urlname, args=[self.domain])
             edit_reminder_urlname = EditScheduledReminderView.urlname
             new_reminder_urlname = CreateScheduledReminderView.urlname
+            keyword_list_url = reverse(KeywordsListView.urlname, args=[self.domain])
         else:
             sms_connectivity_url = reverse('list_domain_backends', args=[self.domain])
             reminders_list_url = reverse('list_reminders', args=[self.domain])
             edit_reminder_urlname = 'edit_complex'
             new_reminder_urlname = 'add_complex_reminder_schedule'
+            keyword_list_url = reverse('manage_keywords', args=[self.domain])
 
         items = [
             (_("Messages"), [
@@ -560,7 +563,7 @@ class MessagingTab(UITab):
                  'url': reverse('scheduled_reminders', args=[self.domain])},
 
                 {'title': _("Keywords"),
-                 'url': reverse('manage_keywords', args=[self.domain]),
+                 'url': keyword_list_url,
                  'subpages': [
                      {'title': keyword_subtitle,
                       'urlname': 'edit_keyword'},

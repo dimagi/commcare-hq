@@ -10,6 +10,7 @@ from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
 from couchexport.models import SavedExportSchema, GroupExportConfiguration
+from couchexport.transforms import couch_to_excel_datetime, identity
 from couchexport.util import SerializableFunction
 import couchforms
 from dimagi.utils.couch.cache import cache_core
@@ -368,33 +369,17 @@ class UnsupportedScheduledReportError(Exception):
 
 
 class ReportNotification(Document):
-    # 11/12: removed WeeklyNotification and DailyNotification subclasses
-
     domain = StringProperty()
     owner_id = StringProperty()
 
     recipient_emails = StringListProperty()
-    config_ids = StringListProperty()  # added 11/2012
-    send_to_owner = BooleanProperty()  # added 11/2012
+    config_ids = StringListProperty()
+    send_to_owner = BooleanProperty()
 
-    # should be named hour, actually.  moved from subclasses
-    hours = IntegerProperty(default=8)
-    # moved from WeeklyNotification subclass.  Will now be -1 for daily
-    # notifications
-    day_of_week = IntegerProperty(default=-1)
+    hour = IntegerProperty(default=8)
+    day = IntegerProperty(default=1)
+    interval = StringProperty(choices=["daily", "weekly", "monthly"])
 
-    # report_slug = StringProperty()  # removed 11/2012
-    # removed 11/2012, only ever contained the user_id of the owner
-    # user_ids = StringListProperty()
-
-    @classmethod
-    def wrap(cls, data):
-        from corehq.apps.reports.management.commands.migrate_report_notifications import first_migrate
-        should_save = first_migrate(data)
-        self = super(ReportNotification, cls).wrap(data)
-        if should_save:
-            self.save()
-        return self
 
     @property
     def is_editable(self):
@@ -439,7 +424,7 @@ class ReportNotification(Document):
     @property
     @memoized
     def owner(self):
-        id = self.owner_id if self.owner_id else self.user_ids[0]
+        id = self.owner_id
         try:
             return WebUser.get_by_user_id(id)
         except CouchUser.AccountTypeError:
@@ -473,17 +458,19 @@ class ReportNotification(Document):
             config.report_type = ProjectReportDispatcher.prefix
             config.report_slug = self.report_slug
             config.domain = self.domain
-            config.owner_id = self.user_ids[0]
+            config.owner_id = self.owner_id
             configs = [config]
 
         return configs
 
     @property
     def day_name(self):
-        if self.day_of_week != -1:
-            return calendar.day_name[self.day_of_week]
-        else:
-            return "Every day"
+        if self.interval == 'weekly':
+            return calendar.day_name[self.day]
+        return {
+            "daily": _("Every day"),
+            "monthly": _("Day %s of every month" % self.day),
+        }[self.interval]
 
     @classmethod
     def day_choices(cls):
@@ -516,10 +503,23 @@ class AppNotFound(Exception):
     pass
 
 
-class FormExportSchema(SavedExportSchema):
+class HQExportSchema(SavedExportSchema):
+    doc_type = 'SavedExportSchema'
+    transform_dates = BooleanProperty(default=False)
+
+    @property
+    def global_transform_function(self):
+        if self.transform_dates:
+            return couch_to_excel_datetime
+        else:
+            return identity
+
+
+class FormExportSchema(HQExportSchema):
     doc_type = 'SavedExportSchema'
     app_id = StringProperty()
     include_errors = BooleanProperty(default=False)
+
 
     @property
     @memoized
@@ -601,7 +601,23 @@ class HQGroupExportConfiguration(GroupExportConfiguration):
     HQ's version of a group export, tagged with a domain
     """
     domain = StringProperty()
-    
+
+    def get_custom_exports(self):
+
+        def _rewrap(export):
+            # custom wrap if relevant
+            try:
+                return {
+                    'form': FormExportSchema,
+                }[export.type].wrap(export._doc)
+            except KeyError:
+                return export
+
+        for custom in list(self.custom_export_ids):
+            custom_export = self._get_custom(custom)
+            if custom_export:
+                yield _rewrap(custom_export)
+
     @classmethod
     def by_domain(cls, domain):
         return cache_core.cached_view(cls.get_db(), "groupexport/by_domain", key=domain, reduce=False, include_docs=True, wrapper=cls.wrap)
@@ -615,7 +631,7 @@ class HQGroupExportConfiguration(GroupExportConfiguration):
         groups = cls.by_domain(domain)
         if groups:
             if len(groups) > 1:
-                notify_exception("Domain %s has more than one group export config! This is weird." % domain)
+                logging.error("Domain %s has more than one group export config! This is weird." % domain)
             return groups[0]
         return HQGroupExportConfiguration(domain=domain)
 

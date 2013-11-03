@@ -107,7 +107,12 @@ class MyAccountSettingsView(BaseMyAccountView):
 
     def post(self, request, *args, **kwargs):
         if self.settings_form.is_valid():
+            old_lang = self.request.couch_user.language
             self.settings_form.update_user(existing_user=self.request.couch_user)
+            new_lang = self.request.couch_user.language
+            # set language in the session so it takes effect immediately
+            if new_lang != old_lang:
+                request.session['django_language'] = new_lang
         return self.get(request, *args, **kwargs)
 
 

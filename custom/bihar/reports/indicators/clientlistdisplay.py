@@ -127,14 +127,14 @@ class PostDeliverySummaryCLD(PostDeliveryCLD, SummaryValueMixIn):
     sort_index_i = 3
 
     def get_columns(self):
-        return _("Name"), _("Husband's Name"), _("ADD"), _(self.summary_header)
+        return _("Name"), _("Husband's Name"), _(self.summary_header), _("ADD")
 
     def as_row(self, case, context):
         return (
             case.name,
             display.husband_name(case),
-            display.add(case),
             self.summary_value(case, context),
+            display.add(case),
         )
 
 

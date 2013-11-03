@@ -44,7 +44,10 @@ $(function () {
         return false;
     });
 
-    $("#update-facets").click(function() {
+    var $update_btn = $("#update-facets");
+    var $facet_search_form = $("#facet-search");
+    var $facet_search_bar = $facet_search_form.find('input');
+    $update_btn.click(function() {
         var $this = $(this);
         var url = "?";
         if ($this.data('params')) {
@@ -65,6 +68,15 @@ $(function () {
             })
         });
 
+        if ($facet_search_bar.val()) {
+            var name = $facet_search_bar.attr("name") || "search";
+            url += name + "=" + $facet_search_bar.val()
+        }
         window.location = encodeURI(url);
+    });
+
+    $facet_search_form.submit(function(e) {
+        e.preventDefault();
+        $update_btn.click();
     });
 });

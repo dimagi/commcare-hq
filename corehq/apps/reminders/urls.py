@@ -5,6 +5,7 @@ from corehq.apps.reminders.views import (
     EditScheduledReminderView,
     RemindersListView,
     CreateComplexScheduledReminderView,
+    KeywordsListView,
 )
 
 urlpatterns = patterns('corehq.apps.reminders.views',
@@ -24,6 +25,7 @@ urlpatterns = patterns('corehq.apps.reminders.views',
     url(r'^schedule/$',
         CreateScheduledReminderView.as_view(), name=CreateScheduledReminderView.urlname),
     url(r'^keywords/$', 'manage_keywords', name='manage_keywords'),
+    url(r'^keywords_new/$', KeywordsListView.as_view(), name=KeywordsListView.urlname),
     url(r'^keywords/add/$', 'add_keyword', name='add_keyword'),
     url(r'^keywords/edit/(?P<keyword_id>[\w-]+)/$', 'add_keyword', name='edit_keyword'),
     url(r'^delete_keyword/(?P<keyword_id>[\w-]+)/$', 'delete_keyword', name='delete_keyword'),

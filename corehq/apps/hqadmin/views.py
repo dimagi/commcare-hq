@@ -23,6 +23,8 @@ from django.utils import html
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.core import management
+from django.template.loader import render_to_string
+from django.http import Http404
 
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.app_manager.util import get_settings_values
@@ -31,7 +33,7 @@ from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index_by_view, check_xform_index_by_view
+from corehq.apps.hqadmin.escheck import check_cluster_health, check_xform_es_index, check_reportcase_es_index, check_case_es_index, check_reportxform_es_index
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.reports.standard.domains import es_domain_query
@@ -53,8 +55,6 @@ from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.django.email import send_HTML_email
-from django.template.loader import render_to_string
-from django.http import Http404
 from pillowtop import get_all_pillows_json
 
 
@@ -619,13 +619,15 @@ def system_ajax(request):
                 t = cresource.get("api/tasks", params_dict={'limit': task_limit}).body_string()
                 all_tasks = json.loads(t)
             except Exception, ex:
-                all_tasks = []
-                t = {}
+                all_tasks = {}
                 logging.error("Error with getting from celery_flower: %s" % ex)
 
             for task_id, traw in all_tasks.items():
                 # it's an array of arrays - looping through [<id>, {task_info_dict}]
-                traw['name'] = '.'.join(traw['name'].split('.')[-2:])
+                if 'name' in traw:
+                    traw['name'] = '.'.join(traw['name'].split('.')[-2:])
+                else:
+                    traw['name'] = None
                 ret.append(traw)
             ret = sorted(ret, key=lambda x: x['succeeded'], reverse=True)
             return HttpResponse(json.dumps(ret), mimetype = 'application/json')
@@ -716,8 +718,12 @@ def system_info(request):
     worker_status = ""
     if celery_monitoring:
         cresource = Resource(celery_monitoring, timeout=3)
-        t = cresource.get("api/workers").body_string()
-        all_workers = json.loads(t)
+        all_workers = {}
+        try:
+            t = cresource.get("api/workers").body_string()
+            all_workers = json.loads(t)
+        except Exception, ex:
+            pass
         worker_ok = '<span class="label label-success">OK</span>'
         worker_bad = '<span class="label label-important">Down</span>'
 
@@ -760,8 +766,17 @@ def system_info(request):
     #elasticsearch status
     #node status
     context.update(check_cluster_health())
-    context.update(check_case_index_by_view())
-    context.update(check_xform_index_by_view())
+
+    # todo: this blocks with a 2s delay for each update, could be async'ed in separate call
+    es_index_status = [
+        check_case_es_index(),
+        check_xform_es_index(),
+        check_reportcase_es_index(),
+        check_reportxform_es_index()
+    ]
+    # convert these to a unified structure - all the dict values are namespaced by index,
+    # but we don't care here in our array output for template rendering
+    context['es_index_status'] = es_index_status
 
     return render(request, "hqadmin/system_info.html", context)
 
@@ -947,7 +962,10 @@ def stats_data(request):
         elif len(domains) < ES_MAX_CLAUSE_COUNT:
             domain_info = [{"names": [d for d in domains], "display_name": _("Domains Matching Filter")}]
         else:
-            domain_info = [{"names": None, "display_name": _("All Domains (NOT applying filters. > 500 projects)")}]
+            domain_info = [{
+                "names": None,
+                "display_name": _("All Domains (NOT applying filters. > %s projects)" % ES_MAX_CLAUSE_COUNT)
+            }]
     else:
         domain_info = [{"names": None, "display_name": _("All Domains")}]
 

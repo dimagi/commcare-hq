@@ -511,6 +511,7 @@ def get_apps_base_context(request, domain, app):
         'timezone': timezone,
     }
 
+
 @cache_control(no_cache=True, no_store=True)
 @login_and_domain_required
 def paginate_releases(request, domain, app_id):
@@ -529,6 +530,7 @@ def paginate_releases(request, domain, app_id):
         wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
     ).all()
     return json_response(saved_apps)
+
 
 @login_and_domain_required
 def release_manager(request, domain, app_id, template='app_manager/releases.html'):
@@ -556,6 +558,26 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     response = render(request, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
+
+
+@login_and_domain_required
+def current_app_version(request, domain, app_id):
+    """
+    Return current app version and the latest release
+    """
+    app = get_app(domain, app_id)
+    latest = get_db().view('app_manager/saved_app',
+        startkey=[domain, app_id, {}],
+        endkey=[domain, app_id],
+        descending=True,
+        limit=1,
+    ).first()
+    latest_release = latest['value']['version'] if latest else None
+    return json_response({
+        'currentVersion': app.version,
+        'latestRelease': latest_release,
+    })
+
 
 @no_conflict_require_POST
 @require_can_edit_apps
@@ -671,8 +693,6 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'app': app,
         'module': module,
         'form': form,
-
-        'show_secret_settings': req.GET.get('secret', False)
     })
     context.update(base_context)
     if app and not module and hasattr(app, 'translations'):

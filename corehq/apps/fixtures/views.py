@@ -255,12 +255,12 @@ def download_item_lists(request, domain):
         max_users = 0
         max_groups = 0
 
-    type_headers = ["UID", DELETE_HEADER, "name", "tag", 'is_global?'] + ["field %d" % x for x in range(1, max_fields - 3)]
+    type_headers = ["UID", DELETE_HEADER, "name", "tag", 'is_global?'] + ["field %d" % x for x in range(1, max_fields - 4)]
     type_headers = ("types", tuple(type_headers))
     table_headers = [type_headers]    
     for type_schema in data_type_schemas:
         item_header = (type_schema[3], tuple(["UID", DELETE_HEADER] +
-                                             ["field: " + x for x in type_schema[4:]] +
+                                             ["field: " + x for x in type_schema[5:]] +
                                              ["group %d" % x for x in range(1, mmax_groups + 1)] +
                                              ["user %d" % x for x in range(1, mmax_users + 1)]))
         table_headers.append(item_header)

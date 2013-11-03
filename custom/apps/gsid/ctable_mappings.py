@@ -33,4 +33,6 @@ class PatientSummaryMapping(CtableMappingFixture):
         return columns
 
     def customize(self, mapping):
-        mapping.couch_view_params = {'stale': 'ok'}
+        mapping.schedule_type = 'hourly'
+        mapping.schedule_hour = -1
+        mapping.schedule_day = -1
