@@ -306,7 +306,7 @@
             };
 
             function configure_keyboard_shortcuts() {
-                $('#keyboard-shortcuts-config').modal('show');
+                $('#keyboard-shortcuts-config').modal('toggle');
             }
 
             var KEYBOARD_SHORTCUTS = [
@@ -428,7 +428,7 @@
                 {
                     shortcut: nav_key + "+p",
                     handler: projects_menu_navigator.activate,
-                    desc: "Acess projects menu"
+                    desc: "Access projects menu"
                 },
                 {
                     shortcut: nav_key + "+u",
