@@ -1,4 +1,20 @@
 /* requires keymaster.js to be included and key() to be in the global namespace */
+
+var keyboard_navigator_utils = {
+    focus_in_fn: function($ele) {
+        $ele.addClass('hovered');
+        $ele.trigger('mouseenter');
+        $ele.focus();
+    },
+    focus_out_fn: function($ele) {
+        if ($ele) {
+            $ele.removeClass('hovered');
+            $ele.trigger('mouseleave');
+            $ele.blur();
+        }
+    }
+};
+
 var KeyboardNavigator = function() {
     var last_mover = '';
     var KeyboardNavigator = function() {
@@ -9,8 +25,8 @@ var KeyboardNavigator = function() {
 
 
         self.init = function(options) {
-            self.focus_in_fn = options.focus_in_fn || self.focus_in_fn;
-            self.focus_out_fn = options.focus_out_fn || self.focus_out_fn;
+            self.focus_in_fn = options.focus_in_fn || keyboard_navigator_utils.focus_in_fn;
+            self.focus_out_fn = options.focus_out_fn || keyboard_navigator_utils.focus_out_fn;
             self.action_fn = options.action_fn || self.action_fn;
             self.start_fn = options.start_fn;
             self.stop_fn = options.stop_fn;
@@ -118,25 +134,11 @@ var KeyboardNavigator = function() {
             }
         };
 
-        self.focus_in_fn = function($ele) {
-            $ele.addClass('hovered');
-            $ele.trigger('mouseenter');
-            $ele.focus();
-        };
-
         self.handle_focus_in = function() {
             console.log('hovering over...');
             console.log(self.$active_element.get(0));
             self.focus_in_fn(self.$active_element);
             return false;
-        };
-
-        self.focus_out_fn = function($ele) {
-            if ($ele) {
-                $ele.removeClass('hovered');
-                $ele.trigger('mouseleave');
-                $ele.blur();
-            }
         };
 
         self.handle_focus_out = function() {

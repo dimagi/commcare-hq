@@ -10,15 +10,7 @@
 
 {% block layout_style %}hq-double-col{% endblock %}
 
-{% block js %}{{ block.super }}
-    {% if request.couch_user.keyboard_shortcuts.enabled %}
-        <script src="{% static 'hqwebapp/js/keyboard_navigator.js' %}"></script>
-    {% endif %}
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
-    {% if request.couch_user.keyboard_shortcuts.enabled %}
-    {% block keyboard_shortcuts %}
+{% block keyboard_shortcuts %}{{ block.super }}
     <script>
         var nav_key = {{ request.couch_user.keyboard_shortcuts.main_key|JSON }};
         function gen_sidebar_elements() {
@@ -47,8 +39,6 @@
             reset_index: false
         });
     </script>
-    {% endblock %}
-    {% endif %}
 {% endblock %}
 
 {% block content %}
