@@ -507,7 +507,7 @@ class AppNotFound(Exception):
 class HQExportSchema(SavedExportSchema):
     doc_type = 'SavedExportSchema'
     domain = StringProperty()
-    transform_dates = BooleanProperty(default=False)
+    transform_dates = BooleanProperty(default=True)
 
     @property
     def global_transform_function(self):
@@ -518,6 +518,8 @@ class HQExportSchema(SavedExportSchema):
 
     @classmethod
     def wrap(cls, data):
+        if 'transform_dates' not in data:
+            data['transform_dates'] = False
         self = super(HQExportSchema, cls).wrap(data)
         if not self.domain:
             self.domain = self.index[0]
