@@ -8,6 +8,8 @@ from dimagi.utils.decorators.memoized import memoized
 
 
 USERNAME_TRANSFORM = 'corehq.apps.export.transforms.user_id_to_username'
+OWNERNAME_TRANSFORM = 'corehq.apps.export.transforms.owner_id_to_display'
+
 
 class AbstractProperty(object):
     def __get__(self, instance, owner):
@@ -242,7 +244,14 @@ class CaseCustomExportHelper(CustomExportHelper):
 
     def format_config_for_javascript(self, table_configuration):
         custom_columns = [
-            CustomColumn(slug='username', index='user_id', display='meta.username', transform=USERNAME_TRANSFORM),
+            CustomColumn(slug='last_modified_by_username', index='user_id',
+                         display='meta.last_modified_by_username', transform=USERNAME_TRANSFORM),
+            CustomColumn(slug='opened_by_username', index='opened_by',
+                         display='meta.opened_by_username', transform=USERNAME_TRANSFORM),
+            CustomColumn(slug='closed_by_username', index='closed_by',
+                         display='meta.closed_by_username', transform=USERNAME_TRANSFORM),
+            CustomColumn(slug='owner_name', index='owner_id', display='meta.owner_name',
+                         transform=OWNERNAME_TRANSFORM),
         ]
         main_table_columns = table_configuration[0]['column_configuration']
         for custom in custom_columns:
