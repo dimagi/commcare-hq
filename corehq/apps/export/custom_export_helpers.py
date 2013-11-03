@@ -7,7 +7,7 @@ from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.memoized import memoized
 
 
-USERNAME_TRANSFORM = 'corehq.apps.users.util.user_id_to_username_export_transform'
+USERNAME_TRANSFORM = 'corehq.apps.export.transforms.user_id_to_username'
 
 class AbstractProperty(object):
     def __get__(self, instance, owner):

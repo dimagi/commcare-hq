@@ -72,14 +72,6 @@ def cached_user_id_to_username(user_id):
         return ret
 
 
-def user_id_to_username_export_transform(user_id, doc):
-    """
-    Stub function necessary because the export code isn't flexible about the arguments
-    it passes to transform functions
-    """
-    return cached_user_id_to_username(user_id)
-
-
 def django_user_from_couch_id(id):
     """
     From a couch id of a profile object, get the django user
