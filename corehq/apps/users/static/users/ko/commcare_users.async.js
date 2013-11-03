@@ -53,6 +53,9 @@ var CommCareUsersViewModel = function (o) {
     self.init = function () {
         $(function () {
             self.change_page(self.current_page);
+            $("#user-search-clear-btn").click(function(e) {
+                self.search_string('');
+            });
         });
     };
 
