@@ -798,8 +798,8 @@ ol.inline {
   margin-left: 0;
   list-style: none;
 }
-ul.inline  > li,
-ol.inline  > li {
+ul.inline > li,
+ol.inline > li {
   display: inline-block;
   padding-left: 5px;
   padding-right: 5px;
@@ -3557,7 +3557,7 @@ th.header > div {
 .open {
   *z-index: 1000;
 }
-.open  > .dropdown-menu {
+.open > .dropdown-menu {
   display: block;
 }
 .pull-right > .dropdown-menu {
@@ -5000,6 +5000,7 @@ input[type="submit"].btn.btn-mini {
   padding-left: 20px;
   margin-left: -20px;
 }
+.sidebar .nav > li > a.hovered,
 .sidebar .nav > li > a:hover {
   background-color: #dbdbdb;
   color: #2c2c2c;
@@ -5019,6 +5020,33 @@ input[type="submit"].btn.btn-mini {
 .nav-list .nav-header-role {
   font-size: 11.049999999999999px;
   padding-top: 0;
+}
+.nav-tabs > li > a {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  line-height: 18px;
+  border: 1px solid transparent;
+  -webkit-border-radius: 4px 4px 0 0;
+  -moz-border-radius: 4px 4px 0 0;
+  border-radius: 4px 4px 0 0;
+}
+.nav-tabs > li > a:hover,
+.nav-tabs > li > a.hovered {
+  border-color: #eeeeee #eeeeee #dddddd;
+}
+.nav-tabs > .active > a,
+.nav-tabs > .active > a.hovered,
+.nav-tabs > .active > a:hover {
+  color: #555555;
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  border-bottom-color: transparent;
+  cursor: default;
+}
+.nav > li > a:hover,
+.nav > li > a.hovered {
+  text-decoration: none;
+  background-color: #eeeeee;
 }
 .navbar {
   overflow: visible;
