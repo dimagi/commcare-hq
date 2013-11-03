@@ -36,6 +36,7 @@ class MessageBankReport(FRIReport):
         "custom.fri.reports.filters.RiskProfileFilter",
     )
     report_template_path = "fri/message_bank.html"
+    show_all_rows = True
 
     @property
     def template_context(self):
@@ -55,9 +56,11 @@ class MessageBankReport(FRIReport):
             DataTablesColumn(_("Message ID")),
         ]
         for case in self.interactive_participants:
-            header = case.get_case_property("name_and_pid")
-            cols.append(DataTablesColumn(header))
-        return DataTablesHeader(*cols)
+            header_text = case.get_case_property("name_and_pid")
+            cols.append(DataTablesColumn(header_text))
+        header = DataTablesHeader(*cols)
+        header.custom_sort = [[1, "asc"]]
+        return header
 
     @property
     def rows(self):
