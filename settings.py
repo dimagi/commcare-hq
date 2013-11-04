@@ -820,6 +820,11 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
     "FRI_SMS_CONTENT" : "custom.fri.api.custom_content_handler",
 }
 
+# These are custom templates which can wrap default the sms/chat.html template
+CUSTOM_CHAT_TEMPLATES = {
+    "FRI" : "fri/chat.html",
+}
+
 SELENIUM_APP_SETTING_DEFAULTS = {
     'cloudcare': {
         # over-generous defaults for now

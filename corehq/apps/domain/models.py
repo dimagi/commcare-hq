@@ -243,8 +243,8 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     use_default_sms_response = BooleanProperty(default=False)
     default_sms_response = StringProperty()
     chat_message_count_threshold = IntegerProperty()
-    custom_chat_template = StringProperty() # See corehq.apps.sms.view.CUSTOM_CHAT_TEMPLATES
-    chat_case_username = StringProperty() # Case property to use when showing the case's name in a chat window
+    custom_chat_template = StringProperty() # See settings.CUSTOM_CHAT_TEMPLATES
+    custom_case_username = StringProperty() # Case property to use when showing the case's name in a chat window
 
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)

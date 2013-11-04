@@ -35,12 +35,9 @@ from casexml.apps.case.models import CommCareCase
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean
 from dateutil.parser import parse
 from dimagi.utils.decorators.memoized import memoized
+from django.conf import settings
 
 DEFAULT_MESSAGE_COUNT_THRESHOLD = 50
-
-CUSTOM_CHAT_TEMPLATES = {
-    "FRI" : "fri/chat.html",
-}
 
 @login_and_domain_required
 def default(request, domain):
@@ -610,8 +607,8 @@ def chat_contacts(request, domain):
                 name = owner.raw_username
             else:
                 url = reverse("case_details", args=[domain, owner._id])
-                if domain_obj.chat_case_username:
-                    name = owner.get_case_property(domain_obj.chat_case_username) or _("(unknown)")
+                if domain_obj.custom_case_username:
+                    name = owner.get_case_property(domain_obj.custom_case_username) or _("(unknown)")
                 else:
                     name = owner.name
             contacts.append({
@@ -635,7 +632,7 @@ def chat(request, domain, contact_id):
         "contact" : get_contact(contact_id),
         "message_count_threshold" : domain_obj.chat_message_count_threshold or DEFAULT_MESSAGE_COUNT_THRESHOLD,
     }
-    template = CUSTOM_CHAT_TEMPLATES.get(domain_obj.custom_chat_template) or "sms/chat.html"
+    template = settings.CUSTOM_CHAT_TEMPLATES.get(domain_obj.custom_chat_template) or "sms/chat.html"
     return render(request, template, context)
 
 @login_and_domain_required
@@ -684,8 +681,8 @@ def api_history(request, domain):
     username_map = {}
     for sms in data:
         if sms.direction == INCOMING:
-            if doc.doc_type == "CommCareCase" and domain_obj.chat_case_username:
-                sender = doc.get_case_property(domain_obj.chat_case_username)
+            if doc.doc_type == "CommCareCase" and domain_obj.custom_case_username:
+                sender = doc.get_case_property(domain_obj.custom_case_username)
             elif doc.doc_type == "CommCareCase":
                 sender = doc.name
             else:
@@ -833,23 +830,36 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
 @domain_admin_required
 def sms_settings(request, domain):
     domain_obj = Domain.get_by_name(domain, strict=True)
+    is_previewer = request.couch_user.is_previewer()
     if request.method == "POST":
         form = SMSSettingsForm(request.POST)
+        form._cchq_is_previewer = is_previewer
         if form.is_valid():
             domain_obj.use_default_sms_response = form.cleaned_data["use_default_sms_response"]
             domain_obj.default_sms_response = form.cleaned_data["default_sms_response"]
+            if is_previewer:
+                domain_obj.custom_case_username = form.cleaned_data["custom_case_username"]
+                domain_obj.chat_message_count_threshold = form.cleaned_data["custom_message_count_threshold"]
+                domain_obj.custom_chat_template = form.cleaned_data["custom_chat_template"]
             domain_obj.save()
             messages.success(request, _("Changes Saved."))
     else:
         initial = {
             "use_default_sms_response" : domain_obj.use_default_sms_response,
             "default_sms_response" : domain_obj.default_sms_response,
+            "use_custom_case_username" : domain_obj.custom_case_username is not None,
+            "custom_case_username" : domain_obj.custom_case_username,
+            "use_custom_message_count_threshold" : domain_obj.chat_message_count_threshold is not None,
+            "custom_message_count_threshold" : domain_obj.chat_message_count_threshold,
+            "use_custom_chat_template" : domain_obj.custom_chat_template is not None,
+            "custom_chat_template" : domain_obj.custom_chat_template,
         }
         form = SMSSettingsForm(initial=initial)
 
     context = {
         "domain" : domain,
         "form" : form,
+        "is_previewer" : is_previewer,
     }
     return render(request, "sms/settings.html", context)
 
