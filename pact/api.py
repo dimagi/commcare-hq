@@ -57,7 +57,7 @@ def get_cloudcare_app():
     if len(filtered_app) != 1:
         raise Exception ("Your hacky assumption failed for pact!")
 
-    app = api.get_app(PACT_DOMAIN, filtered_app[0]['_id'])
+    app = api.look_up_app_json(PACT_DOMAIN, filtered_app[0]['_id'])
     app_id = app['_id']
 
     pact_cloudcare = filter(lambda x: x['name']['en'] == PACT_CLOUDCARE_MODULE, app['modules'])
