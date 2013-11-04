@@ -18,8 +18,8 @@ class BiharCase(CommCareCase):
 
     def dump_json(self):
         return {
-            'case': self._doc,
-            'forms': [f._doc for f in self.get_forms()]
+            'case': self.to_json(),
+            'forms': [f.to_json() for f in self.get_forms()]
         }
 
     @classmethod
