@@ -191,6 +191,10 @@
                                 <span class="label label-important">Bad</span>
                             {% endif %}
                         </dd>
+                        <dt>Index Status</dt>
+                        <dd>
+                            <a href="{% url "system_ajax" %}?api=stale_pillows" target="_blank">Check (slow!)</a>
+                        </dd>
 
                     {% for es_status in es_index_status %}
                         {% for k, v in es_status.items %}

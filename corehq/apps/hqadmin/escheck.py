@@ -16,7 +16,7 @@ from django.conf import settings
 
 
 CLUSTER_HEALTH = 'cluster_health'
-def check_cluster_health():
+def check_es_cluster_health():
     """
     The color state of the cluster health is just a simple indicator for how a cluster is running
     It'll mainly be useful for finding out if shards are in good/bad state (red)

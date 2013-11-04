@@ -3,7 +3,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 from corehq.apps.domain.calculations import CALC_FNS, _all_domain_stats
-from corehq.apps.hqadmin.escheck import check_cluster_health, CLUSTER_HEALTH, check_case_es_index, check_xform_es_index, check_reportcase_es_index, check_reportxform_es_index
+from corehq.apps.hqadmin.escheck import check_es_cluster_health, CLUSTER_HEALTH, check_case_es_index, check_xform_es_index, check_reportcase_es_index, check_reportxform_es_index
 from corehq.apps.reports.export import save_metadata_export_to_tempfile
 from corehq.apps.reports.models import (ReportNotification,
     UnsupportedScheduledReportError, HQGroupExportConfiguration)
@@ -25,7 +25,7 @@ def check_es_index():
     """
 
     es_status = {}
-    es_status.update(check_cluster_health())
+    es_status.update(check_es_cluster_health())
 
     es_status.update(check_case_es_index())
     es_status.update(check_xform_es_index())
@@ -49,6 +49,7 @@ def check_es_index():
                 "Elasticsearch %s Index Issue: %s" % (index, es_status[index]['message']))
 
     if do_notify:
+        message.append("This alert can give false alarms due to timing lag, so please double check https://www.commcarehq.org/hq/admin/system/ and the Elasticsarch Status section to make sure.")
         notify_exception(None, message='\n'.join(message))
 
 
