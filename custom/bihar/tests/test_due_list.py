@@ -1,9 +1,7 @@
 from datetime import datetime
-from django.http import HttpRequest
 
 from django.test import TestCase
-from custom.bihar.reports.due_list import VaccinationSummary, get_due_list_by_task_name, get_due_list_records
-from corehq.apps.users.models import WebUser
+from custom.bihar.reports.due_list import get_due_list_by_task_name, get_due_list_records
 
 
 class FakeES(object):

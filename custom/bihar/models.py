@@ -1,5 +1,8 @@
 import datetime
 from custom.bihar import getters
+from custom.bihar.calculations.homevisit import DateRangeFilter
+from custom.bihar.calculations.utils import filters
+from fluff.filters import Filter
 from pillowtop.listener import BasicPillow
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
@@ -10,6 +13,33 @@ from django.db import models
 
 A_DAY = datetime.timedelta(days=1)
 
+class BiharCase(CommCareCase):
+    doc_type = 'CommCareCase'
+
+    def dump_json(self):
+        return {
+            'case': self._doc,
+            'forms': [f._doc for f in self.get_forms()]
+        }
+
+    @classmethod
+    def from_dump(cls, json_dump):
+        case = BiharCase.wrap(json_dump['case'])
+        case._forms = [XFormInstance.wrap(f) for f in json_dump['forms']]
+        case._forms_cache = dict((f._id, f) for f in case._forms)
+        return case
+
+    _forms = None
+    _forms_cache = None
+    def get_forms(self):
+        if self._forms is None:
+            self._forms = super(BiharCase, self).get_forms()
+            self._forms_cache = dict((f._id, f) for f in self._forms)
+        return self._forms
+
+    class Meta:
+        app_label = 'case'
+
 
 class CareBiharFluff(fluff.IndicatorDocument):
     document_class = CommCareCase
@@ -19,22 +49,36 @@ class CareBiharFluff(fluff.IndicatorDocument):
 
     # home visit
 
-    bp2 = homevisit.BPCalculator(days=(94, 187))
-    bp3 = homevisit.BPCalculator(days=(0, 94))
+    # home visit
+    bp2 = homevisit.VisitCalculator(form_types=('bp', 'reg'),
+            visit_type='bp',
+            get_date_next=getters.date_next_bp,
+            case_filter=lambda case: filters.relevant_predelivery_mother,
+            additional_filter=DateRangeFilter(days=(94, 187)),
+    )
+    bp3 = homevisit.VisitCalculator(form_types=('bp', 'reg'),
+            visit_type='bp',
+            get_date_next=getters.date_next_bp,
+            case_filter=lambda case: filters.relevant_predelivery_mother,
+            additional_filter=DateRangeFilter(days=(0, 94)),
+    )
     pnc = homevisit.VisitCalculator(
         form_types=['del', 'pnc', 'reg'],
         visit_type='pnc',
         get_date_next=getters.date_next_pnc,
+        case_filter=filters.relevant_postdelivery_mother,
     )
     ebf = homevisit.VisitCalculator(
         form_types=['del', 'pnc', 'reg', 'eb'],
         visit_type='eb',
         get_date_next=getters.date_next_eb,
+        case_filter=filters.relevant_postdelivery_mother,
     )
     cf = homevisit.VisitCalculator(
         form_types=['del', 'pnc', 'reg', 'eb', 'cf'],
         visit_type='cf',
         get_date_next=getters.date_next_cf,
+        case_filter=filters.relevant_postdelivery_mother,
     )
 
     upcoming_deliveries = homevisit.DueNextMonth()
