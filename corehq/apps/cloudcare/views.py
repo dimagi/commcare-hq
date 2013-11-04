@@ -16,8 +16,8 @@ from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadReque
 from django.shortcuts import render
 from corehq.apps.app_manager.models import Application, ApplicationBase
 import json
-from corehq.apps.cloudcare.api import get_app, get_cloudcare_apps, get_filtered_cases, get_filters_from_request,\
-    api_closed_to_status, CaseAPIResult, CASE_STATUS_OPEN
+from corehq.apps.cloudcare.api import look_up_app_json, get_cloudcare_apps, get_filtered_cases, get_filters_from_request,\
+    api_closed_to_status, CaseAPIResult, CASE_STATUS_OPEN, get_app_json
 from dimagi.utils.parsing import string_to_boolean
 from django.conf import settings
 from corehq.apps.cloudcare import touchforms_api 
@@ -53,17 +53,16 @@ def cloudcare_main(request, domain, urlPath):
                                      endkey=[domain, app_id],
                                      descending=True,
                                      limit=1).one()
-        return build._doc if build else None
+        return get_app_json(build) if build else None
 
     if not preview:
         apps = get_cloudcare_apps(domain)
         # replace the apps with the last build of each app
         apps = [_app_latest_build_json(app["_id"]) for app in apps]
-    
     else:
         apps = ApplicationBase.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}])
-        apps = [app._doc for app in apps if app and app.application_version == "2.0"]
-    
+        apps = [get_app_json(app) for app in apps if app and app.application_version == "2.0"]
+
     # trim out empty apps
     apps = filter(lambda app: app, apps)
     apps = filter(lambda app: app_access.user_can_access_app(request.couch_user, app), apps)
@@ -102,12 +101,12 @@ def cloudcare_main(request, domain, urlPath):
         app = None
         if app_id:
             if app_id in [a['_id'] for a in apps]:
-                app = get_app(domain, app_id)
+                app = look_up_app_json(domain, app_id)
             else:
                 messages.info(request, _("That app is no longer valid. Try using the "
                                          "navigation links to select an app."))
-        if app == None and len(apps) == 1:
-            app = get_app(domain, apps[0]['_id'])
+        if app is None and len(apps) == 1:
+            app = look_up_app_json(domain, apps[0]['_id'])
 
         def _get_case(domain, case_id):
             case = CommCareCase.get(case_id)
@@ -116,14 +115,14 @@ def cloudcare_main(request, domain, urlPath):
         
         case = _get_case(domain, case_id) if case_id else None
         return {
-            "app": app, 
+            "app": app,
             "case": case
         }
 
     context = {
        "domain": domain,
        "language": language,
-       "apps": json.dumps(apps),
+       "apps": apps,
        "apps_raw": apps,
        "preview": preview,
        "maps_api_key": settings.GMAPS_API_KEY
@@ -268,7 +267,7 @@ def get_apps_api(request, domain):
 
 @cloudcare_api
 def get_app_api(request, domain, app_id):
-    return json_response(get_app(domain, app_id))
+    return json_response(look_up_app_json(domain, app_id))
 
 @cloudcare_api
 @cache_page(60 * 30)
