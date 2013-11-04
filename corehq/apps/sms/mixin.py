@@ -63,6 +63,10 @@ class VerifiedNumber(Document):
             # Circular import
             from corehq.apps.users.models import CommCareUser
             return CommCareUser.get(self.owner_id)
+        elif self.owner_doc_type == 'WebUser':
+            # Circular importsms
+            from corehq.apps.users.models import WebUser
+            return WebUser.get(self.owner_id)
         else:
             return None
 
