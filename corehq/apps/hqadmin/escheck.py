@@ -5,12 +5,14 @@ import time
 from couchdbkit import ResourceNotFound
 
 from casexml.apps.case.models import CommCareCase
+from corehq import Domain
 from corehq.elastic import get_es
 from corehq.pillows.case import CasePillow
 from corehq.pillows.reportcase import ReportCasePillow
 from corehq.pillows.reportxform import ReportXFormPillow
 from corehq.pillows.xform import XFormPillow
 from couchforms.models import XFormInstance
+from django.conf import settings
 
 
 CLUSTER_HEALTH = 'cluster_health'
@@ -54,11 +56,21 @@ def is_real_submission(xform_view_row):
 
 
 def check_reportxform_es_index(doc_id=None):
-    db = XFormInstance.get_db()
-    es_index = ReportXFormPillow.es_alias
+    do_check = False
+    for domain in settings.ES_XFORM_FULL_INDEX_DOMAINS:
+        domain_doc = Domain.get_by_name(domain)
+        if domain_doc is not None:
+            do_check = True
+            break
 
-    check_doc_id = doc_id if doc_id else  _get_latest_doc_from_index(es_index, 'received_on')
-    return check_index_by_doc(es_index, db, check_doc_id)
+    if do_check:
+        db = XFormInstance.get_db()
+        es_index = ReportXFormPillow.es_alias
+
+        check_doc_id = doc_id if doc_id else  _get_latest_doc_from_index(es_index, 'received_on')
+        return check_index_by_doc(es_index, db, check_doc_id)
+    else:
+        return {}
 
 
 def check_xform_es_index(doc_id=None):
@@ -81,11 +93,21 @@ def is_case_recent(case_view_row):
         return True
 
 def check_reportcase_es_index(doc_id=None):
-    db = CommCareCase.get_db()
-    es_index = ReportCasePillow.es_alias
+    do_check = False
+    for domain in settings.ES_CASE_FULL_INDEX_DOMAINS:
+        domain_doc = Domain.get_by_name(domain)
+        if domain_doc is not None:
+            do_check = True
+            break
 
-    check_doc_id = doc_id if doc_id else _get_latest_doc_from_index(es_index, sort_field='opened_on')
-    return check_index_by_doc(es_index, db, check_doc_id)
+    if do_check:
+        db = CommCareCase.get_db()
+        es_index = ReportCasePillow.es_alias
+
+        check_doc_id = doc_id if doc_id else _get_latest_doc_from_index(es_index, sort_field='opened_on')
+        return check_index_by_doc(es_index, db, check_doc_id)
+    else:
+        return {}
 
 
 def check_case_es_index(doc_id=None):
@@ -119,6 +141,7 @@ def _get_latest_doc_from_index(es_index, sort_field):
             if 'hits' in res['hits']:
                 result = res['hits']['hits'][0]
                 return result['_source']['_id']
+
     except Exception, ex:
         logging.error("Error querying get_latest_doc_from_index[%s]: %s" % (es_index, ex))
         return None
