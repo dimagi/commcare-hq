@@ -13,6 +13,7 @@ try:
     from corehq.apps.app_manager.tests.test_commcare_settings import *
     from corehq.apps.app_manager.tests.test_brief_view import *
     from .test_get_questions import *
+    from .test_case_properties import *
     from .test_repeater import *
 except ImportError, e:
     # for some reason the test harness squashes these so log them here for clarity
