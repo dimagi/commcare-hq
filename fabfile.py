@@ -888,8 +888,13 @@ def version_static(preindex=False):
     reference.
 
     """
+    if preindex:
+        withpath = env.code_root_preindex
+    else:
+        withpath = env.code_root
+
     cmd = 'resource_static' if not preindex else 'resource_static clear'
-    with cd(env.code_root):
+    with cd(withpath):
         sudo('rm -f tmp.sh resource_versions.py; %(virtualenv_root)s/bin/python manage.py ' % env + cmd, user=env.sudo_user)
 
 
