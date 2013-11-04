@@ -43,6 +43,18 @@ class TestHomeVisits(TestCase):
         self.assertIndicatorsEmpty(indicator)
 
 
+    def testBPAllInFirstTri(self):
+        indicator = CareBiharFluff()
+
+        dates = {
+            'bp1_due': '2013-01-21', 'bp1_done': '2013-01-21', 'bp1_days_overdue': '0',
+            'bp2_due': '2013-01-22', 'bp2_done': '2013-01-22', 'bp2_days_overdue': '0',
+            'bp3_due': '2013-01-23', 'bp3_done': '2013-01-23', 'bp3_days_overdue': '0',
+        }
+        case = self._load_case('test_bihar_bp.json', dates)
+        indicator.calculate(case)
+        self.assertIndicatorsEmpty(indicator, vals=('bp2', 'bp3', 'pnc', 'ebf', 'cf'))
+
     def testBPAllInSecondTri(self):
         indicator = CareBiharFluff()
 
