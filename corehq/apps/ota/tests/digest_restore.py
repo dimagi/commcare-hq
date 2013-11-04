@@ -33,7 +33,6 @@ class DigestOtaRestoreTest(TestCase):
     def testOtaRestore(self, password=None):
         client = Client()
 
-        print password if password else self.password
         client.set_authorization(self.couch_user.username, password if password else self.password, method='Digest')
 
         resp = client.get('/a/%s/phone/restore' % self.domain, follow=True)
