@@ -4,7 +4,7 @@ from corehq.apps.reports.generic import GenericTabularReport
 from dimagi.utils.couch.database import get_db
 from hsph.fields import IHForCHFField, SelectReferredInStatusField
 from hsph.reports import HSPHSiteDataMixin
-    
+
 from collections import defaultdict
 import numbers
 from corehq.apps.reports import util
@@ -195,10 +195,86 @@ class SecondaryOutcomeReport(DataSummaryReport):
         return data
 
 
+class CustomUpdateDict(dict):
+    """
+    Dict that lets you specify an update function that gets passed the existing
+    value and the new value, overriding __setitem__.
+    """
+    def __init__(self, update_fn=None, *args, **kwargs):
+        self.update_fn = update_fn
+        super(CustomUpdateDict, self).__init__(*args, **kwargs)
+
+    def __setitem__(self, name, value):
+        try:
+            item = super(CustomUpdateDict, self).__getitem__(name)
+        except KeyError:
+            value = value
+        else:
+            value = self.update_fn(item, value)
+
+        super(CustomUpdateDict, self).__setitem__(name, value)
+
+
+def split_reduce_view(view, update_fn, n, *args, **kwargs):
+    """
+    This lets you emit several hashes of values and then combine them into one.
+    The intent is to avoid having to emit each key/value in the hash
+    separately, which drastically increases the number of queries you have to
+    make, especially if this is inside of a loop of some sort.
+
+    Most of the complexity here is handling when reduce_level != 'exact' (which
+    is the primary use case here).  This requires you to duplicate the
+    definition of your reduce function from reduce.js by passing it as
+    update_fn so that we can further reduce .
+
+    see fada_observations/map.js and fada_observations/reduce.js
+    """
+
+    startkey = kwargs['startkey']
+    endkey = kwargs['endkey']
+    grouping = 'group_level' in kwargs
+    if grouping:
+        results = []
+        kwargs['group_level'] += 1
+    else:  # we don't actually use this case
+        result = {'value': {}}
+
+    db = get_db()
+    for i in range(n):
+        prefix = ['split_%s' % i]
+        kwargs['startkey'] = prefix + startkey
+        kwargs['endkey'] = prefix + endkey
+
+        split_results = db.view(view, *args, **kwargs)
+
+        if grouping:
+            for j, split_result in enumerate(split_results):
+                value = split_result['value']
+                key = split_result['key']
+                try:
+                    results[j]['value'].update(value)
+                except IndexError:
+                    results.append({
+                        'value': CustomUpdateDict(update_fn, value),
+                        'key': key[1:]
+                    })
+        else:
+            # no need to do any special update processing because the keys will
+            # be non-overlapping sets
+            result['value'].update(split_results['value'])
+            # this will be the same for all values of i
+            result['key'] = split_results['key'][1:]
+
+    if grouping:
+        return results
+    else:
+        return result
+
+
 class FADAObservationsReport(DataSummaryReport):
     """
     BetterBirth Shared Dropbox/Updated ICT package/Reporting Specs/FADA
-    Observations - 2 _v6_ms.xls
+    Observations - 2 _v7_ss.xls
     """
     name = "FADA Observations"
     slug = "fada_observations"
@@ -228,6 +304,12 @@ class FADAObservationsReport(DataSummaryReport):
                       ["user", user_id, enddate])
                      for user_id in user_ids])
 
+        values = defaultdict(int)
+        # this is unnecessary/not particularly helpful duplication of
+        # information and could be DRYer by letting the defaultdict handle
+        # everything, but that would require passing definitions of the
+        # different percentage calculations to the constructor.  See
+        # http://manage.dimagi.com/default.asp?80439
         data_keys = [
             "total_forms",
             "pp1_observed",
@@ -264,14 +346,16 @@ class FADAObservationsReport(DataSummaryReport):
 
             "pp2_soap_and_water"
         ]
-
-        values = dict((k, 0) for k in data_keys)
-        db = get_db()
+        for k in data_keys:
+            values[k] = 0
 
         all_results = []
 
         for startkey, endkey in keys:
-            results = db.view("hsph/fada_observations",
+            results = split_reduce_view(
+                "hsph/fada_observations", 
+                lambda a, b: a if isinstance(a, basestring) else (a or b),
+                2,
                 reduce=True,
                 group_level=5,
                 startkey=[domain] + startkey,
@@ -290,7 +374,7 @@ class FADAObservationsReport(DataSummaryReport):
                 if value['site_id'] in site_ids and value['user_id'] in user_ids:
                     for k, v in value.items():
                         if k not in ('site_id', 'user_id'):
-                            values[k] += v
+                            values[k] += 1 if v else 0
                 seen_process_sbr_nos.add(process_sbr_no)
 
         for k, v in values.items():
@@ -300,6 +384,21 @@ class FADAObservationsReport(DataSummaryReport):
                     values[k + '_pct'] = round(float(v) * 100 / values[pp], 1)
                 else:
                     values[k + '_pct'] = '---'
+
+        checklist_options = [
+            "picked_up_during_care",
+            "looked_at_poster",
+            "filled_out_after_care",
+        ]
+        for pp in ("1", "2", "4"):
+            checklist_used = values["pp%s_scc_used_pp%s" % (pp, pp)]
+            for option in checklist_options:
+                key = "pp%s_scc_usage_%s" % (pp, option)
+                if checklist_used:
+                    values[key + '_pct'] = round(
+                        100 * float(values.get(key, 0)) / checklist_used, 1)
+                else:
+                    values[key + '_pct'] = '---'
 
         # used by secondary outcome report
         if values['pp3_baby_apneic']:
@@ -321,7 +420,6 @@ class FADAObservationsReport(DataSummaryReport):
         enddate = self.datespan.enddate_param_utc[:10]
 
         user_ids = self.user_ids
-
        
         return {
             'ihf': self.get_values(
