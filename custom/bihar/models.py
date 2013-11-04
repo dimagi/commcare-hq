@@ -13,6 +13,33 @@ from django.db import models
 
 A_DAY = datetime.timedelta(days=1)
 
+class BiharCase(CommCareCase):
+    doc_type = 'CommCareCase'
+
+    def dump_json(self):
+        return {
+            'case': self._doc,
+            'forms': [f._doc for f in self.get_forms()]
+        }
+
+    @classmethod
+    def from_dump(cls, json_dump):
+        case = BiharCase.wrap(json_dump['case'])
+        case._forms = [XFormInstance.wrap(f) for f in json_dump['forms']]
+        case._forms_cache = dict((f._id, f) for f in case._forms)
+        return case
+
+    _forms = None
+    _forms_cache = None
+    def get_forms(self):
+        if self._forms is None:
+            self._forms = super(BiharCase, self).get_forms()
+            self._forms_cache = dict((f._id, f) for f in self._forms)
+        return self._forms
+
+    class Meta:
+        app_label = 'case'
+
 
 class CareBiharFluff(fluff.IndicatorDocument):
     document_class = CommCareCase
