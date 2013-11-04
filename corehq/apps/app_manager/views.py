@@ -63,6 +63,8 @@ from corehq.apps.app_manager.decorators import safe_download, no_conflict_requir
 from django.contrib import messages
 from toggle import toggle_enabled
 
+logger = logging.getLogger(__name__)
+
 require_can_edit_apps = require_permission(Permissions.edit_apps)
 
 
@@ -650,7 +652,9 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         del app['use_commcare_sense']
         app.save()
 
-    context = {}
+    context = {
+        'show_care_plan': toggle_enabled(toggles.APP_BUILDER_CARE_PLAN, req.user.username),
+    }
     if module:
         if not form:
             case_type = module.case_type
@@ -813,13 +817,24 @@ def new_module(req, domain, app_id):
     app = get_app(domain, app_id)
     lang = req.COOKIES.get('lang', app.langs[0])
     name = req.POST.get('name')
-    module = app.new_module(name, lang)
-    module_id = module.id
-    app.new_form(module_id, "Untitled Form", lang)
-    app.save()
-    response = back_to_main(req, domain, app_id=app_id, module_id=module_id)
-    response.set_cookie('suppress_build_errors', 'yes')
-    return response
+    module_type = req.POST.get('module_type', 'case')
+    if module_type == 'case':
+        module = app.new_module(name, lang)
+        module_id = module.id
+        app.new_form(module_id, "Untitled Form", lang)
+        app.save()
+        response = back_to_main(req, domain, app_id=app_id, module_id=module_id)
+        response.set_cookie('suppress_build_errors', 'yes')
+        return response
+    elif module_type == 'care-plan':
+        return new_care_plan_module(req, domain, app, name, lang)
+    else:
+        logger.error('Unexpected module type for new module: "%s"' % module_type)
+        return back_to_main(req, domain, app_id=app_id)
+
+def new_care_plan_module(req, domain, app, name, lang):
+    messages.warning(req, 'Care Plan modules coming soon')
+    return back_to_main(req, domain, app_id=app.id)
 
 @no_conflict_require_POST
 @require_can_edit_apps
