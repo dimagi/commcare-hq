@@ -52,7 +52,7 @@ class VisitCalculator(DoneDueCalculator):
         def _filter(a):
             return (visit_is(a, self.visit_type)  # right type
                     and date_in_range(a.date.date(), date)  # within window
-                    and a.date > getters.date_modified(form, force_to_date=False)  # came after "due" visit
+                    and a.date > getters.date_modified(form, force_to_date=False, force_to_datetime=True)  # came after "due" visit
                     and a.xform_id not in self._visits_used)  # not already counted
         return _filter
 
