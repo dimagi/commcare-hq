@@ -248,9 +248,8 @@ class PtopReindexer(NoArgsCommand):
         else:
             print "\tskipping... %d < %d" % (count, self.start_num)
 
-
     def load_traditional(self):
-        for ix, item in enumerate(self.full_view_data):
+        for ix, item in enumerate(self.full_couch_view_iter()):
             print "\tProcessing item %s (%d)" % (item['id'], ix)
             self.process_row(item, ix)
 
