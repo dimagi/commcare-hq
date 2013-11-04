@@ -218,14 +218,14 @@
 
                     table.show_deleted = ko.observable(true);
                     _(columns).each(function (column) {
-                        column.deleted = $.inArray("deleted", column._niceField.tags) >= 0
-                        column.show_deleted = table.show_deleted;
                         var niceField = self.utils.parseField(column.index, table.index);
                         var special = ko.utils.unwrapObservable(column.special);
                         if (special) {
                             niceField['field'] = special;
                         }
                         column._niceField = niceField;
+                        column.deleted = $.inArray("deleted", column._niceField.tags) >= 0
+                        column.show_deleted = table.show_deleted;
                     });
 
                     for (var i = 0; i < columns.length; i++) {
