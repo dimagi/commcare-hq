@@ -13,12 +13,13 @@ class Command(LabelCommand):
     def handle(self, *labels, **options):
         db = SMSLog.get_db()
 
-        active_domains = db.view(
-            "sms/by_domain",
-            reduce=True,
-            group_level=1,
-        ).all()
-        active_domains = [d['key'][0] for d in active_domains]
+        # active_domains = db.view(
+        #     "sms/by_domain",
+        #     reduce=True,
+        #     group_level=1,
+        # ).all()
+        # active_domains = [d['key'][0] for d in active_domains]
+        active_domains = ['pathfinder']
         startkey = lambda d: [d, "SMSLog", "2013-08-01"]
         endkey = lambda d: [d, "SMSLog", "2013-10-15"]
 
@@ -34,8 +35,8 @@ class Command(LabelCommand):
                 sms_log = SMSLog.wrap(doc)
                 if not sms_log.billed and sms_log.backend_api in [
                     'MACH',
-                    'TROPO',
-                    'UNICEL',
+                    # 'TROPO',
+                    # 'UNICEL',
                 ]:
                     # we're going to assume the SMS messages were sent successfully
                     # at the time they were actually sent
