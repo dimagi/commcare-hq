@@ -83,7 +83,14 @@
                 form: {{ form.source|JSON }},
                 langs: {{ app.langs|JSON }},
                 formName: "{{ form.name|trans:app.langs }}",
-                displayLanguage: {{ lang|JSON }}
+                displayLanguage: {{ lang|JSON }},
+                plugins: [
+                    "javaRosa", 
+                    {% if commcare_options %}
+                        "commCare"
+                    {% endif %}
+                ],
+                commCare: {{ commcare_options|JSON }}
             });
             formdesigner.on('form-saved', function (args) {
                 var response = args.response;

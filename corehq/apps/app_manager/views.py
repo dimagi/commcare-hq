@@ -45,6 +45,8 @@ from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.resource_conflict import retry_resource
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError,\
     XForm
+from corehq.apps.app_manager.case_references import (get_validated_references,
+        get_reftype_names)
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions, CommCareUser
@@ -665,10 +667,15 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
     if form:
         template = "app_manager/form_view.html"
-        context.update({
-            'case_properties': get_all_case_properties(app),
-        })
+        references = get_validated_references(form)
+        case_properties = get_all_case_properties(app)
         context.update(get_form_view_context(req, form, context['langs'], is_user_registration))
+        context.update({
+            'case_management_in_vellum': app.case_management_in_vellum,
+            'case_properties': case_properties,
+            'case_references': references,
+            'case_reference_types': get_reftype_names(),
+        })
     elif module:
         template, module_context = get_module_view_context_and_template(app, module)
         context.update(module_context)
@@ -729,27 +736,54 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
     app = get_app(domain, app_id)
 
     if is_user_registration:
-        form = app.get_user_registration()
+        current_form = app.get_user_registration()
     else:
         try:
-            module = app.get_module(module_id)
+            current_module = app.get_module(module_id)
         except IndexError:
             return bail(req, domain, app_id, not_found="module")
         try:
-            form = module.get_form(form_id)
+            current_form = current_module.get_form(form_id)
         except IndexError:
             return bail(req, domain, app_id, not_found="form")
 
     context = get_apps_base_context(req, domain, app)
-    context.update(locals())
     context.update({
+        'app': app,
+        'module': current_module,
+        'form': current_form,
         'edit': True,
-        'nav_form': form if not is_user_registration else '',
+        'nav_form': current_form if not is_user_registration else '',
         'formdesigner': True,
         'multimedia_object_map': app.get_object_map()
     })
-    return render(req, 'app_manager/form_designer.html', context)
 
+    if app.case_management_in_vellum:
+        modules = []
+        for module in app.get_modules():
+            forms = []
+            for form in module.get_forms():
+                questions, _ = _questions_for_form(req, form, context['langs'])
+                forms.append({
+                    'name': form.name,
+                    'questions': questions,
+                    'actions': form.actions.to_json(),
+                })
+
+            modules.append({
+                'name': module.name,
+                'case_type': module.case_type,
+                'forms': forms
+            })
+
+        context['commcare_options'] = {
+            'current_module': int(module_id),
+            'current_form': int(form_id),
+            'modules': modules,
+            'case_reserved_words': load_case_reserved_words(),
+        }
+
+    return render(req, 'app_manager/form_designer.html', context)
 
 
 @no_conflict_require_POST
@@ -1028,22 +1062,38 @@ def _handle_media_edits(request, item, should_edit, resp):
 @login_or_digest
 @require_permission(Permissions.edit_apps, login_decorator=None)
 def patch_xform(request, domain, app_id, unique_form_id):
-    patch = request.POST['patch']
-    sha1_checksum = request.POST['sha1']
+    # todo: hash form actions too (do JSON.stringify() and json.dumps behave
+    # identically?)
+    def hash(form):
+        return hashlib.sha1(form.source.encode('utf-8')).hexdigest()
+
+    try:
+        # raw_post_data is Django <= 1.3
+        POST = json.loads(getattr(request, 'body', None) or request.raw_post_data)
+    except Exception:
+        POST = request.POST
+    patch = POST['patch']
+    sha1_checksum = POST['sha1']
 
     app = get_app(domain, app_id)
     form = app.get_form(unique_form_id)
 
     current_xml = form.source
-    if hashlib.sha1(current_xml.encode('utf-8')).hexdigest() != sha1_checksum:
+    if hash(form) != sha1_checksum:
         return json_response({'status': 'conflict', 'xform': current_xml})
 
     dmp = diff_match_patch()
     xform, _ = dmp.patch_apply(dmp.patch_fromText(patch), current_xml)
+
     save_xform(app, form, xform)
+    try:
+        form.actions = FormActions.wrap(POST['formActions'])
+    except KeyError:
+        # vellum doesn't have commcare plugin enabled
+        pass
     response_json = {
         'status': 'ok',
-        'sha1': hashlib.sha1(form.source.encode('utf-8')).hexdigest()
+        'sha1': hash(form)
     }
     app.save(response_json)
     return json_response(response_json)
@@ -1054,9 +1104,7 @@ def patch_xform(request, domain, app_id, unique_form_id):
 def edit_form_attr(req, domain, app_id, unique_form_id, attr):
     """
     Called to edit any (supported) form attribute, given by attr
-
     """
-
     app = get_app(domain, app_id)
     form = app.get_form(unique_form_id)
     lang = req.COOKIES.get('lang', app.langs[0])
@@ -1064,13 +1112,8 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
 
     resp = {}
 
-    def should_edit(attribute):
-        if req.POST.has_key(attribute):
-            return True
-        elif req.FILES.has_key(attribute):
-            return True
-        else:
-            return False
+    def should_edit(attr):
+        return attr in req.POST or attr in req.FILES
 
     if should_edit("user_reg_data"):
         # should be user_registrations only

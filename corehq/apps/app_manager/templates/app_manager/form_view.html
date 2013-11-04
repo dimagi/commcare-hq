@@ -164,7 +164,10 @@
                 reserved_words: {{ case_reserved_words_json|JSON }},
                 moduleCaseTypes: {{ module_case_types|JSON }},
                 caseType: {{ form.get_case_type|JSON }},
-                propertiesMap: {{ case_properties|JSON }}
+                propertiesMap: {{ case_properties|JSON }},
+                showCaseReferences: {{ case_management_in_vellum|JSON }},
+                caseReferences: {{ case_references|JSON }},
+                caseReferenceTypes: {{ case_reference_types|JSON }}
                 {% if app.application_version == '1.0' %}
                 ,ejs_urls: {
                     template: "{% static 'app_manager/ejs/case-config-ui-2.ejs' %}",
