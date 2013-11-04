@@ -8,6 +8,7 @@ from corehq.apps import reports
 from corehq.apps.app_manager.models import get_app
 from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
+from corehq.apps.reports.exportfilters import form_matches_users
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
 from couchexport.models import SavedExportSchema, GroupExportConfiguration
 from couchexport.transforms import couch_to_excel_datetime, identity
@@ -505,7 +506,8 @@ class AppNotFound(Exception):
 
 class HQExportSchema(SavedExportSchema):
     doc_type = 'SavedExportSchema'
-    transform_dates = BooleanProperty(default=False)
+    domain = StringProperty()
+    transform_dates = BooleanProperty(default=True)
 
     @property
     def global_transform_function(self):
@@ -514,12 +516,20 @@ class HQExportSchema(SavedExportSchema):
         else:
             return identity
 
+    @classmethod
+    def wrap(cls, data):
+        if 'transform_dates' not in data:
+            data['transform_dates'] = False
+        self = super(HQExportSchema, cls).wrap(data)
+        if not self.domain:
+            self.domain = self.index[0]
+        return self
+
 
 class FormExportSchema(HQExportSchema):
     doc_type = 'SavedExportSchema'
     app_id = StringProperty()
     include_errors = BooleanProperty(default=False)
-
 
     @property
     @memoized
@@ -548,8 +558,7 @@ class FormExportSchema(HQExportSchema):
 
     @property
     def filter(self):
-        f = SerializableFunction()
-
+        f = SerializableFunction(form_matches_users, users=set(CouchUser.ids_by_domain(self.domain)))
         if self.app_id is not None:
             f.add(reports.util.app_export_filter, app_id=self.app_id)
         if not self.include_errors:
