@@ -16,7 +16,7 @@ from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadReque
 from django.shortcuts import render
 from corehq.apps.app_manager.models import Application, ApplicationBase
 import json
-from corehq.apps.cloudcare.api import get_app, get_cloudcare_apps, get_filtered_cases, get_filters_from_request,\
+from corehq.apps.cloudcare.api import look_up_app_json, get_cloudcare_apps, get_filtered_cases, get_filters_from_request,\
     api_closed_to_status, CaseAPIResult, CASE_STATUS_OPEN, get_app_json
 from dimagi.utils.parsing import string_to_boolean
 from django.conf import settings
@@ -101,12 +101,12 @@ def cloudcare_main(request, domain, urlPath):
         app = None
         if app_id:
             if app_id in [a['_id'] for a in apps]:
-                app = get_app(domain, app_id)
+                app = look_up_app_json(domain, app_id)
             else:
                 messages.info(request, _("That app is no longer valid. Try using the "
                                          "navigation links to select an app."))
         if app is None and len(apps) == 1:
-            app = get_app(domain, apps[0]['_id'])
+            app = look_up_app_json(domain, apps[0]['_id'])
 
         def _get_case(domain, case_id):
             case = CommCareCase.get(case_id)
@@ -267,7 +267,7 @@ def get_apps_api(request, domain):
 
 @cloudcare_api
 def get_app_api(request, domain, app_id):
-    return json_response(get_app(domain, app_id))
+    return json_response(look_up_app_json(domain, app_id))
 
 @cloudcare_api
 @cache_page(60 * 30)

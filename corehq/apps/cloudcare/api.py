@@ -344,7 +344,7 @@ def get_app_json(app):
     app_json['post_url'] = app.post_url
     return app_json
 
-def get_app(domain, app_id):
+def look_up_app_json(domain, app_id):
     app = Application.get(app_id)
     assert(app.domain == domain)
     return get_app_json(app)
