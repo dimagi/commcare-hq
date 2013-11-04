@@ -229,7 +229,7 @@
             <div class="modal hide fade" id="keyboard-shortcuts-config">
                 <div class="modal-header">
                     <a class="close" data-dismiss="modal">&times;</a>
-                    <h4>Keyboard Shortcuts Configuration</h4>
+                    <h4><label class="label label-warning">Experimental</label> Keyboard Shortcuts Configuration</h4>
                 </div>
                 <div class="modal-body">
                     <form id="keyboard-shortcuts-config-form" class="form-horizontal" method="POST" action="{% url "keyboard_config" %}?next={{ request.get_full_path|urlencode }}">
@@ -244,7 +244,7 @@
                             <label class="control-label" for="main-key">Choose Shortcut Key</label>
                             <div class="controls">
                                 <select name="main-key">
-                                    <option {% if request.couch_user.keyboard_shortcuts.main_key == 'option' %} selected{% endif %}>option</option>
+                                    <option value="option" {% if request.couch_user.keyboard_shortcuts.main_key == 'option' %} selected{% endif %}>option / alt</option>
                                     <option {% if request.couch_user.keyboard_shortcuts.main_key == 'ctrl' %} selected{% endif %}>ctrl</option>
                                     <option {% if request.couch_user.keyboard_shortcuts.main_key == 'command' %} selected{% endif %}>command</option>
                                     <option {% if request.couch_user.keyboard_shortcuts.main_key == 'shift' %} selected{% endif %}>shift</option>
@@ -256,6 +256,10 @@
                         </div>
                     </form>
                     <hr />
+                    <div style="margin-bottom: 1em;">
+                        <p>Use <code>{{ request.couch_user.keyboard_shortcuts.main_key }}+up</code> and <code>{{ request.couch_user.keyboard_shortcuts.main_key }}+down</code> to navigate the sidebar and menus.</p>
+                        <p>Use <code>{{ request.couch_user.keyboard_shortcuts.main_key }}+enter</code> or <code>{{ request.couch_user.keyboard_shortcuts.main_key }}+spacebar</code> to perform actions during navigation (e.g. browsing to a new page).</p>
+                    </div>
                     <ul class="unstyled" id="keyboard-shortcuts-lookup"></ul>
                 </div>
             </div>
@@ -337,7 +341,7 @@
             var nav_key = {{ request.couch_user.keyboard_shortcuts.main_key|JSON }};
 
             function gen_apps_menu_elements() {
-                return $("#mainmenu-ApplicationsTab li a");
+                return $("#mainmenu-ApplicationsTab li a[data-id]");
             }
             var apps_menu_navigator = new KeyboardNavigator();
             apps_menu_navigator.init({

@@ -64,6 +64,7 @@ var KeyboardNavigator = function() {
                 key(self.nav_key + '+' + self.forward_key, self.ready_scope, self.gen_handle_nav(self.forward_key));
                 key(self.nav_key + '+' + self.back_key, self.ready_scope, self.gen_handle_nav(self.back_key));
                 key(self.nav_key + '+' + self.action_key, self.ready_scope, self.handle_action);
+                key(self.nav_key + '+' + 'space', self.ready_scope, self.handle_action);
             });
         };
 
