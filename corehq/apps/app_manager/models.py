@@ -393,28 +393,31 @@ class FormBase(DocumentSchema):
             'form': {"id": self.id if hasattr(self, 'id') else None, "name": self.name}
         }
 
-        try:
-            _parse_xml(self.source)
-        except XFormError as e:
-            errors.append(dict(
-                type="invalid xml",
-                message=unicode(e) if self.source else '',
-                **meta
-            ))
-        except ValueError:
-            logging.error("Failed: _parse_xml(string=%r)" % self.source)
-            raise
+        if self.source == '':
+            errors.append(dict(type="blank form"))
         else:
             try:
-                self.validate_form()
-            except XFormValidationError as e:
-                error = {'type': 'validation error', 'validation_message': unicode(e)}
-                error.update(meta)
-                errors.append(error)
+                _parse_xml(self.source)
+            except XFormError as e:
+                errors.append(dict(
+                    type="invalid xml",
+                    message=unicode(e) if self.source else '',
+                    **meta
+                ))
+            except ValueError:
+                logging.error("Failed: _parse_xml(string=%r)" % self.source)
+                raise
+            else:
+                try:
+                    self.validate_form()
+                except XFormValidationError as e:
+                    error = {'type': 'validation error', 'validation_message': unicode(e)}
+                    error.update(meta)
+                    errors.append(error)
 
-            for error in self.check_actions():
-                error.update(meta)
-                errors.append(error)
+                for error in self.check_actions():
+                    error.update(meta)
+                    errors.append(error)
 
         if self.requires_case():
             needs_case_detail = True

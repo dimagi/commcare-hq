@@ -849,7 +849,6 @@ def new_form(req, domain, app_id, module_id):
     form_id = form.id
     response = back_to_main(req, domain, app_id=app_id, module_id=module_id,
                             form_id=form_id)
-    response.set_cookie('suppress_build_errors', 'yes')
     return response
 
 @no_conflict_require_POST
@@ -1596,6 +1595,10 @@ def validate_form_for_build(request, domain, app_id, unique_form_id):
         raise Http404()
     errors = form.validate_for_build()
     lang, langs = get_langs(request, app)
+    if "blank form" in [error.get('type') for error in errors]:
+        return json_response({
+            "error_html": render_to_string('app_manager/partials/create_form_prompt.html')
+        })
     return json_response({
         "error_html": render_to_string('app_manager/partials/build_errors.html', {
             'app': app,
