@@ -5,15 +5,15 @@ from corehq.apps.reports.graph_models import LineChart
 from corehq.apps.sms.models import WORKFLOW_REMINDER
 from corehq.elastic import es_query, ES_URLS
 from corehq.util.dates import unix_time_millis
-from custom.trialconnect.reports import TrialConnectReport
+from custom.trialconnect.reports import TrialConnectReport, div
 from custom.trialconnect.smspillow import TC_STUB
 
 
 class AppointmentsReport(TrialConnectReport):
-    slug = 'appointments'
-    name = ugettext_noop("Appointments")
-    description = ugettext_noop("Description for Appointments Report")
-    section_name = ugettext_noop("Appointments")
+    slug = 'appointment_performance'
+    name = ugettext_noop("Appointment Performance")
+    description = ugettext_noop("Appointment confirmation and response rates")
+    section_name = ugettext_noop("Appointment Performance")
     fields = [
         'corehq.apps.reports.filters.select.MultiCaseGroupFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter',
@@ -41,9 +41,12 @@ class AppointmentsReport(TrialConnectReport):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn(_("Total Appointments Sent")),
-            DataTablesColumn(_("% Appointments Confirmed")),
-            DataTablesColumn(_("% Reminders Confirmed")),
+            DataTablesColumn(_("Total Appointments Sent"),
+                help_text=_("# of Appointment Cases with at least one CommConnect reminder sent out within date range")),
+            DataTablesColumn(_("% Appointments Confirmed"),
+                help_text=_("# of Appointment Cases that had a message sent out within the time period with the case property with a state of confirmed")),
+            DataTablesColumn(_("% Reminders Confirmed"),
+                help_text=_("# of forms sent out over SMS for appointment cases that are completed over the date period and not partial submissions")),
             DataTablesColumn(_("Avg Reminders Per Appointment")),
             DataTablesColumn(_("Avg Confirmations Per Appointment")),
         )
@@ -56,10 +59,10 @@ class AppointmentsReport(TrialConnectReport):
         reminders_confirmed = self.unique('session_data', check_response_state=True)
         return [[
             appointments_sent,
-            (float(appointments_confirmed)/appointments_sent) * 100 if appointments_sent else 'nan',
-            (float(reminders_confirmed)/reminders_sent) * 100 if reminders_sent else 'nan',
-            (float(reminders_sent)/appointments_sent) * 100 if appointments_sent else 'nan',
-            (float(reminders_confirmed)/appointments_sent) * 100 if appointments_sent else 'nan',
+            div(appointments_confirmed, appointments_sent, percent=True),
+            div(reminders_confirmed, reminders_sent, percent=True),
+            div(reminders_sent, appointments_sent),
+            div(reminders_confirmed, appointments_sent),
         ]]
 
     def gen_base_query(self, start):
@@ -77,7 +80,7 @@ class AppointmentsReport(TrialConnectReport):
             denom = self.unique(field_name, base_query=base_query)
             values.append({
                 "x": int(unix_time_millis(start)),
-                "y": float(num)/denom if denom != 0 else 0
+                "y": float(div(num, denom)) * 100,
             })
             start += timedelta(days=1)
         return values

@@ -10,7 +10,7 @@ from custom.bihar.reports.supervisor import (SubCenterSelectionReport, BiharNavR
                                       url_and_params)
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.reports.generic import summary_context
-from corehq.apps.api.es import FullCaseES
+from corehq.apps.api.es import ReportCaseES
 from datetime import datetime, timedelta
 
 BIHAR_DOMAIN = 'care-bihar' # TODO: where should this go?
@@ -215,8 +215,8 @@ def format_results(results):
         yield (item, sum(results_dict.get(t, 0) for t in item['tasks']))
 
 def get_due_list_by_task_name(target_date, owner_id=None, case_es=None, size=0, case_type='task'):
-    case_es = case_es or FullCaseES(BIHAR_DOMAIN)
-    es_type = 'fullcase_%(domain)s__%(case_type)s' % { 'domain': BIHAR_DOMAIN, 'case_type': 'task' }
+    case_es = case_es or ReportCaseES(BIHAR_DOMAIN)
+    es_type=None
     facet_name = 'vaccination_names'
 
     # The type of vaccination is stored in the `name` field in ElasticSearch
@@ -232,15 +232,15 @@ def get_due_list_by_task_name(target_date, owner_id=None, case_es=None, size=0, 
             owner_filter,
             {"term": {"closed": False}},
             {"term": {"type": case_type}},
-            {"range": {"date_eligible": {"to": target_date.isoformat() }}},
-            {"range": {"date_expires": {"from": target_date.isoformat()}}},
+            {"range": {"date_eligible.#value": {"to": target_date.strftime('%Y-%m-%d') }}},
+            {"range": {"date_expires.#value": {"from": target_date.strftime('%Y-%m-%d')}}},
         ]
     }
 
     base_query['filter']['and'] += filter['and']
     base_query['facets'] = {
         facet_name: {
-            "terms": {"field":"task_id", "size": 1000},
+            "terms": {"field":"task_id.#value", "size": 1000},
             "facet_filter": filter # This controls the records processed for the summation
         }
     }
@@ -252,8 +252,8 @@ def get_due_list_records(target_date, owner_id=None, task_types=None, case_es=No
     A drill-down of the get_due_list_by_task_name, this returns the records for a particular
     set of types (which is the type of vaccination)
     '''
-    case_es = case_es or FullCaseES(BIHAR_DOMAIN)
-    es_type = 'fullcase_%(domain)s__%(case_type)s' % { 'domain': BIHAR_DOMAIN, 'case_type': 'task' }
+    case_es = case_es or ReportCaseES(BIHAR_DOMAIN)
+    es_type = None
 
     # The type of vaccination is stored in the `name` field in ElasticSearch
     # so we filter on `name.exact` so that "OPV 1" is not tokenized into two words
@@ -262,15 +262,15 @@ def get_due_list_records(target_date, owner_id=None, task_types=None, case_es=No
 
     owner_filter = {"match_all":{}} if owner_id is None else {"term": {"owner_id": owner_id}}
 
-    name_filter = {"match_all":{}} if not task_types else {"terms": {"task_id": task_types}}
+    name_filter = {"match_all":{}} if not task_types else {"terms": {"task_id.#value": task_types}}
     filter = {
         "and": [
             owner_filter,
             name_filter,
             {"term": {"closed": False}},
             {"term": {"type": case_type}},
-            {"range": {"date_eligible": {"to": target_date.isoformat() }}},
-            {"range": {"date_expires": {"from": target_date.isoformat()}}},
+            {"range": {"date_eligible.#value": {"to": target_date.isoformat() }}},
+            {"range": {"date_expires.#value": {"from": target_date.isoformat()}}},
         ]
     }
 

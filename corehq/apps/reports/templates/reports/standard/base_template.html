@@ -51,7 +51,7 @@
 
         $('.report-description-popover').popover({
             placement: 'right',
-            trigger: 'hover',
+            trigger: 'hover'
         });
     </script>
 {% endblock %}
@@ -146,7 +146,14 @@
         <div>
             <div class="modal-header">
                 <a class="close" data-dismiss="modal" data-bind="click: resetModal">×</a>
-                <h3>{% trans "Email report" %}</h3>
+                <h3>
+                    {% trans "Email report:" %}
+                    {{ datespan.startdate|date:"Y-m-d" }}
+                    {% if datespan.startdate %}
+                        {% trans "to" %}
+                    {% endif %}
+                    {{ datespan.enddate|date:"Y-m-d" }}
+                </h3>
             </div>
             <form class="form-horizontal">
                 <div class="modal-body">

@@ -73,6 +73,8 @@ class Command(LabelCommand):
             return [res['id'] for res in results]
 
         CHUNK_SIZE = 100
+        print 'getting case ids'
+
         case_ids = get_case_ids(owners)
         xform_ids = set()
 
@@ -129,13 +131,13 @@ class Command(LabelCommand):
         users = sourcedb.all_docs(
             keys=list(user_ids),
             include_docs=True,
-            wrapper=wrap_user
+            wrapper=wrap_user,
         ).all()
 
         role_ids = set([])
-        for user in users:
+        for user in filter(lambda u: u is not None, users):
             # if we use bulk save, django user doesn't get sync'd
-            if user.domain_membership.role_id:
+            if user.get_domain_membership(domain.name).role_id:
                 role_ids.add(user.domain_membership.role_id)
             user.save(force_update=True)
 

@@ -28,7 +28,7 @@ DIRECTION_CHOICES = (
 
 class MessageLog(SafeSaveDocument, UnicodeMixIn):
     base_doc                    = "MessageLog"
-    couch_recipient_doc_type    = StringProperty() # "CommCareCase" or "CouchUser"
+    couch_recipient_doc_type    = StringProperty() # "CommCareCase", "CommCareUser", "WebUser"
     couch_recipient             = StringProperty() # _id of the contact who this sms was sent to/from
     phone_number                = StringProperty()
     direction                   = StringProperty()
@@ -331,13 +331,20 @@ class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
     @property
     def raw_username(self):
         return self.get_case_property("name")
-    
+
+    @classmethod
+    def wrap_as_commconnect_case(cls, case):
+        """
+        Takes a CommCareCase and wraps it as a CommConnectCase.
+        """
+        return CommConnectCase.wrap(case.to_json())
+
     class Meta:
         app_label = "sms" # This is necessary otherwise syncdb will confuse the sms app with casexml
 
 
 def case_changed_receiver(sender, case, **kwargs):
-    contact = CommConnectCase.wrap(case.to_json())
+    contact = CommConnectCase.wrap_as_commconnect_case(case)
     contact.case_changed()
 
 

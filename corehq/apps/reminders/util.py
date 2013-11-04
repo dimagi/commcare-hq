@@ -1,7 +1,10 @@
+from datetime import datetime, time
 from corehq.apps.app_manager.models import get_app, ApplicationBase, Form
 from couchdbkit.resource import ResourceNotFound
 from django.utils.translation import ugettext as _
 from corehq.apps.groups.models import Group
+from corehq.apps.users.models import CommCareUser
+from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
 
 class DotExpandedDict(dict):
     """
@@ -121,4 +124,71 @@ def get_recipient_name(recipient, include_desc=True):
     else:
         return name
 
+def create_immediate_reminder(contact, content_type, reminder_type=None, message=None, form_unique_id=None, case=None):
+    """
+    contact - the contact to send to
+    content_type - METHOD_SMS or METHOD_SMS_SURVEY (see corehq.apps.reminders.models)
+    reminder_type - either REMINDER_TYPE_DEFAULT, REMINDER_TYPE_ONE_TIME, or REMINDER_TYPE_KEYWORD_INITIATED
+    message - the message to send if content_type == METHOD_SMS
+    form_unique_id - the form_unique_id of the form to send if content_type == METHOD_SMS_SURVEY
+    case - the case that is associated with this reminder (so that you can embed case properties into the message)
+    """
+    from corehq.apps.reminders.models import (
+        CaseReminderHandler,
+        CaseReminderEvent,
+        ON_DATETIME,
+        EVENT_AS_OFFSET,
+        REMINDER_TYPE_DEFAULT,
+        METHOD_SMS,
+        METHOD_SMS_SURVEY,
+        RECIPIENT_CASE,
+        RECIPIENT_USER,
+        RECIPIENT_SURVEY_SAMPLE,
+        RECIPIENT_USER_GROUP,
+    )
+    if isinstance(contact, CommCareCase):
+        recipient = RECIPIENT_CASE
+    elif isinstance(contact, CommCareCaseGroup):
+        recipient = RECIPIENT_SURVEY_SAMPLE
+    elif isinstance(contact, CommCareUser):
+        recipient = RECIPIENT_USER
+    elif isinstance(contact, Group):
+        recipient = RECIPIENT_USER_GROUP
+    else:
+        raise Exception("Unsupported contact type for %s" % contact._id)
+
+    reminder_type = reminder_type or REMINDER_TYPE_DEFAULT
+    if recipient == RECIPIENT_CASE:
+        case_id = contact._id
+    elif case is not None:
+        case_id = case._id
+    else:
+        case_id = None
+
+    handler = CaseReminderHandler(
+        domain = contact.domain,
+        reminder_type = reminder_type,
+        nickname = "One-time Reminder",
+        default_lang = "xx",
+        method = content_type,
+        recipient = recipient,
+        start_condition_type = ON_DATETIME,
+        start_datetime = datetime.utcnow(),
+        start_offset = 0,
+        events = [CaseReminderEvent(
+            day_num = 0,
+            fire_time = time(0,0),
+            form_unique_id = form_unique_id if content_type == METHOD_SMS_SURVEY else None,
+            message = {"xx" : message} if content_type == METHOD_SMS else {},
+            callback_timeout_intervals = [],
+        )],
+        schedule_length = 1,
+        event_interpretation = EVENT_AS_OFFSET,
+        max_iteration_count = 1,
+        case_id = case_id,
+        user_id = contact._id if recipient == RECIPIENT_USER else None,
+        sample_id = contact._id if recipient == RECIPIENT_SURVEY_SAMPLE else None,
+        user_group_id = contact._id if recipient == RECIPIENT_USER_GROUP else None,
+    )
+    handler.save(send_immediately=True)
 

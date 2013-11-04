@@ -5,8 +5,7 @@ from datetime import date
 from casexml.apps.case.models import CommCareCase
 from xlrd import xldate_as_tuple
 from corehq.apps.groups.models import Group
-from corehq.apps.users.models import CouchUser
-from couchdbkit.exceptions import ResourceNotFound
+from corehq.apps.users.cases import get_wrapped_owner
 
 def get_case_properties(domain, case_type=None):
     """
@@ -33,7 +32,7 @@ class ImporterConfig(object):
         self.excel_fields = request.POST.getlist('excel_field[]')
         self.case_fields = request.POST.getlist('case_field[]')
         self.custom_fields = request.POST.getlist('custom_field[]')
-        self.date_fields = request.POST.getlist('is_date_field[]')
+        self.type_fields = request.POST.getlist('type_field[]')
 
         self.search_column = request.POST['search_column']
 
@@ -124,14 +123,19 @@ def convert_custom_fields_to_struct(config):
     excel_fields = config.excel_fields
     case_fields = config.case_fields
     custom_fields = config.custom_fields
-    date_fields = config.date_fields
+    type_fields = config.type_fields
 
     field_map = {}
     for i, field in enumerate(excel_fields):
-        if field and (case_fields[i] or custom_fields[i]):
-            field_map[field] = {'case': case_fields[i],
-                                'custom': custom_fields[i],
-                                'is_date_field': date_fields[i] == 'true'}
+        if field:
+            field_map[field] = {
+                'type_field': type_fields[i]
+            }
+
+            if case_fields[i]:
+                field_map[field]['case'] = case_fields[i]
+            else:
+                field_map[field]['custom'] = custom_fields[i] or field
 
     return field_map
 
@@ -253,7 +257,7 @@ def populate_updated_fields(config, columns, row):
         except:
             continue
 
-        if field_map[key]['custom']:
+        if 'custom' in field_map[key]:
             # custom (new) field was entered
             update_field_name = field_map[key]['custom']
         else:
@@ -261,8 +265,13 @@ def populate_updated_fields(config, columns, row):
             update_field_name = field_map[key]['case']
 
         if update_value:
-            if field_map[key]['is_date_field']:
+            if field_map[key]['type_field'] == 'date':
                 update_value = parse_excel_date(update_value)
+            elif field_map[key]['type_field'] == 'integer':
+                try:
+                    update_value = str(int(update_value))
+                except ValueError:
+                    update_value = ''
             else:
                 update_value = convert_field_value(update_value)
 
@@ -275,17 +284,12 @@ def get_spreadsheet(download_ref, column_headers=True):
         return None
     return ExcelFile(download_ref.get_filename(), column_headers)
 
+def is_user_or_case_sharing_group(owner):
+    return not isinstance(owner, Group) or owner.case_sharing
+
 def is_valid_id(uploaded_id, domain, cache):
     if uploaded_id in cache:
         return cache[uploaded_id]
 
-    # see if it's a user on this domain
-    if CouchUser.get_by_user_id(uploaded_id, domain):
-        return True
-
-    # or if it is a case sharing enabled group
-    try:
-        group = Group.get(uploaded_id)
-        return group.case_sharing
-    except ResourceNotFound:
-        return False
+    owner = get_wrapped_owner(uploaded_id)
+    return owner and owner.domain == domain and is_user_or_case_sharing_group(owner)

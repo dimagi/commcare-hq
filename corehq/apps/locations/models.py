@@ -1,6 +1,6 @@
 from couchdbkit.ext.django.schema import *
 import itertools
-from dimagi.utils.couch.database import get_db
+from dimagi.utils.couch.database import get_db, iter_docs
 from django import forms
 from django.core.urlresolvers import reverse
 
@@ -43,23 +43,36 @@ class Location(Document):
     @classmethod
     def filter_by_type(cls, domain, loc_type, root_loc=None):
         loc_id = root_loc._id if root_loc else None
-        # todo: could be a lot of locations so should use iter_docs
-        return cls.view('locations/by_type',
-                        reduce=False,
-                        startkey=[domain, loc_type, loc_id],
-                        endkey=[domain, loc_type, loc_id, {}],
-                        include_docs=True).all()
+        relevant_ids = [r['id'] for r in cls.get_db().view('locations/by_type',
+            reduce=False,
+            startkey=[domain, loc_type, loc_id],
+            endkey=[domain, loc_type, loc_id, {}],
+        ).all()]
+        return (cls.wrap(l) for l in iter_docs(cls.get_db(), list(relevant_ids)))
+
+    @classmethod
+    def by_domain(cls, domain):
+        relevant_ids = set([r['id'] for r in cls.get_db().view('locations/by_type',
+            reduce=False,
+            startkey=[domain],
+            endkey=[domain, {}],
+        ).all()])
+        return (cls.wrap(l) for l in iter_docs(cls.get_db(), list(relevant_ids)))
 
     @property
     def is_root(self):
         return not self.lineage
 
     @property
-    def parent(self):
+    def parent_id(self):
         if self.is_root:
             return None
-        else:
-            return Location.get(self.lineage[0])
+        return self.lineage[0]
+
+    @property
+    def parent(self):
+        parent_id = self.parent_id
+        return Location.get(parent_id) if parent_id else None
 
     def siblings(self, parent=None):
         if not parent:
@@ -119,10 +132,7 @@ def location_tree(domain):
     for loc in locs:
         loc._children = []
 
-        try:
-            parent_id = loc.lineage[0]
-        except IndexError:
-            parent_id = None
+        parent_id = loc.parent_id
 
         if parent_id:
             parent_loc = locs_by_id[parent_id]

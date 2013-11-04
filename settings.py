@@ -87,7 +87,7 @@ DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ADMIN_MEDIA_PREFIX = '/static/admin/'
 
 # Make this unique, and don't share it with anybody - put into localsettings.py
-SECRET_KEY = ''
+SECRET_KEY = 'you should really change this'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -109,6 +109,8 @@ MIDDLEWARE_CLASSES = [
     'auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
 ]
+
+SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 
 ROOT_URLCONF = "urls"
 
@@ -145,6 +147,7 @@ DEFAULT_APPS = (
     'south',
     'djcelery', # pip install django-celery
     'djtables', # pip install djtables
+    'django_prbac',
     #'ghettoq',     # pip install ghettoq
     'djkombu', # pip install django-kombu
     'couchdbkit.ext.django',
@@ -224,21 +227,25 @@ HQ_APPS = (
     'corehq.apps.orgs',
     'corehq.apps.api',
     'corehq.apps.indicators',
+    'corehq.apps.cachehq',
     'corehq.couchapps',
     'custom.apps.wisepill',
     'fluff',
     'fluff.fluff_filter',
     'soil',
+    'toggle',
     'touchforms.formplayer',
     'hqbilling',
     'phonelog',
     'hutch',
     'pillowtop',
     'hqstyle',
+    'corehq.apps.grapevine',
 
     # custom reports
     'a5288',
     'custom.bihar',
+    'custom.penn_state',
     'dca',
     'custom.apps.gsid',
     'hsph',
@@ -258,6 +265,7 @@ HQ_APPS = (
     'custom.trialconnect',
     'custom.apps.crs_reports',
     'custom.hope',
+    'custom.openlmis',
 )
 
 TEST_APPS = ()
@@ -401,16 +409,6 @@ BROKER_URL = 'django://' #default django db based
 #this is the default celery queue - for periodic tasks on a separate queue override this to something else
 CELERY_PERIODIC_QUEUE = 'celery'
 
-from celery.schedules import crontab
-# schedule options can be seen here:
-# http://docs.celeryproject.org/en/latest/reference/celery.schedules.html
-CELERYBEAT_SCHEDULE = {
-    'monthly-opm-report-snapshot': {
-        'task': 'custom.opm.opm_tasks.tasks.snapshot',
-        'schedule': crontab(hour=1, day_of_month=1),
-    },
-}
-
 SKIP_SOUTH_TESTS = True
 #AUTH_PROFILE_MODULE = 'users.HqUserProfile'
 TEST_RUNNER = 'testrunner.HqTestSuiteRunner'
@@ -493,7 +491,7 @@ TOUCHFORMS_API_PASSWORD = "changeme"
 LOCAL_APPS = ()
 LOCAL_COUCHDB_APPS = ()
 LOCAL_MIDDLEWARE_CLASSES = ()
-LOCAL_PILLOWTOPS = []
+LOCAL_PILLOWTOPS = {}
 
 #If there are existing doc_ids and case_ids you want to check directly - they are refernced
 #in your localsettings for more accurate direct checks, otherwise use view based which can be inaccurate.
@@ -710,6 +708,7 @@ COUCHDB_APPS = [
     'sms',
     'smsforms',
     'telerivet',
+    'toggle',
     'translations',
     'users',
     'utils',  # dimagi-utils
@@ -721,8 +720,10 @@ COUCHDB_APPS = [
     'couchlog',
     'wisepill',
     'crs_reports',
+    'grapevine',
 
     # custom reports
+    'penn_state',
     'care_benin',
     'dca',
     'gsid',
@@ -790,7 +791,7 @@ DEFAULT_CURRENCY = "USD"
 SMS_HANDLERS = [
     'corehq.apps.sms.api.forwarding_handler',
     'corehq.apps.commtrack.sms.handle',
-    'corehq.apps.sms.api.structured_sms_handler',
+    'corehq.apps.sms.api.sms_keyword_handler',
     'corehq.apps.sms.api.form_session_handler',
     'corehq.apps.sms.api.fallback_handler',
 ]
@@ -803,6 +804,7 @@ SMS_LOADED_BACKENDS = [
     "corehq.apps.telerivet.models.TelerivetBackend",
     "corehq.apps.sms.test_backend.TestSMSBackend",
     "corehq.apps.sms.backend.test.TestBackend",
+    "corehq.apps.grapevine.api.GrapevineBackend",
 ]
 
 SELENIUM_APP_SETTING_DEFAULTS = {
@@ -825,42 +827,66 @@ INDICATOR_CONFIG = {
 
 CASE_WRAPPER = 'corehq.apps.hqcase.utils.get_case_wrapper'
 
-PILLOWTOPS = [
-                 'corehq.pillows.case.CasePillow',
-                 'corehq.pillows.fullcase.FullCasePillow',
-                 'corehq.pillows.xform.XFormPillow',
-                 'corehq.pillows.fullxform.FullXFormPillow',
-                 'corehq.pillows.domain.DomainPillow',
-                 'corehq.pillows.user.UserPillow',
-                 'corehq.pillows.application.AppPillow',
-                 'corehq.pillows.sms.SMSPillow',
-                 'corehq.pillows.commtrack.ConsumptionRatePillow',
-                 'corehq.pillows.reportxform.ReportXFormPillow',
-                 'corehq.pillows.reportcase.ReportCasePillow',
-                 # fluff
-                 'custom.bihar.models.CareBiharFluffPillow',
-                 'custom.opm.opm_reports.models.OpmCaseFluffPillow',
-                 'custom.opm.opm_reports.models.OpmUserFluffPillow',
-                 'custom.opm.opm_reports.models.OpmFormFluffPillow',
-                 'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
-                 'custom.reports.care_sa.models.CareSAFluffPillow',
-                 'custom.reports.mc.models.MalariaConsortiumFluffPillow',
-                 # MVP
-                 'corehq.apps.indicators.pillows.FormIndicatorPillow',
-                 'corehq.apps.indicators.pillows.CaseIndicatorPillow',
-                 # TrialConnect
-                 'custom.trialconnect.smspillow.TCSMSPillow',
-             ] + LOCAL_PILLOWTOPS
+PILLOWTOPS = {
+    'core': [
+        'corehq.pillows.case.CasePillow',
+        'corehq.pillows.xform.XFormPillow',
+        'corehq.pillows.domain.DomainPillow',
+        'corehq.pillows.user.UserPillow',
+        'corehq.pillows.application.AppPillow',
+        'corehq.pillows.sms.SMSPillow',
+    ],
+    'core_ext': [
+        'corehq.pillows.reportcase.ReportCasePillow',
+        'corehq.pillows.reportxform.ReportXFormPillow',
+    ],
+    'cache': [
+        'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
+    ],
+    'fluff': [
+        'custom.bihar.models.CareBiharFluffPillow',
+        'custom.opm.opm_reports.models.OpmCaseFluffPillow',
+        'custom.opm.opm_reports.models.OpmUserFluffPillow',
+        'custom.opm.opm_reports.models.OpmFormFluffPillow',
+        'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
+        'custom.reports.care_sa.models.CareSAFluffPillow',
+        'custom.reports.mc.models.MalariaConsortiumFluffPillow',
+    ],
+    'mvp': [
+        'corehq.apps.indicators.pillows.FormIndicatorPillow',
+        'corehq.apps.indicators.pillows.CaseIndicatorPillow',
+    ],
+    'trialconnect': [
+        'custom.trialconnect.smspillow.TCSMSPillow',
+    ],
+    'commtrack': [
+        'corehq.pillows.commtrack.ConsumptionRatePillow',
+    ]
+}
 
-#Custom workflow for indexing xform data beyond the standard properties
-XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
+for k, v in  LOCAL_PILLOWTOPS.items():
+    plist = PILLOWTOPS.get(k, [])
+    plist.extend(v)
+    PILLOWTOPS[k] = plist
 
-#Custom fully indexed domains for FullCase index/pillowtop
+COUCH_CACHE_BACKENDS = [
+    'corehq.apps.cachehq.cachemodels.DomainGenerationCache',
+    'corehq.apps.cachehq.cachemodels.OrganizationGenerationCache',
+    'corehq.apps.cachehq.cachemodels.UserGenerationCache',
+    'corehq.apps.cachehq.cachemodels.GroupGenerationCache',
+    'corehq.apps.cachehq.cachemodels.UserRoleGenerationCache',
+    'corehq.apps.cachehq.cachemodels.TeamGenerationCache',
+    'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
+    'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
+]
+
+#Custom fully indexed domains for ReportCase index/pillowtop
 # Adding a domain will not automatically index that domain's existing cases
 ES_CASE_FULL_INDEX_DOMAINS = [
     'pact',
     'hsph',
     'care-bihar',
+    'bihar',
     'hsph-dev',
     'hsph-betterbirth-pilot-2',
     'commtrack-public-demo',
@@ -868,12 +894,13 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'crs-remind',
 ]
 
-#Custom fully indexed domains for FullXForm index/pillowtop --
+#Custom fully indexed domains for ReportXForm index/pillowtop --
 # only those domains that don't require custom pre-processing before indexing,
 # otherwise list in XFORM_PILLOW_HANDLERS
 # Adding a domain will not automatically index that domain's existing forms
 ES_XFORM_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
+    'pact',
     'uth-rhd-test',
     'mvp-bonsaaso',
     'mvp-koraro',
@@ -899,6 +926,7 @@ DOMAIN_MODULE_MAP = {
     'a5288-test': 'a5288',
     'a5288-study': 'a5288',
     'care-bihar': 'custom.bihar',
+    'bihar': 'custom.bihar',
     'care-ihapc-live': 'custom.reports.care_sa',
     'cvsulive': 'custom.apps.cvsu',
     'dca-malawi': 'dca',
@@ -908,6 +936,7 @@ DOMAIN_MODULE_MAP = {
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
+    'mikesproject': 'custom.penn_state',
     'mvp-potou': 'mvp',
     'mvp-sauri': 'mvp',
     'mvp-bonsaaso': 'mvp',

@@ -16,19 +16,32 @@ def base_template(request):
     }
 
 
-def get_per_domain_context(project):
+def get_per_domain_context(project, request=None):
     if project and project.commtrack_enabled:
         domain_type = 'commtrack'
         logo_url = static('hqstyle/img/commtrack-logo.png')
         site_name = "CommTrack"
         public_site = "http://www.commtrack.org"
         can_be_your = "mobile logistics solution"
+    elif project and project.commconnect_enabled:
+        domain_type = 'commconnect'
+        logo_url = static('hqstyle/img/commconnect-logo.png')
+        site_name = "CommConnect"
+        public_site = "http://www.commcarehq.org"
+        can_be_your = "mobile health solution"
     else:
         domain_type = 'commcare'
         logo_url = static('hqstyle/img/commcare-logo.png')
         site_name = "CommCare HQ"
         public_site = "http://www.commcarehq.org"
         can_be_your = "mobile health solution"
+
+    try:
+        if 'commtrack.org' in request.get_host():
+            logo_url = static('hqstyle/img/commtrack-logo.png')
+    except Exception:
+        # get_host might fail for bad requests, e.g. scheduled reports
+        pass
 
     if project and project.has_custom_logo:
         logo_url = reverse('logo', args=[project.name])
@@ -46,7 +59,7 @@ def domain(request):
     """Global per-domain context variables"""
 
     project = getattr(request, 'project', None)
-    return get_per_domain_context(project)
+    return get_per_domain_context(project, request=request)
 
 
 def current_url_name(request):

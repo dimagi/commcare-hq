@@ -157,10 +157,6 @@
             display: "table-cell";
         }
 
-        .top-nav-search {
-            margin-top: 1.5em;
-        }
-
         #license-info-label {
             display: inline;
         }
@@ -189,16 +185,8 @@
 {% endblock %}
 
 {% block sidebar %}
-    {% include 'appstore/partials/sidebar.html' with display_ua='true' %}
-{% endblock %}
-
-{% block extra_tabs %}
-{% block tabs %}
     {% url "appstore" as search_url %}
-    <ul class="nav">
-        {% include 'appstore/partials/search_input.html' with search_name="search" search_for="apps..." %}
-    </ul>
-{% endblock %}
+    {% include 'appstore/partials/sidebar.html' with display_ua='true' search_name="search" search_for="apps..." %}
 {% endblock %}
 
 {% block page-title %}

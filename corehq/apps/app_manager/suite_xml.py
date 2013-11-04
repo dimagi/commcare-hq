@@ -2,6 +2,7 @@ from collections import namedtuple
 from django.core.urlresolvers import reverse
 from lxml import etree
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField
+from corehq.apps.hqmedia.models import HQMediaMapItem
 from .exceptions import MediaResourceError, ParentModuleReferenceError, SuiteValidationError
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column
 from corehq.apps.app_manager.xform import SESSION_CASE_ID
@@ -343,10 +344,10 @@ def get_detail_column_infos(detail):
     This is not intented to be a widely used format
     just a packaging of column info into a form most convenient for rendering
     """
-    from corehq.apps.app_manager.models import DetailColumn, SortElement
+    from corehq.apps.app_manager.models import SortElement
 
     if detail.type != 'case_short':
-        return [(column, (None, None)) for column in detail.get_columns()]
+        return [(column, None, None) for column in detail.get_columns()]
 
     DetailColumnInfo = namedtuple('DetailColumnInfo',
                                   'column sort_element order')
@@ -372,7 +373,10 @@ def get_detail_column_infos(detail):
 
     # sort elements is now populated with only what's not in any column
     # add invisible columns for these
-    for field, (sort_element, order) in sort_elements.items():
+    sort_only = sorted(sort_elements.items(),
+                       key=lambda (field, (sort_element, order)): order)
+
+    for field, (sort_element, order) in sort_only:
         column = create_temp_sort_column(field, len(columns))
         columns.append(DetailColumnInfo(column, sort_element, order))
     return columns
@@ -426,6 +430,7 @@ class SuiteGenerator(object):
         # before iterating through multimedia_map
         self.app.remove_unused_mappings()
         for path, m in self.app.multimedia_map.items():
+            unchanged_path = path
             if path.startswith(PREFIX):
                 path = path[len(PREFIX):]
             else:
@@ -436,15 +441,19 @@ class SuiteGenerator(object):
             # so we need to replace 'jr://file/' with '../../'
             # (this is a hack)
             path = '../../' + path
-            multimedia_id = m.multimedia_id
+
+            if not getattr(m, 'unique_id', None):
+                # lazy migration for adding unique_id to map_item
+                m.unique_id = HQMediaMapItem.gen_unique_id(m.multimedia_id, unchanged_path)
+
             yield MediaResource(
-                id=self.id_strings.media_resource(multimedia_id, name),
+                id=self.id_strings.media_resource(m.unique_id, name),
                 path=path,
                 version=m.version,
                 local=None,
                 remote=get_url_base() + reverse(
                     'hqmedia_download',
-                    args=[m.media_type, multimedia_id]
+                    args=[m.media_type, m.multimedia_id]
                 ) + name
             )
 

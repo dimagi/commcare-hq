@@ -1,11 +1,11 @@
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 from corehq.apps.reminders.models import REMINDER_TYPE_ONE_TIME
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.sms.models import WORKFLOW_KEYWORD, WORKFLOW_REMINDER, WORKFLOW_BROADCAST
 from corehq.elastic import es_query, ES_URLS, es_histogram
-from custom.trialconnect.reports import TrialConnectReport
+from custom.trialconnect.reports import TrialConnectReport, div
 from dimagi.utils.couch.database import get_db
 
 WORKFLOWS = [WORKFLOW_KEYWORD, WORKFLOW_REMINDER, WORKFLOW_BROADCAST]
@@ -21,9 +21,9 @@ class BaseSystemOverviewReport(TrialConnectReport):
 
 class SystemOverviewReport(BaseSystemOverviewReport):
     slug = 'system_overview'
-    name = ugettext_noop("System Overview")
-    description = ugettext_noop("Description for System Overview Report")
-    section_name = ugettext_noop("System Overview")
+    name = ugettext_noop("Overview")
+    description = ugettext_noop("Summary of the different types of messages sent and received by the system.")
+    section_name = ugettext_noop("Overview")
 
     def workflow_query(self, workflow=None, additional_facets=None):
         additional_facets = additional_facets or []
@@ -40,14 +40,19 @@ class SystemOverviewReport(BaseSystemOverviewReport):
 
     @property
     def headers(self):
-        return DataTablesHeader(
+        columns = [
             DataTablesColumn("", sortable=False),
-            DataTablesColumn(_("Number")),
-            DataTablesColumn(_("Mobile Worker Messages")),
-            DataTablesColumn(_("Case Messages")),
-            DataTablesColumn(_("Incoming")),
-            DataTablesColumn(_("Outgoing")),
-        )
+            DataTablesColumn(_("Number"), help_text=_("Number of individual items")),
+        ]
+        columns.append(DataTablesColumnGroup("",
+            DataTablesColumn(_("Mobile Worker Messages"),
+                             help_text=_("SMS Messages to or from mobile workers' phones, incoming and outgoing")),
+            DataTablesColumn(_("Case Messages"),
+                             help_text=_("SMS Messages to or from a phone number in a case, incoming and outgoing"))))
+        columns.append(DataTablesColumnGroup("",
+            DataTablesColumn(_("Incoming"), help_text=_("Total incoming SMS")),
+            DataTablesColumn(_("Outgoing"), help_text=_("Total outgoing SMS"))))
+        return DataTablesHeader(*columns)
 
     @property
     def rows(self):
@@ -91,7 +96,7 @@ class SystemOverviewReport(BaseSystemOverviewReport):
             row(_("Keywords"), WORKFLOW_KEYWORD),
             row(_("Reminders"), WORKFLOW_REMINDER),
             row(_("Broadcasts"), WORKFLOW_BROADCAST),
-            row(_("Unknown")),
+            row(_("Other")),
         ]
 
         def total(index):
@@ -102,8 +107,8 @@ class SystemOverviewReport(BaseSystemOverviewReport):
         return rows
 
     def es_histogram(self, workflow):
-        q = {"query": {"term": {"workflow": workflow.lower()}}}
-        return es_histogram(histo_type="sms", domains=[self.domain], q=q,
+        q = {"query": {"bool": {"must": [{"term": {"workflow": workflow.lower()}}]}}}
+        return es_histogram(histo_type="sms", domains=[self.domain], q=self.add_recipients_to_query(q),
                             startdate=self.datespan.startdate_display, enddate=self.datespan.enddate_display)
 
     @property
@@ -119,10 +124,10 @@ class SystemOverviewReport(BaseSystemOverviewReport):
         return [chart]
 
 class SystemUsersReport(BaseSystemOverviewReport):
-    slug = 'system_users'
-    name = ugettext_noop("System Users")
-    description = ugettext_noop("Description for System Users Report")
-    section_name = ugettext_noop("System Users")
+    slug = 'user_summary'
+    name = ugettext_noop("User Summary")
+    description = ugettext_noop("Summary of recipient information including number of active recipients and  message usage by type of recipient (case vs. mobile worker)")
+    section_name = ugettext_noop("User Summary")
 
     def active_query(self, recipient_type):
         q = self.base_query
@@ -139,9 +144,9 @@ class SystemUsersReport(BaseSystemOverviewReport):
     def headers(self):
         return DataTablesHeader(
             DataTablesColumn("Users", sortable=False),
-            DataTablesColumn(_("Mobile Workers")),
-            DataTablesColumn(_("Cases")),
-            DataTablesColumn(_("Total")),
+            DataTablesColumn(_("Mobile Workers"), help_text=_("SMS Messaging Statistics for Mobile Workers")),
+            DataTablesColumn(_("Cases"), help_text=_("SMS Messaging Statistics for Cases")),
+            DataTablesColumn(_("Total"), help_text=_("SMS Messaging Statistics for Mobile Workers and Cases")),
         )
 
     @property
@@ -149,8 +154,8 @@ class SystemUsersReport(BaseSystemOverviewReport):
         def row(header, mw_val, case_val):
             return [_(header), mw_val, case_val, mw_val + case_val]
 
-        def verified_numbered_users(owner_type, ids=None):
-            if not ids:
+        def verified_numbered_users(owner_type, ids=None, check_filters=False):
+            if not ids and not check_filters:
                 data = get_db().view('sms/verified_number_by_domain',
                     reduce=True,
                     startkey=[self.domain, owner_type],
@@ -167,17 +172,15 @@ class SystemUsersReport(BaseSystemOverviewReport):
 
         owner_ids = self.combined_user_ids if self.users_by_group else []
         case_ids = self.cases_by_case_group if self.cases_by_case_group else []
-        number = row("Number", verified_numbered_users("CommCareUser", owner_ids),
-                     verified_numbered_users("CommCareCase", case_ids))
+
+        check_filters = True if owner_ids or case_ids else False
+        number = row("Number", verified_numbered_users("CommCareUser", owner_ids, check_filters=check_filters),
+                     verified_numbered_users("CommCareCase", case_ids, check_filters=check_filters))
 
         def get_actives(recipient_type):
             return len(self.active_query(recipient_type)['facets']['couch_recipient']['terms'])
 
-        def div(num, denom, percent=False):
-            floater = 100.0 if percent else 1.0
-            return num * floater / denom if denom != 0 else 0
-
-        active = row("Active", get_actives("commcareuser"), get_actives("commcarecase"))
+        active = row(_("Number Active"), get_actives("commcareuser"), get_actives("commcarecase"))
 
         perc_active = [_("% Active"),
                        div(active[1], number[1], True), div(active[2], number[2], True), div(active[3], number[3], True)]
@@ -189,11 +192,11 @@ class SystemUsersReport(BaseSystemOverviewReport):
                 to_cases = term['count']
             elif term['term'] == 'commcareuser':
                 to_users = term['count']
-        messages = row("Messages", to_users, to_cases)
+        messages = row(_("Number of SMS Messages, incoming and outgoing"), to_users, to_cases)
 
-        avg_per_user = [_("Avg per User"),
+        avg_per_user = [_("Avg SMS Messages per User"),
                         div(messages[1], number[1]), div(messages[2], number[2]), div(messages[3], number[3])]
-        avg_per_act_user = [_("Avg per Active User"),
+        avg_per_act_user = [_("Avg SMS Messages per Active User"),
                             div(messages[1], active[1]), div(messages[2], active[2]), div(messages[3], active[3])]
 
         return [number, active, perc_active, messages, avg_per_user, avg_per_act_user]

@@ -61,13 +61,29 @@ REQUISITION_ACTION_TYPES = [
     RequisitionActions.RECEIPTS,
 ]
 
+
+class Program(Document):
+    """
+    A program, e.g. "hiv" or "tb"
+    """
+    domain = StringProperty()
+    name = StringProperty()
+    code = StringProperty()
+    description = StringProperty()
+
+
 class Product(Document):
+    """
+    A product, e.g. "coartem" or "tylenol"
+    """
     domain = StringProperty()
     name = StringProperty()
     unit = StringProperty()
     code = StringProperty()
     description = StringProperty()
     category = StringProperty()
+    program_id = StringProperty()
+    cost = DecimalProperty()
 
     @classmethod
     def get_by_code(cls, domain, code):
@@ -443,6 +459,7 @@ class SupplyPointCase(CommCareCase):
         id = uuid.uuid4().hex
         user_id = const.get_commtrack_user_id(domain)
         owner_id = owner_id or user_id
+        kwargs = {'external_id': location.external_id} if location.external_id else {}
         caseblock = CaseBlock(
             case_id=id,
             create=True,
@@ -453,23 +470,34 @@ class SupplyPointCase(CommCareCase):
             case_type=const.SUPPLY_POINT_CASE_TYPE,
             update={
                 'location_id': location._id,
-            }
+            },
+            **kwargs
         )
         return cls._from_caseblock(domain, caseblock)
 
     def update_from_location(self, location):
         assert self.domain == location.domain
-        caseblock = CaseBlock(
-            case_id=self._id,
-            create=False,
-            version=V2,
-            case_name=location.name,
-            user_id=const.get_commtrack_user_id(location.domain),
-            update={
-                'location_id': location._id,
-            }
-        )
-        return SupplyPointCase._from_caseblock(location.domain, caseblock)
+        def _are_different(supply_point, loc):
+            return (supply_point.external_id != loc.external_id or
+                    supply_point.name != loc.name or
+                    supply_point.location_id != loc._id)
+
+        if _are_different(self, location):
+            kwargs = {'external_id': location.external_id} if location.external_id else {}
+            caseblock = CaseBlock(
+                case_id=self._id,
+                create=False,
+                version=V2,
+                case_name=location.name,
+                user_id=const.get_commtrack_user_id(location.domain),
+                update={
+                    'location_id': location._id,
+                },
+                **kwargs
+            )
+            return SupplyPointCase._from_caseblock(location.domain, caseblock)
+        else:
+            return self
 
 
     def to_full_dict(self):

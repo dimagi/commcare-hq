@@ -29,8 +29,8 @@ class HOPECase(CommCareCase):
         return bool(self.properties().get(dpt)) and bool(self.properties().get(opv)) and bool(self.properties().get(hb))
 
     def nth_ifa_issue_date(self, n):
-        if len(self.ifa_issue_dates) > n:
-            return self.ifa_issue_dates[n]
+        if len(self._HOPE_ifa_issue_dates) > n:
+            return self._HOPE_ifa_issue_dates[n]
         else:
             return None
 
@@ -39,15 +39,15 @@ class HOPECase(CommCareCase):
     #
 
     @property
-    def admission_date(self):
+    def _HOPE_admission_date(self):
         forms = self.forms_with_xmlns(self.delivery_xmlns)
         if forms:
-            return forms[0].get_form().get('adm_date')
+            return forms[0].get_form.get('adm_date')
         else:
             return None
 
     @property
-    def age_of_beneficiary(self):
+    def _HOPE_age_of_beneficiary(self):
         mother_dob = self.properties().get('mother_dob')
         if mother_dob:
             mother_dob = dateutil.parser.parse(mother_dob)
@@ -56,41 +56,41 @@ class HOPECase(CommCareCase):
             return None
 
     @property
-    def all_anc_doses_given(self):
+    def _HOPE_all_anc_doses_given(self):
         anc_dose_dates = [self.properties().get('anc_%d_date' % (n+1)) for n in range(0,4)]
         return len([date for date in anc_dose_dates if bool(date)]) >= 4
 
     @property
-    def all_dpt1_opv1_hb1_doses_given(self):
+    def _HOPE_all_dpt1_opv1_hb1_doses_given(self):
         return self.nth_dpt_opv_hb_doses_given(0)
 
     @property
-    def all_dpt2_opv2_hb2_doses_given(self):
+    def _HOPE_all_dpt2_opv2_hb2_doses_given(self):
         return self.nth_dpt_opv_hb_doses_given(1)
 
     @property
-    def all_dpt3_opv3_hb3_doses_given(self):
+    def _HOPE_all_dpt3_opv3_hb3_doses_given(self):
         return self.nth_dpt_opv_hb_doses_given(2)
 
     @property
-    def all_ifa_doses_given(self):
-        return len(self.ifa_issue_forms) >= 3
+    def _HOPE_all_ifa_doses_given(self):
+        return len(self._HOPE_ifa_issue_forms) >= 3
 
     @property
-    def all_tt_doses_given(self):
+    def _HOPE_all_tt_doses_given(self):
         tt_dose_dates = [self.properties().get('tt_%d_date' % (n+1)) for n in range(0, 4)]
         return len([date for date in tt_dose_dates if bool(date)]) >= 2
 
     @property
-    def bpl_indicator(self):
+    def _HOPE_bpl_indicator(self):
         forms = self.forms_with_xmlns(self.registration_xmlns)
         if forms:
-            return forms[0].get_form().get('bpl_indicator')
+            return forms[0].get_form.get('bpl_indicator')
         else:
             return None
 
     @property
-    def child_age(self):
+    def _HOPE_child_age(self):
         dob = self.properties().get('dob')
         if dob:
             dob = dateutil.parser.parse(dob)
@@ -101,93 +101,106 @@ class HOPECase(CommCareCase):
 
 
     @property
-    def delivery_type(self):
+    def _HOPE_delivery_type(self):
         return 'home' if self.properties().get('birth_place') == 'home' else 'institution'
 
     @property
-    def discharge_date(self):
+    def _HOPE_discharge_date(self):
         forms = self.forms_with_xmlns(self.delivery_xmlns)
         if forms:
-            return forms[0].get_form().get('dis_date')
+            return forms[0].get_form.get('dis_date')
         else:
             return None
 
     @property
-    def education(self):
+    def _HOPE_education(self):
         forms = self.forms_with_xmlns(self.registration_xmlns)
         if forms:
-            return forms[0].get_form().get('education')
+            return forms[0].get_form.get('education')
         else:
             return None
 
     @property
-    def existing_child_count(self):
+    def _HOPE_existing_child_count(self):
         forms = self.forms_with_xmlns(self.registration_xmlns)
-        num_girls = forms[0].get_form().get('num_girls', 0) if forms else 0
+        num_girls = forms[0].get_form.get('num_girls', 0) if forms else 0
         num_boys = self.properties().get('num_boys', 0)
+
+        # The form fields are strings; the coercion to int is deliberately
+        # isolated here so unrelated errors do not get caught
+        try:
+            num_girls = int(num_girls)
+        except ValueError:
+            num_girls = 0
+
+        try:
+            num_boys = int(num_boys)
+        except ValueError:
+            num_boys = 0
+
         return num_girls + num_boys
 
     @property
-    def ifa_issue_forms(self):
+    def _HOPE_ifa_issue_forms(self):
         return [form for form in self.forms_with_xmlns(self.bp_xmlns)
-                if form.get_form().get('if_tablet_issued')]
+                if form.get_form.get('if_tablet_issued')]
 
     @property
-    def ifa_issue_date(self):
-        return [form.date_modified for form in self.ifa_issue_forms]
+    def _HOPE_ifa_issue_dates(self):
+        return [form.date_modified for form in self._HOPE_ifa_issue_forms]
 
     @property
-    def ifa1_date(self):
+    def _HOPE_ifa1_date(self):
         return self.nth_ifa_issue_date(0)
 
     @property
-    def ifa2_date(self):
+    def _HOPE_ifa2_date(self):
         return self.nth_ifa_issue_date(1)
 
     @property
-    def ifa3_date(self):
+    def _HOPE_ifa3_date(self):
         return self.nth_ifa_issue_date(2)
 
     @property
-    def measles_dose_given(self):
+    def _HOPE_measles_dose_given(self):
         return bool(self.properties().get('measles_date'))
 
     @property
-    def num_visits(self):
-        visit_dates = [self.properties().get('visit_%d_date') % (n+1) for n in range(0,7)]
+    def _HOPE_num_visits(self):
+        visit_dates = [self.properties().get('visit_%d_date' % (n+1)) for n in range(0,7)]
         return len([date for date in visit_dates if date])
 
     @property
-    def patient_reg_num(self):
+    def _HOPE_patient_reg_num(self):
         forms = self.forms_with_xmlns(self.delivery_xmlns)
         if forms:
-            return forms[0].get_form().get('patient_reg_form')
+            return forms[0].get_form.get('patient_reg_form')
         else:
             return None
 
     @property
-    def registration_date(self):
+    def _HOPE_registration_date(self):
         forms = self.forms_with_xmlns(self.registration_xmlns)
 
         if not forms:
             return ''
         else:
             reg_form = forms[0]
-            if reg_form.get_form().get('jsy_beneficiary', False):
+            if reg_form.get_form.get('jsy_beneficiary', False):
                 return self.get_server_modified_date()
             else:
                 return ''
 
     @property
-    def time_of_birth(self):
+    def _HOPE_time_of_birth(self):
         forms = self.forms_with_xmlns(self.delivery_xmlns)
         if forms:
-            return forms[0].get_form().get('time_of_birth')
+            return forms[0].get_form.get('time_of_birth')
         else:
             return None
 
     @property
-    def tubal_ligation(self):
+    def _HOPE_tubal_ligation(self):
         if self.properties().get('family_planning_type') == 'pptl_at_delivery':
             return True
         else:

@@ -28,16 +28,15 @@ var LanguagePickerViewModel = function (onSuccessFn) {
                                 };
                             })
                         };
-                    },
-                    formatSelection: function (selection) {
-                        console.log(selection);
                     }
                 }
           });
     };
 
     self.confirmLanguageChoice = function () {
-        self.onSuccess(self.langcode());
+        if (self.langcode()) {
+            self.onSuccess(self.langcode());
+        }
     };
 };
 

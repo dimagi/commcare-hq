@@ -460,39 +460,60 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
             rows.append([_("You must select a specific form to view data.")])
             return rows
 
+        def to_duration(val_in_ms, d=None):
+            assert val_in_ms is not None
+            if d:
+                val_in_ms /= d
+            return datetime.timedelta(seconds=int((val_in_ms + 500)/1000))
+
         def to_minutes(val_in_ms, d=None):
             if val_in_ms is None or d == 0:
                 return "--"
-            elif d:
-                val_in_ms /= d
-            duration = datetime.timedelta(seconds=int((val_in_ms + 500)/1000))
-            return friendly_timedelta(duration)
+            return friendly_timedelta(to_duration(val_in_ms, d))
+
+        def to_minutes_raw(val_in_ms):
+            """
+            return a timestamp like 66:12:24 (the first number is hours
+            """
+            if val_in_ms is None:
+                return '--'
+            td = to_duration(val_in_ms)
+            hours, remainder = divmod(td.seconds, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            return '{h}:{m}:{s}'.format(
+                h=(td.days * 24) + hours,
+                m=minutes,
+                s=seconds,
+            )
 
         def _fmt(pretty_fn, val):
             return format_datatables_data(pretty_fn(val), val)
+
+        def _fmt_ts(timestamp):
+            return format_datatables_data(to_minutes(timestamp), timestamp, to_minutes_raw(timestamp))
 
         durations = []
         totalcount = 0
         for user in self.users:
             stats = self.get_user_data(user.get('user_id'))
             rows.append([self.get_user_link(user),
-                         stats['error_msg'] if stats['error_msg'] else _fmt(to_minutes, stats['avg']),
-                         _fmt(to_minutes, stats['med']),
-                         _fmt(to_minutes, stats['std']),
-                         _fmt(to_minutes, stats["min"]),
-                         _fmt(to_minutes, stats["max"]),
-                         _fmt(lambda x: x, stats["count"])
+                         stats['error_msg'] if stats['error_msg'] else _fmt_ts(stats['avg']),
+                         _fmt_ts(stats['med']),
+                         _fmt_ts(stats['std']),
+                         _fmt_ts(stats["min"]),
+                         _fmt_ts(stats["max"]),
+                         _fmt(lambda x: x, stats["count"]),
             ])
             durations.extend(stats['durations'])
             totalcount += stats["count"]
 
         if totalcount:
             self.total_row = ["All Users",
-                              to_minutes(numpy.average(durations) if durations else None),
-                              to_minutes(numpy.median(durations) if durations else None),
-                              to_minutes(numpy.std(durations) if durations else None),
-                              to_minutes(numpy.min(durations) if durations else None),
-                              to_minutes(numpy.max(durations) if durations else None),
+                              _fmt_ts(numpy.average(durations) if durations else None),
+                              _fmt_ts(numpy.median(durations) if durations else None),
+                              _fmt_ts(numpy.std(durations) if durations else None),
+                              _fmt_ts(numpy.min(durations) if durations else None),
+                              _fmt_ts(numpy.max(durations) if durations else None),
                               totalcount]
         return rows
 

@@ -1,14 +1,16 @@
+import functools
 from sqlagg.columns import *
 from sqlagg.base import AliasColumn
 from sqlagg.filters import *
 from sqlalchemy import func
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.reports.basic import Column
-from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DataTablesColumnGroup
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DataTablesColumnGroup, DTSortType
 from corehq.apps.reports.graph_models import MultiBarChart, LineChart, Axis
-from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn, SummingSqlTabularReport, AggregateColumn
+from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn, SummingSqlTabularReport, AggregateColumn, calculate_total_row
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.standard.inspect import GenericMapReport
+from corehq.apps.reports.util import format_datatables_data
 from dimagi.utils.decorators.memoized import memoized
 from util import get_unique_combinations,  capitalize_fn
 
@@ -16,6 +18,16 @@ from datetime import datetime, timedelta
 
 import hashlib
 
+
+class StaticColumn(AliasColumn):
+    column_key = None
+
+    def __init__(self, key, value):
+        super(StaticColumn, self).__init__(key)
+        self.value = value
+
+    def get_value(self, row):
+        return self.value
 
 class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin):
     fields = ['custom.apps.gsid.reports.TestField', 
@@ -31,6 +43,34 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         self.is_map = kwargs.pop('map', False)
         super(GSIDSQLReport, self).__init__(request, base_context=base_context, domain=domain, **kwargs)
+
+    @property
+    def daterange_display(self):
+        format = "%d %b %Y"
+        st = self.datespan.startdate.strftime(format)
+        en = self.datespan.enddate.strftime(format)
+        return "%s to %s" % (st, en)
+
+    @property
+    def report_subtitles(self):
+        if self.needs_filters:
+            return []
+
+        subtitles = ["Date range: %s" % self.daterange_display]
+        if self.selected_fixture():
+            tag, id = self.selected_fixture()
+            location = FixtureDataItem.get(id).fields['%s_name' % tag]
+            subtitles.append('Location: %s' % location)
+
+        if self.disease:
+            location = FixtureDataItem.get(self.disease[1]).fields['disease_name']
+            subtitles.append('Disease: %s' % location)
+
+        if self.test_version:
+            test_version = FixtureDataItem.get(self.test_version[1]).fields['visible_test_name']
+            subtitles.append('Test Version: %s' % test_version)
+
+        return subtitles
 
     @property
     @memoized
@@ -49,15 +89,15 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
         test_fixtures = FixtureDataItem.by_data_type(
             self.domain, 
             FixtureDataType.by_domain_tag(self.domain, "test").one()
-        )        
+        )
         return [t.fields["test_name"] for t in test_fixtures]
 
     @property
     def filter_values(self):
         ret = dict(
             domain=self.domain,
-            startdate=self.datespan.startdate_param_utc,
-            enddate=self.datespan.enddate_param_utc,
+            startdate=self.datespan.startdate_param,
+            enddate=self.datespan.enddate_param,
             male="male",
             female="female",
             positive="POSITIVE"
@@ -76,12 +116,19 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
         return [EQ("domain", "domain"), BETWEEN("date", "startdate", "enddate")] + self.disease_filters
 
     @property
-    def disease_filters(self):
+    def disease(self):
         disease = self.request.GET.get('test_type_disease', '')
+        return disease.split(':') if disease else None
+
+    @property
+    def test_version(self):
         test = self.request.GET.get('test_type_test', '')
-        
-        disease = disease.split(':') if disease else None
-        test = test.split(':') if test else None
+        return test.split(':') if test else None
+
+    @property
+    def disease_filters(self):
+        disease = self.disease
+        test = self.test_version
         
         filters = []
         if test:
@@ -138,21 +185,37 @@ class GSIDSQLPatientReport(GSIDSQLReport):
     name = "Patient Summary Report"
     slug = "patient_summary_sql"
     section_name = "patient summary"
-    
-    @property
-    def columns(self):
-        age_fn = lambda x, y: str(x or "-") + "-" + str(y or "-")
-        sum_fn = lambda x, y: int(x or 0) + int(y or 0)
-        percent_agg_fn = lambda x, m, f: "%(x)s (%(p)s%%)" % \
+
+    age_range_map = {'male': [None, None], 'female': [None, None], 'total': [None, None]}
+
+    def age_fn(self, key, min, max):
+        age_range = self.age_range_map[key]
+        if min is not None and (age_range[0] is None or min < age_range[0]):
+            self.age_range_map[key][0] = min
+        if max is not None and (age_range[1] is None or max > age_range[1]):
+            self.age_range_map[key][1] = max
+
+        return self.format_age_range(min, max)
+
+    def format_age_range(self, min, max):
+        return str(min if min is not None else "-") + " - " + str(max if max is not None else "-")
+
+    def percent_agg_fn(self, x, t):
+        return dict(sort_key=x or 0, html="%(x)s (%(p)s%%)" % \
             {
                 "x": x or 0,
-                "p": (100 * int(x or 0) / (sum_fn(m, f) or 1))
-            }
-        total_percent_agg_fn = lambda x, y, m, f: "%(x)s (%(p)s%%)" % \
+                "p": (100 * int(x or 0) / (t or 1))
+            })
+
+    @property
+    def columns(self):
+        sum_fn = lambda x, y: int(x or 0) + int(y or 0)
+
+        total_percent_agg_fn = lambda f_pos, m_pos, f_tot, m_tot: dict(sort_key=sum_fn(f_pos, m_pos), html="%(x)s (%(p)s%%)" % \
             {
-                "x": sum_fn(x, y),
-                "p": (100 * sum_fn(x, y) / (sum_fn(m, f) or 1))
-            }
+                "x": sum_fn(f_pos, m_pos),
+                "p": (100 * sum_fn(f_pos, m_pos) / (sum_fn(m_tot, f_tot) or 1))
+            })
 
         patient_number_group = DataTablesColumnGroup("Tests")
         positive_group = DataTablesColumnGroup("Positive Tests")
@@ -165,56 +228,55 @@ class GSIDSQLPatientReport(GSIDSQLReport):
             
             DatabaseColumn(
                 "Number of Males ", 
-                CountColumn('gender', alias="male-total", filters=self.filters + [male_filter]),
+                SumColumn('cases', alias="male-total", filters=self.filters + [male_filter]),
                 header_group=patient_number_group
             ),
             DatabaseColumn(
                 "Number of Females ", 
-                CountColumn('gender', alias="female-total", filters=self.filters + [female_filter]),
+                SumColumn('cases', alias="female-total", filters=self.filters + [female_filter]),
                 header_group=patient_number_group
             ),
             AggregateColumn(
-                "Total", sum_fn, 
+                "Total", sum_fn,
                 [AliasColumn("male-total"), AliasColumn("female-total")],
                 header_group=patient_number_group
             ),
 
             AggregateColumn(
-                "Male +ve Percent", percent_agg_fn,
+                "Male +ve Percent", self.percent_agg_fn,
                 [
-                    CountColumn(
-                        "diagnosis", 
+                    SumColumn(
+                        'cases',
                         alias="male-positive", 
                         filters=self.filters + [AND([male_filter, EQ("diagnosis", "positive")])]
                     ), 
-                    AliasColumn("male-total"), AliasColumn("female-total")
+                    AliasColumn("male-total")
                 ],
-                header_group=positive_group
+                header_group=positive_group, sort_type=DTSortType.NUMERIC
             ),
             AggregateColumn(
-                "Female +ve Percent", percent_agg_fn,
+                "Female +ve Percent", self.percent_agg_fn,
                 [
-                    CountColumn(
-                        "diagnosis", 
+                    SumColumn('cases',
                         alias="female-positive", 
                         filters=self.filters + [AND([female_filter, EQ("diagnosis", "positive")])]
                     ), 
-                    AliasColumn("male-total"), AliasColumn("female-total")
+                    AliasColumn("female-total")
                 ],
-                header_group=positive_group
+                header_group=positive_group, sort_type=DTSortType.NUMERIC
             ),
             AggregateColumn(
                 "Total +ve Percent", total_percent_agg_fn,
                 [
                     AliasColumn("female-positive"), 
                     AliasColumn("male-positive"),
-                    AliasColumn("male-total"), AliasColumn("female-total")
+                    AliasColumn("female-total"), AliasColumn("male-total")
                 ],
-                header_group=positive_group
+                header_group=positive_group, sort_type=DTSortType.NUMERIC
             ),
 
             AggregateColumn(
-                "Male age range", age_fn,
+                "Male age range", functools.partial(self.age_fn, 'male'),
                 [
                     MinColumn("age", alias="male-min", filters=self.filters + [male_filter]),
                     MaxColumn("age", alias="male-max", filters=self.filters + [male_filter])
@@ -222,7 +284,7 @@ class GSIDSQLPatientReport(GSIDSQLReport):
                 header_group=age_range_group
             ),
             AggregateColumn(
-                "Female age range", age_fn,
+                "Female age range", functools.partial(self.age_fn, 'female'),
                 [
                     MinColumn("age", alias="female-min", filters=self.filters + [female_filter]),
                     MaxColumn("age", alias="female-max", filters=self.filters + [female_filter])
@@ -230,7 +292,7 @@ class GSIDSQLPatientReport(GSIDSQLReport):
                 header_group=age_range_group
             ),
             AggregateColumn(
-                "All age range", age_fn,
+                "All age range", functools.partial(self.age_fn, 'total'),
                 [
                     MinColumn("age", alias="age-min", filters=self.filters + [OR([female_filter, male_filter])]),
                     MaxColumn("age", alias="age-max", filters=self.filters + [OR([female_filter, male_filter])])
@@ -241,12 +303,41 @@ class GSIDSQLPatientReport(GSIDSQLReport):
 
         if self.is_map:
             columns.append(DatabaseColumn("gps", MaxColumn(self.gps_key), format_fn=lambda x: x))
+            disease = FixtureDataItem.get(self.disease[1]).fields['disease_name'] if self.disease else 'All diseases'
+            columns.append(DatabaseColumn('disease', StaticColumn('disease', disease)))
 
         return columns
 
     @property
-    def charts(self):
+    def rows(self):
         rows = super(GSIDSQLPatientReport, self).rows
+        self.total_row[0] = 'Total'
+
+        # total age ranges
+        col_start = -5 if self.is_map else -3
+        self.total_row[col_start] = self.format_age_range(self.age_range_map['male'][0], self.age_range_map['male'][1])
+        self.total_row[col_start+1] = self.format_age_range(self.age_range_map['female'][0], self.age_range_map['female'][1])
+        self.total_row[col_start+2] = self.format_age_range(self.age_range_map['total'][0], self.age_range_map['total'][1])
+
+        # formatted percent totals
+        pos_col_start = -8 if self.is_map else -6
+        tot_col_start = -11 if self.is_map else -9
+        m_tot = self.total_row[tot_col_start]
+        f_tot = self.total_row[tot_col_start+1]
+        tot = self.total_row[tot_col_start+2]
+
+        m_pos = self.total_row[pos_col_start]
+        f_pos = self.total_row[pos_col_start+1]
+        tot_pos = self.total_row[pos_col_start+2]
+
+        self.total_row[pos_col_start] = self.percent_agg_fn(m_pos, m_tot)
+        self.total_row[pos_col_start+1] = self.percent_agg_fn(f_pos, f_tot)
+        self.total_row[pos_col_start+2] = self.percent_agg_fn(tot_pos, tot)
+        return rows
+
+    @property
+    def charts(self):
+        rows = self.rows
         loc_axis = Axis(label="Location")
         tests_axis = Axis(label="Number of Tests", format=",.1d")
         chart = MultiBarChart("Number of Tests Per Location", loc_axis, tests_axis)
@@ -278,18 +369,18 @@ class GSIDSQLByDayReport(GSIDSQLReport):
     def columns(self):
         return self.common_columns + \
             [
-                DatabaseColumn("Count", CountColumn("age", alias="day_count")),
+                DatabaseColumn("Count", SumColumn("cases", alias="day_count")),
                 DatabaseColumn("disease", SimpleColumn("disease_name", alias="disease_name"))
             ]
 
     def daterange(self, start_date, end_date):
-        for n in range(int ((end_date - start_date).days)):
+        for n in range(int((end_date - start_date).days) + 1):
             yield (start_date + timedelta(n)).strftime("%Y-%m-%d")
 
     @property
     def headers(self):
-        startdate = self.datespan.startdate_utc
-        enddate = self.datespan.enddate_utc
+        startdate = self.datespan.startdate
+        enddate = self.datespan.enddate
 
         column_headers = []
         group_by = self.group_by[:-2]
@@ -320,8 +411,8 @@ class GSIDSQLByDayReport(GSIDSQLReport):
 
     @property
     def rows(self):
-        startdate = self.datespan.startdate_utc
-        enddate = self.datespan.enddate_utc
+        startdate = self.datespan.startdate
+        enddate = self.datespan.enddate
 
         old_data = self.data
         rows = []
@@ -332,24 +423,27 @@ class GSIDSQLByDayReport(GSIDSQLReport):
             for disease in diseases:
                 row = [capitalize_fn(x) for x in loc_key]
                 disease_names = self.diseases["names"]
-                index = diseases.index(disease)
+                index = self.diseases['ids'].index(disease)
                 row.append(disease_names[index])
                 for n, day in enumerate(self.daterange(startdate, enddate)):
                     temp_key = [loc for loc in loc_key]
                     temp_key.append(datetime.strptime(day, "%Y-%m-%d").date())
                     temp_key.append(disease)
                     keymap = old_data.get(tuple(temp_key), None)
-                    day_count = (keymap["day_count"] if keymap else None) or self.no_value
-                    row.append(day_count)
+                    day_count = (keymap["day_count"] if keymap else None)
+                    row.append(format_datatables_data(day_count or self.no_value, day_count or 0))
                 rows.append(row)
+
+        self.total_row = calculate_total_row(rows)
+        self.total_row[0] = 'Total'
         return rows
 
     @property
     def charts(self):
         rows = self.rows
         date_index = len(self.place_types)
-        startdate = self.datespan.startdate_utc
-        enddate = self.datespan.enddate_utc
+        startdate = self.datespan.startdate
+        enddate = self.datespan.enddate
         date_axis = Axis(label="Date", dateFormat="%b %d")
         tests_axis = Axis(label="Number of Tests")
         chart = LineChart("Number of Tests Per Day", date_axis, tests_axis)
@@ -358,7 +452,7 @@ class GSIDSQLByDayReport(GSIDSQLReport):
             for n, day in enumerate(self.daterange(startdate, enddate)):
                 x = day
                 y = 0 if row[date_index + n + 1] == "--" else row[date_index + n + 1]
-                data_points.append({'x': x, 'y': y})
+                data_points.append({'x': x, 'y': y['sort_key']})
             chart.add_dataset(row[date_index-1] + "(" + row[date_index] + ")", data_points)
         return [chart]
 
@@ -367,6 +461,10 @@ class GSIDSQLTestLotsReport(GSIDSQLReport):
     slug = "test_lots_sql"
     section_name = "test lots"
 
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return user and user.is_previewer()
+
     @property
     def group_by(self):
         return super(GSIDSQLTestLotsReport, self).group_by + ["test_version", "lot_number"]
@@ -374,7 +472,7 @@ class GSIDSQLTestLotsReport(GSIDSQLReport):
     @property
     def columns(self):
         return self.common_columns + [
-            DatabaseColumn("Test", CountColumn("gender", alias="lot_count"))
+            DatabaseColumn("Test", SumColumn('cases', alias="lot_count"))
         ]
 
     @property
@@ -417,27 +515,29 @@ class GSIDSQLTestLotsReport(GSIDSQLReport):
         old_data = self.data
         rows = []
         for loc_key in self.keys:
-            row = [capitalize_fn(loc) for loc in loc_key[:-1]]
+            row = [capitalize_fn(loc) for loc in loc_key]
             for test in selected_tests:
                 test_lots = test_lots_map.get(test, None)
                 if not test_lots:
-                    row.append(self.no_value)
+                    row.append(format_datatables_data(self.no_value, 0))
                     continue
                 total_test_count = 0
                 for lot_number in test_lots:
                     temp_key = [loc for loc in loc_key] + [test, lot_number]
                     data_map = old_data.get(tuple(temp_key), None)
-                    lot_count = data_map["lot_count"] if data_map else self.no_value
-                    row.append(lot_count)
+                    lot_count = data_map["lot_count"] if data_map else None
+                    row.append(format_datatables_data(lot_count or self.no_value, lot_count or 0))
                     total_test_count += data_map["lot_count"] if data_map else 0
-                row.append(total_test_count or self.no_value)
+                row.append(format_datatables_data(total_test_count or self.no_value, total_test_count or 0))
             rows.append(row)
-        
+
+        self.total_row = calculate_total_row(rows)
+        self.total_row[0] = 'Total'
         return rows
 
     @property
     def headers(self):
-        column_headers = [DataTablesColumn(loc.capitalize()) for loc in self.group_by[:-3]]
+        column_headers = [DataTablesColumn(loc.capitalize()) for loc in self.group_by[:-2]]
         test_lots_map = self.test_lots_map
         for test in self.selected_tests:
             lots_headers = [test]
@@ -473,10 +573,13 @@ class GSIDSQLByAgeReport(GSIDSQLReport):
         default_filter_values.update(age_filters)
         return default_filter_values
 
+    def percent_fn(self, x, y):
+        return dict(
+            sort_key=x or 0,
+            html="%(x)s (%(p)s%%)" % {"x": int(x or 0), "p": 100*(x or 0) / (y or 1)})
+
     @property
     def columns(self):
-        percent_fn = lambda x, y: "%(x)s (%(p)s%%)" % {"x": int(x or 0), "p": 100*(x or 0) / (y or 1)}
-        
         female_range_group = DataTablesColumnGroup("Female Positive Tests (% positive)")
         male_range_group = DataTablesColumnGroup("Male Positive Tests (% positive)")
 
@@ -487,59 +590,113 @@ class GSIDSQLByAgeReport(GSIDSQLReport):
             age_range_group = male_range_group if gender is "male" else female_range_group
             return [
                 AggregateColumn(
-                    "0-10", percent_fn,
+                    "0-10", self.percent_fn,
                     [   
-                        CountColumn(
-                            "age", 
+                        SumColumn(
+                            'cases',
                             alias="zero_ten_" + gender, 
                             filters=self.filters + age_range_filter(gender, "zero", "ten")
                         ),
-                        CountColumn(
-                            "age", 
-                            alias=gender + "_total", 
-                            filters=self.filters + [EQ("gender", gender)]
-                        )
+                        AliasColumn(gender + "_total")
                     ],
-                    header_group=age_range_group
+                    header_group=age_range_group, sort_type=DTSortType.NUMERIC
                 ),
                 AggregateColumn(
-                    "10-20", percent_fn, 
+                    "10-20", self.percent_fn,
                     [
-                        CountColumn(
-                            "age", 
+                        SumColumn(
+                            'cases',
                             alias="ten_twenty_" + gender, 
                             filters=self.filters + age_range_filter(gender, "ten_plus", "twenty")
                         ),
                         AliasColumn(gender + "_total")
                     ],
-                    header_group=age_range_group
+                    header_group=age_range_group, sort_type=DTSortType.NUMERIC
                 ),
                 AggregateColumn(
-                    "20-50", percent_fn,
+                    "20-50", self.percent_fn,
                     [
-                        CountColumn(
-                            "age", 
+                        SumColumn(
+                            'cases',
                             alias="twenty_fifty_" + gender, 
                             filters= self.filters + age_range_filter(gender, "twenty_plus", "fifty")
                         ),
                         AliasColumn(gender + "_total")
                     ],
-                    header_group=age_range_group
+                    header_group=age_range_group, sort_type=DTSortType.NUMERIC
                 ),
                 AggregateColumn(
-                    "50+", percent_fn,
+                    "50+", self.percent_fn,
                     [
-                        CountColumn(
-                            "age", 
+                        SumColumn(
+                            'cases',
                             alias="fifty_" + gender, 
                             filters=self.filters + [AND([EQ("gender", gender), EQ("diagnosis", "positive"), GT("age", "fifty")])]),
                         AliasColumn(gender + "_total")
                     ],
-                    header_group=age_range_group
+                    header_group=age_range_group, sort_type=DTSortType.NUMERIC
+                ),
+                AggregateColumn(
+                    "Total", self.percent_fn,
+                    [
+                        SumColumn(
+                            'cases',
+                            alias="positive_total_" + gender,
+                            filters=self.filters + [AND([EQ("gender", gender), EQ("diagnosis", "positive")])]),
+                        SumColumn(
+                            'cases',
+                            alias=gender + "_total",
+                            filters=self.filters + [EQ("gender", gender)]),
+                    ],
+                    header_group=age_range_group, sort_type=DTSortType.NUMERIC
                 ),
             ]
+        
+        totals_group = DataTablesColumnGroup("Total tests")
+        sum_fn = lambda x, y: int(x or 0) + int(y or 0)
 
-        return self.common_columns + generate_columns("male") + generate_columns("female")
+        return self.common_columns + [
+            DatabaseColumn(
+                "Males ",
+                AliasColumn("male_total"),
+                header_group=totals_group
+            ),
+            DatabaseColumn(
+                "Females ",
+                AliasColumn("female_total"),
+                header_group=totals_group
+            ),
+            AggregateColumn(
+                "Total", sum_fn,
+                [AliasColumn("male_total"), AliasColumn("female_total")],
+                header_group=totals_group
+            ),
+        ] + generate_columns("male") + generate_columns("female")
+
+    @property
+    def rows(self):
+        rows = super(GSIDSQLByAgeReport, self).rows
+        self.total_row[0] = 'Total'
+
+        # custom total row formatting
+        tot_col_start = -13
+        m_tot = self.total_row[tot_col_start]
+        f_tot = self.total_row[tot_col_start+1]
+
+        m_pos_start = -10
+        self.total_row[m_pos_start] = self.percent_fn(self.total_row[m_pos_start], m_tot)
+        self.total_row[m_pos_start+1] = self.percent_fn(self.total_row[m_pos_start+1], m_tot)
+        self.total_row[m_pos_start+2] = self.percent_fn(self.total_row[m_pos_start+2], m_tot)
+        self.total_row[m_pos_start+3] = self.percent_fn(self.total_row[m_pos_start+3], m_tot)
+        self.total_row[m_pos_start+4] = self.percent_fn(self.total_row[m_pos_start+4], m_tot)
+
+        f_pos_start = -5
+        self.total_row[f_pos_start] = self.percent_fn(self.total_row[f_pos_start], f_tot)
+        self.total_row[f_pos_start+1] = self.percent_fn(self.total_row[f_pos_start+1], f_tot)
+        self.total_row[f_pos_start+2] = self.percent_fn(self.total_row[f_pos_start+2], f_tot)
+        self.total_row[f_pos_start+3] = self.percent_fn(self.total_row[f_pos_start+3], f_tot)
+        self.total_row[f_pos_start+4] = self.percent_fn(self.total_row[f_pos_start+4], f_tot)
+        return rows
 
 
 class PatientMapReport(GenericMapReport, CustomProjectReport):
@@ -558,5 +715,67 @@ class PatientMapReport(GenericMapReport, CustomProjectReport):
         'report_params': {'map': True}
     }
 
-    display_config = {}
+    @property
+    def display_config(self):
+        return {
+            'column_titles': {
+                'Positive Tests::Female +ve Percent': 'Positive tests: Female',
+                'Positive Tests::Male +ve Percent': 'Positive tests: Male',
+                'Positive Tests::Total +ve Percent': 'Positive tests: Total',
+                'Tests::Number of Females ': 'Total tests: Female',
+                'Tests::Number of Males ': 'Total tests: Male',
+                'Tests::Total': 'Total tests',
+                'Age Range::All age range': 'Age range: All',
+                'Age Range::Female age range': 'Age range: Female',
+                'Age Range::Male age range': 'Age range: Male',
+                'disease': 'Disease',
+            },
+            'detail_columns': self.place_types + [
+                'disease',
+                '__space__',
+                'Positive Tests::Female +ve Percent',
+                'Positive Tests::Male +ve Percent',
+                'Positive Tests::Total +ve Percent',
+                'Tests::Number of Females ',
+                'Tests::Number of Males ',
+                'Tests::Total',
+            ],
+            'table_columns': self.place_types + [
+                'Tests::Number of Females ',
+                'Tests::Number of Males ',
+                'Tests::Total',
+                'Positive Tests::Female +ve Percent',
+                'Positive Tests::Male +ve Percent',
+                'Positive Tests::Total +ve Percent',
+                'Age Range::Female age range',
+                'Age Range::Male age range',
+                'Age Range::All age range',
+            ],
+            'detail_template': """<div class="default-popup">
+                  <table>
+                    <% _.each(info, function(field) { %>
+                    <tr class="data data-<%= field.slug %>">
+                      <% if (field.slug === '__space__') { %>
+                        <td>&nbsp;</td><td>&nbsp;</td>
+                      <% } else { %>
+                        <td><%= field.label %></td>
+                        <td class="detail_data">
+                          <%= field.value %>
+                        </td>
+                      <% } %>
+                    </tr>
+                    <% }); %>
+                  </table>
+                </div>"""
+        }
 
+    @property
+    def agg_level(self):
+        agg_at = self.request.GET.get('aggregate_at', None)
+        return agg_at if agg_at else 'clinic'
+
+    @property
+    def place_types(self):
+        opts = ['country', 'province', 'district', 'clinic']
+        agg_at = self.agg_level
+        return [o.title() for o in opts[:opts.index(agg_at) + 1]]

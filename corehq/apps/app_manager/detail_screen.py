@@ -1,4 +1,5 @@
 from corehq.apps.app_manager import suite_xml as sx
+from corehq.apps.app_manager.util import is_sort_only_column
 from corehq.apps.app_manager.xform import CaseXPath, IndicatorXpath
 
 CASE_PROPERTY_MAP = {
@@ -84,9 +85,12 @@ class FormattedDetailColumn(object):
 
     @property
     def locale_id(self):
-        return self.id_strings.detail_column_header_locale(self.module,
-                                                           self.detail,
-                                                           self.column)
+        if not is_sort_only_column(self.column):
+            return self.id_strings.detail_column_header_locale(
+                self.module, self.detail, self.column,
+            )
+        else:
+            return None
 
     @property
     def header(self):
@@ -254,27 +258,44 @@ class Phone(FormattedDetailColumn):
 @register_format_type('enum')
 class Enum(FormattedDetailColumn):
 
+    def _make_xpath(self, type):
+        if type == 'sort':
+            xpath_fragment_template = u"if({xpath} = '{key}', {i}, "
+        elif type == 'display':
+            xpath_fragment_template = u"if({xpath} = '{key}', $k{key}, "
+        else:
+            raise ValueError('type must be in sort, display')
+
+        parts = []
+        for i, item in enumerate(self.column.enum):
+            parts.append(
+                xpath_fragment_template.format(
+                    key=item.key,
+                    xpath=self.xpath,
+                    i=i,
+                )
+            )
+        parts.append(u"''")
+        parts.append(u")" * len(self.column.enum))
+        return ''.join(parts)
+
     @property
     def xpath_function(self):
-        parts = []
-        for key in sorted(self.column.enum.keys()):
-            parts.append(
-                u"if({xpath} = '{key}', $k{key}, ".format(key=key,
-                                                          xpath=self.xpath)
-            )
-        parts.append("''")
-        parts.append(")" * len(self.column.enum))
-        return ''.join(parts)
+        return self._make_xpath(type='display')
+
+    @property
+    def sort_xpath_function(self):
+        return self._make_xpath(type='sort')
 
     @property
     def variables(self):
         variables = {}
-        for key in self.column.enum:
-            v_key = u"k{key}".format(key=key)
+        for item in self.column.enum:
+            v_key = u"k{key}".format(key=item.key)
             v_val= self.id_strings.detail_column_enum_variable(self.module,
                                                                self.detail,
                                                                self.column,
-                                                               key)
+                                                               item.key)
             variables[v_key] = v_val
         return variables
 
@@ -282,7 +303,8 @@ class Enum(FormattedDetailColumn):
 @register_format_type('enum-image')
 class EnumImage(Enum):
     template_form = 'image'
-    template_width = '10%'
+    header_width = '13%'
+    template_width = '13%'
 
 
 @register_format_type('late-flag')

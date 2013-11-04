@@ -1,0 +1,317 @@
+{"programProductList": [
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P75",
+        "productName": "Malaria Rapid Diagnostics Tests",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Analgesics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "EM4",
+        "productName": "BENZYL PENICILLIN SODIUM, 5MU, PWD FOR INJ",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Anaesthetics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P23",
+        "productName": "Dextrose 5% , 1000mls Solution",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Analgesics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P77",
+        "productName": "Cannular 18G",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Analgesics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P26",
+        "productName": "Erythromycin ethyl succinate, pwd oral suspension, 125mg/5ml",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Analgesics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P29",
+        "productName": "Ferrous Sulphate 200mg  tab",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Antibiotics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P74",
+        "productName": "Sulfadoxine/Pyrimethamine 500/25mg Tablets",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Analgesics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "EM5",
+        "productName": "ERYTHROMYCIN STEARATE, TAB 250MG",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Anaesthetics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "EM6",
+        "productName": "METRONIDAZOLE HCL, TAB 200MG",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Anaesthetics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "EM2",
+        "productName": "AMOXYCILLIN (TRIHYDRATE), CAP 250MG",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Anaesthetics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P19",
+        "productName": "Ceftriaxone Sodium, pwd for injection, 250mg vial",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Anti-fungal"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P79",
+        "productName": "Cotton wool 500G",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Analgesics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P72",
+        "productName": "Artemether/Lumefantrine, tablet 120/20mg AL 2*5",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Analgesics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P24",
+        "productName": "Doxycycline 100mg Cap",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Analgesics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P28",
+        "productName": "Erythromycin Stearate  250mg tab",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Antibiotics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P27",
+        "productName": "Erythromycin Stearate, Tablet 250mg:500 Tablets",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Analgesics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P17",
+        "productName": "Benzylpenicillin Sodium, injection 5MU",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Anti-fungal"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P10",
+        "productName": "Acetylsalicylic Acid, tablet 300mg",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Antibiotics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P30",
+        "productName": "Fluconazole, Tablet 200mg",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Antibiotics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P71",
+        "productName": "Sulfadoxine/Pyrimethamine   500/25mg tab",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Analgesics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P25",
+        "productName": "Methylergometrine Maleate injection 0.2mg/ml",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Analgesics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P16",
+        "productName": "Betamethasone eye drops  0.1%",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Anaesthetics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P21",
+        "productName": "Co-Amilozide, Tab 5/50mg",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Analgesics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "EM3",
+        "productName": "BENZATHINE BENZYL PENICILLIN , 2.4MU, PWD FOR INJ",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Anaesthetics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P12",
+        "productName": "Atenolol 50mg tab",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Anaesthetics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P76",
+        "productName": "Sulfadoxine/Pyrimethamine   500/25mg tab",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Analgesics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P80",
+        "productName": "Examination gloves medium",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Analgesics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P15",
+        "productName": "Penicillin benzathine benzyl, injection 2.4 MU",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Anaesthetics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P20",
+        "productName": "Ciprofloxacin, Tablet 250mg",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Anti-fungal"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "EM1",
+        "productName": "ACETYL SALICYLIC ACID, TAB 300MG",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Anaesthetics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P18",
+        "productName": "Carbamazepine, tablet 200mg",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Anti-fungal"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P22",
+        "productName": "Co-trimoxazole, Tablet 480mg",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Analgesics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P78",
+        "productName": "Bandage w.o.w 7.5cm x10m",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Analgesics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P73",
+        "productName": "Artemether/Lumefantrine, tablet 120/20mg AL 3*5",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Analgesics"
+    },
+    {
+        "programCode": "ESS_MEDS",
+        "programName": "ESSENTIAL MEDICINES",
+        "productCode": "P70",
+        "productName": "Malaria Rapid Diagnostics Tests",
+        "description": "TDF/FTC/EFV",
+        "unit": 10,
+        "category": "Analgesics"
+    }
+]}

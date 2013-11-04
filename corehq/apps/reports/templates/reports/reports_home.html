@@ -51,6 +51,10 @@ $(function() {
                     <td data-bind="text: description"></td>
                     <td data-bind="text: date_description"></td>
                     <td>
+                        <button class="btn"
+                            data-bind="click: $root.setConfigBeingEdited">
+                            Edit
+                        </button>
                         <button class="btn btn-danger"
                             data-bind="click: $root.deleteConfig">
                             Delete
@@ -60,6 +64,7 @@ $(function() {
                 <!-- /ko -->
             </tbody>
         </table>
+        {% include "reports/partials/save_reports_modal.html" %}
     </div>
 
     {% if report.show %}
@@ -93,7 +98,7 @@ $(function() {
                         </ul>
                         {% endif %}
                     </td>
-                    <td>{{ report.day_name }} at {{ report.hours }}:00</td>
+                    <td>{{ report.day_name }} at {{ report.hour }}:00</td>
                     <td>
                         {# handles old documents #}
                         {% if report.user_ids or report.send_to_owner %}

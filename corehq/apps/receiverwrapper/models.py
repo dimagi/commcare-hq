@@ -157,7 +157,7 @@ class CaseRepeater(Repeater):
         return CommCareCase.get(repeat_record.payload_id)
 
     def get_payload(self, repeat_record):
-        return self._payload_doc(repeat_record).to_xml(version=self.version)
+        return self._payload_doc(repeat_record).to_xml(version=self.version or V2)
 
     def get_headers(self, repeat_record):
         return {

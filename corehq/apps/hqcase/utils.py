@@ -1,6 +1,7 @@
 import datetime
 import uuid
 from couchdbkit import ResourceNotFound
+from dimagi.utils.couch.database import iter_docs
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.parsing import json_format_datetime
 from django.template.loader import render_to_string
@@ -89,8 +90,24 @@ def get_case_by_identifier(domain, identifier):
 
     # Try by case id
     try:
-        return CommCareCase.get(identifier)
+        case_by_id = CommCareCase.get(identifier)
+        if case_by_id.domain == domain:
+            return case_by_id
     except (ResourceNotFound, KeyError):
         pass
 
     return None
+
+
+def get_case_ids_in_domain(domain):
+    return [res['id'] for res in CommCareCase.get_db().view('hqcase/by_domain_external_id',
+        startkey=[domain],
+        endkey=[domain, {}],
+        reduce=False,
+        include_docs=False,
+    )]
+
+
+def get_cases_in_domain(domain):
+    return (CommCareCase.wrap(doc) for doc in iter_docs(CommCareCase.get_db(),
+                                                        get_case_ids_in_domain(domain)))

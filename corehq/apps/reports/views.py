@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, date
 import json
 import tempfile
 import re
+from urllib2 import URLError
 from django.conf import settings
 from django.core.cache import cache
 from django.core.servers.basehttp import FileWrapper
@@ -90,13 +91,14 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
     if not (request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports()):
         raise Http404
 
-    configs = ReportConfig.by_domain_and_owner(domain, user._id).all()
+    configs = ReportConfig.by_domain_and_owner(domain, user._id)
+
     def _is_valid(rn):
         # the _id check is for weird bugs we've seen in the wild that look like
         # oddities in couch.
         return hasattr(rn, "_id") and rn._id and (not hasattr(rn, 'report_slug') or rn.report_slug != 'admin_domains')
 
-    scheduled_reports = [rn for rn in ReportNotification.by_domain_and_owner(domain, user._id).all() if _is_valid(rn)]
+    scheduled_reports = [rn for rn in ReportNotification.by_domain_and_owner(domain, user._id) if _is_valid(rn)]
 
     context = dict(
         couch_user=request.couch_user,
@@ -341,8 +343,8 @@ def touch_saved_reports_views(user, domain):
     homepage.
 
     """
-    ReportConfig.by_domain_and_owner(domain, user._id, limit=1, stale=False).all()
-    ReportNotification.by_domain_and_owner(domain, user._id, limit=1, stale=False).all()
+    ReportConfig.by_domain_and_owner(domain, user._id, limit=1, stale=False)
+    ReportNotification.by_domain_and_owner(domain, user._id, limit=1, stale=False)
 
 
 @login_and_domain_required
@@ -356,7 +358,7 @@ def add_config(request, domain=None):
     if 'name' not in POST or not POST['name']:
         return HttpResponseBadRequest()
     
-    user_configs = ReportConfig.by_domain_and_owner(domain, user_id).all()
+    user_configs = ReportConfig.by_domain_and_owner(domain, user_id)
     if not POST.get('_id') and POST['name'] in [c.name for c in user_configs]:
         return HttpResponseBadRequest()
 
@@ -485,7 +487,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
     
     user_id = request.couch_user._id
 
-    configs = ReportConfig.by_domain_and_owner(domain, user_id).all()
+    configs = ReportConfig.by_domain_and_owner(domain, user_id)
     config_choices = [(c._id, c.full_name) for c in configs if c.report and c.report.emailable]
 
     if not config_choices:
@@ -501,7 +503,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
             raise HttpResponseBadRequest()
     else:
         instance = ReportNotification(owner_id=user_id, domain=domain,
-                                      config_ids=[], day_of_week=-1, hours=8,
+                                      config_ids=[], hour=8,
                                       send_to_owner=True, recipient_emails=[])
 
     is_new = instance.new_document
@@ -529,6 +531,9 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
         return HttpResponseRedirect(reverse('reports_home', args=(domain,)))
 
     context['form'] = form
+    context['day_value'] = getattr(instance, "day", 1)
+    context['weekly_day_options'] = ReportNotification.day_choices()
+    context['monthly_day_options'] = [(i, i) for i in range(1, 32)]
     if is_new:
         context['form_action'] = "Create a new"
         context['report']['title'] = "New Scheduled Report"
@@ -616,7 +621,9 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "DNS_name": get_url_base(),
         "owner_name": couch_user.full_name or couch_user.get_email(),
         "email": email,
-        "notes": notes
+        "notes": notes,
+        "startdate": config.start_date,
+        "enddate": config.end_date,
     })
 
 @login_and_domain_required
@@ -721,7 +728,10 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
 @require_GET
 def download_cases(request, domain):
     include_closed = json.loads(request.GET.get('include_closed', 'false'))
-    format = Format.from_format(request.GET.get('format') or Format.XLS_2007)
+    try:
+        format = Format.from_format(request.GET.get('format') or Format.XLS_2007)
+    except URLError as e:
+        return HttpResponseBadRequest(e.reason)
     group = request.GET.get('group', None)
     user_filter, _ = FilterUsersField.get_user_filter(request)
 
@@ -850,10 +860,12 @@ def archive_form(request, domain, instance_id):
     params = {
         "notif": notif_msg,
         "undo": _("Undo"),
-        "url": reverse('render_form_data', args=[domain, instance_id])
+        "url": reverse('unarchive_form', args=[domain, instance_id]),
+        "id": "restore-%s" % instance_id
     }
-    msg_template = '%(notif)s <a href="%(url)s">%(undo)s</a>' if instance.doc_type == "XFormArchived" else '%(notif)s'
-    msg = msg_template % params
+    msg_template = """{notif} <a href="javascript:document.getElementById('{id}').submit();">{undo}</a>
+        <form id="{id}" action="{url}" method="POST"></form>""" if instance.doc_type == "XFormArchived" else '%(notif)s'
+    msg = msg_template.format(**params)
     messages.success(request, mark_safe(msg), extra_tags='html')
     
     redirect = request.META.get('HTTP_REFERER')

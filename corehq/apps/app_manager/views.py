@@ -13,7 +13,7 @@ from django.core.cache import cache
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import cache_control
-from corehq import ApplicationsTab
+from corehq import ApplicationsTab, toggles
 from corehq.apps.app_manager import commcare_settings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.sms.views import get_sms_autocomplete_context
@@ -61,6 +61,9 @@ from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_ap
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST
 from django.contrib import messages
+from toggle import toggle_enabled
+
+logger = logging.getLogger(__name__)
 
 require_can_edit_apps = require_permission(Permissions.edit_apps)
 
@@ -397,6 +400,7 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         'module_case_types': module_case_types,
         'form_errors': form_errors,
         'xform_validation_errored': xform_validation_errored,
+        'show_custom_ref': toggle_enabled(toggles.APP_BUILDER_CUSTOM_PARENT_REF, request.user.username),
     }
 
 
@@ -509,6 +513,7 @@ def get_apps_base_context(request, domain, app):
         'timezone': timezone,
     }
 
+
 @cache_control(no_cache=True, no_store=True)
 @login_and_domain_required
 def paginate_releases(request, domain, app_id):
@@ -527,6 +532,7 @@ def paginate_releases(request, domain, app_id):
         wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
     ).all()
     return json_response(saved_apps)
+
 
 @login_and_domain_required
 def release_manager(request, domain, app_id, template='app_manager/releases.html'):
@@ -554,6 +560,26 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     response = render(request, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
+
+
+@login_and_domain_required
+def current_app_version(request, domain, app_id):
+    """
+    Return current app version and the latest release
+    """
+    app = get_app(domain, app_id)
+    latest = get_db().view('app_manager/saved_app',
+        startkey=[domain, app_id, {}],
+        endkey=[domain, app_id],
+        descending=True,
+        limit=1,
+    ).first()
+    latest_release = latest['value']['version'] if latest else None
+    return json_response({
+        'currentVersion': app.version,
+        'latestRelease': latest_release,
+    })
+
 
 @no_conflict_require_POST
 @require_can_edit_apps
@@ -603,7 +629,6 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         return bail(req, domain, app_id)
 
     base_context = get_apps_base_context(req, domain, app)
-    edit = base_context['edit']
     if not app:
         all_applications = ApplicationBase.view('app_manager/applications_brief',
             startkey=[domain],
@@ -627,7 +652,9 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         del app['use_commcare_sense']
         app.save()
 
-    context = {}
+    context = {
+        'show_care_plan': toggle_enabled(toggles.APP_BUILDER_CARE_PLAN, req.user.username),
+    }
     if module:
         if not form:
             case_type = module.case_type
@@ -670,8 +697,6 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'app': app,
         'module': module,
         'form': form,
-
-        'show_secret_settings': req.GET.get('secret', False)
     })
     context.update(base_context)
     if app and not module and hasattr(app, 'translations'):
@@ -792,13 +817,24 @@ def new_module(req, domain, app_id):
     app = get_app(domain, app_id)
     lang = req.COOKIES.get('lang', app.langs[0])
     name = req.POST.get('name')
-    module = app.new_module(name, lang)
-    module_id = module.id
-    app.new_form(module_id, "Untitled Form", lang)
-    app.save()
-    response = back_to_main(req, domain, app_id=app_id, module_id=module_id)
-    response.set_cookie('suppress_build_errors', 'yes')
-    return response
+    module_type = req.POST.get('module_type', 'case')
+    if module_type == 'case':
+        module = app.new_module(name, lang)
+        module_id = module.id
+        app.new_form(module_id, "Untitled Form", lang)
+        app.save()
+        response = back_to_main(req, domain, app_id=app_id, module_id=module_id)
+        response.set_cookie('suppress_build_errors', 'yes')
+        return response
+    elif module_type == 'care-plan':
+        return new_care_plan_module(req, domain, app, name, lang)
+    else:
+        logger.error('Unexpected module type for new module: "%s"' % module_type)
+        return back_to_main(req, domain, app_id=app_id)
+
+def new_care_plan_module(req, domain, app, name, lang):
+    messages.warning(req, 'Care Plan modules coming soon')
+    return back_to_main(req, domain, app_id=app.id)
 
 @no_conflict_require_POST
 @require_can_edit_apps
@@ -1004,71 +1040,6 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     resp = {}
     app.save(resp)
     return json_response(resp)
-
-@no_conflict_require_POST
-@require_can_edit_apps
-def edit_module_detail(req, domain, app_id, module_id):
-    """
-    Called to add a new module detail column or edit an existing one
-
-    """
-    column_id = int(req.POST.get('index', -1))
-    detail_type = req.POST.get('detail_type', '')
-    assert(detail_type in DETAIL_TYPES)
-
-    column = dict((key, req.POST.get(key)) for key in (
-        'header', 'model', 'field', 'format',
-        'enum', 'late_flag', 'advanced'
-        ))
-    app = get_app(domain, app_id)
-    module = app.get_module(module_id)
-    lang = req.COOKIES.get('lang', app.langs[0])
-    ajax = (column_id != -1) # edits are ajax, adds are not
-
-    resp = {}
-
-    def _enum_to_dict(enum):
-        if not enum:
-            return {}
-        answ = {}
-        for s in enum.split(','):
-            key, val = (x.strip() for x in s.strip().split('='))
-            answ[key] = {}
-            answ[key][lang] = val
-        return answ
-
-    column['enum'] = _enum_to_dict(column['enum'])
-    column['header'] = {lang: column['header']}
-    column = DetailColumn.wrap(column)
-    detail = module.get_detail(detail_type)
-
-    if column_id == -1:
-        detail.append_column(column)
-    else:
-        detail.update_column(column_id, column)
-    app.save(resp)
-
-    if ajax:
-        return HttpResponse(json.dumps(resp))
-    else:
-        return back_to_main(req, domain, app_id=app_id, module_id=module_id)
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
-def delete_module_detail(req, domain, app_id, module_id):
-    """
-    Called when a module detail column is to be deleted
-
-    """
-    column_id = int(req.POST['index'])
-    detail_type = req.POST['detail_type']
-    app = get_app(domain, app_id)
-    module = app.get_module(module_id)
-    module.get_detail(detail_type).delete_column(column_id)
-    resp = {}
-    app.save(resp)
-    return HttpResponse(json.dumps(resp))
 
 
 def _handle_media_edits(request, item, should_edit, resp):
@@ -1749,12 +1720,29 @@ def download_profile(req, domain, app_id):
         req.app.create_profile()
     )
 
-def odk_install(req, domain, app_id):
-    return render(req, "app_manager/odk_install.html",
-            {"domain": domain, "app": get_app(domain, app_id)})
+@safe_download
+def download_media_profile(req, domain, app_id):
+    return HttpResponse(
+        req.app.create_profile(with_media=True)
+    )
+
+def odk_install(req, domain, app_id, with_media=False):
+    app = get_app(domain, app_id)
+    qr_code_view = "odk_qr_code" if not with_media else "odk_media_qr_code"
+    context = {
+        "domain": domain,
+        "app": app,
+        "qr_code": reverse("corehq.apps.app_manager.views.%s" % qr_code_view, args=[domain, app_id]),
+        "profile_url": app.odk_profile_display_url if not with_media else app.odk_media_profile_display_url,
+    }
+    return render(req, "app_manager/odk_install.html", context)
 
 def odk_qr_code(req, domain, app_id):
     qr_code = get_app(domain, app_id).get_odk_qr_code()
+    return HttpResponse(qr_code, mimetype="image/png")
+
+def odk_media_qr_code(req, domain, app_id):
+    qr_code = get_app(domain, app_id).get_odk_qr_code(with_media=True)
     return HttpResponse(qr_code, mimetype="image/png")
 
 @safe_download
@@ -1765,6 +1753,13 @@ def download_odk_profile(req, domain, app_id):
     """
     return HttpResponse(
         req.app.create_profile(is_odk=True),
+        mimetype="commcare/profile"
+    )
+
+@safe_download
+def download_odk_media_profile(req, domain, app_id):
+    return HttpResponse(
+        req.app.create_profile(is_odk=True, with_media=True),
         mimetype="commcare/profile"
     )
 
@@ -2090,6 +2085,7 @@ def upload_translations(request, domain, app_id):
         app.save()
         success = True
     except Exception:
+        notify_exception(request, 'Bulk Upload Translations Error')
         messages.error(request, _("Something went wrong! Update failed. We're looking into it"))
 
     if success:

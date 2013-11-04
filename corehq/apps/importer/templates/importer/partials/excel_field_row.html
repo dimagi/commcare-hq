@@ -9,7 +9,7 @@
 </td>
 
 <td class="span3">
-    <select name="excel_field[]">
+    <select name="excel_field[]" class="excel_field">
         <option>{% trans "Select field from excel..." %}</option>
         {% for field in excel_fields %}
             {% ifequal field item %}
@@ -26,12 +26,12 @@
 </td>
 
 <td class="span3">
-    <label class="checkbox">
-        <input type="checkbox"
-               class="is_date"
-               name="is_date[]" />
-        {% trans "This field is a date" %}
-    </label>
+    <select name="type_field[]">
+        <option value="plain">{% trans "Plain" %}</option>
+        <option value="date">{% trans "Date" %}</option>
+        <option value="integer">{% trans "Integer" %}</option>
+        <option value="decimal">{% trans "Decimal" %}</option>
+    </select>
 </td>
 
 <td>

@@ -1,8 +1,48 @@
-function SavedApp(o) {
+function SavedApp(o, r) {
+    var $root = r;
     var self = ko.mapping.fromJS(o);
     $.each(['comment_user_name', '_deleteState'], function (i, attr) {
         self[attr] = self[attr] || ko.observable();
     });
+    self.include_media = ko.observable(false);
+
+    self.get_short_odk_url = ko.computed(function() {
+        if (self.include_media()) {
+           if (self.short_odk_media_url) {
+               return self.short_odk_media_url();
+           }
+        } else {
+            if (self.short_odk_url) {
+                return self.short_odk_url();
+            }
+        }
+        return false;
+    });
+
+    self.mm_supported = function() {
+        // This is added to fix legacy issues with incorrectly formatted media_profile.ccpr files.
+        // Files that were generated prior to 10/16/2013 are affected, so don't support remote mm for build made before then.
+        var supported_date = new Date(2013, 9, 16);
+        var date_built = new Date(self.built_on());
+        return date_built.getTime() > supported_date.getTime();
+    };
+
+    self.get_odk_install_url = ko.computed(function() {
+        var slug = self.include_media() ? 'odk_media' : 'odk';
+        return $root.url(slug, self.id());
+    });
+
+    self.sms_url = function(index) {
+        if (index === 0) { // sending to sms
+            return self.short_url()
+        } else { // sending to odk
+            if (self.include_media() && self.short_odk_media_url()) {
+                return self.short_odk_media_url();
+            } else {
+                return self.short_odk_url();
+            }
+        }
+    };
     return self;
 }
 
@@ -19,8 +59,15 @@ function ReleasesMain(o) {
     self.nextVersionToFetch = null;
     self.fetchLimit = 5;
     self.deployAnyway = {};
-    self.appVersion = ko.observable(self.options.appVersion);
+    self.currentAppVersion = ko.observable(self.options.currentAppVersion);
     self.lastAppVersion = ko.observable();
+    self.buildButtonEnabled = ko.computed(function () {
+        if (self.buildState() === 'pending' || self.fetchState() === 'pending') {
+            return false;
+        } else {
+            return true;
+        }
+    });
     self.brokenBuilds = ko.computed(function () {
         var apps = self.savedApps();
         return _.some(apps, function (app) {
@@ -66,7 +113,7 @@ function ReleasesMain(o) {
         }).success(function (savedApps) {
             var i, savedApp;
             for (i = 0; i < savedApps.length; i++) {
-                savedApp = SavedApp(savedApps[i]);
+                savedApp = SavedApp(savedApps[i], self);
                 self.addSavedApp(savedApp);
             }
             if (i) {
@@ -105,6 +152,8 @@ function ReleasesMain(o) {
             });
         }
     };
+    self.reload_message = "Sorry, that didn't go through. " +
+            "Please reload your page and try again"
     self.deleteSavedApp = function (savedApp) {
         savedApp._deleteState('pending');
         $.post(self.url('delete'), {saved_app: savedApp.id()}, function () {
@@ -112,31 +161,45 @@ function ReleasesMain(o) {
             savedApp._deleteState(false);
         }).error(function () {
             savedApp._deleteState('error');
-            alert(
-                "Sorry, that didn't go through. Please reload your page " +
-                "and try again"
-            );
+            alert(self.reload_message);
         });
     };
     self.revertSavedApp = function (savedApp) {
         $.postGo(self.url('revertBuild'), {saved_app: savedApp.id()});
     };
-    self.makeNewBuildEnabled = function () {
+    self.makeNewBuild = function () {
         if (self.buildState() === 'pending') {
             return false;
         }
-        self.getMoreSavedApps();
-        if (self.lastAppVersion() === undefined) {
-            return self.doneFetching();
-        } else {
-            return self.lastAppVersion() !== self.appVersion();
-        }
+
+        var url = self.url('currentVersion');
+        self.fetchState('pending');
+        $.get(
+            self.url('currentVersion')
+        ).success(function (data) {
+            self.fetchState('');
+            self.currentAppVersion(data.currentVersion);
+            if (!data.latestRelease) {
+                self.actuallyMakeBuild();
+            } else if (data.latestRelease !== self.lastAppVersion()) {
+                window.alert("The versions list has changed since you loaded the page.");
+                self.reloadApps();
+            } else if (self.lastAppVersion() !== self.currentAppVersion()) {
+                self.actuallyMakeBuild();
+            } else {
+                window.alert("No new changes to deploy!");
+            }
+        }).error(function () {
+            self.fetchState('error');
+            window.alert(self.reload_message);
+        });
     };
-    self.makeNewBuild = function () {
-        if (!self.makeNewBuildEnabled()) {
-            window.alert("No new changes to deploy!");
-            return;
-        }
+    self.reloadApps = function () {
+        self.savedApps([]);
+        self.nextVersionToFetch = null;
+        self.getMoreSavedApps();
+    };
+    self.actuallyMakeBuild = function () {
         var comment = window.prompt(
             "Please write a comment about the build you're making " +
             "to help you remember later:"
@@ -152,7 +215,8 @@ function ReleasesMain(o) {
         }).success(function (data) {
             $('#build-errors-wrapper').html(data.error_html);
             if (data.saved_app) {
-                self.getMoreSavedApps();
+                var app = SavedApp(data.saved_app, self)
+                self.addSavedApp(app, true);
             }
             self.buildState('');
         }).error(function () {

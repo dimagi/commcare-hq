@@ -1,0 +1,17 @@
+{% extends "mc/reports/sectioned_tabular.html" %}
+{% load i18n %}
+{% block posttable %}
+{% if hf_messages %}
+    <h2>{% trans "mc_msgs_title" %}</h2>
+    {% for user_messages in hf_messages %}
+        {% if user_messages.msgs %}
+            <h3>{{ user_messages.username }}</h3>
+            <ul>
+            {% for msg in user_messages.msgs %}
+                <li>{{ msg }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+{% endblock %}

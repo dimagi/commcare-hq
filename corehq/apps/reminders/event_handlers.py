@@ -3,7 +3,7 @@ from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.smsforms.models import XFormsSession
 from corehq.apps.sms.mixin import VerifiedNumber
 from touchforms.formplayer.api import current_question
-from corehq.apps.sms.api import send_sms, send_sms_to_verified_number, close_open_sessions
+from corehq.apps.sms.api import send_sms, send_sms_to_verified_number
 from corehq.apps.smsforms.app import start_session
 from corehq.apps.sms.util import format_message_list
 from corehq.apps.users.models import CouchUser
@@ -52,9 +52,11 @@ to not move the reminder forward to the next event.
 """
 
 def get_workflow(handler):
-    from corehq.apps.reminders.models import REMINDER_TYPE_ONE_TIME
+    from corehq.apps.reminders.models import REMINDER_TYPE_ONE_TIME, REMINDER_TYPE_KEYWORD_INITIATED
     if handler.reminder_type == REMINDER_TYPE_ONE_TIME:
         return WORKFLOW_BROADCAST
+    elif handler.reminder_type == REMINDER_TYPE_KEYWORD_INITIATED:
+        return WORKFLOW_KEYWORD
     else:
         return WORKFLOW_REMINDER
 
@@ -105,7 +107,7 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers, workflow=Non
                     else:
                         raise_warning() # ERROR_NO_OTHER_NUMBERS
                 else:
-                    result = send_sms(reminder.domain, recipient.get_id, phone_number, message, **message_tags)
+                    result = send_sms(reminder.domain, recipient, phone_number, message, **message_tags)
                     if not result:
                         raise_warning() # Could not send SMS
             else:
@@ -223,11 +225,14 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
                     continue
             
             # Close all currently open sessions
-            close_open_sessions(reminder.domain, recipient.get_id)
+            XFormsSession.close_all_open_sms_sessions(reminder.domain, recipient.get_id)
             
             # Start the new session
-            case_id = recipient.get_id if isinstance(recipient, CommCareCase) else reminder.case_id
-            session, responses = start_session(reminder.domain, recipient, app, module, form, case_id)
+            if isinstance(recipient, CommCareCase) and not handler.force_surveys_to_use_triggered_case:
+                case_id = recipient.get_id
+            else:
+                case_id = reminder.case_id
+            session, responses = start_session(reminder.domain, recipient, app, module, form, case_id, case_for_case_submission=handler.force_surveys_to_use_triggered_case)
             session.survey_incentive = handler.survey_incentive
             session.workflow = message_tags["workflow"]
             session.reminder_id = reminder._id

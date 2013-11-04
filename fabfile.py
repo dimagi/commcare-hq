@@ -73,6 +73,7 @@ env.roledefs = {
     'deploy': [],
 }
 
+env.django_bind = '127.0.0.1'
 
 def format_env(current_env):
     """
@@ -96,6 +97,7 @@ def format_env(current_env):
         'jython_home',
         'virtualenv_root',
         'django_port',
+        'django_bind',
         'flower_port',
     ]
 
@@ -145,6 +147,7 @@ def setup_dirs():
     sudo('mkdir -p %(services)s/supervisor' % env, user=env.sudo_user)
 
 
+
 @task
 def india():
     """Our production server in India."""
@@ -189,7 +192,7 @@ def zambia():
     env.code_branch = 'master'
     env.should_migrate = True
 
-    env.hosts = ['44.222.19.153']  # LIKELY THAT THIS WILL CHANGE
+    env.hosts = ['41.222.19.153']  # LIKELY THAT THIS WILL CHANGE
 
     _setup_path()
 
@@ -205,7 +208,7 @@ def zambia():
         'lb': [],
         'deploy': [],
 
-        'django_monolith': ['44.222.19.153'],
+        'django_monolith': ['41.222.19.153'],
     }
     env.roles = ['django_monolith']
     env.es_endpoint = 'localhost'
@@ -217,6 +220,7 @@ def production():
     """www.commcarehq.org"""
     env.sudo_user = 'cchq'
     env.environment = 'production'
+    env.django_bind = '0.0.0.0'
     env.django_port = '9010'
     env.should_migrate = True
 
@@ -234,9 +238,9 @@ def production():
         'rabbitmq': ['hqdb0.internal.commcarehq.org'],
         'django_celery': ['hqdb0.internal.commcarehq.org'],
         'django_app': [
-            'hqdjango0.internal.commcarehq.org',
-            'hqdjango1.internal.commcarehq.org',
-            'hqdjango2.internal.commcarehq.org'
+            'hqdjango3.internal.commcarehq.org',
+            'hqdjango4.internal.commcarehq.org',
+            'hqdjango5.internal.commcarehq.org',
         ],
         'django_pillowtop': ['hqdb0.internal.commcarehq.org'],
 
@@ -244,7 +248,7 @@ def production():
         # will remove hqdjango0 once we verify it works well on hqdb0
         'formsplayer': ['hqdb0.internal.commcarehq.org'],
         'lb': [],
-        'staticfiles': ['hqproxy0.internal.commcarehq.org'],
+        'staticfiles': ['hqproxy0.internal.commcarehq.org', 'hqproxy1.internal.commcarehq.org'],
         # having deploy here makes it so that
         # we don't get prompted for a host or run deploy too many times
         'deploy': ['hqdb0.internal.commcarehq.org'],
@@ -259,7 +263,7 @@ def production():
     # Gets auto-populated by what_os()
     # if you don't know what it is or don't want to specify.
     env.host_os_map = None
-    env.roles = ['deploy', ]
+    env.roles = ['deploy']
     env.es_endpoint = 'hqes0.internal.commcarehq.org'''
     env.flower_port = 5555
 
@@ -276,6 +280,7 @@ def staging():
 
     env.sudo_user = 'cchq'
     env.environment = 'staging'
+    env.django_bind = '0.0.0.0'
     env.django_port = '9010'
 
     env.should_migrate = True
@@ -290,7 +295,7 @@ def staging():
 
         'formsplayer': ['hqdjango1-staging.internal.commcarehq.org'],
         'lb': [],
-        'staticfiles': ['hqproxy0.internal.commcarehq.org'],
+        'staticfiles': ['hqproxy0.internal.commcarehq.org', 'hqproxy1.internal.commcarehq.org'],
         'deploy': ['hqdb0-staging.internal.commcarehq.org'],
         # fab complains if this doesn't exist
         'django_monolith': [],
@@ -301,7 +306,7 @@ def staging():
     env.server_name = 'commcare-hq-staging'
     env.settings = '%(project)s.localsettings' % env
     env.host_os_map = None
-    env.roles = ['deploy', ]
+    env.roles = ['deploy']
     env.flower_port = 5555
 
     _setup_path()
@@ -324,6 +329,7 @@ def preview():
     env.code_branch = 'master'
     env.sudo_user = 'cchq'
     env.environment = 'preview'
+    env.django_bind = '0.0.0.0'
     env.django_port = '7999'
     env.should_migrate = False
 
@@ -340,7 +346,7 @@ def preview():
 
         'formsplayer': ['hqdjango0-preview.internal.commcarehq.org'],
         'lb': [],
-        'staticfiles': ['hqproxy0.internal.commcarehq.org'],
+        'staticfiles': ['hqproxy0.internal.commcarehq.org', 'hqproxy1.internal.commcarehq.org'],
         'deploy': ['hqdb0-preview.internal.commcarehq.org'],
         'django_monolith': [],
     }
@@ -350,10 +356,42 @@ def preview():
     env.server_name = 'commcare-hq-preview'
     env.settings = '%(project)s.localsettings' % env
     env.host_os_map = None
-    env.roles = ['deploy', ]
+    env.roles = ['deploy']
     env.flower_port = 5556
 
     _setup_path()
+
+
+
+
+@task
+def development():
+    """A development monolith target - must specify a host either by command line or prompt"""
+    env.sudo_user = 'cchq'
+    env.environment = 'development'
+    env.django_bind = '0.0.0.0'
+    env.django_port = '9010'
+    env.should_migrate = True
+
+    _setup_path()
+
+    env.roledefs = {
+        'couch': [],
+        'pg': [],
+        'rabbitmq': [],
+        'django_celery': [],
+        'django_app': [],
+        'django_pillowtop': [],
+        'formsplayer': [],
+        'staticfiles': [],
+        'lb': [],
+        'deploy': [],
+
+        'django_monolith': env.hosts
+    }
+    env.roles = ['django_monolith']
+    env.es_endpoint = 'localhost'
+    env.flower_port = 5555
 
 @task
 @roles('django_app','django_celery','staticfiles')
@@ -453,15 +491,18 @@ def create_pg_db():
 
 @task
 def bootstrap():
-    """Initialize remote host environment (virtualenv, deploy, update)"""
+    """Initialize remote host environment (virtualenv, deploy, update)
+
+    Use it with a targeted -H <hostname> you want to bootstrap for django worker use.
+    """
     require('root', provided_by=('staging', 'preview', 'production'))
     sudo('mkdir -p %(root)s' % env, shell=False, user=env.sudo_user)
-    execute(clone_repo)
+    clone_repo()
 
     update_code()
-    execute(create_virtualenvs)
-    execute(update_virtualenv)
-    execute(setup_dirs)
+    create_virtualenvs()
+    update_virtualenv()
+    setup_dirs()
 
     # copy localsettings if it doesn't already exist in case any management
     # commands we want to run now would error otherwise
@@ -558,6 +599,7 @@ def preindex_views():
         # no update to env - the actual deploy will do
         # this may break if a new dependency is introduced in preindex
         update_virtualenv(preindex=True)
+        version_static(preindex=True)
 
         sudo((
             'echo "%(virtualenv_root_preindex)s/bin/python '
@@ -829,6 +871,7 @@ def flip_es_aliases():
         sudo('%(virtualenv_root)s/bin/python manage.py ptop_es_manage --flip_all_aliases' % env, user=env.sudo_user)
 
 
+@parallel
 @roles('staticfiles', 'django_monolith')
 def _do_collectstatic():
     """Collect static after a code update"""
@@ -838,16 +881,16 @@ def _do_collectstatic():
 
 @roles('django_app', 'django_monolith')
 @parallel
-def version_static():
+def version_static(preindex=False):
     """
     Put refs on all static references to prevent stale browser cache hits when things change.
     This needs to be run on the WEB WORKER since the web worker governs the actual static
     reference.
 
     """
+    cmd = 'resource_static' if not preindex else 'resource_static clear'
     with cd(env.code_root):
-        sudo('rm -f tmp.sh resource_versions.py; %(virtualenv_root)s/bin/python manage.py   \
-             printstatic > tmp.sh; bash tmp.sh > resource_versions.py' % env, user=env.sudo_user)
+        sudo('rm -f tmp.sh resource_versions.py; %(virtualenv_root)s/bin/python manage.py ' % env + cmd, user=env.sudo_user)
 
 
 
@@ -898,53 +941,58 @@ def commit_locale_changes():
     local('git pull ssh://%s%s' % (env.host, env.code_root))
 
 
-def _rebuild_supervisor_conf_file(filename):
+def _rebuild_supervisor_conf_file(conf_command, filename):
     with cd(env.code_root):
         sudo((
             '%(virtualenv_root)s/bin/python manage.py '
-            'make_supervisor_conf --conf_file "%(filename)s" '
+            '%(conf_command)s --conf_file "%(filename)s" '
             '--conf_destination "%(destination)s" --params "%(params)s"'
         ) % {
+
+            'conf_command': conf_command,
             'virtualenv_root': env.virtualenv_root,
             'filename': filename,
             'destination': posixpath.join(env.services, 'supervisor'),
             'params': format_env(env)
         }, user=env.sudo_user)
 
+
+
 @roles('django_celery', 'django_monolith')
 def set_celery_supervisorconf():
-    _rebuild_supervisor_conf_file('supervisor_celery_main.conf')
+    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_main.conf')
 
     # hack to not have staging environments send out reminders
     if env.environment not in ['staging', 'preview', 'realstaging']:
-        _rebuild_supervisor_conf_file('supervisor_celery_beat.conf')
-        _rebuild_supervisor_conf_file('supervisor_celery_periodic.conf')
-    _rebuild_supervisor_conf_file('supervisor_celery_flower.conf')
-    _rebuild_supervisor_conf_file('supervisor_couchdb_lucene.conf') #to be deprecated
+        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_beat.conf')
+        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_periodic.conf')
+    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_flower.conf')
+    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_couchdb_lucene.conf') #to be deprecated
 
     # in reality this also should be another machine
     # if the number of listeners gets too high
     if env.environment not in ['preview']:
         # preview environment should not run pillowtop and index stuff
         # just rely on what's on staging
-        _rebuild_supervisor_conf_file('supervisor_pillowtop.conf')
+        _rebuild_supervisor_conf_file('make_supervisor_pillowtop_conf', 'supervisor_pillowtop.conf')
 
 
 @roles('django_app', 'django_monolith')
 def set_djangoapp_supervisorconf():
-    _rebuild_supervisor_conf_file('supervisor_django.conf')
+    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_django.conf')
 
 
 @roles('remote_es')
 def set_elasticsearch_supervisorconf():
-    _rebuild_supervisor_conf_file('supervisor_elasticsearch.conf')
+    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_elasticsearch.conf')
 
 
 @roles('formsplayer', 'django_monolith')
 def set_formsplayer_supervisorconf():
-    _rebuild_supervisor_conf_file('supervisor_formsplayer.conf')
+    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_formsplayer.conf')
 
 
+@task
 def set_supervisor_config():
     """Upload and link Supervisor configuration from the template."""
     require('environment', provided_by=('staging', 'preview', 'production', 'india'))

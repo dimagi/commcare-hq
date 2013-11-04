@@ -1,17 +1,37 @@
 import re
+from crispy_forms.bootstrap import StrictButton, InlineField
+from crispy_forms.helper import FormHelper
+from django import forms
 from django.forms.forms import Form
 from django.forms.fields import *
+from crispy_forms import layout as crispy
+from django.utils.safestring import mark_safe
+from corehq.apps.hqwebapp.crispy import BootstrapMultiField
 from corehq.apps.sms.models import ForwardingRule, FORWARD_ALL, FORWARD_BY_KEYWORD
 from django.core.exceptions import ValidationError
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.reminders.forms import RecordListField
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.sms.util import get_available_backends
+from dimagi.utils.django.fields import TrimmedCharField
 
 FORWARDING_CHOICES = (
     (FORWARD_ALL, ugettext_noop("All messages")),
     (FORWARD_BY_KEYWORD, ugettext_noop("All messages starting with a keyword")),
 )
+
+class SMSSettingsForm(Form):
+    use_default_sms_response = BooleanField(required=False)
+    default_sms_response = TrimmedCharField(required=False)
+
+    def clean_default_sms_response(self):
+        if self.cleaned_data.get("use_default_sms_response"):
+            value = self.cleaned_data.get("default_sms_response", "")
+            if value == "":
+                raise ValidationError(_("This field is required."))
+            return value
+        else:
+            return None
 
 class ForwardingRuleForm(Form):
     forward_type = ChoiceField(choices=FORWARDING_CHOICES)
@@ -48,7 +68,13 @@ class BackendForm(Form):
         backend_classes = get_available_backends()
         if self._cchq_domain is None:
             # Ensure name is not duplicated among other global backends
-            backend = SMSBackend.view("sms/global_backends", classes=backend_classes, key=[value], include_docs=True).one()
+            backend = SMSBackend.view(
+                "sms/global_backends",
+                classes=backend_classes,
+                key=[value],
+                include_docs=True,
+                reduce=False
+            ).one()
         else:
             # Ensure name is not duplicated among other backends owned by this domain
             backend = SMSBackend.view("sms/backend_by_owner_domain", classes=backend_classes, key=[self._cchq_domain, value], include_docs=True).one()
@@ -104,3 +130,42 @@ class BackendMapForm(Form):
         else:
             return value
 
+
+class InitiateAddSMSBackendForm(Form):
+    action = CharField(
+        initial='new_backend',
+        widget=forms.HiddenInput(),
+    )
+    backend_type = ChoiceField(
+        required=False,
+        label="Connection Type",
+    )
+
+    def __init__(self, is_superuser=False, *args, **kwargs):
+        super(InitiateAddSMSBackendForm, self).__init__(*args, **kwargs)
+        backend_classes = get_available_backends()
+        backend_choices = []
+        for name, klass in backend_classes.items():
+            if is_superuser or name == "TelerivetBackend":
+                try:
+                    friendly_name = klass.get_generic_name()
+                except NotImplementedError:
+                    friendly_name = name
+                backend_choices.append((name, friendly_name))
+        self.fields['backend_type'].choices = backend_choices
+
+        self.helper = FormHelper()
+        self.helper.form_class = "form form-horizontal"
+        self.helper.layout = crispy.Layout(
+            BootstrapMultiField(
+                _("Create Another Connection"),
+                InlineField('action'),
+                InlineField('backend_type'),
+                StrictButton(
+                    mark_safe('<i class="icon-plus"></i> %s' % "Add Another Gateway"),
+                    css_class='btn-success',
+                    type='submit',
+                    style="margin-left:5px;"
+                ),
+            ),
+        )

@@ -3,7 +3,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 from corehq.apps.domain.calculations import CALC_FNS, _all_domain_stats
-from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index_by_view, CLUSTER_HEALTH, check_xform_index_by_view, check_case_index_by_doc, check_xform_index_by_doc
+from corehq.apps.hqadmin.escheck import check_cluster_health, CLUSTER_HEALTH, check_case_es_index, check_xform_es_index, check_reportcase_es_index, check_reportxform_es_index
 from corehq.apps.reports.export import save_metadata_export_to_tempfile
 from corehq.apps.reports.models import (ReportNotification,
     UnsupportedScheduledReportError, HQGroupExportConfiguration)
@@ -16,7 +16,7 @@ from django.conf import settings
 
 logging = get_task_logger(__name__)
 
-@periodic_task(run_every=crontab(hour=[8,14], minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(run_every=crontab(hour="*/6", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def check_es_index():
     """
     Verify that the Case and soon to be added XForm Elastic indices are up to date with what's in couch
@@ -27,28 +27,26 @@ def check_es_index():
     es_status = {}
     es_status.update(check_cluster_health())
 
-    es_check_case_doc = getattr(settings, 'ES_CASE_CHECK_DIRECT_DOC_ID', None)
-    if es_check_case_doc:
-        es_status.update(check_case_index_by_doc(es_check_case_doc))
-    else:
-        es_status.update(check_case_index_by_view())
+    es_status.update(check_case_es_index())
+    es_status.update(check_xform_es_index())
 
-    es_check_xform_doc = getattr(settings, 'ES_XFORM_CHECK_DIRECT_DOC_ID', None)
-    if es_check_xform_doc:
-        es_status.update(check_xform_index_by_doc(es_check_xform_doc))
-    else:
-        es_status.update(check_xform_index_by_view())
+    es_status.update(check_reportcase_es_index())
+    es_status.update(check_reportxform_es_index())
 
     do_notify = False
     message = []
     if es_status[CLUSTER_HEALTH] == 'red':
-        do_notify=True
+        do_notify = True
         message.append("Cluster health is red - something is up with the ES machine")
 
-    for prefix in ['hqcases', 'xforms']:
-        if es_status.get('%s_status' % prefix, False) == False:
-            do_notify=True
-            message.append("Elasticsearch %s Index Issue: %s" % (prefix, es_status['%s_message' % prefix]))
+    for index in es_status.keys():
+        if index == CLUSTER_HEALTH:
+            continue
+        pillow_status = es_status[index]
+        if not pillow_status['status']:
+            do_notify = True
+            message.append(
+                "Elasticsearch %s Index Issue: %s" % (index, es_status[index]['message']))
 
     if do_notify:
         notify_exception(None, message='\n'.join(message))
@@ -82,8 +80,9 @@ def create_metadata_export(download_id, domain, format, filename, datespan=None,
 @periodic_task(run_every=crontab(hour="*", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def daily_reports():    
     # this should get called every hour by celery
-    reps = ReportNotification.view("reportconfig/daily_notifications",
-                                   key=datetime.utcnow().hour,
+    reps = ReportNotification.view("reportconfig/all_notifications",
+                                   key=["daily", datetime.utcnow().hour, None],
+                                   reduce=False,
                                    include_docs=True).all()
     for rep in reps:
         send_report.delay(rep._id)
@@ -92,16 +91,28 @@ def daily_reports():
 def weekly_reports():    
     # this should get called every hour by celery
     now = datetime.utcnow()
-    reps = ReportNotification.view("reportconfig/weekly_notifications",
-                                   key=[now.weekday(), now.hour],
+    reps = ReportNotification.view("reportconfig/all_notifications",
+                                   key=["weekly", now.hour, now.weekday()],
+                                   reduce=False,
                                    include_docs=True).all()
     for rep in reps:
         send_report.delay(rep._id)
 
-@periodic_task(run_every=crontab(hour=[0,12], minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(run_every=crontab(hour="*", minute="1", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+def monthly_reports():
+    now = datetime.utcnow()
+    reps = ReportNotification.view("reportconfig/all_notifications",
+                                   key=["monthly", now.hour, now.day],
+                                   reduce=False,
+                                   include_docs=True).all()
+    for rep in reps:
+        send_report.delay(rep._id)
+
+@periodic_task(run_every=crontab(hour=[22], minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def saved_exports():    
-    for row in HQGroupExportConfiguration.view("groupexport/by_domain", reduce=False).all():
-        export_for_group(row["id"], "couch")
+    for group_config in HQGroupExportConfiguration.view("groupexport/by_domain", reduce=False,
+                                                        include_docs=True).all():
+        export_for_group(group_config, "couch")
 
 @periodic_task(run_every=crontab(hour="12, 22", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def update_calculated_properties():
