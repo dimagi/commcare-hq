@@ -464,7 +464,7 @@ cloudCare.AppView = Backbone.View.extend({
             dataType: "json"
         });
         resp.done(function (data) {
-            data["onsubmit"] = function (xml) {
+            data.onsubmit = function (xml) {
                 // post to receiver
                 $.ajax({
                     type: 'POST',
@@ -477,13 +477,13 @@ cloudCare.AppView = Backbone.View.extend({
                     }
                 });
             };
-            data["onerror"] = function (resp) {
+            data.onerror = function (resp) {
                 showError(resp.message, $("#cloudcare-notifications"));
                 cloudCare.dispatch.trigger("form:error", form, caseModel);
             };
-            data["onload"] = function (adapter, resp) {
+            data.onload = function (adapter, resp) {
                 cloudCare.dispatch.trigger("form:ready", form, caseModel);
-            }
+            };
             var sess = new WebFormSession(data);
             // TODO: probably shouldn't hard code these divs
             sess.load($('#webforms'), $('#loading'), self.options.language);
