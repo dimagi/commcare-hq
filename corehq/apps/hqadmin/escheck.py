@@ -74,12 +74,12 @@ def check_reportxform_es_index(doc_id=None, interval=10):
         return {}
 
 
-def check_xform_es_index(doc_id=None):
+def check_xform_es_index(doc_id=None, interval=10):
     db = XFormInstance.get_db()
     es_index = XFormPillow.es_alias
 
     check_doc_id = doc_id if doc_id else _get_latest_doc_id(db, 'XFormInstance', skipfunc=is_real_submission)
-    return check_index_by_doc(es_index, db, check_doc_id)
+    return check_index_by_doc(es_index, db, check_doc_id, interval=interval)
 
 
 def is_case_recent(case_view_row):
@@ -116,7 +116,7 @@ def check_case_es_index(doc_id=None, interval=10):
     es_index = CasePillow.es_alias
 
     check_doc_id = doc_id if doc_id else _get_latest_doc_id(db, 'CommCareCase', skipfunc=is_case_recent)
-    return check_index_by_doc(es_index, db, check_doc_id)
+    return check_index_by_doc(es_index, db, check_doc_id, interval=interval)
 
 
 def _get_latest_doc_from_index(es_index, sort_field):
