@@ -75,7 +75,7 @@
                         var renamed_field = field;
                         if (self.custom_export.type() === 'form' && index === '#') {
                             if (field === '_id') {
-                                return {tag: 'server', field: renamed_field};
+                                return {tags: ['server'], field: renamed_field};
                             }
                             var patterns = [
                                 {regex: /^form\.meta\.(.*)$/, tag: 'meta'},
