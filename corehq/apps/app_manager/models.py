@@ -1702,6 +1702,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     cloudcare_enabled = BooleanProperty(default=False)
     translation_strategy = StringProperty(default='dump-known',
                                           choices=app_strings.CHOICES.keys())
+    case_management_in_vellum = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):

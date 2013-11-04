@@ -70,6 +70,15 @@
   hide_if_not_enabled: true
   since: "2.0"
 
+- id: case_management_in_vellum
+  name: "Case Management in Form Builder"
+  widget: bool
+  default: false
+  description: 'Enable case properties to be managed in the Form Builder.'
+  requires: "{$parent.doc_type}='Application'"
+  preview: true
+
+
 - id: use_custom_suite
   name: "Custom Suite File"
   widget: bool
