@@ -613,10 +613,10 @@ def system_ajax(request):
         return json_response(get_all_pillows_json())
     elif type == 'stale_pillows':
         es_index_status = [
-            check_case_es_index(),
-            check_xform_es_index(),
-            check_reportcase_es_index(),
-            check_reportxform_es_index()
+            check_case_es_index(interval=3),
+            check_xform_es_index(interval=3),
+            check_reportcase_es_index(interval=3),
+            check_reportxform_es_index(interval=3)
         ]
         return json_response(es_index_status)
 
