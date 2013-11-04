@@ -83,6 +83,7 @@ class VisitCalculator(DoneDueCalculator):
                                   action_filter=self._get_numerator_action_filter(form, date)):
                 self._visits_used.add(form._id)
                 yield date
+                break  # only allow one numerator per denominator
 
 
 class DueNextMonth(TotalCalculator):

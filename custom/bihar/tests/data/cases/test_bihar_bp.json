@@ -17,7 +17,7 @@
         "attachments": {}, 
         "xform_name": "New Beneficiary", 
         "sync_log_id": "3b1f428dceaa4c82eca378212710d5ef", 
-        "server_date": "2013-04-18T10:34:59Z", 
+        "server_date": "2013-04-18T10:34:59Z",
         "action_type": "create", 
         "updated_known_properties": {
           "type": "cc_bihar_pregnancy", 
@@ -27,7 +27,7 @@
         "updated_unknown_properties": {}, 
         "indices": [], 
         "xform_xmlns": "http://bihar.commcarehq.org/pregnancy/new", 
-        "date": "2013-04-18T16:12:57Z"
+        "date": "2013-01-18T16:12:57Z"
       }, 
       {
         "doc_type": "CommCareCaseAction", 
@@ -36,7 +36,7 @@
         "attachments": {}, 
         "xform_name": "New Beneficiary", 
         "sync_log_id": "3b1f428dceaa4c82eca378212710d5ef", 
-        "server_date": "2013-04-18T10:34:59Z", 
+        "server_date": "2013-04-18T10:34:59Z",
         "action_type": "update", 
         "updated_known_properties": {}, 
         "updated_unknown_properties": {
@@ -52,7 +52,7 @@
         }, 
         "indices": [], 
         "xform_xmlns": "http://bihar.commcarehq.org/pregnancy/new", 
-        "date": "2013-04-18T16:12:57Z"
+        "date": "2013-01-18T16:12:57Z"
       }, 
       {
         "doc_type": "CommCareCaseAction", 
@@ -86,7 +86,7 @@
         }, 
         "indices": [], 
         "xform_xmlns": "http://bihar.commcarehq.org/pregnancy/registration", 
-        "date": "2013-04-24T13:43:42Z"
+        "date": "2013-01-18T13:43:42Z"
       }, 
       {
         "doc_type": "CommCareCaseAction", 
@@ -298,7 +298,7 @@
         "@uiVersion": "1", 
         "case": {
           "@xmlns": "http://commcarehq.org/case/transaction/v2", 
-          "@date_modified": "2013-04-18T16:12:57Z", 
+          "@date_modified": "2013-01-18T16:12:57Z",
           "create": {
             "case_type": "cc_bihar_pregnancy", 
             "owner_id": "70c6ba6f55ed21716fe725c214892f9a", 
@@ -411,7 +411,7 @@
           "@xmlns": "http://commcarehq.org/case/transaction/v2", 
           "@case_id": "be17e1c9-0f24-42c7-a678-914889659fce", 
           "@user_id": "70c6ba6f55ed21716fe725c2146a07e6", 
-          "@date_modified": "2013-04-24T13:43:42Z", 
+          "@date_modified": "2013-01-18T13:43:42Z",
           "update": {
             "status": "active", 
             "date_last_visit": "2013-04-24", 
