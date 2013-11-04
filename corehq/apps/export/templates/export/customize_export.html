@@ -16,6 +16,13 @@
                 var self = ko.mapping.fromJS(o);
 
                 self.utils = {
+                    rename: function (field, rename_map) {
+                        if (rename_map.hasOwnProperty(field)) {
+                            return rename_map[field];
+                        } else {
+                            return field;
+                        }
+                    },
                     stripIndex: function (index) {
                         var stripped;
                         if (self.custom_export.type() === 'form') {
@@ -54,10 +61,10 @@
                         field = ko.utils.unwrapObservable(field);
                         index = ko.utils.unwrapObservable(index);
                         var server = {
-                            _id: 0,
                             _rev: 0,
                             doc_type: 0,
-                            '-deletion_id': 0
+                            '-deletion_id': 0,
+                            initial_processing_complete: 0
                         };
                         if (field in server) {
                             return {tags: ['server'].concat(tags), field: field};
@@ -65,7 +72,11 @@
                             return {tags: ['row'].concat(tags), field: field};
                         }
 
+                        var renamed_field = field;
                         if (self.custom_export.type() === 'form' && index === '#') {
+                            if (field === '_id') {
+                                return {tag: 'server', field: renamed_field};
+                            }
                             var patterns = [
                                 {regex: /^form\.meta\.(.*)$/, tag: 'meta'},
                                 {regex: /^form\.case\.(.*)$/, tag: 'case'},
@@ -79,10 +90,13 @@
                                     return {tags: [pattern.tag].concat(tags), field: stripped};
                                 }
                             }
-                            return {tags: ['server'].concat(tags), field: field};
+
+                            return {tags: ['server'].concat(tags), field: renamed_field};
                         } else if (self.custom_export.type() === 'case') {
+
                             if (index === '#') {
                                 var meta = {
+                                    _id: 0,
                                     closed: 0,
                                     closed_by: 0,
                                     closed_on: 0,
@@ -97,18 +111,29 @@
                                     type: 0,
                                     version: 0
                                 };
+                                rename_map = {
+                                    '_id': 'case_id',
+                                    'type': 'case_type',
+                                    'user_id': 'last_modified_by_user_id',
+                                    'modified_on': 'last_modified_date',
+                                    'server_modified_on': 'server_last_modified_date',
+                                    'opened_by': 'opened_by_user_id',
+                                    'opened_on': 'opened_date',
+                                    'closed_by': 'closed_by_user_id',
+                                    'closed_on': 'closed_date'
+                                }
+                                renamed_field = self.utils.rename(field, rename_map);
                                 if (meta.hasOwnProperty(field)) {
-                                    return {tags: ['meta'].concat(tags), field: field};
+                                    return {tags: ['meta'].concat(tags), field: renamed_field};
                                 }
                             } else if (/#\.indices\.#$/.exec(index)) {
-                                var rename = {
+                                var rename_map = {
                                     'identifier': 'relationship',
                                     'referenced_id': 'case_id',
                                     'referenced_type': 'case_type'
                                 };
-                                if (rename.hasOwnProperty(field)) {
-                                    return {tags: [''].concat(tags), field: rename[field]};
-                                }
+                                renamed_field = self.utils.rename(field, rename_map);
+
                             } else if (index === '#.actions.#') {
                                 stripped = field.replace(
                                     /^updated_(?:un)?known_properties\.(.*)$/,
@@ -119,7 +144,7 @@
                                 }
                             }
                         }
-                        return {tags: [''].concat(tags), field: field};
+                        return {tags: [''].concat(tags), field: renamed_field};
                     },
                     showTable: function (table) {
                         var index = table.index();
