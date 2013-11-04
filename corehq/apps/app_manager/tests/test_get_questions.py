@@ -86,7 +86,7 @@ class GetFormQuestionsTest(TestCase):
         module.case_type = 'test'
 
         form = app.new_form(module.id, name="Form", lang='en',
-                attachment=read('case_in_form.xml'))
+                attachment=read('case_references.xml'))
 
         self.form_unique_id = form.unique_id
         app.save()
