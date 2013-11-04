@@ -113,6 +113,41 @@ class TestHomeVisits(TestCase):
 
         self.assertIndicatorsEmpty(indicator, vals=('bp2', 'pnc', 'ebf', 'cf'))
 
+    def testVisitBounds(self):
+        # test dates around the +/- 10 day window and make sure they are/aren't counted
+        out_of_bounds = ['2013-03-11', '2013-04-04']
+        for oob in out_of_bounds:
+            indicator = CareBiharFluff()
+            dates = {
+                'bp1_due': '2013-01-22', 'bp1_done': '2013-01-22', 'bp1_days_overdue': '0',
+                'bp2_due': '2013-03-22', 'bp2_done': oob, 'bp2_days_overdue': '0',
+                'bp3_due': '2013-06-22', 'bp3_done': '2013-06-22', 'bp3_days_overdue': '0',
+            }
+            case = self._load_case('test_bihar_bp.json', dates)
+            indicator.calculate(case)
+            bp2 = indicator.bp2
+            [total] = bp2['total']
+            self.assertEqual(date(2013, 3, 22), total['date'])
+            self.assertEqual(1, total['value'])
+            self.assertEqual(0, len(bp2['numerator']))
+
+        in_bounds = ['2013-03-13', '2013-04-01']
+        for ib in in_bounds:
+            indicator = CareBiharFluff()
+            dates = {
+                'bp1_due': '2013-01-22', 'bp1_done': '2013-01-22', 'bp1_days_overdue': '0',
+                'bp2_due': '2013-03-22', 'bp2_done': ib, 'bp2_days_overdue': '0',
+                'bp3_due': '2013-06-22', 'bp3_done': '2013-06-22', 'bp3_days_overdue': '0',
+            }
+            case = self._load_case('test_bihar_bp.json', dates)
+            indicator.calculate(case)
+            bp2 = indicator.bp2
+            [total] = bp2['total']
+            self.assertEqual(date(2013, 3, 22), total['date'])
+            self.assertEqual(1, total['value'])
+            [numerator] = bp2['numerator']
+            self.assertEqual(date(2013, 3, 22), numerator['date'])
+            self.assertEqual(1, numerator['value'])
 
     def assertIndicatorsEmpty(self, indicator, vals=None):
         vals = vals or ('pnc', 'ebf', 'cf')
