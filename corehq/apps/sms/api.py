@@ -31,6 +31,7 @@ def add_msg_tags(msg, *args, **kwargs):
     msg.workflow = kwargs.get("workflow", None)
     msg.xforms_session_couch_id = kwargs.get("xforms_session_couch_id", None)
     msg.reminder_id = kwargs.get("reminder_id", None)
+    msg.chat_user_id = kwargs.get("chat_user_id", None)
 
 def send_sms(domain, contact, phone_number, text, **kwargs):
     """

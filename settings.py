@@ -230,6 +230,7 @@ HQ_APPS = (
     'corehq.apps.cachehq',
     'corehq.couchapps',
     'custom.apps.wisepill',
+    'custom.fri',
     'fluff',
     'fluff.fluff_filter',
     'soil',
@@ -719,6 +720,7 @@ COUCHDB_APPS = [
     'hqbilling',
     'couchlog',
     'wisepill',
+    'fri',
     'crs_reports',
     'grapevine',
 
@@ -806,6 +808,17 @@ SMS_LOADED_BACKENDS = [
     "corehq.apps.sms.backend.test.TestBackend",
     "corehq.apps.grapevine.api.GrapevineBackend",
 ]
+
+# These are functions that can be called to retrieve custom content in a reminder event.
+# If the function is not in here, it will not be called.
+ALLOWED_CUSTOM_CONTENT_HANDLERS = {
+    "FRI_SMS_CONTENT" : "custom.fri.api.custom_content_handler",
+}
+
+# These are custom templates which can wrap default the sms/chat.html template
+CUSTOM_CHAT_TEMPLATES = {
+    "FRI" : "fri/chat.html",
+}
 
 SELENIUM_APP_SETTING_DEFAULTS = {
     'cloudcare': {
@@ -931,6 +944,8 @@ DOMAIN_MODULE_MAP = {
     'cvsulive': 'custom.apps.cvsu',
     'dca-malawi': 'dca',
     'eagles-fahu': 'dca',
+    'fri': 'custom.fri.reports',
+    'fri-testing': 'custom.fri.reports',
     'gsid': 'custom.apps.gsid',
     'gsid-demo': 'custom.apps.gsid',
     'hsph-dev': 'hsph',

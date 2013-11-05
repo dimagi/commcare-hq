@@ -1,0 +1,16 @@
+{% extends "sms/chat.html" %}
+{% load hq_shared_tags %}
+
+{% block chat_header %}
+    <div>
+    {% if contact.doc_type == "CommCareCase" %}
+        <strong>{{ contact.name_and_pid|default:"" }} {{ contact.risk_profiles|default:"" }}</strong><br>
+        {% if "A" in contact.risk_profiles %}A - HIV+<br>{% endif %}
+        {% if "B" in contact.risk_profiles %}B - ART non<br>{% endif %}
+        {% if "C" in contact.risk_profiles %}C - IDU<br>{% endif %}
+        {% if "D" in contact.risk_profiles %}D - PSE/CSV<br>{% endif %}
+        {% if "E" in contact.risk_profiles %}E - Top<br>{% endif %}
+        {% if "F" in contact.risk_profiles %}F - Bottom<br>{% endif %}
+    {% endif %}
+    </div>
+{% endblock %}

@@ -85,6 +85,15 @@ class VerifiedNumber(Document):
                      include_docs=True).one()
         return v if (include_pending or (v and v.verified)) else None
 
+    @classmethod
+    def by_domain(cls, domain):
+        result = cls.view("sms/verified_number_by_domain",
+                          startkey=[domain],
+                          endkey=[domain, {}],
+                          include_docs=True,
+                          reduce=False).all()
+        return result
+
 def strip_plus(phone_number):
     return phone_number[1:] if phone_number.startswith('+') else phone_number
 

@@ -1,0 +1,29 @@
+{% extends "reports/async/tabular.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% load url from future %}
+
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        $(function() {
+            var select = $(".dataTables_length select");
+            select.val(-1);
+            select.change();
+        });
+    </script>
+{% endblock %}
+
+{% block reportcontent %}
+{{ block.super }}
+{% if is_previewer %}
+    <form action="{% url "fri_upload_message_bank" domain %}" method="post" enctype="multipart/form-data" style="padding: 10px;">
+        <h4>Upload Additional Messages</h4>
+        <div style="border-bottom: 1px solid #CCC; padding: 10px;">
+            <input type="file" name="message_bank_file" /> <input type="submit" class="btn btn-primary" value="Upload" />
+        </div>
+        <div style="padding: 10px;">
+            NOTE: Message bank file must be an Excel 2007 or higher (.xlsx) file containing two columns with column headers "ID" and "Message".
+        </div>
+    </form>
+{% endif %}
+{% endblock %}
