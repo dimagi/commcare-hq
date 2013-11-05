@@ -32,8 +32,12 @@ class Command(BaseCommand):
                         keys[key] = True
 
     def validate_date(self, date):
-        if json_format_datetime(string_to_datetime(date)) != date:
-            raise CommandError("Invalid datetime given for argument '%s'. Argument must be json-formatted." %s date)
+        try:
+            date_test = json_format_datetime(string_to_datetime(date))
+        except Exception:
+            date_test = None
+        if date_test is None or date != date_test:
+            raise CommandError("Invalid datetime given for argument '%s'. Argument must be json-formatted." % date)
 
     def validate_args(self, *args):
         if len(args) < 4:
