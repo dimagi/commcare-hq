@@ -280,11 +280,63 @@ class testReportXFormProcessing(TestCase):
         for prop in dict_props:
             self.assertIsNotNone(for_index2['form']['case'][prop])
 
+    def testComputedConversion(self):
+        """
+        Since we set dyanmic=True on reportxforms, need to do conversions on the computed_ properties
+        so call conversion on computed_ dict as well, this test ensures that it's converted on change_transform
+        :return:
+        """
+        orig = {
+            '_id': 'blank_strings',
+            'form': {
+                'case': {
+                    "@xmlns": "http://commcarehq.org/case/transaction/v2",
+                    "@date_modified": "2013-10-14T10:59:44Z",
+                    "@user_id": "someuser",
+                    "@case_id": "mycase",
+                    "index": "",
+                    "attachment": "",
+                    "create": "",
+                    "update": "",
+                }
+            },
+            'computed_': {
+                "mvp_indicators": {
+                    "last_muac": {
+                        "updated": "2013-02-04T21:54:28Z",
+                        "version": 1,
+                        "type": "FormDataAliasIndicatorDefinition",
+                        "multi_value": False,
+                        "value": None
+                    },
+                    "muac": {
+                        "updated": "2013-02-04T21:54:28Z",
+                        "version": 1,
+                        "type": "FormDataAliasIndicatorDefinition",
+                        "multi_value": False,
+                        "value": {
+                            "#text": "",
+                           "@concept_id": "1343"
+                        }
+                    },
+                    "vaccination_status": {
+                        "updated": "2013-02-04T21:54:28Z",
+                        "version": 1,
+                        "type": "FormDataAliasIndicatorDefinition",
+                        "multi_value": False,
+                        "value": "yes"
 
+                    },
+                }
+            }
+        }
+        pillow = ReportXFormPillow(online=False)
+        orig['domain'] = settings.ES_XFORM_FULL_INDEX_DOMAINS[0]
+        for_indexing = pillow.change_transform(orig)
+        restored = restore_property_dict(for_indexing)
 
-
-
-
+        self.assertNotEqual(orig['computed_'], for_indexing['computed_'])
+        self.assertEqual(orig['computed_'], restored['computed_'])
 
     def testReporXFormtQuery(self):
 
