@@ -1,7 +1,24 @@
 {% load hq_shared_tags %}{% load i18n %}<!DOCTYPE html>
 <html>
     <head>
-        <title>{% block title %}Chat{% endblock %}</title>
+        <title>
+        {% block title %}
+            Chat - 
+            {% if contact.doc_type == "CommCareCase" %}
+                {% if custom_case_username %}
+                    {{ contact|getattr:custom_case_username }}
+                {% else %}
+                    {{ contact.name }}
+                {% endif %}
+            {% else %}
+                {% if contact.first_name %}
+                    {{ contact.first_name }}
+                {% else %}
+                    {{ contact.raw_username }}
+                {% endif %}
+            {% endif %}
+        {% endblock %}
+        </title>
         <link rel="stylesheet" media="screen" href="{% static 'hqstyle/css/core/hqstyle-core.css' %}"/>
         <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'hqwebapp/js/lib/knockout-2.1.0.debug.js' %}"></script>

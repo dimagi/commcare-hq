@@ -632,6 +632,7 @@ def chat(request, domain, contact_id):
         "contact_id" : contact_id,
         "contact" : get_contact(contact_id),
         "message_count_threshold" : domain_obj.chat_message_count_threshold or DEFAULT_MESSAGE_COUNT_THRESHOLD,
+        "custom_case_username" : domain_obj.custom_case_username,
     }
     template = settings.CUSTOM_CHAT_TEMPLATES.get(domain_obj.custom_chat_template) or "sms/chat.html"
     return render(request, template, context)
