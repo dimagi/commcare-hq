@@ -2076,13 +2076,11 @@ msgid "Setup"
 msgstr ""
 
 #: corehq/apps/commtrack/views.py:51
-#, fuzzy
 msgid "Manage Products"
 msgstr "Gérer les déploiements"
 
 #: corehq/apps/commtrack/views.py:107
 #: corehq/apps/commtrack/templates/commtrack/manage/products.html:60
-#, fuzzy
 msgid "New Product"
 msgstr "produit"
 
@@ -2121,7 +2119,6 @@ msgid "Create Product"
 msgstr "Créer un nouveau projet"
 
 #: corehq/apps/commtrack/templates/commtrack/manage/products.html:44
-#, fuzzy
 msgid "Available Products"
 msgstr "Informations du projet"
 
@@ -7555,12 +7552,10 @@ msgid "Maps: States of India"
 msgstr ""
 
 #: corehq/apps/reports/standard/inspect.py:1357
-#, fuzzy
 msgid "Maps: Case List"
 msgstr "Liste des cas"
 
 #: corehq/apps/reports/standard/ivr.py:23
-#, fuzzy
 msgid "Call Log"
 msgstr "tous ouverts"
 
@@ -7732,7 +7727,6 @@ msgid "All Forms"
 msgstr "Tous les formulaires"
 
 #: corehq/apps/reports/standard/monitoring.py:355
-#, fuzzy
 msgid "Daily Form Activity"
 msgstr "Soumissions quotidiennes de formulaires"
 
@@ -7741,7 +7735,6 @@ msgid "Number of submissions per day."
 msgstr ""
 
 #: corehq/apps/reports/standard/monitoring.py:429
-#, fuzzy
 msgid "Form Completion Time"
 msgstr "Tendances de remplissage des formulaires"
 
@@ -7834,7 +7827,6 @@ msgid "Graphical representation of when forms are submitted."
 msgstr ""
 
 #: corehq/apps/reports/standard/monitoring.py:736
-#, fuzzy
 msgid "Worker Activity"
 msgstr "Activité du cas"
 
@@ -8016,7 +8008,6 @@ msgid "Saved Report Name"
 msgstr "Nom du rapport enregistré"
 
 #: corehq/apps/reports/templates/reports/reports_home.html:72
-#, fuzzy
 msgid "Create a New Scheduled Report"
 msgstr "Mes rapports planifiés"
 
@@ -12974,8 +12965,8 @@ msgstr ""
 #~ msgid "Authorization Required"
 #~ msgstr "Autorisation nécessaire"
 
-#~ msgid "Errors & Warnings Summary"
-#~ msgstr " Résumé des erreurs et des avertissements"
+msgid "Errors & Warnings Summary"
+msgstr " Résumé des erreurs et des avertissements"
 
 #~ msgid "Number of Forms"
 #~ msgstr "Nombre de formulaires"
