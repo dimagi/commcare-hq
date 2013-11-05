@@ -98,10 +98,10 @@ class MessageBankReport(FRIReport):
         participant_messages = self.get_participant_messages(case)
         for sms in participant_messages:
             if sms.chat_user_id is not None:
-                if not sms.message_bank_lookup_completed:
+                if not sms.fri_message_bank_lookup_completed:
                     add_metadata(sms, message_bank_messages)
-                if sms.message_bank_message_id in result:
-                    result[sms.message_bank_message_id] += 1
+                if sms.fri_message_bank_message_id in result:
+                    result[sms.fri_message_bank_message_id] += 1
         return result
 
     def _fmt(self, val):
@@ -146,7 +146,7 @@ class MessageReport(FRIReport, DatespanMixin):
 
         for message in data:
             # Add metadata from the message bank if it has not been added already
-            if (message.direction == OUTGOING) and (not message.message_bank_lookup_completed):
+            if (message.direction == OUTGOING) and (not message.fri_message_bank_lookup_completed):
                 add_metadata(message, message_bank_messages)
 
             # Lookup the message recipient

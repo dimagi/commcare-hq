@@ -61,11 +61,11 @@ def add_metadata(sms, message_bank_messages):
     text = letters_only(sms.text)
     for entry in message_bank_messages:
         if entry["compare_string"] in text:
-            sms.message_bank_message_id = entry["message"]._id
+            sms.fri_message_bank_message_id = entry["message"]._id
             sms.fri_id = entry["message"].fri_id
-            sms.risk_profile = entry["message"].risk_profile
+            sms.fri_risk_profile = entry["message"].risk_profile
             break
-    sms.message_bank_lookup_completed = True
+    sms.fri_message_bank_lookup_completed = True
     try:
         sms.save()
     except Exception:

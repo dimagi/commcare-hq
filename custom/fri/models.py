@@ -41,8 +41,8 @@ class FRIRandomizedMessage(Document):
     order = IntegerProperty() # The order in which this message must be sent, from 0 - 279
 
 class FRISMSLog(SMSLog):
-    message_bank_lookup_completed = BooleanProperty(default=False)
-    message_bank_message_id = StringProperty()
+    fri_message_bank_lookup_completed = BooleanProperty(default=False)
+    fri_message_bank_message_id = StringProperty()
     fri_id = StringProperty()
-    risk_profile = StringProperty(choices=PROFILES)
+    fri_risk_profile = StringProperty(choices=PROFILES)
 
