@@ -84,7 +84,34 @@ class Product(object):
         )
 
 class RequisitionStatus(RssWrapper):
-    pass
+
+    @property
+    def requisition_id(self):
+        return self.metadata['requisitionId']
+
+    @property
+    def requisition_status(self):
+        return self.metadata['requisitionStatus']
+
+    @property
+    def order_id(self):
+        return self.metadata.get('orderId', None)
+
+    @property
+    def order_status(self):
+        return self.metadata.get('orderStatus', None)
+
+    @property
+    def emergency(self):
+        return self.metadata.get('emergency', None)
+
+    @property
+    def start_date(self):
+        return self.metadata.get('startDate', None)
+
+    @property
+    def end_date(self):
+        return self.metadata.get('endDate', None)
 
 
 class Program(object):
@@ -134,7 +161,7 @@ def get_programs_and_products(uri_or_text):
         yield Program.from_metadata(RssMetadata.from_entry(entry).metadata)
 
 
-def get_requisition_statues(uri_or_text):
+def get_requisition_statuses(uri_or_text):
     parsed = feedparser.parse(uri_or_text)
     for entry in parsed.entries:
         yield RequisitionStatus(RssMetadata.from_entry(entry))
@@ -194,7 +221,7 @@ class OpenLMISEndpoint(object):
         return (fac for fac in self._iter_feed(self.facility_master_feed_uri, get_facilities))
 
     def get_all_requisition_statuses(self):
-        return (fac for fac in self._iter_feed(self.requisition_status_feed_uri, get_requisition_statues))
+        return (fac for fac in self._iter_feed(self.requisition_status_feed_uri, get_requisition_statuses))
 
     def get_all_programs(self, include_products=True):
         programs = (p for p in self._iter_feed(self.program_catalog_feed_uri, get_programs_and_products))
