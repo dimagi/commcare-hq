@@ -53,7 +53,7 @@ ES_MAX_CLAUSE_COUNT = 1024  #  this is what ES's maxClauseCount is currently set
 
 def get_stats_data(domains, histo_type, datespan, interval="day"):
     histo_data = dict([(d['display_name'],
-                        es_histogram(histo_type, d["names"], datespan.startdate_display, datespan.enddate_display))
+                        es_histogram(histo_type, d["names"], datespan.startdate_display, datespan.enddate_display, interval=interval))
                         for d in domains])
 
     def _total_until_date(histo_type, doms=None):
