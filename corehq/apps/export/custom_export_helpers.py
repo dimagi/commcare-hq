@@ -207,11 +207,12 @@ class FormCustomExportHelper(CustomExportHelper):
 
 class CustomColumn(object):
 
-    def __init__(self, slug, index, display, transform, tag=None):
+    def __init__(self, slug, index, display, transform, is_sensitive=False, tag=None):
         self.slug = slug
         self.index = index
         self.display = display
         self.transform = transform
+        self.is_sensitive = is_sensitive
         self.tag = tag
 
     def match(self, col):
@@ -223,13 +224,16 @@ class CustomColumn(object):
         col['special'] = self.slug
 
     def default_column(self):
+        # this is kinda hacky - mirrors ExportColumn.to_config_format to add custom columns
+        # to the existing export UI
         return {
             'index': self.index,
             'selected': False,
             'display': self.display,
             'transform': self.transform,
-            'special': self.slug,
+            "is_sensitive": self.is_sensitive,
             'tag': self.tag,
+            'special': self.slug,
         }
 
 
