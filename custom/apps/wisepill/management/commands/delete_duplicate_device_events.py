@@ -17,11 +17,11 @@ class Command(BaseCommand):
         keys = {}
         for form in forms:
             form_inst = form.get_form
-            if form_inst["@xmlns"] == xmlns:
+            if form_inst.get("@xmlns") == xmlns:
                 # Timestamp of device event: ddmmyyhhmmss
-                t = form_inst["t"] if "t" in form_inst else None
+                t = form_inst.get("t")
                 # Serial number of device
-                sn = form_inst["sn"] if "sn" in form_inst else None
+                sn = form_inst.get("sn")
                 if t and sn:
                     key = "%s_%s" % (sn, t)
                     if key in keys:
