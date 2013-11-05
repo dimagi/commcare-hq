@@ -324,6 +324,10 @@
                 };
                 self.save.state = ko.observable('save');
 
+                self.row_label_classes = function(row) {
+                    return (row === 'no data' || row === 'deleted') ? "label label-warning" : "label";
+                };
+
                 setTimeout(function () {
                     _(self.table_configuration()).each(function (table) {
                         if (!table.display()) {
@@ -458,7 +462,7 @@
                                 <td><input type="checkbox" class="field-include" data-bind="checked: selected" /></td>
                                 <td>
                                     <span data-bind="foreach: _niceField.tags">
-                                        <span class="label" data-bind="text: $data, visible: $data"></span>
+                                        <span data-bind="text: $data, visible: $data, attr: { 'class': $root.row_label_classes($data)}"></span>
                                     </span>
                                     <code data-bind="text: _niceField.field"></code>
 
