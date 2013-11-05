@@ -917,23 +917,26 @@ function infoContext(feature, config, mode) {
     };
     var displayProperties = {};
     var rawProperties = {};
+    var propTitles = {};
     $.each(prop_cols, function(i, k) {
         var v = feature.properties[k];
         displayProperties[k] = formatForDisplay(k, v);
         rawProperties[k] = (v instanceof Date ? v.getTime() : v);
         // can't use iso date as sort key; datatables expects numeric sorting for date columns
+        propTitles[k] = getColumnTitle(k, config);
     });
 
     var context = {
         props: displayProperties,
         raw: rawProperties,
+        titles: propTitles,
         name: (config.name_column ? feature.properties[config.name_column] : null),
         info: []
     };
     $.each(info_cols, function(i, e) {
         context.info.push({
             slug: e, // FIXME this will cause problems if column keys have weird chars or spaces
-            label: getColumnTitle(e, config),
+            label: propTitles[e],
             value: displayProperties[e],
             raw: rawProperties[e],
         });
@@ -953,6 +956,12 @@ function formatDetailPopup(feature, config) {
 
 // attempt to set sensible defaults for any missing parameters in the metric definitions
 function setMetricDefaults(metric, data, config) {
+    if (metric.auto) {
+        // must update metric in place
+        _.extend(metric, autoMetricForColumn(metric.auto, data));
+        delete metric.auto;
+    }
+
     if (!metric.title) {
         var varcols = [];
         forEachDimension(metric, function(type, meta) {
@@ -1031,18 +1040,22 @@ function getAllCols(config, data) {
 
 function autoConfiguration(config, data) {
     var metrics = $.map(getAllCols(config, data), function(e) {
-        var meta = {column: e};
-        var stats = summarizeColumn(meta, data);
-        var metric = {}
-        if (stats.nonnumeric || !magnitude_based_field(stats) || stats.nonpoint) {
-            metric.color = meta;
-        } else {
-            metric.size = meta;
-        }
-        return metric;
+        return {auto: e};
     });
     // metrics may already exist if we're in debug mode
     config.metrics = (config.metrics || []).concat([{title: 'Auto', group: true, children: metrics}]);
+}
+
+function autoMetricForColumn(col, data) {
+    var meta = {column: col};
+    var stats = summarizeColumn(meta, data);
+    var metric = {}
+    if (stats.nonnumeric || !magnitude_based_field(stats) || stats.nonpoint) {
+        metric.color = meta;
+    } else {
+        metric.size = meta;
+    }
+    return metric;
 }
 
 function summarizeColumn(meta, data) {
@@ -1209,9 +1222,20 @@ function formatValue(column, value, config) {
         return null;
     }
 
-    // TODO have some kind of default formatting (nice dates, add commas to numbers, etc.)
-    var formatter = config._fmt[column];
-    return (formatter ? formatter(value) : '' + value);
+    var defaultFormat = function(val) {
+        var raw = '' + val;
+
+        if (val instanceof Date) {
+            // this is janky -- just crop out tz cruft and seconds
+            return raw.substring(0, 21) + ' ' + raw.substring(28, 33);
+        } else {
+            // TODO default format for numbers (add commas, etc.)
+            return raw;
+        }
+    };
+
+    var formatter = config._fmt[column] || defaultFormat;
+    return formatter(value);
 }
 
 function getColumnTitle(col, config) {

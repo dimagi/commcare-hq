@@ -13,6 +13,7 @@ from django.conf import settings
 from django.core import cache
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+from django.template.loader import render_to_string
 import simplejson
 import logging
 import re
@@ -803,13 +804,14 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
       'report_params': optional dict of (static) config parameters for report
 
       adapter == 'case'
-      # in the current implementation, the case adapater requires you use the same filters
-      # as on the regular case list report
+      # note: in the current implementation, the case adapater requires you use the same
+      # filters as on the regular case list report
       'geo_fetch': mapping of case type to directive of how to pull geo data for a case of
           that type. available directives:
           * name of case property containing 'geopoint' data
           * (TODO) 'link:xxx' where 'xxx' is the case type of a linked case to refer to
             for geo data (the adapter must also know how to process the linked case type)
+        for case types not specified, the default is to use the "gps" case property
     }
 
     display_config: {
@@ -988,6 +990,13 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
             print 'WARN: results limit exceeded'
             pass
 
+        # TODO ideally we'd want access to all the data shown on the
+        # case detail report. certain case types can override this via
+        # case.to_full_dict(). however, there is currently no efficient
+        # way to call this over a large block of cases. so now we (via the
+        # CaseListReport/DataSource) limit ourselves only to that which
+        # can be queried in bulk
+
         for data in source.get_data():
             case = CommCareCase.wrap(data['_case']).get_json()
             del data['_case']
@@ -1002,13 +1011,14 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
              )
             data.update(('prop_%s' % k, v) for k, v in case['properties'].iteritems() if k not in standard_props)
 
+            GEO_DEFAULT = 'gps' # case property
             geo = None
-            geo_directive = params['geo_fetch'].get(data['case_type'], 'gps')
+            geo_directive = params['geo_fetch'].get(data['case_type'], GEO_DEFAULT)
             if geo_directive.startswith('link:'):
                 # TODO use linked case
                 pass
             elif geo_directive == '_random':
-                # for testing
+                # for testing -- just map the case to a random point
                 import random
                 import math
                 geo = '%s %s' % (math.degrees(math.asin(random.uniform(-1, 1))), random.uniform(-180, 180))
@@ -1040,15 +1050,23 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
         if not layers:
             layers = {'Default': {'family': 'fallback'}}
 
+        data = self._get_data()
+        display = self.dynamic_config(self.display_config, data['features'])
+
         context = {
-            'data': self._get_data(),
-            'config': self.display_config,
+            'data': data,
+            'config': display,
             'layers': layers,
         }
 
         return dict(
             context=context,
         )
+
+    def dynamic_config(self, static_config, data):
+        """optionally customize the display configuration based on the 
+        resultant data"""
+        return static_config
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
@@ -1349,9 +1367,55 @@ class GenericCaseListMap(GenericMapReport):
             "geo_fetch": self.case_config,
         }
 
-    display_config = {
-        "name_column": "case_name",
-    }
+    @property
+    def display_config(self):
+        cfg = {
+            "name_column": "case_name",
+            "detail_columns": [
+                'external_id',
+                'owner_name',
+                'num_forms',
+                'is_closed',
+                'opened_on',
+                'modified_on',
+                'closed_on',
+            ],
+            "column_titles": {
+                'case_name': 'Case Name',
+                'case_type': 'Case Type',
+                'external_id': 'ID #',
+                'owner_name': 'Owner',
+                'num_forms': '# Forms',
+                'is_closed': 'Status',
+                'opened_on': 'Date Opened',
+                'modified_on': 'Date Last Modified',
+                'closed_on': 'Date Closed',
+            },
+            "enum_captions": {
+                "is_closed": {'y': 'Closed', 'n': 'Open'},
+            },
+        }
+        cfg['detail_template'] = render_to_string('reports/partials/caselist_mapdetail.html', {})
+        return cfg
+
+    def dynamic_config(self, static_config, data):
+        all_cols = reduce(lambda a, b: a.union(b), (row['properties'] for row in data), set())
+        all_props = filter(lambda e: e.startswith('prop_'), all_cols)
+
+        # TODO feels like there should be a more authoritative source of property titles
+        def format_propname(prop):
+            name = prop[len('prop_'):]
+            name = reduce(lambda str, sep: ' '.join(str.split(sep)), ('-', '_'), name).title()
+            return name
+
+        static_config['column_titles'].update((prop, format_propname(prop)) for prop in all_props)
+        static_config['detail_columns'].extend(sorted(all_props))
+
+        metric_cols = [k for k in static_config['detail_columns'] if k not in ('external_id')]
+        metric_cols.insert(0, 'case_type')
+        static_config['metrics'] = [{'auto': col} for col in metric_cols]
+
+        return static_config
 
 class DemoMapCaseList(GenericCaseListMap):
     name = ugettext_noop("Maps: Case List")
@@ -1362,12 +1426,19 @@ class DemoMapCaseList(GenericCaseListMap):
         "supply-point-product": "_random",
     }
 
+    """
     @property
     def display_config(self):
         cfg = super(DemoMapCaseList, self).display_config
         # extend here
         return cfg
+    """
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return user and user.is_previewer()
+
+"""
+metrics:
+want to allow customization
+"""
