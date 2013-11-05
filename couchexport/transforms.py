@@ -9,10 +9,12 @@ def identity(val, doc):
 
 
 def auto_format_datetime(expected_format, output_format, val, doc):
-    try:
-        return datetime.strptime(val, expected_format).strftime(output_format)
-    except ValueError:
-        return val
+    if isinstance(val, basestring):
+        try:
+            return datetime.strptime(val, expected_format).strftime(output_format)
+        except ValueError:
+            pass
+    return val
 
 
 def couch_to_excel_datetime(val, doc):
