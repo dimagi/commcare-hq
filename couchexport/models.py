@@ -231,12 +231,20 @@ class ExportColumn(DocumentSchema):
     # signature: transform(val, doc) -> val
     transform = SerializableFunctionProperty(default=None)
     tag = StringProperty()
+    is_sensitive = BooleanProperty(default=False)
+
+    @classmethod
+    def wrap(self, data):
+        if 'is_sensitive' not in data and data.get('transform', None):
+            data['is_sensitive'] = True
+        return super(ExportColumn, self).wrap(data)
 
     def to_config_format(self, selected=True):
         return {
             "index": self.index,
             "display": self.display,
             "transform": self.transform.dumps() if self.transform else None,
+            "is_sensitive": self.is_sensitive,
             "selected": selected,
             "tag": self.tag,
         }
@@ -263,7 +271,7 @@ class ExportTable(DocumentSchema):
     @property
     @memoized
     def displays_by_index(self):
-        return dict((c.index, c.display + (" [sensitive]" if c.transform else '')) for c in self.columns)
+        return dict((c.index, c.display + (" [sensitive]" if c.is_sensitive else '')) for c in self.columns)
     
     def get_column_configuration(self, all_cols):
         selected_cols = set()
