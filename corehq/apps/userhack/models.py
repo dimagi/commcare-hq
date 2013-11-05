@@ -19,7 +19,6 @@
 
 from django.contrib.auth.models import User
 from django.core.validators import MaxLengthValidator
-from django_digest.models import PartialDigest
 
 NEW_USERNAME_LENGTH = 128
 
@@ -31,4 +30,3 @@ def monkey_patch_username(model, field):
             v.limit_value = NEW_USERNAME_LENGTH
 
 monkey_patch_username(User, 'username')
-monkey_patch_username(PartialDigest, 'login')
