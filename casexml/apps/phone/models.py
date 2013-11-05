@@ -82,23 +82,23 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
 
     # we need to store a mapping of cases to indices for generating the footprint
 
-    # The cases_on_phone property represents the state of all cases the server thinks
-    # the phone has on it and cares about.
-
-
-    # The dependant_cases_on_phone property represents the possible list of cases
-    # also on the phone because they are referenced by a real case's index (or
-    # a dependent case's index). This list is not necessarily a perfect reflection
-    # of what's on the phone, but is guaranteed to be after pruning
+    # cases_on_phone represents the state of all cases the server
+    # thinks the phone has on it and cares about.
     cases_on_phone = SchemaListProperty(CaseState)
+
+    # dependant_cases_on_phone represents the possible list of cases
+    # also on the phone because they are referenced by a real case's index
+    # (or a dependent case's index).
+    # This list is not necessarily a perfect reflection
+    # of what's on the phone, but is guaranteed to be after pruning
     dependent_cases_on_phone = SchemaListProperty(CaseState)
 
-    # The owner ids property keeps track of what ids the phone thinks it's the owner
-    # of. This typically includes the user id, as well as all groups that that user
-    # is a member of.
+    # owner_ids_on_phone stores the ids the phone thinks it's the owner of.
+    # This typically includes the user id,
+    # as well as all groups that that user is a member of.
     owner_ids_on_phone = StringListProperty()
 
-    strict = True # for asserts
+    strict = True  # for asserts
 
     def get_payload_attachment_name(self, version):
         return 'restore_payload_{version}.xml'.format(version=version)
