@@ -47,6 +47,42 @@ function intervalize(vals, start, end, interval) {
     return ret;
 }
 
+function date_to_first_of_month(date_val) {
+    var month = new Date(date_val).getUTCMonth();
+    var year = new Date(date_val).getUTCFullYear();
+    return new Date(Date.UTC(year, month, 1));
+}
+
+function where_to_put(vals, time) {
+    for (var i = 0; i < vals.length; i++) {
+        if (i + 1 < vals.length && vals[i + 1].x <= time) {
+            continue;
+        }
+        return i;
+    }
+}
+
+function intervalize_months(vals, start, end) {
+    var ret = [];
+    var current_date = date_to_first_of_month(start), end = date_to_first_of_month(end);
+    var current_month = current_date.getUTCMonth();
+    var initial_year = current_date.getUTCFullYear();
+
+    while (current_date.valueOf() <= end.valueOf()) {
+        ret.push({x: current_date.valueOf(), y: 0});
+        current_month += 1;
+        current_date = new Date(Date.UTC(initial_year, current_month, 1))
+    }
+
+    for (var i = 0; i < vals.length; i++) {
+        var index = where_to_put(ret, vals[i].x);
+        if (index >= 0) {
+            ret[index].y += vals[i].y;
+        }
+    }
+    return ret;
+}
+
 function swap_prop_names(obj, from_to_map) {
     var ret_obj = {};
     _.each(from_to_map, function (v, k) { ret_obj[v] = obj[k] });
@@ -88,11 +124,15 @@ function trim_data(data) {
     })
 }
 
-function format_data(data, start, end, interval_val, no_trim) {
+function format_data(data, start, end, interval, no_trim) {
     var ret = [];
     _.each(data, function (vals, name) {
         vals = _.map(vals, function(o) { return swap_prop_names(o, {time: "x", count: "y"})});
-        vals = intervalize(vals, start, end, interval_val);
+        if (interval === 'month') {
+            vals = intervalize_months(vals, start, end)
+        } else {
+            vals = intervalize(vals, start, end, INTERVAL_VALUES[interval]);
+        }
         ret.push({key: name, values: vals});
     });
 
@@ -134,7 +174,7 @@ function findEnds(data, starting_time, ending_time) {
 function loadCharts(chart_name, xname, data, initial_values, starting_time, ending_time, interval) {
     ends = findEnds(data, starting_time, ending_time);
     starting_time = ends.start, ending_time = ends.end;
-    var domain_data = format_data(data, starting_time, ending_time, INTERVAL_VALUES[interval]);
+    var domain_data = format_data(data, starting_time, ending_time, interval);
     var cum_domain_data = _.map(domain_data, function (domain_datum) {
         return formatDataForCumGraphs(domain_datum, initial_values[domain_datum.key]);
     });
