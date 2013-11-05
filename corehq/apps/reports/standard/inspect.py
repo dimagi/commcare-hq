@@ -1064,7 +1064,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
         )
 
     def dynamic_config(self, static_config, data):
-        """optionally customize the display configuration based on the 
+        """override to customize the display configuration based on the 
         resultant data"""
         return static_config
 
@@ -1360,6 +1360,10 @@ class DemoMapReport2(GenericMapReport):
 class GenericCaseListMap(GenericMapReport):
     fields = CaseListMixin.fields
 
+    # override to specify geo-properties of case types
+    # (beyond default 'gps' case property)
+    case_config = {}
+
     @property
     def data_source(self):
         return {
@@ -1425,14 +1429,6 @@ class DemoMapCaseList(GenericCaseListMap):
         "supply-point": "_random",
         "supply-point-product": "_random",
     }
-
-    """
-    @property
-    def display_config(self):
-        cfg = super(DemoMapCaseList, self).display_config
-        # extend here
-        return cfg
-    """
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
