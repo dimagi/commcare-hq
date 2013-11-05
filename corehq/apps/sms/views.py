@@ -14,7 +14,8 @@ from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_
 from corehq.apps.sms.api import send_sms, incoming, send_sms_with_backend_name, send_sms_to_verified_number
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import CouchUser, Permissions
 from corehq.apps.users import models as user_models
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from corehq.apps.sms.models import SMSLog, INCOMING, OUTGOING, ForwardingRule, CommConnectCase
@@ -594,7 +595,7 @@ def global_backend_map(request):
     }
     return render(request, "sms/backend_map.html", context)
 
-@login_and_domain_required
+@require_permission(Permissions.edit_data)
 def chat_contacts(request, domain):
     domain_obj = Domain.get_by_name(domain, strict=True)
     verified_numbers = VerifiedNumber.by_domain(domain)
@@ -623,7 +624,7 @@ def chat_contacts(request, domain):
     }
     return render(request, "sms/chat_contacts.html", context)
 
-@login_and_domain_required
+@require_permission(Permissions.edit_data)
 def chat(request, domain, contact_id):
     domain_obj = Domain.get_by_name(domain, strict=True)
     context = {
@@ -635,7 +636,7 @@ def chat(request, domain, contact_id):
     template = settings.CUSTOM_CHAT_TEMPLATES.get(domain_obj.custom_chat_template) or "sms/chat.html"
     return render(request, template, context)
 
-@login_and_domain_required
+@require_permission(Permissions.edit_data)
 def api_history(request, domain):
     result = []
     contact_id = request.GET.get("contact_id", None)
