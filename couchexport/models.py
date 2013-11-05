@@ -339,7 +339,7 @@ class ExportTable(DocumentSchema):
             id = None
             cells = []
             for column, val in self.get_items_in_order(row):
-                # DEID TRANSFORM BABY!
+                # TRANSFORM BABY!
                 if apply_transforms:
                     if column.transform and not isinstance(val, Constant):
                         try:
