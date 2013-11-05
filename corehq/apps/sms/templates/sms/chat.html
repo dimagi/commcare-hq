@@ -1,4 +1,4 @@
-{% load hq_shared_tags %}{% load i18n %}<!DOCTYPE html>
+{% load hq_shared_tags %}{% load i18n %}{% load url from future %}<!DOCTYPE html>
 <html>
     <head>
         <title>
@@ -164,7 +164,7 @@
                             payload.start_date = self.latest_message_utc_timestamp;
                         }
                         request = $.ajax({
-                            url : "{% url api_history domain %}",
+                            url : "{% url 'api_history' domain %}",
                             data : payload
                         });
                         request.done(function(response, textStatus, jqXHR) {
@@ -193,7 +193,7 @@
                     self.send_message = function() {
                         clearTimeout(self.latest_timeout_handle);
                         request = $.ajax({
-                            url : "{% url api_send_sms domain %}",
+                            url : "{% url 'api_send_sms' domain %}",
                             type : "POST",
                             data : {
                                 contact_id : "{{ contact_id }}",
