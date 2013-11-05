@@ -50,6 +50,7 @@ var CommCareUsersViewModel = function (o) {
 
     self.search_string = ko.observable();
     self.from_search = ko.observable();
+    self.currently_searching = ko.observable(false);
     self.init = function () {
         $(function () {
             self.change_page(self.current_page);
@@ -77,6 +78,7 @@ var CommCareUsersViewModel = function (o) {
         page = page === -1 ? 1 : page;
 
         if (page) {
+            self.currently_searching(true);
             $.ajax({
                 url: format_url(page),
                 dataType: 'json',
@@ -85,6 +87,7 @@ var CommCareUsersViewModel = function (o) {
                     $('.hide-until-load').fadeIn();
                     $('#user-list-notification').text('Sorry, there was an problem contacting the server ' +
                         'to fetch your Mobile Workers list. Please, try again in a little bit.');
+                    self.currently_searching(false);
                 },
                 success: reloadList
             });
@@ -120,6 +123,7 @@ var CommCareUsersViewModel = function (o) {
     };
 
     var reloadList = function(data) {
+            self.currently_searching(false);
             if (data.success) {
                 if (!self.initial_load()) {
                     self.initial_load(true);
