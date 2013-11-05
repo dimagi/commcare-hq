@@ -1,7 +1,7 @@
 from couchdbkit import ResourceNotFound
 from casexml.apps.case.models import CommCareCaseGroup
 from corehq.apps.hqcase.utils import get_case_by_identifier
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _
 
 
 def add_cases_to_case_group(domain, case_group_id, uploaded_data):
@@ -14,8 +14,6 @@ def add_cases_to_case_group(domain, case_group_id, uploaded_data):
     except ResourceNotFound:
         response['errors'].append(_("The case group was not found."))
         return response
-
-    cases = case_group.cases
 
     for row in uploaded_data:
         identifier = row.get('case_identifier')
