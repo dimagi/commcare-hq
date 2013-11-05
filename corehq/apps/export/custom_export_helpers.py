@@ -207,11 +207,12 @@ class FormCustomExportHelper(CustomExportHelper):
 
 class CustomColumn(object):
 
-    def __init__(self, slug, index, display, transform):
+    def __init__(self, slug, index, display, transform, tag=None):
         self.slug = slug
         self.index = index
         self.display = display
         self.transform = transform
+        self.tag = tag
 
     def match(self, col):
          return col['index'] == self.index and col['transform'] == self.transform
@@ -228,6 +229,7 @@ class CustomColumn(object):
             'display': self.display,
             'transform': self.transform,
             'special': self.slug,
+            'tag': self.tag,
         }
 
 
