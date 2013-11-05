@@ -14,6 +14,7 @@
         var CustomExportView = {
             wrap: function (o) {
                 var self = ko.mapping.fromJS(o);
+                self.show_deleted = ko.observable(false);
 
                 self.utils = {
                     rename: function (field, rename_map) {
@@ -216,7 +217,6 @@
                     var unselected;
                     var columns = table.column_configuration();
 
-                    table.show_deleted = ko.observable(true);
                     _(columns).each(function (column) {
                         var niceField = self.utils.parseField(column.index, table.index, column.tag());
                         var special = ko.utils.unwrapObservable(column.special);
@@ -224,8 +224,7 @@
                             niceField['field'] = special;
                         }
                         column._niceField = niceField;
-                        column.deleted = $.inArray("deleted", column._niceField.tags) >= 0
-                        column.show_deleted = table.show_deleted;
+                        column.deleted = $.inArray("deleted", column._niceField.tags) >= 0;
                     });
 
                     for (var i = 0; i < columns.length; i++) {
@@ -409,6 +408,9 @@
                         <input type="checkbox" id="transform-dates-checkbox" data-bind="checked: custom_export.transform_dates" />
                         {% trans "Automatically convert dates for Excel?" %}
                     </label>
+                    <label class="checkbox">
+                        <input type="checkbox" data-bind="checked: $root.show_deleted" /> {% trans "Show Deleted Questions" %}
+                    </label>
                 </div>
             </div>
         </fieldset>
@@ -442,17 +444,14 @@
                                 <a href="#" class="btn btn-mini" data-bind="click: $root.selectAll">{% trans "Select All" %}</a>
                                 <a href="#" class="btn btn-mini btn-inverse" data-bind="click: $root.selectNone">{% trans "Select None" %}</a></th>
                             <th>
-                                {% trans "Field" %}
-                                <div class="pull-right">
-                                    <input type="checkbox" data-bind="checked: show_deleted" /> Show Deleted
-                                </div>
+                                {% trans "Question" %}
                             </th>
                             <th>{% trans "Display" %}</th>
                             <th class="deid-column" data-bind="visible: $root.showDeidColumn()">{% trans "Sensitivity" %}</th>
                         </tr>
                         </thead>
                         <tbody data-bind="sortable: column_configuration">
-                            <tr data-bind="visible: !deleted || show_deleted">
+                            <tr data-bind="visible: !deleted || $root.show_deleted">
                                 <td class="sortable-handle">
                                     <i class="icon-resize-vertical"></i>
                                 </td>
