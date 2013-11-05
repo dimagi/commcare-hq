@@ -239,6 +239,12 @@ class ExportColumn(DocumentSchema):
             data['is_sensitive'] = True
         return super(ExportColumn, self).wrap(data)
 
+    def get_display(self):
+         return '{primary}{extra}'.format(
+             primary=self.display,
+             extra=" [sensitive]" if self.is_sensitive else ''
+         )
+
     def to_config_format(self, selected=True):
         return {
             "index": self.index,
@@ -271,7 +277,7 @@ class ExportTable(DocumentSchema):
     @property
     @memoized
     def displays_by_index(self):
-        return dict((c.index, c.display + (" [sensitive]" if c.is_sensitive else '')) for c in self.columns)
+        return dict((c.index, c.get_display()) for c in self.columns)
     
     def get_column_configuration(self, all_cols):
         selected_cols = set()
@@ -342,7 +348,6 @@ class ExportTable(DocumentSchema):
                             val = transform_error_constant
                     elif global_transform:
                         val = global_transform(val, doc)
-
 
                 if column.index == 'id':
                     id = val
