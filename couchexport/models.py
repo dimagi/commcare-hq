@@ -295,7 +295,7 @@ class ExportTable(DocumentSchema):
         from couchexport.export import FormattedRow
         headers = []
         for col in self.columns:
-            display = self.displays_by_index[col.index]
+            display = col.get_display()
             if col.index == 'id':
                 id_len = len(
                     filter(lambda part: part == '#', self.index.split('.'))
