@@ -243,7 +243,7 @@
                 self.showDeidColumn = ko.observable(function () {
                     return _(self.table_configuration()).some(function (table) {
                         return table.selected() && _(table.column_configuration()).some(function (column) {
-                            return column.selected() && column.transform() && !ko.utils.unwrapObservable(column.special);
+                            return column.selected() && column.transform() && column.is_sensitive();
                         });
                     });
                 }());
@@ -279,10 +279,12 @@
                             columns: _(table.column_configuration()).filter(function (column) {
                                 return column.selected();
                             }).map(function (column) {
+                                var is_sensitive = column.transform() && (column.is_sensitive() || !ko.utils.unwrapObservable(column.special));
                                 return {
                                     index: column.index,
                                     display: column.display,
-                                    transform: column.transform() || null // it doesn't save '' well
+                                    transform: column.transform() || null, // it doesn't save '' well
+                                    is_sensitive: is_sensitive
                                 };
                             })
                         }
