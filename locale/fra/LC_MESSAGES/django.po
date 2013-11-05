@@ -2077,12 +2077,12 @@ msgstr ""
 
 #: corehq/apps/commtrack/views.py:51
 msgid "Manage Products"
-msgstr "Gérer les déploiements"
+msgstr ""
 
 #: corehq/apps/commtrack/views.py:107
 #: corehq/apps/commtrack/templates/commtrack/manage/products.html:60
 msgid "New Product"
-msgstr "produit"
+msgstr ""
 
 #: corehq/apps/commtrack/views.py:139
 #, fuzzy
@@ -2120,7 +2120,7 @@ msgstr "Créer un nouveau projet"
 
 #: corehq/apps/commtrack/templates/commtrack/manage/products.html:44
 msgid "Available Products"
-msgstr "Informations du projet"
+msgstr ""
 
 #: corehq/apps/commtrack/templates/commtrack/manage/products.html:48
 msgid "Showing the Inactive Product List."
@@ -7553,11 +7553,11 @@ msgstr ""
 
 #: corehq/apps/reports/standard/inspect.py:1357
 msgid "Maps: Case List"
-msgstr "Liste des cas"
+msgstr ""
 
 #: corehq/apps/reports/standard/ivr.py:23
 msgid "Call Log"
-msgstr "tous ouverts"
+msgstr ""
 
 #: corehq/apps/reports/standard/ivr.py:32
 #: corehq/apps/reports/standard/ivr.py:165
@@ -7728,7 +7728,7 @@ msgstr "Tous les formulaires"
 
 #: corehq/apps/reports/standard/monitoring.py:355
 msgid "Daily Form Activity"
-msgstr "Soumissions quotidiennes de formulaires"
+msgstr ""
 
 #: corehq/apps/reports/standard/monitoring.py:362
 msgid "Number of submissions per day."
@@ -7736,7 +7736,7 @@ msgstr ""
 
 #: corehq/apps/reports/standard/monitoring.py:429
 msgid "Form Completion Time"
-msgstr "Tendances de remplissage des formulaires"
+msgstr ""
 
 #: corehq/apps/reports/standard/monitoring.py:436
 msgid "Statistics on time spent on a particular form."
@@ -7828,7 +7828,7 @@ msgstr ""
 
 #: corehq/apps/reports/standard/monitoring.py:736
 msgid "Worker Activity"
-msgstr "Activité du cas"
+msgstr ""
 
 #: corehq/apps/reports/standard/monitoring.py:737
 msgid "Summary of form and case activity by user or group."
@@ -8009,7 +8009,7 @@ msgstr "Nom du rapport enregistré"
 
 #: corehq/apps/reports/templates/reports/reports_home.html:72
 msgid "Create a New Scheduled Report"
-msgstr "Mes rapports planifiés"
+msgstr ""
 
 #: corehq/apps/reports/templates/reports/reports_home.html:78
 msgid "Saved Reports"
