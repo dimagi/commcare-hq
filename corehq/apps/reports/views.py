@@ -788,7 +788,7 @@ def _get_form_or_404(id):
     # maybe this should be a more general utility a-la-django's get_object_or_404
     try:
         return XFormInstance.get(id)
-    except ResourceNotFound:
+    except (AttributeError, ResourceNotFound):
         raise Http404()
 
 
