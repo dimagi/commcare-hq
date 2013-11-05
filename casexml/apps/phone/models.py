@@ -130,6 +130,9 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
 
     @classmethod
     def wrap(cls, data):
+        # last_seq used to be int, but is now string for cloudant compatibility
+        if isinstance(data.get('last_seq'), (int, long)):
+            data['last_seq'] = unicode(data['last_seq'])
         ret = super(SyncLog, cls).wrap(data)
         if hasattr(ret, 'has_assert_errors'):
             ret.strict = False
