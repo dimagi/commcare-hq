@@ -279,8 +279,8 @@ class ExportTable(DocumentSchema):
     @property
     @memoized
     def displays_by_index(self):
-        return dict((c.index, c.get_display()) for c in self.columns)
-    
+        return dict((c.index, c.display + (" [sensitive]" if c.is_sensitive else '')) for c in self.columns)
+
     def get_column_configuration(self, all_cols):
         selected_cols = set()
         for c in self.columns:
