@@ -218,7 +218,7 @@
 
                     table.show_deleted = ko.observable(true);
                     _(columns).each(function (column) {
-                        var niceField = self.utils.parseField(column.index, table.index);
+                        var niceField = self.utils.parseField(column.index, table.index, column.tag());
                         var special = ko.utils.unwrapObservable(column.special);
                         if (special) {
                             niceField['field'] = special;
