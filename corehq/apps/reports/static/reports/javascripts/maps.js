@@ -383,7 +383,19 @@ function initData(data, config) {
         e.popupContent = formatDetailPopup(e, config);
     });
 
+    // show any alerts
+    processMetadata(data.metadata || {});
+
     return initTable(data, config);
+}
+
+function processMetadata(metadata) {
+    if (metadata.capped_rows) {
+        var $capped = $('#results-capped');
+        $capped.show();
+        $capped.find('#rows-total').text(metadata.total_rows);
+        $capped.find('#rows-capped').text(metadata.capped_rows);
+    }
 }
 
 function initTable(data, config) {

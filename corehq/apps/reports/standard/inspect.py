@@ -887,8 +887,14 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
             except ValueError:
                 return None
 
+        metadata = {}
         def points():
             for row in data:
+                if '_meta' in row:
+                    # not a real data row
+                    metadata.update(row['_meta'])
+                    continue
+
                 geo = row[geo_col]
                 if geo is None:
                     continue
@@ -932,9 +938,11 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
                     'properties': properties,
                 }
 
+        features = list(points())
         return {
             'type': 'FeatureCollection',
-            'features': list(points()),
+            'features': features,
+            'metadata': metadata,
         }
 
     def _get_data_report(self, params, filters):
@@ -986,9 +994,12 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
 
         total_count = source.es_results['hits']['total']
         if total_count > MAX_RESULTS:
-            # TODO '# of results capped' warning on client
-            print 'WARN: results limit exceeded'
-            pass
+            # can't really think of a better way to return out-of-band
+            # metadata from a generator
+            yield {'_meta': {
+                    'total_rows': total_count,
+                    'capped_rows': MAX_RESULTS,
+                }}
 
         # TODO ideally we'd want access to all the data shown on the
         # case detail report. certain case types can override this via
@@ -1065,7 +1076,11 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
 
     def dynamic_config(self, static_config, data):
         """override to customize the display configuration based on the 
-        resultant data"""
+        resultant data
+
+        static_config -- contents of 'display_config' property
+        data -- report data as a list of geojson Feature records
+        """
         return static_config
 
     @classmethod
