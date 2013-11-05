@@ -30,7 +30,7 @@ class PhonelogReport(DeploymentsReport, DatespanMixin):
 
 
 class FormErrorReport(DeploymentsReport, DatespanMixin):
-    name = "Errors & Warnings Summary"
+    name = ugettext_noop("Errors & Warnings Summary")
     slug = "form_errors"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
@@ -99,7 +99,7 @@ class FormErrorReport(DeploymentsReport, DatespanMixin):
         return rows
 
 class DeviceLogDetailsReport(PhonelogReport):
-    name = "Device Log Details"
+    name = ugettext_noop("Device Log Details")
     slug = "log_details"
     fields = ['corehq.apps.reports.fields.DatespanField',
               'corehq.apps.reports.fields.DeviceLogTagField',
