@@ -245,7 +245,7 @@ class Requisition(object):
 
         agent_code = json_rep['agentCode']
         program_id = json_rep['programId']
-        period_id = getattr(json_rep, 'periodId', None)
+        period_id = json_rep.get('periodId', None)
         report_type = json_rep['reportType']
         products = []
         for p in product_list:
@@ -274,16 +274,16 @@ class RequisitionProduct(Product):
     @classmethod
     def from_json(cls, json_rep):
         code = json_rep['productCode']
-        beginning_balance = getattr(json_rep, 'beginningBalance', None)
-        quantity_received = getattr(json_rep, 'quantityReceived', None)
-        quantity_dispensed = getattr(json_rep, 'quantityDispensed', None)
-        losses_and_adjustments = getattr(json_rep, 'lossesAndAdjustments', None)
-        new_patient_count = getattr(json_rep, 'newPatientCount', None)
-        stock_on_hand = getattr(json_rep, 'stockOnHand', None)
-        stock_out_days = getattr(json_rep, 'stockOutDays', None)
-        quantity_requested = getattr(json_rep, 'quantityRequested', None)
-        reason_for_requested_quantity = getattr(json_rep, 'reasonForRequestedQuantity', None)
-        remarks = getattr(json_rep, 'remarks', None)
+        beginning_balance = json_rep.get('beginningBalance', None)
+        quantity_received = json_rep.get('quantityReceived', None)
+        quantity_dispensed = json_rep.get('quantityDispensed', None)
+        losses_and_adjustments = json_rep.get('lossesAndAdjustments', None)
+        new_patient_count = json_rep.get('newPatientCount', None)
+        stock_on_hand = json_rep.get('stockOnHand', None)
+        stock_out_days = json_rep.get('stockOutDays', None)
+        quantity_requested = json_rep.get('quantityRequested', None)
+        reason_for_requested_quantity = json_rep.get('reasonForRequestedQuantity', None)
+        remarks = json_rep.get('remarks', None)
         return cls(code=code, beginning_balance=beginning_balance, quantity_received=quantity_received, quantity_dispensed=quantity_dispensed,
                    losses_and_adjustments=losses_and_adjustments, new_patient_count=new_patient_count, stock_on_hand=stock_on_hand, stock_out_days=stock_out_days,
                    quantity_requested=quantity_requested, reason_for_requested_quantity=reason_for_requested_quantity, remarks=remarks)
