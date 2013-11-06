@@ -1,6 +1,8 @@
 from custom.bihar.reports import supervisor, due_list, mch_reports
 from custom.bihar.reports.indicators import reports as indicators
 
+BIHAR_DOMAINS = ('care-bihar', 'bihar')
+
 CUSTOM_REPORTS = (
     ('Custom Reports', (
         supervisor.MainNavReport,
