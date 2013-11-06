@@ -865,6 +865,22 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
     parent_select = SchemaProperty(ParentSelect)
     unique_id = StringProperty()
 
+    @classmethod
+    def new_module(cls, name, lang):
+        return Module(
+            name={(lang or 'en'): name or ugettext("Untitled Module")},
+            forms=[],
+            case_type='',
+            details=[Detail(
+                type=detail_type,
+                columns=[DetailColumn(
+                    format='plain',
+                    header={(lang or 'en'): ugettext("Name")},
+                    field='name',
+                    model='case',
+                )],
+            ) for detail_type in DETAIL_TYPES])
+
     def get_or_create_unique_id(self):
         """
         It is the caller's responsibility to save the Application
@@ -1899,23 +1915,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         app = cls(domain=domain, modules=[], name=name, langs=[lang], build_langs=[lang], application_version=application_version)
         return app
 
-    def new_module(self, name, lang):
-        self.modules.append(
-            Module(
-                name={(lang or 'en'): name or ugettext("Untitled Module")},
-                forms=[],
-                case_type='',
-                details=[Detail(
-                    type=detail_type,
-                    columns=[DetailColumn(
-                        format='plain',
-                        header={(lang or 'en'): ugettext("Name")},
-                        field='name',
-                        model='case',
-                    )],
-                ) for detail_type in DETAIL_TYPES],
-            )
-        )
+    def add_module(self, module):
+        self.modules.append(module)
         return self.get_module(-1)
 
     def new_module_from_source(self, source):
