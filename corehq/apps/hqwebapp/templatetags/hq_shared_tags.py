@@ -111,15 +111,15 @@ def domains_for_user(request, selected_domain=None):
                 notify_exception(request)
 
         if len(domain_list) > 0:
-            lst.append('<li class="nav-header">My Projects</li>')
+            lst.append('<li class="nav-header">%s</li>' % _('My Projects'))
             for domain in domain_list:
                 default_url = reverse("domain_homepage", args=[domain.name])
                 lst.append('<li><a href="%s">%s</a></li>' % (default_url, domain.long_display_name()))
         else:
             lst.append('<li class="nav-header">No Projects</li>')
     lst.append('<li class="divider"></li>')
-    lst.append('<li><a href="%s">New Project...</a></li>' % new_domain_url)
-    lst.append('<li><a href="%s">CommCare Exchange...</a></li>' % reverse("appstore"))
+    lst.append('<li><a href="%s">%s...</a></li>' % (new_domain_url, _('New Project')))
+    lst.append('<li><a href="%s">%s...</a></li>' % (reverse("appstore"), _('CommCare Exchange')))
     lst.append("</ul>")
 
     domain_list_str = "".join(lst)

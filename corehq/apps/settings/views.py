@@ -4,7 +4,7 @@ import langcodes
 
 from django.http import HttpResponseRedirect, HttpResponse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq import MySettingsTab
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser,
                                            login_required)
@@ -42,7 +42,7 @@ def project_id_mapping(request, domain):
 
 
 class BaseMyAccountView(BaseSectionPageView):
-    section_name = ugettext_noop("My Account")
+    section_name = ugettext_lazy("My Account")
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -83,7 +83,7 @@ class DefaultMySettingsView(BaseMyAccountView):
 
 class MyAccountSettingsView(BaseMyAccountView):
     urlname = 'my_account_settings'
-    page_title = ugettext_noop("My Information")
+    page_title = ugettext_lazy("My Information")
     template_name = 'settings/edit_my_account.html'
 
     @property
@@ -118,7 +118,7 @@ class MyAccountSettingsView(BaseMyAccountView):
 
 class MyProjectsList(BaseMyAccountView):
     urlname = 'my_projects'
-    page_title = ugettext_noop("My Projects")
+    page_title = ugettext_lazy("My Projects")
     template_name = 'settings/my_projects.html'
 
     @property
@@ -159,7 +159,7 @@ class MyProjectsList(BaseMyAccountView):
 class ChangeMyPasswordView(BaseMyAccountView):
     urlname = 'change_my_password'
     template_name = 'settings/change_my_password.html'
-    page_title = ugettext_noop("Change My Password")
+    page_title = ugettext_lazy("Change My Password")
 
     @property
     @memoized
