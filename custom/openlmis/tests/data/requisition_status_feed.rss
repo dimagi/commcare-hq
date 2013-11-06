@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Event feed</title>
+  <link rel="self" type="application/atom+xml" href="http://localhost:9091/feeds/requisition-status/1" />
+  <link rel="via" type="application/atom+xml" href="http://localhost:9091/feeds/requisition-status/1" />
+  <link rel="next-archive" type="application/atom+xml" href="http://localhost:9091/feeds/requisition-status/2" />
+  <author>
+    <name>Atomfeed</name>
+  </author>
+  <id>+1</id>
+  <generator uri="https://github.com/ICT4H/atomfeed">Atomfeed</generator>
+  <updated>2013-10-29T10:11:50Z</updated>
+  <entry>
+    <title>Requisition Status</title>
+    <category term="requisition-status" />
+    <id>tag:atomfeed.ict4h.org:f4fa4edf-60be-4b4b-abfc-624a0d32f3ca</id>
+    <updated>2013-10-29T10:11:49Z</updated>
+    <content type="application/vnd.atomfeed+xml"><![CDATA[{"requisitionId":28,"requisitionStatus":"INITIATED","emergency":false,"startDate":1358274600000,"endDate":1359570599000}]]></content>
+  </entry>
+  <entry>
+    <title>Requisition Status</title>
+    <category term="requisition-status" />
+    <id>tag:atomfeed.ict4h.org:6364418f-91dc-42d6-a108-36ef39e383c0</id>
+    <updated>2013-10-29T10:11:50Z</updated>
+    <content type="application/vnd.atomfeed+xml"><![CDATA[{"requisitionId":28,"requisitionStatus":"RELEASED","emergency":false,"startDate":1358274600000,"endDate":1359570599000,"orderId":28,"orderStatus":"RECEIVED"}]]></content>
+  </entry>
+</feed>

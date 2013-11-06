@@ -5,7 +5,7 @@ from django.test import TestCase
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.tests import bootstrap_domain
 from corehq.apps.locations.models import Location
-from custom.openlmis.api import get_facilities, Facility, get_facility_programs, FacilityProgramLink, get_programs_and_products, Program
+from custom.openlmis.api import get_facilities, Facility, get_facility_programs, FacilityProgramLink, get_programs_and_products, Program, RequisitionStatus, get_requisition_statuses
 from custom.openlmis.commtrack import sync_supply_point_to_openlmis
 from custom.openlmis.tests.mock_api import MockOpenLMISEndpoint
 
@@ -78,6 +78,39 @@ class FeedApiTest(TestCase):
         self.assertEqual('TDF/FTC/EFV', p.description)
         self.assertEqual(10, p.unit)
         self.assertEqual('Analgesics', p.category)
+
+
+    def testParseRequisitionStatus(self):
+        with open(os.path.join(self.datapath, 'requisition_status_feed.rss')) as f:
+            recent = list(get_requisition_statuses(f.read()))
+
+        [r1, r2] = recent
+        self.assertEqual(2, len(recent))
+        for f in recent:
+            self.assertEqual(RequisitionStatus, type(f))
+
+
+        #Sanity CheckList for two events
+        self.assertEqual('tag:atomfeed.ict4h.org:f4fa4edf-60be-4b4b-abfc-624a0d32f3ca', r1.rss_meta.id)
+        self.assertEqual(datetime.strptime('2013-10-29T10:11:49Z', ISO_FORMAT), r1.rss_meta.updated)
+        self.assertEqual(28, r1.requisition_id)
+        self.assertEqual('INITIATED', r1.requisition_status)
+        self.assertFalse(r1.emergency)
+        self.assertIsNone(r1.order_id)
+        self.assertIsNone(r1.order_status)
+        self.assertEqual(1358274600000, r1.start_date)
+        self.assertEqual(1359570599000, r1.end_date)
+
+        self.assertEqual('tag:atomfeed.ict4h.org:6364418f-91dc-42d6-a108-36ef39e383c0', r2.rss_meta.id)
+        self.assertEqual(datetime.strptime('2013-10-29T10:11:50Z', ISO_FORMAT), r2.rss_meta.updated)
+        self.assertEqual(28, r2.requisition_id)
+        self.assertEqual('RELEASED', r2.requisition_status)
+        self.assertFalse(r1.emergency)
+        self.assertEqual(28, r2.order_id)
+        self.assertEqual('RECEIVED', r2.order_status)
+        self.assertEqual(1358274600000, r2.start_date)
+        self.assertEqual(1359570599000, r2.end_date)
+
 
 
 class PostApiTest(TestCase):
