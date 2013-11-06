@@ -6,16 +6,16 @@ from django import template
 import pytz
 from django.utils.html import escape
 from django.utils.translation import ugettext as _
-from couchforms.models import XFormInstance
-from dimagi.utils.timezones import utils as tz_utils
 from couchdbkit.exceptions import ResourceNotFound
 
+from corehq.apps.receiverwrapper.auth import AuthContext
+from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id, DocInfo
+from couchforms.models import XFormInstance
+from dimagi.utils.timezones import utils as tz_utils
 from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case import const
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import case_inline_display
-
-
 from corehq.apps.hqwebapp.templatetags.proptable_tags import (
     get_tables_as_columns, get_definition)
 
@@ -139,6 +139,31 @@ def render_form(form, domain, options):
     meta = form_dict.pop('meta', {})
     definition = get_definition(sorted_form_metadata_keys(meta.keys()))
     form_meta_data = _get_tables_as_columns(meta, definition)
+    if 'auth_context' in form:
+        auth_context = AuthContext(form.auth_context)
+        auth_context_user_id = auth_context.user_id
+        auth_user_info = get_doc_info_by_id(domain, auth_context_user_id)
+    else:
+        auth_user_info = get_doc_info_by_id(domain, None)
+        auth_context = AuthContext(
+            user_id=None,
+            authenticated=False,
+            domain=domain,
+        )
+    meta_userID = meta.get('userID')
+    meta_username = meta.get('username')
+    if meta_userID == 'demo_user':
+        user_info = DocInfo(
+            domain=domain,
+            display='demo_user',
+        )
+    elif meta_username == 'admin':
+        user_info = DocInfo(
+            domain=domain,
+            display='admin',
+        )
+    else:
+        user_info = get_doc_info_by_id(domain, meta_userID)
 
     return render_to_string("form/partials/single_form.html", {
         "context_case_id": case_id,
@@ -152,6 +177,9 @@ def render_form(form, domain, options):
             "put_loners_in_wells": False
         },
         "form_meta_data": form_meta_data,
+        "auth_context": auth_context,
+        "auth_user_info": auth_user_info,
+        "user_info": user_info,
     })
 
 
