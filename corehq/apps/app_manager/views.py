@@ -56,7 +56,7 @@ from dimagi.utils.web import json_response, json_request
 from corehq.apps.reports import util as report_utils
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
-    AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, str_to_cls, validate_lang, SavedAppBuild, ParentSelect
+    AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, str_to_cls, validate_lang, SavedAppBuild, ParentSelect, Module
 from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST
@@ -800,7 +800,7 @@ def new_app(req, domain):
     cls = str_to_cls[type]
     if cls == Application:
         app = cls.new_app(domain, "Untitled Application", lang=lang, application_version=application_version)
-        app.new_module("Untitled Module", lang)
+        app.add_module(Module.new_module("Untitled Module", lang))
         app.new_form(0, "Untitled Form", lang)
     else:
         app = cls.new_app(domain, "Untitled Application", lang=lang)
@@ -819,7 +819,7 @@ def new_module(req, domain, app_id):
     name = req.POST.get('name')
     module_type = req.POST.get('module_type', 'case')
     if module_type == 'case':
-        module = app.new_module(name, lang)
+        module = app.add_module(Module.new_module(name, lang))
         module_id = module.id
         app.new_form(module_id, "Untitled Form", lang)
         app.save()
