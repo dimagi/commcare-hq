@@ -14,7 +14,7 @@ class BiharMockUser(object):
 
 
 def bihar_reassignment(sender, xform, cases, **kwargs):
-    if xform.domain in BIHAR_DOMAINS and xform.metadata.userID != SYSTEM_USERID:
+    if xform.domain in BIHAR_DOMAINS and xform.metadata and xform.metadata.userID != SYSTEM_USERID:
         owner_ids = set(c.owner_id for c in cases)
         if len(owner_ids) != 1:
             logging.error('form {form} had mismatched case owner ids'.format(form=xform._id))
