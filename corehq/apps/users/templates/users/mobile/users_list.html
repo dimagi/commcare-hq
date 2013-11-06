@@ -95,6 +95,7 @@
         </div>
     </div>
     <hr />
+    {% if users_list.total > 0 %}
     <form data-bind="submit: function () { change_page(-1); }">
         <div class="input-append">
             <input data-bind="value: search_string" class="span4" type="text" placeholder="{% trans "Search for Mobile Workers" %}">
@@ -106,6 +107,7 @@
             Search any text, or use a targeted query. For more info see the <a href='https://wiki.commcarehq.org/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-C.SearchforMobileWorkers' target='_blank'>Mobile Users</a> help page
         </p>
     </form>
+    {% endif %}
 
     <div class="row-fluid" data-bind="visible: !initial_load() || currently_searching()">
         <div class="span12">
