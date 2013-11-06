@@ -1094,6 +1094,7 @@ class VersionedDoc(LazyAttachmentDoc):
         self.scrub_source(source)
 
         return json.dumps(source) if dump_json else source
+
     @classmethod
     def from_source(cls, source, domain):
         for field in cls._meta_fields:
@@ -1931,10 +1932,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     def add_module(self, module):
         self.modules.append(module)
-        return self.get_module(-1)
-
-    def new_module_from_source(self, source):
-        self.modules.append(Module.wrap(source))
         return self.get_module(-1)
 
     @parse_int([1])
