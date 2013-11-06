@@ -1,5 +1,9 @@
 from urlparse import urlparse
 from datetime import datetime
+import json
+import os
+import re
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -14,9 +18,14 @@ from django.http import HttpResponseRedirect, HttpResponse, Http404,\
     HttpResponseServerError, HttpResponseNotFound
 from django.shortcuts import redirect, render
 from django.views.generic import TemplateView
-import json
-from corehq.apps.announcements.models import Notification
+from couchdbkit import ResourceNotFound
+from django.utils.translation import ugettext as _, ugettext_noop
+from django.core.urlresolvers import reverse
+from django.core.mail.message import EmailMessage
+from django.template import loader
+from django.template.context import RequestContext
 
+from corehq.apps.announcements.models import Notification
 from corehq.apps.app_manager.models import BUG_REPORTS_DOMAIN
 from corehq.apps.app_manager.models import import_app
 from corehq.apps.domain.decorators import require_superuser,\
@@ -26,23 +35,15 @@ from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthent
 from corehq.apps.receiverwrapper.models import Repeater
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
-from couchdbkit import ResourceNotFound
+from corehq.apps.hqwebapp.doc_info import get_doc_info
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
-from django.utils.translation import ugettext as _, ugettext_noop
-
 from dimagi.utils.web import get_url_base, json_response
-from django.core.urlresolvers import reverse
 from corehq.apps.domain.models import Domain
-from django.core.mail.message import EmailMessage
-from django.template import loader
-from django.template.context import RequestContext
 from couchforms.models import XFormInstance
 from soil import heartbeat
 from soil import views as soil_views
-import os
-import re
 
 
 def pg_check():
@@ -759,51 +760,17 @@ def quick_find(request):
     query = request.GET.get('q')
     redirect = request.GET.get('redirect') != 'false'
 
-    def _deal_with_couch_doc(doc):
-        domain = doc.get('domain')
-        doc_type = doc.get('doc_type')
-        doc_id = doc.get('_id')
-        simple = {
-            '_id': doc_id,
-            'domain': domain,
-            'doc_type': doc_type
-        }
-        if request.couch_user.is_superuser or (domain and request.couch_user.is_domain_admin(domain)):
-            if not redirect:
-                return simple
-
-            if doc_type in ('Application', 'RemoteApp'):
-                if doc.get('copy_of'):
-                    return _('Application Build'), reverse(
-                        'corehq.apps.app_manager.views.download_index',
-                        args=[domain, doc_id],
-                    )
-                else:
-                    return _('Application'), reverse(
-                        'corehq.apps.app_manager.views.view_app',
-                        args=[domain, doc_id],
-                    )
-            if doc_type in ('CommCareCase',):
-                return _('Case'), reverse(
-                    'case_details',
-                    args=[domain, doc_id],
-                )
-            if doc_type in ('XFormInstance',):
-                return _('Form'), reverse(
-                    'render_form_data',
-                    args=[domain, doc_id],
-                )
-            return simple
-        raise Http404()
-
     def deal_with_couch_doc(doc):
-        x = _deal_with_couch_doc(doc)
-        try:
-            type_text, url = x
-        except ValueError:
-            return json_response(x)
-        messages.info(request, _("We've redirected you to the %s matching your query") % type_text)
-        return HttpResponseRedirect(url)
+        domain = doc.get('domain') or doc.get('domains', [None])[0]
+        if request.couch_user.is_superuser or (domain and request.couch_user.is_domain_admin(domain)):
+            doc_info = get_doc_info(doc, domain_hint=domain)
+        else:
+            raise Http404()
+        if redirect and doc_info.link:
+            messages.info(request, _("We've redirected you to the %s matching your query") % doc_info.type_display)
+            return HttpResponseRedirect(doc_info.link)
+        else:
+            return json_response(doc_info)
 
     try:
         doc = get_db().get(query)
