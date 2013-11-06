@@ -8,6 +8,12 @@ def repeat(fn, n):
         except ResourceConflict:
             pass
 
+class RetryResourceError(Exception):
+    def __init__(self, fn, attempts):
+        self.fn = fn
+        self.attempts = attempts
+    def __str__(self):
+        return repr("Tried function `%s` %s time(s) and conflicted every time." % (self.fn.__name__, self.attempts))
 
 def retry_resource(n):
     def decorator(fn):
@@ -18,5 +24,6 @@ def retry_resource(n):
                     return fn(*args, **kwargs)
                 except ResourceConflict:
                     pass
+            raise RetryResourceError(fn, n)
         return new_fn
     return decorator
