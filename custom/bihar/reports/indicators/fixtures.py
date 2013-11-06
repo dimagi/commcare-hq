@@ -3,10 +3,11 @@ from django.utils import translation
 from django.utils.translation import ugettext as _
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
+from custom.bihar import BIHAR_DOMAINS
 from custom.bihar.reports.indicators.indicators import IndicatorDataProvider, IndicatorConfig, INDICATOR_SETS
 
 # meh
-hard_coded_domains = ('care-bihar', 'bihar')
+hard_coded_domains = BIHAR_DOMAINS
 hard_coded_indicators = 'homevisit'
 hard_coded_group_filter = lambda group: bool((group.metadata or {}).get('awc-code', False))
 hard_coded_fixture_id = 'indicators:bihar-supervisor'
