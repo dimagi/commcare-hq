@@ -115,7 +115,7 @@
         });
 
         function gen_question_tree_elements() {
-            return $('.jstree-leaf a, .jstree-open a');
+            return $('.jstree-leaf:visible a, .jstree-open a, .jstree-closed a:first');
         }
         var question_tree_navigator = new KeyboardNavigator();
         question_tree_navigator.init({
@@ -129,7 +129,7 @@
             focus_in_fn: function($ele) { $ele.addClass('jstree-hovered') },
             focus_out_fn: function($ele) { $ele.removeClass('jstree-hovered') },
             reset_index: true,
-            regen_list_on_leave: true
+            regen_list_on_exit: true
         });
 
         function gen_change_question_elements() {
