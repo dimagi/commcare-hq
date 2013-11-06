@@ -309,10 +309,10 @@ class FormBase(DocumentSchema):
     Translates to a second-level menu on the phone
 
     """
+    form_type = None
+
     name = DictProperty()
     unique_id = StringProperty()
-    requires = StringProperty(choices=["case", "referral", "none"], default="none")
-    actions = SchemaProperty(FormActions)
     show_count = BooleanProperty(default=False)
     xmlns = StringProperty()
     version = IntegerProperty()
@@ -375,29 +375,25 @@ class FormBase(DocumentSchema):
 
     def validate_for_build(self):
         errors = []
-        needs_case_type = False
-        needs_case_detail = False
-        needs_referral_detail = False
 
         try:
             module = self.get_module()
         except AttributeError:
             module = None
-            form_type = 'user_registration'
-        else:
-            form_type = 'module_form'
 
         meta = {
-            'form_type': form_type,
+            'form_type': self.form_type,
             'module': build_error_utils.get_module_info(module) if module else {},
             'form': {"id": self.id if hasattr(self, 'id') else None, "name": self.name}
         }
 
+        xml_valid = False
         if self.source == '':
             errors.append(dict(type="blank form"))
         else:
             try:
                 _parse_xml(self.source)
+                xml_valid = True
             except XFormError as e:
                 errors.append(dict(
                     type="invalid xml",
@@ -415,29 +411,15 @@ class FormBase(DocumentSchema):
                     error.update(meta)
                     errors.append(error)
 
-                for error in self.check_actions():
-                    error.update(meta)
-                    errors.append(error)
-
-        if self.requires_case():
-            needs_case_detail = True
-            needs_case_type = True
-        if self.requires_case_type():
-            needs_case_type = True
-        if self.requires_referral():
-            needs_referral_detail = True
-
-        if module:
-            errors.extend(
-                build_error_utils.get_case_errors(
-                    module,
-                    needs_case_type=needs_case_type,
-                    needs_case_detail=needs_case_detail,
-                    needs_referral_detail=needs_referral_detail,
-                )
-            )
+        errors.extend(self.extended_build_validation(meta, xml_valid))
 
         return errors
+
+    def extended_build_validation(self, error_meta, xml_valid):
+        """
+        Override to perform additional validation during build process.
+        """
+        return []
 
     def get_unique_id(self):
         """
@@ -469,6 +451,74 @@ class FormBase(DocumentSchema):
         xform = XForm(self.source)
         self.add_stuff_to_xform(xform)
         return xform.render()
+
+    def get_questions(self, langs):
+        return XForm(self.source).get_questions(langs)
+
+    def export_json(self, dump_json=True):
+        source = self.to_json()
+        del source['unique_id']
+        return json.dumps(source) if dump_json else source
+
+    def rename_lang(self, old_lang, new_lang):
+        _rename_key(self.name, old_lang, new_lang)
+        try:
+            self.rename_xform_language(old_lang, new_lang)
+        except XFormError:
+            pass
+
+    def rename_xform_language(self, old_code, new_code):
+        source = XForm(self.source)
+        source.rename_language(old_code, new_code)
+        source = source.render()
+        self.source = source
+
+    def default_name(self):
+        return self.name[self.get_app().default_language]
+
+    @property
+    def full_path_name(self):
+        return "%(app_name)s > %(module_name)s > %(form_name)s" % {
+            'app_name': self.get_app().name,
+            'module_name': self.get_module().name[self.get_app().default_language],
+            'form_name': self.default_name()
+        }
+
+class JRResourceProperty(StringProperty):
+
+    def validate(self, value, required=True):
+        super(JRResourceProperty, self).validate(value, required)
+        if value is not None and not value.startswith('jr://'):
+            raise BadValueError("JR Resources must start with 'jr://")
+        return value
+
+
+class NavMenuItemMediaMixin(DocumentSchema):
+
+    media_image = JRResourceProperty(required=False)
+    media_audio = JRResourceProperty(required=False)
+
+
+class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
+    form_type = 'module_form'
+
+    form_filter = StringProperty()
+    requires = StringProperty(choices=["case", "referral", "none"], default="none")
+    actions = SchemaProperty(FormActions)
+
+    def add_stuff_to_xform(self, xform):
+        super(Form, self).add_stuff_to_xform(xform)
+        xform.add_case_and_meta(self)
+
+    def get_app(self):
+        return self._parent._parent
+
+    def get_module(self):
+        return self._parent
+
+    def all_other_forms_require_a_case(self):
+        m = self.get_module()
+        return all([form.requires == 'case' for form in m.get_forms() if form.id != self.id])
 
     def _get_active_actions(self, types):
         actions = {}
@@ -509,27 +559,6 @@ class FormBase(DocumentSchema):
         return self._get_active_actions((
             'open_case', 'update_case', 'close_case',
             'open_referral', 'update_referral', 'close_referral'))
-
-    def get_questions(self, langs):
-        return XForm(self.source).get_questions(langs)
-
-    def export_json(self, dump_json=True):
-        source = self.to_json()
-        del source['unique_id']
-        return json.dumps(source) if dump_json else source
-
-    def rename_lang(self, old_lang, new_lang):
-        _rename_key(self.name, old_lang, new_lang)
-        try:
-            self.rename_xform_language(old_lang, new_lang)
-        except XFormError:
-            pass
-
-    def rename_xform_language(self, old_code, new_code):
-        source = XForm(self.source)
-        source.rename_language(old_code, new_code)
-        source = source.render()
-        self.source = source
 
     def check_actions(self):
         errors = []
@@ -624,52 +653,37 @@ class FormBase(DocumentSchema):
     def requires_referral(self):
         return self.requires == "referral"
 
-    def default_name(self):
-        return self.name[self.get_app().default_language]
+    def extended_build_validation(self, error_meta, xml_valid):
+        errors = []
+        if xml_valid:
+            for error in self.check_actions():
+                error.update(error_meta)
+                errors.append(error)
 
-    @property
-    def full_path_name(self):
-        return "%(app_name)s > %(module_name)s > %(form_name)s" % {
-            'app_name': self.get_app().name,
-            'module_name': self.get_module().name[self.get_app().default_language],
-            'form_name': self.default_name()
-        }
+        needs_case_type = False
+        needs_case_detail = False
+        needs_referral_detail = False
 
-class JRResourceProperty(StringProperty):
+        if self.requires_case():
+            needs_case_detail = True
+            needs_case_type = True
+        if self.requires_case_type():
+            needs_case_type = True
+        if self.requires_referral():
+            needs_referral_detail = True
 
-    def validate(self, value, required=True):
-        super(JRResourceProperty, self).validate(value, required)
-        if value is not None and not value.startswith('jr://'):
-            raise BadValueError("JR Resources must start with 'jr://")
-        return value
+        errors.extend(build_error_utils.get_case_errors(
+            self.get_module(),
+            needs_case_type=needs_case_type,
+            needs_case_detail=needs_case_detail,
+            needs_referral_detail=needs_referral_detail,
+        ))
 
-
-class NavMenuItemMediaMixin(DocumentSchema):
-
-    media_image = JRResourceProperty(required=False)
-    media_audio = JRResourceProperty(required=False)
-
-
-class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
-
-    form_filter = StringProperty()
-
-    def add_stuff_to_xform(self, xform):
-        super(Form, self).add_stuff_to_xform(xform)
-        xform.add_case_and_meta(self)
-
-    def get_app(self):
-        return self._parent._parent
-
-    def get_module(self):
-        return self._parent
-
-    def all_other_forms_require_a_case(self):
-        m = self.get_module()
-        return all([form.requires == 'case' for form in m.get_forms() if form.id != self.id])
+        return errors
 
 
 class UserRegistrationForm(FormBase):
+    form_type = 'user_registration'
 
     username_path = StringProperty(default='username')
     password_path = StringProperty(default='password')
@@ -864,6 +878,22 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
     task_list = SchemaProperty(CaseList)
     parent_select = SchemaProperty(ParentSelect)
     unique_id = StringProperty()
+
+    @classmethod
+    def new_module(cls, name, lang):
+        return Module(
+            name={(lang or 'en'): name or ugettext("Untitled Module")},
+            forms=[],
+            case_type='',
+            details=[Detail(
+                type=detail_type,
+                columns=[DetailColumn(
+                    format='plain',
+                    header={(lang or 'en'): ugettext("Name")},
+                    field='name',
+                    model='case',
+                )],
+            ) for detail_type in DETAIL_TYPES])
 
     def get_or_create_unique_id(self):
         """
@@ -1064,6 +1094,7 @@ class VersionedDoc(LazyAttachmentDoc):
         self.scrub_source(source)
 
         return json.dumps(source) if dump_json else source
+
     @classmethod
     def from_source(cls, source, domain):
         for field in cls._meta_fields:
@@ -1899,27 +1930,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         app = cls(domain=domain, modules=[], name=name, langs=[lang], build_langs=[lang], application_version=application_version)
         return app
 
-    def new_module(self, name, lang):
-        self.modules.append(
-            Module(
-                name={(lang or 'en'): name or ugettext("Untitled Module")},
-                forms=[],
-                case_type='',
-                details=[Detail(
-                    type=detail_type,
-                    columns=[DetailColumn(
-                        format='plain',
-                        header={(lang or 'en'): ugettext("Name")},
-                        field='name',
-                        model='case',
-                    )],
-                ) for detail_type in DETAIL_TYPES],
-            )
-        )
-        return self.get_module(-1)
-
-    def new_module_from_source(self, source):
-        self.modules.append(Module.wrap(source))
+    def add_module(self, module):
+        self.modules.append(module)
         return self.get_module(-1)
 
     @parse_int([1])

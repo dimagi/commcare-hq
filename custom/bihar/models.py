@@ -1,5 +1,5 @@
 import datetime
-from custom.bihar import getters
+from custom.bihar import getters, BIHAR_DOMAINS
 from custom.bihar.calculations.homevisit import DateRangeFilter
 from custom.bihar.calculations.utils import filters
 from fluff.filters import Filter
@@ -44,7 +44,7 @@ class BiharCase(CommCareCase):
 class CareBiharFluff(fluff.IndicatorDocument):
     document_class = CommCareCase
 
-    domains = ('care-bihar', 'bihar',)
+    domains = BIHAR_DOMAINS
     group_by = ['domain', 'owner_id']
 
     # home visit
@@ -166,7 +166,7 @@ class CareBiharFormPillow(BasicPillow):
     """
     couch_filter = 'fluff_filter/domain_type'
     extra_args = {
-        'domains': ['care-bihar', 'bihar'],
+        'domains': list(BIHAR_DOMAINS),
         'doc_type': 'XFormInstance'
     }
     document_class = XFormInstance
@@ -178,3 +178,6 @@ class CareBiharFormPillow(BasicPillow):
 
     def change_transport(self, form_model):
         form_model.save()
+
+
+from .signals import *
