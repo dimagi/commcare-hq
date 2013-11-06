@@ -3,6 +3,7 @@ import json
 from django import template
 from django.conf import settings
 from django.core.urlresolvers import reverse
+from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from corehq.apps.domain.models import Domain
@@ -237,3 +238,10 @@ def get_attribute(obj, arg):
     Usage: {{ couch_user|getattr:"full_name" }}
     """
     return getattr(obj, arg, None)
+
+
+@register.filter
+def pretty_doc_info(doc_info):
+    return render_to_string('hqwebapp/pretty_doc_info.html', {
+        'doc_info': doc_info,
+    })
