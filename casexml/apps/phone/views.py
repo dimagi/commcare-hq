@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from django_digest.decorators import *
 from casexml.apps.phone import xml
 from casexml.apps.case.models import CommCareCase
