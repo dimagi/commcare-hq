@@ -178,3 +178,6 @@ class CareBiharFormPillow(BasicPillow):
 
     def change_transport(self, form_model):
         form_model.save()
+
+
+from .signals import *
