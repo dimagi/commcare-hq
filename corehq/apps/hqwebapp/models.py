@@ -214,7 +214,7 @@ class ProjectReportsTab(UITab):
         }
         
         tools = [(_("Tools"), [
-            {'title': 'My Saved Reports',
+            {'title': _('My Saved Reports'),
              'url': reverse('saved_reports', args=[self.domain]),
              'icon': 'icon-tasks'}
         ])]
@@ -342,7 +342,7 @@ class ProjectDataTab(UITab):
     @property
     @memoized
     def can_edit_commcare_data(self):
-        return self.couch_user.can_edit_data() and not (self.project and self.project.commtrack_enabled)
+        return self.couch_user.can_edit_data()
 
     @property
     @memoized
@@ -509,16 +509,19 @@ class MessagingTab(UITab):
                 EditScheduledReminderView,
                 CreateScheduledReminderView,
                 RemindersListView,
+                KeywordsListView,
             )
             sms_connectivity_url = reverse(DomainSmsGatewayListView.urlname, args=[self.domain])
             reminders_list_url = reverse(RemindersListView.urlname, args=[self.domain])
             edit_reminder_urlname = EditScheduledReminderView.urlname
             new_reminder_urlname = CreateScheduledReminderView.urlname
+            keyword_list_url = reverse(KeywordsListView.urlname, args=[self.domain])
         else:
             sms_connectivity_url = reverse('list_domain_backends', args=[self.domain])
             reminders_list_url = reverse('list_reminders', args=[self.domain])
             edit_reminder_urlname = 'edit_complex'
             new_reminder_urlname = 'add_complex_reminder_schedule'
+            keyword_list_url = reverse('manage_keywords', args=[self.domain])
 
         items = [
             (_("Messages"), [
@@ -560,7 +563,7 @@ class MessagingTab(UITab):
                  'url': reverse('scheduled_reminders', args=[self.domain])},
 
                 {'title': _("Keywords"),
-                 'url': reverse('manage_keywords', args=[self.domain]),
+                 'url': keyword_list_url,
                  'subpages': [
                      {'title': keyword_subtitle,
                       'urlname': 'edit_keyword'},
@@ -573,6 +576,11 @@ class MessagingTab(UITab):
                  'url': reverse('reminders_in_error', args=[self.domain])},
             ])
         ]
+        if self.couch_user.is_previewer():
+            items[0][1].append(
+                {'title': _('Chat'),
+                 'url': reverse('chat_contacts', args=[self.domain])}
+            )
 
         if self.project.survey_management_enabled:
             def sample_title(form=None, **context):
@@ -599,6 +607,14 @@ class MessagingTab(UITab):
                          {'title': _("New Survey"),
                           'urlname': 'add_survey'},
                      ]},
+                ])
+            )
+
+        if self.couch_user.is_superuser or self.couch_user.is_domain_admin(self.domain):
+            items.append(
+                (_("Settings"), [
+                    {'title': _("General Settings"),
+                     'url': reverse('sms_settings', args=[self.domain])},
                 ])
             )
 

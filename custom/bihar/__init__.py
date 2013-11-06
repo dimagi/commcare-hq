@@ -1,5 +1,7 @@
-from custom.bihar.reports import supervisor, due_list
+from custom.bihar.reports import supervisor, due_list, mch_reports
 from custom.bihar.reports.indicators import reports as indicators
+
+BIHAR_DOMAINS = ('care-bihar', 'bihar')
 
 CUSTOM_REPORTS = (
     ('Custom Reports', (
@@ -25,5 +27,7 @@ CUSTOM_REPORTS = (
         indicators.IndicatorCharts,
         indicators.MyPerformanceReport,
         indicators.MyPerformanceList,
+        mch_reports.MotherMCHRegister,
+        mch_reports.ChildMCHRegister
     )),
 )

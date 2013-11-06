@@ -63,6 +63,10 @@ class VerifiedNumber(Document):
             # Circular import
             from corehq.apps.users.models import CommCareUser
             return CommCareUser.get(self.owner_id)
+        elif self.owner_doc_type == 'WebUser':
+            # Circular importsms
+            from corehq.apps.users.models import WebUser
+            return WebUser.get(self.owner_id)
         else:
             return None
 
@@ -80,6 +84,15 @@ class VerifiedNumber(Document):
                      key=strip_plus(phone_number),
                      include_docs=True).one()
         return v if (include_pending or (v and v.verified)) else None
+
+    @classmethod
+    def by_domain(cls, domain):
+        result = cls.view("sms/verified_number_by_domain",
+                          startkey=[domain],
+                          endkey=[domain, {}],
+                          include_docs=True,
+                          reduce=False).all()
+        return result
 
 def strip_plus(phone_number):
     return phone_number[1:] if phone_number.startswith('+') else phone_number

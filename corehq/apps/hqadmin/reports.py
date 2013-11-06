@@ -31,6 +31,8 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
         ctxt = super(AdminFacetedReport, self).template_context
 
         self.run_query(0)
+        if self.es_params.get('search'):
+            ctxt["search_query"] = self.es_params.get('search')[0]
         ctxt.update({
             'layout_flush_content': True,
             'facet_map': self.es_facet_map,

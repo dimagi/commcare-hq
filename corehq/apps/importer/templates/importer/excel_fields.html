@@ -15,8 +15,9 @@
                 var customField = $(this).closest('tr').find(".custom_field");
 
                 if (this.checked) {
+                    var excelField = $(this).closest('tr').find(".excel_field");
+                    customField.val(excelField.val());
                     customField.closest('td').removeClass('hide');
-                    caseField.val('');
                     caseField.closest('td').addClass('hide');
                 } else {
                     customField.val('');

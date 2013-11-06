@@ -39,16 +39,16 @@ class Site(object):
                 for days in range(4, -1, -1)]
 
     def process_user(self, user):
+        username = user.raw_username
+        if username not in self.individual:
+            self.emails.append(user.email)
+            self.individual[username] = {
+                'strategy': [0] * 5,
+                'game': [0] * 5,
+            }
         for form in XFormInstance.get_forms_by_user(
                 user, self.week[0], self.week[-1]):
             if form.xmlns == DAILY_DATA_XMLNS:
-                username = form.metadata.username
-                if username not in self.individual:
-                    self.emails.append(user.email)
-                    self.individual[username] = {
-                        'strategy': [0] * 5,
-                        'game': [0] * 5,
-                    }
                 self.process_form(form, username)
 
 
@@ -84,8 +84,11 @@ def save_report(date=None):
     """
     if date is None:
         date = datetime.date.today()
-    exclude = []
-    for group in [g for g in Group.by_domain(DOMAIN) if g not in exclude]:
+    # exclude = []
+    # for group in [g for g in Group.by_domain(DOMAIN) if g not in exclude]:
+
+    # This is a temporary fix while the app is on the mikesproject domain
+    for group in [g for g in Group.by_domain(DOMAIN) if "Afterschool" in g.name]:
         site = Site(group, date)
         report = LegacyWeeklyReport(
             domain=DOMAIN,
@@ -109,7 +112,9 @@ def save_report(date=None):
         )
 
 
-@periodic_task(run_every=crontab(hour=1, day_of_week=6),
-        queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(
+    run_every=crontab(hour=10, minute=1, day_of_week=6),
+    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery')
+)
 def run_report():
     save_report()

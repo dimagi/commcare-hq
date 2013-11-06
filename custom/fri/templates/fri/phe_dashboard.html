@@ -1,0 +1,14 @@
+{% extends "reports/async/tabular.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block reporttable %}
+<div style="padding-top: 10px; padding-bottom: 10px;">
+    <span class="btn btn-primary" onClick="{% for action in fri_chat_actions %}{{ action }}{% endfor %}">{% trans "Open All Chat Windows" %}</span>
+</div>
+<div style="padding-top: 10px; padding-bottom: 10px;">
+    <span class="btn btn-primary" onClick="window.open('{{ fri_message_bank_url }}', '_blank');">{% trans "Open Message Bank" %}</span>
+</div>
+<h4>Participant Chat Windows</h4>
+{{ block.super }}
+{% endblock %}

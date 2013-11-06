@@ -48,7 +48,7 @@
         var caseUrlRoot = "{% url "cloudcare_get_cases" domain %}";
         var submitUrlRoot = "{% url "receiver_post" domain %}";
         var language = "{{ language }}";
-        var apps = {{ apps|safe }};
+        var apps = {{ apps|JSON }};
         var initialApp = {{ app|JSON }};
         var initialCase = {{ case|JSON }};
         window.mainView = new cloudCare.AppMainView({

@@ -12,9 +12,15 @@
                 <li>
                     <i class="icon icon-exclamation-sign"></i>
                     <span>
-                        {% if error.type == "invalid xml" %}
+                        {% if error.type == "blank form" %}
                             {% if not error.message %}
                                 Blank form
+                            {% endif %}
+                            {% include "app_manager/partials/form_error_message.html" %}
+                        {% endif %}
+                         {% if error.type == "invalid xml" %}
+                            {% if not error.message %}
+                                If you don't know why this happened, please report an issue.
                             {% endif %}
                             {% include "app_manager/partials/form_error_message.html" %}
                         {% endif %}

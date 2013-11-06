@@ -147,6 +147,7 @@ DEFAULT_APPS = (
     'south',
     'djcelery', # pip install django-celery
     'djtables', # pip install djtables
+    'django_prbac',
     #'ghettoq',     # pip install ghettoq
     'djkombu', # pip install django-kombu
     'couchdbkit.ext.django',
@@ -229,6 +230,7 @@ HQ_APPS = (
     'corehq.apps.cachehq',
     'corehq.couchapps',
     'custom.apps.wisepill',
+    'custom.fri',
     'fluff',
     'fluff.fluff_filter',
     'soil',
@@ -239,6 +241,7 @@ HQ_APPS = (
     'hutch',
     'pillowtop',
     'hqstyle',
+    'corehq.apps.grapevine',
 
     # custom reports
     'a5288',
@@ -406,16 +409,6 @@ BROKER_URL = 'django://' #default django db based
 
 #this is the default celery queue - for periodic tasks on a separate queue override this to something else
 CELERY_PERIODIC_QUEUE = 'celery'
-
-from celery.schedules import crontab
-# schedule options can be seen here:
-# http://docs.celeryproject.org/en/latest/reference/celery.schedules.html
-CELERYBEAT_SCHEDULE = {
-    'monthly-opm-report-snapshot': {
-        'task': 'custom.opm.opm_tasks.tasks.snapshot',
-        'schedule': crontab(hour=1, day_of_month=1),
-    },
-}
 
 SKIP_SOUTH_TESTS = True
 #AUTH_PROFILE_MODULE = 'users.HqUserProfile'
@@ -628,7 +621,12 @@ LOGGING = {
             'handlers': ['pillowtop', 'sentry'],
             'level': 'ERROR',
             'propagate': False,
-        }
+        },
+        'pillowtop_eval': {
+            'handlers': ['sentry'],
+            'level': 'INFO',
+            'propagate': False,
+        },
     }
 }
 
@@ -722,7 +720,9 @@ COUCHDB_APPS = [
     'hqbilling',
     'couchlog',
     'wisepill',
+    'fri',
     'crs_reports',
+    'grapevine',
 
     # custom reports
     'penn_state',
@@ -806,7 +806,19 @@ SMS_LOADED_BACKENDS = [
     "corehq.apps.telerivet.models.TelerivetBackend",
     "corehq.apps.sms.test_backend.TestSMSBackend",
     "corehq.apps.sms.backend.test.TestBackend",
+    "corehq.apps.grapevine.api.GrapevineBackend",
 ]
+
+# These are functions that can be called to retrieve custom content in a reminder event.
+# If the function is not in here, it will not be called.
+ALLOWED_CUSTOM_CONTENT_HANDLERS = {
+    "FRI_SMS_CONTENT" : "custom.fri.api.custom_content_handler",
+}
+
+# These are custom templates which can wrap default the sms/chat.html template
+CUSTOM_CHAT_TEMPLATES = {
+    "FRI" : "fri/chat.html",
+}
 
 SELENIUM_APP_SETTING_DEFAULTS = {
     'cloudcare': {
@@ -887,6 +899,7 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'pact',
     'hsph',
     'care-bihar',
+    'bihar',
     'hsph-dev',
     'hsph-betterbirth-pilot-2',
     'commtrack-public-demo',
@@ -926,10 +939,13 @@ DOMAIN_MODULE_MAP = {
     'a5288-test': 'a5288',
     'a5288-study': 'a5288',
     'care-bihar': 'custom.bihar',
+    'bihar': 'custom.bihar',
     'care-ihapc-live': 'custom.reports.care_sa',
     'cvsulive': 'custom.apps.cvsu',
     'dca-malawi': 'dca',
     'eagles-fahu': 'dca',
+    'fri': 'custom.fri.reports',
+    'fri-testing': 'custom.fri.reports',
     'gsid': 'custom.apps.gsid',
     'gsid-demo': 'custom.apps.gsid',
     'hsph-dev': 'hsph',

@@ -621,6 +621,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
             DataTablesColumn(_("Modified Date"), prop_name="modified_on"),
             DataTablesColumn(_("Status"), prop_name="get_status_display", sortable=False)
         )
+        headers.custom_sort = [[5, 'desc']]
         return headers
 
     @property
@@ -640,9 +641,11 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
 
     def date_to_json(self, date):
         if date:
-            return tz_utils.adjust_datetime_to_timezone(
-                date, pytz.utc.zone, self.timezone.zone
-            ).strftime('%Y-%m-%d %H:%M:%S')
+            return date.strftime('%Y-%m-%d %H:%M:%S')
+            # temporary band aid solution for http://manage.dimagi.com/default.asp?80262
+            # return tz_utils.adjust_datetime_to_timezone(
+            #     date, pytz.utc.zone, self.timezone.zone
+            # ).strftime('%Y-%m-%d %H:%M:%S')
         else:
             return ''
 

@@ -54,7 +54,10 @@ var getFormEntryPath = function(appId, moduleId, formId, caseId) {
 };
 
 var getSubmitUrl = function (urlRoot, appId) {
-    // TODO: make this cleaner
+    // deprecated but still called from "touchforms-inline"
+    // which is used to fill out forms from within case details view
+    // use app.getSubmitUrl instead
+    // todo: replace and remove
     return urlRoot + "/" + appId + "/";
 };
 

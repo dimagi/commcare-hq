@@ -1,15 +1,22 @@
+import logging
+from datetime import datetime
+import time
+
 from couchdbkit import ResourceNotFound
-import rawes
+
 from casexml.apps.case.models import CommCareCase
+from corehq import Domain
 from corehq.elastic import get_es
 from corehq.pillows.case import CasePillow
+from corehq.pillows.reportcase import ReportCasePillow
+from corehq.pillows.reportxform import ReportXFormPillow
 from corehq.pillows.xform import XFormPillow
 from couchforms.models import XFormInstance
 from django.conf import settings
-import time
+
 
 CLUSTER_HEALTH = 'cluster_health'
-def check_cluster_health():
+def check_es_cluster_health():
     """
     The color state of the cluster health is just a simple indicator for how a cluster is running
     It'll mainly be useful for finding out if shards are in good/bad state (red)
@@ -23,71 +30,165 @@ def check_cluster_health():
     return ret
 
 
-def check_index_by_doc(es_index, db, doc_id):
+def check_index_by_doc(es_index, db, doc_id, interval=10):
     """
     Given a doc, update it in couch (meaningless save that updates rev)
     and check to make sure that ES will eventually see it after some arbitrary delay
     """
+    target_rev = None
     try:
-        couch_doc = db.open_doc(doc_id)
+        couch_doc = db.open_doc(doc_id if doc_id else "")
         save_results = db.save_doc(couch_doc)
         target_rev = save_results['rev']
-        time.sleep(3) #could be less, but just in case
-        return _check_es_rev(es_index, doc_id, target_rev)
     except ResourceNotFound:
         pass
 
+    time.sleep(interval)
+    return _check_es_rev(es_index, doc_id, target_rev)
 
-def check_xform_index_by_doc(doc_id):
+
+def is_real_submission(xform_view_row):
+    """
+    helper filter function for filtering hqadmin/forms_over_time
+    just filters out devicereports
+    """
+    return xform_view_row['doc']['xmlns'] != 'http://code.javarosa.org/devicereport'
+
+
+
+def check_reportxform_es_index(doc_id=None, interval=10):
+    do_check = False
+    for domain in settings.ES_XFORM_FULL_INDEX_DOMAINS:
+        domain_doc = Domain.get_by_name(domain)
+        if domain_doc is not None:
+            do_check = True
+            break
+
+    if do_check:
+        db = XFormInstance.get_db()
+        es_index = ReportXFormPillow.es_alias
+
+        check_doc_id = doc_id if doc_id else  _get_latest_doc_from_index(es_index, 'received_on')
+        return check_index_by_doc(es_index, db, check_doc_id, interval=interval)
+    else:
+        return {}
+
+
+def check_xform_es_index(doc_id=None, interval=10):
     db = XFormInstance.get_db()
     es_index = XFormPillow.es_alias
-    return check_index_by_doc(es_index, db, doc_id)
+
+    check_doc_id = doc_id if doc_id else _get_latest_doc_id(db, 'XFormInstance', skipfunc=is_real_submission)
+    return check_index_by_doc(es_index, db, check_doc_id, interval=interval)
 
 
-def check_case_index_by_doc(doc_id):
+def is_case_recent(case_view_row):
+    """
+    helper filter function for filtering hqadmin/cases_over_time
+    the view emits a key [YYYY, MM] this just sanity checks to make sure that it's a recent case,
+    not some wrongly future emitted case
+    """
+    if case_view_row['key'] > [datetime.utcnow().year, datetime.utcnow().month]:
+        return False
+    else:
+        return True
+
+def check_reportcase_es_index(doc_id=None, interval=10):
+    do_check = False
+    for domain in settings.ES_CASE_FULL_INDEX_DOMAINS:
+        domain_doc = Domain.get_by_name(domain)
+        if domain_doc is not None:
+            do_check = True
+            break
+
+    if do_check:
+        db = CommCareCase.get_db()
+        es_index = ReportCasePillow.es_alias
+
+        check_doc_id = doc_id if doc_id else _get_latest_doc_from_index(es_index, sort_field='opened_on')
+        return check_index_by_doc(es_index, db, check_doc_id, interval=interval)
+    else:
+        return {}
+
+
+def check_case_es_index(doc_id=None, interval=10):
     db = CommCareCase.get_db()
     es_index = CasePillow.es_alias
-    return check_index_by_doc(es_index, db, doc_id)
+
+    check_doc_id = doc_id if doc_id else _get_latest_doc_id(db, 'CommCareCase', skipfunc=is_case_recent)
+    return check_index_by_doc(es_index, db, check_doc_id, interval=interval)
 
 
-def check_xform_index_by_view():
+def _get_latest_doc_from_index(es_index, sort_field):
     """
-    View based xform index checker - to be deprecated
+    Query elasticsearch index sort descending by the sort field
+    and get the doc_id back so we can then do a rev-update check.
+
+    This si because there's no direct view known ahead of time what's inside the report* index,
+    so just get it directly from the index and do the modify check workflow.
     """
-    latest_xforms = _get_latest_xforms()
-    found_xform = False
-    start_skip = 0
-    limit = 100
+    recent_query = {
+        "filter": {
+            "match_all": {}
+        },
+        "sort": {sort_field: "desc"},
+        "size": 1
+    }
+    es = get_es()
 
-    while found_xform is False:
-        for xform in latest_xforms:
-            doc_id = xform['id']
-            xform_doc = xform['doc']
-            couch_rev = xform_doc['_rev']
-            return _check_es_rev(XFormPillow.es_alias, doc_id, couch_rev)
-    return {"%s_status" % XFormPillow.es_alias: False, "%s_message" % XFormPillow.es_alias: "XForms stale" }
+    try:
+        res = es[es_index].get('_search', data=recent_query)
+        if 'hits' in res:
+            if 'hits' in res['hits']:
+                result = res['hits']['hits'][0]
+                return result['_source']['_id']
+
+    except Exception, ex:
+        logging.error("Error querying get_latest_doc_from_index[%s]: %s" % (es_index, ex))
+        return None
 
 
-def _get_latest_xforms(skip=0, limit=100):
-    db = XFormInstance.get_db()
 
-    def _do_get_raw_xforms(skip, limit):
-        return db.view('hqadmin/forms_over_time', reduce=False, limit=limit, skip=skip, include_docs=True, descending=True)
-    raw_xforms = _do_get_raw_xforms(skip, limit)
-    recent_xforms = []
+def _get_latest_doc_id(db, doc_type, skip=0, limit=100, skipfunc=None):
+    """
+    Get the most recent doc_id from the relevant views emitting over time.
+
+    'CommCareCase' | 'XFormInstance'
+    hqadmin/cases_over_time or hqadmin/forms_over_time
+
+    skipfunc = filter function for getting stuff out that we don't care about.
+
+    for xforms, this is for filtering out devicelogs
+    for cases, filtering out dates in the future
+    """
+    doc_type_views = {
+        'CommCareCase': 'hqadmin/cases_over_time',
+        'XFormInstance': 'hqadmin/forms_over_time'
+    }
+
+    if doc_type in doc_type_views:
+        view_name = doc_type_views[doc_type]
+    else:
+        raise Exception("Don't know what to do with that doc_type to check an index: %s" % doc_type)
+    def _call_view(skip, limit):
+        return db.view(view_name, reduce=False, limit=limit, skip=skip, include_docs=True, descending=True)
+    raw_docs = _call_view(skip, limit)
+    filtered_docs = []
 
     while True:
-        recent_xforms = filter(lambda x: x['doc']['xmlns'] != 'http://code.javarosa.org/devicereport', raw_xforms)
-        if len(recent_xforms) > 0:
+        filtered_docs = filter(skipfunc, raw_docs)
+        if len(filtered_docs) > 0:
             break
-        #all the recent submissions are device logs, keep digging
         skip += limit
-        raw_xforms = _do_get_raw_xforms(skip, limit)
+        raw_docs = _call_view(skip, limit)
         if skip == 5000:
-            #sanity check if we get a deluge of devicereports
-            return recent_xforms
+            #sanity check if we get a deluge of bad data, just return anything we got
+            break
 
-    return recent_xforms
+    if len(filtered_docs) > 0:
+        return filtered_docs[0]['id']
+    else:
+        return None
 
 
 def _check_es_rev(index, doc_id, couch_rev):
@@ -131,26 +232,6 @@ def _check_es_rev(index, doc_id, couch_rev):
     except Exception, ex:
         message = "ES Error: %s" % ex
         status = False
-    return {"%s_status" % index: status, "%s_message" % index: message}
+    return {index: {"index": index, "status": status, "message": message}}
 
 
-def check_case_index_by_view():
-    """
-    View based case index checker - to be deprecated
-    Verify couch case view and ES views are up to date with the latest xform to update a case, and that the revs are in sync.
-    Query recent xforms and their cases, as this is a more accurate way to get case changes in the wild with existing working views
-    """
-    casedb = CommCareCase.get_db()
-    recent_xforms = _get_latest_xforms()
-    for xform in recent_xforms:
-        xform_id = xform['id']
-        #just check to see if any of these recent forms have a case associated with them - they should...
-        casedoc = casedb.view('case/by_xform_id', reduce=False, include_docs=True, key=xform_id, limit=1).one()
-        if casedoc is not None:
-            couch_rev = casedoc['doc']['_rev']
-            doc_id = casedoc['doc']['_id']
-            return _check_es_rev(CasePillow.es_alias, doc_id, couch_rev)
-    #this could be if there's 100 devicelogs that come in
-    message = "No recent xforms with case ids - will try again later"
-
-    return {"%s_status" % CasePillow.es_alias: False, "%s_message" % CasePillow.es_alias: message }

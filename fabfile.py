@@ -599,6 +599,7 @@ def preindex_views():
         # no update to env - the actual deploy will do
         # this may break if a new dependency is introduced in preindex
         update_virtualenv(preindex=True)
+        version_static(preindex=True)
 
         sudo((
             'echo "%(virtualenv_root_preindex)s/bin/python '
@@ -880,16 +881,21 @@ def _do_collectstatic():
 
 @roles('django_app', 'django_monolith')
 @parallel
-def version_static():
+def version_static(preindex=False):
     """
     Put refs on all static references to prevent stale browser cache hits when things change.
     This needs to be run on the WEB WORKER since the web worker governs the actual static
     reference.
 
     """
-    with cd(env.code_root):
-        sudo('rm -f tmp.sh resource_versions.py; %(virtualenv_root)s/bin/python manage.py   \
-             printstatic > tmp.sh; bash tmp.sh > resource_versions.py' % env, user=env.sudo_user)
+    if preindex:
+        withpath = env.code_root_preindex
+    else:
+        withpath = env.code_root
+
+    cmd = 'resource_static' if not preindex else 'resource_static clear'
+    with cd(withpath):
+        sudo('rm -f tmp.sh resource_versions.py; %(virtualenv_root)s/bin/python manage.py ' % env + cmd, user=env.sudo_user)
 
 
 

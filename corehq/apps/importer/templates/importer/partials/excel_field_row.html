@@ -9,7 +9,7 @@
 </td>
 
 <td class="span3">
-    <select name="excel_field[]">
+    <select name="excel_field[]" class="excel_field">
         <option>{% trans "Select field from excel..." %}</option>
         {% for field in excel_fields %}
             {% ifequal field item %}

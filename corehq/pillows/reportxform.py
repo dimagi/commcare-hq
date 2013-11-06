@@ -32,6 +32,9 @@ class ReportXFormPillow(XFormPillow):
                 #full indexing is only enabled for select domains on an opt-in basis
                 return None
             convert_property_dict(doc_ret['form'], self.default_mapping['properties']['form'], override_root_keys=['case'])
+            if 'computed_' in doc_ret:
+                convert_property_dict(doc_ret['computed_'], {})
+
             return doc_ret
         else:
             return None

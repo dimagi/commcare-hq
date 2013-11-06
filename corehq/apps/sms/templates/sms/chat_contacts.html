@@ -1,0 +1,62 @@
+{% extends 'hqwebapp/two_column.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load url from future %}
+
+{% block title %}{% trans "Chat over SMS" %}{% endblock %}
+
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url "messaging" domain %}"><strong>{% trans "Messaging" %}</strong></a> <span class="divider">&gt;</span>
+        </li>
+        <li class="active">
+            <div id="report-title"><a href="{% url "chat_contacts" domain %}">{% trans "Chat over SMS" %}</a></div>
+        </li>
+    </ul>
+{% endblock %}
+
+{% block head %}{{ block.super }}
+    {% include "imports/datatables.html" %}
+    <script type="text/javascript" src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+<script>
+    $(function(){
+        var table = new HQReportDataTables({});
+        table.render();
+    });
+</script>
+{% endblock %}
+
+{% block main_column %}
+    <table class="table table-striped datatable">
+        <thead>
+            <tr>
+                <th>{% trans "Contact Name" %}</th>
+                <th>{% trans "Contact Type" %}</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for contact in contacts %}
+            <tr>
+                <td><a href="{{ contact.url }}">{{ contact.name }}</a></td>
+                <td>
+                    {% if contact.doc_type == 'CommCareCase' %}
+                        {% trans "Case" %}
+                    {% else %}
+                        {% if contact.doc_type == 'CommCareUser' %}
+                            {% commcare_user %}
+                        {% else %}
+                            {% trans "(unknown)" %}
+                        {% endif %}
+                    {% endif %}
+                </td>
+                <td><span class="btn btn-primary" onClick="window.open('{% url "sms_chat" domain contact.id %}', '_blank', 'location=no,menubar=no,scrollbars=no,status=no,toolbar=no,height=400,width=400');">{% trans "Open Chat Window" %} <i class="icon icon-white icon-share-alt"></i></span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

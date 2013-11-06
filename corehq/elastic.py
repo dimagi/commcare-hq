@@ -33,7 +33,10 @@ ADD_TO_ES_FILTER = {
         {"not": {"missing": {"field": "xmlns"}}},
         {"not": {"missing": {"field": "form.meta.userID"}}},
     ],
-    "users": [{"term": {"doc_type": "CommCareUser"}}],
+    "users": [
+        {"term": {"doc_type": "CommCareUser"}},
+        {"term": {"is_active": True}},
+    ],
 }
 
 DATE_FIELDS = {
@@ -50,7 +53,7 @@ ES_MAX_CLAUSE_COUNT = 1024  #  this is what ES's maxClauseCount is currently set
 
 def get_stats_data(domains, histo_type, datespan, interval="day"):
     histo_data = dict([(d['display_name'],
-                        es_histogram(histo_type, d["names"], datespan.startdate_display, datespan.enddate_display))
+                        es_histogram(histo_type, d["names"], datespan.startdate_display, datespan.enddate_display, interval=interval))
                         for d in domains])
 
     def _total_until_date(histo_type, doms=None):
@@ -65,7 +68,7 @@ def get_stats_data(domains, histo_type, datespan, interval="day"):
         }
         q["filter"]["and"].extend(ADD_TO_ES_FILTER.get(histo_type, [])[:])
 
-        return es_query(q=q, es_url=ES_URLS[histo_type], size=1)["hits"]["total"]
+        return es_query(q=q, es_url=ES_URLS[histo_type], size=0)["hits"]["total"]
 
     return {
         'histo_data': histo_data,
@@ -111,6 +114,7 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff
     return ret_data["facets"]["histo"]["entries"]
 
 
+SIZE_LIMIT = 1000000
 def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at=None, size=None, dict_only=False, fields=None):
     """
         Any filters you include in your query should an and filter
@@ -123,7 +127,7 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
     if params is None:
         params = {}
 
-    q["size"] = size if size is not None else q.get("size", 9999)
+    q["size"] = size if size is not None else q.get("size", SIZE_LIMIT)
     q["from"] = start_at or 0
     q["filter"] = q.get("filter", {})
     q["filter"]["and"] = q["filter"].get("and", [])
@@ -147,7 +151,7 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
     if facets:
         q["facets"] = q.get("facets", {})
         for facet in facets:
-            q["facets"][facet] = {"terms": {"field": facet, "size": 9999}}
+            q["facets"][facet] = {"terms": {"field": facet, "size": SIZE_LIMIT}}
 
     if q.get('facets') and q.get("filter", {}).get("and"):
         for facet in q["facets"]:
@@ -179,7 +183,7 @@ def stream_es_query(chunksize=100, **kwargs):
     size = kwargs.pop("size", None)
     kwargs.pop("start_at", None)
     kwargs["size"] = chunksize
-    for i in range(0, size or 9999999, chunksize):
+    for i in range(0, size or SIZE_LIMIT, chunksize):
         kwargs["start_at"] = i
         res = es_query(**kwargs)
         if not res["hits"]["hits"]:
