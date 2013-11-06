@@ -3,6 +3,7 @@ from couchdbkit.exceptions import MultipleResultsFound, ResourceNotFound
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 from corehq.apps.groups.models import Group
+from corehq.apps.users.forms import CommCareAccountForm
 from corehq.apps.users.util import normalize_username, raw_username
 from corehq.apps.users.models import CommCareUser
 from couchexport.writers import Excel2007ExportWriter
@@ -209,6 +210,14 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
                             user.set_password(password)
                         status_row['flag'] = 'updated'
                     else:
+                        if len(raw_username(username)) > CommCareAccountForm.max_len_username:
+                            ret['rows'].append({
+                                'username': username,
+                                'row': row,
+                                'flag': _("username cannot contain greater than %d characters" %
+                                          CommCareAccountForm.max_len_username)
+                            })
+                            continue
                         if not is_password(password):
                             raise UserUploadError(_("Cannot create a new user with a blank password"))
                         user = CommCareUser.create(domain, username, password, uuid=user_id or '')

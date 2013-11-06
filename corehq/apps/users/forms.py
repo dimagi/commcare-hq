@@ -155,7 +155,9 @@ class CommCareAccountForm(forms.Form):
     # 25 is domain max length
     # @{domain}.commcarehq.org adds 16
     # left over is 87 and 80 just sounds better
-    username = forms.CharField(max_length=80, required=True)
+    max_len_username = 80
+
+    username = forms.CharField(max_length=max_len_username, required=True)
     password = forms.CharField(widget=PasswordInput(), required=True, min_length=1, help_text="Only numbers are allowed in passwords")
     password_2 = forms.CharField(label='Password (reenter)', widget=PasswordInput(), required=True, min_length=1)
     domain = forms.CharField(widget=HiddenInput())
@@ -227,6 +229,10 @@ class CommCareAccountForm(forms.Form):
         except KeyError:
             pass
         else:
+            if len(username) > CommCareAccountForm.max_len_username:
+                raise forms.ValidationError(
+                    "Username %s is too long.  Must be under %d characters."
+                    % (username, CommCareAccountForm.max_len_username))
             validate_username('%s@commcarehq.org' % username)
             domain = self.cleaned_data['domain']
             username = format_username(username, domain)
