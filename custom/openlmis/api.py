@@ -298,13 +298,13 @@ class RequisitionProduct(Product):
 
     def __init__(self, code, name=None, description=None, unit=None, category=None, beginning_balance=None,
                  quantity_received=None, quantity_dispensed=None, losses_and_adjustments=None, new_patient_count=None,
-                 stock_on_hand=None, stock_out_days=None, quantity_requested=None, reason_for_requested_quantity=None, remarks=None):
+                 stock_in_hand=None, stock_out_days=None, quantity_requested=None, reason_for_requested_quantity=None, remarks=None):
         self.beginning_balance = beginning_balance
         self.quantity_received = quantity_received
         self.quantity_dispensed = quantity_dispensed
         self.losses_and_adjustments = losses_and_adjustments
         self.new_patient_count = new_patient_count
-        self.stock_on_hand = stock_on_hand
+        self.stock_in_hand = stock_in_hand
         self.stock_out_days = stock_out_days
         self.quantity_requested = quantity_requested
         self.reason_for_requested_quantity = reason_for_requested_quantity
@@ -319,11 +319,11 @@ class RequisitionProduct(Product):
         quantity_dispensed = json_rep.get('quantityDispensed', None)
         losses_and_adjustments = json_rep.get('lossesAndAdjustments', None)
         new_patient_count = json_rep.get('newPatientCount', None)
-        stock_on_hand = json_rep.get('stockOnHand', None)
+        stock_in_hand = json_rep.get('stockInHand', None)
         stock_out_days = json_rep.get('stockOutDays', None)
         quantity_requested = json_rep.get('quantityRequested', None)
         reason_for_requested_quantity = json_rep.get('reasonForRequestedQuantity', None)
         remarks = json_rep.get('remarks', None)
         return cls(code=code, beginning_balance=beginning_balance, quantity_received=quantity_received, quantity_dispensed=quantity_dispensed,
-                   losses_and_adjustments=losses_and_adjustments, new_patient_count=new_patient_count, stock_on_hand=stock_on_hand, stock_out_days=stock_out_days,
+                   losses_and_adjustments=losses_and_adjustments, new_patient_count=new_patient_count, stock_in_hand=stock_in_hand, stock_out_days=stock_out_days,
                    quantity_requested=quantity_requested, reason_for_requested_quantity=reason_for_requested_quantity, remarks=remarks)
