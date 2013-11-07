@@ -186,28 +186,6 @@ def commcare_user():
 def hq_web_user():
     return _(settings.WEB_USER_TERM)
 
-
-@register.simple_tag
-def list_my_orgs(request):
-    org_list = request.couch_user.get_organizations()
-    lst = list()
-    lst.append('<ul class="nav nav-pills nav-stacked">')
-    for org in org_list:
-        default_url = reverse("orgs_landing", args=[org.name])
-        lst.append('<li><a href="%s">%s</a></li>' % (default_url, org.title))
-    lst.append('</ul>')
-
-    return "".join(lst)
-
-
-@register.simple_tag
-def commcare_user():
-    return _(settings.COMMCARE_USER_TERM)
-
-@register.simple_tag
-def hq_web_user():
-    return _(settings.WEB_USER_TERM)
-
 @register.filter
 def mod(value, arg):
     return value % arg
