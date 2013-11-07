@@ -915,15 +915,6 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
     'pact',
     'uth-rhd-test',
-    'mvp-bonsaaso',
-    'mvp-koraro',
-    'mvp-mbola',
-    'mvp-mwandama',
-    'mvp-potou',
-    'mvp-ruhiira',
-    'mvp-sada',
-    'mvp-sauri',
-    'mvp-tiby',
 ]
 
 CUSTOM_MODULES = [
