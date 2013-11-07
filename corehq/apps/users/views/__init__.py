@@ -184,7 +184,13 @@ class BaseEditUserView(BaseUserSettingsView):
     def post(self, request, *args, **kwargs):
         if self.request.POST['form_type'] == "update-user":
             if self.form_user_update.is_valid():
+                old_lang = self.request.couch_user.language
                 if self.form_user_update.update_user(existing_user=self.editable_user, domain=self.domain):
+                    # if editing our own account we should also update the language in the session
+                    if self.editable_user._id == self.request.couch_user._id:
+                        new_lang = self.request.couch_user.language
+                        if new_lang != old_lang:
+                            request.session['django_language'] = new_lang
                     messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.username)
         return self.get(request, *args, **kwargs)
 
