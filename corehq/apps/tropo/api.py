@@ -27,10 +27,7 @@ class TropoBackend(SMSBackend):
 
     def send(self, msg, delay=True, *args, **kwargs):
         phone_number = clean_phone_number(msg.phone_number)
-        try:
-            text = msg.text.encode("iso-8859-1")
-        except UnicodeEncodeError:
-            text = msg.text.encode("utf-8")
+        text = msg.text.encode("utf-8")
         params = urlencode({
             "action" : "create",
             "token" : self.messaging_token,
