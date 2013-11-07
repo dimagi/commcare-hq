@@ -188,6 +188,18 @@
                                     <p class="help-block">{% trans "Please try to include as much information as possible." %}</p>
                                 </div>
                             </div>
+                            <div class="control-group">
+                                <label class="control-label" for="bug-report-cc">{% trans "Other recipients (optional)" %}
+                                </label>
+                                <div class="controls">
+                                    <input type="text" class="input-xlarge" name="cc" id="bug-report-cc" rows="1">
+                                    <p class="help-block">{% trans "Comma-separated email addresses of others you want to notify about this issue" %}
+                                    </p>
+                                    <div class="alert fade in page-level-alert alert-error">
+                                        <a class="close" data-dismiss="alert" href="#">×</a>{% trans "Please enter valid comma-separated email-list." %}
+                                    </div>
+                                </div>
+                            </div>
                         </fieldset>
                     </div>
                     <div class="modal-footer">
@@ -263,6 +275,13 @@
                 if ($.browser.msie) {
                     $('#unsupported-browser').show();
                 }
+                var $alertBox = $("#hqwebapp-bugReportForm .alert");
+                $alertBox.hide();
+                $("#hqwebapp-bugReportForm input[name='cc']").focus(
+                    function(){
+                        $alertBox.hide();
+                    }
+                );
             });
         </script>
     </body>

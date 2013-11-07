@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.forms import PasswordChangeForm
 import langcodes
 
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq import MySettingsTab

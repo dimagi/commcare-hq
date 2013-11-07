@@ -1,0 +1,32 @@
+{
+    "requisition":
+    {
+        "id":1,
+        "programCode":"HIV",
+        "agentCode":"F10",
+        "emergency":false,
+        "periodStartDate":1358274600000,
+        "periodEndDate":1359570599000,
+        "products":
+            [
+                {
+                    "productCode":"P10",
+                    "beginningBalance":3,
+                    "quantityReceived":0,
+                    "quantityDispensed":1,
+                    "totalLossesAndAdjustments":-2,
+                    "stockInHand":0,
+                    "newPatientCount":2,
+                    "stockOutDays":2,
+                    "quantityRequested":3,
+                    "reasonForRequestedQuantity":"reason",
+                    "calculatedOrderQuantity":57,
+                    "quantityApproved":65,
+                    "remarks":"1"
+                }
+            ],
+            "requisitionStatus":"RELEASED",
+            "orderId":1,"orderStatus":"RELEASED",
+            "supplyingFacilityCode":"F10"
+    }
+}

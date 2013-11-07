@@ -16,6 +16,15 @@ $(function () {
     });
 
     $hqwebappBugReportForm.submit(function() {
+        var emailAddresses = $(this).find("input[name='cc']").val();
+        emailAddresses = emailAddresses.replace(/ /g, "").split(",");
+        for (var index in emailAddresses){
+            var email = emailAddresses[index];
+            if (email && !IsValidEmail(email)){
+                $("#hqwebapp-bugReportForm .alert").show();
+                return false;
+            }
+        }
         var $submitButton = $(this).find("button[type='submit']");
         if(!isBugReportSubmitting && $submitButton.text() == $submitButton.data("complete-text")) {
             $hqwebappBugReportModal.modal("hide");
@@ -33,6 +42,10 @@ $(function () {
         return false;
     });
 
+    function IsValidEmail(email) {
+        var regex = /^([a-zA-Z0-9_.+-])+\@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+        return regex.test(email);
+    }
     function hqwebappBugReportBeforeSerialize($form, options) {
         $form.find("#bug-report-url").val(location.href);
     }

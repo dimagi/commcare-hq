@@ -152,3 +152,20 @@ def sync_supply_point_to_openlmis(supply_point, openlmis_endpoint, create=True):
         return openlmis_endpoint.create_virtual_facility(json_sp)
     else:
         return openlmis_endpoint.update_virtual_facility(supply_point.external_id, json_sp)
+
+
+def submit_requisition(requisition, openlmis_endpoint):
+    return openlmis_endpoint.submit_requisition(requisition)
+
+def approve_requisition(requisition_details, approver_name, openlmis_endpoint):
+    products = []
+    for product in requisition_details.products:
+        products.append({"productCode": product.code, "approvedQuantity": product.quantity_approved})
+
+    approve_data = {
+         "requisitionId": requisition_details.id,
+         "approverName": approver_name,
+         "products": products
+    }
+
+    return openlmis_endpoint.approve_requisition(approve_data)

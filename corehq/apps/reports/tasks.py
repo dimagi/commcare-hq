@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
@@ -7,9 +7,11 @@ from corehq.apps.hqadmin.escheck import check_es_cluster_health, CLUSTER_HEALTH,
 from corehq.apps.reports.export import save_metadata_export_to_tempfile
 from corehq.apps.reports.models import (ReportNotification,
     UnsupportedScheduledReportError, HQGroupExportConfiguration)
-from corehq.elastic import get_es
+from corehq.elastic import get_es, ES_URLS, stream_es_query, es_query
+from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 from couchexport.groupexports import export_for_group
+from dimagi.utils.couch.database import get_db
 from dimagi.utils.logging import notify_exception
 from couchexport.tasks import cache_file_to_be_served
 from django.conf import settings
@@ -142,3 +144,22 @@ def update_calculated_properties():
             del calced_props['cp_first_form']
             del calced_props['cp_last_form']
         es.post("%s/hqdomain/%s/_update" % (DOMAIN_INDEX, r["_id"]), data={"doc": calced_props})
+
+DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+def is_app_active(app_id, domain):
+    now = datetime.now()
+    then = (now - timedelta(days=30)).strftime(DATE_FORMAT)
+    now = now.strftime(DATE_FORMAT)
+
+    key = ['submission app', domain, app_id]
+    row = get_db().view("reports_forms/all_forms", startkey=key+[then], endkey=key+[now]).all()
+    return True if row else False
+
+@periodic_task(run_every=crontab(hour="12, 22", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+def apps_update_calculated_properties():
+    es = get_es()
+    q = {"filter": {"and": [{"missing": {"field": "copy_of"}}]}}
+    results = stream_es_query(q=q, es_url=ES_URLS["apps"], size=999999, chunksize=500)
+    for r in results:
+        calced_props = {"cp_is_active": is_app_active(r["_id"], r["_source"]["domain"])}
+        es.post("%s/app/%s/_update" % (APP_INDEX, r["_id"]), data={"doc": calced_props})
