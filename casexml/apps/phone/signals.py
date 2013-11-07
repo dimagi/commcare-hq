@@ -18,7 +18,7 @@ def send_default_response(sender, xform, **kwargs):
         return forms_submitted["value"] if forms_submitted else "at least 1"
     
     def forms_submitted_today_count(user):
-        today = datetime.today()
+        today = datetime.utcnow().date()
         startkey = [user, today.year, today.month - 1, today.day]
         endkey = [user, today.year, today.month - 1, today.day, {}]
         forms_submitted_today = get_db().view("couchforms/by_user", 
