@@ -78,17 +78,29 @@
                             if (field === '_id') {
                                 return {tags: ['server'], field: renamed_field};
                             }
+                            var rename_map = {
+                                "form.case.@case_id": "form.meta.caseid",
+                                "form.meta.timeEnd": "form.meta.completed_time",
+                                "form.meta.timeStart": "form.meta.started_time",
+                                "_id": "meta.formid"
+                            };
+                            field = self.utils.rename(field, rename_map);
                             var patterns = [
-                                {regex: /^form\.meta\.(.*)$/, tag: 'meta'},
+                                {regex: /^form\.meta\.(.*)$/, tag: 'info'},
                                 {regex: /^form\.case\.(.*)$/, tag: 'case'},
+                                {regex: /^form\.subcase_\d(.*)$/, tag: 'subcase', no_replace: true},
                                 {regex: /^form\.([#@].*)$/, tag: 'tag'},
                                 {regex: /^form\.(.*)$/, tag: ''}
                             ], pattern, stripped;
                             for (var i = 0; i < patterns.length; i++) {
                                 pattern = patterns[i];
-                                stripped = field.replace(pattern.regex, '$1');
+                                stripped = !pattern.no_replace ? field.replace(pattern.regex, '$1') : field;
                                 if (field !== stripped) {
                                     return {tags: [pattern.tag].concat(tags), field: stripped};
+                                }
+
+                                if (pattern.no_replace && pattern.regex.test(field)) {
+                                    tags += pattern.tag;
                                 }
                             }
 
@@ -181,7 +193,7 @@
                         var tag_order = {
                             '': 0,
                             'case': 1,
-                            'meta': 2,
+                            'info': 2,
                             'update': 2.5, // for case history only
                             'server': 3,
                             'tag': 4,
@@ -338,10 +350,17 @@
                         _(table.column_configuration()).each(function (column) {
                             if (!column.display()) {
                                 var parsed = column._niceField;
-                                var display = parsed.field;
-                                if (parsed.tags[0]) {
-                                    display = parsed.tags[0] + '.' + parsed.field;
+                                var prefixed_tags = ["case", "meta", "info", "server", "tag", "row"];
+                                var prefix = '';
+                                for (var i = 0; i < parsed.tags.length; i++) {
+                                    for (var j = 0; j < prefixed_tags.length; j++) {
+                                        if (parsed.tags[i] === prefixed_tags[j]) {
+                                            prefix = parsed.tags[i] + '.';
+                                            break;
+                                        }
+                                    }
                                 }
+                                var display = prefix + parsed.field;
                                 column.display(display);
                             }
                         });

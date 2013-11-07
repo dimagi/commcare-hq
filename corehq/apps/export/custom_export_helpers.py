@@ -58,6 +58,7 @@ class CustomExportHelper(object):
         self.domain = domain
         self.presave = False
         self.transform_dates = False
+        self.creating_new_export = not bool(export_id)
 
         if export_id:
             self.custom_export = self.ExportSchemaClass.get(export_id)
@@ -154,6 +155,8 @@ class FormCustomExportHelper(CustomExportHelper):
     allow_deid = True
     allow_repeats = True
 
+    default_questions = ["form.case.@case_id", "form.meta.started_time", "_id", "form.meta.username"]
+
     @property
     def export_title(self):
         return _('Export Submissions to Excel')
@@ -180,19 +183,24 @@ class FormCustomExportHelper(CustomExportHelper):
         remaining_questions = current_questions.copy()
 
         def is_special_type(q):
-            return any([q.startswith('form.#'), q.startswith('form.@'), q.startswith('form.case.'), q.startswith('form.meta.')])
+            return any([q.startswith('form.#'), q.startswith('form.@'), q.startswith('form.case.'),
+                        q.startswith('form.meta.'), q.startswith('form.subcase_')])
 
         for col in column_conf:
             question = col["index"]
             remaining_questions.discard(question)
             if question.startswith("form.") and not is_special_type(question) and question not in current_questions:
                 col["tag"] = "deleted"
+            if self.creating_new_export and question in self.default_questions:
+                col["selected"] = True
 
+        selected_params = {"selected": True} if self.creating_new_export else {}
         column_conf.extend([
             ExportColumn(
                 index=q,
                 display='',
                 tag='no data',
+                **selected_params
             ).to_config_format(selected=False)
             for q in remaining_questions
         ])
