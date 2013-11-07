@@ -75,14 +75,11 @@
 
                         var renamed_field = field;
                         if (self.custom_export.type() === 'form' && index === '#') {
-                            if (field === '_id') {
-                                return {tags: ['server'], field: renamed_field};
-                            }
                             var rename_map = {
                                 "form.case.@case_id": "form.meta.caseid",
                                 "form.meta.timeEnd": "form.meta.completed_time",
                                 "form.meta.timeStart": "form.meta.started_time",
-                                "_id": "meta.formid"
+                                "_id": "form.meta.formid"
                             };
                             field = self.utils.rename(field, rename_map);
                             var patterns = [
@@ -236,7 +233,6 @@
                             niceField['field'] = special;
                         }
                         column._niceField = niceField;
-                        column.deleted = $.inArray("deleted", column._niceField.tags) >= 0;
                     });
 
                     for (var i = 0; i < columns.length; i++) {
@@ -434,7 +430,7 @@
                         {% trans "Automatically convert dates for Excel?" %}
                     </label>
                     <label class="checkbox">
-                        <input type="checkbox" data-bind="checked: $root.show_deleted" /> {% trans "Show Deleted Questions" %}
+                        <input type="checkbox" data-bind="checked: $root.show_deleted" /> {% trans "Show Deleted Questions and Advanced Properties" %}
                     </label>
                 </div>
             </div>
@@ -476,7 +472,7 @@
                         </tr>
                         </thead>
                         <tbody data-bind="sortable: column_configuration">
-                            <tr data-bind="visible: !deleted || $root.show_deleted">
+                            <tr data-bind="visible:  $root.show_deleted() || ($data.default() || selected)">
                                 <td class="sortable-handle">
                                     <i class="icon-resize-vertical"></i>
                                 </td>

@@ -155,7 +155,7 @@ class FormCustomExportHelper(CustomExportHelper):
     allow_deid = True
     allow_repeats = True
 
-    default_questions = ["form.case.@case_id", "form.meta.started_time", "_id", "form.meta.username"]
+    default_questions = ["form.case.@case_id", "form.meta.timeStart", "_id", "form.meta.username"]
 
     @property
     def export_title(self):
@@ -188,10 +188,15 @@ class FormCustomExportHelper(CustomExportHelper):
 
         for col in column_conf:
             question = col["index"]
-            remaining_questions.discard(question)
+            if question in remaining_questions:
+                remaining_questions.discard(question)
+                col["default"] = True
             if question.startswith("form.") and not is_special_type(question) and question not in current_questions:
                 col["tag"] = "deleted"
-            if self.creating_new_export and question in self.default_questions:
+                col["default"] = False
+            if question in self.default_questions:
+                col["default"] = True
+            if self.creating_new_export and col.get("default", False):
                 col["selected"] = True
 
         selected_params = {"selected": True} if self.creating_new_export else {}
@@ -200,6 +205,7 @@ class FormCustomExportHelper(CustomExportHelper):
                 index=q,
                 display='',
                 tag='no data',
+                default=True,
                 **selected_params
             ).to_config_format(selected=False)
             for q in remaining_questions
@@ -242,6 +248,7 @@ class CustomColumn(object):
             "is_sensitive": self.is_sensitive,
             'tag': self.tag,
             'special': self.slug,
+            'default': False,
         }
 
 
