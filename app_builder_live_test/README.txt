@@ -12,4 +12,8 @@ Checkout feature branch and run
 
 Then do a diff on the two directories:
 
-diff app_builder_live_test/master app_builder_live_test/feature
+diff -r app_builder_live_test/master app_builder_live_test/feature
+
+OR
+
+Just run ./app_builder_live_test/diff feature
