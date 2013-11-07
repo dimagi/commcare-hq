@@ -6,7 +6,7 @@ from django.core.validators import EmailValidator, email_re
 from django.core.urlresolvers import reverse
 from django.forms.widgets import PasswordInput, HiddenInput
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.template.loader import get_template
 from django.template import Context
 from corehq.apps.commtrack.helpers import set_commtrack_location
@@ -100,10 +100,10 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
 
 
 class BaseUserInfoForm(forms.Form):
-    first_name = forms.CharField(max_length=50, required=False)
-    last_name = forms.CharField(max_length=50, required=False)
-    email = forms.EmailField(label=ugettext_noop("E-mail"), max_length=75, required=False)
-    language = forms.ChoiceField(choices=(), initial=None, required=False, help_text=mark_safe(_(
+    first_name = forms.CharField(label=ugettext_lazy('First Name'), max_length=50, required=False)
+    last_name = forms.CharField(label=ugettext_lazy('Last Name'), max_length=50, required=False)
+    email = forms.EmailField(label=ugettext_lazy("E-mail"), max_length=75, required=False)
+    language = forms.ChoiceField(choices=(), initial=None, required=False, help_text=mark_safe(ugettext_lazy(
         "<i class=\"icon-info-sign\"></i> Becomes default language seen in CloudCare and reports (if applicable). "
         "Supported languages for reports are en, fr (partial), and hin (partial)."
     )))
@@ -115,9 +115,11 @@ class BaseUserInfoForm(forms.Form):
 
 
 class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
-    email_opt_out = forms.BooleanField(required=False,
-                                      label="",
-                                      help_text=ugettext_noop("Opt out of emails about new features and other CommCare updates."))
+    email_opt_out = forms.BooleanField(
+        required=False,
+        label="",
+        help_text=ugettext_lazy("Opt out of emails about new features and other CommCare updates.")
+    )
 
     @property
     def direct_properties(self):

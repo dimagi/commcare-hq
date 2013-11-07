@@ -57,7 +57,7 @@
 {% block main_column %}
     <form class="form-horizontal" method="post" enctype="multipart/form-data">
         {% bootstrap_form_errors basic_info_form %}
-        {% bootstrap_fieldset basic_info_form "Edit Basic Information" %}
+        {% bootstrap_fieldset basic_info_form _("Edit Basic Information") %}
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">
                 {% trans 'Update Basic Info' %}
