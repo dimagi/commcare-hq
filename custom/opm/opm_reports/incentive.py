@@ -6,7 +6,7 @@ for each field.
 import datetime
 
 from couchdbkit.exceptions import ResourceNotFound
-from couchforms.models import XFormInstance
+# from couchforms.models import XFormInstance
 
 from ..opm_tasks.models import OpmReportSnapshot
 from .constants import *
@@ -74,17 +74,18 @@ class Worker(object):
         )['total']
         self.service_forms_count = 'yes' if get_result('service_forms') else 'no'
 
-        # self.growth_monitoring_count = get_result('growth_monitoring')
+        self.growth_monitoring_count = get_result('growth_monitoring')
 
-        def get_growth_monitored():
-            results = get_result('growth_monitoring', reduce=False)
-            case_ids = set()
-            for result in results:
-                form = XFormInstance.get(result)
-                case_ids.add(form.form['case']['@case_id'])
-            return len(case_ids)
+        # print worker._id
+        # def get_growth_monitored():
+            # results = get_result('growth_monitoring', reduce=False)
+            # case_ids = set()
+            # for result in results:
+                # form = XFormInstance.get(result)
+                # case_ids.add(form.form['case']['@case_id'])
+            # return len(case_ids)
 
-        self.growth_monitoring_count = get_growth_monitored()
+        # self.growth_monitoring_count = get_growth_monitored()
 
         FIXTURES = get_fixture_data()
         self.service_forms_cash = FIXTURES['service_form_submitted'] \

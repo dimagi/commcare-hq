@@ -4,8 +4,10 @@ These are used in the Incentive Payment Report
 """
 import datetime
 
-from corehq.apps.users.models import CommCareUser, CommCareCase
 import fluff
+from couchforms.models import XFormInstance
+from corehq.apps.users.models import CommCareUser, CommCareCase
+from dimagi.utils.parsing import json_format_date
 
 from .constants import *
 
@@ -82,4 +84,66 @@ class GrowthMonitoring(fluff.Calculator):
                         total += int(child.get('child%s_child_growthmon' % child_num))
                     except:
                         pass
-            yield user_date_group(form, total)
+            if total:
+                yield { 
+                    'date': form.received_on,
+                    'value': total,
+                    'group_by': [
+                        form.domain,
+                        form.metadata.userID,
+                    ],
+                }
+
+
+    def get_result(self, key, date_range=None, reduce=True):
+        # This block is copy-pasted from fluff
+        if self.window:
+            now = self.fluff.get_now()
+            start = now - self.window
+            end = now
+        elif date_range is not None:
+            start, end = date_range
+        for emitter_name in self._fluff_emitters:
+            shared_key = [self.fluff._doc_type] + key + [self.slug, emitter_name]
+            emitter = getattr(self, emitter_name)
+            emitter_type = emitter._fluff_emitter
+            q_args = {
+                'reduce': False,
+            }
+            if emitter_type == 'date':
+                assert isinstance(date_range, tuple) or self.window, (
+                    "You must either set a window on your Calculator "
+                    "or pass in a date range")
+                if start > end:
+                    q_args['descending'] = True
+                q = self.fluff.view(
+                    'fluff/generic',
+                    startkey=shared_key + [json_format_date(start)],
+                    endkey=shared_key + [json_format_date(end)],
+                    **q_args
+                ).all()
+            elif emitter_type == 'null':
+                q = self.fluff.view(
+                    'fluff/generic',
+                    key=shared_key + [None],
+                    **q_args
+                ).all()
+            else:
+                raise exceptions.EmitterTypeError(
+                    'emitter type %s not recognized' % emitter_type
+                )
+
+            # begin modifications from normal `get_result`
+
+            def strip(id_string):
+                prefix = '%s-' % self.fluff.__name__
+                assert id_string.startswith(prefix)
+                return id_string[len(prefix):]
+
+            cases = {}
+            for form in q:
+                form_id = strip(form['id'])
+                case_id = XFormInstance.get(form_id).form['case']['@case_id']
+                cases[case_id] = max(cases.get(case_id, 0), form['value'])
+        return {'total': sum(cases.values())}
+
