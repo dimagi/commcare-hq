@@ -190,6 +190,7 @@ class OpenLMISEndpoint(object):
         self.update_virtual_facility_base_url = self._urlcombine(self._rest_uri, '/agent')
         self.program_product_url = self._urlcombine(self._rest_uri, '/programProducts.json')
         self.submit_requisition_url = self._urlcombine(self._rest_uri, '/submitRequisition') #todo waiting for update document, added some url for testing
+        self.requisition_details_url = self._urlcombine(self._rest_uri, '/requisitions')
 
     def _urlcombine(self, base, target):
         return '{base}{target}'.format(base=base, target=target)
@@ -237,6 +238,12 @@ class OpenLMISEndpoint(object):
         return Program.from_json(response.json())
 
 
+    def get_requisition_details(self, id):
+        response = requests.get(self.update_requisition_details_url(id), auth=self._auth())
+
+        return RequisitionDetails.from_json(response.json())
+
+
     def create_virtual_facility(self, facility_data):
         response = requests.post(self.create_virtual_facility_url,
                                  data=json.dumps(facility_data),
@@ -246,6 +253,11 @@ class OpenLMISEndpoint(object):
 
     def update_virtual_facility_url(self, id):
         return self._urlcombine(self.update_virtual_facility_base_url, '/{id}.json'.format(id=id))
+
+
+    def update_requisition_details_url(self, id):
+        return self._urlcombine(self.requisition_details_url, '/{id}.json'.format(id=id))
+
 
     def update_virtual_facility(self, id, facility_data):
         facility_data['agentCode'] = id
@@ -285,7 +297,7 @@ class Requisition(object):
 
         agent_code = json_rep['agentCode']
         program_id = json_rep['programId']
-        period_id = json_rep.get('periodId', None)
+        period_id = getattr(json_rep, 'periodId', None)
         report_type = json_rep['reportType']
         products = []
         for p in product_list:
@@ -322,8 +334,119 @@ class RequisitionProduct(Product):
         stock_in_hand = json_rep.get('stockInHand', None)
         stock_out_days = json_rep.get('stockOutDays', None)
         quantity_requested = json_rep.get('quantityRequested', None)
-        reason_for_requested_quantity = json_rep.get('reasonForRequestedQuantity', None)
+        reason_for_requested_quantity =json_rep.get('reasonForRequestedQuantity', None)
         remarks = json_rep.get('remarks', None)
         return cls(code=code, beginning_balance=beginning_balance, quantity_received=quantity_received, quantity_dispensed=quantity_dispensed,
                    losses_and_adjustments=losses_and_adjustments, new_patient_count=new_patient_count, stock_in_hand=stock_in_hand, stock_out_days=stock_out_days,
                    quantity_requested=quantity_requested, reason_for_requested_quantity=reason_for_requested_quantity, remarks=remarks)
+
+class RequisitionStatus(RssWrapper):
+
+    @property
+    def requisition_id(self):
+        return self.metadata['requisitionId']
+
+    @property
+    def requisition_status(self):
+        return self.metadata['requisitionStatus']
+
+    @property
+    def order_id(self):
+        return self.metadata.get('orderId', None)
+
+    @property
+    def order_status(self):
+        return self.metadata.get('orderStatus', None)
+
+    @property
+    def emergency(self):
+        return self.metadata.get('emergency', None)
+
+    @property
+    def start_date(self):
+        return self.metadata.get('startDate', None)
+
+    @property
+    def end_date(self):
+        return self.metadata.get('endDate', None)
+
+
+class RequisitionDetails(Requisition):
+
+    def __init__(self, id, agent_code, program_code, emergency, period_start_date, period_end_date, requisition_status,
+                   products, supplying_facility_code=None, order_id=None, order_status=None):
+
+        super(RequisitionDetails, self).__init__(agent_code=agent_code, program_id=program_code, report_type=None, products=products)
+
+        self.id = id
+        self.emergency = emergency
+        self.period_start_date = period_start_date
+        self.period_end_date = period_end_date
+        self.requisition_status = requisition_status
+        self.order_id = order_id
+        self.order_status = order_status
+        self.supplying_facility_code = supplying_facility_code
+
+    @classmethod
+    def from_json(cls, json_rep):
+        json_rep = json_rep["requisition"]
+        product_list = json_rep['products']
+        if not product_list:
+            return None
+
+        id = json_rep['id']
+        agent_code = json_rep['agentCode']
+        program_code = json_rep['programCode']
+        emergency = json_rep['emergency']
+        period_start_date = json_rep['periodStartDate']
+        period_end_date = json_rep['periodEndDate']
+        requisition_status = json_rep['requisitionStatus']
+        order_id = json_rep['orderId']
+        order_status = json_rep['orderStatus']
+        supplying_facility_code = json_rep['supplyingFacilityCode']
+
+        products = []
+        for p in product_list:
+            products.append(RequisitionProductDetails.from_json(p))
+
+        return cls(id, agent_code, program_code, emergency, period_start_date, period_end_date, requisition_status,
+                   products, supplying_facility_code, order_id, order_status)
+
+
+class RequisitionProductDetails(RequisitionProduct):
+
+    def __init__(self,  code, beginning_balance,
+                 quantity_received, quantity_dispensed=None, losses_and_adjustments=None, new_patient_count=None,
+                 stock_in_hand=None, stock_out_days=None, quantity_requested=None, reason_for_requested_quantity=None, remarks=None,
+                 total_losses_and_adjustments=None, calculated_order_quantity=None, quantity_approved=None):
+
+        self.total_losses_and_adjustments = total_losses_and_adjustments
+        self.calculated_order_quantity = calculated_order_quantity
+        self.quantity_approved = quantity_approved
+
+        super(RequisitionProductDetails, self).__init__(code=code, beginning_balance=beginning_balance, quantity_received=quantity_received, quantity_dispensed=quantity_dispensed,
+                   losses_and_adjustments=losses_and_adjustments, new_patient_count=new_patient_count, stock_in_hand=stock_in_hand, stock_out_days=stock_out_days,
+                   quantity_requested=quantity_requested, reason_for_requested_quantity=reason_for_requested_quantity, remarks=remarks)
+
+    @classmethod
+    def from_json(cls, json_rep):
+        code = json_rep['productCode']
+        beginning_balance = json_rep.get('beginningBalance', None)
+        quantity_received = json_rep.get('quantityReceived', None)
+        quantity_dispensed = json_rep.get('quantityDispensed', None)
+        losses_and_adjustments = json_rep.get('lossesAndAdjustments', None)
+        new_patient_count = json_rep.get('newPatientCount', None)
+        stock_in_hand = json_rep.get('stockInHand', None)
+        stock_out_days = json_rep.get('stockOutDays', None)
+        quantity_requested = json_rep.get('quantityRequested', None)
+        reason_for_requested_quantity =json_rep.get('reasonForRequestedQuantity', None)
+        remarks = json_rep.get('remarks', None)
+
+        total_losses_and_adjustments = json_rep.get('totalLossesAndAdjustments', None)
+        calculated_order_quantity = json_rep.get('calculatedOrderQuantity', None)
+        quantity_approved = json_rep.get('quantityApproved', None)
+
+        return cls(code=code, beginning_balance=beginning_balance,
+                 quantity_received=quantity_received, quantity_dispensed=quantity_dispensed, losses_and_adjustments=losses_and_adjustments, new_patient_count=new_patient_count,
+                 stock_in_hand=stock_in_hand, stock_out_days=stock_out_days, quantity_requested=quantity_requested, reason_for_requested_quantity=reason_for_requested_quantity, remarks=remarks,
+                 total_losses_and_adjustments=total_losses_and_adjustments, calculated_order_quantity=calculated_order_quantity, quantity_approved=quantity_approved)
