@@ -5,8 +5,8 @@ from django.test import TestCase
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.tests import bootstrap_domain
 from corehq.apps.locations.models import Location
-from custom.openlmis.api import get_facilities, Facility, get_facility_programs, FacilityProgramLink, get_programs_and_products, Program, RequisitionStatus, get_requisition_statuses
-from custom.openlmis.commtrack import sync_supply_point_to_openlmis
+from custom.openlmis.api import get_facilities, Facility, get_facility_programs, FacilityProgramLink, get_programs_and_products, Program, Requisition, RequisitionStatus, get_requisition_statuses
+from custom.openlmis.commtrack import sync_supply_point_to_openlmis, submit_requisition
 from custom.openlmis.tests.mock_api import MockOpenLMISEndpoint
 
 
@@ -119,6 +119,7 @@ class PostApiTest(TestCase):
         self.domain = 'post-api-test'
         bootstrap_domain(self.domain)
         self.api = MockOpenLMISEndpoint("uri://mock/lmis/endpoint", username='ned', password='honor')
+        self.datapath = os.path.join(os.path.dirname(__file__), 'data')
 
     def testCreateVirtualFacility(self):
         loc = Location(site_code='1234', name='beavis', domain=self.domain,
@@ -127,3 +128,8 @@ class PostApiTest(TestCase):
         sp = make_supply_point(self.domain, loc)
         self.assertTrue(sync_supply_point_to_openlmis(sp, self.api))
         self.assertTrue(sync_supply_point_to_openlmis(sp, self.api, False))
+
+    def testSubmitRequisition(self):
+        with open(os.path.join(self.datapath, 'sample_requisition_data.json')) as f:
+            requisition = Requisition.from_json(json.loads(f.read()))
+        self.assertTrue(submit_requisition(requisition, self.api))

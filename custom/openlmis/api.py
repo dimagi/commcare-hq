@@ -189,6 +189,7 @@ class OpenLMISEndpoint(object):
         self.create_virtual_facility_url = self._urlcombine(self._rest_uri, '/agent.json')
         self.update_virtual_facility_base_url = self._urlcombine(self._rest_uri, '/agent')
         self.program_product_url = self._urlcombine(self._rest_uri, '/programProducts.json')
+        self.submit_requisition_url = self._urlcombine(self._rest_uri, '/submitRequisition') #todo waiting for update document, added some url for testing
 
     def _urlcombine(self, base, target):
         return '{base}{target}'.format(base=base, target=target)
@@ -254,7 +255,75 @@ class OpenLMISEndpoint(object):
                                 auth=self._auth())
         return self._response(response)
 
+    def submit_requisition(self, requisition_data):
+        response = requests.post(self.submit_requisition_url,
+                                 data=json.dumps(requisition_data),
+                                 headers={'content-type': 'application/json'},
+                                 auth=self._auth())
+        return self._response(response)
+
 
     @classmethod
     def from_config(cls, config):
         return cls(config.url, config.username, config.password)
+
+
+class Requisition(object):
+
+    def __init__(self, agent_code, program_id, report_type, products, period_id=None):
+        self.agent_code = agent_code
+        self.program_id = program_id
+        self.period_id = period_id
+        self.report_type = report_type
+        self.products = products
+
+    @classmethod
+    def from_json(cls, json_rep):
+        product_list = json_rep['products']
+        if not product_list:
+            return None
+
+        agent_code = json_rep['agentCode']
+        program_id = json_rep['programId']
+        period_id = json_rep.get('periodId', None)
+        report_type = json_rep['reportType']
+        products = []
+        for p in product_list:
+            products.append(RequisitionProduct.from_json(p))
+
+        return cls(agent_code=agent_code, program_id=program_id, report_type=report_type, products=products, period_id=period_id)
+
+
+class RequisitionProduct(Product):
+
+    def __init__(self, code, name=None, description=None, unit=None, category=None, beginning_balance=None,
+                 quantity_received=None, quantity_dispensed=None, losses_and_adjustments=None, new_patient_count=None,
+                 stock_in_hand=None, stock_out_days=None, quantity_requested=None, reason_for_requested_quantity=None, remarks=None):
+        self.beginning_balance = beginning_balance
+        self.quantity_received = quantity_received
+        self.quantity_dispensed = quantity_dispensed
+        self.losses_and_adjustments = losses_and_adjustments
+        self.new_patient_count = new_patient_count
+        self.stock_in_hand = stock_in_hand
+        self.stock_out_days = stock_out_days
+        self.quantity_requested = quantity_requested
+        self.reason_for_requested_quantity = reason_for_requested_quantity
+        self.remarks = remarks
+        super(RequisitionProduct, self).__init__(code, name, description, unit, category)
+
+    @classmethod
+    def from_json(cls, json_rep):
+        code = json_rep['productCode']
+        beginning_balance = json_rep.get('beginningBalance', None)
+        quantity_received = json_rep.get('quantityReceived', None)
+        quantity_dispensed = json_rep.get('quantityDispensed', None)
+        losses_and_adjustments = json_rep.get('lossesAndAdjustments', None)
+        new_patient_count = json_rep.get('newPatientCount', None)
+        stock_in_hand = json_rep.get('stockInHand', None)
+        stock_out_days = json_rep.get('stockOutDays', None)
+        quantity_requested = json_rep.get('quantityRequested', None)
+        reason_for_requested_quantity = json_rep.get('reasonForRequestedQuantity', None)
+        remarks = json_rep.get('remarks', None)
+        return cls(code=code, beginning_balance=beginning_balance, quantity_received=quantity_received, quantity_dispensed=quantity_dispensed,
+                   losses_and_adjustments=losses_and_adjustments, new_patient_count=new_patient_count, stock_in_hand=stock_in_hand, stock_out_days=stock_out_days,
+                   quantity_requested=quantity_requested, reason_for_requested_quantity=reason_for_requested_quantity, remarks=remarks)

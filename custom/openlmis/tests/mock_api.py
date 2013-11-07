@@ -8,3 +8,6 @@ class MockOpenLMISEndpoint(OpenLMISEndpoint):
 
     def update_virtual_facility(self, id, facility_data):
         return True
+
+    def submit_requisition(self, requisition_data):
+        return True
