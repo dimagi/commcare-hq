@@ -18,6 +18,11 @@ function emit_array(exact_keys, range_keys, data, extra_keys) {
     for (var k in data) {
         if (data[k] !== null) {
             var _emit = function (val) {
+                // that's right, we silently discard any values that aren't
+                // numbers
+                if (typeof val !== 'number') {
+                    return;
+                }
                 emit(exact_keys.concat([k])
                         .concat(range_keys)
                         .concat(extra_keys[k] || []),
@@ -29,11 +34,11 @@ function emit_array(exact_keys, range_keys, data, extra_keys) {
                 _emit(data[k] ? 1 : 0);
                 break;
             case 'object':  // array of numbers
-                for (var i in data[k]) {
+                for (var i = 0; i < data[k].length; i++) {
                     _emit(data[k][i]);
                 }
                 break;
-            case 'number':
+            default:
                 _emit(data[k]);
                 break;
             // anything else is unsupported for builtin _stats view and
