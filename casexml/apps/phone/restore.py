@@ -1,4 +1,4 @@
-import warnings
+from couchdbkit import ResourceConflict
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.case.exceptions import BadStateException, RestoreException
 from casexml.apps.phone.models import SyncLog, CaseState
@@ -90,7 +90,13 @@ class RestoreConfig(object):
 
         resp = xml.tostring(response)
         if self.caching_enabled and self.sync_log:
-            self.sync_log.set_cached_payload(resp, self.version)
+            try:
+                self.sync_log.set_cached_payload(resp, self.version)
+            except ResourceConflict:
+                # if one sync takes a long time and another one updates the sync log
+                # this can fail. in this event, don't fail to respond, since it's just
+                # a caching optimization
+                pass
         return resp
 
     def get_response(self):
