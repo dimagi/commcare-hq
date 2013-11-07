@@ -301,6 +301,7 @@ def bug_report(req):
         'url',
         'message',
         'app_id',
+        'cc'
     )])
 
     report['user_agent'] = req.META['HTTP_USER_AGENT']
@@ -331,6 +332,8 @@ def bug_report(req):
         u"Message:\n\n"
         u"{message}\n"
         ).format(**report)
+    cc = report['cc'].strip().split(",")
+    cc = filter(None, cc)
 
     if full_name and not any([c in full_name for c in '<>"']):
         reply_to = u'"{full_name}" <{username}>'.format(**report)
@@ -348,7 +351,8 @@ def bug_report(req):
         subject=subject,
         body=message,
         to=settings.BUG_REPORT_RECIPIENTS,
-        headers={'Reply-To': reply_to}
+        headers={'Reply-To': reply_to},
+        cc=cc
     )
 
     # only fake the from email if it's an @dimagi.com account
