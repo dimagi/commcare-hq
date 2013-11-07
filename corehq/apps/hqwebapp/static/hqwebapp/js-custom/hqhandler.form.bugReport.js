@@ -17,7 +17,7 @@ $(function () {
 
     $hqwebappBugReportForm.submit(function() {
         var emailAddresses = $(this).find("input[name='cc']").val();
-        emailAddresses = emailAddresses.replace(/" "/, "").split(",");
+        emailAddresses = emailAddresses.replace(/ /g, "").split(",");
         for (var index in emailAddresses){
             var email = emailAddresses[index];
             if (email && !IsValidEmail(email)){
