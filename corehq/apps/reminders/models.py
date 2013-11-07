@@ -348,6 +348,7 @@ class CaseReminderHandler(Document):
     sample_id = StringProperty()
     user_group_id = StringProperty()
     user_id = StringProperty()
+    case_id = StringProperty()
     reminder_type = StringProperty(choices=REMINDER_TYPE_CHOICES, default=REMINDER_TYPE_DEFAULT)
     
     # Only used when recipient is RECIPIENT_SUBCASE.
