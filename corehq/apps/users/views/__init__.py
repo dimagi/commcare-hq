@@ -21,11 +21,10 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django_digest.decorators import httpdigest
 
-from dimagi.utils.web import json_response, get_ip
+from dimagi.utils.web import json_response
 
 from corehq.apps.registration.forms import AdminInvitesUserForm
 from corehq.apps.prescriptions.models import Prescription
-from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.users.forms import (UpdateUserRoleForm, BaseUserInfoForm, UpdateMyAccountInfoForm)
 from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser,
