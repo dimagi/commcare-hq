@@ -814,7 +814,7 @@ class Detail(IndexedSchema):
     Full configuration for a case selection screen
 
     """
-    type = StringProperty(choices=DETAIL_TYPES)
+    display = StringProperty(choices=['short', 'long'])
 
     columns = SchemaListProperty(DetailColumn)
     get_columns = IndexedSchema.Getter('columns')
@@ -828,10 +828,6 @@ class Detail(IndexedSchema):
     def rename_lang(self, old_lang, new_lang):
         for column in self.columns:
             column.rename_lang(old_lang, new_lang)
-
-    @property
-    def display(self):
-        return "short" if self.type.endswith('short') else 'long'
 
     def filter_xpath(self):
 
@@ -860,6 +856,18 @@ class ParentSelect(DocumentSchema):
     module_id = StringProperty()
 
 
+class DetailPair(DocumentSchema):
+    short = SchemaProperty(Detail)
+    long = SchemaProperty(Detail)
+
+    @classmethod
+    def wrap(cls, data):
+        self = super(DetailPair, cls).wrap(data)
+        self.short.display = 'short'
+        self.long.display = 'long'
+        return self
+
+
 class Module(IndexedSchema, NavMenuItemMediaMixin):
     """
     A group of related forms, and configuration that applies to them all.
@@ -870,7 +878,8 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
     case_label = DictProperty()
     referral_label = DictProperty()
     forms = SchemaListProperty(Form)
-    details = SchemaListProperty(Detail)
+    case_details = SchemaProperty(DetailPair)
+    ref_details = SchemaProperty(DetailPair)
     case_type = StringProperty()
     put_in_root = BooleanProperty(default=False)
     case_list = SchemaProperty(CaseList)
@@ -880,20 +889,39 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
     unique_id = StringProperty()
 
     @classmethod
+    def wrap(cls, data):
+        if 'details' in data:
+            case_short, case_long, ref_short, ref_long = data['details']
+            del data['details']
+            data['case_details'] = {
+                'short': case_short,
+                'long': case_long,
+            }
+            data['ref_details'] = {
+                'short': ref_short,
+                'long': ref_long,
+            }
+        return super(Module, cls).wrap(data)
+
+    @classmethod
     def new_module(cls, name, lang):
+        detail = Detail(
+            columns=[DetailColumn(
+                format='plain',
+                header={(lang or 'en'): ugettext("Name")},
+                field='name',
+                model='case',
+            )]
+        )
         return Module(
             name={(lang or 'en'): name or ugettext("Untitled Module")},
             forms=[],
             case_type='',
-            details=[Detail(
-                type=detail_type,
-                columns=[DetailColumn(
-                    format='plain',
-                    header={(lang or 'en'): ugettext("Name")},
-                    field='name',
-                    model='case',
-                )],
-            ) for detail_type in DETAIL_TYPES])
+            case_details=DetailPair(
+                short=Detail(detail.to_json()),
+                long=Detail(detail.to_json()),
+            ),
+        )
 
     def get_or_create_unique_id(self):
         """
@@ -913,7 +941,7 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
         _rename_key(self.name, old_lang, new_lang)
         for form in self.get_forms():
             form.rename_lang(old_lang, new_lang)
-        for detail in self.details:
+        for _, detail in self.get_details():
             detail.rename_lang(old_lang, new_lang)
         for case_list in (self.case_list, self.referral_list):
             case_list.rename_lang(old_lang, new_lang)
@@ -925,18 +953,18 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
         self__forms = self.forms
         return self__forms[i].with_id(i%len(self.forms), self)
 
-    get_details = IndexedSchema.Getter('details')
-
-    def get_detail(self, detail_type):
-        for detail in self.get_details():
-            if detail.type == detail_type:
-                return detail
-        raise Exception("Module %s has no detail type %s" % (self, detail_type))
+    def get_details(self):
+        return (
+            ('case_short', self.case_details.short),
+            ('case_long', self.case_details.long),
+            ('ref_short', self.ref_details.short),
+            ('ref_long', self.ref_details.long),
+        )
 
     @property
     def detail_sort_elements(self):
         try:
-            return self.get_detail('case_short').sort_elements
+            return self.case_details.short.sort_elements
         except Exception:
             return []
 
@@ -2098,7 +2126,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                         needs_case_detail=True
                     )
                 )
-            for column in module.get_detail('case_short').columns:
+            for column in module.case_details.short.columns:
                 if column.format == 'filter':
                     try:
                         etree.XPath(column.filter_xpath or '')

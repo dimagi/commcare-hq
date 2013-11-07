@@ -32,12 +32,7 @@
         $(function () {
             var $home = $("#detail-screen-config");
             var detailScreenConfig = DetailScreenConfig.init($home, {
-                state: {
-                    case_short: {{ module.details.0|JSON }},
-                    case_long: {{ module.details.1|JSON }},
-                    ref_short: {{ module.details.2|JSON }},
-                    ref_long: {{ module.details.3|JSON }}
-                },
+                state: {{ module.get_details|JSON }},
                 properties: {
                     'case': {{ case_properties|JSON }},
                     referral: ["id", "type", "date-due", "date-created"]

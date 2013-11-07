@@ -22,7 +22,7 @@ class AppManagerTest(TestCase):
             for j in range(3):
                 self.app.new_form(module.id, name="Form%s-%s" % (i,j), attachment=self.xform_str, lang="en")
             module = self.app.get_module(i)
-            detail = module.get_detail("ref_short")
+            detail = module.ref_details.short
             detail.columns.append(
                 DetailColumn(header={"en": "test"}, model="case", field="test", format="plain")
             )
@@ -71,18 +71,6 @@ class AppManagerTest(TestCase):
     def testDeleteModule(self):
         self.app.delete_module(0)
         self.assertEqual(len(self.app.modules), 2)
-
-    def testSwapDetailColumns(self):
-        module = self.app.get_module(0)
-        detail = module.get_detail("ref_short")
-        self.assertEqual(len(detail.columns), 3)
-        self.assertEqual(detail.columns[0].header['en'], 'Name')
-        self.assertEqual(detail.columns[1].header['en'], 'test')
-        self.assertEqual(detail.columns[2].header['en'], 'age')
-        self.app.rearrange_detail_columns(module.id, "ref_short", 0, 1)
-        self.assertEqual(detail.columns[0].header['en'], 'test')
-        self.assertEqual(detail.columns[1].header['en'], 'Name')
-        self.assertEqual(detail.columns[2].header['en'], 'age')
 
     def testSwapModules(self):
         m0 = self.app.modules[0].name['en']

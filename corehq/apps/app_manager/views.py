@@ -670,7 +670,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         context.update(get_form_view_context(req, form, context['langs'], is_user_registration))
     elif module:
         sort_elements = [prop.values() for prop in
-                         module.get_detail('case_short').sort_elements]
+                         module.case_details.short.sort_elements]
         context.update({"sortElements": json.dumps(sort_elements)})
         template = "app_manager/module_view.html"
     else:
@@ -976,7 +976,7 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
-    detail = module.get_detail('case_short')
+    detail = module.case_details.short
 
     detail.sort_elements = []
     if 'sort_elements' in screens:
@@ -994,9 +994,11 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
             return HttpResponseBadRequest("All detail types must be in %r"
                                           % DETAIL_TYPES)
 
-    for detail_type in screens:
-        module.get_detail(detail_type).columns = \
-            [DetailColumn.wrap(c) for c in screens[detail_type]]
+    # todo: fix js so it sends down screens in new format
+    module.case_details.short.columns = DetailColumn.wrap(screens['case']['short'])
+    module.case_details.long.columns = DetailColumn.wrap(screens['case']['long'])
+    module.ref_details.short.columns = DetailColumn.wrap(screens['ref']['short'])
+    module.ref_details.long.columns = DetailColumn.wrap(screens['ref']['long'])
 
     module.parent_select = ParentSelect.wrap(parent_select)
     resp = {}
@@ -1491,11 +1493,6 @@ def rearrange(req, domain, app_id, key):
             messages.warning(req, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
     elif "modules" == key:
         app.rearrange_modules(i, j)
-    elif "detail" == key:
-        module_id = int(req.POST['module_id'])
-        app.rearrange_detail_columns(module_id, req.POST['detail_type'], i, j)
-    elif "langs" == key:
-        app.rearrange_langs(i, j)
     app.save(resp)
     if ajax:
         return HttpResponse(json.dumps(resp))
