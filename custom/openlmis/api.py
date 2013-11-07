@@ -307,7 +307,7 @@ class Requisition(object):
 
         agent_code = json_rep['agentCode']
         program_id = json_rep['programId']
-        period_id = getattr(json_rep, 'periodId', None)
+        period_id = json_rep['periodId']
         report_type = json_rep['reportType']
         products = []
         for p in product_list:
@@ -344,41 +344,11 @@ class RequisitionProduct(Product):
         stock_in_hand = json_rep.get('stockInHand', None)
         stock_out_days = json_rep.get('stockOutDays', None)
         quantity_requested = json_rep.get('quantityRequested', None)
-        reason_for_requested_quantity =json_rep.get('reasonForRequestedQuantity', None)
+        reason_for_requested_quantity = json_rep.get('reasonForRequestedQuantity', None)
         remarks = json_rep.get('remarks', None)
         return cls(code=code, beginning_balance=beginning_balance, quantity_received=quantity_received, quantity_dispensed=quantity_dispensed,
                    losses_and_adjustments=losses_and_adjustments, new_patient_count=new_patient_count, stock_in_hand=stock_in_hand, stock_out_days=stock_out_days,
                    quantity_requested=quantity_requested, reason_for_requested_quantity=reason_for_requested_quantity, remarks=remarks)
-
-class RequisitionStatus(RssWrapper):
-
-    @property
-    def requisition_id(self):
-        return self.metadata['requisitionId']
-
-    @property
-    def requisition_status(self):
-        return self.metadata['requisitionStatus']
-
-    @property
-    def order_id(self):
-        return self.metadata.get('orderId', None)
-
-    @property
-    def order_status(self):
-        return self.metadata.get('orderStatus', None)
-
-    @property
-    def emergency(self):
-        return self.metadata.get('emergency', None)
-
-    @property
-    def start_date(self):
-        return self.metadata.get('startDate', None)
-
-    @property
-    def end_date(self):
-        return self.metadata.get('endDate', None)
 
 
 class RequisitionDetails(Requisition):
@@ -411,9 +381,9 @@ class RequisitionDetails(Requisition):
         period_start_date = json_rep['periodStartDate']
         period_end_date = json_rep['periodEndDate']
         requisition_status = json_rep['requisitionStatus']
-        order_id = json_rep['orderId']
-        order_status = json_rep['orderStatus']
-        supplying_facility_code = json_rep['supplyingFacilityCode']
+        order_id = json_rep.get('orderId', None)
+        order_status = json_rep.get('orderStatus', None)
+        supplying_facility_code = json_rep.get('supplyingFacilityCode', None)
 
         products = []
         for p in product_list:
