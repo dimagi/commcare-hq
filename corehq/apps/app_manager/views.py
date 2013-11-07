@@ -970,6 +970,7 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     params = json_request(req.POST)
     screens = params.get('screens')
     parent_select = params.get('parent_select')
+    sort_elements = screens['sort_elements']
 
     if not screens:
         return HttpResponseBadRequest("Requires JSON encoded param 'screens'")
@@ -979,26 +980,17 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     detail = module.case_details.short
 
     detail.sort_elements = []
-    if 'sort_elements' in screens:
-        for sort_element in json.load(StringIO(screens['sort_elements'])):
-            item = SortElement()
-            item.field = sort_element['field']
-            item.type = sort_element['type']
-            item.direction = sort_element['direction']
-            detail.sort_elements.append(item)
 
-        del screens['sort_elements']
+    module.case_details.short.columns = map(DetailColumn.wrap, screens['short'])
+    module.case_details.long.columns = map(DetailColumn.wrap, screens['long'])
 
-    for detail_type in screens:
-        if detail_type not in DETAIL_TYPES:
-            return HttpResponseBadRequest("All detail types must be in %r"
-                                          % DETAIL_TYPES)
+    for sort_element in sort_elements:
+        item = SortElement()
+        item.field = sort_element['field']
+        item.type = sort_element['type']
+        item.direction = sort_element['direction']
+        detail.sort_elements.append(item)
 
-    # todo: fix js so it sends down screens in new format
-    module.case_details.short.columns = DetailColumn.wrap(screens['case']['short'])
-    module.case_details.long.columns = DetailColumn.wrap(screens['case']['long'])
-    module.ref_details.short.columns = DetailColumn.wrap(screens['ref']['short'])
-    module.ref_details.long.columns = DetailColumn.wrap(screens['ref']['long'])
 
     module.parent_select = ParentSelect.wrap(parent_select)
     resp = {}

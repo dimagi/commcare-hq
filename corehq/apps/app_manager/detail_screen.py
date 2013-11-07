@@ -12,7 +12,7 @@ CASE_PROPERTY_MAP = {
     'name': 'case_name',
 }
 
-# todo: find usages
+
 def get_column_generator(app, module, detail, column, sort_element=None,
                          order=None, detail_type=None):
     cls = get_class_for_format(column.format)
