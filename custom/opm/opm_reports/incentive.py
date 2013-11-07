@@ -6,6 +6,7 @@ for each field.
 import datetime
 
 from couchdbkit.exceptions import ResourceNotFound
+from couchforms.models import XFormInstance
 
 from ..opm_tasks.models import OpmReportSnapshot
 from .constants import *
@@ -52,11 +53,12 @@ class Worker(object):
         self.account_number = fluff_attr('account_number')
         self.block = fluff_attr('block')
 
-        def get_result(calculator):
+        def get_result(calculator, reduce=True):
             return OpmFormFluff.get_result(
                 calculator,
                 [DOMAIN, worker._id],
                 report.date_range,
+                reduce=reduce,
             )['total']
 
         self.women_registered = len(OpmCaseFluff.get_result(
@@ -71,7 +73,18 @@ class Worker(object):
             report.date_range,
         )['total']
         self.service_forms_count = 'yes' if get_result('service_forms') else 'no'
-        self.growth_monitoring_count = get_result('growth_monitoring')
+
+        # self.growth_monitoring_count = get_result('growth_monitoring')
+
+        def get_growth_monitored():
+            results = get_result('growth_monitoring', reduce=False)
+            case_ids = set()
+            for result in results:
+                form = XFormInstance.get(result)
+                case_ids.add(form.form['case']['@case_id'])
+            return len(case_ids)
+
+        self.growth_monitoring_count = get_growth_monitored()
 
         FIXTURES = get_fixture_data()
         self.service_forms_cash = FIXTURES['service_form_submitted'] \
