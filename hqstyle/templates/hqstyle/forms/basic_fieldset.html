@@ -1,3 +1,4 @@
+{% load i18n %}
 <fieldset>
     {% if legend %}<legend>{{ legend }}</legend>{% endif %}
     {% for field in form.visible_fields %}
@@ -11,7 +12,7 @@
                     <span class="help-inline">{{ error }}</span>
                 {% endfor %}
                 {% if field.errors|length == 0 and field.field.required %}
-                    <span class="help-inline"><small class="label">REQUIRED</small></span>
+                    <span class="help-inline"><small class="label">{% trans "REQUIRED" %}</small></span>
                 {% endif %}
                 {% if field.help_text %}
                     <p class="help-block">
