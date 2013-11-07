@@ -20,6 +20,12 @@ function get_submission_day(xform_doc) {
     return null;
 }
 
+function safeParseInt(val) {
+    // handle NaN (returned when parseInt() doesn't find a number as the first
+    // character of the string) to ensure that we always return an integer
+    return parseInt(val) || 0;
+}
+
 /* HSPH related */
 
 function isHSPHForm(doc) {
@@ -133,11 +139,11 @@ function HSPHEntry(doc) {
 
         if (self.form.mother_delivered_or_referred === "delivered" && self.form.date_delivery) {
             self.data.numBirths = (self.form.multiple_birth === 'yes') ?
-                                    parseInt(self.form.multiple_birth_number) : 1;
+                                    safeParseInt(self.form.multiple_birth_number) : 1;
             self.data.dateBirth = self.form.date_delivery;
         } else if (self.form.case_date_delivery) {
             self.data.numBirths = (self.form.case_multiple_birth === 'yes') ?
-                parseInt(self.form.case_multiple_birth_number) : 1;
+                safeParseInt(self.form.case_multiple_birth_number) : 1;
             self.data.dateBirth = self.form.case_date_delivery;
             self.data.birthDataFromCase = true;
         }
@@ -203,7 +209,7 @@ function HSPHEntry(doc) {
     };
 
     self.getCITLInfo = function () {
-        self.data.facilityStatus = (isDCOSiteLogReport(self.doc)) ? -1 : parseInt(self.form.current_implementation_stage);
+        self.data.facilityStatus = (isDCOSiteLogReport(self.doc)) ? -1 : safeParseInt(self.form.current_implementation_stage);
 
         if (isCITLReport(self.doc)) {
             self.data.isCITLData = true;
