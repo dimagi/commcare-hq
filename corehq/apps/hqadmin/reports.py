@@ -178,17 +178,20 @@ class AdminAppReport(AdminFacetedReport):
     es_url = APP_INDEX + '/app/_search'
 
     profile_list = ["profile.%s.%s" % (c['type'], c['id']) for c in CC_SETTINGS if c['type'] != 'hq']
+    calculated_properties_mapping = ("Calculations", True,
+                                     [{"facet": "cp_is_active", "name": "Active", "expanded": True }])
 
     @property
     def es_facet_list(self):
-        return Application.properties().keys() + self.profile_list
+        return Application.properties().keys() + self.profile_list + ["cp_is_active"]
 
     @property
     def es_facet_mapping(self):
         def remove_profile(name):
             return name[len("profile."):]
         profile_mapping = create_mapping_from_list(self.profile_list, "Profile", True, True, remove_profile)
-        return [profile_mapping, create_mapping_from_list(Application.properties().keys(), "Other")]
+        other_mapping = create_mapping_from_list(Application.properties().keys(), "Other")
+        return [profile_mapping, self.calculated_properties_mapping, other_mapping]
 
     @property
     def headers(self):
