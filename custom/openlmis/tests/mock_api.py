@@ -11,3 +11,6 @@ class MockOpenLMISEndpoint(OpenLMISEndpoint):
 
     def submit_requisition(self, requisition_data):
         return True
+
+    def confirm_delivery(self, order_id, delivery_date):
+        return True
