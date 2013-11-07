@@ -42,7 +42,7 @@ class Command(MappingOutputCommand):
             sys.stderr.write("\tCurrent live aliased index: %s\n\n"  % (','.join(aliased_indices)))
 
         if calc_index != current_index:
-            sys.stderr.write("REPORT_XFORM_INDEX hash has changed, please update \n\t%s\n\tXFORM_INDEX property with the line below:\n" % filepath)
+            sys.stderr.write("REPORT_XFORM_INDEX hash has changed, please update \n\t%s\n\tREPORT_XFORM_INDEX property with the line below:\n" % filepath)
             sys.stdout.write('REPORT_XFORM_INDEX="%s"\n' % calc_index)
         else:
             sys.stderr.write("REPORT_XFORM_INDEX unchanged\n")
