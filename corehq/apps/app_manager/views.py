@@ -24,6 +24,7 @@ from unidecode import unidecode
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, RegexURLResolver
 from django.shortcuts import render
+from dimagi.utils.django.cached_object import CachedObject
 from django.utils.http import urlencode
 from django.views.decorators.http import require_GET
 from django.conf import settings
@@ -1634,9 +1635,10 @@ def download_file(req, domain, app_id, path):
         'txt': 'text/plain',
     }
     try:
-        response = HttpResponse(mimetype=mimetype_map[path.split('.')[-1]])
+        mimetype = mimetype_map[path.split('.')[-1]]
     except KeyError:
-        response = HttpResponse()
+        mimetype = None
+    response = HttpResponse(mimetype=mimetype)
 
     if path in ('CommCare.jad', 'CommCare.jar'):
         set_file_download(response, path)
@@ -1646,7 +1648,17 @@ def download_file(req, domain, app_id, path):
 
     try:
         assert req.app.copy_of
-        payload = req.app.fetch_attachment(full_path)
+        obj = CachedObject(str(app_id) + ":" + full_path)
+        if not obj.is_cached():
+            payload = req.app.fetch_attachment(full_path)
+            if type(payload) is unicode:
+                payload = payload.encode('utf-8')
+            buffer = StringIO(payload)
+            metadata = {'content_type': mimetype}
+            obj.cache_put(buffer, metadata)
+        else:
+            _, buffer = obj.get()
+            payload = buffer.getvalue()
         response.write(payload)
         response['Content-Length'] = len(response.content)
         return response
