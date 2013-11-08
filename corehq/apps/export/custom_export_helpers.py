@@ -155,7 +155,7 @@ class FormCustomExportHelper(CustomExportHelper):
     allow_deid = True
     allow_repeats = True
 
-    default_questions = ["form.case.@case_id", "form.meta.timeStart", "_id", "form.meta.username"]
+    default_questions = ["form.case.@case_id", "form.meta.timeEnd", "_id", "form.meta.username"]
 
     @property
     def export_title(self):
@@ -199,15 +199,12 @@ class FormCustomExportHelper(CustomExportHelper):
             if self.creating_new_export and col.get("default", False):
                 col["selected"] = True
 
-        selected_params = {"selected": True} if self.creating_new_export else {}
         column_conf.extend([
             ExportColumn(
                 index=q,
                 display='',
-                tag='no data',
                 default=True,
-                **selected_params
-            ).to_config_format(selected=False)
+            ).to_config_format(selected=self.creating_new_export)
             for q in remaining_questions
         ])
 
