@@ -580,8 +580,13 @@ class FormExportSchema(HQExportSchema):
     @property
     @memoized
     def question_order(self):
-        if not self.app:
-            return []
+        try:
+            if not self.app:
+                return []
+        except AppNotFound:
+            if settings.DEBUG:
+                return []
+            raise
         else:
             questions = self.app.get_questions(self.xmlns)
 
