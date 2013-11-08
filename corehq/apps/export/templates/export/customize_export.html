@@ -70,7 +70,7 @@
                         if (field in server) {
                             return {tags: ['server'].concat(tags), field: field};
                         } else if (field === 'id') {
-                            return {tags: ['row'].concat(tags), field: field};
+                            return {tags: ['row'].concat(tags), field: 'number'};
                         }
 
                         var renamed_field = field;
@@ -305,7 +305,7 @@
                                     )) {
                                 table.columns.splice(0, 0, {
                                     index: 'id',
-                                    display: 'row.id',
+                                    display: 'row.number',
                                     transform: null
                                 });
                             }
