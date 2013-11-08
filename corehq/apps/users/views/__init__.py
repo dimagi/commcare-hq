@@ -21,11 +21,10 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django_digest.decorators import httpdigest
 
-from dimagi.utils.web import json_response, get_ip
+from dimagi.utils.web import json_response
 
 from corehq.apps.registration.forms import AdminInvitesUserForm
 from corehq.apps.prescriptions.models import Prescription
-from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.users.forms import (UpdateUserRoleForm, BaseUserInfoForm, UpdateMyAccountInfoForm)
 from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser,
@@ -185,7 +184,13 @@ class BaseEditUserView(BaseUserSettingsView):
     def post(self, request, *args, **kwargs):
         if self.request.POST['form_type'] == "update-user":
             if self.form_user_update.is_valid():
+                old_lang = self.request.couch_user.language
                 if self.form_user_update.update_user(existing_user=self.editable_user, domain=self.domain):
+                    # if editing our own account we should also update the language in the session
+                    if self.editable_user._id == self.request.couch_user._id:
+                        new_lang = self.request.couch_user.language
+                        if new_lang != old_lang:
+                            request.session['django_language'] = new_lang
                     messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.username)
         return self.get(request, *args, **kwargs)
 

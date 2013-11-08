@@ -47,7 +47,7 @@
                 {% ifnotequal request.user.username user.username %}
                     <form style="margin-bottom: 0;" action="{% url "remove_web_user" domain user.user_id %}" method="post">
                         <button type="submit" class="btn btn-danger{% if user.from_team %} disabled" disabled="disabled {% endif %}">
-                            <i class="icon icon-white icon-remove"></i> Remove Membership
+                            <i class="icon icon-white icon-remove"></i> {% trans "Remove Membership" %}
                         </button>
                     </form>
                 {% endifnotequal %}

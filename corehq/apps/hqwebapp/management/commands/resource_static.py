@@ -1,7 +1,3 @@
-from gevent import monkey
-monkey.patch_all()
-from gevent.pool import Pool
-
 import simplejson
 import os
 from django.core.management.base import LabelCommand
@@ -40,7 +36,6 @@ class Command(LabelCommand):
             self.output_resources(existing_resource_str)
             return
 
-        pool = Pool(8)
         self.resources = {}
         for finder in finders.get_finders():
             for path, storage in finder.list(['.*', '*~', '* *']):
@@ -48,8 +43,7 @@ class Command(LabelCommand):
                     continue
                 url = os.path.join(storage.prefix, path) if storage.prefix else path
                 parts = (storage.location + '/' + path).split('/')
-                pool.spawn(self.generate_output, url, parts)
-        pool.join()
+                self.generate_output(url, parts)
         resource_str = simplejson.dumps(self.resources, indent=2)
         rcache.set(RESOURCE_PREFIX % current_sha, resource_str, 86400)
         self.output_resources(resource_str)
