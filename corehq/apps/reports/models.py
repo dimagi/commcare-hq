@@ -4,8 +4,10 @@ from django.http import Http404
 from django.utils import html
 from django.utils.safestring import mark_safe
 import pytz
+from corehq import Domain
 from corehq.apps import reports
 from corehq.apps.app_manager.models import get_app
+from corehq.apps.app_manager.util import ParentCasePropertyBuilder
 from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
 from corehq.apps.reports.exportfilters import form_matches_users
@@ -525,7 +527,6 @@ class HQExportSchema(SavedExportSchema):
             self.domain = self.index[0]
         return self
 
-
 class FormExportSchema(HQExportSchema):
     doc_type = 'SavedExportSchema'
     app_id = StringProperty()
@@ -614,6 +615,31 @@ class FormDeidExportSchema(FormExportSchema):
     def get_case(cls, doc, case_id):
         pass
 
+class CaseExportSchema(HQExportSchema):
+
+    @property
+    def domain(self):
+        return self.index[0]
+
+    @property
+    def domain_obj(self):
+        return Domain.get_by_name(self.domain)
+
+    @property
+    def case_type(self):
+        return self.index[1]
+
+    @property
+    def applications(self):
+        return self.domain_obj.full_applications(include_builds=False)
+
+    @property
+    def case_properties(self):
+        props = set([])
+        for app in self.applications:
+            builder = ParentCasePropertyBuilder(app, ("name",))
+            props |= set(builder.get_properties(self.case_type))
+        return props
 
 class HQGroupExportConfiguration(GroupExportConfiguration):
     """

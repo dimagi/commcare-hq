@@ -105,7 +105,7 @@ class BaseCreateCustomExportView(BaseExportView):
                 ),
                 type=self.export_helper.export_type
             )
-            if self.export_helper.export_type == 'form':
+            if self.export_helper.export_type in ['form', 'case']:
                 self.export_helper.custom_export.app_id = app_id
             return super(BaseCreateCustomExportView, self).get(request, *args, **kwargs)
 

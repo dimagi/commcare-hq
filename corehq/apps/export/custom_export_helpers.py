@@ -1,6 +1,6 @@
 import json
 from corehq.apps.reports.standard import export
-from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration, HQExportSchema
+from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration, CaseExportSchema
 from corehq.apps.reports.standard.export import DeidExportReport
 from couchexport.models import ExportTable, ExportSchema, ExportColumn
 from django.utils.translation import ugettext as _
@@ -155,7 +155,7 @@ class FormCustomExportHelper(CustomExportHelper):
     allow_deid = True
     allow_repeats = True
 
-    default_questions = ["form.case.@case_id", "form.meta.timeEnd", "_id", "form.meta.username"]
+    default_questions = ["form.case.@case_id", "form.meta.timeEnd", "_id", "id", "form.meta.username"]
     questions_to_show = default_questions[:] + ["form.meta.timeStart", "received_on"]
 
     @property
@@ -246,16 +246,24 @@ class CustomColumn(object):
             "is_sensitive": self.is_sensitive,
             'tag': self.tag,
             'special': self.slug,
-            'default': False,
+            'show': False,
         }
 
 
 class CaseCustomExportHelper(CustomExportHelper):
 
-    ExportSchemaClass = HQExportSchema
+    ExportSchemaClass = CaseExportSchema
     ExportReport = export.CaseExportReport
 
     export_type = 'case'
+
+    default_properties = ["_id", "closed", "meta.closed_by_username", "closed_on", "meta.last_modified_by_username",
+                          "modified_on", "meta.opened_by_username", "opened_on", "meta.owner_name", "id"]
+    meta_properties = ["_id", "closed", "closed_by", "closed_on", "domain", "computed_modified_on_",
+                       "server_modified_on", "modified_on", "opened_by", "opened_on", "owner_id",
+                       "user_id", "type", "version", "external_id"]
+    server_properties = ["_rev", "doc_type", "-deletion_id", "initial_processing_complete"]
+    row_properties = ["id"]
 
     @property
     def export_title(self):
@@ -282,6 +290,43 @@ class CaseCustomExportHelper(CustomExportHelper):
                     custom.format_for_javascript(match)
 
         return table_configuration
+
+    def update_table_conf(self, table_conf):
+        column_conf = table_conf[0].get("column_configuration", {})
+        current_properties = set(self.custom_export.case_properties)
+        remaining_properties = current_properties.copy()
+
+        def is_special_type(p):
+            return any([p in self.meta_properties, p in self.server_properties, p in self.row_properties])
+
+        for col in column_conf:
+            prop = col["index"]
+            display = col.get('display') or prop
+            if prop in remaining_properties:
+                remaining_properties.discard(prop)
+                col["show"] = True
+            if not is_special_type(prop) and prop not in current_properties:
+                col["tag"] = "deleted"
+                col["show"] = False
+            if self.creating_new_export and (display in self.default_properties or prop in current_properties):
+                col["selected"] = True
+
+        column_conf.extend([
+            ExportColumn(
+                index=q,
+                display='',
+                show=True,
+            ).to_config_format(selected=self.creating_new_export)
+            for q in remaining_properties
+        ])
+
+        table_conf[0]["column_configuration"] = column_conf
+        return table_conf
+
+    def get_context(self):
+        ctxt = super(CaseCustomExportHelper, self).get_context()
+        self.update_table_conf(ctxt["table_configuration"])
+        return ctxt
 
 
 CustomExportHelper.subclasses_map.update({
