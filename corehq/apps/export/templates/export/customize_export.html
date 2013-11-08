@@ -135,7 +135,7 @@
                                 }
                                 renamed_field = self.utils.rename(field, rename_map);
                                 if (meta.hasOwnProperty(field)) {
-                                    return {tags: ['meta'].concat(tags), field: renamed_field};
+                                    return {tags: ['info'].concat(tags), field: renamed_field};
                                 }
                             } else if (/#\.indices\.#$/.exec(index)) {
                                 var rename_map = {
