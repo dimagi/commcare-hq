@@ -489,7 +489,8 @@ class TestingAndCounseling(CareReport):
         ['Individuals HIV tested', 'hiv_tested'],
         ['Individuals HIV Positive ', 'hiv_positive'],
         ['Newly diagnosed HIV+ indv scr for TB', 'new_hiv_tb_screen'],  # 1d
-        ['Individuals scr for TB [status unknown]', 'hiv_known_screened'],  # 1e
+        ['TB screening status known - TB Module', 'tb_screened'],  # 1ea
+        ['TB screening status unknown - HCT Module', 'hct_screened'],  # 1eb
         ['Individuals ref to PHCF with signs & symptoms of TB', 'referred_tb_signs'],  # 1f
         ['Newly diagnosed individuals HIV infected ref for CD4 count test in a PHCF', 'referred_for_cdf_new'],  # 1ha TODO empty?
         ['Existing patients HIV infected ref for CD4 count test in a PHCF', 'referred_for_cdf_existing'],  # 1hb TODO empty?
