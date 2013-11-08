@@ -1,4 +1,3 @@
-from django.http import HttpResponse
 from django_digest.decorators import *
 from casexml.apps.phone import xml
 from casexml.apps.case.models import CommCareCase
@@ -19,6 +18,7 @@ def xml_for_case(request, case_id, version="1.0"):
     """
     Test view to get the xml for a particular case
     """
+    from django.http import HttpResponse
     case = CommCareCase.get(case_id)
     return HttpResponse(xml.get_case_xml(case, [const.CASE_ACTION_CREATE,
                                                 const.CASE_ACTION_UPDATE],
