@@ -25,3 +25,11 @@ def get_edd(case):
 
 def get_add(case):
     return get_date_attr(case, 'add')
+
+
+def relevant_predelivery_mother(case):
+    return is_pregnant_mother(case) and get_edd(case)
+
+
+def relevant_postdelivery_mother(case):
+    return is_pregnant_mother(case) and get_add(case)

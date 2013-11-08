@@ -327,11 +327,7 @@
     <div class="btn-group">
         <a href="./source/" class="btn btn-primary">
             <i class="icon-pencil"></i>
-            {% if form.source %}
-                {% trans "Edit" %}
-            {% else %}
-                {% trans "Create" %}
-            {% endif %}
+            {% trans "Edit" %}
         </a>
         {% if app.application_version == '2.0' %}
             {% if form.source and not is_user_registration %}

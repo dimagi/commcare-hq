@@ -860,10 +860,12 @@ def archive_form(request, domain, instance_id):
     params = {
         "notif": notif_msg,
         "undo": _("Undo"),
-        "url": reverse('render_form_data', args=[domain, instance_id])
+        "url": reverse('unarchive_form', args=[domain, instance_id]),
+        "id": "restore-%s" % instance_id
     }
-    msg_template = '%(notif)s <a href="%(url)s">%(undo)s</a>' if instance.doc_type == "XFormArchived" else '%(notif)s'
-    msg = msg_template % params
+    msg_template = """{notif} <a href="javascript:document.getElementById('{id}').submit();">{undo}</a>
+        <form id="{id}" action="{url}" method="POST"></form>""" if instance.doc_type == "XFormArchived" else '%(notif)s'
+    msg = msg_template.format(**params)
     messages.success(request, mark_safe(msg), extra_tags='html')
     
     redirect = request.META.get('HTTP_REFERER')

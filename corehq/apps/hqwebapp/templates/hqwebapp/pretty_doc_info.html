@@ -1,0 +1,2 @@
+{{ doc_info.type_display|default_if_none:doc_info.type|default_if_none:'' }}
+{% if doc_info.link %}<a href="{{ doc_info.link }}">{% endif %}{{ doc_info.display|default_if_none:doc_info.id }}{% if doc_info.link %}</a>{% endif %}

@@ -96,7 +96,7 @@ class OrgDomainStatsReport(DomainStatsReport):
         organization = Organization.get_by_name(org, strict=True)
         if organization and \
                 (self.request.couch_user.is_superuser or self.request.couch_user.is_member_of_org(org)):
-            return [d for d in Domain.get_by_organization(organization.name).all()]
+            return [d for d in Domain.get_by_organization(organization.name)]
         return []
 
     def is_custom_param(self, param):

@@ -80,7 +80,6 @@ class Command(BaseCommand):
     def copy_docs(self, sourcedb, destdb, pretend=False, doc_types=[]):
 
         metadata = sourcedb.view('_all_docs', limit=0)
-        notify_chunk = 100
         processed = 0
 
         for chunk in self.iter_chunks(sourcedb, '_all_docs'):

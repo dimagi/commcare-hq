@@ -6,7 +6,7 @@ from django.core.validators import EmailValidator, email_re
 from django.core.urlresolvers import reverse
 from django.forms.widgets import PasswordInput, HiddenInput
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.template.loader import get_template
 from django.template import Context
 from corehq.apps.commtrack.helpers import set_commtrack_location
@@ -100,10 +100,10 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
 
 
 class BaseUserInfoForm(forms.Form):
-    first_name = forms.CharField(max_length=50, required=False)
-    last_name = forms.CharField(max_length=50, required=False)
-    email = forms.EmailField(label=ugettext_noop("E-mail"), max_length=75, required=False)
-    language = forms.ChoiceField(choices=(), initial=None, required=False, help_text=mark_safe(_(
+    first_name = forms.CharField(label=ugettext_lazy('First Name'), max_length=50, required=False)
+    last_name = forms.CharField(label=ugettext_lazy('Last Name'), max_length=50, required=False)
+    email = forms.EmailField(label=ugettext_lazy("E-mail"), max_length=75, required=False)
+    language = forms.ChoiceField(choices=(), initial=None, required=False, help_text=mark_safe(ugettext_lazy(
         "<i class=\"icon-info-sign\"></i> Becomes default language seen in CloudCare and reports (if applicable). "
         "Supported languages for reports are en, fr (partial), and hin (partial)."
     )))
@@ -115,9 +115,11 @@ class BaseUserInfoForm(forms.Form):
 
 
 class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
-    email_opt_out = forms.BooleanField(required=False,
-                                      label="",
-                                      help_text=ugettext_noop("Opt out of emails about new features and other CommCare updates."))
+    email_opt_out = forms.BooleanField(
+        required=False,
+        label="",
+        help_text=ugettext_lazy("Opt out of emails about new features and other CommCare updates.")
+    )
 
     @property
     def direct_properties(self):
@@ -155,7 +157,9 @@ class CommCareAccountForm(forms.Form):
     # 25 is domain max length
     # @{domain}.commcarehq.org adds 16
     # left over is 87 and 80 just sounds better
-    username = forms.CharField(max_length=80, required=True)
+    max_len_username = 80
+
+    username = forms.CharField(max_length=max_len_username, required=True)
     password = forms.CharField(widget=PasswordInput(), required=True, min_length=1, help_text="Only numbers are allowed in passwords")
     password_2 = forms.CharField(label='Password (reenter)', widget=PasswordInput(), required=True, min_length=1)
     domain = forms.CharField(widget=HiddenInput())
@@ -227,6 +231,10 @@ class CommCareAccountForm(forms.Form):
         except KeyError:
             pass
         else:
+            if len(username) > CommCareAccountForm.max_len_username:
+                raise forms.ValidationError(
+                    "Username %s is too long.  Must be under %d characters."
+                    % (username, CommCareAccountForm.max_len_username))
             validate_username('%s@commcarehq.org' % username)
             domain = self.cleaned_data['domain']
             username = format_username(username, domain)

@@ -339,9 +339,12 @@ def get_cloudcare_apps(domain):
                ApplicationBase.view('cloudcare/cloudcare_apps', 
                                     startkey=[domain], endkey=[domain, {}]))
 
-def get_app(domain, app_id):
+def get_app_json(app):
+    app_json = app.to_json()
+    app_json['post_url'] = app.post_url
+    return app_json
+
+def look_up_app_json(domain, app_id):
     app = Application.get(app_id)
     assert(app.domain == domain)
-    return app._doc
-
-
+    return get_app_json(app)

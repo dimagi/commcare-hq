@@ -56,12 +56,14 @@ from dimagi.utils.web import json_response, json_request
 from corehq.apps.reports import util as report_utils
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
-    AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, str_to_cls, validate_lang, SavedAppBuild, ParentSelect
+    AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, str_to_cls, validate_lang, SavedAppBuild, ParentSelect, Module
 from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST
 from django.contrib import messages
 from toggle import toggle_enabled
+
+logger = logging.getLogger(__name__)
 
 require_can_edit_apps = require_permission(Permissions.edit_apps)
 
@@ -263,43 +265,6 @@ def import_app(req, domain, template="app_manager/import_app.html"):
             'is_superuser': req.couch_user.is_superuser
         })
 
-@require_can_edit_apps
-@no_conflict_require_POST
-def import_factory_app(req, domain):
-    factory_app = get_app('factory', req.POST['app_id'])
-    source = factory_app.export_json(dump_json=False)
-    name = req.POST.get('name')
-    if name:
-        source['name'] = name
-    cls = str_to_cls[source['doc_type']]
-    app = cls.from_source(source, domain)
-    app.save()
-    app_id = app._id
-    return back_to_main(req, domain, app_id=app_id)
-
-@require_can_edit_apps
-@no_conflict_require_POST
-def import_factory_module(req, domain, app_id):
-    fapp_id, fmodule_id = req.POST['app_module_id'].split('/')
-    fapp = get_app('factory', fapp_id)
-    fmodule = fapp.get_module(fmodule_id)
-    app = get_app(domain, app_id)
-    source = fmodule.export_json(dump_json=False)
-    app.new_module_from_source(source)
-    app.save()
-    return back_to_main(req, domain, app_id=app_id)
-
-@require_can_edit_apps
-@no_conflict_require_POST
-def import_factory_form(req, domain, app_id, module_id):
-    fapp_id, fmodule_id, fform_id = req.POST['app_module_form_id'].split('/')
-    fapp = get_app('factory', fapp_id)
-    fform = fapp.get_module(fmodule_id).get_form(fform_id)
-    source = fform.export_json(dump_json=False)
-    app = get_app(domain, app_id)
-    app.new_form_from_source(module_id, source)
-    app.save()
-    return back_to_main(req, domain, app_id=app_id, module_id=module_id)
 
 def default(req, domain):
     """
@@ -650,7 +615,9 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         del app['use_commcare_sense']
         app.save()
 
-    context = {}
+    context = {
+        'show_care_plan': toggle_enabled(toggles.APP_BUILDER_CARE_PLAN, req.user.username),
+    }
     if module:
         if not form:
             case_type = module.case_type
@@ -703,7 +670,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         context.update(get_form_view_context(req, form, context['langs'], is_user_registration))
     elif module:
         sort_elements = [prop.values() for prop in
-                         module.get_detail('case_short').sort_elements]
+                         module.case_details.short.sort_elements]
         context.update({"sortElements": json.dumps(sort_elements)})
         template = "app_manager/module_view.html"
     else:
@@ -796,7 +763,7 @@ def new_app(req, domain):
     cls = str_to_cls[type]
     if cls == Application:
         app = cls.new_app(domain, "Untitled Application", lang=lang, application_version=application_version)
-        app.new_module("Untitled Module", lang)
+        app.add_module(Module.new_module("Untitled Module", lang))
         app.new_form(0, "Untitled Form", lang)
     else:
         app = cls.new_app(domain, "Untitled Application", lang=lang)
@@ -813,13 +780,24 @@ def new_module(req, domain, app_id):
     app = get_app(domain, app_id)
     lang = req.COOKIES.get('lang', app.langs[0])
     name = req.POST.get('name')
-    module = app.new_module(name, lang)
-    module_id = module.id
-    app.new_form(module_id, "Untitled Form", lang)
-    app.save()
-    response = back_to_main(req, domain, app_id=app_id, module_id=module_id)
-    response.set_cookie('suppress_build_errors', 'yes')
-    return response
+    module_type = req.POST.get('module_type', 'case')
+    if module_type == 'case':
+        module = app.add_module(Module.new_module(name, lang))
+        module_id = module.id
+        app.new_form(module_id, "Untitled Form", lang)
+        app.save()
+        response = back_to_main(req, domain, app_id=app_id, module_id=module_id)
+        response.set_cookie('suppress_build_errors', 'yes')
+        return response
+    elif module_type == 'care-plan':
+        return new_care_plan_module(req, domain, app, name, lang)
+    else:
+        logger.error('Unexpected module type for new module: "%s"' % module_type)
+        return back_to_main(req, domain, app_id=app_id)
+
+def new_care_plan_module(req, domain, app, name, lang):
+    messages.warning(req, 'Care Plan modules coming soon')
+    return back_to_main(req, domain, app_id=app.id)
 
 @no_conflict_require_POST
 @require_can_edit_apps
@@ -834,7 +812,6 @@ def new_form(req, domain, app_id, module_id):
     form_id = form.id
     response = back_to_main(req, domain, app_id=app_id, module_id=module_id,
                             form_id=form_id)
-    response.set_cookie('suppress_build_errors', 'yes')
     return response
 
 @no_conflict_require_POST
@@ -993,33 +970,27 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     params = json_request(req.POST)
     screens = params.get('screens')
     parent_select = params.get('parent_select')
+    sort_elements = screens['sort_elements']
 
     if not screens:
         return HttpResponseBadRequest("Requires JSON encoded param 'screens'")
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
-    detail = module.get_detail('case_short')
+    detail = module.case_details.short
 
     detail.sort_elements = []
-    if 'sort_elements' in screens:
-        for sort_element in json.load(StringIO(screens['sort_elements'])):
-            item = SortElement()
-            item.field = sort_element['field']
-            item.type = sort_element['type']
-            item.direction = sort_element['direction']
-            detail.sort_elements.append(item)
 
-        del screens['sort_elements']
+    module.case_details.short.columns = map(DetailColumn.wrap, screens['short'])
+    module.case_details.long.columns = map(DetailColumn.wrap, screens['long'])
 
-    for detail_type in screens:
-        if detail_type not in DETAIL_TYPES:
-            return HttpResponseBadRequest("All detail types must be in %r"
-                                          % DETAIL_TYPES)
+    for sort_element in sort_elements:
+        item = SortElement()
+        item.field = sort_element['field']
+        item.type = sort_element['type']
+        item.direction = sort_element['direction']
+        detail.sort_elements.append(item)
 
-    for detail_type in screens:
-        module.get_detail(detail_type).columns = \
-            [DetailColumn.wrap(c) for c in screens[detail_type]]
 
     module.parent_select = ParentSelect.wrap(parent_select)
     resp = {}
@@ -1514,11 +1485,6 @@ def rearrange(req, domain, app_id, key):
             messages.warning(req, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
     elif "modules" == key:
         app.rearrange_modules(i, j)
-    elif "detail" == key:
-        module_id = int(req.POST['module_id'])
-        app.rearrange_detail_columns(module_id, req.POST['detail_type'], i, j)
-    elif "langs" == key:
-        app.rearrange_langs(i, j)
     app.save(resp)
     if ajax:
         return HttpResponse(json.dumps(resp))
@@ -1581,6 +1547,10 @@ def validate_form_for_build(request, domain, app_id, unique_form_id):
         raise Http404()
     errors = form.validate_for_build()
     lang, langs = get_langs(request, app)
+    if "blank form" in [error.get('type') for error in errors]:
+        return json_response({
+            "error_html": render_to_string('app_manager/partials/create_form_prompt.html')
+        })
     return json_response({
         "error_html": render_to_string('app_manager/partials/build_errors.html', {
             'app': app,
@@ -2063,8 +2033,8 @@ def upload_translations(request, domain, app_id):
         trans_dict = defaultdict(dict)
         for row in translations:
             for lang in app.langs:
-               if row.get(lang):
-                   trans_dict[lang].update({row["property"]: row[lang].encode('utf8')})
+                if row.get(lang):
+                    trans_dict[lang].update({row["property"]: row[lang]})
 
         app.translations = dict(trans_dict)
         app.save()

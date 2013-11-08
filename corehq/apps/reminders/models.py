@@ -348,6 +348,7 @@ class CaseReminderHandler(Document):
     sample_id = StringProperty()
     user_group_id = StringProperty()
     user_id = StringProperty()
+    case_id = StringProperty()
     reminder_type = StringProperty(choices=REMINDER_TYPE_CHOICES, default=REMINDER_TYPE_DEFAULT)
     
     # Only used when recipient is RECIPIENT_SUBCASE.
@@ -394,6 +395,11 @@ class CaseReminderHandler(Document):
     
     # stop condition
     until = StringProperty()
+
+    # If present, references an entry in settings.ALLOWED_CUSTOM_CONTENT_HANDLERS, which maps to a function
+    # that should be called to retrieve the sms content to send in an sms reminder.
+    # The signature of a custom content handler should be function(reminder, handler, recipient)
+    custom_content_handler = StringProperty()
 
     #   If a subcase triggers an SMS survey, but we're sending it to the parent case,
     # we sometimes want the subcase to be the one on which we execute case actions

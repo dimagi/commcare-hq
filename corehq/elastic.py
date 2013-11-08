@@ -1,6 +1,7 @@
 from urllib import unquote
 import rawes
 from django.conf import settings
+from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX
@@ -23,6 +24,7 @@ ES_URLS = {
     "cases": CASE_INDEX + '/case/_search',
     "users": USER_INDEX + '/user/_search',
     "domains": DOMAIN_INDEX + '/hqdomain/_search',
+    "apps": APP_INDEX + '/app/_search',
     "sms": SMS_INDEX + '/sms/_search',
     "tc_sms": TCSMS_INDEX + '/tc_sms/_search',
 }
@@ -35,6 +37,7 @@ ADD_TO_ES_FILTER = {
     ],
     "users": [
         {"term": {"doc_type": "CommCareUser"}},
+        {"term": {"base_doc": "couchuser"}},
         {"term": {"is_active": True}},
     ],
 }
@@ -53,7 +56,7 @@ ES_MAX_CLAUSE_COUNT = 1024  #  this is what ES's maxClauseCount is currently set
 
 def get_stats_data(domains, histo_type, datespan, interval="day"):
     histo_data = dict([(d['display_name'],
-                        es_histogram(histo_type, d["names"], datespan.startdate_display, datespan.enddate_display))
+                        es_histogram(histo_type, d["names"], datespan.startdate_display, datespan.enddate_display, interval=interval))
                         for d in domains])
 
     def _total_until_date(histo_type, doms=None):

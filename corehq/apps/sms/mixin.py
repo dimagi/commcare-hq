@@ -1,6 +1,7 @@
 from collections import defaultdict
 import re
 from couchdbkit.ext.django.schema import *
+from couchdbkit.exceptions import MultipleResultsFound
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
@@ -63,6 +64,10 @@ class VerifiedNumber(Document):
             # Circular import
             from corehq.apps.users.models import CommCareUser
             return CommCareUser.get(self.owner_id)
+        elif self.owner_doc_type == 'WebUser':
+            # Circular importsms
+            from corehq.apps.users.models import WebUser
+            return WebUser.get(self.owner_id)
         else:
             return None
 
@@ -72,14 +77,73 @@ class VerifiedNumber(Document):
             self['-deletion_id'] = deletion_id
 
         self.save()
-    
+
+    @classmethod
+    def by_extensive_search(cls, phone_number):
+        # Try to look up the verified number entry directly
+        v = cls.by_phone(phone_number)
+
+        # If not found, try to see if any number in the database is a substring
+        # of the number given to us. This can happen if the telco prepends some
+        # international digits, such as 011...
+        if v is None:
+            v = cls.by_phone(phone_number[1:])
+        if v is None:
+            v = cls.by_phone(phone_number[2:])
+        if v is None:
+            v = cls.by_phone(phone_number[3:])
+
+        # If still not found, try to match only the last digits of numbers in 
+        # the database. This can happen if the telco removes the country code
+        # in the caller id.
+        if v is None:
+            v = cls.by_suffix(phone_number)
+
+        return v
+
     @classmethod
     def by_phone(cls, phone_number, include_pending=False):
-        # TODO: do we assume phone number duplicates are prevented?
-        v = cls.view("sms/verified_number_by_number",
+        return cls.phone_lookup(
+            "sms/verified_number_by_number",
+            phone_number,
+            include_pending
+        )
+
+    @classmethod
+    def by_suffix(cls, phone_number, include_pending=False):
+        """
+        Used to lookup a VerifiedNumber, trying to exclude country code digits.
+        """
+        try:
+            result = cls.phone_lookup(
+                "sms/verified_number_by_suffix",
+                phone_number,
+                include_pending
+            )
+        except MultipleResultsFound:
+            # We can't pinpoint who the number belongs to because more than one
+            # suffix matches. So treat it as if the result was not found.
+            result = None
+        return result
+
+    @classmethod
+    def phone_lookup(cls, view_name, phone_number, include_pending=False):
+        # We use .one() here because the framework prevents duplicates
+        # from being entered when a contact saves a number.
+        # See CommCareMobileContactMixin.save_verified_number()
+        v = cls.view(view_name,
                      key=strip_plus(phone_number),
                      include_docs=True).one()
         return v if (include_pending or (v and v.verified)) else None
+
+    @classmethod
+    def by_domain(cls, domain):
+        result = cls.view("sms/verified_number_by_domain",
+                          startkey=[domain],
+                          endkey=[domain, {}],
+                          include_docs=True,
+                          reduce=False).all()
+        return result
 
 def strip_plus(phone_number):
     return phone_number[1:] if phone_number.startswith('+') else phone_number

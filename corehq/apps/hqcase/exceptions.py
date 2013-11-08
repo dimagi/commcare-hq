@@ -1,0 +1,3 @@
+
+class CaseAssignmentError(Exception):
+    pass

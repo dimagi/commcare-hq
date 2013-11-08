@@ -5,16 +5,18 @@ import time
 from couchdbkit import ResourceNotFound
 
 from casexml.apps.case.models import CommCareCase
+from corehq import Domain
 from corehq.elastic import get_es
 from corehq.pillows.case import CasePillow
 from corehq.pillows.reportcase import ReportCasePillow
 from corehq.pillows.reportxform import ReportXFormPillow
 from corehq.pillows.xform import XFormPillow
 from couchforms.models import XFormInstance
+from django.conf import settings
 
 
 CLUSTER_HEALTH = 'cluster_health'
-def check_cluster_health():
+def check_es_cluster_health():
     """
     The color state of the cluster health is just a simple indicator for how a cluster is running
     It'll mainly be useful for finding out if shards are in good/bad state (red)
@@ -28,7 +30,7 @@ def check_cluster_health():
     return ret
 
 
-def check_index_by_doc(es_index, db, doc_id):
+def check_index_by_doc(es_index, db, doc_id, interval=10):
     """
     Given a doc, update it in couch (meaningless save that updates rev)
     and check to make sure that ES will eventually see it after some arbitrary delay
@@ -41,7 +43,7 @@ def check_index_by_doc(es_index, db, doc_id):
     except ResourceNotFound:
         pass
 
-    time.sleep(3)  # could be less, but just in case
+    time.sleep(interval)
     return _check_es_rev(es_index, doc_id, target_rev)
 
 
@@ -53,20 +55,31 @@ def is_real_submission(xform_view_row):
     return xform_view_row['doc']['xmlns'] != 'http://code.javarosa.org/devicereport'
 
 
-def check_reportxform_es_index(doc_id=None):
-    db = XFormInstance.get_db()
-    es_index = ReportXFormPillow.es_alias
 
-    check_doc_id = doc_id if doc_id else  _get_latest_doc_from_index(es_index, 'received_on')
-    return check_index_by_doc(es_index, db, check_doc_id)
+def check_reportxform_es_index(doc_id=None, interval=10):
+    do_check = False
+    for domain in settings.ES_XFORM_FULL_INDEX_DOMAINS:
+        domain_doc = Domain.get_by_name(domain)
+        if domain_doc is not None:
+            do_check = True
+            break
+
+    if do_check:
+        db = XFormInstance.get_db()
+        es_index = ReportXFormPillow.es_alias
+
+        check_doc_id = doc_id if doc_id else  _get_latest_doc_from_index(es_index, 'received_on')
+        return check_index_by_doc(es_index, db, check_doc_id, interval=interval)
+    else:
+        return {}
 
 
-def check_xform_es_index(doc_id=None):
+def check_xform_es_index(doc_id=None, interval=10):
     db = XFormInstance.get_db()
     es_index = XFormPillow.es_alias
 
     check_doc_id = doc_id if doc_id else _get_latest_doc_id(db, 'XFormInstance', skipfunc=is_real_submission)
-    return check_index_by_doc(es_index, db, check_doc_id)
+    return check_index_by_doc(es_index, db, check_doc_id, interval=interval)
 
 
 def is_case_recent(case_view_row):
@@ -80,20 +93,30 @@ def is_case_recent(case_view_row):
     else:
         return True
 
-def check_reportcase_es_index(doc_id=None):
-    db = CommCareCase.get_db()
-    es_index = ReportCasePillow.es_alias
+def check_reportcase_es_index(doc_id=None, interval=10):
+    do_check = False
+    for domain in settings.ES_CASE_FULL_INDEX_DOMAINS:
+        domain_doc = Domain.get_by_name(domain)
+        if domain_doc is not None:
+            do_check = True
+            break
 
-    check_doc_id = doc_id if doc_id else _get_latest_doc_from_index(es_index, sort_field='opened_on')
-    return check_index_by_doc(es_index, db, check_doc_id)
+    if do_check:
+        db = CommCareCase.get_db()
+        es_index = ReportCasePillow.es_alias
+
+        check_doc_id = doc_id if doc_id else _get_latest_doc_from_index(es_index, sort_field='opened_on')
+        return check_index_by_doc(es_index, db, check_doc_id, interval=interval)
+    else:
+        return {}
 
 
-def check_case_es_index(doc_id=None):
+def check_case_es_index(doc_id=None, interval=10):
     db = CommCareCase.get_db()
     es_index = CasePillow.es_alias
 
     check_doc_id = doc_id if doc_id else _get_latest_doc_id(db, 'CommCareCase', skipfunc=is_case_recent)
-    return check_index_by_doc(es_index, db, check_doc_id)
+    return check_index_by_doc(es_index, db, check_doc_id, interval=interval)
 
 
 def _get_latest_doc_from_index(es_index, sort_field):
@@ -119,6 +142,7 @@ def _get_latest_doc_from_index(es_index, sort_field):
             if 'hits' in res['hits']:
                 result = res['hits']['hits'][0]
                 return result['_source']['_id']
+
     except Exception, ex:
         logging.error("Error querying get_latest_doc_from_index[%s]: %s" % (es_index, ex))
         return None

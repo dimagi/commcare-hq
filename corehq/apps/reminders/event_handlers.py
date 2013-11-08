@@ -15,6 +15,7 @@ from datetime import timedelta
 from dimagi.utils.parsing import json_format_datetime
 from django.utils.translation import ugettext as _, ugettext_noop
 from casexml.apps.case.models import CommCareCase
+from dimagi.utils.modules import to_function
 
 DEFAULT_OUTBOUND_RETRY_INTERVAL = 5
 DEFAULT_OUTBOUND_RETRIES = 2
@@ -24,6 +25,9 @@ ERROR_NO_VERIFIED_NUMBER = ugettext_noop("Recipient has no phone number.")
 ERROR_NO_OTHER_NUMBERS = ugettext_noop("Recipient has no phone number.")
 ERROR_FORM = ugettext_noop("Can't load form. Please check configuration.")
 ERROR_NO_RECIPIENTS = ugettext_noop("No recipient(s).")
+ERROR_FINDING_CUSTOM_CONTENT_HANDLER = ugettext_noop("Error looking up custom content handler.")
+ERROR_INVALID_CUSTOM_CONTENT_HANDLER = ugettext_noop("Invalid custom content handler.")
+
 
 """
 This module defines the methods that will be called from CaseReminderHandler.fire()
@@ -77,16 +81,28 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers, workflow=Non
             except Exception:
                 lang = None
             
-            message = current_event.message.get(lang, current_event.message[handler.default_lang])
-            try:
-                message = Message.render(message, **template_params)
-            except Exception:
-                if len(recipients) == 1:
-                    raise_error(reminder, ERROR_RENDERING_MESSAGE % lang)
-                    return False
+            if handler.custom_content_handler is not None:
+                if handler.custom_content_handler in settings.ALLOWED_CUSTOM_CONTENT_HANDLERS:
+                    try:
+                        content_handler = to_function(settings.ALLOWED_CUSTOM_CONTENT_HANDLERS[handler.custom_content_handler])
+                    except Exception:
+                        raise_error(reminder, ERROR_FINDING_CUSTOM_CONTENT_HANDLER)
+                        return False
+                    message = content_handler(reminder, handler, recipient)
                 else:
-                    raise_warning() # ERROR_RENDERING_MESSAGE
-                    continue
+                    raise_error(reminder, ERROR_INVALID_CUSTOM_CONTENT_HANDLER)
+                    return False
+            else:
+                message = current_event.message.get(lang, current_event.message[handler.default_lang])
+                try:
+                    message = Message.render(message, **template_params)
+                except Exception:
+                    if len(recipients) == 1:
+                        raise_error(reminder, ERROR_RENDERING_MESSAGE % lang)
+                        return False
+                    else:
+                        raise_warning() # ERROR_RENDERING_MESSAGE
+                        continue
             
             verified_number = verified_numbers[recipient.get_id]
             if verified_number is not None:

@@ -16,7 +16,7 @@ def _get_tob(case):  # only guaranteed to be accurate within 24 hours
 
 def _get_time_of_visit_after_birth(case):
     form = get_form(case, action_filter=lambda a: a.updated_unknown_properties.get("add", None))
-    return form.xpath('form/meta/timeStart')
+    return form.xpath('form/meta/timeStart') if form else None
 
 
 def _get_prop_from_forms(case, property):

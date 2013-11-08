@@ -54,6 +54,7 @@ domain_specific = patterns('',
     (r'^fixtures/', include('corehq.apps.fixtures.urls')),
     (r'^importer/', include('corehq.apps.importer.urls')),
     (r'^sqlextract/', include('ctable_view.urls')),
+    (r'^fri/', include('custom.fri.urls')),
 )
 
 urlpatterns = patterns('',

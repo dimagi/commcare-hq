@@ -8,6 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import CallLog, INCOMING, OUTGOING
 from datetime import datetime
+from corehq.apps.sms.util import strip_plus
 
 @csrf_exempt
 def sms_in(request):
@@ -52,27 +53,14 @@ def ivr_in(request):
     if request.method == "POST":
         data = json.loads(request.raw_post_data)
         phone_number = data["session"]["from"]["id"]
-        ####
-        
         # TODO: Implement tropo as an ivr backend. In the meantime, just log the call.
-        
-        cleaned_number = phone_number
-        if cleaned_number is not None and len(cleaned_number) > 0 and cleaned_number[0] == "+":
-            cleaned_number = cleaned_number[1:]
-        
-        # Try to look up the verified number entry
-        v = VerifiedNumber.view("sms/verified_number_by_number",
-            key=cleaned_number,
-            include_docs=True
-        ).one()
-        
-        # If none was found, try to match only the last digits of numbers in the database
-        if v is None:
-            v = VerifiedNumber.view("sms/verified_number_by_suffix",
-                key=cleaned_number,
-                include_docs=True
-            ).one()
-        
+
+        if phone_number:
+            cleaned_number = strip_plus(phone_number)
+            v = VerifiedNumber.by_extensive_search(cleaned_number)
+        else:
+            v = None
+
         # Save the call entry
         msg = CallLog(
             phone_number = cleaned_number,
@@ -85,8 +73,7 @@ def ivr_in(request):
             msg.couch_recipient_doc_type = v.owner_doc_type
             msg.couch_recipient = v.owner_id
         msg.save()
-        
-        ####
+
         t = Tropo()
         t.reject()
         return HttpResponse(t.RenderJson())

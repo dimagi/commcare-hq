@@ -3,6 +3,15 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
+{% block head %}
+    {{ block.super }}
+    <style>
+        .dependent_field {
+            padding-left: 25px;
+        }
+    </style>
+{% endblock %}
+
 {% block title %}
     {% trans "Messaging Settings" %}
 {% endblock %}
@@ -13,12 +22,24 @@
         var self = this;
         self.use_default_sms_response = ko.observable(initial_values.use_default_sms_response);
         self.default_sms_response = ko.observable(initial_values.default_sms_response);
+        self.use_custom_case_username = ko.observable(initial_values.use_custom_case_username);
+        self.custom_case_username = ko.observable(initial_values.custom_case_username);
+        self.use_custom_message_count_threshold = ko.observable(initial_values.use_custom_message_count_threshold);
+        self.custom_message_count_threshold = ko.observable(initial_values.custom_message_count_threshold);
+        self.use_custom_chat_template = ko.observable(initial_values.use_custom_chat_template);
+        self.custom_chat_template = ko.observable(initial_values.custom_chat_template);
     }
     
     $(function(){
         svm = SettingsViewModel({
             "use_default_sms_response" : {{ form.use_default_sms_response.value|JSON }},
             "default_sms_response" : {{ form.default_sms_response.value|JSON }},
+            "use_custom_case_username" : {{ form.use_custom_case_username.value|JSON }},
+            "custom_case_username" : {{ form.custom_case_username.value|JSON }},
+            "use_custom_message_count_threshold" : {{ form.use_custom_message_count_threshold.value|JSON }},
+            "custom_message_count_threshold" : {{ form.custom_message_count_threshold.value|JSON }},
+            "use_custom_chat_template" : {{ form.use_custom_chat_template.value|JSON }},
+            "custom_chat_template" : {{ form.custom_chat_template.value|JSON }},
         });
         ko.applyBindings(svm);
     });
@@ -37,20 +58,59 @@
 {% endblock %}
 
 {% block main_column %}
-    <h4>{% trans "Settings" %}</h4>
     <form action="" method="post">
+        <h4>{% trans "General Settings" %}</h4>
         <table>
-            <tr>
-                <td>{% trans "Use Default SMS Response" %}</td>
-                <td><input type="checkbox" name="use_default_sms_response" data-bind="checked: use_default_sms_response" /></td>
-                <td>{{ form.use_default_sms_response.errors }}</td>
-            </tr>
-            <tr data-bind="visible: use_default_sms_response">
-                <td>{% trans "Default SMS Response" %}</td>
-                <td><textarea name="default_sms_response" data-bind="text: default_sms_response"></textarea></td>
-                <td>{{ form.default_sms_response.errors }}</td>
-            </tr>
+            <tbody>
+                <tr>
+                    <td>{% trans "Use Default SMS Response" %}</td>
+                    <td><input type="checkbox" name="use_default_sms_response" data-bind="checked: use_default_sms_response" /></td>
+                    <td>{{ form.use_default_sms_response.errors }}</td>
+                </tr>
+                <tr data-bind="visible: use_default_sms_response">
+                    <td class="dependent_field">{% trans "Default SMS Response" %}</td>
+                    <td><textarea name="default_sms_response" data-bind="text: default_sms_response"></textarea></td>
+                    <td>{{ form.default_sms_response.errors }}</td>
+                </tr>
+            </tbody>
         </table>
+        {% if is_previewer %}
+        <h4>{% trans "SMS Chat Settings" %}</h4>
+        <table>
+            <tbody>
+                <tr>
+                    <td>{% trans "Use Custom Case Name" %}</td>
+                    <td><input type="checkbox" name="use_custom_case_username" data-bind="checked: use_custom_case_username" /></td>
+                    <td>{{ form.use_custom_case_username.errors }}</td>
+                </tr>
+                <tr data-bind="visible: use_custom_case_username">
+                    <td class="dependent_field">{% trans "Custom Case Name" %}</td>
+                    <td><input type="text" name="custom_case_username" data-bind="value: custom_case_username" /></td>
+                    <td>{{ form.custom_case_username.errors }}</td>
+                </tr>
+                <tr>
+                    <td>{% trans "Use Custom Message Count Threshold" %}</td>
+                    <td><input type="checkbox" name="use_custom_message_count_threshold" data-bind="checked: use_custom_message_count_threshold" /></td>
+                    <td>{{ form.use_custom_message_count_threshold.errors }}</td>
+                </tr>
+                <tr data-bind="visible: use_custom_message_count_threshold">
+                    <td class="dependent_field">{% trans "Custom Message Count Threshold" %}</td>
+                    <td><input type="text" name="custom_message_count_threshold" data-bind="value: custom_message_count_threshold" /></td>
+                    <td>{{ form.custom_message_count_threshold.errors }}</td>
+                </tr>
+                <tr>
+                    <td>{% trans "Use Custom Chat Template" %}</td>
+                    <td><input type="checkbox" name="use_custom_chat_template" data-bind="checked: use_custom_chat_template" /></td>
+                    <td>{{ form.use_custom_chat_template.errors }}</td>
+                </tr>
+                <tr data-bind="visible: use_custom_chat_template">
+                    <td class="dependent_field">{% trans "Custom Chat Template" %}</td>
+                    <td><input type="text" name="custom_chat_template" data-bind="value: custom_chat_template" /></td>
+                    <td>{{ form.custom_chat_template.errors }}</td>
+                </tr>
+            </tbody>
+        </table>
+        {% endif %}
         <input type="submit" class="btn btn-primary" value="Save" />
     </form>
 {% endblock %}

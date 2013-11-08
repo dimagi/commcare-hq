@@ -5,8 +5,8 @@ from django.test import TestCase
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.tests import bootstrap_domain
 from corehq.apps.locations.models import Location
-from custom.openlmis.api import get_facilities, Facility, get_facility_programs, FacilityProgramLink, get_programs_and_products, Program
-from custom.openlmis.commtrack import sync_supply_point_to_openlmis
+from custom.openlmis.api import get_facilities, Facility, get_facility_programs, FacilityProgramLink, get_programs_and_products, Program, Requisition, RequisitionDetails, RequisitionStatus, get_requisition_statuses
+from custom.openlmis.commtrack import sync_supply_point_to_openlmis, submit_requisition, approve_requisition, delivery_update
 from custom.openlmis.tests.mock_api import MockOpenLMISEndpoint
 
 
@@ -79,6 +79,71 @@ class FeedApiTest(TestCase):
         self.assertEqual(10, p.unit)
         self.assertEqual('Analgesics', p.category)
 
+    def testParseRequisitionDetailsJson(self):
+        with open(os.path.join(self.datapath, 'sample_requisition_details.json')) as f:
+            requisition = RequisitionDetails.from_json(json.loads(f.read()))
+
+        self.assertEqual(1, requisition.id)
+        self.assertEqual("HIV", requisition.program_id)
+        self.assertEqual("F10", requisition.agent_code)
+        self.assertEqual(False, requisition.emergency)
+        self.assertEqual(1358274600000, requisition.period_start_date)
+        self.assertEqual(1359570599000, requisition.period_end_date)
+
+        self.assertEqual(1, len(requisition.products))
+
+        self.assertEqual("P10", requisition.products[0].code)
+        self.assertEqual(3, requisition.products[0].beginning_balance)
+        self.assertEqual(0, requisition.products[0].quantity_received)
+        self.assertEqual(1, requisition.products[0].quantity_dispensed)
+        self.assertEqual(-2, requisition.products[0].total_losses_and_adjustments)
+        self.assertEqual(0, requisition.products[0].stock_in_hand)
+        self.assertEqual(2, requisition.products[0].new_patient_count)
+        self.assertEqual(2, requisition.products[0].stock_out_days)
+        self.assertEqual(3, requisition.products[0].quantity_requested)
+        self.assertEqual("reason", requisition.products[0].reason_for_requested_quantity)
+        self.assertEqual(57, requisition.products[0].calculated_order_quantity)
+        self.assertEqual(65, requisition.products[0].quantity_approved)
+        self.assertEqual("1", requisition.products[0].remarks)
+
+        self.assertEqual("RELEASED", requisition.requisition_status)
+        self.assertEqual(1, requisition.order_id)
+        self.assertEqual("RELEASED", requisition.order_status)
+        self.assertEqual("F10", requisition.supplying_facility_code)
+
+
+    def testParseRequisitionStatus(self):
+        with open(os.path.join(self.datapath, 'requisition_status_feed.rss')) as f:
+            recent = list(get_requisition_statuses(f.read()))
+
+        [r1, r2] = recent
+        self.assertEqual(2, len(recent))
+        for f in recent:
+            self.assertEqual(RequisitionStatus, type(f))
+
+
+        #Sanity CheckList for two events
+        self.assertEqual('tag:atomfeed.ict4h.org:f4fa4edf-60be-4b4b-abfc-624a0d32f3ca', r1.rss_meta.id)
+        self.assertEqual(datetime.strptime('2013-10-29T10:11:49Z', ISO_FORMAT), r1.rss_meta.updated)
+        self.assertEqual(28, r1.requisition_id)
+        self.assertEqual('INITIATED', r1.requisition_status)
+        self.assertFalse(r1.emergency)
+        self.assertIsNone(r1.order_id)
+        self.assertIsNone(r1.order_status)
+        self.assertEqual(1358274600000, r1.start_date)
+        self.assertEqual(1359570599000, r1.end_date)
+
+        self.assertEqual('tag:atomfeed.ict4h.org:6364418f-91dc-42d6-a108-36ef39e383c0', r2.rss_meta.id)
+        self.assertEqual(datetime.strptime('2013-10-29T10:11:50Z', ISO_FORMAT), r2.rss_meta.updated)
+        self.assertEqual(28, r2.requisition_id)
+        self.assertEqual('RELEASED', r2.requisition_status)
+        self.assertFalse(r1.emergency)
+        self.assertEqual(28, r2.order_id)
+        self.assertEqual('RECEIVED', r2.order_status)
+        self.assertEqual(1358274600000, r2.start_date)
+        self.assertEqual(1359570599000, r2.end_date)
+
+
 
 class PostApiTest(TestCase):
 
@@ -86,6 +151,7 @@ class PostApiTest(TestCase):
         self.domain = 'post-api-test'
         bootstrap_domain(self.domain)
         self.api = MockOpenLMISEndpoint("uri://mock/lmis/endpoint", username='ned', password='honor')
+        self.datapath = os.path.join(os.path.dirname(__file__), 'data')
 
     def testCreateVirtualFacility(self):
         loc = Location(site_code='1234', name='beavis', domain=self.domain,
@@ -94,3 +160,18 @@ class PostApiTest(TestCase):
         sp = make_supply_point(self.domain, loc)
         self.assertTrue(sync_supply_point_to_openlmis(sp, self.api))
         self.assertTrue(sync_supply_point_to_openlmis(sp, self.api, False))
+
+    def testSubmitRequisition(self):
+        with open(os.path.join(self.datapath, 'sample_requisition_data.json')) as f:
+            requisition = Requisition.from_json(json.loads(f.read()))
+        self.assertTrue(submit_requisition(requisition, self.api))
+
+    def testApproveRequisition(self):
+        with open(os.path.join(self.datapath, 'sample_requisition_details.json')) as f:
+            requisition = RequisitionDetails.from_json(json.loads(f.read()))
+        self.assertTrue(approve_requisition(requisition, "Test_name", self.api))
+
+    def testConfirmDelivery(self):
+        with open(os.path.join(self.datapath, 'sample_requisition_details.json')) as f:
+            requisition = RequisitionDetails.from_json(json.loads(f.read()))
+        self.assertTrue(delivery_update(requisition, self.api))

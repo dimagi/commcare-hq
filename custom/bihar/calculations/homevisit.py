@@ -1,3 +1,4 @@
+from datetime import timedelta
 import logging
 from custom.bihar import getters
 from custom.bihar.calculations.types import DoneDueCalculator, TotalCalculator
@@ -8,68 +9,81 @@ from custom.bihar.calculations.utils.visits import visit_is, has_visit
 import fluff
 
 
-class BPCalculator(DoneDueCalculator):
+def date_in_range(date_to_check, reference, lower_window=10, upper_window=10):
+    if not date_to_check:
+        return False
+    ret = reference - timedelta(days=lower_window) <= date_to_check <= reference + timedelta(days=upper_window)
+    return ret
 
-    def __init__(self, days, window=A_MONTH):
+
+def no_filter(*args, **kwargs): return True
+
+class DateRangeFilter(object):
+
+    def __init__(self, days):
         self.days = days
-        super(BPCalculator, self).__init__(window)
 
-    def filter(self, case):
-        return is_pregnant_mother(case) and get_edd(case)
-
-    def _form_filter(self, case, form):
+    def __call__(self, case, date):
         lower, upper = self.days
-        date_modified = getters.date_modified(form)
-        return lower <= (case.edd - date_modified).days < upper
-
-    @fluff.date_emitter
-    def numerator(self, case):
-        for form in get_forms(case, action_filter=lambda a: visit_is(a, 'bp')):
-            date = getters.date_next_bp(form)
-            days_overdue = getters.days_visit_overdue(form)
-            if date and days_overdue == 0 and self._form_filter(case, form):
-                yield date
-
-    @fluff.date_emitter
-    def total(self, case):
-        for form in get_forms(case, action_filter=lambda a: visit_is(a, 'bp') or visit_is(a, 'reg')):
-            date = getters.date_next_bp(form)
-            if date and self._form_filter(case, form):
-                yield date
+        return lower <= (case.edd - date).days < upper
 
 
 class VisitCalculator(DoneDueCalculator):
 
-    def __init__(self, form_types, visit_type, get_date_next, window=A_MONTH):
+    def __init__(self, form_types, visit_type, get_date_next, case_filter,
+                 additional_filter=no_filter, window=A_MONTH):
         self.form_types = form_types
         self.visit_type = visit_type
         self.get_date_next = get_date_next
+        self.case_filter = case_filter
+        self.additional_filter = additional_filter
         super(VisitCalculator, self).__init__(window)
 
     def filter(self, case):
-        return is_pregnant_mother(case) and get_add(case)
+        return self.case_filter(case)
 
-    def _numerator_action_filter(self, a):
-        return visit_is(a, self.visit_type)
+
+    def _get_numerator_action_filter(self, form, date):
+        """
+        The filter used to determine relevant actions from the numerator.
+        The form is the form contributing to the denominator and the date is
+        the due date for the visit.
+        """
+        def _filter(a):
+            return (visit_is(a, self.visit_type)  # right type
+                    and date_in_range(a.date.date(), date)  # within window
+                    and a.date > getters.date_modified(form, force_to_date=False, force_to_datetime=True)  # came after "due" visit
+                    and a.xform_id not in self._visits_used)  # not already counted
+        return _filter
 
     def _total_action_filter(self, a):
         return any(visit_is(a, visit_type)
                    for visit_type in self.form_types)
 
     @fluff.date_emitter
-    def numerator(self, case):
-        for form in get_forms(case, action_filter=self._numerator_action_filter):
-            date = self.get_date_next(form)
-            days_overdue = getters.days_visit_overdue(form)
-            if date and days_overdue in (-1, 0, 1):
-                yield date
-
-    @fluff.date_emitter
     def total(self, case):
+        return (date for date, form in self._total(case))
+
+    def _total(self, case):
+        """
+        Private method for calculating the "total" for the denominator. In addition to emitting
+        the appropriate date it also emits the form that generated it, so that it can be referenced
+        by the numerator.
+        """
         for form in get_forms(case, action_filter=self._total_action_filter):
             date = self.get_date_next(form)
-            if date:
+            if date and self.additional_filter(case, date):
+                yield (date, form)
+
+    @fluff.date_emitter
+    def numerator(self, case):
+        self._visits_used = set()
+        for date, form in self._total(case):
+            for form in get_forms(case,
+                                  action_filter=self._get_numerator_action_filter(form, date)):
+                self._visits_used.add(form._id)
                 yield date
+                break  # only allow one numerator per denominator
 
 
 class DueNextMonth(TotalCalculator):

@@ -42,6 +42,8 @@ from dimagi.utils.modules import to_function
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
 from corehq import elastic
+from jsonobject import DateTimeProperty
+
 
 class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     """
@@ -145,7 +147,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
             yield [
                 form_data_link(form["_id"]),
                 (username or _('No data for username')) + (" %s" % name if name else ""),
-                datetime.strptime(form["form"]["meta"]["timeEnd"], '%Y-%m-%dT%H:%M:%SZ').strftime("%Y-%m-%d %H:%M:%S"),
+                DateTimeProperty().wrap(form["form"]["meta"]["timeEnd"]).strftime("%Y-%m-%d %H:%M:%S"),
                 xmlns_to_name(self.domain, form.get("xmlns"), app_id=form.get("app_id")),
             ]
 
