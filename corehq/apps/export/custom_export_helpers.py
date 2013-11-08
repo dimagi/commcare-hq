@@ -156,6 +156,7 @@ class FormCustomExportHelper(CustomExportHelper):
     allow_repeats = True
 
     default_questions = ["form.case.@case_id", "form.meta.timeEnd", "_id", "form.meta.username"]
+    questions_to_show = default_questions[:] + ["form.meta.timeStart", "received_on"]
 
     @property
     def export_title(self):
@@ -190,20 +191,20 @@ class FormCustomExportHelper(CustomExportHelper):
             question = col["index"]
             if question in remaining_questions:
                 remaining_questions.discard(question)
-                col["default"] = True
+                col["show"] = True
             if question.startswith("form.") and not is_special_type(question) and question not in current_questions:
                 col["tag"] = "deleted"
-                col["default"] = False
-            if question in self.default_questions:
-                col["default"] = True
-            if self.creating_new_export and col.get("default", False):
+                col["show"] = False
+            if question in self.questions_to_show:
+                col["show"] = True
+            if self.creating_new_export and (question in self.default_questions or question in current_questions):
                 col["selected"] = True
 
         column_conf.extend([
             ExportColumn(
                 index=q,
                 display='',
-                default=True,
+                show=True,
             ).to_config_format(selected=self.creating_new_export)
             for q in remaining_questions
         ])
