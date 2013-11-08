@@ -192,6 +192,7 @@ class OpenLMISEndpoint(object):
         self.submit_requisition_url = self._urlcombine(self._rest_uri, '/submitRequisition') #todo waiting for update document, added some url for testing
         self.requisition_details_url = self._urlcombine(self._rest_uri, '/requisitions')
         self.approve_requisition_url = self._urlcombine(self._rest_uri, '/') #todo waiting for update document, added some url for testing
+        self.confirm_delivery_base_url = self._urlcombine(self._rest_uri, '/orders')
 
     def _urlcombine(self, base, target):
         return '{base}{target}'.format(base=base, target=target)
@@ -271,6 +272,16 @@ class OpenLMISEndpoint(object):
     def submit_requisition(self, requisition_data):
         response = requests.post(self.submit_requisition_url,
                                  data=json.dumps(requisition_data),
+                                 headers={'content-type': 'application/json'},
+                                 auth=self._auth())
+        return self._response(response)
+
+    def update_confirm_delivery_url(self, order_id):
+        return self._urlcombine(self.confirm_delivery_base_url, '/{orderId}/pod.json'.format(orderId=order_id))
+
+    def confirm_delivery(self, order_id, delivery_data):
+        response = requests.post(self.update_confirm_delivery_url(order_id),
+                                 data=json.dumps(delivery_data),
                                  headers={'content-type': 'application/json'},
                                  auth=self._auth())
         return self._response(response)

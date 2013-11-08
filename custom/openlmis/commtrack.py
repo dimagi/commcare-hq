@@ -157,6 +157,7 @@ def sync_supply_point_to_openlmis(supply_point, openlmis_endpoint, create=True):
 def submit_requisition(requisition, openlmis_endpoint):
     return openlmis_endpoint.submit_requisition(requisition)
 
+
 def approve_requisition(requisition_details, approver_name, openlmis_endpoint):
     products = []
     for product in requisition_details.products:
@@ -169,3 +170,12 @@ def approve_requisition(requisition_details, approver_name, openlmis_endpoint):
     }
 
     return openlmis_endpoint.approve_requisition(approve_data)
+
+
+def delivery_update(requisition_details, openlmis_endpoint):
+    order_id = requisition_details.order_id
+    products = []
+    for product in requisition_details.products:
+        products.append({'productCode': product.code, 'quantityReceived': product.quantity_received})
+    delivery_data = {'podLineItems': products}
+    return openlmis_endpoint.confirm_delivery(order_id, delivery_data)
