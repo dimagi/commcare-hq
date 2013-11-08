@@ -232,7 +232,7 @@ class ExportColumn(DocumentSchema):
     transform = SerializableFunctionProperty(default=None)
     tag = StringProperty()
     is_sensitive = BooleanProperty(default=False)
-    default = BooleanProperty(default=False)
+    show = BooleanProperty(default=False)
 
     @classmethod
     def wrap(self, data):
@@ -254,7 +254,7 @@ class ExportColumn(DocumentSchema):
             "is_sensitive": self.is_sensitive,
             "selected": selected,
             "tag": self.tag,
-            "default": self.default,
+            "show": self.show,
         }
 
 class ExportTable(DocumentSchema):
