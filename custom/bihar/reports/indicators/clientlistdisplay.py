@@ -57,11 +57,14 @@ class SummaryValueMixIn(ClientListDisplay):
 
     def summary_value(self, case, context):
         raw = self.summary_value_raw(case, context)
+        return self._summary_display(raw)
+
+    def _summary_display(self, raw_value):
         display = {
             'num': self.numerator_text,
             'denom': self.denominator_text,
             'neither': self.neither_text,
-        }[raw]
+        }[raw_value]
         return _(display)
 
 
@@ -159,9 +162,14 @@ class PreDeliveryDoneDueCLD(DoneDueMixIn, PreDeliverySummaryCLD):
         return super(PreDeliveryDoneDueCLD, self).get_columns() + (_('Days Late'),)
 
     def as_row(self, case, context, fluff_row):
-        value = self.summary_value_raw(case, context)
-        return super(PreDeliveryDoneDueCLD, self).as_row(case, context, fluff_row) + \
-               (self._get_days_due(case, value, fluff_row),)
+        value = 'num' if fluff_row['in_num'] else 'denom'
+        return (
+            case.name,
+            display.husband_name(case),
+            self._summary_display(value),
+            display.edd(case),
+            self._get_days_due(case, value, fluff_row),
+        )
 
 
 class PostDeliveryDoneDueCLD(DoneDueMixIn, PostDeliverySummaryCLD):
@@ -171,9 +179,14 @@ class PostDeliveryDoneDueCLD(DoneDueMixIn, PostDeliverySummaryCLD):
         return super(PostDeliveryDoneDueCLD, self).get_columns() + (_('Days Due'),)
 
     def as_row(self, case, context, fluff_row):
-        value = self.summary_value_raw(case, context)
-        return super(PostDeliveryDoneDueCLD, self).as_row(case, context, fluff_row) + \
-               (self._get_days_due(case, value, fluff_row),)
+        value = 'num' if fluff_row['in_num'] else 'denom'
+        return (
+            case.name,
+            display.husband_name(case),
+            self._summary_display(value),
+            display.add(case),
+            self._get_days_due(case, value, fluff_row),
+        )
 
 
 class ComplicationsCalculator(PostDeliverySummaryCLD):
