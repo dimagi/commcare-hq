@@ -43,11 +43,13 @@ def bihar_reassignment(sender, xform, cases, **kwargs):
             logging.error('form {form} had mismatched case owner ids'.format(form=xform._id))
         else:
             [owner_id] = owner_ids
+            form_cases = set(c._id for c in cases)
             if owner_id in PREVIEW_GROUPS:
                 for case in cases:
                     if case.type in ('cc_bihar_pregnancy', 'cc_bihar_newborn'):
                         assign_case(case, owner_id, BiharMockUser(),
-                                    include_subcases=True, include_parent_cases=True)
+                                    include_subcases=True, include_parent_cases=True,
+                                    exclude=form_cases)
 
 
 cases_received.connect(bihar_reassignment)
