@@ -17,7 +17,7 @@ class ClientListDisplay(object):
     def get_columns(self):
         raise NotImplementedError("Override this!")
 
-    def as_row(self, case, context):
+    def as_row(self, case, context, fluff_row):
         raise NotImplementedError("Override this!")
 
     def sortkey(self, case, context):
@@ -76,7 +76,7 @@ class PreDeliveryCLD(ClientListDisplay):
     def get_columns(self):
         return _("Name"), _("Husband's Name"), _("EDD")
 
-    def as_row(self, case, context):
+    def as_row(self, case, context, fluff_row):
         return (
             case.name,
             display.husband_name(case),
@@ -94,7 +94,7 @@ class PreDeliverySummaryCLD(PreDeliveryCLD, SummaryValueMixIn):
     def get_columns(self):
         return _("Name"), _("Husband's Name"), _(self.summary_header), _("EDD")
 
-    def as_row(self, case, context):
+    def as_row(self, case, context, fluff_row):
         return (
             case.name,
             display.husband_name(case),
@@ -110,7 +110,7 @@ class PostDeliveryCLD(ClientListDisplay):
     def get_columns(self):
         return _("Name"), _("Husband's Name"), _("ADD")
 
-    def as_row(self, case, context):
+    def as_row(self, case, context, fluff_row):
         return (
             case.name,
             display.husband_name(case),
@@ -129,7 +129,7 @@ class PostDeliverySummaryCLD(PostDeliveryCLD, SummaryValueMixIn):
     def get_columns(self):
         return _("Name"), _("Husband's Name"), _(self.summary_header), _("ADD")
 
-    def as_row(self, case, context):
+    def as_row(self, case, context, fluff_row):
         return (
             case.name,
             display.husband_name(case),
@@ -146,9 +146,9 @@ class DoneDueMixIn(SummaryValueMixIn):
     def sortkey(self, case, context):
         return display.in_numerator(case, context)
 
-    def _get_days_due(self, case, value):
+    def _get_days_due(self, case, value, fluff_row):
         if value == 'denom':
-            return next_visit_date(case)
+            return fluff_row['key'][-1]  # the last item of the key is the date
         else:
             return days_overdue(case)
 
@@ -158,9 +158,10 @@ class PreDeliveryDoneDueCLD(DoneDueMixIn, PreDeliverySummaryCLD):
     def get_columns(self):
         return super(PreDeliveryDoneDueCLD, self).get_columns() + (_('Days Late'),)
 
-    def as_row(self, case, context):
+    def as_row(self, case, context, fluff_row):
         value = self.summary_value_raw(case, context)
-        return super(PreDeliveryDoneDueCLD, self).as_row(case, context) + (self._get_days_due(case, value),)
+        return super(PreDeliveryDoneDueCLD, self).as_row(case, context, fluff_row) + \
+               (self._get_days_due(case, value, fluff_row),)
 
 
 class PostDeliveryDoneDueCLD(DoneDueMixIn, PostDeliverySummaryCLD):
@@ -169,9 +170,10 @@ class PostDeliveryDoneDueCLD(DoneDueMixIn, PostDeliverySummaryCLD):
     def get_columns(self):
         return super(PostDeliveryDoneDueCLD, self).get_columns() + (_('Days Due'),)
 
-    def as_row(self, case, context):
+    def as_row(self, case, context, fluff_row):
         value = self.summary_value_raw(case, context)
-        return super(PostDeliveryDoneDueCLD, self).as_row(case, context) + (self._get_days_due(case, value),)
+        return super(PostDeliveryDoneDueCLD, self).as_row(case, context, fluff_row) + \
+               (self._get_days_due(case, value, fluff_row),)
 
 
 class ComplicationsCalculator(PostDeliverySummaryCLD):
