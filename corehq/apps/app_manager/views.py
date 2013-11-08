@@ -670,7 +670,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         context.update(get_form_view_context(req, form, context['langs'], is_user_registration))
     elif module:
         sort_elements = [prop.values() for prop in
-                         module.get_detail('case_short').sort_elements]
+                         module.case_details.short.sort_elements]
         context.update({"sortElements": json.dumps(sort_elements)})
         template = "app_manager/module_view.html"
     else:
@@ -970,33 +970,27 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     params = json_request(req.POST)
     screens = params.get('screens')
     parent_select = params.get('parent_select')
+    sort_elements = screens['sort_elements']
 
     if not screens:
         return HttpResponseBadRequest("Requires JSON encoded param 'screens'")
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
-    detail = module.get_detail('case_short')
+    detail = module.case_details.short
 
     detail.sort_elements = []
-    if 'sort_elements' in screens:
-        for sort_element in json.load(StringIO(screens['sort_elements'])):
-            item = SortElement()
-            item.field = sort_element['field']
-            item.type = sort_element['type']
-            item.direction = sort_element['direction']
-            detail.sort_elements.append(item)
 
-        del screens['sort_elements']
+    module.case_details.short.columns = map(DetailColumn.wrap, screens['short'])
+    module.case_details.long.columns = map(DetailColumn.wrap, screens['long'])
 
-    for detail_type in screens:
-        if detail_type not in DETAIL_TYPES:
-            return HttpResponseBadRequest("All detail types must be in %r"
-                                          % DETAIL_TYPES)
+    for sort_element in sort_elements:
+        item = SortElement()
+        item.field = sort_element['field']
+        item.type = sort_element['type']
+        item.direction = sort_element['direction']
+        detail.sort_elements.append(item)
 
-    for detail_type in screens:
-        module.get_detail(detail_type).columns = \
-            [DetailColumn.wrap(c) for c in screens[detail_type]]
 
     module.parent_select = ParentSelect.wrap(parent_select)
     resp = {}
@@ -1491,11 +1485,6 @@ def rearrange(req, domain, app_id, key):
             messages.warning(req, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
     elif "modules" == key:
         app.rearrange_modules(i, j)
-    elif "detail" == key:
-        module_id = int(req.POST['module_id'])
-        app.rearrange_detail_columns(module_id, req.POST['detail_type'], i, j)
-    elif "langs" == key:
-        app.rearrange_langs(i, j)
     app.save(resp)
     if ajax:
         return HttpResponse(json.dumps(resp))

@@ -37,21 +37,21 @@ def _create_custom_app_strings(app, lang):
             yield lc, name
 
     for module in app.get_modules():
-        for detail in module.get_details():
-            if detail.type.startswith('case'):
+        for detail_type, detail in module.get_details():
+            if detail_type.startswith('case'):
                 label = trans(module.case_label)
             else:
                 label = trans(module.referral_label)
-            yield id_strings.detail_title_locale(module, detail), label
+            yield id_strings.detail_title_locale(module, detail_type), label
 
-            detail_column_infos = get_detail_column_infos(detail)
+            detail_column_infos = get_detail_column_infos(detail, include_sort=detail_type == 'case_short')
             for (column, sort_element, order) in detail_column_infos:
                 if not is_sort_only_column(column):
-                    yield id_strings.detail_column_header_locale(module, detail, column), trans(column.header)
+                    yield id_strings.detail_column_header_locale(module, detail_type, column), trans(column.header)
 
                 if column.format in ('enum', 'enum-image'):
                     for item in column.enum:
-                        yield id_strings.detail_column_enum_variable(module, detail, column, item.key), trans(item.value)
+                        yield id_strings.detail_column_enum_variable(module, detail_type, column, item.key), trans(item.value)
 
         yield id_strings.module_locale(module), numfirst(trans(module.name))
         if module.case_list.show:
