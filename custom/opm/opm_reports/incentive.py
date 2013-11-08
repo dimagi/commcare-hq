@@ -76,17 +76,6 @@ class Worker(object):
 
         self.growth_monitoring_count = get_result('growth_monitoring')
 
-        # print worker._id
-        # def get_growth_monitored():
-            # results = get_result('growth_monitoring', reduce=False)
-            # case_ids = set()
-            # for result in results:
-                # form = XFormInstance.get(result)
-                # case_ids.add(form.form['case']['@case_id'])
-            # return len(case_ids)
-
-        # self.growth_monitoring_count = get_growth_monitored()
-
         FIXTURES = get_fixture_data()
         self.service_forms_cash = FIXTURES['service_form_submitted'] \
                 if self.service_forms_count == 'yes' else 0
