@@ -6,7 +6,6 @@ for each field.
 import datetime
 
 from couchdbkit.exceptions import ResourceNotFound
-# from couchforms.models import XFormInstance
 
 from ..opm_tasks.models import OpmReportSnapshot
 from .constants import *
