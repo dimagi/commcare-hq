@@ -35,6 +35,7 @@ class Worker(object):
         # make sure worker passes the filters
         report.filter(
             lambda key: worker.user_data.get(key),
+            # user.awc, user.block
             [('awc', 'awcs'), ('block', 'blocks')]
         )
 

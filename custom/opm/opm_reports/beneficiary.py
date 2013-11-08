@@ -37,7 +37,13 @@ class Beneficiary(object):
     ]
 
     def __init__(self, case, report):
-        report.filter(lambda key: case.get_case_property(key))
+
+        # make sure beneficiary passes the filters
+        report.filter(
+            lambda key: case.get_case_property(key),
+            # case.awc_name, case.block_name
+            [('awc_name', 'awcs'), ('block_name', 'blocks')],
+        )
 
         if case.closed and case.closed_on <= report.datespan.startdate_utc:
             raise InvalidRow
