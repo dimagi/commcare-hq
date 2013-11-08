@@ -173,11 +173,14 @@ class Calculator(object):
                 raise
         return values
 
-    def get_result(self, key, date_range=None, reduce=True):
+    def get_result(self, key, date_range=None, reduce=True, verbose_results=False):
         """
         If your Calculator does not have a window set, you must pass a tuple of
         date or datetime objects to date_range
         """
+        if verbose_results:
+            assert not reduce, "can't have reduce set for verbose results"
+
         if self.window:
             now = self.fluff.get_now()
             start = now - self.window
@@ -221,18 +224,28 @@ class Calculator(object):
                 except IndexError:
                     result[emitter_name] = 0
             else:
+                # clean ids
                 def strip(id_string):
                     prefix = '%s-' % self.fluff.__name__
                     assert id_string.startswith(prefix)
                     return id_string[len(prefix):]
-                result[emitter_name] = [strip(row['id']) for row in q]
+                for row in q:
+                    row['id'] = strip(row['id'])
+
+                if not verbose_results:
+                    # strip down to ids
+                    result[emitter_name] = [row['id'] for row in q]
+                else:
+                    result[emitter_name] = q
+
         return result
 
-    def aggregate_results(self, keys, reduce=True):
+    def aggregate_results(self, keys, reduce=True, verbose_results=False):
 
         def iter_results():
             for key in keys:
-                result = self.get_result(key, reduce=reduce)
+                result = self.get_result(key, reduce=reduce,
+                                         verbose_results=verbose_results)
                 for slug, value in result.items():
                     yield slug, value
 
@@ -240,10 +253,14 @@ class Calculator(object):
             results = defaultdict(int)
             for slug, value in iter_results():
                 results[slug] += value
-        else:
+        elif not verbose_results:
             results = defaultdict(set)
             for slug, value in iter_results():
                 results[slug].update(value)
+        else:
+            results = defaultdict(list)
+            for slug, value in iter_results():
+                results[slug].extend(value)
 
         return results
 
