@@ -187,7 +187,7 @@ class IndicatorClientList(ClientListBase, IndicatorMixIn):
     slug = "indicatorclientlist"
     name = ugettext_noop("Client List") 
 
-    extra_context_providers = [name_context]
+    extra_context_providers = [shared_bihar_context, name_context]
 
     @property
     def _name(self):
