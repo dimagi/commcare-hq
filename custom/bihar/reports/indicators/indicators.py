@@ -317,8 +317,8 @@ class Indicator(object):
     def sort_index(self):
         return self._display.sort_index
 
-    def as_row(self, case, context):
-        return self._display.as_row(case, context)
+    def as_row(self, case, context, fluff_row):
+        return self._display.as_row(case, context, fluff_row)
 
 class IndicatorDataProvider(object):
 

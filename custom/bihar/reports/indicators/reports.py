@@ -214,21 +214,28 @@ class IndicatorClientList(ClientListBase, IndicatorMixIn):
     def fluff_results(self):
         return self.indicator.fluff_calculator.aggregate_results(
             ([self.domain, owner_id] for owner_id in self.all_owner_ids),
-            reduce=False
+            reduce=False,
+        )
+
+    @property
+    @memoized
+    def verbose_results(self):
+        return self.indicator.fluff_calculator.aggregate_results(
+            ([self.domain, owner_id] for owner_id in self.all_owner_ids),
+            reduce=False,
+            verbose_results=True,
         )
 
     @property
     def rows(self):
-        case_ids = self.fluff_results[self.indicator.fluff_calculator.primary]
-        cases = CommCareCase.view('_all_docs', keys=list(case_ids),
-                                  include_docs=True)
+        results = self.verbose_results[self.indicator.fluff_calculator.primary]
+        case_ids = set([res['id'] for res in results])
+        cases = dict((c._id, c) for c in CommCareCase.view('_all_docs', keys=list(case_ids),
+                                                           include_docs=True))
 
         return [
-            self.indicator.as_row(case, self.fluff_results)
-            for case in sorted(
-                cases,
-                key=partial(self.indicator.sortkey, context=self.fluff_results)
-            )
+            self.indicator.as_row(cases[result['id']], self.fluff_results, fluff_row=result)
+            for result in reversed(results)
         ]
 
 class MyPerformanceList(IndicatorClientList):
