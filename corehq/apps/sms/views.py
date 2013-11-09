@@ -11,7 +11,13 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadReque
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_SMS
-from corehq.apps.sms.api import send_sms, incoming, send_sms_with_backend_name, send_sms_to_verified_number
+from corehq.apps.sms.api import (
+    send_sms,
+    incoming,
+    send_sms_with_backend_name,
+    send_sms_to_verified_number,
+    DomainScopeValidationError,
+)
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
@@ -36,6 +42,7 @@ from casexml.apps.case.models import CommCareCase
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean
 from dateutil.parser import parse
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.logging import notify_exception
 from django.conf import settings
 
 DEFAULT_MESSAGE_COUNT_THRESHOLD = 50
@@ -252,7 +259,23 @@ def message_test(request, domain, phone_number):
     if request.method == "POST":
         message = request.POST.get("message", "")
         domain_scope = None if request.couch_user.is_superuser else domain
-        incoming(phone_number, message, "TEST", domain_scope=domain_scope)
+        try:
+            incoming(phone_number, message, "TEST", domain_scope=domain_scope)
+        except DomainScopeValidationError:
+            messages.error(
+                request,
+                _("Invalid phone number being simulated. You may only " \
+                  "simulate SMS from verified numbers belonging to contacts " \
+                  "in this domain.")
+            )
+        except Exception:
+            notify_exception(request)
+            messages.error(
+                request,
+                _("An error has occurred. Please try again in a few minutes " \
+                  "and if the issue persists, please contact CommCareHQ " \
+                  "Support.")
+            )
 
     context = get_sms_autocomplete_context(request, domain)
     context['domain'] = domain
