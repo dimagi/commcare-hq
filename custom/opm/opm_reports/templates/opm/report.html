@@ -5,34 +5,68 @@
 
 {% block pretable %}
     <style>
+        #opm-report-head {
+            height: 200px;
+            margin-left: 30px;
+        }
+        #opm-report-head #cc-logo {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
         #opm-report-head h1 {
-            margin: 20px 0px 0px 20px;
+            height: 80px;
+            text-align: center;
+            margin: 60px;
+        }
+        #opm-report-head #opm-logo {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            height: 160px;
+            max-width: 234px;
         }
     </style>
     {% if not report.needs_filters %}
     <div id="opm-report-head">
         {% if rendered_as == 'print' %}
             <div>{% now "d M Y" %}</div>
-            <div class="row">
-                <div class="span10">
-                    <h1 class="media-heading">{{ report.report_title }}</h1>
-                </div>
-                <div class="pull-right">
-                    <img class="media-object pull-right"
-                    src="{% static 'hqstyle/img/commcarehq-icon-large.png' %}" width="64" >
-                </div>
-            </div>
-        {% else %}
-            <div class="media">
-                <a class="pull-right" href="#">
-                    <img class="media-object pull-right"
-                    src="{% static 'hqstyle/img/commcarehq-icon-large.png' %}" width="64" >
-                </a>
-                <div class="media-body" style="height: 64px">
-                    <h1 class="media-heading">{{ report.report_title }}</h1>
-                </div>
-            </div>
         {% endif %}
+        <div>
+            <img id="cc-logo" class="media-object"
+            src="{% static 'hqstyle/img/commcare-logo.png' %}">
+            <h1 class="media-heading">{{ report.report_title }}</h1>
+            <div class="pull-right">
+                <img id="opm-logo" class="media-object pull-right"
+                src="{% static 'opm/img/opm-logo-small.png' %}">
+            </div>
+        </div>
+        {#{% if rendered_as == 'print' %}#}
+            {#<div>{% now "d M Y" %}</div>#}
+            {#<div class="row">#}
+                {#<div class="span10">#}
+                    {#<h1 class="media-heading">{{ report.report_title }}</h1>#}
+                {#</div>#}
+                {#<div class="pull-right">#}
+                    {#<img class="media-object pull-right"#}
+                    {#src="{% static 'hqstyle/img/commcare-logo.png' %}">#}
+                    {#<img class="media-object pull-right"#}
+                    {#src="{% static 'opm/img/opm-logo.jpg' %}" style="height: 140px;">#}
+                {#</div>#}
+            {#</div>#}
+        {#{% else %}#}
+            {#<div class="media">#}
+                {#<a class="pull-right" href="#">#}
+                    {#<img class="media-object pull-right"#}
+                    {#src="{% static 'hqstyle/img/commcare-logo.png' %}">#}
+                    {#<img class="media-object pull-right"#}
+                    {#src="{% static 'opm/img/opm-logo.jpg' %}" style="height: 140px;">#}
+                {#</a>#}
+                {#<div class="media-body" style="height: 64px">#}
+                    {#<h1 class="media-heading">{{ report.report_title }}</h1>#}
+                {#</div>#}
+            {#</div>#}
+        {#{% endif %}#}
         <h4 class="media-heading">
             {% for subtitle in report.report_subtitles %}
             <br/><small>{{ subtitle }}</small>
