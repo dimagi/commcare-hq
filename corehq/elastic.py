@@ -120,10 +120,6 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff
 
 SIZE_LIMIT = 1000000
 def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at=None, size=None, dict_only=False, fields=None):
-    """
-        Any filters you include in your query should an and filter
-        todo: intelligently deal with preexisting filters
-    """
     if terms is None:
         terms = []
     if q is None:
