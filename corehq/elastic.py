@@ -132,8 +132,8 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
 
     q["size"] = size if size is not None else q.get("size", SIZE_LIMIT)
     q["from"] = start_at or 0
-    q["filter"] = q.get("filter", {})
-    q["filter"]["and"] = q["filter"].get("and", [])
+    filter = q.pop("filter", {})
+    filter["and"] = filter.get("and", [])
 
     def convert(param):
         #todo: find a better way to handle bools, something that won't break fields that may be 'T' or 'F' but not bool
@@ -146,7 +146,7 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
     for attr in params:
         if attr not in terms:
             attr_val = [convert(params[attr])] if not isinstance(params[attr], list) else [convert(p) for p in params[attr]]
-            q["filter"]["and"].append({"terms": {attr: attr_val}})
+            filter["and"].append({"terms": {attr: attr_val}})
 
     def facet_filter(facet):
         return [clause for clause in q["filter"]["and"] if facet not in clause.get("terms", [])]
@@ -156,16 +156,13 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
         for facet in facets:
             q["facets"][facet] = {"terms": {"field": facet, "size": SIZE_LIMIT}}
 
-    if q.get('facets') and q.get("filter", {}).get("and"):
-        for facet in q["facets"]:
-            if "facet_filter" not in q["facets"][facet]:
-                q["facets"][facet]["facet_filter"] = {"and": []}
-            q["facets"][facet]["facet_filter"]["and"].extend(facet_filter(facet))
-            if not q["facets"][facet]["facet_filter"]["and"]:
-                del q["facets"][facet]["facet_filter"]["and"]
-
-    if not q['filter']['and']:
-        del q["filter"]
+    if filter["and"]:
+        q["query"] = {
+            "filtered": {
+                "query": q["query"],
+                "filter": filter,
+            }
+        }
 
     if fields:
         q["fields"] = q.get("fields", [])
