@@ -1,4 +1,3 @@
-import pdb
 from django.db.models.signals import  post_save
 from couchdbkit.ext.django.schema import Document
 from django.db import models
