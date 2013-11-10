@@ -1,3 +1,4 @@
+import copy
 from urllib import unquote
 import rawes
 from django.conf import settings
@@ -160,12 +161,15 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
             q["facets"][facet] = {"terms": {"field": facet, "size": SIZE_LIMIT}}
 
     if filter["and"]:
+        query = q.pop("query", {})
         q["query"] = {
             "filtered": {
-                "query": q["query"],
                 "filter": filter,
             }
         }
+        if query:
+            q["query"]["filtered"]["query"] = query
+
 
     if fields:
         q["fields"] = q.get("fields", [])
