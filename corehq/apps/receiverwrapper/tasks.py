@@ -8,7 +8,7 @@ from corehq.apps.receiverwrapper.models import RepeatRecord
 
 logging = get_task_logger(__name__)
 
-CHECK_REPEATERS_INTERVAL = timedelta(minutes=1)
+CHECK_REPEATERS_INTERVAL = timedelta(minutes=5)
 @periodic_task(run_every=CHECK_REPEATERS_INTERVAL, queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def check_repeaters():
     start = datetime.utcnow()
