@@ -80,7 +80,6 @@ def dict_diff(current, prev):
     Removed: field:values not in current that were in prev
     Changed: field:values that changed from prev to current, and returning prev's values
     """
-
     removed = dict()
     added = dict()
     changed = dict()
@@ -95,25 +94,3 @@ def dict_diff(current, prev):
             added[key] = value
     return added, removed, changed
 
-
-
-#
-#def get_timeout():
-#    """
-#    gets any specified timeout from the settings file, or use 10 minutes by
-#    default
-#    """
-#    return getattr(settings, 'TRACKING_TIMEOUT', 10)
-#
-#def get_cleanup_timeout():
-#    """
-#    gets any specified visitor clean-up timeout from the settings file, or
-#    use 24 hours by default
-#    """
-#    return getattr(settings, 'TRACKING_CLEANUP_TIMEOUT', 24)
-#
-#def get_untracked_prefixes():
-#    """
-#    gets a list of prefixes that shouldn't be tracked
-#    """
-#    return getattr(settings, 'NO_TRACKING_PREFIXES', [])

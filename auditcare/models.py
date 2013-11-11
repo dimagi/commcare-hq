@@ -163,17 +163,10 @@ class ModelActionAudit(AuditEvent):
             return None
         prev_rev = self.prev()
 
-        #sanity check
         if prev_rev.revision_checksum == self.revision_checksum:
+            #sanity check, do nothing at no changes
             return None
-
-        if (self.archived_data.get('doc_type', None) == 'XFormInstance' and prev_rev.archived_data.get('doc_type',
-            None) == 'XFormInstance'):
-            #it's an xforminstance - hackishly just inspect the form instance
-            removed, added, changed = utils.dict_diff(self.archived_data['form'], prev_rev.archived_data['form'])
-        else:
-            #all other models compare the json directly
-            removed, added, changed = utils.dict_diff(self.archived_data, prev_rev.archived_data)
+        removed, added, changed = utils.dict_diff(self.archived_data, prev_rev.archived_data)
         self.removed = removed
         self.added = added
         self.changed = changed
@@ -208,7 +201,7 @@ class ModelActionAudit(AuditEvent):
         added_keys = self.added.keys()
         removed_keys = self.removed.keys()
 
-        if filters is not None and len(filters) > 0:
+        if filters:
             are_changed = filter(lambda x: x in changed_keys, filters)
             are_added = filter(lambda x: x in added_keys, filters)
             are_removed = filter(lambda x: x in removed_keys, filters)
@@ -217,7 +210,7 @@ class ModelActionAudit(AuditEvent):
             are_added = added_keys[:]
             are_removed = removed_keys[:]
 
-        if excludes is not None and len(excludes) > 0:
+        if excludes:
             final_changed = filter(lambda x: x not in excludes, are_changed)
             final_added = filter(lambda x: x not in excludes, are_added)
             final_removed = filter(lambda x: x not in excludes, are_removed)

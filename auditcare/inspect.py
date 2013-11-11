@@ -11,8 +11,8 @@ default_excludes = ['_rev']
 class ObjectHistoryWrapper(object):
     def __init__(self, obj, filter_fields=None, exclude_fields=None, start_date=None, end_date=None, **kwargs):
         self.object = obj
-        self.filter_fields = filter_fields
-        self.exclude_fields = exclude_fields
+        self.filter_fields = filter_fields or []
+        self.exclude_fields = exclude_fields or []
         self.start_date = start_date
         self.end_date = end_date
 
@@ -26,12 +26,9 @@ class ObjectHistoryWrapper(object):
             #it's a couchdbkit document, search by __class__
             key = [obj['doc_type'], obj['_id']]
 
-
         final_fields = []
-        if len(filter_fields) > 0:
+        if len(self.filter_fields) > 0:
             final_fields = filter_fields[:]
-        else:
-            pass
         self.final_fields = final_fields
 
         revisions=ModelActionAudit.view('auditcare/model_actions_by_id', key=key, reduce=False, include_docs=True).all()
@@ -41,6 +38,7 @@ class ObjectHistoryWrapper(object):
         #return sorted(revisions, key=lambda x: x.event_date, reverse=True)
 
         self.revisions=sorted(ModelActionAudit.view('auditcare/model_actions_by_id', key=key, reduce=False, include_docs=True).all(), key=lambda x: x.event_date)
+
     def filtered_changes(self):
         """
         Generator for the filtered fields for a given instance.
@@ -50,7 +48,7 @@ class ObjectHistoryWrapper(object):
         key: changed_fields, value: a tuple of field names ([changed fields], [added fields], [removed fields])
         """
         for rev in self.revisions:
-            yield {"revision": rev, 'changed_fields': rev.get_changed_fields(filters=self.filter_fields, excludes=self.exclude_fields) }
+            yield {"revision": rev, 'changed_fields': rev.get_changed_fields(filters=self.filter_fields, excludes=self.exclude_fields)}
 
 
     def change_narratives(self):
@@ -63,13 +61,12 @@ class ObjectHistoryWrapper(object):
         for rev in self.revisions:
             changed, added, removed  = rev.get_changed_fields(filters=self.filter_fields, excludes=self.exclude_fields)
             if len(changed) > 0:
-                #yield {'revision': rev, 'changes': list(rev.resolved_changed_fields(filters=self.filter_fields, excludes=self.exclude_fields))}
-                ret.append({'revision': rev, 'changes': rev.resolved_changed_fields(filters=self.filter_fields, excludes=self.exclude_fields)})
+                ret.append({'revision': rev, 'changes': list(rev.resolved_changed_fields(filters=self.filter_fields, excludes=self.exclude_fields))})
         return ret
 
 
 
-def history_for_doc(obj, start_date=None, end_date=None, date_range=None, filter_fields=[], exclude_fields=[]):
+def history_for_doc(obj, start_date=None, end_date=None, date_range=None, filter_fields=None, exclude_fields=None):
     """
     Get an audit history for a given object
 
