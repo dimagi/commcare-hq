@@ -324,7 +324,7 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         try:
             form_action_errors = form.validate_for_build()
             if not form_action_errors:
-                xform.add_case_and_meta(form)
+                form.add_stuff_to_xform(xform)
                 if settings.DEBUG and False:
                     xform.validate()
         except CaseError as e:
@@ -357,7 +357,6 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         'nav_form': form if not is_user_registration else '',
         'xform_languages': languages,
         "xform_questions": xform_questions,
-        'form_actions': form.actions.to_json(),
         'case_reserved_words_json': load_case_reserved_words(),
         'is_user_registration': is_user_registration,
         'module_case_types': module_case_types,
