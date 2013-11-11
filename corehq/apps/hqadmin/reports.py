@@ -81,7 +81,7 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
         start_at=self.pagination.start
         size = size if size is not None else self.pagination.count
 
-        return es_query(params, self.es_facet_list, terms, q, self.es_url, start_at, size)
+        return es_query(params, self.es_facet_list, terms, q, self.es_url, start_at, size, facet_size=25)
 
     @property
     def es_results(self):
@@ -177,20 +177,27 @@ class AdminAppReport(AdminFacetedReport):
     default_sort = {'name.exact': 'asc'}
     es_url = APP_INDEX + '/app/_search'
 
+    excluded_properties = ["_id", "_rev", "_attachments", "admin_password_charset", "short_odk_url", "version",
+                           "admin_password", "built_on", ]
     profile_list = ["profile.%s.%s" % (c['type'], c['id']) for c in CC_SETTINGS if c['type'] != 'hq']
     calculated_properties_mapping = ("Calculations", True,
                                      [{"facet": "cp_is_active", "name": "Active", "expanded": True }])
 
     @property
+    def properties(self):
+        return filter(lambda p: p and p not in self.excluded_properties, Application.properties().keys())
+
+    @property
     def es_facet_list(self):
-        return Application.properties().keys() + self.profile_list + ["cp_is_active"]
+        props = self.properties + self.profile_list + ["cp_is_active"]
+        return filter(lambda p: p not in self.excluded_properties, props)
 
     @property
     def es_facet_mapping(self):
         def remove_profile(name):
             return name[len("profile."):]
         profile_mapping = create_mapping_from_list(self.profile_list, "Profile", True, True, remove_profile)
-        other_mapping = create_mapping_from_list(Application.properties().keys(), "Other")
+        other_mapping = create_mapping_from_list(self.properties, "Other")
         return [profile_mapping, self.calculated_properties_mapping, other_mapping]
 
     @property
