@@ -245,10 +245,11 @@ class CaseBlock(object):
             update_block.append(make_case_elem(key))
 
         for key, q_path in sorted(update_mapping.items()):
+            resolved_path = self.xform.resolve_path(q_path)
             self.xform.add_bind(
                 nodeset="%scase/update/%s" % (path, key),
-                calculate=self.xform.resolve_path(q_path),
-                relevant=("count(%s) > 0" % self.xform.resolve_path(q_path))
+                calculate=resolved_path,
+                relevant=("count(%s) > 0" % resolved_path)
             )
 
     def add_close_block(self, relevance, path=''):
@@ -512,7 +513,8 @@ class XForm(WrappedNode):
         if form.get_app().application_version == APP_V1:
             self.add_case_and_meta_1(form)
         else:
-            self.add_case_and_meta_2(form)
+            self.create_casexml_2(form)
+            self.add_meta_2()
 
     def already_has_meta(self):
         meta_blocks = set()
@@ -523,67 +525,61 @@ class XForm(WrappedNode):
 
         return meta_blocks
 
-    def add_case_and_meta_2(self, form):
-        case = self.case_node
-
+    def add_meta_2(self):
         case_parent = self.data_node
-
-        self.create_casexml_2(form)
 
         # Test all of the possibilities so that we don't end up with two "meta" blocks
         for meta in self.already_has_meta():
             case_parent.remove(meta.xml)
 
-        def add_meta():
-            orx = namespaces['orx'][1:-1]
-            nsmap = {None: orx, 'cc': namespaces['cc'][1:-1]}
+        orx = namespaces['orx'][1:-1]
+        nsmap = {None: orx, 'cc': namespaces['cc'][1:-1]}
 
-            meta = ET.Element("{orx}meta".format(**namespaces), nsmap=nsmap)
-            for tag in (
-                '{orx}deviceID',
-                '{orx}timeStart',
-                '{orx}timeEnd',
-                '{orx}username',
-                '{orx}userID',
-                '{orx}instanceID',
-                '{cc}appVersion',
-            ):
-                meta.append(ET.Element(tag.format(**namespaces), nsmap=nsmap))
+        meta = ET.Element("{orx}meta".format(**namespaces), nsmap=nsmap)
+        for tag in (
+            '{orx}deviceID',
+            '{orx}timeStart',
+            '{orx}timeEnd',
+            '{orx}username',
+            '{orx}userID',
+            '{orx}instanceID',
+            '{cc}appVersion',
+        ):
+            meta.append(ET.Element(tag.format(**namespaces), nsmap=nsmap))
 
-            case_parent.append(meta)
+        case_parent.append(meta)
 
-            self.add_setvalue(
-                ref="meta/deviceID",
-                value="instance('commcaresession')/session/context/deviceid",
-            )
-            self.add_setvalue(
-                ref="meta/timeStart",
-                type="xsd:dateTime",
-                value="now()",
-            )
-            self.add_setvalue(
-                ref="meta/timeEnd",
-                type="xsd:dateTime",
-                event="xforms-revalidate",
-                value="now()",
-            )
-            self.add_setvalue(
-                ref="meta/username",
-                value="instance('commcaresession')/session/context/username",
-            )
-            self.add_setvalue(
-                ref="meta/userID",
-                value="instance('commcaresession')/session/context/userid",
-            )
-            self.add_setvalue(
-                ref="meta/instanceID",
-                value="uuid()"
-            )
-            self.add_setvalue(
-                ref="meta/appVersion",
-                value="instance('commcaresession')/session/context/appversion"
-            )
-        add_meta()
+        self.add_setvalue(
+            ref="meta/deviceID",
+            value="instance('commcaresession')/session/context/deviceid",
+        )
+        self.add_setvalue(
+            ref="meta/timeStart",
+            type="xsd:dateTime",
+            value="now()",
+        )
+        self.add_setvalue(
+            ref="meta/timeEnd",
+            type="xsd:dateTime",
+            event="xforms-revalidate",
+            value="now()",
+        )
+        self.add_setvalue(
+            ref="meta/username",
+            value="instance('commcaresession')/session/context/username",
+        )
+        self.add_setvalue(
+            ref="meta/userID",
+            value="instance('commcaresession')/session/context/userid",
+        )
+        self.add_setvalue(
+            ref="meta/instanceID",
+            value="uuid()"
+        )
+        self.add_setvalue(
+            ref="meta/appVersion",
+            value="instance('commcaresession')/session/context/appversion"
+        )
 
     def add_case_and_meta_1(self, form):
         case = self.case_node
