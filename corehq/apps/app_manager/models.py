@@ -77,8 +77,8 @@ def load_case_reserved_words():
 
 
 @memoized
-def load_default_user_registration():
-    with open(os.path.join(os.path.dirname(__file__), 'data', 'register_user.xhtml')) as f:
+def load_form_template(filename):
+    with open(os.path.join(os.path.dirname(__file__), 'data', filename)) as f:
         return f.read()
 
 
@@ -1921,7 +1921,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         form = self.user_registration
         form._app = self
         if not form.source:
-            form.source = load_default_user_registration()
+            form.source = load_form_template('register_user.xhtml')
         return form
 
     def get_forms(self, bare=True):
