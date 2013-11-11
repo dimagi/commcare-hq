@@ -37,7 +37,7 @@ def get_related_cases(initial_case_list, domain, strip_history=False, search_up=
     case_db.populate(directly_referenced_indices)
     while queue:
         case = queue.pop()
-        if case.case_id not in relevant_cases:
+        if case and case.case_id not in relevant_cases:
             relevant_cases[case.case_id] = case
             if case.doc_type == 'CommCareCase-Deleted':
                 relevant_deleted_case_ids.append(case.case_id)
