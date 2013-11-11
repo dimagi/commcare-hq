@@ -234,6 +234,7 @@ e.g.
   ds = CustomReportDataSource(config)
   data = ds.get_data()
 
+.. _dynamic_reports:
 
 Adding dynamic reports
 ----------------------

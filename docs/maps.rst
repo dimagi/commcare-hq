@@ -14,12 +14,12 @@ These are:
 
 .. _map report template: https://github.com/dimagi/commcare-hq/blob/8af9177910fa3ae5642a68d8085071e91c1356f6/corehq/apps/reports/standard/inspect.py#L685
 
-* the backend data source which will power the report (required)
-* customizations to the display/behavior of the map itself (optional, but suggested for anything other than quick prototyping)
+* ``data_source`` -- the backend data source which will power the report (required)
+* ``display_config`` -- customizations to the display/behavior of the map itself (optional, but suggested for anything other than quick prototyping)
 
 There are two options for how this configuration actually takes place:
 
-* via a domain's "dynamic reports", where you can create specific configurations of a generic report for a domain. (TODO: document this separately)
+* via a domain's "dynamic reports" (see :ref:`dynamic_reports`), where you can create specific configurations of a generic report for a domain
 * subclass the map report to provide/generate the config parameters.
   You should **not** need to subclass any code functionality.
   This is useful for making a more permanent map configuration, and when the configuration needs to be dynamically generated based on other data or domain config (e.g., for `CommTrack`_)
@@ -45,6 +45,8 @@ The columns shown in the table and the detail popup can be customized.
 Attribute data is generally treated as either being numeric data or enumerated data (i.e., belonging to a number of discrete categories).
 Strings are inherently treated as enum data.
 Numeric data can be treated as enum data be specifying thresholds: numbers will be mapped to enum 'buckets' between consecutive thresholds (e.g, thresholds of ``10``, ``20`` will create enum categories: ``< 10``, ``10-20``, ``> 20``).
+
+.. _styling:
 
 Styling
 =======
@@ -73,17 +75,33 @@ There are several sample reports that comprehensively demo the potential styling
 .. _Demo 1: https://www.commcarehq.org/a/commtrack-public-demo/reports/maps_demo/
 .. _Demo 2: https://www.commcarehq.org/a/commtrack-public-demo/reports/maps_demo2/
 
+See :ref:`display_config`
+
 Data Sources
 ============
 
-Any report filters in the map report are passed on verbatim to the backing data source.
+Set this config on the ``data_source`` property.
+It should be a ``dict`` with the following properties:
 
-One column of the returned data must be the geodata. For point features, this can be in the format of a geopoint xform question (e.g, ``42.366 -71.104``). The geodata format for region features is outside the scope of the document.
+* ``geo_column`` -- the column in the returned data that contains the geo point (default: ``"geo"``)
+* ``adapter`` -- which data adapter to use (one of the choices below)
+* extra arguments specific to each data adapter
+
+Note that any report filters in the map report are passed on verbatim to the backing data source.
+
+One column of the data returned by the data source must be the geodata (in ``geo_column``).
+For point features, this can be in the format of a geopoint xform question (e.g, ``42.366 -71.104``).
+The geodata format for region features is outside the scope of the document.
 
 ``report``
 ----------
 
-Retrieve data from a ``ReportDataSource`` (the abstract data provider of Simon's new reporting framework -- TODO: link to this documentation)
+Retrieve data from a ``ReportDataSource`` (the abstract data provider of Simon's new reporting framework -- see :ref:`report_api`)
+
+Parameters:
+
+* ``report`` -- fully qualified name of ``ReportDataSource`` class
+* ``report_params`` -- ``dict`` of static config parameters for the ``ReportDataSource`` (optional)
 
 ``legacyreport``
 ----------------
@@ -92,10 +110,128 @@ Retrieve data from a ``GenericTabularReport`` which has not yet been refactored 
 *Not ideal* and should only be used for backwards compatibility.
 Tabular reports tend to return pre-formatted data, while the maps report works best with raw data (for example, it won't know ``4%`` or ``30 mg`` are numeric data, and will instead treat them as text enum values). `Read more`_.
 
+Parameters:
+
+* ``report`` -- fully qualified name of tabular report view class (descends from ``GenericTabularReport``)
+* ``report_params`` -- ``dict`` of static config parameters for the ``ReportDataSource`` (optional)
+
+``case``
+--------
+
+Pull case data similar to the Case List.
+
+*(In the current implementation, you must use the same report filters as on the regular Case List report)*
+
+Parameters:
+
+* ``geo_fetch`` -- a mapping of case types to directives of how to pull geo data for a case of that type. Supported directives:
+
+  - name of case property containing the ``geopoint`` data
+  - ``"link:xxx"`` where ``xxx`` is the case type of a linked case; the adapter will then serach that linked case for geo-data based on the directive of the linked case type *(not supported yet)*
+
+  In the absence of any directive, the adapter will first search any linked ``Location`` record *(not supported yet)*, then try the ``gps`` case property.
+
 ``csv`` and ``geojson``
 -----------------------
 
 Retrieve static data from a csv or geojson file on the server (only useful for testing/demo-- this powers the demo reports, for example).
+
+.. _display_config:
+
+Display Configuration
+=====================
+
+Set this config on the ``display_config`` property.
+It should be a ``dict`` with the following properties:
+
+*(Whenever 'column' is mentioned, it refers to a column slug as returned by the data adapter)*
+
+**All properties are optional. The map will attempt sensible defaults.**
+
+* ``name_column`` -- column containing the name of the row; used as the header of the detail popup
+
+* ``column_titles`` -- a mapping of columns to display titles for each column
+
+* ``detail_columns`` -- a list of columns to display in the detail popup
+
+* ``table_columns`` -- a list of columns to display in the data table below the map
+
+* ``enum_captions`` -- display captions for enumerated values.
+  A ``dict`` where each key is a column and each value is another ``dict`` mapping enum values to display captions.
+  These enum values reflect the results of any transformations from ``metrics`` (including ``_other``, ``_null``, and ``-``).
+
+* ``numeric_format`` -- a mapping of columns to functions that apply the appropriate numerical formatting for that column.
+  Expressed as the body of a function that returns the formatted value (``return`` statement required!).
+  The unformatted value is passed to the function as the variable ``x``.
+
+* ``detail_template`` -- an underscore.js template to format the content of the detail popup
+
+* ``metrics`` -- define visualization metrics (see :ref:`styling`).
+  An array of metrics, where each metric is a ``dict`` like so:
+
+  - ``auto`` -- column.
+    Auto-generate a metric for this column with no additional manual input.
+    Uses heuristics to determine best presentation format.
+
+  *OR*
+
+  - ``title`` -- metric title in sidebar (optional)
+
+  *AND one of the following for each visualization property you want to control*
+
+  - ``size`` (static) -- set the size of the marker (radius in pixels)
+
+  - ``size`` (dynamic) -- vary the size of the marker dynamically.
+    A dict in the format:
+
+    - ``column`` -- column whose data to vary by
+
+    - ``baseline`` -- value that should correspond to a marker radius of 10px
+
+    - ``min`` -- min marker radius (optional)
+
+    - ``max`` -- max marker radius (optional)
+
+  - ``color`` (static) -- set the marker color (css color value)
+
+  - ``color`` (dynamic) -- vary the color of the marker dynamically.
+    A dict in the format:
+
+    - ``column`` -- column whose data to vary by
+
+    - ``categories`` -- for enumerated data; a mapping of enum values to css color values.
+      Mapping key may also be one of these magic values:
+
+      - ``_other``: a catch-all for any value not specified
+
+      - ``_null``: matches rows whose value is blank; if absent, such rows will be hidden
+
+    - ``colorstops`` -- for numeric data.
+      Creates a sliding color scale.
+      An array of colorstops, each of the format ``[<value>, <css color>]``.
+
+    - ``thresholds`` -- (optional) a helper to convert numerical data into enum data via "buckets".
+      Specify a list of thresholds.
+      Each bucket comprises a range from one threshold up to but not including the next threshold.
+      Values are mapped to the bucket whose range they lie in.
+      The "name" (i.e., enum value) of a bucket is its lower threshold.
+      Values below the lowest threshold are mapped to a special bucket called ``"-"``.
+
+  - ``icon`` (static) -- set the marker icon (image url)
+
+  - ``icon`` (dynamic) -- vary the icon of the marker dynamically.
+    A dict in the format:
+
+    - ``column`` -- column whose data to vary by
+
+    - ``categories`` -- as in ``color``, a mapping of enum values to icon urls
+
+    - ``thresholds`` -- as in ``color``
+
+  ``size`` and ``color`` may be combined (such as one column controlling size while another controls the color).
+  ``icon`` must be used on its own.
+
+  For date columns, any relevant number in the above config (``thresholds``, ``colorstops``, etc.) may be replaced with a date (in ISO format).
 
 .. _Read more:
 
