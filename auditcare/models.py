@@ -166,7 +166,7 @@ class ModelActionAudit(AuditEvent):
         if prev_rev.revision_checksum == self.revision_checksum:
             #sanity check, do nothing at no changes
             return None
-        removed, added, changed = utils.dict_diff(self.archived_data, prev_rev.archived_data)
+        removed, added, changed = utils.dict_diff(self.archived_data, prev_rev.to_json()['archived_data'])
         self.removed = removed
         self.added = added
         self.changed = changed
