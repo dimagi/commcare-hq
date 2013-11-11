@@ -95,7 +95,7 @@ def _post_xform_to_couch(instance, attachments=None):
                 # "rollback" by changing the doc_type to XFormError
                 try:
                     bad = XFormError.get(doc_id)
-                    bad.problem = "%s" % e
+                    bad.problem = unicode(e)
                     bad.save()
                     return bad
                 except ResourceNotFound:
