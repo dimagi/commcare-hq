@@ -245,7 +245,7 @@ def importer_job_poll(request, domain, download_id, template="importer/partials/
     context = RequestContext(request)
 
     if download_data.task.result and 'error' in download_data.task.result:
-        error = download_data.result['error']
+        error = download_data.task.result['error']
         if error == 'EXPIRED':
             return _spreadsheet_expired(request, domain)
         elif error == 'HAS_ERRORS':
