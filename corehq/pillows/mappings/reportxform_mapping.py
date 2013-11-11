@@ -1,6 +1,5 @@
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
-REPORT_XFORM_INDEX="report_xforms_57e70354956755b15465af3fa4e8e5ae"
-
+REPORT_XFORM_INDEX="report_xforms_f2c1d12974356f337b97915c0d68df91"
 
 
 
@@ -71,7 +70,7 @@ REPORT_XFORM_MAPPING = {
     'ignore_malformed': True,
     'dynamic': True,
     "_meta": {
-        "created": '2013-05-11', #record keeping on the index.
+        "created": '2013-11-08', #record keeping on the index.
     },
     "properties": {
         'doc_type': {'type': 'string'},

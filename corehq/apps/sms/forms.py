@@ -14,6 +14,7 @@ from corehq.apps.reminders.forms import RecordListField
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.sms.util import get_available_backends
 from dimagi.utils.django.fields import TrimmedCharField
+from django.conf import settings
 
 FORWARDING_CHOICES = (
     (FORWARD_ALL, ugettext_noop("All messages")),
@@ -21,17 +22,48 @@ FORWARDING_CHOICES = (
 )
 
 class SMSSettingsForm(Form):
+    _cchq_is_previewer = False
     use_default_sms_response = BooleanField(required=False)
     default_sms_response = TrimmedCharField(required=False)
+    use_custom_case_username = BooleanField(required=False)
+    custom_case_username = TrimmedCharField(required=False)
+    use_custom_message_count_threshold = BooleanField(required=False)
+    custom_message_count_threshold = IntegerField(required=False)
+    use_custom_chat_template = BooleanField(required=False)
+    custom_chat_template = TrimmedCharField(required=False)
 
-    def clean_default_sms_response(self):
-        if self.cleaned_data.get("use_default_sms_response"):
-            value = self.cleaned_data.get("default_sms_response", "")
-            if value == "":
+    def _clean_dependent_field(self, bool_field, field):
+        if self.cleaned_data.get(bool_field):
+            value = self.cleaned_data.get(field, None)
+            if not value:
                 raise ValidationError(_("This field is required."))
             return value
         else:
             return None
+
+    def clean_default_sms_response(self):
+        return self._clean_dependent_field("use_default_sms_response", "default_sms_response")
+
+    def clean_custom_case_username(self):
+        if not self._cchq_is_previewer:
+            return None
+        return self._clean_dependent_field("use_custom_case_username", "custom_case_username")
+
+    def clean_custom_message_count_threshold(self):
+        if not self._cchq_is_previewer:
+            return None
+        value = self._clean_dependent_field("use_custom_message_count_threshold", "custom_message_count_threshold")
+        if value is not None and value < 0:
+            raise ValidationError(_("Please enter a positive number"))
+        return value
+
+    def clean_custom_chat_template(self):
+        if not self._cchq_is_previewer:
+            return None
+        value = self._clean_dependent_field("use_custom_chat_template", "custom_chat_template")
+        if value is not None and value not in settings.CUSTOM_CHAT_TEMPLATES:
+            raise ValidationError(_("Unknown custom template identifier."))
+        return value
 
 class ForwardingRuleForm(Form):
     forward_type = ChoiceField(choices=FORWARDING_CHOICES)

@@ -23,13 +23,17 @@
     <div class="span4">
         <aside class="well">
             <h3>{% trans "Have a new idea?" %}</h3>
-            <a class="btn btn-primary" href="{% url "registration_domain" %}">Create a Blank Project</a>
-            <div>or</div>
-            <a class="btn btn-primary" href="{% url "appstore" %}">Copy from CommCare Exchange</a>
+            <a class="btn btn-primary" href="{% url "registration_domain" %}">{% trans "Create a Blank Project" %}</a>
+            <div>{% trans "or" %}</div>
+            <a class="btn btn-primary" href="{% url "appstore" %}">{% trans "Copy from CommCare Exchange" %}</a>
         </aside>
         <aside class="well">
             <h3>{% trans "Need ideas?" %}</h3>
-            <p>Check out the <a href="{% url "appstore" %}">CommCare Exchange</a>.
+            <p>
+                {% url "appstore" as appstore_url %}
+                {% blocktrans %}
+                    Check out the <a href="{{ appstore_url }}">CommCare Exchange</a>.
+                {% endblocktrans %}
             </p>
         </aside>
     </div>

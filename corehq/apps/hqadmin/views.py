@@ -33,7 +33,8 @@ from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqadmin.escheck import check_cluster_health, check_xform_es_index, check_reportcase_es_index, check_case_es_index, check_reportxform_es_index
+from corehq.apps.hqadmin.escheck import check_es_cluster_health, check_xform_es_index, check_reportcase_es_index, check_case_es_index, check_reportxform_es_index
+from corehq.apps.hqadmin.system_info.checks import check_redis, check_rabbitmq, check_celery_health, check_memcached
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.reports.standard.domains import es_domain_query
@@ -610,6 +611,14 @@ def system_ajax(request):
         pass
     elif type == 'pillowtop':
         return json_response(get_all_pillows_json())
+    elif type == 'stale_pillows':
+        es_index_status = [
+            check_case_es_index(interval=3),
+            check_xform_es_index(interval=3),
+            check_reportcase_es_index(interval=3),
+            check_reportxform_es_index(interval=3)
+        ]
+        return json_response(es_index_status)
 
     if celery_monitoring:
         cresource = Resource(celery_monitoring, timeout=3)
@@ -619,13 +628,15 @@ def system_ajax(request):
                 t = cresource.get("api/tasks", params_dict={'limit': task_limit}).body_string()
                 all_tasks = json.loads(t)
             except Exception, ex:
-                all_tasks = []
-                t = {}
+                all_tasks = {}
                 logging.error("Error with getting from celery_flower: %s" % ex)
 
             for task_id, traw in all_tasks.items():
                 # it's an array of arrays - looping through [<id>, {task_info_dict}]
-                traw['name'] = '.'.join(traw['name'].split('.')[-2:])
+                if 'name' in traw:
+                    traw['name'] = '.'.join(traw['name'].split('.')[-2:])
+                else:
+                    traw['name'] = None
                 ret.append(traw)
             ret = sorted(ret, key=lambda x: x['succeeded'], reverse=True)
             return HttpResponse(json.dumps(ret), mimetype = 'application/json')
@@ -634,22 +645,7 @@ def system_ajax(request):
 
 @require_superuser
 def system_info(request):
-
-    def human_bytes(bytes):
-        #source: https://github.com/bartTC/django-memcache-status
-        bytes = float(bytes)
-        if bytes >= 1073741824:
-            gigabytes = bytes / 1073741824
-            size = '%.2fGB' % gigabytes
-        elif bytes >= 1048576:
-            megabytes = bytes / 1048576
-            size = '%.2fMB' % megabytes
-        elif bytes >= 1024:
-            kilobytes = bytes / 1024
-            size = '%.2fKB' % kilobytes
-        else:
-            size = '%.2fB' % bytes
-        return size
+    environment = settings.SERVER_ENVIRONMENT
 
     context = get_hqadmin_base_context(request)
     context['couch_update'] = request.GET.get('couch_update', 5000)
@@ -659,122 +655,17 @@ def system_info(request):
     # recent changes
     recent_changes = int(request.GET.get('changes', 50))
     context['recent_changes'] = get_recent_changes(get_db(), recent_changes)
-
-
     context['rabbitmq_url'] = get_rabbitmq_management_url()
-
     context['hide_filters'] = True
     context['current_system'] = socket.gethostname()
-
-    environment = settings.SERVER_ENVIRONMENT
     context['last_deploy'] = HqDeploy.get_latest(environment)
-
     context['snapshot'] = context['last_deploy'].code_snapshot if context['last_deploy'] else {}
 
-    #redis status
-    redis_status = ""
-    redis_results = ""
-    if 'redis' in settings.CACHES:
-        rc = cache.get_cache('redis')
-        try:
-            import redis
-            redis_api = redis.StrictRedis.from_url('redis://%s' % rc._server)
-            info_dict = redis_api.info()
-            redis_status = "Online"
-            redis_results = "Used Memory: %s" % info_dict['used_memory_human']
-        except Exception, ex:
-            redis_status = "Offline"
-            redis_results = "Redis connection error: %s" % ex
-    else:
-        redis_status = "Not Configured"
-        redis_results = "Redis is not configured on this system!"
-
-    context['redis_status'] = redis_status
-    context['redis_results'] = redis_results
-
-    #rabbitmq status
-    mq_status = "Unknown"
-    if settings.BROKER_URL.startswith('amqp'):
-        amqp_parts = settings.BROKER_URL.replace('amqp://','').split('/')
-        mq_management_url = amqp_parts[0].replace('5672', '15672')
-        vhost = amqp_parts[1]
-        try:
-            mq = Resource('http://%s' % mq_management_url, timeout=2)
-            vhost_dict = json.loads(mq.get('api/vhosts', timeout=2).body_string())
-            mq_status = "Offline"
-            for d in vhost_dict:
-                if d['name'] == vhost:
-                    mq_status='RabbitMQ OK'
-        except Exception, ex:
-            mq_status = "RabbitMQ Error: %s" % ex
-    else:
-        mq_status = "RabbitMQ Not configured"
-    context['rabbitmq_status'] = mq_status
-
-    #celery task monitoring status
-    celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
-    worker_status = ""
-    if celery_monitoring:
-        cresource = Resource(celery_monitoring, timeout=3)
-        all_workers = {}
-        try:
-            t = cresource.get("api/workers").body_string()
-            all_workers = json.loads(t)
-        except Exception, ex:
-            pass
-        worker_ok = '<span class="label label-success">OK</span>'
-        worker_bad = '<span class="label label-important">Down</span>'
-
-        tasks_ok = 'label-success'
-        tasks_full = 'label-warning'
-
-
-        worker_info = []
-        for hostname, w in all_workers.items():
-            status_html = mark_safe(worker_ok if w['status'] else worker_bad)
-            tasks_class = tasks_full if w['running_tasks'] == w['concurrency'] else tasks_ok
-            tasks_html = mark_safe('<span class="label %s">%d / %d</span> :: %d' % (tasks_class, w['running_tasks'], w['concurrency'], w['completed_tasks']))
-            worker_info.append(' '.join([hostname, status_html, tasks_html]))
-        worker_status = '<br>'.join(worker_info)
-    context['worker_status'] = mark_safe(worker_status)
-
-
-    #memcached_status
-    mc = cache.get_cache('default')
-    mc_status = "Unknown/Offline"
-    mc_results = ""
-    try:
-        mc_stats = mc._cache.get_stats()
-        if len(mc_stats) > 0:
-            mc_status = "Online"
-            stats_dict = mc_stats[0][1]
-            bytes = stats_dict['bytes']
-            max_bytes = stats_dict['limit_maxbytes']
-            curr_items = stats_dict['curr_items']
-            mc_results = "%s Items %s out of %s" % (curr_items, human_bytes(bytes),
-                                                    human_bytes(max_bytes))
-
-    except Exception, ex:
-        mc_status = "Offline"
-        mc_results = "%s" % ex
-    context['memcached_status'] = mc_status
-    context['memcached_results'] = mc_results
-
-
-    #elasticsearch status
-    #node status
-    context.update(check_cluster_health())
-
-    # todo: this blocks with a 2s delay for each update, could be async'ed in separate call
-    es_index_status = [
-        check_case_es_index(),
-        check_xform_es_index(),
-        check_reportcase_es_index(),
-        check_reportxform_es_index()
-    ]
-    # convert these to a unified structure - all the dict values are namespaced by index,
-    # but we don't care here in our array output for template rendering
-    context['es_index_status'] = es_index_status
+    context.update(check_redis())
+    context.update(check_rabbitmq())
+    context.update(check_celery_health())
+    context.update(check_memcached())
+    context.update(check_es_cluster_health())
 
     return render(request, "hqadmin/system_info.html", context)
 
@@ -960,7 +851,10 @@ def stats_data(request):
         elif len(domains) < ES_MAX_CLAUSE_COUNT:
             domain_info = [{"names": [d for d in domains], "display_name": _("Domains Matching Filter")}]
         else:
-            domain_info = [{"names": None, "display_name": _("All Domains (NOT applying filters. > 500 projects)")}]
+            domain_info = [{
+                "names": None,
+                "display_name": _("All Domains (NOT applying filters. > %s projects)" % ES_MAX_CLAUSE_COUNT)
+            }]
     else:
         domain_info = [{"names": None, "display_name": _("All Domains")}]
 

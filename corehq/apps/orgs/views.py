@@ -580,5 +580,6 @@ def stats(request, org, stat_slug, template='orgs/stats.html'):
 def stats_data(request, org):
     domains = [{"names": [d.name], "display_name": d.hr_name} for d in Domain.get_by_organization(org)]
     histo_type = request.GET.get('histogram_type')
-    stats_data = get_stats_data(domains, histo_type, request.datespan)
+    interval = request.GET.get('interval', 'day')
+    stats_data = get_stats_data(domains, histo_type, request.datespan, interval=interval)
     return json_response(stats_data)

@@ -11,6 +11,7 @@ from django.shortcuts import render
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_case_properties
+from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 
 from corehq.apps.reminders.forms import (
     CaseReminderForm,
@@ -369,6 +370,9 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
     
     if request.method == "POST":
         form = ComplexCaseReminderForm(request.POST)
+        form._cchq_is_superuser = request.couch_user.is_superuser
+        form._cchq_use_custom_content_handler = (h is not None and h.custom_content_handler is not None)
+        form._cchq_custom_content_handler = h.custom_content_handler if h is not None else None
         if form.is_valid():
             if h is None:
                 h = CaseReminderHandler(domain=domain)
@@ -404,6 +408,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
             h.recipient_case_match_property = form.cleaned_data["recipient_case_match_property"]
             h.recipient_case_match_type = form.cleaned_data["recipient_case_match_type"]
             h.recipient_case_match_value = form.cleaned_data["recipient_case_match_value"]
+            h.custom_content_handler = form.cleaned_data["custom_content_handler"]
             h.force_surveys_to_use_triggered_case = form.cleaned_data["force_surveys_to_use_triggered_case"]
             if form.cleaned_data["start_condition_type"] == "ON_DATETIME":
                 dt = parse(form.cleaned_data["start_datetime_date"]).date()
@@ -454,6 +459,8 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
                 "recipient_case_match_property" : h.recipient_case_match_property,
                 "recipient_case_match_type" : h.recipient_case_match_type,
                 "recipient_case_match_value" : h.recipient_case_match_value,
+                "use_custom_content_handler" : h.custom_content_handler is not None,
+                "custom_content_handler" : h.custom_content_handler,
                 "force_surveys_to_use_triggered_case" : h.force_surveys_to_use_triggered_case,
             }
         else:
@@ -472,6 +479,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
         "form_list":    form_list,
         "handler_id":   handler_id,
         "sample_list":  sample_list,
+        "is_superuser" : request.couch_user.is_superuser,
     })
 
 
@@ -1340,3 +1348,64 @@ class RemindersListView(BaseMessagingSectionView):
         raise {
             'success': False,
         }
+
+
+class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
+    template_name = 'reminders/keyword_list.html'
+    urlname = 'keyword_list'
+    page_title = ugettext_noop("Keywords")
+
+    limit_text = ugettext_noop("keywords per page")
+    empty_notification = ugettext_noop("You have no keywords. Please add one!")
+    loading_message = ugettext_noop("Loading keywords...")
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+    @property
+    def parameters(self):
+        return self.request.POST if self.request.method == 'POST' else self.request.GET
+
+    @property
+    @memoized
+    def total(self):
+        data = CommCareCaseGroup.get_db().view(
+            'reminders/survey_keywords',
+            reduce=True,
+            startkey=[self.domain],
+            endkey=[self.domain, {}],
+        ).first()
+        return data['value'] if data else 0
+
+    @property
+    def column_names(self):
+        return [
+            _("Keyword"),
+            _("Description"),
+        ]
+
+    @property
+    def page_context(self):
+        return self.pagination_context
+
+    @property
+    def paginated_list(self):
+        for keyword in SurveyKeyword.get_by_domain(
+            self.domain,
+            limit=self.limit,
+            skip=self.skip,
+        ):
+            yield {
+                'itemData': {
+                    'id': keyword._id,
+                    'keyword': keyword.keyword,
+                    'description': keyword.description,
+                    'editUrl': reverse('edit_keyword', args=[self.domain, keyword._id]),
+                },
+                'template': 'keyword-row-template',
+            }
+
+    def post(self, *args, **kwargs):
+        return self.paginate_crud_response
+

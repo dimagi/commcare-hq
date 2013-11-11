@@ -10,9 +10,15 @@
         {% else %}
             <li{% if not include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url "appstore" %}">{% trans "All" %}</a></li>
         {% endif %}
+        <hr>
     {% endif %}
 
-    <button style="margin: 1em 0" class="btn btn-primary" id="update-facets" data-prefix="{{ facet_prefix }}" data-params="{{ persistent_params }}">{% trans "Apply" %}</button>
+    <button style="margin-bottom: 1em;" class="btn btn-primary" id="update-facets" data-prefix="{{ facet_prefix }}" data-params="{{ persistent_params }}">{% trans "Apply" %}</button>
+    <li>
+        <form action="{{ search_url }}" method="get" class="form-search" id="facet-search">
+            <input type="text" name="{{ search_name }}" placeholder="Search for {{ search_for }}" value="{{ search_query }}" class="search-query" style="width: 80%" />
+        </form>
+    </li>
     {% for facet_group, expanded, facets in facet_map %}
 
         {% if grouped_facets and facet_group %}

@@ -96,8 +96,8 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
     def filter_values(self):
         ret = dict(
             domain=self.domain,
-            startdate=self.datespan.startdate_param_utc,
-            enddate=self.datespan.enddate_param_utc,
+            startdate=self.datespan.startdate_param,
+            enddate=self.datespan.enddate_param,
             male="male",
             female="female",
             positive="POSITIVE"
@@ -379,8 +379,8 @@ class GSIDSQLByDayReport(GSIDSQLReport):
 
     @property
     def headers(self):
-        startdate = self.datespan.startdate_utc
-        enddate = self.datespan.enddate_utc
+        startdate = self.datespan.startdate
+        enddate = self.datespan.enddate
 
         column_headers = []
         group_by = self.group_by[:-2]
@@ -411,8 +411,8 @@ class GSIDSQLByDayReport(GSIDSQLReport):
 
     @property
     def rows(self):
-        startdate = self.datespan.startdate_utc
-        enddate = self.datespan.enddate_utc
+        startdate = self.datespan.startdate
+        enddate = self.datespan.enddate
 
         old_data = self.data
         rows = []
@@ -442,8 +442,8 @@ class GSIDSQLByDayReport(GSIDSQLReport):
     def charts(self):
         rows = self.rows
         date_index = len(self.place_types)
-        startdate = self.datespan.startdate_utc
-        enddate = self.datespan.enddate_utc
+        startdate = self.datespan.startdate
+        enddate = self.datespan.enddate
         date_axis = Axis(label="Date", dateFormat="%b %d")
         tests_axis = Axis(label="Number of Tests")
         chart = LineChart("Number of Tests Per Day", date_axis, tests_axis)
@@ -460,6 +460,10 @@ class GSIDSQLTestLotsReport(GSIDSQLReport):
     name = "Test Lots Report"
     slug = "test_lots_sql"
     section_name = "test lots"
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return user and user.is_previewer()
 
     @property
     def group_by(self):
@@ -714,7 +718,6 @@ class PatientMapReport(GenericMapReport, CustomProjectReport):
     @property
     def display_config(self):
         return {
-            'name_column': self.agg_level,
             'column_titles': {
                 'Positive Tests::Female +ve Percent': 'Positive tests: Female',
                 'Positive Tests::Male +ve Percent': 'Positive tests: Male',
@@ -727,9 +730,9 @@ class PatientMapReport(GenericMapReport, CustomProjectReport):
                 'Age Range::Male age range': 'Age range: Male',
                 'disease': 'Disease',
             },
-            'detail_columns': [
-                'Country',
+            'detail_columns': self.place_types + [
                 'disease',
+                '__space__',
                 'Positive Tests::Female +ve Percent',
                 'Positive Tests::Male +ve Percent',
                 'Positive Tests::Total +ve Percent',
@@ -737,21 +740,42 @@ class PatientMapReport(GenericMapReport, CustomProjectReport):
                 'Tests::Number of Males ',
                 'Tests::Total',
             ],
-            'table_columns': [
+            'table_columns': self.place_types + [
                 'Tests::Number of Females ',
                 'Tests::Number of Males ',
                 'Tests::Total',
                 'Positive Tests::Female +ve Percent',
                 'Positive Tests::Male +ve Percent',
                 'Positive Tests::Total +ve Percent',
-                'Age Range::All age range',
                 'Age Range::Female age range',
                 'Age Range::Male age range',
-            ]
+                'Age Range::All age range',
+            ],
+            'detail_template': """<div class="default-popup">
+                  <table>
+                    <% _.each(info, function(field) { %>
+                    <tr class="data data-<%= field.slug %>">
+                      <% if (field.slug === '__space__') { %>
+                        <td>&nbsp;</td><td>&nbsp;</td>
+                      <% } else { %>
+                        <td><%= field.label %></td>
+                        <td class="detail_data">
+                          <%= field.value %>
+                        </td>
+                      <% } %>
+                    </tr>
+                    <% }); %>
+                  </table>
+                </div>"""
         }
 
     @property
     def agg_level(self):
-        opts = ['country', 'province', 'district', 'clinic']
         agg_at = self.request.GET.get('aggregate_at', None)
-        return agg_at.title() if agg_at else 'Clinic'
+        return agg_at if agg_at else 'clinic'
+
+    @property
+    def place_types(self):
+        opts = ['country', 'province', 'district', 'clinic']
+        agg_at = self.agg_level
+        return [o.title() for o in opts[:opts.index(agg_at) + 1]]

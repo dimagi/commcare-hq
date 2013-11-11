@@ -3,8 +3,10 @@ import json
 from django import template
 from django.conf import settings
 from django.core.urlresolvers import reverse
+from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
+import simplejson
 from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.logging import notify_exception
@@ -89,43 +91,44 @@ def domains_for_user(request, selected_domain=None):
     Cache the entire string alongside the couch_user's doc_id that can get invalidated when
     the user doc updates via save.
     """
-    cached_val = cache_core.get_cached_prop(request.couch_user.get_id, 'domain_list')
-    if cached_val:
-        return cached_val.get('domain_list', "")
+
 
     lst = list()
     lst.append('<ul class="dropdown-menu nav-list dropdown-orange">')
     new_domain_url = reverse("registration_domain")
     if selected_domain == 'public':
         # viewing the public domain with a different db, so the user's domains can't readily be accessed.
-        lst.append('<li><a href="%s">Back to My Projects...</a></li>' % reverse("domain_select"))
+        lst.append('<li><a href="%s">%s...</a></li>' % (reverse("domain_select"), _("Back to My Projects")))
         lst.append('<li class="divider"></li>')
     else:
-        try:
-            domain_list = Domain.active_for_user(request.couch_user)
-        except Exception:
-            if settings.DEBUG:
-                raise
-            else:
-                domain_list = Domain.active_for_user(request.user)
-                notify_exception(request)
+
+        cached_domains = cache_core.get_cached_prop(request.couch_user.get_id, 'domain_list')
+        if cached_domains:
+            domain_list = [Domain.wrap(x) for x in cached_domains]
+        else:
+            try:
+                domain_list = Domain.active_for_user(request.couch_user)
+                cache_core.cache_doc_prop(request.couch_user.get_id, 'domain_list', [x.to_json() for x in domain_list])
+            except Exception:
+                if settings.DEBUG:
+                    raise
+                else:
+                    domain_list = Domain.active_for_user(request.user)
+                    notify_exception(request)
 
         if len(domain_list) > 0:
-            lst.append('<li class="nav-header">My Projects</li>')
+            lst.append('<li class="nav-header">%s</li>' % _('My Projects'))
             for domain in domain_list:
                 default_url = reverse("domain_homepage", args=[domain.name])
                 lst.append('<li><a href="%s">%s</a></li>' % (default_url, domain.long_display_name()))
         else:
             lst.append('<li class="nav-header">No Projects</li>')
     lst.append('<li class="divider"></li>')
-    lst.append('<li><a href="%s">New Project...</a></li>' % new_domain_url)
-    lst.append('<li><a href="%s">CommCare Exchange...</a></li>' % reverse("appstore"))
+    lst.append('<li><a href="%s">%s...</a></li>' % (new_domain_url, _('New Project')))
+    lst.append('<li><a href="%s">%s...</a></li>' % (reverse("appstore"), _('CommCare Exchange')))
     lst.append("</ul>")
 
     domain_list_str = "".join(lst)
-    ret = {"domain_list": domain_list_str }
-    cache_core.cache_doc_prop(request.couch_user.get_id, 'domain_list', ret)
-
     return domain_list_str
 
 @register.simple_tag
@@ -145,45 +148,7 @@ def list_my_domains(request):
     my_domain_list_str = "".join(lst)
     ret = {"list_my_domains": my_domain_list_str}
     cache_core.cache_doc_prop(request.couch_user.get_id, 'list_my_domains', ret)
-
     return my_domain_list_str
-
-@register.simple_tag
-def list_my_domains(request):
-    cached_val = cache_core.get_cached_prop(request.couch_user.get_id, 'list_my_domains')
-    if cached_val:
-        return cached_val.get('list_my_domains', "")
-
-    domain_list = Domain.active_for_user(request.user)
-    lst = list()
-    lst.append('<ul class="nav nav-pills nav-stacked">')
-    for domain in domain_list:
-        default_url = reverse("domain_homepage", args=[domain.name])
-        lst.append('<li><a href="%s">%s</a></li>' % (default_url, domain.display_name()))
-    lst.append('</ul>')
-
-    return "".join(lst)
-
-@register.simple_tag
-def list_my_orgs(request):
-    org_list = request.couch_user.get_organizations()
-    lst = list()
-    lst.append('<ul class="nav nav-pills nav-stacked">')
-    for org in org_list:
-        default_url = reverse("orgs_landing", args=[org.name])
-        lst.append('<li><a href="%s">%s</a></li>' % (default_url, org.title))
-    lst.append('</ul>')
-
-    return "".join(lst)
-
-
-@register.simple_tag
-def commcare_user():
-    return _(settings.COMMCARE_USER_TERM)
-
-@register.simple_tag
-def hq_web_user():
-    return _(settings.WEB_USER_TERM)
 
 
 @register.simple_tag
@@ -237,3 +202,10 @@ def get_attribute(obj, arg):
     Usage: {{ couch_user|getattr:"full_name" }}
     """
     return getattr(obj, arg, None)
+
+
+@register.filter
+def pretty_doc_info(doc_info):
+    return render_to_string('hqwebapp/pretty_doc_info.html', {
+        'doc_info': doc_info,
+    })

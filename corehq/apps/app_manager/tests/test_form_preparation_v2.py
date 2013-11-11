@@ -6,7 +6,7 @@ import lxml.etree
 
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from corehq.apps.app_manager.const import APP_V2
-from corehq.apps.app_manager.models import Application, OpenCaseAction, UpdateCaseAction, PreloadAction, FormAction
+from corehq.apps.app_manager.models import Application, OpenCaseAction, UpdateCaseAction, PreloadAction, FormAction, Module
 from django.test import TestCase
 from corehq.apps.app_manager.tests.util import TestFileMixin
 
@@ -30,7 +30,7 @@ class FormPreparationV2Test(FormPrepBase):
     def setUp(self):
         self.app = Application.new_app('domain', 'New App', APP_V2)
         self.app.version = 3
-        self.module = self.app.new_module('New Module', lang='en')
+        self.module = self.app.add_module(Module.new_module('New Module', lang='en'))
         self.form = self.app.new_form(0, 'New Form', lang='en')
         self.module.case_type = 'test_case_type'
         self.form.source = self.get_xml('original')

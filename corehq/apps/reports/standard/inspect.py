@@ -43,6 +43,8 @@ from dimagi.utils.modules import to_function
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
 from corehq import elastic
+from jsonobject import DateTimeProperty
+
 
 class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     """
@@ -146,7 +148,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
             yield [
                 form_data_link(form["_id"]),
                 (username or _('No data for username')) + (" %s" % name if name else ""),
-                datetime.strptime(form["form"]["meta"]["timeEnd"], '%Y-%m-%dT%H:%M:%SZ').strftime("%Y-%m-%d %H:%M:%S"),
+                DateTimeProperty().wrap(form["form"]["meta"]["timeEnd"]).strftime("%Y-%m-%d %H:%M:%S"),
                 xmlns_to_name(self.domain, form.get("xmlns"), app_id=form.get("app_id")),
             ]
 
@@ -622,6 +624,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
             DataTablesColumn(_("Modified Date"), prop_name="modified_on"),
             DataTablesColumn(_("Status"), prop_name="get_status_display", sortable=False)
         )
+        headers.custom_sort = [[5, 'desc']]
         return headers
 
     @property
@@ -641,9 +644,11 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
 
     def date_to_json(self, date):
         if date:
-            return tz_utils.adjust_datetime_to_timezone(
-                date, pytz.utc.zone, self.timezone.zone
-            ).strftime('%Y-%m-%d %H:%M:%S')
+            return date.strftime('%Y-%m-%d %H:%M:%S')
+            # temporary band aid solution for http://manage.dimagi.com/default.asp?80262
+            # return tz_utils.adjust_datetime_to_timezone(
+            #     date, pytz.utc.zone, self.timezone.zone
+            # ).strftime('%Y-%m-%d %H:%M:%S')
         else:
             return ''
 

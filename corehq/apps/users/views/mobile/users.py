@@ -17,6 +17,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
 from django.contrib import messages
+from corehq.elastic import es_query, ES_URLS, ADD_TO_ES_FILTER
 
 from couchexport.models import Format
 from corehq.apps.users.forms import CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm, MultipleSelectionForm
@@ -272,8 +273,16 @@ class ListCommCareUsersView(BaseUserSettingsView):
         )
 
     @property
+    @memoized
+    def query(self):
+        return self.request.GET.get('query')
+
+    @property
     def show_case_sharing(self):
         return self.request.project.case_sharing_included()
+
+    def get_groups(self):
+        return Group.by_domain(self.domain)
 
     @property
     def page_context(self):
@@ -283,11 +292,13 @@ class ListCommCareUsersView(BaseUserSettingsView):
                 'limit': self.users_list_limit,
                 'total': self.users_list_total,
             },
+            'groups': self.get_groups(),
             'cannot_share': self.cannot_share,
             'show_inactive': self.show_inactive,
             'more_columns': self.more_columns,
             'show_case_sharing': self.show_case_sharing,
             'pagination_limit_options': range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT),
+            'query': self.query,
         }
 
 
@@ -305,6 +316,9 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
     @property
     @memoized
     def users(self):
+        if self.query:
+            return self.users_from_es
+
         if self.cannot_share:
             users = CommCareUser.cannot_share(
                 self.domain,
@@ -321,6 +335,23 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
         if self.sort_by == 'forms':
             users.sort(key=lambda user: -user.form_count)
         return users
+
+    @property
+    @memoized
+    def users_from_es(self):
+        q = {
+            "query": { "query_string": { "query": self.query }},
+            "filter": {"and": ADD_TO_ES_FILTER["users"][:]},
+            "sort": {'username.exact': 'asc'},
+        }
+        params = {
+            "domain": self.domain,
+            "is_active": not self.show_inactive,
+        }
+        results = es_query(params=params, q=q, es_url=ES_URLS["users"],
+                           size=self.users_list_limit, start_at=self.users_list_skip)
+        users = [res['_source'] for res in results.get('hits', {}).get('hits', [])]
+        return [CommCareUser.wrap(user) for user in users]
 
     def get_archive_text(self, is_active):
         if is_active:

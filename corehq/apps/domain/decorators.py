@@ -65,9 +65,7 @@ def login_and_domain_required(view_func):
                 else:
                     raise Http404
             else:
-                login_url = reverse('login', kwargs={
-                    'domain_type': domain.domain_type
-                })
+                login_url = reverse('domain_login', kwargs={'domain': domain})
                 return _redirect_for_login_or_domain(req, REDIRECT_FIELD_NAME, login_url)
         else:
             raise Http404

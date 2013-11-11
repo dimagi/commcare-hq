@@ -1,5 +1,9 @@
 from urlparse import urlparse
 from datetime import datetime
+import json
+import os
+import re
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -14,34 +18,32 @@ from django.http import HttpResponseRedirect, HttpResponse, Http404,\
     HttpResponseServerError, HttpResponseNotFound
 from django.shortcuts import redirect, render
 from django.views.generic import TemplateView
-import json
-from corehq.apps.announcements.models import Notification
+from couchdbkit import ResourceNotFound
+from django.utils.translation import ugettext as _, ugettext_noop
+from django.core.urlresolvers import reverse
+from django.core.mail.message import EmailMessage
+from django.template import loader
+from django.template.context import RequestContext
 
+from corehq.apps.announcements.models import Notification
 from corehq.apps.app_manager.models import BUG_REPORTS_DOMAIN
 from corehq.apps.app_manager.models import import_app
 from corehq.apps.domain.decorators import require_superuser,\
     login_and_domain_required
 from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
+from corehq.apps.receiverwrapper.models import Repeater
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
+from corehq.apps.hqwebapp.doc_info import get_doc_info
+from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
-from django.utils.translation import ugettext as _, ugettext_noop
-
 from dimagi.utils.web import get_url_base, json_response
-from django.core.urlresolvers import reverse
 from corehq.apps.domain.models import Domain
-from django.core.mail.message import EmailMessage
-from django.template import loader
-from django.template.context import RequestContext
 from couchforms.models import XFormInstance
 from soil import heartbeat
 from soil import views as soil_views
-import os
-import re
-
-from django.utils.http import urlencode
 
 
 def pg_check():
@@ -299,6 +301,7 @@ def bug_report(req):
         'url',
         'message',
         'app_id',
+        'cc'
     )])
 
     report['user_agent'] = req.META['HTTP_USER_AGENT']
@@ -329,6 +332,8 @@ def bug_report(req):
         u"Message:\n\n"
         u"{message}\n"
         ).format(**report)
+    cc = report['cc'].strip().split(",")
+    cc = filter(None, cc)
 
     if full_name and not any([c in full_name for c in '<>"']):
         reply_to = u'"{full_name}" <{username}>'.format(**report)
@@ -346,7 +351,8 @@ def bug_report(req):
         subject=subject,
         body=message,
         to=settings.BUG_REPORT_RECIPIENTS,
-        headers={'Reply-To': reply_to}
+        headers={'Reply-To': reply_to},
+        cc=cc
     )
 
     # only fake the from email if it's an @dimagi.com account
@@ -752,3 +758,42 @@ class CRUDPaginatedViewMixin(object):
         }
         """
         raise NotImplementedError("You must implement get_deleted_item_data")
+
+
+def quick_find(request):
+    query = request.GET.get('q')
+    redirect = request.GET.get('redirect') != 'false'
+
+    def deal_with_couch_doc(doc):
+        domain = doc.get('domain') or doc.get('domains', [None])[0]
+        if request.couch_user.is_superuser or (domain and request.couch_user.is_domain_admin(domain)):
+            doc_info = get_doc_info(doc, domain_hint=domain)
+        else:
+            raise Http404()
+        if redirect and doc_info.link:
+            messages.info(request, _("We've redirected you to the %s matching your query") % doc_info.type_display)
+            return HttpResponseRedirect(doc_info.link)
+        else:
+            return json_response(doc_info)
+
+    try:
+        doc = get_db().get(query)
+    except ResourceNotFound:
+        pass
+    else:
+        return deal_with_couch_doc(doc)
+
+    try:
+        doc = Repeater.get_db().get(query)
+    except ResourceNotFound:
+        pass
+    else:
+        return deal_with_couch_doc(doc)
+
+    raise Http404()
+
+
+def osdd(request, template='osdd.xml'):
+    response = render(request, template, {'url_base': get_url_base()})
+    response['Content-Type'] = 'application/xml'
+    return response

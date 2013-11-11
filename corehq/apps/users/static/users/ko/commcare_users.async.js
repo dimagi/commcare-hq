@@ -48,9 +48,15 @@ var CommCareUsersViewModel = function (o) {
         return 7;
     });
 
+    self.search_string = ko.observable();
+    self.from_search = ko.observable();
+    self.currently_searching = ko.observable(false);
     self.init = function () {
         $(function () {
             self.change_page(self.current_page);
+            $("#user-search-clear-btn").click(function(e) {
+                self.search_string('');
+            });
         });
     };
 
@@ -68,8 +74,11 @@ var CommCareUsersViewModel = function (o) {
 
     self.change_page = function (page, next_or_last) {
         page = ko.utils.unwrapObservable(page);
+        self.from_search(page === -1);
+        page = page === -1 ? 1 : page;
 
         if (page) {
+            self.currently_searching(true);
             $.ajax({
                 url: format_url(page),
                 dataType: 'json',
@@ -78,6 +87,7 @@ var CommCareUsersViewModel = function (o) {
                     $('.hide-until-load').fadeIn();
                     $('#user-list-notification').text('Sorry, there was an problem contacting the server ' +
                         'to fetch your Mobile Workers list. Please, try again in a little bit.');
+                    self.currently_searching(false);
                 },
                 success: reloadList
             });
@@ -113,6 +123,7 @@ var CommCareUsersViewModel = function (o) {
     };
 
     var reloadList = function(data) {
+            self.currently_searching(false);
             if (data.success) {
                 if (!self.initial_load()) {
                     self.initial_load(true);
@@ -127,11 +138,17 @@ var CommCareUsersViewModel = function (o) {
             if (!page) {
                 return "#";
             }
-            return self.list_url +'?page=' + page +
+            var ret_url = self.list_url +'?page=' + page +
                 "&limit=" + self.page_limit() +
                 "&cannot_share=" + self.cannot_share +
                 "&show_inactive=" + self.show_inactive +
                 "&more_columns=" + self.more_columns();
+
+            if (self.search_string()) {
+                ret_url += "&query=" + self.search_string();
+            }
+
+            return ret_url
         },
         successful_archive_action = function (button, index) {
             return function (data) {
