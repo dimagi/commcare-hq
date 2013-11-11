@@ -137,9 +137,11 @@ def form_context(request, domain, app_id, module_id, form_id):
     form_url = "%s%s" % (get_url_base(), reverse('download_xform', args=[domain, app_id, module_id, form_id]))
     case_id = request.GET.get('case_id')
     delegation = request.GET.get('task-list') == 'true'
+    offline = request.GET.get('offline') == 'true'
     return json_response(
         touchforms_api.get_full_context(domain, request.couch_user, 
-                                        app, form_url, case_id, delegation=delegation))
+                                        app, form_url, case_id,
+                                        delegation=delegation, offline=offline))
         
 
 cloudcare_api = login_or_digest_ex(allow_cc_users=True)
