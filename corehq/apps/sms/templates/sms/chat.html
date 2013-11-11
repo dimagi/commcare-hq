@@ -65,6 +65,20 @@
             #message_table td {
                 vertical-align: top;
             }
+            #message_history_choices {
+                border-bottom: 1px solid #CCC;
+                text-align: center;
+            }
+            .message_history_choice {
+                cursor: pointer;
+                color: #44F;
+            }
+            .message_history_choice:hover {
+                text-decoration: underline;
+            }
+            .message_history_choice_selected {
+                font-weight: bold;
+            }
             #footer_table {
                 width: 100%;
             }
@@ -107,9 +121,15 @@
             </table>
         </div>
         <div id="chat_messages">
+            <div id="message_history_choices">
+                <span>Message History</span>
+                <span data-bind="foreach: history_choices">
+                    &#8901; <span data-bind="text: description, css: {message_history_choice_selected: selected(), message_history_choice: !selected()}, click: function(data, event) {$parent.update_history_choice($index());}"></span>
+                </span>
+            </div>
             <table id="message_table">
                 <tbody data-bind="foreach: messages">
-                    <tr>
+                    <tr data-bind="visible: utc_timestamp > $parent.selected_history_choice().utc_timestamp">
                         <td><div class="message_content"><strong><span data-bind="text: sender"></span></strong>: <span data-bind="text: text"></span></div></td>
                         <td><div class="timestamp_content"><strong><span class="highlight_bullet" data-bind="text: seen_text"></span></strong><span data-bind="text: timestamp"></span></div></td>
                     </tr>
@@ -135,12 +155,18 @@
                     $("#chat_messages").height(body_height - chat_header_height - chat_footer_height);
                 }
                 resize_messages();
-                
-                function ChatMessage(sender, text, timestamp, seen) {
+                function MessageHistoryChoice(description, utc_timestamp) {
+                    var self = this;
+                    self.description = description;
+                    self.utc_timestamp = Date.parse(utc_timestamp); // The number of milliseconds since the Unix epoch
+                    self.selected = ko.observable(false);
+                }
+                function ChatMessage(sender, text, timestamp, utc_timestamp, seen) {
                     var self = this;
                     self.sender = sender;
                     self.text = text;
                     self.timestamp = timestamp;
+                    self.utc_timestamp = Date.parse(utc_timestamp); // The number of milliseconds since the Unix epoch
                     self.seen_text = ko.observable(seen ? "" : String.fromCharCode(9830));
                 }
                 function ChatWindowViewModel() {
@@ -156,6 +182,25 @@
                     self.message_count = ko.observable(0);
                     self.message_count_threshold = {{ message_count_threshold }};
                     self.first_update = true;
+                    
+                    self.history_choices = ko.observableArray([]);
+                    {% for description, timestamp in history_choices %}
+                    self.history_choices.push(new MessageHistoryChoice("{{ description }}", "{{ timestamp }}"));
+                    {% endfor %}
+                    self.selected_history_choice = ko.observable();
+                    self.update_history_choice = function(i) {
+                        for(var j = 0; j < self.history_choices().length; j++) {
+                            entry = self.history_choices()[j];
+                            if(i == j) {
+                                entry.selected(true);
+                                self.selected_history_choice(entry);
+                            } else {
+                                entry.selected(false);
+                            }
+                        }
+                    }
+                    self.update_history_choice(0);
+                    
                     self.update_messages = function() {
                         payload = {
                             contact_id : "{{ contact_id }}"
@@ -170,7 +215,7 @@
                         request.done(function(response, textStatus, jqXHR) {
                             data = $.parseJSON(response);
                             for(i = 0; i < data.length; i++) {
-                                chat_window_view_model.messages.push(new ChatMessage(data[i].sender, data[i].text, data[i].timestamp, self.is_focused));
+                                chat_window_view_model.messages.push(new ChatMessage(data[i].sender, data[i].text, data[i].timestamp, data[i].utc_timestamp, self.is_focused));
                                 self.latest_message_utc_timestamp = data[i].utc_timestamp;
                             }
                             if(data.length > 0 && !self.is_focused) {
