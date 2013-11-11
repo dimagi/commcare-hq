@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.core.validators import ValidationError
 from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404, HttpResponse
+from django.template.defaultfilters import yesno
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
@@ -226,9 +227,9 @@ def download_item_lists(request, domain):
         return ["" for x in range(0, length)]
 
 
-    #Fills sheets' schemas and data
+    # Fills sheets' schemas and data
     for data_type in data_types:
-        type_schema = [str(_id_from_doc(data_type)), "N", data_type.name, data_type.tag]
+        type_schema = [str(_id_from_doc(data_type)), "N", data_type.name, data_type.tag, yesno(data_type.is_global)]
         fields = [field for field in data_type.fields]
         type_id = data_type.get_id
         data_table_of_type = []
@@ -254,12 +255,12 @@ def download_item_lists(request, domain):
         max_users = 0
         max_groups = 0
 
-    type_headers = ["UID", DELETE_HEADER, "name", "tag"] + ["field %d" % x for x in range(1, max_fields - 3)]
+    type_headers = ["UID", DELETE_HEADER, "name", "tag", 'is_global?'] + ["field %d" % x for x in range(1, max_fields - 4)]
     type_headers = ("types", tuple(type_headers))
     table_headers = [type_headers]    
     for type_schema in data_type_schemas:
         item_header = (type_schema[3], tuple(["UID", DELETE_HEADER] +
-                                             ["field: " + x for x in type_schema[4:]] +
+                                             ["field: " + x for x in type_schema[5:]] +
                                              ["group %d" % x for x in range(1, mmax_groups + 1)] +
                                              ["user %d" % x for x in range(1, mmax_users + 1)]))
         table_headers.append(item_header)
@@ -427,6 +428,7 @@ def run_upload(request, domain, workbook):
 
             new_data_type = FixtureDataType(
                     domain=domain,
+                    is_global=dt.get('is_global', False),
                     name=_get_or_raise(dt, 'name'),
                     tag=_get_or_raise(dt, 'tag'),
                     fields=type_definition_fields,
@@ -438,6 +440,7 @@ def run_upload(request, domain, workbook):
                     data_type = new_data_type
                     pass
                 data_type.fields = type_definition_fields
+                data_type.is_global = dt.get('is_global', False)
                 assert data_type.doc_type == FixtureDataType._doc_type
                 if data_type.domain != domain:
                     data_type = new_data_type

@@ -96,7 +96,7 @@ class OrgDomainStatsReport(DomainStatsReport):
         organization = Organization.get_by_name(org, strict=True)
         if organization and \
                 (self.request.couch_user.is_superuser or self.request.couch_user.is_member_of_org(org)):
-            return [d for d in Domain.get_by_organization(organization.name).all()]
+            return [d for d in Domain.get_by_organization(organization.name)]
         return []
 
     def is_custom_param(self, param):
@@ -245,7 +245,9 @@ def total_distinct_users(domains=None):
     }
 
     res = es_query(q=q, facets=["form.meta.userID"], es_url=ES_URLS["forms"], size=0)
-    return len(res["facets"]["form.meta.userID"]["terms"])
+    excluded_ids = ['commtrack-system', 'demo_user']
+    terms = [t.get('term') for t in res["facets"]["form.meta.userID"]["terms"]]
+    return len(filter(lambda t: t and t not in excluded_ids, terms))
 
 ES_PREFIX = "es_"
 class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
@@ -264,7 +266,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
 
         if self.es_params:
             domain_results = es_domain_query(self.es_params, fields=["name"], size=99999, show_stats=False)
-            domains = [d["fields"]["name"] for d in domain_results["hits"]["hits"]]
+            domains = filter(None, [d.get("fields", {}).get("name") for d in domain_results["hits"]["hits"]])
             if len(domains) < ES_MAX_CLAUSE_COUNT:
                 ctxt["total_distinct_users"] = total_distinct_users(domains)
                 ctxt["matching_filters"] = True

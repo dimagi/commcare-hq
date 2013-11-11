@@ -24,7 +24,7 @@ from dimagi.utils.web import json_request
 from dimagi.utils.parsing import string_to_boolean
 from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
 
-CHART_SPAN_MAP = {1: '12', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
+CHART_SPAN_MAP = {1: '10', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
 
 class GenericReportView(CacheableRequestMixIn):
     """
@@ -100,8 +100,10 @@ class GenericReportView(CacheableRequestMixIn):
     is_admin_report = False
     special_notice = None
     override_permissions_check = False # whether to ignore the permissions check that's done when rendering the report
-    
-    
+
+    report_title = None
+    report_subtitles = []
+
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
             raise NotImplementedError("Missing a required parameter: (name: %(name)s, section_name: %(section_name)s,"
@@ -429,6 +431,8 @@ class GenericReportView(CacheableRequestMixIn):
                 is_printable=self.printable,
                 is_admin=self.is_admin_report,   # todo is this necessary???
                 special_notice=self.special_notice,
+                report_title=self.report_title or self.rendered_report_title,
+                report_subtitles=self.report_subtitles,
             ),
             current_config_id=current_config_id,
             default_config=default_config,
@@ -822,6 +826,14 @@ class GenericTabularReport(GenericReportView):
 
     @property
     def export_table(self):
+        """
+        Exports the report as excel.
+
+        When rendering a complex cell, it will assign a value in the following order:
+        1. cell['raw']
+        2. cell['sort_key']
+        3. str(cell)
+        """
         try:
             import xlwt
         except ImportError:
@@ -832,7 +844,12 @@ class GenericTabularReport(GenericReportView):
         formatted_rows = self.rows
 
         def _unformat_row(row):
-            return [col.get("sort_key", col) if isinstance(col, dict) else col for col in row]
+            def _unformat_val(val):
+                if isinstance(val, dict):
+                    return val.get('raw', val.get('sort_key', val))
+                return val
+
+            return [_unformat_val(val) for val in row]
 
         table = headers.as_table
         rows = [_unformat_row(row) for row in formatted_rows]

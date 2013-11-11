@@ -34,10 +34,7 @@ it stores weekly totals for the site, as well as results for each user in that s
 Once the reports have been stored, an email is sent out to each user with a link to their individual report.
 The user clicks on the report, is redirected to a login page, then sent to the report.
 
-
 Next Steps:
-    * Email users.
     * Display Individual's username in report?
     * Display some results in email?
     * save dates to be skipped in a once-off doc referred to by ID
-

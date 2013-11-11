@@ -7,11 +7,25 @@ from corehq.apps.commtrack.models import Product
 from corehq.apps.commtrack.util import all_sms_codes
 
 
+class CurrencyField(forms.DecimalField):
+    """
+    Allows a field to accept human readable currency values.
+
+    Example: $1,400.25 will be accepted and stored as 1400.25
+    """
+    def clean(self, value):
+        for c in ['$', ',']:
+            value = value.replace(c, '')
+
+        return super(CurrencyField, self).clean(value)
+
+
 class ProductForm(forms.Form):
     name = forms.CharField(max_length=100)
     code = forms.CharField(label='SMS Code', max_length=10)
     description = forms.CharField(max_length=500, required=False)
     category = forms.CharField(max_length=100, required=False)
+    cost = CurrencyField(max_digits=8, decimal_places=2, required=False)
 
     def __init__(self, product, *args, **kwargs):
         self.product = product
@@ -53,7 +67,7 @@ class ProductForm(forms.Form):
 
         product = instance or self.product
 
-        for field in ('name', 'code', 'category', 'description'):
+        for field in ('name', 'code', 'category', 'description', 'cost'):
             setattr(product, field, self.cleaned_data[field])
 
         if commit:

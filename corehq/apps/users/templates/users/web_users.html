@@ -198,37 +198,37 @@
                     <input data-bind="value: name" placeholder="Role Name"/>
                     <table class="table table-bordered">
                         <tr>
-                            <th width="33%">Edit Web Users</th>
+                            <th width="33%">{% trans "Edit Web Users" %}</th>
                             <td>
                                 <input type="checkbox" data-bind="checked: permissions.edit_web_users"/>
                             </td>
                         </tr>
                         <tr>
-                            <th>Edit {% commcare_user %}s</th>
+                            <th>{% trans "Edit" %} {% commcare_user %}s</th>
                             <td>
                                 <input type="checkbox" data-bind="checked: permissions.edit_commcare_users"/>
                             </td>
                         </tr>
                         <tr>
-                            <th>Edit Data</th>
+                            <th>{% trans "Edit Data" %}</th>
                             <td>
                                 <input type="checkbox" data-bind="checked: permissions.edit_data"/>
                             </td>
                         </tr>
                         <tr>
-                            <th>Edit Apps</th>
+                            <th>{% trans "Edit Apps" %}</th>
                             <td>
                                 <input type="checkbox" data-bind="checked: permissions.edit_apps"/>
                             </td>
                         </tr>
                         <tr>
-                            <th>View All Reports</th>
+                            <th>{% trans "View All Reports" %}</th>
                             <td>
                                 <input type="checkbox" data-bind="checked: reportPermissions.all"/>
                             </td>
                         </tr>
                         <tr data-bind="visible: !reportPermissions.all()">
-                            <th>View Specific Reports</th>
+                            <th>{% trans "View Specific Reports" %}</th>
                             <td>
                                 <div data-bind="foreach: reportPermissions.specific, visibleFade: !reportPermissions.all()">
                                     <div>
@@ -255,7 +255,11 @@
 <div class="row-fluid">
     {% if user.is_superuser %}
     <div class="span6">
-        <div class="btn-toolbar"><a id="show_all_web_users_emails" class="btn" href="#">Copy and paste admin emails</a></div>
+        <div class="btn-toolbar">
+            <a id="show_all_web_users_emails" class="btn" href="#">
+                {% trans "Copy and paste admin emails" %}
+            </a>
+        </div>
         <div id="all_web_users_emails" class="well hide">
             {% for user in web_users %}
                 {% if user.is_domain_admin %}

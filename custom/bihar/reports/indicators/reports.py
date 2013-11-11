@@ -1,4 +1,4 @@
-from functools import partial
+import logging
 from custom.bihar.reports.supervisor import BiharNavReport, MockEmptyReport, \
     url_and_params, BiharSummaryReport, \
     ConvenientBaseMixIn, GroupReferenceMixIn, list_prompt, shared_bihar_context,\
@@ -187,7 +187,7 @@ class IndicatorClientList(ClientListBase, IndicatorMixIn):
     slug = "indicatorclientlist"
     name = ugettext_noop("Client List") 
 
-    extra_context_providers = [name_context]
+    extra_context_providers = [shared_bihar_context, name_context]
 
     @property
     def _name(self):
@@ -214,21 +214,50 @@ class IndicatorClientList(ClientListBase, IndicatorMixIn):
     def fluff_results(self):
         return self.indicator.fluff_calculator.aggregate_results(
             ([self.domain, owner_id] for owner_id in self.all_owner_ids),
-            reduce=False
+            reduce=False,
+        )
+
+    @property
+    @memoized
+    def verbose_results(self):
+        return self.indicator.fluff_calculator.aggregate_results(
+            ([self.domain, owner_id] for owner_id in self.all_owner_ids),
+            reduce=False,
+            verbose_results=True,
         )
 
     @property
     def rows(self):
-        case_ids = self.fluff_results[self.indicator.fluff_calculator.primary]
-        cases = CommCareCase.view('_all_docs', keys=list(case_ids),
-                                  include_docs=True)
+        results = self.verbose_results[self.indicator.fluff_calculator.primary]
+        numerators = self.verbose_results['numerator']
+        def _reconcile(numerators, denominators):
+            def _is_match(num, denom):
+                return num['id'] == denom['id'] and num['key'][-1] == denom['key'][-1]
+
+            num_copy = copy(numerators)
+            for denom in denominators:
+                denom['in_num'] = False
+                for num in num_copy:
+                    if _is_match(num, denom):
+                        num_copy.remove(num)
+                        denom['in_num'] = True
+                        break
+            if num_copy:
+                logging.error('expected no indicators left in the numerator but found some')
+
+
+        def _key(result):
+            return (result['in_num'], result['key'][-1])
+
+        _reconcile(numerators, results)
+        results = sorted(results, key=_key)
+        case_ids = set([res['id'] for res in results])
+        cases = dict((c._id, c) for c in CommCareCase.view('_all_docs', keys=list(case_ids),
+                                                           include_docs=True))
 
         return [
-            self.indicator.as_row(case, self.fluff_results)
-            for case in sorted(
-                cases,
-                key=partial(self.indicator.sortkey, context=self.fluff_results)
-            )
+            self.indicator.as_row(cases[result['id']], self.fluff_results, fluff_row=result)
+            for result in results
         ]
 
 class MyPerformanceList(IndicatorClientList):

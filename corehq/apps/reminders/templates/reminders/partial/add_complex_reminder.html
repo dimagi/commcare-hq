@@ -128,6 +128,7 @@
                 recipient_changed();
             }
         }
+        use_custom_content_handler_changed();
     }
     
     function event_interpretation_changed() {
@@ -234,6 +235,19 @@
             $(".for_random_time").show();
         } else {
             $(".for_random_time").hide();
+        }
+    }
+    
+    function use_custom_content_handler_changed() {
+        if($("#id_use_custom_content_handler").is(":checked")) {
+            $(".for_custom_content_handler").show();
+            $(".language_message_params").hide();
+        } else {
+            $(".for_custom_content_handler").hide();
+            method = $("#id_method").val();
+            if(method == "sms" || method == "callback") {
+                $(".language_message_params").show();
+            }
         }
     }
     
@@ -428,6 +442,10 @@
         $(".time_type").change(function() {
             time_type_changed();
         });
+        
+        $("#id_use_custom_content_handler").change(function() {
+            use_custom_content_handler_changed();
+        });
 
         // Run on change methods
         
@@ -440,6 +458,7 @@
         use_until_changed();
         enable_advanced_time_changed();
         recipient_case_match_type_changed();
+        use_custom_content_handler_changed();
     });
 </script>
 {% endblock %}
@@ -636,7 +655,7 @@
                     <th class="for_random_time">
                         <div class="help_popover" data-help-key="Window Length">Window Length <i class="icon icon-question-sign"></i></div>
                     </th>
-                    <th class="for_sms for_sms_callback">
+                    <th class="for_sms for_sms_callback language_message_params">
                         <div class="help_popover" data-help-key="Language | Message">Language | Message <i class="icon icon-question-sign"></i></div>
                     </th>
                     <th class="for_sms_survey for_ivr_survey">
@@ -661,7 +680,7 @@
                     </td>
                     <td><input type="text" class="input-medium" name="reminder_events.{{ forloop.counter }}.time" value="{{ e.time }}" /></td>
                     <td class="for_random_time"><input type="text" class="short" name="reminder_events.{{ forloop.counter }}.time_window_length" value="{{ e.time_window_length|default:'' }}" /></td>
-                    <td class="for_sms for_sms_callback">
+                    <td class="for_sms for_sms_callback language_message_params">
                         {% for message_num, message in e.messages.items %}
                         <div>
                             <input type="text" class="tiny language_message language" name="reminder_events.{{ forloop.parentloop.counter }}.messages.{{ forloop.counter }}.language" value="{{ message.language }}" />
@@ -775,6 +794,27 @@
                         <td>{{ form.force_surveys_to_use_triggered_case }}</td>
                         <td>When answering suveys, force the form submission to use the case that triggered the reminder. <span class="help_popover" data-help-key="Use Case That Triggered Reminder in Submission"><i class="icon icon-question-sign"></i></span></td>
                     </tr>
+                    {% if is_superuser %}
+                    <tr>
+                        <td>{{ form.use_custom_content_handler }}</td>
+                        <td>Use custom content handler</td>
+                    </tr>
+                    <tr class="for_custom_content_handler">
+                        <td></td>
+                        <td><input id="id_custom_content_handler" name="custom_content_handler" type="text" class="input-xxlarge" value="{{ form.custom_content_handler.value|default:'' }}" />{{ form.custom_content_handler.errors }}</td>
+                    </tr>
+                    {% else %}
+                        {% if form.use_custom_content_handler.value %}
+                        <tr>
+                            <td><input id="id_use_custom_content_handler" type="checkbox" checked="checked" disabled="disabled" /></td>
+                            <td>Use custom content handler</td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>{{ form.custom_content_handler.value }}</td>
+                        </tr>
+                        {% endif %}
+                    {% endif %}
                 </tbody>
             </table>
         </div>

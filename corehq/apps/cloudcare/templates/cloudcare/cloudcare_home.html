@@ -48,7 +48,7 @@
         var caseUrlRoot = "{% url "cloudcare_get_cases" domain %}";
         var submitUrlRoot = "{% url "receiver_post" domain %}";
         var language = "{{ language }}";
-        var apps = {{ apps|safe }};
+        var apps = {{ apps|JSON }};
         var initialApp = {{ app|JSON }};
         var initialCase = {{ case|JSON }};
         window.mainView = new cloudCare.AppMainView({
@@ -97,28 +97,40 @@ if (window.location.href.indexOf('offline=true') != -1) { enableOffline(); } // 
 	{% if preview %}
         <div class="alert fade in alert-block alert-full alert-info">
             <a class="close" data-dismiss="alert" href="#">&times;</a>
-            CloudCare submits REAL DATA that will create cases and show up in reports!
+            {% trans "CloudCare submits REAL DATA that will create cases and show up in reports!" %}
         </div>
     {% endif %}
     {% if request.couch_user.is_web_user %}
-	    <div class="alert fade in alert-block alert-full alert-info">
-	        <a class="close" data-dismiss="alert" href="#">&times;</a>
-	        You are using CloudCare as a {% hq_web_user %}! Any data you submit might confuse your reports, and not everything
-	        may work properly. For the best experience please logout and login as a {% commcare_user %}.
-	    </div>
-	{% endif %}
-    <div id="offline-prompt" class="alert fade in alert-block alert-full alert-danger" style="display:none;">
-        Offline CloudCare is not running! <a href="http://mrgris.com/a/dimagi/offline-cloudcare.jnlp">Launch it here</a>.
-        (It may take a moment to start up once it has downloaded)
+       <div class="alert fade in alert-block alert-full alert-info">
+            <a class="close" data-dismiss="alert" href="#">&times;</a>
+                {% blocktrans %}
+                    You are using CloudCare as a Web User! Any data you submit
+                    might confuse your reports, and not everything may work
+                    properly. For the best experience please logout and
+                    login as a Mobile Worker.
+                {% endblocktrans %}
+        </div>
+    {% endif %}
+    <div id="offline-prompt" class="alert fade in alert-block alert-full alert-danger" style="display: none;">
+        {% blocktrans %}
+            Offline CloudCare is not running!
+            <a href="http://mrgris.com/a/dimagi/offline-cloudcare.jnlp">Launch it here</a>.
+            (It may take a moment to start up once it has downloaded)
+        {% endblocktrans %}
     </div>
-	<div id="cloudcare-main" style="position:relative;">
-	    {% if not apps_raw %}
-	    <h3>No Apps found</h3>
-	    <p>Sorry, it doesn't look like you have any CloudCare apps available. To learn more about how to
-	    enable and use CloudCare, please check out our <a href="https://confluence.dimagi.com/pages/viewpage.action?pageId=10224014" target="_blank">wiki documentation</a>.
-	    </p>
-	    {% endif %}
-	    <section id="cloudcare-notifications"></section>
+    <div id="cloudcare-main" style="position:relative;">
+        {% if not apps_raw %}
+            <h3>No Apps found</h3>
+            <p>
+                {% blocktrans %}
+                    Sorry, it doesn't look like you have any CloudCare apps
+                    available. To learn more about how to enable and use
+                    CloudCare, please check out our
+                    <a href="https://confluence.dimagi.com/pages/viewpage.action?pageId=10224014" target="_blank">wiki documentation</a>.
+                {% endblocktrans %}
+            </p>
+        {% endif %}
+        <section id="cloudcare-notifications"></section>
         <div id="loading" class="well" style="display: none; position: fixed; right: 0; margin-right: 40px; top: 40px;">
             <img width="32" height="32" alt="Loading" src="{% static 'formplayer/img/loading_transparent.gif' %}" />
             {% trans "Loading" %}...

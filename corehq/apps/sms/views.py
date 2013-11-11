@@ -1,33 +1,51 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 import re
+import json
+import pytz
 from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_SMS
+from corehq.apps.sms.api import (
+    send_sms,
+    incoming,
+    send_sms_with_backend_name,
+    send_sms_to_verified_number,
+    DomainScopeValidationError,
+)
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
-from corehq.apps.sms.api import send_sms, incoming, send_sms_with_backend_name
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import CouchUser, Permissions
 from corehq.apps.users import models as user_models
-from corehq.apps.sms.models import SMSLog, INCOMING, ForwardingRule
-from corehq.apps.sms.mixin import MobileBackend, SMSBackend, BackendMapping
-from corehq.apps.sms.forms import ForwardingRuleForm, BackendMapForm, InitiateAddSMSBackendForm
-from corehq.apps.sms.util import get_available_backends
+from corehq.apps.users.views.mobile.users import EditCommCareUserView
+from corehq.apps.sms.models import SMSLog, INCOMING, OUTGOING, ForwardingRule, CommConnectCase
+from corehq.apps.sms.mixin import MobileBackend, SMSBackend, BackendMapping, VerifiedNumber
+from corehq.apps.sms.forms import ForwardingRuleForm, BackendMapForm, InitiateAddSMSBackendForm, SMSSettingsForm
+from corehq.apps.sms.util import get_available_backends, get_contact
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest, domain_admin_required, require_superuser
 from dimagi.utils.couch.database import get_db
 from django.contrib import messages
 from corehq.apps.reports import util as report_utils
+from dimagi.utils.timezones import utils as tz_utils
 from django.views.decorators.csrf import csrf_exempt
 from corehq.apps.domain.models import Domain
 from django.utils.translation import ugettext as _, ugettext_noop
+from couchdbkit.resource import ResourceNotFound
+from casexml.apps.case.models import CommCareCase
+from dimagi.utils.parsing import json_format_datetime, string_to_boolean
+from dateutil.parser import parse
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.logging import notify_exception
+from django.conf import settings
 
+DEFAULT_MESSAGE_COUNT_THRESHOLD = 50
 
 @login_and_domain_required
 def default(request, domain):
@@ -207,7 +225,7 @@ def send_to_recipients(request, domain):
         for user, number in phone_numbers:
             if not number:
                 no_numbers.append(user.raw_username)
-            elif send_sms(domain, user.user_id if user else "", number, message):
+            elif send_sms(domain, user, number, message):
                 sent.append("%s" % (user.raw_username if user else number))
             else:
                 failed_numbers.append("%s (%s)" % (
@@ -241,7 +259,23 @@ def message_test(request, domain, phone_number):
     if request.method == "POST":
         message = request.POST.get("message", "")
         domain_scope = None if request.couch_user.is_superuser else domain
-        incoming(phone_number, message, "TEST", domain_scope=domain_scope)
+        try:
+            incoming(phone_number, message, "TEST", domain_scope=domain_scope)
+        except DomainScopeValidationError:
+            messages.error(
+                request,
+                _("Invalid phone number being simulated. You may only " \
+                  "simulate SMS from verified numbers belonging to contacts " \
+                  "in this domain.")
+            )
+        except Exception:
+            notify_exception(request)
+            messages.error(
+                request,
+                _("An error has occurred. Please try again in a few minutes " \
+                  "and if the issue persists, please contact CommCareHQ " \
+                  "Support.")
+            )
 
     context = get_sms_autocomplete_context(request, domain)
     context['domain'] = domain
@@ -261,16 +295,53 @@ def api_send_sms(request, domain):
     An API to send SMS.
     Expected post parameters:
         phone_number - the phone number to send to
+        contact_id - the _id of a contact to send to (overrides phone_number)
         text - the text of the message
         backend_id - the name of the MobileBackend to use while sending
     """
     if request.method == "POST":
         phone_number = request.POST.get("phone_number", None)
+        contact_id = request.POST.get("contact_id", None)
         text = request.POST.get("text", None)
         backend_id = request.POST.get("backend_id", None)
-        if (phone_number is None) or (text is None) or (backend_id is None):
+        chat = request.POST.get("chat", None)
+
+        if (phone_number is None and contact_id is None) or (text is None):
             return HttpResponseBadRequest("Not enough arguments.")
-        if send_sms_with_backend_name(domain, phone_number, text, backend_id):
+
+        vn = None
+        if contact_id is not None:
+            try:
+                contact = get_contact(contact_id)
+                assert contact is not None
+                assert contact.domain == domain
+            except Exception:
+                return HttpResponseBadRequest("Contact not found.")
+            try:
+                vn = contact.get_verified_number()
+                assert vn is not None
+                phone_number = vn.phone_number
+            except Exception:
+                return HttpResponseBadRequest("Contact has no phone number.")
+
+        try:
+            chat_workflow = string_to_boolean(chat)
+        except Exception:
+            chat_workflow = False
+
+        if chat_workflow:
+            chat_user_id = request.couch_user._id
+        else:
+            chat_user_id = None
+
+        if backend_id is not None:
+            success = send_sms_with_backend_name(domain, phone_number, text, backend_id, chat_user_id=chat_user_id)
+        elif vn is not None:
+            success = send_sms_to_verified_number(vn, text, chat_user_id=chat_user_id)
+        else:
+            success = send_sms(domain, None, phone_number, text, chat_user_id=chat_user_id)
+
+        if success:
             return HttpResponse("OK")
         else:
             return HttpResponse("ERROR")
@@ -547,6 +618,119 @@ def global_backend_map(request):
     }
     return render(request, "sms/backend_map.html", context)
 
+@require_permission(Permissions.edit_data)
+def chat_contacts(request, domain):
+    domain_obj = Domain.get_by_name(domain, strict=True)
+    verified_numbers = VerifiedNumber.by_domain(domain)
+    contacts = []
+    for vn in verified_numbers:
+        owner = vn.owner
+        if owner is not None and owner.doc_type in ('CommCareCase','CommCareUser'):
+            if owner.doc_type == "CommCareUser":
+                url = reverse(EditCommCareUserView.urlname, args=[domain, owner._id])
+                name = owner.raw_username
+            else:
+                url = reverse("case_details", args=[domain, owner._id])
+                if domain_obj.custom_case_username:
+                    name = owner.get_case_property(domain_obj.custom_case_username) or _("(unknown)")
+                else:
+                    name = owner.name
+            contacts.append({
+                "id" : owner._id,
+                "doc_type" : owner.doc_type,
+                "url" : url,
+                "name" : name,
+            })
+    context = {
+        "domain" : domain,
+        "contacts" : contacts,
+    }
+    return render(request, "sms/chat_contacts.html", context)
+
+@require_permission(Permissions.edit_data)
+def chat(request, domain, contact_id):
+    domain_obj = Domain.get_by_name(domain, strict=True)
+    context = {
+        "domain" : domain,
+        "contact_id" : contact_id,
+        "contact" : get_contact(contact_id),
+        "message_count_threshold" : domain_obj.chat_message_count_threshold or DEFAULT_MESSAGE_COUNT_THRESHOLD,
+        "custom_case_username" : domain_obj.custom_case_username,
+    }
+    template = settings.CUSTOM_CHAT_TEMPLATES.get(domain_obj.custom_chat_template) or "sms/chat.html"
+    return render(request, template, context)
+
+@require_permission(Permissions.edit_data)
+def api_history(request, domain):
+    result = []
+    contact_id = request.GET.get("contact_id", None)
+    start_date = request.GET.get("start_date", None)
+    timezone = report_utils.get_timezone(None, domain)
+    domain_obj = Domain.get_by_name(domain, strict=True)
+
+    try:
+        assert contact_id is not None
+        doc = get_contact(contact_id)
+        assert doc is not None
+        assert doc.domain == domain
+    except Exception:
+        return HttpResponse("[]")
+
+    query_start_date_str = None
+    if start_date is not None:
+        try:
+            query_start_date = parse(start_date)
+            query_start_date += timedelta(seconds=1)
+            query_start_date_str = json_format_datetime(query_start_date)
+        except Exception:
+            pass
+
+    if query_start_date_str is not None:
+        data = SMSLog.view("sms/by_recipient",
+                           startkey=[doc.doc_type, contact_id, "SMSLog", INCOMING, query_start_date_str],
+                           endkey=[doc.doc_type, contact_id, "SMSLog", INCOMING, {}],
+                           include_docs=True,
+                           reduce=False).all()
+        data += SMSLog.view("sms/by_recipient",
+                            startkey=[doc.doc_type, contact_id, "SMSLog", OUTGOING, query_start_date_str],
+                            endkey=[doc.doc_type, contact_id, "SMSLog", OUTGOING, {}],
+                            include_docs=True,
+                            reduce=False).all()
+    else:
+        data = SMSLog.view("sms/by_recipient",
+                           startkey=[doc.doc_type, contact_id, "SMSLog"],
+                           endkey=[doc.doc_type, contact_id, "SMSLog", {}],
+                           include_docs=True,
+                           reduce=False).all()
+    data.sort(key=lambda x : x.date)
+    username_map = {}
+    for sms in data:
+        if sms.direction == INCOMING:
+            if doc.doc_type == "CommCareCase" and domain_obj.custom_case_username:
+                sender = doc.get_case_property(domain_obj.custom_case_username)
+            elif doc.doc_type == "CommCareCase":
+                sender = doc.name
+            else:
+                sender = doc.first_name or doc.raw_username
+        elif sms.chat_user_id is not None:
+            if sms.chat_user_id in username_map:
+                sender = username_map[sms.chat_user_id]
+            else:
+                try:
+                    user = CouchUser.get_by_user_id(sms.chat_user_id)
+                    sender = user.first_name or user.raw_username
+                except Exception:
+                    sender = _("Unknown")
+                username_map[sms.chat_user_id] = sender
+        else:
+            sender = _("System")
+        result.append({
+            "sender" : sender,
+            "text" : sms.text,
+            "timestamp" : tz_utils.adjust_datetime_to_timezone(sms.date, pytz.utc.zone, timezone.zone).strftime("%I:%M%p %m/%d/%y").lower(),
+            "utc_timestamp" : json_format_datetime(sms.date),
+        })
+    return HttpResponse(json.dumps(result))
 
 class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView):
     template_name = "sms/gateway_list.html"
@@ -667,3 +851,40 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         return super(DomainSmsGatewayListView, self).dispatch(request, *args, **kwargs)
+
+@domain_admin_required
+def sms_settings(request, domain):
+    domain_obj = Domain.get_by_name(domain, strict=True)
+    is_previewer = request.couch_user.is_previewer()
+    if request.method == "POST":
+        form = SMSSettingsForm(request.POST)
+        form._cchq_is_previewer = is_previewer
+        if form.is_valid():
+            domain_obj.use_default_sms_response = form.cleaned_data["use_default_sms_response"]
+            domain_obj.default_sms_response = form.cleaned_data["default_sms_response"]
+            if is_previewer:
+                domain_obj.custom_case_username = form.cleaned_data["custom_case_username"]
+                domain_obj.chat_message_count_threshold = form.cleaned_data["custom_message_count_threshold"]
+                domain_obj.custom_chat_template = form.cleaned_data["custom_chat_template"]
+            domain_obj.save()
+            messages.success(request, _("Changes Saved."))
+    else:
+        initial = {
+            "use_default_sms_response" : domain_obj.use_default_sms_response,
+            "default_sms_response" : domain_obj.default_sms_response,
+            "use_custom_case_username" : domain_obj.custom_case_username is not None,
+            "custom_case_username" : domain_obj.custom_case_username,
+            "use_custom_message_count_threshold" : domain_obj.chat_message_count_threshold is not None,
+            "custom_message_count_threshold" : domain_obj.chat_message_count_threshold,
+            "use_custom_chat_template" : domain_obj.custom_chat_template is not None,
+            "custom_chat_template" : domain_obj.custom_chat_template,
+        }
+        form = SMSSettingsForm(initial=initial)
+
+    context = {
+        "domain" : domain,
+        "form" : form,
+        "is_previewer" : is_previewer,
+    }
+    return render(request, "sms/settings.html", context)
+

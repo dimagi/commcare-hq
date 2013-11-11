@@ -386,6 +386,8 @@ class CareReport(SqlTabularReport,
 
         rows_for_table = []
         overall_total_row = []
+        age_group_totals = {'0': [], '1': [], '2': [], '3': []}
+
         # for every group of data, unpack back to individual rows
         # and set up the information the template needs to render this
         # stuff
@@ -406,6 +408,11 @@ class CareReport(SqlTabularReport,
                         'row_data': row_data
                     })
 
+                    age_group_totals[age_group] = self.add_row_to_total(
+                        age_group_totals[age_group],
+                        row_data
+                    )
+
                     total_row = self.add_row_to_total(total_row, row_data)
             elif not self.show_age() and self.show_gender():
                 row_data = self.merge_gender_data(rows[user])
@@ -425,6 +432,11 @@ class CareReport(SqlTabularReport,
                         'age_display': self.age_group_text(age_group),
                         'row_data': row_data
                     })
+
+                    age_group_totals[age_group] = self.add_row_to_total(
+                        age_group_totals[age_group],
+                        row_data
+                    )
 
                     total_row = self.add_row_to_total(total_row, row_data)
             else:
@@ -448,6 +460,16 @@ class CareReport(SqlTabularReport,
                 'row_data': total_row,
             })
 
+        if self.show_age():
+            for group in ['0', '1', '2', '3']:
+                rows_for_table.append({
+                    'username': 'AGE_TOTAL_ROW',
+                    'total_width': total_width,
+                    'age_display': self.age_group_text(group),
+                    'gender': self.show_gender(),
+                    'row_data': age_group_totals[group]
+                })
+
         rows_for_table.append({
             'username': 'OVERALL_TOTAL_ROW',
             'total_width': total_width,
@@ -467,7 +489,8 @@ class TestingAndCounseling(CareReport):
         ['Individuals HIV tested', 'hiv_tested'],
         ['Individuals HIV Positive ', 'hiv_positive'],
         ['Newly diagnosed HIV+ indv scr for TB', 'new_hiv_tb_screen'],  # 1d
-        ['Individuals scr for TB [status unknown]', 'hiv_known_screened'],  # 1e
+        ['TB screening status known - TB Module', 'tb_screened'],  # 1ea
+        ['TB screening status unknown - HCT Module', 'hct_screened'],  # 1eb
         ['Individuals ref to PHCF with signs & symptoms of TB', 'referred_tb_signs'],  # 1f
         ['Newly diagnosed individuals HIV infected ref for CD4 count test in a PHCF', 'referred_for_cdf_new'],  # 1ha TODO empty?
         ['Existing patients HIV infected ref for CD4 count test in a PHCF', 'referred_for_cdf_existing'],  # 1hb TODO empty?

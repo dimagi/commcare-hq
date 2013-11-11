@@ -68,7 +68,6 @@ var SortRows = function () {
     self.rowCount = ko.computed(function () {
         return self.sortRows().length;
     });
-
 };
 
 // http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
@@ -125,69 +124,6 @@ function ParentSelect(init) {
 var DetailScreenConfig = (function () {
     "use strict";
     var DetailScreenConfig, Screen, Column, sortRows;
-
-    function formatEnum(obj, lang, langs) {
-        var key,
-            translated_pairs = {},
-            actual_pairs = {},
-            translatedValue,
-            actualValue,
-            i;
-        for (key in obj) {
-            if (obj.hasOwnProperty(key)) {
-                translatedValue = "";
-                actualValue = "";
-                if (obj[key][lang]) {
-                    translatedValue = { value: obj[key][lang],
-                                        lang: lang };
-                    actualValue = obj[key][lang];
-                } else {
-                    // separate value for a different language
-                    for (i = 0; i < langs.length; i += 1) {
-                        if (obj[key][langs[i]]) {
-                            translatedValue = { value: obj[key][langs[i]],
-                                                lang: langs[i] };
-                        }
-                    }
-                }
-                actual_pairs[key] = actualValue;
-                translated_pairs[key] = translatedValue;
-            }
-        }
-        return {
-            cleaned: actual_pairs,
-            translations: translated_pairs
-        };
-    }
-    function unformatEnum(text, lang, original) {
-        var json, mapping, key,
-            orig = JSON.parse(JSON.stringify(original));
-
-        if (text) {
-            mapping = JSON.parse(text);
-        } else {
-            mapping = {};
-        }
-        for (key in mapping) {
-            if (mapping.hasOwnProperty(key)) {
-                if (!orig.hasOwnProperty(key)) {
-                    orig[key] = {};
-                }
-                orig[key][lang] = mapping[key] || "";
-            }
-        }
-        for (key in orig) {
-            if (orig.hasOwnProperty(key)) {
-                if (!mapping.hasOwnProperty(key)) {
-                    delete orig[key][lang];
-                }
-                if (_.isEmpty(orig[key])) {
-                    delete orig[key];
-                }
-            }
-        }
-        return orig;
-    }
     var word = '[a-zA-Z][\\w_-]*';
     var field_val_re = RegExp('^('+word+':)?'+word+'(\\/'+word+')*$');
     var field_format_warning = $('<span/>').addClass('help-inline')
@@ -214,7 +150,7 @@ var DetailScreenConfig = (function () {
             this.original.field = this.original.field || "";
             this.original.header = this.original.header || {};
             this.original.format = this.original.format || "plain";
-            this.original['enum'] = this.original['enum'] || {};
+            this.original['enum'] = this.original['enum'] || [];
             this.original.late_flag = this.original.late_flag || 30;
             this.original.filter_xpath = this.original.filter_xpath || "";
             this.original.time_ago_interval = this.original.time_ago_interval || DetailScreenConfig.TIME_AGO.year;
@@ -227,7 +163,6 @@ var DetailScreenConfig = (function () {
 
             this.model = uiElement.select([
                 {label: "Case", value: "case"},
-                {label: "Referral", value: "referral"}
             ]).val(this.original.model);
             this.field = uiElement.input().val(this.original.field);
             this.format_warning = field_format_warning.clone().hide();
@@ -252,17 +187,13 @@ var DetailScreenConfig = (function () {
             this.format = uiElement.select(DetailScreenConfig.MENU_OPTIONS).val(this.original.format || null);
 
             (function () {
-                var f = formatEnum(that.original['enum'], that.lang, that.screen.langs);
-                that.enum_extra = uiElement.map_list(guidGenerator(), that.original.field);
-                that.enum_extra.val(f.cleaned, f.translations);
-                var div = that.enum_extra.ui.find('div');
-                if (div.is(':empty')) {
-                    div.css('display', 'inline-block')
-                       .css('margin-right', '10px')
-                       .prepend($("<h4/>")
-                       .text(DetailScreenConfig.message.ENUM_EXTRA_LABEL));
-                }
-                that.enum_extra.ui.find('.enum-edit').css({ display: 'inline-block' });
+                var o = {
+                    lang: that.lang,
+                    langs: that.screen.langs,
+                    items: that.original['enum'],
+                    modalTitle: 'Editing mapping for ' + that.original.field
+                };
+                that.enum_extra = uiElement.key_value_mapping(o);
             }());
             this.late_flag_extra = uiElement.input().val(this.original.late_flag.toString());
             this.late_flag_extra.ui.find('input').css('width', 'auto');
@@ -309,10 +240,10 @@ var DetailScreenConfig = (function () {
             this.format.on('change', function () {
                 // Prevent this from running on page load before init
                 if (that.format.ui.parent().length > 0) {
-                    that.enum_extra.ui.remove();
-                    that.late_flag_extra.ui.remove();
-                    that.filter_xpath_extra.ui.remove();
-                    that.time_ago_extra.ui.remove();
+                    that.enum_extra.ui.detach();
+                    that.late_flag_extra.ui.detach();
+                    that.filter_xpath_extra.ui.detach();
+                    that.time_ago_extra.ui.detach();
 
                     if (this.val() === "enum" || this.val() === "enum-image") {
                         that.format.ui.parent().append(that.enum_extra.ui);
@@ -373,7 +304,7 @@ var DetailScreenConfig = (function () {
                 column.field = this.field.val();
                 column.header[this.lang] = this.header.val();
                 column.format = this.format.val();
-                column['enum'] = unformatEnum(this.enum_extra.$formatted_view.val(), this.lang, column['enum']);
+                column['enum'] = this.enum_extra.getItems();
                 column.late_flag = parseInt(this.late_flag_extra.val(), 10);
                 column.time_ago_interval = parseFloat(this.time_ago_extra.val());
                 column.filter_xpath = this.filter_xpath_extra.val();
@@ -404,10 +335,6 @@ var DetailScreenConfig = (function () {
         return Column;
     }());
     Screen = (function () {
-        var sectionLabels = {
-            'case': "",
-            referral: "Referral Details"
-        };
         function Screen($home, spec, config, options) {
             var i, column, model, property, header,
                 that = this, columns;
@@ -418,7 +345,7 @@ var DetailScreenConfig = (function () {
             this.edit = options.edit;
             this.columns = [];
             this.suggestedColumns = [];
-            this.model = spec.short.type === "ref_short" ? "referral" : "case";
+            this.model = 'case';
             this.lang = options.lang;
             this.langs = options.langs || [];
             this.properties = options.properties;
@@ -490,7 +417,7 @@ var DetailScreenConfig = (function () {
                 }
             }).$edit_view.autocomplete({
                 source: function (request, response) {
-                    var availableTags = that.properties[that.customColumn.model.val()];
+                    var availableTags = that.properties;
                     response(
                         $.ui.autocomplete.filter(availableTags,  request.term)
                     );
@@ -507,26 +434,21 @@ var DetailScreenConfig = (function () {
             });
 
             // set up suggestion columns
-            for (model in this.properties) {
-                if (this.properties.hasOwnProperty(model) && !(this.model === 'case' && model === 'referral')) {
-                    for (i = 0; i < this.properties[model].length; i += 1) {
-                        property = this.properties[model][i];
-                        header = {};
-                        header[this.lang] = toTitleCase(property);
-                        column = Column.init({
-                            model: model,
-                            field: property,
-                            header: header,
-                            includeInShort: false
-                        }, this);
-                        initColumnAsSuggestion(column);
-                        this.suggestedColumns.push(column);
-                    }
-                }
+            for (i = 0; i < this.properties.length; i += 1) {
+                property = this.properties[i];
+                header = {};
+                header[this.lang] = toTitleCase(property);
+                column = Column.init({
+                    model: model,
+                    field: property,
+                    header: header,
+                    includeInShort: false
+                }, this);
+                initColumnAsSuggestion(column);
+                this.suggestedColumns.push(column);
             }
             this.suggestedColumns = _(this.suggestedColumns).sortBy(function (column) {
                 return [
-                    column.model.val() === 'referral' ? 1 : 2,
                     /\//.test(column.field.val()) ? 2 : 1,
                     column.field.val()
                 ];
@@ -584,8 +506,8 @@ var DetailScreenConfig = (function () {
                 });
             });
         }
-        Screen.init = function ($home, spec, config, lang) {
-            return new Screen($home, spec, config, lang);
+        Screen.init = function ($home, spec, config, options) {
+            return new Screen($home, spec, config, options);
         };
         Screen.prototype = {
             save: function () {
@@ -620,19 +542,11 @@ var DetailScreenConfig = (function () {
                         longColumns.push(column.serialize());
                     }
                 }
-
-                if (this.model === 'case') {
-                    return {
-                        'case_short': shortColumns,
-                        'case_long': longColumns,
-                        'sort_elements': ko.toJSON(this.config.sortRows.sortRows)
-                    };
-                } else {
-                    return {
-                        'ref_short': shortColumns,
-                        'ref_long': longColumns
-                    };
-                }
+                return {
+                    short: shortColumns,
+                    long: longColumns,
+                    sort_elements: ko.toJS(this.config.sortRows.sortRows)
+                };
             },
             addColumn: function (column, $tbody, i, suggested) {
                 var $tr = $('<tr/>').data('index', i).appendTo($tbody);
@@ -648,9 +562,6 @@ var DetailScreenConfig = (function () {
                 $('<td/>').addClass('detail-screen-checkbox').append(column.includeInShort.ui).appendTo($tr);
                 $('<td/>').addClass('detail-screen-checkbox').append(column.includeInLong.ui).appendTo($tr);
 
-                if (this.model === 'referral') {
-                    $('<td/>').addClass('detail-screen-model').append(column.model.ui).appendTo($tr);
-                }
                 if (!column.field.edit) {
                     var text = column.field.ui.text();
                     var parts = text.split('/');
@@ -696,9 +607,6 @@ var DetailScreenConfig = (function () {
             },
             render: function () {
                 var $table, $columns, $suggestedColumns, $thead, $tr, i, $box;
-                if (sectionLabels[this.model]) {
-                    $('<h4/>').text(sectionLabels[this.model]).appendTo(this.$home);
-                }
                 $box = $("<div/>").appendTo(this.$home);
 
                 // this is a not-so-elegant way to get the styling right
@@ -736,9 +644,6 @@ var DetailScreenConfig = (function () {
 
                     $('<th/>').addClass('detail-screen-checkbox').text(DetailScreenConfig.message.SHORT).appendTo($tr).popover(DetailScreenConfig.message.SHORT_POPOVER);
                     $('<th/>').addClass('detail-screen-checkbox').text(DetailScreenConfig.message.LONG).appendTo($tr).popover(DetailScreenConfig.message.LONG_POPOVER);
-                    if (this.model === "referral") {
-                        $('<th/>').addClass('detail-screen-model').text(DetailScreenConfig.message.MODEL).appendTo($tr);
-                    }
                     $('<th/>').addClass('detail-screen-field').text(DetailScreenConfig.message.FIELD).appendTo($tr);
                     $('<th/>').addClass('detail-screen-header').text(DetailScreenConfig.message.HEADER).appendTo($tr);
                     $('<th/>').addClass('detail-screen-format').text(DetailScreenConfig.message.FORMAT).appendTo($tr);
@@ -811,10 +716,10 @@ var DetailScreenConfig = (function () {
             this.edit = spec.edit;
             this.saveUrl = spec.saveUrl;
 
-            function addScreen(short, long) {
+            function addScreen(pair) {
                 var screen = Screen.init(
                     $('<div/>'),
-                    {'short': short, 'long': long},
+                    pair,
                     that,
                     {
                         lang: that.lang,
@@ -828,10 +733,7 @@ var DetailScreenConfig = (function () {
                 that.$home.append(screen.$home);
             }
 
-            addScreen(spec.state.case_short, spec.state.case_long);
-            if (spec.applicationVersion === '1.0') {
-                addScreen(spec.state.ref_short, spec.state.ref_long);
-            }
+            addScreen(spec.state);
         };
         DetailScreenConfig.init = function ($home, spec) {
             var ds = new DetailScreenConfig($home, spec);

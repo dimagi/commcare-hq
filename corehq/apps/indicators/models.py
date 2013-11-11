@@ -331,8 +331,10 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
                     # day is out of range for month
                     datespan.startdate = self.get_last_day_of_month(start_year, start_month)
 
-            datespan.startdate = datespan.startdate + datetime.timedelta(days=self.startdate_shift)
-            datespan.enddate = datespan.enddate + datetime.timedelta(days=self.enddate_shift)
+            if self.startdate_shift:
+                datespan.startdate = datespan.startdate + datetime.timedelta(days=self.startdate_shift)
+            if self.enddate_shift:
+                datespan.enddate = datespan.enddate + datetime.timedelta(days=self.enddate_shift)
             
         return datespan
 

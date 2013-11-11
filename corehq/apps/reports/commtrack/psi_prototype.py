@@ -16,7 +16,7 @@ from corehq.apps.commtrack import const
 from corehq.apps.commtrack.util import supply_point_type_categories
 import corehq.apps.locations.util as loc_util
 from collections import deque
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_noop
 
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
 
@@ -282,7 +282,7 @@ def load_all_loc_hierarchy(locs):
     return load_locs(ancestor_loc_ids)
 
 class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
-    name = 'Visit Report'
+    name = ugettext_noop('Visit Report')
     slug = 'visits'
     fields = ['corehq.apps.reports.fields.DatespanField',
               'corehq.apps.reports.commtrack.fields.SupplyPointTypeField',
@@ -344,7 +344,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
         return [row(r) for r in reports]
 
 class StockReportExport(VisitReport):
-    name = 'Stock Reports Export'
+    name = ugettext_noop('Stock Reports Export')
     slug = 'bulk_export'
     exportable = True
     emailable = False
@@ -372,7 +372,7 @@ class StockReportExport(VisitReport):
 OUTLETS_LIMIT = 500
 
 class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
-    name = 'Sales and Consumption Report'
+    name = ugettext_noop('Sales and Consumption Report')
     slug = 'sales_consumption'
     fields = ['corehq.apps.reports.fields.DatespanField',
               'corehq.apps.reports.commtrack.fields.SupplyPointTypeField',
@@ -476,7 +476,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
         return filter(None, (summary_row(site, reports_by_loc.get(site._id, [])) for site in self.outlets))
 
 class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
-    name = 'Sales and Consumption Report, Cumulative'
+    name = ugettext_noop('Sales and Consumption Report, Cumulative')
     slug = 'cumul_sales_consumption'
     fields = ['corehq.apps.reports.fields.DatespanField',
               'corehq.apps.reports.commtrack.fields.SupplyPointTypeField',
@@ -595,7 +595,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
 
 
 class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
-    name = 'Stock-out Report'
+    name = ugettext_noop('Stock-out Report')
     slug = 'stockouts'
     fields = ['corehq.apps.reports.commtrack.fields.SupplyPointTypeField',
               'corehq.apps.reports.commtrack.fields.ProductField',

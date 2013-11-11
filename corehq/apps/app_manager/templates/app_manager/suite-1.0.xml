@@ -32,10 +32,10 @@
  {% endfor %}
 {% if not app.use_custom_suite %}
  {% for module in app.get_modules %}
-  {% for detail in module.details %}
+  {% for detail_type, detail in module.get_details %}
    {% if detail.columns %}
-    <detail id="m{{ module.id }}_{{ detail.type }}">
-        <title><text><locale id="m{{ module.id }}.{{ detail.type }}.title"/></text></title>
+    <detail id="m{{ module.id }}_{{ detail_type }}">
+        <title><text><locale id="m{{ module.id }}.{{ detail_type }}.title"/></text></title>
         <filter>
             {% if detail.filter_xpath %}
             <raw function="{{ detail.filter_xpath }}"/>
@@ -53,9 +53,9 @@
         {% if d.format != 'filter' %}
         <field>
             <header{% if d.format == "late-flag" or d.format == "invisible" %}{% if detail.display == "short" %} width="0"{% endif %}{% endif %}>
-                <text><locale id="m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.counter }}.header"/></text>
+                <text><locale id="m{{ module.id }}.{{ detail_type }}.{{ d.model }}_{{ d.field }}_{{ forloop.counter }}.header"/></text>
             </header>
-         {% if d.format == "plain" or d.format == "phone" and detail.type == "case_short" or d.format == "phone" and detail.type == "ref_short" %}
+         {% if d.format == "plain" or d.format == "phone" and detail_type == "case_short" or d.format == "phone" and detail_type == "ref_short" %}
             <template><text><xpath function="/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }}"/></text></template>
          {% else %}{% ifequal d.format "date" %}
 {#            <template><text><xpath function="format_date(/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }}, 'short')"/></text></template>#}
@@ -65,7 +65,7 @@
          {% else %}{% if d.format == "enum" or d.format == "enum-image"%}
              <template{% if d.format == "enum-image" %} form="image"{% endif %}><text>
                  <xpath function="
-                  {% for key, val in d.enum.items|sort %}
+                  {% for key, val in d.enum_dict.items|sort %}
                      if(/data/{{ d.model }}_{{ d.field }}_{{ forloop.parentloop.counter }} = '{{ key }}', $k{{ key }},
                   {% endfor %}
                      '?'
@@ -73,9 +73,9 @@
                      )
                   {% endfor %}
                  ">
-                  {% for key, val in d.enum.items|sort %}
+                  {% for key, val in d.enum_dict.items|sort %}
                      <variable name="k{{ key }}">
-                         <locale id="m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.parentloop.counter }}.enum.k{{ key }}{% if d.format == "enum-image" %}.image{% endif %}"/>
+                         <locale id="m{{ module.id }}.{{ detail_type }}.{{ d.model }}_{{ d.field }}_{{ forloop.parentloop.counter }}.enum.k{{ key }}{% if d.format == "enum-image" %}.image{% endif %}"/>
                      </variable>
                   {% endfor %}
                  </xpath>

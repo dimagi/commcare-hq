@@ -34,7 +34,9 @@ var LanguagePickerViewModel = function (onSuccessFn) {
     };
 
     self.confirmLanguageChoice = function () {
-        self.onSuccess(self.langcode());
+        if (self.langcode()) {
+            self.onSuccess(self.langcode());
+        }
     };
 };
 

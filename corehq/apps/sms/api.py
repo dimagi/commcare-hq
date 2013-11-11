@@ -24,6 +24,9 @@ from corehq.apps.groups.models import Group
 REGISTRATION_KEYWORDS = ["JOIN"]
 REGISTRATION_MOBILE_WORKER_KEYWORDS = ["WORKER"]
 
+class DomainScopeValidationError(Exception):
+    pass
+
 class BackendAuthorizationException(Exception):
     pass
 
@@ -31,8 +34,9 @@ def add_msg_tags(msg, *args, **kwargs):
     msg.workflow = kwargs.get("workflow", None)
     msg.xforms_session_couch_id = kwargs.get("xforms_session_couch_id", None)
     msg.reminder_id = kwargs.get("reminder_id", None)
+    msg.chat_user_id = kwargs.get("chat_user_id", None)
 
-def send_sms(domain, id, phone_number, text, **kwargs):
+def send_sms(domain, contact, phone_number, text, **kwargs):
     """
     Sends an outbound SMS. Returns false if it fails.
     """
@@ -44,13 +48,14 @@ def send_sms(domain, id, phone_number, text, **kwargs):
 
     msg = SMSLog(
         domain=domain,
-        couch_recipient=id, 
-        couch_recipient_doc_type="CouchUser",
         phone_number=phone_number,
         direction=OUTGOING,
         date = datetime.utcnow(),
         text = text
     )
+    if contact:
+        msg.couch_recipient = contact._id
+        msg.couch_recipient_doc_type = contact.doc_type
     add_msg_tags(msg, **kwargs)
     
     def onerror():
@@ -222,7 +227,10 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None,
     if domain_scope:
         # only process messages for phones known to be associated with this domain
         if v is None or v.domain != domain_scope:
-            raise RuntimeError('attempted to simulate incoming sms from phone number not verified with this domain')
+            raise DomainScopeValidationError(
+                'Attempted to simulate incoming sms from phone number not ' \
+                'verified with this domain'
+            )
 
     # Log message in message log
     msg = SMSLog(
@@ -259,7 +267,7 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None,
     else:
         if not process_sms_registration(msg):
             import verify
-            verify.process_verification(phone_number, text)
+            verify.process_verification(phone_number, msg)
 
     return msg
 
@@ -395,14 +403,9 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact, verifi
 
     error_occurred = False
     error_msg = None
+    session = None
 
     try:
-        form_complete = False
-        session = None
-
-        # Close any open sessions
-        XFormsSession.close_all_open_sms_sessions(domain, contact_id)
-
         # Start the session
         form = Form.get_form(survey_keyword_action.form_unique_id)
         app = form.get_app()
@@ -477,9 +480,9 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact, verifi
                         valid, answer, _error_msg = validate_answer(current_question.event, xpath_answer[xpath])
                         if not valid:
                             raise StructuredSMSException(response_text=_error_msg)
-                        responses = _get_responses(domain, contact_id, answer, yield_responses=True)
+                        responses = _get_responses(domain, contact_id, answer, yield_responses=True, session_id=session.session_id, update_timestamp=False)
                     else:
-                        responses = _get_responses(domain, contact_id, "", yield_responses=True)
+                        responses = _get_responses(domain, contact_id, "", yield_responses=True, session_id=session.session_id, update_timestamp=False)
 
                     current_question = responses[-1]
                     if is_form_complete(current_question):
@@ -498,13 +501,13 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact, verifi
                     if not valid:
                         raise StructuredSMSException(response_text=_error_msg)
 
-                    responses = _get_responses(domain, contact_id, answer, yield_responses=True)
+                    responses = _get_responses(domain, contact_id, answer, yield_responses=True, session_id=session.session_id, update_timestamp=False)
                     current_question = responses[-1]
                     form_complete = is_form_complete(current_question)
 
                 # If the form isn't finished yet but we're out of arguments, try to leave each remaining question blank and continue
                 while not form_complete:
-                    responses = _get_responses(domain, contact_id, "", yield_responses=True)
+                    responses = _get_responses(domain, contact_id, "", yield_responses=True, session_id=session.session_id, update_timestamp=False)
                     current_question = responses[-1]
 
                     if current_question.is_error:
@@ -520,9 +523,15 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact, verifi
         error_occurred = True
         error_msg = "ERROR: Internal server error"
 
+    if session is not None:
+        session = XFormsSession.get(session._id)
+        if session.is_open:
+            session.end(False)
+            session.save()
+
     message_tags = {
         "workflow" : WORKFLOW_KEYWORD,
-        "xforms_session_couch_id" : session._id if session is not None else None,
+        "xforms_session_couch_id": session._id if session is not None else None,
     }
 
     if msg is not None:
@@ -532,11 +541,6 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact, verifi
 
     if error_occurred and verified_number is not None and send_response:
         send_sms_to_verified_number(verified_number, error_msg, **message_tags)
-
-    if session is not None and (error_occurred or not form_complete):
-        session = XFormsSession.get(session._id)
-        session.end(False)
-        session.save()
 
 def process_survey_keyword_actions(verified_number, survey_keyword, text, msg=None):
     from corehq.apps.reminders.models import (
@@ -685,11 +689,11 @@ def form_session_handler(v, text, msg=None):
                     send_sms_to_verified_number(v, response_text, workflow=session.workflow, reminder_id=session.reminder_id, xforms_session_couch_id=session._id)
             else:
                 send_sms_to_verified_number(v, error_msg + event.text_prompt, workflow=session.workflow, reminder_id=session.reminder_id, xforms_session_couch_id=session._id)
-        except Exception as e:
+        except Exception:
             # Catch any touchforms errors
             msg_id = msg._id if msg is not None else ""
-            send_sms_to_verified_number(v, "An error has occurred. Please try again later. If the problem persists, try restarting the survey.")
             logging.exception("Exception in form_session_handler for message id %s." % msg_id)
+            send_sms_to_verified_number(v, "An error has occurred. Please try again later. If the problem persists, try restarting the survey.")
         return True
     else:
         return False
@@ -711,10 +715,9 @@ def forwarding_handler(v, text, msg=None):
     return False
 
 def fallback_handler(v, text, msg=None):
-    # Previously, the form session handler was returning True, which would prevent this message
-    # from going out on unknown keywords received. So for now, going to comment this out, until
-    # we give the domains the option to add this message in.
-    #send_sms_to_verified_number(v, 'could not understand your message. please check keyword.')
+    domain_obj = Domain.get_by_name(v.domain, strict=True)
+    if domain_obj.use_default_sms_response and domain_obj.default_sms_response:
+        send_sms_to_verified_number(v, domain_obj.default_sms_response)
     return True
 
 

@@ -190,5 +190,5 @@ def create_immediate_reminder(contact, content_type, reminder_type=None, message
         sample_id = contact._id if recipient == RECIPIENT_SURVEY_SAMPLE else None,
         user_group_id = contact._id if recipient == RECIPIENT_USER_GROUP else None,
     )
-    handler.save(fast_forward=False)
+    handler.save(send_immediately=True)
 

@@ -1,6 +1,68 @@
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
+REPORT_XFORM_INDEX="report_xforms_f2c1d12974356f337b97915c0d68df91"
 
-REPORT_XFORM_INDEX="report_xforms_407d6db90efd062d401038e645b5dcb5"
+
+
+CASE_MAPPING_FRAGMENT = {
+    'type': 'nested',
+    'dynamic': False,
+    'properties': {
+        'date_modified': {
+            "type": "date",
+            "format": DATE_FORMATS_STRING
+        },
+        '@date_modified': {
+            "type": "date",
+            "format": DATE_FORMATS_STRING
+        },
+        'index': {
+            'type': 'object',
+            'dynamic': True
+        },
+
+        "@case_id": {"type": "string", "index": "not_analyzed"},
+        "@user_id": {"type": "string", "index": "not_analyzed"},
+        "@xmlns": {"type": "string", "index": "not_analyzed"},
+
+
+        "case_id": {"type": "string", "index": "not_analyzed"},
+        "user_id": {"type": "string", "index": "not_analyzed"},
+        "xmlns": {"type": "string", "index": "not_analyzed"},
+
+        "create": {
+            'type': 'object',
+            'dynamic': True,
+            'properties:': {
+                'case_type': {"type": "string", "index": "not_analyzed"},
+                'owner_id': {"type": "string", "index": "not_analyzed"},
+                'case_name': {"type": "string", "index": "not_analyzed"},
+            }
+        },
+
+        "update": {
+            'type': 'object',
+            'dynamic': True,
+            'properties:': {
+                'case_type': {"type": "string", "index": "not_analyzed"},
+                'owner_id': {"type": "string", "index": "not_analyzed"},
+                'case_name': {"type": "string", "index": "not_analyzed"},
+                'date_opened': {
+                    "type": "date",
+                    "format": DATE_FORMATS_STRING
+                },
+
+            },
+        },
+        "index": {
+            'type': 'object',
+            'dynamic': True
+        },
+        'attachment': {
+            'type': 'object',
+            'dynamic': False
+        }
+    }
+}
 
 REPORT_XFORM_MAPPING = {
     "date_detection": False,
@@ -8,7 +70,7 @@ REPORT_XFORM_MAPPING = {
     'ignore_malformed': True,
     'dynamic': True,
     "_meta": {
-        "created": '2013-05-11', #record keeping on the index.
+        "created": '2013-11-08', #record keeping on the index.
     },
     "properties": {
         'doc_type': {'type': 'string'},
@@ -76,39 +138,16 @@ REPORT_XFORM_MAPPING = {
         {
             'case_block': {
                 "match": "case",
-                "mapping": {
-                    'type': 'nested',
-                    'dynamic': False,
-                    'properties': {
-                        'date_modified': {
-                            "type": "date",
-                            "format": DATE_FORMATS_STRING
-                        },
-                        '@date_modified': {
-                            "type": "date",
-                            "format": DATE_FORMATS_STRING
-                        },
-
-                        "@case_id": {"type": "string", "index": "not_analyzed" },
-                        "@user_id": {"type": "string", "index": "not_analyzed" },
-                        "@xmlns": {"type": "string", "index": "not_analyzed" },
-
-
-                        "case_id": {"type": "string", "index": "not_analyzed"},
-                        "user_id": {"type": "string", "index": "not_analyzed"},
-                        "xmlns": {"type": "string", "index": "not_analyzed"},
-                    }
-                }
+                "mapping": CASE_MAPPING_FRAGMENT
             }
         },
         {
             "everything_else": {
                 "match": "*",
                 "match_mapping_type": "string",
-                "mapping": {
-                    "{name}": {"type": "string", "index": "not_analyzed"},
-                }
+                "mapping": {"type": "string", "index": "not_analyzed"}
             }
         }
     ]
 }
+

@@ -100,3 +100,9 @@
 [submodule "submodules/django-no-exceptions"]
 	path = submodules/django-no-exceptions
 	url = git://github.com/dimagi/django-no-exceptions.git
+[submodule "submodules/toggle"]
+	path = submodules/toggle
+	url = https://github.com/dimagi/toggle.git
+[submodule "submodules/django-prbac-src"]
+	path = submodules/django-prbac-src
+	url = git://github.com/dimagi/django-prbac.git

@@ -190,6 +190,7 @@ class OpenSubCaseAction(FormAction):
 
     case_type = StringProperty()
     case_name = StringProperty()
+    reference_id = StringProperty()
     case_properties = DictProperty()
     repeat_context = StringProperty()
 
@@ -308,10 +309,10 @@ class FormBase(DocumentSchema):
     Translates to a second-level menu on the phone
 
     """
+    form_type = None
+
     name = DictProperty()
     unique_id = StringProperty()
-    requires = StringProperty(choices=["case", "referral", "none"], default="none")
-    actions = SchemaProperty(FormActions)
     show_count = BooleanProperty(default=False)
     xmlns = StringProperty()
     version = IntegerProperty()
@@ -374,66 +375,51 @@ class FormBase(DocumentSchema):
 
     def validate_for_build(self):
         errors = []
-        needs_case_type = False
-        needs_case_detail = False
-        needs_referral_detail = False
 
         try:
             module = self.get_module()
         except AttributeError:
             module = None
-            form_type = 'user_registration'
-        else:
-            form_type = 'module_form'
 
         meta = {
-            'form_type': form_type,
+            'form_type': self.form_type,
             'module': build_error_utils.get_module_info(module) if module else {},
             'form': {"id": self.id if hasattr(self, 'id') else None, "name": self.name}
         }
 
-        try:
-            _parse_xml(self.source)
-        except XFormError as e:
-            errors.append(dict(
-                type="invalid xml",
-                message=unicode(e) if self.source else '',
-                **meta
-            ))
-        except ValueError:
-            logging.error("Failed: _parse_xml(string=%r)" % self.source)
-            raise
+        xml_valid = False
+        if self.source == '':
+            errors.append(dict(type="blank form"))
         else:
             try:
-                self.validate_form()
-            except XFormValidationError as e:
-                error = {'type': 'validation error', 'validation_message': unicode(e)}
-                error.update(meta)
-                errors.append(error)
+                _parse_xml(self.source)
+                xml_valid = True
+            except XFormError as e:
+                errors.append(dict(
+                    type="invalid xml",
+                    message=unicode(e) if self.source else '',
+                    **meta
+                ))
+            except ValueError:
+                logging.error("Failed: _parse_xml(string=%r)" % self.source)
+                raise
+            else:
+                try:
+                    self.validate_form()
+                except XFormValidationError as e:
+                    error = {'type': 'validation error', 'validation_message': unicode(e)}
+                    error.update(meta)
+                    errors.append(error)
 
-            for error in self.check_actions():
-                error.update(meta)
-                errors.append(error)
-
-        if self.requires_case():
-            needs_case_detail = True
-            needs_case_type = True
-        if self.requires_case_type():
-            needs_case_type = True
-        if self.requires_referral():
-            needs_referral_detail = True
-
-        if module:
-            errors.extend(
-                build_error_utils.get_case_errors(
-                    module,
-                    needs_case_type=needs_case_type,
-                    needs_case_detail=needs_case_detail,
-                    needs_referral_detail=needs_referral_detail,
-                )
-            )
+        errors.extend(self.extended_build_validation(meta, xml_valid))
 
         return errors
+
+    def extended_build_validation(self, error_meta, xml_valid):
+        """
+        Override to perform additional validation during build process.
+        """
+        return []
 
     def get_unique_id(self):
         """
@@ -465,6 +451,74 @@ class FormBase(DocumentSchema):
         xform = XForm(self.source)
         self.add_stuff_to_xform(xform)
         return xform.render()
+
+    def get_questions(self, langs):
+        return XForm(self.source).get_questions(langs)
+
+    def export_json(self, dump_json=True):
+        source = self.to_json()
+        del source['unique_id']
+        return json.dumps(source) if dump_json else source
+
+    def rename_lang(self, old_lang, new_lang):
+        _rename_key(self.name, old_lang, new_lang)
+        try:
+            self.rename_xform_language(old_lang, new_lang)
+        except XFormError:
+            pass
+
+    def rename_xform_language(self, old_code, new_code):
+        source = XForm(self.source)
+        source.rename_language(old_code, new_code)
+        source = source.render()
+        self.source = source
+
+    def default_name(self):
+        return self.name[self.get_app().default_language]
+
+    @property
+    def full_path_name(self):
+        return "%(app_name)s > %(module_name)s > %(form_name)s" % {
+            'app_name': self.get_app().name,
+            'module_name': self.get_module().name[self.get_app().default_language],
+            'form_name': self.default_name()
+        }
+
+class JRResourceProperty(StringProperty):
+
+    def validate(self, value, required=True):
+        super(JRResourceProperty, self).validate(value, required)
+        if value is not None and not value.startswith('jr://'):
+            raise BadValueError("JR Resources must start with 'jr://")
+        return value
+
+
+class NavMenuItemMediaMixin(DocumentSchema):
+
+    media_image = JRResourceProperty(required=False)
+    media_audio = JRResourceProperty(required=False)
+
+
+class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
+    form_type = 'module_form'
+
+    form_filter = StringProperty()
+    requires = StringProperty(choices=["case", "referral", "none"], default="none")
+    actions = SchemaProperty(FormActions)
+
+    def add_stuff_to_xform(self, xform):
+        super(Form, self).add_stuff_to_xform(xform)
+        xform.add_case_and_meta(self)
+
+    def get_app(self):
+        return self._parent._parent
+
+    def get_module(self):
+        return self._parent
+
+    def all_other_forms_require_a_case(self):
+        m = self.get_module()
+        return all([form.requires == 'case' for form in m.get_forms() if form.id != self.id])
 
     def _get_active_actions(self, types):
         actions = {}
@@ -505,27 +559,6 @@ class FormBase(DocumentSchema):
         return self._get_active_actions((
             'open_case', 'update_case', 'close_case',
             'open_referral', 'update_referral', 'close_referral'))
-
-    def get_questions(self, langs):
-        return XForm(self.source).get_questions(langs)
-
-    def export_json(self, dump_json=True):
-        source = self.to_json()
-        del source['unique_id']
-        return json.dumps(source) if dump_json else source
-
-    def rename_lang(self, old_lang, new_lang):
-        _rename_key(self.name, old_lang, new_lang)
-        try:
-            self.rename_xform_language(old_lang, new_lang)
-        except XFormError:
-            pass
-
-    def rename_xform_language(self, old_code, new_code):
-        source = XForm(self.source)
-        source.rename_language(old_code, new_code)
-        source = source.render()
-        self.source = source
 
     def check_actions(self):
         errors = []
@@ -620,52 +653,37 @@ class FormBase(DocumentSchema):
     def requires_referral(self):
         return self.requires == "referral"
 
-    def default_name(self):
-        return self.name[self.get_app().default_language]
+    def extended_build_validation(self, error_meta, xml_valid):
+        errors = []
+        if xml_valid:
+            for error in self.check_actions():
+                error.update(error_meta)
+                errors.append(error)
 
-    @property
-    def full_path_name(self):
-        return "%(app_name)s > %(module_name)s > %(form_name)s" % {
-            'app_name': self.get_app().name,
-            'module_name': self.get_module().name[self.get_app().default_language],
-            'form_name': self.default_name()
-        }
+        needs_case_type = False
+        needs_case_detail = False
+        needs_referral_detail = False
 
-class JRResourceProperty(StringProperty):
+        if self.requires_case():
+            needs_case_detail = True
+            needs_case_type = True
+        if self.requires_case_type():
+            needs_case_type = True
+        if self.requires_referral():
+            needs_referral_detail = True
 
-    def validate(self, value, required=True):
-        super(JRResourceProperty, self).validate(value, required)
-        if value is not None and not value.startswith('jr://'):
-            raise BadValueError("JR Resources must start with 'jr://")
-        return value
+        errors.extend(build_error_utils.get_case_errors(
+            self.get_module(),
+            needs_case_type=needs_case_type,
+            needs_case_detail=needs_case_detail,
+            needs_referral_detail=needs_referral_detail,
+        ))
 
-
-class NavMenuItemMediaMixin(DocumentSchema):
-
-    media_image = JRResourceProperty(required=False)
-    media_audio = JRResourceProperty(required=False)
-
-
-class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
-
-    form_filter = StringProperty()
-
-    def add_stuff_to_xform(self, xform):
-        super(Form, self).add_stuff_to_xform(xform)
-        xform.add_case_and_meta(self)
-
-    def get_app(self):
-        return self._parent._parent
-
-    def get_module(self):
-        return self._parent
-
-    def all_other_forms_require_a_case(self):
-        m = self.get_module()
-        return all([form.requires == 'case' for form in m.get_forms() if form.id != self.id])
+        return errors
 
 
 class UserRegistrationForm(FormBase):
+    form_type = 'user_registration'
 
     username_path = StringProperty(default='username')
     password_path = StringProperty(default='password')
@@ -676,6 +694,12 @@ class UserRegistrationForm(FormBase):
         xform.add_user_registration(self.username_path, self.password_path, self.data_paths)
 
 
+class MappingItem(DocumentSchema):
+    key = StringProperty()
+    # lang => localized string
+    value = DictProperty()
+
+
 class DetailColumn(IndexedSchema):
     """
     Represents a column in case selection screen on the phone. Ex:
@@ -684,10 +708,10 @@ class DetailColumn(IndexedSchema):
             'model': 'case',
             'field': 'sex',
             'format': 'enum',
-            'enum': {
-                'm': {'en': 'Male', 'por': 'Macho'},
-                'f': {'en': 'Female', 'por': 'Fêmea'},
-            },
+            'enum': [
+                {'key': 'm', 'value': {'en': 'Male', 'por': 'Macho'},
+                {'key': 'f', 'value': {'en': 'Female', 'por': 'Fêmea'},
+            ],
         }
 
     """
@@ -696,14 +720,23 @@ class DetailColumn(IndexedSchema):
     field = StringProperty()
     format = StringProperty()
 
-    enum = DictProperty()
+    enum = SchemaListProperty(MappingItem)
+
     late_flag = IntegerProperty(default=30)
     advanced = StringProperty(default="")
     filter_xpath = StringProperty(default="")
     time_ago_interval = FloatProperty(default=365.25)
 
+    @property
+    def enum_dict(self):
+        """for backwards compatibility with building 1.0 apps"""
+        import warnings
+        warnings.warn('You should not use enum_dict. Use enum instead',
+                      DeprecationWarning)
+        return dict((item.key, item.value) for item in self.enum)
+
     def rename_lang(self, old_lang, new_lang):
-        for dct in (self.header, self.enum):
+        for dct in [self.header] + [item.value for item in self.enum]:
             _rename_key(dct, old_lang, new_lang)
 
     @property
@@ -739,6 +772,12 @@ class DetailColumn(IndexedSchema):
         if data.get('format') in ('months-ago', 'years-ago'):
             data['time_ago_interval'] = cls.TimeAgoInterval.get_from_old_format(data['format'])
             data['format'] = 'time-ago'
+
+        # Lazy migration: enum used to be a dict, now is a list
+        if isinstance(data.get('enum'), dict):
+            data['enum'] = sorted({'key': key, 'value': value}
+                                  for key, value in data['enum'].items())
+
         return super(DetailColumn, cls).wrap(data)
 
 
@@ -775,7 +814,7 @@ class Detail(IndexedSchema):
     Full configuration for a case selection screen
 
     """
-    type = StringProperty(choices=DETAIL_TYPES)
+    display = StringProperty(choices=['short', 'long'])
 
     columns = SchemaListProperty(DetailColumn)
     get_columns = IndexedSchema.Getter('columns')
@@ -786,37 +825,9 @@ class Detail(IndexedSchema):
     def get_column(self, i):
         return self.columns[i].with_id(i%len(self.columns), self)
 
-    def append_column(self, column):
-        self.columns.append(column)
-
-    def update_column(self, column_id, column):
-        my_column = self.columns[column_id]
-
-        my_column.model = column.model
-        my_column.field = column.field
-        my_column.format = column.format
-        my_column.late_flag = column.late_flag
-        my_column.advanced = column.advanced
-
-        for lang in column.header:
-            my_column.header[lang] = column.header[lang]
-
-        for key in column.enum:
-            for lang in column.enum[key]:
-                if key not in my_column.enum:
-                    my_column.enum[key] = {}
-                my_column.enum[key][lang] = column.enum[key][lang]
-
-    def delete_column(self, column_id):
-        del self.columns[column_id]
-
     def rename_lang(self, old_lang, new_lang):
         for column in self.columns:
             column.rename_lang(old_lang, new_lang)
-
-    @property
-    def display(self):
-        return "short" if self.type.endswith('short') else 'long'
 
     def filter_xpath(self):
 
@@ -845,6 +856,18 @@ class ParentSelect(DocumentSchema):
     module_id = StringProperty()
 
 
+class DetailPair(DocumentSchema):
+    short = SchemaProperty(Detail)
+    long = SchemaProperty(Detail)
+
+    @classmethod
+    def wrap(cls, data):
+        self = super(DetailPair, cls).wrap(data)
+        self.short.display = 'short'
+        self.long.display = 'long'
+        return self
+
+
 class Module(IndexedSchema, NavMenuItemMediaMixin):
     """
     A group of related forms, and configuration that applies to them all.
@@ -855,7 +878,8 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
     case_label = DictProperty()
     referral_label = DictProperty()
     forms = SchemaListProperty(Form)
-    details = SchemaListProperty(Detail)
+    case_details = SchemaProperty(DetailPair)
+    ref_details = SchemaProperty(DetailPair)
     case_type = StringProperty()
     put_in_root = BooleanProperty(default=False)
     case_list = SchemaProperty(CaseList)
@@ -863,6 +887,41 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
     task_list = SchemaProperty(CaseList)
     parent_select = SchemaProperty(ParentSelect)
     unique_id = StringProperty()
+
+    @classmethod
+    def wrap(cls, data):
+        if 'details' in data:
+            case_short, case_long, ref_short, ref_long = data['details']
+            del data['details']
+            data['case_details'] = {
+                'short': case_short,
+                'long': case_long,
+            }
+            data['ref_details'] = {
+                'short': ref_short,
+                'long': ref_long,
+            }
+        return super(Module, cls).wrap(data)
+
+    @classmethod
+    def new_module(cls, name, lang):
+        detail = Detail(
+            columns=[DetailColumn(
+                format='plain',
+                header={(lang or 'en'): ugettext("Name")},
+                field='name',
+                model='case',
+            )]
+        )
+        return Module(
+            name={(lang or 'en'): name or ugettext("Untitled Module")},
+            forms=[],
+            case_type='',
+            case_details=DetailPair(
+                short=Detail(detail.to_json()),
+                long=Detail(detail.to_json()),
+            ),
+        )
 
     def get_or_create_unique_id(self):
         """
@@ -882,7 +941,7 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
         _rename_key(self.name, old_lang, new_lang)
         for form in self.get_forms():
             form.rename_lang(old_lang, new_lang)
-        for detail in self.details:
+        for _, detail in self.get_details():
             detail.rename_lang(old_lang, new_lang)
         for case_list in (self.case_list, self.referral_list):
             case_list.rename_lang(old_lang, new_lang)
@@ -894,18 +953,18 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
         self__forms = self.forms
         return self__forms[i].with_id(i%len(self.forms), self)
 
-    get_details = IndexedSchema.Getter('details')
-
-    def get_detail(self, detail_type):
-        for detail in self.get_details():
-            if detail.type == detail_type:
-                return detail
-        raise Exception("Module %s has no detail type %s" % (self, detail_type))
+    def get_details(self):
+        return (
+            ('case_short', self.case_details.short),
+            ('case_long', self.case_details.long),
+            ('ref_short', self.ref_details.short),
+            ('ref_long', self.ref_details.long),
+        )
 
     @property
     def detail_sort_elements(self):
         try:
-            return self.get_detail('case_short').sort_elements
+            return self.case_details.short.sort_elements
         except Exception:
             return []
 
@@ -1063,6 +1122,7 @@ class VersionedDoc(LazyAttachmentDoc):
         self.scrub_source(source)
 
         return json.dumps(source) if dump_json else source
+
     @classmethod
     def from_source(cls, source, domain):
         for field in cls._meta_fields:
@@ -1861,10 +1921,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         form = self.user_registration
         form._app = self
         if not form.source:
-            form.source = load_default_user_registration().format(user_registration_xmlns="%s%s" % (
-                get_url_base(),
-                reverse('view_user_registration', args=[self.domain, self.id]),
-            ))
+            form.source = load_default_user_registration()
         return form
 
     def get_forms(self, bare=True):
@@ -1901,27 +1958,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         app = cls(domain=domain, modules=[], name=name, langs=[lang], build_langs=[lang], application_version=application_version)
         return app
 
-    def new_module(self, name, lang):
-        self.modules.append(
-            Module(
-                name={(lang or 'en'): name or ugettext("Untitled Module")},
-                forms=[],
-                case_type='',
-                details=[Detail(
-                    type=detail_type,
-                    columns=[DetailColumn(
-                        format='plain',
-                        header={(lang or 'en'): ugettext("Name")},
-                        field='name',
-                        model='case',
-                    )],
-                ) for detail_type in DETAIL_TYPES],
-            )
-        )
-        return self.get_module(-1)
-
-    def new_module_from_source(self, source):
-        self.modules.append(Module.wrap(source))
+    def add_module(self, module):
+        self.modules.append(module)
         return self.get_module(-1)
 
     @parse_int([1])
@@ -2088,7 +2126,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                         needs_case_detail=True
                     )
                 )
-            for column in module.get_detail('case_short').columns:
+            for column in module.case_details.short.columns:
                 if column.format == 'filter':
                     try:
                         etree.XPath(column.filter_xpath or '')

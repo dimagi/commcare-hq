@@ -9,10 +9,12 @@ def days_visit_overdue(form):
         return val
 
 
-def date_modified(form):
+def date_modified(form, force_to_date=True, force_to_datetime=False):
     val = form.xpath('form/case/@date_modified')
-    if isinstance(val, datetime.datetime):
+    if force_to_date and isinstance(val, datetime.datetime):
         return val.date()
+    elif force_to_datetime and isinstance(val, datetime.date):
+        return datetime.datetime.combine(val, datetime.time())
     else:
         return val
 

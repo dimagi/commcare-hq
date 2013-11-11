@@ -8,6 +8,7 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
 from corehq.elastic import get_es
 from django.views.generic import View
+from corehq.pillows.base import restore_property_dict, VALUE_TAG
 from dimagi.utils.logging import notify_exception
 from corehq.apps.reports.exceptions import BadRequestError
 
@@ -106,14 +107,14 @@ class ESView(View):
         es_results = es_base.get('_search', data=es_query)
 
         if 'error' in es_results:
-            if es_query['query']['filtered']['query'].get('query_string'):
+            if 'query_string' in es_query.get('query', {}).get('filtered', {}).get('query', {}):
                 # the error may have been caused by a bad query string
                 # re-run with no query string to check
                 querystring = es_query['query']['filtered']['query']['query_string']['query']
                 new_query = es_query
                 new_query['query']['filtered']['query'] = {"match_all": {}}
-                new_results = self.run_query(new_query, es_type)
-                if new_results: 
+                new_results = self.run_query(new_query)
+                if new_results:
                     # the request succeeded without that query string
                     # an error with a blank query will return None
                     raise ESUserError("Error with elasticsearch query: %s" %
@@ -139,7 +140,7 @@ class ESView(View):
         es_results['hits']['hits'] = hits
         return es_results
 
-    def base_query(self, terms={}, fields=[], start=0, size=DEFAULT_SIZE):
+    def base_query(self, terms=None, fields=None, start=0, size=DEFAULT_SIZE):
         """
         The standard query to run across documents of a certain index.
         domain = exact match domain string
@@ -148,6 +149,7 @@ class ESView(View):
         start = where to start the results from
         size = default size in ES is 10, also explicitly set here.
         """
+        fields = fields or []
         query = {
             "filter": {
                 "and": [
@@ -157,9 +159,12 @@ class ESView(View):
             "from": start,
             "size": size
         }
+
+        use_terms = terms or {}
+
         if len(fields) > 0:
             query['fields'] = fields
-        for k, v in terms.items():
+        for k, v in use_terms.items():
             query['filter']['and'].append({"term": {k: v}})
         return query
 
@@ -188,7 +193,6 @@ class ESView(View):
             return response
 
         #ensure that the domain is filtered in implementation
-        domain = self.request.domain
         query_results = self.run_query(raw_query)
         query_output = simplejson.dumps(query_results, indent=self.indent)
         response = HttpResponse(query_output, content_type="application/json")
@@ -202,30 +206,27 @@ class CaseES(ESView):
     """
     index = "hqcases"
 
-class FullCaseES(ESView):
-    """
-    Fully indexed case index elasticsearch endpoint.
-    """
-    index = "full_cases"
-
+class ReportCaseES(ESView):
+    index = 'report_cases'
 
 
 class XFormES(ESView):
     index = "xforms"
 
-    def base_query(self, terms={}, doc_type='xforminstance', fields=[], start=0, size=DEFAULT_SIZE):
+    def base_query(self, terms=None, doc_type='xforminstance', fields=None, start=0, size=DEFAULT_SIZE):
         """
         Somewhat magical enforcement that the basic query for XForms will only return XFormInstance
         docs by default.
         """
-        new_terms = terms
+
+        new_terms = terms or {}
+        use_fields = fields or []
         if 'doc_type' not in new_terms:
             #let the terms override the kwarg - the query terms trump the magic
             new_terms['doc_type'] = doc_type
-        return super(XFormES, self).base_query(terms=new_terms, fields=fields, start=start, size=size)
+        return super(XFormES, self).base_query(terms=new_terms, fields=use_fields, start=start, size=size)
 
-
-    def run_query(self, es_query):
+    def run_query(self, es_query, **kwargs):
         es_results = super(XFormES, self).run_query(es_query)
         #hack, walk the results again, and if we have xmlns, populate human readable names
         # Note that `get_unknown_form_name` does not require the request, which is also
@@ -261,9 +262,112 @@ class XFormES(ESView):
 
 
 
+def report_term_filter(terms, mapping):
+    """convert terms to correct #value term queries based upon the mapping
+    does it match up with pre-defined stuff in the mapping?
+    """
+
+    ret_terms = []
+    for orig_term in terms:
+        curr_mapping = mapping.get('properties')
+        split_term = orig_term.split('.')
+        for ix, sub_term in enumerate(split_term, start=1):
+            is_property = sub_term in curr_mapping
+            if ix == len(split_term):
+                #it's the last one, and if it's still not in it, then append a value
+                if is_property:
+                    ret_term = orig_term
+                else:
+                    ret_term = '%s.%s' % (orig_term, VALUE_TAG)
+                ret_terms.append(ret_term)
+            if is_property and 'properties' in curr_mapping[sub_term]:
+                curr_mapping = curr_mapping[sub_term]['properties']
+    return ret_terms
+
+
+
+def get_report_script_field(field_path, is_known=False):
+    """
+    Generate a script field string for easier querying.
+    field_path: is the path.to.property.name in the _source
+    is_known: if true, then query as is, if false, then it's a dynamically mapped item,
+    so put on the #value property at the end.
+    """
+    property_split = field_path.split('.')
+    property_path = '_source%s' % ''.join("['%s']" % x for x in property_split)
+    if is_known:
+        script_string = property_path
+    else:
+        full_script_path = "%s['#value']" % property_path
+        script_string = """if (%(prop_path)s != null) { %(value_path)s; }
+        else { null; }""" % {
+            'prop_path': property_path,
+            'value_path': full_script_path
+        }
+
+    ret = {"script": script_string}
+    return ret
+
+
+
+class ReportXFormES(XFormES):
+    index = 'report_xforms'
+
+
+    def base_query(self, terms=None, doc_type='xforminstance', fields=None, start=0, size=DEFAULT_SIZE):
+        """
+        Somewhat magical enforcement that the basic query for XForms will only return XFormInstance
+        docs by default.
+        """
+        raw_terms = terms or {}
+        query_terms = {}
+        if 'doc_type' not in raw_terms:
+            #let the terms override the kwarg - the query terms trump the magic
+            query_terms['doc_type'] = doc_type
+
+        for k, v in raw_terms.items():
+            query_terms['%s.%s' % (k, VALUE_TAG)] = v
+
+        return super(ReportXFormES, self).base_query(terms=raw_terms, fields=fields, start=start, size=size)
+
+    def run_query(self, es_query):
+        es_results = super(XFormES, self).run_query(es_query)
+        #hack, walk the results again, and if we have xmlns, populate human readable names
+        # Note that `get_unknown_form_name` does not require the request, which is also
+        # not necessarily available here. So `None` is passed here.
+        form_filter = FormsByApplicationFilter(None, domain=self.domain)
+
+        if es_results:
+            for res in es_results.get('hits', {}).get('hits', []):
+                if '_source' in res:
+                    res_source = restore_property_dict(res['_source'])
+                    res['_source'] = res_source
+                    xmlns = res['_source'].get('xmlns', None)
+                    name = None
+                    if xmlns:
+                        name = form_filter.get_unknown_form_name(xmlns,
+                                                                 app_id=res['_source'].get('app_id',
+                                                                                           None),
+                                                                 none_if_not_found=True)
+                    if not name:
+                        name = 'unknown' # try to fix it below but this will be the default
+                        # fall back
+                        try:
+                            if res['_source']['form'].get('@name', None):
+                                name = res['_source']['form']['@name']
+                            else:
+                                backup = res['_source']['form'].get('#type', 'data')
+                                if backup != 'data':
+                                    name = backup
+                        except (TypeError, KeyError):
+                            pass
+
+                    res['_source']['es_readable_name'] = name
+        return es_results
 
     @classmethod
-    def by_case_id_query(cls, domain, case_id, terms={}, doc_type='xforminstance', date_field=None, startdate=None, enddate=None, date_format='%Y-%m-%d'):
+    def by_case_id_query(cls, domain, case_id, terms=None, doc_type='xforminstance',
+                         date_field=None, startdate=None, enddate=None, date_format='%Y-%m-%d'):
         """
         Run a case_id query on both case properties (supporting old and new) for xforms.
 
@@ -278,6 +382,8 @@ class XFormES(ESView):
         startdate, enddate: datetime interval values
         date_format: string of the date format to filter based upon, defaults to yyyy-mm-dd
         """
+
+        use_terms = terms or {}
         query = {
             "query": {
                 "filtered": {
@@ -285,36 +391,42 @@ class XFormES(ESView):
                         "and": [
                             {"term": {"domain.exact": domain.lower()}},
                             {"term": {"doc_type": doc_type}},
+                            {
+                                "nested": {
+                                    "path": "form.case",
+                                    "filter": {
+                                        "or": [
+                                            {"term": {"@case_id": "%s" % case_id}},
+                                            {"term": {"case_id": "%s" % case_id}}
+                                        ]
+                                    }
+                                }
+                            }
                         ]
                     },
                     "query": {
-                        "query_string": {
-                            "query": "(form.case.case_id:%(case_id)s OR form.case.@case_id:%(case_id)s)" % dict(
-                                case_id=case_id)
-                        }
+                        "match_all": {}
                     }
                 }
             }
         }
         if date_field is not None:
             range_query = {
-                "numeric_range": {
+                "range": {
                     date_field: {}
                 }
             }
 
             if startdate is not None:
-                range_query['numeric_range'][date_field]["gte"] = startdate.strftime(date_format)
+                range_query['range'][date_field]["gte"] = startdate.strftime(date_format)
             if enddate is not None:
-                range_query['numeric_range'][date_field]["lte"] = enddate.strftime(date_format)
+                range_query['range'][date_field]["lte"] = enddate.strftime(date_format)
             query['query']['filtered']['filter']['and'].append(range_query)
 
-        for k, v in terms.items():
+        for k, v in use_terms.items():
             query['query']['filtered']['filter']['and'].append({"term": {k.lower(): v.lower()}})
         return query
 
-class FullXFormES(XFormES):
-    index = 'full_xforms'
 
 class ESQuerySet(object):
     """

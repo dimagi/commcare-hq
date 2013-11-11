@@ -1,7 +1,10 @@
+import copy
 from django.utils.unittest.case import TestCase
 from django.conf import settings
 import simplejson
-from corehq.pillows.base import restore_property_dict
+from corehq.apps.api.es import report_term_filter
+from corehq.pillows.base import restore_property_dict, VALUE_TAG
+from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_MAPPING
 
 from corehq.pillows.reportxform import ReportXFormPillow
 
@@ -144,6 +147,227 @@ class testReportXFormProcessing(TestCase):
 
         self.assertEqual(orig, restored)
 
+    def testSubCaseForm(self):
+        """
+        Ensure that the dict format converter never touches any sub property that has a key of 'case'
+
+        this is our way of handling case blocks. The properties in the case block ought not to be touched
+
+        this current form only captures
+        """
+        pillow = ReportXFormPillow(online=False)
+        orig = {
+            '_id': 'nested_case_blocks',
+            'form': {
+                'case': {
+                    "@xmlns": "http://commcarehq.org/case/transaction/v2",
+                    "@date_modified": "2013-10-14T10:59:44Z",
+                    "@user_id": "someuser",
+                    "@case_id": "mycase",
+                },
+                'subcase_0': {
+                    'case': {
+                        "@xmlns": "http://commcarehq.org/case/transaction/v2",
+                        "index": {
+                            "parent": {
+                                "@case_type": "household",
+                                "#text": "some_parent"
+                            }
+                        },
+                        "@date_modified": "2013-10-12T11:59:41Z",
+                        "create": {
+                            "case_type": "child",
+                            "owner_id": "some_owner",
+                            "case_name": "hello there"
+                        },
+                        "@user_id": "someuser",
+                        "update": {
+                            "first_name": "asdlfjkasdf",
+                            "surname": "askljvlajskdlrwe",
+                            "dob": "2011-03-21",
+                            "sex": "male",
+                            "weight_date": "never",
+                            "household_head_health_id": "",
+                            "dob_known": "yes",
+                            "health_id": "",
+                            "length_date": "never",
+                            "dob_calc": "2011-03-21"
+                        },
+                        "@case_id": "subcaseid"
+                    }
+                },
+                'really': {
+                    'nested': {
+                        'case': {
+                        "@xmlns": "http://commcarehq.org/case/transaction/v2",
+                        "index": {
+                            "parent": {
+                                "@case_type": "household",
+                                "#text": "some_parent"
+                            }
+                        },
+                        "@date_modified": "2013-10-12T11:59:41Z",
+                        "create": {
+                            "case_type": "child",
+                            "owner_id": "some_owner",
+                            "case_name": "hello there"
+                        },
+                        "@user_id": "someuser",
+                        "update": {
+                            "first_name": "asdlfjkasdf",
+                            "surname": "askljvlajskdlrwe",
+                            "dob": "2011-03-21",
+                            "sex": "male",
+                            "weight_date": "never",
+                            "household_head_health_id": "",
+                            "dob_known": "yes",
+                            "health_id": "",
+                            "length_date": "never",
+                            "dob_calc": "2011-03-21"
+                        },
+                        "@case_id": "subcaseid2"
+                        }
+                    }
+                },
+                'array_cases': [
+                    {'case': {'foo': 'bar'}},
+                    {'case': {'boo': 'bar'}},
+                    {'case': {'poo': 'bar'}},
+                ]
+            }
+        }
+        orig['domain'] = settings.ES_XFORM_FULL_INDEX_DOMAINS[0]
+        for_indexing = pillow.change_transform(orig)
+
+        self.assertEqual(orig['form']['case'], for_indexing['form']['case'])
+        self.assertEqual(orig['form']['subcase_0']['case'], for_indexing['form']['subcase_0']['case'])
+        self.assertEqual(orig['form']['really']['nested']['case'], for_indexing['form']['really']['nested']['case'])
+
+
+    def testBlanktoNulls(self):
+        orig = {
+            '_id': 'blank_strings',
+            'form': {
+                'case': {
+                    "@xmlns": "http://commcarehq.org/case/transaction/v2",
+                    "@date_modified": "2013-10-14T10:59:44Z",
+                    "@user_id": "someuser",
+                    "@case_id": "mycase",
+                    "index": "",
+                    "attachment": "",
+                    "create": "",
+                    "update": "",
+                }
+            }
+        }
+
+        dict_props = ['index', 'attachment', 'create', 'update']
+
+        pillow = ReportXFormPillow(online=False)
+        all_blank = copy.deepcopy(orig)
+        all_blank['domain'] = settings.ES_XFORM_FULL_INDEX_DOMAINS[0]
+        for_indexing = pillow.change_transform(all_blank)
+
+        for prop in dict_props:
+            self.assertIsNone(for_indexing['form']['case'][prop])
+
+        all_dicts = copy.deepcopy(orig)
+        all_dicts['domain'] = settings.ES_XFORM_FULL_INDEX_DOMAINS[0]
+        for prop in dict_props:
+            all_dicts['form']['case'][prop] = {}
+
+        for_index2 = pillow.change_transform(all_dicts)
+        for prop in dict_props:
+            self.assertIsNotNone(for_index2['form']['case'][prop])
+
+    def testComputedConversion(self):
+        """
+        Since we set dyanmic=True on reportxforms, need to do conversions on the computed_ properties
+        so call conversion on computed_ dict as well, this test ensures that it's converted on change_transform
+        :return:
+        """
+        orig = {
+            '_id': 'blank_strings',
+            'form': {
+                'case': {
+                    "@xmlns": "http://commcarehq.org/case/transaction/v2",
+                    "@date_modified": "2013-10-14T10:59:44Z",
+                    "@user_id": "someuser",
+                    "@case_id": "mycase",
+                    "index": "",
+                    "attachment": "",
+                    "create": "",
+                    "update": "",
+                }
+            },
+            'computed_': {
+                "mvp_indicators": {
+                    "last_muac": {
+                        "updated": "2013-02-04T21:54:28Z",
+                        "version": 1,
+                        "type": "FormDataAliasIndicatorDefinition",
+                        "multi_value": False,
+                        "value": None
+                    },
+                    "muac": {
+                        "updated": "2013-02-04T21:54:28Z",
+                        "version": 1,
+                        "type": "FormDataAliasIndicatorDefinition",
+                        "multi_value": False,
+                        "value": {
+                            "#text": "",
+                           "@concept_id": "1343"
+                        }
+                    },
+                    "vaccination_status": {
+                        "updated": "2013-02-04T21:54:28Z",
+                        "version": 1,
+                        "type": "FormDataAliasIndicatorDefinition",
+                        "multi_value": False,
+                        "value": "yes"
+
+                    },
+                }
+            }
+        }
+        pillow = ReportXFormPillow(online=False)
+        orig['domain'] = settings.ES_XFORM_FULL_INDEX_DOMAINS[0]
+        for_indexing = pillow.change_transform(orig)
+        restored = restore_property_dict(for_indexing)
+
+        self.assertNotEqual(orig['computed_'], for_indexing['computed_'])
+        self.assertEqual(orig['computed_'], restored['computed_'])
+
+    def testReporXFormtQuery(self):
+
+        unknown_terms = ['form.num_using_fp.#text', 'form.num_using_fp.@concept_id',
+                         'form.counseling.sanitation_counseling.handwashing_importance',
+                         'form.counseling.bednet_counseling.wash_bednet',
+                         'form.prev_location_code',
+                         'member_available.#text',
+                         'location_code_1']
+        unknown_terms_query = report_term_filter(unknown_terms, REPORT_XFORM_MAPPING)
+
+        manually_set = ['%s.%s' % (x, VALUE_TAG) for x in unknown_terms]
+        self.assertEqual(manually_set, unknown_terms_query)
+
+        known_terms = [
+            'initial_processing_complete',
+            'doc_type',
+            'app_id',
+            'xmlns',
+            '@uiVersion',
+            '@version',
+            'form.#type',
+            'form.@name',
+            'form.meta.timeStart',
+            'form.meta.timeEnd',
+            'form.meta.appVersion',
+            ]
+
+        # shoot, TODO, cases are difficult to escape the VALUE_TAG term due to dynamic templates
+        known_terms_query = report_term_filter(known_terms, REPORT_XFORM_MAPPING)
+        self.assertEqual(known_terms_query, known_terms)
 
     def testConceptReportConversion(self):
         pillow = ReportXFormPillow(online=False)
@@ -192,14 +416,3 @@ class testReportXFormProcessing(TestCase):
                              }
                          ]
         )
-
-
-
-
-
-
-
-
-
-
-

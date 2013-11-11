@@ -87,7 +87,7 @@ DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ADMIN_MEDIA_PREFIX = '/static/admin/'
 
 # Make this unique, and don't share it with anybody - put into localsettings.py
-SECRET_KEY = ''
+SECRET_KEY = 'you should really change this'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -147,6 +147,7 @@ DEFAULT_APPS = (
     'south',
     'djcelery', # pip install django-celery
     'djtables', # pip install djtables
+    'django_prbac',
     #'ghettoq',     # pip install ghettoq
     'djkombu', # pip install django-kombu
     'couchdbkit.ext.django',
@@ -229,15 +230,18 @@ HQ_APPS = (
     'corehq.apps.cachehq',
     'corehq.couchapps',
     'custom.apps.wisepill',
+    'custom.fri',
     'fluff',
     'fluff.fluff_filter',
     'soil',
+    'toggle',
     'touchforms.formplayer',
     'hqbilling',
     'phonelog',
     'hutch',
     'pillowtop',
     'hqstyle',
+    'corehq.apps.grapevine',
 
     # custom reports
     'a5288',
@@ -405,16 +409,6 @@ BROKER_URL = 'django://' #default django db based
 
 #this is the default celery queue - for periodic tasks on a separate queue override this to something else
 CELERY_PERIODIC_QUEUE = 'celery'
-
-from celery.schedules import crontab
-# schedule options can be seen here:
-# http://docs.celeryproject.org/en/latest/reference/celery.schedules.html
-CELERYBEAT_SCHEDULE = {
-    'monthly-opm-report-snapshot': {
-        'task': 'custom.opm.opm_tasks.tasks.snapshot',
-        'schedule': crontab(hour=1, day_of_month=1),
-    },
-}
 
 SKIP_SOUTH_TESTS = True
 #AUTH_PROFILE_MODULE = 'users.HqUserProfile'
@@ -628,7 +622,12 @@ LOGGING = {
             'handlers': ['pillowtop', 'sentry'],
             'level': 'ERROR',
             'propagate': False,
-        }
+        },
+        'pillowtop_eval': {
+            'handlers': ['sentry'],
+            'level': 'INFO',
+            'propagate': False,
+        },
     }
 }
 
@@ -711,6 +710,7 @@ COUCHDB_APPS = [
     'sms',
     'smsforms',
     'telerivet',
+    'toggle',
     'translations',
     'users',
     'utils',  # dimagi-utils
@@ -721,7 +721,9 @@ COUCHDB_APPS = [
     'hqbilling',
     'couchlog',
     'wisepill',
+    'fri',
     'crs_reports',
+    'grapevine',
 
     # custom reports
     'penn_state',
@@ -805,7 +807,19 @@ SMS_LOADED_BACKENDS = [
     "corehq.apps.telerivet.models.TelerivetBackend",
     "corehq.apps.sms.test_backend.TestSMSBackend",
     "corehq.apps.sms.backend.test.TestBackend",
+    "corehq.apps.grapevine.api.GrapevineBackend",
 ]
+
+# These are functions that can be called to retrieve custom content in a reminder event.
+# If the function is not in here, it will not be called.
+ALLOWED_CUSTOM_CONTENT_HANDLERS = {
+    "FRI_SMS_CONTENT" : "custom.fri.api.custom_content_handler",
+}
+
+# These are custom templates which can wrap default the sms/chat.html template
+CUSTOM_CHAT_TEMPLATES = {
+    "FRI" : "fri/chat.html",
+}
 
 SELENIUM_APP_SETTING_DEFAULTS = {
     'cloudcare': {
@@ -837,9 +851,6 @@ PILLOWTOPS = {
         'corehq.pillows.sms.SMSPillow',
     ],
     'core_ext': [
-        'corehq.pillows.fullcase.FullCasePillow',  # to remove
-        'corehq.pillows.fullxform.FullXFormPillow',  # to remove
-
         'corehq.pillows.reportcase.ReportCasePillow',
         'corehq.pillows.reportxform.ReportXFormPillow',
     ],
@@ -883,15 +894,13 @@ COUCH_CACHE_BACKENDS = [
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]
 
-#Custom workflow for indexing xform data beyond the standard properties
-XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
-
-#Custom fully indexed domains for FullCase index/pillowtop
+#Custom fully indexed domains for ReportCase index/pillowtop
 # Adding a domain will not automatically index that domain's existing cases
 ES_CASE_FULL_INDEX_DOMAINS = [
     'pact',
     'hsph',
     'care-bihar',
+    'bihar',
     'hsph-dev',
     'hsph-betterbirth-pilot-2',
     'commtrack-public-demo',
@@ -899,22 +908,14 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'crs-remind',
 ]
 
-#Custom fully indexed domains for FullXForm index/pillowtop --
+#Custom fully indexed domains for ReportXForm index/pillowtop --
 # only those domains that don't require custom pre-processing before indexing,
 # otherwise list in XFORM_PILLOW_HANDLERS
 # Adding a domain will not automatically index that domain's existing forms
 ES_XFORM_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
+    'pact',
     'uth-rhd-test',
-    'mvp-bonsaaso',
-    'mvp-koraro',
-    'mvp-mbola',
-    'mvp-mwandama',
-    'mvp-potou',
-    'mvp-ruhiira',
-    'mvp-sada',
-    'mvp-sauri',
-    'mvp-tiby',
 ]
 
 CUSTOM_MODULES = [
@@ -930,10 +931,13 @@ DOMAIN_MODULE_MAP = {
     'a5288-test': 'a5288',
     'a5288-study': 'a5288',
     'care-bihar': 'custom.bihar',
+    'bihar': 'custom.bihar',
     'care-ihapc-live': 'custom.reports.care_sa',
     'cvsulive': 'custom.apps.cvsu',
     'dca-malawi': 'dca',
     'eagles-fahu': 'dca',
+    'fri': 'custom.fri.reports',
+    'fri-testing': 'custom.fri.reports',
     'gsid': 'custom.apps.gsid',
     'gsid-demo': 'custom.apps.gsid',
     'hsph-dev': 'hsph',

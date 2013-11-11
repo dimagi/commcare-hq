@@ -1,6 +1,6 @@
 from xml.etree import ElementTree
 from corehq.apps.users.models import CommCareUser
-from couchdbkit.ext.django.schema import Document, DictProperty, StringProperty, StringListProperty, IntegerProperty
+from couchdbkit.ext.django.schema import Document, DictProperty, StringProperty, StringListProperty, IntegerProperty, BooleanProperty
 from corehq.apps.groups.models import Group
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.couch.database import get_db
@@ -10,6 +10,7 @@ class FixtureTypeCheckError(Exception):
 
 class FixtureDataType(Document):
     domain = StringProperty()
+    is_global = BooleanProperty(default=False)
     tag = StringProperty()
     name = StringProperty()
     fields = StringListProperty()

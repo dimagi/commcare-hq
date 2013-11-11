@@ -57,5 +57,5 @@ class LegacyWeeklyReport(Document):
             key=[DOMAIN, site, str(date)],
             reduce=False,
             include_docs=True,
-        ).one()
+        ).first()
         return report

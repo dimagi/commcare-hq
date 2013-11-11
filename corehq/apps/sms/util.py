@@ -194,3 +194,13 @@ def clean_text(text):
         text = text.replace(a, b)
     return text
 
+def get_contact(contact_id):
+    from corehq.apps.sms.models import CommConnectCase
+    contact = CommConnectCase.get(contact_id)
+    if contact.doc_type != "CommCareCase":
+        try:
+            contact = CouchUser.get_by_user_id(contact_id)
+        except CouchUser.AccountTypeError:
+            raise Exception("Unkown contact type for contact %s" % contact_id)
+    return contact
+

@@ -19,15 +19,16 @@ def get_case_errors(module, needs_case_type, needs_case_detail,
         }
 
     if needs_case_detail:
-        if not module.get_detail('case_short').columns:
+        if not module.case_details.short.columns:
             yield {
                 'type': 'no case detail',
                 'module': module_info,
             }
-        columns = module.get_detail('case_short').columns + module.get_detail('case_long').columns
+        columns = module.case_details.short.columns + module.case_details.long.columns
         for column in columns:
             if column.format in ('enum', 'enum-image'):
-                for key in column.enum.keys():
+                for item in column.enum:
+                    key = item.key
                     if not re.match('^([\w_-]*)$', key):
                         yield {
                             'type': 'invalid id key',
@@ -35,7 +36,7 @@ def get_case_errors(module, needs_case_type, needs_case_detail,
                             'module': module_info,
                         }
 
-    if needs_referral_detail and not module.get_detail('ref_short').columns:
+    if needs_referral_detail and not module.ref_details.short.columns:
         yield {
             'type': 'no ref detail',
             'module': module_info,

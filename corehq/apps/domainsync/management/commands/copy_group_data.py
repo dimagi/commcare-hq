@@ -18,7 +18,7 @@ class Command(LabelCommand):
     label = ""
     option_list = LabelCommand.option_list + (
         make_option('--include-user-owned',
-            action='store_true', dest='include_user_cases', default=False,
+            action='store_true', dest='include_user_owned', default=False,
             help="In addition to getting cases owned by the group itself, also get those owned by all users in the group"),
         make_option('--include-sync-logs',
             action='store_true', dest='include_sync_logs', default=False,
@@ -40,6 +40,7 @@ class Command(LabelCommand):
 
         sourcedb = Database(args[0])
         group_id = args[1]
+        include_user_owned = options["include_user_owned"]
 
         print 'getting group'
         group = Group.wrap(sourcedb.get(group_id))
@@ -53,7 +54,7 @@ class Command(LabelCommand):
         domain.save(force_update=True)
 
         owners = [group_id]
-        if options["include_user_cases"]:
+        if include_user_owned:
             owners.extend(group.users)
 
         def keys_for_owner(domain, owner_id):
@@ -73,6 +74,8 @@ class Command(LabelCommand):
             return [res['id'] for res in results]
 
         CHUNK_SIZE = 100
+        print 'getting case ids'
+
         case_ids = get_case_ids(owners)
         xform_ids = set()
 
@@ -90,6 +93,15 @@ class Command(LabelCommand):
 
             self.lenient_bulk_save(CommCareCase, cases)
 
+        if include_user_owned:
+            # also grab submissions that may not have included any case data
+            for user_id in group.users:
+                xform_ids.update(res['id'] for res in sourcedb.view(
+                    'couchforms/by_user',
+                    startkey=[user_id],
+                    endkey=[user_id, {}],
+                    reduce=False
+                ))
 
         print 'copying %s xforms' % len(xform_ids)
         user_ids = set(group.users)
@@ -129,13 +141,13 @@ class Command(LabelCommand):
         users = sourcedb.all_docs(
             keys=list(user_ids),
             include_docs=True,
-            wrapper=wrap_user
+            wrapper=wrap_user,
         ).all()
 
         role_ids = set([])
-        for user in users:
+        for user in filter(lambda u: u is not None, users):
             # if we use bulk save, django user doesn't get sync'd
-            if user.domain_membership.role_id:
+            if user.get_domain_membership(domain.name).role_id:
                 role_ids.add(user.domain_membership.role_id)
             user.save(force_update=True)
 

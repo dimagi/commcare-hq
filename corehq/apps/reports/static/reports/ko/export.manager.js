@@ -86,6 +86,20 @@ var ExportManager = function (o) {
         }
     };
 
+    self.downloadExport = function(downloadUrl) {
+        var displayDownloadError = function (response) {
+            displayModalError('Sorry, something unexpected went wrong and your download ' +
+                'could not be completed. Please try again and report an issue if the problem ' +
+                'persists.'
+            );
+        };
+        $.ajax({
+            dataType: 'json',
+            url: downloadUrl,
+            success: updateModal,
+            error: displayDownloadError
+        });
+    };
     self.requestBulkDownload = function(data, event) {
         resetModal("Bulk "+self.bulk_download_notice_text, false);
         var prepareExport = new Object();
@@ -145,7 +159,7 @@ var ExportManager = function (o) {
             "&is_custom="+self.is_custom +
             "&async=true";
 
-        $.getJSON(downloadUrl, updateModal);
+        self.downloadExport(downloadUrl);
     };
 
     self.requestDownload = function(data, event) {
@@ -165,7 +179,7 @@ var ExportManager = function (o) {
         if (!self.is_custom)
             downloadUrl = downloadUrl+'&app_id='+$button.data('appid');
 
-        $.getJSON(downloadUrl, updateModal);
+        self.downloadExport(downloadUrl);
     };
 
     self.requestCaseDownload = function(data, event) {
@@ -178,7 +192,7 @@ var ExportManager = function (o) {
         downloadUrl += '&include_closed=' + $('#include-closed-select').val();
         downloadUrl += '&async=true'
 
-        $.getJSON(downloadUrl, updateModal);
+        self.downloadExport(downloadUrl);
     };
 
     self.checkCustomSheetNameLength = function(data, event) {

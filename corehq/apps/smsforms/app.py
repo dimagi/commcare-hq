@@ -75,29 +75,34 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
 def get_responses(msg):
     return _get_responses(msg.domain, msg.couch_recipient, msg.text)
 
-def _get_responses(domain, recipient, text, yield_responses=False, session_id=None):
+def _get_responses(domain, recipient, text, yield_responses=False, session_id=None, update_timestamp=True):
     """
     Try to process this message like a session-based submission against
     an xform.
     
     Returns a list of responses if there are any.
     """
-        # assumes couch_recipient is the connection_id
+    session = None
     if session_id is not None:
-        session = XFormsSession.latest_by_session_id(session_id)
+        if update_timestamp:
+            # The IVR workflow passes the session id
+            session = XFormsSession.latest_by_session_id(session_id)
     else:
-        # The IVR workflow passes the session id, the SMS workflow grabs the open sms session
-        session = XFormsSession.view("smsforms/open_sms_sessions_by_connection", 
-                                     key=[domain, recipient],
-                                     include_docs=True).one()
-    if session:
+        # The SMS workflow grabs the open sms session
+        session = XFormsSession.get_open_sms_session(domain, recipient)
+        if session is not None:
+            session_id = session.session_id
+
+    if update_timestamp and session is not None:
         session.modified_time = datetime.utcnow()
         session.save()
+
+    if session_id is not None:
         # TODO auth
         if yield_responses:
-            return list(tfsms.next_responses(session.session_id, text, auth=None))
+            return list(tfsms.next_responses(session_id, text, auth=None))
         else:
-            return _responses_to_text(tfsms.next_responses(session.session_id, text, auth=None))
+            return _responses_to_text(tfsms.next_responses(session_id, text, auth=None))
 
 def _responses_to_text(responses):
     return [r.text_prompt for r in responses if r.text_prompt]

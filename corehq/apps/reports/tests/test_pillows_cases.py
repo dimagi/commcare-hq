@@ -1,12 +1,14 @@
 from django.utils.unittest.case import TestCase
 import simplejson
 from casexml.apps.case.xform import extract_case_blocks
+from corehq.apps.api.es import report_term_filter
 from corehq.pillows.base import VALUE_TAG
 from corehq.pillows.case import CasePillow
 from corehq.pillows.reportcase import ReportCasePillow
 from corehq.pillows.reportxform import ReportXFormPillow
 from corehq.pillows.xform import XFormPillow
 from django.conf import settings
+from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_MAPPING
 
 XFORM_MULTI_CASES = {
     "_id": "multi-case-test",
@@ -546,4 +548,26 @@ class testReportCaseProcessing(TestCase):
             self.assertTrue(VALUE_TAG in diaper)
 
         self.assertEqual(case['prior_diapers'], [x[VALUE_TAG] for x in processed_case['prior_diapers']])
+
+
+    def testReportCaseQuery(self):
+
+        unknown_terms = ['gender', 'notes', 'sms_reminder', 'hamlet_name', 'actions.dob',
+                         'actions.dots', 'actions.hp']
+        unknown_terms_query = report_term_filter(unknown_terms, REPORT_CASE_MAPPING)
+        print unknown_terms
+        print unknown_terms_query
+
+        manually_set = ['%s.%s' % (x, VALUE_TAG) for x in unknown_terms]
+        self.assertEqual(manually_set, unknown_terms_query)
+
+        known_terms = ['owner_id', 'domain', 'opened_on', 'actions.action_type', 'actions.date',
+                       'actions.indices.doc_type']
+        known_terms_query = report_term_filter(known_terms, REPORT_CASE_MAPPING)
+
+        print known_terms
+        print known_terms_query
+        self.assertEqual(known_terms_query, known_terms)
+
+
 

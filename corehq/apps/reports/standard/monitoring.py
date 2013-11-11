@@ -14,7 +14,7 @@ from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, 
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
-from corehq.elastic import es_query
+from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.couch.database import get_db
@@ -210,13 +210,21 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
         columns = [DataTablesColumn(_("Users"))]
         for landmark in self.landmarks:
             num_cases = DataTablesColumn(_("# Modified or Closed"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The number of cases that have been modified between %d days ago and today." % landmark.days)
+                help_text=_("The number of cases that have been modified between %d days ago and today.") % landmark.days
+            )
+            num_active = DataTablesColumn(_("# Active"), sort_type=DTSortType.NUMERIC,
+                help_text=_("The number of active cases.")
+            )
+            num_closed = DataTablesColumn(_("# Closed"), sort_type=DTSortType.NUMERIC,
+                help_text=_("The number of cases that have been closed between %d days ago and today.") % landmark.days
             )
             proportion = DataTablesColumn(_("Proportion"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The number of modified cases / (#active + #closed cases in the last %d days)." % landmark.days)
+                help_text=_("The number of modified cases / (#active + #closed cases in the last %d days).") % landmark.days
             )
             columns.append(DataTablesColumnGroup(_("Cases in Last %s Days") % landmark.days if landmark else _("Ever"),
                 num_cases,
+                num_active,
+                num_closed,
                 proportion
             ))
         columns.append(DataTablesColumn(_("# Active Cases"),
@@ -246,7 +254,9 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
 
             for landmark in self.landmarks:
                 value = row.modified_count(self.utc_now - landmark)
-                total = row.active_count() + row.closed_count(self.utc_now - landmark)
+                active = row.active_count()
+                closed = row.closed_count(self.utc_now - landmark)
+                total = active + closed
 
                 try:
                     p_val = float(value) * 100. / float(total)
@@ -255,6 +265,8 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
                     p_val = None
                     proportion = '--'
                 add_numeric_cell(value, value)
+                add_numeric_cell(active, active)
+                add_numeric_cell(closed, closed)
                 add_numeric_cell(proportion, p_val)
 
             add_numeric_cell(row.active_count())
@@ -460,39 +472,60 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
             rows.append([_("You must select a specific form to view data.")])
             return rows
 
+        def to_duration(val_in_ms, d=None):
+            assert val_in_ms is not None
+            if d:
+                val_in_ms /= d
+            return datetime.timedelta(seconds=int((val_in_ms + 500)/1000))
+
         def to_minutes(val_in_ms, d=None):
             if val_in_ms is None or d == 0:
                 return "--"
-            elif d:
-                val_in_ms /= d
-            duration = datetime.timedelta(seconds=int((val_in_ms + 500)/1000))
-            return friendly_timedelta(duration)
+            return friendly_timedelta(to_duration(val_in_ms, d))
+
+        def to_minutes_raw(val_in_ms):
+            """
+            return a timestamp like 66:12:24 (the first number is hours
+            """
+            if val_in_ms is None:
+                return '--'
+            td = to_duration(val_in_ms)
+            hours, remainder = divmod(td.seconds, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            return '{h}:{m}:{s}'.format(
+                h=(td.days * 24) + hours,
+                m=minutes,
+                s=seconds,
+            )
 
         def _fmt(pretty_fn, val):
             return format_datatables_data(pretty_fn(val), val)
+
+        def _fmt_ts(timestamp):
+            return format_datatables_data(to_minutes(timestamp), timestamp, to_minutes_raw(timestamp))
 
         durations = []
         totalcount = 0
         for user in self.users:
             stats = self.get_user_data(user.get('user_id'))
             rows.append([self.get_user_link(user),
-                         stats['error_msg'] if stats['error_msg'] else _fmt(to_minutes, stats['avg']),
-                         _fmt(to_minutes, stats['med']),
-                         _fmt(to_minutes, stats['std']),
-                         _fmt(to_minutes, stats["min"]),
-                         _fmt(to_minutes, stats["max"]),
-                         _fmt(lambda x: x, stats["count"])
+                         stats['error_msg'] if stats['error_msg'] else _fmt_ts(stats['avg']),
+                         _fmt_ts(stats['med']),
+                         _fmt_ts(stats['std']),
+                         _fmt_ts(stats["min"]),
+                         _fmt_ts(stats["max"]),
+                         _fmt(lambda x: x, stats["count"]),
             ])
             durations.extend(stats['durations'])
             totalcount += stats["count"]
 
         if totalcount:
             self.total_row = ["All Users",
-                              to_minutes(numpy.average(durations) if durations else None),
-                              to_minutes(numpy.median(durations) if durations else None),
-                              to_minutes(numpy.std(durations) if durations else None),
-                              to_minutes(numpy.min(durations) if durations else None),
-                              to_minutes(numpy.max(durations) if durations else None),
+                              _fmt_ts(numpy.average(durations) if durations else None),
+                              _fmt_ts(numpy.median(durations) if durations else None),
+                              _fmt_ts(numpy.std(durations) if durations else None),
+                              _fmt_ts(numpy.min(durations) if durations else None),
+                              _fmt_ts(numpy.max(durations) if durations else None),
                               totalcount]
         return rows
 
@@ -811,6 +844,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                                 "from": datespan.startdate_param,
                                 "to": datespan.enddate_param,
                                 "include_upper": True}}}]}}}
+        q["filter"] = {"and": ADD_TO_ES_FILTER["forms"][:]}
         facets = ['form.meta.userID']
         return es_query(q=q, facets=facets, es_url=XFORM_INDEX + '/xform/_search', size=1, dict_only=dict_only)
 

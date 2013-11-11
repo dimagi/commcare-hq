@@ -178,7 +178,6 @@ Complete list of available subcommands:
     | ptop_es_manage
     | ptop_fast_reindex_apps
     | ptop_fast_reindex_cases
-    | ptop_fast_reindex_cases_deleted
     | ptop_fast_reindex_domains
     | ptop_fast_reindex_fluff
     | ptop_fast_reindex_fullcases

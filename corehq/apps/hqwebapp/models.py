@@ -214,7 +214,7 @@ class ProjectReportsTab(UITab):
         }
         
         tools = [(_("Tools"), [
-            {'title': 'My Saved Reports',
+            {'title': _('My Saved Reports'),
              'url': reverse('saved_reports', args=[self.domain]),
              'icon': 'icon-tasks'}
         ])]
@@ -342,7 +342,7 @@ class ProjectDataTab(UITab):
     @property
     @memoized
     def can_edit_commcare_data(self):
-        return self.couch_user.can_edit_data() and not (self.project and self.project.commtrack_enabled)
+        return self.couch_user.can_edit_data()
 
     @property
     @memoized
@@ -509,16 +509,19 @@ class MessagingTab(UITab):
                 EditScheduledReminderView,
                 CreateScheduledReminderView,
                 RemindersListView,
+                KeywordsListView,
             )
             sms_connectivity_url = reverse(DomainSmsGatewayListView.urlname, args=[self.domain])
             reminders_list_url = reverse(RemindersListView.urlname, args=[self.domain])
             edit_reminder_urlname = EditScheduledReminderView.urlname
             new_reminder_urlname = CreateScheduledReminderView.urlname
+            keyword_list_url = reverse(KeywordsListView.urlname, args=[self.domain])
         else:
             sms_connectivity_url = reverse('list_domain_backends', args=[self.domain])
             reminders_list_url = reverse('list_reminders', args=[self.domain])
             edit_reminder_urlname = 'edit_complex'
             new_reminder_urlname = 'add_complex_reminder_schedule'
+            keyword_list_url = reverse('manage_keywords', args=[self.domain])
 
         items = [
             (_("Messages"), [
@@ -553,12 +556,14 @@ class MessagingTab(UITab):
                       'urlname': edit_reminder_urlname},
                      {'title': _("Schedule Reminder"),
                       'urlname': new_reminder_urlname},
+                     {'title': _("Schedule Multi Event Reminder"),
+                      'urlname': 'create_complex_reminder_schedule'},
                  ]},
                 {'title': _("Reminder Calendar"),
                  'url': reverse('scheduled_reminders', args=[self.domain])},
 
                 {'title': _("Keywords"),
-                 'url': reverse('manage_keywords', args=[self.domain]),
+                 'url': keyword_list_url,
                  'subpages': [
                      {'title': keyword_subtitle,
                       'urlname': 'edit_keyword'},
@@ -571,6 +576,11 @@ class MessagingTab(UITab):
                  'url': reverse('reminders_in_error', args=[self.domain])},
             ])
         ]
+        if self.couch_user.is_previewer():
+            items[0][1].append(
+                {'title': _('Chat'),
+                 'url': reverse('chat_contacts', args=[self.domain])}
+            )
 
         if self.project.survey_management_enabled:
             def sample_title(form=None, **context):
@@ -597,6 +607,14 @@ class MessagingTab(UITab):
                          {'title': _("New Survey"),
                           'urlname': 'add_survey'},
                      ]},
+                ])
+            )
+
+        if self.couch_user.is_superuser or self.couch_user.is_domain_admin(self.domain):
+            items.append(
+                (_("Settings"), [
+                    {'title': _("General Settings"),
+                     'url': reverse('sms_settings', args=[self.domain])},
                 ])
             )
 
@@ -739,11 +757,11 @@ class ProjectSettingsTab(UITab):
 
             project_info.extend([
                 {
-                    'title': EditBasicProjectInfoView.page_title,
+                    'title': _(EditBasicProjectInfoView.page_title),
                     'url': reverse(EditBasicProjectInfoView.urlname, args=[self.domain])
                 },
                 {
-                    'title': EditDeploymentProjectInfoView.page_title,
+                    'title': _(EditDeploymentProjectInfoView.page_title),
                     'url': reverse(EditDeploymentProjectInfoView.urlname, args=[self.domain])
                 }
             ])
@@ -752,7 +770,7 @@ class ProjectSettingsTab(UITab):
                 # so that corehq is not dependent on the billing submodule
                 from hqbilling.views import EditProjectBillingInfoView
                 project_info.append({
-                    'title': EditProjectBillingInfoView.page_title,
+                    'title': _(EditProjectBillingInfoView.page_title),
                     'url': reverse(EditProjectBillingInfoView.urlname, args=[self.domain])
                 })
             except ImportError:
@@ -760,13 +778,13 @@ class ProjectSettingsTab(UITab):
 
         from corehq.apps.domain.views import EditMyProjectSettingsView
         project_info.append({
-            'title': EditMyProjectSettingsView.page_title,
+            'title': _(EditMyProjectSettingsView.page_title),
             'url': reverse(EditMyProjectSettingsView.urlname, args=[self.domain])
         })
 
         from corehq.apps.domain.views import OrgSettingsView
         project_info.append({
-            'title': OrgSettingsView.page_title,
+            'title': _(OrgSettingsView.page_title),
             'url': reverse(OrgSettingsView.urlname, args=[self.domain])
         })
 
@@ -778,11 +796,11 @@ class ProjectSettingsTab(UITab):
             if self.project.commtrack_enabled:
                 commtrack_settings = [
                     {
-                        'title': BasicCommTrackSettingsView.page_title,
+                        'title': _(BasicCommTrackSettingsView.page_title),
                         'url': reverse(BasicCommTrackSettingsView.urlname, args=[self.domain])
                     },
                     {
-                        'title': AdvancedCommTrackSettingsView.page_title,
+                        'title': _(AdvancedCommTrackSettingsView.page_title),
                         'url': reverse(AdvancedCommTrackSettingsView.urlname, args=[self.domain])
                     },
                 ]
@@ -821,11 +839,11 @@ class ProjectSettingsTab(UITab):
         if self.couch_user.is_superuser:
             from corehq.apps.domain.views import EditInternalDomainInfoView, EditInternalCalculationsView
             internal_admin = [{
-                'title': EditInternalDomainInfoView.page_title,
+                'title': _(EditInternalDomainInfoView.page_title),
                 'url': reverse(EditInternalDomainInfoView.urlname, args=[self.domain])
             },
             {
-                'title': EditInternalCalculationsView.page_title,
+                'title': _(EditInternalCalculationsView.page_title),
                 'url': reverse(EditInternalCalculationsView.urlname, args=[self.domain])
             }]
             items.append((_('Internal Data (Dimagi Only)'), internal_admin))
@@ -851,15 +869,15 @@ class MySettingsTab(UITab):
         items = [
             (_("Manage My Settings"), (
                 {
-                    'title': MyAccountSettingsView.page_title,
+                    'title': _(MyAccountSettingsView.page_title),
                     'url': reverse(MyAccountSettingsView.urlname),
                 },
                 {
-                    'title': MyProjectsList.page_title,
+                    'title': _(MyProjectsList.page_title),
                     'url': reverse(MyProjectsList.urlname),
                 },
                 {
-                    'title': ChangeMyPasswordView.page_title,
+                    'title': _(ChangeMyPasswordView.page_title),
                     'url': reverse(ChangeMyPasswordView.urlname),
                 },
             ))
