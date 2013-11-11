@@ -532,6 +532,8 @@ class XForm(WrappedNode):
         for meta in self.already_has_meta():
             case_parent.remove(meta.xml)
 
+        self.add_instance('commcaresession', src='jr://instance/session')
+
         orx = namespaces['orx'][1:-1]
         nsmap = {None: orx, 'cc': namespaces['cc'][1:-1]}
 
@@ -879,9 +881,6 @@ class XForm(WrappedNode):
                     )
                     index_node.append(parent_index)
                     subcase_block.elem.append(index_node)
-
-        # always needs session instance for meta
-        self.add_instance('commcaresession', src='jr://instance/session')
 
         case = self.case_node
         case_parent = self.data_node
