@@ -79,8 +79,14 @@
         <!-- keep this well-hidden for now -->
         <nav id="debug-opts" style="display: none;">
           <script>
-function enableOffline() { $('#debug-opts').show(); $('#use-offline').attr('checked', 'checked'); }
-if (window.location.href.indexOf('offline=true') != -1) { enableOffline(); } // doesn't work?
+function enableOffline() {
+    $('#debug-opts').show();
+    $('#use-offline').attr('checked', 'checked');
+}
+if (window.location.href.indexOf('offline=true') != -1) {
+    // doesn't work?
+    enableOffline();
+}
           </script>
           <ul class="nav nav-list">
             <li>
