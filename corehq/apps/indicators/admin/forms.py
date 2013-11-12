@@ -183,11 +183,6 @@ class BulkCopyIndicatorsForm(forms.Form):
     indicator_ids = MultipleChoiceField(
         label="Indicator(s)",
         validators=[MinLengthValidator(1)])
-    override_existing = forms.BooleanField(label="Override Existing",
-                                           help_text="Override properties of existing indicators with the same"
-                                                     "namespace and slug in destination project space.",
-                                           required=False,
-                                           initial=False)
 
     def __init__(self, domain=None, couch_user=None, indicator_class=None, *args, **kwargs):
         super(BulkCopyIndicatorsForm, self).__init__(*args, **kwargs)
@@ -229,27 +224,36 @@ class BulkCopyIndicatorsForm(forms.Form):
         failed = []
         success = []
         destination_domain = self.cleaned_data['destination_domain']
-        override = self.cleaned_data['override_existing']
         available_namespaces = get_namespaces(destination_domain)
         indicator_ids = self.cleaned_data['indicator_ids']
         for indicator_id in indicator_ids:
             try:
                 indicator = self.indicator_class.get(indicator_id)
-                excluded_properties = ['last_modified', 'base_doc', 'namespace', 'domain', 'class_path']
+                properties_to_exclude = [
+                    'last_modified',
+                    'base_doc',
+                    'namespace',
+                    'domain',
+                    'class_path',
+                    'version'
+                ]
                 if indicator.namespace not in available_namespaces:
                     failed.append(dict(indicator=indicator.slug,
                                        reason='Indicator namespace not available for destination project.'))
                     continue
+
                 properties = set(indicator.properties().keys())
-                copied_properties = properties.difference(excluded_properties)
+                copied_properties = properties.difference(properties_to_exclude)
                 copied_properties = dict([(p, getattr(indicator, p)) for p in copied_properties])
-                copied_indicator = self.indicator_class.increment_or_create_unique(indicator.namespace, destination_domain,
-                                                                                **copied_properties)
-                if copied_indicator and not copied_indicator.version:
-                    copied_indicator.version = 1
-                    copied_indicator.save()
+
+                copied_indicator = self.indicator_class.increment_or_create_unique(
+                    indicator.namespace,
+                    destination_domain,
+                    **copied_properties
+                )
                 if copied_indicator:
                     success.append(copied_indicator.slug)
+
             except Exception as e:
                 failed.append(dict(indicator=indicator_id,
                                    reason='Could not retrieve indicator %s due to error %s:' % (indicator_id, e)))

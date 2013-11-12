@@ -47,13 +47,15 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
         self.class_path = self._class_path
 
     def __str__(self):
-        return "\n\n%(class_name)s - Modified %(last_modified)s\n %(slug)s, v. %(version)s, namespace: %(namespace)s." % {
+        return "\n\n%(class_name)s - Modified %(last_modified)s\n %(slug)s, domain: %(domain)s," \
+            " version: %(version)s, namespace: %(namespace)s." % {
                 'class_name': self.__class__.__name__,
                 'slug': self.slug,
+                'domain': self.domain,
                 'version': self.version,
                 'namespace': self.namespace,
-                'last_modified': self.last_modified.strftime('%M %B %Y at %H:%M')
-                        if self.last_modified else "Ages Ago"
+                'last_modified': (self.last_modified.strftime('%M %B %Y at %H:%M')
+                                  if self.last_modified else "Ages Ago")
             }
 
     @classmethod
