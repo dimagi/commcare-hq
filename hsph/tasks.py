@@ -9,14 +9,14 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.hqcase.utils import submit_case_blocks, get_cases_in_domain
 
 
 DOMAINS = ["hsph-dev", "hsph-betterbirth"]
 PAST_N_DAYS = 21
 GROUPS_TO_CHECK = ["cati", "cati-tl"]
 GROUP_SHOULD_BE = "fida"
-
+TYPE = "birth"
 
 @periodic_task(
     run_every=crontab(minute=1, hour=0),
@@ -30,15 +30,14 @@ def update_case_properties():
 	"""
 	time_zone = Domain.get_by_name(DOMAINS[0]).default_timezone
 	time_zone = pytz.timezone(time_zone)
-	past_n_date = datetime.datetime.now(time_zone) - datetime.timedelta(PAST_N_DAYS)
+	past_n_date = (datetime.datetime.now(time_zone) - datetime.timedelta(PAST_N_DAYS)).date()
 	for domain in DOMAINS:
-		case_list = CommCareCase.view("hqcase/types_by_domain", key=[domain, "birth"], include_docs=True, reduce=False)
-		case_list = case_list.all()
+		case_list = get_cases_in_domain(domain, type=TYPE)
 		cases_to_modify = []
 		for case in case_list:
 			if (hasattr(case, "assigned_to") and
 			    hasattr(case, "date_admission") and
-			    case.date_admission < past_n_date.date() and
+			    case.date_admission < past_n_date and
 			    case.assigned_to in GROUPS_TO_CHECK):
 					case.assigned_to = GROUP_SHOULD_BE
 					cases_to_modify.append(case)
