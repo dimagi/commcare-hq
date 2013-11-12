@@ -259,6 +259,17 @@ class CaseBlock(object):
             relevant=relevance,
         )
 
+    def add_index_ref(self, reference_id, case_type, path=''):
+        index_node = make_case_elem('index')
+        parent_index = make_case_elem(reference_id, {'case_type': case_type})
+        index_node.append(parent_index)
+        self.elem.append(index_node)
+
+        self.xform.add_bind(
+            nodeset='{path}case/index/{ref}'.format(path=path, ref=reference_id),
+            calculate=self.xform.resolve_path("case/@case_id"),
+        )
+
 class XForm(WrappedNode):
     """
     A bunch of utility functions for doing certain specific
@@ -870,15 +881,8 @@ class XForm(WrappedNode):
                 subcase_block.add_update_block(subcase.case_properties, path=path)
 
                 if case_block is not None and subcase.case_type != form.get_case_type():
-                    index_node = make_case_elem('index')
                     reference_id = subcase.reference_id or 'parent'
-                    parent_index = make_case_elem(reference_id, {'case_type': form.get_case_type()})
-                    self.add_bind(
-                        nodeset='{path}case/index/{ref}'.format(path=path, ref=reference_id),
-                        calculate=self.resolve_path("case/@case_id"),
-                    )
-                    index_node.append(parent_index)
-                    subcase_block.elem.append(index_node)
+                    subcase_block.add_index_ref(reference_id, form.get_case_type(), path=path)
 
         # always needs session instance for meta
         self.add_instance('commcaresession', src='jr://instance/session')
