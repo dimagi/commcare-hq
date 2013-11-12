@@ -5,6 +5,8 @@ import time
 import numbers
 
 from django.utils.datastructures import SortedDict
+from corehq.apps.reports.standard.cases.basic import CaseListReport
+from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from corehq.pillows.base import restore_property_dict
 
 from dimagi.utils.couch.database import get_db
@@ -17,7 +19,6 @@ from corehq.apps.reports.datatables import (DataTablesColumn, NumericColumn,
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports import util
 
-from corehq.apps.reports.standard.inspect import CaseDisplay, CaseListReport
 from hsph.reports import HSPHSiteDataMixin
 from hsph.fields import AllocatedToFilter, IHForCHFField, DCTLToFIDAFilter
 from corehq.apps.api.es import ReportCaseES

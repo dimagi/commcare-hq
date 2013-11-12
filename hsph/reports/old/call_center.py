@@ -1,11 +1,12 @@
 import datetime
 from casexml.apps.case.models import CommCareCaseAction
+from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.api.es import ReportCaseES
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.basic import BasicTabularReport, Column
 from corehq.apps.reports.standard import (DatespanMixin,
     ProjectReportParametersMixin, CustomProjectReport)
-from corehq.apps.reports.standard.inspect import CaseDisplay, CaseListReport
+from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.pillows.base import restore_property_dict
 from hsph.reports import HSPHSiteDataMixin
