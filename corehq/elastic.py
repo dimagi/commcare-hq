@@ -133,8 +133,9 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
 
     def get_or_init_anded_filter_from_query_dict(qdict):
         and_filter = qdict.get("filter", {}).pop("and", [])
-        if qdict.get("filter"):
-            and_filter.append(qdict.pop("filter"))
+        filter = qdict.pop("filter", None)
+        if filter:
+            and_filter.append(filter)
         return {"and": and_filter}
 
     filter = get_or_init_anded_filter_from_query_dict(q)
