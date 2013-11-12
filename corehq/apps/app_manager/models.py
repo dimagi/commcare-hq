@@ -1371,7 +1371,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     @property
     def commcare_minor_release(self):
         """This is mostly just for views"""
-        return self.build_spec.minor_release()
+        return '%d.%d' % self.build_spec.minor_release()
 
     def get_build_label(self):
         for item in CommCareBuildConfig.fetch().menu:

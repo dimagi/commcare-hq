@@ -167,9 +167,12 @@ class BuildSpec(DocumentSchema):
             return cls(version=version, build_number=build_number)
 
     def minor_release(self):
-        return ".".join(self.version.split('.')[:2])
+        major, minor, _ = self.version.split('.')
+        return int(major), int(minor)
+
     def major_release(self):
         return self.version.split('.')[0]
+
 
 class BuildMenuItem(DocumentSchema):
     build = SchemaProperty(BuildSpec)

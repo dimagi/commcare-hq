@@ -1,3 +1,4 @@
+from distutils.version import LooseVersion
 import functools
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.app_manager.util import is_sort_only_column
@@ -16,7 +17,7 @@ def _create_custom_app_strings(app, lang):
     def trans(d):
         return clean_trans(d, langs)
     def numfirst(text):
-        if float(app.build_spec.minor_release()) >= 2.8:
+        if LooseVersion(app.build_spec.version) >= '2.8':
             numeric_nav_on = app.profile.get('properties', {}).get('cc-entry-mode') == 'cc-entry-review'
             if app.profile.get('features', {}).get('sense') == 'true' or numeric_nav_on:
                 text = "${0} %s" % (text,) if not (text and text[0].isdigit()) else text
