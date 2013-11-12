@@ -103,18 +103,19 @@ def get_case_by_identifier(domain, identifier):
     return None
 
 
-def get_case_ids_in_domain(domain):
-    return [res['id'] for res in CommCareCase.get_db().view('hqcase/by_domain_external_id',
-        startkey=[domain],
-        endkey=[domain, {}],
+def get_case_ids_in_domain(domain, type=None):
+    type_key = [type] if type else []
+    return [res['id'] for res in CommCareCase.get_db().view('hqcase/types_by_domain',
+        startkey=[domain] + type_key,
+        endkey=[domain] + type_key + [{}],
         reduce=False,
         include_docs=False,
     )]
 
 
-def get_cases_in_domain(domain):
+def get_cases_in_domain(domain, type=None):
     return (CommCareCase.wrap(doc) for doc in iter_docs(CommCareCase.get_db(),
-                                                        get_case_ids_in_domain(domain)))
+                                                        get_case_ids_in_domain(domain, type=type)))
 
 def assign_case(case_or_case_id, owner_id, acting_user=None, include_subcases=True,
                 include_parent_cases=False, exclude=()):
