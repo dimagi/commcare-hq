@@ -183,11 +183,6 @@ class BulkCopyIndicatorsForm(forms.Form):
     indicator_ids = MultipleChoiceField(
         label="Indicator(s)",
         validators=[MinLengthValidator(1)])
-    override_existing = forms.BooleanField(label="Override Existing",
-                                           help_text="Override properties of existing indicators with the same"
-                                                     "namespace and slug in destination project space.",
-                                           required=False,
-                                           initial=False)
 
     def __init__(self, domain=None, couch_user=None, indicator_class=None, *args, **kwargs):
         super(BulkCopyIndicatorsForm, self).__init__(*args, **kwargs)
@@ -229,7 +224,6 @@ class BulkCopyIndicatorsForm(forms.Form):
         failed = []
         success = []
         destination_domain = self.cleaned_data['destination_domain']
-        override = self.cleaned_data['override_existing']
         available_namespaces = get_namespaces(destination_domain)
         indicator_ids = self.cleaned_data['indicator_ids']
         for indicator_id in indicator_ids:
