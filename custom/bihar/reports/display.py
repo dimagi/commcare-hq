@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 import re
-from corehq.apps.reports.standard.inspect import CaseDisplay
+from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from casexml.apps.case.models import CommCareCase
 from django.utils.translation import ugettext as _
 import logging

@@ -1,8 +1,9 @@
 from corehq.apps.reports.commtrack.psi_prototype import CommtrackReportMixin
-from corehq.apps.reports.standard.inspect import GenericMapReport
 from django.utils.translation import ugettext_noop
 from corehq.apps.commtrack.models import Product
 from django.template.loader import render_to_string
+from corehq.apps.reports.standard.maps import GenericMapReport
+
 
 class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
     name = ugettext_noop("Stock Status (map)")
