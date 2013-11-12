@@ -4,12 +4,63 @@
 
 {% block js-inline %}{{ block.super }}
     <script>
+        // http://rosettacode.org/wiki/LZW_compression#JavaScript
+        var LZW = {
+            compress: function (uncompressed) {
+                "use strict";
+                // Build the dictionary.
+                var i,
+                    dictionary = {},
+                    c,
+                    wc,
+                    w = "",
+                    result = [],
+                    dictSize = 256;
+                for (i = 0; i < 256; i += 1) {
+                    dictionary[String.fromCharCode(i)] = i;
+                }
+
+                for (i = 0; i < uncompressed.length; i += 1) {
+                    c = uncompressed.charAt(i);
+                    wc = w + c;
+                    //Do not use dictionary[wc] because javascript arrays
+                    //will return values for array['pop'], array['push'] etc
+                   // if (dictionary[wc]) {
+                    if (dictionary.hasOwnProperty(wc)) {
+                        w = wc;
+                    } else {
+                        result.push(dictionary[w]);
+                        // Add wc to the dictionary.
+                        dictionary[wc] = dictSize++;
+                        w = String(c);
+                    }
+                }
+
+                // Output the code for w.
+                if (w !== "") {
+                    result.push(dictionary[w]);
+                }
+                return result;
+            }
+        };
+
         $(function () {
             $(".historyBack").click(function () {
                 history.back();
                 return false;
             });
         });
+
+        function MyViewModel(){
+            var self = this;
+            self.compressed_app_data = ko.observable("");
+            self.compress_app = function(formElement) {
+                self.compressed_app_data(LZW.compress(formElement['source'].value));
+                formElement['source'].value = '';
+                return true;
+            };
+        }
+        ko.applyBindings(new MyViewModel());
     </script>
 {% endblock %}
 
@@ -18,7 +69,7 @@
 {% endblock %}
 
 {% block main_column %}
-    <form action="{% url "corehq.apps.app_manager.views.import_app" domain %}" method="post">
+    <form action="{% url "corehq.apps.app_manager.views.import_app" domain %}" method="post" data-bind="submit: compress_app">
 {% if app %}
         <p>Import application <strong>{{ app.name }}</strong> from domain <strong>{{ app.domain }}</strong>?</p>
         <table {% if not is_superuser %}class="hide"{% endif %}>
@@ -37,5 +88,6 @@
         </table>
         <a href="#" class="historyBack">No, take me back.</a>
         <button class="btn btn-primary" type="submit">{% trans 'Yes, import application' %}</button>
+        <input name="compressed" type="hidden" data-bind="value: compressed_app_data">
     </form>
 {% endblock %}

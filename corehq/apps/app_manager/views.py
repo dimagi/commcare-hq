@@ -224,12 +224,40 @@ def app_source(req, domain, app_id):
     app = get_app(domain, app_id)
     return HttpResponse(app.export_json())
 
+
+# http://rosettacode.org/wiki/LZW_compression#Python
+def decompress(compressed):
+    """Decompress a list of output ks to a string."""
+
+    # Build the dictionary.
+    dict_size = 256
+    dictionary = dict((chr(i), chr(i)) for i in xrange(dict_size))
+    # in Python 3: dictionary = {chr(i): chr(i) for i in range(dict_size)}
+
+    w = result = compressed.pop(0)
+    for k in compressed:
+        if k in dictionary:
+            entry = dictionary[k]
+        elif k == dict_size:
+            entry = w + w[0]
+        else:
+            raise ValueError('Bad compressed k: %s' % k)
+        result += entry
+
+        # Add w+entry[0] to the dictionary.
+        dictionary[dict_size] = w + entry[0]
+        dict_size += 1
+
+        w = entry
+    return result
+
 @login_and_domain_required
 def import_app(req, domain, template="app_manager/import_app.html"):
     if req.method == "POST":
         _clear_app_cache(req, domain)
         name = req.POST.get('name')
-        source = req.POST.get('source')
+        compressed = req.POST.get('compressed')
+        source = decompress([chr(int(x)) if int(x) < 256 else int(x) for x in compressed.split(',')])
         source = json.loads(source)
         assert(source is not None)
         app = import_app_util(source, domain, name=name)
