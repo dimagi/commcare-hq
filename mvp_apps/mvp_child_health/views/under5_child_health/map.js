@@ -44,14 +44,15 @@ function(doc) {
                     // pass
                 }
 
-                if (danger_signs.indexOf('fever') >= 0) {
+                if ((danger_signs.indexOf('fever') >= 0) || (danger_signs.indexOf('sign-fever') >= 0) ) {
                     if (danger_signs.length === 1) {
                         uncomplicated_fever = true;
                     } else {
                         complicated_fever = true;
                     }
                 }
-                if (danger_signs.indexOf('diarrhea') >= 0 && danger_signs.length === 1) {
+                if ((danger_signs.indexOf('diarrhea') >= 0 && danger_signs.length === 1) || 
+                    (danger_signs.indexOf('sign_diarrhea') >= 0 && danger_signs.length === 1)) {
                     diarrhea_only = true;
                 }
 
