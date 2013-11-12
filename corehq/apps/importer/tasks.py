@@ -102,8 +102,8 @@ def bulk_import_async(import_id, config, domain, excel_id):
                 continue
         else:
             # if they didn't supply an owner_id mapping, default to current
-            # user if we are creating cases
-            owner_id = user_id if case else None
+            # user
+            owner_id = user_id
 
         external_id = fields_to_update.pop('external_id', None)
         parent_id = fields_to_update.pop('parent_id', None)
@@ -139,14 +139,13 @@ def bulk_import_async(import_id, config, domain, excel_id):
 
             if config.search_field == 'external_id':
                 extras['external_id'] = search_id
-            if owner_id:
-                extras['owner_id'] = owner_id
 
             try:
                 caseblock = CaseBlock(
                     create=True,
                     case_id=id,
                     version=V2,
+                    owner_id=owner_id,
                     user_id=user_id,
                     case_type=config.case_type,
                     update=fields_to_update,
@@ -160,12 +159,13 @@ def bulk_import_async(import_id, config, domain, excel_id):
         elif case and case.type == config.case_type:
             if external_id:
                 extras['external_id'] = external_id
+            if uploaded_owner_id:
+                extras['owner_id'] = owner_id
 
             try:
                 caseblock = CaseBlock(
                     create=False,
                     case_id=case._id,
-                    owner_id=owner_id,
                     version=V2,
                     update=fields_to_update,
                     **extras
