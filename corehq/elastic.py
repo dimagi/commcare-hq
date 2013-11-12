@@ -125,6 +125,8 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
         terms = []
     if q is None:
         q = {}
+    else:
+        q = copy.deepcopy(q)
     if params is None:
         params = {}
 
