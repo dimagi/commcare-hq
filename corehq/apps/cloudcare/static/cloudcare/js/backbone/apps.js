@@ -20,7 +20,7 @@ cloudCare.AppNavigation = Backbone.Router.extend({
         "view/:app/:module/:form/case/:case":        "app:module:form:case",
         "view/:app/:module/:form/case/:case/enter/": "app:module:form:case:enter",
         "":                                          "clear"
-    },
+    }
 
 });
 
@@ -41,7 +41,7 @@ cloudCare.AppSummaryView = Selectable.extend({
 });
 
 cloudCare.AppList = Backbone.Collection.extend({
-    model: cloudCare.AppSummary,
+    model: cloudCare.AppSummary
 });
 
 cloudCare.AppListView = Backbone.View.extend({
@@ -162,16 +162,10 @@ cloudCare.FormView = Selectable.extend({
 cloudCare.Module = LocalizableModel.extend({
     initialize: function () {
         this.constructor.__super__.initialize.apply(this, [this.options]);
-        _.bindAll(this, 'updateForms', 'getDetail');
+        _.bindAll(this, 'updateForms');
         this.updateForms();
         this.on("change", function () {
             this.updateForms();
-        });
-    },
-
-    getDetail: function (type) {
-        return _(this.get("details")).find(function (elem) {
-            return elem.type === type;
         });
     },
 
@@ -516,8 +510,8 @@ cloudCare.AppView = Backbone.View.extend({
 	            self.playForm(module, form);
             } else if (form.get("requires") === "case") {
                 cloudCare.dispatch.trigger("form:selected:caselist", form);
-	            var listDetails = formListView.model.getDetail("case_short");
-	            var summaryDetails = formListView.model.getDetail("case_long");
+	            var listDetails = formListView.model.get("case_details").short;
+	            var summaryDetails = formListView.model.get("case_details").long;
 	            formListView.caseView = new cloudCare.CaseMainView({
 	                el: $("#cases"),
 	                listDetails: listDetails,
