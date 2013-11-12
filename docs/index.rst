@@ -23,6 +23,7 @@ Welcome to CommCareHQ's documentation!
    class_views
    management_commands
    commtrack
+   cloudcare
 
 Tips for documenting
 --------------------

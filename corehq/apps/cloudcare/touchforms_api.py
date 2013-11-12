@@ -10,11 +10,12 @@ from corehq.apps.users.models import CommCareUser
 DELEGATION_STUB_CASE_TYPE = "cc_delegation_stub"
 
 class SessionDataHelper(object):
-    def __init__(self, domain, couch_user, case_id=None, delegation=False):
+    def __init__(self, domain, couch_user, case_id=None, delegation=False, offline=False):
         self.domain = domain
         self.couch_user = couch_user
         self.case_id = case_id
         self._delegation = delegation
+        self.offline = offline
 
     @property
     @memoized
@@ -89,10 +90,14 @@ class SessionDataHelper(object):
         session_data = self.get_session_data()
         # always tell touchforms to include footprinted cases in its case db
         session_data["additional_filters"] = {"footprint": True}
+
+        online_url = reverse("xform_player_proxy")
+        offline_url = 'http://localhost:%d' % settings.OFFLINE_TOUCHFORMS_PORT
+
         return {
             "form_url": form_url,
             "session_data": session_data,
-            "xform_url": reverse("xform_player_proxy")
+            "xform_url": offline_url if self.offline else online_url,
         }
 
 
@@ -103,5 +108,5 @@ def get_session_data(domain, couch_user, case_id=None, device_id=CLOUDCARE_DEVIC
 def filter_cases(domain, couch_user, xpath, additional_filters=None, auth=None, delegation=False):
     return SessionDataHelper(domain, couch_user, delegation=delegation).filter_cases(xpath, additional_filters, auth)
 
-def get_full_context(domain, user, app, form_url, case_id=None, delegation=False):
-    return SessionDataHelper(domain, user, case_id, delegation=delegation).get_full_context(form_url)
+def get_full_context(domain, user, app, form_url, case_id=None, delegation=False, offline=False):
+    return SessionDataHelper(domain, user, case_id, delegation=delegation, offline=offline).get_full_context(form_url)

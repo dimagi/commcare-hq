@@ -72,24 +72,17 @@ class ParentCasePropertyBuilder(object):
         forms_info = []
         for module in self.app.get_modules():
             for form in module.get_forms():
-                forms_info.append((module.case_type, form.actions))
+                forms_info.append((module.case_type, form))
         return forms_info
 
     @memoized
     def get_parent_types_and_contributed_properties(self, case_type):
         parent_types = set()
         case_properties = set()
-        for m_case_type, f_actions in self.forms_info:
-            for subcase in f_actions.subcases:
-                if subcase.case_type == case_type:
-                    case_properties.update(
-                        subcase.case_properties.keys()
-                    )
-                    if case_type != m_case_type and (
-                            f_actions.open_case.is_active() or
-                            f_actions.update_case.is_active() or
-                            f_actions.close_case.is_active()):
-                        parent_types.add(m_case_type)
+        for m_case_type, form in self.forms_info:
+            p_types, c_props = form.get_parent_types_and_contributed_properties(m_case_type, case_type)
+            parent_types.update(parent_types)
+            case_properties.update(c_props)
         return parent_types, case_properties
 
     def get_parent_types(self, case_type):
@@ -109,11 +102,10 @@ class ParentCasePropertyBuilder(object):
 
         case_properties = set(self.defaults)
 
-        for m_case_type, f_actions in self.forms_info:
+        for m_case_type, form in self.forms_info:
             if m_case_type == case_type:
-                case_properties.update(
-                    f_actions.update_case.update.keys()
-                )
+                case_properties.update(form.get_case_updates())
+
         parent_types, contributed_properties = \
             self.get_parent_types_and_contributed_properties(case_type)
         case_properties.update(contributed_properties)

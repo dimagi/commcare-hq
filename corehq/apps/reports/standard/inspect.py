@@ -786,81 +786,10 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
 
 class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
     """instances must set:
-
     data_source -- config about backend data source
     display_config -- configure the front-end display of data
 
-    data_source: {
-      'adapter': type of data source ('test', 'report', etc.),
-      'geo_column': column in returned data identifying the geo point (defaults to "geo"),
-      <custom parameters by adapter>
-
-      adapter == 'report'
-      'report': 'fully qualified name of ReportDataSource class'
-      'report_params': optional dict of (static) config parameters for ReportDataSource
-
-      # for backwards compatibility with existing tabular reports not yet converted to
-      # ReportDataSources... **NOT RECOMMENDED** because tabular reports generally emit
-      # formatted data, whereas the maps report works best on raw data; also, the report
-      # api is complex and i make no guarantees that invoking it secondhand via the map
-      # report won't overlook something important
-      adapter == 'legacyreport'
-      'report': 'fully qualified name of tabular report view class'
-      'report_params': optional dict of (static) config parameters for report
-
-      adapter == 'case'
-      # note: in the current implementation, the case adapater requires you use the same
-      # filters as on the regular case list report
-      'geo_fetch': mapping of case type to directive of how to pull geo data for a case of
-          that type. available directives:
-          * name of case property containing 'geopoint' data
-          * (TODO) 'link:xxx' where 'xxx' is the case type of a linked case to refer to
-            for geo data (the adapter must also know how to process the linked case type)
-        for case types not specified, the default is to use the "gps" case property
-    }
-
-    display_config: {
-      'name_column': column data used in the header of the detail popup,
-      'column_titles': {'column name': 'display title for column},
-      'detail_columns': [list of column data to display in detail popup],
-      'table_columns': [list of columns to display in table view],
-      'enum_captions': {
-        'col with enum values': {'enum value': 'enum caption'}
-      },
-      'numeric_format': {
-        'numeric column': 'body of javascript function that formats the number appropriately (variable is 'x')'
-      },
-      'metrics': [ <toggleable data display modes> (may be omitted during report prototyping)
-        one or more of:
-        {
-          'title': display title,
-          'size': [optional] controls the size of the marker-- radius in pixels OR
-            {
-              'column': column containing the relevant variable,
-              'baseline': value corresponding to a marker of radius 10 pixels,
-              'min': minimum marker radius (pixels) [optional],
-              'max': maximum marker radius (pixels) [optional],
-            },
-          'color': [optional] controls the color of the marker-- a css color value OR
-            {
-              'column': column containing the relevant variable,
-              one of either 'categories' or 'colorstops'
-              'categories': {'enum value': css color},
-                 - special value '_other' can act as catch-all for values not explicitly listed
-                 - special value '_null' will be used for rows where the value is blank; if absent, such rows will be hidden
-              'colorstops': (to create sliding color scales) [list of colorstops: [value, csscolor]],
-              'thresholds': [optional] [list of numerical threshold values to convert numeric data into enum 'buckets'],
-            },
-          'icon': [optional] use an icon as the marker; overrides size/color-- an image url OR
-            {
-              'column': column containing the relevant variable,
-              'categories': as in 'color', only a url instead of a color
-              'thresholds': as in 'color'
-            },
-          # for display of date columns, you may use dates instead of numbers in the 'thresholds' and 'colorstops' fields
-        }
-      ]
-    }
+    consult docs/maps.html for instructions
     """
 
     report_partial_path = "reports/partials/maps.html"

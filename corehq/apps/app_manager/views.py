@@ -324,7 +324,7 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         try:
             form_action_errors = form.validate_for_build()
             if not form_action_errors:
-                xform.add_case_and_meta(form)
+                form.add_stuff_to_xform(xform)
                 if settings.DEBUG and False:
                     xform.validate()
         except CaseError as e:
@@ -357,7 +357,6 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         'nav_form': form if not is_user_registration else '',
         'xform_languages': languages,
         "xform_questions": xform_questions,
-        'form_actions': form.actions.to_json(),
         'case_reserved_words_json': load_case_reserved_words(),
         'is_user_registration': is_user_registration,
         'module_case_types': module_case_types,
@@ -560,6 +559,42 @@ def release_build(request, domain, app_id, saved_app_id):
         return HttpResponseRedirect(reverse('release_manager', args=[domain, app_id]))
 
 
+def get_module_view_context(app, module):
+    case_type = module.case_type
+    builder = ParentCasePropertyBuilder(
+        app,
+        defaults=('name', 'date-opened', 'status')
+    )
+
+    def get_parent_modules_and_save():
+        """
+        This closure is so we don't override the `module` variable
+
+        """
+        parent_types = builder.get_parent_types(case_type)
+        modules = app.modules
+        # make sure all modules have unique ids
+        if any(not module.unique_id for module in modules):
+            for module in modules:
+                module.get_or_create_unique_id()
+            app.save()
+        parent_module_ids = [module.unique_id for module in modules
+                             if module.case_type in parent_types]
+        return [{
+                    'unique_id': module.unique_id,
+                    'name': module.name,
+                    'is_parent': module.unique_id in parent_module_ids,
+                } for module in app.modules if module.case_type != case_type]
+
+    sort_elements = [prop.values() for prop in
+                     module.case_details.short.sort_elements]
+    return {
+        'parent_modules': get_parent_modules_and_save(),
+        'case_properties': sorted(builder.get_properties(case_type)),
+        "sortElements": json.dumps(sort_elements)
+    }
+
+
 @retry_resource(3)
 def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user_registration=False):
     """
@@ -591,7 +626,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     except IndexError:
         return bail(req, domain, app_id)
 
-    base_context = get_apps_base_context(req, domain, app)
+    context = get_apps_base_context(req, domain, app)
     if not app:
         all_applications = ApplicationBase.view('app_manager/applications_brief',
             startkey=[domain],
@@ -615,63 +650,23 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         del app['use_commcare_sense']
         app.save()
 
-    context = {
-        'show_care_plan': toggle_enabled(toggles.APP_BUILDER_CARE_PLAN, req.user.username),
-    }
-    if module:
-        if not form:
-            case_type = module.case_type
-            builder = ParentCasePropertyBuilder(
-                app,
-                defaults=('name', 'date-opened', 'status')
-            )
-
-            def get_parent_modules_and_save():
-                """
-                This closure is so we don't override the `module` variable
-
-                """
-                parent_types = builder.get_parent_types(case_type)
-                modules = app.modules
-                # make sure all modules have unique ids
-                if any(not module.unique_id for module in modules):
-                    for module in modules:
-                        module.get_or_create_unique_id()
-                    app.save()
-                parent_module_ids = [module.unique_id for module in modules
-                                     if module.case_type in parent_types]
-                return [{
-                    'unique_id': module.unique_id,
-                    'name': module.name,
-                    'is_parent': module.unique_id in parent_module_ids,
-                } for module in app.modules if module.case_type != case_type]
-            context.update({
-                'parent_modules': get_parent_modules_and_save(),
-                'case_properties': sorted(builder.get_properties(case_type)),
-            })
-        else:
-            context.update({
-                'case_properties': get_all_case_properties(app),
-            })
-
     context.update({
-        'domain': domain,
-
-        'app': app,
+        'show_care_plan': toggle_enabled(toggles.APP_BUILDER_CARE_PLAN, req.user.username),
         'module': module,
         'form': form,
     })
-    context.update(base_context)
+
     if app and not module and hasattr(app, 'translations'):
         context.update({"translations": app.translations.get(context['lang'], {})})
 
     if form:
         template = "app_manager/form_view.html"
+        context.update({
+            'case_properties': get_all_case_properties(app),
+        })
         context.update(get_form_view_context(req, form, context['langs'], is_user_registration))
     elif module:
-        sort_elements = [prop.values() for prop in
-                         module.case_details.short.sort_elements]
-        context.update({"sortElements": json.dumps(sort_elements)})
+        context.update(get_module_view_context(app, module))
         template = "app_manager/module_view.html"
     else:
         template = "app_manager/app_view.html"

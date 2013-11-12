@@ -35,6 +35,18 @@ def _make_elem(tag, attr=None):
     return ET.Element(tag.format(**namespaces), dict([(key.format(**namespaces), val) for key,val in attr.items()]))
 
 
+def make_case_elem(tag, attr=None):
+        return _make_elem('{cx2}%s' % tag, attr)
+
+
+def get_case_parent_id_xpath(parent_path):
+        xpath = SESSION_CASE_ID
+        if parent_path:
+            for parent_name in parent_path.split('/'):
+                xpath = xpath.case().index_id(parent_name)
+        return xpath
+
+
 class XPath(unicode):
     def slash(self, xpath):
         if self:
@@ -130,6 +142,122 @@ def raise_if_none(message):
         return _fn
     return decorator
 
+
+class CaseBlock(object):
+
+    @classmethod
+    def make_parent_case_block(cls, xform, node_path, parent_path):
+        case_block = CaseBlock(xform, node_path)
+        id_xpath = get_case_parent_id_xpath(parent_path)
+        xform.add_bind(
+            nodeset='%scase/@case_id' % node_path,
+            calculate=id_xpath,
+        )
+        return case_block
+
+    def __init__(self, xform, path=''):
+        self.xform = xform
+
+        self.elem = ET.Element('{cx2}case'.format(**namespaces), {
+            'case_id': '',
+            'date_modified': '',
+            'user_id': '',
+            }, nsmap={
+            None: namespaces['cx2'][1:-1]
+        })
+
+        self.xform.add_bind(
+            nodeset="%scase/@date_modified" % path,
+            type="dateTime",
+            calculate=self.xform.resolve_path("meta/timeEnd")
+        )
+        self.xform.add_bind(
+            nodeset="%scase/@user_id" % path,
+            calculate=self.xform.resolve_path("meta/userID"),
+        )
+
+    def add_create_block(self, relevance, case_name, case_type, path='',
+                         delay_case_id=False, autoset_owner_id=True, has_case_sharing=False):
+        create_block = make_case_elem('create')
+        self.elem.append(create_block)
+        case_type_node = make_case_elem('case_type')
+        owner_id_node = make_case_elem('owner_id')
+        case_type_node.text = case_type
+
+        create_block.append(make_case_elem('case_name'))
+        create_block.append(owner_id_node)
+        create_block.append(case_type_node)
+
+        def add_setvalue_or_bind(ref, value):
+            if not delay_case_id:
+                self.xform.add_setvalue(ref=ref, value=value)
+            else:
+                self.xform.add_bind(nodeset=ref, calculate=value)
+
+        self.xform.add_bind(
+            nodeset='%scase' % path,
+            relevant=relevance,
+        )
+        add_setvalue_or_bind(
+            ref='%scase/@case_id' % path,
+            value='uuid()',
+        )
+        self.xform.add_bind(
+            nodeset="%scase/create/case_name" % path,
+            calculate=self.xform.resolve_path(case_name),
+        )
+
+        if autoset_owner_id:
+            if has_case_sharing:
+                self.xform.add_instance('groups', src='jr://fixture/user-groups')
+                add_setvalue_or_bind(
+                    ref="%scase/create/owner_id" % path,
+                    value="instance('groups')/groups/group/@id"
+                )
+            else:
+                self.xform.add_bind(
+                    nodeset="%scase/create/owner_id" % path,
+                    calculate=self.xform.resolve_path("meta/userID"),
+                )
+        else:
+            owner_id_node.text = '-'
+
+        if not case_name:
+            raise CaseError("Please set 'Name according to question'. "
+                            "This will give each case a 'name' attribute")
+        self.xform.add_bind(
+            nodeset=case_name,
+            required="true()",
+        )
+
+    def add_update_block(self, updates, path=''):
+        update_block = make_case_elem('update')
+        self.elem.append(update_block)
+        update_mapping = {}
+
+        if updates:
+            for key, value in updates.items():
+                if key == 'name':
+                    key = 'case_name'
+                update_mapping[key] = value
+
+        for key in sorted(update_mapping.keys()):
+            update_block.append(make_case_elem(key))
+
+        for key, q_path in sorted(update_mapping.items()):
+            resolved_path = self.xform.resolve_path(q_path)
+            self.xform.add_bind(
+                nodeset="%scase/update/%s" % (path, key),
+                calculate=resolved_path,
+                relevant=("count(%s) > 0" % resolved_path)
+            )
+
+    def add_close_block(self, relevance, path=''):
+        self.elem.append(make_case_elem('close'))
+        self.xform.add_bind(
+            nodeset="%scase/close" % path,
+            relevant=relevance,
+        )
 
 class XForm(WrappedNode):
     """
@@ -385,7 +513,8 @@ class XForm(WrappedNode):
         if form.get_app().application_version == APP_V1:
             self.add_case_and_meta_1(form)
         else:
-            self.add_case_and_meta_2(form)
+            self.create_casexml_2(form)
+            self.add_meta_2()
 
     def already_has_meta(self):
         meta_blocks = set()
@@ -396,67 +525,61 @@ class XForm(WrappedNode):
 
         return meta_blocks
 
-    def add_case_and_meta_2(self, form):
-        case = self.case_node
-
+    def add_meta_2(self):
         case_parent = self.data_node
-
-        self.create_casexml_2(form)
 
         # Test all of the possibilities so that we don't end up with two "meta" blocks
         for meta in self.already_has_meta():
             case_parent.remove(meta.xml)
 
-        def add_meta():
-            orx = namespaces['orx'][1:-1]
-            nsmap = {None: orx, 'cc': namespaces['cc'][1:-1]}
+        orx = namespaces['orx'][1:-1]
+        nsmap = {None: orx, 'cc': namespaces['cc'][1:-1]}
 
-            meta = ET.Element("{orx}meta".format(**namespaces), nsmap=nsmap)
-            for tag in (
-                '{orx}deviceID',
-                '{orx}timeStart',
-                '{orx}timeEnd',
-                '{orx}username',
-                '{orx}userID',
-                '{orx}instanceID',
-                '{cc}appVersion',
-            ):
-                meta.append(ET.Element(tag.format(**namespaces), nsmap=nsmap))
+        meta = ET.Element("{orx}meta".format(**namespaces), nsmap=nsmap)
+        for tag in (
+            '{orx}deviceID',
+            '{orx}timeStart',
+            '{orx}timeEnd',
+            '{orx}username',
+            '{orx}userID',
+            '{orx}instanceID',
+            '{cc}appVersion',
+        ):
+            meta.append(ET.Element(tag.format(**namespaces), nsmap=nsmap))
 
-            case_parent.append(meta)
+        case_parent.append(meta)
 
-            self.add_setvalue(
-                ref="meta/deviceID",
-                value="instance('commcaresession')/session/context/deviceid",
-            )
-            self.add_setvalue(
-                ref="meta/timeStart",
-                type="xsd:dateTime",
-                value="now()",
-            )
-            self.add_setvalue(
-                ref="meta/timeEnd",
-                type="xsd:dateTime",
-                event="xforms-revalidate",
-                value="now()",
-            )
-            self.add_setvalue(
-                ref="meta/username",
-                value="instance('commcaresession')/session/context/username",
-            )
-            self.add_setvalue(
-                ref="meta/userID",
-                value="instance('commcaresession')/session/context/userid",
-            )
-            self.add_setvalue(
-                ref="meta/instanceID",
-                value="uuid()"
-            )
-            self.add_setvalue(
-                ref="meta/appVersion",
-                value="instance('commcaresession')/session/context/appversion"
-            )
-        add_meta()
+        self.add_setvalue(
+            ref="meta/deviceID",
+            value="instance('commcaresession')/session/context/deviceid",
+        )
+        self.add_setvalue(
+            ref="meta/timeStart",
+            type="xsd:dateTime",
+            value="now()",
+        )
+        self.add_setvalue(
+            ref="meta/timeEnd",
+            type="xsd:dateTime",
+            event="xforms-revalidate",
+            value="now()",
+        )
+        self.add_setvalue(
+            ref="meta/username",
+            value="instance('commcaresession')/session/context/username",
+        )
+        self.add_setvalue(
+            ref="meta/userID",
+            value="instance('commcaresession')/session/context/userid",
+        )
+        self.add_setvalue(
+            ref="meta/instanceID",
+            value="uuid()"
+        )
+        self.add_setvalue(
+            ref="meta/appVersion",
+            value="instance('commcaresession')/session/context/appversion"
+        )
 
     def add_case_and_meta_1(self, form):
         case = self.case_node
@@ -569,6 +692,14 @@ class XForm(WrappedNode):
         if type:
             self.add_bind(nodeset=ref, type=type)
 
+    def action_relevance(self, action):
+        if action.condition.type == 'always':
+            return 'true()'
+        elif action.condition.type == 'if':
+            return "%s = '%s'" % (self.resolve_path(action.condition.question), action.condition.answer)
+        else:
+            return 'false()'
+
     def create_casexml_2(self, form):
         from corehq.apps.app_manager.util import split_path
 
@@ -577,126 +708,6 @@ class XForm(WrappedNode):
         if form.requires == 'none' and 'open_case' not in actions and 'update_case' in actions:
             raise CaseError("To update a case you must either open a case or require a case to begin with")
 
-        def make_case_elem(tag, attr=None):
-            return _make_elem('{cx2}%s' % tag, attr)
-
-        def make_case_block(path=''):
-            case_block = ET.Element('{cx2}case'.format(**namespaces), {
-                'case_id': '',
-                'date_modified': '',
-                'user_id': '',
-                }, nsmap={
-                None: namespaces['cx2'][1:-1]
-            })
-
-            self.add_bind(
-                nodeset="%scase/@date_modified" % path,
-                type="dateTime",
-                calculate=self.resolve_path("meta/timeEnd")
-            )
-            self.add_bind(
-                nodeset="%scase/@user_id" % path,
-                calculate=self.resolve_path("meta/userID"),
-            )
-            return case_block
-
-        def relevance(action):
-            if action.condition.type == 'always':
-                return 'true()'
-            elif action.condition.type == 'if':
-                return "%s = '%s'" % (self.resolve_path(action.condition.question), action.condition.answer)
-            else:
-                return 'false()'
-
-        def add_create_block(case_block, action, case_name, case_type, path='',
-                             delay_case_id=False, autoset_owner_id=True):
-            create_block = make_case_elem('create')
-            case_block.append(create_block)
-            case_type_node = make_case_elem('case_type')
-            owner_id_node = make_case_elem('owner_id')
-            case_type_node.text = case_type
-
-            create_block.append(make_case_elem('case_name'))
-            create_block.append(owner_id_node)
-            create_block.append(case_type_node)
-
-            def add_setvalue_or_bind(ref, value):
-                if not delay_case_id:
-                    self.add_setvalue(ref=ref, value=value)
-                else:
-                    self.add_bind(nodeset=ref, calculate=value)
-
-            self.add_bind(
-                nodeset='%scase' % path,
-                relevant=relevance(action),
-            )
-            add_setvalue_or_bind(
-                ref='%scase/@case_id' % path,
-                value='uuid()',
-            )
-            self.add_bind(
-                nodeset="%scase/create/case_name" % path,
-                calculate=self.resolve_path(case_name),
-            )
-
-            if autoset_owner_id:
-                if form.get_app().case_sharing:
-                    self.add_instance('groups', src='jr://fixture/user-groups')
-                    add_setvalue_or_bind(
-                        ref="%scase/create/owner_id" % path,
-                        value="instance('groups')/groups/group/@id"
-                    )
-                else:
-                    self.add_bind(
-                        nodeset="%scase/create/owner_id" % path,
-                        calculate=self.resolve_path("meta/userID"),
-                    )
-            else:
-                owner_id_node.text = '-'
-
-            if not case_name:
-                raise CaseError("Please set 'Name according to question'. "
-                                "This will give each case a 'name' attribute")
-            self.add_bind(
-                nodeset=case_name,
-                required="true()",
-            )
-
-        def add_update_block(case_block, updates, path=''):
-            update_block = make_case_elem('update')
-            case_block.append(update_block)
-            update_mapping = {}
-
-            if updates:
-                for key, value in updates.items():
-                    if key == 'name':
-                        key = 'case_name'
-                    update_mapping[key] = value
-
-            for key in sorted(update_mapping.keys()):
-                update_block.append(make_case_elem(key))
-
-            for key, q_path in sorted(update_mapping.items()):
-                self.add_bind(
-                    nodeset="%scase/update/%s" % (path, key),
-                    calculate=self.resolve_path(q_path),
-                    relevant=("count(%s) > 0" % self.resolve_path(q_path))
-                )
-
-        def add_close_block(case_block, action=None, path=''):
-            case_block.append(make_case_elem('close'))
-            self.add_bind(
-                nodeset="%scase/close" % path,
-                relevant=relevance(action) if action else 'true()',
-            )
-
-        def get_case_parent_id_xpath(parent_path):
-            xpath = SESSION_CASE_ID
-            if parent_path:
-                for parent_name in parent_path.split('/'):
-                    xpath = xpath.case().index_id(parent_name)
-            return xpath
-
         delegation_case_block = None
         if not actions or (form.requires == 'none' and 'open_case' not in actions):
             case_block = None
@@ -704,14 +715,14 @@ class XForm(WrappedNode):
             extra_updates = {}
             needs_casedb_instance = False
 
-            case_block = make_case_block()
+            case_block = CaseBlock(self)
             if form.requires != 'none':
                 def make_delegation_stub_case_block():
                     path = 'cc_delegation_stub/'
                     DELEGATION_ID = 'delegation_id'
                     outer_block = _make_elem('{x}cc_delegation_stub', {DELEGATION_ID: ''})
-                    delegation_case_block = make_case_block(path)
-                    add_close_block(delegation_case_block)
+                    delegation_case_block = CaseBlock(self, path)
+                    delegation_case_block.add_close_block('true()')
                     session_delegation_id = "instance('commcaresession')/session/data/%s" % DELEGATION_ID
                     path_to_delegation_id = self.resolve_path("%s@%s" % (path, DELEGATION_ID))
                     self.add_setvalue(
@@ -726,7 +737,7 @@ class XForm(WrappedNode):
                         nodeset="%scase/@case_id" % path,
                         calculate=path_to_delegation_id
                     )
-                    outer_block.append(delegation_case_block)
+                    outer_block.append(delegation_case_block.elem)
                     return outer_block
 
                 if form.get_module().task_list.show:
@@ -734,9 +745,8 @@ class XForm(WrappedNode):
 
             if 'open_case' in actions:
                 open_case_action = actions['open_case']
-                add_create_block(
-                    case_block=case_block,
-                    action=open_case_action,
+                case_block.add_create_block(
+                    relevance=self.action_relevance(open_case_action),
                     case_name=open_case_action.name_path,
                     case_type=form.get_case_type(),
                     path='',
@@ -744,6 +754,7 @@ class XForm(WrappedNode):
                         'update_case' in actions and
                         'owner_id' in actions['update_case'].update
                     ),
+                    has_case_sharing=form.get_app().case_sharing,
                 )
                 if 'external_id' in actions['open_case'] and actions['open_case'].external_id:
                     extra_updates['external_id'] = actions['open_case'].external_id
@@ -772,7 +783,7 @@ class XForm(WrappedNode):
                 if '' in updates_by_case:
                     # 90% use-case
                     basic_updates = updates_by_case.pop('')
-                    add_update_block(case_block, basic_updates)
+                    case_block.add_update_block(basic_updates)
                 if updates_by_case:
                     needs_casedb_instance = True
                     def make_nested_subnode(base_node, path):
@@ -787,27 +798,17 @@ class XForm(WrappedNode):
                             prev_node = node
                         return node
 
-                    def make_parent_case_block(node_path, parent_path):
-                        case_block = make_case_block(node_path)
-                        id_xpath = get_case_parent_id_xpath(parent_path)
-                        self.add_bind(
-                            nodeset='%scase/@case_id' % node_path,
-                            calculate=id_xpath,
-                        )
-                        return case_block
-
                     base_node = _make_elem('{x}parents')
                     self.data_node.append(base_node)
                     for parent_path, updates in sorted(updates_by_case.items()):
                         node = make_nested_subnode(base_node, parent_path)
                         node_path = 'parents/%s/' % parent_path
-                        parent_case_block = make_parent_case_block(node_path,
-                                                                   parent_path)
-                        add_update_block(parent_case_block, updates, node_path)
-                        node.append(parent_case_block)
+                        parent_case_block = CaseBlock.make_parent_case_block(self, node_path, parent_path)
+                        parent_case_block.add_update_block(updates, node_path)
+                        node.append(parent_case_block.elem)
 
             if 'close_case' in actions:
-                add_close_block(case_block, actions['close_case'])
+                case_block.add_close_block(self.action_relevance(actions['close_case']))
 
             if 'case_preload' in actions:
                 needs_casedb_instance = True
@@ -854,19 +855,19 @@ class XForm(WrappedNode):
                     subcase_node = parent_node
                     path = base_path
 
-                subcase_block = make_case_block(path)
-                subcase_node.insert(0, subcase_block)
-                add_create_block(
-                    case_block=subcase_block,
-                    action=subcase,
+                subcase_block = CaseBlock(self, path)
+                subcase_node.insert(0, subcase_block.elem)
+                subcase_block.add_create_block(
+                    relevance=self.action_relevance(subcase),
                     case_name=subcase.case_name,
                     case_type=subcase.case_type,
                     path=path,
                     delay_case_id=bool(subcase.repeat_context),
                     autoset_owner_id='owner_id' not in subcase.case_properties,
+                    has_case_sharing=form.get_app().case_sharing,
                 )
 
-                add_update_block(subcase_block, subcase.case_properties, path=path)
+                subcase_block.add_update_block(subcase.case_properties, path=path)
 
                 if case_block is not None and subcase.case_type != form.get_case_type():
                     index_node = make_case_elem('index')
@@ -877,7 +878,7 @@ class XForm(WrappedNode):
                         calculate=self.resolve_path("case/@case_id"),
                     )
                     index_node.append(parent_index)
-                    subcase_block.append(index_node)
+                    subcase_block.elem.append(index_node)
 
         # always needs session instance for meta
         self.add_instance('commcaresession', src='jr://instance/session')
@@ -889,9 +890,9 @@ class XForm(WrappedNode):
             if case.exists():
                 raise XFormError("You cannot use the Case Management UI if you already have a case block in your form.")
             else:
-                case_parent.append(case_block)
+                case_parent.append(case_block.elem)
                 if delegation_case_block is not None:
-                    case_parent.append(delegation_case_block)
+                    case_parent.append(delegation_case_block.elem)
 
         if not case_parent.exists():
             raise XFormError("Couldn't get the case XML from one of your forms. "
@@ -925,14 +926,6 @@ class XForm(WrappedNode):
 
             add_bind({"nodeset":"case/date_modified", "type":"dateTime", "{jr}preload":"timestamp", "{jr}preloadParams":"end"})
 
-
-            def relevance(action):
-                if action.condition.type == 'always':
-                    return 'true()'
-                elif action.condition.type == 'if':
-                    return "%s = '%s'" % (self.resolve_path(action.condition.question), action.condition.answer)
-                else:
-                    return 'false()'
             if 'open_case' in actions:
                 casexml[
                 __('create')[
@@ -942,7 +935,7 @@ class XForm(WrappedNode):
                 __("external_id"),
                 ]
                 ]
-                r = relevance(actions['open_case'])
+                r = self.action_relevance(actions['open_case'])
                 if r != "true()":
                     add_bind({
                         "nodeset":"case",
@@ -1016,7 +1009,7 @@ class XForm(WrappedNode):
                 casexml[
                 __('close')
                 ]
-                r = relevance(actions['close_case'])
+                r = self.action_relevance(actions['close_case'])
                 add_bind({
                     "nodeset": "case/close",
                     "relevant": r,
@@ -1085,7 +1078,7 @@ class XForm(WrappedNode):
                             })
                 if 'close_referral' in actions:
                     referral_update[__("date_closed")]
-                    r = relevance(actions['close_referral'])
+                    r = self.action_relevance(actions['close_referral'])
                     add_bind({
                         "nodeset":"case/referral/update/date_closed",
                         "relevant": r,

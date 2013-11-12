@@ -443,8 +443,14 @@ cloudCare.AppView = Backbone.View.extend({
                 url += "&task-list=true";
             }
         }
-        return url;
 
+        // superhacky
+        if ($('#use-offline').is(':checked')) {
+            url += (url.indexOf('?') != -1 ? '&' : '?');
+            url += "offline=true"
+        }
+
+        return url;
     },
     playForm: function (module, form, caseModel) {
         // go play the form. this is a little sketchy
@@ -483,10 +489,16 @@ cloudCare.AppView = Backbone.View.extend({
             };
             data.onload = function (adapter, resp) {
                 cloudCare.dispatch.trigger("form:ready", form, caseModel);
+            }
+            var loadSession = function() {
+                var sess = new WebFormSession(data);
+                // TODO: probably shouldn't hard code these divs
+                sess.load($('#webforms'), $('#loading'), self.options.language);
             };
-            var sess = new WebFormSession(data);
-            // TODO: probably shouldn't hard code these divs
-            sess.load($('#webforms'), $('#loading'), self.options.language);
+            var promptForOffline = function(show) {
+                $('#offline-prompt')[show ? 'show' : 'hide']();
+            };
+            touchformsInit(data.xform_url, loadSession, promptForOffline);
         });
     },
     selectForm: function (form) {

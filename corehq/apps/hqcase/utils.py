@@ -162,7 +162,7 @@ def assign_cases(caselist, owner_id, acting_user=None):
 
     username = acting_user.username if acting_user else 'system'
     user_id = acting_user._id if acting_user else 'system'
-    filtered_cases = [c for c in caselist if c.owner_id != owner_id]
+    filtered_cases = set([c for c in caselist if c.owner_id != owner_id])
     if filtered_cases:
         caseblocks = [ElementTree.tostring(CaseBlock(
                 create=False,
@@ -171,6 +171,7 @@ def assign_cases(caselist, owner_id, acting_user=None):
                 version=V2,
             ).as_xml(format_datetime=json_format_datetime)) for c in filtered_cases
         ]
+        # todo: this should check whether the submit_case_blocks call actually succeeds
         submit_case_blocks(caseblocks, domain, username=username,
                            user_id=user_id)
 

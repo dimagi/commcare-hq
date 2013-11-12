@@ -77,8 +77,8 @@ def load_case_reserved_words():
 
 
 @memoized
-def load_default_user_registration():
-    with open(os.path.join(os.path.dirname(__file__), 'data', 'register_user.xhtml')) as f:
+def load_form_template(filename):
+    with open(os.path.join(os.path.dirname(__file__), 'data', filename)) as f:
         return f.read()
 
 
@@ -680,6 +680,25 @@ class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
         ))
 
         return errors
+
+    def get_case_updates(self):
+        return self.actions.update_case.update.keys()
+
+    @memoized
+    def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
+        parent_types = set()
+        case_properties = set()
+        for subcase in self.actions.subcases:
+            if subcase.case_type == case_type:
+                case_properties.update(
+                    subcase.case_properties.keys()
+                )
+                if case_type != module_case_type and (
+                        self.actions.open_case.is_active() or
+                        self.actions.update_case.is_active() or
+                        self.actions.close_case.is_active()):
+                    parent_types.add(module_case_type)
+        return parent_types, case_properties
 
 
 class UserRegistrationForm(FormBase):
@@ -1921,7 +1940,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         form = self.user_registration
         form._app = self
         if not form.source:
-            form.source = load_default_user_registration()
+            form.source = load_form_template('register_user.xhtml')
         return form
 
     def get_forms(self, bare=True):
