@@ -259,15 +259,15 @@ class CaseBlock(object):
             relevant=relevance,
         )
 
-    def add_index_ref(self, reference_id, case_type, path=''):
+    def add_index_ref(self, reference_id, case_type, case_path='', ref_path="case/@case_id"):
         index_node = make_case_elem('index')
         parent_index = make_case_elem(reference_id, {'case_type': case_type})
         index_node.append(parent_index)
         self.elem.append(index_node)
 
         self.xform.add_bind(
-            nodeset='{path}case/index/{ref}'.format(path=path, ref=reference_id),
-            calculate=self.xform.resolve_path("case/@case_id"),
+            nodeset='{path}case/index/{ref}'.format(path=case_path, ref=reference_id),
+            calculate=self.xform.resolve_path(ref_path),
         )
 
 class XForm(WrappedNode):
@@ -884,7 +884,7 @@ class XForm(WrappedNode):
 
                 if case_block is not None and subcase.case_type != form.get_case_type():
                     reference_id = subcase.reference_id or 'parent'
-                    subcase_block.add_index_ref(reference_id, form.get_case_type(), path=path)
+                    subcase_block.add_index_ref(reference_id, form.get_case_type(), case_path=path)
 
         case = self.case_node
         case_parent = self.data_node
