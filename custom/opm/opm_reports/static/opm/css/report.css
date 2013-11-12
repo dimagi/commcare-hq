@@ -1,0 +1,30 @@
+#opm-logo {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    height: 160px;
+    max-width: 234px;
+}
+#cc-logo {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+}
+
+#opm-report {
+    height: 200px;
+}
+#opm-report h1 {
+    font-size: 50px;
+    text-align: center;
+    padding-top: 70px;
+}
+
+#opm-report-print {
+    height: 200px;
+    margin: 0px 30px;
+}
+#opm-report-print h1 {
+    text-align: center;
+    margin: 60px;
+}
