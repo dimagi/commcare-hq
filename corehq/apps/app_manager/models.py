@@ -910,16 +910,22 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
     @classmethod
     def wrap(cls, data):
         if 'details' in data:
-            case_short, case_long, ref_short, ref_long = data['details']
-            del data['details']
-            data['case_details'] = {
-                'short': case_short,
-                'long': case_long,
-            }
-            data['ref_details'] = {
-                'short': ref_short,
-                'long': ref_long,
-            }
+            try:
+                case_short, case_long, ref_short, ref_long = data['details']
+            except ValueError:
+                # "need more than 0 values to unpack"
+                pass
+            else:
+                data['case_details'] = {
+                    'short': case_short,
+                    'long': case_long,
+                }
+                data['ref_details'] = {
+                    'short': ref_short,
+                    'long': ref_long,
+                }
+            finally:
+                del data['details']
         return super(Module, cls).wrap(data)
 
     @classmethod
@@ -1371,7 +1377,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     @property
     def commcare_minor_release(self):
         """This is mostly just for views"""
-        return self.build_spec.minor_release()
+        return '%d.%d' % self.build_spec.minor_release()
 
     def get_build_label(self):
         for item in CommCareBuildConfig.fetch().menu:
