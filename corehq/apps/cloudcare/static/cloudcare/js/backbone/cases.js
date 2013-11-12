@@ -292,7 +292,7 @@ cloudCare.CaseDetailsView = Backbone.View.extend(cloudCare.caseViewMixin).extend
             });
         }
         return self;
-    },               
+    }
 });
 
 cloudCare.CaseMainView = Backbone.View.extend({
