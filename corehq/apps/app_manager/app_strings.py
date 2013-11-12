@@ -16,7 +16,8 @@ def _create_custom_app_strings(app, lang):
 
     def trans(d):
         return clean_trans(d, langs)
-    def numfirst(text):
+
+    def maybe_add_index(text):
         if LooseVersion(app.build_spec.version) >= '2.8':
             numeric_nav_on = app.profile.get('properties', {}).get('cc-entry-mode') == 'cc-entry-review'
             if app.profile.get('features', {}).get('sense') == 'true' or numeric_nav_on:
@@ -54,14 +55,14 @@ def _create_custom_app_strings(app, lang):
                     for item in column.enum:
                         yield id_strings.detail_column_enum_variable(module, detail_type, column, item.key), trans(item.value)
 
-        yield id_strings.module_locale(module), numfirst(trans(module.name))
+        yield id_strings.module_locale(module), maybe_add_index(trans(module.name))
         if module.case_list.show:
             yield id_strings.case_list_locale(module), trans(module.case_list.label) or "Case List"
         if module.referral_list.show:
             yield id_strings.referral_list_locale(module), trans(module.referral_list.label)
         for form in module.get_forms():
             form_name = trans(form.name) + ('${0}' if form.show_count else '')
-            yield id_strings.form_locale(form), numfirst(form_name)
+            yield id_strings.form_locale(form), maybe_add_index(form_name)
 
 
 class AppStringsBase(object):
