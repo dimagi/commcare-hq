@@ -624,24 +624,6 @@ class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
 
         return errors
 
-    def set_requires(self, requires):
-        if requires == "none":
-            self.actions.update_referral = DocumentSchema()
-            self.actions.close_case = DocumentSchema()
-            self.actions.close_referral = DocumentSchema()
-            self.actions.case_preload = DocumentSchema()
-            self.actions.referral_preload = DocumentSchema()
-        elif requires == "case":
-            self.actions.open_case = DocumentSchema()
-            self.actions.close_referral= DocumentSchema()
-            self.actions.update_referral = DocumentSchema()
-            self.actions.referral_preload = DocumentSchema()
-        elif requires == "referral":
-            self.actions.open_case = DocumentSchema()
-            self.actions.open_referral = DocumentSchema()
-
-        self.requires = requires
-
     def requires_case(self):
         # all referrals also require cases
         return self.requires in ("case", "referral")
