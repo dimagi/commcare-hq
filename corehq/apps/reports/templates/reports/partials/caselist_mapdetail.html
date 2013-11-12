@@ -1,0 +1,33 @@
+{% comment %}
+this template generates an underscore.js template used by the maps report
+{% endcomment %}
+<style>
+.case-detail .type {
+    color: #666;
+    font-size: 75%;
+    text-transform: uppercase;
+}
+</style>
+<div class="case-detail">
+  <h3>
+    <a target="_blank" href="<%= props.detail_url %>"><%= name %></a>
+    <span class="type">(<%= props.case_type %>)</span>
+  </h3>
+  <hr />
+  <table>
+    <!-- same as default detail -->
+    <% var seenProps = false;
+       _.each(info, function(field) { %>
+    <% if (!seenProps && field.slug.substring(0, 5) == 'prop_') {
+       seenProps = true; %>
+    <tr><td>&nbsp;</td></tr> <!-- separator -->
+    <% } %>
+    <tr class="data data-<%= field.slug %>">
+      <td><%= field.label %></td>
+      <td class="detail_data">
+	<%= field.value %>
+      </td>
+    </tr>
+    <% }); %>
+  </table>
+</div>
