@@ -910,16 +910,22 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
     @classmethod
     def wrap(cls, data):
         if 'details' in data:
-            case_short, case_long, ref_short, ref_long = data['details']
-            del data['details']
-            data['case_details'] = {
-                'short': case_short,
-                'long': case_long,
-            }
-            data['ref_details'] = {
-                'short': ref_short,
-                'long': ref_long,
-            }
+            try:
+                case_short, case_long, ref_short, ref_long = data['details']
+            except ValueError:
+                # "need more than 0 values to unpack"
+                pass
+            else:
+                data['case_details'] = {
+                    'short': case_short,
+                    'long': case_long,
+                }
+                data['ref_details'] = {
+                    'short': ref_short,
+                    'long': ref_long,
+                }
+            finally:
+                del data['details']
         return super(Module, cls).wrap(data)
 
     @classmethod
