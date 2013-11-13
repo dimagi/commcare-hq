@@ -1,3 +1,5 @@
+import re
+
 from collections import namedtuple
 from django.core.urlresolvers import reverse
 from lxml import etree
@@ -11,6 +13,16 @@ from dimagi.utils.web import get_url_base
 
 FIELD_TYPE_INDICATOR = 'indicator'
 FIELD_TYPE_PROPERTY = 'property'
+
+
+def _replace_dot(string, repl):
+    """
+    This is used in form filters to selectively replace dots.
+    The regex allows decimals
+    """
+    pattern = r'(\D|^)\.(\D|$)'
+    repl = '\g<1>%s\g<2>' % repl
+    return re.sub(pattern, repl, string)
 
 
 class OrderedXmlObject(XmlObject):
@@ -625,6 +637,7 @@ class SuiteGenerator(object):
                 )
                 add_case_stuff(module, e, use_filter=False)
                 yield e
+
     @property
     def menus(self):
         for module in self.modules:
@@ -641,9 +654,8 @@ class SuiteGenerator(object):
                     if module.all_forms_require_a_case() and \
                             not module.put_in_root and \
                             getattr(form, 'form_filter', None):
-                        command.relevant = form.form_filter.replace('.',
-                            SESSION_CASE_ID.case()
-                        )
+                        command.relevant = _replace_dot(
+                                form.form_filter, SESSION_CASE_ID.case())
                     yield command
 
                 if module.case_list.show:
