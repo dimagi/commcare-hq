@@ -1,6 +1,6 @@
 USER_INDEX="hqusers_55adf53b5021867f35c6649ad589e493"
 USER_MAPPING={'_all': {'analyzer': 'standard'},
- '_meta': {'comment': ' [yedi made on 11/13/2013',
+ '_meta': {'comment': 'yedi made on 11/13/2013',
            'created': None},
  'date_detection': False,
  'date_formats': ['yyyy-MM-dd',
