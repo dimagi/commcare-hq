@@ -7,7 +7,6 @@ import re
 import json
 from collections import defaultdict
 from xml.dom.minidom import parseString
-from no_exceptions.exceptions import Http400
 
 from diff_match_patch import diff_match_patch
 from django.core.cache import cache
@@ -483,10 +482,8 @@ def get_apps_base_context(request, domain, app):
 def paginate_releases(request, domain, app_id):
     limit = request.GET.get('limit', 10)
     start_build_param = request.GET.get('start_build')
-    if not start_build_param:
-        raise Http400("You must pass in a start_build parameter")
-    start_build = json.loads(start_build_param)
-    if start_build:
+    if start_build_param:
+        start_build = json.loads(start_build_param)
         assert isinstance(start_build, int)
     else:
         start_build = {}
