@@ -288,6 +288,10 @@
         <script src="{% static 'hqwebapp/js/lib/jquery.timeago.js' %}"></script>
 
         <script src="{% static 'hqwebapp/js/lib/keymaster.min.js' %}"></script>
+        <script>
+            var KEY = key.noConflict();  // Make global key function capital to adhere to globals convention
+                                         // and to avoid conflicts in other places where "key" is used as variable name
+        </script>
         {% if request.couch_user.keyboard_shortcuts.enabled %}
             <script src="{% static 'hqwebapp/js/keyboard_navigator.js' %}"></script>
         {% endif %}
@@ -329,7 +333,7 @@
                 {
                     shortcut: "option+k, ctrl+k, command+k",
                     handler: configure_keyboard_shortcuts,
-                    desc: "Open Keyboard Configuration",
+                    desc: "Open Keyboard Configuration"
                 }
             ];
 
@@ -340,7 +344,7 @@
             $(function() {
                 var $lookup = $('#keyboard-shortcuts-lookup');
                 _(KEYBOARD_SHORTCUTS).each(function(s) {
-                    key(s.shortcut, s.handler);
+                    KEY(s.shortcut, s.handler);
                     var $shortcut = $('<li>').append($('<span>').text(s.desc), ': ', $('<code>').text(s.shortcut));
                     $lookup.append($shortcut);
                 });

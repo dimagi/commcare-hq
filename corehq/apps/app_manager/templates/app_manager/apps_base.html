@@ -50,7 +50,7 @@
         var nav_key = {{ request.couch_user.keyboard_shortcuts.main_key|JSON }};
 
         // overrides default behavior and allows for shortcuts in inputs
-        key.filter = function(event) {
+        KEY.filter = function(event) {
             return true;
         };
 

@@ -1,4 +1,4 @@
-/* requires keymaster.js to be included and key() to be in the global namespace */
+/* requires keymaster.js to be included and key() to be aliased as KEY() in the global namespace */
 
 var keyboard_navigator_utils = {
     focus_in_fn: function($ele) {
@@ -16,7 +16,7 @@ var keyboard_navigator_utils = {
 };
 
 var KeyboardNavigator = function() {
-    key.setScope('ready');
+    KEY.setScope('ready');
     var last_mover = '';
     var KeyboardNavigator = function() {
         var self = this;
@@ -53,18 +53,18 @@ var KeyboardNavigator = function() {
 
             $(function() {
                 $(document).keyup(function(event) {
-                    if (key.getScope() === self.ready_scope) {
+                    if (KEY.getScope() === self.ready_scope) {
                         if ( event.which === self.macchrome_keycodes[self.nav_key] ) {
                             self.leave_nav();
                         }
                     }
                 });
 
-                key(self.nav_key, self.ready_scope, self.enter_nav);
-                key(self.nav_key + '+' + self.forward_key, self.ready_scope, self.gen_handle_nav(self.forward_key));
-                key(self.nav_key + '+' + self.back_key, self.ready_scope, self.gen_handle_nav(self.back_key));
-                key(self.nav_key + '+' + self.action_key, self.ready_scope, self.handle_action);
-                key(self.nav_key + '+' + 'space', self.ready_scope, self.handle_action);
+                KEY(self.nav_key, self.ready_scope, self.enter_nav);
+                KEY(self.nav_key + '+' + self.forward_key, self.ready_scope, self.gen_handle_nav(self.forward_key));
+                KEY(self.nav_key + '+' + self.back_key, self.ready_scope, self.gen_handle_nav(self.back_key));
+                KEY(self.nav_key + '+' + self.action_key, self.ready_scope, self.handle_action);
+                KEY(self.nav_key + '+' + 'space', self.ready_scope, self.handle_action);
             });
         };
 
@@ -107,7 +107,7 @@ var KeyboardNavigator = function() {
             console.log('Leaving navigation');
 
             self.handle_focus_out();
-            key.setScope(self.ready_scope);
+            KEY.setScope(self.ready_scope);
             self.navigating = false;
 
             if (self.stop_fn) {
@@ -115,7 +115,7 @@ var KeyboardNavigator = function() {
             }
 
             if (self.prior_scope) {
-                key.setScope(self.prior_scope);
+                KEY.setScope(self.prior_scope);
                 self.prior_scope = false;
             }
         };
@@ -169,8 +169,8 @@ var KeyboardNavigator = function() {
         };
 
         self.activate = function() {
-            self.prior_scope = key.getScope();
-            key.setScope(self.ready_scope);
+            self.prior_scope = KEY.getScope();
+            KEY.setScope(self.ready_scope);
             self.enter_nav();
             self.handle_focus_in();
             return false;
