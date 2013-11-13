@@ -167,8 +167,7 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
                 "filter": filter,
             }
         }
-        if query:
-            q["query"]["filtered"]["query"] = query
+        q["query"]["filtered"]["query"] = query if query else {"match_all": {}}
 
 
     if fields:
