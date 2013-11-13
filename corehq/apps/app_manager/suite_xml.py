@@ -616,9 +616,10 @@ class SuiteGenerator(object):
             actions = form.active_actions()
             if 'open_case' in actions and autoset_owner_id_for_open_case(actions):
                 return True
-            for subcase in actions['subcases']:
-                if autoset_owner_id_for_subcase(subcase):
-                    return True
+            if 'subcases' in actions:
+                for subcase in actions['subcases']:
+                    if autoset_owner_id_for_subcase(subcase):
+                        return True
             return False
 
         def add_case_sharing_assertion(e):
