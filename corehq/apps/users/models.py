@@ -1897,6 +1897,19 @@ class OrgRemovalRecord(DeleteRecord):
         user.add_org_membership(some_args["organization"], **some_args)
         user.save()
 
+class UserCache(object):
+    def __init__(self):
+        self.cache = {}
+
+    def get(self, user_id):
+        if not user_id:
+            return None
+        if user_id in self.cache:
+            return self.cache[user_id]
+        else:
+            user = CouchUser.get_by_user_id(user_id)
+            self.cache[user_id] = user
+            return user
 
 from .signals import *
 from corehq.apps.domain.models import Domain

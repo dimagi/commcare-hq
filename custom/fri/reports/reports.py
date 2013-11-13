@@ -12,7 +12,8 @@ from custom.fri.api import get_message_bank, add_metadata
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.users.models import CouchUser
+from casexml.apps.case.xform import CaseDbCache
+from corehq.apps.users.models import CouchUser, UserCache
 from dimagi.utils.timezones import utils as tz_utils
 from custom.fri.api import get_interactive_participants
 from django.core.urlresolvers import reverse
@@ -117,15 +118,54 @@ class MessageReport(FRIReport, DatespanMixin):
     @property
     def headers(self):
         header = DataTablesHeader(
+            DataTablesColumn(_("Participant ID")),
+            DataTablesColumn(_("Study Arm")),
+            DataTablesColumn(_("Originator")),
+            DataTablesColumn(_("Timestamp")),
             DataTablesColumn(_("Message Text")),
             DataTablesColumn(_("Message ID")),
-            DataTablesColumn(_("Timestamp")),
-            DataTablesColumn(_("Participant ID")),
-            DataTablesColumn(_("Originator")),
             DataTablesColumn(_("Direction")),
         )
-        header.custom_sort = [[2, "desc"]]
+        header.custom_sort = [[1, "asc"],[0, "asc"],[3, "asc"]]
         return header
+
+    def _case_name(self, contact, reverse=False):
+        first_name = contact.get_case_property("first_name") or ""
+        pid = contact.get_case_property("pid") or ""
+        if first_name or pid:
+            if reverse:
+                return "%s %s" % (pid, first_name)
+            else:
+                return "%s %s" % (first_name, pid)
+        else:
+            return "-"
+
+    def _user_name(self, contact):
+        return contact.first_name or contact.raw_username
+
+    def _participant_id(self, contact):
+        if contact and contact.doc_type == "CommCareCase":
+            return self._case_name(contact, True)
+        else:
+            return "-"
+
+    def _originator(self, message, recipient, sender):
+        if message.direction == INCOMING:
+            if recipient:
+                if recipient.doc_type == "CommCareCase":
+                    return self._case_name(recipient)
+                else:
+                    return self._user_name(recipient)
+            else:
+                return "-"
+        else:
+            if sender:
+                if sender.doc_type == "CommCareCase":
+                    return self._case_name(sender)
+                else:
+                    return self._user_name(sender)
+            else:
+                return _("System")
 
     @property
     def rows(self):
@@ -137,61 +177,42 @@ class MessageReport(FRIReport, DatespanMixin):
                               include_docs=True,
                               reduce=False).all()
         result = []
-        username_map = {} # Store the results of username lookups for faster loading
         direction_map = {
             INCOMING: _("Incoming"),
             OUTGOING: _("Outgoing"),
         }
         message_bank_messages = get_message_bank(self.domain, for_comparing=True)
 
+        case_cache = CaseDbCache(domain=self.domain, strip_history=False, deleted_ok=True)
+        user_cache = UserCache()
+
         for message in data:
             # Add metadata from the message bank if it has not been added already
             if (message.direction == OUTGOING) and (not message.fri_message_bank_lookup_completed):
                 add_metadata(message, message_bank_messages)
 
-            # Lookup the message recipient
-            recipient_id = message.couch_recipient
-            if recipient_id in [None, ""]:
-                username = "-"
-            elif recipient_id in username_map:
-                username = username_map.get(recipient_id)
+            if message.couch_recipient_doc_type == "CommCareCase":
+                recipient = case_cache.get(message.couch_recipient)
             else:
-                username = "-"
-                try:
-                    if message.couch_recipient_doc_type == "CommCareCase":
-                        username = CommCareCase.get(recipient_id).get_case_property("pid")
-                    else:
-                        user = CouchUser.get_by_user_id(recipient_id)
-                        username = user.first_name or user.raw_username
-                except Exception:
-                    pass
-                username_map[recipient_id] = username
+                recipient = user_cache.get(message.couch_recipient)
 
-            # Lookup the sender
-            if message.direction == OUTGOING:
-                if message.chat_user_id in [None, ""]:
-                    sender = _("System")
-                else:
-                    sender = "-"
-                    if message.chat_user_id in username_map:
-                        sender = username_map[message.chat_user_id]
-                    else:
-                        try:
-                            user = CouchUser.get_by_user_id(message.chat_user_id)
-                            sender = user.first_name or user.raw_username
-                        except Exception:
-                            pass
-                        username_map[message.chat_user_id] = sender
+            if message.chat_user_id:
+                sender = user_cache.get(message.chat_user_id)
             else:
-                sender = "-"
+                sender = None
+
+            study_arm = None
+            if message.couch_recipient_doc_type == "CommCareCase":
+                study_arm = case_cache.get(message.couch_recipient).get_case_property("study_arm")
 
             timestamp = tz_utils.adjust_datetime_to_timezone(message.date, pytz.utc.zone, self.timezone.zone)
             result.append([
+                self._fmt(self._participant_id(recipient)),
+                self._fmt(study_arm or "-"),
+                self._fmt(self._originator(message, recipient, sender)),
+                self._fmt_timestamp(timestamp),
                 self._fmt(message.text),
                 self._fmt(message.fri_id or "-"),
-                self._fmt_timestamp(timestamp),
-                self._fmt(username),
-                self._fmt(sender if message.direction == OUTGOING else username),
                 self._fmt(direction_map.get(message.direction,"-")),
             ])
         return result
