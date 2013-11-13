@@ -1,6 +1,6 @@
 from datetime import timedelta
 import warnings
-from corehq.fluff.calculators.logic import ANDCalculator, ORCalculator
+from corehq.fluff.calculators.logic import ORCalculator
 import fluff
 from fluff.filters import Filter, ORFilter, ANDFilter
 from fluff.models import SimpleCalculator
@@ -174,30 +174,6 @@ class CustomFilter(Filter):
     def filter(self, item):
         return self._filter(item)
 
-# meh this is a little redundant but convenient
-class FormANDCalculator(ANDCalculator):
-    window = timedelta(days=1)
-
-    def __init__(self, calculators):
-        warnings.warn("FormANDCalculator is deprecated. "
-                      "Use SimpleCalculator in combination with ANDFilter", DeprecationWarning)
-        super(FormANDCalculator, self).__init__(calculators)
-
-    @fluff.date_emitter
-    def total(self, form):
-        yield default_date(form)
-
-class FormORCalculator(ORCalculator):
-    window = timedelta(days=1)
-
-    def __init__(self, calculators):
-        warnings.warn("FormORCalculator is deprecated. "
-                      "Use SimpleCalculator in combination with ORFilter", DeprecationWarning)
-        super(FormORCalculator, self).__init__(calculators)
-
-    @fluff.date_emitter
-    def total(self, form):
-        yield default_date(form)
 
 class FormSUMCalculator(ORCalculator):
     window = timedelta(days=1)
