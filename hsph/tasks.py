@@ -33,19 +33,18 @@ def update_case_properties():
 	past_n_date = (datetime.datetime.now(time_zone) - datetime.timedelta(PAST_N_DAYS)).date()
 	for domain in DOMAINS:
 		case_list = get_cases_in_domain(domain, type=TYPE)
-		cases_to_modify = []
+		case_ids_to_modify = []
 		for case in case_list:
 			if (hasattr(case, "assigned_to") and
 			    hasattr(case, "date_admission") and
 			    case.date_admission < past_n_date and
 			    case.assigned_to in GROUPS_TO_CHECK):
-					case.assigned_to = GROUP_SHOULD_BE
-					cases_to_modify.append(case)
+					case_ids_to_modify.append(case._id)
 		case_blocks = [ElementTree.tostring(CaseBlock(
 			create = False,
-			case_id = c._id,
-			update = {"assigned_to": c.assigned_to},
+			case_id = c,
+			update = {"assigned_to": GROUP_SHOULD_BE},
 			version = V2,
-			).as_xml()) for c in cases_to_modify
+			).as_xml()) for c in case_ids_to_modify
 		]
 		submit_case_blocks(case_blocks, domain)
