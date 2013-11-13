@@ -2,7 +2,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CouchUser
 from django_digest.decorators import *
 from casexml.apps.phone.restore import RestoreConfig
-
+from django.http import HttpResponse
 
 @httpdigest
 def restore(request, domain):
