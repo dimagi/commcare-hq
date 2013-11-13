@@ -39,8 +39,8 @@ var KeyboardNavigator = function() {
             self.ready_scope = options.ready_scope || 'ready';
             self.nav_key = options.nav_key || 'option';
             self.action_key = options.action_key || 'enter';
-            self.forward_key = options.forward_key || 'right';
-            self.back_key = options.back_key || 'left';
+            self.forward_keys = options.forward_keys || ['right'];
+            self.back_keys = options.back_keys || ['left'];
 
             self.regen_list_on_exit = options.regen_list_on_exit === true;
 
@@ -61,8 +61,12 @@ var KeyboardNavigator = function() {
                 });
 
                 KEY(self.nav_key, self.ready_scope, self.enter_nav);
-                KEY(self.nav_key + '+' + self.forward_key, self.ready_scope, self.gen_handle_nav(self.forward_key));
-                KEY(self.nav_key + '+' + self.back_key, self.ready_scope, self.gen_handle_nav(self.back_key));
+
+                var set_up_nav_key_handlers = function(key) {
+                    KEY(self.nav_key + '+' + key, self.ready_scope, self.gen_handle_nav(key));
+                };
+                _.each(self.forward_keys, set_up_nav_key_handlers);
+                _.each(self.back_keys, set_up_nav_key_handlers);
                 KEY(self.nav_key + '+' + self.action_key, self.ready_scope, self.handle_action);
                 KEY(self.nav_key + '+' + 'space', self.ready_scope, self.handle_action);
             });
@@ -120,16 +124,14 @@ var KeyboardNavigator = function() {
             }
         };
 
-        self.gen_handle_nav = function(direction) {
+        self.gen_handle_nav = function(key) {
             return function() {
                 if (!self.navigating) {
                     self.enter_nav();
                 }
                 self.navigating = true;
                 self.handle_focus_out();
-                self.set_index(self.index + (direction === self.forward_key ? 1 : -1));
-                console.log('Just went ' + direction);
-                console.log('index: ' + self.index);
+                self.set_index(self.index + (self.forward_keys.indexOf(key) > -1 ? 1 : -1));
                 self.handle_focus_in();
                 return false;
             }

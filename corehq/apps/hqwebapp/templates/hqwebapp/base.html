@@ -268,11 +268,13 @@
                         </div>
                     </form>
                     <hr />
-                    <div style="margin-bottom: 1em;">
-                        <p>Use <code>{{ request.couch_user.keyboard_shortcuts.main_key }}+up</code> and <code>{{ request.couch_user.keyboard_shortcuts.main_key }}+down</code> to navigate the sidebar and menus.</p>
-                        <p>Use <code>{{ request.couch_user.keyboard_shortcuts.main_key }}+enter</code> or <code>{{ request.couch_user.keyboard_shortcuts.main_key }}+spacebar</code> to perform actions during navigation (e.g. browsing to a new page).</p>
-                    </div>
                     <ul class="unstyled" id="keyboard-shortcuts-lookup"></ul>
+                    <strong>While navigating menus or the sidebar:</strong>
+                    <ul class="unstyled">
+                        <li>Move up: <code>{{ request.couch_user.keyboard_shortcuts.main_key }}+k</code> or <code>{{ request.couch_user.keyboard_shortcuts.main_key }}+up</code></li>
+                        <li>Move down: <code>{{ request.couch_user.keyboard_shortcuts.main_key }}+j</code> or <code>{{ request.couch_user.keyboard_shortcuts.main_key }}+down</code></li>
+                        <li>Do action (e.g. browsing to a page): <code>{{ request.couch_user.keyboard_shortcuts.main_key }}+enter</code> or <code>{{ request.couch_user.keyboard_shortcuts.main_key }}+spacebar</code></li>
+                    </ul>
                 </div>
             </div>
         {% endblock %}
@@ -331,7 +333,7 @@
 
             var KEYBOARD_SHORTCUTS = [
                 {
-                    shortcut: "option+k, ctrl+k, command+k",
+                    shortcut: "option+`, ctrl+`, command+`",
                     handler: configure_keyboard_shortcuts,
                     desc: "Open Keyboard Configuration"
                 }
@@ -365,8 +367,8 @@
                 ready_scope: 'am-ready',
                 nav_key: nav_key,
                 action_key: 'enter',
-                forward_key: 'down',
-                back_key: 'up',
+                forward_keys: ['j', 'down'],
+                back_keys: ['k', 'up'],
                 element_list_generator: gen_apps_menu_elements,
                 focus_in_fn: function($ele) {
                     $("#mainmenu-ApplicationsTab").addClass('open');
@@ -386,8 +388,8 @@
                 ready_scope: 'adm-ready',
                 nav_key: nav_key,
                 action_key: 'enter',
-                forward_key: 'down',
-                back_key: 'up',
+                forward_keys: ['j', 'down'],
+                back_keys: ['k', 'up'],
                 element_list_generator: gen_admin_menu_elements,
                 focus_in_fn: function($ele) {
                     $("#mainmenu-AdminTab").addClass('open');
@@ -407,8 +409,8 @@
                 ready_scope: 'pm-ready',
                 nav_key: nav_key,
                 action_key: 'enter',
-                forward_key: 'down',
-                back_key: 'up',
+                forward_keys: ['j', 'down'],
+                back_keys: ['k', 'up'],
                 element_list_generator: gen_projects_menu_elements,
                 start_fn: function() { $('#nav-projects-menu').addClass('open') },
                 stop_fn: function() { $('#nav-projects-menu').removeClass('open') },
@@ -425,8 +427,8 @@
                 ready_scope: 'um-ready',
                 nav_key: nav_key,
                 action_key: 'enter',
-                forward_key: 'down',
-                back_key: 'up',
+                forward_keys: ['j', 'down'],
+                back_keys: ['k', 'up'],
                 element_list_generator: gen_user_menu_elements,
                 start_fn: function() { $('#nav-user-menu').addClass('open') },
                 stop_fn: function() { $('#nav-user-menu').removeClass('open') },
