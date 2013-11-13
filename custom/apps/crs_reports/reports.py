@@ -3,7 +3,7 @@ from django.utils import html
 from django.core.urlresolvers import reverse, NoReverseMatch
 import pytz
 from django.utils.translation import ugettext as _
-from corehq import CaseListReport
+from corehq.apps.reports.standard.cases.basic import CaseListReport
 
 from corehq.apps.api.es import ReportCaseES
 from corehq.apps.reports.standard import CustomProjectReport

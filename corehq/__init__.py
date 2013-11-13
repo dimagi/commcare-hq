@@ -3,8 +3,6 @@ from corehq.apps.hqadmin.reports import AdminUserReport, AdminAppReport
 from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
 import corehq.apps.receiverwrapper.reports as receiverwrapper
-from corehq.apps.reports.standard.cases.basic import CaseListReport
-from corehq.apps.reports.standard.maps import DemoMapReport, DemoMapReport2, DemoMapCaseList
 import phonelog.reports as phonelog
 from corehq.apps.reports.commtrack import psi_prototype
 from corehq.apps.reports.commtrack import standard as commtrack_reports
@@ -15,6 +13,9 @@ from dimagi.utils.modules import to_function
 from django.utils.translation import ugettext_noop as _
 
 def REPORTS(project):
+    from corehq.apps.reports.standard.cases.basic import CaseListReport
+    from corehq.apps.reports.standard.maps import DemoMapReport, DemoMapReport2, DemoMapCaseList
+
     reports = [
         (_("Monitor Workers"), (
             monitoring.WorkerActivityReport,
