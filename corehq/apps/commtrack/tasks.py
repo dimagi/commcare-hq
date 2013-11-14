@@ -8,18 +8,20 @@ from soil.util import expose_download
 from corehq.apps.importer.util import get_spreadsheet
 from dimagi.utils.excel import WorkbookJSONReader
 
+
 @task
-def import_locations_async(download_id, domain, file_ref_id, update_existing=False):
+def import_locations_async(domain, file_ref_id, update_existing=False):
     task = import_locations_async
 
+    DownloadBase.set_progress(task, 0, 100)
     download_ref = DownloadBase.get(file_ref_id)
     workbook = WorkbookJSONReader(download_ref.get_filename())
     worksheet = workbook.get_worksheet()
 
     results_msg = '\n'.join(import_locations(domain, worksheet, update_existing))
 
-    ref = expose_download(results_msg, 60*60*3)
-    cache.set(download_id, ref)
+    DownloadBase.set_progress(task, 100, 100)
+
 
 @task
 def import_stock_reports_async(download_id, domain, file_ref_id):
