@@ -79,7 +79,7 @@ class PactPatientForm(Form):
                     ret[name] = value
 
 
-        # hack, if any of the names, change remake the name
+        # hack, if any of the names, change remake the name and initials
         name_changed = False
         if 'first_name' in ret.keys():
             name_changed = True
@@ -95,6 +95,7 @@ class PactPatientForm(Form):
 
         if name_changed:
             ret['name'] = '%s %s' % (first_name, last_name)
+            ret['initials'] = '%s%s' % (first_name[0] if len(first_name) > 1 else '', last_name[0] if len(last_name) > 0 else '')
 
         return ret
 
