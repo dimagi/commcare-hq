@@ -616,6 +616,7 @@ class FormDeidExportSchema(FormExportSchema):
         pass
 
 class CaseExportSchema(HQExportSchema):
+    doc_type = 'SavedExportSchema'
 
     @property
     def domain(self):
