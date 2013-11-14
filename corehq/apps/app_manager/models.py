@@ -1870,8 +1870,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @property
     def custom_suite(self):
         try:
-            return self.fetch_attachment('custom_suite.xml')
-        except Exception:
+            return self.lazy_fetch_attachment('custom_suite.xml')
+        except ResourceNotFound:
             return ""
 
     def set_custom_suite(self, value):
