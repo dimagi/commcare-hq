@@ -264,7 +264,7 @@ def populate_updated_fields(config, columns, row):
             # existing case field was chosen
             update_field_name = field_map[key]['case']
 
-        if update_value:
+        if update_value is not None:
             if field_map[key]['type_field'] == 'date':
                 update_value = parse_excel_date(update_value)
             elif field_map[key]['type_field'] == 'integer':
@@ -292,4 +292,4 @@ def is_valid_id(uploaded_id, domain, cache):
         return cache[uploaded_id]
 
     owner = get_wrapped_owner(uploaded_id)
-    return owner and domain in owner.get_domains() and is_user_or_case_sharing_group(owner)
+    return owner and is_user_or_case_sharing_group(owner) and owner.is_member_of(domain)
