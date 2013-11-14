@@ -292,4 +292,4 @@ def is_valid_id(uploaded_id, domain, cache):
         return cache[uploaded_id]
 
     owner = get_wrapped_owner(uploaded_id)
-    return owner and domain in owner.get_domains() and is_user_or_case_sharing_group(owner)
+    return owner and is_user_or_case_sharing_group(owner) and owner.is_member_of(domain)
