@@ -242,11 +242,11 @@ def production():
             'hqdjango4.internal.commcarehq.org',
             'hqdjango5.internal.commcarehq.org',
         ],
-        'django_pillowtop': ['hqdb0.internal.commcarehq.org'],
+        'django_pillowtop': ['hqpillow0.internal.commcarehq.org'],
 
         # for now, we'll have touchforms run on both hqdb0 and hqdjango0
         # will remove hqdjango0 once we verify it works well on hqdb0
-        'formsplayer': ['hqdb0.internal.commcarehq.org'],
+        'formsplayer': ['hqtouch0.internal.commcarehq.org'],
         'lb': [],
         'staticfiles': ['hqproxy0.internal.commcarehq.org', 'hqproxy1.internal.commcarehq.org'],
         # having deploy here makes it so that
@@ -263,7 +263,7 @@ def production():
     # Gets auto-populated by what_os()
     # if you don't know what it is or don't want to specify.
     env.host_os_map = None
-    env.roles = ['deploy']
+    #env.roles = ['deploy']
     env.es_endpoint = 'hqes0.internal.commcarehq.org'''
     env.flower_port = 5555
 
