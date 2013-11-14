@@ -1,0 +1,29 @@
+{% extends "reports/async/tabular.html" %}
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load i18n %}
+
+{% block pretable %}
+<link rel="stylesheet" href="{% static "opm/css/report.css" %}">
+{% if not report.needs_filters %}
+    {% if rendered_as == 'print' %}
+        <div id="opm-report-print">
+            <div>{% now "d M Y" %}</div>
+    {% else %}
+        <div id="opm-report">
+    {% endif %}
+            <img id="cc-logo" class="media-object"
+            src="{% static 'hqstyle/img/commcare-logo-small.png' %}">
+            <h1 class="media-heading">{{ report.report_title }}</h1>
+            <div class="pull-right">
+                <img id="opm-logo" class="media-object pull-right"
+                src="{% static 'opm/img/opm-logo-small.png' %}">
+            </div>
+            <h4 class="media-heading">
+                {% for subtitle in report.report_subtitles %}
+                <br/><small>{{ subtitle }}</small>
+                {% endfor %}
+            </h4>
+        </div>
+{% endif %}
+{% endblock %}
