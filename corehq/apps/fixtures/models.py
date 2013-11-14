@@ -33,12 +33,11 @@ class FixtureDataType(Document):
 
     # support for old fields
     @property
-    def old_fields(self):
-        warnings.warn("old_fields should only be used in to migrate old code")
-        old_fields = []
+    def fields_without_attributes(self):
+        fields_without_attributes = []
         for fixt_field in self.fields:
-            old_fields.append(fixt_field.field_name)
-        return old_fields
+            fields_without_attributes.append(fixt_field.field_name)
+        return fields_without_attributes
 
     @classmethod
     def by_domain(cls, domain):
@@ -137,7 +136,7 @@ class FixtureDataItem(Document):
         return super(FixtureDataItem, cls).wrap(obj)
 
     @property
-    def old_fields(self):
+    def fields_without_attributes(self):
         fields = {}
         for field in self.fields:
             # if the field has properties, a unique field_val can't be generated for FixtureItem
@@ -329,7 +328,7 @@ class FixtureDataItem(Document):
             result = fixtures['index_val']['result_field']
         """
         fixtures = cls.get_item_list(domain, tag)
-        return dict((f.old_fields[index_field], f.old_fields) for f in fixtures)
+        return dict((f.fields_without_attributes[index_field], f.fields_without_attributes) for f in fixtures)
 
     def delete_ownerships(self, transaction):
         ownerships = FixtureOwnership.by_item_id(self.get_id, self.domain)
