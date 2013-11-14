@@ -1073,9 +1073,6 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
             data_paths_dict[path.split('/')[-1]] = path
         form.data_paths = data_paths_dict
 
-    if should_edit("requires"):
-        requires = req.POST['requires']
-        form.set_requires(requires)
     if should_edit("name"):
         name = req.POST['name']
         form.name[lang] = name
