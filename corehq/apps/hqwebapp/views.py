@@ -15,7 +15,7 @@ from django.contrib.auth.views import login as django_login, redirect_to_login
 from django.contrib.auth.views import logout as django_logout
 from django.contrib.sites.models import Site
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
-    HttpResponseServerError, HttpResponseNotFound
+    HttpResponseServerError, HttpResponseNotFound, HttpResponseBadRequest
 from django.shortcuts import redirect, render
 from django.views.generic import TemplateView
 from couchdbkit import ResourceNotFound
@@ -763,6 +763,8 @@ class CRUDPaginatedViewMixin(object):
 def quick_find(request):
     query = request.GET.get('q')
     redirect = request.GET.get('redirect') != 'false'
+    if not query:
+        return HttpResponseBadRequest('GET param "q" must be provided')
 
     def deal_with_couch_doc(doc):
         domain = doc.get('domain') or doc.get('domains', [None])[0]
