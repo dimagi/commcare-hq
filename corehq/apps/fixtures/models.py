@@ -1,6 +1,8 @@
+import warnings 
+
 from xml.etree import ElementTree
 from corehq.apps.users.models import CommCareUser
-from couchdbkit.ext.django.schema import Document, DictProperty, StringProperty, StringListProperty, IntegerProperty, BooleanProperty
+from couchdbkit.ext.django.schema import Document, DocumentSchema, DictProperty, StringProperty, StringListProperty, SchemaListProperty, IntegerProperty, BooleanProperty
 from corehq.apps.groups.models import Group
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.couch.database import get_db
@@ -8,12 +10,35 @@ from dimagi.utils.couch.database import get_db
 class FixtureTypeCheckError(Exception):
     pass
 
+class FixtureVersionError(Exception):
+    pass
+
+class FixtureTypeField(DocumentSchema):
+    field_name = StringProperty()
+    properties = StringListProperty()
+
 class FixtureDataType(Document):
     domain = StringProperty()
     is_global = BooleanProperty(default=False)
     tag = StringProperty()
     name = StringProperty()
-    fields = StringListProperty()
+    fields = SchemaListProperty(FixtureTypeField)
+
+    @classmethod
+    def wrap(cls, obj):
+        if obj["fields"] and isinstance(obj['fields'][0], str):
+            # print "old fields, do something here"
+            obj['fields'] = [{'field_name': f, 'properties': []} for f in obj['fields']]
+        return super(FixtureDataType, cls).wrap(obj)
+
+    # support for old fields
+    @property
+    def old_fields(self):
+        warnings.warn("old_fields should only be used in to migrate old code")
+        old_fields = []
+        for fixt_field in self.fields:
+            old_fields.append(fixt_field.field_name)
+        return old_fields
 
     @classmethod
     def by_domain(cls, domain):
@@ -31,11 +56,96 @@ class FixtureDataType(Document):
         transaction.delete_all(FixtureOwnership.for_all_item_ids(item_ids, self.domain))
         transaction.delete(self)
 
+
+class FixtureItemField(DocumentSchema):
+    """
+        "field_value": "Delhi_IN_HIN",
+        "properties": {"lang": "hin"} 
+    """
+    field_value = StringProperty()
+    properties = DictProperty()
+
+FieldWithAttributes = SchemaListProperty(FixtureItemField)
+
+
+class FieldList(DocumentSchema):
+    """
+        List of fields for different combinations of properties
+    """
+    field_list = SchemaListProperty(FixtureItemField)
+
 class FixtureDataItem(Document):
+    """
+    Previously following        
+        domain = StringProperty()
+        data_type_id = StringProperty()
+        fields = DictProperty()
+        sort_key = IntegerProperty()
+
+    Example old Item:
+        domain = "hq-domain"
+        data_type_id = <id of state FixtureDataType>
+        fields = {
+            "country": "India",
+            "state_name": "Delhi",
+            "state_id": "DEL"
+        }
+
+    Example new Item with attributes:
+        domain = "hq-domain"
+        data_type_id = <id of state FixtureDataType>
+        fields = {
+            "country": {"field_list": [
+                {"field_value": "India", "properties": {}},
+            ]},
+            "state_name": {"field_list": [
+                {"field_value": "Delhi_IN_ENG", "properties": {"lang": "eng"}},
+                {"field_value": "Delhi_IN_HIN", "properties": {"lang": "hin"}},                
+            ]},
+            "state_id": {"field_list": [
+                {"field_value": "DEL", "properties": {}}
+            ]}
+        }
+    If one of field's 'properties' is an empty 'dict', the field has no attributes
+    """
     domain = StringProperty()
     data_type_id = StringProperty()
-    fields = DictProperty()
+    fields = DictProperty(FieldList)
     sort_key = IntegerProperty()
+
+    @classmethod
+    def wrap(cls, obj):
+        if not obj["fields"]:
+            return super(FixtureDataItem, cls).wrap(obj)
+        
+        is_of_new_type = False
+        fields_dict = {}        
+        for field in obj['fields']:
+            if type(obj['fields'][field]) != str:
+                is_of_new_type = True
+                break
+            fields_dict[field] = {
+                "field_list": [
+                    {
+                        'field_value': obj['fields'][field],
+                        'properties': {}
+                    }
+                ]
+            }
+        if not is_of_new_type:
+            obj['fields'] = fields_dict
+        return super(FixtureDataItem, cls).wrap(obj)
+
+    @property
+    def old_fields(self):
+        fields = {}
+        for field in self.fields:
+            # if the field has properties, a unique field_val can't be generated for FixtureItem
+            if len(self.fields[field].field_list) > 1:
+                raise FixtureVersionError("This method is not supported for fields with properties."
+                                          " field '%s' has properties" % field)
+            fields[field] = self.fields[field].field_list[0].field_value
+        return fields
 
     @property
     def data_type(self):
@@ -73,18 +183,25 @@ class FixtureDataItem(Document):
     def type_check(self):
         fields = set(self.fields.keys())
         for field in self.data_type.fields:
-            if field in fields:
+            if field.field_name in fields:
                 fields.remove(field)
             else:
-                raise FixtureTypeCheckError("field %s not in fixture data %s" % (field, self.get_id))
+                raise FixtureTypeCheckError("field %s not in fixture data %s" % (field.field_name, self.get_id))
         if fields:
             raise FixtureTypeCheckError("fields %s from fixture data %s not in fixture data type" % (', '.join(fields), self.get_id))
 
     def to_xml(self):
         xData = ElementTree.Element(self.data_type.tag)
         for field in self.data_type.fields:
-            xField = ElementTree.SubElement(xData, field)
-            xField.text = unicode(self.fields[field] or "") if self.fields.has_key(field) else ""
+            if not self.fields.has_key(field.field_name):
+                xField = ElementTree.SubElement(xData, field.field_name)
+                xField.text = ""
+                continue
+            for field_with_attr in self.fields[field.field_name].field_list:
+                xField = ElementTree.SubElement(xData, field.field_name)
+                xField.text = field_with_attr.field_value
+                for attribute in field_with_attr.properties:
+                    xField.attrib[attribute] = field_with_attr.properties[attribute]
         return xData
 
     def get_groups(self, wrap=True):
@@ -212,7 +329,7 @@ class FixtureDataItem(Document):
             result = fixtures['index_val']['result_field']
         """
         fixtures = cls.get_item_list(domain, tag)
-        return dict((f.fields[index_field], f.fields) for f in fixtures)
+        return dict((f.old_fields[index_field], f.old_fields) for f in fixtures)
 
     def delete_ownerships(self, transaction):
         ownerships = FixtureOwnership.by_item_id(self.get_id, self.domain)
