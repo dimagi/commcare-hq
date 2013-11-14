@@ -3,6 +3,7 @@ from corehq.apps.locations.models import Location
 from corehq.apps.locations.forms import LocationForm
 from corehq.apps.locations.util import defined_location_types, allowed_child_types
 import itertools
+from soil import DownloadBase
 
 class LocationCache(object):
     """
@@ -36,7 +37,8 @@ class LocationCache(object):
             if key in self._existing_by_type:
                 self._existing_by_type[key][location.name] = location
 
-def import_locations(domain, worksheet, update_existing=False):
+
+def import_locations(domain, worksheet, update_existing=False, task=None):
     fields = worksheet.headers
 
     data = list(worksheet)
@@ -55,7 +57,10 @@ def import_locations(domain, worksheet, update_existing=False):
         return
 
     loc_cache = LocationCache(domain)
-    for loc in data:
+    for index, loc in enumerate(data):
+        if task:
+            DownloadBase.set_progress(task, index, len(data))
+
         for m in import_location(domain, loc, hierarchy_fields, property_fields, update_existing, loc_cache):
             yield m
 

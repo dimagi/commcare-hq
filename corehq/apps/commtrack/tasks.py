@@ -4,8 +4,6 @@ from soil import DownloadBase
 from corehq.apps.locations.bulk import import_locations
 from corehq.apps.commtrack.bulk import import_stock_reports
 from soil.util import expose_download
-
-from corehq.apps.importer.util import get_spreadsheet
 from dimagi.utils.excel import WorkbookJSONReader
 
 
@@ -18,7 +16,7 @@ def import_locations_async(domain, file_ref_id, update_existing=False):
     workbook = WorkbookJSONReader(download_ref.get_filename())
     worksheet = workbook.get_worksheet()
 
-    results_msg = '\n'.join(import_locations(domain, worksheet, update_existing))
+    results_msg = '\n'.join(import_locations(domain, worksheet, update_existing, task))
 
     DownloadBase.set_progress(task, 100, 100)
 
