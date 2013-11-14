@@ -98,5 +98,16 @@ class LegacyReportView(LegacyMixin, CustomProjectReport):
                 get_individual('strategy'), 'peace'),
             'individual_game': self.context_for(
                 get_individual('game'), 'smiley'),
+            # 'site_weekly': self.report.weekly_totals,
+            # 'individual_weekly': get_individual('weekly_totals'),
+            'site_weekly': [
+                    ('Sept 9', 3),
+                    ('Sept 16', 2),
+                    ('Sept 23', 5),   # current week
+                ],
+            'individual_weekly': [
+                    ('Sept 16', 2),
+                    ('Sept 23', 5),   # current week
+                ],
         }
 

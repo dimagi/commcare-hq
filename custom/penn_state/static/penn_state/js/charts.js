@@ -33,24 +33,17 @@ function pieChart(id, report) {
 }
 
 
-function barChart(id, report) {
-    var days = [];
-    report.days.forEach(function (day) {
-        if (day[1] >= 0){
-            days.push({
-                'label': day[0],
-                'value': day[1],
-            });
-        } else {
-            days.push({
-                'label': 'Off',
-                'value': 0
-            });
-        }
+function barChart(id, weekly) {
+    var weeks = [];
+    weekly.forEach(function (week) {
+        weeks.push({
+            'label': week[0],
+            'value': week[1],
+        });
     });
     chartData = [{
         key: 'something',
-        values: days,
+        values: weeks,
     }];
     console.log(chartData);
     nv.addGraph(function() {
