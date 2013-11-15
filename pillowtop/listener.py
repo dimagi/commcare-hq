@@ -319,6 +319,10 @@ class PythonPillow(BasicPillow):
         else:
             self.process_change(change)
         if self.changes_seen % self.checkpoint_frequency == 0 and do_set_checkpoint:
+            # if using chunking make sure we never allow the checkpoint to get in
+            # front of the chunks
+            if self.use_chunking:
+                self.process_chunk()
             self.set_checkpoint(change)
 
     def run(self):
