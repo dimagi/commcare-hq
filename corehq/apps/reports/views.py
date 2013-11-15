@@ -790,9 +790,14 @@ def _get_form_context(request, domain, instance_id):
 def _get_form_or_404(id):
     # maybe this should be a more general utility a-la-django's get_object_or_404
     try:
-        return XFormInstance.get(id)
+        xform_json = XFormInstance.get_db().get(id)
     except ResourceNotFound:
         raise Http404()
+
+    if xform_json.get('doc_type') not in ('XFormInstance',):
+        raise Http404()
+
+    return XFormInstance.wrap(xform_json)
 
 
 @require_form_view_permission
