@@ -15,16 +15,33 @@
             </div>
         </div>
     </header>
-    <form method="post" action="" enctype="multipart/form-data">
-        <div>
-            <input type="file" name="locs" />
+
+    <form class="form-horizontal form-report"
+          method="post"
+          action=""
+          enctype="multipart/form-data">
+        <div class="control-group">
+            <label class="control-label" for="file">
+                {% trans "Select a file to upload" %}
+            </label>
+            <div class="controls">
+                <input type="file" name="locs" />
+            </div>
         </div>
-        <div>
-            <input id="update" type="checkbox" name="update" />
-            <label for="update">Update existing?</label>
+
+        <div class="control-group">
+            <div class="controls">
+                <label class="checkbox" for="named_columns">
+                    <input id="update" type="checkbox" name="update" />
+                    {% trans "Update existing locations" %}
+                </label>
+            </div>
         </div>
-        <div>
-            <button type="submit">Import locations</button>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                {% trans "Import locations" %}
+            </button>
         </div>
     </form>
 {% endblock %}

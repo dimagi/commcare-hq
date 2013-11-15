@@ -157,13 +157,6 @@ class LocationImportStatusView(BaseLocationView):
     def page_context(self):
         return {}
 
-    @property
-    def parent_pages(self):
-        return [{
-            'title': LocationsListView.page_title,
-            'url': reverse(LocationsListView.urlname, args=[self.domain]),
-        }]
-
     def get(self, request, *args, **kwargs):
         context = {
             'domain': self.domain,
@@ -171,21 +164,15 @@ class LocationImportStatusView(BaseLocationView):
         }
         return render(request, 'locations/manage/import_status.html', context)
 
+
 class LocationImportView(BaseLocationView):
     urlname = 'location_import'
-    page_title = ugettext_noop("Upload Locations from Excel")
+    page_title = ugettext_noop('Upload Locations from Excel')
     template_name = 'locations/manage/import.html'
 
     @property
     def page_context(self):
         return {}
-
-    @property
-    def parent_pages(self):
-        return [{
-            'title': LocationsListView.page_title,
-            'url': reverse(LocationsListView.urlname, args=[self.domain]),
-        }]
 
     def post(self, request, *args, **kwargs):
         upload = request.FILES.get('locs')
