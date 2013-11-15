@@ -21,7 +21,7 @@ class ScheduledReportForm(forms.Form):
         label="Day",
         coerce=int,
         required=False,
-        choices=[(i, i) for i in range(1, 32)])
+        choices=[(i, i) for i in range(0, 32)])
 
     hour = forms.TypedChoiceField(
         label='Time',
