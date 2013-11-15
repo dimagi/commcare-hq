@@ -222,21 +222,9 @@ def location_importer_job_poll(request, domain, download_id, template="locations
 
     context = RequestContext(request)
 
-    if download_data.task.result and 'error' in download_data.task.result:
-        error = download_data.result['error']
-        if error == 'EXPIRED':
-            pass
-            #return _spreadsheet_expired(request, domain)
-        elif error == 'HAS_ERRORS':
-            messages.error(request, _('The session containing the file you '
-                                      'uploaded has expired - please upload '
-                                      'a new one.'))
-            #return HttpResponseRedirect(base.ImportCases.get_url(domain=domain) + "?error=cache")
-
-
     if download_data.task.state == 'SUCCESS':
         is_ready = True
-        context['result'] = download_data.task.result
+        context['result'] = download_data.task.result.get('messages')
 
     context['is_ready'] = is_ready
     context['is_alive'] = alive
