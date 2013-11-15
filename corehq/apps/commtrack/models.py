@@ -902,6 +902,12 @@ class RequisitionCase(CommCareCase):
         return data
 
     @classmethod
+    def get_by_external_id_and_product_id(cls, external_id, product_id):
+        return cls.view('commtrack/requisition_by_external_id_and_product_id',
+                        key=[external_id, product_id],
+                        inlude_docs=True).first()
+
+    @classmethod
     def get_display_config(cls):
         return [
             {

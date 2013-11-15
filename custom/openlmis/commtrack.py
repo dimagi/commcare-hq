@@ -160,7 +160,7 @@ def sync_requisition_from_openlmis(domain, requisition_id, openlmis_endpoint):
     lmis_requisition_details = openlmis_endpoint.get_requisition_details(requisition_id)
     for product in lmis_requisition_details.products:
         pdt = Product.get_by_code(domain, product.code)
-        rec_case = RequisitionCase.get_requsition(lmis_requisition_details.id, pdt._id)
+        rec_case = RequisitionCase.get_by_external_id_and_product_id(lmis_requisition_details.id, pdt._id)
         if rec_case is None:
             rec_case = lmis_requisition_details.to_requisition_case(pdt._id)
             rec_case.save()
