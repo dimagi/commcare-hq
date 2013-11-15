@@ -74,6 +74,21 @@ def to_html(key, val, level=0, datetime_fmt="%b %d, %Y %H:%M %Z",
         else:
             return ""
 
+    def safe_strftime(val, fmt):
+        '''
+        This hack assumes datetime_fmt does not contain directives whose
+        value is dependent on the year, such as week number of the year ('%W').
+        The hack allows strftime to be used to support directives such as '%b'.
+        '''
+        if isinstance(val, datetime.datetime):
+            safe_val = datetime.datetime(1900, val.month, val.day, hour=val.hour,
+                                         minute=val.minute, second=val.second,
+                                         microsecond=val.microsecond, tzinfo=val.tzinfo)
+        else:
+            safe_val = datetime.date(1900, val.month, val.day)
+        return safe_val.strftime(fmt.replace("%Y", str(val.year)))
+
+
     if isinstance(val, types.DictionaryType):
         ret = "".join(
             ["<dl %s>" % ("class='well'" if level == 0 else '')] + 
@@ -96,23 +111,13 @@ def to_html(key, val, level=0, datetime_fmt="%b %d, %Y %H:%M %Z",
 
     elif isinstance(val, datetime.date):
         if isinstance(val, datetime.datetime):
-            '''
-            This hack assumes datetime_fmt does not contain directives whose
-            value is dependent on the year, such as week number of the year ('%W').
-            The hack allows strftime to be used to support directives such as '%b'.
-            '''
             fmt = datetime_fmt
-            safe_val = datetime.datetime(1900, val.month, val.day, hour=val.hour,
-                                         minute=val.minute, second=val.second,
-                                         microsecond=val.microsecond, tzinfo=val.tzinfo)
         else:
             fmt = date_fmt
-            safe_val = datetime.date(1900, val.month, val.day)
-        fmt = fmt.replace("%Y", str(val.year))
 
         iso = val.isoformat()
         ret = mark_safe("<time %s title='%s' datetime='%s'>%s</time>" % (
-            "class='timeago'" if timeago else "", iso, iso, safe_val.strftime(fmt)))
+            "class='timeago'" if timeago else "", iso, iso, safe_strftime(val, fmt)))
     else:
         if val is None:
             val = '---'
