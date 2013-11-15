@@ -11,6 +11,7 @@ class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
         make_option('-u', '--update', action='store_true', help='update existing report config if already exists'),
         make_option('-x', '--execute', action='store_true', help='actually make the change; otherwise just a dry run'),
+        make_option('-a', '--all', action='store_true', help='make report visible to all (otherwise just previewers'),
     )
 
     def handle(self, *args, **options):
@@ -52,9 +53,12 @@ class Command(BaseCommand):
 
         report.report = reportclass
         report.kwargs = config
+        report.previewers_only = not bool(options['all'])
 
         if options['execute']:
             domain.save()
+            self.stdout.write('done; report visible to %s\n' %
+                              ('all' if options['all'] else 'previewers only'))
         else:
             self.stdout.write('dry run only. no changes saves (use -x)\n')
 

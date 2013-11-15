@@ -85,11 +85,17 @@ def make_dynamic_report(report_config, keyprefix):
     # a unique key to distinguish this particular configuration of the generic report
     report_key = keyprefix + [report_config.report, report_config.name]
     slug = hashlib.sha1(':'.join(report_key)).hexdigest()[:12]
-    kwargs = report_config.kwargs
+    kwargs = dict(report_config.kwargs)
     kwargs.update({
             'name': report_config.name,
             'slug': slug,
         })
+    if report_config.previewers_only:
+        # note this is a classmethod that will be injected into the dynamic class below
+        @classmethod
+        def show_in_navigation(cls, domain=None, project=None, user=None):
+            return user and user.is_previewer()
+        kwargs['show_in_navigation'] = show_in_navigation
     metaclass = to_function(report_config.report)
     # dynamically create a report class
     return type('DynamicReport%s' % slug, (metaclass,), kwargs)
