@@ -1,6 +1,11 @@
 Internationalization
 ====================
 
+This page contains the most common techniques needed for managing CommCare HQ
+localization strings. For more comprehensive information, consult the
+`Django Docs translations page <https://docs.djangoproject.com/en/dev/topics/i18n/translation/>`_.
+
+
 Tagging strings in views
 ------------------------
 
@@ -13,7 +18,9 @@ Tagging strings in views
 
 
 Sometimes it isn't always so simple, for example with report or settings
-section names TODO why is this?
+section names. Two methods (`ugettext_noop` and `ugettext_lazy`) are available to mark
+a string for translation but not store the translated string value. Both of these
+solve the problem of 
 
 .. code-block:: python
 
@@ -21,6 +28,31 @@ section names TODO why is this?
         urlname = 'my_account_settings'
         page_title = ugettext_lazy("My Information")
         template_name = 'settings/edit_my_account.html'
+
+Using `ugettext_lazy`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The `ugettext_lazy` method will work in the majority of translation situations. 
+It flags the string for translation but does not translate it until it is
+rendered for display. If the string needs to be immediately used or
+manipulated by other methods, this might not work.
+
+When using the value immediately, there is no reason to do lazy translation.
+
+.. code-block:: python
+
+    return HttpResponse(ugettext("An error was encountered."))
+
+
+When using methods to manipulate a string, lazy translated strings will not
+work properly.
+
+.. code-block:: python
+
+    group_name = ugettext("mobile workers")
+    return group_name.upper()
+
+
 
 
 It is easy to forget to translate form field names, as Django normally builds
