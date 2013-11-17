@@ -1,0 +1,40 @@
+{% load i18n %}
+{% if is_ready %}
+    <div id="ready_{{ download_id }}">
+        <legend>{% trans "Import complete." %}</legend>
+        <script type="text/javascript">
+            $("#export-download-status .loading-indicator").addClass('hide');
+        </script>
+
+        <div class="alert alert-success">
+            <h3>{% trans "We had some problems creating your locations:" %}</h3>
+            {% for r in result %}
+            <p>{{ r }}</p>
+            {% endfor %}
+        </div>
+    </div>
+{% else %}
+    <legend>
+        {% trans "Importing your data. This may take some time..." %}
+    </legend>
+    {% if not is_alive %}
+        <p class="alert alert-error">
+        {% blocktrans %}
+            Task processor not detected.
+            There may be something wrong with your system.
+            If the download takes longer than normal to complete
+            please contact support for help.
+        {% endblocktrans %}
+        </p>
+    {% endif %}
+    {% if progress.percent %}
+        <div class="progress progress-striped active">
+            <div class="bar" style="width: {{ progress.percent }}%;"></div>
+        </div>
+    {% endif %}
+    {% if progress.total %}
+        <p class="help-inline">
+            {% trans "Imported" %} {{ progress.percent }}%
+        </p>
+    {% endif %}
+{% endif %}
