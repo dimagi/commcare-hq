@@ -24,6 +24,7 @@ Welcome to CommCareHQ's documentation!
    management_commands
    commtrack
    cloudcare
+   translations
 
 Tips for documenting
 --------------------
