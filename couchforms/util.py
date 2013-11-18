@@ -242,9 +242,9 @@ class SubmissionPost(object):
             return self.get_success_response(doc)
         except SubmissionError as e:
             logging.exception(
-                "Problem receiving submission to %s. %s" % (
+                u"Problem receiving submission to %s. %s" % (
                     self.request.path,
-                    str(e),
+                    unicode(e),
                 )
             )
             return self.get_error_response(e.error_log)
