@@ -68,10 +68,10 @@ class PSISQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin):
         return FixtureDataItem.by_field_value(self.domain, village_fdt, 'id', float(id)).one()
 
     def get_village_name(self, village_id):
-        return self.get_village(village_id).fields.get("name", id)
+        return self.get_village(village_id).fields_without_attributes.get("name", id)
 
     def get_village_class(self, village_id):
-        return self.get_village(village_id).fields.get("village_class", "No data")
+        return self.get_village(village_id).fields_without_attributes.get("village_class", "No data")
     
     def get_village_fdt(self, domain):
         return FixtureDataType.by_domain_tag(domain, 'village').one()
