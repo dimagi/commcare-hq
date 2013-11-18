@@ -349,7 +349,7 @@ class CareReport(SqlTabularReport,
         Get the name of province/cbo/user (depending on what is selected)
         """
         if not self.selected_province():
-            return FixtureDataItem.get(user).fields['name']
+            return FixtureDataItem.get(user).fields_without_attributes['name']
         elif not self.selected_cbo():
             return Group.get(user).name
         else:

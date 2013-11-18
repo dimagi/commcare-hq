@@ -255,7 +255,7 @@ class McSqlData(SqlData):
                 }.get(tag) or tag
 
             if self.fixture_type and self.fixture_item:
-                return user.user_data.get(_tag_to_user_data(self.fixture_type.tag), None) == self.fixture_item.fields.get('name')
+                return user.user_data.get(_tag_to_user_data(self.fixture_type.tag), None) == self.fixture_item.fields_without_attributes.get('name')
             else:
                 return True
 
