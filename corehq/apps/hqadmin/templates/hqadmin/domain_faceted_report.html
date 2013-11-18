@@ -77,11 +77,6 @@
 {% endblock %}
 {% block main_column %}{{ block.super }}
     <hr />
-    <h4># of users who have submitted a form {% if matching_filters %}(across domains matching filters){% else %}(across all domains){% endif %}: {{ total_distinct_users }}</h4>
-    <label class="label label-warning">Notice</label>
-    <span>This indicator currently includes <strong><em>CommCareCases</em></strong> that have submitted a form via SMS/CommConnect</span>
-    <hr />
-
     <form id="all-charts-filter" style="margin: 0;" class="form-inline">
         <span>
             <h4 style="display: inline-block;">{% trans "Filters for All Charts: " %}</h4>
