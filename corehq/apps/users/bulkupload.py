@@ -6,6 +6,8 @@ from corehq.apps.groups.models import Group
 from corehq.apps.users.forms import CommCareAccountForm
 from corehq.apps.users.util import normalize_username, raw_username
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.domain.models import Domain
+from corehq.apps.locations.models import Location
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.excel import flatten_json, json_to_headers, \
     alphanumeric_sort_key
@@ -273,6 +275,22 @@ class GroupNameError(Exception):
         )
 
 
+def get_location_rows(domain):
+    users = CommCareUser.by_domain(domain)
+
+    mappings = []
+    for user in users:
+        if hasattr(user, 'commtrack_location'):
+            location = Location.get(user.commtrack_location)
+            mappings.append([
+                user.username,
+                location.site_code,
+                location.name
+            ])
+
+    return mappings
+
+
 def dump_users_and_groups(response, domain):
     file = StringIO()
     writer = Excel2007ExportWriter()
@@ -342,11 +360,19 @@ def dump_users_and_groups(response, domain):
         {'data': dict([(key, None) for key in group_data_keys])}
     ))
 
+    headers = [
+        ('users', [user_headers]),
+        ('groups', [group_headers]),
+    ]
+
+    commtrack_enabled = Domain.get_by_name(domain).commtrack_enabled
+    if commtrack_enabled:
+        headers.append(
+            ('locations', [['username', 'sms code', 'location name (optional)']])
+        )
+
     writer.open(
-        header_table=[
-            ('users', [user_headers]),
-            ('groups', [group_headers]),
-        ],
+        header_table=headers,
         file=file,
     )
 
@@ -360,10 +386,18 @@ def dump_users_and_groups(response, domain):
             row = dict(flatten_json(group_dict))
             yield [row.get(header) or '' for header in group_headers]
 
-    writer.write([
+    rows = [
         ('users', get_user_rows()),
         ('groups', get_group_rows()),
-    ])
+    ]
+
+    if commtrack_enabled:
+        rows.append(
+            ('locations', get_location_rows(domain))
+        )
+
+
+    writer.write(rows)
 
     writer.close()
     response.write(file.getvalue())
