@@ -1,7 +1,6 @@
 from django.utils.unittest.case import TestCase
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.util import TestFileMixin
-
 from lxml import etree
 import commcare_translations
 

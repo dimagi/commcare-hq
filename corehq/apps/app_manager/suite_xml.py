@@ -1,5 +1,3 @@
-import re
-
 from collections import namedtuple
 from django.core.urlresolvers import reverse
 from lxml import etree
