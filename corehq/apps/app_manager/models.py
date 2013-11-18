@@ -663,8 +663,11 @@ class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
 
         return errors
 
-    def get_case_updates(self):
-        return self.actions.update_case.update.keys()
+    def get_case_updates(self, case_type):
+        if self.get_module().case_type == case_type:
+            return self.actions.update_case.update.keys()
+
+        return []
 
     @memoized
     def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
