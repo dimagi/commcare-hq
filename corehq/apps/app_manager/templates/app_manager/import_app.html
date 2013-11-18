@@ -5,6 +5,7 @@
 
 {% block js-inline %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/lib/compression.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
     <script>
         $(function () {
             $(".historyBack").click(function () {
@@ -13,16 +14,19 @@
             });
         });
 
-        function MyViewModel(){
+        function CompressionViewModel(){
             var self = this;
-            self.compressed_app_data = ko.observable("");
+            self.name = ko.observable("");
+            self.source = ko.observable("");
             self.compress_app = function(formElement) {
-                self.compressed_app_data(LZW.compress(formElement['source'].value));
-                formElement['source'].value = '';
-                return true;
+                $.postGo("{% url "corehq.apps.app_manager.views.import_app" domain %}",
+                         {name : self.name(),
+                          compressed: LZW.compress(self.source())}
+                        );
+                return false;
             };
         }
-        ko.applyBindings(new MyViewModel());
+        ko.applyBindings(new CompressionViewModel());
     </script>
 {% endblock %}
 
@@ -41,15 +45,14 @@
 {% endif %}
             <tr>
                 <th>Name:</th>
-                <td><input type="text" name="name"/></td>
+                <td><input type="text" name="name" data-bind="value: name"/></td>
             </tr>
             <tr>
                 <th>Source:</th>
-                <td><textarea name="source">{{ app.export_json }}</textarea></td>
+                <td><textarea name="source" data-bind="value: source">{{ app.export_json }}</textarea></td>
             </tr>
         </table>
         <a href="#" class="historyBack">No, take me back.</a>
         <button class="btn btn-primary" type="submit">{% trans 'Yes, import application' %}</button>
-        <input name="compressed" type="hidden" data-bind="value: compressed_app_data">
     </form>
 {% endblock %}
