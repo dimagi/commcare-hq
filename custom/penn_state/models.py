@@ -22,16 +22,16 @@ class LegacyWeeklyReport(Document):
                 'strategy': [2, 4, 0, 1, 3],
                 'game': [1, 2, 4, 1, 0],
                 'weekly_totals': [
-                    ('Sept 9', 3),
-                    ('Sept 16', 2),
-                    ('Sept 23', 5),   # current week
+                    ['Sept 9', 3],
+                    ['Sept 16', 2],
+                    ['Sept 23', 5],   # current week
                 ],
             },
         },
         'weekly_totals': [
-            ('Sept 9', 11),
-            ('Sept 16', 6),
-            ('Sept 23', 9),   # current week
+            ['Sept 9', 11],
+            ['Sept 16', 6],
+            ['Sept 23', 9],   # current week
         ],
     Where each week is a 5 element list.  0 indicates that
     no strategies/games were recorded, -1 indicates an off
@@ -46,14 +46,9 @@ class LegacyWeeklyReport(Document):
     weekly_totals = ListProperty()
 
     @classmethod
-    def get_all_by_site(cls, site):
-        groups = Group.by_user(user).all()
-        # if len(groups) != 1 or not groups[0].reporting:
-        if len(groups) == 0 or not groups[0].reporting:
-            return
-
-        site = groups[0].name
-
+    def by_site(cls, site, date=None):
+        if isinstance(site, Group):
+            site = site.name
         if date is None:
             # get the most recent saturday (isoweekday==6)
             days = [6, 7, 1, 2, 3, 4, 5]
@@ -79,19 +74,5 @@ class LegacyWeeklyReport(Document):
             return
 
         site = groups[0].name
+        return self.by_site(site, date)
 
-        if date is None:
-            # get the most recent saturday (isoweekday==6)
-            days = [6, 7, 1, 2, 3, 4, 5]
-            today = datetime.date.today()
-            date = today - datetime.timedelta(
-                days=days.index(today.isoweekday())
-            )
-
-        report = cls.view(
-            'penn_state/smiley_weekly_reports',
-            key=[DOMAIN, site, str(date)],
-            reduce=False,
-            include_docs=True,
-        ).first()
-        return report
