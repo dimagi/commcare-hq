@@ -644,7 +644,7 @@ class SuiteGenerator(object):
                             not module.put_in_root and \
                             getattr(form, 'form_filter', None):
                         command.relevant = dot_interpolate(
-                                SESSION_CASE_ID.case(), form.form_filter)
+                                form.form_filter, SESSION_CASE_ID.case())
                     yield command
 
                 if module.case_list.show:

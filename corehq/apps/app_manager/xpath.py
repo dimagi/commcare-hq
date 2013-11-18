@@ -1,10 +1,10 @@
 import re
 
 
-def dot_interpolate(xpath, context):
+def dot_interpolate(string, replacement):
     """
-    Replaces non-decimal dots in `context` with `xpath`
+    Replaces non-decimal dots in `string` with `replacement`
     """
     pattern = r'(\D|^)\.(\D|$)'
-    repl = '\g<1>%s\g<2>' % xpath
-    return re.sub(pattern, repl, context)
+    repl = '\g<1>%s\g<2>' % replacement
+    return re.sub(pattern, repl, string)

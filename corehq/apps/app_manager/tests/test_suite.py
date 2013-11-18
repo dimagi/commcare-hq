@@ -82,6 +82,6 @@ class RegexTest(TestCase):
         ]
         for case in cases:
             self.assertEqual(
-                dot_interpolate(replacement, case[0]),
+                dot_interpolate(case[0], replacement),
                 case[1] % replacement
             )
