@@ -562,7 +562,7 @@ class AsyncDrillableField(BaseReportFilter):
     def fdi_to_json(self, fdi):
         return {
             'fixture_type': fdi.data_type_id,
-            'fields': fdi.fields,
+            'fields': fdi.fields_without_attributes,
             'id': fdi.get_id,
             'children': getattr(fdi, '_children', None),
         }
@@ -606,7 +606,7 @@ class AsyncDrillableField(BaseReportFilter):
                 continue
             real_index = len(self.hierarchy) - (i+1)
             lineage.insert(0, FixtureDataItem.by_field_value(self.domain, self.data_types(real_index - 1),
-                h["references"], lineage[0].fields[h["parent_ref"]]).one())
+                h["references"], lineage[0].fields_without_attributes[h["parent_ref"]]).one())
 
         return lineage
 
@@ -626,7 +626,7 @@ class AsyncDrillableField(BaseReportFilter):
                 this_fdi = [f for f in parent['children'] if f['id'] == fdi.get_id][0]
                 next_h = self.hierarchy[i+1]
                 this_fdi['children'] = [self.fdi_to_json(f) for f in FixtureDataItem.by_field_value(self.domain,
-                                        self.data_types(i+1), next_h["parent_ref"], fdi.fields[next_h["references"]])]
+                                        self.data_types(i+1), next_h["parent_ref"], fdi.fields_without_attributes[next_h["references"]])]
                 parent = this_fdi
 
         return {
