@@ -48,11 +48,10 @@ function barChart(id, report) {
             });
         }
     });
-    chartData = [{
+    var chartData = [{
         key: 'something',
         values: days,
     }];
-    console.log(chartData);
     nv.addGraph(function() {
         var chart = nv.models.discreteBarChart()
             .x(function(d) { return d.label })
