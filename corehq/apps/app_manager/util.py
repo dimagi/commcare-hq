@@ -81,7 +81,7 @@ class ParentCasePropertyBuilder(object):
         case_properties = set()
         for m_case_type, form in self.forms_info:
             p_types, c_props = form.get_parent_types_and_contributed_properties(m_case_type, case_type)
-            parent_types.update(parent_types)
+            parent_types.update(p_types)
             case_properties.update(c_props)
         return parent_types, case_properties
 
