@@ -32,8 +32,7 @@ class MobileAuthKeyRecord(Document):
         return self.get_id
 
     @classmethod
-    def current_for_user(cls, domain, user_id, now=None):
-        now = now or datetime.utcnow()
+    def key_for_time(cls, domain, user_id, now):
         now_json = json_format_datetime(now)
         key_record = cls.view('mobile_auth/key_records',
             startkey=[domain, user_id, now_json],
@@ -42,7 +41,4 @@ class MobileAuthKeyRecord(Document):
             limit=1,
             include_docs=True,
         ).first()
-        if key_record and now < key_record.expires:
-            return key_record
-        else:
-            return None
+        return key_record
