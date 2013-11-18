@@ -103,8 +103,7 @@ class ParentCasePropertyBuilder(object):
         case_properties = set(self.defaults)
 
         for m_case_type, form in self.forms_info:
-            if m_case_type == case_type:
-                case_properties.update(form.get_case_updates())
+            case_properties.update(form.get_case_updates(case_type))
 
         parent_types, contributed_properties = \
             self.get_parent_types_and_contributed_properties(case_type)
