@@ -560,7 +560,7 @@ def release_build(request, domain, app_id, saved_app_id):
         return HttpResponseRedirect(reverse('release_manager', args=[domain, app_id]))
 
 
-def get_module_view_context(app, module):
+def get_module_view_context(app, module, langs):
     case_type = module.case_type
     builder = ParentCasePropertyBuilder(
         app,
@@ -583,7 +583,7 @@ def get_module_view_context(app, module):
                              if module.case_type in parent_types]
         return [{
                     'unique_id': module.unique_id,
-                    'name': module.name,
+                    'name': next(module.name[lang] for lang in langs if lang in module.name),
                     'is_parent': module.unique_id in parent_module_ids,
                 } for module in app.modules if module.case_type != case_type]
 
@@ -667,7 +667,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         })
         context.update(get_form_view_context(req, form, context['langs'], is_user_registration))
     elif module:
-        context.update(get_module_view_context(app, module))
+        context.update(get_module_view_context(app, module, context['langs']))
         template = "app_manager/module_view.html"
     else:
         template = "app_manager/app_view.html"

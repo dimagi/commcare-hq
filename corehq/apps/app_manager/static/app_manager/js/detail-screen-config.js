@@ -103,19 +103,13 @@ function ParentSelect(init) {
     self.parentModules = ko.observable(init.parentModules);
     self.lang = ko.observable(init.lang);
     self.langs = ko.observable(init.langs);
-    function getTranslation(name, langs) {
-        var firstLang = _(langs).find(function (lang) {
-            return name[lang];
-        });
-        return name[firstLang];
-    }
     self.moduleOptions = ko.computed(function () {
         return _(self.parentModules()).map(function (module) {
             var STAR = '\u2605', SPACE = '\u3000';
             var marker = (module.is_parent ? STAR : SPACE);
             return {
                 value: module.unique_id,
-                label: marker + ' ' + getTranslation(module.name, [self.lang()].concat(self.langs()))
+                label: marker + ' ' + module.name
             };
         });
     });
@@ -708,9 +702,7 @@ var DetailScreenConfig = (function () {
             this.parentSelect = new ParentSelect({
                 active: spec.parentSelect.active,
                 moduleId: spec.parentSelect.module_id,
-                parentModules: spec.parentModules,
-                lang: this.lang,
-                langs: this.langs
+                parentModules: spec.parentModules
             });
             this.edit = spec.edit;
             this.saveUrl = spec.saveUrl;
