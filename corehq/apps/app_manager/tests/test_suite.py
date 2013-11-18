@@ -1,6 +1,8 @@
 from django.utils.unittest.case import TestCase
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.util import TestFileMixin
+from corehq.apps.app_manager.suite_xml import dot_interpolate
+
 from lxml import etree
 import commcare_translations
 
@@ -67,3 +69,19 @@ class SuiteTest(XmlTest, TestFileMixin):
 
     def test_callcenter_suite(self):
         self._test_generic_suite('call-center')
+
+
+class RegexTest(TestCase):
+
+    def testRegex(self):
+        replacement = "@case_id stuff"
+        cases = [
+            ('./lmp < 570.5', '%s/lmp < 570.5'),
+            ('stuff ./lmp < 570.', 'stuff %s/lmp < 570.'),
+            ('.53 < hello.', '.53 < hello%s'),
+        ]
+        for case in cases:
+            self.assertEqual(
+                dot_interpolate(replacement, case[0]),
+                case[1] % replacement
+            )
