@@ -18,7 +18,7 @@
             var self = this;
             self.name = ko.observable("");
             self.source = ko.observable("");
-            self.compress_app = function(formElement) {
+            self.save = function(formElement) {
                 $.postGo("{% url "corehq.apps.app_manager.views.import_app" domain %}",
                          {name : self.name(),
                           compressed: LZW.compress(self.source())}
@@ -35,7 +35,7 @@
 {% endblock %}
 
 {% block main_column %}
-    <form action="{% url "corehq.apps.app_manager.views.import_app" domain %}" method="post" data-bind="submit: compress_app">
+    <form action="{% url "corehq.apps.app_manager.views.import_app" domain %}" method="post" data-bind="submit: save">
 {% if app %}
         <p>Import application <strong>{{ app.name }}</strong> from domain <strong>{{ app.domain }}</strong>?</p>
         <table {% if not is_superuser %}class="hide"{% endif %}>
