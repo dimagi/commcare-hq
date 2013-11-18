@@ -10,19 +10,10 @@ from corehq.apps.app_manager.util import split_path, create_temp_sort_column
 from corehq.apps.app_manager.xform import SESSION_CASE_ID
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
+from dimagi.utils.xpath import dot_interpolate
 
 FIELD_TYPE_INDICATOR = 'indicator'
 FIELD_TYPE_PROPERTY = 'property'
-
-
-def _replace_dot(string, repl):
-    """
-    This is used in form filters to selectively replace dots.
-    The regex allows decimals
-    """
-    pattern = r'(\D|^)\.(\D|$)'
-    repl = '\g<1>%s\g<2>' % repl
-    return re.sub(pattern, repl, string)
 
 
 class OrderedXmlObject(XmlObject):
@@ -654,8 +645,8 @@ class SuiteGenerator(object):
                     if module.all_forms_require_a_case() and \
                             not module.put_in_root and \
                             getattr(form, 'form_filter', None):
-                        command.relevant = _replace_dot(
-                                form.form_filter, SESSION_CASE_ID.case())
+                        command.relevant = dot_interpolate(
+                                SESSION_CASE_ID.case(), form.form_filter)
                     yield command
 
                 if module.case_list.show:
