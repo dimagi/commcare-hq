@@ -37,8 +37,8 @@ class HSPHFieldManagementReport(GenericTabularReport, CustomProjectReport, Proje
         data_items = list(FixtureDataItem.by_user(user, domain=self.domain))
         for item in data_items:
             if item.data_type_id == self.dctl_fixture:
-                dctl_id = item.fields.get('id')
-                dctl_name = item.fields.get('name', dctl_name)
+                dctl_id = item.fields_without_attributes.get('id')
+                dctl_name = item.fields_without_attributes.get('name', dctl_name)
         return dctl_id, dctl_name
 
 class DCOActivityReport(HSPHFieldManagementReport):
