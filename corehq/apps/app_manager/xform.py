@@ -207,20 +207,19 @@ class CaseBlock(object):
             calculate=self.xform.resolve_path(case_name),
         )
 
-        if autoset_owner_id:
-            if has_case_sharing:
-                self.xform.add_instance('groups', src='jr://fixture/user-groups')
-                add_setvalue_or_bind(
-                    ref="%scase/create/owner_id" % path,
-                    value="instance('groups')/groups/group/@id"
-                )
-            else:
-                self.xform.add_bind(
-                    nodeset="%scase/create/owner_id" % path,
-                    calculate=self.xform.resolve_path("meta/userID"),
-                )
-        else:
+        if not autoset_owner_id:
             owner_id_node.text = '-'
+        elif has_case_sharing:
+            self.xform.add_instance('groups', src='jr://fixture/user-groups')
+            add_setvalue_or_bind(
+                ref="%scase/create/owner_id" % path,
+                value="instance('groups')/groups/group/@id"
+            )
+        else:
+            self.xform.add_bind(
+                nodeset="%scase/create/owner_id" % path,
+                calculate=self.xform.resolve_path("meta/userID"),
+            )
 
         if not case_name:
             raise CaseError("Please set 'Name according to question'. "
