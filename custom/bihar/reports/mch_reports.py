@@ -1,7 +1,7 @@
 from django.utils.translation import ugettext as _
+from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.api.es import ReportCaseES
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.standard.inspect import CaseListReport
 
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup

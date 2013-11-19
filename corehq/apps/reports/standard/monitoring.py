@@ -32,8 +32,8 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
     exportable = True
 
     def get_user_link(self, user):
+        from corehq.apps.reports.standard.cases.basic import CaseListReport
         user_link_template = '<a href="%(link)s?individual=%(user_id)s">%(username)s</a>'
-        from corehq.apps.reports.standard.inspect import CaseListReport
         user_link = user_link_template % {"link": "%s%s" % (get_url_base(),
                                                             CaseListReport.get_url(domain=self.domain)),
                                           "user_id": user.get('user_id'),

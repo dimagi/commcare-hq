@@ -13,6 +13,9 @@ from dimagi.utils.modules import to_function
 from django.utils.translation import ugettext_noop as _
 
 def REPORTS(project):
+    from corehq.apps.reports.standard.cases.basic import CaseListReport
+    from corehq.apps.reports.standard.maps import DemoMapReport, DemoMapReport2, DemoMapCaseList
+
     reports = [
         (_("Monitor Workers"), (
             monitoring.WorkerActivityReport,
@@ -24,8 +27,7 @@ def REPORTS(project):
             monitoring.WorkerActivityTimes,
         )),
         (_("Inspect Data"), (
-            inspect.SubmitHistory,
-            inspect.CaseListReport,
+            inspect.SubmitHistory, CaseListReport,
         )),
         (_("Manage Deployments"), (
             deployments.ApplicationStatusReport,
@@ -34,9 +36,7 @@ def REPORTS(project):
             phonelog.DeviceLogDetailsReport
         )),
         (_("Demos for Previewers"), (
-            inspect.DemoMapReport,
-            inspect.DemoMapReport2,
-            inspect.DemoMapCaseList,
+            DemoMapReport, DemoMapReport2, DemoMapCaseList,
         )),
     ]
     

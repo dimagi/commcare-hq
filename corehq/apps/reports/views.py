@@ -15,6 +15,7 @@ from corehq.apps.reports.export import (
     CustomBulkExportHelper,
     save_metadata_export_to_tempfile)
 from corehq.apps.reports.models import ReportConfig, ReportNotification
+from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.tasks import create_metadata_export
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
@@ -649,7 +650,7 @@ def case_details(request, domain, case_id):
     
     if case is None or case.doc_type != "CommCareCase" or case.domain != domain:
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake please report an issue.")
-        return HttpResponseRedirect(inspect.CaseListReport.get_url(domain=domain))
+        return HttpResponseRedirect(CaseListReport.get_url(domain=domain))
 
     try:
         owner_name = CommCareUser.get_by_user_id(case.owner_id, domain).raw_username
@@ -671,10 +672,10 @@ def case_details(request, domain, case_id):
         "case": case,
         "username": username, 
         "owner_name": owner_name,
-        "slug": inspect.CaseListReport.slug,
+        "slug": CaseListReport.slug,
         "report": dict(
             name=case_inline_display(case),
-            slug=inspect.CaseListReport.slug,
+            slug=CaseListReport.slug,
             is_async=False,
         ),
         "layout_flush_content": True,
