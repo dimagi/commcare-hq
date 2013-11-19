@@ -50,13 +50,19 @@ class AsyncDrillableFilter(BaseReportFilter):
     def generate_lineage(self, leaf_type, leaf_item_id):
         leaf_fdi = FixtureDataItem.get(leaf_item_id)
 
+        index = None
         for i, h in enumerate(self.hierarchy[::-1]):
             if h["type"] == leaf_type:
                 index = i
 
+        if index is None:
+            raise Exception(
+                "Could not generate lineage for AsyncDrillableField due to a nonexistent leaf_type (%s)" % leaf_type)
+
         lineage = [leaf_fdi]
         for i, h in enumerate(self.full_hierarchy[::-1]):
-            if i < index or i >= len(self.hierarchy)-1: continue
+            if i < index or i >= len(self.hierarchy)-1:
+                continue
             real_index = len(self.hierarchy) - (i+1)
             lineage.insert(0, FixtureDataItem.by_field_value(self.domain, self.data_types(real_index - 1),
                 h["references"], lineage[0].fields[h["parent_ref"]]).one())
