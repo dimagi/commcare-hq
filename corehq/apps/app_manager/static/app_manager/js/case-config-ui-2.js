@@ -365,6 +365,7 @@ var CaseConfig = (function () {
                 },
                 write: function (value) {
                     self.close_condition.type(value ? 'always' : 'never');
+                    self.caseConfig.saveButton.fire('change');
                 }
             });
 
