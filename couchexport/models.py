@@ -87,6 +87,8 @@ class ExportSchema(Document, UnicodeMixIn):
 
     @classmethod
     def wrap(cls, data):
+        if isinstance(data.get('seq'), (int, long)):
+            data['seq'] = unicode(data['seq'])
         ret = super(ExportSchema, cls).wrap(data)
         if not ret.timestamp:
             # these won't work on bigcouch so we want to know if this happens
