@@ -14,6 +14,7 @@ from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, 
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
+from corehq.apps.users.models import CommCareUser
 from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
@@ -826,7 +827,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
     def users_to_iterate(self):
         if '_all' in self.group_ids:
             from corehq.apps.groups.models import Group
-            ret = [util._report_user_dict(u) for u in util.user_list(self.domain)]
+            ret = [util._report_user_dict(u) for u in list(CommCareUser.by_domain(self.domain))]
             for r in ret:
                 r["group_ids"] = Group.by_user(r["user_id"], False)
             return ret
