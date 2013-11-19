@@ -210,6 +210,10 @@ class CommCareCaseResource(JsonResource, DomainSpecificResourceMixin):
         detail_allowed_methods = ['get']
         resource_name = 'case'
 
+
+class XFormInstanceMeta(CustomResourceMeta):
+    serializer = CustomXMLSerializer(formats=['json'])
+
 class XFormInstanceResource(JsonResource, DomainSpecificResourceMixin):
     type = "form"
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
@@ -225,7 +229,7 @@ class XFormInstanceResource(JsonResource, DomainSpecificResourceMixin):
     def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(XFormInstance, kwargs['pk'], kwargs['domain'])
 
-    class Meta(CustomResourceMeta):
+    class Meta(XFormInstanceMeta):
         object_class = XFormInstance        
         list_allowed_methods = []
         detail_allowed_methods = ['get']
