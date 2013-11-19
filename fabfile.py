@@ -609,7 +609,7 @@ def preindex_views():
         ) % env, user=env.sudo_user)
 
 
-@roles('django_app','django_celery', 'staticfiles', 'django_monolith')
+@roles('django_app','django_celery', 'staticfiles', 'django_monolith', 'formsplayer')
 @parallel
 def update_code(preindex=False):
     if preindex:
