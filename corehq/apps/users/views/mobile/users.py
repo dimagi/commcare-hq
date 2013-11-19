@@ -9,7 +9,7 @@ from couchdbkit import ResourceNotFound
 from django.contrib.auth.forms import SetPasswordForm
 from django.utils.safestring import mark_safe
 
-from openpyxl.shared.exc import InvalidFileException
+from openpyxl.shared.exc import InvalidFileException, DataTypeException
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseForbidden, HttpResponseBadRequest, Http404
@@ -565,6 +565,9 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
             messages.error(request,
                            'Your upload was unsuccessful. %s' % e.message)
             return HttpResponseRedirect(redirect)
+        except DataTypeException as e:
+            return HttpResponseBadRequest("Upload encountered a data type error: %s"
+                                          % e.message)
 
         try:
             self.user_specs = self.workbook.get_worksheet(title='users')
