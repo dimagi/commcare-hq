@@ -1,4 +1,4 @@
-from celery.schedules import crontab
+from datetime import timedelta
 from celery.task.base import periodic_task
 from celery.task import task
 from corehq import Domain
@@ -6,7 +6,7 @@ from custom.openlmis.api import OpenLMISEndpoint
 from custom.openlmis.commtrack import bootstrap_domain, sync_requisition_from_openlmis
 import settings
 
-@periodic_task(run_every=crontab(minute=0, hour=1),queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(run_every=timedelta(hours=1),queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def check_requisition_updates():
     projects = Domain.get_all()
     for project in projects:

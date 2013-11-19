@@ -1,4 +1,6 @@
-from custom.openlmis.api import OpenLMISEndpoint
+import json
+import os
+from custom.openlmis.api import OpenLMISEndpoint, RequisitionDetails
 
 
 class MockOpenLMISEndpoint(OpenLMISEndpoint):
@@ -17,3 +19,8 @@ class MockOpenLMISEndpoint(OpenLMISEndpoint):
 
     def confirm_delivery(self, order_id, delivery_date):
         return True
+
+    def get_requisition_details(self, requisition_id):
+        with open(os.path.join(self.datapath, 'sample_requisition_details.json')) as f:
+            requisition = RequisitionDetails.from_json(json.loads(f.read()))
+        return requisition
