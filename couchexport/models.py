@@ -325,9 +325,12 @@ class ExportTable(DocumentSchema):
     def get_items_in_order(self, row):
         row_data = list(row.get_data())
         for column in self.columns:
-            i = self.row_positions_by_index[column.index]
-            val = row_data[i]
-            yield column, val
+            try:
+                i = self.row_positions_by_index[column.index]
+                val = row_data[i]
+                yield column, val
+            except KeyError:
+                yield column, ''
 
     def trim(self, data, doc, apply_transforms, global_transform):
         from couchexport.export import FormattedRow, Constant, transform_error_constant
