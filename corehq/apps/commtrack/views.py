@@ -185,28 +185,6 @@ def bootstrap(request, domain):
         }
     )
 
-@require_superuser
-def location_import(request, domain):
-    if request.method == "POST":
-        upload = request.FILES.get('locs')
-        if not upload:
-            return HttpResponse('no file uploaded')
-        update_existing = bool(request.POST.get('update'))
-
-        # stash this in soil to make it easier to pass to celery
-        file_ref = expose_download(upload.read(),
-                                   expiry=1*60*60)
-        download_id = uuid.uuid4().hex
-        import_locations_async.delay(download_id, domain, file_ref.download_id, update_existing)
-        return _async_in_progress(request, domain, download_id)
-
-    return HttpResponse("""
-<form method="post" action="" enctype="multipart/form-data">
-  <div><input type="file" name="locs" /></div>
-  <div><input id="update" type="checkbox" name="update" /> <label for="update">Update existing?</label></div>
-  <div><button type="submit">Import locations</button></div>
-</form>
-""")
 
 @require_superuser
 def historical_import(request, domain):

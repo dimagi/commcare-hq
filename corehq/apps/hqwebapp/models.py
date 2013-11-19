@@ -305,7 +305,7 @@ class CommTrackSetupTab(UITab):
 
         # circular import
         from corehq.apps.locations.views import (LocationsListView, NewLocationView, EditLocationView,
-                                                 FacilitySyncView)
+                                                 FacilitySyncView, LocationImportView)
         locations_section = [
             {
                 'title': LocationsListView.page_title,
@@ -328,6 +328,10 @@ class CommTrackSetupTab(UITab):
             {
                 'title': FacilitySyncView.page_title,
                 'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
+            },
+            {
+                'title': LocationImportView.page_title,
+                'url': reverse(LocationImportView.urlname, args=[self.domain]),
             },
         ]
         items.append([_("Integration (Advanced)"), advanced_locations_section])

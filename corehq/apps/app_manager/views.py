@@ -35,6 +35,7 @@ from corehq.apps.app_manager.util import save_xform, get_settings_values
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.translations import system_text as st_trans
+from corehq.util.compression import decompress
 from couchexport.export import FormattedRow, export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
@@ -229,7 +230,8 @@ def import_app(req, domain, template="app_manager/import_app.html"):
     if req.method == "POST":
         _clear_app_cache(req, domain)
         name = req.POST.get('name')
-        source = req.POST.get('source')
+        compressed = req.POST.get('compressed')
+        source = decompress([chr(int(x)) if int(x) < 256 else int(x) for x in compressed.split(',')])
         source = json.loads(source)
         assert(source is not None)
         app = import_app_util(source, domain, name=name)

@@ -59,7 +59,8 @@ def sms_in(request):
         if root.tag == 'gviSms':
             date_string = root.find('smsDateTime').text
             phone_number = root.find('cellNumber').text
-            text = unescape(root.find('content').text)
+            content_text = root.find('content').text
+            text = unescape(content_text) if content_text else ''
 
             timestamp = datetime.strptime(date_string, DATE_FORMAT)
             incoming_sms(phone_number, text, GrapevineBackend.get_api_id(), timestamp=timestamp)
@@ -69,7 +70,8 @@ def sms_in(request):
             resp_type = root.find('responseType').text  # receipt, reply or error
 
             if resp_type == 'reply':
-                message_text = unescape(root.find('response').text)
+                response_text = root.find('response').text
+                message_text = unescape(response_text) if response_text else ''
                 timestamp = datetime.strptime(date_string, DATE_FORMAT)
                 incoming_sms(phone_number, message_text, GrapevineBackend.get_api_id(), timestamp=timestamp)
 

@@ -1,0 +1,47 @@
+{% extends "settings/base_template.html" %}
+{% load url from future %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block js %}{{ block.super }}
+    <link rel="stylesheet" href="{% static 'locations/style/manage.css' %}">
+{% endblock %}
+
+{% block main_column %}
+    <header>
+        <div class="row-fluid">
+            <div class="span8">
+                <h2>{% trans "Import Locations from Excel" %}</h2>
+            </div>
+        </div>
+    </header>
+
+    <form class="form-horizontal form-report"
+          method="post"
+          action=""
+          enctype="multipart/form-data">
+        <div class="control-group">
+            <label class="control-label" for="file">
+                {% trans "Select a file to upload" %}
+            </label>
+            <div class="controls">
+                <input type="file" name="locs" />
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="controls">
+                <label class="checkbox" for="named_columns">
+                    <input id="update" type="checkbox" name="update" />
+                    {% trans "Update existing locations" %}
+                </label>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                {% trans "Import locations" %}
+            </button>
+        </div>
+    </form>
+{% endblock %}
