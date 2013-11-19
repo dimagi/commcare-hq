@@ -236,7 +236,7 @@ def production():
         'couch': ['hqdb0.internal.commcarehq.org'],
         'pg': ['hqdb0.internal.commcarehq.org'],
         'rabbitmq': ['hqdb0.internal.commcarehq.org'],
-        'django_celery': ['hqdb0.internal.commcarehq.org'],
+        'django_celery': ['hqcelery0.internal.commcarehq.org'],
         'django_app': [
             'hqdjango3.internal.commcarehq.org',
             'hqdjango4.internal.commcarehq.org',
@@ -246,7 +246,7 @@ def production():
 
         # for now, we'll have touchforms run on both hqdb0 and hqdjango0
         # will remove hqdjango0 once we verify it works well on hqdb0
-        'formsplayer': ['hqdb0.internal.commcarehq.org'],
+        'formsplayer': ['hqtouch0.internal.commcarehq.org', 'hqdb0.internal.commcarehq.org'],
         'lb': [],
         'staticfiles': ['hqproxy0.internal.commcarehq.org', 'hqproxy1.internal.commcarehq.org'],
         # having deploy here makes it so that
