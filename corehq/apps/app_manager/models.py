@@ -32,6 +32,7 @@ from couchdbkit.resource import ResourceNotFound
 
 from corehq.apps.app_manager.commcare_settings import check_condition
 from corehq.apps.app_manager.const import APP_V1, APP_V2
+from corehq.apps.app_manager.xpath import dot_interpolate
 from corehq.util.hash_compat import make_password
 from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
@@ -834,11 +835,14 @@ class Detail(IndexedSchema):
             column.rename_lang(old_lang, new_lang)
 
     def filter_xpath(self):
-
         filters = []
         for i,column in enumerate(self.columns):
             if column.format == 'filter':
-                filters.append("(%s)" % column.filter_xpath.replace('.', '%s_%s_%s' % (column.model, column.field, i + 1)))
+                value = dot_interpolate(
+                    column.filter_xpath,
+                    '%s_%s_%s' % (column.model, column.field, i + 1)
+                )
+                filters.append("(%s)" % value)
         xpath = ' and '.join(filters)
         return partial_escape(xpath)
 
