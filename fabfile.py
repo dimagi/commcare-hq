@@ -609,7 +609,7 @@ def preindex_views():
         ) % env, user=env.sudo_user)
 
 
-@roles('django_app','django_celery', 'staticfiles', 'django_monolith')
+@roles('django_app','django_celery', 'staticfiles', 'django_monolith', 'formsplayer')
 @parallel
 def update_code(preindex=False):
     if preindex:
@@ -974,6 +974,10 @@ def set_celery_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_flower.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_couchdb_lucene.conf') #to be deprecated
 
+
+
+@roles('django_pillowtop', 'django_monolith')
+def set_pillowtop_supervisorconf():
     # in reality this also should be another machine
     # if the number of listeners gets too high
     if env.environment not in ['preview']:
@@ -1004,6 +1008,7 @@ def set_supervisor_config():
     execute(set_celery_supervisorconf)
     execute(set_djangoapp_supervisorconf)
     execute(set_formsplayer_supervisorconf)
+    execute(set_pillowtop_supervisorconf)
 
     # if needing tunneled ES setup, comment this back in
     # execute(set_elasticsearch_supervisorconf)
