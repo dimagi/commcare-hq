@@ -17,7 +17,7 @@
         function CompressionViewModel(){
             var self = this;
             self.name = ko.observable("");
-            self.source = ko.observable("");
+            self.source = ko.observable("{{ app.export_json|escapejs }}");
             self.save = function(formElement) {
                 $.postGo("{% url "corehq.apps.app_manager.views.import_app" domain %}",
                          {name : self.name(),
@@ -49,7 +49,7 @@
             </tr>
             <tr>
                 <th>Source:</th>
-                <td><textarea name="source" data-bind="value: source">{{ app.export_json }}</textarea></td>
+                <td><textarea name="source" data-bind="value: source"></textarea></td>
             </tr>
         </table>
         <a href="#" class="historyBack">No, take me back.</a>
