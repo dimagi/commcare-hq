@@ -831,7 +831,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return CouchUser.view("users/by_username", include_docs=True)
 
     @classmethod
-    def by_domain(cls, domain, is_active=True, reduce=False, limit=None, skip=0, strict=False):
+    def by_domain(cls, domain, is_active=True, reduce=False, limit=None,
+            skip=0, strict=False, include_docs=True):
         flag = "active" if is_active else "inactive"
         if cls.__name__ == "CouchUser":
             key = [flag, domain]
@@ -839,7 +840,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             key = [flag, domain, cls.__name__]
         extra_args = dict()
         if not reduce:
-            extra_args.update(include_docs=True)
+            extra_args.update(include_docs=include_docs)
             if limit is not None:
                 extra_args.update(
                     limit=limit,
@@ -854,6 +855,33 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             **extra_args
         ).all()
 
+    @classmethod
+    def names_by_domain(cls, domain, is_active=True, limit=None, skip=0, strict=False):
+        flag = "active" if is_active else "inactive"
+        if cls.__name__ == "CouchUser":
+            key = [flag, domain]
+        else:
+            key = [flag, domain, cls.__name__]
+        extra_args = dict()
+        if limit is not None:
+            extra_args.update(
+                limit=limit,
+                skip=skip
+            )
+        users = cls.view("users/names_by_domain",
+            reduce=False,
+            startkey=key,
+            endkey=key + [{}],
+            **extra_args
+        ).all()
+        def user_dict(user):
+            return {
+                'id': user['id'],
+                'username': user['key'][3],
+                'first_name': user['key'][4],
+                'last_name': user['key'][5],
+            }
+        return [user_dict(user) for user in users]
 
     @classmethod
     def ids_by_domain(cls, domain, is_active=True):
