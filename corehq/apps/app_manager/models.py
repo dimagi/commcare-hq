@@ -390,7 +390,7 @@ class FormBase(DocumentSchema):
 
         xml_valid = False
         if self.source == '':
-            errors.append(dict(type="blank form"))
+            errors.append(dict(type="blank form", **meta))
         else:
             try:
                 _parse_xml(self.source)
