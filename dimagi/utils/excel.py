@@ -1,3 +1,4 @@
+from openpyxl.shared.exc import DataTypeException
 import csv
 
 from tempfile import NamedTemporaryFile
@@ -83,6 +84,8 @@ class IteratorJSONReader(object):
     def get_fieldnames(self):
         obj = {}
         for field, value in zip(self.headers, [''] * len(self.headers)):
+            if not isinstance(field, basestring):
+                raise DataTypeException("Field " + str(field) + " is not a string.")
             self.set_field_value(obj, field, value)
         return obj.keys()
 
