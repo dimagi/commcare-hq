@@ -11,6 +11,7 @@ from corehq.apps.locations.models import Location
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.excel import flatten_json, json_to_headers, \
     alphanumeric_sort_key
+from corehq.apps.commtrack.util import get_supply_point
 
 
 class UserUploadError(Exception):
@@ -102,6 +103,28 @@ def _fmt_phone(phone_number):
         phone_number = str(int(phone_number))
     return phone_number.lstrip("+")
 
+
+def create_or_update_locations(domain, location_specs, log):
+    for row in location_specs:
+        try:
+            user = CommCareUser.get_by_username(row.get('username'))
+        except:
+            # TODO
+            return
+        try:
+            location = get_supply_point(
+                domain,
+                row.get('location-sms-code')
+            )['location']
+
+        except:
+            # TODO
+            return
+
+        user.commtrack_location = location._id
+        user.save()
+
+
 def create_or_update_groups(domain, group_specs, log):
     group_memoizer = GroupMemoizer(domain)
     group_memoizer.load_all()
@@ -145,7 +168,7 @@ def create_or_update_groups(domain, group_specs, log):
     return group_memoizer
 
 
-def create_or_update_users_and_groups(domain, user_specs, group_specs):
+def create_or_update_users_and_groups(domain, user_specs, group_specs, location_specs):
     ret = {"errors": [], "rows": []}
     group_memoizer = create_or_update_groups(domain, group_specs, log=ret)
     usernames = set()
@@ -256,11 +279,13 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
 
                 except UserUploadError as e:
                     status_row['flag'] = '%s' % e
-                    
+
             ret["rows"].append(status_row)
     finally:
         group_memoizer.save_all()
-    
+
+    create_or_update_locations(domain, location_specs, log=ret)
+
     return ret
 
 
