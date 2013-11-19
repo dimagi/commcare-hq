@@ -98,4 +98,5 @@ class Command(LabelCommand):
         self.repl_docs()
         self.repl_docs_of_type('CommCareBuild')
         self.repl_docs_of_type('CommCareBuildConfig')
+        self.repl_docs_of_type('Organization')
         AuditEvent.audit_command()
