@@ -27,7 +27,6 @@ class FixtureDataType(Document):
     @classmethod
     def wrap(cls, obj):
         if obj["fields"] and isinstance(obj['fields'][0], str):
-            # print "old fields, do something here"
             obj['fields'] = [{'field_name': f, 'properties': []} for f in obj['fields']]
         return super(FixtureDataType, cls).wrap(obj)
 
@@ -63,8 +62,6 @@ class FixtureItemField(DocumentSchema):
     """
     field_value = StringProperty()
     properties = DictProperty()
-
-FieldWithAttributes = SchemaListProperty(FixtureItemField)
 
 
 class FieldList(DocumentSchema):
@@ -195,12 +192,12 @@ class FixtureDataItem(Document):
             if not self.fields.has_key(field.field_name):
                 xField = ElementTree.SubElement(xData, field.field_name)
                 xField.text = ""
-                continue
-            for field_with_attr in self.fields[field.field_name].field_list:
-                xField = ElementTree.SubElement(xData, field.field_name)
-                xField.text = field_with_attr.field_value
-                for attribute in field_with_attr.properties:
-                    xField.attrib[attribute] = field_with_attr.properties[attribute]
+            else:
+                for field_with_attr in self.fields[field.field_name].field_list:
+                    xField = ElementTree.SubElement(xData, field.field_name)
+                    xField.text = field_with_attr.field_value
+                    for attribute in field_with_attr.properties:
+                        xField.attrib[attribute] = field_with_attr.properties[attribute]
         return xData
 
     def get_groups(self, wrap=True):
