@@ -1,3 +1,4 @@
+import uuid
 from django.utils import http, importlib
 from . import CACHED_VIEW_PREFIX, rcache, COUCH_CACHE_TIMEOUT, CACHE_VIEWS
 from django.conf import settings
@@ -105,11 +106,13 @@ class GenerationCache(object):
 
         include_docs = params.get('include_docs', False)
 
+        MISSING = uuid.uuid4().hex
         cache_view_key = self._mk_view_cache_key(view_name, params)
         if include_docs:
-            #include_docs=True results in couchdbkit remove the 'rows' result and returns just the actual rows in an array
-            cached_view = rcache().get(cache_view_key, None)
-            if cached_view and CACHE_VIEWS:
+            # include_docs=True results in couchdbkit remove the 'rows' result
+            # and returns just the actual rows in an array
+            cached_view = rcache().get(cache_view_key, MISSING)
+            if cached_view != MISSING and CACHE_VIEWS:
                 results = simplejson.loads(cached_view)
                 final_results = {}
 
@@ -125,20 +128,19 @@ class GenerationCache(object):
                             "id": stub['id'],
                             "value": None,
                             "key": stub["key"],
-                            #this feels hacky, but for some reason other views are squashing the master cached doc.
-                            #a more true invalidation scheme should have this more readily address this, but for now
-                            #do a db call here and cache it. Should be a _cached_doc_only call here
+                            # this feels hacky, but for some reason other views are squashing the master cached doc.
+                            # a more true invalidation scheme should have this more readily address this, but for now
+                            # do a db call here and cache it. Should be a _cached_doc_only call here
                             "doc": cached_open_doc(db, stub['id'])
                         }
                         rows.append(row)
                     if wrapper:
                         final_results = [wrapper(x['doc']) for x in rows]
                     else:
-                        #final_results['rows'] = rows
                         final_results = rows
                 return final_results
             else:
-                #cache miss, get view, cache it and all docs
+                # cache miss, get view, cache it and all docs
                 view_obj = db.view(view_name, **params)
                 view_obj._fetch_if_needed()
                 view_results = view_obj._result_cache
@@ -167,10 +169,9 @@ class GenerationCache(object):
                 return retval
 
         else:
-            ###########################
             # include_docs=False just returns the entire view verbatim
-            cached_view = rcache().get(cache_view_key)
-            if cached_view and CACHE_VIEWS:
+            cached_view = rcache().get(cache_view_key, MISSING)
+            if cached_view != MISSING and CACHE_VIEWS:
                 results = simplejson.loads(cached_view)
                 return results
             else:
@@ -179,8 +180,8 @@ class GenerationCache(object):
                 for row in view_results:
                     doc_id = row.get('id', None)
                     if doc_id:
-                        #a non reduce view will have doc_ids on each row, we want to reverse index these
-                        #to know when to invalidate
+                        # a non reduce view will have doc_ids on each row, we want to reverse index these
+                        # to know when to invalidate
                         self._cached_view_doc(doc_id)
                 return view_results
 

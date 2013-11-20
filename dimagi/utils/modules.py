@@ -21,7 +21,6 @@ def to_function(function_path, failhard=False):
     except ImportError:
         if failhard:
             raise
-        
 
     
 def try_import(module_name):
