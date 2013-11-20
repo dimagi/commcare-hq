@@ -966,6 +966,7 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
 
     """
     params = json_request(req.POST)
+    detail_type = params.get('type')
     screens = params.get('screens')
     parent_select = params.get('parent_select')
     sort_elements = screens['sort_elements']
@@ -975,20 +976,22 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
-    detail = module.case_details.short
 
-    detail.sort_elements = []
+    if detail_type == 'case':
+        detail = module.case_details
+    else:
+        return HttpResponseBadRequest("Unknown detail type '%s'" % detail_type)
 
-    module.case_details.short.columns = map(DetailColumn.wrap, screens['short'])
-    module.case_details.long.columns = map(DetailColumn.wrap, screens['long'])
+    detail.short.columns = map(DetailColumn.wrap, screens['short'])
+    detail.long.columns = map(DetailColumn.wrap, screens['long'])
 
+    detail.short.sort_elements = []
     for sort_element in sort_elements:
         item = SortElement()
         item.field = sort_element['field']
         item.type = sort_element['type']
         item.direction = sort_element['direction']
-        detail.sort_elements.append(item)
-
+        detail.short.sort_elements.append(item)
 
     module.parent_select = ParentSelect.wrap(parent_select)
     resp = {}
