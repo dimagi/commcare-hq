@@ -136,7 +136,7 @@ def setup_apache_dirs():
     sudo('mkdir -p %(services)s/apache' % env, user=env.sudo_user)
 
 
-@roles('django_celery', 'django_app', 'staticfiles', 'django_pillowtop', 'formsplayer')
+@roles('django_monolith', 'django_celery', 'django_app', 'staticfiles', 'django_pillowtop', 'formsplayer')
 def setup_dirs():
     """
     create uploaded media, log, etc. directories (if needed) and make writable
