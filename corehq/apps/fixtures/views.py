@@ -354,7 +354,7 @@ def upload_fixture_api(request, domain, **kwargs):
         "has_no_permission": "User {attr} doesn't have permission to upload fixtures",
         "invalid_file": "Error processing your file. Submit a valid (.xlsx) file",
         "has_no_sheet": "Workbook does not have a sheet called {attr}",
-        "has_no_column": "Fixture upload couldn't succeed due to the following error: {attr}",
+        "unknown_fail": "Fixture upload couldn't succeed due to the following error: {attr}",
     }
     
     def _return_response(code, message):
@@ -382,9 +382,12 @@ def upload_fixture_api(request, domain, **kwargs):
     except WorksheetNotFound as e:
         error_message = error_messages["has_no_sheet"].format(attr=e.title)
         return _return_response(response_codes["fail"], error_message)
+    except ExcelMalformatException as e:
+        notify_exception(request)
+        return _return_response(response_codes["fail"], str(e))
     except Exception as e:
         notify_exception(request)
-        error_message = error_messages["has_no_column"].format(attr=e)
+        error_message = error_messages["unknown_fail"].format(attr=e)
         return _return_response(response_codes["fail"], error_message)
 
     num_unknown_groups = len(upload_resp["unknown_groups"])
@@ -543,7 +546,7 @@ def run_upload(request, domain, workbook):
                                 )
                                 raise ExcelMalformatException(_(error_message))
 
-                # All excel formats should have been covered by this line. Can make assumptions about data
+                # excel format check should have been covered by this line. Can make assumptions about data now
                 type_fields = data_type.fields
                 item_fields = {}
                 for field in type_fields:
