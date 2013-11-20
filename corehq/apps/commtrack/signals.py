@@ -16,7 +16,7 @@ from dimagi.utils import create_unique_filter
 
 supply_point_modified = Signal(providing_args=['supply_point', 'created'])
 
-stock_point_submission = Signal(providing_args=['cases'])
+requisition_modified = Signal(providing_args=['cases'])
 
 def attach_locations(xform, cases):
     """
@@ -112,7 +112,8 @@ def raise_events(xform, cases):
         supply_point_modified.send(sender=None, supply_point=sp, created=created)
 
     requisition_cases = [RequisitionCase.wrap(c._doc) for c in cases if c.type == const.REQUISITION_CASE_TYPE]
-    stock_point_submission.send(sender=None, cases=requisition_cases)
+    if requisition_cases:
+        requisition_modified.send(sender=None, cases=requisition_cases)
 
 def commtrack_processing(sender, xform, cases, **kwargs):
     if is_commtrack_form(xform):
