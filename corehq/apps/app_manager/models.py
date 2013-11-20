@@ -876,25 +876,66 @@ class DetailPair(DocumentSchema):
         return self
 
 
-class Module(IndexedSchema, NavMenuItemMediaMixin):
+class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
+    name = DictProperty()
+    unique_id = StringProperty()
+    case_type = StringProperty()
+
+    # this is a generic property that you should override
+    forms = ListProperty()
+
+    @classmethod
+    def wrap(cls, data):
+        if cls is ModuleBase:
+            doc_type = data['doc_type']
+            if doc_type == 'Module':
+                return Module.wrap(data)
+            else:
+                raise ValueError('Unexpected doc_type for Module', doc_type)
+        else:
+            return super(ModuleBase, cls).wrap(data)
+
+    def get_or_create_unique_id(self):
+        """
+        It is the caller's responsibility to save the Application
+        after calling this function.
+
+        WARNING: If called on the same doc in different requests without saving,
+        this function will return a different uuid each time,
+        likely causing unexpected behavior
+
+        """
+        if not self.unique_id:
+            self.unique_id = FormBase.generate_id()
+        return self.unique_id
+
+    get_forms = IndexedSchema.Getter('forms')
+
+    @parse_int([1])
+    def get_form(self, i):
+        self__forms = self.forms
+        return self__forms[i].with_id(i%len(self.forms), self)
+
+    def requires_case_details(self):
+        return False
+
+
+class Module(ModuleBase):
     """
     A group of related forms, and configuration that applies to them all.
     Translates to a top-level menu on the phone.
 
     """
-    name = DictProperty()
     case_label = DictProperty()
     referral_label = DictProperty()
     forms = SchemaListProperty(Form)
     case_details = SchemaProperty(DetailPair)
     ref_details = SchemaProperty(DetailPair)
-    case_type = StringProperty()
     put_in_root = BooleanProperty(default=False)
     case_list = SchemaProperty(CaseList)
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
     parent_select = SchemaProperty(ParentSelect)
-    unique_id = StringProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -937,20 +978,6 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
             ),
         )
 
-    def get_or_create_unique_id(self):
-        """
-        It is the caller's responsibility to save the Application
-        after calling this function.
-
-        WARNING: If called on the same doc in different requests without saving,
-        this function will return a different uuid each time,
-        likely causing unexpected behavior
-
-        """
-        if not self.unique_id:
-            self.unique_id = FormBase.generate_id()
-        return self.unique_id
-
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
         for form in self.get_forms():
@@ -959,13 +986,6 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
             detail.rename_lang(old_lang, new_lang)
         for case_list in (self.case_list, self.referral_list):
             case_list.rename_lang(old_lang, new_lang)
-
-    get_forms = IndexedSchema.Getter('forms')
-
-    @parse_int([1])
-    def get_form(self, i):
-        self__forms = self.forms
-        return self__forms[i].with_id(i%len(self.forms), self)
 
     def get_details(self):
         return (
@@ -1674,7 +1694,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     """
     user_registration = SchemaProperty(UserRegistrationForm)
     show_user_registration = BooleanProperty(default=False, required=True)
-    modules = SchemaListProperty(Module)
+    modules = SchemaListProperty(ModuleBase)
     name = StringProperty()
     # profile's schema is {'features': {}, 'properties': {}}
     # ended up not using a schema because properties is a reserved word
@@ -2432,7 +2452,7 @@ class DeleteModuleRecord(DeleteRecord):
 
     app_id = StringProperty()
     module_id = IntegerProperty()
-    module = SchemaProperty(Module)
+    module = SchemaProperty(ModuleBase)
 
     def undo(self):
         app = Application.get(self.app_id)
@@ -2459,7 +2479,7 @@ class DeleteFormRecord(DeleteRecord):
 Form.get_command_id = lambda self: "m{module.id}-f{form.id}".format(module=self.get_module(), form=self)
 Form.get_locale_id = lambda self: "forms.m{module.id}f{form.id}".format(module=self.get_module(), form=self)
 
-Module.get_locale_id = lambda self: "modules.m{module.id}".format(module=self)
+ModuleBase.get_locale_id = lambda self: "modules.m{module.id}".format(module=self)
 
 Module.get_case_list_command_id = lambda self: "m{module.id}-case-list".format(module=self)
 Module.get_case_list_locale_id = lambda self: "case_lists.m{module.id}".format(module=self)
