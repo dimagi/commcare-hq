@@ -24,7 +24,6 @@ class FakeCache(object):
 
 
 fake_cache = FakeCache()
-cached_object.MOCK_REDIS_CACHE = fake_cache
 
 class CachedObjectTests(TestCase):
 
