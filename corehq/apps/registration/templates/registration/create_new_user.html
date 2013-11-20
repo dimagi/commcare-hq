@@ -1,9 +1,10 @@
 {% extends "registration/base.html" %}
 {% load url from future %}
 {% load field_tags %}
+{% load i18n %}
 
-{% block title %}Create an Account{% endblock title %}
-{% block step-title %}Create an Account{% endblock %}
+{% block title %}{% trans "Create an Account" %}{% endblock title %}
+{% block step-title %}{% trans "Create an Account" %}{% endblock %}
 {% block js-inline  %}{{ block.super }}
     {% url "eula_basic" as eula_url %}
     {% include 'hqstyle/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
@@ -47,7 +48,11 @@
                 {{ hidden }}
             {% endfor %}
         </fieldset>
-        <div class="form-actions"><button type="submit" class="btn btn-primary btn-large disable-on-submit">Sign Up</button></div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-large disable-on-submit">
+                {% trans "Create Account" %}
+            </button>
+        </div>
     </form>
 {% endblock %}
 {% block modals %}{{ block.super }}

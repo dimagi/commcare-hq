@@ -18,13 +18,13 @@ class NewWebUserRegistrationForm(forms.Form):
     """
     Form for a brand new user, before they've created a domain or done anything on CommCare HQ.
     """
-    full_name = forms.CharField(label='Full Name',
+    full_name = forms.CharField(label=_('Full Name'),
                                 max_length=User._meta.get_field('first_name').max_length +
                                            User._meta.get_field('last_name').max_length + 1)
-    email = forms.EmailField(label='Email Address',
-                                    max_length=User._meta.get_field('email').max_length,
-                                    help_text='You will use this email to log in.')
-    password = forms.CharField(label='Password',
+    email = forms.EmailField(label=_('Email Address'),
+                             max_length=User._meta.get_field('email').max_length,
+                             help_text=_('You will use this email to log in.'))
+    password = forms.CharField(label=_('Create Password'),
                                max_length=max_pwd,
                                widget=forms.PasswordInput(render_value=False))
     email_opt_out = forms.BooleanField(required=False,
@@ -34,13 +34,13 @@ class NewWebUserRegistrationForm(forms.Form):
     # Must be set to False to have the clean_*() routine called
     eula_confirmed = forms.BooleanField(required=False,
                                         label="",
-                                        help_text=mark_safe(
+                                        help_text=mark_safe(_(
                                             """I have read and agree to the
                                                <a data-toggle='modal'
                                                   data-target='#eulaModal'
                                                   href='#eulaModal'>
                                                   CommCare HQ End User License Agreement
-                                               </a>."""))
+                                               </a>.""")))
     # not required for when a user accepts an invitation
     domain_type = forms.CharField(
         required=False, widget=forms.HiddenInput(), initial='commcare')
