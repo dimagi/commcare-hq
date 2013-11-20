@@ -765,6 +765,8 @@ def new_app(req, domain):
         app.new_form(0, "Untitled Form", lang)
     else:
         app = cls.new_app(domain, "Untitled Application", lang=lang)
+    if req.project.secure_submissions:
+        app.secure_submissions = True
     app.save()
     _clear_app_cache(req, domain)
     app_id = app.id
