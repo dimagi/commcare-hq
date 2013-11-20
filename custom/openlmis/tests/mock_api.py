@@ -17,3 +17,8 @@ class MockOpenLMISEndpoint(OpenLMISEndpoint):
 
     def confirm_delivery(self, order_id, delivery_date):
         return True
+
+
+class MockOpenLMISSubmitEndpoint(OpenLMISEndpoint):
+    def submit_requisition(self, requisition_data):
+        return {'requisitionId': 'REQ_123'}
