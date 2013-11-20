@@ -164,7 +164,7 @@
                 moduleCaseTypes: {{ module_case_types|JSON }},
                 caseType: {{ form.get_case_type|JSON }},
                 propertiesMap: {{ case_properties|JSON }}
-                {% if app.application_version != '1.0' %}
+                {% if app.application_version == '1.0' %}
                 ,ejs_urls: {
                     template: "{% static 'app_manager/ejs/case-config-ui-2.ejs' %}",
                     condition_ejs: "{% static 'app_manager/ejs/condition.ejs' %}",
