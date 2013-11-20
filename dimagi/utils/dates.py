@@ -199,8 +199,8 @@ class DateSpan(object):
         This is used for couch queries to get the adjusted date as a string
         that can be easily used in a couch view.
         """
-        if self.startdate:
-            return self.startdate.strftime(self.format)
+        # todo: should we get rid of this?
+        return self.startdate_display
 
     @property
     def startdate_utc(self):
@@ -300,8 +300,14 @@ class DateSpan(object):
         if today_or_tomorrow(self.enddate, self.inclusive):
             return "last %s days" % ((self.enddate - self.startdate).days + (1 if self.inclusive else 0))
         
-        return "%s to %s" % (self.startdate.strftime(self.format), 
-                             self.enddate.strftime(self.format))
+        return self.default_serialization()
+
+    def __repr__(self):
+        return str(self)
+
+    def default_serialization(self):
+        return "%s to %s" % (self.startdate_display,
+                             self.enddate_display)
 
     @classmethod
     def since(cls, days, enddate=None, format=DEFAULT_DATE_FORMAT, inclusive=True, timezone=pytz.utc):
