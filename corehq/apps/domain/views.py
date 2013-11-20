@@ -207,6 +207,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 'commtrack_enabled',
                 'restrict_superusers',
                 'ota_restore_caching',
+                'secure_submissions',
             ]:
                 initial[attr] = getattr(self.domain_object, attr)
             initial.update({
