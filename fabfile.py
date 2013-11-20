@@ -136,7 +136,7 @@ def setup_apache_dirs():
     sudo('mkdir -p %(services)s/apache' % env, user=env.sudo_user)
 
 
-@roles('django_celery', 'django_app', 'staticfiles')
+@roles('django_celery', 'django_app', 'staticfiles', 'django_pillowtop', 'formsplayer')
 def setup_dirs():
     """
     create uploaded media, log, etc. directories (if needed) and make writable
@@ -394,7 +394,7 @@ def development():
     env.flower_port = 5555
 
 @task
-@roles('django_app','django_celery','staticfiles')
+@roles('django_app', 'django_celery', 'staticfiles', 'django_pillowtop', 'formsplayer')
 def install_packages():
     """Install packages, given a list of package names"""
     require('environment', provided_by=('staging', 'preview', 'production'))
@@ -415,7 +415,7 @@ def install_packages():
 
 
 @task
-@roles('django_app', 'django_celery', 'staticfiles')
+@roles('django_app', 'django_celery', 'staticfiles', 'django_pillowtop', 'formsplayer')
 @parallel
 def upgrade_packages():
     """
@@ -458,7 +458,7 @@ def what_os():
         return env.host_os_map[env.host_string]
 
 
-@roles('pg','django_celery','django_app','staticfiles', 'django_monolith')
+@roles('pg','django_celery','django_app','staticfiles', 'django_monolith', 'django_pillowtop', 'formsplayer')
 @task
 def setup_server():
     """Set up a server for the first time in preparation for deployments."""
@@ -526,7 +526,7 @@ def unbootstrap():
               '%(code_root)s %(code_root_preindex)s') % env, user=env.sudo_user)
 
 
-@roles('django_celery', 'django_app', 'staticfiles', 'django_monolith')
+@roles('django_celery', 'django_app', 'staticfiles', 'django_monolith', 'django_pillowtop', 'formsplayer')
 def create_virtualenvs():
     """set up virtualenv on remote host"""
     require('virtualenv_root', 'virtualenv_root_preindex',
@@ -537,7 +537,7 @@ def create_virtualenvs():
     sudo('cd && virtualenv %s %s' % (args, env.virtualenv_root_preindex), user=env.sudo_user, shell=True)
 
 
-@roles('django_celery', 'django_app', 'staticfiles', 'django_monolith')
+@roles('django_celery', 'django_app', 'staticfiles', 'django_monolith', 'django_pillowtop', 'formsplayer')
 def clone_repo():
     """clone a new copy of the git repository"""
     with settings(warn_only=True):
@@ -571,7 +571,7 @@ def remove_submodule_source(path):
     execute(_remove_submodule_source_preindex, path)
 
 
-@roles('django_app','django_celery', 'staticfiles', 'django_monolith')
+@roles('django_app','django_celery', 'staticfiles', 'django_monolith', 'django_pilllowtop', 'formsplayer')
 @parallel
 def _remove_submodule_source_main(path):
     with cd(env.code_root):
@@ -609,7 +609,7 @@ def preindex_views():
         ) % env, user=env.sudo_user)
 
 
-@roles('django_app','django_celery', 'staticfiles', 'django_monolith', 'formsplayer')
+@roles('django_app','django_celery', 'staticfiles', 'django_monolith', 'django_pillowtop', 'formsplayer')
 @parallel
 def update_code(preindex=False):
     if preindex:
@@ -717,7 +717,7 @@ def deploy():
 
 
 @task
-@roles('django_app','django_celery','staticfiles', 'django_monolith')
+@roles('django_app','django_celery','staticfiles', 'django_monolith', 'django_pillowtop', 'formsplayer')
 @parallel
 def update_virtualenv(preindex=False):
     """
@@ -763,7 +763,7 @@ def touch_supervisor():
     _supervisor_command('update')
 
 
-@roles('django_app', 'django_celery', 'django_monolith')
+@roles('django_app', 'django_celery', 'django_monolith', 'django_pillowtop', 'formsplayer')
 @parallel
 def clear_services_dir():
     """
@@ -813,7 +813,7 @@ def netstat_plnt():
     sudo('netstat -plnt')
 
 
-@roles('django_app', 'django_celery','django_monolith')
+@roles('django_app', 'django_celery', 'django_monolith', 'django_pillowtop', 'formsplayer')
 def services_start():
     """Start the gunicorn servers"""
     require('environment', provided_by=('staging', 'preview', 'production'))
@@ -822,7 +822,7 @@ def services_start():
     _supervisor_command('start  all')
 
 
-@roles('django_app', 'django_celery', 'django_monolith')
+@roles('django_app', 'django_celery', 'django_monolith', 'django_pillowtop', 'formsplayer')
 def services_stop():
     """Stop the gunicorn servers"""
     require('environment', provided_by=('staging', 'preview', 'production'))
@@ -839,7 +839,7 @@ def restart_services():
     execute(services_restart)
 
 
-@roles('django_app', 'django_celery', 'django_monolith')
+@roles('django_app', 'django_celery', 'django_monolith', 'django_pillowtop', 'formsplayer')
 def services_restart():
     """Stop and restart all supervisord services"""
     require('environment',
@@ -1042,7 +1042,7 @@ def update_django_locales():
     do_update_django_locales()
 
 
-@roles('django_app', 'django_celery', 'staticfiles', 'django_monolith')
+@roles('django_app', 'django_celery', 'staticfiles', 'django_monolith',)
 @parallel
 def do_update_django_locales():
     with cd(env.code_root):
