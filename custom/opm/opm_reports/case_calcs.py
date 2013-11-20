@@ -10,6 +10,22 @@ import fluff
 from .constants import *
 
 
+def get_case(form):
+    case_id = form.form['case']['@case_id']
+    case = CommCareCase.get(case_id)
+
+
+def block_type(form):
+    case = get_case(form)
+    if case.block_name.lower() == "atri":
+        return 'hard'
+    elif case.block_name.lower() == "wazirganj":
+        return 'soft'
+    else:
+        print "UNKNOWN CASE TYPE FOR FORM %s, CASE %s" % \
+            (form._id, case._id)
+
+
 def case_date_group(form):
     return { 
         'date': form.received_on,
@@ -43,7 +59,6 @@ class BirthPreparedness(fluff.Calculator):
         if form.xmlns == BIRTH_PREP_XMLNS:
             for window in self.window_attrs:
                 if form.form.get(window) == '1':
-                    # yield form.received_on
                     yield case_date_group(form)
 
 
@@ -65,8 +80,7 @@ class Delivery(fluff.Calculator):
 
 
 def account_number_from_form(form):
-    case_id = form.form['case']['@case_id']
-    case = CommCareCase.get(case_id)
+    case = get_case(form)
     return case.get_case_property("bank_account_number")
 
        
@@ -87,8 +101,10 @@ class ChildFollowup(fluff.Calculator):
     def total(self, form):
         if form.xmlns == CHILD_FOLLOWUP_XMLNS:
             followed_up = False
-            for prop in ['window%d_child%d' % (window, child)
-                for window in range(3, 15) for child in range(1, 4)]:
+            for prop in [
+                'window%d_child%d' % (window, child)
+                for window in range(3, 15) for child in range(1, 4)
+            ]:
                 if form.form.get(prop):# == '1':
                     followed_up = True
             if followed_up:
