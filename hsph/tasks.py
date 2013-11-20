@@ -28,7 +28,11 @@ def update_case_properties():
     past 21 days and assigned_to property as one of GROUPS_TO_CHECK, and if there are such
     cases their assigned_to property is set to GROUP_SHOULD_BE
     """
-    time_zone = Domain.get_by_name(DOMAINS[0]).default_timezone
+    # skip if hsph doesn't exist on this server
+    _domain = Domain.get_by_name(DOMAINS[0])
+    if _domain is None:
+        return
+    time_zone = _domain.default_timezone
     time_zone = pytz.timezone(time_zone)
     past_n_date = (datetime.datetime.now(time_zone) - datetime.timedelta(PAST_N_DAYS)).date()
     for domain in DOMAINS:
