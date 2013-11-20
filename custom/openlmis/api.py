@@ -4,6 +4,7 @@ import feedparser
 import time
 import requests
 from requests.auth import HTTPBasicAuth
+from corehq.apps.commtrack.models import RequisitionCase
 from custom.openlmis.exceptions import OpenLMISAPIException
 
 
@@ -179,7 +180,7 @@ class OpenLMISEndpoint(object):
 
         # feeds
         self._feed_uri = self._urlcombine(self.base_uri, '/feeds')
-        self.facility_master_feed_uri = self._urlcombine(self._feed_uri, '/facility')
+        self.facility_master_feed_uri = self._urlcombine(self._feed_uri, '/facilities')
         self.facility_program_feed_uri = self._urlcombine(self._feed_uri, '/programSupported')
         self.program_catalog_feed_uri = self._urlcombine(self._feed_uri, '/programCatalogChanges')
         self.requisition_status_feed_uri = self._urlcombine(self._feed_uri, '/requisition-status')
@@ -299,11 +300,10 @@ class OpenLMISEndpoint(object):
 
 class Requisition(object):
 
-    def __init__(self, agent_code, program_id, report_type, products, period_id=None):
+    def __init__(self, agent_code, program_id, products, period_id=None):
         self.agent_code = agent_code
         self.program_id = program_id
         self.period_id = period_id
-        self.report_type = report_type
         self.products = products
 
     @classmethod
@@ -315,12 +315,11 @@ class Requisition(object):
         agent_code = json_rep['agentCode']
         program_id = json_rep['programId']
         period_id = json_rep['periodId']
-        report_type = json_rep['reportType']
         products = []
         for p in product_list:
             products.append(RequisitionProduct.from_json(p))
 
-        return cls(agent_code=agent_code, program_id=program_id, report_type=report_type, products=products, period_id=period_id)
+        return cls(agent_code=agent_code, program_id=program_id, products=products, period_id=period_id)
 
 
 class RequisitionProduct(Product):
@@ -363,7 +362,7 @@ class RequisitionDetails(Requisition):
     def __init__(self, id, agent_code, program_code, emergency, period_start_date, period_end_date, requisition_status,
                    products, supplying_facility_code=None, order_id=None, order_status=None):
 
-        super(RequisitionDetails, self).__init__(agent_code=agent_code, program_id=program_code, report_type=None, products=products)
+        super(RequisitionDetails, self).__init__(agent_code=agent_code, program_id=program_code, products=products)
 
         self.id = id
         self.emergency = emergency
@@ -398,6 +397,21 @@ class RequisitionDetails(Requisition):
 
         return cls(id, agent_code, program_code, emergency, period_start_date, period_end_date, requisition_status,
                    products, supplying_facility_code, order_id, order_status)
+
+    def to_requisition_case(self, product_id):
+        req_case = RequisitionCase()
+        req_case.user_id = self.agent_code
+        req_case.set_case_property("program_id", self.program_id)
+        req_case.set_case_property("period_id", self.period_id)
+        req_case.product_id = product_id
+        req_case.external_id = self.id
+        req_case.requisition_status = self.requisition_status
+        req_case.set_case_property("order_id", self.order_id)
+        req_case.set_case_property("order_status", self.order_status)
+        req_case.set_case_property("emergency", self.emergency)
+        req_case.set_case_property("start_date", self.period_start_date)
+        req_case.set_case_peoperty("end_date", self.period_end_date)
+        return req_case
 
 
 class RequisitionProductDetails(RequisitionProduct):

@@ -1,6 +1,6 @@
 import logging
 from corehq.apps.commtrack.helpers import make_supply_point
-from corehq.apps.commtrack.models import Program, SupplyPointCase, Product
+from corehq.apps.commtrack.models import Program, SupplyPointCase, Product, RequisitionCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
 from custom.openlmis.api import OpenLMISEndpoint
@@ -154,6 +154,31 @@ def sync_supply_point_to_openlmis(supply_point, openlmis_endpoint, create=True):
         return openlmis_endpoint.update_virtual_facility(supply_point.external_id, json_sp)
 
 
+def sync_requisition_from_openlmis(domain, requisition_id, openlmis_endpoint):
+    cases = []
+    send_notification = False
+    lmis_requisition_details = openlmis_endpoint.get_requisition_details(requisition_id)
+    rec_cases = RequisitionCase.get_by_external_id(domain, lmis_requisition_details.id)
+    if rec_cases is None:
+        for product in lmis_requisition_details.products:
+            pdt = Product.get_by_code(domain, product.code)
+            case = lmis_requisition_details.to_requisition_case(pdt._id)
+            case.save()
+            if case.requisition_status is 'AUTHORIZED':
+                send_notification = True
+            cases.append(case)
+    else:
+        for case in rec_cases:
+            before_status = case.requisition_status
+            if _apply_updates(case, lmis_requisition_details.to_requisition_case(case.product_id)):
+                after_status = case.requisition_status
+                case.save()
+                if before_status in ['INITIATED', 'SUBMITTED'] and after_status is 'AUTHORIZED':
+                    send_notification = True
+            cases.append(case)
+    return cases, send_notification
+
+
 def submit_requisition(requisition, openlmis_endpoint):
     return openlmis_endpoint.submit_requisition(requisition)
 
@@ -170,6 +195,10 @@ def approve_requisition(requisition_details, approver_name, openlmis_endpoint):
     }
 
     return openlmis_endpoint.approve_requisition(approve_data)
+
+
+def get_requisition_details(requisition_id, openlmis_endpoint):
+    return openlmis_endpoint.get_requisition_details(requisition_id)
 
 
 def delivery_update(requisition_details, openlmis_endpoint):
