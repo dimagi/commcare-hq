@@ -9,6 +9,7 @@ from corehq.apps.reports.commtrack import standard as commtrack_reports
 from corehq.apps.reports.commtrack import maps as commtrack_maps
 import hashlib
 from dimagi.utils.modules import to_function
+import logging
 
 from django.utils.translation import ugettext_noop as _
 
@@ -78,7 +79,7 @@ def REPORTS(project):
 def dynamic_reports(project):
     """include any reports that can be configured/customized with static parameters for this domain"""
     for reportset in project.dynamic_reports:
-        yield (reportset.section_title, [make_dynamic_report(report, [reportset.section_title]) for report in reportset.reports])
+        yield (reportset.section_title, filter(None, (make_dynamic_report(report, [reportset.section_title]) for report in reportset.reports)))
 
 def make_dynamic_report(report_config, keyprefix):
     """create a report class the descends from a generic report class but has specific parameters set"""
@@ -96,7 +97,13 @@ def make_dynamic_report(report_config, keyprefix):
         def show_in_navigation(cls, domain=None, project=None, user=None):
             return user and user.is_previewer()
         kwargs['show_in_navigation'] = show_in_navigation
-    metaclass = to_function(report_config.report)
+
+    try:
+        metaclass = to_function(report_config.report)
+    except:
+        logging.error('dynamic report config for [%s] is invalid' % report_config.report)
+        return None
+
     # dynamically create a report class
     return type('DynamicReport%s' % slug, (metaclass,), kwargs)
 
