@@ -458,7 +458,7 @@ def what_os():
         return env.host_os_map[env.host_string]
 
 
-@roles('pg','django_celery','django_app','staticfiles', 'django_monolith', 'django_pillowtop', 'formsplayer')
+@roles('django_monolith', 'pg','django_celery','django_app','staticfiles', 'django_pillowtop', 'formsplayer')
 @task
 def setup_server():
     """Set up a server for the first time in preparation for deployments."""
