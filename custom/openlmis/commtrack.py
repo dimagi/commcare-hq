@@ -5,9 +5,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
 from custom.openlmis.api import OpenLMISEndpoint
 from custom.openlmis.exceptions import BadParentException, OpenLMISAPIException
-from django.dispatch.dispatcher import Signal
 
-to_approve_requisition = Signal(providing_args=["case"])
 
 def _apply_updates(doc, update_dict):
     # updates the doc with items from the dict
