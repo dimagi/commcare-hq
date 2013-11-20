@@ -517,6 +517,7 @@ var DetailScreenConfig = (function () {
                     url: this.saveUrl,
                     type: "POST",
                     data: {
+                        type: this.type,
                         screens: JSON.stringify(this.serialize()),
                         parent_select: JSON.stringify({
                             module_id: parentSelect.moduleId(),
