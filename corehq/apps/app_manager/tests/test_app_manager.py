@@ -80,7 +80,7 @@ class AppManagerTest(TestCase):
         self.assertEqual(self.app.modules[1].name['en'], m0)
 
     def testImportApp(self):
-        self.failUnless(self.app._attachments)
+        self.assertTrue(self.app._attachments)
         new_app = import_app(self.app.id, self.domain)
         self.assertEqual(set(new_app._attachments.keys()).intersection(self.app._attachments.keys()), set())
         new_forms = list(new_app.get_forms())
