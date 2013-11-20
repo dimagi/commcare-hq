@@ -521,7 +521,7 @@ def run_upload(request, domain, workbook):
                     if len(field.properties) == 0:
                         item_fields[field.field_name] = FieldList(
                             field_list=[FixtureItemField(
-                                    field_value=di['field'][field.field_name],
+                                    field_value=str(di['field'][field.field_name]),
                                     properties={}
                                 )]
                             )
@@ -532,8 +532,8 @@ def run_upload(request, domain, workbook):
                         prop_dict = di[field.field_name]
                         for x in range(0, prop_combo_len):
                             fix_item_field = FixtureItemField(
-                                    field_value=field_prop_combos[x],
-                                    properties= {prop:prop_dict[prop][x] for prop in prop_dict}
+                                    field_value=str(field_prop_combos[x]),
+                                    properties= {prop:str(prop_dict[prop][x]) for prop in prop_dict}
                                 )
                             field_list.append(fix_item_field)
                         item_fields[field.field_name] = FieldList(
