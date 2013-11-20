@@ -15,7 +15,7 @@ from django.views.generic.base import TemplateView
 from django.shortcuts import render
 
 from corehq.apps.domain.decorators import login_or_digest
-from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, _id_from_doc
+from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, _id_from_doc, FieldList, FixtureTypeField, FixtureItemField
 from corehq.apps.groups.models import Group
 from corehq.apps.users.bulkupload import GroupMemoizer
 from corehq.apps.users.decorators import require_permission
@@ -419,19 +419,38 @@ def run_upload(request, domain, workbook):
             return container[attr]
         except KeyError:
             raise Exception("Workbook 'types' has no column '{attr}'".format(attr=attr))
+
+    def diff_lists(list_a, list_b):
+        set_a = set(list_a)
+        set_b = set(list_b)
+        not_in_b = set_a.difference(set_b)
+        not_in_a = set_a.difference(set_a)
+        return (list(not_in_a), list(not_in_b))
    
     number_of_fixtures = -1
     with CouchTransaction() as transaction:
         for number_of_fixtures, dt in enumerate(data_types):
             tag = _get_or_raise(dt, 'tag')
             type_definition_fields = _get_or_raise(dt, 'field')
+            type_fields_with_properties = []
+            for count, field in enumerate(type_definition_fields):
+                prop_key = "field " + str(count + 1)
+                if dt.has_key(prop_key):
+                    property_list = dt[prop_key]["property"]
+                else:
+                    property_list = []
+                field_with_prop = FixtureTypeField(
+                        field_name = field,
+                        properties = property_list
+                    )
+                type_fields_with_properties.append(field_with_prop)
 
             new_data_type = FixtureDataType(
                     domain=domain,
                     is_global=dt.get('is_global', False),
                     name=_get_or_raise(dt, 'name'),
                     tag=_get_or_raise(dt, 'tag'),
-                    fields=type_definition_fields,
+                    fields=type_fields_with_properties,
             )
             try:
                 if dt['UID']:
@@ -439,7 +458,7 @@ def run_upload(request, domain, workbook):
                 else:
                     data_type = new_data_type
                     pass
-                data_type.fields = type_definition_fields
+                data_type.fields = type_fields_with_properties
                 data_type.is_global = dt.get('is_global', False)
                 assert data_type.doc_type == FixtureDataType._doc_type
                 if data_type.domain != domain:
@@ -456,15 +475,71 @@ def run_upload(request, domain, workbook):
             for sort_key, di in enumerate(data_items):
                 # Check that type definitions in 'types' sheet vs corresponding columns in the item-sheet MATCH
                 item_fields = di['field']
-                for field in type_definition_fields:
-                    if not item_fields.has_key(field):
-                        raise Exception(_("Workbook '%(tag)s' does not contain the column " +
-                                          "'%(field)s' specified in its 'types' definition") % {'tag': tag, 'field': field})
                 item_fields_list = di['field'].keys()
-                for field in item_fields_list:
-                    if not field in type_definition_fields:
-                        raise Exception(_("""Workbook '%(tag)s' has an extra column 
-                                          '%(field)s' that's not defined in its 'types' definition""") % {'tag': tag, 'field': field})                
+                not_in_sheet, not_in_types = diff_lists(item_fields_list, data_type.fields_without_attributes)
+                if len(not_in_sheet)>0:
+                    raise Exception(_("Excel-sheet '%(tag)s' does not contain the column " +
+                            "'%(field)s' as specified in its 'types' definition") % {'tag': tag, 'field': not_in_sheet[0]})
+                if len(not_in_types)>0:
+                    raise Exception(_("""Excel-sheet '%(tag)s' has an extra column 
+                            '%(field)s' that's not defined in its 'types' definition""") % {'tag': tag, 'field': not_in_types[0]})
+
+                # check that properties in 'types' sheet vs item-sheet MATCH
+                for field in data_type.fields:
+                    if len(field.properties)>0:
+                        sheet_props = di.get(field.field_name, {})
+                        sheet_props_list = sheet_props.keys()
+                        type_props = field.properties
+                        not_in_sheet, not_in_types = diff_lists(sheet_props_list, type_props)
+                        if len(not_in_sheet)>0:
+                            raise Exception(_("Excel-sheet '%(tag)s' does not contain property " +
+                                    "'%(property)s' of the field '%(field)s' as specified in its 'types' definition")
+                                     % {'tag': tag, 'property': not_in_sheet[0], 'field': field.field_name })
+                        if len(not_in_types)>0:
+                            raise Exception(_("""Excel-sheet '%(tag)s' has an extra property 
+                                    '%(property)s' of the field '%(field)s' that's not defined in its 'types' definition""") 
+                                    % {'tag': tag, 'property': not_in_types[0], 'field': field.field_name })
+                        # check that fields with properties are numnbered
+                        if type(di['field'][field.field_name]) != list:
+                            raise Exception(_("Fields with attributes should be numbered as 'field: '$(field)s' interger")
+                                    % {'field': field.field_name })
+                        field_prop_len = len(di['field'][field.field_name])
+                        for prop in sheet_props:
+                            format_context = {'field': field.field_name, 'prop': prop}
+                            if type(sheet_props[prop]) != list:
+                                raise Exception(_("Attribute should be written as ''%(field)s': '%(prop)s' interger'")
+                                    % format_context)
+                            if len(sheet_props[prop]) != field_prop_len:
+                                raise Exception(_("Number of values for field '%(field)s' and attribute'%(prop)s' should be same")
+                                    % format_context)
+
+                # All excel formats should have been covered by this line. Can make assumptions about data
+                type_fields = data_type.fields
+                item_fields = {}
+                for field in type_fields:
+                    # if field doesn't have properties
+                    if len(field.properties) == 0:
+                        item_fields[field.field_name] = FieldList(
+                            field_list=[FixtureItemField(
+                                    field_value=di['field'][field.field_name],
+                                    properties={}
+                                )]
+                            )
+                    else:
+                        field_list = []
+                        field_prop_combos = di['field'][field.field_name]
+                        prop_combo_len = len(field_prop_combos)
+                        prop_dict = di[field.field_name]
+                        for x in range(0, prop_combo_len):
+                            fix_item_field = FixtureItemField(
+                                    field_value=field_prop_combos[x],
+                                    properties= {prop:prop_dict[prop][x] for prop in prop_dict}
+                                )
+                            field_list.append(fix_item_field)
+                        item_fields[field.field_name] = FieldList(
+                                field_list=field_list
+                            )
+
                 new_data_item = FixtureDataItem(
                     domain=domain,
                     data_type_id=data_type.get_id,
@@ -477,7 +552,7 @@ def run_upload(request, domain, workbook):
                     else:
                         old_data_item = new_data_item
                         pass
-                    old_data_item.fields = di['field']   
+                    old_data_item.fields = item_fields   
                     if old_data_item.domain != domain:
                         old_data_item = new_data_item
                         messages.error(request, _("'%(UID)s' is not a valid UID. But the new item is created.") % {'UID': di['UID'] })
