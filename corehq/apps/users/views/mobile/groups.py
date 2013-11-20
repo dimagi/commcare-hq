@@ -76,23 +76,24 @@ class EditGroupMembersView(BaseGroupsView):
     @property
     @memoized
     def member_ids(self):
-        return set([u._id for u in self.members])
+        return set([u['id'] for u in self.members])
 
     @property
     @memoized
     def all_users(self):
-        return sorted(CommCareUser.by_domain(self.domain), key=lambda user: user.username)
+        return sorted(CommCareUser.names_by_domain(self.domain),
+                key=lambda user: user['username'])
 
     @property
     @memoized
     def all_user_ids(self):
-        return set([u._id for u in self.all_users])
+        return set([u['id'] for u in self.all_users])
 
     @property
     @memoized
     def members(self):
         member_ids = set(self.group.get_user_ids())
-        return [u for u in self.all_users if u._id in member_ids]
+        return [u for u in self.all_users if u['id'] in member_ids]
 
     @property
     def nonmembers(self):
@@ -103,17 +104,16 @@ class EditGroupMembersView(BaseGroupsView):
     @memoized
     def user_selection_form(self):
         def _user_display(user):
-            full_name = user.full_name
-            username = user.raw_username
+            full_name = user['first_name'] + user['last_name']
             return u'{username}{full_name}'.format(
-                username=username,
+                username=user['username'],
                 full_name=(u' (%s)' % full_name) if full_name else '',
             )
 
         form = MultipleSelectionForm(initial={
             'selected_ids': list(self.member_ids),
         })
-        form.fields['selected_ids'].choices = [(u._id, _user_display(u)) for u in self.all_users]
+        form.fields['selected_ids'].choices = [(u['id'], _user_display(u)) for u in self.all_users]
         return form
 
     @property
