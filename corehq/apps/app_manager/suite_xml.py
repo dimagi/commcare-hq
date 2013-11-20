@@ -150,11 +150,9 @@ class Entry(XmlObject):
 
     form = StringField('form')
     command = NodeField('command', Command)
-    instance = NodeField('instance', Instance)
     instances = NodeListField('instance', Instance)
 
     datums = NodeListField('session/datum', SessionDatum)
-    datum = NodeField('session/datum', SessionDatum)
 
     assertions = NodeListField('assertions/assert', Assertion)
 
