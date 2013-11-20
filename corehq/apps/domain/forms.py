@@ -376,8 +376,8 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
     secure_submissions = BooleanField(
         label=_("Only accept secure submissions"),
         required=False,
-        help_text=_("Turn this on to prevent others from impersonating your"
-                    "mobile workers. To use, all of your deployed applications"
+        help_text=_("Turn this on to prevent others from impersonating your "
+                    "mobile workers. To use, all of your deployed applications "
                     "must be using secure submissions."),
     )
 
