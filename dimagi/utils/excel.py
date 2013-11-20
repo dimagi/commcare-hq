@@ -1,4 +1,3 @@
-from openpyxl.shared.exc import DataTypeException
 import csv
 
 from tempfile import NamedTemporaryFile
@@ -40,6 +39,10 @@ class Excel2007DictReader(object):
 
 
 class JSONReaderError(Exception):
+    pass
+
+
+class HeaderValueError(Exception):
     pass
 
 
@@ -85,7 +88,7 @@ class IteratorJSONReader(object):
         obj = {}
         for field, value in zip(self.headers, [''] * len(self.headers)):
             if not isinstance(field, basestring):
-                raise DataTypeException("Field " + str(field) + " is not a string.")
+                raise HeaderValueError("Field " + str(field) + " is not a string.")
             self.set_field_value(obj, field, value)
         return obj.keys()
 
