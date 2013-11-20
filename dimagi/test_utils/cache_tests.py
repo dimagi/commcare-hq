@@ -24,11 +24,9 @@ class FakeCache(object):
 
 
 fake_cache = FakeCache()
-cached_object.MOCK_REDIS_CACHE = fake_cache
 
 class CachedObjectTests(TestCase):
-
-    def SetUp(self):
+    def setUp(self):
         cached_object.MOCK_REDIS_CACHE = fake_cache
 
     def testBasicObjects(self):
