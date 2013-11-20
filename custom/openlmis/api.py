@@ -321,14 +321,6 @@ class Requisition(object):
 
         return cls(agent_code=agent_code, program_id=program_id, products=products, period_id=period_id)
 
-    def to_requisition_case(self, product_id):
-        req_case = RequisitionCase()
-        req_case.user_id = self.agent_code
-        req_case.set_case_property("program_id", self.program_id)
-        req_case.set_case_property("period_id", self.period_id)
-        req_case.product_id = product_id
-        return req_case
-
 
 class RequisitionProduct(Product):
 

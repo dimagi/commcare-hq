@@ -7,7 +7,7 @@ from custom.openlmis.api import OpenLMISEndpoint
 from custom.openlmis.exceptions import BadParentException, OpenLMISAPIException
 from django.dispatch.dispatcher import Signal
 
-approval_requisition = Signal(providing_args=["case"])
+to_approve_requisition = Signal(providing_args=["case"])
 
 def _apply_updates(doc, update_dict):
     # updates the doc with items from the dict
@@ -158,20 +158,22 @@ def sync_supply_point_to_openlmis(supply_point, openlmis_endpoint, create=True):
 
 def sync_requisition_from_openlmis(domain, requisition_id, openlmis_endpoint):
     lmis_requisition_details = openlmis_endpoint.get_requisition_details(requisition_id)
-    for product in lmis_requisition_details.products:
-        pdt = Product.get_by_code(domain, product.code)
-        rec_case = RequisitionCase.get_by_external_id_and_product_id(lmis_requisition_details.id, pdt._id)
-        if rec_case is None:
-            rec_case = lmis_requisition_details.to_requisition_case(pdt._id)
-            rec_case.save()
-        else:
-            before_status = rec_case.requisition_status
-            if _apply_updates(rec_case, lmis_requisition_details.to_requisition_case(pdt._id)):
-                after_status = rec_case.requisition_status
-                rec_case.save()
+    rec_cases = RequisitionCase.get_by_external_id(domain, lmis_requisition_details.id)
+    if rec_cases is None:
+        for product in lmis_requisition_details.products:
+            pdt = Product.get_by_code(domain, product.code)
+            case = lmis_requisition_details.to_requisition_case(pdt._id)
+            case.save()
+            yield case
+    else:
+        for case in rec_cases:
+            before_status = case.requisition_status
+            if _apply_updates(case, lmis_requisition_details.to_requisition_case(case.product_id)):
+                after_status = case.requisition_status
+                case.save()
                 if before_status in ['INITIATED', 'SUBMITTED'] and after_status is 'AUTHORIZED':
-                    approval_requisition.send(sender=None, case=rec_case)
-        yield rec_case
+                    to_approve_requisition.send(sender=None, case=case)
+            yield case
 
 
 def submit_requisition(requisition, openlmis_endpoint):

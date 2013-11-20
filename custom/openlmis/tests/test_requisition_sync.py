@@ -19,7 +19,7 @@ class RequisitionSyncTest(TestCase):
         for product in Product.by_domain(TEST_DOMAIN):
             product.delete()
 
-    def testSyncRequistion(self):
+    def testSyncRequisition(self):
         with open(os.path.join(self.datapath, 'sample_program.json')) as f:
             lmis_program = Program.from_json(json.loads(f.read()))
         commtrack_program = sync_openlmis_program(TEST_DOMAIN, lmis_program)
@@ -30,6 +30,6 @@ class RequisitionSyncTest(TestCase):
             'description': 'decs',
             'category': 'category',
         }
-        product = sync_openlmis_product(TEST_DOMAIN, commtrack_program, test_product)
+        sync_openlmis_product(TEST_DOMAIN, commtrack_program, test_product)
         sync_requisition_from_openlmis(TEST_DOMAIN, 1, self.api)
-        self.assertTrue(1, RequisitionCase.get_by_external_id_and_product_id(1, product._id))
+        self.assertTrue(1, len(RequisitionCase.get_by_external(TEST_DOMAIN, 1)))
