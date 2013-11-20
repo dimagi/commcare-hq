@@ -33,6 +33,7 @@
             var $home = $("#detail-screen-config");
             var detailScreenConfig = DetailScreenConfig.init($home, {
                 state: {
+                    type: 'case',
                     short: {{ module.case_details.short|JSON }},
                     long: {{ module.case_details.long|JSON }}
                 },
@@ -230,8 +231,8 @@
                 </ol>
             {% endblocktrans %}
         </div>
-        <div id="detail-screen-config-body">
-            <div id="detail-screen-sort">
+        <div id="case-detail-screen-config-body">
+            <div id="case-detail-screen-sort">
             {% if app.enable_multi_sort %}
                 <legend data-bind="visible: rowCount() > 0">
                     {% trans "Sort Properties" %}
@@ -322,12 +323,12 @@
                 </div>
             {% endif %}
             </div>
-            <div id="detail-screen-config">
+            <div id="case-detail-screen-config">
                 <legend>
                     {% trans "Display Properties" %}
                 </legend>
             </div>
-            <div id="detail-screen-parent" data-bind="visible: moduleOptions().length">
+            <div id="case-detail-screen-parent" data-bind="visible: moduleOptions().length">
                 <legend>{% trans "Parent Child Selection" %}</legend>
                 <label class="checkbox">
                     <input type="checkbox" data-bind="checked: active"/>
