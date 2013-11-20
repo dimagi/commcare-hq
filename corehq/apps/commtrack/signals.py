@@ -112,7 +112,7 @@ def raise_events(xform, cases):
         supply_point_modified.send(sender=None, supply_point=sp, created=created)
 
     requisition_cases = [RequisitionCase.wrap(c._doc) for c in cases if c.type == const.REQUISITION_CASE_TYPE]
-    stock_point_submission.send(sender=None, requisition_cases=requisition_cases)
+    stock_point_submission.send(sender=None, cases=requisition_cases)
 
 def commtrack_processing(sender, xform, cases, **kwargs):
     if is_commtrack_form(xform):

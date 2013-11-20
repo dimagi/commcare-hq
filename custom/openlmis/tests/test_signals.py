@@ -1,15 +1,13 @@
-from corehq.apps.commtrack import const
-from corehq.apps.commtrack.models import SupplyPointProductCase, Product, Program, CommtrackConfig, OpenLMISConfig
-from corehq.apps.commtrack.tests.util import CommTrackTest, bootstrap_domain, TEST_DOMAIN
-from datetime import datetime
+import json
+from corehq.apps.commtrack.models import Product, Program, CommtrackConfig, OpenLMISConfig
+from corehq.apps.commtrack.tests.util import CommTrackTest, TEST_DOMAIN
 from corehq.apps.commtrack.stockreport import Requisition
-from corehq.apps.commtrack.const import RequisitionActions, RequisitionStatus
+from corehq.apps.commtrack.const import RequisitionActions
 from corehq.apps.commtrack.requisitions import create_requisition
 from custom.openlmis.signals import stock_data_submission
-from corehq.apps.commtrack.helpers import make_supply_point,\
-    make_supply_point_product
-from custom.openlmis.tests.mock_api import MockOpenLMISEndpoint, MockOpenLMISSubmitEndpoint
-
+from corehq.apps.commtrack.helpers import make_supply_point_product
+from custom.openlmis.tests.mock_api import MockOpenLMISSubmitEndpoint
+import os
 
 class SignalsTest(CommTrackTest):
     requisitions_enabled = True
@@ -24,49 +22,17 @@ class SignalsTest(CommTrackTest):
         self.program.save()
 
     def createProducts(self):
+        with open(os.path.join(self.datapath, 'sample_product_1.json')) as f:
+            lmis_product_1 = json.loads(f.read())
 
-        product_1_dict = {
-            'domain': TEST_DOMAIN,
-            'code':'123',
-            'name':'hiv',
-            'description':'desc1',
-            'category':'test_category',
-            'program_id': self.program._id,
-            "beginningBalance":'3',
-            "quantityReceived":'0',
-            "quantityDispensed":'1',
-            "lossesAndAdjustments":'-2',
-            "stockOnHand":'0',
-            "newPatientCount":'2',
-            "stockOutDays":'2',
-            "quantityRequested":'3',
-            "reasonForRequestedQuantity":"reason",
-            "calculatedOrderQuantity":'57',
-            "quantityApproved":'65',
-            "remarks":"1"
-        }
-        product_2_dict = {
-            'domain': TEST_DOMAIN,
-            'code':'234',
-            'name':'asd',
-            'description':'desc2',
-            'category':'test_category',
-            'program_id': self.program._id,
-            "beginningBalance":'3',
-            "quantityReceived":'0',
-            "quantityDispensed":'1',
-            "lossesAndAdjustments":'-2',
-            "stockOnHand":'0',
-            "newPatientCount":'2',
-            "stockOutDays":'2',
-            "quantityRequested":'3',
-            "reasonForRequestedQuantity":"reason",
-            "calculatedOrderQuantity":'57',
-            "quantityApproved":'65',
-            "remarks":"1"
-        }
-        product_1 = Product(product_1_dict)
-        product_2 = Product(product_2_dict)
+        with open(os.path.join(self.datapath, 'sample_product_2.json')) as f:
+            lmis_product_2 = json.loads(f.read())
+
+        lmis_product_1['program_id'] =  self.program._id
+        lmis_product_2['program_id'] =  self.program._id
+
+        product_1 = Product(lmis_product_1)
+        product_2 = Product(lmis_product_2)
         product_1.save()
         product_2.save()
 
@@ -76,6 +42,7 @@ class SignalsTest(CommTrackTest):
 
     def setUp(self):
         super(SignalsTest, self).setUp()
+        self.datapath = os.path.join(os.path.dirname(__file__), 'data')
         self.spps.clear()
 
         self.createProgram()
@@ -105,7 +72,7 @@ class SignalsTest(CommTrackTest):
             req = create_requisition(self.user._id, spp, transaction)
             requisition_cases.append(req)
         endpoint = MockOpenLMISSubmitEndpoint("uri://mock/lmis/endpoint", username='ned', password='honor')
-        stock_data_submission(sender=None, requisition_cases=requisition_cases, endpoint=endpoint)
+        stock_data_submission(sender=None, cases=requisition_cases, endpoint=endpoint)
 
         for req in requisition_cases:
             self.assertEqual(req.external_id, 'REQ_123')

@@ -13,10 +13,10 @@ def supply_point_updated(sender, supply_point, created, **kwargs):
         sync_supply_point_to_openlmis(supply_point, endpoint)
 
 @receiver(stock_point_submission)
-def stock_data_submission(sender, requisition_cases, endpoint=None, **kwargs):
+def stock_data_submission(sender, cases, endpoint=None, **kwargs):
 
-    if requisition_cases:
-        project = Domain.get_by_name(requisition_cases[0].domain)
+    if cases:
+        project = Domain.get_by_name(cases[0].domain)
 
         if project.commtrack_enabled and project.commtrack_settings.openlmis_enabled:
 
@@ -24,11 +24,11 @@ def stock_data_submission(sender, requisition_cases, endpoint=None, **kwargs):
                 endpoint = OpenLMISEndpoint.from_config(project.commtrack_settings.openlmis_config)
 
             # get agentCode and programCode - I assume all cases are part of the same program
-            agentCode = (requisition_cases[0].get_supply_point_case()).location.site_code
-            programCode = Program.get(requisition_cases[0].get_product().program_id).code
+            agentCode = (cases[0].get_supply_point_case()).location.site_code
+            programCode = Program.get(cases[0].get_product().program_id).code
 
             products = []
-            for rq in requisition_cases:
+            for rq in cases:
                 product = rq.get_product()
                 products.append({'productCode': product.code,
                                  'beginningBalance': product.beginningBalance,
@@ -49,5 +49,6 @@ def stock_data_submission(sender, requisition_cases, endpoint=None, **kwargs):
             response = sync_stock_data_to_openlmis(submission=stock_data, openlmis_endpoint=endpoint)
 
             if response['requisitionId'] is not None:
-                for rq in requisition_cases:
+                for rq in cases:
                     rq.external_id = response['requisitionId']
+                    rq.save()
