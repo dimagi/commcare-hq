@@ -15,7 +15,8 @@ from django.views.generic.base import TemplateView
 from django.shortcuts import render
 
 from corehq.apps.domain.decorators import login_or_digest
-from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, _id_from_doc
+from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, _id_from_doc, FieldList, FixtureTypeField, FixtureItemField
+from corehq.apps.fixtures.exceptions import ExcelMalformatException
 from corehq.apps.groups.models import Group
 from corehq.apps.users.bulkupload import GroupMemoizer
 from corehq.apps.users.decorators import require_permission
@@ -328,9 +329,13 @@ class UploadItemLists(TemplateView):
         except WorksheetNotFound as e:
             messages.error(request, _("Workbook does not contain a sheet called '%(title)s'") % {'title': e.title})
             return error_redirect()
+        except ExcelMalformatException as e:
+            messages.error(request, _("Uploaded excel file has following formatting-problems: '%(e)s'") % {'e': e})
+            return error_redirect()
         except Exception as e:
             notify_exception(request)
-            messages.error(request, _("Fixture upload could not complete due to the following error: '%(e)s'") % {'e': e})
+            messages.error(request, _("Fixture upload failed for some reason and we have noted this failure. "
+                                      "Please make sure the excel file is correctly formatted and try again."))
             return error_redirect()
 
         return HttpResponseRedirect(reverse('fixture_view', args=[self.domain]))
@@ -349,7 +354,7 @@ def upload_fixture_api(request, domain, **kwargs):
         "has_no_permission": "User {attr} doesn't have permission to upload fixtures",
         "invalid_file": "Error processing your file. Submit a valid (.xlsx) file",
         "has_no_sheet": "Workbook does not have a sheet called {attr}",
-        "has_no_column": "Fixture upload couldn't succeed due to the following error: {attr}",
+        "unknown_fail": "Fixture upload couldn't succeed due to the following error: {attr}",
     }
     
     def _return_response(code, message):
@@ -377,9 +382,12 @@ def upload_fixture_api(request, domain, **kwargs):
     except WorksheetNotFound as e:
         error_message = error_messages["has_no_sheet"].format(attr=e.title)
         return _return_response(response_codes["fail"], error_message)
+    except ExcelMalformatException as e:
+        notify_exception(request)
+        return _return_response(response_codes["fail"], str(e))
     except Exception as e:
         notify_exception(request)
-        error_message = error_messages["has_no_column"].format(attr=e)
+        error_message = error_messages["unknown_fail"].format(attr=e)
         return _return_response(response_codes["fail"], error_message)
 
     num_unknown_groups = len(upload_resp["unknown_groups"])
@@ -410,6 +418,21 @@ def run_upload(request, domain, workbook):
         "unknown_users": [], 
         "number_of_fixtures": 0,
     }
+    failure_messages = {
+        "has_no_column": "Workbook 'types' has no column {column_name}.",
+        "has_no_field_column": "Excel-sheet {tag} does not contain the column '{field}' "
+                               "as specified in its 'types' definition",
+        "has_extra_column": "Excel-sheet {tag} has an extra column" + 
+                            "'{field}' that's not defined in its 'types' definition",
+        "sheet_has_no_property": "Excel-sheet {tag} does not contain property " +
+                            "{property} of the field {field} as specified in its 'types' definition",
+        "sheet_has_extra_property": "Excel-sheet {tag} has an extra property" +
+                            "{property} of the field {field} that's not defined in its 'types' definition",
+        "invalid_field_with_property": "Fields with attributes should be numbered as 'field: {field} integer",
+        "invalid_property": "Attribute should be written as '{field}: {prop} interger'",
+        "wrong_field_property_combos": "Number of values for field {field} and attribute {prop} should be same"
+    }
+
     group_memoizer = GroupMemoizer(domain)
 
     data_types = workbook.get_worksheet(title='types')
@@ -418,20 +441,39 @@ def run_upload(request, domain, workbook):
         try:
             return container[attr]
         except KeyError:
-            raise Exception("Workbook 'types' has no column '{attr}'".format(attr=attr))
+            raise ExcelMalformatException(_(failure_messages["has_no_column"].format(attr=attr)))
+
+    def diff_lists(list_a, list_b):
+        set_a = set(list_a)
+        set_b = set(list_b)
+        not_in_b = set_a.difference(set_b)
+        not_in_a = set_a.difference(set_a)
+        return list(not_in_a), list(not_in_b)
    
     number_of_fixtures = -1
     with CouchTransaction() as transaction:
         for number_of_fixtures, dt in enumerate(data_types):
             tag = _get_or_raise(dt, 'tag')
             type_definition_fields = _get_or_raise(dt, 'field')
+            type_fields_with_properties = []
+            for count, field in enumerate(type_definition_fields):
+                prop_key = "field " + str(count + 1)
+                if dt.has_key(prop_key):
+                    property_list = dt[prop_key]["property"]
+                else:
+                    property_list = []
+                field_with_prop = FixtureTypeField(
+                    field_name =field,
+                    properties =property_list
+                    )
+                type_fields_with_properties.append(field_with_prop)
 
             new_data_type = FixtureDataType(
-                    domain=domain,
-                    is_global=dt.get('is_global', False),
-                    name=_get_or_raise(dt, 'name'),
-                    tag=_get_or_raise(dt, 'tag'),
-                    fields=type_definition_fields,
+                domain=domain,
+                is_global=dt.get('is_global', False),
+                name=_get_or_raise(dt, 'name'),
+                tag=_get_or_raise(dt, 'tag'),
+                fields=type_fields_with_properties,
             )
             try:
                 if dt['UID']:
@@ -439,7 +481,7 @@ def run_upload(request, domain, workbook):
                 else:
                     data_type = new_data_type
                     pass
-                data_type.fields = type_definition_fields
+                data_type.fields = type_fields_with_properties
                 data_type.is_global = dt.get('is_global', False)
                 assert data_type.doc_type == FixtureDataType._doc_type
                 if data_type.domain != domain:
@@ -455,16 +497,82 @@ def run_upload(request, domain, workbook):
             data_items = workbook.get_worksheet(data_type.tag)
             for sort_key, di in enumerate(data_items):
                 # Check that type definitions in 'types' sheet vs corresponding columns in the item-sheet MATCH
-                item_fields = di['field']
-                for field in type_definition_fields:
-                    if not item_fields.has_key(field):
-                        raise Exception(_("Workbook '%(tag)s' does not contain the column " +
-                                          "'%(field)s' specified in its 'types' definition") % {'tag': tag, 'field': field})
                 item_fields_list = di['field'].keys()
-                for field in item_fields_list:
-                    if not field in type_definition_fields:
-                        raise Exception(_("""Workbook '%(tag)s' has an extra column 
-                                          '%(field)s' that's not defined in its 'types' definition""") % {'tag': tag, 'field': field})                
+                not_in_sheet, not_in_types = diff_lists(item_fields_list, data_type.fields_without_attributes)
+                if len(not_in_sheet)>0:
+                    error_message = failure_messages["has_no_field_column"].format(tag=tag, field=not_in_sheet[0])
+                    raise ExcelMalformatException(_(error_message))
+                if len(not_in_types)>0:
+                    error_message = failure_messages["has_extra_column"].format(tag=tag, field=not_in_types[0])
+                    raise ExcelMalformatException(_(error_message))
+
+                # check that properties in 'types' sheet vs item-sheet MATCH
+                for field in data_type.fields:
+                    if len(field.properties)>0:
+                        sheet_props = di.get(field.field_name, {})
+                        sheet_props_list = sheet_props.keys()
+                        type_props = field.properties
+                        not_in_sheet, not_in_types = diff_lists(sheet_props_list, type_props)
+                        if len(not_in_sheet)>0:
+                            error_message = failure_messages["sheet_has_no_property"].format(
+                                tag=tag,
+                                property=not_in_sheet[0],
+                                field=field.field_name
+                            )
+                            raise ExcelMalformatException(_(error_message))
+                        if len(not_in_types)>0:
+                            error_message = failure_messages["sheet_has_extra_property"].format(
+                                tag=tag,
+                                property=not_in_types[0],
+                                field=field.field_name
+                            )
+                            raise ExcelMalformatException(_(error_message))
+                        # check that fields with properties are numbered
+                        if type(di['field'][field.field_name]) != list:
+                            error_message = failure_messages["invalid_field_with_property"].format(field=field.field_name)
+                            raise ExcelMalformatException(_(error_message))
+                        field_prop_len = len(di['field'][field.field_name])
+                        for prop in sheet_props:
+                            if type(sheet_props[prop]) != list:
+                                error_message = failure_messages["invalid_property"].format(
+                                    field=field.field_name,
+                                    prop=prop
+                                )
+                                raise ExcelMalformatException(_(error_message))
+                            if len(sheet_props[prop]) != field_prop_len:
+                                error_message = failure_messages["wrong_field_property_combos"].format(
+                                    field=field.field_name,
+                                    prop=prop
+                                )
+                                raise ExcelMalformatException(_(error_message))
+
+                # excel format check should have been covered by this line. Can make assumptions about data now
+                type_fields = data_type.fields
+                item_fields = {}
+                for field in type_fields:
+                    # if field doesn't have properties
+                    if len(field.properties) == 0:
+                        item_fields[field.field_name] = FieldList(
+                            field_list=[FixtureItemField(
+                                field_value=str(di['field'][field.field_name]),
+                                properties={}
+                            )]
+                        )
+                    else:
+                        field_list = []
+                        field_prop_combos = di['field'][field.field_name]
+                        prop_combo_len = len(field_prop_combos)
+                        prop_dict = di[field.field_name]
+                        for x in range(0, prop_combo_len):
+                            fix_item_field = FixtureItemField(
+                                field_value=str(field_prop_combos[x]),
+                                properties={prop: str(prop_dict[prop][x]) for prop in prop_dict}
+                            )
+                            field_list.append(fix_item_field)
+                        item_fields[field.field_name] = FieldList(
+                            field_list=field_list
+                        )
+
                 new_data_item = FixtureDataItem(
                     domain=domain,
                     data_type_id=data_type.get_id,
@@ -477,7 +585,7 @@ def run_upload(request, domain, workbook):
                     else:
                         old_data_item = new_data_item
                         pass
-                    old_data_item.fields = di['field']   
+                    old_data_item.fields = item_fields   
                     if old_data_item.domain != domain:
                         old_data_item = new_data_item
                         messages.error(request, _("'%(UID)s' is not a valid UID. But the new item is created.") % {'UID': di['UID'] })
