@@ -70,6 +70,12 @@ class SuiteTest(XmlTest, TestFileMixin):
     def test_callcenter_suite(self):
         self._test_generic_suite('call-center')
 
+    def test_case_assertions(self):
+        self._test_generic_suite('app_case_sharing', 'suite-case-sharing')
+
+    def test_no_case_assertions(self):
+        self._test_generic_suite('app_no_case_sharing', 'suite-no-case-sharing')
+
 
 class RegexTest(TestCase):
 
