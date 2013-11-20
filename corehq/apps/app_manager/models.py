@@ -533,7 +533,7 @@ class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
         return actions
 
     def active_actions(self):
-        if self.get_app().application_version == '1.0':
+        if self.get_app().application_version == APP_V1:
             action_types = (
                 'open_case', 'update_case', 'close_case',
                 'open_referral', 'update_referral', 'close_referral',
@@ -1885,7 +1885,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         self.put_attachment(value, 'custom_suite.xml')
 
     def create_suite(self):
-        if self.application_version == '1.0':
+        if self.application_version == APP_V1:
             template='app_manager/suite-%s.xml' % self.application_version
             return render_to_string(template, {
                 'app': self,
