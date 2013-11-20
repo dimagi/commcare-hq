@@ -654,7 +654,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         app.save()
 
     context.update({
-        'show_care_plan': toggle_enabled(toggles.APP_BUILDER_CARE_PLAN, req.user.username),
+        'show_care_plan': toggle_enabled(toggles.APP_BUILDER_CAREPLAN, req.user.username),
         'module': module,
         'form': form,
     })
@@ -787,7 +787,7 @@ def new_module(req, domain, app_id):
         response = back_to_main(req, domain, app_id=app_id, module_id=module_id)
         response.set_cookie('suppress_build_errors', 'yes')
         return response
-    elif module_type == 'care-plan':
+    elif module_type == 'careplan':
         return new_care_plan_module(req, domain, app, name, lang)
     else:
         logger.error('Unexpected module type for new module: "%s"' % module_type)
