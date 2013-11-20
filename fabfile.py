@@ -394,7 +394,7 @@ def development():
     env.flower_port = 5555
 
 @task
-@roles('django_app', 'django_celery', 'staticfiles', 'django_pillowtop', 'formsplayer')
+@roles('django_monolith', 'django_app', 'django_celery', 'staticfiles', 'django_pillowtop', 'formsplayer')
 def install_packages():
     """Install packages, given a list of package names"""
     require('environment', provided_by=('staging', 'preview', 'production'))
@@ -415,7 +415,7 @@ def install_packages():
 
 
 @task
-@roles('django_app', 'django_celery', 'staticfiles', 'django_pillowtop', 'formsplayer')
+@roles('django_monolith', 'django_app', 'django_celery', 'staticfiles', 'django_pillowtop', 'formsplayer')
 @parallel
 def upgrade_packages():
     """
