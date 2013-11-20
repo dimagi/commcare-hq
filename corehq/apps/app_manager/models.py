@@ -881,9 +881,6 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
     unique_id = StringProperty()
     case_type = StringProperty()
 
-    # this is a generic property that you should override
-    forms = ListProperty()
-
     @classmethod
     def wrap(cls, data):
         if cls is ModuleBase:
