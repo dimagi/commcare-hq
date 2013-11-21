@@ -54,6 +54,7 @@ class LegacyMixin(object):
             'total': sum(days_used),
             'days_used': len(days_used),
             'days_on': len(days_on),
+            'days_missed': len(days_on) - len(days_used),
             'icon': icon,
         }
 
