@@ -97,7 +97,12 @@ def active(domain, *args):
     now = now.strftime(DATE_FORMAT)
 
     key = ['submission', domain]
-    row = get_db().view("reports_forms/all_forms", startkey=key+[then], endkey=key+[now]).all()
+    row = get_db().view(
+        "reports_forms/all_forms",
+        startkey=key+[then],
+        endkey=key+[now],
+        limit=1
+    ).all()
     return True if row else False
 
 def display_time(row, display=True):
