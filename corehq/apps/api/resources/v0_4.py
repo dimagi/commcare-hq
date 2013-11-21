@@ -340,9 +340,7 @@ class HOPECaseResource(CommCareCaseResource):
     all_tt_doses_given = fields.BooleanField(attribute='_HOPE_all_tt_doses_given', readonly=True, null=True)
     asha_id = fields.CharField(attribute='_HOPE_asha_id', readonly=True, null=True)
     bcg_indicator = fields.BooleanField(attribute='_HOPE_bcg_indicator', readonly=True, null=True)
-    bpl_indicator = fields.BooleanField(attribute='_HOPE_bpl_indicator', readonly=True, null=True)
     child_name = fields.CharField(attribute='_HOPE_child_name', readonly=True, null=True)
-    delivery_time = fields.CharField(attribute='_HOPE_delivery_time', readonly=True, null=True)
     delivery_type = fields.CharField(attribute='_HOPE_delivery_type', readonly=True, null=True)
     dpt_1_indicator = fields.BooleanField(attribute='_HOPE_dpt_1_indicator', readonly=True, null=True)
     existing_child_count = fields.IntegerField(attribute='_HOPE_existing_child_count', readonly=True, null=True)
@@ -352,7 +350,6 @@ class HOPECaseResource(CommCareCaseResource):
     measles_dose_given = fields.BooleanField(attribute='_HOPE_measles_dose_given', readonly=True, null=True)
     number_of_visits = fields.IntegerField(attribute='_HOPE_number_of_visits', readonly=True, null=True)
     opv_1_indicator = fields.BooleanField(attribute='_HOPE_opv_1_indicator', readonly=True, null=True)
-    patient_reg_num = fields.CharField(attribute='_HOPE_patient_reg_num', readonly=True, null=True)
     registration_date = fields.CharField(attribute='_HOPE_registration_date', readonly=True, null=True)
     tubal_ligation = fields.CharField(attribute='_HOPE_tubal_ligation', readonly=True, null=True)
 

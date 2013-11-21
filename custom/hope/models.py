@@ -109,14 +109,6 @@ class HOPECase(CommCareCase):
         return bool(self.get_case_property('bcg_date'))
 
     @property
-    def _HOPE_bpl_indicator(self):
-        form = self.registration_form
-        if form:
-            return form.get_form.get('bpl_indicator')
-        else:
-            return None
-
-    @property
     def _HOPE_child_name(self):
         if self.type == 'cc_bihar_newborn':
             return self.name
@@ -191,14 +183,6 @@ class HOPECase(CommCareCase):
     @property
     def _HOPE_opv_1_indicator(self):
         return bool(self.get_case_property('opv_1_date'))
-
-    @property
-    def _HOPE_patient_reg_num(self):
-        forms = self.forms_with_xmlns(self.delivery_xmlns)
-        if forms:
-            return forms[0].get_form.get('patient_reg_form')
-        else:
-            return None
 
     @property
     def _HOPE_registration_date(self):
