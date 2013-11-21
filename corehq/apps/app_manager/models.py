@@ -31,7 +31,8 @@ from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
 
 from corehq.apps.app_manager.commcare_settings import check_condition
-from corehq.apps.app_manager.const import APP_V1, APP_V2
+from corehq.apps.app_manager.const import APP_V1, APP_V2, CAREPLAN_TASK, CAREPLAN_GOAL, \
+    CAREPLAN_DEFAULT_CASE_PROPERTIES, CAREPLAN_NAME_PATH, CAREPLAN_CASE_NAMES
 from corehq.apps.app_manager.xpath import dot_interpolate
 from corehq.util.hash_compat import make_password
 from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
@@ -887,6 +888,8 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
             doc_type = data['doc_type']
             if doc_type == 'Module':
                 return Module.wrap(data)
+            elif doc_type == 'CareplanModule':
+                return CareplanModule.wrap(data)
             else:
                 raise ValueError('Unexpected doc_type for Module', doc_type)
         else:
@@ -1041,6 +1044,117 @@ class Module(ModuleBase):
     @memoized
     def all_forms_require_a_case(self):
         return all([form.requires == 'case' for form in self.get_forms()])
+
+
+class CareplanForm(FormBase, IndexedSchema, NavMenuItemMediaMixin):
+
+    case_type = StringProperty(required=True, choices=[CAREPLAN_GOAL, CAREPLAN_TASK])
+    mode = StringProperty(required=True, choices=['create', 'update'])
+    custom_case_updates = DictProperty()
+
+    @classmethod
+    def new_form(cls, lang, name, case_type, mode):
+        action = 'Update' if mode == 'update' else 'New'
+        name = name or '%s Careplan %s' % (action, CAREPLAN_CASE_NAMES[case_type])
+        form = CareplanForm(name={lang: name}, case_type=case_type, mode=mode)
+        source = load_form_template('%s_%s.xml' % (case_type, mode))
+        return form, source
+
+    def _case_changes(self):
+        case_changes = CAREPLAN_DEFAULT_CASE_PROPERTIES[self.case_type][self.mode].copy()
+        case_changes.update(self.custom_case_updates)
+        return case_changes
+
+    def add_stuff_to_xform(self, xform):
+        super(CareplanForm, self).add_stuff_to_xform(xform)
+        case_changes = self._case_changes()
+        xform.add_care_plan(self, self.mode, self.case_type, CAREPLAN_NAME_PATH, case_changes)
+
+    def get_app(self):
+        return self._parent._parent
+
+    def get_case_updates(self, case_type):
+        if case_type == self.case_type:
+            return self._case_changes().keys()
+        else:
+            return []
+
+    def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
+        parent_types = set()
+        case_properties = set()
+        if case_type == self.case_type:
+            if case_type == CAREPLAN_GOAL:
+                parent_types.add(module_case_type)
+            elif case_type == CAREPLAN_TASK:
+                parent_types.add(CAREPLAN_GOAL)
+            case_properties.update(self._case_changes().keys())
+
+        return parent_types, case_properties
+
+
+class CareplanModule(ModuleBase):
+    """
+    A set of forms and configuration for managing the Care Plan workflow.
+    """
+    parent_select = SchemaProperty(ParentSelect)
+
+    forms = SchemaListProperty(CareplanForm)
+    goal_details = SchemaProperty(DetailPair)
+    task_details = SchemaProperty(DetailPair)
+
+    @classmethod
+    def new_module(cls, app, name, lang, target_module_id, target_case_type):
+        lang = lang or 'en'
+        return CareplanModule(
+            name={lang: name or ugettext("Care Plan")},
+            parent_select=ParentSelect(
+                active=True,
+                relationship='parent',
+                module_id=target_module_id
+            ),
+            case_type=target_case_type,
+            goal_details=DetailPair(
+                short=cls._get_detail(lang, 'goal_short'),
+                long=cls._get_detail(lang, 'goal_long'),
+            ),
+            task_details=DetailPair(
+                short=cls._get_detail(lang, 'task_short'),
+                long=cls._get_detail(lang, 'task_long'),
+            )
+        )
+
+    @classmethod
+    def _get_detail(cls, lang, detail_type):
+        columns = [
+            DetailColumn(
+                format='plain',
+                header={lang: ugettext("Goal")},
+                field='name',
+                model='case'),
+            DetailColumn(
+                format='date',
+                header={lang: ugettext("Followup")},
+                field='date_followup',
+                model='case')]
+
+        if detail_type.endswith('long'):
+            columns.append(DetailColumn(
+                format='plain',
+                header={lang: ugettext("Description")},
+                field='description',
+                model='case'))
+
+        if detail_type == 'tasks_long':
+            columns.append(DetailColumn(
+                format='plain',
+                header={lang: ugettext("Last update")},
+                field='latest_report',
+                model='case'))
+
+        return Detail(type=detail_type, columns=columns)
+
+    def requires_case_details(self):
+        return True
 
 
 class VersionedDoc(LazyAttachmentDoc):
@@ -2473,8 +2587,8 @@ class DeleteFormRecord(DeleteRecord):
         app.modules[self.module_id].forms = forms
         app.save()
 
-Form.get_command_id = lambda self: "m{module.id}-f{form.id}".format(module=self.get_module(), form=self)
-Form.get_locale_id = lambda self: "forms.m{module.id}f{form.id}".format(module=self.get_module(), form=self)
+FormBase.get_command_id = lambda self: "m{module.id}-f{form.id}".format(module=self.get_module(), form=self)
+FormBase.get_locale_id = lambda self: "forms.m{module.id}f{form.id}".format(module=self.get_module(), form=self)
 
 ModuleBase.get_locale_id = lambda self: "modules.m{module.id}".format(module=self)
 
