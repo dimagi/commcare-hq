@@ -83,7 +83,7 @@ class MalariaConsortiumFluff(fluff.IndicatorDocument):
         xmlns=NEWBORN_FOLLOWUP_XMLNS,
     )
     home_visits_newborn = _or_alias(
-         [home_visits_newborn_reg, home_visits_newborn_followup]
+        [home_visits_newborn_reg, home_visits_newborn_followup]
     )
     home_visits_child_reg = _filtered_calc_alias(
         xmlns=CHILD_REGISTRATION_XMLNS,
@@ -105,13 +105,13 @@ class MalariaConsortiumFluff(fluff.IndicatorDocument):
         xmlns=ADULT_FOLLOWUP_XMLNS,
     )
     home_visits_adult = _or_alias(
-         [home_visits_adult_reg, home_visits_adult_followup]
+        [home_visits_adult_reg, home_visits_adult_followup]
     )
     home_visits_followup = _or_alias(
         [home_visits_newborn_followup, home_visits_child_followup, home_visits_adult_followup]
     )
     home_visits_other = _or_alias(
-         [home_visits_non_pregnant, home_visits_male_reg, home_visits_adult_followup]
+        [home_visits_non_pregnant, home_visits_male_reg, home_visits_adult_followup]
     )
     home_visits_total = _or_alias(
         [home_visits_pregnant, home_visits_postpartem, home_visits_newborn, home_visits_children, home_visits_other]
