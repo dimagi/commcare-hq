@@ -2,6 +2,7 @@ from collections import defaultdict
 from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.app_manager.const import APP_V1
 from lxml import etree as ET
+from corehq.apps.app_manager.xml_utils import CaseIDXPath, session_var, XPath, CaseTypeXpath
 from .exceptions import XFormError, CaseError, XFormValidationError
 import formtranslate.api
 
@@ -39,54 +40,12 @@ def make_case_elem(tag, attr=None):
         return _make_elem('{cx2}%s' % tag, attr)
 
 
-def session_var(var):
-    return u"instance('commcaresession')/session/data/%s" % var
-
-
 def get_case_parent_id_xpath(parent_path):
         xpath = SESSION_CASE_ID
         if parent_path:
             for parent_name in parent_path.split('/'):
                 xpath = xpath.case().index_id(parent_name)
         return xpath
-
-
-class XPath(unicode):
-    def slash(self, xpath):
-        if self:
-            return XPath(u'%s/%s' % (self, xpath))
-        else:
-            return XPath(xpath)
-
-    def select(self, ref, value):
-        return XPath('{self}[{ref} = {value}]'.format(self=self, ref=ref, value=value))
-
-
-class CaseSelectionXPath(XPath):
-    selector = ''
-
-    def case(self):
-        return CaseXPath(u"instance('casedb')/casedb/case[%s=%s]" % (self.selector, self))
-
-
-class CaseIDXPath(CaseSelectionXPath):
-    selector = '@case_id'
-
-
-class CaseTypeXpath(CaseSelectionXPath):
-    selector = '@case_type'
-
-
-class CaseXPath(XPath):
-
-    def index_id(self, name):
-        return CaseIDXPath(self.slash(u'index').slash(name))
-
-    def parent_id(self):
-        return self.index_id('parent')
-
-    def property(self, property):
-        return self.slash(property)
 
 
 SESSION_CASE_ID = CaseIDXPath(session_var('case_id'))

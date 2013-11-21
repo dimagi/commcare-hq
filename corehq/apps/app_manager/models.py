@@ -1255,6 +1255,20 @@ class CareplanModule(ModuleBase):
     def requires_case_details(self):
         return True
 
+    def get_form_by_type(self, case_type, mode):
+        for form in self.forms:
+            if form.case_type == case_type and form.mode == mode:
+                return form
+
+    def get_details(self):
+        return (
+            ('%s_short' % CAREPLAN_GOAL, self.goal_details.short),
+            ('%s_long' % CAREPLAN_GOAL, self.goal_details.long),
+            ('%s_short' % CAREPLAN_TASK, self.task_details.short),
+            ('%s_long' % CAREPLAN_TASK, self.task_details.long),
+        )
+
+
 
 class VersionedDoc(LazyAttachmentDoc):
     """

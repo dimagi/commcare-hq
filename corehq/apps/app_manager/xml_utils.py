@@ -57,3 +57,46 @@ class XMLTag(XMLObject):
                     'name':self.name, 'options':options, 'children':children}
         else:
             return children
+
+def session_var(var):
+    return u"instance('commcaresession')/session/data/%s" % var
+
+class XPath(unicode):
+    def slash(self, xpath):
+        if self:
+            return XPath(u'%s/%s' % (self, xpath))
+        else:
+            return XPath(xpath)
+
+    def select(self, ref, value):
+        return XPath('{self}[{ref} = {value}]'.format(self=self, ref=ref, value=value))
+
+    def count(self):
+        return XPath('count({self})'.format(self=self))
+
+
+class CaseSelectionXPath(XPath):
+    selector = ''
+
+    def case(self):
+        return CaseXPath(u"instance('casedb')/casedb/case[%s=%s]" % (self.selector, self))
+
+
+class CaseIDXPath(CaseSelectionXPath):
+    selector = '@case_id'
+
+
+class CaseTypeXpath(CaseSelectionXPath):
+    selector = '@case_type'
+
+
+class CaseXPath(XPath):
+
+    def index_id(self, name):
+        return CaseIDXPath(self.slash(u'index').slash(name))
+
+    def parent_id(self):
+        return self.index_id('parent')
+
+    def property(self, property):
+        return self.slash(property)
