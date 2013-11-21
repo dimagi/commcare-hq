@@ -414,19 +414,26 @@ class MalariaConsortiumFluff(fluff.IndicatorDocument):
         property_path='form/has_pneumonia',
         property_value='yes',
     )
-    # internal_child_given_pneumonia_treatment = internal_treated_ari_child
-    internal_child_given_correct_pneumonia_treatment = _and_alias([
+    internal_child_diagnosed_pneumonia = _filtered_calc_alias(
+        xmlns=CHILD_REGISTRATION_XMLNS,
+        property_path='form/pneumonia_ds',
+        property_value='yes',
+    )
+    internal_child_given_correct_pneumonia_treatment_1 = _and_alias([
          internal_child_has_pneumonia, internal_treated_ari_child
     ])
+    internal_child_given_correct_pneumonia_treatment_2 = _and_alias([
+         internal_child_diagnosed_pneumonia, internal_treated_ari_child
+    ])
 
-
-    # internal_adult_has_pneumonia = internal_diagnosed_ari_adult
-    # internal_adult_given_pneumonia_treatment = internal_diagnosed_and_treated_ari_adult
     patients_given_pneumonia_meds_denom = _or_alias([
-        internal_child_has_pneumonia, internal_diagnosed_ari_adult
+        internal_child_has_pneumonia,
+        internal_child_diagnosed_pneumonia,
+        internal_diagnosed_ari_adult,
     ])
     patients_given_pneumonia_meds_num = _or_alias([
-        internal_child_given_correct_pneumonia_treatment,
+        internal_child_given_correct_pneumonia_treatment_1,
+        internal_child_given_correct_pneumonia_treatment_2,
         internal_diagnosed_and_treated_ari_adult,
     ])
 
@@ -460,7 +467,7 @@ class MalariaConsortiumFluff(fluff.IndicatorDocument):
     internal_child_has_malaria = _filtered_calc_alias(
         xmlns=CHILD_REGISTRATION_XMLNS,
         property_path='form/has_malaria',
-        property_value='1',
+        property_value='yes',
     )
     internal_child_given_correct_malaria_treatment = _and_alias([
         internal_child_has_malaria,
@@ -506,7 +513,7 @@ class MalariaConsortiumFluff(fluff.IndicatorDocument):
     ])
     internal_adult_referral_needed = _filtered_calc_alias(
         xmlns=ADULT_REGISTRATION_XMLNS,
-        property_path='form/has_danger_sign',
+        property_path='form/preg_danger_signs/treatment_preg_ds',
         property_value='yes',
     )
     internal_adult_referral_given = _filtered_calc_alias(
