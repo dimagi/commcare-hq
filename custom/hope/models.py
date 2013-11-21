@@ -70,12 +70,13 @@ class HOPECase(CommCareCase):
 
     @property
     def _HOPE_admission_date(self):
-        forms = self.forms_with_xmlns(self.delivery_xmlns)
-        if forms:
-            return forms[0].get_form.get('adm_date')
+        if self.delivery_forms:
+            return self.delivery_forms[0].get_form.get('adm_date')
         else:
             return None
 
+    @property
+    @memoized
     def user(self):
         user_id = self.user_id
 
@@ -116,8 +117,7 @@ class HOPECase(CommCareCase):
 
     @property
     def _HOPE_area_indicator(self):
-        form = self.registration_form
-        return form.get_form.get('area_indicator') if form else None
+        return self.registration_form.get_form.get('area_indicator') if self.registration_form else None
 
     @property
     def _HOPE_asha_id(self):
@@ -158,9 +158,8 @@ class HOPECase(CommCareCase):
 
     @property
     def _HOPE_education(self):
-        forms = self.forms_with_xmlns(self.registration_xmlns)
-        if forms:
-            return forms[0].get_form.get('education')
+        if self.registration_form:
+            return self.registration_form.get_form.get('education')
         else:
             return None
 
@@ -187,7 +186,7 @@ class HOPECase(CommCareCase):
 
     @property
     def _HOPE_ifa_issue_forms(self):
-        return [form for form in self.forms_with_xmlns(self.bp_xmlns)
+        return [form for form in self.bp_forms
                 if form.get_form.get('bp1', {}).get('ifa_tablets_issued')]
 
     @property
@@ -233,9 +232,8 @@ class HOPECase(CommCareCase):
 
     @property
     def _HOPE_time_of_birth(self):
-        forms = self.forms_with_xmlns(self.delivery_xmlns)
-        if forms:
-            return forms[0].get_form.get('time_of_birth')
+        if self.delivery_forms:
+            return self.delivery_forms[0].get_form.get('time_of_birth')
         else:
             return None
 
