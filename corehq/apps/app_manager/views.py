@@ -953,6 +953,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         'media_image': None, 'media_audio': None,
         "case_list": ('case_list-show', 'case_list-label'),
         "task_list": ('task_list-show', 'task_list-label'),
+        "parent_module": None,
     }
 
     if attr not in attributes:
@@ -983,6 +984,9 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
             return HttpResponseBadRequest("case type is improperly formatted")
     if should_edit("put_in_root"):
         module["put_in_root"] = json.loads(req.POST.get("put_in_root"))
+    if should_edit("parent_module"):
+        parent_module = req.POST.get("parent_module")
+        module.parent_select.module_id = parent_module
     for attribute in ("name", "case_label", "referral_label"):
         if should_edit(attribute):
             name = req.POST.get(attribute, None)
