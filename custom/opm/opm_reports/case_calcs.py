@@ -12,18 +12,17 @@ from .constants import *
 
 def get_case(form):
     case_id = form.form['case']['@case_id']
-    case = CommCareCase.get(case_id)
+    return CommCareCase.get(case_id)
 
 
 def block_type(form):
     case = get_case(form)
-    if case.block_name.lower() == "atri":
-        return 'hard'
-    elif case.block_name.lower() == "wazirganj":
-        return 'soft'
-    else:
-        print "UNKNOWN CASE TYPE FOR FORM %s, CASE %s" % \
-            (form._id, case._id)
+    block = case.get_case_property('block_name')
+    if block:
+        if block.lower() == "atri":
+            return 'hard'
+        elif block.lower() == "wazirganj":
+            return 'soft'
 
 
 def case_date_group(form):
@@ -57,7 +56,10 @@ class BirthPreparedness(fluff.Calculator):
     @fluff.date_emitter
     def total(self, form):
         if form.xmlns == BIRTH_PREP_XMLNS:
+            block = block_type(form)
             for window in self.window_attrs:
+                if block == 'soft' and window[-1] == '3':
+                    window = "soft_%s" % window
                 if form.form.get(window) == '1':
                     yield case_date_group(form)
 
