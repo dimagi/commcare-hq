@@ -35,6 +35,7 @@
         {% if GOOGLE_ANALYTICS_ID %}
         <script type="text/javascript">
             _gaq.push(['_setAccount', '{{ GOOGLE_ANALYTICS_ID }}']);
+            _gaq.push(['_setDomainName', 'none']);
             _gaq.push(['_trackPageview']);
             {% if domain %}_gaq.push(['_setCustomVar', 1, 'domain', '{{ domain }}', 3]);{% endif %}
             {% if request.user.is_authenticated %}_gaq.push(['_setCustomVar', 1, 'uuid', '{{ request.user.id }}', 3]);{% endif %}
