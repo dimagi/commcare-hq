@@ -365,7 +365,7 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
                 reduce=reduce
             )
 
-        return cache_core.cached_view(self.get_db(), self.couch_view, cache_expire=60*60, **view_kwargs)
+        return cache_core.cached_view(self.get_db(), self.couch_view, cache_expire=60*60*6, **view_kwargs)
 
     def get_raw_results(self, user_ids, datespan=False, date_group_level=False, reduce=False):
         """
