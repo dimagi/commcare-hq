@@ -33,6 +33,7 @@ from couchdbkit.resource import ResourceNotFound
 from corehq.apps.app_manager.commcare_settings import check_condition
 from corehq.apps.app_manager.const import APP_V1, APP_V2
 from corehq.apps.app_manager.xpath import dot_interpolate
+from corehq.apps.builds import get_default_build_spec
 from corehq.util.hash_compat import make_password
 from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
@@ -51,7 +52,7 @@ from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property
 from corehq.apps.app_manager import current_builds, app_strings, remote_app
 from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings, build_error_utils
-from corehq.apps.app_manager.util import split_path, save_xform
+from corehq.apps.app_manager.util import split_path, save_xform, get_correct_app_class
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml
 from .exceptions import AppError, VersioningError, XFormError, XFormValidationError
 
@@ -1282,7 +1283,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
 
         self = super(ApplicationBase, cls).wrap(data)
         if not self.build_spec or self.build_spec.is_null():
-            self.build_spec = CommCareBuildConfig.fetch().get_default(self.application_version)
+            self.build_spec = get_default_build_spec(self.application_version)
 
         if should_save:
             self.save()
@@ -2371,12 +2372,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
             raise Http404
     if domain and app['domain'] != domain:
         raise Http404
-    cls = wrap_cls or {
-        'Application': Application,
-        'Application-Deleted': Application,
-        "RemoteApp": RemoteApp,
-        "RemoteApp-Deleted": RemoteApp,
-    }[app['doc_type']]
+    cls = wrap_cls or get_correct_app_class(app)
     app = cls.wrap(app)
     return app
 
