@@ -39,6 +39,10 @@ def make_case_elem(tag, attr=None):
         return _make_elem('{cx2}%s' % tag, attr)
 
 
+def session_var(var):
+    return u"instance('commcaresession')/session/data/%s" % var
+
+
 def get_case_parent_id_xpath(parent_path):
         xpath = SESSION_CASE_ID
         if parent_path:
@@ -54,11 +58,23 @@ class XPath(unicode):
         else:
             return XPath(xpath)
 
+    def select(self, ref, value):
+        return XPath('{self}[{ref} = {value}]'.format(self=self, ref=ref, value=value))
 
-class CaseIDXPath(XPath):
+
+class CaseSelectionXPath(XPath):
+    selector = ''
 
     def case(self):
-        return CaseXPath(u"instance('casedb')/casedb/case[@case_id=%s]" % self)
+        return CaseXPath(u"instance('casedb')/casedb/case[%s=%s]" % (self.selector, self))
+
+
+class CaseIDXPath(CaseSelectionXPath):
+    selector = '@case_id'
+
+
+class CaseTypeXpath(CaseSelectionXPath):
+    selector = '@case_type'
 
 
 class CaseXPath(XPath):
@@ -72,7 +88,8 @@ class CaseXPath(XPath):
     def property(self, property):
         return self.slash(property)
 
-SESSION_CASE_ID = CaseIDXPath(u"instance('commcaresession')/session/data/case_id")
+
+SESSION_CASE_ID = CaseIDXPath(session_var('case_id'))
 
 
 class IndicatorXpath(XPath):
@@ -177,7 +194,8 @@ class CaseBlock(object):
         )
 
     def add_create_block(self, relevance, case_name, case_type, path='',
-                         delay_case_id=False, autoset_owner_id=True, has_case_sharing=False):
+                         delay_case_id=False, autoset_owner_id=True,
+                         has_case_sharing=False, case_id='uuid()'):
         create_block = make_case_elem('create')
         self.elem.append(create_block)
         case_type_node = make_case_elem('case_type')
@@ -200,7 +218,7 @@ class CaseBlock(object):
         )
         add_setvalue_or_bind(
             ref='%scase/@case_id' % path,
-            value='uuid()',
+            value=case_id,
         )
         self.xform.add_bind(
             nodeset="%scase/create/case_name" % path,
@@ -1189,3 +1207,112 @@ class XForm(WrappedNode):
                 'nodeset': self.resolve_path('registration/user_data/%s' % key),
                 'calculate': self.resolve_path(path),
             }))
+
+    def add_care_plan(self, form, mode, case_type, case_name_path, case_changes):
+        from const import CAREPLAN_GOAL, CAREPLAN_TASK
+        self.add_meta_2()
+
+        def add_parent_case_id(case_block):
+            parent_case_id = _make_elem('parent_case_id')
+            self.data_node.append(parent_case_id)
+            self.add_bind(
+                nodeset=self.resolve_path('parent_case_id'),
+                calculate=session_var('parent_id')
+            )
+            case_block.add_index_ref('parent', form.get_case_type(), ref_path='parent_case_id')
+
+        if case_type == CAREPLAN_GOAL:
+            if mode == 'create':
+                case_block = CaseBlock(self)
+                case_block.add_create_block(
+                    relevance='true()',
+                    case_name=case_name_path,
+                    case_type=case_type,
+                    autoset_owner_id=False,
+                    case_id=session_var('new_goal_id')
+                )
+
+                case_block.add_update_block(case_changes)
+
+                add_parent_case_id(case_block)
+
+                # set case owner to whatever parent case owner is
+                self.add_setvalue(
+                    ref="case/create/owner_id",
+                    value=CaseIDXPath(self.resolve_path('parent_case_id')).case().property('@owner_id'),
+                    event='xforms-revalidate'
+                )
+
+                self.data_node.append(case_block.elem)
+            elif mode == 'update':
+                case_parent = self.data_node
+                case_block = CaseBlock(self)
+                case_block.add_update_block(case_changes)
+
+                self.add_setvalue(
+                    ref='case/@case_id',
+                    value=SESSION_CASE_ID
+                )
+
+                case_block.add_close_block("%s = '%s'" % (self.resolve_path('close_goal'), 'yes'))
+
+                # preload values from case
+                self.add_setvalue(
+                    ref=self.resolve_path('description_group/description'),
+                    value=SESSION_CASE_ID.case().property('description')
+                )
+                self.add_setvalue(
+                    ref=self.resolve_path('followup_date'),
+                    value=SESSION_CASE_ID.case().property('date_followup')
+                )
+
+                # load task case ID's into child_tasks node
+                self.add_setvalue(
+                    ref=self.resolve_path('child_tasks'),
+                    value="join(' ', %s)" % CaseTypeXpath(CAREPLAN_TASK).case().select('index/goal', SESSION_CASE_ID).select('@status', 'open').slash('@case_id')
+                )
+
+                case_parent.append(case_block.elem)
+
+                task_case_block = CaseBlock(self, path='tasks_to_close')
+                self.add_setvalue(
+                    ref='case/@case_id',
+                    value='selected-at(%s, ../../@index)' % self.resolve_path('child_tasks')
+                )
+
+                self.data_node.find('{x}tasks_to_close').append(task_case_block.elem)
+        elif case_type == CAREPLAN_TASK:
+            if mode == 'create':
+                case_block = CaseBlock(self, path=self.resolve_path('task_repeat'))
+                case_block.add_create_block(
+                    relevance='true()',
+                    case_name='../../../name',
+                    case_type=CAREPLAN_TASK,
+                    autoset_owner_id=False,
+                    case_id=session_var('new_task_id')
+                )
+
+                # set case owner to whatever parent case owner is
+                self.add_setvalue(
+                    ref="case/create/owner_id",
+                    value=CaseIDXPath(self.resolve_path('parent_case_id')).case().property('@owner_id'),
+                    event='xforms-revalidate'
+                )
+
+                case_block.add_update_block(case_changes)
+
+                add_parent_case_id(case_block)
+                case_block.add_index_ref('goal', CAREPLAN_TASK, ref_path='case_id_goal')
+
+                self.data_node.find('{x}task_repeat').append(case_block.elem)
+            elif mode == 'update':
+                case_block = CaseBlock(self)
+                case_block.add_update_block(case_changes)
+
+                self.add_setvalue(
+                    ref='case/@case_id',
+                    value=SESSION_CASE_ID
+                )
+
+                case_block.add_close_block(self.resolve_path('/data/task_complete'), 'yes')
+                self.data_node.append(case_block.elem)
