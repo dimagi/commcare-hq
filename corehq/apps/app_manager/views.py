@@ -1025,6 +1025,10 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
 
     if detail_type == 'case':
         detail = module.case_details
+    elif detail_type == CAREPLAN_GOAL:
+        detail = module.goal_details
+    elif detail_type == CAREPLAN_TASK:
+        detail = module.task_details
     else:
         return HttpResponseBadRequest("Unknown detail type '%s'" % detail_type)
 
