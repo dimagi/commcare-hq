@@ -186,8 +186,20 @@ class HOPECase(CommCareCase):
 
     @property
     def _HOPE_ifa_issue_forms(self):
-        return [form for form in self.bp_forms
-                if form.get_form.get('bp1', {}).get('ifa_tablets_issued')]
+        ifa_issue_forms = []
+
+        for form in self.bp_forms:
+            ifa_tablets_issued = form.get_form.get('bp1', {}).get('ifa_tablets_issued')
+
+            try:
+                ifa_tablets_issued = int(ifa_tablets_issued)
+            except ValueError:
+                ifa_tablets_issued = 0
+
+            if ifa_tablets_issued > 0:
+                ifa_issue_forms.append(form)
+
+        return ifa_issue_forms
 
     @property
     def _HOPE_ifa_issue_dates(self):
