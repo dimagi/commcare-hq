@@ -19,6 +19,7 @@ def split_path(path):
     path = '/'.join(path_parts)
     return path, name
 
+
 def save_xform(app, form, xml):
     try:
         xform = XForm(xml)
@@ -190,3 +191,13 @@ def create_temp_sort_column(field, index):
 def is_sort_only_column(column):
     from corehq.apps.app_manager.models import SortOnlyDetailColumn
     return isinstance(column, SortOnlyDetailColumn)
+
+
+def get_correct_app_class(doc):
+    from corehq.apps.app_manager.models import Application, RemoteApp
+    return {
+        'Application': Application,
+        'Application-Deleted': Application,
+        "RemoteApp": RemoteApp,
+        "RemoteApp-Deleted": RemoteApp,
+    }[doc['doc_type']]
