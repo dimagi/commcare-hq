@@ -112,7 +112,12 @@ def _post_xform_to_couch(instance, attachments=None):
     """
     attachments = attachments or {}
     try:
-        doc_id = create_xform_from_xml(instance)
+        # todo: pretty sure nested try/except can be cleaned up
+        try:
+            doc_id = create_xform_from_xml(instance)
+        except couchforms.XMLSyntaxError as e:
+            doc = _log_hard_failure(instance, attachments, e)
+            raise SubmissionError(doc)
         try:
             xform = XFormInstance.get(doc_id)
             for key, value in attachments.items():
@@ -142,13 +147,9 @@ def _post_xform_to_couch(instance, attachments=None):
                 # no biggie, the failure must have been in getting it back
                 pass
             raise
-    except ResourceConflict as e:
-        if e.status_int == 409:
-            # this is an update conflict, i.e. the uid in the form was the same.
-            return _handle_id_conflict(instance, attachments)
-        else:
-            doc = _log_hard_failure(instance, attachments, e)
-            raise SubmissionError(doc)
+    except ResourceConflict:
+        # this is an update conflict, i.e. the uid in the form was the same.
+        return _handle_id_conflict(instance, attachments)
 
 
 def _has_errors(response, errors):
