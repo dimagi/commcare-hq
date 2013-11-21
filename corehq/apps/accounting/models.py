@@ -52,8 +52,8 @@ class BillingAccount(models.Model):
     )
     created_by = models.CharField(max_length=80)
     date_created = models.DateField(auto_now_add=True)
-    contact = models.ForeignKey(BillingContact)
-    currency = models.ForeignKey(Currency)
+    contact = models.ForeignKey(BillingContact, on_delete=models.PROTECT)
+    currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
     is_auto_invoiceable = models.BooleanField(default=False)
     account_type = models.CharField(
         max_length=25,
