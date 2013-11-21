@@ -171,6 +171,7 @@ HQ_APPS = (
     'casexml.apps.phone',
     'corehq.apps.cleanup',
     'corehq.apps.cloudcare',
+    'corehq.apps.accounting',
     'corehq.apps.appstore',
     'corehq.apps.domain',
     'corehq.apps.domainsync',
