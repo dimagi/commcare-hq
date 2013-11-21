@@ -99,8 +99,8 @@ def make_dynamic_report(report_config, keyprefix):
         kwargs['show_in_navigation'] = show_in_navigation
 
     try:
-        metaclass = to_function(report_config.report)
-    except:
+        metaclass = to_function(report_config.report, failhard=True)
+    except StandardError:
         logging.error('dynamic report config for [%s] is invalid' % report_config.report)
         return None
 
