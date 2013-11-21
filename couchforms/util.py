@@ -3,6 +3,7 @@ from couchdbkit import ResourceConflict
 import datetime
 from django.http import HttpResponse, HttpResponseServerError, HttpResponseBadRequest, HttpResponseForbidden
 from django.utils.datastructures import MultiValueDictKeyError
+import couchforms
 from dimagi.utils.mixins import UnicodeMixIn
 
 try:
@@ -60,9 +61,18 @@ def create_xform_from_xml(xml_string, _id=None):
     optionally set the doc _id to a predefined value (_id)
     return doc _id of the created doc
 
+    If xml_string is bad xml
+      - raise couchforms.XMLSyntaxError
+      - do not save form
+
     """
     import xml2json
-    name, json_form = xml2json.xml2json(xml_string)
+
+    try:
+        name, json_form = xml2json.xml2json(xml_string)
+    except xml2json.XMLSyntaxError as e:
+        raise couchforms.XMLSyntaxError(u'Invalid XML: %s' % e)
+
     json_form['#type'] = name
     xform = XFormInstance(
         _attachments={
