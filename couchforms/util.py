@@ -82,9 +82,9 @@ def create_xform_from_xml(xml_string, _id=None):
             },
         },
         form=json_form,
-        xmlns=json_form['@xmlns'],
+        xmlns=json_form.get('@xmlns'),
         received_on=datetime.datetime.utcnow(),
-        **{"#export_tag": "xmlns"}
+        **{'#export_tag': 'xmlns'}
     )
     _id = _id or _extract_meta_instance_id(json_form)
     if _id:
