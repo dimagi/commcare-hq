@@ -584,20 +584,29 @@ def get_module_view_context_and_template(app, module):
         parent_module_ids = [module.unique_id for module in modules
                              if module.case_type in parent_types]
         return [{
-                    'unique_id': module.unique_id,
-                    'name': module.name,
-                    'is_parent': module.unique_id in parent_module_ids,
-                } for module in app.modules if module.case_type != case_type]
+                    'unique_id': mod.unique_id,
+                    'name': mod.name,
+                    'is_parent': mod.unique_id in parent_module_ids,
+                } for mod in app.modules if mod.case_type != case_type and mod.unique_id != module.unique_id]
 
     def get_sort_elements(details):
         return [prop.values() for prop in details.sort_elements]
 
-    case_type = module.case_type
-    return "app_manager/module_view.html", {
-        'parent_modules': get_parent_modules_and_save(case_type),
-        'case_properties': sorted(builder.get_properties(case_type)),
-        "sortElements": json.dumps(get_sort_elements(module.case_details.short))
-    }
+    if isinstance(module, CareplanModule):
+        return "app_manager/module_view_careplan.html", {
+            'parent_modules': get_parent_modules_and_save(CAREPLAN_GOAL),
+            'goal_case_properties': sorted(builder.get_properties(CAREPLAN_GOAL)),
+            'task_case_properties': sorted(builder.get_properties(CAREPLAN_TASK)),
+            "goal_sortElements": json.dumps(get_sort_elements(module.goal_details.short)),
+            "task_sortElements": json.dumps(get_sort_elements(module.task_details.short)),
+        }
+    else:
+        case_type = module.case_type
+        return "app_manager/module_view.html", {
+            'parent_modules': get_parent_modules_and_save(case_type),
+            'case_properties': sorted(builder.get_properties(case_type)),
+            "sortElements": json.dumps(get_sort_elements(module.case_details.short))
+        }
 
 
 @retry_resource(3)
